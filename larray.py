@@ -67,6 +67,7 @@ Matrix class
 # ? improve Labeler I don't know how though :)
 # ? implement dict-like behavior for LArray.axes (to be able to do stuff like
 #   la.axes['sex'].labels
+#
 
 import csv
 from itertools import izip, product
