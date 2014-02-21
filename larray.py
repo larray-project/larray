@@ -4,7 +4,6 @@ Matrix class
 #TODO
 # implement new syntax
 
-# move to github
 # easily add sum column for a dimension
 # reorder an axis labels
 # modify read_csv format (last_column / time)
@@ -76,7 +75,45 @@ import sys
 import numpy as np
 import tables
 
+from orderedset import OrderedSet
 from utils import prod, table2str, table2csv, table2iode, timed, unique
+
+
+def srange(*args):
+    return map(str, range(*args))
+
+
+def to_labels(s):
+    """
+    converts a string to a list of values
+    returns the list of values
+    """
+    numcolons = s.count(':')
+    if numcolons:
+        assert numcolons <= 2
+        fullstr = s + ':1' if numcolons == 1 else s
+        start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
+        if start is None:
+            start = 0
+        if stop is None:
+            raise ValueError("no stop bound provided in range: %s" % s)
+        stop += 1
+        return OrderedSet(srange(start, stop, step))
+    else:
+        return OrderedSet(v.strip() for v in s.split(','))
+
+
+def union(*args):
+    """
+    returns the union of several "value strings"
+    """
+    if args:
+        s = to_labels(args[0])
+        for arg in args:
+            s.update(to_labels(arg))
+        return s
+    else:
+        return OrderedSet()
 
 
 def strip_chars(s, chars):
@@ -755,3 +792,5 @@ if __name__ == '__main__':
     #reg.Collapse('c:/tmp/reg.csv')
     #reg.ToAv('reg.av')
     pass
+
+
