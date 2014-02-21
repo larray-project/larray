@@ -444,6 +444,7 @@ def table2str(table, missing, fullinfo=False):
         lines.extend(newlines)
     return '\n'.join(' | '.join(row) for row in lines)
 
+
 def table2csv(table, sep, missing, collapsed=0):
     '''table is a list of lists'''
     if not table:
@@ -523,9 +524,11 @@ class PrettyTable(object):
 # copied from itertools recipes
 def unique(iterable):
     """
-    List all elements once, preserving order. Remember all elements ever seen.
+    Yields all elements once, preserving order. Remember all elements ever
+    seen.
+    >>> list(unique('AAAABBBCCDAABBB'))
+    ['A', 'B', 'C', 'D']
     """
-    # unique('AAAABBBCCDAABBB') --> A B C D
     seen = set()
     seen_add = seen.add
     for element in iterable:
@@ -536,10 +539,13 @@ def unique(iterable):
 
 def duplicates(iterable):
     """
-    List duplicated elements once, preserving order. Remember all elements ever
-    seen.
+    Yields duplicated elements once, preserving order. Remember all elements
+    ever seen.
+    >>> list(duplicates('AAAABBBCCDAABBB'))
+    ['A', 'B', 'C']
+    >>> list(duplicates('ABBAAABBBCCDAABBB'))
+    ['B', 'A', 'C']
     """
-    # duplicates('AAAABBBCCDAABBB') --> A B C
     counts = defaultdict(int)
     for element in iterable:
         counts[element] += 1
@@ -551,8 +557,9 @@ def unique_duplicate(iterable):
     """
     List all elements once and duplicated elements, preserving order.
     Remember all elements ever seen.
+    >>> unique_duplicate('AAAABBBCCDAABBB')
+    [A, B, C, D], [A, B, C]
     """
-    # unique_duplicate('AAAABBBCCDAABBB') --> [A, B, C, D], [A, B, C]
     counts = {}
     uniques = []
     dupes = []
