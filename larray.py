@@ -17,7 +17,6 @@ Matrix class
 
 
 #TODO:
-
 # * unit TESTS !!!!
 # * evaluate the impact of label-only __getitem__: numpy/matplotlib/...
 #   functions probably rely on __getitem__ with indices
