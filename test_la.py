@@ -4,10 +4,8 @@ import numpy as np
 
 print "numpy", np.__version__
 
-vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,A43,A44,' \
-      'A45,A46,A71,A72,A73' #.split(',')
-wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,A83,A84,' \
-      'A85,A91,A92,A93' #.split(',')
+vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,A43,A44,A45,A46,A71,A72,A73'.split(',')
+wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,A83,A84,A85,A91,A92,A93'.split(',')
 #bru = ['A21']
 bru = 'A21'
 
