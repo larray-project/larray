@@ -660,6 +660,7 @@ class LArray(np.ndarray):
 
 
 def parse(s):
+    #parameters can be strings or numbers
     if(isinstance(s, str)):
         s = s.lower()
         if s in ('0', '1', 'false', 'true'):
