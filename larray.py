@@ -577,58 +577,39 @@ class LArray(np.ndarray):
 
     #XXX: sep argument does not seem very useful
     def to_excel(self, filename, sep=None):
-        import ExcelCom as ec
+        import xlsxwriter as xl
 
         if sep is None:
             sep = '_'
             #sep = self.sep
-        xl = ec.comExcel()
-        xl.load(filename)
+        workbook = xl.Workbook(filename)
         if self.ndim > 2:
             for key in product(*[axis.labels for axis in self.axes[:-2]]):
                 sheetname = sep.join(str(k) for k in key)
-
                 # sheet names must not:
                 # * contain any of the following characters: : \ / ? * [ ]
                 #XXX: this will NOT work for unicode strings !
                 sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
                                                 r'\/?*') # chars to delete
                 # * exceed 31 characters
-                sheetname = sheetname[:31]
+                # sheetname = sheetname[:31]
                 # * be blank
                 assert sheetname, "sheet name cannot be blank"
-
-                sheetdata = np.asarray(self[key])
-
-                xl.addworksheets(sheetname)
-
-                #TODO: reuse as_table, possibly adding an argument to
-                # as_table to determine how many dimensions should be "folded"
-
-                # last axis (time) as columns headers (ie the first row)
-                xl.setRange(sheetname, 2, 1,
-                            (tuple(str(l) for l in self.axes[-1].labels),))
-
-                # next to last axis as rows headers (ie the first column)
-                xl.setRange(sheetname, 1, 2,
-                            tuple((x,) for x in self.axes[-2].labels))
-                xl.setRange(sheetname, 2, 2, sheetdata)
+                worksheet = workbook.add_worksheet(sheetname)
+                worksheet.write_row(0, 1, self.axes[-1].labels) 
+                worksheet.write_column(1, 0, self.axes[-2].labels)                    
+                for row, data in enumerate(np.asarray(self[key])):
+                    worksheet.write_row(1+row, 1, data)                    
+                     
         else:
-            xl.addworksheets('Sheet1')
-
-            # last axis (time) as columns headers (ie the first row)
-            xl.setRange('Sheet1', 2, 1,
-                        (tuple(str(l) for l in self.axes[-1].labels),))
+            worksheet = workbook.add_worksheet('Sheet1')
+            worksheet.write_row(0, 1, self.axes[-1].labels) 
             if self.ndim == 2:
-                # next to last axis as rows headers (ie the first column)
-                xl.setRange('Sheet1', 1, 2,
-                            tuple((str(x),) for x in self.axes[-2].labels))
-            xl.setRange('Sheet1', 2, 2, np.asarray(self))
+                 worksheet.write_column(1, 0, self.axes[-2].labels)
+            for row, data in enumerate(np.asarray(self)):
+                worksheet.write_row(1+row, 1, data)                    
 
-        xl.save(filename)
-        xl.close()
-        xl.end
-        del xl
+
 
     def transpose(self, *args):
         axes_names = set(axis.name for axis in args)
@@ -698,16 +679,17 @@ def df_aslarray(df, na=np.nan):
 
 
 # CSV functions
-def read_csv(filepath, sep=',', na=np.nan):  
+def read_csv(filepath, index_col, sep=',', na=np.nan):  
     # read the first line to determine how many axes (time excluded) we have
-    with open(filepath, 'rb') as f:
-        reader = csv.reader(f, delimiter=sep)
-        header = [parse(cell) for cell in reader.next()]
-        axes_names = [cell for cell in header if isinstance(cell, basestring)]
-    df = pd.read_csv(filepath, index_col=range(len(axes_names)), sep=sep)
-    assert df.index.names == axes_names, "%s != %s" % (df.index.names,
-                                                       axes_names)
-    return df_aslarray(df, na)
+#    with open(filepath, 'rb') as f:
+#        reader = csv.reader(f, delimiter=sep)
+#        header = [parse(cell) for cell in reader.next()]
+#        axes_names = [cell for cell in header if isinstance(cell, basestring)]
+#    df = pd.read_csv(filepath, index_col=range(len(axes_names)), sep=sep)
+#    assert df.index.names == axes_names, "%s != %s" % (df.index.names,
+#                                                       axes_names)
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep)
+    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
         
 def save_csv(l_array, filepath, sep=',', na=np.nan):
     df = l_array.as_dataframe()
@@ -735,7 +717,7 @@ def save_excel(l_array, name, filepath):
     
 def read_excel(name, filepath, index_col):
     df=pd.read_excel(filepath, name, index_col=index_col)
-    return df_aslarray(df)     
+    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
     
 def SaveMatrices(h5_filename):
     try:
@@ -795,10 +777,13 @@ def LoadMatrix(h5_filename, matname):
 if __name__ == '__main__':
     #reg.Collapse('c:/tmp/reg.csv')
     #reg.ToAv('reg.av')
-    test = read_csv('ert_eff_ic_a.tsv', '\t', 0)
+    bel = read_csv('bel.csv', index_col=[0,1,2,3]) 
+    test = read_csv('ert_eff_ic_a.tsv', index_col=[0,1,2], sep='\t', na=0)
     test.ToCsv('brol.csv')
     save_csv(test, 'brolpd.csv')
+    test_csv = read_csv('brolpd.csv', index_col=[0,1,2])
     save_excel(test, "TEST", "test.xls")
     test_xls = read_excel("TEST", "test.xls", index_col=[0,1,2])
     save_h5(test, 'test', 'store.h5')
     test_h5 = read_h5('test', 'store.h5')
+    save_h5(bel, 'bel', 'store.h5')
