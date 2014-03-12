@@ -1,10 +1,32 @@
+from __future__ import division, print_function
+# -*- coding: utf8 -*-
 """
 Matrix class
 """
 #TODO
-# implement new syntax
+# * implement new syntax
 
-# easily add sum column for a dimension
+# * easily add sum column for a dimension
+# a.sum(age=group_to_family(age[:]) + [':'])
+
+# this should work (I think)
+# a.sum(age=[(l,) for l in age[:]] + slice(None))
+
+# a.with_total(age=np.sum)
+# a.with_total(age=np.sum,np.avg) # potentially several totals
+# a.append(age=a.sum(age))
+# a.append(age='sum')
+# a.append(age=sum)
+# a.append(age='total=sum') # total = the name of the new label
+
+# the following should work already (modulo the axis name -> axis num)
+# all_ages = a.sum(age=(':',))
+# np.concatenate((a, all_ages), axis=age)
+
+# np.append(a, a.sum(age), axis=age)
+# a.append(a.sum(age), axis=age)
+
+
 # reorder an axis labels
 # modify read_csv format (last_column / time)
 # test to_csv: does it consume too much mem?
@@ -13,6 +35,31 @@ Matrix class
 # xlsx export workbook without overwriting some sheets (charts)
 # implement x = bel.filter(age='0:10')
 # implement y = bel.sum(sex='H,F')
+
+# XXX: allow naming "one-shot" groups? e.g:
+# regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
+
+# XXX: __getitem__
+# * integer key on a non-integer label dimension is non-ambiguous:
+#   - treat them like indices
+# * int key on in int label dimension is ambiguous:
+#   - treat them like indices
+#   OR
+#   - treat them like values to lookup (len(key) has not relation with len(dim)
+#     BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
+# * bool key on a non-bool dimension is non-ambiguous:
+#   - treat them as a filter (len(key) must be == len(dim))
+# * bool key on a bool dimension is ambiguous:
+#   - treat them as a filter (len(key) must be == len(dim) == 2)
+#     eg [False, True], [True, False], [True, True], [False, False]
+#     >>> I think this usage is unlikely to be used by users directly but might
+#   - treat them like a subset of values to include in the cartesian product
+#     eg, supposing we have a array of shape (bool[2], int[110], boo[2])
+#     the key ([False], [1, 5, 9], [False, True]) would return an array
+#     of shape [1, 3, 2]
+#   OR
+#   - treat them like values to lookup (len(key) has not relation with len(dim)
+#     BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
 
 
 #TODO:
@@ -68,7 +115,7 @@ Matrix class
 #   la.axes['sex'].labels
 
 import csv
-from itertools import izip, product
+from itertools import izip, product, chain
 import string
 import sys
 
@@ -83,11 +130,49 @@ def srange(*args):
     return map(str, range(*args))
 
 
+def slice_to_str(key):
+    """
+    converts a slice to a string
+    >>> slice_to_str(slice(None))
+    ':'
+    >>> slice_to_str(slice(24))
+    ':24'
+    >>> slice_to_str(slice(25, None))
+    '25:'
+    >>> slice_to_str(slice(5, 10))
+    '5:10'
+    >>> slice_to_str(slice(None, 5, 2))
+    ':5:2'
+    """
+    # examples of result: ":24" "25:" ":" ":5:2"
+    start = key.start if key.start is not None else ''
+    stop = key.stop if key.stop is not None else ''
+    step = (":" + str(key.step)) if key.step is not None else ''
+    return '%s:%s%s' % (start, stop, step)
+
+
+def to_label(e):
+    """
+    make it hashable
+    """
+    if isinstance(e, list):
+        return tuple(e)
+    elif isinstance(e, basestring):
+        return e
+    elif isinstance(e, slice):
+        return slice_to_str(e)
+    else:
+        print('to_label not implemented for', e)
+        raise NotImplementedError
+
+
 def to_labels(s):
     """
-    converts a string to a list of values
-    returns the list of values
+    converts a string to a list of values, useable in Axis
     """
+    if isinstance(s, (list, tuple)):
+        return [to_label(e) for e in s]
+
     numcolons = s.count(':')
     if numcolons:
         assert numcolons <= 2
@@ -98,22 +183,98 @@ def to_labels(s):
         if stop is None:
             raise ValueError("no stop bound provided in range: %s" % s)
         stop += 1
-        return OrderedSet(srange(start, stop, step))
+        return srange(start, stop, step)
     else:
-        return OrderedSet(v.strip() for v in s.split(','))
+        return [v.strip() for v in s.split(',')]
+
+
+def to_key(s):
+    """
+    converts a string to a structure usable as a key (slice objects, etc.)
+    This is used, for example in .filter: arr.filter(axis=key) or in .sum:
+    arr.sum(axis=key) or arr.sum(axis=(key, key, key))
+    colons (:) are translated to slice objects, but "int strings" are not
+    converted to int.
+    leading and trailing commas are stripped.
+    >>> to_key('a:c')
+    slice('a', 'c', None)
+    >>> to_key('a,b,c')
+    ['a', 'b', 'c']
+    >>> to_key('a,')
+    ['a']
+    >>> to_key('a')
+    'a'
+    >>> to_key(10)
+    10
+    """
+    if isinstance(s, tuple):
+        return list(s)
+    elif not isinstance(s, basestring):
+        return s
+
+    numcolons = s.count(':')
+    if numcolons:
+        assert numcolons <= 2
+        # can be of len 2 or 3 (if step is provided)
+        bounds = [a if a else None for a in s.split(':')]
+        return slice(*bounds)
+    else:
+        if ',' in s:
+            # strip extremity commas to avoid empty string keys
+            s = s.strip(',')
+            return [v.strip() for v in s.split(',')]
+        else:
+            return s.strip()
+
+
+def to_keys(s):
+    # FIXME: it does not accept only strings
+    """
+    converts a "family string" to its corresponding structure:
+    'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
+    >>> to_keys('P01,P02')  # <-- one group => collapse dimension
+    ['P01', 'P02']
+    >>> to_keys(('P01,P02',))  # <-- do not collapse dimension
+    (['P01', 'P02'],)
+    >>> to_keys('P01;P02;:')
+    ('P01', 'P02', slice(None, None, None))
+
+    # >>> to_keys('P01,P02,:') # <-- INVALID !
+    # it should have an explicit failure
+
+    # we allow this, even though it is a dubious syntax
+    >>> to_keys(('P01', 'P02', ':'))
+    ('P01', 'P02', slice(None, None, None))
+
+    # it is better to use explicit groups
+    >>> to_keys(('P01,', 'P02,', ':'))
+    (['P01'], ['P02'], slice(None, None, None))
+
+    # or even the ugly duck...
+    >>> to_keys((('P01',), ('P02',), ':'))
+    (['P01'], ['P02'], slice(None, None, None))
+    """
+    if isinstance(s, basestring):
+        if ';' in s:
+            return tuple([to_key(group) for group in s.split(';')])
+        else:
+            #XXX: allowed?
+            return to_key(s)
+    elif isinstance(s, ValueGroup):
+        return s
+    else:
+        assert isinstance(s, tuple)
+        return tuple([to_key(group) for group in s])
 
 
 def union(*args):
     """
-    returns the union of several "value strings"
+    returns the union of several "value strings" as a list
     """
     if args:
-        s = to_labels(args[0])
-        for arg in args:
-            s.update(to_labels(arg))
-        return s
+        return list(unique(chain(*(to_labels(arg) for arg in args))))
     else:
-        return OrderedSet()
+        return []
 
 
 def strip_chars(s, chars):
@@ -154,8 +315,14 @@ class Axis(object):
         labels should be an array-like (convertible to an ndarray)
         """
         self.name = name
+        if isinstance(labels, basestring):
+            labels = to_labels(labels)
         self.labels = np.asarray(labels)
         self._mapping = {label: i for i, label in enumerate(labels)}
+
+    @property
+    def is_aggregated(self):
+        return isinstance(self.labels[0], ValueGroup)
 
     def group(self, *args, **kwargs):
         name = kwargs.pop('name', None)
@@ -208,17 +375,17 @@ class Axis(object):
         fancy index with boolean vectors are passed through unmodified
         """
         mapping = self._mapping
+
         if isinstance(key, basestring):
-            #XXX: not sure where to put this
-            if ',' in key:
-                key = key.split(',')
-            # otherwise do nothing
+            key = to_key(key)
         elif isinstance(key, ValueGroup):
             if key in mapping:
                 # the array is an aggregate (it has ValueGroup keys in its
                 # mapping) => return the index of the group
                 return mapping[key]
             else:
+                # assert not self.is_aggregated
+
                 # the array is not an aggregate (it has normal label keys in its
                 # mapping) => return the index of all the elements in the group
                 key = key.key
@@ -261,8 +428,14 @@ class ValueGroup(object):
         """
         self.axis = axis
         if isinstance(key, basestring):
-            key = key.split(',')
-
+            key = to_key(key)
+        elif isinstance(key, slice):
+            pass
+        elif isinstance(key, ValueGroup):
+            pass
+        else:
+            # transform tuples and the like
+            key = list(key)
         #TODO: valueGroups will very likely be used as "groups" so they should
         # cache the indices of their labels
         self.key = key
@@ -270,17 +443,28 @@ class ValueGroup(object):
         # this is only meant the check the key is valid, later we might want
         # to cache the result to check that it does not change over time
         self.axis.translate(key)
-
         if name is None:
             if isinstance(key, slice):
-                # examples of result: [:24] [25:] [:]
-                start = key.start if key.start is not None else ''
-                stop = key.stop if key.stop is not None else ''
-                step = (":" + key.step) if key.step is not None else ''
-                name = '%s:%s%s' % (start, stop, step)
+                name = slice_to_str(key)
+            elif isinstance(key, list):
+                name = ','.join(str(k) for k in key)
             else:
+                # key can be a ValueGroup or a string
+                # assert isinstance(key, basestring)
                 name = str(key)
         self.name = name
+
+    def __hash__(self):
+        key = self.key
+        if isinstance(key, list):
+            key = tuple(key)
+        elif isinstance(key, slice):
+            key = slice_to_str(key)
+        return hash((self.axis, key))
+
+    def __eq__(self, other):
+        # two VG with different names but the same key compare equal
+        return self.axis == other.axis and self.key == other.key
 
     def __str__(self):
         return self.name
@@ -299,6 +483,8 @@ class Labeler(object):
             return group
         elif np.isscalar(group):
             return group
+        elif isinstance(group, slice):
+            return slice_to_str(group)
         elif len(group) == 1:
             return group[0]
         else:
@@ -306,6 +492,10 @@ class Labeler(object):
             if len(concat) < 40:
                 return concat
             else:
+                #XXX: use "first_value, ..., last_value"?
+                #XXX: or "first_value..last_value"?
+                #XXX: or "first_value:last_value" if the range is contiguous
+                # in the axis (we would need access to the axis then)
                 self.count += 1
                 return "group_{}".format(self.count)
 
@@ -347,6 +537,10 @@ class LArray(np.ndarray):
             #self.row_totals = None
             #self.col_totals = None
 
+    @property
+    def is_aggregated(self):
+        return any(axis.is_aggregated for axis in self.axes)
+
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
@@ -356,14 +550,27 @@ class LArray(np.ndarray):
 
         # expand string keys with commas
         #XXX: is it the right place to do this?
-        key = tuple(axis_key.split(',')
-                        if isinstance(axis_key, basestring) and ',' in axis_key
-                        else axis_key
-                    for axis_key in key)
+        key = tuple(to_key(axis_key) for axis_key in key)
 
         # convert xD keys to ND keys
         if len(key) < self.ndim:
             key = key + (slice(None),) * (self.ndim - len(key))
+
+        if self.is_aggregated:
+            # convert values on aggregated axes to (value)groups on the
+            # *parent* axis
+            def convert(axis, values):
+                #FIXME: check on what axis
+                if isinstance(values, ValueGroup):
+                    return values
+                label0 = axis.labels[0]
+                # this is an aggregated axis
+                if isinstance(label0, ValueGroup):
+                    return label0.axis.group(values)
+                else:
+                    return values
+            key = tuple(convert(axis, axis_key)
+                        for axis, axis_key in zip(self.axes, key))
 
         # translate labels to integers
         translated_key = tuple(axis.translate(axis_key)
@@ -404,7 +611,7 @@ class LArray(np.ndarray):
                 noscalarkey = translated_key
 
             # 2) expand slices to lists (ranges)
-            #TODO: cache the range in the axis
+            #TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice) else axis_key
                             for axis_key, axis
@@ -494,7 +701,8 @@ class LArray(np.ndarray):
     #XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
     # behavior, because that would introduce a subtle difference between
-    # [a, b] and [a] even though it is faster and uses less memory.
+    # filter(dim=[a, b]) and filter(dim=[a]) even though it would be faster
+    # and uses less memory.
     def filter(self, collapse=False, **kwargs):
         """
         filters the array along the axes given as keyword arguments.
@@ -537,32 +745,62 @@ class LArray(np.ndarray):
 
     def _group_aggregate(self, op, kwargs, commutative=False):
         if not commutative and len(kwargs) > 1:
-            raise ValueError("grouping aggregates on multiple dimensions"
-                             "is not supported for '%s'" % op.func_name)
+            raise ValueError("grouping aggregates on multiple axes at the same "
+                             "time is not supported for '%s' (because it is "
+                             "not a commutative operation)" % op.func_name)
 
         # allow multiple-dimensions aggregates for commutative operations
         # (all except var, std and ptp I think)
         res = self
         for agg_axis_name, groups in kwargs.iteritems():
-            if not isinstance(groups, (tuple, list)):
-                groups = (groups,)
+            groups = to_keys(groups)
+            # if not isinstance(groups, (tuple, list)):
+            #     groups = (groups,)
 
             agg_axis_idx = res._get_axis_idx(agg_axis_name)
             agg_axis = res.axes[agg_axis_idx]
 
-            labeler = Labeler()
-            group_labels = [labeler.get(group) for group in groups]
             res_axes = res.axes[:]
-
-            # I don't think it is a good idea to modify the axis name (eg
-            # append "_agg" or "*") even though this creates a new axis
-            # that is independent from the original one because the original
-            # name is probably what users will want to use to filter
-            res_axes[agg_axis_idx] = Axis(agg_axis.name, group_labels)
-
             res_shape = list(res.shape)
-            res_shape[agg_axis_idx] = len(groups)
 
+            if not isinstance(groups, tuple):
+                # groups should be a single group
+                assert isinstance(groups, (basestring, slice, list,
+                                           ValueGroup)), \
+                    type(groups)
+                if isinstance(groups, list):
+                    assert len(groups) > 0
+                    assert all(not isinstance(g, (tuple, list)) for g in groups)
+                groups = (groups,)
+                del res_axes[agg_axis_idx]
+
+                # it is easier to kill the axis after the fact
+                killaxis = True
+            else:
+                labeler = Labeler()
+                group_labels = [labeler.get(group) for group in groups]
+
+                # I don't think it is a good idea to modify the axis name (eg
+                # append "_agg" or "*") even though this creates a new axis
+                # that is independent from the original one because the original
+                # name is probably what users will want to use to filter
+                # the label is the list of values
+
+                # make sure each group is a ValueGroup
+                # ///create ValueGroups for each group///
+                # and use that as the axis ticks
+                #XXX: reusing the same ValueGroup instead of
+                vgs = tuple(agg_axis.group(g)
+                                if (not isinstance(g, ValueGroup) or
+                                    g.axis is not agg_axis)
+                                else g
+                            for g in groups)
+                assert all(vg.axis is agg_axis for vg in vgs)
+                res_axes[agg_axis_idx] = Axis(agg_axis.name, vgs)
+                #_labels)
+                killaxis = False
+
+            res_shape[agg_axis_idx] = len(groups)
             res_data = np.empty(res_shape, dtype=res.dtype)
 
             group_idx = [slice(None) for _ in res_shape]
@@ -571,6 +809,7 @@ class LArray(np.ndarray):
 
                 # we need only lists not single labels, otherwise the dimension
                 # is discarded
+                #XXX: shouldn't this be handled in to_keys?
                 group = [group] if np.isscalar(group) else group
 
                 # we don't reuse kwargs because we might have modified "groups"
@@ -578,6 +817,9 @@ class LArray(np.ndarray):
                 arr = np.asarray(arr)
                 op(arr, axis=agg_axis_idx, out=res_data[group_idx])
                 del arr
+            if killaxis:
+                assert group_idx[agg_axis_idx] == 0
+                res_data = res_data[group_idx]
             res = LArray(res_data, res_axes)
 
         return res
@@ -740,7 +982,7 @@ def SaveMatrices(h5_filename):
         d = sys._getframe(1).f_locals
         for k, v in d.iteritems():
             if isinstance(v, LArray):
-                print "storing %s %s" % (k, v.info())
+                # print "storing %s %s" % (k, v.info())
                 disk_array = h5file.createArray(matnode, k, v.matdata, k)
                 attrs = disk_array.attrs
                 attrs._dimensions = np.array(v.dimnames)
@@ -772,11 +1014,11 @@ def LoadMatrix(h5_filename, matname):
         h5root = h5file.root
         if 'matrices' not in h5root:
             #raise Exception('could not find any matrices in the input data file')
-            print 'could not find any matrices in the input data file'
+            # print 'could not find any matrices in the input data file'
             return None
         if matname not in [mat.name for mat in h5root.matrices]:
             #raise Exception('could not find %s in the input data file' % matname)
-            print 'could not find %s in the input data file' % matname
+            # print 'could not find %s in the input data file' % matname
             return None
         mat = getattr(h5root.matrices, matname)
         dimnames = list(mat.attrs._dimensions)
