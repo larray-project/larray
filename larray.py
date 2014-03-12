@@ -4,70 +4,66 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
-# * implement new syntax
-
+# * cleanup unit tests
 # * easily add sum column for a dimension
-# a.sum(age=group_to_family(age[:]) + [':'])
+#   - a.sum(age=group_to_family(age[:]) + [':'])
 
-# this should work (I think)
-# a.sum(age=[(l,) for l in age[:]] + slice(None))
+#   - this should work (I think)
+#   - a.sum(age=[(l,) for l in age[:]] + slice(None))
 
-# a.with_total(age=np.sum)
-# a.with_total(age=np.sum,np.avg) # potentially several totals
-# a.append(age=a.sum(age))
-# a.append(age='sum')
-# a.append(age=sum)
-# a.append(age='total=sum') # total = the name of the new label
+#   - a.with_total(age=np.sum)
+#   - a.with_total(age=np.sum,np.avg) # potentially several totals
+#   - a.append(age=a.sum(age))
+#   - a.append(age='sum')
+#   - a.append(age=sum)
+#   - a.append(age='total=sum') # total = the name of the new label
 
-# the following should work already (modulo the axis name -> axis num)
-# all_ages = a.sum(age=(':',))
-# np.concatenate((a, all_ages), axis=age)
+#   - the following should work already (modulo the axis name -> axis num)
+#   - all_ages = a.sum(age=(':',))
+#   - np.concatenate((a, all_ages), axis=age)
 
-# np.append(a, a.sum(age), axis=age)
-# a.append(a.sum(age), axis=age)
+#   - np.append(a, a.sum(age), axis=age)
+#   - a.append(a.sum(age), axis=age)
 
+# * reorder an axis labels
+# * modify read_csv format (last_column / time)
+# * test to_csv: does it consume too much mem?
+#   ---> test pandas (one dimension horizontally)
+# * add labels in ValueGroups.__str__
+# * xlsx export workbook without overwriting some sheets (charts)
+# * implement x = bel.filter(age='0:10')
+# * implement y = bel.sum(sex='H,F')
 
-# reorder an axis labels
-# modify read_csv format (last_column / time)
-# test to_csv: does it consume too much mem?
-# ---> test pandas (one dimension horizontally)
-# add labels in ValueGroups.__str__
-# xlsx export workbook without overwriting some sheets (charts)
-# implement x = bel.filter(age='0:10')
-# implement y = bel.sum(sex='H,F')
+# ? allow naming "one-shot" groups? e.g:
+#   regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
 
-# XXX: allow naming "one-shot" groups? e.g:
-# regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
-
-# XXX: __getitem__
-# * integer key on a non-integer label dimension is non-ambiguous:
-#   - treat them like indices
-# * int key on in int label dimension is ambiguous:
-#   - treat them like indices
-#   OR
-#   - treat them like values to lookup (len(key) has not relation with len(dim)
-#     BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
-# * bool key on a non-bool dimension is non-ambiguous:
-#   - treat them as a filter (len(key) must be == len(dim))
-# * bool key on a bool dimension is ambiguous:
-#   - treat them as a filter (len(key) must be == len(dim) == 2)
-#     eg [False, True], [True, False], [True, True], [False, False]
-#     >>> I think this usage is unlikely to be used by users directly but might
-#   - treat them like a subset of values to include in the cartesian product
-#     eg, supposing we have a array of shape (bool[2], int[110], boo[2])
-#     the key ([False], [1, 5, 9], [False, True]) would return an array
-#     of shape [1, 3, 2]
-#   OR
-#   - treat them like values to lookup (len(key) has not relation with len(dim)
-#     BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
-
-
-#TODO:
-# * unit TESTS !!!!
+# * review __getitem__ vs labels
+#   o integer key on a non-integer label dimension is non-ambiguous:
+#     => treat them like indices
+#   o int key on in int label dimension is ambiguous:
+#     => treat them like indices
+#     OR
+#     => treat them like values to lookup (len(key) has not relation with
+#        len(dim) BUT if key is a tuple (nd-key), we have
+#        len(dim0) == dim(dimX)
+#   o bool key on a non-bool dimension is non-ambiguous:
+#     - treat them as a filter (len(key) must be == len(dim))
+#   o bool key on a bool dimension is ambiguous:
+#     - treat them as a filter (len(key) must be == len(dim) == 2)
+#       eg [False, True], [True, False], [True, True], [False, False]
+#       >>> I think this usage is unlikely to be used by users directly but might
+#     - treat them like a subset of values to include in the cartesian product
+#       eg, supposing we have a array of shape (bool[2], int[110], boo[2])
+#       the key ([False], [1, 5, 9], [False, True]) would return an array
+#       of shape [1, 3, 2]
+#     OR
+#     - treat them like values to lookup (len(key) has not relation with len(dim)
+#       BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
 # * evaluate the impact of label-only __getitem__: numpy/matplotlib/...
 #   functions probably rely on __getitem__ with indices
+
 # * docstring for all methods
-# * choose between subset and group. Having both is just confusing.
+# * choose between subset and group. Having both is just confusing, I think.
 # * check whether we could use np.array_repr/array_str (and
 #   np.set_printoptions) instead of our own as_table/table2str
 # * IO functions: csv/hdf/excel?/...?
@@ -98,7 +94,7 @@ Matrix class
 # * test structured arrays
 # * review all method & argument names
 # * implement ValueGroup.__getitem__
-# ? allow __getitem__ with ValueGroups at any position since we usually know
+# ? allow __getitem__ with ValueGroups at any position since we know
 #   which axis the ValueGroup correspond to. ie: allow bel[vla] even though
 #   geo is not the first dimension of bel.
 # ? move "utils" to its own project (so that it is not duplicated between
@@ -115,8 +111,7 @@ Matrix class
 #   la.axes['sex'].labels
 #
 
-import csv
-from itertools import izip, product, chain
+from itertools import product, chain
 import string
 import sys
 
@@ -125,7 +120,6 @@ import pandas as pd
 
 import tables
 
-from orderedset import OrderedSet
 from utils import prod, table2str, table2csv, table2iode, timed, unique
 
 
@@ -888,8 +882,6 @@ class LArray(np.ndarray):
             for row, data in enumerate(np.asarray(self)):
                 worksheet.write_row(1+row, 1, data)                    
 
-
-
     def transpose(self, *args):
         axes_names = set(axis.name for axis in args)
         missing_axes = [axis for axis in self.axes
@@ -921,7 +913,7 @@ class LArray(np.ndarray):
 
 def parse(s):
     #parameters can be strings or numbers
-    if(isinstance(s, str)):
+    if isinstance(s, str):
         s = s.lower()
         if s in ('0', '1', 'false', 'true'):
             return s in ('1', 'true')
@@ -934,6 +926,7 @@ def parse(s):
                 return s
     else:
         return s
+
 
 def df_aslarray(df, na=np.nan):
     axes_labels = [list(unique(level[labels]))
@@ -969,35 +962,28 @@ def read_csv(filepath, index_col, sep=',', na=np.nan):
 #                                                       axes_names)
     df = pd.read_csv(filepath, index_col=index_col, sep=sep)
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
-        
+
+
 def save_csv(l_array, filepath, sep=',', na=np.nan):
     df = l_array.as_dataframe()
     df.to_csv(filepath, sep=sep)
 
-# HDF5 functions    
+
+# HDF5 functions
 def save_h5(l_array, name, filepath):
     df = l_array.as_dataframe()
     store = pd.HDFStore(filepath)
     store.put(name, df)
     store.close()    
     
+
 def read_h5(name, filepath):
     store = pd.HDFStore(filepath)
     df = store.get(name)
     store.close()
-    return df_aslarray(df) 
+    return df_aslarray(df)
 
-#EXCEL functions
-def save_excel(l_array, name, filepath):
-    df = l_array.as_dataframe()
-    writer = pd.ExcelWriter(filepath)
-    df.to_excel(writer, name)
-    writer.save()
-    
-def read_excel(name, filepath, index_col):
-    df=pd.read_excel(filepath, name, index_col=index_col)
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
-    
+
 def SaveMatrices(h5_filename):
     try:
         h5file = tables.openFile(h5_filename, mode="w", title="IodeMatrix")
@@ -1052,6 +1038,20 @@ def LoadMatrix(h5_filename, matname):
         return LArray(data, axes)
     finally:
         h5file.close()
+
+
+# EXCEL functions
+def save_excel(l_array, name, filepath):
+    df = l_array.as_dataframe()
+    writer = pd.ExcelWriter(filepath)
+    df.to_excel(writer, name)
+    writer.save()
+    
+
+def read_excel(name, filepath, index_col):
+    df=pd.read_excel(filepath, name, index_col=index_col)
+    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
+    
 
 if __name__ == '__main__':
     #reg.Collapse('c:/tmp/reg.csv')

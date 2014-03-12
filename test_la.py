@@ -4,8 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from larray import LArray, Axis, union, OrderedSet, to_labels, ValueGroup, \
-    srange, to_key
+from larray import LArray, Axis, ValueGroup, union, to_labels, to_key, srange
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
