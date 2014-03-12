@@ -814,7 +814,11 @@ class LArray(np.ndarray):
         return self._aggregate(np.sum, args, kwargs, commutative=True)
 
     #XXX: sep argument does not seem very useful
+    #XXX: use pandas function instead?
     def to_excel(self, filename, sep=None):
+        # Why xlsxwriter? Because it is faster than openpyxl and xlwt
+        # currently does not .xlsx (only .xls).
+        # PyExcelerate seem like a decent alternative too
         import xlsxwriter as xl
 
         if sep is None:
