@@ -106,7 +106,6 @@ Matrix class
 #   potential projects using it)
 
 # ? make pywin32 optional?
-# ? improve Labeler I don't know how though :)
 # ? implement dict-like behavior for LArray.axes (to be able to do stuff like
 #   la.axes['sex'].labels
 #
@@ -165,7 +164,7 @@ def to_label(e):
 
 def to_labels(s):
     """
-    converts a string to a list of values, useable in Axis
+    converts a string to a list of values, usable in Axis
     """
     if isinstance(s, (list, tuple)):
         return [to_label(e) for e in s]
@@ -349,8 +348,8 @@ class Axis(object):
         key is an integer-based key (slice and fancy indexing are supported)
         returns an Axis for a sub-array
         """
-        if (isinstance(key, slice)
-            and key.start is None and key.stop is None and key.step is None):
+        if (isinstance(key, slice) and
+                key.start is None and key.stop is None and key.step is None):
             return self
         # we must NOT modify the axis name, even though this creates a new axis
         # that is independent from the original one because the original
@@ -468,33 +467,6 @@ class ValueGroup(object):
 
     def __repr__(self):
         return "%s[%s]" % (self.axis.name, self.name)
-
-
-class Labeler(object):
-    def __init__(self):
-        self.count = 0
-
-    def get(self, group):
-        #XXX: add support for slices here?
-        if isinstance(group, ValueGroup):
-            return group
-        elif np.isscalar(group):
-            return group
-        elif isinstance(group, slice):
-            return slice_to_str(group)
-        elif len(group) == 1:
-            return group[0]
-        else:
-            concat = '+'.join(str(v) for v in group)
-            if len(concat) < 40:
-                return concat
-            else:
-                #XXX: use "first_value, ..., last_value"?
-                #XXX: or "first_value..last_value"?
-                #XXX: or "first_value:last_value" if the range is contiguous
-                # in the axis (we would need access to the axis then)
-                self.count += 1
-                return "group_{}".format(self.count)
 
 
 class LArray(np.ndarray):
@@ -773,27 +745,20 @@ class LArray(np.ndarray):
                 # it is easier to kill the axis after the fact
                 killaxis = True
             else:
-                labeler = Labeler()
-                group_labels = [labeler.get(group) for group in groups]
+                # make sure each group is a ValueGroup and use that as the axis
+                # ticks
+                ticks = tuple(agg_axis.group(g)
+                                  if (not isinstance(g, ValueGroup) or
+                                      g.axis is not agg_axis)
+                                  else g
+                              for g in groups)
+                assert all(vg.axis is agg_axis for vg in ticks)
 
-                # I don't think it is a good idea to modify the axis name (eg
-                # append "_agg" or "*") even though this creates a new axis
-                # that is independent from the original one because the original
-                # name is probably what users will want to use to filter
-                # the label is the list of values
-
-                # make sure each group is a ValueGroup
-                # ///create ValueGroups for each group///
-                # and use that as the axis ticks
-                #XXX: reusing the same ValueGroup instead of
-                vgs = tuple(agg_axis.group(g)
-                                if (not isinstance(g, ValueGroup) or
-                                    g.axis is not agg_axis)
-                                else g
-                            for g in groups)
-                assert all(vg.axis is agg_axis for vg in vgs)
-                res_axes[agg_axis_idx] = Axis(agg_axis.name, vgs)
-                #_labels)
+                # We do NOT modify the axis name (eg append "_agg" or "*") even
+                # though this creates a new axis that is independent from the
+                # original one because the original name is what users will
+                # want to use to access that axis (eg in .filter kwargs)
+                res_axes[agg_axis_idx] = Axis(agg_axis.name, ticks)
                 killaxis = False
 
             res_shape[agg_axis_idx] = len(groups)
