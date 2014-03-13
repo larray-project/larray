@@ -7,11 +7,33 @@ Matrix class
 # * split unit tests
 
 # * easily add sum column for a dimension
+#   - in all cases, we will need to define a new Axis object
+#   - in the examples below, we suppose a.label is 'income'
+#   - best candidates (IMO)
+#       - a.append(age=a.sum(age))   # label is "income.sum(age)"
+#                                    # ideally, it should be just "sum(age)"
+#                                    # (the label on the array stays "income"
+#                                    # after all, so it is redundant to add
+#                                    # it here) but that is probably harder
+#                                    # to get because a.sum(age).label should
+#                                    # really be "income.sum(age)", it is just
+#                                    # the label/tick on the new Axis that
+#                                    # should not contain "income".
+#       - a.append(age=a.sum(age).label('total'))  # label is "total"
+#       - a.append(a.sum(age), axis=age)
+#       - a.append_total(age)     # default aggregate is sum
+#                                 # default label is "total"
+#       - a.append_total(age=avg) # default aggregate is sum,
+#       - a.append_total(age, sex=avg) # default aggregate is sum,
+
+# other candidates
 #   - a.with_total(age=np.sum)
 #   - a.with_total(age=np.sum,np.avg) # potentially several totals
 #   - a.append(age=a.sum(age))
 #   - a.append(age='sum')
 #   - a.append(age=sum)
+
+#   - a.append(total=a.sum(age), axis=age) # total = the name of the new label
 #   - a.append(age='total=sum') # total = the name of the new label
 
 #   - the following should work already (modulo the axis name -> axis num)
@@ -20,7 +42,6 @@ Matrix class
 
 #   - np.append(a, a.sum(age), axis=age)
 #   - a.append(a.sum(age), axis=age)
-#   - a.append(age=a.sum(age))
 
 # * check axes on arithmetics
 # * but special case for length 1 (to be able to do: "H + F" or "vla / belgium")
