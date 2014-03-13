@@ -4,13 +4,9 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
-# * cleanup unit tests
+# * split unit tests
+
 # * easily add sum column for a dimension
-#   - a.sum(age=group_to_family(age[:]) + [':'])
-
-#   - this should work (I think)
-#   - a.sum(age=[(l,) for l in age[:]] + slice(None))
-
 #   - a.with_total(age=np.sum)
 #   - a.with_total(age=np.sum,np.avg) # potentially several totals
 #   - a.append(age=a.sum(age))
@@ -24,6 +20,13 @@ Matrix class
 
 #   - np.append(a, a.sum(age), axis=age)
 #   - a.append(a.sum(age), axis=age)
+#   - a.append(age=a.sum(age))
+
+# * check axes on arithmetics
+# * but special case for length 1 (to be able to do: "H + F" or "vla / belgium")
+
+# * reindex a dataset (ie make it conform to the index of another dataset)
+#   so that you can do operations involving both (add, divide, ...)
 
 # * reorder an axis labels
 # * modify read_csv format (last_column / time)
@@ -31,8 +34,6 @@ Matrix class
 #   ---> test pandas (one dimension horizontally)
 # * add labels in ValueGroups.__str__
 # * xlsx export workbook without overwriting some sheets (charts)
-# * implement x = bel.filter(age='0:10')
-# * implement y = bel.sum(sex='H,F')
 
 # ? allow naming "one-shot" groups? e.g:
 #   regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
@@ -301,6 +302,11 @@ def range_to_slice(seq):
             return seq
         prev_value = value
     return slice(first, prev_value + step, step)
+
+
+def larray_equal(first, other):
+    return (first.axes == other.axes and
+            np.array_equal(np.asarray(first), np.asarray(other)))
 
 
 class Axis(object):

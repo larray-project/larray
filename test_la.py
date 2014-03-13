@@ -4,7 +4,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from larray import LArray, Axis, ValueGroup, union, to_labels, to_key, srange
+from larray import LArray, Axis, ValueGroup, union, to_labels, to_key, srange, \
+    larray_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
@@ -13,15 +14,23 @@ from larray import LArray, Axis, ValueGroup, union, to_labels, to_key, srange
 # family(group(a), b, c)
 
 
-def assert_array_equal(first, other):
+def array_equal(a, b):
     # np.array_equal is not implemented on strings in numpy < 1.9
-    if (np.issubdtype(first.dtype, np.str) and np.issubdtype(other.dtype,
+    if (np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype,
                                                              np.str)):
-        eq = (first == other).all()
+        return (a == b).all()
     else:
-        print(first.dtype, other.dtype)
-        eq = np.array_equal(first, other)
-    assert eq, "got: %s\nexpected: %s" % (first, other)
+        return np.array_equal(a, b)
+
+
+def assert_equal_factory(test_func):
+    def assert_equal(a, b):
+        assert test_func(a, b), "got: %s\nexpected: %s" % (a, b)
+    return assert_equal
+
+
+assert_array_equal = assert_equal_factory(array_equal)
+assert_larray_equal = assert_equal_factory(larray_equal)
 
 
 class TestValueStrings(TestCase):
@@ -79,20 +88,14 @@ class TestAxis(TestCase):
 
         # list of strings
         assert_array_equal(Axis('sex', sex_list).labels, sex_array)
-
         # array of strings
-        assert_array_equal(Axis('sex', np.array(sex_list)).labels, sex_array)
-
+        assert_array_equal(Axis('sex', sex_array).labels, sex_array)
         # single string
         assert_array_equal(Axis('sex', 'H,F').labels, sex_array)
-
         # list of ints
-        age = Axis('age', range(116))
-        assert_array_equal(age.labels, np.arange(116))
-
+        assert_array_equal((Axis('age', range(116))).labels, np.arange(116))
         # range-string
-        age = Axis('age', ':115')
-        assert_array_equal(age.labels, np.array(srange(116)))
+        assert_array_equal((Axis('age', ':115')).labels, np.array(srange(116)))
 
     def test_group(self):
         age = Axis('age', ':115')
@@ -101,9 +104,25 @@ class TestAxis(TestCase):
         self.assertEqual(age.group('1,5,9'), ValueGroup(age, ages_list))
         self.assertEqual(age.group('1', '5', '9'), ValueGroup(age, ages_list))
 
+        # with a slice string
+        self.assertEqual(age.group('10:20'), ValueGroup(age, slice('10', '20')))
+
         # with name
         self.assertEqual(age.group(srange(10, 20), name='teens'),
                          ValueGroup(age, srange(10, 20), 'teens'))
+
+        #TODO: support more stuff in string groups
+        # arr3x = geo.group('A3*') # * match one or more chars
+        # arr3x = geo.group('A3?') # ? matches one char (equivalent in this case)
+        # arr3x = geo.seq('A31', 'A38') # not equivalent to geo['A31:A38'] !
+        #                               # (if A22 is between A31 and A38)
+
+    def test_getitem(self):
+        age = Axis('age', ':115')
+        vg = age.group(':17')
+        # these are equivalent
+        self.assertEqual(age[:'17'], vg)
+        self.assertEqual(age[':17'], vg)
 
     def test_all(self):
         age = Axis('age', ':115')
@@ -123,6 +142,13 @@ class TestValueGroup(TestCase):
 
         self.single_value = ValueGroup(self.lipro, 'P03')
         self.list = ValueGroup(self.lipro, 'P01,P03,P07')
+
+    def test_init(self):
+        self.assertEqual(self.slice_both, ValueGroup(self.age, slice('1', '5')))
+        self.assertEqual(self.slice_start,
+                         ValueGroup(self.age, slice('1', None)))
+        self.assertEqual(self.slice_stop, ValueGroup(self.age, slice('5')))
+        self.assertEqual(self.slice_none, ValueGroup(self.age, slice(None)))
 
     def test_name(self):
         self.assertEqual(self.slice_both.name, '1:5')
@@ -149,6 +175,9 @@ class TestValueGroup(TestCase):
 
 
 class TestLArray(TestCase):
+    def _assert_equal_raw(self, la, raw):
+        assert_array_equal(np.asarray(la), raw)
+
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.age = Axis('age', ':115')
@@ -236,6 +265,10 @@ class TestLArray(TestCase):
         filtered = la.filter(age='1,5,9', lipro='P01,P02')
         self.assertEqual(filtered.shape, (3, 44, 2, 2))
 
+        # multiple axes one after the other
+        filtered = la.filter(age='1,5,9').filter(lipro='P01,P02')
+        self.assertEqual(filtered.shape, (3, 44, 2, 2))
+
         # a single value for one dimension => collapse the dimension
         filtered = la.filter(sex='H')
         self.assertEqual(filtered.shape, (116, 44, 15))
@@ -252,62 +285,125 @@ class TestLArray(TestCase):
         # I might be short-sighted.
         # filtered = la.filter(lipro='P01,P02,P01')
 
+        #XXX: we could abuse python to allow naming groups via Axis.__getitem__
+        # (but I doubt it is a good idea).
+        # child = age[':17', 'child']
+
+        # slices
+        # ------
+
+        # VG slice
+        self.assertEqual(la.filter(age=age[':17']).shape, (18, 44, 2, 15))
+        # string slice
+        self.assertEqual(la.filter(age=':17').shape, (18, 44, 2, 15))
+        # raw slice
+        self.assertEqual(la.filter(age=slice('17')).shape, (18, 44, 2, 15))
+
+        # filter chain with a slice
+        self.assertEqual(la.filter(age=':17').filter(geo='A12,A13').shape,
+                         (18, 2, 2, 15))
+
     def test_sum(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
+        vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
+
+        # full axes reductions
+        # ====================
+
+        # everything
+        self.assertEqual(la.sum(), np.asarray(la).sum())
 
         # using axes numbers
-        aggregated = la.sum(0, 2)
-        self.assertEqual(aggregated.shape, (44, 15))
+        self.assertEqual(la.sum(0, 2).shape, (44, 15))
 
         # using Axis objects
+        self.assertEqual(la.sum(age).shape, (44, 2, 15))
+        self.assertEqual(la.sum(age, sex).shape, (44, 15))
+
+        # chained sum
+        self.assertEqual(la.sum(age, sex).sum(geo).shape, (15,))
+        self.assertEqual(la.sum(age, sex).sum(lipro, geo), la.sum())
+
+        # getitem on aggregated
         aggregated = la.sum(age, sex)
-        self.assertEqual(aggregated.shape, (44, 15))
+        self.assertEqual(aggregated[self.vla].shape, (22, 15))
 
-        agg_and_getitem = aggregated[self.vla]
-        self.assertEqual(agg_and_getitem.shape, (22, 15))
+        # filter on aggregated
+        self.assertEqual(aggregated.filter(geo=self.vla).shape, (22, 15))
 
-        agg_and_filter = aggregated.filter(geo=self.vla)
-        self.assertEqual(agg_and_filter.shape, (22, 15))
+        # group aggregates
+        # ================
 
-        # futher aggregate (partial)
+        # simple
+        # ------
 
-        # 2d (geo, lipro) -> 2d (geo', lipro)
-        reg = aggregated.sum(geo=(self.vla, self.wal, self.bru, self.belgium))
+        # a) group aggregate on a fresh array
+
+        # a.1) one group => collapse dimension
+        self.assertEqual(la.sum(sex='H').shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex='H,F').shape, (116, 44, 15))
+        self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=':').shape, (116, 2, 15))
+        # Include everything between two labels. Since A11 is the first label
+        # and A21 is the last one, this should be equivalent to the previous
+        # tests.
+        self.assertEqual(la.sum(geo='A11:A21').shape, (116, 2, 15))
+        assert_larray_equal(la.sum(geo='A11:A21'), la.sum(geo=':'))
+
+        # a.2) a tuple of one group => do not collapse dimension
+        self.assertEqual(la.sum(geo=(geo.all(),)).shape, (116, 1, 2, 15))
+
+        # a.3) several groups
+        self.assertEqual(la.sum(geo=(vla, wal, bru)).shape, (116, 3, 2, 15))
+        # with one label in several groups
+        self.assertEqual(la.sum(sex=(['H'], ['H', 'F'])).shape,
+                         (116, 44, 2, 15))
+        self.assertEqual(la.sum(sex=('H', 'H,F')).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum(sex='H;H,F').shape, (116, 44, 2, 15))
+
+        aggregated = la.sum(geo=(vla, wal, bru, belgium))
+        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        self.assertTrue(isinstance(aggregated.axes[1].labels[0], ValueGroup))
+
+        # b) both axis aggregate and group aggregate at the same time
+        # Note that you must list "full axes" aggregates first (Python does
+        # not allow non-kwargs after kwargs.
+        self.assertEqual(la.sum(age, sex, geo=(vla, wal, bru, belgium)).shape,
+                         (4, 15))
+
+        # c) chain group aggregate after axis aggregate
+        reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(reg.shape, (4, 15))
-        geo2, lipro2 = reg.axes
-        self.assertTrue(isinstance(geo2.labels[0], ValueGroup))
 
-        regsum = reg.sum(lipro='P01,P02')  # <-- one group => collapse dimension
-        self.assertEqual(regsum.shape, (4,))
+        # group aggregates on a group-aggregated array
+        # --------------------------------------------
 
-        regsum = reg.sum(lipro=('P01,P02',))  # <-- do not collapse dimension
-        self.assertEqual(regsum.shape, (4, 1))
+        # 1) one group => collapse dimension
+        self.assertEqual(reg.sum(lipro='P01,P02').shape, (4,))
 
-        # several groups
-        # --------------
+        # 2) a tuple of one group => do not collapse dimension
+        self.assertEqual((reg.sum(lipro=('P01,P02',))).shape, (4, 1))
 
-        regsum = reg.sum(lipro='P01;P02;:')
-        self.assertEqual(regsum.shape, (4, 3))
+        # 3) several groups
+        self.assertEqual((reg.sum(lipro='P01;P02;:')).shape, (4, 3))
 
         # this is INVALID
         # TODO: raise a nice exception
         # regsum = reg.sum(lipro='P01,P02,:')
 
-        # this is currently allowed even though it is a bit kludgy
-        regsum = reg.sum(lipro=('P01', 'P02', ':'))
-        self.assertEqual(regsum.shape, (4, 3))
-        regsum = reg.sum(lipro=('P01', 'P02', lipro.all()))
-        self.assertEqual(regsum.shape, (4, 3))
+        # this is currently allowed even though it can be confusing:
+        # P01 and P02 are both groups with one element each.
+        self.assertEqual((reg.sum(lipro=('P01', 'P02', ':'))).shape, (4, 3))
+        self.assertEqual((reg.sum(lipro=('P01', 'P02', lipro.all()))).shape,
+                         (4, 3))
 
         # explicit groups are better
-        regsum = reg.sum(lipro=('P01,', 'P02,', ':'))
-        self.assertEqual(regsum.shape, (4, 3))
-        regsum = reg.sum(lipro=(['P01'], ['P02'], ':'))
-        self.assertEqual(regsum.shape, (4, 3))
+        self.assertEqual((reg.sum(lipro=('P01,', 'P02,', ':'))).shape, (4, 3))
+        self.assertEqual((reg.sum(lipro=(['P01'], ['P02'], ':'))).shape, (4, 3))
 
-        # getitem on the aggregated
-        # -------------------------
+        # getitem on a group-aggregated array
+        # -----------------------------------
 
         # using a string
         vla = self.vla
@@ -317,6 +413,9 @@ class TestLArray(TestCase):
         self.assertEqual(reg[(vla, slice(None))].shape, (15,))
         self.assertEqual(reg[vla, slice(None)].shape, (15,))
         self.assertEqual(reg[vla, :].shape, (15,))
+
+        # one more level...
+        self.assertEqual(reg[vla]['P03'], 389049848.0)
 
         # using an anonymous ValueGroup
         vla = self.geo.group(self.vla)
@@ -336,8 +435,8 @@ class TestLArray(TestCase):
         self.assertEqual(reg[vla, slice(None)].shape, (15,))
         self.assertEqual(reg[vla, :].shape, (15,))
 
-        # filter on the aggregated
-        # ------------------------
+        # filter on a group-aggregated array
+        # ----------------------------------
 
         # using a string
         vla = self.vla
@@ -354,93 +453,27 @@ class TestLArray(TestCase):
         # normal because reg.filter(geo=(vla,)) is equivalent to:
         # reg[((vla,),)] or reg[(vla,), :]
 
-        vla = self.geo.group(self.vla, name='Vlaanderen')
-        reg = aggregated.sum(geo=(vla, self.wal, self.bru, self.belgium))
-        regvla = reg[vla]
+        #TODO: check that *if* the aggregated array (reg) was created using
+        # *named* groups, it can also be indexed by the group name
+        # vla = self.geo.group(self.vla, name='Vlaanderen')
+        # reg = aggregated.sum(geo=(vla, self.wal, self.bru, self.belgium))
+        # self.assertEqual(reg['Vlaanderen'].shape, (15,))
 
-        #TODO: check that you can index a group by name
-        # regvla = reg['Vlaanderen']
+        # mixed VG/string slices
+        child = age[':17']
+        working = age['18:64']
+        retired = age['65:']
+        byage = la.sum(age=(child, '5', working, retired))
+        self.assertEqual(byage.shape, (4, 44, 2, 15))
+        byage = la.sum(age=(child, '5:10', working, retired))
+        self.assertEqual(byage.shape, (4, 44, 2, 15))
 
-#        self.assertEqual(regvla.shape, (15,))
-
-        regvlap03 = regvla['P03']
-        print("regvlap03 axes", regvlap03.info())
-        print(regvlap03)
-
-        # we could abuse python to provide allow naming groups via
-        # Axis.__getitem__ (not sure it s a good idea):
-        # child = age[:17, 'child']
-
-        # child = age[:17] # stop bound is inclusive !
-
-        child = age.group(':17') # stop bound is inclusive !
-        # working = age[18:64] # create a ValueGroup(Axis(age), [18, ..., 64], '18:64')
-        working = age.group('18:64') # create a ValueGroup(Axis(age), [18, ..., 64],
-        # '18:64')
-        # retired = age[65:]
-        retired = age.group('65:')
-        #arr3x = geo.group('A3*') # * match one or more chars
-        #arr3x = geo.group('A3?') # ? matches one char (equivalent in this case)
-        #arr3x = geo.seq('A31', 'A38')
-        # arr3x = geo['A31':'A38'] # not equivalent! (if A22 is between A31 and A38)
-
-        test = la.filter(age=child)
-        print("test", test.info())
-        # test = bel.filter(age=age[:17]).filter(geo=belgium)
-        test = la.filter(age=':17').filter(geo=self.belgium)
-        print(test.info())
-        # test = bel.filter(age=range(18))
-        # print test.info()
-
-        # ages = bel.sum(age=(child, 5, working, retired))
-        ages = la.sum(age=(child, '5:10', working, retired))
-        print(ages.info())
-        ages2 = ages.filter(age=child)
-        print(ages2.info())
-
-        #print "ages.filter", ages.filter(age=:17) # invalid syntax
-        #print "ages.filter(age=':17')", ages.filter(age=':17')
-        #print "ages.filter(age=slice(17))", ages.filter(age=slice(17))
-
-        total = reg.sum()            # total (including duplicates like belgium?)
-        print("total", total)
-        # total (including duplicates like belgium?)
-        total = reg.sum(geo, lipro)
-        print("total", total)
-
-        x = la.sum(age) # 3d matrix
-        print("sum(age)")
-        print(x.info())
-
-        x = la.sum(lipro, geo) # 2d matrix
-        print("sum(lipro, geo)")
-        print(x.info())
-
-        # a single group VS a
-        x = la.sum(lipro, geo=geo.all()) # the same 2d matrix?
-        x = la.sum(lipro, geo=':') # the same 2d matrix?
-        x = la.sum(lipro, geo='A11:A33') # include everything between the two labels
-        #  (it can include 'A63')
-        print("sum(lipro, geo=geo.all())")
-        print("sum(lipro, geo=geo.all())")
-        print(x.info())
-
-        x = la.sum(lipro, sex='H') # a 3d matrix (sex dimension of size 1)
-        print("sum(lipro, sex='H')")
-        print(x.info())
-
-        # x = bel.sum(lipro, sex=(['H'], ['H', 'F'])) # idem
-        x = la.sum(lipro, sex=('H', 'H,F')) # idem
-        x = la.sum(lipro, sex='H;H,F') # <-- abbreviation
-        print("sum(lipro, sex=('H',))")
-        print(x.info())
-
-        x = la.sum(lipro, geo=(geo.all(),)) # 3d matrix (geo dimension of size 1)
-        print("sum(lipro, geo=(geo.all(),))")
-        print(x.info())
-        #print bel.sum(lipro, geo=(vla, wal, bru)) # 3d matrix
-
-        #bel.sum(lipro, geo=(vla, wal, bru), sex) # <-- not allowed!!! (I think we can live with that)
+        # filter on an aggregated larray created with mixed groups
+        self.assertEqual(byage.filter(age=child).shape, (44, 2, 15))
+        self.assertEqual(byage.filter(age=':17').shape, (44, 2, 15))
+        self.assertEqual(byage.filter(age=slice('17')).shape, (44, 2, 15))
+        #TODO: make it work for integer indices
+        # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
 
     def test_ratio(self):
         la = self.larray
@@ -450,10 +483,9 @@ class TestLArray(TestCase):
         self.assertEqual(reg.shape, (4, 15))
 
         ratio = reg.ratio(geo, lipro)
-        print("reg.ratio(geo, lipro)")
-        print(ratio.info())
-        print(ratio)
-        print(ratio.sum())
+        self.assertEqual(ratio.shape, (4, 15))
+        assert_array_equal(ratio, reg / reg.sum(geo, lipro))
+        self.assertEqual(ratio.sum(), 1.0)
 
     def test_reorder(self):
         la = self.larray
@@ -465,26 +497,23 @@ class TestLArray(TestCase):
         reordered = la.reorder(lipro, age)
         self.assertEqual(reordered.shape, (15, 116, 44, 2))
 
-    def _assert_equal(self, la, raw):
-        assert_array_equal(np.asarray(la), raw)
-
     def test_arithmetics(self):
         raw = self.small_data
         la = self.small
 
-        self._assert_equal(la + la, raw + raw)
-        self._assert_equal(la * 2, raw * 2)
-        self._assert_equal(2 * la, 2 * raw)
-        self._assert_equal(la + 1, raw + 1)
-        self._assert_equal(1 + la, 1 + raw)
-        self._assert_equal(30 / la, 30 / raw)
-        self._assert_equal(30 / (la + 1), 30 / (raw + 1))
-        self._assert_equal(la / la, raw / raw)
+        self._assert_equal_raw(la + la, raw + raw)
+        self._assert_equal_raw(la * 2, raw * 2)
+        self._assert_equal_raw(2 * la, 2 * raw)
+        self._assert_equal_raw(la + 1, raw + 1)
+        self._assert_equal_raw(1 + la, 1 + raw)
+        self._assert_equal_raw(30 / la, 30 / raw)
+        self._assert_equal_raw(30 / (la + 1), 30 / (raw + 1))
+        self._assert_equal_raw(la / la, raw / raw)
 
         raw_int = raw.astype(int)
         la_int = LArray(raw_int, axes=(self.sex, self.lipro))
-        self._assert_equal(la_int / 2, raw_int / 2)
-        self._assert_equal(la_int // 2, raw_int // 2)
+        self._assert_equal_raw(la_int / 2, raw_int / 2)
+        self._assert_equal_raw(la_int // 2, raw_int // 2)
 
     # def test_excel_export(self):
     #     la = self.larray
