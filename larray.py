@@ -496,25 +496,79 @@ class ValueGroup(object):
         return "%s[%s]" % (self.axis.name, self.name)
 
 
-class LArray(np.ndarray):
-    def __new__(cls, data, axes=None):
-        obj = np.asarray(data).view(cls)
-        ndim = obj.ndim
+def unaryop(opname):
+    def func(self):
+        method = getattr(np.asarray(self), '__%s__' % opname)
+        return LArray(method(), self.axes)
+    return func
+
+
+def binop(opname, reversed=False):
+    def opmethod(self, other):
+        if not isinstance(other, LArray) and not np.isscalar(other):
+            raise TypeError("unsupported operand type(s) for %s: '%s' and '%s'"
+                            % (opname, type(self), type(other)))
+        if isinstance(other, LArray) and self.axes != other.axes:
+            raise ValueError('axes not compatible')
+        axes = self.axes
+        if reversed:
+            self, other = other, self
+        method = getattr(np.asarray(self), '__%s__' % opname)
+        values = method(np.asarray(other))
+        return LArray(values, axes)
+    return opmethod
+
+
+class LArray(object):
+    def __init__(self, data, axes=None, name=None):
+        array = np.asarray(data)
+        ndim = array.ndim
         if axes is not None:
             if len(axes) != ndim:
                 raise ValueError("number of axes (%d) does not match "
                                  "number of dimensions of data (%d)"
                                  % (len(axes), ndim))
             shape = tuple(len(axis) for axis in axes)
-            if shape != obj.shape:
+            if shape != array.shape:
                 raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (shape, obj.shape))
+                                 "data shape %s" % (shape, array.shape))
 
-        if axes is not None and not isinstance(axes, list):
+        if isinstance(axes, tuple):
             axes = list(axes)
-        obj.axes = axes
-        return obj
-    
+        self.axes = axes
+        if False:
+            # record/structured array => DataFrame
+
+            # to do this (create a dataframe for non-record arrays), we could
+            # simply create a Series and do s.unstack()
+            # but I am not sure it makes sense to create a DF for non record
+            # arrays.
+            axes_labels = [a.labels for a in axes[:-1]]
+            axes_names = [a.name for a in axes[:-1]]
+            axes_names[-1] = axes_names[-1] + '\\' + axes[-1].name
+            columns = axes[-1].labels.tolist()
+            full_index = list(product(*axes_labels))
+            index = pd.MultiIndex.from_tuples(full_index, names=axes_names)
+            self.data = pd.DataFrame(self.reshape(len(full_index), len(columns)), index, columns)
+        else:
+            # homogeneous => Series
+            axes_names = [a.name for a in axes]
+            full_index = list(product(*[a.labels for a in axes]))
+            index = pd.MultiIndex.from_tuples(full_index, names=axes_names)
+            self.data = pd.Series(array.ravel(), index=index, name=name)
+
+    @property
+    def shape(self):
+        return tuple(len(axis) for axis in self.axes)
+
+    @property
+    def ndim(self):
+        return len(self.axes)
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
     def as_dataframe(self):
         axes_labels = [a.labels.tolist() for a in self.axes[:-1]]
         axes_names = [a.name for a in self.axes[:-1]]
@@ -525,31 +579,16 @@ class LArray(np.ndarray):
         df = pd.DataFrame(self.reshape(len(full_index), len(columns)), index, columns)
         return df
 
-
-    #noinspection PyAttributeOutsideInit
-    def __array_finalize__(self, obj):
-        # We are in the middle of the LabeledArray.__new__ constructor,
-        # and our special attributes will be set when we return to that
-        # constructor, so we do not need to set them here.
-        if obj is None:
-            return
-
-        # obj is our "template" object (on which we have asked a view on).
-        if isinstance(obj, LArray) and self.shape == obj.shape:
-            # obj.view(LArray)
-            # larr[:3]
-            self.axes = obj.axes
-        else:
-            self.axes = None
-            #self.row_totals = None
-            #self.col_totals = None
-
     @property
     def is_aggregated(self):
         return any(axis.is_aggregated for axis in self.axes)
 
+    def __setitem__(self, key, value):
+        #FIXME: allow label keys
+        self.asarray()[key] = value
+
     def __getitem__(self, key, collapse_slices=False):
-        data = np.asarray(self)
+        data = self.asarray()
 
         # convert scalar keys to 1D keys
         if not isinstance(key, tuple):
@@ -634,7 +673,8 @@ class LArray(np.ndarray):
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
-        return LArray(data[full_key], axes)
+        res_data = data[full_key]
+        return LArray(res_data, axes) if axes else res_data
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
@@ -718,7 +758,7 @@ class LArray(np.ndarray):
         """
         src_data = np.asarray(self)
         if not axes:
-            # scalars don't need to be wrapped in LArray
+            # scalars do not need to be wrapped in LArray
             return op(src_data)
 
         # we need to search for the axis by name, instead of the axis object
@@ -729,6 +769,9 @@ class LArray(np.ndarray):
         axes_tokill = set(axes_indices)
         res_axes = [axis for axis_num, axis in enumerate(self.axes)
                     if axis_num not in axes_tokill]
+        if not res_axes:
+            # scalars do not need to be wrapped in LArray
+            return res_data
         return LArray(res_data, res_axes)
 
     def _get_axis(self, name):
@@ -823,7 +866,7 @@ class LArray(np.ndarray):
             return self._axis_aggregate(op, axes=args)
 
     def copy(self):
-        return LArray(np.ndarray.copy(self), axes=self.axes[:])
+        return LArray(self.asarray().copy(), axes=self.axes[:])
 
     def info(self):
         axes_labels = [' '.join(repr(label) for label in axis.labels)
@@ -843,8 +886,8 @@ class LArray(np.ndarray):
     #XXX: sep argument does not seem very useful
     #XXX: use pandas function instead?
     def to_excel(self, filename, sep=None):
-        # Why xlsxwriter? Because it is faster than openpyxl and xlwt
-        # currently does not .xlsx (only .xls).
+        # Why xlsxwriter? Because it is faster than openpyxl and
+        # xlwt does not currently support .xlsx (only .xls).
         # PyExcelerate seem like a decent alternative too
         import xlsxwriter as xl
 
@@ -884,11 +927,63 @@ class LArray(np.ndarray):
                         if axis.name not in axes_names]
         res_axes = list(args) + missing_axes
         axes_indices = [self._get_axis_idx(axis.name) for axis in res_axes]
-        src_data = np.asarray(self)
-        res_data = src_data.transpose(axes_indices)
+        res_data = self.asarray().transpose(axes_indices)
         return LArray(res_data, res_axes)
     #XXX: is this necessary?
     reorder = transpose
+
+    def __array__(self):
+        return np.asarray(self.data).reshape(self.shape)
+    asarray = __array__
+
+    #FIXME: this make stuff fail
+    # def __getattr__(self, key):
+    #     return getattr(self.data, key)
+
+    __lt__ = binop('lt')
+    __le__ = binop('le')
+    __eq__ = binop('eq')
+    __ne__ = binop('ne')
+    __gt__ = binop('gt')
+    __ge__ = binop('ge')
+
+    __add__ = binop('add')
+    __radd__ = binop('add', reversed=True)
+    __sub__ = binop('sub')
+    __rsub__ = binop('sub', reversed=True)
+    __mul__ = binop('mul')
+    __rmul__ = binop('mul', reversed=True)
+
+    __div__ = binop('div')
+    __rdiv__ = binop('div', reversed=True)
+    __truediv__ = binop('truediv')
+    __rtruediv__ = binop('truediv', reversed=True)
+    __floordiv__ = binop('floordiv')
+    __rfloordiv__ = binop('floordiv', reversed=True)
+
+    __mod__ = binop('mod')
+    __rmod__ = binop('mod', reversed=True)
+    __divmod__ = binop('divmod')
+    __rdivmod__ = binop('divmod', reversed=True)
+    __pow__ = binop('pow')
+    __rpow__ = binop('pow', reversed=True)
+
+    __lshift__ = binop('lshift')
+    __rlshift__ = binop('lshift', reversed=True)
+    __rshift__ = binop('rshift')
+    __rrshift__ = binop('rshift', reversed=True)
+
+    __and__ = binop('and')
+    __rand__ = binop('and', reversed=True)
+    __xor__ = binop('xor')
+    __rxor__ = binop('xor', reversed=True)
+    __or__ = binop('or')
+    __ror__ = binop('or', reversed=True)
+
+    __neg__ = unaryop('neg')
+    __pos__ = unaryop('pos')
+    __abs__ = unaryop('abs')
+    __invert__ = unaryop('invert')
 
     def ToCsv(self, filename):
         res = table2csv(self.as_table(), ',', 'nan')
