@@ -327,7 +327,7 @@ def range_to_slice(seq):
 
 def larray_equal(first, other):
     return (first.axes == other.axes and
-            np.array_equal(np.asarray(first), np.asarray(other)))
+            np.array_equal(first.asarray(), other.asarray()))
 
 
 class Axis(object):
@@ -498,7 +498,7 @@ class ValueGroup(object):
 
 def unaryop(opname):
     def func(self):
-        method = getattr(np.asarray(self), '__%s__' % opname)
+        method = getattr(self.asarray(), '__%s__' % opname)
         return LArray(method(), self.axes)
     return func
 
@@ -717,7 +717,7 @@ class LArray(object):
             #    result[1].append('total')
         else:
             result = []
-        data = np.asarray(self).ravel()
+        data = self.asarray().ravel()
         if axes_labels is not None:
             categ_values = list(product(*axes_labels[:-1]))
         else:
@@ -756,7 +756,7 @@ class LArray(object):
         op is an aggregate function: func(arr, axis=(0, 1))
         axes is a tuple of axes (Axis objects or integers)
         """
-        src_data = np.asarray(self)
+        src_data = self.asarray()
         if not axes:
             # scalars do not need to be wrapped in LArray
             return op(src_data)
@@ -850,6 +850,7 @@ class LArray(object):
                 del arr
             if killaxis:
                 assert group_idx[agg_axis_idx] == 0
+                #FIXME: if this is the only axis, it will break
                 res_data = res_data[group_idx]
             res = LArray(res_data, res_axes)
 
@@ -917,9 +918,9 @@ class LArray(object):
             worksheet = workbook.add_worksheet('Sheet1')
             worksheet.write_row(0, 1, self.axes[-1].labels) 
             if self.ndim == 2:
-                 worksheet.write_column(1, 0, self.axes[-2].labels)
-            for row, data in enumerate(np.asarray(self)):
-                worksheet.write_row(1+row, 1, data)                    
+                worksheet.write_column(1, 0, self.axes[-2].labels)
+            for row, data in enumerate(self.asarray()):
+                worksheet.write_row(1 + row, 1, data)
 
     def transpose(self, *args):
         axes_names = set(axis.name for axis in args)
