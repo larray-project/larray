@@ -475,6 +475,9 @@ class TestLArray(TestCase):
         #TODO: make it work for integer indices
         # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
 
+    def test_isnan(self):
+        self._assert_equal_raw(np.isnan(self.small), np.isnan(self.small_data))
+
     def test_ratio(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
