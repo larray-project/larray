@@ -538,6 +538,13 @@ class TestLArray(TestCase):
         self._assert_equal_raw(la_int / 2, raw_int / 2)
         self._assert_equal_raw(la_int // 2, raw_int // 2)
 
+    def test_mean(self):
+        la = self.small
+        raw = self.small_data
+
+        sex, lipro = la.axes
+        self._assert_equal_raw(la.mean(lipro), raw.mean(1))
+
     def test_append(self):
         la = self.small
         sex, lipro = la.axes
@@ -546,6 +553,11 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (2, 16))
         la = la.append(la.sum(sex), axis=sex, label='sum')
         self.assertEqual(la.shape, (3, 16))
+
+        # crap the sex axis is different !!!! we don't have this problem with
+        # the kwargs syntax below
+        # la = la.append(la.mean(sex), axis=sex, label='mean')
+        # self.assertEqual(la.shape, (4, 16))
 
         # another syntax (which implies we could not have an axis named "label")
         # la = la.append(lipro=la.sum(lipro), label='sum')

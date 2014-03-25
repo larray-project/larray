@@ -4,6 +4,7 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
+# * fix str() for 1D LArray
 # * int labels
 # * avg on last 10 years
 #     time = Axis('time', ...)
@@ -122,8 +123,6 @@ Matrix class
 #   * only display X label ticks by default (with an argument to display all)
 #     eg 'A11' ... 'A93'
 # * __setitem__
-# * aggregates other than sum: all, any, sum, prod, cumsum, cumprod, min, max,
-#   ptp, mean, var, std
 # * plotting (see plot.py)
 #   >> check pandas API
 # * implement iloc
@@ -880,10 +879,34 @@ class LArray(np.ndarray):
             axes = self.axes
         return np.nan_to_num(self / self.sum(*axes))
 
-    def sum(self, *args, **kwargs):
-        return self._aggregate(np.sum, args, kwargs, commutative=True)
+    # aggregate method factory
+    def agg_method(npfunc, name=None, commutative=False):
+        def method(self, *args, **kwargs):
+            return self._aggregate(npfunc, args, kwargs,
+                                   commutative=commutative)
+        if name is None:
+            name = npfunc.__name__
+        method.__name__ = name
+        return method
+
+    all = agg_method(np.all)
+    any = agg_method(np.any)
+    sum = agg_method(np.sum)
+    prod = agg_method(np.prod)
+    cumsum = agg_method(np.cumsum)
+    cumprod = agg_method(np.cumprod)
+    min = agg_method(np.min)
+    max = agg_method(np.max)
+    ptp = agg_method(np.ptp)
+    mean = agg_method(np.mean)
+    var = agg_method(np.var)
+    std = agg_method(np.std)
 
     def append(self, values, axis, label):
+        if axis not in self.axes:
+            # the user is probably using an axis from another (earlier)
+            # array that has the same name but different ticks
+            raise Exception("invalid axis")
         axis_name = axis.name if isinstance(axis, Axis) else axis
         axis_idx = self._get_axis_idx(axis_name) \
             if isinstance(axis_name, basestring) else axis_name
