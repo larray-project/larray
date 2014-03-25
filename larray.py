@@ -10,6 +10,10 @@ Matrix class
 #     x = time[-10:]  # <- does not work!
     # la[time[-10:]].avg(time)
     # la.append(la.avg(time[-10:]), axis=time)
+    # la.append(time=la.avg(time[-10:]))
+    # la.append(time=la.avg(time='-10:'))
+
+# * reshape
 
 # la.append(la.avg(time[-10:]), axis=time)
 
@@ -878,6 +882,22 @@ class LArray(np.ndarray):
 
     def sum(self, *args, **kwargs):
         return self._aggregate(np.sum, args, kwargs, commutative=True)
+
+    def append(self, values, axis, label):
+        axis_name = axis.name if isinstance(axis, Axis) else axis
+        axis_idx = self._get_axis_idx(axis_name) \
+            if isinstance(axis_name, basestring) else axis_name
+        shape = self.shape
+        values = np.asarray(values)
+        if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
+            # adding a dimension of size one if it is missing
+            new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
+            values = values.reshape(new_shape)
+        data = np.append(np.asarray(self), values, axis=axis_idx)
+        axis = axis if isinstance(axis, Axis) else self._get_axis(axis_name)
+        new_axes = self.axes[:]
+        new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
+        return LArray(data, axes=new_axes)
 
     #XXX: sep argument does not seem very useful
     #XXX: use pandas function instead?

@@ -538,6 +538,19 @@ class TestLArray(TestCase):
         self._assert_equal_raw(la_int / 2, raw_int / 2)
         self._assert_equal_raw(la_int // 2, raw_int // 2)
 
+    def test_append(self):
+        la = self.small
+        sex, lipro = la.axes
+
+        la = la.append(la.sum(lipro), axis=lipro, label='sum')
+        self.assertEqual(la.shape, (2, 16))
+        la = la.append(la.sum(sex), axis=sex, label='sum')
+        self.assertEqual(la.shape, (3, 16))
+
+        # another syntax (which implies we could not have an axis named "label")
+        # la = la.append(lipro=la.sum(lipro), label='sum')
+        # self.assertEqual(la.shape, (117, 44, 2, 15))
+
     # def test_excel_export(self):
     #     la = self.larray
     #     age, geo, sex, lipro = la.axes
