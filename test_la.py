@@ -248,6 +248,14 @@ class TestLArray(TestCase):
         filtered = la.filter(age=ages11)
         self.assertEqual(filtered.shape, (44, 2, 15))
 
+        # VG with a list of 1 value => do not collapse
+        filtered = la.filter(age=age.group(['11']))
+        self.assertEqual(filtered.shape, (1, 44, 2, 15))
+
+        # VG with a list of 1 value defined as a string => do not collapse
+        filtered = la.filter(age=age.group('11,'))
+        self.assertEqual(filtered.shape, (1, 44, 2, 15))
+
         # VG with 1 value
         #XXX: this does not work. Do we want to make this work?
         # filtered = la.filter(age=(ages11,))
@@ -303,6 +311,14 @@ class TestLArray(TestCase):
         self.assertEqual(la.filter(age=':17').filter(geo='A12,A13').shape,
                          (18, 2, 2, 15))
 
+    def test_sum_several_vg_groups(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        fla = geo.group(self.vla, name='Flanders')
+        wal = geo.group(self.wal, name='Wallonia')
+        bru = geo.group(self.bru, name='Brussel')
+        self.assertEqual(la.sum(geo=(fla, wal, bru)).shape, (116, 3, 2, 15))
+
     def test_sum(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
@@ -343,6 +359,12 @@ class TestLArray(TestCase):
         # a.1) one group => collapse dimension
         self.assertEqual(la.sum(sex='H').shape, (116, 44, 15))
         self.assertEqual(la.sum(sex='H,F').shape, (116, 44, 15))
+
+        self.assertEqual(la.sum(geo='A11,A21,A25').shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=['A11', 'A21', 'A25']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=geo.group('A11,A21,A25')).shape,
+                         (116, 2, 15))
+
         self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=':').shape, (116, 2, 15))
         # Include everything between two labels. Since A11 is the first label
@@ -355,6 +377,7 @@ class TestLArray(TestCase):
         self.assertEqual(la.sum(geo=(geo.all(),)).shape, (116, 1, 2, 15))
 
         # a.3) several groups
+        # string groups
         self.assertEqual(la.sum(geo=(vla, wal, bru)).shape, (116, 3, 2, 15))
         # with one label in several groups
         self.assertEqual(la.sum(sex=(['H'], ['H', 'F'])).shape,

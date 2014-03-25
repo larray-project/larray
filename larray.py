@@ -4,7 +4,29 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
+# * int labels
+# * avg on last 10 years
+#     time = Axis('time', ...)
+#     x = time[-10:]  # <- does not work!
+    # la[time[-10:]].avg(time)
+    # la.append(la.avg(time[-10:]), axis=time)
+
+# la.append(la.avg(time[-10:]), axis=time)
+
+# la.avg(time[-10:])
+
+# * drop last year
+#   la = la[:,:,:,:,time[:-1]]
+#   la = la.filter(time[:-1]) # <- implement this !
+#   (equal to "la = la.filter(time=time[:-1])")
+#   la = la.filter(geo='A25,A11')
+#   la = la.filter(geo['A25,A11'])
+
+# also for __getitem__
+#   la = la[time[:-1]] # <- implement this !
+#
 # * split unit tests
+
 
 # * easily add sum column for a dimension
 #   - in all cases, we will need to define a new Axis object
@@ -207,6 +229,7 @@ def to_labels(s):
 
 
 def to_key(s):
+    #FIXME: it does not accept only strings
     """
     converts a string to a structure usable as a key (slice objects, etc.)
     This is used, for example in .filter: arr.filter(axis=key) or in .sum:
@@ -246,9 +269,10 @@ def to_key(s):
 
 
 def to_keys(s):
-    # FIXME: it does not accept only strings
+    # FIXME: fix doc: it does not accept only strings
     """
-    converts a "family string" to its corresponding structure:
+    converts a "family string" to its corresponding structure.
+    It is only used for .sum(axis=xxx)
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
     >>> to_keys('P01,P02')  # <-- one group => collapse dimension
     ['P01', 'P02']
@@ -276,16 +300,19 @@ def to_keys(s):
         if ';' in s:
             return tuple([to_key(group) for group in s.split(';')])
         else:
-            #XXX: allowed?
+            # a single group => collapse dimension
             return to_key(s)
     elif isinstance(s, ValueGroup):
         return s
+    elif isinstance(s, list):
+        return to_key(s)
     else:
         assert isinstance(s, tuple)
         return tuple([to_key(group) for group in s])
 
 
 def union(*args):
+    #TODO: add support for ValueGroup and lists
     """
     returns the union of several "value strings" as a list
     """
@@ -525,7 +552,6 @@ class LArray(np.ndarray):
         df = pd.DataFrame(self.reshape(len(full_index), len(columns)), index, columns)
         return df
 
-
     #noinspection PyAttributeOutsideInit
     def __array_finalize__(self, obj):
         # We are in the middle of the LabeledArray.__new__ constructor,
@@ -697,7 +723,9 @@ class LArray(np.ndarray):
     # I think it would be dangerous to make it the default
     # behavior, because that would introduce a subtle difference between
     # filter(dim=[a, b]) and filter(dim=[a]) even though it would be faster
-    # and uses less memory.
+    # and uses less memory. Maybe I should have a "view" argument which
+    # defaults to 'auto' (ie collapse by default), can be set to False to
+    # force a copy and to True to raise an exception if a view is not possible.
     def filter(self, collapse=False, **kwargs):
         """
         filters the array along the axes given as keyword arguments.
@@ -759,33 +787,43 @@ class LArray(np.ndarray):
             res_shape = list(res.shape)
 
             if not isinstance(groups, tuple):
-                # groups should be a single group
+                # groups is in fact a single group
                 assert isinstance(groups, (basestring, slice, list,
-                                           ValueGroup)), \
-                    type(groups)
+                                           ValueGroup)), type(groups)
                 if isinstance(groups, list):
                     assert len(groups) > 0
+
+                    # Make sure this is actually a single group, not multiple
+                    # mistakently given as a list instead of a tuple
                     assert all(not isinstance(g, (tuple, list)) for g in groups)
+
                 groups = (groups,)
                 del res_axes[agg_axis_idx]
 
                 # it is easier to kill the axis after the fact
                 killaxis = True
             else:
-                # make sure each group is a ValueGroup and use that as the axis
+                # make sure all groups are ValueGroup and use that as the axis
                 # ticks
-                ticks = tuple(agg_axis.group(g)
-                                  if (not isinstance(g, ValueGroup) or
-                                      g.axis is not agg_axis)
-                                  else g
-                              for g in groups)
-                assert all(vg.axis is agg_axis for vg in ticks)
+                groups = tuple(agg_axis.group(g)
+                                   if (not isinstance(g, ValueGroup) or
+                                       g.axis is not agg_axis)
+                                   else g
+                               for g in groups)
+                assert all(vg.axis is agg_axis for vg in groups)
+
+                # Make sure each (value)group is not a single-value group.
+                # Groups with a list of one value are fine, we just want to
+                # avoid the axis being discarded by the .filter() operation.
+                groups = [ValueGroup(g.axis, [g.key], g.name)
+                            if np.isscalar(g.key) else g
+                          for g in groups]
 
                 # We do NOT modify the axis name (eg append "_agg" or "*") even
                 # though this creates a new axis that is independent from the
                 # original one because the original name is what users will
                 # want to use to access that axis (eg in .filter kwargs)
-                res_axes[agg_axis_idx] = Axis(agg_axis.name, ticks)
+                res_axes[agg_axis_idx] = Axis(agg_axis.name, groups)
                 killaxis = False
 
             res_shape[agg_axis_idx] = len(groups)
@@ -796,7 +834,8 @@ class LArray(np.ndarray):
                 group_idx[agg_axis_idx] = i
 
                 # we need only lists not single labels, otherwise the dimension
-                # is discarded
+                # is discarded too early (in filter instead of in the
+                # aggregate func)
                 #XXX: shouldn't this be handled in to_keys?
                 group = [group] if np.isscalar(group) else group
 
