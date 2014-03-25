@@ -902,14 +902,18 @@ class LArray(np.ndarray):
     var = agg_method(np.var)
     std = agg_method(np.std)
 
-    def append(self, values, axis, label):
-        if axis not in self.axes:
-            # the user is probably using an axis from another (earlier)
-            # array that has the same name but different ticks
-            raise Exception("invalid axis")
-        axis_name = axis.name if isinstance(axis, Axis) else axis
-        axis_idx = self._get_axis_idx(axis_name) \
-            if isinstance(axis_name, basestring) else axis_name
+    def append(self, **kwargs):
+        label = kwargs.pop('label', None)
+        # It does not make sense to accept multiple axes at once, as "values"
+        # will not have the correct shape for all axes after the first one.
+        #XXX: Knowing that, it might be better to use a required (non kw) axis
+        # argument, but it would be inconsistent with filter and sum.
+        # It would look like: la.append(lipro, la.sum(lipro), label='sum')
+        if len(kwargs) > 1:
+            raise ValueError("Cannot append to several axes at the same time")
+        axis_name, values = kwargs.items()[0]
+        axis_idx = self._get_axis_idx(axis_name)
+        axis = self.axes[axis_idx]
         shape = self.shape
         values = np.asarray(values)
         if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
