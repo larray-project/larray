@@ -4,8 +4,7 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
-# * fix la.sum(lipro=(lipro[:],)) != la.sum(lipro=(lipro.all(),))
-# * la.filter(x=, y=) (axes are permutted)
+# * fix la.filter(x=, y=) (axes are permutted)
 
 # * fix str() for 1D LArray
 # * int labels
