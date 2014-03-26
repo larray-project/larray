@@ -929,14 +929,14 @@ class LArray(np.ndarray):
         return LArray(data, axes=new_axes)
 
     def extend(self, axis, other):
-        if axis not in self.axes:
-            # the user is probably using an axis from another (earlier)
-            # array that has the same name but different ticks
-            raise Exception("invalid axis")
         axis_name = axis.name if isinstance(axis, Axis) else axis
         axis_idx = self._get_axis_idx(axis_name) \
             if isinstance(axis_name, basestring) else axis_name
         axis = axis if isinstance(axis, Axis) else self._get_axis(axis_name)
+        if axis not in self.axes:
+            # the user is probably using an axis from another (earlier)
+            # array that has the same name but different ticks
+            raise Exception("invalid axis")
         other_axis = other._get_axis(axis_name)
 
         data = np.append(np.asarray(self), np.asarray(other), axis=axis_idx)
