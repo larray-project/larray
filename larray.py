@@ -5,6 +5,7 @@ Matrix class
 """
 #TODO
 # * fix la.sum(lipro=(lipro[:],)) != la.sum(lipro=(lipro.all(),))
+# * la.filter(x=, y=) (axes are permutted)
 
 # * fix str() for 1D LArray
 # * int labels
@@ -1033,7 +1034,7 @@ def parse(s):
 def df_aslarray(df, na=np.nan):
     axes_labels = [list(unique(level[labels]))
                    for level, labels in zip(df.index.levels, df.index.labels)]
-    axes_names = df.index.names
+    axes_names = list(df.index.names)
     laxis = axes_names[-1].split('\\')                                                       
     if len(laxis) > 0:
         axes_names[-1] = laxis[0]
