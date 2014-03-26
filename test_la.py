@@ -563,6 +563,15 @@ class TestLArray(TestCase):
         # la = la.append(lipro=la.sum(lipro), label='sum')
         # self.assertEqual(la.shape, (117, 44, 2, 15))
 
+    def test_extend(self):
+        la = self.small
+        sex, lipro = la.axes
+
+        la = la.extend(lipro, la.sum(lipro=(lipro[:],)))
+        self.assertEqual(la.shape, (2, 16))
+        la = la.extend(sex, la.sum(sex=(sex.all(),)))
+        self.assertEqual(la.shape, (3, 16))
+
     # def test_excel_export(self):
     #     la = self.larray
     #     age, geo, sex, lipro = la.axes
