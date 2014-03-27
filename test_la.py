@@ -348,13 +348,9 @@ class TestLArray(TestCase):
         self._assert_equal_raw(la.sum(lipro=(lipro.all(),)),
                                np.sum(raw, axis=1, keepdims=True))
 
-    def test_sum(self):
+    def test_sum_full_axes(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
-        vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
-
-        # full axes reductions
-        # ====================
 
         # everything
         self.assertEqual(la.sum(), np.asarray(la).sum())
@@ -365,6 +361,9 @@ class TestLArray(TestCase):
         # using Axis objects
         self.assertEqual(la.sum(age).shape, (44, 2, 15))
         self.assertEqual(la.sum(age, sex).shape, (44, 15))
+
+        # using axes names
+        self.assertEqual(la.sum('age', 'sex').shape, (44, 15))
 
         # chained sum
         self.assertEqual(la.sum(age, sex).sum(geo).shape, (15,))
@@ -377,8 +376,10 @@ class TestLArray(TestCase):
         # filter on aggregated
         self.assertEqual(aggregated.filter(geo=self.vla).shape, (22, 15))
 
-        # group aggregates
-        # ================
+    def test_sum_groups(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
 
         # simple
         # ------

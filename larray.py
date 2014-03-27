@@ -4,10 +4,21 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
-# * axes with the same name and labels should compare equal
 # * fix la.filter(x=, y=) (axes are permuted) (see demo.py)
-# * fix la.sum(arr=(V, W, B)) (see demo2.py)
-# * implement la.sum('axis_name')
+
+# ? age, geo, sex, lipro = la.axes_names
+
+#   => user only use axes strings and this allows them to not have to bother
+#      about incompatible axes
+
+# discuss VG with Geert:
+# I do not "expand" key (eg :) upon group creation for perf reason
+# VG[:] is much faster than [A01,A02,...,A99]
+# I could make that all "contiguous" ranges are conv to slices (return views)
+# but that might introduce confusing differences if they update/setitem their
+# arrays
+
+# ? keepdims=True instead of/in addition to group tuples
 
 # * fix str() for 1D LArray
 # * int labels
@@ -789,22 +800,36 @@ class LArray(np.ndarray):
             # scalars don't need to be wrapped in LArray
             return op(src_data)
 
-        # we need to search for the axis by name, instead of the axis object
-        # itself because we need to support axes subsets (ValueGroup)
-        axes_indices = [self._get_axis_idx(a.name) if isinstance(a, Axis) else a
-                        for a in axes]
-        res_data = op(src_data, axis=tuple(axes_indices))
+        axes_indices = tuple(self.get_axis_idx(a) for a in axes)
+        res_data = op(src_data, axis=axes_indices)
         axes_tokill = set(axes_indices)
         res_axes = [axis for axis_num, axis in enumerate(self.axes)
                     if axis_num not in axes_tokill]
         return LArray(res_data, res_axes)
 
-    def _get_axis(self, name):
-        return self.axes[self._get_axis_idx(name)]
-
-    def _get_axis_idx(self, name):
+    def get_axis_idx(self, axis):
+        """
+        axis can be an index, a name or an Axis object
+        if the Axis object is from another LArray, get_axis_idx will return the
+        index of the local axis with the same name, whether it is compatible
+        (has the same ticks) or not.
+        """
+        name_or_idx = axis.name if isinstance(axis, Axis) else axis
         axis_names = [a.name for a in self.axes]
-        return axis_names.index(name)
+        return axis_names.index(name_or_idx) \
+            if isinstance(name_or_idx, basestring) \
+            else name_or_idx
+
+    def get_axis(self, axis, idx=False):
+        """
+        axis can be an index, a name or an Axis object
+        if the Axis object is from another LArray, get_axis will return the
+        local axis with the same name, whether it is compatible (has the
+        same ticks) or not.
+        """
+        axis_idx = self.get_axis_idx(axis)
+        axis = self.axes[axis_idx]
+        return (axis, axis_idx) if idx else axis
 
     def _group_aggregate(self, op, kwargs, commutative=False):
         if not commutative and len(kwargs) > 1:
@@ -820,9 +845,7 @@ class LArray(np.ndarray):
             # if not isinstance(groups, (tuple, list)):
             #     groups = (groups,)
 
-            agg_axis_idx = res._get_axis_idx(agg_axis_name)
-            agg_axis = res.axes[agg_axis_idx]
-
+            agg_axis, agg_axis_idx = res.get_axis(agg_axis_name, idx=True)
             res_axes = res.axes[:]
             res_shape = list(res.shape)
 
@@ -952,8 +975,7 @@ class LArray(np.ndarray):
         if len(kwargs) > 1:
             raise ValueError("Cannot append to several axes at the same time")
         axis_name, values = kwargs.items()[0]
-        axis_idx = self._get_axis_idx(axis_name)
-        axis = self.axes[axis_idx]
+        axis, axis_idx = self.get_axis(axis_name, idx=True)
         shape = self.shape
         values = np.asarray(values)
         if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
@@ -961,28 +983,21 @@ class LArray(np.ndarray):
             new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
             values = values.reshape(new_shape)
         data = np.append(np.asarray(self), values, axis=axis_idx)
-        axis = axis if isinstance(axis, Axis) else self._get_axis(axis_name)
         new_axes = self.axes[:]
         new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
         return LArray(data, axes=new_axes)
 
     def extend(self, axis, other):
-        axis_name = axis.name if isinstance(axis, Axis) else axis
-        axis_idx = self._get_axis_idx(axis_name) \
-            if isinstance(axis_name, basestring) else axis_name
-        axis = axis if isinstance(axis, Axis) else self._get_axis(axis_name)
-        if axis not in self.axes:
-            # the user is probably using an axis from another (earlier)
-            # array that has the same name but different ticks
-            raise Exception("invalid axis")
-        other_axis = other._get_axis(axis_name)
+        axis, axis_idx = self.get_axis(axis, idx=True)
+        # Get axis by name, so that we do *NOT* check they are "compatible",
+        # because it makes sense to append axes of different length
+        other_axis = other.get_axis(axis)
 
         data = np.append(np.asarray(self), np.asarray(other), axis=axis_idx)
         new_axes = self.axes[:]
         new_axes[axis_idx] = Axis(axis.name,
                                   np.append(axis.labels, other_axis.labels))
         return LArray(data, axes=new_axes)
-
 
     #XXX: sep argument does not seem very useful
     #XXX: use pandas function instead?
@@ -1023,11 +1038,12 @@ class LArray(np.ndarray):
                 worksheet.write_row(1+row, 1, data)                    
 
     def transpose(self, *args):
-        axes_names = set(axis.name for axis in args)
+        axes = [self.get_axis(a) for a in args]
+        axes_names = set(axis.name for axis in axes)
         missing_axes = [axis for axis in self.axes
                         if axis.name not in axes_names]
-        res_axes = list(args) + missing_axes
-        axes_indices = [self._get_axis_idx(axis.name) for axis in res_axes]
+        res_axes = axes + missing_axes
+        axes_indices = [self.get_axis_idx(axis) for axis in res_axes]
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, res_axes)
