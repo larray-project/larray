@@ -772,3 +772,14 @@ class ExplainTypeError(type):
                 return "%d arguments (%d given)" % (needed - 1, given - 1)
             msg = re.sub('(\d+) arguments \((\d+) given\)', repl, msg)
             raise TypeError(msg)
+
+
+def array_equal(a, b):
+    # np.array_equal is not implemented on strings in numpy < 1.9
+    if (np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype, np.str)):
+        try:
+            return (a == b).all()
+        except ValueError:
+            return False
+    else:
+        return np.array_equal(a, b)

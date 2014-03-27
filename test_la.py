@@ -4,23 +4,15 @@ from unittest import TestCase
 
 import numpy as np
 
-from larray import LArray, Axis, ValueGroup, union, to_labels, to_key, srange, \
-    larray_equal
+from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
+                    srange, larray_equal)
+from utils import array_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
 # or use a class, just for that?
 # group(a, b, c)
 # family(group(a), b, c)
-
-
-def array_equal(a, b):
-    # np.array_equal is not implemented on strings in numpy < 1.9
-    if (np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype,
-                                                             np.str)):
-        return (a == b).all()
-    else:
-        return np.array_equal(a, b)
 
 
 def assert_equal_factory(test_func):
@@ -96,6 +88,20 @@ class TestAxis(TestCase):
         assert_array_equal((Axis('age', range(116))).labels, np.arange(116))
         # range-string
         assert_array_equal((Axis('age', ':115')).labels, np.array(srange(116)))
+
+    def test_eq(self):
+        self.assertTrue(Axis('sex', 'H,F') == Axis('sex', 'H,F'))
+        self.assertTrue(Axis('sex', 'H,F') == Axis('sex', ['H', 'F']))
+        self.assertFalse(Axis('sex', 'M,F') == Axis('sex', 'H,F'))
+        self.assertFalse(Axis('sex1', 'H,F') == Axis('sex2', 'H,F'))
+        self.assertFalse(Axis('sex1', 'M,F') == Axis('sex2', 'H,F'))
+
+    def test_ne(self):
+        self.assertFalse(Axis('sex', 'H,F') != Axis('sex', 'H,F'))
+        self.assertFalse(Axis('sex', 'H,F') != Axis('sex', ['H', 'F']))
+        self.assertTrue(Axis('sex', 'M,F') != Axis('sex', 'H,F'))
+        self.assertTrue(Axis('sex1', 'H,F') != Axis('sex2', 'H,F'))
+        self.assertTrue(Axis('sex1', 'M,F') != Axis('sex2', 'H,F'))
 
     def test_group(self):
         age = Axis('age', ':115')
@@ -525,6 +531,17 @@ class TestLArray(TestCase):
         self.assertEqual(byage.filter(age=slice('17')).shape, (44, 2, 15))
         #TODO: make it work for integer indices
         # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
+
+    def test_sum_with_groups_from_other_axis(self):
+        small = self.small
+
+        # use a group from another *compatible* axis
+        lipro2 = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
+        self.assertEqual(small.sum(lipro=lipro2.group('P01,P03')).shape, (2,))
+
+        # use group from another *incompatible* axis
+        lipro3 = Axis('lipro', 'P01,P03,P05')
+        self.assertRaises(ValueError, small.sum, lipro=lipro3.group('P01,P03'))
 
     def test_ratio(self):
         la = self.larray

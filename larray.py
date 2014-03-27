@@ -171,7 +171,8 @@ import pandas as pd
 
 import tables
 
-from utils import prod, table2str, table2csv, table2iode, timed, unique
+from utils import (prod, table2str, table2csv, table2iode, timed, unique,
+                   array_equal)
 
 
 def srange(*args):
@@ -400,9 +401,9 @@ class Axis(object):
         returns a ValueGroup usable in .sum or .filter
         """
         if isinstance(key, ValueGroup):
-            if key.axis is not self:
+            if key.axis != self:
                 raise ValueError("cannot subset an axis with a ValueGroup of "
-                                 "another axis")
+                                 "an incompatible axis")
             return key
         return ValueGroup(self, key, name)
 
@@ -422,6 +423,13 @@ class Axis(object):
         # that is independent from the original one because the original
         # name is probably what users will want to use to filter
         return Axis(self.name, self.labels[key])
+
+    def __eq__(self, other):
+        return (isinstance(other, Axis) and self.name == other.name and
+                array_equal(self.labels, other.labels))
+
+    def __ne__(self, other):
+        return not self == other
 
     def __len__(self):
         return len(self.labels)
@@ -837,16 +845,15 @@ class LArray(np.ndarray):
             else:
                 # make sure all groups are ValueGroup and use that as the axis
                 # ticks
-                #TODO: use g.axis != agg_axis) instead
                 #TODO: assert that if isinstance(g, ValueGroup):
                 # g.axis == agg_axis (no conversion needed)
                 # or g.axis == agg_axis.parent_axis (we are grouping groups)
                 groups = tuple(agg_axis.group(g)
                                    if (not isinstance(g, ValueGroup) or
-                                       g.axis is not agg_axis)
+                                       g.axis != agg_axis)
                                    else g
                                for g in groups)
-                assert all(vg.axis is agg_axis for vg in groups)
+                assert all(vg.axis == agg_axis for vg in groups)
 
                 # Make sure each (value)group is not a single-value group.
                 # Groups with a list of one value are fine, we just want to
