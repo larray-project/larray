@@ -429,10 +429,10 @@ class TestLArray(TestCase):
         self.assertEqual(reg.sum(lipro='P01,P02').shape, (4,))
 
         # 2) a tuple of one group => do not collapse dimension
-        self.assertEqual((reg.sum(lipro=('P01,P02',))).shape, (4, 1))
+        self.assertEqual(reg.sum(lipro=('P01,P02',)).shape, (4, 1))
 
         # 3) several groups
-        self.assertEqual((reg.sum(lipro='P01;P02;:')).shape, (4, 3))
+        self.assertEqual(reg.sum(lipro='P01;P02;:').shape, (4, 3))
 
         # this is INVALID
         # TODO: raise a nice exception
@@ -440,13 +440,18 @@ class TestLArray(TestCase):
 
         # this is currently allowed even though it can be confusing:
         # P01 and P02 are both groups with one element each.
-        self.assertEqual((reg.sum(lipro=('P01', 'P02', ':'))).shape, (4, 3))
-        self.assertEqual((reg.sum(lipro=('P01', 'P02', lipro.all()))).shape,
+        self.assertEqual(reg.sum(lipro=('P01', 'P02', ':')).shape, (4, 3))
+        self.assertEqual(reg.sum(lipro=('P01', 'P02', lipro.all())).shape,
                          (4, 3))
 
         # explicit groups are better
-        self.assertEqual((reg.sum(lipro=('P01,', 'P02,', ':'))).shape, (4, 3))
-        self.assertEqual((reg.sum(lipro=(['P01'], ['P02'], ':'))).shape, (4, 3))
+        self.assertEqual(reg.sum(lipro=('P01,', 'P02,', ':')).shape, (4, 3))
+        self.assertEqual(reg.sum(lipro=(['P01'], ['P02'], ':')).shape, (4, 3))
+
+        # 4) groups on the aggregated dimension
+
+        # self.assertEqual(reg.sum(geo=([vla, bru], [wal, bru])).shape, (2, 3))
+        # vla, wal, bru
 
         # getitem on a group-aggregated array
         # -----------------------------------
@@ -585,6 +590,23 @@ class TestLArray(TestCase):
         # another syntax (which implies we could not have an axis named "label")
         # la = la.append(lipro=la.sum(lipro), label='sum')
         # self.assertEqual(la.shape, (117, 44, 2, 15))
+
+    # the aim of this test is to drop the last value of an axis, but instead
+    # of dropping the last axis tick/label, drop the first one.
+    def test_shift_axis(self):
+        la = self.small
+        sex, lipro = la.axes
+
+        #TODO: check how awful the syntax is with an axis that is not last
+        # or first
+        l2 = LArray(la[:, :'P14'], axes=[sex, Axis('lipro', lipro.labels[1:])])
+        l2 = LArray(la[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
+
+        # We can also modify the axis in-place (dangerous!)
+        # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
+        l2 = la[:, 'P02':]
+        #FIXME: the mapping is not updated when .labels change
+        l2.axes[1].labels = lipro.labels[1:]
 
     def test_extend(self):
         la = self.small
