@@ -460,7 +460,7 @@ class Axis(object):
                 res[i] = mapping[label]
             return res
         else:
-            assert np.isscalar(key)
+            assert np.isscalar(key), type(key)
             # key is scalar (integer, float, string, ...)
             return mapping[key]
 
@@ -1053,7 +1053,23 @@ def df_aslarray(df, na=np.nan):
 
 
 # CSV functions
-def read_csv(filepath, index_col, sep=',', na=np.nan):  
+def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):  
+    """
+    reads csv file and returns an Larray with the contents
+        nb_index: number of leading index columns (ex. 4)
+    or 
+        index_col : list of columns for the index (ex. [0, 1, 2, 3])
+    
+    format csv file:
+    arr,ages,sex,nat\time,1991,1992,1993
+    A1,BI,H,BE,1,0,0
+    A1,BI,H,FO,2,0,0
+    A1,BI,F,BE,0,0,1
+    A1,BI,F,FO,0,0,0
+    A1,A0,H,BE,0,0,0
+
+    """    
+
     # read the first line to determine how many axes (time excluded) we have
 #    with open(filepath, 'rb') as f:
 #        reader = csv.reader(f, delimiter=sep)
@@ -1062,17 +1078,27 @@ def read_csv(filepath, index_col, sep=',', na=np.nan):
 #    df = pd.read_csv(filepath, index_col=range(len(axes_names)), sep=sep)
 #    assert df.index.names == axes_names, "%s != %s" % (df.index.names,
 #                                                       axes_names)
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep)
+    if len(index_col) > 0:
+        df = pd.read_csv(filepath, index_col=index_col, sep=sep)
+    else:
+        df = pd.read_csv(filepath, index_col=range(nb_index), sep=sep)
+        
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
 def save_csv(l_array, filepath, sep=',', na=np.nan):
+    """
+    saves an LArray to a csv file
+    """    
     df = l_array.as_dataframe()
     df.to_csv(filepath, sep=sep)
 
 
 # HDF5 functions
 def save_h5(l_array, name, filepath):
+    """
+    save a l_array to a h5-store using the specified name
+    """
     df = l_array.as_dataframe()
     store = pd.HDFStore(filepath)
     store.put(name, df)
@@ -1080,6 +1106,10 @@ def save_h5(l_array, name, filepath):
     
 
 def read_h5(name, filepath):
+    """
+    read a l_array from a h5-store with the specified name
+    """
+    
     store = pd.HDFStore(filepath)
     df = store.get(name)
     store.close()
@@ -1144,14 +1174,25 @@ def LoadMatrix(h5_filename, matname):
 
 # EXCEL functions
 def save_excel(l_array, name, filepath):
+    """
+    saves an LArray to the sheet name in the file: filepath
+    """
     df = l_array.as_dataframe()
     writer = pd.ExcelWriter(filepath)
     df.to_excel(writer, name)
     writer.save()
     
-
-def read_excel(name, filepath, index_col):
-    df=pd.read_excel(filepath, name, index_col=index_col)
+def read_excel(name, filepath, nb_index=0, index_col=[]):
+    """
+    reads excel file from sheet name and returns an Larray with the contents
+        nb_index: number of leading index columns (ex. 4)
+    or 
+        index_col : list of columns for the index (ex. [0, 1, 2, 3])    
+    """    
+    if len(index_col) > 0:
+        df=pd.read_excel(filepath, name, index_col=index_col)
+    else:
+        df=pd.read_excel(filepath, name, index_col=range(nb_index))    
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
     
 
