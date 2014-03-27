@@ -328,26 +328,6 @@ class TestLArray(TestCase):
         # with a discarded axis
         self.assertEqual(la.filter(age='1,5,9', sex='H').shape, (3, 44, 15))
 
-    def test_sum_several_vg_groups(self):
-        la = self.larray
-        age, geo, sex, lipro = la.axes
-        fla = geo.group(self.vla, name='Flanders')
-        wal = geo.group(self.wal, name='Wallonia')
-        bru = geo.group(self.bru, name='Brussel')
-        self.assertEqual(la.sum(geo=(fla, wal, bru)).shape, (116, 3, 2, 15))
-
-    def test_sum_simple(self):
-        la = self.small
-        raw = self.small_data
-
-        sex, lipro = la.axes
-
-        self._assert_equal_raw(la.sum(lipro), raw.sum(1))
-        self._assert_equal_raw(la.sum(lipro=(lipro[:],)),
-                               np.sum(raw, axis=1, keepdims=True))
-        self._assert_equal_raw(la.sum(lipro=(lipro.all(),)),
-                               np.sum(raw, axis=1, keepdims=True))
-
     def test_sum_full_axes(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
@@ -532,6 +512,14 @@ class TestLArray(TestCase):
         self.assertEqual(byage.filter(age=slice('17')).shape, (44, 2, 15))
         #TODO: make it work for integer indices
         # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
+
+    def test_sum_several_vg_groups(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        fla = geo.group(self.vla, name='Flanders')
+        wal = geo.group(self.wal, name='Wallonia')
+        bru = geo.group(self.bru, name='Brussel')
+        self.assertEqual(la.sum(geo=(fla, wal, bru)).shape, (116, 3, 2, 15))
 
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
