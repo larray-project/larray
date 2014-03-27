@@ -612,6 +612,10 @@ class LArray(np.ndarray):
             #self.col_totals = None
 
     @property
+    def axes_names(self):
+        return [axis.name for axis in self.axes]
+
+    @property
     def is_aggregated(self):
         return any(axis.is_aggregated for axis in self.axes)
 
@@ -736,8 +740,7 @@ class LArray(np.ndarray):
         width = self.shape[-1]
         height = prod(self.shape[:-1])
         if self.axes is not None:
-            #axes_names = [axis.name for axis in self.axes]
-            axes_names = [axis.name for axis in self.axes]
+            axes_names = self.axes_names
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
@@ -782,7 +785,7 @@ class LArray(np.ndarray):
         filters the array along the axes given as keyword arguments.
         It is similar to np.take but works with several axes at once.
         """
-        axes_names = set(axis.name for axis in self.axes)
+        axes_names = set(self.axes_names)
         for kwarg in kwargs:
             if kwarg not in axes_names:
                 raise KeyError("{} is not an axis name".format(kwarg))
