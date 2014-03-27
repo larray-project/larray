@@ -6,7 +6,6 @@ Matrix class
 #TODO
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
-# * fix la.filter(x=, y=) (axes are permuted) (see demo.py)
 
 # ? age, geo, sex, lipro = la.axes_names
 
