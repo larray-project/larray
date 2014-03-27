@@ -325,8 +325,23 @@ class TestLArray(TestCase):
                          (3, 44, 2, 2))
         # with a group of one value
         self.assertEqual(la.filter(age='1,5,9', sex='H,').shape, (3, 44, 1, 15))
-        # with a discarded axis
+
+        # with a discarded axis (there is a scalar in the key)
         self.assertEqual(la.filter(age='1,5,9', sex='H').shape, (3, 44, 15))
+
+        # with a discarded axis that is not adjacent to the ix_array axis
+        # ie with a sliced axis between the scalar axis and the ix_array axis
+        # since our array has a axes: age, geo, sex, lipro, any of the
+        # following should be tested: age+sex / age+lipro / geo+lipro
+        # additionally, if the ix_array axis was first (ie ix_array on age),
+        # it worked even before the issue was fixed, since the "indexing"
+        # subspace is tacked-on to the beginning (as the first dimension)
+        self.assertEqual(la.filter(age='57', sex='H,F').shape,
+                         (44, 2, 15))
+        self.assertEqual(la.filter(age='57', lipro='P01,P05').shape,
+                         (44, 2, 2))
+        self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape,
+                         (116, 2, 2))
 
     def test_sum_full_axes(self):
         la = self.larray

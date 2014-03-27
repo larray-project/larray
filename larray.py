@@ -4,6 +4,8 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
+# * implement named groups in strings
+#   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 # * fix la.filter(x=, y=) (axes are permuted) (see demo.py)
 
 # ? age, geo, sex, lipro = la.axes_names
@@ -675,34 +677,36 @@ class LArray(np.ndarray):
         # count number of indexing arrays (ie non scalar/slices) in tuple
         num_ix_arrays = sum(isinstance(axis_key, sequence)
                             for axis_key in translated_key)
+        num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
 
         # handle advanced indexing with more than one indexing array:
         # basic indexing (only integer and slices) and advanced indexing
         # with only one indexing array are handled fine by numpy
-        if num_ix_arrays > 1:
+        if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
             # np.ix_ wants only lists so:
 
             # 1) kill scalar-key axes (if any) by indexing them (we cannot
             #    simply transform the scalars into lists of 1 element because
             #    in that case those dimensions are not dropped by
             #    ndarray.__getitem__)
+            keyandaxes = zip(translated_key, self.axes)
             if any(np.isscalar(axis_key) for axis_key in translated_key):
                 killscalarskey = tuple(axis_key
                                            if np.isscalar(axis_key)
                                            else slice(None)
                                        for axis_key in translated_key)
                 data = data[killscalarskey]
-                noscalarkey = tuple(axis_key for axis_key in translated_key
-                                    if not np.isscalar(axis_key))
+                noscalar_keyandaxes = [(axis_key, axis)
+                                        for axis_key, axis in keyandaxes
+                                        if not np.isscalar(axis_key)]
             else:
-                noscalarkey = translated_key
+                noscalar_keyandaxes = keyandaxes
 
             # 2) expand slices to lists (ranges)
             #TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice) else axis_key
-                            for axis_key, axis
-                            in zip(noscalarkey, self.axes))
+                            for axis_key, axis in noscalar_keyandaxes)
             # np.ix_ computes the cross product of all lists
             full_key = np.ix_(*listkey)
         else:
