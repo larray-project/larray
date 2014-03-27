@@ -4,7 +4,10 @@ from __future__ import division, print_function
 Matrix class
 """
 #TODO
-# * fix la.filter(x=, y=) (axes are permutted)
+# * axes with the same name and labels should compare equal
+# * fix la.filter(x=, y=) (axes are permuted) (see demo.py)
+# * fix la.sum(arr=(V, W, B)) (see demo2.py)
+# * implement la.sum('axis_name')
 
 # * fix str() for 1D LArray
 # * int labels
@@ -376,8 +379,13 @@ class Axis(object):
         self._mapping = {label: i for i, label in enumerate(labels)}
 
     @property
+    def parent_axis(self):
+        label0 = self.labels[0]
+        return label0.axis if isinstance(label0, ValueGroup) else None
+
+    @property
     def is_aggregated(self):
-        return isinstance(self.labels[0], ValueGroup)
+        return self.parent_axis is not None
 
     def group(self, *args, **kwargs):
         name = kwargs.pop('name', None)
@@ -424,6 +432,13 @@ class Axis(object):
         """
         return self.subset(key)
 
+    def __contains__(self, key):
+        try:
+            self.translate(key)
+            return True
+        except Exception:
+            return False
+
     def translate(self, key):
         """
         translates a label key to its numerical index counterpart
@@ -434,16 +449,18 @@ class Axis(object):
         if isinstance(key, basestring):
             key = to_key(key)
         elif isinstance(key, ValueGroup):
-            if key in mapping:
+            if self.is_aggregated:
                 # the array is an aggregate (it has ValueGroup keys in its
                 # mapping) => return the index of the group
                 return mapping[key]
             else:
-                # assert not self.is_aggregated
-
                 # the array is not an aggregate (it has normal label keys in its
                 # mapping) => return the index of all the elements in the group
-                key = key.key
+                if key.axis == self:
+                    key = key.key
+                else:
+                    raise ValueError("group %s cannot be used on axis %s"
+                                     % (key, self))
 
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
@@ -460,7 +477,7 @@ class Axis(object):
                 res[i] = mapping[label]
             return res
         else:
-            assert np.isscalar(key), type(key)
+            assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
             # key is scalar (integer, float, string, ...)
             return mapping[key]
 
@@ -596,15 +613,24 @@ class LArray(np.ndarray):
 
         if self.is_aggregated:
             # convert values on aggregated axes to (value)groups on the
-            # *parent* axis
+            # *parent* axis. The goal is to allow targeting a ValueGroup
+            # label by a string. eg.
+            # reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+            # we want all the following to work:
+            #   reg[geo.group('A21', name='bru')]
+            #   reg['A21']
+            #   reg[:] -> all lines, and not the "belgium" line. It is not
+            # ideal but it is the lesser evil, because
+            # reg.filter(lipro='PO1,PO2') maps to reg[:, 'PO1,PO2'] and
+            # it should return the whole "aggregated" geo dimension,
+            # not one line only
             def convert(axis, values):
-                #FIXME: check on what axis
-                if isinstance(values, ValueGroup):
-                    return values
-                label0 = axis.labels[0]
-                # this is an aggregated axis
-                if isinstance(label0, ValueGroup):
-                    return label0.axis.group(values)
+                if (axis.is_aggregated and not isinstance(values, ValueGroup)):
+                    vg = axis.parent_axis.group(values)
+                    if vg in axis:
+                        return vg
+                    else:
+                        return values
                 else:
                     return values
             key = tuple(convert(axis, axis_key)
@@ -673,6 +699,7 @@ class LArray(np.ndarray):
         return self[slice(i, j)]
 
     def __str__(self):
+        # return str(self.shape)
         if not self.ndim:
             return str(np.asscalar(self))
         else:
@@ -810,6 +837,10 @@ class LArray(np.ndarray):
             else:
                 # make sure all groups are ValueGroup and use that as the axis
                 # ticks
+                #TODO: use g.axis != agg_axis) instead
+                #TODO: assert that if isinstance(g, ValueGroup):
+                # g.axis == agg_axis (no conversion needed)
+                # or g.axis == agg_axis.parent_axis (we are grouping groups)
                 groups = tuple(agg_axis.group(g)
                                    if (not isinstance(g, ValueGroup) or
                                        g.axis is not agg_axis)
