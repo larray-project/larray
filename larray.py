@@ -7,6 +7,9 @@ Matrix class
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
+# * implement multi group in one axis getitem:
+#   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
+
 # ? age, geo, sex, lipro = la.axes_names
 #   => user only use axes strings and this allows them to not have to bother
 #      about incompatible axes
@@ -842,95 +845,97 @@ class LArray(np.ndarray):
         axis = self.axes[axis_idx]
         return (axis, axis_idx) if idx else axis
 
-    def _group_aggregate(self, op, kwargs, commutative=False):
-        if not commutative and len(kwargs) > 1:
-            raise ValueError("grouping aggregates on multiple axes at the same "
-                             "time is not supported for '%s' (because it is "
-                             "not a commutative operation)" % op.func_name)
+    def _group_aggregate(self, op, axis, groups):
+        groups = to_keys(groups)
 
-        res = self
-        for agg_axis_name, groups in kwargs.iteritems():
-            groups = to_keys(groups)
+        axis, axis_idx = self.get_axis(axis, idx=True)
+        res_axes = self.axes[:]
+        res_shape = list(self.shape)
 
-            agg_axis, agg_axis_idx = res.get_axis(agg_axis_name, idx=True)
-            res_axes = res.axes[:]
-            res_shape = list(res.shape)
+        if not isinstance(groups, tuple):
+            # groups is in fact a single group
+            assert isinstance(groups, (basestring, slice, list,
+                                       ValueGroup)), type(groups)
+            if isinstance(groups, list):
+                assert len(groups) > 0
 
-            if not isinstance(groups, tuple):
-                # groups is in fact a single group
-                assert isinstance(groups, (basestring, slice, list,
-                                           ValueGroup)), type(groups)
-                if isinstance(groups, list):
-                    assert len(groups) > 0
+                # Make sure this is actually a single group, not multiple
+                # mistakenly given as a list instead of a tuple
+                assert all(not isinstance(g, (tuple, list)) for g in groups)
 
-                    # Make sure this is actually a single group, not multiple
-                    # mistakenly given as a list instead of a tuple
-                    assert all(not isinstance(g, (tuple, list)) for g in groups)
+            groups = (groups,)
+            del res_axes[axis_idx]
 
-                groups = (groups,)
-                del res_axes[agg_axis_idx]
+            # it is easier to kill the axis after the fact
+            killaxis = True
+        else:
+            # make sure all groups are ValueGroup and use that as the axis
+            # ticks
+            #TODO: assert that if isinstance(g, ValueGroup):
+            # g.axis == axis (no conversion needed)
+            # or g.axis == axis.parent_axis (we are grouping groups)
+            groups = tuple(axis.group(g)
+                               if (not isinstance(g, ValueGroup) or
+                                   g.axis != axis)
+                               else g
+                           for g in groups)
+            assert all(vg.axis == axis for vg in groups)
 
-                # it is easier to kill the axis after the fact
-                killaxis = True
-            else:
-                # make sure all groups are ValueGroup and use that as the axis
-                # ticks
-                #TODO: assert that if isinstance(g, ValueGroup):
-                # g.axis == agg_axis (no conversion needed)
-                # or g.axis == agg_axis.parent_axis (we are grouping groups)
-                groups = tuple(agg_axis.group(g)
-                                   if (not isinstance(g, ValueGroup) or
-                                       g.axis != agg_axis)
-                                   else g
-                               for g in groups)
-                assert all(vg.axis == agg_axis for vg in groups)
+            # Make sure each (value)group is not a single-value group.
+            # Groups with a list of one value are fine, we just want to
+            # avoid the axis being discarded by the .filter() operation.
+            groups = [ValueGroup(g.axis, [g.key], g.name)
+                        if np.isscalar(g.key) else g
+                      for g in groups]
 
-                # Make sure each (value)group is not a single-value group.
-                # Groups with a list of one value are fine, we just want to
-                # avoid the axis being discarded by the .filter() operation.
-                groups = [ValueGroup(g.axis, [g.key], g.name)
-                            if np.isscalar(g.key) else g
-                          for g in groups]
+            # We do NOT modify the axis name (eg append "_agg" or "*") even
+            # though this creates a new axis that is independent from the
+            # original one because the original name is what users will
+            # want to use to access that axis (eg in .filter kwargs)
+            res_axes[axis_idx] = Axis(axis.name, groups)
+            killaxis = False
 
-                # We do NOT modify the axis name (eg append "_agg" or "*") even
-                # though this creates a new axis that is independent from the
-                # original one because the original name is what users will
-                # want to use to access that axis (eg in .filter kwargs)
-                res_axes[agg_axis_idx] = Axis(agg_axis.name, groups)
-                killaxis = False
+        res_shape[axis_idx] = len(groups)
+        res_data = np.empty(res_shape, dtype=self.dtype)
 
-            res_shape[agg_axis_idx] = len(groups)
-            res_data = np.empty(res_shape, dtype=res.dtype)
+        group_idx = [slice(None) for _ in res_shape]
+        for i, group in enumerate(groups):
+            group_idx[axis_idx] = i
 
-            group_idx = [slice(None) for _ in res_shape]
-            for i, group in enumerate(groups):
-                group_idx[agg_axis_idx] = i
+            # we need only lists not single labels, otherwise the dimension
+            # is discarded too early (in filter instead of in the
+            # aggregate func)
+            #XXX: shouldn't this be handled in to_keys?
+            group = [group] if np.isscalar(group) else group
 
-                # we need only lists not single labels, otherwise the dimension
-                # is discarded too early (in filter instead of in the
-                # aggregate func)
-                #XXX: shouldn't this be handled in to_keys?
-                group = [group] if np.isscalar(group) else group
-
-                # we don't reuse kwargs because we might have modified "groups"
-                arr = res.filter(collapse=True, **{agg_axis_name: group})
-                arr = np.asarray(arr)
-                op(arr, axis=agg_axis_idx, out=res_data[group_idx])
-                del arr
-            if killaxis:
-                assert group_idx[agg_axis_idx] == 0
-                res_data = res_data[group_idx]
-            res = LArray(res_data, res_axes)
-
-        return res
+            arr = self.filter(collapse=True, **{axis.name: group})
+            arr = np.asarray(arr)
+            op(arr, axis=axis_idx, out=res_data[group_idx])
+            del arr
+        if killaxis:
+            assert group_idx[axis_idx] == 0
+            res_data = res_data[group_idx]
+        return LArray(res_data, res_axes)
 
     def _aggregate(self, op, args, kwargs, commutative=False):
+        if not commutative and len(kwargs) > 1:
+            raise ValueError("grouping aggregates on multiple axes at the same "
+                             "time using keyword arguments is not supported "
+                             "for '%s' (because it is not a commutative"
+                             "operation and keyword arguments are *not* "
+                             "ordered in Python)" % op.func_name)
+
         # op() without args is equal to op(all_axes)
         if args and kwargs:
             intermediate = self._axis_aggregate(op, axes=args)
-            return intermediate._group_aggregate(op, kwargs, commutative)
+            for axis, groups in kwargs.iteritems():
+                intermediate = intermediate._group_aggregate(op, axis, groups)
+            return intermediate
         elif kwargs:
-            return self._group_aggregate(op, kwargs, commutative)
+            intermediate = self
+            for axis, groups in kwargs.iteritems():
+                intermediate = intermediate._group_aggregate(op, axis, groups)
+            return intermediate
         else:
             return self._axis_aggregate(op, axes=args)
 
