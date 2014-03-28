@@ -8,9 +8,13 @@ Matrix class
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
 # ? age, geo, sex, lipro = la.axes_names
-
 #   => user only use axes strings and this allows them to not have to bother
 #      about incompatible axes
+#   => sadly, this prevents slicing axes (time[-10:])
+#   => maybe la.axes should return another class (say GenericAxis) which only
+#      contain a name, and can be "indexed"/sliced. No check that the key is
+#      actually valid would be done until the valueGroup is actually used on
+#      a specific LArray
 
 # discuss VG with Geert:
 # I do not "expand" key (eg :) upon group creation for perf reason
@@ -20,7 +24,8 @@ Matrix class
 # arrays
 
 # ? keepdims=True instead of/in addition to group tuples
-
+# * implement newaxis
+# * smarter str() for large arrays
 # * fix str() for 1D LArray
 # * int labels
 # * avg on last 10 years
@@ -119,7 +124,7 @@ Matrix class
 #       eg [False, True], [True, False], [True, True], [False, False]
 #       >>> I think this usage is unlikely to be used by users directly but might
 #     - treat them like a subset of values to include in the cartesian product
-#       eg, supposing we have a array of shape (bool[2], int[110], boo[2])
+#       eg, supposing we have a array of shape (bool[2], int[110], bool[2])
 #       the key ([False], [1, 5, 9], [False, True]) would return an array
 #       of shape [1, 3, 2]
 #     OR
@@ -843,13 +848,9 @@ class LArray(np.ndarray):
                              "time is not supported for '%s' (because it is "
                              "not a commutative operation)" % op.func_name)
 
-        # allow multiple-dimensions aggregates for commutative operations
-        # (all except var, std and ptp I think)
         res = self
         for agg_axis_name, groups in kwargs.iteritems():
             groups = to_keys(groups)
-            # if not isinstance(groups, (tuple, list)):
-            #     groups = (groups,)
 
             agg_axis, agg_axis_idx = res.get_axis(agg_axis_name, idx=True)
             res_axes = res.axes[:]
@@ -863,7 +864,7 @@ class LArray(np.ndarray):
                     assert len(groups) > 0
 
                     # Make sure this is actually a single group, not multiple
-                    # mistakently given as a list instead of a tuple
+                    # mistakenly given as a list instead of a tuple
                     assert all(not isinstance(g, (tuple, list)) for g in groups)
 
                 groups = (groups,)
@@ -912,7 +913,7 @@ class LArray(np.ndarray):
                 group = [group] if np.isscalar(group) else group
 
                 # we don't reuse kwargs because we might have modified "groups"
-                arr = self.filter(collapse=True, **{agg_axis_name: group})
+                arr = res.filter(collapse=True, **{agg_axis_name: group})
                 arr = np.asarray(arr)
                 op(arr, axis=agg_axis_idx, out=res_data[group_idx])
                 del arr
@@ -958,16 +959,18 @@ class LArray(np.ndarray):
         method.__name__ = name
         return method
 
-    all = agg_method(np.all)
-    any = agg_method(np.any)
-    sum = agg_method(np.sum)
-    prod = agg_method(np.prod)
-    cumsum = agg_method(np.cumsum)
-    cumprod = agg_method(np.cumprod)
-    min = agg_method(np.min)
-    max = agg_method(np.max)
+    all = agg_method(np.all, commutative=True)
+    any = agg_method(np.any, commutative=True)
+    # commutative modulo float precision errors
+    sum = agg_method(np.sum, commutative=True)
+    prod = agg_method(np.prod, commutative=True)
+    cumsum = agg_method(np.cumsum, commutative=True)
+    cumprod = agg_method(np.cumprod, commutative=True)
+    min = agg_method(np.min, commutative=True)
+    max = agg_method(np.max, commutative=True)
+    mean = agg_method(np.mean, commutative=True)
+    # not commutative
     ptp = agg_method(np.ptp)
-    mean = agg_method(np.mean)
     var = agg_method(np.var)
     std = agg_method(np.std)
 

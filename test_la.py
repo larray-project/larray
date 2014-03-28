@@ -371,7 +371,7 @@ class TestLArray(TestCase):
         # filter on aggregated
         self.assertEqual(aggregated.filter(geo=self.vla).shape, (22, 15))
 
-    def test_sum_groups(self):
+    def test_sum_groups_kwargs(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
         vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
@@ -413,6 +413,11 @@ class TestLArray(TestCase):
         aggregated = la.sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
         self.assertTrue(isinstance(aggregated.axes[1].labels[0], ValueGroup))
+
+        # a.4) several dimensions at the same time
+        self.assertEqual(la.sum(lipro='P01,P03;P02,P05;:',
+                                geo=(vla, wal, bru, belgium)).shape,
+                         (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
         # Note that you must list "full axes" aggregates first (Python does
