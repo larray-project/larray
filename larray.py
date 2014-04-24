@@ -936,7 +936,10 @@ class LArray(np.ndarray):
 
     def copy(self):
         return LArray(np.ndarray.copy(self), axes=self.axes[:])
-
+    
+    def zeros_like(self):
+        return LArray(np.zeros_like(np.asarray(self)), axes=self.axes[:])
+    
     def info(self):
         axes_labels = [' '.join(repr(label) for label in axis.labels)
                        for axis in self.axes]
@@ -1094,29 +1097,55 @@ def parse(s):
 
 
 def df_aslarray(df, na=np.nan):
-    axes_labels = [list(unique(level[labels]))
+    if isinstance(df.index, pd.core.index.MultiIndex):
+        axes_labels = [list(unique(level[labels]))
                    for level, labels in zip(df.index.levels, df.index.labels)]
-    axes_names = list(df.index.names)
-    laxis = axes_names[-1].split('\\')                                                       
-    if len(laxis) > 0:
-        axes_names[-1] = laxis[0]
-    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-    # pandas treats the "time" labels as column names (strings) so we need to
-    # convert them to values
-    if len(laxis) > 0:
-        axes_names[-1] = laxis[0]
-        axes.append(Axis(laxis[1], [parse(cell) for cell in df.columns.values]))
+        axes_names = list(df.index.names)
+        laxis = axes_names[-1].split('\\')                                                       
+        if len(laxis) > 0:
+            axes_names[-1] = laxis[0]
+        axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+        # pandas treats the "time" labels as column names (strings) so we need to
+        # convert them to values
+        if len(laxis) > 0:
+            axes_names[-1] = laxis[0]
+            axes.append(Axis(laxis[1], [parse(cell) for cell in df.columns.values]))
+        else:
+            axes.append(Axis('time', [parse(cell) for cell in df.columns.values]))
+        sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
+        if na != np.nan:
+            sdf.fillna(na,inplace=True)
+        data = sdf.values.reshape([len(axis.labels) for axis in axes])    
+        return LArray(data, axes) 
+    elif isinstance(df.index, pd.core.index.Index):        
+        labels = [l for l in df.index]
+        axes_names = list(df.index.names)
+        laxis = axes_names[-1].split('\\')                                                       
+        if len(laxis) > 0:
+            axes_names[-1] = laxis[0]        
+        axes = [Axis(axes_names[0], labels)]
+        # pandas treats the "time" labels as column names (strings) so we need to
+        # convert them to values
+        if len(laxis) > 0:
+            axes.append(Axis(laxis[1], [parse(cell) for cell in df.columns.values]))
+        else:
+            axes.append(Axis('time', [parse(cell) for cell in df.columns.values]))
+#        sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
+#        if na != np.nan:
+#            sdf.fillna(na,inplace=True)
+#        data = sdf.values.reshape([len(axis.labels) for axis in axes])    
+        data = df.values
+        return LArray(data, axes) 
+
+        
     else:
-        axes.append(Axis('time', [parse(cell) for cell in df.columns.values]))
-    sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
-    if na != np.nan:
-        sdf.fillna(na,inplace=True)
-    data = sdf.values.reshape([len(axis.labels) for axis in axes])    
-    return LArray(data, axes) 
+        return None
+        
 
 
 # CSV functions
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):  
+    import csv
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1133,14 +1162,14 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
 
     """    
 
-    # read the first line to determine how many axes (time excluded) we have
-#    with open(filepath, 'rb') as f:
-#        reader = csv.reader(f, delimiter=sep)
-#        header = [parse(cell) for cell in reader.next()]
-#        axes_names = [cell for cell in header if isinstance(cell, basestring)]
-#    df = pd.read_csv(filepath, index_col=range(len(axes_names)), sep=sep)
-#    assert df.index.names == axes_names, "%s != %s" % (df.index.names,
-#                                                       axes_names)
+    if(len(index_col) == 0 and nb_index == 0):
+        # read the first line to determine how many axes (time excluded) we have
+        with open(filepath, 'rb') as f:
+            reader = csv.reader(f, delimiter=sep)
+            header = [parse(cell) for cell in reader.next()]
+            axes_names = [cell for cell in header if isinstance(cell, basestring)]
+            nb_index = len(axes_names)
+        
     if len(index_col) > 0:
         df = pd.read_csv(filepath, index_col=index_col, sep=sep)
     else:
@@ -1258,17 +1287,151 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
         df=pd.read_excel(filepath, name, index_col=range(nb_index))    
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
     
+def zeros(axes):
+    s = tuple(len(axis) for axis in axes)
+    return LArray(np.zeros(s), axes)  
+    
+    
+def ArrayAssign(larray, larray_new, **kwargs):
+    axes_names = set(larray.axes_names)
+    for kwarg in kwargs:
+        if kwarg not in axes_names:
+            raise KeyError("{} is not an axis name".format(kwarg))
+    full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
+                for ax in larray.axes)
+    def fullkey(larray, key, collapse_slices=False):
+        '''
+        based in __getitem__
+        '''
+        data = np.asarray(larray)
 
-if __name__ == '__main__':
-    #reg.Collapse('c:/tmp/reg.csv')
-    #reg.ToAv('reg.av')
-    bel = read_csv('bel.csv', index_col=[0,1,2,3]) 
-    test = read_csv('ert_eff_ic_a.tsv', index_col=[0,1,2], sep='\t', na=0)
-    test.ToCsv('brol.csv')
-    save_csv(test, 'brolpd.csv')
-    test_csv = read_csv('brolpd.csv', index_col=[0,1,2])
-    save_excel(test, "TEST", "test.xls")
-    test_xls = read_excel("TEST", "test.xls", index_col=[0,1,2])
-    save_h5(test, 'test', 'store.h5')
-    test_h5 = read_h5('test', 'store.h5')
-    save_h5(bel, 'bel', 'store.h5')
+        # convert scalar keys to 1D keys
+        if not isinstance(key, tuple):
+            key = (key,)
+
+        # expand string keys with commas
+        #XXX: is it the right place to do this?
+        key = tuple(to_key(axis_key) for axis_key in key)
+
+        # convert xD keys to ND keys
+        if len(key) < larray.ndim:
+            key = key + (slice(None),) * (larray.ndim - len(key))
+
+        if larray.is_aggregated:
+            # convert values on aggregated axes to (value)groups on the
+            # *parent* axis. The goal is to allow targeting a ValueGroup
+            # label by a string. eg.
+            # reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+            # we want all the following to work:
+            #   reg[geo.group('A21', name='bru')]
+            #   reg['A21']
+            #   reg[:] -> all lines, and not the "belgium" line. It is not
+            # ideal but it is the lesser evil, because
+            # reg.filter(lipro='PO1,PO2') maps to reg[:, 'PO1,PO2'] and
+            # it should return the whole "aggregated" geo dimension,
+            # not one line only
+            def convert(axis, values):
+                if (axis.is_aggregated and not isinstance(values, ValueGroup)):
+                    vg = axis.parent_axis.group(values)
+                    if vg in axis:
+                        return vg
+                    else:
+                        return values
+                else:
+                    return values
+            key = tuple(convert(axis, axis_key)
+                        for axis, axis_key in zip(larray.axes, key))
+
+        # translate labels to integers
+        translated_key = tuple(axis.translate(axis_key)
+                               for axis, axis_key in zip(larray.axes, key))
+
+        # isinstance(ndarray, collections.Sequence) is False but it
+        # behaves like one
+        sequence = (tuple, list, np.ndarray)
+        if collapse_slices:
+            translated_key = [range_to_slice(axis_key)
+                                  if isinstance(axis_key, sequence)
+                                  else axis_key
+                              for axis_key in translated_key]
+
+        # count number of indexing arrays (ie non scalar/slices) in tuple
+        num_ix_arrays = sum(isinstance(axis_key, sequence)
+                            for axis_key in translated_key)
+        num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
+
+        # handle advanced indexing with more than one indexing array:
+        # basic indexing (only integer and slices) and advanced indexing
+        # with only one indexing array are handled fine by numpy
+        if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
+            # np.ix_ wants only lists so:
+
+            # 1) kill scalar-key axes (if any) by indexing them (we cannot
+            #    simply transform the scalars into lists of 1 element because
+            #    in that case those dimensions are not dropped by
+            #    ndarray.__getitem__)
+            keyandaxes = zip(translated_key, larray.axes)
+            if any(np.isscalar(axis_key) for axis_key in translated_key):
+                killscalarskey = tuple(axis_key
+                                           if np.isscalar(axis_key)
+                                           else slice(None)
+                                       for axis_key in translated_key)
+                data = data[killscalarskey]
+                noscalar_keyandaxes = [(axis_key, axis)
+                                        for axis_key, axis in keyandaxes
+                                        if not np.isscalar(axis_key)]
+            else:
+                noscalar_keyandaxes = keyandaxes
+
+            # 2) expand slices to lists (ranges)
+            #TODO: cache the range in the axis?
+            listkey = tuple(np.arange(*axis_key.indices(len(axis)))
+                            if isinstance(axis_key, slice) else axis_key
+                            for axis_key, axis in noscalar_keyandaxes)
+            # np.ix_ computes the cross product of all lists
+            full_key = np.ix_(*listkey)
+        else:
+            full_key = translated_key
+
+        return data, full_key
+        
+    data, full_key = fullkey(larray, full_idx)
+    #DIFFERENT SHAPE BUT SAME SIZE
+    if(data[full_key].shape != larray_new.shape) and (data[full_key].size == larray_new.size):
+        data[full_key] = np.asarray(larray_new).reshape(data[full_key].shape) 
+        return
+            
+    #DIFFERENT SHAPE BUT ONLY ONE OR MORE MISSING DIMENSION(S)
+    if(len(data[full_key].shape) != len(larray_new.shape)):
+        bshape = broadcastshape(larray_new.shape, data[full_key].shape)
+        if bshape is not None:
+            data[full_key] = np.asarray(larray_new).reshape(bshape) 
+        return   
+            
+    # SAME DIMENSIONS
+    data[full_key] = np.asarray(larray_new)
+        
+def broadcastshape(oshape, nshape):
+    bshape = list(nshape)
+    dshape = set(nshape).difference(set(oshape))
+    if len(dshape) == len(nshape)-len(oshape):
+        for i in range(len(bshape)):
+            if bshape[i] in dshape:
+                bshape[i] = 1        
+        return tuple(bshape)
+    else:
+        return None    
+
+#if __name__ == '__main__':
+#    #reg.Collapse('c:/tmp/reg.csv')
+#    #reg.ToAv('reg.av')
+#    bel = read_csv('bel.csv', index_col=[0,1,2,3]) 
+#    test = read_csv('ert_eff_ic_a.tsv', index_col=[0,1,2], sep='\t', na=0)
+#    test.ToCsv('brol.csv')
+#    save_csv(test, 'brolpd.csv')
+#    test_csv = read_csv('brolpd.csv', index_col=[0,1,2])
+#    save_excel(test, "TEST", "test.xls")
+#    test_xls = read_excel("TEST", "test.xls", index_col=[0,1,2])
+#    save_h5(test, 'test', 'store.h5')
+#    test_h5 = read_h5('test', 'store.h5')
+#    save_h5(bel, 'bel', 'store.h5')
