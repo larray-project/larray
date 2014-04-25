@@ -533,6 +533,54 @@ class TestLArray(TestCase):
         #TODO: make it work for integer indices
         # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
 
+    # def test_sum_groups_vg_args(self):
+    #     la = self.larray
+    #     age, geo, sex, lipro = la.axes
+    #     vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
+    #
+    #     # simple
+    #     # ------
+    #
+    #     # a) one group aggregate (on a fresh array)
+    #
+    #     # one group => collapse dimension
+    #     self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
+    #     self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+    #     self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
+
+    #     # several groups
+    #     self.assertEqual(la.sum((vla, wal, belgium)).shape, (116, 3, 2, 15))
+    #
+    #     # b) group aggregates on several dimensions at the same time
+    #
+    #     # one group per dim => collapse
+    #     self.assertEqual(la.sum(lipro['P01,P03'], vla).shape, (116, 4, 2, 3))
+    #     # several groups per dim
+    #     lipro_groups = (lipro['P01,P02'], lipro['P05'], lipro['P07,P06'])
+    #     self.assertEqual(la.sum(lipro_groups, (vla, wal, bru, belgium)).shape,
+    #                      (116, 4, 2, 3))
+
+    #     # c) both axis aggregate and group aggregate at the same time
+
+    #     # In this version we do not need to list "full axes" aggregates first
+    #     # since group aggregates are not kwargs
+
+    #     # one group
+    #     self.assertEqual(la.sum(age, sex, vla).shape, (15,))
+    #     self.assertEqual(la.sum(vla, age, sex).shape, (15,))
+    #     self.assertEqual(la.sum(age, vla, sex).shape, (15,))
+    #     # tuple of groups
+    #     self.assertEqual(la.sum(age, sex, (vla, belgium)).shape, (4, 15))
+    #     self.assertEqual(la.sum(age, (vla, belgium), sex).shape, (4, 15))
+    #     self.assertEqual(la.sum((vla, belgium), age, sex).shape, (4, 15))
+    #     self.assertEqual(la.sum((vla, belgium), age, sex).shape, (4, 15))
+    #
+    #
+    #     # d) mixing arg and kwarg group aggregates
+    #     self.assertEqual(la.sum(lipro['P01,P02,P03,P05,P08'],
+    #                             geo=(vla, wal, bru)).shape,
+    #                      (116, 3, 2, 5))
+
     def test_sum_several_vg_groups(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
