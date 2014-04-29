@@ -471,7 +471,7 @@ class Axis(object):
         try:
             self.translate(key)
             return True
-        except ValueError:
+        except (ValueError, KeyError):
             return False
 
     def translate(self, key):
