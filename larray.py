@@ -640,8 +640,15 @@ class LArray(np.ndarray):
         return any(axis.is_aggregated for axis in self.axes)
 
     def full_key(self, key, collapse_slices=False):
-        # convert scalar keys to 1D keys
-        if not isinstance(key, tuple):
+        if isinstance(key, dict):
+            axes_names = set(self.axes_names)
+            for axis_name in key:
+                if axis_name not in axes_names:
+                    raise KeyError("{} is not an axis name".format(axis_name))
+            key = tuple(key[ax.name] if ax.name in key else slice(None)
+                            for ax in self.axes)
+        elif not isinstance(key, tuple):
+            # convert scalar keys to 1D keys
             key = (key,)
 
         # expand string keys with commas
@@ -650,7 +657,7 @@ class LArray(np.ndarray):
 
         # convert xD keys to ND keys
         if len(key) < self.ndim:
-            key = key + (slice(None),) * (self.ndim - len(key))
+            key += (slice(None),) * (self.ndim - len(key))
 
         if self.is_aggregated:
             # convert values on aggregated axes to (value)groups on the
@@ -741,9 +748,9 @@ class LArray(np.ndarray):
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
 
-    def set(self, key, value):
+    def set(self, value, **kwargs):
         data = np.asarray(self)
-        cross_key = self.cross_key(self.full_key(key), collapse_slices=True)
+        cross_key = self.cross_key(self.full_key(kwargs), collapse_slices=True)
         data[cross_key] = value
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
@@ -815,13 +822,7 @@ class LArray(np.ndarray):
         filters the array along the axes given as keyword arguments.
         It is similar to np.take but works with several axes at once.
         """
-        axes_names = set(self.axes_names)
-        for kwarg in kwargs:
-            if kwarg not in axes_names:
-                raise KeyError("{} is not an axis name".format(kwarg))
-        full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
-                         for ax in self.axes)
-        return self.__getitem__(full_idx, collapse)
+        return self.__getitem__(kwargs, collapse)
 
     def _axis_aggregate(self, op, axes=()):
         """

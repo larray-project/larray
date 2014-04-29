@@ -254,8 +254,9 @@ class TestLArray(TestCase):
         age, geo, sex, lipro = la.axes
         ages1_5_9 = age.group('1,5,9')
 
-        # la.set(ages1_5_9, la[ages1_5_9] + 25.0)
-        la[ages1_5_9] = la[ages1_5_9] + 25.0
+        la.set(la[ages1_5_9] + 25.0, age=ages1_5_9)
+        #XXX: We could also implement:
+        # la.xs[ages1_5_9] = la[ages1_5_9] + 25.0
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
         self._assert_equal_raw(la, raw)
 
