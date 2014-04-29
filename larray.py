@@ -424,7 +424,7 @@ class Axis(object):
 
     def subset(self, key, name=None):
         """
-        key is a label-based key (slice and fancy indexing are supported)
+        key is label-based (slice and fancy indexing are supported)
         returns a ValueGroup usable in .sum or .filter
         """
         if isinstance(key, ValueGroup):
@@ -440,7 +440,7 @@ class Axis(object):
 
     def subaxis(self, key, name=None):
         """
-        key is an integer-based key (slice and fancy indexing are supported)
+        key is label-based (slice and fancy indexing are supported)
         returns an Axis for a sub-array
         """
         if (isinstance(key, slice) and
@@ -449,7 +449,9 @@ class Axis(object):
         # we must NOT modify the axis name, even though this creates a new axis
         # that is independent from the original one because the original
         # name is probably what users will want to use to filter
-        return Axis(self.name, self.labels[key])
+        if name is None:
+            name = self.name
+        return Axis(name, self.labels[self.translate(key)])
 
     def __eq__(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
@@ -468,11 +470,12 @@ class Axis(object):
         return self.subset(key)
 
     def __contains__(self, key):
-        try:
-            self.translate(key)
-            return True
-        except (ValueError, KeyError):
+        if self.is_aggregated:
+            if not isinstance(key, ValueGroup):
+                key = ValueGroup(self, key)
+        elif not np.isscalar(key):
             return False
+        return key in self._mapping
 
     def translate(self, key):
         """
@@ -571,7 +574,8 @@ class ValueGroup(object):
 
     def __eq__(self, other):
         # two VG with different names but the same key compare equal
-        return self.axis == other.axis and self.key == other.key
+        return (isinstance(other, ValueGroup) and self.axis == other.axis and
+                self.key == other.key)
 
     def __str__(self):
         return self.name
@@ -649,7 +653,6 @@ class LArray(np.ndarray):
         # convert xD keys to ND keys
         if len(key) < self.ndim:
             key = key + (slice(None),) * (self.ndim - len(key))
-
         if self.is_aggregated:
             # convert values on aggregated axes to (value)groups on the
             # *parent* axis. The goal is to allow targeting a ValueGroup
@@ -699,40 +702,36 @@ class LArray(np.ndarray):
         if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
             # np.ix_ wants only lists so:
 
-            # 1) kill scalar-key axes (if any) by indexing them (we cannot
-            #    simply transform the scalars into lists of 1 element because
-            #    in that case those dimensions are not dropped by
-            #    ndarray.__getitem__)
-            keyandaxes = zip(translated_key, self.axes)
-            if any(np.isscalar(axis_key) for axis_key in translated_key):
-                killscalarskey = tuple(axis_key
-                                           if np.isscalar(axis_key)
-                                           else slice(None)
-                                       for axis_key in translated_key)
-                data = data[killscalarskey]
-                noscalar_keyandaxes = [(axis_key, axis)
-                                       for axis_key, axis in keyandaxes
-                                       if not np.isscalar(axis_key)]
-            else:
-                noscalar_keyandaxes = keyandaxes
+            # 1) transform scalar-key to lists of 1 element. In that case,
+            #    ndarray.__getitem__ leaves length 1 dimensions instead of
+            #    dropping them like we would like so we will need to drop
+            #    them later ourselves (via reshape)
+            noscalar_key = [[axis_key] if np.isscalar(axis_key) else axis_key
+                            for axis_key in translated_key]
 
             # 2) expand slices to lists (ranges)
             #TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice) else axis_key
-                            for axis_key, axis in noscalar_keyandaxes)
+                            for axis_key, axis in zip(noscalar_key, self.axes))
             # np.ix_ computes the cross product of all lists
             full_key = np.ix_(*listkey)
         else:
             full_key = translated_key
 
-        # it might be tempting to make subaxis take a label-based key but this
-        # is more complicated as np.isscalar works better after translate
-        # (eg for "aggregate tables" where ValueGroups are used as keys)
+        def killaxis(axis, key):
+            if isinstance(key, ValueGroup):
+                return axis.is_aggregated or np.isscalar(key.key)
+            else:
+                return np.isscalar(key)
+
         axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
-        return LArray(data[full_key], axes)
+                for axis, axis_key in zip(self.axes, key)
+                if not killaxis(axis, axis_key)]
+        data = data[full_key]
+        # drop length 1 dimensions created by scalar keys
+        data = data.reshape(tuple(len(axis) for axis in axes))
+        return LArray(data, axes)
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
@@ -750,10 +749,10 @@ class LArray(np.ndarray):
     def as_table(self):
         if not self.ndim:
             return []
-    
-        #ert	| unit	| geo\time	| 2012 	| 2011 	| 2010 	
-        #NEER27	| I05	| AT	| 101.41 	| 101.63 	| 101.63 	
-        #NEER27	| I05	| AU	| 134.86 	| 125.29 	| 117.08 	
+
+        # ert    | unit | geo\time | 2012   | 2011   | 2010
+        # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
+        # NEER27 | I05  | AU       | 134.86 | 125.29 | 117.08
 
         width = self.shape[-1]
         height = prod(self.shape[:-1])
@@ -887,9 +886,9 @@ class LArray(np.ndarray):
                 # g.axis == axis (no conversion needed)
                 # or g.axis == axis.parent_axis (we are grouping groups)
                 groups = tuple(axis.group(g)
-                                   if (not isinstance(g, ValueGroup) or
-                                       g.axis != axis)
-                                   else g
+                               if (not isinstance(g, ValueGroup) or
+                                   g.axis != axis)
+                               else g
                                for g in groups)
                 assert all(vg.axis == axis for vg in groups)
 
@@ -897,7 +896,7 @@ class LArray(np.ndarray):
                 # Groups with a list of one value are fine, we just want to
                 # avoid the axis being discarded by the .filter() operation.
                 groups = [ValueGroup(g.axis, [g.key], g.name)
-                            if np.isscalar(g.key) else g
+                          if np.isscalar(g.key) else g
                           for g in groups]
 
                 # We do NOT modify the axis name (eg append "_agg" or "*") even
