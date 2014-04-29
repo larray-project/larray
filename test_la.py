@@ -237,6 +237,28 @@ class TestLArray(TestCase):
 'P12' 'P13' 'P14' 'P15'"""
         self.assertEqual(self.larray.info(), expected)
 
+    def test_getitem(self):
+        raw = self.array
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        ages1_5_9 = age.group('1,5,9')
+
+        filtered = la[ages1_5_9]
+        self.assertEqual(filtered.shape, (3, 44, 2, 15))
+        self._assert_equal_raw(filtered, raw[[1, 5, 9]])
+
+    def test_setitem(self):
+        raw = self.array.copy()
+        la = self.larray.copy()
+        age, geo, sex, lipro = la.axes
+        ages1_5_9 = age.group('1,5,9')
+
+        # la.set(ages1_5_9, la[ages1_5_9] + 25.0)
+        la[ages1_5_9] = la[ages1_5_9] + 25.0
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
+        self._assert_equal_raw(la, raw)
+
     def test_filter(self):
         la = self.larray
         age, geo, sex, lipro = la.axes

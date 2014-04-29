@@ -639,9 +639,7 @@ class LArray(np.ndarray):
     def is_aggregated(self):
         return any(axis.is_aggregated for axis in self.axes)
 
-    def __getitem__(self, key, collapse_slices=False):
-        data = np.asarray(self)
-
+    def full_key(self, key, collapse_slices=False):
         # convert scalar keys to 1D keys
         if not isinstance(key, tuple):
             key = (key,)
@@ -653,6 +651,7 @@ class LArray(np.ndarray):
         # convert xD keys to ND keys
         if len(key) < self.ndim:
             key = key + (slice(None),) * (self.ndim - len(key))
+
         if self.is_aggregated:
             # convert values on aggregated axes to (value)groups on the
             # *parent* axis. The goal is to allow targeting a ValueGroup
@@ -678,6 +677,9 @@ class LArray(np.ndarray):
             key = tuple(convert(axis, axis_key)
                         for axis, axis_key in zip(self.axes, key))
 
+        return key
+
+    def cross_key(self, key, collapse_slices=False):
         # translate labels to integers
         translated_key = tuple(axis.translate(axis_key)
                                for axis, axis_key in zip(self.axes, key))
@@ -687,8 +689,8 @@ class LArray(np.ndarray):
         sequence = (tuple, list, np.ndarray)
         if collapse_slices:
             translated_key = [range_to_slice(axis_key)
-                                  if isinstance(axis_key, sequence)
-                                  else axis_key
+                              if isinstance(axis_key, sequence)
+                              else axis_key
                               for axis_key in translated_key]
 
         # count number of indexing arrays (ie non scalar/slices) in tuple
@@ -712,12 +714,16 @@ class LArray(np.ndarray):
             # 2) expand slices to lists (ranges)
             #TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
-                            if isinstance(axis_key, slice) else axis_key
+                            if isinstance(axis_key, slice)
+                            else axis_key
                             for axis_key, axis in zip(noscalar_key, self.axes))
             # np.ix_ computes the cross product of all lists
-            full_key = np.ix_(*listkey)
+            return np.ix_(*listkey)
         else:
-            full_key = translated_key
+            return translated_key
+
+    def __getitem__(self, key, collapse_slices=False):
+        key = self.full_key(key)
 
         def killaxis(axis, key):
             if isinstance(key, ValueGroup):
@@ -728,10 +734,17 @@ class LArray(np.ndarray):
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, key)
                 if not killaxis(axis, axis_key)]
-        data = data[full_key]
+
+        data = np.asarray(self)
+        data = data[self.cross_key(key, collapse_slices)]
         # drop length 1 dimensions created by scalar keys
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
+
+    def set(self, key, value):
+        data = np.asarray(self)
+        cross_key = self.cross_key(self.full_key(key), collapse_slices=True)
+        data[cross_key] = value
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
