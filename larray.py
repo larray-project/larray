@@ -132,14 +132,14 @@ Matrix class
 #   o bool key on a bool dimension is ambiguous:
 #     - treat them as a filter (len(key) must be == len(dim) == 2)
 #       eg [False, True], [True, False], [True, True], [False, False]
-#       >>> I think this usage is unlikely to be used by users directly but might
+#       >>> I think this usage is unlikely to be used by users directly but...
 #     - treat them like a subset of values to include in the cartesian product
 #       eg, supposing we have a array of shape (bool[2], int[110], bool[2])
 #       the key ([False], [1, 5, 9], [False, True]) would return an array
 #       of shape [1, 3, 2]
 #     OR
-#     - treat them like values to lookup (len(key) has not relation with len(dim)
-#       BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
+#     - treat them like values to lookup (len(key) has not relation with
+#       len(dim) BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
 # * evaluate the impact of label-only __getitem__: numpy/matplotlib/...
 #   functions probably rely on __getitem__ with indices
 
@@ -471,7 +471,7 @@ class Axis(object):
         try:
             self.translate(key)
             return True
-        except Exception:
+        except ValueError:
             return False
 
     def translate(self, key):
@@ -664,7 +664,7 @@ class LArray(np.ndarray):
             # it should return the whole "aggregated" geo dimension,
             # not one line only
             def convert(axis, values):
-                if (axis.is_aggregated and not isinstance(values, ValueGroup)):
+                if axis.is_aggregated and not isinstance(values, ValueGroup):
                     vg = axis.parent_axis.group(values)
                     if vg in axis:
                         return vg
@@ -711,8 +711,8 @@ class LArray(np.ndarray):
                                        for axis_key in translated_key)
                 data = data[killscalarskey]
                 noscalar_keyandaxes = [(axis_key, axis)
-                                        for axis_key, axis in keyandaxes
-                                        if not np.isscalar(axis_key)]
+                                       for axis_key, axis in keyandaxes
+                                       if not np.isscalar(axis_key)]
             else:
                 noscalar_keyandaxes = keyandaxes
 
@@ -1069,7 +1069,7 @@ class LArray(np.ndarray):
             worksheet = workbook.add_worksheet('Sheet1')
             worksheet.write_row(0, 1, self.axes[-1].labels) 
             if self.ndim == 2:
-                 worksheet.write_column(1, 0, self.axes[-2].labels)
+                worksheet.write_column(1, 0, self.axes[-2].labels)
             for row, data in enumerate(np.asarray(self)):
                 worksheet.write_row(1+row, 1, data)                    
 
@@ -1123,19 +1123,23 @@ def parse(s):
 def df_aslarray(df, na=np.nan):
     if isinstance(df.index, pd.core.index.MultiIndex):
         axes_labels = [list(unique(level[labels]))
-                   for level, labels in zip(df.index.levels, df.index.labels)]
+                       for level, labels
+                       in zip(df.index.levels, df.index.labels)]
         axes_names = list(df.index.names)
         laxis = axes_names[-1].split('\\')                                                       
         if len(laxis) > 0:
             axes_names[-1] = laxis[0]
-        axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-        # pandas treats the "time" labels as column names (strings) so we need to
-        # convert them to values
+        axes = [Axis(name, labels)
+                for name, labels in zip(axes_names, axes_labels)]
+        # pandas treats the "time" labels as column names (strings) so we need
+        # to convert them to values
         if len(laxis) > 0:
             axes_names[-1] = laxis[0]
-            axes.append(Axis(laxis[1], [parse(cell) for cell in df.columns.values]))
+            axes.append(Axis(laxis[1],
+                             [parse(cell) for cell in df.columns.values]))
         else:
-            axes.append(Axis('time', [parse(cell) for cell in df.columns.values]))
+            axes.append(Axis('time',
+                             [parse(cell) for cell in df.columns.values]))
         sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
         if na != np.nan:
             sdf.fillna(na,inplace=True)
@@ -1151,20 +1155,19 @@ def df_aslarray(df, na=np.nan):
         # pandas treats the "time" labels as column names (strings) so we need to
         # convert them to values
         if len(laxis) > 0:
-            axes.append(Axis(laxis[1], [parse(cell) for cell in df.columns.values]))
+            axes.append(Axis(laxis[1],
+                             [parse(cell) for cell in df.columns.values]))
         else:
-            axes.append(Axis('time', [parse(cell) for cell in df.columns.values]))
+            axes.append(Axis('time',
+                             [parse(cell) for cell in df.columns.values]))
 #        sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
 #        if na != np.nan:
 #            sdf.fillna(na,inplace=True)
 #        data = sdf.values.reshape([len(axis.labels) for axis in axes])    
         data = df.values
         return LArray(data, axes) 
-
-        
     else:
         return None
-        
 
 
 # CSV functions
@@ -1186,7 +1189,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
 
     """    
 
-    if(len(index_col) == 0 and nb_index == 0):
+    if len(index_col) == 0 and nb_index == 0:
         # read the first line to determine how many axes (time excluded) we have
         with open(filepath, 'rb') as f:
             reader = csv.reader(f, delimiter=sep)
@@ -1202,12 +1205,12 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
-def save_csv(l_array, filepath, sep=',', na=np.nan):
+def save_csv(l_array, filepath, sep=',', na_rep=''):
     """
     saves an LArray to a csv file
     """    
     df = l_array.as_dataframe()
-    df.to_csv(filepath, sep=sep)
+    df.to_csv(filepath, sep=sep, na_rep=na_rep)
 
 
 # HDF5 functions
@@ -1225,7 +1228,6 @@ def read_h5(name, filepath):
     """
     read a l_array from a h5-store with the specified name
     """
-    
     store = pd.HDFStore(filepath)
     df = store.get(name)
     store.close()
@@ -1297,7 +1299,8 @@ def save_excel(l_array, name, filepath):
     writer = pd.ExcelWriter(filepath)
     df.to_excel(writer, name)
     writer.save()
-    
+
+
 def read_excel(name, filepath, nb_index=0, index_col=[]):
     """
     reads excel file from sheet name and returns an Larray with the contents
@@ -1306,23 +1309,24 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
         index_col : list of columns for the index (ex. [0, 1, 2, 3])    
     """    
     if len(index_col) > 0:
-        df=pd.read_excel(filepath, name, index_col=index_col)
+        df = pd.read_excel(filepath, name, index_col=index_col)
     else:
-        df=pd.read_excel(filepath, name, index_col=range(nb_index))    
+        df = pd.read_excel(filepath, name, index_col=range(nb_index))
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
-    
+
+
 def zeros(axes):
     s = tuple(len(axis) for axis in axes)
     return LArray(np.zeros(s), axes)  
-    
-    
+
+
 def ArrayAssign(larray, larray_new, **kwargs):
     axes_names = set(larray.axes_names)
     for kwarg in kwargs:
         if kwarg not in axes_names:
             raise KeyError("{} is not an axis name".format(kwarg))
     full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
-                for ax in larray.axes)
+                     for ax in larray.axes)
     def fullkey(larray, key, collapse_slices=False):
         '''
         based in __getitem__
@@ -1421,12 +1425,13 @@ def ArrayAssign(larray, larray_new, **kwargs):
         
     data, full_key = fullkey(larray, full_idx)
     #DIFFERENT SHAPE BUT SAME SIZE
-    if(data[full_key].shape != larray_new.shape) and (data[full_key].size == larray_new.size):
+    if (data[full_key].shape != larray_new.shape) and \
+            (data[full_key].size == larray_new.size):
         data[full_key] = np.asarray(larray_new).reshape(data[full_key].shape) 
         return
             
     #DIFFERENT SHAPE BUT ONLY ONE OR MORE MISSING DIMENSION(S)
-    if(len(data[full_key].shape) != len(larray_new.shape)):
+    if len(data[full_key].shape) != len(larray_new.shape):
         bshape = broadcastshape(larray_new.shape, data[full_key].shape)
         if bshape is not None:
             data[full_key] = np.asarray(larray_new).reshape(bshape) 
@@ -1434,7 +1439,8 @@ def ArrayAssign(larray, larray_new, **kwargs):
             
     # SAME DIMENSIONS
     data[full_key] = np.asarray(larray_new)
-        
+
+
 def broadcastshape(oshape, nshape):
     bshape = list(nshape)
     dshape = set(nshape).difference(set(oshape))
@@ -1445,17 +1451,3 @@ def broadcastshape(oshape, nshape):
         return tuple(bshape)
     else:
         return None    
-
-#if __name__ == '__main__':
-#    #reg.Collapse('c:/tmp/reg.csv')
-#    #reg.ToAv('reg.av')
-#    bel = read_csv('bel.csv', index_col=[0,1,2,3]) 
-#    test = read_csv('ert_eff_ic_a.tsv', index_col=[0,1,2], sep='\t', na=0)
-#    test.ToCsv('brol.csv')
-#    save_csv(test, 'brolpd.csv')
-#    test_csv = read_csv('brolpd.csv', index_col=[0,1,2])
-#    save_excel(test, "TEST", "test.xls")
-#    test_xls = read_excel("TEST", "test.xls", index_col=[0,1,2])
-#    save_h5(test, 'test', 'store.h5')
-#    test_h5 = read_h5('test', 'store.h5')
-#    save_h5(bel, 'bel', 'store.h5')
