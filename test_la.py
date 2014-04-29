@@ -247,20 +247,16 @@ class TestLArray(TestCase):
         ages11 = age.group('11')
 
         # with ValueGroup
-        filtered = la.filter(age=ages1_5_9)
-        self.assertEqual(filtered.shape, (3, 44, 2, 15))
+        self.assertEqual(la.filter(age=ages1_5_9).shape, (3, 44, 2, 15))
 
         # VG with 1 value => collapse
-        filtered = la.filter(age=ages11)
-        self.assertEqual(filtered.shape, (44, 2, 15))
+        self.assertEqual(la.filter(age=ages11).shape, (44, 2, 15))
 
         # VG with a list of 1 value => do not collapse
-        filtered = la.filter(age=age.group(['11']))
-        self.assertEqual(filtered.shape, (1, 44, 2, 15))
+        self.assertEqual(la.filter(age=age.group(['11'])).shape, (1, 44, 2, 15))
 
         # VG with a list of 1 value defined as a string => do not collapse
-        filtered = la.filter(age=age.group('11,'))
-        self.assertEqual(filtered.shape, (1, 44, 2, 15))
+        self.assertEqual(la.filter(age=age.group('11,')).shape, (1, 44, 2, 15))
 
         # VG with 1 value
         #XXX: this does not work. Do we want to make this work?
@@ -268,31 +264,26 @@ class TestLArray(TestCase):
         # self.assertEqual(filtered.shape, (1, 44, 2, 15))
 
         # list
-        filtered = la.filter(age=['1', '5', '9'])
-        self.assertEqual(filtered.shape, (3, 44, 2, 15))
+        self.assertEqual(la.filter(age=['1', '5', '9']).shape, (3, 44, 2, 15))
 
         # string
-        filtered = la.filter(age='1,5,9')
-        self.assertEqual(filtered.shape, (3, 44, 2, 15))
+        self.assertEqual(la.filter(age='1,5,9').shape, (3, 44, 2, 15))
 
         # multiple axes at once
-        filtered = la.filter(age='1,5,9', lipro='P01,P02')
-        self.assertEqual(filtered.shape, (3, 44, 2, 2))
+        self.assertEqual(la.filter(age='1,5,9', lipro='P01,P02').shape,
+                         (3, 44, 2, 2))
 
         # multiple axes one after the other
-        filtered = la.filter(age='1,5,9').filter(lipro='P01,P02')
-        self.assertEqual(filtered.shape, (3, 44, 2, 2))
+        self.assertEqual((la.filter(age='1,5,9').filter(lipro='P01,P02')).shape,
+                         (3, 44, 2, 2))
 
         # a single value for one dimension => collapse the dimension
-        filtered = la.filter(sex='H')
-        self.assertEqual(filtered.shape, (116, 44, 15))
+        self.assertEqual(la.filter(sex='H').shape, (116, 44, 15))
 
         # but a list with a single value for one dimension => do not collapse
-        filtered = la.filter(sex=['H'])
-        self.assertEqual(filtered.shape, (116, 44, 1, 15))
+        self.assertEqual(la.filter(sex=['H']).shape, (116, 44, 1, 15))
 
-        filtered = la.filter(sex='H,')
-        self.assertEqual(filtered.shape, (116, 44, 1, 15))
+        self.assertEqual(la.filter(sex='H,').shape, (116, 44, 1, 15))
 
         # with duplicate keys
         #XXX: do we want to support this? I don't see any value in that but
