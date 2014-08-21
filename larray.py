@@ -405,6 +405,8 @@ class Axis(object):
             labels = to_labels(labels)
         self.labels = np.asarray(labels)
         self._mapping = {label: i for i, label in enumerate(labels)}
+        self._mapping.update({label.name: i for i, label in enumerate(labels)
+                              if isinstance(label, ValueGroup)})
 
     @property
     def parent_axis(self):
@@ -471,9 +473,17 @@ class Axis(object):
 
     def __contains__(self, key):
         if self.is_aggregated:
-            if not isinstance(key, ValueGroup):
-                key = ValueGroup(self, key)
-        elif not np.isscalar(key):
+            try:
+                return key in self._mapping
+            except (KeyError, TypeError):
+                if not isinstance(key, ValueGroup):
+                    try:
+                        key = ValueGroup(self, key)
+                    except KeyError:
+                        pass
+        try:
+            hash(key)
+        except TypeError:
             return False
         return key in self._mapping
 
@@ -663,24 +673,30 @@ class LArray(np.ndarray):
             # convert values on aggregated axes to (value)groups on the
             # *parent* axis. The goal is to allow targeting a ValueGroup
             # label by a string. eg.
+            # bru_str = 'A21'
+            # bru = geo.group(bru_str, name='bru')
             # reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
             # we want all the following to work:
-            #   reg[geo.group('A21', name='bru')]
-            #   reg['A21']
+            #   reg[bru_str]
+            #   reg[bru]
+            #   reg['bru']
             #   reg[:] -> all lines, and not the "belgium" line. It is not
             # ideal but it is the lesser evil, because
             # reg.filter(lipro='PO1,PO2') maps to reg[:, 'PO1,PO2'] and
             # it should return the whole "aggregated" geo dimension,
             # not one line only
-            def convert(axis, values):
-                if axis.is_aggregated and not isinstance(values, ValueGroup):
-                    vg = axis.parent_axis.group(values)
+            def convert(axis, axis_key):
+                if axis.is_aggregated and not isinstance(axis_key, ValueGroup):
+                    # first try reg['bru']
+                    if axis_key in axis:
+                        return axis_key
+                    vg = axis.parent_axis.group(axis_key)
                     if vg in axis:
                         return vg
                     else:
-                        return values
+                        return axis_key
                 else:
-                    return values
+                    return axis_key
             key = tuple(convert(axis, axis_key)
                         for axis, axis_key in zip(self.axes, key))
 

@@ -194,10 +194,10 @@ class TestLArray(TestCase):
         wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,' \
               'A83,A84,A85,A91,A92,A93'
         bru = 'A21'
-        self.vla = vla
-        self.wal = wal
+        self.vla_str = vla
+        self.wal_str = wal
         # string without commas
-        self.bru = bru
+        self.bru_str = bru
         # list of strings
         self.belgium = union(vla, wal, bru)
 
@@ -380,15 +380,16 @@ class TestLArray(TestCase):
 
         # getitem on aggregated
         aggregated = la.sum(age, sex)
-        self.assertEqual(aggregated[self.vla].shape, (22, 15))
+        self.assertEqual(aggregated[self.vla_str].shape, (22, 15))
 
         # filter on aggregated
-        self.assertEqual(aggregated.filter(geo=self.vla).shape, (22, 15))
+        self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
 
     def test_sum_groups_kwargs(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
-        vla, wal, bru, belgium = self.vla, self.wal, self.bru, self.belgium
+        vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
+        belgium = self.belgium
 
         # simple
         # ------
@@ -478,7 +479,7 @@ class TestLArray(TestCase):
         # -----------------------------------
 
         # using a string
-        vla = self.vla
+        vla = self.vla_str
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -490,7 +491,7 @@ class TestLArray(TestCase):
         self.assertEqual(reg[vla]['P03'], 389049848.0)
 
         # using an anonymous ValueGroup
-        vla = self.geo.group(self.vla)
+        vla = self.geo.group(self.vla_str)
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -499,7 +500,7 @@ class TestLArray(TestCase):
         self.assertEqual(reg[vla, :].shape, (15,))
 
         # using a named ValueGroup
-        vla = self.geo.group(self.vla, name='Vlaanderen')
+        vla = self.geo.group(self.vla_str, name='Vlaanderen')
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -511,25 +512,19 @@ class TestLArray(TestCase):
         # ----------------------------------
 
         # using a string
-        vla = self.vla
+        vla = self.vla_str
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
         # using an anonymous ValueGroup
-        vla = self.geo.group(self.vla)
+        vla = self.geo.group(self.vla_str)
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
         # using a named ValueGroup
-        vla = self.geo.group(self.vla, name='Vlaanderen')
+        vla = self.geo.group(self.vla_str, name='Vlaanderen')
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
 
         # Note that reg.filter(geo=(vla,)) does NOT work. It might be a
         # little confusing for users, because reg[(vla,)] works but it is
         # normal because reg.filter(geo=(vla,)) is equivalent to:
         # reg[((vla,),)] or reg[(vla,), :]
-
-        #TODO: check that *if* the aggregated array (reg) was created using
-        # *named* groups, it can also be indexed by the group name
-        # vla = self.geo.group(self.vla, name='Vlaanderen')
-        # reg = aggregated.sum(geo=(vla, self.wal, self.bru, self.belgium))
-        # self.assertEqual(reg['Vlaanderen'].shape, (15,))
 
         # mixed VG/string slices
         child = age[':17']
@@ -598,10 +593,21 @@ class TestLArray(TestCase):
     def test_sum_several_vg_groups(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
-        fla = geo.group(self.vla, name='Flanders')
-        wal = geo.group(self.wal, name='Wallonia')
-        bru = geo.group(self.bru, name='Brussel')
+        fla = geo.group(self.vla_str, name='Flanders')
+        wal = geo.group(self.wal_str, name='Wallonia')
+        bru = geo.group(self.bru_str, name='Brussel')
         self.assertEqual(la.sum(geo=(fla, wal, bru)).shape, (116, 3, 2, 15))
+
+    def test_sum_named_vg_groups_string_indexable(self):
+        la, geo = self.larray, self.geo
+        # check that if an aggregated array (reg) is created using
+        # *named* groups, it can also be indexed by the group name
+        vla = geo.group(self.vla_str, name='Flanders')
+        wal = geo.group(self.wal_str, name='Wallonia')
+        bru = geo.group(self.bru_str, name='Brussels')
+        bel = geo.all(name='Belgium')
+        reg = la.sum(geo=(vla, wal, bru, bel))
+        self.assertEqual(reg.filter(geo='Flanders').shape, (116, 2, 15))
 
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
@@ -618,7 +624,8 @@ class TestLArray(TestCase):
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        reg = la.sum(age, sex, geo=(self.vla, self.wal, self.bru, self.belgium))
+        reg = la.sum(age, sex, geo=(self.vla_str, self.wal_str, self.bru_str,
+                                    self.belgium))
         self.assertEqual(reg.shape, (4, 15))
 
         ratio = reg.ratio(geo, lipro)
