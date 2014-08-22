@@ -227,27 +227,56 @@ def slice_to_str(key):
     return '%s:%s%s' % (start, stop, step)
 
 
-def to_label(e):
+def to_label(v):
     """
-    make it hashable
+    make it a string
     """
-    if isinstance(e, list):
-        return tuple(e)
-    elif isinstance(e, basestring):
-        return e
-    elif isinstance(e, slice):
-        return slice_to_str(e)
+    if isinstance(v, slice):
+        return slice_to_str(v)
+    elif isinstance(v, list):
+        return ','.join(str(k) for k in v)
     else:
-        print('to_label not implemented for', e)
-        raise NotImplementedError
+        return str(v)
+
+
+def to_tick(e):
+    """
+    make it hashable, and acceptable as an ndarray element
+
+    we need to either make all collections to ValueGroup (and keep VG as is) or
+    transform it to
+    string, be we can't use to_tick(e.key) because that can result in a
+    tuple of value and array(['H', ('H', 'F')]) does not work
+    """
+    if np.isscalar(e):
+        return e
+    else:
+        return to_label(e)
 
 
 def to_labels(s):
     """
-    converts a string to a list of values, usable in Axis
+    Makes a (list of) value(s) usable as the collection of labels for an
+    Axis (ie hashable). Strip strings, split them on ',' and translate
+    "range strings" to real ranges **including the end point** !
+    >>> to_labels('H , F')
+    ['H', 'F']
+
+    #XXX: we might want to return real int instead, because if we ever
+    # want to have more complex queries, such as:
+    # arr.filter(age > 10 and age < 20)
+    # this would break for string values (because '10' < '2')
+    >>> to_labels(':3')
+    ['0', '1', '2', '3']
     """
+    if isinstance(s, ValueGroup):
+        # a single ValueGroup used for all ticks of an Axis
+        raise NotImplemented("not sure what to do with it yet")
+    if isinstance(s, np.ndarray):
+        #XXX: we assume it has already been translated. Is it a safe assumption?
+        return s
     if isinstance(s, (list, tuple)):
-        return [to_label(e) for e in s]
+        return [to_tick(e) for e in s]
 
     numcolons = s.count(':')
     if numcolons:
@@ -264,44 +293,40 @@ def to_labels(s):
         return [v.strip() for v in s.split(',')]
 
 
-def to_key(s):
-    #FIXME: fix doc: it does not accept only strings
+def to_key(v):
     """
-    converts a string to a structure usable as a key (slice objects, etc.)
-    This is used, for example in .filter: arr.filter(axis=key) or in .sum:
-    arr.sum(axis=key) or arr.sum(axis=(key, key, key))
-    colons (:) are translated to slice objects, but "int strings" are not
-    converted to int.
-    leading and trailing commas are stripped.
+    Converts a value to a key usable for indexing (slice object, list of values,
+    ...). Strings are split on ',' and stripped. Colons (:) are interpreted
+    as slices. "int strings" are not converted to int.
     >>> to_key('a:c')
     slice('a', 'c', None)
-    >>> to_key('a,b,c')
+    >>> to_key('a, b,c ,')
     ['a', 'b', 'c']
     >>> to_key('a,')
     ['a']
-    >>> to_key('a')
+    >>> to_key(' a ')
     'a'
     >>> to_key(10)
     10
     """
-    if isinstance(s, tuple):
-        return list(s)
-    elif not isinstance(s, basestring):
-        return s
+    if isinstance(v, tuple):
+        return list(v)
+    elif not isinstance(v, basestring):
+        return v
 
-    numcolons = s.count(':')
+    numcolons = v.count(':')
     if numcolons:
         assert numcolons <= 2
         # can be of len 2 or 3 (if step is provided)
-        bounds = [a if a else None for a in s.split(':')]
+        bounds = [a if a else None for a in v.split(':')]
         return slice(*bounds)
     else:
-        if ',' in s:
+        if ',' in v:
             # strip extremity commas to avoid empty string keys
-            s = s.strip(',')
-            return [v.strip() for v in s.split(',')]
+            v = v.strip(',')
+            return [v.strip() for v in v.split(',')]
         else:
-            return s.strip()
+            return v.strip()
 
 
 def to_keys(s):
@@ -393,6 +418,12 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
+def isscalar(group):
+    if isinstance(group, ValueGroup):
+        group = group.key
+    return np.isscalar(group)
+
+
 class Axis(object):
     # ticks instead of labels?
     #XXX: make name and labels optional?
@@ -401,28 +432,19 @@ class Axis(object):
         labels should be an array-like (convertible to an ndarray)
         """
         self.name = name
-        if isinstance(labels, basestring):
-            labels = to_labels(labels)
+        labels = to_labels(labels)
+        assert not any(isinstance(label, ValueGroup) for label in labels)
+        #TODO: move this to to_labels????
+        print("labels", labels)
         self.labels = np.asarray(labels)
         self._mapping = {label: i for i, label in enumerate(labels)}
-        self._mapping.update({label.name: i for i, label in enumerate(labels)
-                              if isinstance(label, ValueGroup)})
-
-    @property
-    def parent_axis(self):
-        label0 = self.labels[0]
-        return label0.axis if isinstance(label0, ValueGroup) else None
-
-    @property
-    def is_aggregated(self):
-        return self.parent_axis is not None
 
     def group(self, *args, **kwargs):
         name = kwargs.pop('name', None)
         if kwargs:
             raise ValueError("invalid keyword argument(s): %s" % kwargs.keys())
         key = args[0] if len(args) == 1 else args
-        return ValueGroup(self, key, name)
+        return ValueGroup(key, name, self)
 
     def subset(self, key, name=None):
         """
@@ -434,7 +456,7 @@ class Axis(object):
                 raise ValueError("cannot subset an axis with a ValueGroup of "
                                  "an incompatible axis")
             return key
-        return ValueGroup(self, key, name)
+        return ValueGroup(key, name, self)
 
     def all(self, name=None):
         return self.subset(slice(None),
@@ -455,6 +477,21 @@ class Axis(object):
             name = self.name
         return Axis(name, self.labels[self.translate(key)])
 
+    def subaxis2(self, key, name=None):
+        """
+        key is index-based (slice and fancy indexing are supported)
+        returns an Axis for a sub-array
+        """
+        if (isinstance(key, slice) and
+                    key.start is None and key.stop is None and key.step is None):
+            return self
+        # we must NOT modify the axis name, even though this creates a new axis
+        # that is independent from the original one because the original
+        # name is probably what users will want to use to filter
+        if name is None:
+            name = self.name
+        return Axis(name, self.labels[key])
+
     def __eq__(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
                 array_equal(self.labels, other.labels))
@@ -472,20 +509,11 @@ class Axis(object):
         return self.subset(key)
 
     def __contains__(self, key):
-        if self.is_aggregated:
-            try:
-                return key in self._mapping
-            except (KeyError, TypeError):
-                if not isinstance(key, ValueGroup):
-                    try:
-                        key = ValueGroup(self, key)
-                    except KeyError:
-                        pass
         try:
-            hash(key)
+            return key in self._mapping
         except TypeError:
+            # eg if the key is not hashable
             return False
-        return key in self._mapping
 
     def translate(self, key):
         """
@@ -494,25 +522,40 @@ class Axis(object):
         """
         mapping = self._mapping
 
+        # first, try the key as-is
+        try:
+            return mapping[key]
+        except (KeyError, TypeError):
+            pass
+
+        if isinstance(key, ValueGroup):
+            # return the index of all the elements in the group
+            # the check made it fail
+            # self is the aggregated axis, key.axis is the "original" geo axis
+            key = key.key
+            # if key.axis == self:
+            #     key = key.key
+            # else:
+            #     raise ValueError("group %r cannot be used on axis %s"
+            #                      % (key, self))
+
+        # try again, before we get munge the string
+        # to support targeting a string-based aggregate with a VG
+        # reg = x.sum(geo=(vla_str, wal_str, bru_str, belgium))
+        # vla = geo.group(vla_str)
+        # reg.filter(geo=vla)
+        try:
+            return mapping[key]
+        except (KeyError, TypeError):
+            pass
+
         if isinstance(key, basestring):
             key = to_key(key)
-        elif isinstance(key, ValueGroup):
-            if self.is_aggregated:
-                # the array is an aggregate (it has ValueGroup keys in its
-                # mapping) => return the index of the group
-                return mapping[key]
-            else:
-                # the array is not an aggregate (it has normal label keys in its
-                # mapping) => return the index of all the elements in the group
-                if key.axis == self:
-                    key = key.key
-                else:
-                    raise ValueError("group %s cannot be used on axis %s"
-                                     % (key, self))
 
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
             # stop is inclusive in the input key and exclusive in the output !
+            print("map", mapping)
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
         elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
@@ -540,58 +583,44 @@ class Axis(object):
 # new Axis with a subset of values/ticks/labels: the subset of
 # ticks/labels of the ValueGroup need to correspond to its *Axis*
 # indices
+#trying a "dumb" ValueGroup
 class ValueGroup(object):
-    def __init__(self, axis, key, name=None):
+    def __init__(self, key, name=None, axis=None):
         """
         key should be either a sequence of labels, a slice with label bounds
         or a string
+        axis, is only used to check the key and later to cache the translated
+        key
         """
-        self.axis = axis
-        if isinstance(key, basestring):
-            key = to_key(key)
-        elif isinstance(key, slice):
-            pass
-        elif isinstance(key, ValueGroup):
-            pass
-        else:
-            # transform tuples and the like
-            key = list(key)
-        #TODO: valueGroups will very likely be used as "groups" so they should
-        # cache the indices of their labels
         self.key = key
-
-        # this is only meant the check the key is valid, later we might want
-        # to cache the result to check that it does not change over time
-        self.axis.translate(key)
-        if name is None:
-            if isinstance(key, slice):
-                name = slice_to_str(key)
-            elif isinstance(key, list):
-                name = ','.join(str(k) for k in key)
-            else:
-                # key can be a ValueGroup or a string
-                # assert isinstance(key, basestring)
-                name = str(key)
+        # we do NOT assign a name in all cases because that makes it
+        # impossible to know whether a name was explicitly given or computed
         self.name = name
 
+        #TODO: for performance reasons, we should cache the result. This will
+        # need to be invalidated correctly
+        # check the key is valid
+        if axis is not None:
+            axis.translate(key)
+        self.axis = axis
+
     def __hash__(self):
-        key = self.key
-        if isinstance(key, list):
-            key = tuple(key)
-        elif isinstance(key, slice):
-            key = slice_to_str(key)
-        return hash((self.axis, key))
+        # to_tick & to_key are partially opposite operations but this
+        # standardize on a single notation so that they can all target each
+        # other
+        return hash(to_tick(to_key(self.key)))
 
     def __eq__(self, other):
-        # two VG with different names but the same key compare equal
-        return (isinstance(other, ValueGroup) and self.axis == other.axis and
-                self.key == other.key)
+        # different name or axis compare equal !
+        other_key = other.key if isinstance(other, ValueGroup) else other
+        return to_key(self.key) == to_key(other_key)
 
     def __str__(self):
-        return self.name
+        return to_label(self.key) if self.name is None else self.name
 
     def __repr__(self):
-        return "%s[%s]" % (self.axis.name, self.name)
+        name = ", %r" % self.name if self.name is not None else ''
+        return "ValueGroup(%r%s)" % (self.key, name)
 
 
 class LArray(np.ndarray):
@@ -645,81 +674,44 @@ class LArray(np.ndarray):
     def axes_names(self):
         return [axis.name for axis in self.axes]
 
-    @property
-    def is_aggregated(self):
-        return any(axis.is_aggregated for axis in self.axes)
-
-    def full_key(self, key, collapse_slices=False):
+    def full_key(self, key):
+        """
+        Returns a full nd-key from a key in any of the following forms:
+        a) a single value b) a tuple of values c) an {axis_name: value} dict
+        """
         if isinstance(key, dict):
             axes_names = set(self.axes_names)
             for axis_name in key:
                 if axis_name not in axes_names:
                     raise KeyError("{} is not an axis name".format(axis_name))
-            key = tuple(key[ax.name] if ax.name in key else slice(None)
-                            for ax in self.axes)
+            key = tuple(key[axis.name] if axis.name in key else slice(None)
+                        for axis in self.axes)
         elif not isinstance(key, tuple):
             # convert scalar keys to 1D keys
             key = (key,)
-
-        # expand string keys with commas
-        #XXX: is it the right place to do this?
-        key = tuple(to_key(axis_key) for axis_key in key)
 
         # convert xD keys to ND keys
         if len(key) < self.ndim:
             key += (slice(None),) * (self.ndim - len(key))
 
-        if self.is_aggregated:
-            # convert values on aggregated axes to (value)groups on the
-            # *parent* axis. The goal is to allow targeting a ValueGroup
-            # label by a string. eg.
-            # bru_str = 'A21'
-            # bru = geo.group(bru_str, name='bru')
-            # reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-            # we want all the following to work:
-            #   reg[bru_str]
-            #   reg[bru]
-            #   reg['bru']
-            #   reg[:] -> all lines, and not the "belgium" line. It is not
-            # ideal but it is the lesser evil, because
-            # reg.filter(lipro='PO1,PO2') maps to reg[:, 'PO1,PO2'] and
-            # it should return the whole "aggregated" geo dimension,
-            # not one line only
-            def convert(axis, axis_key):
-                if axis.is_aggregated and not isinstance(axis_key, ValueGroup):
-                    # first try reg['bru']
-                    if axis_key in axis:
-                        return axis_key
-                    vg = axis.parent_axis.group(axis_key)
-                    if vg in axis:
-                        return vg
-                    else:
-                        return axis_key
-                else:
-                    return axis_key
-            key = tuple(convert(axis, axis_key)
-                        for axis, axis_key in zip(self.axes, key))
-
         return key
 
+    #XXX: we only need axes length, so we might want to move this out of the
+    # class
     def cross_key(self, key, collapse_slices=False):
-        # translate labels to integers
-        translated_key = tuple(axis.translate(axis_key)
-                               for axis, axis_key in zip(self.axes, key))
-
         # isinstance(ndarray, collections.Sequence) is False but it
         # behaves like one
         sequence = (tuple, list, np.ndarray)
         if collapse_slices:
-            translated_key = [range_to_slice(axis_key)
-                              if isinstance(axis_key, sequence)
-                              else axis_key
-                              for axis_key in translated_key]
+            key = [range_to_slice(axis_key)
+                   if isinstance(axis_key, sequence)
+                   else axis_key
+                   for axis_key in key]
 
         # count number of indexing arrays (ie non scalar/slices) in tuple
         num_ix_arrays = sum(isinstance(axis_key, sequence)
-                            for axis_key in translated_key)
-        num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
+                            for axis_key in key)
+        num_scalars = sum(np.isscalar(axis_key) for axis_key in key)
 
         # handle advanced indexing with more than one indexing array:
         # basic indexing (only integer and slices) and advanced indexing
@@ -732,7 +724,7 @@ class LArray(np.ndarray):
             #    dropping them like we would like so we will need to drop
             #    them later ourselves (via reshape)
             noscalar_key = [[axis_key] if np.isscalar(axis_key) else axis_key
-                            for axis_key in translated_key]
+                            for axis_key in key]
 
             # 2) expand slices to lists (ranges)
             #TODO: cache the range in the axis?
@@ -743,30 +735,39 @@ class LArray(np.ndarray):
             # np.ix_ computes the cross product of all lists
             return np.ix_(*listkey)
         else:
-            return translated_key
+            return key
+
+    def translated_key(self, key):
+        return tuple(axis.translate(axis_key)
+                     for axis, axis_key in zip(self.axes, key))
 
     def __getitem__(self, key, collapse_slices=False):
+        print("getitem")
+        print("> key", key)
         key = self.full_key(key)
 
-        def killaxis(axis, key):
-            if isinstance(key, ValueGroup):
-                return axis.is_aggregated or np.isscalar(key.key)
-            else:
-                return np.isscalar(key)
+        translated_key = self.translated_key(key)
 
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, key)
-                if not killaxis(axis, axis_key)]
+        axes = [axis.subaxis2(axis_key)
+                for axis, axis_key in zip(self.axes, translated_key)
+                if not np.isscalar(axis_key)]
 
         data = np.asarray(self)
-        data = data[self.cross_key(key, collapse_slices)]
+
+        # translate labels to integers
+        raw_key = self.cross_key(translated_key, collapse_slices)
+        data = data[raw_key]
         # drop length 1 dimensions created by scalar keys
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
 
     def set(self, value, **kwargs):
         data = np.asarray(self)
-        cross_key = self.cross_key(self.full_key(kwargs), collapse_slices=True)
+        # expand string keys with commas
+        #XXX: is it the right place to do this?
+        key = tuple(to_key(axis_key) for axis_key in self.full_key(kwargs))
+        translated_key = self.translated_key(key)
+        cross_key = self.cross_key(translated_key, collapse_slices=True)
         data[cross_key] = value
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
@@ -887,7 +888,9 @@ class LArray(np.ndarray):
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for axis, groups in items:
+            print("groups", groups)
             groups = to_keys(groups)
+            print("to_keys groups", groups)
 
             axis, axis_idx = res.get_axis(axis, idx=True)
             res_axes = res.axes[:]
@@ -910,24 +913,11 @@ class LArray(np.ndarray):
                 # it is easier to kill the axis after the fact
                 killaxis = True
             else:
-                # make sure all groups are ValueGroup and use that as the axis
-                # ticks
-                #TODO: assert that if isinstance(g, ValueGroup):
-                # g.axis == axis (no conversion needed)
-                # or g.axis == axis.parent_axis (we are grouping groups)
-                groups = tuple(axis.group(g)
-                               if (not isinstance(g, ValueGroup) or
-                                   g.axis != axis)
-                               else g
-                               for g in groups)
-                assert all(vg.axis == axis for vg in groups)
-
-                # Make sure each (value)group is not a single-value group.
-                # Groups with a list of one value are fine, we just want to
-                # avoid the axis being discarded by the .filter() operation.
-                groups = [ValueGroup(g.axis, [g.key], g.name)
-                          if np.isscalar(g.key) else g
-                          for g in groups]
+                # convert all value groups to strings
+                # groups = tuple(str(g) if isinstance(g, ValueGroup) else g
+                #                for g in groups)
+                # grx = tuple(g.key if isinstance(g, ValueGroup) else g
+                #             for g in groups)
 
                 # We do NOT modify the axis name (eg append "_agg" or "*") even
                 # though this creates a new axis that is independent from the
@@ -947,9 +937,15 @@ class LArray(np.ndarray):
                 # is discarded too early (in filter instead of in the
                 # aggregate func)
                 #XXX: shouldn't this be handled in to_keys?
+                print("group1", group)
+                print("scalar?", isscalar(group))
                 group = [group] if np.isscalar(group) else group
+                print("group2", group)
 
                 arr = res.filter(collapse=True, **{axis.name: group})
+                print(res.shape)
+                print(arr.shape)
+                print(res_data[group_idx].shape)
                 arr = np.asarray(arr)
                 op(arr, axis=axis_idx, out=res_data[group_idx])
                 del arr
@@ -1349,125 +1345,101 @@ def zeros(axes):
     return LArray(np.zeros(s), axes)  
 
 
-def ArrayAssign(larray, larray_new, **kwargs):
-    axes_names = set(larray.axes_names)
-    for kwarg in kwargs:
-        if kwarg not in axes_names:
-            raise KeyError("{} is not an axis name".format(kwarg))
-    full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
-                     for ax in larray.axes)
-    def fullkey(larray, key, collapse_slices=False):
-        '''
-        based in __getitem__
-        '''
-        data = np.asarray(larray)
-
-        # convert scalar keys to 1D keys
-        if not isinstance(key, tuple):
-            key = (key,)
-
-        # expand string keys with commas
-        #XXX: is it the right place to do this?
-        key = tuple(to_key(axis_key) for axis_key in key)
-
-        # convert xD keys to ND keys
-        if len(key) < larray.ndim:
-            key = key + (slice(None),) * (larray.ndim - len(key))
-
-        if larray.is_aggregated:
-            # convert values on aggregated axes to (value)groups on the
-            # *parent* axis. The goal is to allow targeting a ValueGroup
-            # label by a string. eg.
-            # reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-            # we want all the following to work:
-            #   reg[geo.group('A21', name='bru')]
-            #   reg['A21']
-            #   reg[:] -> all lines, and not the "belgium" line. It is not
-            # ideal but it is the lesser evil, because
-            # reg.filter(lipro='PO1,PO2') maps to reg[:, 'PO1,PO2'] and
-            # it should return the whole "aggregated" geo dimension,
-            # not one line only
-            def convert(axis, values):
-                if (axis.is_aggregated and not isinstance(values, ValueGroup)):
-                    vg = axis.parent_axis.group(values)
-                    if vg in axis:
-                        return vg
-                    else:
-                        return values
-                else:
-                    return values
-            key = tuple(convert(axis, axis_key)
-                        for axis, axis_key in zip(larray.axes, key))
-
-        # translate labels to integers
-        translated_key = tuple(axis.translate(axis_key)
-                               for axis, axis_key in zip(larray.axes, key))
-
-        # isinstance(ndarray, collections.Sequence) is False but it
-        # behaves like one
-        sequence = (tuple, list, np.ndarray)
-        if collapse_slices:
-            translated_key = [range_to_slice(axis_key)
-                                  if isinstance(axis_key, sequence)
-                                  else axis_key
-                              for axis_key in translated_key]
-
-        # count number of indexing arrays (ie non scalar/slices) in tuple
-        num_ix_arrays = sum(isinstance(axis_key, sequence)
-                            for axis_key in translated_key)
-        num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
-
-        # handle advanced indexing with more than one indexing array:
-        # basic indexing (only integer and slices) and advanced indexing
-        # with only one indexing array are handled fine by numpy
-        if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
-            # np.ix_ wants only lists so:
-
-            # 1) kill scalar-key axes (if any) by indexing them (we cannot
-            #    simply transform the scalars into lists of 1 element because
-            #    in that case those dimensions are not dropped by
-            #    ndarray.__getitem__)
-            keyandaxes = zip(translated_key, larray.axes)
-            if any(np.isscalar(axis_key) for axis_key in translated_key):
-                killscalarskey = tuple(axis_key
-                                           if np.isscalar(axis_key)
-                                           else slice(None)
-                                       for axis_key in translated_key)
-                data = data[killscalarskey]
-                noscalar_keyandaxes = [(axis_key, axis)
-                                        for axis_key, axis in keyandaxes
-                                        if not np.isscalar(axis_key)]
-            else:
-                noscalar_keyandaxes = keyandaxes
-
-            # 2) expand slices to lists (ranges)
-            #TODO: cache the range in the axis?
-            listkey = tuple(np.arange(*axis_key.indices(len(axis)))
-                            if isinstance(axis_key, slice) else axis_key
-                            for axis_key, axis in noscalar_keyandaxes)
-            # np.ix_ computes the cross product of all lists
-            full_key = np.ix_(*listkey)
-        else:
-            full_key = translated_key
-
-        return data, full_key
-        
-    data, full_key = fullkey(larray, full_idx)
-    #DIFFERENT SHAPE BUT SAME SIZE
-    if (data[full_key].shape != larray_new.shape) and \
-            (data[full_key].size == larray_new.size):
-        data[full_key] = np.asarray(larray_new).reshape(data[full_key].shape) 
-        return
-            
-    #DIFFERENT SHAPE BUT ONLY ONE OR MORE MISSING DIMENSION(S)
-    if len(data[full_key].shape) != len(larray_new.shape):
-        bshape = broadcastshape(larray_new.shape, data[full_key].shape)
-        if bshape is not None:
-            data[full_key] = np.asarray(larray_new).reshape(bshape) 
-        return   
-            
-    # SAME DIMENSIONS
-    data[full_key] = np.asarray(larray_new)
+# def ArrayAssign(larray, larray_new, **kwargs):
+#     axes_names = set(larray.axes_names)
+#     for kwarg in kwargs:
+#         if kwarg not in axes_names:
+#             raise KeyError("{} is not an axis name".format(kwarg))
+#     full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
+#                      for ax in larray.axes)
+#
+#     def fullkey(larray, key, collapse_slices=False):
+#         """
+#         based in __getitem__
+#         """
+#         data = np.asarray(larray)
+#
+#         # convert scalar keys to 1D keys
+#         if not isinstance(key, tuple):
+#             key = (key,)
+#
+#         # expand string keys with commas
+#         #XXX: is it the right place to do this?
+#         key = tuple(to_key(axis_key) for axis_key in key)
+#
+#         # convert xD keys to ND keys
+#         if len(key) < larray.ndim:
+#             key = key + (slice(None),) * (larray.ndim - len(key))
+#
+#         # translate labels to integers
+#         translated_key = tuple(axis.translate(axis_key)
+#                                for axis, axis_key in zip(larray.axes, key))
+#
+#         # isinstance(ndarray, collections.Sequence) is False but it
+#         # behaves like one
+#         sequence = (tuple, list, np.ndarray)
+#         if collapse_slices:
+#             translated_key = [range_to_slice(axis_key)
+#                                   if isinstance(axis_key, sequence)
+#                                   else axis_key
+#                               for axis_key in translated_key]
+#
+#         # count number of indexing arrays (ie non scalar/slices) in tuple
+#         num_ix_arrays = sum(isinstance(axis_key, sequence)
+#                             for axis_key in translated_key)
+#         num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
+#
+#         # handle advanced indexing with more than one indexing array:
+#         # basic indexing (only integer and slices) and advanced indexing
+#         # with only one indexing array are handled fine by numpy
+#         if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
+#             # np.ix_ wants only lists so:
+#
+#             # 1) kill scalar-key axes (if any) by indexing them (we cannot
+#             #    simply transform the scalars into lists of 1 element because
+#             #    in that case those dimensions are not dropped by
+#             #    ndarray.__getitem__)
+#             keyandaxes = zip(translated_key, larray.axes)
+#             if any(np.isscalar(axis_key) for axis_key in translated_key):
+#                 killscalarskey = tuple(axis_key
+#                                        if np.isscalar(axis_key)
+#                                        else slice(None)
+#                                        for axis_key in translated_key)
+#                 data = data[killscalarskey]
+#                 noscalar_keyandaxes = [(axis_key, axis)
+#                                        for axis_key, axis in keyandaxes
+#                                        if not np.isscalar(axis_key)]
+#             else:
+#                 noscalar_keyandaxes = keyandaxes
+#
+#             # 2) expand slices to lists (ranges)
+#             #TODO: cache the range in the axis?
+#             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
+#                             if isinstance(axis_key, slice) else axis_key
+#                             for axis_key, axis in noscalar_keyandaxes)
+#             # np.ix_ computes the cross product of all lists
+#             full_key = np.ix_(*listkey)
+#         else:
+#             full_key = translated_key
+#
+#         return data, full_key
+#
+#     data, full_key = fullkey(larray, full_idx)
+#     #DIFFERENT SHAPE BUT SAME SIZE
+#     if (data[full_key].shape != larray_new.shape) and \
+#             (data[full_key].size == larray_new.size):
+#         data[full_key] = np.asarray(larray_new).reshape(data[full_key].shape)
+#         return
+#
+#     #DIFFERENT SHAPE BUT ONLY ONE OR MORE MISSING DIMENSION(S)
+#     if len(data[full_key].shape) != len(larray_new.shape):
+#         bshape = broadcastshape(larray_new.shape, data[full_key].shape)
+#         if bshape is not None:
+#             data[full_key] = np.asarray(larray_new).reshape(bshape)
+#         return
+#
+#     # SAME DIMENSIONS
+#     data[full_key] = np.asarray(larray_new)
 
 
 def broadcastshape(oshape, nshape):
