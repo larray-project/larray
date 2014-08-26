@@ -1130,6 +1130,9 @@ class LArray(np.ndarray):
                          'nan')
         f = open(filename, "w")
         f.write(res)
+        
+    def plot(self):
+        self.as_dataframe().plot()
 
 
 def parse(s):
@@ -1217,19 +1220,25 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     A1,A0,H,BE,0,0,0
 
     """    
+    dtype = {}        
+    # read the first line to determine how many axes (time excluded) we have
+    with open(filepath, 'rb') as f:
+        reader = csv.reader(f, delimiter=sep)
+        header = [parse(cell) for cell in reader.next()]
+        axes_names = [cell for cell in header if isinstance(cell, basestring)]
 
-    if len(index_col) == 0 and nb_index == 0:
-        # read the first line to determine how many axes (time excluded) we have
-        with open(filepath, 'rb') as f:
-            reader = csv.reader(f, delimiter=sep)
-            header = [parse(cell) for cell in reader.next()]
-            axes_names = [cell for cell in header if isinstance(cell, basestring)]
-            nb_index = len(axes_names)
+    if len(index_col) == 0 and nb_index == 0:        
+        nb_index = len(axes_names)
         
     if len(index_col) > 0:
-        df = pd.read_csv(filepath, index_col=index_col, sep=sep)
+        nb_index = len(index_col)
     else:
-        df = pd.read_csv(filepath, index_col=range(nb_index), sep=sep)
+        index_col=range(nb_index)
+    
+    #force str for dimensions
+    for axis in axes_names[:nb_index]:
+        dtype[axis] = np.str        
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
         
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
