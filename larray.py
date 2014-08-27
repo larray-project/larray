@@ -418,12 +418,6 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
-def isscalar(group):
-    if isinstance(group, ValueGroup):
-        group = group.key
-    return np.isscalar(group)
-
-
 class Axis(object):
     # ticks instead of labels?
     #XXX: make name and labels optional?
@@ -435,16 +429,17 @@ class Axis(object):
         labels = to_labels(labels)
         assert not any(isinstance(label, ValueGroup) for label in labels)
         #TODO: move this to to_labels????
-        print("labels", labels)
         self.labels = np.asarray(labels)
         self._mapping = {label: i for i, label in enumerate(labels)}
 
+    #XXX: not sure I should offer an *args version. We should probably kill
+    # this one and rename subset to group
     def group(self, *args, **kwargs):
         name = kwargs.pop('name', None)
         if kwargs:
             raise ValueError("invalid keyword argument(s): %s" % kwargs.keys())
         key = args[0] if len(args) == 1 else args
-        return ValueGroup(key, name, self)
+        return self.subset(key, name)
 
     def subset(self, key, name=None):
         """
@@ -510,10 +505,17 @@ class Axis(object):
 
     def __contains__(self, key):
         try:
-            return key in self._mapping
+            return to_key(key) in self._mapping
         except TypeError:
             # eg if the key is not hashable
             return False
+
+    def isscalar(self, key):
+        if key in self:
+            return True
+        if isinstance(key, ValueGroup):
+            key = key.key
+        return np.isscalar(to_key(key))
 
     def translate(self, key):
         """
@@ -539,7 +541,7 @@ class Axis(object):
             #     raise ValueError("group %r cannot be used on axis %s"
             #                      % (key, self))
 
-        # try again, before we get munge the string
+        # try again, before we munge the string
         # to support targeting a string-based aggregate with a VG
         # reg = x.sum(geo=(vla_str, wal_str, bru_str, belgium))
         # vla = geo.group(vla_str)
@@ -555,7 +557,6 @@ class Axis(object):
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
             # stop is inclusive in the input key and exclusive in the output !
-            print("map", mapping)
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
         elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
@@ -613,7 +614,9 @@ class ValueGroup(object):
     def __eq__(self, other):
         # different name or axis compare equal !
         other_key = other.key if isinstance(other, ValueGroup) else other
-        return to_key(self.key) == to_key(other_key)
+        #XXX: use to_tick too? (and create a "normalize_key" function?)
+        #can I produce an example of case where to_tick helps?
+        return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
     def __str__(self):
         return to_label(self.key) if self.name is None else self.name
@@ -742,8 +745,6 @@ class LArray(np.ndarray):
                      for axis, axis_key in zip(self.axes, key))
 
     def __getitem__(self, key, collapse_slices=False):
-        print("getitem")
-        print("> key", key)
         key = self.full_key(key)
 
         translated_key = self.translated_key(key)
@@ -837,6 +838,11 @@ class LArray(np.ndarray):
     def filter(self, collapse=False, **kwargs):
         """
         filters the array along the axes given as keyword arguments.
+        The *collapse* argument determines whether consecutive ranges should
+        be collapsed to slices, which is more efficient and returns a view
+        (and not a copy) if possible (if all ranges are consecutive).
+        Only use this argument if you do not intent to modify the resulting
+        array, or if you know what you are doing.
         It is similar to np.take but works with several axes at once.
         """
         return self.__getitem__(kwargs, collapse)
@@ -860,7 +866,9 @@ class LArray(np.ndarray):
 
     def get_axis_idx(self, axis):
         """
-        axis can be an index, a name or an Axis object
+        returns the index of an axis
+
+        axis can be a name or an Axis object (or an index)
         if the Axis object is from another LArray, get_axis_idx will return the
         index of the local axis with the same name, whether it is compatible
         (has the same ticks) or not.
@@ -888,9 +896,7 @@ class LArray(np.ndarray):
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for axis, groups in items:
-            print("groups", groups)
             groups = to_keys(groups)
-            print("to_keys groups", groups)
 
             axis, axis_idx = res.get_axis(axis, idx=True)
             res_axes = res.axes[:]
@@ -938,8 +944,11 @@ class LArray(np.ndarray):
                 # aggregate func)
                 #XXX: shouldn't this be handled in to_keys?
                 print("group1", group)
-                print("scalar?", isscalar(group))
-                group = [group] if np.isscalar(group) else group
+                print("scalar?", axis.isscalar(group), np.isscalar(group))
+                # when group is a ValueGroup with a string with comas,
+                # it is kinda tricky to know if it is "scalar" or not,
+                # we have to check against the
+                group = [group] if axis.isscalar(group) else group
                 print("group2", group)
 
                 arr = res.filter(collapse=True, **{axis.name: group})

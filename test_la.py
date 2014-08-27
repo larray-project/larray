@@ -143,6 +143,85 @@ class TestAxis(TestCase):
         self.assertEqual(group.key, slice(None))
         self.assertEqual(group.axis, age)
 
+    def test_isscalar(self):
+        # normal Axis
+        age = Axis('age', ':10')
+
+        age2 = age.group('2')
+        age2bis = age.group('2,')
+        age2ter = age.group(['2'])
+        age2qua = '2,'
+
+        age20 = ValueGroup('20')
+        age20bis = ValueGroup('20,')
+        age20ter = ValueGroup(['20'])
+        age20qua = '20,'
+
+        #TODO: move assert to another test
+        self.assertEqual(age2bis, age2ter)
+
+        age247 = age.group('2,4,7')
+        age247bis = age.group(['2', '4', '7'])
+        age359 = age.group(['3', '5', '9'])
+        age468 = age.group('4,6,7')
+
+        # not part of the axis, but should work anyway
+        self.assertTrue(age.isscalar(5))
+        self.assertTrue(age.isscalar('5'))
+        self.assertTrue(age.isscalar(age2))
+        self.assertTrue(age.isscalar(age20))
+
+        #XXX: tricky: should it be a scalar (because it IS "almost") in the agg
+        # self.assertFalse(age.isscalar(age2bis))
+        # self.assertFalse(age.isscalar(age2ter))
+        self.assertFalse(age.isscalar(age2qua))
+        self.assertFalse(age.isscalar(age20bis))
+        self.assertFalse(age.isscalar(age20ter))
+        self.assertFalse(age.isscalar(age20qua))
+        self.assertFalse(age.isscalar(['3', '5', '9']))
+        self.assertFalse(age.isscalar('3,5,9'))
+        self.assertFalse(age.isscalar('3:9'))
+        self.assertFalse(age.isscalar(age247))
+        self.assertFalse(age.isscalar(age247bis))
+        self.assertFalse(age.isscalar(age359))
+        self.assertFalse(age.isscalar(age468))
+
+        # aggregated Axis
+        agg = Axis("agg", (age359, age2, age468, '2,6'))
+        # not par of the axis, but it is important that it works anyway
+        self.assertTrue(agg.isscalar(5))
+        self.assertTrue(agg.isscalar('5'))
+        self.assertTrue(agg.isscalar(age2))
+        self.assertTrue(agg.isscalar(age20))
+        self.assertTrue(agg.isscalar(age359))
+        self.assertTrue(agg.isscalar('3,5,9'))
+        self.assertTrue(agg.isscalar(['3', '5', '9']))
+        self.assertTrue(agg.isscalar(age468))
+        self.assertTrue(agg.isscalar('4,6,8'))
+        self.assertTrue(agg.isscalar(['4', '6', '8']))
+        self.assertTrue(agg.isscalar(age468))
+        self.assertTrue(agg.isscalar('2,6'))
+        self.assertTrue(agg.isscalar(['2', '6']))
+        self.assertTrue(agg.isscalar(age.group('2,6')))
+        self.assertTrue(agg.isscalar(age.group(['2', '6'])))
+
+        self.assertFalse(agg.isscalar(age2bis))
+        self.assertFalse(agg.isscalar(age2ter))
+        self.assertFalse(agg.isscalar(age20bis))
+        self.assertFalse(agg.isscalar(age20ter))
+        self.assertFalse(agg.isscalar(age20qua))
+        self.assertFalse(agg.isscalar(age247))
+        self.assertFalse(agg.isscalar(age247bis))
+        self.assertFalse(agg.isscalar('2,7'))
+        self.assertFalse(agg.isscalar(['2', '7']))
+        self.assertFalse(agg.isscalar(age.group('2,6')))
+        self.assertFalse(agg.isscalar(age.group(['2', '7'])))
+
+    def test_contains(self):
+        #TODO
+        pass
+        # simple
+        # agg axis
 
 class TestValueGroup(TestCase):
     def setUp(self):
