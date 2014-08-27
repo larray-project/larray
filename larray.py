@@ -989,11 +989,14 @@ class LArray(np.ndarray):
         return LArray(np.zeros_like(np.asarray(self)), axes=self.axes[:])
     
     def info(self):
-        axes_labels = [' '.join(repr(label) for label in axis.labels)
+        def shorten(l):
+            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
+        axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
                        for axis in self.axes]
         lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
                  for axis, labels in zip(self.axes, axes_labels)]
-        return ("%s\n" % str(self.shape)) + '\n'.join(lines)
+        shape = " x ".join(str(s) for s in self.shape)
+        return '\n'.join([shape] + lines)
 
     def ratio(self, *axes):
         if not axes:
