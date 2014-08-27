@@ -385,7 +385,7 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
-class Axis:
+class Axis(object):
     # ticks instead of labels?
     #XXX: make name and labels optional?
     def __init__(self, name, labels):
