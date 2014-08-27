@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 # -*- coding: utf8 -*-
 """
 Matrix class
@@ -201,9 +200,9 @@ import tables
 from utils import (prod, table2str, table2csv, table2iode, timed, unique,
                    array_equal)
 
-
+#TODO: return a generator, not a list
 def srange(*args):
-    return map(str, range(*args))
+    return list(map(str, range(*args)))
 
 
 def slice_to_str(key):
@@ -233,7 +232,7 @@ def to_label(e):
     """
     if isinstance(e, list):
         return tuple(e)
-    elif isinstance(e, basestring):
+    elif isinstance(e, str):
         return e
     elif isinstance(e, slice):
         return slice_to_str(e)
@@ -286,7 +285,7 @@ def to_key(s):
     """
     if isinstance(s, tuple):
         return list(s)
-    elif not isinstance(s, basestring):
+    elif not isinstance(s, str):
         return s
 
     numcolons = s.count(':')
@@ -332,7 +331,7 @@ def to_keys(s):
     >>> to_keys((('P01',), ('P02',), ':'))
     (['P01'], ['P02'], slice(None, None, None))
     """
-    if isinstance(s, basestring):
+    if isinstance(s, str):
         if ';' in s:
             return tuple([to_key(group) for group in s.split(';')])
         else:
@@ -356,13 +355,6 @@ def union(*args):
         return list(unique(chain(*(to_labels(arg) for arg in args))))
     else:
         return []
-
-
-def strip_chars(s, chars):
-    if isinstance(s, unicode):
-        return s.translate({ord(c): u'' for c in chars})
-    else:
-        return s.translate(None, ''.join(chars))
 
 
 def range_to_slice(seq):
@@ -393,7 +385,7 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
-class Axis(object):
+class Axis:
     # ticks instead of labels?
     #XXX: make name and labels optional?
     def __init__(self, name, labels):
@@ -401,7 +393,7 @@ class Axis(object):
         labels should be an array-like (convertible to an ndarray)
         """
         self.name = name
-        if isinstance(labels, basestring):
+        if isinstance(labels, str):
             labels = to_labels(labels)
         self.labels = np.asarray(labels)
         self._mapping = {label: i for i, label in enumerate(labels)}
@@ -420,7 +412,7 @@ class Axis(object):
     def group(self, *args, **kwargs):
         name = kwargs.pop('name', None)
         if kwargs:
-            raise ValueError("invalid keyword argument(s): %s" % kwargs.keys())
+            raise ValueError("invalid keyword argument(s): %s" % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
         return ValueGroup(self, key, name)
 
@@ -487,6 +479,9 @@ class Axis(object):
             return False
         return key in self._mapping
 
+    def __hash__(self):
+        return id(self)
+
     def translate(self, key):
         """
         translates a label key to its numerical index counterpart
@@ -494,7 +489,7 @@ class Axis(object):
         """
         mapping = self._mapping
 
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             key = to_key(key)
         elif isinstance(key, ValueGroup):
             if self.is_aggregated:
@@ -547,7 +542,7 @@ class ValueGroup(object):
         or a string
         """
         self.axis = axis
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             key = to_key(key)
         elif isinstance(key, slice):
             pass
@@ -867,7 +862,7 @@ class LArray(np.ndarray):
         name_or_idx = axis.name if isinstance(axis, Axis) else axis
         axis_names = [a.name for a in self.axes]
         return axis_names.index(name_or_idx) \
-            if isinstance(name_or_idx, basestring) \
+            if isinstance(name_or_idx, str) \
             else name_or_idx
 
     def get_axis(self, axis, idx=False):
@@ -895,7 +890,7 @@ class LArray(np.ndarray):
 
             if not isinstance(groups, tuple):
                 # groups is in fact a single group
-                assert isinstance(groups, (basestring, slice, list,
+                assert isinstance(groups, (str, slice, list,
                                            ValueGroup)), type(groups)
                 if isinstance(groups, list):
                     assert len(groups) > 0
@@ -965,7 +960,7 @@ class LArray(np.ndarray):
                              "time using keyword arguments is not supported "
                              "for '%s' (because it is not a commutative"
                              "operation and keyword arguments are *not* "
-                             "ordered in Python)" % op.func_name)
+                             "ordered in Python)" % op.__name__)
 
         # Sort kwargs by axis name so that we have consistent results
         # between runs because otherwise rounding errors could lead to
@@ -978,7 +973,7 @@ class LArray(np.ndarray):
             return self._axis_aggregate(op)
 
         def isaxis(a):
-            return isinstance(a, (int, basestring, Axis))
+            return isinstance(a, (int, str, Axis))
 
         res = self
         # group consecutive same-type (group vs axis aggregates) operations
@@ -1039,7 +1034,7 @@ class LArray(np.ndarray):
         # It would look like: la.append(lipro, la.sum(lipro), label='sum')
         if len(kwargs) > 1:
             raise ValueError("Cannot append to several axes at the same time")
-        axis_name, values = kwargs.items()[0]
+        axis_name, values = list(kwargs.items())[0]
         axis, axis_idx = self.get_axis(axis_name, idx=True)
         shape = self.shape
         values = np.asarray(values)
@@ -1225,7 +1220,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     with open(filepath, 'rb') as f:
         reader = csv.reader(f, delimiter=sep)
         header = [parse(cell) for cell in reader.next()]
-        axes_names = [cell for cell in header if isinstance(cell, basestring)]
+        axes_names = [cell for cell in header if isinstance(cell, str)]
 
     if len(index_col) == 0 and nb_index == 0:        
         nb_index = len(axes_names)
@@ -1233,12 +1228,12 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     if len(index_col) > 0:
         nb_index = len(index_col)
     else:
-        index_col=range(nb_index)
-    
+        index_col = list(range(nb_index))
+
     #force str for dimensions
     for axis in axes_names[:nb_index]:
-        dtype[axis] = np.str        
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
+        dtype[axis] = np.str
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)        df = pd.read_csv(filepath, index_col=list(range(nb_index)), sep=sep)
         
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
@@ -1277,7 +1272,7 @@ def SaveMatrices(h5_filename):
         h5file = tables.openFile(h5_filename, mode="w", title="IodeMatrix")
         matnode = h5file.createGroup("/", "matrices", "IodeMatrices")
         d = sys._getframe(1).f_locals
-        for k, v in d.iteritems():
+        for k, v in d.items():
             if isinstance(v, LArray):
                 # print "storing %s %s" % (k, v.info())
                 disk_array = h5file.createArray(matnode, k, v.matdata, k)
@@ -1349,7 +1344,7 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
     if len(index_col) > 0:
         df = pd.read_excel(filepath, name, index_col=index_col)
     else:
-        df = pd.read_excel(filepath, name, index_col=range(nb_index))
+        df = pd.read_excel(filepath, name, index_col=list(range(nb_index)))
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
 
 
