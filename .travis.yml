@@ -32,9 +32,10 @@ install:
     # Setup environment
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3} numpy pandas
     - source activate travisci
+    - pwd
 
 script:
-    - cd ~; python -m unittest -v test_la
+    - python -m unittest -v test_la
 
 notifications:
     on_success: "change"
