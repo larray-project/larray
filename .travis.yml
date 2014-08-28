@@ -1,0 +1,42 @@
+# References
+# - https://gist.github.com/dan-blanchard/7045057
+# - https://github.com/numba/numba/blob/master/.travis.yml
+language: python
+
+python:
+    - "2.7"
+    - "3.3"
+    - "3.4"
+
+branches:
+    only:
+        - master
+        #- devel
+        #- release
+        #- devpatches
+
+before_install:
+    # Install Miniconda
+    - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.3.0-Linux-x86_64.sh -O miniconda.sh; fi
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b
+    - export PATH=/home/travis/miniconda/bin:$PATH
+    - conda update --yes conda
+
+    # The next couple lines fix a crash with multiprocessing on Travis
+    # and are not specific to using Miniconda
+    - sudo rm -rf /dev/shm
+    - sudo ln -s /run/shm /dev/shm
+
+install:
+    # Setup environment
+    - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3} numpy pandas
+    - source activate travisci
+
+script:
+    - cd ~
+    - python -m unittest -v test_la
+
+notifications:
+    on_success: "change"
+    on_failure: "always"
