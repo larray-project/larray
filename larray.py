@@ -1236,8 +1236,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     #force str for dimensions
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)        df = pd.read_csv(filepath, index_col=list(range(nb_index)), sep=sep)
-        
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
