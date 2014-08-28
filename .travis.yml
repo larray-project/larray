@@ -30,7 +30,8 @@ before_install:
 
 install:
     # Setup environment
-    - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3} numpy pandas
+    # dateutil numpy pytz setuptools six
+    - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3} numpy pandas tables
     - source activate travisci
     - pwd
 
