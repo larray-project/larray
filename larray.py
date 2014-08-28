@@ -198,7 +198,7 @@ import pandas as pd
 import tables
 
 from utils import (prod, table2str, table2csv, table2iode, timed, unique,
-                   array_equal)
+                   array_equal, csv_open)
 
 #TODO: return a generator, not a list
 def srange(*args):
@@ -1220,9 +1220,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     """    
     dtype = {}        
     # read the first line to determine how many axes (time excluded) we have
-    with open(filepath, 'rb') as f:
+    with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
-        header = [parse(cell) for cell in reader.next()]
+        header = [parse(cell) for cell in next(reader)]
         axes_names = [cell for cell in header if isinstance(cell, str)]
 
     if len(index_col) == 0 and nb_index == 0:        

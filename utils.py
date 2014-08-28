@@ -15,6 +15,15 @@ from functools import reduce
 
 #import config
 
+
+def csv_open(filename, mode='r'):
+    assert 'b' not in mode and 't' not in mode
+    if sys.version < '3':
+        return open(filename, mode + 'b')
+    else:
+        return open(filename, mode, newline='', encoding='utf8')
+
+
 #import win32clipboard
  
 def GetClipboard():
