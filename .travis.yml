@@ -34,8 +34,7 @@ install:
     - source activate travisci
 
 script:
-    - cd ~
-    - python -m unittest -v test_la
+    - cd ~; python -m unittest -v test_la
 
 notifications:
     on_success: "change"
