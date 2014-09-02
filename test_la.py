@@ -595,6 +595,8 @@ class TestLArray(TestCase):
         bel = geo.all(name='Belgium')
         reg = la.sum(geo=(vla, wal, bru, bel))
         self.assertEqual(reg.filter(geo='Flanders').shape, (116, 2, 15))
+        self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape,
+                         (2, 116, 2, 15))
 
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
