@@ -230,10 +230,14 @@ def to_label(v):
     """
     make it a string
     """
+    #XXX: return the same string for list and tuples?
     if isinstance(v, slice):
         return slice_to_str(v)
     elif isinstance(v, list):
-        return ','.join(str(k) for k in v)
+        if len(v) == 1:
+            return str(v) + ','
+        else:
+            return ','.join(str(k) for k in v)
     else:
         return str(v)
 
@@ -241,11 +245,16 @@ def to_label(v):
 def to_tick(e):
     """
     make it hashable, and acceptable as an ndarray element
+    scalar & VG -> not modif
+    slice -> 'start:stop'
+    list -> 'v1,v2,v3'
+    tuple -> '(v1, v2, v3)'
+    other -> str(v)
     """
     # we need to either make all collections to ValueGroup (and keep VG as is)
     # or transform it to string, be we can't use to_tick(e.key) because that
     # can result in a tuple of value and array(['H', ('H', 'F')]) does not work
-    if np.isscalar(e):
+    if np.isscalar(e) or isinstance(e, ValueGroup):
         return e
     else:
         return to_label(e)
@@ -269,11 +278,13 @@ def to_labels(s):
     if isinstance(s, ValueGroup):
         # a single ValueGroup used for all ticks of an Axis
         raise NotImplemented("not sure what to do with it yet")
-    if isinstance(s, np.ndarray):
+    elif isinstance(s, np.ndarray):
         #XXX: we assume it has already been translated. Is it a safe assumption?
         return s
-    if isinstance(s, (list, tuple)):
+    elif isinstance(s, (list, tuple)):
         return [to_tick(e) for e in s]
+    elif sys.version >= '3' and isinstance(s, range):
+        return list(s)
 
     numcolons = s.count(':')
     if numcolons:
@@ -417,10 +428,20 @@ class Axis(object):
         """
         self.name = name
         labels = to_labels(labels)
-        assert not any(isinstance(label, ValueGroup) for label in labels)
+
         #TODO: move this to to_labels????
+        # we convert to an ndarray to save memory (for scalar ticks, for
+        # ValueGroup ticks, it does not make a difference since a list of VG
+        # and an ndarray of VG are both arrays of pointers)
         self.labels = np.asarray(labels)
+
         self._mapping = {label: i for i, label in enumerate(labels)}
+        # we have no choice but to do that!
+        # otherwise we could not make geo['Brussels'] work efficiently
+        # (we could have to traverse the whole mapping checking for each name,
+        # which is not an option)
+        self._mapping.update({label.name: i for i, label in enumerate(labels)
+                              if isinstance(label, ValueGroup)})
 
     #XXX: not sure I should offer an *args version. We should probably kill
     # this one and rename subset to group
@@ -495,11 +516,7 @@ class Axis(object):
         return self.subset(key)
 
     def __contains__(self, key):
-        try:
-            return to_key(key) in self._mapping
-        except TypeError:
-            # eg if the key is not hashable
-            return False
+        return to_tick(key) in self._mapping
 
     def __hash__(self):
         return id(self)
@@ -594,14 +611,15 @@ class ValueGroup(object):
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this
         # standardize on a single notation so that they can all target each
-        # other
+        # other. eg, this removes spaces in "list strings", instead of
+        # hashing them directly
+        #XXX: but we might want to include that normalization feature in
+        # to_tick directly, instead of using to_key explicitly here
         return hash(to_tick(to_key(self.key)))
 
     def __eq__(self, other):
         # different name or axis compare equal !
         other_key = other.key if isinstance(other, ValueGroup) else other
-        #XXX: use to_tick too? (and create a "normalize_key" function?)
-        #can I produce an example of case where to_tick helps?
         return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
     def __str__(self):
@@ -931,14 +949,9 @@ class LArray(np.ndarray):
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in filter instead of in the
                 # aggregate func)
-                print("group", group)
                 group = [group] if group in axis else group
-                print("group2", group)
 
                 arr = res.filter(collapse=True, **{axis.name: group})
-                print(res.shape)
-                print(arr.shape)
-                print(res_data[group_idx].shape)
                 arr = np.asarray(arr)
                 op(arr, axis=axis_idx, out=res_data[group_idx])
                 del arr

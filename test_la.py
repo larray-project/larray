@@ -872,7 +872,6 @@ class TestLArray(TestCase):
         sex, lipro = la.axes
 
         all_lipro = lipro[:]
-        print(all_lipro, type(all_lipro), all_lipro.key)
         tail = la.sum(lipro=(all_lipro,))
         la = la.extend(lipro, tail)
         self.assertEqual(la.shape, (2, 16))
