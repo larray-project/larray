@@ -6,13 +6,23 @@ import sys
 import time
 import operator
 import itertools
-from itertools import izip, product
+from itertools import product
 from textwrap import wrap
 from collections import defaultdict, deque
 
 import numpy as np
+from functools import reduce
 
 #import config
+
+
+def csv_open(filename, mode='r'):
+    assert 'b' not in mode and 't' not in mode
+    if sys.version < '3':
+        return open(filename, mode + 'b')
+    else:
+        return open(filename, mode, newline='', encoding='utf8')
+
 
 #import win32clipboard
  
@@ -80,7 +90,7 @@ def gettime(func, *args, **kwargs):
 
 def timed(func, *args, **kwargs):
     elapsed, res = gettime(func, *args, **kwargs)
-    print "done (%s elapsed)." % time2str(elapsed)
+    print("done (%s elapsed)." % time2str(elapsed))
     return res
 
 
@@ -354,13 +364,6 @@ def loop_wh_progress(func, sequence):
         last_percent_done = percent_done
 
 
-def count_occurences(seq):
-    counter = defaultdict(int)
-    for e in seq:
-        counter[e] += 1
-    return counter.items()
-
-
 def skip_comment_cells(lines):
     notacomment = lambda v: not v.startswith('#')
     for line in lines:
@@ -420,24 +423,24 @@ def table2str(table, missing, fullinfo=False):
             row.extend([''] * (numcol - len(row)))
     formatted = [[format_value(value, missing, fullinfo) for value in row]
                   for row in table]
-    colwidths = [get_col_width(formatted, i) for i in xrange(numcol)]
+    colwidths = [get_col_width(formatted, i) for i in range(numcol)]
 
     total_width = sum(colwidths)
     sep_width = (len(colwidths) - 1) * 3
     if total_width + sep_width > 80:
-        minwidths = [get_min_width(formatted, i) for i in xrange(numcol)]
+        minwidths = [get_min_width(formatted, i) for i in range(numcol)]
         available_width = 80.0 - sep_width - sum(minwidths)
         ratio = available_width / total_width
         colwidths = [minw + max(int(width * ratio), 0)
-                     for minw, width in izip(minwidths, colwidths)]
+                     for minw, width in zip(minwidths, colwidths)]
 
     lines = []
     for row in formatted:
         wrapped_row = [wrap(value, width)
-                       for value, width in izip(row, colwidths)]
+                       for value, width in zip(row, colwidths)]
         maxlines = max(len(value) for value in wrapped_row)
         newlines = [[] for _ in range(maxlines)]
-        for value, width in izip(wrapped_row, colwidths):
+        for value, width in zip(wrapped_row, colwidths):
             for i in range(maxlines):
                 chunk = value[i] if i < len(value) else ''
                 newlines[i].append(chunk.rjust(width))
@@ -577,7 +580,7 @@ def unique_duplicate(iterable):
 # adapted from pseudo code of itertools.tee
 def split_columns_as_iterators(iterable):
     iterator = iter(iterable)
-    header = iterator.next()
+    header = next(iterator)
     numcolumns = len(header)
     # deque (used as a FIFO queue) for each column (so that each iterator does
     # not need to advance at the same speed. However in that case the memory
@@ -601,7 +604,7 @@ def split_columns_as_iterators(iterable):
 def merge_dicts(*args, **kwargs):
     result = args[0].copy()
     for arg in args[1:] + (kwargs,):
-        for k, v in arg.iteritems():
+        for k, v in arg.items():
             if isinstance(v, dict) and k in result:
                 v = merge_dicts(result[k], v)
             result[k] = v
@@ -619,7 +622,7 @@ def merge_items(*args):
 
 
 def invert_dict(d):
-    return dict((v, k) for k, v in d.iteritems())
+    return dict((v, k) for k, v in d.items())
 
 
 def countlines(filepath):
@@ -674,7 +677,7 @@ def validate_dict(d, target, context=''):
     # in case we have a * in there, we should only make sure that required keys
     # are present, otherwise we have to also check if provided keys are valid
     validate_keys(d, required, optional, context, extra_allowed=anykey)
-    for k, v in d.iteritems():
+    for k, v in d.items():
         if k in required:
             section_def = target['#' + k]
         elif k in optional:
@@ -738,7 +741,7 @@ def fields_yaml_to_type(dict_fields_list):
     Transform a list of (one item) dict with str types to a list of tuple with
     Python types
     '''
-    return fields_str_to_type([d.items()[0] for d in dict_fields_list])
+    return fields_str_to_type([list(d.items())[0] for d in dict_fields_list])
 
 
 # exceptions handling
@@ -757,7 +760,7 @@ class ExplainTypeError(type):
     def __call__(cls, *args, **kwargs):
         try:
             return type.__call__(cls, *args, **kwargs)
-        except TypeError, e:
+        except TypeError as e:
             if hasattr(cls, 'func_name'):
                 funcname = cls.func_name
             else:
