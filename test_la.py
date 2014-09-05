@@ -161,17 +161,18 @@ class TestAxis(TestCase):
         age247 = age.group('2,4,7')
         age247bis = age.group(['2', '4', '7'])
         age359 = age.group(['3', '5', '9'])
-        age468 = age.group('4,6,7')
+        age468 = age.group('4,6,8', name='even')
 
         self.assertFalse(5 in age)
         self.assertTrue('5' in age)
-        self.assertTrue(age2 in age)
-        self.assertTrue(age20 in age)
 
-        #XXX: tricky: should it be a scalar (because it IS "almost") in the agg
-        # self.assertFalse(age.isscalar(age2bis))
-        # self.assertFalse(age.isscalar(age2ter))
+        self.assertTrue(age2 in age)
+        # only single ticks are "contained" in the axis, not "collections"
+        self.assertFalse(age2bis in age)
+        self.assertFalse(age2ter in age)
         self.assertFalse(age2qua in age)
+
+        self.assertFalse(age20 in age)
         self.assertFalse(age20bis in age)
         self.assertFalse(age20ter in age)
         self.assertFalse(age20qua in age)
@@ -184,34 +185,46 @@ class TestAxis(TestCase):
         self.assertFalse(age468 in age)
 
         # aggregated Axis
-        agg = Axis("agg", (age359, age2, age468, '2,6'))
-        # not par of the axis, but it is important that it works anyway
-        self.assertTrue(5 in agg)
-        self.assertTrue('5' in agg)
+        agg = Axis("agg", (age2, age247, age359, age468,
+                           '2,6', ['3', '5', '7']))
         self.assertTrue(age2 in agg)
-        self.assertTrue(age20 in agg)
+        self.assertFalse(age2bis in agg)
+        self.assertFalse(age2ter in agg)
+        self.assertFalse(age2qua in age)
+
+        self.assertTrue(age247 in agg)
+        self.assertTrue(age247bis in agg)
+        self.assertTrue('2,4,7' in agg)
+        self.assertTrue(['2', '4', '7'] in agg)
+
         self.assertTrue(age359 in agg)
         self.assertTrue('3,5,9' in agg)
         self.assertTrue(['3', '5', '9'] in agg)
+
         self.assertTrue(age468 in agg)
         self.assertTrue('4,6,8' in agg)
         self.assertTrue(['4', '6', '8'] in agg)
-        self.assertTrue(age468 in agg)
+        self.assertTrue('even' in agg)
+
         self.assertTrue('2,6' in agg)
         self.assertTrue(['2', '6'] in agg)
         self.assertTrue(age.group('2,6') in agg)
         self.assertTrue(age.group(['2', '6']) in agg)
 
-        self.assertFalse(age2bis in agg)
-        self.assertFalse(age2ter in agg)
+        self.assertTrue('3,5,7' in agg)
+        self.assertTrue(['3', '5', '7'] in agg)
+        self.assertTrue(age.group('3,5,7') in agg)
+        self.assertTrue(age.group(['3', '5', '7']) in agg)
+
+        self.assertFalse(5 in agg)
+        self.assertFalse('5' in agg)
+        self.assertFalse(age20 in agg)
         self.assertFalse(age20bis in agg)
         self.assertFalse(age20ter in agg)
         self.assertFalse(age20qua in agg)
-        self.assertFalse(age247 in agg)
-        self.assertFalse(age247bis in agg)
         self.assertFalse('2,7' in agg)
         self.assertFalse(['2', '7'] in agg)
-        self.assertFalse(age.group('2,6') in agg)
+        self.assertFalse(age.group('2,7') in agg)
         self.assertFalse(age.group(['2', '7']) in agg)
 
 
@@ -229,6 +242,7 @@ class TestValueGroup(TestCase):
 
         self.single_value = ValueGroup('P03')
         self.list = ValueGroup('P01,P03,P07')
+        self.list_named = ValueGroup('P01,P03,P07', "P137")
 
     def test_init(self):
         self.assertEqual(self.slice_full.name, "full")
@@ -269,11 +283,14 @@ class TestValueGroup(TestCase):
     def test_hash(self):
         d = {self.slice_both: 1,
              self.single_value: 2,
-             self.list: 3}
+             self.list_named: 3}
         # target a ValueGroup with an equivalent ValueGroup
         self.assertEqual(d.get(self.slice_both), 1)
         self.assertEqual(d.get(self.single_value), 2)
         self.assertEqual(d.get(self.list), 3)
+        self.assertEqual(d.get(self.list_named), 3)
+        # this cannot and will never work!
+        # self.assertEqual(d.get("P137"), 3)
 
         # target a ValueGroup with an equivalent key
         self.assertEqual(d.get('1:5'), 1)
@@ -752,7 +769,7 @@ class TestLArray(TestCase):
         reg = la.sum(geo=(vla, wal, bru, bel))
         self.assertEqual(reg.filter(geo='Flanders').shape, (116, 2, 15))
         self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape,
-                         (2, 116, 2, 15))
+                         (116, 2, 2, 15))
 
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
