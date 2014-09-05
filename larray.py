@@ -241,12 +241,10 @@ def to_label(v):
 def to_tick(e):
     """
     make it hashable, and acceptable as an ndarray element
-
-    we need to either make all collections to ValueGroup (and keep VG as is) or
-    transform it to
-    string, be we can't use to_tick(e.key) because that can result in a
-    tuple of value and array(['H', ('H', 'F')]) does not work
     """
+    # we need to either make all collections to ValueGroup (and keep VG as is)
+    # or transform it to string, be we can't use to_tick(e.key) because that
+    # can result in a tuple of value and array(['H', ('H', 'F')]) does not work
     if np.isscalar(e):
         return e
     else:
@@ -503,13 +501,6 @@ class Axis(object):
             # eg if the key is not hashable
             return False
 
-    def isscalar(self, key):
-        if key in self:
-            return True
-        if isinstance(key, ValueGroup):
-            key = key.key
-        return np.isscalar(to_key(key))
-
     def __hash__(self):
         return id(self)
 
@@ -697,6 +688,11 @@ class LArray(np.ndarray):
     #XXX: we only need axes length, so we might want to move this out of the
     # class
     def cross_key(self, key, collapse_slices=False):
+        """
+        :param key: a complete (contains all dimensions) index-based key
+        :param collapse_slices: convert contiguous ranges to slices
+        :return: a key for indexing the cross product
+        """
         # isinstance(ndarray, collections.Sequence) is False but it
         # behaves like one
         sequence = (tuple, list, np.ndarray)
@@ -707,9 +703,10 @@ class LArray(np.ndarray):
                    for axis_key in key]
 
         # count number of indexing arrays (ie non scalar/slices) in tuple
-        num_ix_arrays = sum(isinstance(axis_key, sequence)
-                            for axis_key in key)
+        num_ix_arrays = sum(isinstance(axis_key, sequence) for axis_key in key)
         num_scalars = sum(np.isscalar(axis_key) for axis_key in key)
+        num_slices = sum(isinstance(axis_key, slice) for axis_key in key)
+        assert len(key) == num_ix_arrays + num_scalars + num_slices
 
         # handle advanced indexing with more than one indexing array:
         # basic indexing (only integer and slices) and advanced indexing
@@ -740,19 +737,16 @@ class LArray(np.ndarray):
                      for axis, axis_key in zip(self.axes, key))
 
     def __getitem__(self, key, collapse_slices=False):
-        key = self.full_key(key)
+        data = np.asarray(self)
 
-        translated_key = self.translated_key(key)
+        translated_key = self.translated_key(self.full_key(key))
 
         axes = [axis.subaxis2(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
 
-        data = np.asarray(self)
-
-        # translate labels to integers
-        raw_key = self.cross_key(translated_key, collapse_slices)
-        data = data[raw_key]
+        cross_key = self.cross_key(translated_key, collapse_slices)
+        data = data[cross_key]
         # drop length 1 dimensions created by scalar keys
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
@@ -934,16 +928,11 @@ class LArray(np.ndarray):
             for i, group in enumerate(groups):
                 group_idx[axis_idx] = i
 
-                # we need only lists not single labels, otherwise the dimension
-                # is discarded too early (in filter instead of in the
+                # we need only lists of ticks, not single ticks, otherwise the
+                # dimension is discarded too early (in filter instead of in the
                 # aggregate func)
-                #XXX: shouldn't this be handled in to_keys?
-                print("group1", group)
-                print("scalar?", axis.isscalar(group), np.isscalar(group))
-                # when group is a ValueGroup with a string with comas,
-                # it is kinda tricky to know if it is "scalar" or not,
-                # we have to check against the
-                group = [group] if axis.isscalar(group) else group
+                print("group", group)
+                group = [group] if group in axis else group
                 print("group2", group)
 
                 arr = res.filter(collapse=True, **{axis.name: group})
