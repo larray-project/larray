@@ -1225,22 +1225,22 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     A1,A0,H,BE,0,0,0
 
     """    
-    dtype = {}        
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
         header = [parse(cell) for cell in next(reader)]
         axes_names = [cell for cell in header if isinstance(cell, str)]
 
-    if len(index_col) == 0 and nb_index == 0:        
+    if len(index_col) == 0 and nb_index == 0:
         nb_index = len(axes_names)
-        
+
     if len(index_col) > 0:
         nb_index = len(index_col)
     else:
         index_col = list(range(nb_index))
 
-    #force str for dimensions
+    # force str for dimensions
+    dtype = {}
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
@@ -1363,84 +1363,6 @@ def zeros(axes):
 
 
 # def ArrayAssign(larray, larray_new, **kwargs):
-#     axes_names = set(larray.axes_names)
-#     for kwarg in kwargs:
-#         if kwarg not in axes_names:
-#             raise KeyError("{} is not an axis name".format(kwarg))
-#     full_idx = tuple(kwargs[ax.name] if ax.name in kwargs else slice(None)
-#                      for ax in larray.axes)
-#
-#     def fullkey(larray, key, collapse_slices=False):
-#         """
-#         based in __getitem__
-#         """
-#         data = np.asarray(larray)
-#
-#         # convert scalar keys to 1D keys
-#         if not isinstance(key, tuple):
-#             key = (key,)
-#
-#         # expand string keys with commas
-#         #XXX: is it the right place to do this?
-#         key = tuple(to_key(axis_key) for axis_key in key)
-#
-#         # convert xD keys to ND keys
-#         if len(key) < larray.ndim:
-#             key = key + (slice(None),) * (larray.ndim - len(key))
-#
-#         # translate labels to integers
-#         translated_key = tuple(axis.translate(axis_key)
-#                                for axis, axis_key in zip(larray.axes, key))
-#
-#         # isinstance(ndarray, collections.Sequence) is False but it
-#         # behaves like one
-#         sequence = (tuple, list, np.ndarray)
-#         if collapse_slices:
-#             translated_key = [range_to_slice(axis_key)
-#                                   if isinstance(axis_key, sequence)
-#                                   else axis_key
-#                               for axis_key in translated_key]
-#
-#         # count number of indexing arrays (ie non scalar/slices) in tuple
-#         num_ix_arrays = sum(isinstance(axis_key, sequence)
-#                             for axis_key in translated_key)
-#         num_scalars = sum(np.isscalar(axis_key) for axis_key in translated_key)
-#
-#         # handle advanced indexing with more than one indexing array:
-#         # basic indexing (only integer and slices) and advanced indexing
-#         # with only one indexing array are handled fine by numpy
-#         if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
-#             # np.ix_ wants only lists so:
-#
-#             # 1) kill scalar-key axes (if any) by indexing them (we cannot
-#             #    simply transform the scalars into lists of 1 element because
-#             #    in that case those dimensions are not dropped by
-#             #    ndarray.__getitem__)
-#             keyandaxes = zip(translated_key, larray.axes)
-#             if any(np.isscalar(axis_key) for axis_key in translated_key):
-#                 killscalarskey = tuple(axis_key
-#                                        if np.isscalar(axis_key)
-#                                        else slice(None)
-#                                        for axis_key in translated_key)
-#                 data = data[killscalarskey]
-#                 noscalar_keyandaxes = [(axis_key, axis)
-#                                        for axis_key, axis in keyandaxes
-#                                        if not np.isscalar(axis_key)]
-#             else:
-#                 noscalar_keyandaxes = keyandaxes
-#
-#             # 2) expand slices to lists (ranges)
-#             #TODO: cache the range in the axis?
-#             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
-#                             if isinstance(axis_key, slice) else axis_key
-#                             for axis_key, axis in noscalar_keyandaxes)
-#             # np.ix_ computes the cross product of all lists
-#             full_key = np.ix_(*listkey)
-#         else:
-#             full_key = translated_key
-#
-#         return data, full_key
-#
 #     data, full_key = fullkey(larray, full_idx)
 #     #DIFFERENT SHAPE BUT SAME SIZE
 #     if (data[full_key].shape != larray_new.shape) and \
