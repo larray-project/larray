@@ -649,14 +649,17 @@ class LArray(np.ndarray):
         obj.axes = axes
         return obj
     
-    def as_dataframe(self):
+    def as_dataframe(self, transpose=True):
         axes_labels = [a.labels.tolist() for a in self.axes[:-1]]
         axes_names = [a.name for a in self.axes[:-1]]
         axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
         columns = self.axes[-1].labels.tolist()
-        full_index=[i for i in product(*axes_labels)] 
+        full_index=[i for i in product(*axes_labels)]
         index = pd.MultiIndex.from_tuples(full_index, names=axes_names)
         df = pd.DataFrame(self.reshape(len(full_index), len(columns)), index, columns)
+        if not transpose:
+            return df.stack()
+
         return df
 
     #noinspection PyAttributeOutsideInit
@@ -1247,11 +1250,11 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
-def save_csv(l_array, filepath, sep=',', na_rep=''):
+def save_csv(l_array, filepath, sep=',', na_rep='', transpose=True):
     """
     saves an LArray to a csv file
     """    
-    df = l_array.as_dataframe()
+    df = l_array.as_dataframe(transpose)
     df.to_csv(filepath, sep=sep, na_rep=na_rep)
 
 

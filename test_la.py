@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
-                    srange, larray_equal, read_csv)
+                    srange, larray_equal, read_csv, save_csv)
 from utils import array_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -897,6 +897,14 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+
+    def test_savecsv(self):
+        la = read_csv('test.csv')
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
+        self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+        save_csv(la, 'out.csv', transpose=False)
 
     def test_plot(self):
         pass
