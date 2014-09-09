@@ -649,18 +649,20 @@ class LArray(np.ndarray):
         obj.axes = axes
         return obj
     
-    def as_dataframe(self, transpose=True):
+    def as_dataframe(self):
         axes_labels = [a.labels.tolist() for a in self.axes[:-1]]
         axes_names = [a.name for a in self.axes[:-1]]
         axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
         columns = self.axes[-1].labels.tolist()
-        full_index=[i for i in product(*axes_labels)]
+        full_index = list(product(*axes_labels))
         index = pd.MultiIndex.from_tuples(full_index, names=axes_names)
-        df = pd.DataFrame(self.reshape(len(full_index), len(columns)), index, columns)
-        if not transpose:
-            return df.stack()
+        return pd.DataFrame(self.reshape(len(full_index), len(columns)),
+                            index, columns)
 
-        return df
+    def as_series(self):
+        index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
+                                           names=self.axes_names)
+        return pd.Series(np.asarray(self).reshape(self.size), index)
 
     #noinspection PyAttributeOutsideInit
     def __array_finalize__(self, obj):
@@ -1253,9 +1255,13 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
 def save_csv(l_array, filepath, sep=',', na_rep='', transpose=True):
     """
     saves an LArray to a csv file
-    """    
-    df = l_array.as_dataframe(transpose)
-    df.to_csv(filepath, sep=sep, na_rep=na_rep)
+    """
+    if transpose:
+        df = l_array.as_dataframe()
+        df.to_csv(filepath, sep=sep, na_rep=na_rep)
+    else:
+        s = l_array.as_series()
+        s.to_csv(filepath, sep=sep, na_rep=na_rep, header=True)
 
 
 # HDF5 functions

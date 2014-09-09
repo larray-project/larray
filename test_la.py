@@ -904,7 +904,17 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+
+        save_csv(la, 'out.csv')
+        result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
+                  '1,0,F,1,3722,3395,3347\n',
+                  '1,0,F,2,338,316,323\n']
+        self.assertEqual(open('out.csv').readlines()[:3], result)
+
         save_csv(la, 'out.csv', transpose=False)
+        result = ['arr,age,sex,nat,time,0\n', '1,0,F,1,2007,3722\n',
+                  '1,0,F,1,2010,3395\n']
+        self.assertEqual(open('out.csv').readlines()[:3], result)
 
     def test_plot(self):
         pass
