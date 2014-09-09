@@ -648,15 +648,14 @@ class LArray(np.ndarray):
             axes = list(axes)
         obj.axes = axes
         return obj
-    
+
     def as_dataframe(self):
-        axes_labels = [a.labels.tolist() for a in self.axes[:-1]]
-        axes_names = [a.name for a in self.axes[:-1]]
-        axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
-        columns = self.axes[-1].labels.tolist()
-        full_index = list(product(*axes_labels))
-        index = pd.MultiIndex.from_tuples(full_index, names=axes_names)
-        return pd.DataFrame(self.reshape(len(full_index), len(columns)),
+        axes_labels = self.axes_labels[:-1]
+        axes_names = self.axes_names[:-1]
+        axes_names[-1] += '\\' + self.axes[-1].name
+        columns = self.axes[-1].labels
+        index = pd.MultiIndex.from_product(axes_labels, names=axes_names)
+        return pd.DataFrame(self.reshape(len(index), len(columns)),
                             index, columns)
 
     def as_series(self):
@@ -681,6 +680,10 @@ class LArray(np.ndarray):
             self.axes = None
             #self.row_totals = None
             #self.col_totals = None
+
+    @property
+    def axes_labels(self):
+        return [axis.labels for axis in self.axes]
 
     @property
     def axes_names(self):
