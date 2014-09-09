@@ -1148,25 +1148,9 @@ class LArray(np.ndarray):
 
     def to_excel(self, filepath, sheet_name):
         """
-        saves an LArray to the sheet name in the file: filepath
+        write LArray to an excel file in the specified sheet
         """
         self.df.to_excel(filepath, sheet_name)
-
-    def ToCsv(self, filename):
-        res = table2csv(self.as_table(), ',', 'nan')
-        f = open(filename, "w")
-        f.write(res)
-
-    def Collapse(self, filename):
-        res = table2csv(self.as_table(), ',', 'nan', self.dimcount)
-        f = open(filename, "w")
-        f.write(res)
-
-    def ToAv(self, filename):
-        res = table2iode(self.as_table(), self.samplestr, self.dimcount, '_',
-                         'nan')
-        f = open(filename, "w")
-        f.write(res)
 
     def plot(self):
         self.df.plot()
