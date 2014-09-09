@@ -191,6 +191,7 @@ Matrix class
 from itertools import product, chain, groupby
 import string
 import sys
+import csv
 
 import numpy as np
 import pandas as pd
@@ -649,7 +650,8 @@ class LArray(np.ndarray):
         obj.axes = axes
         return obj
 
-    def as_dataframe(self):
+    @property
+    def df(self):
         axes_names = self.axes_names[:-1]
         axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
         columns = self.axes[-1].labels
@@ -658,7 +660,8 @@ class LArray(np.ndarray):
         return pd.DataFrame(self.reshape(len(index), len(columns)),
                             index, columns)
 
-    def as_series(self):
+    @property
+    def series(self):
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
                                            names=self.axes_names)
         return pd.Series(np.asarray(self).reshape(self.size), index)
@@ -1128,6 +1131,27 @@ class LArray(np.ndarray):
     #XXX: is this necessary?
     reorder = transpose
 
+    def to_csv(self, filepath, sep=',', na_rep='', transpose=True):
+        """
+        write LArray to a csv file
+        """
+        if transpose:
+            self.df.to_csv(filepath, sep=sep, na_rep=na_rep)
+        else:
+            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True)
+
+    def to_hdf(self, filepath, key):
+        """
+        write LArray to an HDF file at the specified name
+        """
+        self.df.to_hdf(filepath, key)
+
+    def to_excel(self, filepath, sheet_name):
+        """
+        saves an LArray to the sheet name in the file: filepath
+        """
+        self.df.to_excel(filepath, sheet_name)
+
     def ToCsv(self, filename):
         res = table2csv(self.as_table(), ',', 'nan')
         f = open(filename, "w")
@@ -1143,9 +1167,9 @@ class LArray(np.ndarray):
                          'nan')
         f = open(filename, "w")
         f.write(res)
-        
+
     def plot(self):
-        self.as_dataframe().plot()
+        self.df.plot()
 
 
 def parse(s):
@@ -1215,9 +1239,7 @@ def df_aslarray(df, na=np.nan):
         return None
 
 
-# CSV functions
-def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):  
-    import csv
+def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1232,7 +1254,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     A1,BI,F,FO,0,0,0
     A1,A0,H,BE,0,0,0
 
-    """    
+    """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
@@ -1255,118 +1277,25 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
-def save_csv(l_array, filepath, sep=',', na_rep='', transpose=True):
+def read_hdf(filepath, key):
     """
-    saves an LArray to a csv file
+    read an Larray from a h5 file with the specified name
     """
-    if transpose:
-        df = l_array.as_dataframe()
-        df.to_csv(filepath, sep=sep, na_rep=na_rep)
-    else:
-        s = l_array.as_series()
-        s.to_csv(filepath, sep=sep, na_rep=na_rep, header=True)
-
-
-# HDF5 functions
-def save_h5(l_array, name, filepath):
-    """
-    save a l_array to a h5-store using the specified name
-    """
-    df = l_array.as_dataframe()
-    store = pd.HDFStore(filepath)
-    store.put(name, df)
-    store.close()    
-    
-
-def read_h5(name, filepath):
-    """
-    read a l_array from a h5-store with the specified name
-    """
-    store = pd.HDFStore(filepath)
-    df = store.get(name)
-    store.close()
-    return df_aslarray(df)
-
-
-def SaveMatrices(h5_filename):
-    try:
-        h5file = tables.openFile(h5_filename, mode="w", title="IodeMatrix")
-        matnode = h5file.createGroup("/", "matrices", "IodeMatrices")
-        d = sys._getframe(1).f_locals
-        for k, v in d.items():
-            if isinstance(v, LArray):
-                # print "storing %s %s" % (k, v.info())
-                disk_array = h5file.createArray(matnode, k, v.matdata, k)
-                attrs = disk_array.attrs
-                attrs._dimensions = np.array(v.dimnames)
-                attrs._sep = v.sep
-                attrs._sample = np.array(v.samplestr)
-                attrs._t = np.array(v.samplelist)
-                attrs.shape = np.array(v.matrixshape())
-                for i, dimlist in enumerate(v.dimlist):
-                    setattr(attrs, '%s' %v.dimnames[i], np.array(v.dimlist[i]))
-    finally:
-        h5file.close()
-
-
-def ListMatrices(h5_filename):
-    try:
-        h5file = tables.openFile(h5_filename, mode="r")
-        h5root = h5file.root
-        if 'matrices' not in h5root:
-            raise Exception('could not find any matrices in the input data file')
-        matnames = [mat.name for mat in h5root.matrices]
-    finally:
-        h5file.close()
-        return matnames
-
-
-def LoadMatrix(h5_filename, matname):
-    try:
-        h5file = tables.openFile(h5_filename, mode="r")
-        h5root = h5file.root
-        if 'matrices' not in h5root:
-            #raise Exception('could not find any matrices in the input data file')
-            # print 'could not find any matrices in the input data file'
-            return None
-        if matname not in [mat.name for mat in h5root.matrices]:
-            #raise Exception('could not find %s in the input data file' % matname)
-            # print 'could not find %s in the input data file' % matname
-            return None
-        mat = getattr(h5root.matrices, matname)
-        dimnames = list(mat.attrs._dimensions)
-        dimlist = [list(mat.getAttr('%s' % name)) for name in dimnames]
-        axes = [Axis(name, labels) for name, labels in zip(dimnames, dimlist)]
-        axes.append(Axis('time', list(mat.attrs._t)))
-        data = timed(mat.read)
-        return LArray(data, axes)
-    finally:
-        h5file.close()
-
-
-# EXCEL functions
-def save_excel(l_array, name, filepath):
-    """
-    saves an LArray to the sheet name in the file: filepath
-    """
-    df = l_array.as_dataframe()
-    writer = pd.ExcelWriter(filepath)
-    df.to_excel(writer, name)
-    writer.save()
+    return df_aslarray(pd.read_hdf(filepath, key))
 
 
 def read_excel(name, filepath, nb_index=0, index_col=[]):
     """
     reads excel file from sheet name and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
-    or 
-        index_col : list of columns for the index (ex. [0, 1, 2, 3])    
-    """    
+    or
+        index_col : list of columns for the index (ex. [0, 1, 2, 3])
+    """
     if len(index_col) > 0:
         df = pd.read_excel(filepath, name, index_col=index_col)
     else:
         df = pd.read_excel(filepath, name, index_col=list(range(nb_index)))
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))     
+    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))
 
 
 def zeros(axes):

@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
-                    srange, larray_equal, read_csv, save_csv)
+                    srange, larray_equal, read_csv)
 from utils import array_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -898,20 +898,20 @@ class TestLArray(TestCase):
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
 
-    def test_savecsv(self):
+    def test_to_csv(self):
         la = read_csv('test.csv')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
 
-        save_csv(la, 'out.csv')
+        la.to_csv('out.csv')
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
                   '1,0,F,1,3722,3395,3347\n',
                   '1,0,F,2,338,316,323\n']
         self.assertEqual(open('out.csv').readlines()[:3], result)
 
-        save_csv(la, 'out.csv', transpose=False)
+        la.to_csv('out.csv', transpose=False)
         result = ['arr,age,sex,nat,time,0\n', '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
         self.assertEqual(open('out.csv').readlines()[:3], result)
