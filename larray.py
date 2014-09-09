@@ -650,11 +650,11 @@ class LArray(np.ndarray):
         return obj
 
     def as_dataframe(self):
-        axes_labels = self.axes_labels[:-1]
         axes_names = self.axes_names[:-1]
-        axes_names[-1] += '\\' + self.axes[-1].name
+        axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
         columns = self.axes[-1].labels
-        index = pd.MultiIndex.from_product(axes_labels, names=axes_names)
+        index = pd.MultiIndex.from_product(self.axes_labels[:-1],
+                                           names=axes_names)
         return pd.DataFrame(self.reshape(len(index), len(columns)),
                             index, columns)
 
