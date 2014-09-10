@@ -1,9 +1,10 @@
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
-                    srange, larray_equal, read_csv)
+                    srange, larray_equal, read_csv, df_aslarray)
 from utils import array_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -916,6 +917,28 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+
+    def test_df_aslarray(self):
+        dt = [('age', int), ('sex\\time', 'a1'),
+              ('2007', int), ('2010', int), ('2013', int)]
+        data = np.array([
+            (0, 'F', 3722, 3395, 3347),
+            (0, 'H', 338, 316, 323),
+            (1, 'F', 2878, 2791, 2822),
+            (1, 'H', 1121, 1037, 976),
+            (2, 'F', 4073, 4161, 4429),
+            (2, 'H', 1561, 1463, 1467),
+            (3, 'F', 3507, 3741, 3366),
+            (3, 'H', 2052, 2052, 2118),
+        ], dtype=dt)
+        df = pd.DataFrame(data)
+        df.set_index(['age', 'sex\\time'], inplace=True)
+
+        la = df_aslarray(df)
+        self.assertEqual(la.ndim, 3)
+        self.assertEqual(la.shape, (4, 2, 3))
+        self.assertEqual(la.axes_names, ['age', 'sex', 'time'])
+        self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
 
     def test_to_csv(self):
         la = read_csv('test5d.csv')
