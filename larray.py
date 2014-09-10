@@ -1200,7 +1200,7 @@ def df_aslarray(df, na=np.nan):
 
     if isinstance(df.index, pd.core.index.MultiIndex):
         #FIXME: why is this needed???
-        sdf = df.reindex(list(product(*axes_labels)), df.columns.values)
+        sdf = df.reindex(list(product(*axes_labels[:-1])), df.columns.values)
         if na != np.nan:
             sdf.fillna(na, inplace=True)
         # all dimensions except one (in the columns) are lumped together
