@@ -905,14 +905,14 @@ class TestLArray(TestCase):
         self.assertEqual(la.axes_names, ['age', 'time'])
         self._assert_equal_raw(la[0, :], [3722, 3395, 3347])
 
-        la = read_csv('test.csv')
+        la = read_csv('test5d.csv')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
 
     def test_to_csv(self):
-        la = read_csv('test.csv')
+        la = read_csv('test5d.csv')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
