@@ -919,7 +919,7 @@ class TestLArray(TestCase):
         self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
 
     def test_df_aslarray(self):
-        dt = [('age', int), ('sex\\time', 'a1'),
+        dt = [('age', int), ('sex\\time', 'U1'),
               ('2007', int), ('2010', int), ('2013', int)]
         data = np.array([
             (0, 'F', 3722, 3395, 3347),
