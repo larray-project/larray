@@ -389,13 +389,14 @@ class TestLArray(TestCase):
         self.assertEqual(filtered.shape, (3, 44, 2, 15))
         self._assert_equal_raw(filtered, raw[[1, 5, 9]])
 
-    def test_setitem(self):
+    def test_set(self):
         raw = self.array.copy()
         la = self.larray.copy()
         age, geo, sex, lipro = la.axes
         ages1_5_9 = age.group('1,5,9')
 
         la.set(la[ages1_5_9] + 25.0, age=ages1_5_9)
+
         #XXX: We could also implement:
         # la.xs[ages1_5_9] = la[ages1_5_9] + 25.0
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
@@ -892,6 +893,18 @@ class TestLArray(TestCase):
     #     print("done")
 
     def test_readcsv(self):
+        # la = read_csv('test1d.csv')
+        # self.assertEqual(la.ndim, 1)
+        # self.assertEqual(la.shape, (5,))
+        # self.assertEqual(la.axes_names, ['age'])
+        # self._assert_equal_raw(la[0], [3722])
+
+        la = read_csv('test2d.csv')
+        self.assertEqual(la.ndim, 2)
+        self.assertEqual(la.shape, (5, 3))
+        self.assertEqual(la.axes_names, ['age', 'time'])
+        self._assert_equal_raw(la[0, :], [3722, 3395, 3347])
+
         la = read_csv('test.csv')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
