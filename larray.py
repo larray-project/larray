@@ -1157,7 +1157,7 @@ class LArray(np.ndarray):
 
 
 def parse(s):
-    #parameters can be strings or numbers
+    # parameters can be strings or numbers
     if isinstance(s, str):
         s = s.lower()
         if s in ('0', '1', 'false', 'true'):
@@ -1174,53 +1174,40 @@ def parse(s):
 
 
 def df_aslarray(df, na=np.nan):
+    axes_names = list(df.index.names)
+    last_axis = axes_names[-1].split('\\')
+    axes_names[-1] = last_axis[0]
+    axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
+
     if isinstance(df.index, pd.core.index.MultiIndex):
+        # labels in index.levels are sorted, but the data is not, so we need to
+        # compute the "unsorted" labels !
+        # alternatives are to either use "df = df.sort_index()", or
+        # "df.index.get_level_values(level)" but they are both slower.
         axes_labels = [list(unique(level[labels]))
                        for level, labels
                        in zip(df.index.levels, df.index.labels)]
-        axes_names = list(df.index.names)
-        laxis = axes_names[-1].split('\\')
-        if len(laxis) > 0:
-            axes_names[-1] = laxis[0]
-        axes = [Axis(name, labels)
-                for name, labels in zip(axes_names, axes_labels)]
-        # pandas treats the "time" labels as column names (strings) so we need
-        # to convert them to values
-        if len(laxis) > 0:
-            axes_names[-1] = laxis[0]
-            axes.append(Axis(laxis[1],
-                             [parse(cell) for cell in df.columns.values]))
-        else:
-            axes.append(Axis('time',
-                             [parse(cell) for cell in df.columns.values]))
-        sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
-        if na != np.nan:
-            sdf.fillna(na,inplace=True)
-        data = sdf.values.reshape([len(axis.labels) for axis in axes])    
-        return LArray(data, axes) 
-    elif isinstance(df.index, pd.core.index.Index):        
-        labels = [l for l in df.index]
-        axes_names = list(df.index.names)
-        laxis = axes_names[-1].split('\\')                                                       
-        if len(laxis) > 0:
-            axes_names[-1] = laxis[0]        
-        axes = [Axis(axes_names[0], labels)]
-        # pandas treats the "time" labels as column names (strings) so we need to
-        # convert them to values
-        if len(laxis) > 0:
-            axes.append(Axis(laxis[1],
-                             [parse(cell) for cell in df.columns.values]))
-        else:
-            axes.append(Axis('time',
-                             [parse(cell) for cell in df.columns.values]))
-#        sdf = df.reindex([i for i in product(*axes_labels)], df.columns.values)
-#        if na != np.nan:
-#            sdf.fillna(na,inplace=True)
-#        data = sdf.values.reshape([len(axis.labels) for axis in axes])    
-        data = df.values
-        return LArray(data, axes) 
     else:
-        return None
+        assert isinstance(df.index, pd.core.index.Index)
+        axes_labels = [list(df.index)]
+
+    # pandas treats the "time" labels as column names (strings) so we need
+    # to convert them to values
+    axes_labels.append([parse(cell) for cell in df.columns.values])
+
+    axes = [Axis(name, labels)
+            for name, labels in zip(axes_names, axes_labels)]
+
+    if isinstance(df.index, pd.core.index.MultiIndex):
+        #FIXME: why is this needed???
+        sdf = df.reindex(list(product(*axes_labels)), df.columns.values)
+        if na != np.nan:
+            sdf.fillna(na, inplace=True)
+        # all dimensions except one (in the columns) are lumped together
+        data = sdf.values.reshape([len(axis) for axis in axes])
+    else:
+        data = df.values
+    return LArray(data, axes)
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
