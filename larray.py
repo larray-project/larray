@@ -196,10 +196,8 @@ import csv
 import numpy as np
 import pandas as pd
 
-import tables
+from utils import (prod, table2str, unique, array_equal, csv_open)
 
-from utils import (prod, table2str, table2csv, table2iode, timed, unique,
-                   array_equal, csv_open)
 
 #TODO: return a generator, not a list
 def srange(*args):
