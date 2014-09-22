@@ -1033,9 +1033,6 @@ class LArray(np.ndarray):
     def copy(self):
         return LArray(np.ndarray.copy(self), axes=self.axes[:])
     
-    def zeros_like(self):
-        return LArray(np.zeros_like(np.asarray(self)), axes=self.axes[:])
-    
     def info(self):
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
