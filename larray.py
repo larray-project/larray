@@ -178,7 +178,6 @@ Matrix class
 #   la.axes.sex.labels
 
 from itertools import product, chain, groupby
-import string
 import sys
 import csv
 
@@ -478,7 +477,7 @@ class Axis(object):
         returns an Axis for a sub-array
         """
         if (isinstance(key, slice) and
-                    key.start is None and key.stop is None and key.step is None):
+                key.start is None and key.stop is None and key.step is None):
             return self
         # we must NOT modify the axis name, even though this creates a new axis
         # that is independent from the original one because the original
@@ -865,11 +864,10 @@ class LArray(np.ndarray):
         if axes_labels is not None:
             categ_values = list(product(*axes_labels[:-1]))
         else:
-            categ_values = [[] for y in range(height)]
+            categ_values = [[] for _ in range(height)]
         #row_totals = self.row_totals
         for y in range(height):
-            line = list(categ_values[y]) + \
-                   list(data[y * width:(y + 1) * width])
+            line = list(categ_values[y]) + list(data[y * width:(y + 1) * width])
             #if row_totals is not None:
             #    line.append(row_totals[y])
             result.append(line)
