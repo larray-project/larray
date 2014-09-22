@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
-                    srange, larray_equal, read_csv, df_aslarray)
+                    srange, larray_equal, read_csv, df_aslarray, zeros,
+                    zeros_like)
 from utils import array_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -367,6 +368,16 @@ class TestLArray(TestCase):
 
         self.small_data = np.random.randn(2, 15)
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
+
+    def test_zeros(self):
+        la = zeros((self.geo, self.age))
+        self.assertEqual(la.shape, (44, 116))
+        self._assert_equal_raw(la, np.zeros((44, 116)))
+
+    def test_zeros_like(self):
+        la = zeros_like(self.larray)
+        self.assertEqual(la.shape, (116, 44, 2, 15))
+        self._assert_equal_raw(la, np.zeros((116, 44, 2, 15)))
 
     def test_info(self):
         #XXX: make .info into a property?

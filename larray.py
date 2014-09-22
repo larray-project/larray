@@ -3,6 +3,8 @@
 Matrix class
 """
 #TODO
+# * rename axes
+
 # * rewrite LArray.__str__ / as_table
 
 # * allow arithmetics between arrays with different axes order
@@ -825,7 +827,6 @@ class LArray(np.ndarray):
         return self[slice(i, j)]
 
     def __str__(self):
-        # return str(self.shape)
         if not self.ndim:
             return str(np.asscalar(self))
         else:
@@ -1282,9 +1283,16 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
 
 
+def read_tsv(filepath):
+    """
+    read an LArray from a tsv file
+    """
+    return read_csv(filepath, sep='\t')
+
+
 def read_hdf(filepath, key):
     """
-    read an Larray from a h5 file with the specified name
+    read an LArray from a h5 file with the specified name
     """
     return df_aslarray(pd.read_hdf(filepath, key))
 
@@ -1304,5 +1312,8 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
 
 
 def zeros(axes):
-    s = tuple(len(axis) for axis in axes)
-    return LArray(np.zeros(s), axes)  
+    return LArray(np.zeros(tuple(len(axis) for axis in axes)), axes)
+
+
+def zeros_like(array):
+    return zeros(array.axes)
