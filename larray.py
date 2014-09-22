@@ -3,9 +3,7 @@
 Matrix class
 """
 #TODO
-# * set
-
-# * reshape / reshape_like
+# * rewrite LArray.__str__ / as_table
 
 # * allow arithmetics between arrays with different axes order
 
@@ -45,12 +43,6 @@ Matrix class
     # la.append(time=la.avg(time[-10:]))
     # la.append(time=la.avg(time='-10:'))
 
-# * reshape
-
-# la.append(la.avg(time[-10:]), axis=time)
-
-# la.avg(time[-10:])
-
 # * drop last year
 #   la = la[:,:,:,:,time[:-1]]
 #   la = la.filter(time[:-1]) # <- implement this !
@@ -62,7 +54,6 @@ Matrix class
 #   la = la[time[:-1]] # <- implement this !
 #
 # * split unit tests
-
 
 # * easily add sum column for a dimension
 #   - in all cases, we will need to define a new Axis object
@@ -108,7 +99,6 @@ Matrix class
 #   so that you can do operations involving both (add, divide, ...)
 
 # * reorder an axis labels
-# * modify read_csv format (last_column / time)
 # * test to_csv: does it consume too much mem?
 #   ---> test pandas (one dimension horizontally)
 # * add labels in ValueGroups.__str__
@@ -166,7 +156,6 @@ Matrix class
 # * re-implement row_totals/col_totals? or what do we do with them?
 # * all the other TODO/XXX in the code
 # * time specific API so that we know if we go for a subclass or not
-# * check Collapse: is this needed? can't we generalize it?
 # * data alignment in arithmetic methods (or at least check that axes are
 #   compatible and raise an exception if they are not)
 # * test structured arrays
@@ -183,10 +172,10 @@ Matrix class
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
 
-# ? make pywin32 optional?
 # ? implement dict-like behavior for LArray.axes (to be able to do stuff like
 #   la.axes['sex'].labels
-#
+#   or even
+#   la.axes.sex.labels
 
 from itertools import product, chain, groupby
 import string
@@ -196,7 +185,7 @@ import csv
 import numpy as np
 import pandas as pd
 
-from utils import (prod, table2str, unique, array_equal, csv_open)
+from utils import prod, table2str, unique, array_equal, csv_open
 
 
 #TODO: return a generator, not a list
@@ -655,7 +644,7 @@ class LArray(np.ndarray):
         columns = self.axes[-1].labels
         index = pd.MultiIndex.from_product(self.axes_labels[:-1],
                                            names=axes_names)
-        return pd.DataFrame(self.reshape(len(index), len(columns)),
+        return pd.DataFrame(np.asarray(self).reshape(len(index), len(columns)),
                             index, columns)
 
     @property
@@ -784,8 +773,52 @@ class LArray(np.ndarray):
         #XXX: is it the right place to do this?
         key = tuple(to_key(axis_key) for axis_key in self.full_key(kwargs))
         translated_key = self.translated_key(key)
+
+        #XXX: we could create fakes axes in this case, as we only use axes names
+        # and axes length, not the ticks
+        target_axes = [axis.subaxis2(axis_key)
+                for axis, axis_key in zip(self.axes, translated_key)
+                if not np.isscalar(axis_key)]
+
         cross_key = self.cross_key(translated_key, collapse_slices=True)
-        data[cross_key] = value
+        data[cross_key] = value.broadcast(target_axes)
+
+    def reshape(self, target_axes):
+        """
+        total size must be compatible
+        """
+        data = np.asarray(self).reshape([len(axis) for axis in target_axes])
+        return LArray(data, target_axes)
+
+    def reshape_like(self, target):
+        """
+        target is an LArray, total size must be compatible
+        """
+        return self.reshape(target.axes)
+
+    def broadcast(self, target_axes):
+        """
+        * all common axes must be either 1 or the same length
+        * extra axes in source must be of length 1
+        * extra axes in target can have any length (the result will have axes
+              of length 1 for those axes)
+        """
+        sources_axes = {axis.name: axis for axis in self.axes}
+        source_name_set = set(self.axes_names)
+        target_names = [a.name for a in target_axes]
+        target_name_set = set(target_names)
+
+        # 1) drop extra axes from the source
+        array = self.reshape([axis for axis in self.axes
+                              if axis.name in target_name_set])
+
+        # 2) reorder common axes
+        transposed = array.transpose([axis for axis in target_axes
+                                      if axis.name in source_name_set])
+
+        # 3) add length-1 axes
+        return transposed.reshape([sources_axes.get(name, Axis(name, ['*']))
+                                   for name in target_names])
 
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
@@ -1020,7 +1053,7 @@ class LArray(np.ndarray):
         return np.nan_to_num(self / self.sum(*axes))
 
     # aggregate method factory
-    def agg_method(npfunc, name=None, commutative=False):
+    def _agg_method(npfunc, name=None, commutative=False):
         def method(self, *args, **kwargs):
             return self._aggregate(npfunc, args, kwargs,
                                    commutative=commutative)
@@ -1029,20 +1062,20 @@ class LArray(np.ndarray):
         method.__name__ = name
         return method
 
-    all = agg_method(np.all, commutative=True)
-    any = agg_method(np.any, commutative=True)
+    all = _agg_method(np.all, commutative=True)
+    any = _agg_method(np.any, commutative=True)
     # commutative modulo float precision errors
-    sum = agg_method(np.sum, commutative=True)
-    prod = agg_method(np.prod, commutative=True)
-    cumsum = agg_method(np.cumsum, commutative=True)
-    cumprod = agg_method(np.cumprod, commutative=True)
-    min = agg_method(np.min, commutative=True)
-    max = agg_method(np.max, commutative=True)
-    mean = agg_method(np.mean, commutative=True)
+    sum = _agg_method(np.sum, commutative=True)
+    prod = _agg_method(np.prod, commutative=True)
+    cumsum = _agg_method(np.cumsum, commutative=True)
+    cumprod = _agg_method(np.cumprod, commutative=True)
+    min = _agg_method(np.min, commutative=True)
+    max = _agg_method(np.max, commutative=True)
+    mean = _agg_method(np.mean, commutative=True)
     # not commutative
-    ptp = agg_method(np.ptp)
-    var = agg_method(np.var)
-    std = agg_method(np.std)
+    ptp = _agg_method(np.ptp)
+    var = _agg_method(np.var)
+    std = _agg_method(np.std)
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
@@ -1078,46 +1111,16 @@ class LArray(np.ndarray):
                                   np.append(axis.labels, other_axis.labels))
         return LArray(data, axes=new_axes)
 
-    #XXX: sep argument does not seem very useful
-    #XXX: use pandas function instead?
-    def to_excel(self, filename, sep=None):
-        # Why xlsxwriter? Because it is faster than openpyxl and xlwt
-        # currently does not .xlsx (only .xls).
-        # PyExcelerate seem like a decent alternative too
-        import xlsxwriter as xl
-
-        if sep is None:
-            sep = '_'
-            #sep = self.sep
-        workbook = xl.Workbook(filename)
-        if self.ndim > 2:
-            for key in product(*[axis.labels for axis in self.axes[:-2]]):
-                sheetname = sep.join(str(k) for k in key)
-                # sheet names must not:
-                # * contain any of the following characters: : \ / ? * [ ]
-                #XXX: this will NOT work for unicode strings !
-                sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
-                                                r'\/?*') # chars to delete
-                # * exceed 31 characters
-                # sheetname = sheetname[:31]
-                # * be blank
-                assert sheetname, "sheet name cannot be blank"
-                worksheet = workbook.add_worksheet(sheetname)
-                worksheet.write_row(0, 1, self.axes[-1].labels) 
-                worksheet.write_column(1, 0, self.axes[-2].labels)                    
-                for row, data in enumerate(np.asarray(self[key])):
-                    worksheet.write_row(1+row, 1, data)                    
-                     
-        else:
-            worksheet = workbook.add_worksheet('Sheet1')
-            worksheet.write_row(0, 1, self.axes[-1].labels) 
-            if self.ndim == 2:
-                worksheet.write_column(1, 0, self.axes[-2].labels)
-            for row, data in enumerate(np.asarray(self)):
-                worksheet.write_row(1+row, 1, data)                    
-
     def transpose(self, *args):
-        axes = [self.get_axis(a) for a in args]
+        """
+        reorder axes
+        accepts either a tuple of axes specs or axes specs as *args
+        """
+        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+            axes = args[0]
+        else:
+            axes = args
+        axes = [self.get_axis(a) for a in axes]
         axes_names = set(axis.name for axis in axes)
         missing_axes = [axis for axis in self.axes
                         if axis.name not in axes_names]
@@ -1126,8 +1129,6 @@ class LArray(np.ndarray):
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, res_axes)
-    #XXX: is this necessary?
-    reorder = transpose
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True):
         """
@@ -1149,6 +1150,43 @@ class LArray(np.ndarray):
         write LArray to an excel file in the specified sheet
         """
         self.df.to_excel(filepath, sheet_name)
+
+    #XXX: sep argument does not seem very useful
+    # def to_excel(self, filename, sep=None):
+    #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
+    #     # currently does not .xlsx (only .xls).
+    #     # PyExcelerate seem like a decent alternative too
+    #     import xlsxwriter as xl
+    #
+    #     if sep is None:
+    #         sep = '_'
+    #         #sep = self.sep
+    #     workbook = xl.Workbook(filename)
+    #     if self.ndim > 2:
+    #         for key in product(*[axis.labels for axis in self.axes[:-2]]):
+    #             sheetname = sep.join(str(k) for k in key)
+    #             # sheet names must not:
+    #             # * contain any of the following characters: : \ / ? * [ ]
+    #             #XXX: this will NOT work for unicode strings !
+    #             sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
+    #                                             r'\/?*') # chars to delete
+    #             # * exceed 31 characters
+    #             # sheetname = sheetname[:31]
+    #             # * be blank
+    #             assert sheetname, "sheet name cannot be blank"
+    #             worksheet = workbook.add_worksheet(sheetname)
+    #             worksheet.write_row(0, 1, self.axes[-1].labels)
+    #             worksheet.write_column(1, 0, self.axes[-2].labels)
+    #             for row, data in enumerate(np.asarray(self[key])):
+    #                 worksheet.write_row(1+row, 1, data)
+    #
+    #     else:
+    #         worksheet = workbook.add_worksheet('Sheet1')
+    #         worksheet.write_row(0, 1, self.axes[-1].labels)
+    #         if self.ndim == 2:
+    #             worksheet.write_column(1, 0, self.axes[-2].labels)
+    #         for row, data in enumerate(np.asarray(self)):
+    #             worksheet.write_row(1+row, 1, data)
 
     def plot(self):
         self.df.plot()
@@ -1270,34 +1308,3 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
 def zeros(axes):
     s = tuple(len(axis) for axis in axes)
     return LArray(np.zeros(s), axes)  
-
-
-# def ArrayAssign(larray, larray_new, **kwargs):
-#     data, full_key = fullkey(larray, full_idx)
-#     #DIFFERENT SHAPE BUT SAME SIZE
-#     if (data[full_key].shape != larray_new.shape) and \
-#             (data[full_key].size == larray_new.size):
-#         data[full_key] = np.asarray(larray_new).reshape(data[full_key].shape)
-#         return
-#
-#     #DIFFERENT SHAPE BUT ONLY ONE OR MORE MISSING DIMENSION(S)
-#     if len(data[full_key].shape) != len(larray_new.shape):
-#         bshape = broadcastshape(larray_new.shape, data[full_key].shape)
-#         if bshape is not None:
-#             data[full_key] = np.asarray(larray_new).reshape(bshape)
-#         return
-#
-#     # SAME DIMENSIONS
-#     data[full_key] = np.asarray(larray_new)
-
-
-def broadcastshape(oshape, nshape):
-    bshape = list(nshape)
-    dshape = set(nshape).difference(set(oshape))
-    if len(dshape) == len(nshape)-len(oshape):
-        for i in range(len(bshape)):
-            if bshape[i] in dshape:
-                bshape[i] = 1        
-        return tuple(bshape)
-    else:
-        return None    

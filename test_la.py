@@ -391,16 +391,40 @@ class TestLArray(TestCase):
         self._assert_equal_raw(filtered, raw[[1, 5, 9]])
 
     def test_set(self):
-        raw = self.array.copy()
-        la = self.larray.copy()
-        age, geo, sex, lipro = la.axes
+        age, geo, sex, lipro = self.larray.axes
         ages1_5_9 = age.group('1,5,9')
 
-        la.set(la[ages1_5_9] + 25.0, age=ages1_5_9)
+        # a) value has exactly the same shape as the target slice
+        la = self.larray.copy()
+        raw = self.array.copy()
 
-        #XXX: We could also implement:
-        # la.xs[ages1_5_9] = la[ages1_5_9] + 25.0
+        la.set(la[ages1_5_9] + 25.0, age=ages1_5_9)
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
+        self._assert_equal_raw(la, raw)
+
+        # b) same size but a different shape (extra length-1 axis)
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
+        fake_axis = Axis('fake', ['label'])
+        age_axis = la[ages1_5_9].axes[0]
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
+                                        self.lipro))
+        la.set(value, age=ages1_5_9)
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
+        self._assert_equal_raw(la, raw)
+
+        # dimension of length 1
+        la = self.larray.copy()
+        raw = self.array.copy()
+        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        la.set(la[ages1_5_9].sum(geo=(geo.all(),)), age=ages1_5_9)
+        self._assert_equal_raw(la, raw)
+
+        # c) missing dimension
+        la = self.larray.copy()
+        la.set(la[ages1_5_9].sum(geo), age=ages1_5_9)
         self._assert_equal_raw(la, raw)
 
     def test_filter(self):
@@ -802,10 +826,10 @@ class TestLArray(TestCase):
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        reordered = la.reorder(geo, age, lipro, sex)
+        reordered = la.transpose(geo, age, lipro, sex)
         self.assertEqual(reordered.shape, (44, 116, 15, 2))
 
-        reordered = la.reorder(lipro, age)
+        reordered = la.transpose(lipro, age)
         self.assertEqual(reordered.shape, (15, 116, 44, 2))
 
     def test_arithmetics(self):
