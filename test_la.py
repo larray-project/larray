@@ -334,6 +334,32 @@ class TestValueGroup(TestCase):
         self.assertEqual(repr(self.list), "ValueGroup('P01,P03,P07')")
 
 
+class TestAxesCollection(TestCase):
+    def setUp(self):
+        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
+        self.sex = Axis('sex', 'H,F')
+        self.age = Axis('age', ':115')
+        self.larray = zeros((self.lipro, self.sex, self.age))
+
+    def test_getitem_name(self):
+        la = self.larray
+        self.assertEqual(la.axes['lipro'], self.lipro)
+        self.assertEqual(la.axes['sex'], self.sex)
+        self.assertEqual(la.axes['age'], self.age)
+
+    def test_getitem_int(self):
+        la = self.larray
+        self.assertEqual(la.axes[0], self.lipro)
+        self.assertEqual(la.axes[1], self.sex)
+        self.assertEqual(la.axes[2], self.age)
+
+    def test_getattr(self):
+        la = self.larray
+        self.assertEqual(la.axes.lipro, self.lipro)
+        self.assertEqual(la.axes.sex, self.sex)
+        self.assertEqual(la.axes.age, self.age)
+
+
 class TestLArray(TestCase):
     def _assert_equal_raw(self, la, raw):
         assert_array_equal(np.asarray(la), raw)
@@ -427,7 +453,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
 
         raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
         fake_axis = Axis('fake', ['label'])
-        age_axis = la[ages1_5_9].axes[0]
+        age_axis = la[ages1_5_9].axes.age
         value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
                                         self.lipro))
         la.set(value, age=ages1_5_9)
@@ -450,8 +476,6 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        # ages1_5_9 = self.la.axes.age.group('1,5,9')
-        # ages1_5_9 = self.la.axes['age'].group('1,5,9')
         ages1_5_9 = age.group('1,5,9')
         ages11 = age.group('11')
 
@@ -910,7 +934,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
         l2 = la[:, 'P02':]
         #FIXME: the mapping is not updated when .labels change
-        l2.axes[1].labels = lipro.labels[1:]
+        l2.axes.lipro.labels = lipro.labels[1:]
 
     def test_extend(self):
         la = self.small

@@ -3,8 +3,6 @@
 Matrix class
 """
 #TODO
-# * axis collection
-
 # * rewrite LArray.__str__ / as_table
 
 # * allow arithmetics between arrays with different axes order
@@ -179,11 +177,6 @@ Matrix class
 #   (and potentially rename it to reflect the broader scope)
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
-
-# ? implement dict-like behavior for LArray.axes (to be able to do stuff like
-#   la.axes['sex'].labels
-#   or even
-#   la.axes.sex.labels
 
 from itertools import product, chain, groupby
 import sys
@@ -625,6 +618,78 @@ class ValueGroup(object):
         return "ValueGroup(%r%s)" % (self.key, name)
 
 
+# not using OrderedDict because it does not support indices-based getitem
+# not using namedtuple because we have to know the fields in advance (it is a
+# one-off class)
+class AxisCollection(object):
+    def __init__(self, axes):
+        """
+        :param axes: sequence of Axis objects
+        """
+        if not isinstance(axes, list):
+            axes = list(axes)
+        self._list = axes
+        self._map = {axis.name: axis for axis in axes}
+
+    def __getattr__(self, key):
+        try:
+            return self._map[key]
+        except KeyError:
+            return self.__getattribute__(key)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._list[key]
+        elif isinstance(key, slice):
+            return AxisCollection(self._list[key])
+        else:
+            return self._map[key]
+
+    def __setitem__(self, key, value):
+        if isinstance(key, slice):
+            raise NotImplementedError("slice set")
+        if isinstance(key, int):
+            axis = self._list[key]
+            self._list[key] = value
+            del self._map[axis.name]
+            self._map[value.name] = value
+        else:
+            assert isinstance(key, basestring)
+            try:
+                axis = self._map[key]
+            except KeyError:
+                raise ValueError("inserting a new axis by name is not possible")
+            idx = self._list.index(axis)
+            self._list[idx] = value
+            self._map[key] = value
+
+    def __delitem__(self, key):
+        if isinstance(key, slice):
+            raise NotImplementedError("slice delete")
+        if isinstance(key, int):
+            axis = self._list.pop(key)
+            del self._map[axis.name]
+        else:
+            assert isinstance(key, basestring)
+            axis = self._map.pop(key)
+            self._list.remove(axis)
+
+    def __eq__(self, other):
+        """
+        other collection compares equal if all axes compare equal and in the
+        same order. Works with a list.
+        """
+        if isinstance(other, AxisCollection):
+            other = other._list
+        return self._list == other
+
+    def __contains__(self, key):
+        return key in self._map
+
+    def __len__(self):
+        return len(self._list)
+
+
 class LArray(np.ndarray):
     def __new__(cls, data, axes=None):
         obj = np.asarray(data).view(cls)
@@ -639,8 +704,8 @@ class LArray(np.ndarray):
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (shape, obj.shape))
 
-        if axes is not None and not isinstance(axes, list):
-            axes = list(axes)
+        if axes is not None and not isinstance(axes, AxisCollection):
+            axes = AxisCollection(axes)
         obj.axes = axes
         return obj
 
@@ -692,7 +757,6 @@ class LArray(np.ndarray):
             if a.name in kwargs:
                 a.name = kwargs[a.name]
         return self
-        
 
     def full_key(self, key):
         """
