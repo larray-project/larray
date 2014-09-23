@@ -366,7 +366,7 @@ class TestLArray(TestCase):
         self.larray = LArray(self.array,
                              axes=(self.age, self.geo, self.sex, self.lipro))
 
-        self.small_data = np.random.randn(2, 15)
+        self.small_data = np.arange(30).reshape(2, 15)
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
 
     def test_zeros(self):
@@ -389,6 +389,14 @@ class TestLArray(TestCase):
  sex [2]: 'H' 'F'
  lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""
         self.assertEqual(self.larray.info(), expected)
+
+    def test_str(self):
+        a = self.small.filter(lipro=self.lipro.group('P01:P05'))
+        self.assertEqual(str(a), """
+sex\lipro | P01 | P02 | P03 | P04 | P05
+        H |   0 |   1 |   2 |   3 |   4
+        F |  15 |  16 |  17 |  18 |  19
+""")
 
     def test_getitem(self):
         raw = self.array
