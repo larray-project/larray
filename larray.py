@@ -686,6 +686,14 @@ class LArray(np.ndarray):
     def axes_names(self):
         return [axis.name for axis in self.axes]
 
+    def axes_rename(self, **kwargs):
+        self.axes = [Axis(a.name, a.labels) for a in self.axes]
+        for a in self.axes:
+            if a.name in kwargs:
+                a.name = kwargs[a.name]
+        return self
+        
+
     def full_key(self, key):
         """
         Returns a full nd-key from a key in any of the following forms:
