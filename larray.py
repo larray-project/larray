@@ -1000,8 +1000,7 @@ class LArray(np.ndarray):
         (has the same ticks) or not.
         """
         name_or_idx = axis.name if isinstance(axis, Axis) else axis
-        axis_names = [a.name for a in self.axes]
-        return axis_names.index(name_or_idx) \
+        return self.axes_names.index(name_or_idx) \
             if isinstance(name_or_idx, str) \
             else name_or_idx
 
