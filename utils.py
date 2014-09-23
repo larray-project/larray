@@ -786,3 +786,7 @@ def array_equal(a, b):
             return False
     else:
         return np.array_equal(a, b)
+
+
+def unzip(iterable):
+    return list(zip(*iterable))
