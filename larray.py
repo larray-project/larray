@@ -3,6 +3,8 @@
 Matrix class
 """
 #TODO
+# * rename axes
+
 # * rewrite LArray.__str__ / as_table
 
 # * allow arithmetics between arrays with different axes order
@@ -178,14 +180,13 @@ Matrix class
 #   la.axes.sex.labels
 
 from itertools import product, chain, groupby
-import string
 import sys
 import csv
 
 import numpy as np
 import pandas as pd
 
-from utils import prod, table2str, unique, array_equal, csv_open
+from utils import prod, table2str, unique, array_equal, csv_open, unzip
 
 
 #TODO: return a generator, not a list
@@ -478,7 +479,7 @@ class Axis(object):
         returns an Axis for a sub-array
         """
         if (isinstance(key, slice) and
-                    key.start is None and key.stop is None and key.step is None):
+                key.start is None and key.stop is None and key.step is None):
             return self
         # we must NOT modify the axis name, even though this creates a new axis
         # that is independent from the original one because the original
@@ -785,8 +786,8 @@ class LArray(np.ndarray):
         #XXX: we could create fakes axes in this case, as we only use axes names
         # and axes length, not the ticks
         target_axes = [axis.subaxis2(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
+                       for axis, axis_key in zip(self.axes, translated_key)
+                       if not np.isscalar(axis_key)]
 
         cross_key = self.cross_key(translated_key, collapse_slices=True)
         data[cross_key] = value.broadcast(target_axes)
@@ -834,7 +835,6 @@ class LArray(np.ndarray):
         return self[slice(i, j)]
 
     def __str__(self):
-        # return str(self.shape)
         if not self.ndim:
             return str(np.asscalar(self))
         else:
@@ -873,11 +873,10 @@ class LArray(np.ndarray):
         if axes_labels is not None:
             categ_values = list(product(*axes_labels[:-1]))
         else:
-            categ_values = [[] for y in range(height)]
+            categ_values = [[] for _ in range(height)]
         #row_totals = self.row_totals
         for y in range(height):
-            line = list(categ_values[y]) + \
-                   list(data[y * width:(y + 1) * width])
+            line = list(categ_values[y]) + list(data[y * width:(y + 1) * width])
             #if row_totals is not None:
             #    line.append(row_totals[y])
             result.append(line)
@@ -1042,9 +1041,6 @@ class LArray(np.ndarray):
     def copy(self):
         return LArray(np.ndarray.copy(self), axes=self.axes[:])
     
-    def zeros_like(self):
-        return LArray(np.zeros_like(np.asarray(self)), axes=self.axes[:])
-    
     def info(self):
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
@@ -1203,7 +1199,7 @@ class LArray(np.ndarray):
 def parse(s):
     # parameters can be strings or numbers
     if isinstance(s, str):
-        s = s.lower()
+        s = s.strip().lower()
         if s in ('0', '1', 'false', 'true'):
             return s in ('1', 'true')
         elif s.isdigit():
@@ -1217,8 +1213,11 @@ def parse(s):
         return s
 
 
-def df_aslarray(df, na=np.nan):
+def df_aslarray(df, na=np.nan, headersep=None):
     axes_names = list(df.index.names)
+    if headersep is not None:
+        for i in range(len(axes_names)):
+            axes_names[i:i+1] = axes_names[i].split(headersep)
     last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
@@ -1231,9 +1230,15 @@ def df_aslarray(df, na=np.nan):
         axes_labels = [list(unique(level[labels]))
                        for level, labels
                        in zip(df.index.levels, df.index.labels)]
+        if headersep is not None:
+            raise NotImplementedError("headersep on a MultiIndex")
     else:
         assert isinstance(df.index, pd.core.index.Index)
-        axes_labels = [list(df.index)]
+        if headersep is not None:
+            nonunique = unzip(label.split(headersep) for label in df.index)
+            axes_labels = [list(unique(labels)) for labels in nonunique]
+        else:
+            axes_labels = [list(df.index)]
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
@@ -1241,9 +1246,9 @@ def df_aslarray(df, na=np.nan):
 
     axes = [Axis(name, labels)
             for name, labels in zip(axes_names, axes_labels)]
-
     if isinstance(df.index, pd.core.index.MultiIndex):
         #FIXME: why is this needed???
+        # sparse!
         sdf = df.reindex(list(product(*axes_labels[:-1])), df.columns.values)
         if na != np.nan:
             sdf.fillna(na, inplace=True)
@@ -1251,10 +1256,14 @@ def df_aslarray(df, na=np.nan):
         data = sdf.values.reshape([len(axis) for axis in axes])
     else:
         data = df.values
+        if headersep is not None:
+            data = data.reshape([len(axis) for axis in axes])
+
     return LArray(data, axes)
 
 
-def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
+def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
+             na=np.nan):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1274,7 +1283,10 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
         header = [parse(cell) for cell in next(reader)]
-        axes_names = [cell for cell in header if isinstance(cell, str)]
+        if headersep is not None and headersep != sep:
+            axes_names = header[0].split(headersep)
+        else:
+            axes_names = [cell for cell in header if isinstance(cell, str)]
 
     if len(index_col) == 0 and nb_index == 0:
         nb_index = len(axes_names)
@@ -1284,17 +1296,37 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', na=np.nan):
     else:
         index_col = list(range(nb_index))
 
+    if headersep is not None:
+        index_col = 0
+
     # force str for dimensions
+    # because pandas autodetect failed (thought it was int when it was a string)
     dtype = {}
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na)
+    # because sparse?
+    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na,
+                       headersep=headersep)
+
+
+def read_tsv(filepath):
+    """
+    read an LArray from a tsv file
+    """
+    return read_csv(filepath, sep='\t')
+
+
+def read_eurostat(filepath):
+    """
+    read an LArray from an eurostat tsv file
+    """
+    return read_csv(filepath, sep='\t', headersep=',')
 
 
 def read_hdf(filepath, key):
     """
-    read an Larray from a h5 file with the specified name
+    read an LArray from a h5 file with the specified name
     """
     return df_aslarray(pd.read_hdf(filepath, key))
 
@@ -1314,5 +1346,8 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
 
 
 def zeros(axes):
-    s = tuple(len(axis) for axis in axes)
-    return LArray(np.zeros(s), axes)  
+    return LArray(np.zeros(tuple(len(axis) for axis in axes)), axes)
+
+
+def zeros_like(array):
+    return zeros(array.axes)
