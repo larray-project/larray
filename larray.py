@@ -3,7 +3,7 @@
 Matrix class
 """
 #TODO
-# * rename axes
+# * axis collection
 
 # * rewrite LArray.__str__ / as_table
 
@@ -138,6 +138,12 @@ Matrix class
 # * choose between subset and group. Having both is just confusing, I think.
 # * check whether we could use np.array_repr/array_str (and
 #   np.set_printoptions) instead of our own as_table/table2str
+#   >> no (cannot choose sep) but np.array2string might work
+#   >> this might be a good start (but it does not work for rec arrays)
+#   >> s = np.array2string(a, separator=' | ', prefix='')
+#   >> s.replace(' [', '').replace(']', '').replace('[[', '') \
+#       .replace(' |\n', '\n')
+
 # * IO functions: csv/hdf/excel?/...?
 #   >> needs discussion of the formats (users involved in the discussion?)
 #      + check pandas dialects
