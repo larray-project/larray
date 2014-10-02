@@ -1021,12 +1021,14 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
                   '1,0,F,1,3722,3395,3347\n',
                   '1,0,F,2,338,316,323\n']
-        self.assertEqual(open('out.csv').readlines()[:3], result)
+        with open('out.csv') as f:
+            self.assertEqual(f.readlines()[:3], result)
 
         la.to_csv('out.csv', transpose=False)
         result = ['arr,age,sex,nat,time,0\n', '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
-        self.assertEqual(open('out.csv').readlines()[:3], result)
+        with open('out.csv') as f:
+            self.assertEqual(f.readlines()[:3], result)
 
     def test_plot(self):
         pass
