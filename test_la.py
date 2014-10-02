@@ -6,7 +6,7 @@ import pandas as pd
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
                     srange, larray_equal, read_csv, df_aslarray, zeros,
                     zeros_like)
-from utils import array_equal
+from utils import array_equal, array_nan_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
@@ -22,6 +22,9 @@ def assert_equal_factory(test_func):
 
 
 assert_array_equal = assert_equal_factory(array_equal)
+#TODO: when we will depend on numpy 1.9, we should be able to replace this by
+# numpy.testing.assert_array_equal, or even assert_equal
+assert_array_nan_equal = assert_equal_factory(array_nan_equal)
 assert_larray_equal = assert_equal_factory(larray_equal)
 
 
@@ -362,7 +365,7 @@ class TestAxesCollection(TestCase):
 
 class TestLArray(TestCase):
     def _assert_equal_raw(self, la, raw):
-        assert_array_equal(np.asarray(la), raw)
+        assert_array_nan_equal(np.asarray(la), raw)
 
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
