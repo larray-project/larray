@@ -868,7 +868,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         assert_array_equal(ratio, reg / reg.sum(geo, lipro))
         self.assertEqual(ratio.sum(), 1.0)
 
-    def test_reorder(self):
+    def test_transpose(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
 
@@ -877,6 +877,9 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
 
         reordered = la.transpose(lipro, age)
         self.assertEqual(reordered.shape, (15, 116, 44, 2))
+
+        self.assertEqual(la.transpose().axes_names,
+                         ['lipro', 'sex', 'geo', 'age'])
 
     def test_arithmetics(self):
         raw = self.small_data

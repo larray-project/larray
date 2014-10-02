@@ -1191,6 +1191,8 @@ class LArray(np.ndarray):
         """
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             axes = args[0]
+        elif len(args) == 0:
+            axes = self.axes[::-1]
         else:
             axes = args
         axes = [self.get_axis(a) for a in axes]
