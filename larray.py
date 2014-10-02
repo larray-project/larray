@@ -1266,6 +1266,7 @@ class LArray(np.ndarray):
 
 
 def parse(s):
+    """used to parse the "folded" axis ticks (usually periods)"""
     # parameters can be strings or numbers
     if isinstance(s, str):
         s = s.strip().lower()
@@ -1311,6 +1312,9 @@ def df_aslarray(df, na=np.nan, headersep=None):
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
+    #TODO:: doing this before the reindex significantly slows it down,
+    # as the index still uses strings
+    # axes_labels.append([cell for cell in df.columns.values])
     axes_labels.append([parse(cell) for cell in df.columns.values])
 
     axes = [Axis(name, labels)
@@ -1318,6 +1322,11 @@ def df_aslarray(df, na=np.nan, headersep=None):
     if isinstance(df.index, pd.core.index.MultiIndex):
         #FIXME: why is this needed???
         # sparse!
+        #TODO: use from_product instead, but beware that it sorts values,
+        # so the axes need to be sorted too!
+        # new_index = pd.MultiIndex.from_product(axes_labels[:-1])
+        # sdf = df.reindex(new_index, sorted(df.columns), fill_value=na,
+        #                  copy=False)
         sdf = df.reindex(list(product(*axes_labels[:-1])), df.columns.values)
         if na != np.nan:
             sdf.fillna(na, inplace=True)
@@ -1351,11 +1360,11 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
-        header = [parse(cell) for cell in next(reader)]
+        header = next(reader)
         if headersep is not None and headersep != sep:
-            axes_names = header[0].split(headersep)
-        else:
-            axes_names = [cell for cell in header if isinstance(cell, str)]
+            header = header[0].split(headersep)
+        pos_last = next(i for i, v in enumerate(header) if '\\' in v)
+        axes_names = header[:pos_last + 1]
 
     if len(index_col) == 0 and nb_index == 0:
         nb_index = len(axes_names)
@@ -1374,7 +1383,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
-    # because sparse?
+    # sort time axis/columns
+    #TODO: do this at the same time than expanding to the cross product
+    # return df_aslarray(df, na, headersep=headersep)
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na,
                        headersep=headersep)
 
