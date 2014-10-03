@@ -853,10 +853,8 @@ class LArray(np.ndarray):
     def __add__(self, other):
         if isinstance(other, LArray):
             #TODO: first test if it is not already broadcastable
-            broadcastable = self.broadcast_with(other)
-            return super(LArray, broadcastable).__add__(other)
-        else:
-            return super(LArray, self).__add__(other)
+            self = self.broadcast_with(other)
+        return super(LArray, self).__add__(other)
 
     def set(self, value, **kwargs):
         data = np.asarray(self)
