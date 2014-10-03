@@ -899,24 +899,23 @@ class LArray(np.ndarray):
         this is different from reshape which ensures the result has exactly the
         shape of the target.
         """
-        sources_axes = {axis.name: axis for axis in self.axes}
-        source_name_set = set(self.axes_names)
+        if not isinstance(target_axes, AxisCollection):
+            target_axes = AxisCollection(target_axes)
         target_names = [a.name for a in target_axes]
-        target_name_set = set(target_names)
 
         # 1) drop extra axes from the source
         array = self.reshape([axis for axis in self.axes
-                              if axis.name in target_name_set])
+                              if axis.name in target_axes])
 
         # 2) reorder common axes
         transposed = array.transpose([axis for axis in target_axes
-                                      if axis.name in source_name_set])
+                                      if axis.name in self.axes])
 
         # 3) add length-1 axes. If they are in the leading dimensions, it is
         # technically not necessary (because numpy can handle missing axes in
         # the leading dimensions) but it does not hurt either, so it is easier
         # to do it unconditionally.
-        return transposed.reshape([sources_axes.get(name, Axis(name, ['*']))
+        return transposed.reshape([self.axes.get(name, Axis(name, ['*']))
                                    for name in target_names])
 
     def broadcast_with(self, target):
