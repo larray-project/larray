@@ -1335,65 +1335,51 @@ def parse(s):
         return s
 
 
-def df_aslarray(df, na=np.nan, headersep=None):
+def df_labels(df):
+    """
+    returns sorted unique labels for each dimension
+    """
+    if isinstance(df.index, pd.core.index.MultiIndex):
+        return list(df.index.levels)
+    else:
+        assert isinstance(df.index, pd.core.index.Index)
+        # use .values if needed
+        return [df.index]
+
+
+def cartesian_product_df(df, **kwargs):
+    labels = df_labels(df)
+    new_index = pd.MultiIndex.from_product(labels)
+    sort_columns = kwargs.pop('sort_columns', False)
+    columns = sorted(df.columns) if sort_columns else list(df.columns)
+    # the prodlen test is meant to avoid the more expensive array_equal test
+    prodlen = np.prod([len(axis_labels) for axis_labels in labels])
+    if prodlen == len(df) and columns == list(df.columns) and \
+            np.array_equal(df.index.values, new_index.values):
+        return df
+    return df.reindex(new_index, columns, **kwargs)
+
+
+def df_aslarray(df, sort_columns=True, **kwargs):
     axes_names = list(df.index.names)
-    if headersep is not None:
-        for i in range(len(axes_names)):
-            axes_names[i:i+1] = axes_names[i].split(headersep)
     last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
 
-    if isinstance(df.index, pd.core.index.MultiIndex):
-        # labels in index.levels are sorted, but the data is not, so we need to
-        # compute the "unsorted" labels !
-        # alternatives are to either use "df = df.sort_index()", or
-        # "df.index.get_level_values(level)" but they are both slower.
-        axes_labels = [list(unique(level[labels]))
-                       for level, labels
-                       in zip(df.index.levels, df.index.labels)]
-        if headersep is not None:
-            raise NotImplementedError("headersep on a MultiIndex")
-    else:
-        assert isinstance(df.index, pd.core.index.Index)
-        if headersep is not None:
-            nonunique = unzip(label.split(headersep) for label in df.index)
-            axes_labels = [list(unique(labels)) for labels in nonunique]
-        else:
-            axes_labels = [list(df.index)]
+    df = cartesian_product_df(df, sort_columns=sort_columns, **kwargs)
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
-    #TODO:: doing this before the reindex significantly slows it down,
-    # as the index still uses strings
-    # axes_labels.append([cell for cell in df.columns.values])
+    axes_labels = df_labels(df)
     axes_labels.append([parse(cell) for cell in df.columns.values])
 
-    axes = [Axis(name, labels)
-            for name, labels in zip(axes_names, axes_labels)]
-    if isinstance(df.index, pd.core.index.MultiIndex):
-        #FIXME: why is this needed???
-        # sparse!
-        #TODO: use from_product instead, but beware that it sorts values,
-        # so the axes need to be sorted too!
-        # new_index = pd.MultiIndex.from_product(axes_labels[:-1])
-        # sdf = df.reindex(new_index, sorted(df.columns), fill_value=na,
-        #                  copy=False)
-        sdf = df.reindex(list(product(*axes_labels[:-1])), df.columns.values)
-        if na != np.nan:
-            sdf.fillna(na, inplace=True)
-        # all dimensions except one (in the columns) are lumped together
-        data = sdf.values.reshape([len(axis) for axis in axes])
-    else:
-        data = df.values
-        if headersep is not None:
-            data = data.reshape([len(axis) for axis in axes])
-
+    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+    data = df.values.reshape([len(axis) for axis in axes])
     return LArray(data, axes)
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan):
+             na=np.nan, sort_columns=True):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1414,7 +1400,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         reader = csv.reader(f, delimiter=sep)
         header = next(reader)
         if headersep is not None and headersep != sep:
-            header = header[0].split(headersep)
+            combined_axes_names = header[0]
+            header = combined_axes_names.split(headersep)
         pos_last = next(i for i, v in enumerate(header) if '\\' in v)
         axes_names = header[:pos_last + 1]
 
@@ -1427,7 +1414,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         index_col = list(range(nb_index))
 
     if headersep is not None:
-        index_col = 0
+        # we will set the index after having split the tick values
+        index_col = None
 
     # force str for dimensions
     # because pandas autodetect failed (thought it was int when it was a string)
@@ -1435,11 +1423,15 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
-    # sort time axis/columns
-    #TODO: do this at the same time than expanding to the cross product
-    # return df_aslarray(df, na, headersep=headersep)
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1), na,
-                       headersep=headersep)
+    if headersep is not None:
+        labels_column = df[combined_axes_names]
+        label_columns = unzip(label.split(headersep) for label in labels_column)
+        for name, column in zip(axes_names, label_columns):
+            df[name] = column
+        del df[combined_axes_names]
+        df.set_index(axes_names, inplace=True)
+
+    return df_aslarray(df, sort_columns=sort_columns, fill_value=na)
 
 
 def read_tsv(filepath):
