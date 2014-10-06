@@ -850,12 +850,6 @@ class LArray(np.ndarray):
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
 
-    def __add__(self, other):
-        if isinstance(other, LArray):
-            #TODO: first test if it is not already broadcastable
-            self = self.broadcast_with(other)
-        return super(LArray, self).__add__(other)
-
     def set(self, value, **kwargs):
         data = np.asarray(self)
         # expand string keys with commas
@@ -1199,6 +1193,20 @@ class LArray(np.ndarray):
     ptp = _agg_method(np.ptp)
     var = _agg_method(np.var)
     std = _agg_method(np.std)
+
+    # element-wise method factory
+    def _elem_method(name):
+        super_method = getattr(np.ndarray, name)
+
+        def method(self, other):
+            if isinstance(other, LArray):
+                #TODO: first test if it is not already broadcastable
+                self = self.broadcast_with(other)
+            return super_method(self, other)
+        method.__name__ = name
+        return method
+
+    __add__ = _elem_method('__add__')
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
