@@ -1,6 +1,6 @@
+# -*- coding: utf8 -*-
 from __future__ import print_function
 
-# -*- coding: utf8 -*-
 """
 Matrix class
 """
@@ -432,21 +432,17 @@ class Axis(object):
         self._mapping.update({label.name: i for i, label in enumerate(labels)
                               if isinstance(label, ValueGroup)})
 
-    #XXX: not sure I should offer an *args version. We should probably kill
-    # this one and rename subset to group
+    #XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
+        """
+        key is label-based (slice and fancy indexing are supported)
+        returns a ValueGroup usable in .sum or .filter
+        """
         name = kwargs.pop('name', None)
         if kwargs:
             raise ValueError("invalid keyword argument(s): %s"
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        return self.subset(key, name)
-
-    def subset(self, key, name=None):
-        """
-        key is label-based (slice and fancy indexing are supported)
-        returns a ValueGroup usable in .sum or .filter
-        """
         if isinstance(key, ValueGroup):
             if key.axis != self:
                 raise ValueError("cannot subset an axis with a ValueGroup of "
@@ -455,8 +451,7 @@ class Axis(object):
         return ValueGroup(key, name, self)
 
     def all(self, name=None):
-        return self.subset(slice(None),
-                           name=name if name is not None else "all")
+        return self.group(slice(None), name=name if name is not None else "all")
 
     def subaxis(self, key, name=None):
         """
@@ -502,7 +497,7 @@ class Axis(object):
         """
         key is a label-based key (slice and fancy indexing are supported)
         """
-        return self.subset(key)
+        return self.group(key)
 
     def __contains__(self, key):
         return to_tick(key) in self._mapping
