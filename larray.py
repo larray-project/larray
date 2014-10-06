@@ -194,6 +194,29 @@ def srange(*args):
     return list(map(str, range(*args)))
 
 
+def range_to_slice(seq):
+    """
+    seq is a sequence-like (list, tuple or ndarray (*)) of integers
+    returns a slice if possible (including for sequences of 1 element)
+    otherwise returns the input sequence itself
+
+    (*) isinstance(ndarray, Sequence) is False but it behaves like one
+    """
+    if len(seq) < 1:
+        return seq
+    first = seq[0]
+    if len(seq) == 1:
+        return slice(first, first + 1)
+    second = seq[1]
+    step = second - first
+    prev_value = second
+    for value in seq[2:]:
+        if value != prev_value + step:
+            return seq
+        prev_value = value
+    return slice(first, prev_value + step, step)
+
+
 def slice_to_str(key):
     """
     converts a slice to a string
@@ -213,6 +236,19 @@ def slice_to_str(key):
     stop = key.stop if key.stop is not None else ''
     step = (":" + str(key.step)) if key.step is not None else ''
     return '%s:%s%s' % (start, stop, step)
+
+
+def str_to_range(s):
+    numcolons = s.count(':')
+    assert numcolons <= 2
+    fullstr = s + ':1' if numcolons == 1 else s
+    start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
+    if start is None:
+        start = 0
+    if stop is None:
+        raise ValueError("no stop bound provided in range: %s" % s)
+    stop += 1
+    return srange(start, stop, step)
 
 
 def to_string(v):
@@ -247,19 +283,6 @@ def to_tick(e):
         return e
     else:
         return to_string(e)
-
-
-def str_to_range(s):
-    numcolons = s.count(':')
-    assert numcolons <= 2
-    fullstr = s + ':1' if numcolons == 1 else s
-    start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
-    if start is None:
-        start = 0
-    if stop is None:
-        raise ValueError("no stop bound provided in range: %s" % s)
-    stop += 1
-    return srange(start, stop, step)
 
 
 def to_labels(s):
@@ -382,29 +405,6 @@ def union(*args):
         return list(unique(chain(*(to_labels(arg) for arg in args))))
     else:
         return []
-
-
-def range_to_slice(seq):
-    """
-    seq is a sequence-like (list, tuple or ndarray (*)) of integers
-    returns a slice if possible (including for sequences of 1 element)
-    otherwise returns the input sequence itself
-
-    (*) isinstance(ndarray, Sequence) is False but it behaves like one
-    """
-    if len(seq) < 1:
-        return seq
-    first = seq[0]
-    if len(seq) == 1:
-        return slice(first, first + 1)
-    second = seq[1]
-    step = second - first
-    prev_value = second
-    for value in seq[2:]:
-        if value != prev_value + step:
-            return seq
-        prev_value = value
-    return slice(first, prev_value + step, step)
 
 
 def larray_equal(first, other):
