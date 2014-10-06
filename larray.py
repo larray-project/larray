@@ -7,8 +7,6 @@ Matrix class
 #TODO
 # * rewrite LArray.__str__ / as_table
 
-# * allow arithmetics between arrays with different axes order
-
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
@@ -95,6 +93,7 @@ Matrix class
 #   - a.append(a.sum(age), axis=age)
 
 # * check axes on arithmetics
+
 # * but special case for length 1 (to be able to do: "H + F" or "vla / belgium")
 
 # * reindex a dataset (ie make it conform to the index of another dataset)
