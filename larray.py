@@ -327,11 +327,11 @@ def to_key(v):
 
 
 def to_keys(s):
-    # FIXME: fix doc: it does not accept only strings
     """
-    converts a "family string" to its corresponding structure.
-    It is only used for .sum(axis=xxx)
+    converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
+
+    It is only used for .sum(axis=xxx)
     >>> to_keys('P01,P02')  # <-- one group => collapse dimension
     ['P01', 'P02']
     >>> to_keys(('P01,P02',))  # <-- do not collapse dimension
