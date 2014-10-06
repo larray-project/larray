@@ -455,21 +455,6 @@ class Axis(object):
 
     def subaxis(self, key, name=None):
         """
-        key is label-based (slice and fancy indexing are supported)
-        returns an Axis for a sub-array
-        """
-        if (isinstance(key, slice) and
-                key.start is None and key.stop is None and key.step is None):
-            return self
-        # we must NOT modify the axis name, even though this creates a new axis
-        # that is independent from the original one because the original
-        # name is probably what users will want to use to filter
-        if name is None:
-            name = self.name
-        return Axis(name, self.labels[self.translate(key)])
-
-    def subaxis2(self, key, name=None):
-        """
         key is index-based (slice and fancy indexing are supported)
         returns an Axis for a sub-array
         """
@@ -836,7 +821,7 @@ class LArray(np.ndarray):
 
         translated_key = self.translated_key(self.full_key(key))
 
-        axes = [axis.subaxis2(axis_key)
+        axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
 
@@ -863,7 +848,7 @@ class LArray(np.ndarray):
         #XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
         # theoretically take a significant time to compute
-        target_axes = [axis.subaxis2(axis_key)
+        target_axes = [axis.subaxis(axis_key)
                        for axis, axis_key in zip(self.axes, translated_key)
                        if not np.isscalar(axis_key)]
 

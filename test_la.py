@@ -944,8 +944,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         #TODO: check how awful the syntax is with an axis that is not last
         # or first
         l2 = LArray(la[:, :'P14'], axes=[sex, Axis('lipro', lipro.labels[1:])])
-        l2 = LArray(la[:, :'P14'],
-                    axes=[sex, lipro.subaxis(slice('P02', None))])
+        l2 = LArray(la[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
 
         # We can also modify the axis in-place (dangerous!)
         # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
