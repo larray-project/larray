@@ -326,7 +326,7 @@ def to_key(v):
             return v.strip()
 
 
-def to_keys(s):
+def to_keys(value):
     """
     converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
@@ -354,19 +354,19 @@ def to_keys(s):
     >>> to_keys((('P01',), ('P02',), ':'))
     (['P01'], ['P02'], slice(None, None, None))
     """
-    if isinstance(s, str):
-        if ';' in s:
-            return tuple([to_key(group) for group in s.split(';')])
+    if isinstance(value, str):
+        if ';' in value:
+            return tuple([to_key(group) for group in value.split(';')])
         else:
             # a single group => collapse dimension
-            return to_key(s)
-    elif isinstance(s, ValueGroup):
-        return s
-    elif isinstance(s, list):
-        return to_key(s)
+            return to_key(value)
+    elif isinstance(value, ValueGroup):
+        return value
+    elif isinstance(value, list):
+        return to_key(value)
     else:
-        assert isinstance(s, tuple)
-        return tuple([to_key(group) for group in s])
+        assert isinstance(value, tuple)
+        return tuple([to_key(group) for group in value])
 
 
 def union(*args):
