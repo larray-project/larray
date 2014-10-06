@@ -886,13 +886,21 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         la = self.small
 
         self._assert_equal_raw(la + la, raw + raw)
-        self._assert_equal_raw(la * 2, raw * 2)
-        self._assert_equal_raw(2 * la, 2 * raw)
         self._assert_equal_raw(la + 1, raw + 1)
         self._assert_equal_raw(1 + la, 1 + raw)
+
+        self._assert_equal_raw(la - la, raw - raw)
+        self._assert_equal_raw(la - 1, raw - 1)
+        self._assert_equal_raw(1 - la, 1 - raw)
+
+        self._assert_equal_raw(la * la, raw * raw)
+        self._assert_equal_raw(la * 2, raw * 2)
+        self._assert_equal_raw(2 * la, 2 * raw)
+
+        self._assert_equal_raw(la / la, raw / raw)
+        self._assert_equal_raw(la / 2, raw / 2)
         self._assert_equal_raw(30 / la, 30 / raw)
         self._assert_equal_raw(30 / (la + 1), 30 / (raw + 1))
-        self._assert_equal_raw(la / la, raw / raw)
 
         raw_int = raw.astype(int)
         la_int = LArray(raw_int, axes=(self.sex, self.lipro))

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # -*- coding: utf8 -*-
 """
 Matrix class
@@ -1195,18 +1197,61 @@ class LArray(np.ndarray):
     std = _agg_method(np.std)
 
     # element-wise method factory
-    def _elem_method(name):
-        super_method = getattr(np.ndarray, name)
+    def _binop(opname):
+        fullname = '__%s__' % opname
+        super_method = getattr(np.ndarray, fullname)
 
-        def method(self, other):
+        def opmethod(self, other):
             if isinstance(other, LArray):
                 #TODO: first test if it is not already broadcastable
                 self = self.broadcast_with(other)
+            elif not np.isscalar(other):
+                raise TypeError("unsupported operand type(s) for %s: '%s' "
+                                "and '%s'" % (opname, type(self), type(other)))
             return super_method(self, other)
-        method.__name__ = name
-        return method
+        opmethod.__name__ = fullname
+        return opmethod
 
-    __add__ = _elem_method('__add__')
+    __lt__ = _binop('lt')
+    __le__ = _binop('le')
+    __eq__ = _binop('eq')
+    __ne__ = _binop('ne')
+    __gt__ = _binop('gt')
+    __ge__ = _binop('ge')
+    __add__ = _binop('add')
+    __radd__ = _binop('radd')
+    __sub__ = _binop('sub')
+    __rsub__ = _binop('rsub')
+    __mul__ = _binop('mul')
+    __rmul__ = _binop('rmul')
+    __div__ = _binop('div')
+    __rdiv__ = _binop('rdiv')
+    __truediv__ = _binop('truediv')
+    __rtruediv__ = _binop('rtruediv')
+    __floordiv__ = _binop('floordiv')
+    __rfloordiv__ = _binop('rfloordiv')
+    __mod__ = _binop('mod')
+    __rmod__ = _binop('rmod')
+    __divmod__ = _binop('divmod')
+    __rdivmod__ = _binop('rdivmod')
+    __pow__ = _binop('pow')
+    __rpow__ = _binop('rpow')
+    __lshift__ = _binop('lshift')
+    __rlshift__ = _binop('rlshift')
+    __rshift__ = _binop('rshift')
+    __rrshift__ = _binop('rrshift')
+    __and__ = _binop('and')
+    __rand__ = _binop('rand')
+    __xor__ = _binop('xor')
+    __rxor__ = _binop('rxor')
+    __or__ = _binop('or')
+    __ror__ = _binop('ror')
+
+    # unary ops do not need broadcasting so do not need to be overriden
+    # __neg__ = _unaryop('neg')
+    # __pos__ = _unaryop('pos')
+    # __abs__ = _unaryop('abs')
+    # __invert__ = _unaryop('invert')
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
