@@ -853,20 +853,28 @@ class LArray(np.ndarray):
         return LArray(data, axes)
 
     def set(self, value, **kwargs):
+        """
+        sets a subset of LArray to value
+
+        * all common axes must be either 1 or the same length
+        * extra axes in value must be of length 1
+        * extra axes in self can have any length
+        """
         data = np.asarray(self)
         # expand string keys with commas
         #XXX: is it the right place to do this?
         key = tuple(to_key(axis_key) for axis_key in self.full_key(kwargs))
         translated_key = self.translated_key(key)
 
-        #XXX: we could create fakes axes in this case, as we only use axes names
-        # and axes length, not the ticks
+        #XXX: we might want to create fakes axes in this case, as we only
+        # use axes names and axes length, not the ticks, and those could
+        # theoretically take a significant time to compute
         target_axes = [axis.subaxis2(axis_key)
                        for axis, axis_key in zip(self.axes, translated_key)
                        if not np.isscalar(axis_key)]
 
         cross_key = self.cross_key(translated_key, collapse_slices=True)
-        data[cross_key] = value.broadcast(target_axes)
+        data[cross_key] = value.broadcast_with(target_axes)
 
     def reshape(self, target_axes):
         """
@@ -880,37 +888,6 @@ class LArray(np.ndarray):
         target is an LArray, total size must be compatible
         """
         return self.reshape(target.axes)
-
-    def broadcast(self, target_axes):
-        """
-        returns an LArray that is a compatible subset of target_axes
-
-        * all common axes must be either 1 or the same length
-        * extra axes in source must be of length 1
-        * extra axes in target can have any length (the result will have axes
-              of length 1 for those axes)
-
-        this is different from reshape which ensures the result has exactly the
-        shape of the target.
-        """
-        if not isinstance(target_axes, AxisCollection):
-            target_axes = AxisCollection(target_axes)
-        target_names = [a.name for a in target_axes]
-
-        # 1) drop extra axes from the source
-        array = self.reshape([axis for axis in self.axes
-                              if axis.name in target_axes])
-
-        # 2) reorder common axes
-        transposed = array.transpose([axis for axis in target_axes
-                                      if axis.name in self.axes])
-
-        # 3) add length-1 axes. If they are in the leading dimensions, it is
-        # technically not necessary (because numpy can handle missing axes in
-        # the leading dimensions) but it does not hurt either, so it is easier
-        # to do it unconditionally.
-        return transposed.reshape([self.axes.get(name, Axis(name, ['*']))
-                                   for name in target_names])
 
     def broadcast_with(self, target):
         """
