@@ -249,6 +249,19 @@ def to_tick(e):
         return to_string(e)
 
 
+def str_to_range(s):
+    numcolons = s.count(':')
+    assert numcolons <= 2
+    fullstr = s + ':1' if numcolons == 1 else s
+    start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
+    if start is None:
+        start = 0
+    if stop is None:
+        raise ValueError("no stop bound provided in range: %s" % s)
+    stop += 1
+    return srange(start, stop, step)
+
+
 def to_labels(s):
     """
     Makes a (list of) value(s) usable as the collection of labels for an
@@ -275,17 +288,8 @@ def to_labels(s):
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
 
-    numcolons = s.count(':')
-    if numcolons:
-        assert numcolons <= 2
-        fullstr = s + ':1' if numcolons == 1 else s
-        start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
-        if start is None:
-            start = 0
-        if stop is None:
-            raise ValueError("no stop bound provided in range: %s" % s)
-        stop += 1
-        return srange(start, stop, step)
+    if ':' in s:
+        return str_to_range(s)
     else:
         return [v.strip() for v in s.split(',')]
 
