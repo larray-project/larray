@@ -821,24 +821,19 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
     #                      (116, 3, 2, 5))
 
     def test_sum_several_vg_groups(self):
-        la = self.larray
-        age, geo, sex, lipro = la.axes
+        la, geo = self.larray, self.geo
         fla = geo.group(self.vla_str, name='Flanders')
         wal = geo.group(self.wal_str, name='Wallonia')
-        bru = geo.group(self.bru_str, name='Brussel')
-        self.assertEqual(la.sum(geo=(fla, wal, bru)).shape, (116, 3, 2, 15))
-
-    def test_sum_named_vg_groups_string_indexable(self):
-        """
-        an aggregated array (reg) created using *named* groups should also be
-        indexable by the group name
-        """
-        la, geo = self.larray, self.geo
-        vla = geo.group(self.vla_str, name='Flanders')
-        wal = geo.group(self.wal_str, name='Wallonia')
         bru = geo.group(self.bru_str, name='Brussels')
-        bel = geo.all(name='Belgium')
-        reg = la.sum(geo=(vla, wal, bru, bel))
+        reg = la.sum(geo=(fla, wal, bru))
+        self.assertEqual(reg.shape, (116, 3, 2, 15))
+
+        # the result is indexable
+        # a) by VG
+        self.assertEqual(reg.filter(geo=fla).shape, (116, 2, 15))
+        self.assertEqual(reg.filter(geo=(fla, wal)).shape, (116, 2, 2, 15))
+
+        # b) by string (name of groups)
         self.assertEqual(reg.filter(geo='Flanders').shape, (116, 2, 15))
         self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape,
                          (116, 2, 2, 15))
