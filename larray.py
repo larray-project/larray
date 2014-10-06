@@ -215,7 +215,7 @@ def slice_to_str(key):
     return '%s:%s%s' % (start, stop, step)
 
 
-def to_label(v):
+def to_string(v):
     """
     make it a string
     """
@@ -246,7 +246,7 @@ def to_tick(e):
     if np.isscalar(e) or isinstance(e, ValueGroup):
         return e
     else:
-        return to_label(e)
+        return to_string(e)
 
 
 def to_labels(s):
@@ -592,7 +592,7 @@ class ValueGroup(object):
         return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
     def __str__(self):
-        return to_label(self.key) if self.name is None else self.name
+        return to_string(self.key) if self.name is None else self.name
 
     def __repr__(self):
         name = ", %r" % self.name if self.name is not None else ''
