@@ -1201,8 +1201,9 @@ class LArray(np.ndarray):
     __rsub__ = _binop('rsub')
     __mul__ = _binop('mul')
     __rmul__ = _binop('rmul')
-    __div__ = _binop('div')
-    __rdiv__ = _binop('rdiv')
+    if sys.version < '3':
+        __div__ = _binop('div')
+        __rdiv__ = _binop('rdiv')
     __truediv__ = _binop('truediv')
     __rtruediv__ = _binop('rtruediv')
     __floordiv__ = _binop('floordiv')
