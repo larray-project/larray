@@ -1269,26 +1269,27 @@ class LArray(np.ndarray):
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, res_axes)
 
-    def to_csv(self, filepath, sep=',', na_rep='', transpose=True):
+    def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
         """
         write LArray to a csv file
         """
         if transpose:
-            self.df.to_csv(filepath, sep=sep, na_rep=na_rep)
+            self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
         else:
-            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True)
+            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
+                               **kwargs)
 
-    def to_hdf(self, filepath, key):
+    def to_hdf(self, filepath, key, *args, **kwargs):
         """
         write LArray to an HDF file at the specified name
         """
-        self.df.to_hdf(filepath, key)
+        self.df.to_hdf(filepath, key, *args, **kwargs)
 
-    def to_excel(self, filepath, sheet_name):
+    def to_excel(self, filepath, sheet_name, *args, **kwargs):
         """
         write LArray to an excel file in the specified sheet
         """
-        self.df.to_excel(filepath, sheet_name)
+        self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
     #XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
@@ -1327,12 +1328,14 @@ class LArray(np.ndarray):
     #         for row, data in enumerate(np.asarray(self)):
     #             worksheet.write_row(1+row, 1, data)
 
-    def plot(self):
-        self.df.plot()
+    def plot(self, *args, **kwargs):
+        self.df.plot(*args, **kwargs)
 
 
 def parse(s):
-    """used to parse the "folded" axis ticks (usually periods)"""
+    """
+    used to parse the "folded" axis ticks (usually periods)
+    """
     # parameters can be strings or numbers
     if isinstance(s, str):
         s = s.strip().lower()
@@ -1393,7 +1396,7 @@ def df_aslarray(df, sort_columns=True, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_columns=True):
+             na=np.nan, sort_columns=True, **kwargs):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1436,7 +1439,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     dtype = {}
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype)
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype,
+                     **kwargs)
     if headersep is not None:
         labels_column = df[combined_axes_names]
         label_columns = unzip(label.split(headersep) for label in labels_column)
@@ -1448,28 +1452,28 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     return df_aslarray(df, sort_columns=sort_columns, fill_value=na)
 
 
-def read_tsv(filepath):
+def read_tsv(filepath, **kwargs):
     """
     read an LArray from a tsv file
     """
-    return read_csv(filepath, sep='\t')
+    return read_csv(filepath, sep='\t', **kwargs)
 
 
-def read_eurostat(filepath):
+def read_eurostat(filepath, **kwargs):
     """
     read an LArray from an eurostat tsv file
     """
-    return read_csv(filepath, sep='\t', headersep=',')
+    return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key):
+def read_hdf(filepath, key, *args, **kwargs):
     """
     read an LArray from a h5 file with the specified name
     """
-    return df_aslarray(pd.read_hdf(filepath, key))
+    return df_aslarray(pd.read_hdf(filepath, key, *args, **kwargs))
 
 
-def read_excel(name, filepath, nb_index=0, index_col=[]):
+def read_excel(name, filepath, nb_index=0, index_col=[], **kwargs):
     """
     reads excel file from sheet name and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1477,9 +1481,10 @@ def read_excel(name, filepath, nb_index=0, index_col=[]):
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
     """
     if len(index_col) > 0:
-        df = pd.read_excel(filepath, name, index_col=index_col)
+        df = pd.read_excel(filepath, name, index_col=index_col, **kwargs)
     else:
-        df = pd.read_excel(filepath, name, index_col=list(range(nb_index)))
+        df = pd.read_excel(filepath, name, index_col=list(range(nb_index)),
+                           **kwargs)
     return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))
 
 
