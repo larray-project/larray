@@ -186,7 +186,7 @@ import csv
 import numpy as np
 import pandas as pd
 
-from utils import prod, table2str, unique, array_equal, csv_open, unzip
+from utils import prod, table2str, unique, array_equal, csv_open, unzip, decode
 
 
 #TODO: return a generator, not a list
@@ -1378,7 +1378,7 @@ def cartesian_product_df(df, **kwargs):
 
 
 def df_aslarray(df, sort_columns=True, **kwargs):
-    axes_names = list(df.index.names)
+    axes_names = [decode(name, 'utf8') for name in df.index.names]
     last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')

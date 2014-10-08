@@ -9,12 +9,25 @@ import numpy as np
 from functools import reduce
 
 
+if sys.version < '3':
+    bytes = str
+    str = unicode
+
+
 def csv_open(filename, mode='r'):
     assert 'b' not in mode and 't' not in mode
     if sys.version < '3':
         return open(filename, mode + 'b')
     else:
         return open(filename, mode, newline='', encoding='utf8')
+
+
+def decode(s, encoding='utf-8', errors='strict'):
+    if isinstance(s, bytes):
+        return s.decode(encoding, errors)
+    else:
+        assert isinstance(s, str)
+        return s
 
 
 def prod(values):
