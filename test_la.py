@@ -905,6 +905,14 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         # test adding two larrays with different axes order
         self._assert_equal_raw(la + la.transpose(), raw.T * 2)
 
+    # def test_boolean_indexing(self):
+    #     raw = self.small_data
+    #     la = self.small
+    #
+    #     self._assert_equal_raw(la > 2, raw > 2)
+    # FIXME this fails: it should return a 1d array with "combined ticks"
+    #     self._assert_equal_raw(la[la > 2], raw[raw > 2])
+
     def test_mean(self):
         la = self.small
         raw = self.small_data
