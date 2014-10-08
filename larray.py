@@ -186,7 +186,8 @@ import csv
 import numpy as np
 import pandas as pd
 
-from utils import prod, table2str, unique, array_equal, csv_open, unzip, decode
+from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
+                   str, decode)
 
 
 #TODO: return a generator, not a list
@@ -643,7 +644,7 @@ class AxisCollection(object):
             del self._map[axis.name]
             self._map[value.name] = value
         else:
-            assert isinstance(key, basestring)
+            assert isinstance(key, str)
             try:
                 axis = self._map[key]
             except KeyError:
@@ -659,7 +660,7 @@ class AxisCollection(object):
             axis = self._list.pop(key)
             del self._map[axis.name]
         else:
-            assert isinstance(key, basestring)
+            assert isinstance(key, str)
             axis = self._map.pop(key)
             self._list.remove(axis)
 
