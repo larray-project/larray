@@ -705,8 +705,8 @@ class LArray(np.ndarray):
         columns = self.axes[-1].labels
         index = pd.MultiIndex.from_product(self.axes_labels[:-1],
                                            names=axes_names)
-        return pd.DataFrame(np.asarray(self).reshape(len(index), len(columns)),
-                            index, columns)
+        data = np.asarray(self).reshape(len(index), len(columns))
+        return pd.DataFrame(data, index, columns)
 
     @property
     def series(self):
@@ -1384,6 +1384,11 @@ def df_aslarray(df, sort_columns=True, **kwargs):
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
 
     df = cartesian_product_df(df, sort_columns=sort_columns, **kwargs)
+
+    # we could inline df_aslarray into the functions that use it, so that the
+    # original (non-cartesian) df is freed from memory at this point, but it
+    # would be much uglier and would not lower the peak memory usage which
+    # happens during cartesian_product_df.reindex
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
