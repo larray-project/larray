@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 
 from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
-                    srange, larray_equal, read_csv, df_aslarray, zeros,
-                    zeros_like)
+                    srange, larray_equal, read_csv, read_hdf, df_aslarray,
+                    zeros, zeros_like)
 from utils import array_equal, array_nan_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -758,8 +758,10 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         child = age[':17']
         working = age['18:64']
         retired = age['65:']
+
         byage = la.sum(age=(child, '5', working, retired))
         self.assertEqual(byage.shape, (4, 44, 2, 15))
+
         byage = la.sum(age=(child, '5:10', working, retired))
         self.assertEqual(byage.shape, (4, 44, 2, 15))
 
@@ -825,6 +827,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         fla = geo.group(self.vla_str, name='Flanders')
         wal = geo.group(self.wal_str, name='Wallonia')
         bru = geo.group(self.bru_str, name='Brussels')
+
         reg = la.sum(geo=(fla, wal, bru))
         self.assertEqual(reg.shape, (116, 3, 2, 15))
 
@@ -1074,3 +1077,9 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         #large = LArray(large_data, axes=[large_axis])
         #large.plot()
         #large.hist()
+
+
+if __name__ == "__main__":
+    # x = read_hdf('c:/tmp/rgl_la.h5', 'rgl')
+    x = read_hdf('c:/tmp/c.h5', 'c')
+    print(x.info())
