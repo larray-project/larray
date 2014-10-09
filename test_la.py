@@ -78,9 +78,12 @@ class TestAxis(TestCase):
         pass
 
     def test_init(self):
+        sex_tuple = ('H', 'F')
         sex_list = ['H', 'F']
         sex_array = np.array(sex_list)
 
+        # tuple of strings
+        assert_array_equal(Axis('sex', sex_tuple).labels, sex_array)
         # list of strings
         assert_array_equal(Axis('sex', sex_list).labels, sex_array)
         # array of strings
@@ -191,7 +194,7 @@ class TestAxis(TestCase):
 
         # aggregated Axis
         agg = Axis("agg", (age2, age247, age359, age468,
-                           '2,6', ['3', '5', '7']))
+                           '2,6', ['3', '5', '7'], ('6', '7', '9')))
         self.assertTrue(age2 in agg)
         self.assertFalse(age2bis in agg)
         self.assertFalse(age2ter in agg)
@@ -220,6 +223,11 @@ class TestAxis(TestCase):
         self.assertTrue(['3', '5', '7'] in agg)
         self.assertTrue(age.group('3,5,7') in agg)
         self.assertTrue(age.group(['3', '5', '7']) in agg)
+
+        self.assertTrue('6,7,9' in agg)
+        self.assertTrue(['6', '7', '9'] in agg)
+        self.assertTrue(age.group('6,7,9') in agg)
+        self.assertTrue(age.group(['6', '7', '9']) in agg)
 
         self.assertFalse(5 in agg)
         self.assertFalse('5' in agg)

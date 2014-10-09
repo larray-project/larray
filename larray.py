@@ -258,8 +258,7 @@ def to_string(v):
     """
     if isinstance(v, slice):
         return slice_to_str(v)
-    #XXX: return the same string for list and tuples?
-    elif isinstance(v, list):
+    elif isinstance(v, (tuple, list)):
         if len(v) == 1:
             return str(v) + ','
         else:
@@ -273,8 +272,7 @@ def to_tick(e):
     make it hashable, and acceptable as an ndarray element
     scalar & VG -> not modified
     slice -> 'start:stop'
-    list -> 'v1,v2,v3'
-    tuple -> '(v1, v2, v3)'
+    list|tuple -> 'v1,v2,v3'
     other -> str(v)
     """
     # we need to either make all collections to ValueGroup (and keep VG as is)
