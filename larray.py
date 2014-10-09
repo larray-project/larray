@@ -275,9 +275,14 @@ def to_tick(e):
     list|tuple -> 'v1,v2,v3'
     other -> str(v)
     """
-    # we need to either make all collections to ValueGroup (and keep VG as is)
-    # or transform it to string, be we can't use to_tick(e.key) because that
-    # can result in a tuple of value and array(['H', ('H', 'F')]) does not work
+    # the fact that an "aggregated tick" is passed as a ValueGroup or as a
+    # string should be as irrelevant as possible. The thing is that we cannot
+    # (currently) use the more elegant to_tick(e.key) that means the
+    # ValueGroup is not available in Axis.__init__ after to_ticks, and we
+    # need it to update the mapping if it was named. Effectively,
+    # this creates two entries in the mapping for a single tick. Besides,
+    # I like having the ValueGroup as the tick, as it provides extra info as
+    # to where it comes from.
     if np.isscalar(e) or isinstance(e, ValueGroup):
         return e
     else:
@@ -288,7 +293,9 @@ def to_ticks(s):
     """
     Makes a (list of) value(s) usable as the collection of labels for an
     Axis (ie hashable). Strip strings, split them on ',' and translate
-    "range strings" to real ranges **including the end point** !
+    "range strings" to list of values **including the end point** !
+    This function is only used in Axis.__init__ and union().
+
     >>> to_ticks('H , F')
     ['H', 'F']
 
@@ -309,6 +316,8 @@ def to_ticks(s):
         return [to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
+    else:
+        assert isinstance(s, str)
 
     if ':' in s:
         return str_to_range(s)
@@ -421,7 +430,7 @@ class Axis(object):
         self.name = name
         labels = to_ticks(labels)
 
-        #TODO: move this to to_labels????
+        #TODO: move this to to_ticks????
         # we convert to an ndarray to save memory (for scalar ticks, for
         # ValueGroup ticks, it does not make a difference since a list of VG
         # and an ndarray of VG are both arrays of pointers)
