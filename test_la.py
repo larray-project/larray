@@ -5,7 +5,7 @@ import pandas as pd
 
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
-                    zeros, zeros_like)
+                    zeros, zeros_like, AxisCollection)
 from utils import array_equal, array_nan_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
@@ -348,30 +348,30 @@ class TestValueGroup(TestCase):
         self.assertEqual(repr(self.list), "ValueGroup('P01,P03,P07')")
 
 
-class TestAxesCollection(TestCase):
+class TestAxisCollection(TestCase):
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.sex = Axis('sex', 'H,F')
         self.age = Axis('age', ':115')
-        self.larray = zeros((self.lipro, self.sex, self.age))
+        self.collection = AxisCollection((self.lipro, self.sex, self.age))
 
     def test_getitem_name(self):
-        la = self.larray
-        self.assertEqual(la.axes['lipro'], self.lipro)
-        self.assertEqual(la.axes['sex'], self.sex)
-        self.assertEqual(la.axes['age'], self.age)
+        col = self.collection
+        self.assertEqual(col['lipro'], self.lipro)
+        self.assertEqual(col['sex'], self.sex)
+        self.assertEqual(col['age'], self.age)
 
     def test_getitem_int(self):
-        la = self.larray
-        self.assertEqual(la.axes[0], self.lipro)
-        self.assertEqual(la.axes[1], self.sex)
-        self.assertEqual(la.axes[2], self.age)
+        col = self.collection
+        self.assertEqual(col[0], self.lipro)
+        self.assertEqual(col[1], self.sex)
+        self.assertEqual(col[2], self.age)
 
     def test_getattr(self):
-        la = self.larray
-        self.assertEqual(la.axes.lipro, self.lipro)
-        self.assertEqual(la.axes.sex, self.sex)
-        self.assertEqual(la.axes.age, self.age)
+        col = self.collection
+        self.assertEqual(col.lipro, self.lipro)
+        self.assertEqual(col.sex, self.sex)
+        self.assertEqual(col.age, self.age)
 
 
 class TestLArray(TestCase):
