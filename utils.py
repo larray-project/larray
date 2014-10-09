@@ -12,7 +12,9 @@ from functools import reduce
 if sys.version < '3':
     bytes = str
     str = unicode
-
+else:
+    bytes = bytes
+    str = str
 
 def csv_open(filename, mode='r'):
     assert 'b' not in mode and 't' not in mode
