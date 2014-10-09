@@ -838,6 +838,20 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape,
                          (116, 2, 2, 15))
 
+        # using string groups
+        reg = la.sum(geo=(self.vla_str, self.wal_str, self.bru_str))
+        self.assertEqual(reg.shape, (116, 3, 2, 15))
+        # the result is indexable
+        # a) by string (def)
+        self.assertEqual(reg.filter(geo=self.vla_str).shape, (116, 2, 15))
+        self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape,
+                         (116, 2, 2, 15))
+
+        # b) by VG
+        self.assertEqual(reg.filter(geo=fla).shape, (116, 2, 15))
+        self.assertEqual(reg.filter(geo=(fla, wal)).shape,
+                         (116, 2, 2, 15))
+
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
 
