@@ -286,19 +286,19 @@ def to_tick(e):
         return to_string(e)
 
 
-def to_labels(s):
+def to_ticks(s):
     """
     Makes a (list of) value(s) usable as the collection of labels for an
     Axis (ie hashable). Strip strings, split them on ',' and translate
     "range strings" to real ranges **including the end point** !
-    >>> to_labels('H , F')
+    >>> to_ticks('H , F')
     ['H', 'F']
 
     #XXX: we might want to return real int instead, because if we ever
     # want to have more complex queries, such as:
     # arr.filter(age > 10 and age < 20)
     # this would break for string values (because '10' < '2')
-    >>> to_labels(':3')
+    >>> to_ticks(':3')
     ['0', '1', '2', '3']
     """
     if isinstance(s, ValueGroup):
@@ -403,7 +403,7 @@ def union(*args):
     returns the union of several "value strings" as a list
     """
     if args:
-        return list(unique(chain(*(to_labels(arg) for arg in args))))
+        return list(unique(chain(*(to_ticks(arg) for arg in args))))
     else:
         return []
 
@@ -421,7 +421,7 @@ class Axis(object):
         labels should be an array-like (convertible to an ndarray)
         """
         self.name = name
-        labels = to_labels(labels)
+        labels = to_ticks(labels)
 
         #TODO: move this to to_labels????
         # we convert to an ndarray to save memory (for scalar ticks, for

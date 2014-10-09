@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from larray import (LArray, Axis, ValueGroup, union, to_labels, to_key,
+from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like)
 from utils import array_equal, array_nan_equal
@@ -30,8 +30,8 @@ assert_larray_equal = assert_equal_factory(larray_equal)
 
 class TestValueStrings(TestCase):
     def test_split(self):
-        self.assertEqual(to_labels('H,F'), ['H', 'F'])
-        self.assertEqual(to_labels('H, F'), ['H', 'F'])
+        self.assertEqual(to_ticks('H,F'), ['H', 'F'])
+        self.assertEqual(to_ticks('H, F'), ['H', 'F'])
 
     def test_union(self):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
@@ -41,10 +41,10 @@ class TestValueStrings(TestCase):
         # want to have more complex queries, such as:
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
-        self.assertEqual(to_labels('0:115'), srange(116))
-        self.assertEqual(to_labels(':115'), srange(116))
-        self.assertRaises(ValueError, to_labels, '10:')
-        self.assertRaises(ValueError, to_labels, ':')
+        self.assertEqual(to_ticks('0:115'), srange(116))
+        self.assertEqual(to_ticks(':115'), srange(116))
+        self.assertRaises(ValueError, to_ticks, '10:')
+        self.assertRaises(ValueError, to_ticks, ':')
 
 
 class TestKeyStrings(TestCase):
