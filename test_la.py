@@ -440,6 +440,8 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
 
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
+
+        # 1) using a ValueGroup key
         ages1_5_9 = age.group('1,5,9')
 
         # a) value has exactly the same shape as the target slice
@@ -473,6 +475,13 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         # c) missing dimension
         la = self.larray.copy()
         la.set(la[ages1_5_9].sum(geo), age=ages1_5_9)
+        self._assert_equal_raw(la, raw)
+
+        # 2) using a string key
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la.set(la['2,7,3'] + 27.0, age='1,5,9')
+        raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
         self._assert_equal_raw(la, raw)
 
     def test_filter(self):
