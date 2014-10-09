@@ -350,9 +350,11 @@ class TestValueGroup(TestCase):
 
 class TestAxisCollection(TestCase):
     def setUp(self):
-        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
+        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 5)])
         self.sex = Axis('sex', 'H,F')
-        self.age = Axis('age', ':115')
+        self.age = Axis('age', ':7')
+        self.geo = Axis('geo', 'A11,A12,A13')
+        self.value = Axis('value', ':10')
         self.collection = AxisCollection((self.lipro, self.sex, self.age))
 
     def test_getitem_name(self):
@@ -372,6 +374,55 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col.lipro, self.lipro)
         self.assertEqual(col.sex, self.sex)
         self.assertEqual(col.age, self.age)
+
+    def test_append(self):
+        col = self.collection
+        geo = Axis('geo', 'A11,A12,A13')
+        col.append(geo)
+        self.assertEqual(col, [self.lipro, self.sex, self.age, geo])
+
+    def test_extend(self):
+        col = self.collection
+        col.extend([self.geo, self.value])
+        self.assertEqual(col,
+                         [self.lipro, self.sex, self.age, self.geo, self.value])
+
+    def test_insert(self):
+        col = self.collection
+        col.insert(1, self.geo)
+        self.assertEqual(col, [self.lipro, self.geo, self.sex, self.age])
+
+    def test_add(self):
+        col = self.collection.copy()
+        lipro, sex, age = self.lipro, self.sex, self.age
+        geo, value = self.geo, self.value
+
+        # 1) list
+        # a) no dupe
+        new = col + [self.geo, value]
+        self.assertEqual(new, [lipro, sex, age, geo, value])
+        # check the original has not been modified
+        self.assertEqual(col, self.collection)
+
+        # b) with dupe
+        #XXX: the "new" age axis is ignored. We might want to ignore it if it
+        #  is the same but raise an exception if it is different
+        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
+        self.assertEqual(new, [lipro, sex, age, geo])
+
+        # other col
+        new = col + AxisCollection([geo, value])
+        self.assertEqual(new, [lipro, sex, age, geo, value])
+
+    def test_str(self):
+        self.assertEqual(str(self.collection), "{lipro, sex, age}")
+
+    def test_repr(self):
+        self.assertEqual(repr(self.collection), """AxisCollection([
+    Axis('lipro', ['P01', 'P02', 'P03', 'P04']),
+    Axis('sex', ['H', 'F']),
+    Axis('age', ['0', '1', '2', '3', '4', '5', '6', '7'])
+])""")
 
 
 class TestLArray(TestCase):

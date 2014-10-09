@@ -613,18 +613,17 @@ class ValueGroup(object):
 # not using namedtuple because we have to know the fields in advance (it is a
 # one-off class)
 class AxisCollection(object):
-    def __init__(self, axes):
+    def __init__(self, axes=None):
         """
         :param axes: sequence of Axis objects
         """
+        if axes is None:
+            axes = []
         assert all(isinstance(a, Axis) for a in axes)
         if not isinstance(axes, list):
             axes = list(axes)
         self._list = axes
         self._map = {axis.name: axis for axis in axes}
-
-    def get(self, key, default=None):
-        return self._map.get(key, default)
 
     def __getattr__(self, key):
         try:
@@ -669,6 +668,11 @@ class AxisCollection(object):
             axis = self._map.pop(key)
             self._list.remove(axis)
 
+    def __add__(self, other):
+        result = self[:]
+        result.extend(other)
+        return result
+
     def __eq__(self, other):
         """
         other collection compares equal if all axes compare equal and in the
@@ -683,6 +687,45 @@ class AxisCollection(object):
 
     def __len__(self):
         return len(self._list)
+
+    def __str__(self):
+        return "{%s}" % ', '.join(axis.name for axis in self._list)
+
+    def __repr__(self):
+        axes_repr = (repr(axis) for axis in self._list)
+        return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
+
+    def get(self, key, default=None):
+        return self._map.get(key, default)
+
+    def append(self, axis):
+        """
+        append axis at the end of the collection
+        """
+        # when __setitem__(slice) will be implemented, we could simplify this
+        self._list.append(axis)
+        self._map[axis.name] = axis
+
+    def extend(self, axes):
+        """
+        extend the collection by appending the axes from axes
+        """
+        to_add = [axis for axis in axes if axis.name not in self._map]
+        # when __setitem__(slice) will be implemented, we could simplify this
+        self._list.extend(to_add)
+        for axis in to_add:
+            self._map[axis.name] = axis
+
+    def insert(self, index, axis):
+        """
+        insert axis before index
+        """
+        # when __setitem__(slice) will be implemented, we could simplify this
+        self._list.insert(index, axis)
+        self._map[axis.name] = axis
+
+    def copy(self):
+        return self[:]
 
 
 class LArray(np.ndarray):
