@@ -295,6 +295,9 @@ class TestValueGroup(TestCase):
         self.assertEqual(d.get(self.list), 3)
         self.assertEqual(d.get(self.list_named), 3)
         # this cannot and will never work!
+        # we could make it work with a special dict class, but do we WANT to
+        # make it work?
+        # yes, probably
         # self.assertEqual(d.get("P137"), 3)
 
         # target a ValueGroup with an equivalent key

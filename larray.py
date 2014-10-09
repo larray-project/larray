@@ -502,34 +502,20 @@ class Axis(object):
         """
         mapping = self._mapping
 
-        # first, try the key as-is
+        # first, try the key as-is, so that we can target elements in aggregated
+        # arrays (those are either strings containing comas or ValueGroups)
         try:
             return mapping[key]
+        # we must catch TypeError because key might not be hashable (eg slice)
         except (KeyError, TypeError):
             pass
 
         if isinstance(key, ValueGroup):
-            # return the index of all the elements in the group
-            # the check made it fail
-            # self is the aggregated axis, key.axis is the "original" geo axis
             key = key.key
-            # if key.axis == self:
-            #     key = key.key
-            # else:
-            #     raise ValueError("group %r cannot be used on axis %s"
-            #                      % (key, self))
-
-        # try again, before we munge the string
-        # to support targeting a string-based aggregate with a VG
-        # reg = x.sum(geo=(vla_str, wal_str, bru_str, belgium))
-        # vla = geo.group(vla_str)
-        # reg.filter(geo=vla)
-        try:
-            return mapping[key]
-        except (KeyError, TypeError):
-            pass
 
         if isinstance(key, str):
+            # transform "specially formatted strings" for slices and lists to
+            # actual objects
             key = to_key(key)
 
         if isinstance(key, slice):
@@ -547,6 +533,8 @@ class Axis(object):
                 res[i] = mapping[label]
             return res
         else:
+            # the first mapping[key] above will cover most cases. This code
+            # path is only used if the key was given in "non normalized form"
             assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
             # key is scalar (integer, float, string, ...)
             return mapping[key]
