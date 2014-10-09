@@ -790,10 +790,9 @@ class LArray(np.ndarray):
         return [axis.name for axis in self.axes]
 
     def axes_rename(self, **kwargs):
-        self.axes = [Axis(a.name, a.labels) for a in self.axes]
-        for a in self.axes:
-            if a.name in kwargs:
-                a.name = kwargs[a.name]
+        axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
+                for a in  self.axes]
+        self.axes = AxisCollection(axes)
         return self
 
     def full_key(self, key):
