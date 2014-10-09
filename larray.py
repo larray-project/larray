@@ -239,9 +239,19 @@ def slice_to_str(key):
     return '%s:%s%s' % (start, stop, step)
 
 
-def str_to_range(s):
+def slice_str_to_range(s):
+    """
+    converts a slice string to a list of (string) values. The end point is
+    included.
+    >>> slice_str_to_range(':3')
+    ['0', '1', '2', '3']
+    >>> slice_str_to_range('2:5')
+    ['2', '3', '4', '5']
+    >>> slice_str_to_range('2:6:2')
+    ['2', '4', '6']
+    """
     numcolons = s.count(':')
-    assert numcolons <= 2
+    assert 1 <= numcolons <= 2
     fullstr = s + ':1' if numcolons == 1 else s
     start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
     if start is None:
@@ -320,7 +330,7 @@ def to_ticks(s):
         assert isinstance(s, str)
 
     if ':' in s:
-        return str_to_range(s)
+        return slice_str_to_range(s)
     else:
         return [v.strip() for v in s.split(',')]
 
