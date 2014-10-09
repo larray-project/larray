@@ -845,10 +845,7 @@ class LArray(np.ndarray):
         * extra axes in self can have any length
         """
         data = np.asarray(self)
-        # expand string keys with commas
-        #XXX: is it the right place to do this?
-        key = tuple(to_key(axis_key) for axis_key in self.full_key(kwargs))
-        translated_key = self.translated_key(key)
+        translated_key = self.translated_key(self.full_key(kwargs))
 
         #XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
