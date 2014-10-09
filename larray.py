@@ -254,11 +254,11 @@ def str_to_range(s):
 
 def to_string(v):
     """
-    make it a string
+    converts a (group of) tick(s) to a string
     """
-    #XXX: return the same string for list and tuples?
     if isinstance(v, slice):
         return slice_to_str(v)
+    #XXX: return the same string for list and tuples?
     elif isinstance(v, list):
         if len(v) == 1:
             return str(v) + ','
@@ -271,7 +271,7 @@ def to_string(v):
 def to_tick(e):
     """
     make it hashable, and acceptable as an ndarray element
-    scalar & VG -> not modif
+    scalar & VG -> not modified
     slice -> 'start:stop'
     list -> 'v1,v2,v3'
     tuple -> '(v1, v2, v3)'
@@ -575,10 +575,10 @@ class ValueGroup(object):
         # impossible to know whether a name was explicitly given or computed
         self.name = name
 
-        #TODO: for performance reasons, we should cache the result. This will
-        # need to be invalidated correctly
-        # check the key is valid
         if axis is not None:
+            # check the key is valid
+            #TODO: for performance reasons, we should cache the result. This will
+            # need to be invalidated correctly
             axis.translate(key)
         self.axis = axis
 
