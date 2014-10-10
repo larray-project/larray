@@ -369,6 +369,9 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col[1], self.sex)
         self.assertEqual(col[2], self.age)
 
+    def test_keys(self):
+        self.assertEqual(self.collection.keys(), ['lipro', 'sex', 'age'])
+
     def test_getattr(self):
         col = self.collection
         self.assertEqual(col.lipro, self.lipro)

@@ -699,7 +699,7 @@ class AxisCollection(object):
         return self._map.get(key, default)
 
     def keys(self):
-        return self._map.keys()
+        return [a.name for a in self._list]
 
     def append(self, axis):
         """
