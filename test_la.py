@@ -369,6 +369,12 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col[1], self.sex)
         self.assertEqual(col[2], self.age)
 
+    def test_get(self):
+        col = self.collection
+        self.assertEqual(col.get('lipro'), self.lipro)
+        self.assertIsNone(col.get('nonexisting'))
+        self.assertIs(col.get('nonexisting', self.value), self.value)
+
     def test_keys(self):
         self.assertEqual(self.collection.keys(), ['lipro', 'sex', 'age'])
 
