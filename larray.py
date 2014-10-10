@@ -698,6 +698,9 @@ class AxisCollection(object):
     def get(self, key, default=None):
         return self._map.get(key, default)
 
+    def keys(self):
+        return self._map.keys()
+
     def append(self, axis):
         """
         append axis at the end of the collection
