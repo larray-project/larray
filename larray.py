@@ -187,7 +187,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   str, decode)
+                   decode, basestring)
 
 
 #TODO: return a generator, not a list
@@ -327,7 +327,7 @@ def to_ticks(s):
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     else:
-        assert isinstance(s, str)
+        assert isinstance(s, basestring)
 
     if ':' in s:
         return slice_str_to_range(s)
@@ -353,7 +353,7 @@ def to_key(v):
     """
     if isinstance(v, tuple):
         return list(v)
-    elif not isinstance(v, str):
+    elif not isinstance(v, basestring):
         return v
 
     numcolons = v.count(':')
@@ -399,7 +399,7 @@ def to_keys(value):
     >>> to_keys((('P01',), ('P02',), ':'))
     (['P01'], ['P02'], slice(None, None, None))
     """
-    if isinstance(value, str):
+    if isinstance(value, basestring):
         if ';' in value:
             return tuple([to_key(group) for group in value.split(';')])
         else:
@@ -530,7 +530,7 @@ class Axis(object):
         if isinstance(key, ValueGroup):
             key = key.key
 
-        if isinstance(key, str):
+        if isinstance(key, basestring):
             # transform "specially formatted strings" for slices and lists to
             # actual objects
             key = to_key(key)
@@ -648,7 +648,7 @@ class AxisCollection(object):
             del self._map[axis.name]
             self._map[value.name] = value
         else:
-            assert isinstance(key, str)
+            assert isinstance(key, basestring)
             try:
                 axis = self._map[key]
             except KeyError:
@@ -664,7 +664,7 @@ class AxisCollection(object):
             axis = self._list.pop(key)
             del self._map[axis.name]
         else:
-            assert isinstance(key, str)
+            assert isinstance(key, basestring)
             axis = self._map.pop(key)
             self._list.remove(axis)
 
@@ -1055,7 +1055,7 @@ class LArray(np.ndarray):
         """
         name_or_idx = axis.name if isinstance(axis, Axis) else axis
         return self.axes_names.index(name_or_idx) \
-            if isinstance(name_or_idx, str) \
+            if isinstance(name_or_idx, basestring) \
             else name_or_idx
 
     def get_axis(self, axis, idx=False):
@@ -1083,7 +1083,7 @@ class LArray(np.ndarray):
 
             if not isinstance(groups, tuple):
                 # groups is in fact a single group
-                assert isinstance(groups, (str, slice, list,
+                assert isinstance(groups, (basestring, slice, list,
                                            ValueGroup)), type(groups)
                 if isinstance(groups, list):
                     assert len(groups) > 0
@@ -1152,7 +1152,7 @@ class LArray(np.ndarray):
             return self._axis_aggregate(op)
 
         def isaxis(a):
-            return isinstance(a, (int, str, Axis))
+            return isinstance(a, (int, basestring, Axis))
 
         res = self
         # group consecutive same-type (group vs axis aggregates) operations
@@ -1385,7 +1385,7 @@ def parse(s):
     used to parse the "folded" axis ticks (usually periods)
     """
     # parameters can be strings or numbers
-    if isinstance(s, str):
+    if isinstance(s, basestring):
         s = s.strip().lower()
         if s in ('0', '1', 'false', 'true'):
             return s in ('1', 'true')

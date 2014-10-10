@@ -10,11 +10,11 @@ from functools import reduce
 
 
 if sys.version < '3':
+    basestring = basestring
     bytes = str
-    str = unicode
 else:
-    bytes = bytes
-    str = str
+    basestring = str
+    unicode = str
 
 def csv_open(filename, mode='r'):
     assert 'b' not in mode and 't' not in mode
@@ -28,7 +28,7 @@ def decode(s, encoding='utf-8', errors='strict'):
     if isinstance(s, bytes):
         return s.decode(encoding, errors)
     else:
-        assert isinstance(s, str)
+        assert isinstance(s, unicode)
         return s
 
 
