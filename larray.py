@@ -1400,38 +1400,45 @@ def parse(s):
         return s
 
 
-def df_labels(df):
+def df_labels(df, sort=True):
     """
-    returns sorted unique labels for each dimension
+    returns unique labels for each dimension
     """
-    if isinstance(df.index, pd.core.index.MultiIndex):
-        return list(df.index.levels)
+    idx = df.index
+    if isinstance(idx, pd.core.index.MultiIndex):
+        if sort:
+            return list(idx.levels)
+        else:
+            return [list(unique(idx.get_level_values(l))) for l in idx.names]
     else:
-        assert isinstance(df.index, pd.core.index.Index)
+        assert isinstance(idx, pd.core.index.Index)
         # use .values if needed
-        return [df.index]
+        return [idx]
 
 
-def cartesian_product_df(df, **kwargs):
-    labels = df_labels(df)
-    new_index = pd.MultiIndex.from_product(labels)
-    sort_columns = kwargs.pop('sort_columns', False)
+def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
+    labels = df_labels(df, sort=sort_rows)
+    if sort_rows:
+        new_index = pd.MultiIndex.from_product(labels)
+    else:
+        new_index = pd.MultiIndex.from_tuples(list(product(*labels)))
     columns = sorted(df.columns) if sort_columns else list(df.columns)
     # the prodlen test is meant to avoid the more expensive array_equal test
     prodlen = np.prod([len(axis_labels) for axis_labels in labels])
     if prodlen == len(df) and columns == list(df.columns) and \
             np.array_equal(df.index.values, new_index.values):
-        return df
-    return df.reindex(new_index, columns, **kwargs)
+        return df, labels
+    return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_columns=True, **kwargs):
+def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
     last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
 
-    df = cartesian_product_df(df, sort_columns=sort_columns, **kwargs)
+    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
+                                           sort_columns=sort_columns, **kwargs)
 
     # we could inline df_aslarray into the functions that use it, so that the
     # original (non-cartesian) df is freed from memory at this point, but it
@@ -1440,7 +1447,6 @@ def df_aslarray(df, sort_columns=True, **kwargs):
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
-    axes_labels = df_labels(df)
     axes_labels.append([parse(cell) for cell in df.columns.values])
 
     axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
@@ -1449,7 +1455,7 @@ def df_aslarray(df, sort_columns=True, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_columns=True, **kwargs):
+             na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1502,7 +1508,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         del df[combined_axes_names]
         df.set_index(axes_names, inplace=True)
 
-    return df_aslarray(df, sort_columns=sort_columns, fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
 def read_tsv(filepath, **kwargs):
@@ -1519,11 +1526,12 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, *args, **kwargs):
+def read_hdf(filepath, key, sort_rows=True, **kwargs):
     """
     read an LArray from a h5 file with the specified name
     """
-    return df_aslarray(pd.read_hdf(filepath, key, *args, **kwargs))
+    return df_aslarray(pd.read_hdf(filepath, key, **kwargs),
+                       sort_rows=sort_rows)
 
 
 def read_excel(name, filepath, nb_index=0, index_col=[], **kwargs):
