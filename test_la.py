@@ -366,8 +366,11 @@ class TestAxisCollection(TestCase):
     def test_getitem_int(self):
         col = self.collection
         self.assertEqual(col[0], self.lipro)
+        self.assertEqual(col[-3], self.lipro)
         self.assertEqual(col[1], self.sex)
+        self.assertEqual(col[-2], self.sex)
         self.assertEqual(col[2], self.age)
+        self.assertEqual(col[-1], self.age)
 
     def test_get(self):
         col = self.collection
