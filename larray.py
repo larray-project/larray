@@ -1534,7 +1534,7 @@ def read_hdf(filepath, key, sort_rows=True, **kwargs):
                        sort_rows=sort_rows)
 
 
-def read_excel(name, filepath, nb_index=0, index_col=[], **kwargs):
+def read_excel(filepath, name, nb_index=0, index_col=[], **kwargs):
     """
     reads excel file from sheet name and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
