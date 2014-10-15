@@ -1119,11 +1119,11 @@ class LArray(np.ndarray):
                 group_idx[axis_idx] = i
 
                 # we need only lists of ticks, not single ticks, otherwise the
-                # dimension is discarded too early (in filter instead of in the
-                # aggregate func)
+                # dimension is discarded too early (in __getitem__ instead of in
+                # the aggregate func)
                 group = [group] if group in axis else group
 
-                arr = res.filter(collapse=True, **{axis.name: group})
+                arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 arr = np.asarray(arr)
                 op(arr, axis=axis_idx, out=res_data[group_idx])
                 del arr
