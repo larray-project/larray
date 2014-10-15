@@ -372,6 +372,7 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col[2], self.age)
         self.assertEqual(col[-1], self.age)
 
+    #TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection
         self.assertEqual(col.get('lipro'), self.lipro)
