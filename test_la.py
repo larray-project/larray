@@ -1004,7 +1004,7 @@ sex\lipro | P01 | P02 | P03 | P04 | P05
         self._assert_equal_raw(la_int // 2, raw_int // 2)
 
         # test adding two larrays with different axes order
-        self._assert_equal_raw(la + la.transpose(), raw.T * 2)
+        self._assert_equal_raw(la + la.transpose(), raw * 2)
 
     # def test_boolean_indexing(self):
     #     raw = self.small_data
