@@ -1212,7 +1212,7 @@ class LArray(np.ndarray):
         def opmethod(self, other):
             if isinstance(other, LArray):
                 #TODO: first test if it is not already broadcastable
-                self = self.broadcast_with(other)
+                other = other.broadcast_with(self)
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
