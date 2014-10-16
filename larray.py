@@ -179,7 +179,7 @@ Matrix class
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
 
-from itertools import product, chain, groupby
+from itertools import product, chain, groupby, repeat
 import sys
 import csv
 
@@ -187,7 +187,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring)
+                   decode, basestring, izip)
 
 
 #TODO: return a generator, not a list
@@ -963,12 +963,12 @@ class LArray(np.ndarray):
         if not self.ndim:
             return str(np.asscalar(self))
         else:
-            return '\n' + table2str(self.as_table(), 'nan', True) + '\n'
+            return '\n' + table2str(list(self.as_table()), 'nan', True) + '\n'
     __repr__ = __str__
 
     def as_table(self):
         if not self.ndim:
-            return []
+            return
 
         # ert    | unit | geo\time | 2012   | 2011   | 2010
         # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
@@ -976,37 +976,21 @@ class LArray(np.ndarray):
 
         width = self.shape[-1]
         height = prod(self.shape[:-1])
+        data = np.asarray(self).reshape(height, width)
+
         if self.axes is not None:
-            axes_names = self.axes_names
+            axes_names = self.axes_names[:]
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
-            axes_labels = [axis.labels for axis in self.axes]
+            ticks = product(*self.axes_labels[:-1])
+            yield axes_names + list(self.axes_labels[-1])
         else:
-            axes_names = None
-            axes_labels = None
+            # endlessly repeat empty list
+            ticks = repeat([])
 
-        if axes_names is not None:
-            result = [axes_names + list(axes_labels[-1])]
-            #if self.row_totals is not None:
-            #    result[0].append('')
-            #    result[1].append('total')
-        else:
-            result = []
-        data = np.asarray(self).ravel()
-        if axes_labels is not None:
-            categ_values = list(product(*axes_labels[:-1]))
-        else:
-            categ_values = [[] for _ in range(height)]
-        #row_totals = self.row_totals
-        for y in range(height):
-            line = list(categ_values[y]) + list(data[y * width:(y + 1) * width])
-            #if row_totals is not None:
-            #    line.append(row_totals[y])
-            result.append(line)
-        #if self.col_totals is not None and self.ndim > 1:
-        #    result.append([''] * (self.ndim - 2) + ['total'] + self.col_totals)
-        return result
+        for tick, dataline in izip(ticks, data):
+            yield list(tick) + list(dataline)
 
     #XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default

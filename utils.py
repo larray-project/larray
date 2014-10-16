@@ -8,13 +8,18 @@ from textwrap import wrap
 import numpy as np
 from functools import reduce
 
-
 if sys.version < '3':
     basestring = basestring
     bytes = str
 else:
     basestring = str
     unicode = str
+
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
+
 
 def csv_open(filename, mode='r'):
     assert 'b' not in mode and 't' not in mode
