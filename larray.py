@@ -992,8 +992,7 @@ class LArray(np.ndarray):
 
         # summary if needed
         if height > maxlines:
-            datasep = [["..."] * width]
-            data = chain(data[:edgeitems], datasep, data[-edgeitems:])
+            data = chain(data[:edgeitems], [["..."] * width], data[-edgeitems:])
             if self.axes is not None:
                 if height > maxlines:
                     startticks = islice(ticks, edgeitems)
