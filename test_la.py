@@ -495,11 +495,26 @@ class TestLArray(TestCase):
         self.assertEqual(self.larray.info(), expected)
 
     def test_str(self):
-        a = self.small.filter(lipro=self.lipro.group('P01:P05'))
+        lipro3 = self.lipro['P01:P03']
+        a = self.small.filter(lipro=lipro3)
         self.assertEqual(str(a), """
-sex\lipro | P01 | P02 | P03 | P04 | P05
-        H |   0 |   1 |   2 |   3 |   4
-        F |  15 |  16 |  17 |  18 |  19
+sex\lipro | P01 | P02 | P03
+        H |   0 |   1 |   2
+        F |  15 |  16 |  17
+""")
+        self.assertEqual(str(self.larray.filter(lipro=lipro3)), """
+age | geo | sex\lipro |      P01 |      P02 |      P03
+  0 | A11 |         H |      0.0 |      1.0 |      2.0
+  0 | A11 |         F |     15.0 |     16.0 |     17.0
+  0 | A12 |         H |     30.0 |     31.0 |     32.0
+  0 | A12 |         F |     45.0 |     46.0 |     47.0
+  0 | A13 |         H |     60.0 |     61.0 |     62.0
+... | ... |       ... |      ... |      ... |      ...
+115 | A92 |         F | 153045.0 | 153046.0 | 153047.0
+115 | A93 |         H | 153060.0 | 153061.0 | 153062.0
+115 | A93 |         F | 153075.0 | 153076.0 | 153077.0
+115 | A21 |         H | 153090.0 | 153091.0 | 153092.0
+115 | A21 |         F | 153105.0 | 153106.0 | 153107.0
 """)
 
     def test_getitem(self):

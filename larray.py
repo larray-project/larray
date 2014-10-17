@@ -179,7 +179,7 @@ Matrix class
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
 
-from itertools import product, chain, groupby, repeat
+from itertools import product, chain, groupby, repeat, islice
 import sys
 import csv
 
@@ -187,7 +187,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip)
+                   decode, basestring, izip, rproduct)
 
 
 #TODO: return a generator, not a list
@@ -966,14 +966,13 @@ class LArray(np.ndarray):
             return '\n' + table2str(list(self.as_table()), 'nan', True) + '\n'
     __repr__ = __str__
 
-    def as_table(self):
+    def as_table(self, maxlines=80, edgeitems=5):
         if not self.ndim:
             return
 
         # ert    | unit | geo\time | 2012   | 2011   | 2010
         # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
         # NEER27 | I05  | AU       | 134.86 | 125.29 | 117.08
-
         width = self.shape[-1]
         height = prod(self.shape[:-1])
         data = np.asarray(self).reshape(height, width)
@@ -983,11 +982,24 @@ class LArray(np.ndarray):
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
-            ticks = product(*self.axes_labels[:-1])
+            labels = self.axes_labels[:-1]
+            ticks = product(*labels)
+
             yield axes_names + list(self.axes_labels[-1])
         else:
             # endlessly repeat empty list
             ticks = repeat([])
+
+        # summary if needed
+        if height > maxlines:
+            datasep = [["..."] * width]
+            data = chain(data[:edgeitems], datasep, data[-edgeitems:])
+            if self.axes is not None:
+                if height > maxlines:
+                    startticks = islice(ticks, edgeitems)
+                    midticks = [["..."] * (self.ndim - 1)]
+                    endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
+                    ticks = chain(startticks, midticks, endticks)
 
         for tick, dataline in izip(ticks, data):
             yield list(tick) + list(dataline)

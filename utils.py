@@ -4,9 +4,15 @@ Misc tools
 import sys
 import operator
 from textwrap import wrap
+from functools import reduce
+from itertools import product
+
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 import numpy as np
-from functools import reduce
 
 if sys.version < '3':
     basestring = basestring
@@ -14,11 +20,6 @@ if sys.version < '3':
 else:
     basestring = str
     unicode = str
-
-try:
-    from itertools import izip
-except ImportError:
-    izip = zip
 
 
 def csv_open(filename, mode='r'):
@@ -117,6 +118,10 @@ def unique(iterable):
         if element not in seen:
             seen_add(element)
             yield element
+
+
+def rproduct(*i):
+    return product(*[x[::-1] for x in i])
 
 
 def array_equal(a, b):
