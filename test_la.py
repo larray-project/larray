@@ -485,7 +485,6 @@ class TestLArray(TestCase):
 
     def test_info(self):
         #XXX: make .info into a property?
-        # self.assertEqual(self.bel.info, "abc")
         expected = """\
 116 x 44 x 2 x 15
  age [116]: '0' '1' '2' ... '113' '114' '115'

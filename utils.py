@@ -150,9 +150,6 @@ def unzip(iterable):
     return list(zip(*iterable))
 
 
-class ReprObject(object):
-    def __init__(self, s):
-        self.s = s
-
+class ReprString(str):
     def __repr__(self):
-        return self.s
+        return self

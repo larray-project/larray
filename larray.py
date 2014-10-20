@@ -187,7 +187,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip, rproduct, ReprObject)
+                   decode, basestring, izip, rproduct, ReprString)
 
 
 #TODO: return a generator, not a list
@@ -1158,7 +1158,8 @@ class LArray(np.ndarray):
 
     def copy(self):
         return LArray(np.ndarray.copy(self), axes=self.axes[:])
-    
+
+    # @property
     def info(self):
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
@@ -1167,7 +1168,7 @@ class LArray(np.ndarray):
         lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
                  for axis, labels in zip(self.axes, axes_labels)]
         shape = " x ".join(str(s) for s in self.shape)
-        return ReprObject('\n'.join([shape] + lines))
+        return ReprString('\n'.join([shape] + lines))
 
     def ratio(self, *axes):
         if not axes:
