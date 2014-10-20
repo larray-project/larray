@@ -1159,7 +1159,7 @@ class LArray(np.ndarray):
     def copy(self):
         return LArray(np.ndarray.copy(self), axes=self.axes[:])
 
-    # @property
+    @property
     def info(self):
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])

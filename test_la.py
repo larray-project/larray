@@ -484,14 +484,13 @@ class TestLArray(TestCase):
         self._assert_equal_raw(la, np.zeros((116, 44, 2, 15)))
 
     def test_info(self):
-        #XXX: make .info into a property?
         expected = """\
 116 x 44 x 2 x 15
  age [116]: '0' '1' '2' ... '113' '114' '115'
  geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
  sex [2]: 'H' 'F'
  lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""
-        self.assertEqual(self.larray.info(), expected)
+        self.assertEqual(self.larray.info, expected)
 
     def test_str(self):
         lipro3 = self.lipro['P01:P03']
