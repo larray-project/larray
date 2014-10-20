@@ -187,7 +187,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip, rproduct)
+                   decode, basestring, izip, rproduct, ReprObject)
 
 
 #TODO: return a generator, not a list
@@ -1167,7 +1167,7 @@ class LArray(np.ndarray):
         lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
                  for axis, labels in zip(self.axes, axes_labels)]
         shape = " x ".join(str(s) for s in self.shape)
-        return '\n'.join([shape] + lines)
+        return ReprObject('\n'.join([shape] + lines))
 
     def ratio(self, *axes):
         if not axes:

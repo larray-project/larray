@@ -148,3 +148,11 @@ def array_nan_equal(a, b):
 
 def unzip(iterable):
     return list(zip(*iterable))
+
+
+class ReprObject(object):
+    def __init__(self, s):
+        self.s = s
+
+    def __repr__(self):
+        return self.s
