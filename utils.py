@@ -1,6 +1,8 @@
 """
 Misc tools
 """
+from __future__ import division
+
 import sys
 import operator
 from textwrap import wrap
@@ -68,8 +70,12 @@ def get_min_width(table, index):
     return max(longest_word(row[index]) for row in table)
 
 
-def table2str(table, missing, fullinfo=False):
-    '''table is a list of lists'''
+def table2str(table, missing, fullinfo=False, summarize=True,
+              maxwidth=80, numedges='auto', sep=' | ', cont='...'):
+    """
+    table is a list of lists
+    :type table: list of list
+    """
     if not table:
         return ''
     numcol = max(len(row) for row in table)
@@ -78,17 +84,37 @@ def table2str(table, missing, fullinfo=False):
         if len(row) < numcol:
             row.extend([''] * (numcol - len(row)))
     formatted = [[format_value(value, missing, fullinfo) for value in row]
-                  for row in table]
-    colwidths = [get_col_width(formatted, i) for i in range(numcol)]
+                 for row in table]
+    maxwidths = [get_col_width(formatted, i) for i in range(numcol)]
 
-    total_width = sum(colwidths)
-    sep_width = (len(colwidths) - 1) * 3
-    if total_width + sep_width > 80:
+    total_colwidth = sum(maxwidths)
+    sep_width = (numcol - 1) * len(sep)
+    if total_colwidth + sep_width > maxwidth:
         minwidths = [get_min_width(formatted, i) for i in range(numcol)]
-        available_width = 80.0 - sep_width - sum(minwidths)
-        ratio = available_width / total_width
-        colwidths = [minw + max(int(width * ratio), 0)
-                     for minw, width in zip(minwidths, colwidths)]
+        available_width = maxwidth - sep_width - sum(minwidths)
+        if available_width >= 0:
+            ratio = available_width / total_colwidth
+            colwidths = [minw + int(maxw * ratio)
+                         for minw, maxw in zip(minwidths, maxwidths)]
+        else:
+            # need to exceed maxwidth or hide some data
+            if summarize:
+                if numedges == 'auto':
+                    for i in range(1, numcol // 2):
+                        colw = sum(minwidths[:i]) + sum(minwidths[-i:])
+                        # + 1 for the "continuation" column
+                        sepw = (i * 2 - 1 + 1) * len(sep)
+                        if colw + len(cont) + sepw > maxwidth:
+                            break
+                    numedges = i - 1
+                formatted = [row[:numedges] + [cont] + row[-numedges:]
+                             for row in formatted]
+                colwidths = \
+                    minwidths[:numedges] + [len(cont)] + minwidths[-numedges:]
+            else:
+                colwidths = minwidths
+    else:
+        colwidths = maxwidths
 
     lines = []
     for row in formatted:
@@ -101,7 +127,7 @@ def table2str(table, missing, fullinfo=False):
                 chunk = value[i] if i < len(value) else ''
                 newlines[i].append(chunk.rjust(width))
         lines.extend(newlines)
-    return '\n'.join(' | '.join(row) for row in lines)
+    return '\n'.join(sep.join(row) for row in lines)
 
 
 # copied from itertools recipes
