@@ -781,8 +781,6 @@ class LArray(np.ndarray):
             self.axes = obj.axes
         else:
             self.axes = None
-            #self.row_totals = None
-            #self.col_totals = None
 
     @property
     def axes_labels(self):
