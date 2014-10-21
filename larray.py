@@ -5,8 +5,6 @@ from __future__ import print_function
 Matrix class
 """
 #TODO
-# * rewrite LArray.__str__ / as_table
-
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
@@ -32,7 +30,6 @@ Matrix class
 
 # ? keepdims=True instead of/in addition to group tuples
 # * implement newaxis
-# * smarter str() for large arrays
 # * fix str() for 1D LArray
 # * int labels
 # * avg on last 10 years
@@ -135,13 +132,6 @@ Matrix class
 
 # * docstring for all methods
 # * choose between subset and group. Having both is just confusing, I think.
-# * check whether we could use np.array_repr/array_str (and
-#   np.set_printoptions) instead of our own as_table/table2str
-#   >> no (cannot choose sep) but np.array2string might work
-#   >> this might be a good start (but it does not work for rec arrays)
-#   >> s = np.array2string(a, separator=' | ', prefix='')
-#   >> s.replace(' [', '').replace(']', '').replace('[[', '') \
-#       .replace(' |\n', '\n')
 
 # * IO functions: csv/hdf/excel?/...?
 #   >> needs discussion of the formats (users involved in the discussion?)
@@ -983,7 +973,12 @@ class LArray(np.ndarray):
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
             labels = self.axes_labels[:-1]
-            ticks = product(*labels)
+            if self.ndim == 1:
+                # There is no vertical axis, so the axis name should not have
+                # any "tick" below it and we add an empty "tick".
+                ticks = [['']]
+            else:
+                ticks = product(*labels)
 
             yield axes_names + list(self.axes_labels[-1])
         else:

@@ -494,12 +494,19 @@ class TestLArray(TestCase):
 
     def test_str(self):
         lipro3 = self.lipro['P01:P03']
-        a = self.small.filter(lipro=lipro3)
-        self.assertEqual(str(a), """
+
+        # one dimension
+        self.assertEqual(str(self.small.filter(lipro=lipro3, sex='H')), """
+lipro | P01 | P02 | P03
+      |   0 |   1 |   2
+""")
+        # two dimensions
+        self.assertEqual(str(self.small.filter(lipro=lipro3)), """
 sex\lipro | P01 | P02 | P03
         H |   0 |   1 |   2
         F |  15 |  16 |  17
 """)
+        # four dimensions (too many rows)
         self.assertEqual(str(self.larray.filter(lipro=lipro3)), """
 age | geo | sex\lipro |      P01 |      P02 |      P03
   0 | A11 |         H |      0.0 |      1.0 |      2.0
@@ -514,6 +521,7 @@ age | geo | sex\lipro |      P01 |      P02 |      P03
 115 | A21 |         H | 153090.0 | 153091.0 | 153092.0
 115 | A21 |         F | 153105.0 | 153106.0 | 153107.0
 """)
+        # four dimensions (too many rows and columns)
         self.assertEqual(str(self.larray), """
 age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
   0 | A11 |         H |      0.0 |      1.0 | ... |     13.0 |     14.0
