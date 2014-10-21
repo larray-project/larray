@@ -71,7 +71,7 @@ def get_min_width(table, index):
 
 
 def table2str(table, missing, fullinfo=False, summarize=True,
-              maxwidth=80, numedges='auto', sep=' | ', cont='...'):
+              maxwidth=80, numedges='auto', sep=' | ', cont='...', keepcols=0):
     """
     table is a list of lists
     :type table: list of list
@@ -100,17 +100,24 @@ def table2str(table, missing, fullinfo=False, summarize=True,
             # need to exceed maxwidth or hide some data
             if summarize:
                 if numedges == 'auto':
-                    for i in range(1, numcol // 2):
-                        colw = sum(minwidths[:i]) + sum(minwidths[-i:])
-                        # + 1 for the "continuation" column
-                        sepw = (i * 2 - 1 + 1) * len(sep)
-                        if colw + len(cont) + sepw > maxwidth:
-                            break
-                    numedges = i - 1
-                formatted = [row[:numedges] + [cont] + row[-numedges:]
+                    w = sum(minwidths[:keepcols]) + len(cont)
+                    maxedges = (numcol - keepcols) // 2
+                    if maxedges:
+                        for i in range(1, maxedges + 1):
+                            w += minwidths[i] + minwidths[-i]
+                            # + 1 for the "continuation" column
+                            ncol = keepcols + i * 2 + 1
+                            sepw = (ncol - 1) * len(sep)
+                            if w + sepw > maxwidth:
+                                break
+                        numedges = i - 1
+                    else:
+                        numedges = 0
+                head = keepcols+numedges
+                tail = -numedges if numedges else numcol
+                formatted = [row[:head] + [cont] + row[tail:]
                              for row in formatted]
-                colwidths = \
-                    minwidths[:numedges] + [len(cont)] + minwidths[-numedges:]
+                colwidths = minwidths[:head] + [len(cont)] + minwidths[tail:]
             else:
                 colwidths = minwidths
     else:

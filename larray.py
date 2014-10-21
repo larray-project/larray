@@ -961,7 +961,9 @@ class LArray(np.ndarray):
         if not self.ndim:
             return str(np.asscalar(self))
         else:
-            return '\n' + table2str(list(self.as_table()), 'nan', True) + '\n'
+            s = table2str(list(self.as_table()), 'nan', True,
+                          keepcols=self.ndim - 1)
+            return '\n' + s + '\n'
     __repr__ = __str__
 
     def as_table(self, maxlines=80, edgeitems=5):
