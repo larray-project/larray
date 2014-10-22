@@ -1180,7 +1180,7 @@ class LArray(np.ndarray):
     def ratio(self, *axes):
         if not axes:
             axes = self.axes
-        return np.nan_to_num(self / self.sum(*axes))
+        return self / self.sum(*axes)
 
     # aggregate method factory
     def _agg_method(npfunc, name=None, commutative=False):
