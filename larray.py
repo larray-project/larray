@@ -1,12 +1,12 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 
+__version__ = "0.1"
+
 """
 Matrix class
 """
 #TODO
-# * __setitem__
-
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
@@ -38,6 +38,10 @@ Matrix class
 #   time[end - 10:]
 #   time[end(-10):]
 #   time[stop - 10:]
+#   another way is to use a special attribute:
+#   time.ix[5:]
+#   time.ix[-10:]
+
 # * avg on last 10 years
 #     time = Axis('time', ...)
 #     x = time[-10:]  # <- does not work!
