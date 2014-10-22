@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 
-__version__ = "0.1"
+__version__ = "0.2dev"
 
 """
 Matrix class
