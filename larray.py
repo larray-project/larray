@@ -315,7 +315,8 @@ def to_ticks(s):
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     else:
-        assert isinstance(s, basestring)
+        assert isinstance(s, basestring), "%s is not a supported type for " \
+                                          "ticks" % type(s)
 
     if ':' in s:
         return slice_str_to_range(s)
