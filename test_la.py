@@ -541,12 +541,26 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw = self.array
         la = self.larray
         age, geo, sex, lipro = la.axes
+        age159 = age['1,5,9']
+        lipro159 = lipro['P01,P05,P09']
 
-        ages1_5_9 = age.group('1,5,9')
+        # ValueGroup at "correct" place
+        self._assert_equal_raw(la[age159], raw[[1, 5, 9]])
 
-        filtered = la[ages1_5_9]
-        self.assertEqual(filtered.shape, (3, 44, 2, 15))
-        self._assert_equal_raw(filtered, raw[[1, 5, 9]])
+        # ValueGroup at "incorrect" place
+        self._assert_equal_raw(la[lipro159], raw[:, :, :, [0, 4, 8]])
+
+        # multiple ValueGroup key (in "incorrect" order)
+        self._assert_equal_raw(la[lipro159, age159],
+                               raw[[1, 5, 9]][:, :, :, [0, 4, 8]])
+
+        # mixed ValueGroup/positional key
+        self._assert_equal_raw(la['1,5,9', lipro159],
+                               raw[[1, 5, 9]][:, :, :, [0, 4, 8]])
+
+        # key with duplicate axes
+        # la[[1, 5, 9], age['1,5,9']]
+        self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))
 
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes

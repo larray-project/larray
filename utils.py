@@ -8,6 +8,7 @@ import operator
 from textwrap import wrap
 from functools import reduce
 from itertools import product
+from collections import defaultdict
 
 try:
     from itertools import izip
@@ -150,6 +151,19 @@ def unique(iterable):
     for element in iterable:
         if element not in seen:
             seen_add(element)
+            yield element
+
+
+def duplicates(iterable):
+    """
+    List duplicated elements once, preserving order. Remember all elements ever
+    seen.
+    """
+    # duplicates('AAAABBBCCDAABBB') --> A B C
+    counts = defaultdict(int)
+    for element in iterable:
+        counts[element] += 1
+        if counts[element] == 2:
             yield element
 
 

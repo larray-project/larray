@@ -5,6 +5,8 @@ from __future__ import print_function
 Matrix class
 """
 #TODO
+# * __setitem__
+
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
@@ -30,8 +32,12 @@ Matrix class
 
 # ? keepdims=True instead of/in addition to group tuples
 # * implement newaxis
-# * fix str() for 1D LArray
-# * int labels
+# * int labels vs indice-based indexing
+#   one way to disambiguate is to use marker objects:
+#   time[start + 5:]
+#   time[end - 10:]
+#   time[end(-10):]
+#   time[stop - 10:]
 # * avg on last 10 years
 #     time = Axis('time', ...)
 #     x = time[-10:]  # <- does not work!
@@ -136,11 +142,6 @@ Matrix class
 # * IO functions: csv/hdf/excel?/...?
 #   >> needs discussion of the formats (users involved in the discussion?)
 #      + check pandas dialects
-# * better info()
-#   ? make info a property?
-#   * only display X label ticks by default (with an argument to display all)
-#     eg 'A11' ... 'A93'
-# * __setitem__
 # * plotting (see plot.py)
 #   >> check pandas API
 # * implement iloc
@@ -158,9 +159,6 @@ Matrix class
 # * test structured arrays
 # * review all method & argument names
 # * implement ValueGroup.__getitem__
-# ? allow __getitem__ with ValueGroups at any position since we know
-#   which axis the ValueGroup correspond to. ie: allow bel[vla] even though
-#   geo is not the first dimension of bel.
 # ? move "utils" to its own project (so that it is not duplicated between
 #   larray and liam2)
 #   OR
@@ -177,7 +175,7 @@ import numpy as np
 import pandas as pd
 
 from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip, rproduct, ReprString)
+                   decode, basestring, izip, rproduct, ReprString, duplicates)
 
 
 #TODO: return a generator, not a list
@@ -789,8 +787,25 @@ class LArray(np.ndarray):
     def full_key(self, key):
         """
         Returns a full nd-key from a key in any of the following forms:
-        a) a single value b) a tuple of values c) an {axis_name: value} dict
+        a) a single value b) a tuple of values (possibly including ValueGroups)
+        c) an {axis_name: value} dict
         """
+        # convert scalar keys to 1D keys
+        if not isinstance(key, (tuple, dict)):
+            key = (key,)
+
+        # handle keys containing ValueGroups (at potentially wrong places)
+        if any(isinstance(axis_key, ValueGroup) for axis_key in key):
+            #XXX: support ValueGroup without axis?
+            listkey = [(axis_key.axis.name
+                        if isinstance(axis_key, ValueGroup)
+                        else axis_name, axis_key)
+                       for axis_key, axis_name in zip(key, self.axes_names)]
+            dupe_axes = list(duplicates(k for k, v in listkey))
+            if dupe_axes:
+                raise ValueError("key with duplicate axis: %s" % dupe_axes)
+            key = dict(listkey)
+
         if isinstance(key, dict):
             axes_names = set(self.axes_names)
             for axis_name in key:
@@ -798,9 +813,6 @@ class LArray(np.ndarray):
                     raise KeyError("{} is not an axis name".format(axis_name))
             key = tuple(key[axis.name] if axis.name in key else slice(None)
                         for axis in self.axes)
-        elif not isinstance(key, tuple):
-            # convert scalar keys to 1D keys
-            key = (key,)
 
         # convert xD keys to ND keys
         if len(key) < self.ndim:
@@ -998,7 +1010,7 @@ class LArray(np.ndarray):
         for tick, dataline in izip(ticks, data):
             yield list(tick) + list(dataline)
 
-    #XXX: should filter(geo=['W']) return a view by default? (collapse=True)
+    # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
     # behavior, because that would introduce a subtle difference between
     # filter(dim=[a, b]) and filter(dim=[a]) even though it would be faster
