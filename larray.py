@@ -886,6 +886,25 @@ class LArray(np.ndarray):
         data = data.reshape(tuple(len(axis) for axis in axes))
         return LArray(data, axes)
 
+    def __setitem__(self, key, value, collapse_slices=True):
+        data = np.asarray(self)
+
+        translated_key = self.translated_key(self.full_key(key))
+
+        #XXX: we might want to create fakes axes in this case, as we only
+        # use axes names and axes length, not the ticks, and those could
+        # theoretically take a significant time to compute
+
+        #FIXME: this breaks when using a boolean fancy index. eg
+        # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
+        # LArray.ratio())
+        axes = [axis.subaxis(axis_key)
+                for axis, axis_key in zip(self.axes, translated_key)
+                if not np.isscalar(axis_key)]
+
+        cross_key = self.cross_key(translated_key, collapse_slices)
+        data[cross_key] = value.broadcast_with(axes)
+
     def set(self, value, **kwargs):
         """
         sets a subset of LArray to value
@@ -894,18 +913,7 @@ class LArray(np.ndarray):
         * extra axes in value must be of length 1
         * extra axes in self can have any length
         """
-        data = np.asarray(self)
-        translated_key = self.translated_key(self.full_key(kwargs))
-
-        #XXX: we might want to create fakes axes in this case, as we only
-        # use axes names and axes length, not the ticks, and those could
-        # theoretically take a significant time to compute
-        target_axes = [axis.subaxis(axis_key)
-                       for axis, axis_key in zip(self.axes, translated_key)
-                       if not np.isscalar(axis_key)]
-
-        cross_key = self.cross_key(translated_key, collapse_slices=True)
-        data[cross_key] = value.broadcast_with(target_axes)
+        self.__setitem__(kwargs, value)
 
     def reshape(self, target_axes):
         """

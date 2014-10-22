@@ -562,6 +562,52 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))
 
+    def test_setitem(self):
+        age, geo, sex, lipro = self.larray.axes
+
+        # 1) using a ValueGroup key
+        ages1_5_9 = age['1,5,9']
+
+        # a) value has exactly the same shape as the target slice
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        la[ages1_5_9] = la[ages1_5_9] + 25.0
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
+        self._assert_equal_raw(la, raw)
+
+        # b) same size but a different shape (extra length-1 axis)
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
+        fake_axis = Axis('fake', ['label'])
+        age_axis = la[ages1_5_9].axes.age
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
+                                        self.lipro))
+        la[ages1_5_9] = value
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
+        self._assert_equal_raw(la, raw)
+
+        # dimension of length 1
+        la = self.larray.copy()
+        raw = self.array.copy()
+        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        la[ages1_5_9] = la[ages1_5_9].sum(geo=(geo.all(),))
+        self._assert_equal_raw(la, raw)
+
+        # c) missing dimension
+        la = self.larray.copy()
+        la[ages1_5_9] = la[ages1_5_9].sum(geo)
+        self._assert_equal_raw(la, raw)
+
+        # 2) using a string key
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la['1,5,9'] = la['2,7,3'] + 27.0
+        raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
+        self._assert_equal_raw(la, raw)
+
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
 
