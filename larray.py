@@ -307,6 +307,8 @@ def to_ticks(s):
     if isinstance(s, ValueGroup):
         # a single ValueGroup used for all ticks of an Axis
         raise NotImplemented("not sure what to do with it yet")
+    elif isinstance(s, pd.Index):
+        return s.values
     elif isinstance(s, np.ndarray):
         #XXX: we assume it has already been translated. Is it a safe assumption?
         return s
