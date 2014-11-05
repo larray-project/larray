@@ -1357,6 +1357,9 @@ class LArray(np.ndarray):
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
+    def to_clipboard(self, *args, **kwargs):
+        self.df.to_clipboard(*args, **kwargs)
+
     #XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
     #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
