@@ -180,8 +180,9 @@ import csv
 import numpy as np
 import pandas as pd
 
-from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip, rproduct, ReprString, duplicates)
+from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
+                          decode, basestring, izip, rproduct, ReprString,
+                          duplicates)
 
 
 #TODO: return a generator, not a list
@@ -1482,9 +1483,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
-    or 
+    or
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
-    
+
     format csv file:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0

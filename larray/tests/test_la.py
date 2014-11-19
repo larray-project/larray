@@ -6,7 +6,7 @@ import pandas as pd
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like, AxisCollection)
-from utils import array_equal, array_nan_equal
+from larray.utils import array_equal, array_nan_equal
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
