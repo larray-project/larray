@@ -7,10 +7,12 @@ __version__ = "0.2dev"
 Matrix class
 """
 #TODO
+# * rename ValueGroup to LabelGroup
+
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
-# * implement multi group in one axis getitem:
+# ? implement multi group in one axis getitem:
 #   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
 #                        <=> (lipro['P01,P02'], lipro['P05'])
 
