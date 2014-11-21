@@ -1,3 +1,4 @@
+import os.path
 from unittest import TestCase
 
 import numpy as np
@@ -7,6 +8,17 @@ from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like, AxisCollection)
 from larray.utils import array_equal, array_nan_equal
+
+
+TESTDATADIR = os.path.dirname(__file__)
+
+
+def abspath(relpath):
+    """
+    :param relpath: path relative to current module
+    :return: absolute path
+    """
+    return os.path.join(TESTDATADIR, relpath)
 
 #XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
@@ -1176,25 +1188,25 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     #     print("done")
 
     def test_readcsv(self):
-        # la = read_csv('test1d.csv')
+        # la = read_csv(abspath('test1d.csv'))
         # self.assertEqual(la.ndim, 1)
         # self.assertEqual(la.shape, (5,))
         # self.assertEqual(la.axes_names, ['age'])
         # self._assert_equal_raw(la[0], [3722])
 
-        la = read_csv('test2d.csv')
+        la = read_csv(abspath('test2d.csv'))
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes_names, ['age', 'time'])
         self._assert_equal_raw(la[0, :], [3722, 3395, 3347])
 
-        la = read_csv('test3d.csv')
+        la = read_csv(abspath('test3d.csv'))
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes_names, ['age', 'sex', 'time'])
         self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
 
-        la = read_csv('test5d.csv')
+        la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
@@ -1223,7 +1235,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
 
     def test_to_csv(self):
-        la = read_csv('test5d.csv')
+        la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
