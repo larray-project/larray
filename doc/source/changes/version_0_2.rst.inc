@@ -1,16 +1,21 @@
 ﻿New features
 ------------
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
+* added to_clipboard.
 
-* added another feature.
+* added embryonic documentation.
+
+* added setup.py to install the module.
+
+* added another feature (see the :ref:`miscellaneous section <misc>` for
+  details).
 
 .. _misc:
 
 Miscellaneous improvements
 --------------------------
 
-* improved something.
+* reorganised files.
 
 Fixes
 -----
