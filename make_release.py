@@ -2,7 +2,7 @@
 # coding=utf-8
 # Release script for LIAM2
 # Licence: GPLv3
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import errno
 import fnmatch
@@ -377,5 +377,4 @@ if __name__ == '__main__':
 
     # chdir(r'c:\tmp')
     # chdir('liam2_new_release')
-
     make_release(*argv[1:])
