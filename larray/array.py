@@ -730,6 +730,9 @@ class AxisCollection(object):
 
 
 class LArray(np.ndarray):
+    """
+    LArray class
+    """
     def __new__(cls, data, axes=None):
         obj = np.asarray(data).view(cls)
         ndim = obj.ndim
@@ -1544,8 +1547,21 @@ def read_tsv(filepath, **kwargs):
 
 
 def read_eurostat(filepath, **kwargs):
-    """
-    read an LArray from an eurostat tsv file
+    """Read EUROSTAT TSV (tab-separated) file into an LArray
+
+    EUROSTAT TSV files are special because they use tabs as data
+    separators but comas to separate headers.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the file
+    kwargs
+        Arbitrary keyword arguments are passed through to read_csv
+
+    Returns
+    -------
+    result : LArray
     """
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
