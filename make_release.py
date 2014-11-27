@@ -151,11 +151,11 @@ def strip_pretags(release_name):
     removes pre-release tags from a version string
 
     >>> strip_pretags('0.8')
-    '0.8'
+    u'0.8'
     >>> strip_pretags('0.8alpha25')
-    '0.8'
+    u'0.8'
     >>> strip_pretags('0.8.1rc1')
-    '0.8.1'
+    u'0.8.1'
     """
     # 'a' needs to be searched for after 'beta'
     for tag in ('rc', 'c', 'beta', 'b', 'alpha', 'a'):
