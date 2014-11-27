@@ -187,7 +187,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LArraydoc'
+htmlhelp_basename = 'larray'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -207,7 +207,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'LArray.tex', 'LArray Documentation',
+  ('index', 'larray.tex', 'LArray Documentation',
    'Gaetan de Menten, Geert Bryon', 'manual'),
 ]
 
