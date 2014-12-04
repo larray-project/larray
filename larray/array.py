@@ -1359,7 +1359,7 @@ class LArray(np.ndarray):
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
-    def to_excel(self, filepath, sheet_name, *args, **kwargs):
+    def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
         """
         write LArray to an excel file in the specified sheet
         """
