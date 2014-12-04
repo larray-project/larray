@@ -1571,15 +1571,18 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, sort_rows=True, **kwargs):
+def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
+             **kwargs):
     """
     read an LArray from a h5 file with the specified name
     """
-    return df_aslarray(pd.read_hdf(filepath, key, **kwargs),
-                       sort_rows=sort_rows)
+    df = pd.read_hdf(filepath, key, **kwargs)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
-def read_excel(filepath, name, nb_index=0, index_col=[], **kwargs):
+def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
+               na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
     reads excel file from sheet name and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
@@ -1587,11 +1590,12 @@ def read_excel(filepath, name, nb_index=0, index_col=[], **kwargs):
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
     """
     if len(index_col) > 0:
-        df = pd.read_excel(filepath, name, index_col=index_col, **kwargs)
+        df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
     else:
-        df = pd.read_excel(filepath, name, index_col=list(range(nb_index)),
+        df = pd.read_excel(filepath, sheetname, index_col=list(range(nb_index)),
                            **kwargs)
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
 def zeros(axes):
