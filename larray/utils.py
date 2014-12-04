@@ -37,7 +37,7 @@ def decode(s, encoding='utf-8', errors='strict'):
     if isinstance(s, bytes):
         return s.decode(encoding, errors)
     else:
-        assert isinstance(s, unicode)
+        assert s is None or isinstance(s, unicode), "unexpected " + str(type(s))
         return s
 
 

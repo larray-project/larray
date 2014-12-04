@@ -754,7 +754,9 @@ class LArray(np.ndarray):
     @property
     def df(self):
         axes_names = self.axes_names[:-1]
-        axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+        if axes_names[-1] is not None:
+            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+
         columns = self.axes[-1].labels
         index = pd.MultiIndex.from_product(self.axes_labels[:-1],
                                            names=axes_names)
@@ -1460,10 +1462,13 @@ def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
-    last_axis = axes_names[-1].split('\\')
+    if axes_names == [None]:
+        last_axis = None, None
+    else:
+        last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
+    #FIXME: hardcoded "time"
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
-
     df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
                                            sort_columns=sort_columns, **kwargs)
 
