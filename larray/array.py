@@ -1589,11 +1589,9 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
     or
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
     """
-    if len(index_col) > 0:
-        df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
-    else:
-        df = pd.read_excel(filepath, sheetname, index_col=list(range(nb_index)),
-                           **kwargs)
+    if len(index_col) == 0:
+        index_col = list(range(nb_index))
+    df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
                        fill_value=na)
 
