@@ -1415,8 +1415,8 @@ def parse(s):
     """
     # parameters can be strings or numbers
     if isinstance(s, basestring):
-        s = s.strip().lower()
-        if s in ('0', '1', 'false', 'true'):
+        s = s.strip()
+        if s.lower() in ('0', '1', 'false', 'true'):
             return s in ('1', 'true')
         elif s.isdigit():
             return int(s)
