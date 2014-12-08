@@ -1,3 +1,5 @@
+doc/build/
 .idea
 *.pyc
 *.pyd
+larray.egg-info

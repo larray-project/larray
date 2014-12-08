@@ -7,10 +7,12 @@ __version__ = "0.2dev"
 Matrix class
 """
 #TODO
+# * rename ValueGroup to LabelGroup
+
 # * implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
-# * implement multi group in one axis getitem:
+# ? implement multi group in one axis getitem:
 #   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
 #                        <=> (lipro['P01,P02'], lipro['P05'])
 
@@ -178,8 +180,9 @@ import csv
 import numpy as np
 import pandas as pd
 
-from utils import (prod, table2str, unique, array_equal, csv_open, unzip,
-                   decode, basestring, izip, rproduct, ReprString, duplicates)
+from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
+                          decode, basestring, izip, rproduct, ReprString,
+                          duplicates)
 
 
 #TODO: return a generator, not a list
@@ -780,6 +783,9 @@ class AxisCollection(object):
 
 
 class LArray(np.ndarray):
+    """
+    LArray class
+    """
     def __new__(cls, data, axes=None):
         obj = np.asarray(data).view(cls)
         ndim = obj.ndim
@@ -1530,9 +1536,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
-    or 
+    or
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
-    
+
     format csv file:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0
@@ -1591,8 +1597,21 @@ def read_tsv(filepath, **kwargs):
 
 
 def read_eurostat(filepath, **kwargs):
-    """
-    read an LArray from an eurostat tsv file
+    """Read EUROSTAT TSV (tab-separated) file into an LArray
+
+    EUROSTAT TSV files are special because they use tabs as data
+    separators but comas to separate headers.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the file
+    kwargs
+        Arbitrary keyword arguments are passed through to read_csv
+
+    Returns
+    -------
+    result : LArray
     """
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
