@@ -557,6 +557,39 @@ class Axis(object):
     def __repr__(self):
         return 'Axis(%r, %r)' % (self.name, self.labels.tolist())
 
+    def __add__(self, other):
+        if isinstance(other, Axis):
+            if self.name != other.name:
+                return Axis(self.name, self.labels)
+            return Axis(self.name, union(self.labels, other.labels))
+        else:
+            try:
+                return Axis(self.name, self.labels + other)
+            except Exception:
+                raise ValueError
+
+    def __sub__(self, other):
+        if isinstance(other, Axis):
+            if self.name != other.name:
+                return Axis(self.name, self.labels)
+            return Axis(self.name, [l for l in self.labels if l not in other.labels])
+        else:
+            try:
+                return Axis(self.name, self.labels - other)
+            except Exception:
+                raise ValueError
+
+    def copy(self):
+        return Axis(self.name, self.labels)
+        
+    def sorted(self):
+        res = self.copy()
+        res.labels.sort()
+        res._mapping = {label: i for i, label in enumerate(res.labels)}
+        res._mapping.update({label.name: i for i, label in enumerate(res.labels)
+                              if isinstance(label, ValueGroup)})
+        return res
+        
 
 # We need a separate class for ValueGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
@@ -708,6 +741,8 @@ class AxisCollection(object):
         """
         extend the collection by appending the axes from axes
         """
+        if isinstance(axes, Axis):
+            axes = [axes]
         to_add = [axis for axis in axes if axis.name not in self._map]
         # when __setitem__(slice) will be implemented, we could simplify this
         self._list.extend(to_add)
@@ -724,6 +759,24 @@ class AxisCollection(object):
 
     def copy(self):
         return self[:]
+
+    def without(self, to_drop):
+        """
+        drop axis from collection, you can use a comma seperated list
+        """
+        res = self[:]
+        td_l = []
+        if isinstance(to_drop, basestring):
+            td_l = to_drop.split(',')
+        elif isinstance(to_drop, Axis):
+            td_l = [to_drop.name]
+        elif isinstance(to_drop, list):
+            td_l = [a.__str__() for a in to_drop ]
+            
+        for td in td_l:
+            res.__delitem__(td)
+                    
+        return res
 
 
 class LArray(np.ndarray):
@@ -1356,9 +1409,6 @@ class LArray(np.ndarray):
         write LArray to an excel file in the specified sheet
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
-
-    def to_clipboard(self, *args, **kwargs):
-        self.df.to_clipboard(*args, **kwargs)
 
     #XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
