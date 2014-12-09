@@ -23,3 +23,4 @@ Appendix
    :maxdepth: 1
 
    changes
+   contribute
