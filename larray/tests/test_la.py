@@ -388,6 +388,25 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col[2], self.age)
         self.assertEqual(col[-1], self.age)
 
+    def test_getitem_slice(self):
+        col = self.collection[:2]
+        self.assertEqual(len(col), 2)
+        self.assertEqual(col[0], self.lipro)
+        self.assertEqual(col[1], self.sex)
+
+    def test_delitem(self):
+        col = self.collection[:]
+        self.assertEqual(len(col), 3)
+        del col[0]
+        self.assertEqual(len(col), 2)
+        self.assertEqual(col[0], self.sex)
+        self.assertEqual(col[1], self.age)
+        del col['age']
+        self.assertEqual(len(col), 1)
+        self.assertEqual(col[0], self.sex)
+        del col[self.sex]
+        self.assertEqual(len(col), 0)
+
     #TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection
