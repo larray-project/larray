@@ -696,6 +696,9 @@ class AxisCollection(object):
         if isinstance(key, int):
             axis = self._list.pop(key)
             del self._map[axis.name]
+        elif isinstance(key, Axis):
+            self._list.remove(key)
+            del self._map[key.name]
         else:
             assert isinstance(key, basestring)
             axis = self._map.pop(key)
@@ -777,9 +780,7 @@ class AxisCollection(object):
         if isinstance(axes, basestring):
             axes = axes.split(',')
         elif isinstance(axes, Axis):
-            axes = [axes.name]
-        elif isinstance(axes, list):
-            axes = [str(a) for a in axes]
+            axes = [axes]
         for axis in axes:
             del res[axis]
         return res
