@@ -443,7 +443,11 @@ class Axis(object):
         # ValueGroup ticks, it does not make a difference since a list of VG
         # and an ndarray of VG are both arrays of pointers)
         self.labels = np.asarray(labels)
+        self._mapping = {}
+        self._update_mapping()
 
+    def _update_mapping(self):
+        labels = self.labels
         self._mapping = {label: i for i, label in enumerate(labels)}
         # we have no choice but to do that!
         # otherwise we could not make geo['Brussels'] work efficiently
@@ -588,9 +592,7 @@ class Axis(object):
     def sorted(self):
         res = self.copy()
         res.labels.sort()
-        res._mapping = {label: i for i, label in enumerate(res.labels)}
-        res._mapping.update({label.name: i for i, label in enumerate(res.labels)
-                              if isinstance(label, ValueGroup)})
+        res._update_mapping()
         return res
         
 
