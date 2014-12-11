@@ -1154,7 +1154,11 @@ class LArray(np.ndarray):
         #TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
-        for axis, groups in items:
+        for item in items:
+            if isinstance(item, ValueGroup):
+                axis, groups = item.axis, item
+            else:
+                axis, groups = item
             groups = to_keys(groups)
 
             axis, axis_idx = res.get_axis(axis, idx=True)
