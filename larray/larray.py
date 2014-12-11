@@ -567,7 +567,7 @@ class Axis(object):
     def __add__(self, other):
         if isinstance(other, Axis):
             if self.name != other.name:
-                return Axis(self.name, self.labels)
+                raise ValueError('cannot add Axes with different names')
             return Axis(self.name, union(self.labels, other.labels))
         else:
             try:
@@ -578,7 +578,7 @@ class Axis(object):
     def __sub__(self, other):
         if isinstance(other, Axis):
             if self.name != other.name:
-                return Axis(self.name, self.labels)
+                raise ValueError('cannot subtract Axes with different names')
             return Axis(self.name, [l for l in self.labels if l not in other.labels])
         else:
             try:
