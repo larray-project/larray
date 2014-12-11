@@ -703,7 +703,12 @@ class AxisCollection(object):
 
     def __add__(self, other):
         result = self[:]
-        result.extend(other)
+        if isinstance(other, Axis):
+            result.append(other)
+        else:
+            # other should be a sequence
+            assert len(other) >= 0
+            result.extend(other)
         return result
 
     def __eq__(self, other):
@@ -746,8 +751,6 @@ class AxisCollection(object):
         """
         extend the collection by appending the axes from axes
         """
-        if isinstance(axes, Axis):
-            axes = [axes]
         to_add = [axis for axis in axes if axis.name not in self._map]
         # when __setitem__(slice) will be implemented, we could simplify this
         self._list.extend(to_add)
