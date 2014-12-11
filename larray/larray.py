@@ -768,22 +768,20 @@ class AxisCollection(object):
     def copy(self):
         return self[:]
 
-    def without(self, to_drop):
+    def without(self, axes):
         """
-        drop axis from collection, you can use a comma seperated list
+        returns a new collection without some axes
+        you can use a comma separated list
         """
         res = self[:]
-        td_l = []
-        if isinstance(to_drop, basestring):
-            td_l = to_drop.split(',')
-        elif isinstance(to_drop, Axis):
-            td_l = [to_drop.name]
-        elif isinstance(to_drop, list):
-            td_l = [a.__str__() for a in to_drop ]
-            
-        for td in td_l:
-            res.__delitem__(td)
-                    
+        if isinstance(axes, basestring):
+            axes = axes.split(',')
+        elif isinstance(axes, Axis):
+            axes = [axes.name]
+        elif isinstance(axes, list):
+            axes = [str(a) for a in axes]
+        for axis in axes:
+            del res[axis]
         return res
 
 
