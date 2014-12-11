@@ -1,9 +1,11 @@
 import os.path
 from unittest import TestCase
+import unittest
 
 import numpy as np
 import pandas as pd
 
+import larray
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like, AxisCollection)
@@ -1271,6 +1273,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
 
 if __name__ == "__main__":
-    # x = read_hdf('c:/tmp/rgl_la.h5', 'rgl')
-    x = read_hdf('c:/tmp/c.h5', 'c')
-    print(x.info())
+    import doctest
+    doctest.testmod(larray.larray)
+    unittest.main()

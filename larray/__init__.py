@@ -1,1 +1,1 @@
-from larray.array import *
+from larray.larray import *

@@ -807,7 +807,9 @@ class LArray(np.ndarray):
     @property
     def df(self):
         axes_names = self.axes_names[:-1]
-        axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+        if axes_names[-1] is not None:
+            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+
         columns = self.axes[-1].labels
         index = pd.MultiIndex.from_product(self.axes_labels[:-1],
                                            names=axes_names)
@@ -1410,7 +1412,7 @@ class LArray(np.ndarray):
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
-    def to_excel(self, filepath, sheet_name, *args, **kwargs):
+    def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
         """
         write LArray to an excel file in the specified sheet
         """
@@ -1463,8 +1465,8 @@ def parse(s):
     """
     # parameters can be strings or numbers
     if isinstance(s, basestring):
-        s = s.strip().lower()
-        if s in ('0', '1', 'false', 'true'):
+        s = s.strip()
+        if s.lower() in ('0', '1', 'false', 'true'):
             return s in ('1', 'true')
         elif s.isdigit():
             return int(s)
@@ -1510,10 +1512,13 @@ def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
-    last_axis = axes_names[-1].split('\\')
+    if axes_names == [None]:
+        last_axis = None, None
+    else:
+        last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
+    #FIXME: hardcoded "time"
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
-
     df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
                                            sort_columns=sort_columns, **kwargs)
 
@@ -1616,27 +1621,29 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, sort_rows=True, **kwargs):
+def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
+             **kwargs):
     """
     read an LArray from a h5 file with the specified name
     """
-    return df_aslarray(pd.read_hdf(filepath, key, **kwargs),
-                       sort_rows=sort_rows)
+    df = pd.read_hdf(filepath, key, **kwargs)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
-def read_excel(filepath, name, nb_index=0, index_col=[], **kwargs):
+def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
+               na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
     reads excel file from sheet name and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
     or
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
     """
-    if len(index_col) > 0:
-        df = pd.read_excel(filepath, name, index_col=index_col, **kwargs)
-    else:
-        df = pd.read_excel(filepath, name, index_col=list(range(nb_index)),
-                           **kwargs)
-    return df_aslarray(df.reindex_axis(sorted(df.columns), axis=1))
+    if len(index_col) == 0:
+        index_col = list(range(nb_index))
+    df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
 def zeros(axes):
