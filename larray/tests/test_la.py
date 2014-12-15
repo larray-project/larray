@@ -1298,5 +1298,5 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(larray.larray)
+    doctest.testmod(larray.core)
     unittest.main()
