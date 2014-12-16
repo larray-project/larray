@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # coding=utf-8
-# Release script for LIAM2
 # Licence: GPLv3
 from __future__ import print_function, unicode_literals
 
@@ -30,8 +29,6 @@ if sys.version < '3':
     # add support for encoding. Slow on Python2, but that is not a problem
     # given what we do with it.
     open = io.open
-
-WEBSITE = 'liam2.plan.be'
 
 
 # ------------- #
@@ -339,7 +336,7 @@ def make_release(release_name=None, branch='master'):
     do('Building doc', build_doc)
 
     do('Creating source archive', call,
-       r'git archive --format zip --output ..\LIAM2-%s-src.zip %s'
+       r'git archive --format zip --output ..\LARRAY-%s-src.zip %s'
        % (release_name, rev))
 
     # ------- #
@@ -376,5 +373,5 @@ if __name__ == '__main__':
     from sys import argv
 
     # chdir(r'c:\tmp')
-    # chdir('liam2_new_release')
+    # chdir('larray_new_release')
     make_release(*argv[1:])
