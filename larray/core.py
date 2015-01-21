@@ -46,21 +46,20 @@ Matrix class
 
 # * avg on last 10 years
 #     time = Axis('time', ...)
-#     x = time[-10:]  # <- does not work!
+#     x = time[-10:]  # <- does not work (-10 is not a tick on the Axis)!
+    # la.avg(time[-10:])
     # la[time[-10:]].avg(time)
     # la.append(la.avg(time[-10:]), axis=time)
     # la.append(time=la.avg(time[-10:]))
     # la.append(time=la.avg(time='-10:'))
 
 # * drop last year
+#   la = la[time[:-1]] # <- implement this !
 #   la = la[:,:,:,:,time[:-1]]
 #   la = la.filter(time[:-1]) # <- implement this !
 #   (equal to "la = la.filter(time=time[:-1])")
 #   la = la.filter(geo='A25,A11')
 #   la = la.filter(geo['A25,A11'])
-
-# also for __getitem__
-#   la = la[time[:-1]] # <- implement this !
 #
 # * split unit tests
 
@@ -975,7 +974,10 @@ class LArray(np.ndarray):
                 if not np.isscalar(axis_key)]
 
         cross_key = self.cross_key(translated_key, collapse_slices)
-        data[cross_key] = value.broadcast_with(axes)
+
+        # if value is a "raw" ndarray we rely on numpy broadcasting
+        data[cross_key] = value.broadcast_with(axes) \
+            if isinstance(value, LArray) else value
 
     def set(self, value, **kwargs):
         """
