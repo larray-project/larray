@@ -67,6 +67,20 @@ Matrix class
 #   - in all cases, we will need to define a new Axis object
 #   - in the examples below, we suppose a.label is 'income'
 #   - best candidates (IMO)
+#       - a.append(a.sum(age), age, 'total')
+#         * label can be optional (it could be set to either None or an
+#           autoincrementing int/label) not all operations need a label anyway
+#         * even axis can be optional in some (the usual) case: if value is
+# only missing one dimension compared to a and the other dimensions are
+# compatibles, we could assume it is the missing dimension. This would make
+# this possible: a.append(a.sum(age)). This is DRY but possibly too magical
+# and diverges from numpy where no axis => flattened result
+#         it is probably better to have an alias: with_total/append_total
+# which does it.
+#       - a.append_total(axis, func=np.sum, label=None) # label = func.__name__?
+#       - a.append_total(axis, func=np.mean, label=None)
+#       - a.extend(values, axis)
+#       - a.append(age, 'total', a.sum(age))
 #       - a.append(age=a.sum(age))   # label is "income.sum(age)"
 #                                    # ideally, it should be just "sum(age)"
 #                                    # (the label on the array stays "income"
@@ -81,6 +95,7 @@ Matrix class
 #       - a.append_total(age)     # default aggregate is sum
 #                                 # default label is "total"
 #       - a.append_total(age=avg) # default aggregate is sum,
+#       - a.append_total(age, sum) # default aggregate is sum,
 #       - a.append_total(age, sex=avg) # default aggregate is sum,
 
 # other candidates
