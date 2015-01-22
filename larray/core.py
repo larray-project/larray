@@ -842,10 +842,10 @@ class LArray(np.ndarray):
 
     #noinspection PyAttributeOutsideInit
     def __array_finalize__(self, obj):
-        # We are in the middle of the LabeledArray.__new__ constructor,
-        # and our special attributes will be set when we return to that
-        # constructor, so we do not need to set them here.
         if obj is None:
+            # We are in the middle of the LabeledArray.__new__ constructor,
+            # and our special attributes will be set when we return to that
+            # constructor, so we do not need to set them here.
             return
 
         # obj is our "template" object (on which we have asked a view on).
@@ -1360,7 +1360,7 @@ class LArray(np.ndarray):
     __or__ = _binop('or')
     __ror__ = _binop('ror')
 
-    # unary ops do not need broadcasting so do not need to be overriden
+    # unary ops do not need broadcasting so do not need to be overridden
     # __neg__ = _unaryop('neg')
     # __pos__ = _unaryop('pos')
     # __abs__ = _unaryop('abs')
