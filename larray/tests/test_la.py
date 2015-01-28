@@ -712,11 +712,31 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la, raw)
 
     def test_setitem_bool_array_key(self):
+        age, geo, sex, lipro = self.larray.axes
+
         # LArray key
+        # a) same shape
         la = self.larray.copy()
         raw = self.array.copy()
         la[la < 5] = 0
         raw[raw < 5] = 0
+        self._assert_equal_raw(la, raw)
+
+        # b) numpy-broadcastable shape
+        la = self.larray.copy()
+        raw = self.array.copy()
+        key = la[sex['F,']] < 5
+        self.assertEqual(key.ndim, 4)
+        la[key] = 0
+        raw[raw[:, :, [1]] < 5] = 0
+        self._assert_equal_raw(la, raw)
+
+        # c) LArray-broadcastable shape (missing axis)
+        la = self.larray.copy()
+        key = la[sex['F']] < 5
+        self.assertEqual(key.ndim, 3)
+        la[key] = 0
+        # same raw as last test
         self._assert_equal_raw(la, raw)
 
         # ndarray key

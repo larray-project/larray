@@ -989,6 +989,8 @@ class LArray(np.ndarray):
         data = np.asarray(self)
 
         if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+            if isinstance(key, LArray):
+                key = key.broadcast_with(self.axes)
             data[key] = value
             return
 
@@ -1036,7 +1038,7 @@ class LArray(np.ndarray):
 
     def broadcast_with(self, target):
         """
-        returns an LArray that is broadcastable with target
+        returns an LArray that is (numpy) broadcastable with target
         target can be either an LArray or any collection of Axis
 
         * all common axes must be either 1 or the same length
