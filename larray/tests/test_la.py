@@ -647,6 +647,28 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
         self._assert_equal_raw(la, raw)
 
+    def test_setitem_ndarray(self):
+        """
+        tests LArray.__setitem__(key, value) where value is a raw ndarray.
+        In that case, value.shape is more restricted as we rely on
+        numpy broadcasting.
+        """
+        # a) value has exactly the same shape as the target slice
+        la = self.larray.copy()
+        raw = self.array.copy()
+        value = raw[[1, 5, 9]] + 25.0
+        la['1,5,9'] = value
+        raw[[1, 5, 9]] = value
+        self._assert_equal_raw(la, raw)
+
+        # b) value has the same axes than target but one has length 1
+        la = self.larray.copy()
+        raw = self.array.copy()
+        value = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        la['1,5,9'] = value
+        raw[[1, 5, 9]] = value
+        self._assert_equal_raw(la, raw)
+
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
 
