@@ -870,6 +870,12 @@ class LArray(np.ndarray):
         self.axes = AxisCollection(axes)
         return self
 
+    def rename(self, axis, newname):
+        axis = self.get_axis(axis)
+        axes = [Axis(newname, a.labels) if a is axis else a
+                for a in self.axes]
+        return LArray(self, axes)
+
     def full_key(self, key):
         """
         Returns a full nd-key from a key in any of the following forms:

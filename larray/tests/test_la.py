@@ -518,6 +518,18 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (116, 44, 2, 15))
         self._assert_equal_raw(la, np.zeros((116, 44, 2, 15)))
 
+    def test_rename(self):
+        la = self.larray
+        new = la.rename('sex', 'gender')
+        # old array axes names not modified
+        self.assertEqual(la.axes_names, ['age', 'geo', 'sex', 'lipro'])
+        self.assertEqual(new.axes_names, ['age', 'geo', 'gender', 'lipro'])
+
+        new = la.rename(self.sex, 'gender')
+        # old array axes names not modified
+        self.assertEqual(la.axes_names, ['age', 'geo', 'sex', 'lipro'])
+        self.assertEqual(new.axes_names, ['age', 'geo', 'gender', 'lipro'])
+
     def test_info(self):
         expected = """\
 116 x 44 x 2 x 15
