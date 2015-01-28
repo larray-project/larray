@@ -866,7 +866,7 @@ class LArray(np.ndarray):
 
     def axes_rename(self, **kwargs):
         axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
-                for a in  self.axes]
+                for a in self.axes]
         self.axes = AxisCollection(axes)
         return self
 

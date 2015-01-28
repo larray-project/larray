@@ -632,11 +632,10 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
         self._assert_equal_raw(la, raw)
 
-        # b) value has exactly the same shape but VG is at a "wrong" position
+        # b) value has exactly the same shape but VG at a "wrong" positions
         la = self.larray.copy()
-        # same raw as previous test
-
         la[geo[:], ages1_5_9] = la[ages1_5_9] + 25.0
+        # same raw as previous test
         self._assert_equal_raw(la, raw)
 
         # c) value has an extra length-1 axis
