@@ -606,6 +606,15 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))
 
+    def test_getitem_bool_array_key(self):
+        raw = self.array
+        la = self.larray
+
+        # LArray key
+        self._assert_equal_raw(la[la < 5], raw[raw < 5])
+        # ndarray key
+        self._assert_equal_raw(la[raw < 5], raw[raw < 5])
+
     def test_setitem_larray(self):
         """
         tests LArray.__setitem__(key, value) where value is an LArray

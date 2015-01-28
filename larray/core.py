@@ -970,6 +970,9 @@ class LArray(np.ndarray):
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
+        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+            return data[key]
+
         translated_key = self.translated_key(self.full_key(key))
 
         axes = [axis.subaxis(axis_key)
