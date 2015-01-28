@@ -906,7 +906,7 @@ class LArray(np.ndarray):
             axes_names = set(self.axes_names)
             for axis_name in key:
                 if axis_name not in axes_names:
-                    raise KeyError("{} is not an axis name".format(axis_name))
+                    raise KeyError("'{}' is not an axis name".format(axis_name))
             key = tuple(key[axis.name] if axis.name in key else slice(None)
                         for axis in self.axes)
 
