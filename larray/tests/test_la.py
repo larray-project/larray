@@ -711,6 +711,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = value
         self._assert_equal_raw(la, raw)
 
+    def test_setitem_bool_array_key(self):
+        # LArray key
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la[la < 5] = 0
+        raw[raw < 5] = 0
+        self._assert_equal_raw(la, raw)
+
+        # ndarray key
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la[raw < 5] = 0
+        raw[raw < 5] = 0
+        self._assert_equal_raw(la, raw)
+
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
 

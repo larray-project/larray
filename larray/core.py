@@ -988,6 +988,10 @@ class LArray(np.ndarray):
     def __setitem__(self, key, value, collapse_slices=True):
         data = np.asarray(self)
 
+        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+            data[key] = value
+            return
+
         translated_key = self.translated_key(self.full_key(key))
 
         #XXX: we might want to create fakes axes in this case, as we only
