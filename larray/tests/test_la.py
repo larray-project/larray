@@ -676,6 +676,11 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[..., [0, 4, 8]] = 0
         self._assert_equal_raw(la, raw)
 
+        # 4) using a single slice(None) key
+        la = self.larray.copy()
+        la[:] = 0
+        self._assert_equal_raw(la, np.zeros_like(raw))
+
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.

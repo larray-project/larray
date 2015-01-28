@@ -1067,6 +1067,9 @@ class LArray(np.ndarray):
         # sadly LArray[:] translates to LArray.__getslice__(0, sys.maxsize)
         return self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)]
 
+    def __setslice__(self, i, j, value):
+        self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)] = value
+
     def __str__(self):
         if not self.ndim:
             return str(np.asscalar(self))
