@@ -593,6 +593,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la['1,5,9', lipro159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
+        # single None slice
+        self._assert_equal_raw(la[:], raw)
+
         # key with duplicate axes
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))

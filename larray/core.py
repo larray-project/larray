@@ -1054,7 +1054,8 @@ class LArray(np.ndarray):
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
     def __getslice__(self, i, j):
-        return self[slice(i, j)]
+        # sadly LArray[:] translates to LArray.__getslice__(0, sys.maxsize)
+        return self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)]
 
     def __str__(self):
         if not self.ndim:
