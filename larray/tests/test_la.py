@@ -535,6 +535,9 @@ class TestLArray(TestCase):
         # zero dimension / scalar
         self.assertEqual(str(self.small[lipro['P01'], sex['F']]), "15")
 
+        # empty / len 0 first dimension
+        self.assertEqual(str(self.small[sex[[]]]), "LArray([])")
+
         # one dimension
         self.assertEqual(str(self.small[lipro3, sex['H']]), """
 lipro | P01 | P02 | P03

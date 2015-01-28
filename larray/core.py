@@ -1082,6 +1082,8 @@ class LArray(np.ndarray):
     def __str__(self):
         if not self.ndim:
             return str(np.asscalar(self))
+        elif not len(self):
+            return 'LArray([])'
         else:
             s = table2str(list(self.as_table()), 'nan', True,
                           keepcols=self.ndim - 1)
