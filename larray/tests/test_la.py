@@ -623,7 +623,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
         self._assert_equal_raw(la, raw)
 
-        # b) value has an extra length-1 axis
+        # b) value has exactly the same shape but VG is at a "wrong" position
+        la = self.larray.copy()
+        # same raw as previous test
+
+        la[geo[:], ages1_5_9] = la[ages1_5_9] + 25.0
+        self._assert_equal_raw(la, raw)
+
+        # c) value has an extra length-1 axis
         la = self.larray.copy()
         raw = self.array.copy()
 
@@ -636,14 +643,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
         self._assert_equal_raw(la, raw)
 
-        # c) value has the same axes than target but one has length 1
+        # d) value has the same axes than target but one has length 1
         la = self.larray.copy()
         raw = self.array.copy()
         raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
         la[ages1_5_9] = la[ages1_5_9].sum(geo=(geo.all(),))
         self._assert_equal_raw(la, raw)
 
-        # d) value has a missing dimension
+        # e) value has a missing dimension
         la = self.larray.copy()
         la[ages1_5_9] = la[ages1_5_9].sum(geo)
         # we use "raw" from previous test
