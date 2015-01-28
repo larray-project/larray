@@ -583,15 +583,15 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la[age159], raw[[1, 5, 9]])
 
         # ValueGroup at "incorrect" place
-        self._assert_equal_raw(la[lipro159], raw[:, :, :, [0, 4, 8]])
+        self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
         # multiple ValueGroup key (in "incorrect" order)
         self._assert_equal_raw(la[lipro159, age159],
-                               raw[[1, 5, 9]][:, :, :, [0, 4, 8]])
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # mixed ValueGroup/positional key
         self._assert_equal_raw(la['1,5,9', lipro159],
-                               raw[[1, 5, 9]][:, :, :, [0, 4, 8]])
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # key with duplicate axes
         # la[[1, 5, 9], age['1,5,9']]
