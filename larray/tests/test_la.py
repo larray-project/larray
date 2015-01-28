@@ -596,6 +596,12 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # single None slice
         self._assert_equal_raw(la[:], raw)
 
+        # only Ellipsis
+        self._assert_equal_raw(la[...], raw)
+
+        # Ellipsis and VG
+        self._assert_equal_raw(la[..., lipro159], raw[..., [0, 4, 8]])
+
         # key with duplicate axes
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))
@@ -648,6 +654,19 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw = self.array.copy()
         la['1,5,9'] = la['2,7,3'] + 27.0
         raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
+        self._assert_equal_raw(la, raw)
+
+        # 3) using ellipsis keys
+        # only Ellipsis
+        la = self.larray.copy()
+        la[...] = 0
+        self._assert_equal_raw(la, np.zeros_like(raw))
+
+        # Ellipsis and VG
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la[..., lipro['P01,P05,P09']] = 0
+        raw[..., [0, 4, 8]] = 0
         self._assert_equal_raw(la, raw)
 
     def test_setitem_ndarray(self):

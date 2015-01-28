@@ -880,6 +880,16 @@ class LArray(np.ndarray):
         if not isinstance(key, (tuple, dict)):
             key = (key,)
 
+        # handle keys containing an Ellipsis
+        if isinstance(key, tuple):
+            num_ellipses = key.count(Ellipsis)
+            if num_ellipses > 1:
+                raise ValueError("cannot use more than one Ellipsis (...)")
+            elif num_ellipses == 1:
+                pos = key.index(Ellipsis)
+                none_slices = (slice(None),) * (self.ndim - len(key) + 1)
+                key = key[:pos] + none_slices + key[pos + 1:]
+
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
             #XXX: support ValueGroup without axis?
