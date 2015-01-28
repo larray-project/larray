@@ -528,10 +528,15 @@ class TestLArray(TestCase):
         self.assertEqual(self.larray.info, expected)
 
     def test_str(self):
-        lipro3 = self.lipro['P01:P03']
+        lipro = self.lipro
+        lipro3 = lipro['P01:P03']
+        sex = self.sex
+
+        # zero dimension / scalar
+        self.assertEqual(str(self.small[lipro['P01'], sex['F']]), "15")
 
         # one dimension
-        self.assertEqual(str(self.small.filter(lipro=lipro3, sex='H')), """
+        self.assertEqual(str(self.small[lipro3, sex['H']]), """
 lipro | P01 | P02 | P03
       |   0 |   1 |   2
 """)
