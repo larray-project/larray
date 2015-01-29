@@ -1711,3 +1711,7 @@ def zeros(axes):
 
 def zeros_like(array):
     return zeros(array.axes)
+
+
+def empty(axes):
+    return LArray(np.empty(tuple(len(axis) for axis in axes)), axes)
