@@ -417,7 +417,7 @@ def to_keys(value):
     elif isinstance(value, list):
         return to_key(value)
     else:
-        assert isinstance(value, tuple)
+        assert isinstance(value, tuple), "%s is not a tuple" % value
         return tuple([to_key(group) for group in value])
 
 
