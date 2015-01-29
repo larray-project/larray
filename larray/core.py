@@ -55,12 +55,7 @@ Matrix class
 
 # * drop last year
 #   la = la[time[:-1]] # <- implement this !
-#   la = la[:,:,:,:,time[:-1]]
-#   la = la.filter(time[:-1]) # <- implement this !
-#   (equal to "la = la.filter(time=time[:-1])")
-#   la = la.filter(geo='A25,A11')
-#   la = la.filter(geo['A25,A11'])
-#
+
 # * split unit tests
 
 # * easily add sum column for a dimension
