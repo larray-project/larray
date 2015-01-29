@@ -865,6 +865,9 @@ class LArray(np.ndarray):
         return [axis.name for axis in self.axes]
 
     def axes_rename(self, **kwargs):
+        for k in kwargs.keys():
+            if k not in self.axes:
+                raise KeyError("'%s' axis not found in array")
         axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
                 for a in self.axes]
         self.axes = AxisCollection(axes)
