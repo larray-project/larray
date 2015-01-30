@@ -795,27 +795,26 @@ class AxisCollection(object):
         return res
 
 
-class LArray(np.ndarray):
+class LArray(object):
     """
     LArray class
     """
-    def __new__(cls, data, axes=None):
-        obj = np.asarray(data).view(cls)
-        ndim = obj.ndim
+    def __init__(self, data, axes=None):
+        ndim = data.ndim
         if axes is not None:
             if len(axes) != ndim:
                 raise ValueError("number of axes (%d) does not match "
                                  "number of dimensions of data (%d)"
                                  % (len(axes), ndim))
             shape = tuple(len(axis) for axis in axes)
-            if shape != obj.shape:
+            if shape != data.shape:
                 raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (shape, obj.shape))
+                                 "data shape %s" % (shape, data.shape))
 
         if axes is not None and not isinstance(axes, AxisCollection):
             axes = AxisCollection(axes)
-        obj.axes = axes
-        return obj
+        self.data = data
+        self.axes = axes
 
     @property
     def df(self):
@@ -974,8 +973,9 @@ class LArray(np.ndarray):
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
-        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
-            return data[key]
+        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            return data[np.asarray(key)]
 
         translated_key = self.translated_key(self.full_key(key))
 
@@ -987,15 +987,20 @@ class LArray(np.ndarray):
         data = data[cross_key]
         # drop length 1 dimensions created by scalar keys
         data = data.reshape(tuple(len(axis) for axis in axes))
-        return LArray(data, axes)
+        if not axes:
+            # scalars do not need to be wrapped in LArray
+            return data
+        else:
+            return LArray(data, axes)
 
     def __setitem__(self, key, value, collapse_slices=True):
         data = np.asarray(self)
 
-        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
+                np.issubdtype(key.dtype, bool):
             if isinstance(key, LArray):
                 key = key.broadcast_with(self.axes)
-            data[key] = value
+            data[np.asarray(key)] = value
             return
 
         translated_key = self.translated_key(self.full_key(key))
@@ -1162,15 +1167,18 @@ class LArray(np.ndarray):
         """
         src_data = np.asarray(self)
         if not axes:
-            # scalars don't need to be wrapped in LArray
-            return op(src_data)
+            axes = self.axes
 
         axes_indices = tuple(self.get_axis_idx(a) for a in axes)
         res_data = op(src_data, axis=axes_indices)
         axes_tokill = set(axes_indices)
         res_axes = [axis for axis_num, axis in enumerate(self.axes)
                     if axis_num not in axes_tokill]
-        return LArray(res_data, res_axes)
+        if not res_axes:
+            # scalars don't need to be wrapped in LArray
+            return res_data
+        else:
+            return LArray(res_data, res_axes)
 
     def get_axis_idx(self, axis):
         """
@@ -1294,7 +1302,7 @@ class LArray(np.ndarray):
         return res
 
     def copy(self):
-        return LArray(np.ndarray.copy(self), axes=self.axes[:])
+        return LArray(self.data.copy(), axes=self.axes[:])
 
     @property
     def info(self):
@@ -1349,7 +1357,7 @@ class LArray(np.ndarray):
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
-            return super_method(self, other)
+            return LArray(super_method(self.data, other), self.axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -1514,6 +1522,33 @@ class LArray(np.ndarray):
 
     def plot(self, *args, **kwargs):
         self.df.plot(*args, **kwargs)
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return self.data.ndim
+
+    @property
+    def size(self):
+        return self.data.size
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    @property
+    def item(self):
+        return self.data.item
+
+    def __len__(self):
+        return len(self.data)
+
+    def __array__(self, dtype=None):
+        return self.data
+
 
 
 def parse(s):
