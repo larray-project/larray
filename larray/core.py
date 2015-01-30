@@ -730,8 +730,8 @@ class AxisCollection(object):
         other collection compares equal if all axes compare equal and in the
         same order. Works with a list.
         """
-        if isinstance(other, AxisCollection):
-            other = other._list
+        if not isinstance(other, list):
+            other = list(other)
         return self._list == other
 
     def __contains__(self, key):
