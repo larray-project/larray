@@ -373,6 +373,13 @@ class TestAxisCollection(TestCase):
         self.value = Axis('value', ':10')
         self.collection = AxisCollection((self.lipro, self.sex, self.age))
 
+    def test_eq(self):
+        col = self.collection
+        self.assertEqual(col, col)
+        self.assertEqual(col, AxisCollection((self.lipro, self.sex, self.age)))
+        self.assertEqual(col, (self.lipro, self.sex, self.age))
+        self.assertNotEqual(col, (self.lipro, self.age, self.sex))
+
     def test_getitem_name(self):
         col = self.collection
         self.assertEqual(col['lipro'], self.lipro)
@@ -600,7 +607,10 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         lipro159 = lipro['P01,P05,P09']
 
         # ValueGroup at "correct" place
-        self._assert_equal_raw(la[age159], raw[[1, 5, 9]])
+        subset = la[age159]
+        self.assertEqual(subset.axes[1:], (geo, sex, lipro))
+        self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
+        self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
         # ValueGroup at "incorrect" place
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
