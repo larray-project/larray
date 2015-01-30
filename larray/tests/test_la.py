@@ -1277,14 +1277,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(+la, +raw)
         self._assert_equal_raw(~la, ~raw)
 
-    # def test_boolean_indexing(self):
-    #     raw = self.small_data
-    #     la = self.small
-    #
-    #     self._assert_equal_raw(la > 2, raw > 2)
-    # FIXME this fails: it should return a 1d array with "combined ticks"
-    #     self._assert_equal_raw(la[la > 2], raw[raw > 2])
-
     def test_mean(self):
         la = self.small
         raw = self.small_data
