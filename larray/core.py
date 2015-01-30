@@ -1399,11 +1399,21 @@ class LArray(object):
     __or__ = _binop('or')
     __ror__ = _binop('ror')
 
+    # element-wise method factory
+    def _unaryop(opname):
+        fullname = '__%s__' % opname
+        super_method = getattr(np.ndarray, fullname)
+
+        def opmethod(self):
+            return LArray(super_method(self.data), self.axes)
+        opmethod.__name__ = fullname
+        return opmethod
+
     # unary ops do not need broadcasting so do not need to be overridden
-    # __neg__ = _unaryop('neg')
-    # __pos__ = _unaryop('pos')
-    # __abs__ = _unaryop('abs')
-    # __invert__ = _unaryop('invert')
+    __neg__ = _unaryop('neg')
+    __pos__ = _unaryop('pos')
+    __abs__ = _unaryop('abs')
+    __invert__ = _unaryop('invert')
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
