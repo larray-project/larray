@@ -1233,7 +1233,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.transpose().axes_names,
                          ['lipro', 'sex', 'geo', 'age'])
 
-    def test_arithmetics(self):
+    def test_binary_ops(self):
         raw = self.small_data
         la = self.small
 
@@ -1262,13 +1262,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # test adding two larrays with different axes order
         self._assert_equal_raw(la + la.transpose(), raw * 2)
 
-    # def test_boolean_indexing(self):
-    #     raw = self.small_data
-    #     la = self.small
-    #
-    #     self._assert_equal_raw(la > 2, raw > 2)
-    # FIXME this fails: it should return a 1d array with "combined ticks"
-    #     self._assert_equal_raw(la[la > 2], raw[raw > 2])
+    def test_unary_ops(self):
+        raw = self.small_data
+        la = self.small
+
+        # using numpy functions
+        self._assert_equal_raw(np.abs(la - 10), np.abs(raw - 10))
+        self._assert_equal_raw(np.negative(la), np.negative(raw))
+        self._assert_equal_raw(np.invert(la), np.invert(raw))
+
+        # using python builtin ops
+        self._assert_equal_raw(abs(la - 10), abs(raw - 10))
+        self._assert_equal_raw(-la, -raw)
+        self._assert_equal_raw(+la, +raw)
+        self._assert_equal_raw(~la, ~raw)
 
     def test_mean(self):
         la = self.small

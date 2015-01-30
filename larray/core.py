@@ -977,6 +977,10 @@ class LArray(object):
 
         if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
                 np.issubdtype(key.dtype, bool):
+            #TODO: return an LArray with Axis labels = combined keys
+            # these combined keys should be objects which display as:
+            # (axis1_label, axis2_label, ...) but should also store the axis
+            # (names). Should it be the same object as the NDValueGroup?/NDKey?
             return data[np.asarray(key)]
 
         translated_key = self.translated_key(self.full_key(key))
