@@ -1359,7 +1359,7 @@ class LArray(object):
         def opmethod(self, other):
             if isinstance(other, LArray):
                 #TODO: first test if it is not already broadcastable
-                other = other.broadcast_with(self)
+                other = other.broadcast_with(self).data
             elif isinstance(other, np.ndarray):
                 pass
             elif not np.isscalar(other):
@@ -1566,6 +1566,8 @@ class LArray(object):
 
     def __array__(self, dtype=None):
         return self.data
+
+    __array_priority__ = 100
 
 
 
