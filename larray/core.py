@@ -1360,6 +1360,8 @@ class LArray(object):
             if isinstance(other, LArray):
                 #TODO: first test if it is not already broadcastable
                 other = other.broadcast_with(self)
+            elif isinstance(other, np.ndarray):
+                pass
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
