@@ -10,7 +10,7 @@ import pandas as pd
 import larray
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
-                    zeros, zeros_like, AxisCollection)
+                    zeros, zeros_like, AxisCollection, DataFrameWrapper)
 from larray.utils import array_equal, array_nan_equal
 
 
@@ -509,11 +509,23 @@ class TestLArray(TestCase):
 
         self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
                                                  .astype(float)
-        self.larray = LArray(self.array,
-                             axes=(self.age, self.geo, self.sex, self.lipro))
+        idx = pd.MultiIndex.from_product([self.age.labels, self.geo.labels,
+                                          self.sex.labels])
+        dfarray = self.array.reshape(116 * 44 * 2, 15)
+        df = pd.DataFrame(dfarray, idx, columns=self.lipro.labels)
+        wrapped = DataFrameWrapper(df)
+        self.larray = LArray(wrapped, (self.age, self.geo, self.sex,
+                                       self.lipro))
+        # self.larray = LArray(self.array,
+        #                      axes=(self.age, self.geo, self.sex, self.lipro))
+        # self.larray = read_hdf('c:/tmp/y.h5', 'y', sort_rows=False)
 
         self.small_data = np.arange(30).reshape(2, 15)
-        self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
+        df = pd.DataFrame(self.small_data, self.sex.labels,
+                          columns=self.lipro.labels)
+        self.small = LArray(DataFrameWrapper(df), (self.sex, self.lipro))
+        # self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
+        # self.small = read_hdf('c:/tmp/x.h5', 'x', sort_rows=False)
 
     def test_zeros(self):
         la = zeros((self.geo, self.age))

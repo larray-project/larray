@@ -1365,7 +1365,7 @@ class LArray(object):
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
-            return LArray(super_method(self.data, other), self.axes)
+            return LArray(super_method(np.asarray(self), other), self.axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -1411,7 +1411,7 @@ class LArray(object):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self):
-            return LArray(super_method(self.data), self.axes)
+            return LArray(super_method(np.asarray(self)), self.axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -1541,6 +1541,15 @@ class LArray(object):
     def plot(self, *args, **kwargs):
         self.df.plot(*args, **kwargs)
 
+    #XXX: one less indirection as we have all the info at this level?
+    # @property
+    # def shape(self):
+    #     return tuple(len(a) for a in self.axes)
+    #
+    # @property
+    # def ndim(self):
+    #     return len(self.axes)
+
     @property
     def shape(self):
         return self.data.shape
@@ -1565,7 +1574,7 @@ class LArray(object):
         return len(self.data)
 
     def __array__(self, dtype=None):
-        return self.data
+        return np.asarray(self.data)
 
     __array_priority__ = 100
 
@@ -1657,6 +1666,31 @@ class DataFrameWrapper(object):
 
     def __getattr__(self, key):
         return getattr(self.df, key)
+
+    @property
+    def dtype(self):
+        # assumes df is homogeneous !
+        return self.df.dtypes[0]
+
+    @property
+    def ndim(self):
+        return self.df.index.nlevels + 1
+
+    @property
+    def shape(self):
+        shape = [len(level) for level in self.df.index.levels]
+        shape.append(len(self.df.columns))
+        return tuple(shape)
+
+    def copy(self):
+        return DataFrameWrapper(self.df.copy())
+
+    # not caught by __getattr__?
+    def __len__(self):
+        return self.shape[0]
+
+    def __array__(self, dtype=None):
+        return self.df.__array__(dtype).reshape(self.shape)
 
 
 #TODO: implement sort_columns
