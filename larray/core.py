@@ -975,7 +975,7 @@ class LArray(object):
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
-        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
+        if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
             #TODO: return an LArray with Axis labels = combined keys
             # these combined keys should be objects which display as:
