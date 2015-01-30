@@ -1263,12 +1263,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la + la.transpose(), raw * 2)
 
         # mixed operations
-        la_raw = la + raw
-        self.assertEqual(la_raw.axes, la.axes)
-        self._assert_equal_raw(la_raw, raw + raw)
-        raw_la = raw + la
-        self._assert_equal_raw(raw_la, raw + raw)
-        self.assertEqual(raw_la.axes, la.axes)
+        raw2 = raw / 2
+        la_raw2 = la - raw2
+        self.assertEqual(la_raw2.axes, la.axes)
+        self._assert_equal_raw(la_raw2, raw - raw2)
+        raw2_la = raw2 - la
+        self.assertEqual(raw2_la.axes, la.axes)
+        self._assert_equal_raw(raw2_la, raw2 - raw)
+
+        la_ge_raw2 = la >= raw2
+        self.assertEqual(la_ge_raw2.axes, la.axes)
+        self._assert_equal_raw(la_ge_raw2, raw >= raw2)
+
+        raw2_ge_la = raw2 >= la
+        self.assertEqual(raw2_ge_la.axes, la.axes)
+        self._assert_equal_raw(raw2_ge_la, raw2 >= raw)
 
     def test_unary_ops(self):
         raw = self.small_data
