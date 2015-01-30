@@ -1648,6 +1648,37 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     return LArray(data, axes)
 
 
+class DataFrameWrapper(object):
+    def __init__(self, df):
+        self.df = df
+
+    def __getitem__(self, key):
+        return self.df[key]
+
+    def __getattr__(self, key):
+        return getattr(self.df, key)
+
+
+#TODO: implement sort_columns
+def df_aslarray2(df, sort_rows=True, sort_columns=True, **kwargs):
+    axes_names = [decode(name, 'utf8') for name in df.index.names]
+    if axes_names == [None]:
+        last_axis = None, None
+    else:
+        last_axis = axes_names[-1].split('\\')
+    axes_names[-1] = last_axis[0]
+    #FIXME: hardcoded "time"
+    axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
+
+    axes_labels = df_labels(df, sort=sort_rows)
+    # pandas treats the "time" labels as column names (strings) so we need
+    # to convert them to values
+    axes_labels.append([parse(cell) for cell in df.columns.values])
+
+    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+    return LArray(DataFrameWrapper(df), axes)
+
+
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
              na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
@@ -1733,14 +1764,12 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
-             **kwargs):
+def read_hdf(filepath, key, sort_rows=True, sort_columns=True, **kwargs):
     """
     read an LArray from a h5 file with the specified name
     """
     df = pd.read_hdf(filepath, key, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    return df_aslarray2(df, sort_rows=sort_rows, sort_columns=sort_columns)
 
 
 def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
