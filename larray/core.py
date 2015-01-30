@@ -596,10 +596,12 @@ class Axis(object):
                 raise ValueError
 
     def copy(self):
+        #XXX: I wonder if we should make a copy of the labels
         return Axis(self.name, self.labels)
         
     def sorted(self):
         res = self.copy()
+        #FIXME: this probably also sorts the original axis !
         res.labels.sort()
         res._update_mapping()
         return res
