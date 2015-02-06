@@ -1690,7 +1690,7 @@ class DataFrameWrapper(object):
         return self.shape[0]
 
     def __array__(self, dtype=None):
-        return self.df.__array__(dtype).reshape(self.shape)
+        return self.df.__array__(dtype) #.reshape(self.shape)
 
 
 #TODO: implement sort_columns
@@ -1767,8 +1767,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         del df[combined_axes_names]
         df.set_index(axes_names, inplace=True)
 
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    return df_aslarray2(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                        fill_value=na)
 
 
 def read_tsv(filepath, **kwargs):
