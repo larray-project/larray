@@ -933,32 +933,42 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
                          (116, 2, 2))
 
     def test_sum_full_axes(self):
-        la = self.larray
-        age, geo, sex, lipro = la.axes
+        # la = self.larray
+        # df = pd.read_csv('c:/tmp/sparse.csv', index_col=[0, 1, 2])
+        # la = DataFrameLArray(df, )
+        la = read_csv('c:/tmp/sparse.csv')
+
+        ert, unit, geo, time = la.axes
+
+        # age, geo, sex, lipro = la.axes
 
         # everything
         self.assertEqual(la.sum(), np.asarray(la).sum())
 
         # using axes numbers
-        self.assertEqual(la.sum(0, 2).shape, (44, 15))
+        self.assertEqual(la.sum(0, 2).shape, (1, 10))
 
         # using Axis objects
-        self.assertEqual(la.sum(age).shape, (44, 2, 15))
-        self.assertEqual(la.sum(age, sex).shape, (44, 15))
+        self.assertEqual(la.sum(ert).shape, (1, 8, 10))
+        self.assertEqual(la.sum(ert, geo).shape, (1, 10))
+        self.assertEqual(la.sum(ert).sum(geo).shape, (1, 10))
+        self.assertEqual(la.sum(time).shape, (5, 1, 8))
+        self.assertEqual(la.sum(ert, geo, time).shape, (1,))
 
         # using axes names
-        self.assertEqual(la.sum('age', 'sex').shape, (44, 15))
+        self.assertEqual(la.sum('ert', 'geo').shape, (1, 10))
+        # self.assertEqual(la.sum('age', 'sex').shape, (44, 15))
 
         # chained sum
-        self.assertEqual(la.sum(age, sex).sum(geo).shape, (15,))
-        self.assertEqual(la.sum(age, sex).sum(lipro, geo), la.sum())
-
-        # getitem on aggregated
-        aggregated = la.sum(age, sex)
-        self.assertEqual(aggregated[self.vla_str].shape, (22, 15))
-
-        # filter on aggregated
-        self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
+        # self.assertEqual(la.sum(age, sex).sum(geo).shape, (15,))
+        # self.assertEqual(la.sum(age, sex).sum(lipro, geo), la.sum())
+        #
+        # # getitem on aggregated
+        # aggregated = la.sum(age, sex)
+        # self.assertEqual(aggregated[self.vla_str].shape, (22, 15))
+        #
+        # # filter on aggregated
+        # self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
 
     def test_group_agg(self):
         la = self.larray

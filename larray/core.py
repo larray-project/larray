@@ -1,6 +1,18 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
+
+# this branch tries to implement the following structure:
+# class LArray(object):  # abstract class (or possibly ndarray API)
+#     pass
+#
+#
+# class DataFrameLArray(LArray):
+#     def __init__(self, data):
+#         # data is a pd.DataFrame
+#         self.data = data
+
+
 __version__ = "0.2dev"
 
 """
@@ -678,6 +690,9 @@ class AxisCollection(object):
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._list[key]
+        elif isinstance(key, Axis):
+            #XXX: check that it is the same object????
+            return self._map[key.name]
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         else:
@@ -792,6 +807,8 @@ class AxisCollection(object):
             axes = axes.split(',')
         elif isinstance(axes, Axis):
             axes = [axes]
+        # transform positional axis to axis objects
+        axes = [self[axis] for axis in axes]
         for axis in axes:
             del res[axis]
         return res
@@ -804,19 +821,54 @@ class LArray(object):
     def __init__(self, data, axes=None):
         ndim = data.ndim
         if axes is not None:
-            if len(axes) != ndim:
-                raise ValueError("number of axes (%d) does not match "
-                                 "number of dimensions of data (%d)"
-                                 % (len(axes), ndim))
+            # if len(axes) != ndim:
+            #     raise ValueError("number of axes (%d) does not match "
+            #                      "number of dimensions of data (%d)"
+            #                      % (len(axes), ndim))
             shape = tuple(len(axis) for axis in axes)
-            if shape != data.shape:
-                raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (shape, data.shape))
+            # if prod(data.shape) != prod(shape):
+            #     raise ValueError("bad shape: %s vs %s" % (data.shape, shape))
+            # if shape != data.shape:
+            #     raise ValueError("length of axes %s does not match "
+            #                      "data shape %s" % (shape, data.shape))
 
         if axes is not None and not isinstance(axes, AxisCollection):
             axes = AxisCollection(axes)
         self.data = data
         self.axes = axes
+
+    def __array_finalize__(self, obj):
+        raise Exception("does this happen?")
+
+    @property
+    def axes_labels(self):
+        return [axis.labels for axis in self.axes]
+
+    @property
+    def axes_names(self):
+        return [axis.name for axis in self.axes]
+
+    @property
+    def shape(self):
+        return tuple(len(axis) for axis in self.axes)
+
+    @property
+    def ndim(self):
+        return len(self.axes)
+
+
+class SeriesLArray(LArray):
+    def __init__(self, data, axes=None):
+        if not isinstance(data, pd.Series):
+            raise TypeError("data must be a pandas.Series")
+        LArray.__init__(self, data, axes)
+
+
+class DataFrameLArray(LArray):
+    def __init__(self, data, axes=None):
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("data must be a pandas.DataFrame")
+        LArray.__init__(self, data, axes)
 
     @property
     def df(self):
@@ -835,30 +887,6 @@ class LArray(object):
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
                                            names=self.axes_names)
         return pd.Series(np.asarray(self).reshape(self.size), index)
-
-    #noinspection PyAttributeOutsideInit
-    def __array_finalize__(self, obj):
-        if obj is None:
-            # We are in the middle of the LabeledArray.__new__ constructor,
-            # and our special attributes will be set when we return to that
-            # constructor, so we do not need to set them here.
-            return
-
-        # obj is our "template" object (on which we have asked a view on).
-        if isinstance(obj, LArray) and self.shape == obj.shape:
-            # obj.view(LArray)
-            # larr[:3]
-            self.axes = obj.axes
-        else:
-            self.axes = None
-
-    @property
-    def axes_labels(self):
-        return [axis.labels for axis in self.axes]
-
-    @property
-    def axes_names(self):
-        return [axis.name for axis in self.axes]
 
     def axes_rename(self, **kwargs):
         for k in kwargs.keys():
@@ -1166,25 +1194,78 @@ class LArray(object):
         """
         return self.__getitem__(kwargs, collapse)
 
-    def _axis_aggregate(self, op, axes=()):
+    def _df_axis_level(self, axis):
+        idx = self.get_axis_idx(axis)
+        index_ndim = len(self.data.index.names)
+        if idx < index_ndim:
+            return 0, idx
+        else:
+            return 1, idx - index_ndim
+
+    def _axis_aggregate(self, op_name, axes=()):
         """
         op is an aggregate function: func(arr, axis=(0, 1))
         axes is a tuple of axes (Axis objects or integers)
         """
-        src_data = np.asarray(self)
         if not axes:
             axes = self.axes
-
-        axes_indices = tuple(self.get_axis_idx(a) for a in axes)
-        res_data = op(src_data, axis=axes_indices)
-        axes_tokill = set(axes_indices)
-        res_axes = [axis for axis_num, axis in enumerate(self.axes)
-                    if axis_num not in axes_tokill]
-        if not res_axes:
-            # scalars don't need to be wrapped in LArray
-            return res_data
         else:
-            return LArray(res_data, res_axes)
+            # axes can be an iterator
+            axes = tuple(axes)
+
+        # ert x unit x geo \ time
+        dfaxes = [self._df_axis_level(axis) for axis in axes]
+        all_axis0_levels = list(range(len(self.data.index.names)))
+        all_axis1_levels = list(range(len(self.data.columns.names)))
+        axis0_levels = [level for dfaxis, level in dfaxes if dfaxis == 0]
+        axis1_levels = [level for dfaxis, level in dfaxes if dfaxis == 1]
+
+        shift_axis1 = False
+        res_data = self.data
+        if axis0_levels:
+            levels_left = set(all_axis0_levels) - set(axis0_levels)
+            kwargs = {'level': sorted(levels_left)} if levels_left else {}
+            res_data = getattr(res_data, op_name)(axis=0, **kwargs)
+            if not levels_left:
+                assert isinstance(res_data, pd.Series)
+                shift_axis1 = True
+
+        if axis1_levels:
+            if shift_axis1:
+                axis_num = 0
+            else:
+                axis_num = 1
+            levels_left = set(all_axis1_levels) - set(axis1_levels)
+            kwargs = {'level': sorted(levels_left)} if levels_left else {}
+            res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
+
+        # sum(ert) -> x.sum(axis=0, level=[1, 2])
+        # sum(unit) -> x.sum(axis=0, level=[0, 2])
+        # sum(geo) -> x.sum(axis=0, level=[0, 1])
+        # sum(time) -> x.sum(axis=1)
+
+        # sum(ert, unit) -> x.sum(axis=0, level=2)
+        # sum(unit, geo) -> x.sum(axis=0, level=0)
+        # sum(ert, geo) -> x.sum(axis=0, level=1)
+        # sum(ert, unit, geo) -> x.sum(axis=0)
+
+        # sum(geo, time) ???-> x.sum(axis=0, level=[0, 1]).sum(axis=1)
+        # axis=1 first is faster
+        # sum(ert, unit, time) -> x.sum(axis=1).sum(level=2)
+
+        # sum(ert, unit, geo, time) -> x.sum(axis=0).sum()
+        # axis=0 first is faster
+        # sum(ert, unit, geo, time) -> x.sum(axis=1).sum()
+
+        if isinstance(res_data, pd.DataFrame):
+            res_type = DataFrameLArray
+        elif isinstance(res_data, pd.Series):
+            res_type = SeriesLArray
+        else:
+            assert np.isscalar(res_data)
+            return res_data
+        res_axes = self.axes.without(axes)
+        return res_type(res_data, res_axes)
 
     def get_axis_idx(self, axis):
         """
@@ -1327,29 +1408,31 @@ class LArray(object):
         return self / self.sum(*axes)
 
     # aggregate method factory
-    def _agg_method(npfunc, name=None, commutative=False):
+    def _agg_method(name, commutative=False):
         def method(self, *args, **kwargs):
-            return self._aggregate(npfunc, args, kwargs,
+            return self._aggregate(name, args, kwargs,
                                    commutative=commutative)
-        if name is None:
-            name = npfunc.__name__
         method.__name__ = name
         return method
 
-    all = _agg_method(np.all, commutative=True)
-    any = _agg_method(np.any, commutative=True)
+    all = _agg_method('all', commutative=True)
+    any = _agg_method('any', commutative=True)
     # commutative modulo float precision errors
-    sum = _agg_method(np.sum, commutative=True)
-    prod = _agg_method(np.prod, commutative=True)
-    cumsum = _agg_method(np.cumsum, commutative=True)
-    cumprod = _agg_method(np.cumprod, commutative=True)
-    min = _agg_method(np.min, commutative=True)
-    max = _agg_method(np.max, commutative=True)
-    mean = _agg_method(np.mean, commutative=True)
+    sum = _agg_method('sum', commutative=True)
+    prod = _agg_method('prod', commutative=True)
+
+    # no level argument
+    # cumsum = _agg_method('cumsum', commutative=True)
+    # cumprod = _agg_method('cumprod', commutative=True)
+    min = _agg_method('min', commutative=True)
+    max = _agg_method('max', commutative=True)
+    mean = _agg_method('mean', commutative=True)
     # not commutative
-    ptp = _agg_method(np.ptp)
-    var = _agg_method(np.var)
-    std = _agg_method(np.std)
+
+    # N/A in pd.DataFrame
+    # ptp = _agg_method('ptp')
+    var = _agg_method('var')
+    std = _agg_method('std')
 
     # element-wise method factory
     def _binop(opname):
@@ -1551,14 +1634,6 @@ class LArray(object):
     #     return len(self.axes)
 
     @property
-    def shape(self):
-        return self.data.shape
-
-    @property
-    def ndim(self):
-        return self.data.ndim
-
-    @property
     def size(self):
         return self.data.size
 
@@ -1710,7 +1785,7 @@ def df_aslarray2(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_labels.append([parse(cell) for cell in df.columns.values])
 
     axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-    return LArray(DataFrameWrapper(df), axes)
+    return DataFrameLArray(df, axes)
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
