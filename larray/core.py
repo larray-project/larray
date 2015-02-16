@@ -756,7 +756,8 @@ class AxisCollection(object):
         return len(self._list)
 
     def __str__(self):
-        return "{%s}" % ', '.join(axis.name for axis in self._list)
+        return "{%s}" % ', '.join([axis.name if axis.name is not None else '-'
+                                   for axis in self._list])
 
     def __repr__(self):
         axes_repr = (repr(axis) for axis in self._list)
@@ -864,10 +865,25 @@ class SeriesLArray(LArray):
         LArray.__init__(self, data, axes)
 
 
+#TODO: factorize with df_labels
+def _df_levels(df, axis):
+    idx = df.index if axis == 0 else df.columns
+    if isinstance(idx, pd.MultiIndex):
+        return [(name, idx.get_level_values(name).unique())
+                for name in idx.names]
+    else:
+        assert isinstance(idx, pd.Index)
+        # not sure the unique() is really useful here
+        return [(idx.name, idx.unique())]
+
+
 class DataFrameLArray(LArray):
-    def __init__(self, data, axes=None):
+    def __init__(self, data):
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas.DataFrame")
+        # data = data.sort_index()
+        axes = [Axis(name, labels)
+                for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
         LArray.__init__(self, data, axes)
 
     @property
@@ -996,11 +1012,41 @@ class DataFrameLArray(LArray):
         else:
             return key
 
+    # def translated_key(self, key):
+    #     return tuple(axis.translate(axis_key)
+    #                  for axis, axis_key in zip(self.axes, key))
+
     def translated_key(self, key):
-        return tuple(axis.translate(axis_key)
-                     for axis, axis_key in zip(self.axes, key))
+        """
+        translate ValueGroups to lists
+        """
+        return tuple([list(k.key) if isinstance(k, ValueGroup) else k
+                     for k in key])
+
+    def split_key(self, full_key):
+        """
+        spits an LArray key with all axes to a key with two axes
+        :param full_key:
+        :return:
+        """
+        index_ndim = len(self.data.index.names)
+        # avoid length-1 tuples (it confuses Pandas)
+        if index_ndim == 1:
+            return full_key[0], full_key[index_ndim:]
+        elif index_ndim == len(full_key) - 1:
+            return full_key[:index_ndim], full_key[index_ndim]
+        else:
+            return full_key[:index_ndim], full_key[index_ndim:]
 
     def __getitem__(self, key, collapse_slices=False):
+        full_key = self.full_key(key)
+        translated_key = self.translated_key(full_key)
+        a0_key, a1_key = self.split_key(translated_key)
+        data = self.data
+        # data = data.sort_index()
+        res_data = data.loc[a0_key, a1_key]
+        return DataFrameLArray(res_data)
+
         data = np.asarray(self)
 
         if isinstance(key, (np.ndarray, LArray)) and \
@@ -1123,14 +1169,15 @@ class DataFrameLArray(LArray):
         self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)] = value
 
     def __str__(self):
-        if not self.ndim:
-            return str(np.asscalar(self))
-        elif not len(self):
-            return 'LArray([])'
-        else:
-            s = table2str(list(self.as_table()), 'nan', True,
-                          keepcols=self.ndim - 1)
-            return '\n' + s + '\n'
+        return str(self.data)
+        # if not self.ndim:
+        #     return str(np.asscalar(self))
+        # elif not len(self):
+        #     return 'LArray([])'
+        # else:
+        #     s = table2str(list(self.as_table()), 'nan', True,
+        #                   keepcols=self.ndim - 1)
+        #     return '\n' + s + '\n'
     __repr__ = __str__
 
     def as_table(self, maxlines=80, edgeitems=5):
@@ -1779,13 +1826,15 @@ def df_aslarray2(df, sort_rows=True, sort_columns=True, **kwargs):
     #FIXME: hardcoded "time"
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
 
-    axes_labels = df_labels(df, sort=sort_rows)
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
-    axes_labels.append([parse(cell) for cell in df.columns.values])
+    column_labels = [parse(cell) for cell in df.columns.values]
 
-    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-    return DataFrameLArray(df, axes)
+    df.index.names = axes_names[:-1]
+    df.columns = column_labels
+    df.columns.name = axes_names[-1]
+
+    return DataFrameLArray(df)
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,

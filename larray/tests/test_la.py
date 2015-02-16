@@ -611,6 +611,34 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 115 | A21 |         F | 153105.0 | 153106.0 | ... | 153118.0 | 153119.0
 """)
 
+    def test_getitem_sparse(self):
+        la = read_csv('c:/tmp/sparse.csv')
+        df = la.data
+
+        ert, unit, geo, time = la.axes
+
+        # raw = self.array
+        # la = self.larray
+        # age, geo, sex, lipro = la.axes
+        # age159 = age['1,5,9']
+        ertkey = ert['NEER37', 'NEEREA17']
+        fr_uk = geo['FR', 'UK']
+        skey = ['NEER37', 'NEER42', 'NEEREA17']
+        # lipro159 = lipro['P01,P05,P09']
+
+        # ValueGroup at "correct" place
+        subset = la[ertkey]
+        axes = list(subset.axes)
+
+        #FIXME: ticks are not ordered?
+        geo2 = Axis('geo', ['BE', 'US', 'NL', 'UK'])
+        self.assertEqual(axes[1:], [unit, geo2, time])
+        self.assertEqual(axes[0], Axis('ert', ['NEER37', 'NEEREA17']))
+
+        subset = la[fr_uk]
+        # self.assertEqual(subset, ...)
+        # print(la[fr_uk])
+
     def test_getitem(self):
         raw = self.array
         la = self.larray
