@@ -1,0 +1,19 @@
+p = LArray(name='population')
+v = LArray(name='value')
+s = p[age[10], geo['A21'], sex['F']]
+s.labels == {'name': 'population', 'age': 10, 'geo': 'A21', 'sex': 'F'}
+#XXX: what if we have non-coordinate labels?
+s.name == "population[age=10, geo='A21', sex='F']"
+(s + 1).labels == {'label': 'population', 'age': 10, 'geo': 'A21', 'sex': 'F'}
+(s + 1).label == "population[age=10, geo='A21', sex='F'] + 1"
+x = s / p[age[10]]
+x.label == "population[age=10, geo='A21', sex='F'] / population[age=10]"
+x.labels = {'label': 'population', 'age': 10, 'geo': 'A21', 'sex': 'F'}
+
+vp = v / p
+vp.label == "value / population"
+vp[sex['F']].label == "(value / population)[sex='F']"
+
+p + v = LabeledDataFrame OR LArray with one more dimension named "columns"?
+
+d = LDataFrame(names=['population', 'value'])

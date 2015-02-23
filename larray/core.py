@@ -879,9 +879,13 @@ def _df_levels(df, axis):
 
 class DataFrameLArray(LArray):
     def __init__(self, data):
+        """
+        data should be a DataFrame with a (potentially)MultiIndex set for rows
+        """
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas.DataFrame")
-        # data = data.sort_index()
+        data = data.sort_index()
+        assert all(name is not None for name in data.index.names)
         axes = [Axis(name, labels)
                 for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
         LArray.__init__(self, data, axes)
@@ -1020,8 +1024,8 @@ class DataFrameLArray(LArray):
         """
         translate ValueGroups to lists
         """
-        return tuple([list(k.key) if isinstance(k, ValueGroup) else k
-                     for k in key])
+        key = [k.key if isinstance(k, ValueGroup) else k for k in key]
+        return tuple(to_key(k) for k in key)
 
     def split_key(self, full_key):
         """
@@ -1039,13 +1043,27 @@ class DataFrameLArray(LArray):
             return full_key[:index_ndim], full_key[index_ndim:]
 
     def __getitem__(self, key, collapse_slices=False):
+        data = self.data
+        if isinstance(key, (np.ndarray, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            return data[np.asarray(key)]
+
         full_key = self.full_key(key)
         translated_key = self.translated_key(full_key)
+        print('translated', translated_key)
         a0_key, a1_key = self.split_key(translated_key)
-        data = self.data
+        # print("data", data)
         # data = data.sort_index()
         res_data = data.loc[a0_key, a1_key]
-        return DataFrameLArray(res_data)
+
+        if isinstance(res_data, pd.DataFrame):
+            res_type = DataFrameLArray
+        elif isinstance(res_data, pd.Series):
+            res_type = SeriesLArray
+        else:
+            assert np.isscalar(res_data)
+            return res_data
+        return res_type(res_data)
 
         data = np.asarray(self)
 
@@ -1311,8 +1329,9 @@ class DataFrameLArray(LArray):
         else:
             assert np.isscalar(res_data)
             return res_data
-        res_axes = self.axes.without(axes)
-        return res_type(res_data, res_axes)
+        # res_axes = self.axes.without(axes)
+        # return res_type(res_data, res_axes)
+        return res_type(res_data)
 
     def get_axis_idx(self, axis):
         """
@@ -1339,8 +1358,13 @@ class DataFrameLArray(LArray):
         axis = self.axes[axis_idx]
         return (axis, axis_idx) if idx else axis
 
-    def _group_aggregate(self, op, items):
+    def _group_aggregate(self, op_name, items):
         res = self
+
+        # we cannot use Pandas groupby functionality because it is only meant
+        #  for disjoint groups, and we need to support a "row" being in
+        # several groups.
+
         #TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
@@ -1352,8 +1376,8 @@ class DataFrameLArray(LArray):
             groups = to_keys(groups)
 
             axis, axis_idx = res.get_axis(axis, idx=True)
-            res_axes = res.axes[:]
-            res_shape = list(res.shape)
+            # res_axes = res.axes[:]
+            # res_shape = list(res.shape)
 
             if not isinstance(groups, tuple):
                 # groups is in fact a single group
@@ -1367,7 +1391,7 @@ class DataFrameLArray(LArray):
                     assert all(not isinstance(g, (tuple, list)) for g in groups)
 
                 groups = (groups,)
-                del res_axes[axis_idx]
+                # del res_axes[axis_idx]
 
                 # it is easier to kill the axis after the fact
                 killaxis = True
@@ -1382,38 +1406,59 @@ class DataFrameLArray(LArray):
                 # though this creates a new axis that is independent from the
                 # original one because the original name is what users will
                 # want to use to access that axis (eg in .filter kwargs)
-                res_axes[axis_idx] = Axis(axis.name, groups)
+                # res_axes[axis_idx] = Axis(axis.name, groups)
                 killaxis = False
 
-            res_shape[axis_idx] = len(groups)
-            res_data = np.empty(res_shape, dtype=res.dtype)
+            # we don't know res_shape in advance...
+            # res_shape[axis_idx] = len(groups)
 
-            group_idx = [slice(None) for _ in res_shape]
-            for i, group in enumerate(groups):
-                group_idx[axis_idx] = i
+            # res_data = np.empty(res_shape, dtype=res.dtype)
+            results = []
+            # group_idx = [slice(None) for _ in res_shape]
+            for group in groups:
+                # group_idx[axis_idx] = i
 
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in __getitem__ instead of in
                 # the aggregate func)
                 group = [group] if group in axis else group
 
+                #TODO: we should bypass wrapping the result in DataFrameLArray
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
-                arr = np.asarray(arr)
-                op(arr, axis=axis_idx, out=res_data[group_idx])
+                result = arr._axis_aggregate(op_name, [axis])
+                # arr = np.asarray(arr)
                 del arr
-            if killaxis:
-                assert group_idx[axis_idx] == 0
-                res_data = res_data[group_idx]
-            res = LArray(res_data, res_axes)
+                results.append(result.data)
+                # op(arr, axis=axis_idx, out=res_data[group_idx])
+
+
+            #  We never have to specify axis=1 because we
+            # always concatenate on
+            # a "new" axis.
+            #FIXME: we might want specify axis=1 when the agg axis is in
+            # columns so that the new axis is in columns too
+            res_data = pd.concat(results, keys=groups, names=[axis.name])
+            #XXX: this is very expensive (it rebuilds the whole index) !
+            # it would be nice if it could be avoided (but I have not found any
+            # way yet)
+            if axis_idx != 0:
+                res_data = res_data.swaplevel(0, axis_idx)
+
+            # if killaxis:
+            #     assert group_idx[axis_idx] == 0
+            #     res_data = res_data[group_idx]
+
+            #FIXME: res_data can be a Series
+            res = DataFrameLArray(res_data)
         return res
 
-    def _aggregate(self, op, args, kwargs, commutative=False):
+    def _aggregate(self, op_name, args, kwargs, commutative=False):
         if not commutative and len(kwargs) > 1:
             raise ValueError("grouping aggregates on multiple axes at the same "
                              "time using keyword arguments is not supported "
                              "for '%s' (because it is not a commutative"
                              "operation and keyword arguments are *not* "
-                             "ordered in Python)" % op.__name__)
+                             "ordered in Python)" % op_name.__name__)
 
         # Sort kwargs by axis name so that we have consistent results
         # between runs because otherwise rounding errors could lead to
@@ -1423,16 +1468,16 @@ class DataFrameLArray(LArray):
         operations = list(args) + sorted(kwargs.items())
         if not operations:
             # op() without args is equal to op(all_axes)
-            return self._axis_aggregate(op)
+            return self._axis_aggregate(op_name)
 
         def isaxis(a):
             return isinstance(a, (int, basestring, Axis))
 
         res = self
-        # group consecutive same-type (group vs axis aggregates) operations
+        # group *consecutive* same-type (group vs axis aggregates) operations
         for are_axes, axes in groupby(operations, isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
-            res = func(op, axes)
+            res = func(op_name, axes)
         return res
 
     def copy(self):
@@ -1484,18 +1529,35 @@ class DataFrameLArray(LArray):
     # element-wise method factory
     def _binop(opname):
         fullname = '__%s__' % opname
-        super_method = getattr(np.ndarray, fullname)
-
+        df_method = getattr(pd.DataFrame, opname)
+        fill_values = {
+            'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
+            'mul': 1, 'rmul': 0, 'div': 1, 'rdiv': 1
+        }
+        fill_value = fill_values.get(opname)
         def opmethod(self, other):
-            if isinstance(other, LArray):
+            if isinstance(other, DataFrameLArray):
+                res_data = df_method(self.data, other.data,
+                                     fill_value=fill_value)
+                # print("res", res_data)
+                return DataFrameLArray(res_data)
+            elif isinstance(other, LArray):
+                raise NotImplementedError("mixed LArrays")
                 #TODO: first test if it is not already broadcastable
                 other = other.broadcast_with(self).data
             elif isinstance(other, np.ndarray):
-                pass
-            elif not np.isscalar(other):
+                res_data = df_method(self.data, other)
+                print("res", res_data)
+                return DataFrameLArray(res_data)
+
+                raise NotImplementedError("DataFrameLArray and ndarray")
+            elif np.isscalar(other):
+                res_data = df_method(self.data, other)
+                # print("res", res_data)
+                return DataFrameLArray(res_data)
+            else:
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
-            return LArray(super_method(np.asarray(self), other), self.axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -1520,20 +1582,20 @@ class DataFrameLArray(LArray):
     __rfloordiv__ = _binop('rfloordiv')
     __mod__ = _binop('mod')
     __rmod__ = _binop('rmod')
-    __divmod__ = _binop('divmod')
-    __rdivmod__ = _binop('rdivmod')
+    # __divmod__ = _binop('divmod')
+    # __rdivmod__ = _binop('rdivmod')
     __pow__ = _binop('pow')
     __rpow__ = _binop('rpow')
-    __lshift__ = _binop('lshift')
-    __rlshift__ = _binop('rlshift')
-    __rshift__ = _binop('rshift')
-    __rrshift__ = _binop('rrshift')
-    __and__ = _binop('and')
-    __rand__ = _binop('rand')
-    __xor__ = _binop('xor')
-    __rxor__ = _binop('rxor')
-    __or__ = _binop('or')
-    __ror__ = _binop('ror')
+    # __lshift__ = _binop('lshift')
+    # __rlshift__ = _binop('rlshift')
+    # __rshift__ = _binop('rshift')
+    # __rrshift__ = _binop('rrshift')
+    # __and__ = _binop('and')
+    # __rand__ = _binop('rand')
+    # __xor__ = _binop('xor')
+    # __rxor__ = _binop('rxor')
+    # __or__ = _binop('or')
+    # __ror__ = _binop('ror')
 
     # element-wise method factory
     def _unaryop(opname):
@@ -1546,10 +1608,10 @@ class DataFrameLArray(LArray):
         return opmethod
 
     # unary ops do not need broadcasting so do not need to be overridden
-    __neg__ = _unaryop('neg')
-    __pos__ = _unaryop('pos')
+    # __neg__ = _unaryop('neg')
+    # __pos__ = _unaryop('pos')
     __abs__ = _unaryop('abs')
-    __invert__ = _unaryop('invert')
+    # __invert__ = _unaryop('invert')
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
@@ -1830,6 +1892,7 @@ def df_aslarray2(df, sort_rows=True, sort_columns=True, **kwargs):
     # to convert them to values
     column_labels = [parse(cell) for cell in df.columns.values]
 
+    #FIXME: do not modify original DataFrame !
     df.index.names = axes_names[:-1]
     df.columns = column_labels
     df.columns.name = axes_names[-1]
