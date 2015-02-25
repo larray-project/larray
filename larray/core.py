@@ -1024,7 +1024,12 @@ class DataFrameLArray(LArray):
         """
         translate ValueGroups to lists
         """
-        key = [k.key if isinstance(k, ValueGroup) else k for k in key]
+        # we do not use axis.translate because we have to let Pandas do the
+        # label -> position conversion
+        # key = [axis.translate(axis_key)
+        #                  for axis, axis_key in zip(self.axes, key))
+        key = [k.key if isinstance(k, ValueGroup) and k not in axis else k
+               for axis, k in zip(self.axes, key)]
         return tuple(to_key(k) for k in key)
 
     def split_key(self, full_key):
@@ -1034,7 +1039,7 @@ class DataFrameLArray(LArray):
         :return:
         """
         index_ndim = len(self.data.index.names)
-        # avoid length-1 tuples (it confuses Pandas)
+        # avoid producing length-1 tuples (it confuses Pandas)
         if index_ndim == 1:
             return full_key[0], full_key[index_ndim:]
         elif index_ndim == len(full_key) - 1:
@@ -1050,11 +1055,22 @@ class DataFrameLArray(LArray):
 
         full_key = self.full_key(key)
         translated_key = self.translated_key(full_key)
-        print('translated', translated_key)
+        # print('translated', translated_key)
         a0_key, a1_key = self.split_key(translated_key)
+        # print('a0, a1 key', a0_key, a1_key)
+
+        killlevel = [axis.name for axis, k in zip(self.axes, full_key)
+                     if k in axis]
+        # print("killlevel", killlevel)
         # print("data", data)
-        # data = data.sort_index()
+
         res_data = data.loc[a0_key, a1_key]
+
+        #XXX: I wish I could avoid doing this manually. For some reason,
+        # df.loc[ 'a'] kills the level but both df.loc[('a', slice(None)), :]
+        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
+        if killlevel:
+            res_data.index = res_data.index.droplevel(killlevel)
 
         if isinstance(res_data, pd.DataFrame):
             res_type = DataFrameLArray
@@ -1374,7 +1390,6 @@ class DataFrameLArray(LArray):
             else:
                 axis, groups = item
             groups = to_keys(groups)
-
             axis, axis_idx = res.get_axis(axis, idx=True)
             # res_axes = res.axes[:]
             # res_shape = list(res.shape)
@@ -1436,7 +1451,8 @@ class DataFrameLArray(LArray):
             # always concatenate on
             # a "new" axis.
             #FIXME: we might want specify axis=1 when the agg axis is in
-            # columns so that the new axis is in columns too
+            # columns so that the new axis is in columns too (and we get a
+            # DataFrame instead of a Series)
             res_data = pd.concat(results, keys=groups, names=[axis.name])
             #XXX: this is very expensive (it rebuilds the whole index) !
             # it would be nice if it could be avoided (but I have not found any
@@ -1444,7 +1460,8 @@ class DataFrameLArray(LArray):
             if axis_idx != 0:
                 res_data = res_data.swaplevel(0, axis_idx)
 
-            # if killaxis:
+            if killaxis:
+                print("I should kill it")
             #     assert group_idx[axis_idx] == 0
             #     res_data = res_data[group_idx]
 
