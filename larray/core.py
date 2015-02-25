@@ -1394,8 +1394,6 @@ class DataFrameLArray(LArray):
                 axis, groups = item
             groups = to_keys(groups)
             axis, axis_idx = res.get_axis(axis, idx=True)
-            # res_axes = res.axes[:]
-            # res_shape = list(res.shape)
 
             if not isinstance(groups, tuple):
                 # groups is in fact a single group
@@ -1409,7 +1407,6 @@ class DataFrameLArray(LArray):
                     assert all(not isinstance(g, (tuple, list)) for g in groups)
 
                 groups = (groups,)
-                # del res_axes[axis_idx]
 
                 # it is easier to kill the axis after the fact
                 killaxis = True
@@ -1427,14 +1424,8 @@ class DataFrameLArray(LArray):
                 # res_axes[axis_idx] = Axis(axis.name, groups)
                 killaxis = False
 
-            # we don't know res_shape in advance...
-            # res_shape[axis_idx] = len(groups)
-
-            # res_data = np.empty(res_shape, dtype=res.dtype)
             results = []
-            # group_idx = [slice(None) for _ in res_shape]
             for group in groups:
-                # group_idx[axis_idx] = i
 
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in __getitem__ instead of in
@@ -1444,19 +1435,16 @@ class DataFrameLArray(LArray):
                 #TODO: we should bypass wrapping the result in DataFrameLArray
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 result = arr._axis_aggregate(op_name, [axis])
-                # arr = np.asarray(arr)
                 del arr
                 results.append(result.data)
-                # op(arr, axis=axis_idx, out=res_data[group_idx])
 
-
-            #  We never have to specify axis=1 because we
-            # always concatenate on
+            # We never have to specify axis=1 because we always concatenate on
             # a "new" axis.
             #FIXME: we might want specify axis=1 when the agg axis is in
             # columns so that the new axis is in columns too (and we get a
             # DataFrame instead of a Series)
             res_data = pd.concat(results, keys=groups, names=[axis.name])
+
             #XXX: this is very expensive (it rebuilds the whole index) !
             # it would be nice if it could be avoided (but I have not found any
             # way yet)
@@ -1464,6 +1452,8 @@ class DataFrameLArray(LArray):
                 res_data = res_data.swaplevel(0, axis_idx)
 
             if killaxis:
+                assert len(results) == 1
+                # simply avoid concat instead of kill after the fact
                 print("I should kill it")
             #     assert group_idx[axis_idx] == 0
             #     res_data = res_data[group_idx]
