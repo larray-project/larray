@@ -859,9 +859,10 @@ class LArray(object):
 
 
 class SeriesLArray(LArray):
-    def __init__(self, data, axes=None):
+    def __init__(self, data):
         if not isinstance(data, pd.Series):
             raise TypeError("data must be a pandas.Series")
+        axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
         LArray.__init__(self, data, axes)
 
 
@@ -1032,20 +1033,23 @@ class DataFrameLArray(LArray):
                for axis, k in zip(self.axes, key)]
         return tuple(to_key(k) for k in key)
 
+    def split_tuple(self, full_tuple):
+        """
+        splits a tuple with one value per axis to two tuples corresponding to
+        the DataFrame axes
+        """
+        index_ndim = len(self.data.index.names)
+        return full_tuple[:index_ndim], full_tuple[index_ndim:]
+
     def split_key(self, full_key):
         """
         spits an LArray key with all axes to a key with two axes
-        :param full_key:
-        :return:
         """
-        index_ndim = len(self.data.index.names)
+        a0_key, a1_key = self.split_tuple(full_key)
         # avoid producing length-1 tuples (it confuses Pandas)
-        if index_ndim == 1:
-            return full_key[0], full_key[index_ndim:]
-        elif index_ndim == len(full_key) - 1:
-            return full_key[:index_ndim], full_key[index_ndim]
-        else:
-            return full_key[:index_ndim], full_key[index_ndim:]
+        a0_key = a0_key[0] if len(a0_key) == 1 else a0_key
+        a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
+        return a0_key, a1_key
 
     def __getitem__(self, key, collapse_slices=False):
         data = self.data
@@ -1055,22 +1059,21 @@ class DataFrameLArray(LArray):
 
         full_key = self.full_key(key)
         translated_key = self.translated_key(full_key)
-        # print('translated', translated_key)
         a0_key, a1_key = self.split_key(translated_key)
-        # print('a0, a1 key', a0_key, a1_key)
-
-        killlevel = [axis.name for axis, k in zip(self.axes, full_key)
-                     if k in axis]
-        # print("killlevel", killlevel)
-        # print("data", data)
-
         res_data = data.loc[a0_key, a1_key]
 
         #XXX: I wish I could avoid doing this manually. For some reason,
-        # df.loc[ 'a'] kills the level but both df.loc[('a', slice(None)), :]
+        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
         # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
-        if killlevel:
-            res_data.index = res_data.index.droplevel(killlevel)
+        a0_axes, a1_axes = self.split_tuple(self.axes)
+        if isinstance(a0_key, tuple):
+            a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
+                         if k in axis]
+            res_data.index = res_data.index.droplevel(a0_tokill)
+        if isinstance(a1_key, tuple):
+            a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
+                         if k in axis]
+            res_data.columns = res_data.columns.droplevel(a1_tokill)
 
         if isinstance(res_data, pd.DataFrame):
             res_type = DataFrameLArray
@@ -1276,12 +1279,12 @@ class DataFrameLArray(LArray):
         return self.__getitem__(kwargs, collapse)
 
     def _df_axis_level(self, axis):
-        idx = self.get_axis_idx(axis)
+        axis_idx = self.get_axis_idx(axis)
         index_ndim = len(self.data.index.names)
-        if idx < index_ndim:
-            return 0, idx
+        if axis_idx < index_ndim:
+            return 0, axis_idx
         else:
-            return 1, idx - index_ndim
+            return 1, axis_idx - index_ndim
 
     def _axis_aggregate(self, op_name, axes=()):
         """
