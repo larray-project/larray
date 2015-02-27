@@ -1038,7 +1038,7 @@ class DataFrameLArray(LArray):
         splits a tuple with one value per axis to two tuples corresponding to
         the DataFrame axes
         """
-        index_ndim = len(self.data.index.names)
+        index_ndim = self._df_index_ndim
         return full_tuple[:index_ndim], full_tuple[index_ndim:]
 
     def split_key(self, full_key):
@@ -1278,9 +1278,13 @@ class DataFrameLArray(LArray):
         """
         return self.__getitem__(kwargs, collapse)
 
+    @property
+    def _df_index_ndim(self):
+        return len(self.data.index.names)
+
     def _df_axis_level(self, axis):
         axis_idx = self.get_axis_idx(axis)
-        index_ndim = len(self.data.index.names)
+        index_ndim = self._df_index_ndim
         if axis_idx < index_ndim:
             return 0, axis_idx
         else:
@@ -1299,7 +1303,7 @@ class DataFrameLArray(LArray):
 
         # ert x unit x geo \ time
         dfaxes = [self._df_axis_level(axis) for axis in axes]
-        all_axis0_levels = list(range(len(self.data.index.names)))
+        all_axis0_levels = list(range(self._df_index_ndim))
         all_axis1_levels = list(range(len(self.data.columns.names)))
         axis0_levels = [level for dfaxis, level in dfaxes if dfaxis == 0]
         axis1_levels = [level for dfaxis, level in dfaxes if dfaxis == 1]
@@ -1438,25 +1442,27 @@ class DataFrameLArray(LArray):
                 del arr
                 results.append(result.data)
 
-            # We never have to specify axis=1 because we always concatenate on
-            # a "new" axis.
-            #FIXME: we might want specify axis=1 when the agg axis is in
-            # columns so that the new axis is in columns too (and we get a
-            # DataFrame instead of a Series)
-            res_data = pd.concat(results, keys=groups, names=[axis.name])
-
-            #XXX: this is very expensive (it rebuilds the whole index) !
-            # it would be nice if it could be avoided (but I have not found any
-            # way yet)
-            if axis_idx != 0:
-                res_data = res_data.swaplevel(0, axis_idx)
-
             if killaxis:
                 assert len(results) == 1
-                # simply avoid concat instead of kill after the fact
-                print("I should kill it")
-            #     assert group_idx[axis_idx] == 0
-            #     res_data = res_data[group_idx]
+                res_data = results[0]
+            else:
+                # We never have to specify axis=1 because we always concatenate on
+                # a "new" axis.
+                #FIXME: we might want specify axis=1 when the agg axis is in
+                # columns so that the new axis is in columns too (and we get a
+                # DataFrame instead of a Series)
+                groups = [str(g) for g in groups]
+                res_data = pd.concat(results, keys=groups, names=[axis.name])
+
+                #XXX: this is very expensive (it rebuilds the whole index) !
+                # it would be nice if it could be avoided (but I have not found any
+                # way yet)
+                #TODO: allow this on columns
+                if axis_idx != 0:
+                    # move the new axis to the correct place
+                    levels = list(range(1, self._df_index_ndim))
+                    levels.insert(axis_idx, 0)
+                    res_data = res_data.reorder_levels(levels)
 
             #FIXME: res_data can be a Series
             res = DataFrameLArray(res_data)
