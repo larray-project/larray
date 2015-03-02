@@ -1526,8 +1526,7 @@ class DataFrameLArray(PandasLArray):
                 assert len(results) == 1
                 res_data = results[0]
             else:
-                #FIXME: str(g) is kinda ugly
-                groups = [str(g) for g in groups]
+                groups = to_ticks(groups)
                 df_axis, df_level = self._df_axis_level(axis)
                 res_data = pd.concat(results, axis=df_axis, keys=groups,
                                      names=[axis.name])
