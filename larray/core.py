@@ -885,7 +885,11 @@ class DataFrameLArray(LArray):
         """
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas.DataFrame")
-        data = data.sort_index()
+        #XXX: not sure always using sort_index would be enough
+        if isinstance(data.index, pd.MultiIndex):
+            data.index = data.index.sortlevel()[0]
+        else:
+            data = data.sort_index()
         assert all(name is not None for name in data.index.names)
         axes = [Axis(name, labels)
                 for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
@@ -1290,6 +1294,10 @@ class DataFrameLArray(LArray):
         else:
             return 1, axis_idx - index_ndim
 
+    def _df_axis_nlevels(self, df_axis):
+        idx = self.data.index if df_axis == 0 else self.data.columns
+        return len(idx.names)
+
     def _axis_aggregate(self, op_name, axes=()):
         """
         op is an aggregate function: func(arr, axis=(0, 1))
@@ -1448,21 +1456,26 @@ class DataFrameLArray(LArray):
             else:
                 # We never have to specify axis=1 because we always concatenate on
                 # a "new" axis.
-                #FIXME: we might want specify axis=1 when the agg axis is in
-                # columns so that the new axis is in columns too (and we get a
-                # DataFrame instead of a Series)
                 groups = [str(g) for g in groups]
-                res_data = pd.concat(results, keys=groups, names=[axis.name])
+                df_axis, df_level = self._df_axis_level(axis)
+                res_data = pd.concat(results, axis=df_axis, keys=groups,
+                                     names=[axis.name])
+
+                print(res_data.index.names)
+                print(axis_idx)
 
                 #XXX: this is very expensive (it rebuilds the whole index) !
                 # it would be nice if it could be avoided (but I have not found any
                 # way yet)
-                #TODO: allow this on columns
-                if axis_idx != 0:
+                #XXX: only do this at the last iteration? Not sure if we can
+                # afford to temporarily loose sync between axes order and level
+                # orders?
+                if df_level != 0:
                     # move the new axis to the correct place
-                    levels = list(range(1, self._df_index_ndim))
-                    levels.insert(axis_idx, 0)
-                    res_data = res_data.reorder_levels(levels)
+                    levels = list(range(1, self._df_axis_nlevels(df_axis)))
+                    levels.insert(df_level, 0)
+                    print(levels)
+                    res_data = res_data.reorder_levels(levels, axis=df_axis)
 
             #FIXME: res_data can be a Series
             res = DataFrameLArray(res_data)

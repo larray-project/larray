@@ -1063,6 +1063,10 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         aggregated = la.sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
 
+        # over a dimension in columns
+        aggregated = la.sum(lipro='P01,P03;P02,P05;:')
+        self.assertEqual(aggregated.shape, (116, 44, 2, 3))
+
         # a.4) several dimensions at the same time
         self.assertEqual(la.sum(lipro='P01,P03;P02,P05;:',
                                 geo=(vla, wal, bru, belgium)).shape,
