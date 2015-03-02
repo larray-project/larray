@@ -1312,7 +1312,26 @@ class DataFrameLArray(LArray):
             # axes can be an iterator
             axes = tuple(axes)
 
-        # ert x unit x geo \ time
+        # first x second x third \ fourth
+        # sum(first) -> x.sum(axis=0, level=[1, 2])
+        # sum(second) -> x.sum(axis=0, level=[0, 2])
+        # sum(third) -> x.sum(axis=0, level=[0, 1])
+        # sum(fourth) -> x.sum(axis=1)
+
+        # sum(first, second) -> x.sum(axis=0, level=2)
+        # sum(second, third) -> x.sum(axis=0, level=0)
+        # sum(first, third) -> x.sum(axis=0, level=1)
+
+        # sum(first, second, third) -> x.sum(axis=0)
+
+        # sum(third, fourth) -> x.sum(axis=0, level=[0, 1]).sum(axis=1)
+        # axis=1 first is faster
+        # sum(first, second, fourth) -> x.sum(axis=1).sum(level=2)
+
+        # sum(first, second, third, fourth) -> x.sum(axis=0).sum()
+        # axis=0 first is faster
+        # sum(first, second, third, fourth) -> x.sum(axis=1).sum()
+
         dfaxes = [self._df_axis_level(axis) for axis in axes]
         all_axis0_levels = list(range(self._df_index_ndim))
         all_axis1_levels = list(range(len(self.data.columns.names)))
@@ -1337,24 +1356,6 @@ class DataFrameLArray(LArray):
             levels_left = set(all_axis1_levels) - set(axis1_levels)
             kwargs = {'level': sorted(levels_left)} if levels_left else {}
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
-
-        # sum(ert) -> x.sum(axis=0, level=[1, 2])
-        # sum(unit) -> x.sum(axis=0, level=[0, 2])
-        # sum(geo) -> x.sum(axis=0, level=[0, 1])
-        # sum(time) -> x.sum(axis=1)
-
-        # sum(ert, unit) -> x.sum(axis=0, level=2)
-        # sum(unit, geo) -> x.sum(axis=0, level=0)
-        # sum(ert, geo) -> x.sum(axis=0, level=1)
-        # sum(ert, unit, geo) -> x.sum(axis=0)
-
-        # sum(geo, time) ???-> x.sum(axis=0, level=[0, 1]).sum(axis=1)
-        # axis=1 first is faster
-        # sum(ert, unit, time) -> x.sum(axis=1).sum(level=2)
-
-        # sum(ert, unit, geo, time) -> x.sum(axis=0).sum()
-        # axis=0 first is faster
-        # sum(ert, unit, geo, time) -> x.sum(axis=1).sum()
 
         return self._wrap_pandas(res_data)
 
