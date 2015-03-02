@@ -1525,9 +1525,6 @@ class DataFrameLArray(PandasLArray):
                 res_data = pd.concat(results, axis=df_axis, keys=groups,
                                      names=[axis.name])
 
-                print(res_data.index.names)
-                print(axis_idx)
-
                 #XXX: this is very expensive (it rebuilds the whole index) !
                 # it would be nice if it could be avoided (but I have not found any
                 # way yet)
@@ -1538,7 +1535,6 @@ class DataFrameLArray(PandasLArray):
                     # move the new axis to the correct place
                     levels = list(range(1, self._df_axis_nlevels(df_axis)))
                     levels.insert(df_level, 0)
-                    print(levels)
                     res_data = res_data.reorder_levels(levels, axis=df_axis)
 
             res = self._wrap_pandas(res_data)
