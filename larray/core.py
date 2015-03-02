@@ -1055,6 +1055,16 @@ class DataFrameLArray(LArray):
         a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
         return a0_key, a1_key
 
+    def _wrap_pandas(self, res_data):
+        if isinstance(res_data, pd.DataFrame):
+            res_type = DataFrameLArray
+        elif isinstance(res_data, pd.Series):
+            res_type = SeriesLArray
+        else:
+            assert np.isscalar(res_data)
+            return res_data
+        return res_type(res_data)
+
     def __getitem__(self, key, collapse_slices=False):
         data = self.data
         if isinstance(key, (np.ndarray, LArray)) and \
@@ -1079,14 +1089,7 @@ class DataFrameLArray(LArray):
                          if k in axis]
             res_data.columns = res_data.columns.droplevel(a1_tokill)
 
-        if isinstance(res_data, pd.DataFrame):
-            res_type = DataFrameLArray
-        elif isinstance(res_data, pd.Series):
-            res_type = SeriesLArray
-        else:
-            assert np.isscalar(res_data)
-            return res_data
-        return res_type(res_data)
+        return self._wrap_pandas(res_data)
 
         data = np.asarray(self)
 
@@ -1353,16 +1356,7 @@ class DataFrameLArray(LArray):
         # axis=0 first is faster
         # sum(ert, unit, geo, time) -> x.sum(axis=1).sum()
 
-        if isinstance(res_data, pd.DataFrame):
-            res_type = DataFrameLArray
-        elif isinstance(res_data, pd.Series):
-            res_type = SeriesLArray
-        else:
-            assert np.isscalar(res_data)
-            return res_data
-        # res_axes = self.axes.without(axes)
-        # return res_type(res_data, res_axes)
-        return res_type(res_data)
+        return self._wrap_pandas(res_data)
 
     def get_axis_idx(self, axis):
         """
@@ -1477,8 +1471,7 @@ class DataFrameLArray(LArray):
                     print(levels)
                     res_data = res_data.reorder_levels(levels, axis=df_axis)
 
-            #FIXME: res_data can be a Series
-            res = DataFrameLArray(res_data)
+            res = self._wrap_pandas(res_data)
         return res
 
     def _aggregate(self, op_name, args, kwargs, commutative=False):
