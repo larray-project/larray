@@ -963,18 +963,6 @@ class LArray(object):
         else:
             return key
 
-    def translated_key(self, key):
-        """
-        translate ValueGroups to lists
-        """
-        # we do not use axis.translate because we have to let Pandas do the
-        # label -> position conversion
-        # key = [axis.translate(axis_key)
-        #                  for axis, axis_key in zip(self.axes, key))
-        key = [k.key if isinstance(k, ValueGroup) and k not in axis else k
-               for axis, k in zip(self.axes, key)]
-        return tuple(to_key(k) for k in key)
-
     def reshape(self, target_axes):
         """
         self.size must be equal to prod([len(axis) for axis in target_axes])
@@ -1184,6 +1172,18 @@ class PandasLArray(LArray):
 
     def __array__(self, dtype=None):
         return np.asarray(self.data)
+
+    def translated_key(self, key):
+        """
+        translate ValueGroups to lists
+        """
+        # we do not use axis.translate because we have to let Pandas do the
+        # label -> position conversion
+        # key = [axis.translate(axis_key)
+        #                  for axis, axis_key in zip(self.axes, key))
+        key = [k.key if isinstance(k, ValueGroup) and k not in axis else k
+               for axis, k in zip(self.axes, key)]
+        return tuple(to_key(k) for k in key)
 
 
 class SeriesLArray(PandasLArray):
