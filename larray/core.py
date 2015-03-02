@@ -1252,6 +1252,11 @@ def _df_levels(df, axis):
         return [(idx.name, idx.unique())]
 
 
+class MixedDtype(dict):
+    def __init__(self, dtypes):
+        dict.__init__(self, dtypes)
+
+
 class DataFrameLArray(PandasLArray):
     def __init__(self, data):
         """
@@ -1319,7 +1324,9 @@ class DataFrameLArray(PandasLArray):
             # these combined keys should be objects which display as:
             # (axis1_label, axis2_label, ...) but should also store the axis
             # (names). Should it be the same object as the NDValueGroup?/NDKey?
-            return data[np.asarray(key)]
+            if isinstance(key, DataFrameLArray):
+                key = key.data
+            return self._wrap_pandas(data[key])
 
         full_key = self.full_key(key)
         translated_key = self.translated_key(full_key)
@@ -1803,7 +1810,11 @@ class DataFrameLArray(PandasLArray):
 
     @property
     def dtype(self):
-        return self.data.dtype
+        dtypes = self.data.dtypes
+        if all(dtypes == dtypes[0]):
+            return dtypes[0]
+        else:
+            return MixedDtype(dtypes.to_dict())
 
     @property
     def item(self):
