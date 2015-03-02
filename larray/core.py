@@ -1173,17 +1173,23 @@ class PandasLArray(LArray):
     def __array__(self, dtype=None):
         return np.asarray(self.data)
 
+    def _translate_axis_key(self, axis, key):
+        # we do not use axis.translate because we have to let Pandas do the
+        # label -> position conversion
+        if key in axis:
+            return key
+
+        if isinstance(key, ValueGroup):
+            key = key.key
+
+        return to_key(key)
+
     def translated_key(self, key):
         """
         translate ValueGroups to lists
         """
-        # we do not use axis.translate because we have to let Pandas do the
-        # label -> position conversion
-        # key = [axis.translate(axis_key)
-        #                  for axis, axis_key in zip(self.axes, key))
-        key = [k.key if isinstance(k, ValueGroup) and k not in axis else k
-               for axis, k in zip(self.axes, key)]
-        return tuple(to_key(k) for k in key)
+        return tuple(self._translate_axis_key(axis, k)
+                     for axis, k in zip(self.axes, key))
 
 
 class SeriesLArray(PandasLArray):
