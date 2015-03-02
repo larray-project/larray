@@ -489,7 +489,7 @@ class TestAxisCollection(TestCase):
 class TestLArray(TestCase):
     def _assert_equal_raw(self, la, raw):
         got = np.asarray(la).flatten()
-        expected = raw.flatten()
+        expected = np.asarray(raw).flatten()
         assert got.size == expected.size, "size differs: %s vs %s" \
                                           % (got.size, expected.size)
         assert_array_nan_equal(got, expected)
