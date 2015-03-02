@@ -15,8 +15,8 @@ import pandas as pd
 import larray
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
-                    zeros, zeros_like, AxisCollection, DataFrameWrapper,
-                    DataFrameLArray, df_aslarray2)
+                    zeros, zeros_like, AxisCollection,
+                    DataFrameLArray)
 from larray.utils import array_equal, array_nan_equal
 
 
@@ -669,8 +669,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
         # ValueGroup at "incorrect" place
-        print(la[age['0'], geo['A21']])
-        print(la[lipro['P01']])
+        # print(la[age['0'], geo['A21']])
+        # print(la[lipro['P01']])
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
         # multiple ValueGroup key (in "incorrect" order)
@@ -1261,7 +1261,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         # the result is indexable
         # a) by VG
-        print(reg)
+        # print(reg)
 
         self.assertEqual(reg.filter(geo=fla).shape, (116, 2, 15))
         self.assertEqual(reg.filter(geo=(fla, wal)).shape, (116, 2, 2, 15))
@@ -1393,7 +1393,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         sex, lipro = la.axes
         result = la.mean(lipro)
-        print(result)
         self._assert_equal_raw(result, raw.mean(1))
         # self._assert_equal_raw(la.mean(lipro), raw.mean(1))
 
@@ -1494,7 +1493,7 @@ REER27CPI,I05,US,96.66,99.07,100
 """
         df = pd.read_csv(StringIO(s))
         df = df.set_index(['ert', 'unit', 'geo\\time'])
-        la = df_aslarray2(df)
+        la = df_aslarray(df)
         self.assertEqual(la.ndim, 4)
         self.assertEqual(la.shape, (3, 1, 4, 3))
         self.assertEqual(la.axes_names, ['ert', 'unit', 'geo', 'time'])

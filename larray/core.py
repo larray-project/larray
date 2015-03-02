@@ -1553,7 +1553,6 @@ class DataFrameLArray(PandasLArray):
             if isinstance(other, DataFrameLArray):
                 res_data = df_method(self.data, other.data,
                                      fill_value=fill_value)
-                # print("res", res_data)
                 return DataFrameLArray(res_data)
             elif isinstance(other, LArray):
                 raise NotImplementedError("mixed LArrays")
@@ -1561,13 +1560,11 @@ class DataFrameLArray(PandasLArray):
                 other = other.broadcast_with(self).data
             elif isinstance(other, np.ndarray):
                 res_data = df_method(self.data, other)
-                print("res", res_data)
                 return DataFrameLArray(res_data)
 
                 raise NotImplementedError("DataFrameLArray and ndarray")
             elif np.isscalar(other):
                 res_data = df_method(self.data, other)
-                # print("res", res_data)
                 return DataFrameLArray(res_data)
             else:
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
@@ -1826,70 +1823,8 @@ def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
-    axes_names = [decode(name, 'utf8') for name in df.index.names]
-    if axes_names == [None]:
-        last_axis = None, None
-    else:
-        last_axis = axes_names[-1].split('\\')
-    axes_names[-1] = last_axis[0]
-    #FIXME: hardcoded "time"
-    axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
-    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
-                                           sort_columns=sort_columns, **kwargs)
-
-    # we could inline df_aslarray into the functions that use it, so that the
-    # original (non-cartesian) df is freed from memory at this point, but it
-    # would be much uglier and would not lower the peak memory usage which
-    # happens during cartesian_product_df.reindex
-
-    # pandas treats the "time" labels as column names (strings) so we need
-    # to convert them to values
-    axes_labels.append([parse(cell) for cell in df.columns.values])
-
-    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-    data = df.values.reshape([len(axis) for axis in axes])
-    return LArray(data, axes)
-
-
-class DataFrameWrapper(object):
-    def __init__(self, df):
-        self.df = df
-
-    def __getitem__(self, key):
-        return self.df[key]
-
-    def __getattr__(self, key):
-        return getattr(self.df, key)
-
-    @property
-    def dtype(self):
-        # assumes df is homogeneous !
-        return self.df.dtypes[0]
-
-    @property
-    def ndim(self):
-        return self.df.index.nlevels + 1
-
-    @property
-    def shape(self):
-        shape = [len(level) for level in self.df.index.levels]
-        shape.append(len(self.df.columns))
-        return tuple(shape)
-
-    def copy(self):
-        return DataFrameWrapper(self.df.copy())
-
-    # not caught by __getattr__?
-    def __len__(self):
-        return self.shape[0]
-
-    def __array__(self, dtype=None):
-        return self.df.__array__(dtype) #.reshape(self.shape)
-
-
 #TODO: implement sort_columns
-def df_aslarray2(df, sort_rows=True, sort_columns=True, **kwargs):
+def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
     if axes_names == [None]:
         last_axis = None, None
@@ -1965,8 +1900,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         del df[combined_axes_names]
         df.set_index(axes_names, inplace=True)
 
-    return df_aslarray2(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                        fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
 
 
 def read_tsv(filepath, **kwargs):
@@ -2001,7 +1936,7 @@ def read_hdf(filepath, key, sort_rows=True, sort_columns=True, **kwargs):
     read an LArray from a h5 file with the specified name
     """
     df = pd.read_hdf(filepath, key, **kwargs)
-    return df_aslarray2(df, sort_rows=sort_rows, sort_columns=sort_columns)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns)
 
 
 def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
