@@ -1437,6 +1437,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         all_lipro = lipro[:]
         tail = la.sum(lipro=(all_lipro,))
+        self.assertEqual(tail.axes_names, ['sex', 'lipro'])
         la = la.extend(lipro, tail)
         self.assertEqual(la.shape, (2, 16))
         # test with a string axis
