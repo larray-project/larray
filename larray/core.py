@@ -201,7 +201,7 @@ import csv
 import numpy as np
 import pandas as pd
 
-from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
+from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
 
@@ -857,62 +857,6 @@ class LArray(object):
     def ndim(self):
         return len(self.axes)
 
-
-class SeriesLArray(LArray):
-    def __init__(self, data):
-        if not isinstance(data, pd.Series):
-            raise TypeError("data must be a pandas.Series")
-        axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
-        LArray.__init__(self, data, axes)
-
-
-#TODO: factorize with df_labels
-def _df_levels(df, axis):
-    idx = df.index if axis == 0 else df.columns
-    if isinstance(idx, pd.MultiIndex):
-        return [(name, idx.get_level_values(name).unique())
-                for name in idx.names]
-    else:
-        assert isinstance(idx, pd.Index)
-        # not sure the unique() is really useful here
-        return [(idx.name, idx.unique())]
-
-
-class DataFrameLArray(LArray):
-    def __init__(self, data):
-        """
-        data should be a DataFrame with a (potentially)MultiIndex set for rows
-        """
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError("data must be a pandas.DataFrame")
-        #XXX: not sure always using sort_index would be enough
-        if isinstance(data.index, pd.MultiIndex):
-            data.index = data.index.sortlevel()[0]
-        else:
-            data = data.sort_index()
-        assert all(name is not None for name in data.index.names)
-        axes = [Axis(name, labels)
-                for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
-        LArray.__init__(self, data, axes)
-
-    @property
-    def df(self):
-        axes_names = self.axes_names[:-1]
-        if axes_names[-1] is not None:
-            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
-
-        columns = self.axes[-1].labels
-        index = pd.MultiIndex.from_product(self.axes_labels[:-1],
-                                           names=axes_names)
-        data = np.asarray(self).reshape(len(index), len(columns))
-        return pd.DataFrame(data, index, columns)
-
-    @property
-    def series(self):
-        index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
-                                           names=self.axes_names)
-        return pd.Series(np.asarray(self).reshape(self.size), index)
-
     def axes_rename(self, **kwargs):
         for k in kwargs.keys():
             if k not in self.axes:
@@ -974,8 +918,6 @@ class DataFrameLArray(LArray):
 
         return key
 
-    #XXX: we only need axes length, so we might want to move this out of the
-    # class
     def cross_key(self, key, collapse_slices=False):
         """
         :param key: a complete (contains all dimensions) index-based key
@@ -1021,10 +963,6 @@ class DataFrameLArray(LArray):
         else:
             return key
 
-    # def translated_key(self, key):
-    #     return tuple(axis.translate(axis_key)
-    #                  for axis, axis_key in zip(self.axes, key))
-
     def translated_key(self, key):
         """
         translate ValueGroups to lists
@@ -1036,125 +974,6 @@ class DataFrameLArray(LArray):
         key = [k.key if isinstance(k, ValueGroup) and k not in axis else k
                for axis, k in zip(self.axes, key)]
         return tuple(to_key(k) for k in key)
-
-    def split_tuple(self, full_tuple):
-        """
-        splits a tuple with one value per axis to two tuples corresponding to
-        the DataFrame axes
-        """
-        index_ndim = self._df_index_ndim
-        return full_tuple[:index_ndim], full_tuple[index_ndim:]
-
-    def split_key(self, full_key):
-        """
-        spits an LArray key with all axes to a key with two axes
-        """
-        a0_key, a1_key = self.split_tuple(full_key)
-        # avoid producing length-1 tuples (it confuses Pandas)
-        a0_key = a0_key[0] if len(a0_key) == 1 else a0_key
-        a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
-        return a0_key, a1_key
-
-    def _wrap_pandas(self, res_data):
-        if isinstance(res_data, pd.DataFrame):
-            res_type = DataFrameLArray
-        elif isinstance(res_data, pd.Series):
-            res_type = SeriesLArray
-        else:
-            assert np.isscalar(res_data)
-            return res_data
-        return res_type(res_data)
-
-    def __getitem__(self, key, collapse_slices=False):
-        data = self.data
-        if isinstance(key, (np.ndarray, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            return data[np.asarray(key)]
-
-        full_key = self.full_key(key)
-        translated_key = self.translated_key(full_key)
-        a0_key, a1_key = self.split_key(translated_key)
-        res_data = data.loc[a0_key, a1_key]
-
-        #XXX: I wish I could avoid doing this manually. For some reason,
-        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
-        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
-        a0_axes, a1_axes = self.split_tuple(self.axes)
-        if isinstance(a0_key, tuple):
-            a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
-                         if k in axis]
-            res_data.index = res_data.index.droplevel(a0_tokill)
-        if isinstance(a1_key, tuple):
-            a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
-                         if k in axis]
-            res_data.columns = res_data.columns.droplevel(a1_tokill)
-
-        return self._wrap_pandas(res_data)
-
-        data = np.asarray(self)
-
-        if isinstance(key, (np.ndarray, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            #TODO: return an LArray with Axis labels = combined keys
-            # these combined keys should be objects which display as:
-            # (axis1_label, axis2_label, ...) but should also store the axis
-            # (names). Should it be the same object as the NDValueGroup?/NDKey?
-            return data[np.asarray(key)]
-
-        translated_key = self.translated_key(self.full_key(key))
-
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
-
-        cross_key = self.cross_key(translated_key, collapse_slices)
-        data = data[cross_key]
-        # drop length 1 dimensions created by scalar keys
-        data = data.reshape(tuple(len(axis) for axis in axes))
-        if not axes:
-            # scalars do not need to be wrapped in LArray
-            return data
-        else:
-            return LArray(data, axes)
-
-    def __setitem__(self, key, value, collapse_slices=True):
-        data = np.asarray(self)
-
-        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            if isinstance(key, LArray):
-                key = key.broadcast_with(self.axes)
-            data[np.asarray(key)] = value
-            return
-
-        translated_key = self.translated_key(self.full_key(key))
-
-        #XXX: we might want to create fakes axes in this case, as we only
-        # use axes names and axes length, not the ticks, and those could
-        # theoretically take a significant time to compute
-
-        #FIXME: this breaks when using a boolean fancy index. eg
-        # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
-        # LArray.ratio())
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
-
-        cross_key = self.cross_key(translated_key, collapse_slices)
-
-        # if value is a "raw" ndarray we rely on numpy broadcasting
-        data[cross_key] = value.broadcast_with(axes) \
-            if isinstance(value, LArray) else value
-
-    def set(self, value, **kwargs):
-        """
-        sets a subset of LArray to value
-
-        * all common axes must be either 1 or the same length
-        * extra axes in value must be of length 1
-        * extra axes in self can have any length
-        """
-        self.__setitem__(kwargs, value)
 
     def reshape(self, target_axes):
         """
@@ -1169,40 +988,6 @@ class DataFrameLArray(LArray):
         """
         return self.reshape(target.axes)
 
-    def broadcast_with(self, target):
-        """
-        returns an LArray that is (numpy) broadcastable with target
-        target can be either an LArray or any collection of Axis
-
-        * all common axes must be either 1 or the same length
-        * extra axes in source can have any length and will be moved to the
-          front
-        * extra axes in target can have any length and the result will have axes
-          of length 1 for those axes
-
-        this is different from reshape which ensures the result has exactly the
-        shape of the target.
-        """
-        if isinstance(target, LArray):
-            target_axes = target.axes
-        else:
-            target_axes = target
-            if not isinstance(target, AxisCollection):
-                target_axes = AxisCollection(target_axes)
-        target_names = [a.name for a in target_axes]
-
-        # 1) append length-1 axes for axes in target but not in source (I do not
-        #    think their position matters).
-        array = self.reshape(list(self.axes) +
-                             [Axis(name, ['*']) for name in target_names
-                              if name not in self.axes])
-        # 2) reorder axes to target order (move source only axes to the front)
-        sourceonly_axes = [axis for axis in self.axes
-                           if axis.name not in target_axes]
-        other_axes = [self.axes.get(name, Axis(name, ['*']))
-                      for name in target_names]
-        return array.transpose(sourceonly_axes + other_axes)
-
     # deprecated since Python 2.0 but we need to define it to catch "simple"
     # slices (with integer bounds !) because ndarray is a "builtin" type
     def __getslice__(self, i, j):
@@ -1211,18 +996,6 @@ class DataFrameLArray(LArray):
 
     def __setslice__(self, i, j, value):
         self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)] = value
-
-    def __str__(self):
-        return str(self.data)
-        # if not self.ndim:
-        #     return str(np.asscalar(self))
-        # elif not len(self):
-        #     return 'LArray([])'
-        # else:
-        #     s = table2str(list(self.as_table()), 'nan', True,
-        #                   keepcols=self.ndim - 1)
-        #     return '\n' + s + '\n'
-    __repr__ = __str__
 
     def as_table(self, maxlines=80, edgeitems=5):
         if not self.ndim:
@@ -1284,6 +1057,297 @@ class DataFrameLArray(LArray):
         It is similar to np.take but works with several axes at once.
         """
         return self.__getitem__(kwargs, collapse)
+
+    def set(self, value, **kwargs):
+        """
+        sets a subset of LArray to value
+
+        * all common axes must be either 1 or the same length
+        * extra axes in value must be of length 1
+        * extra axes in self can have any length
+        """
+        self.__setitem__(kwargs, value)
+
+    def get_axis_idx(self, axis):
+        """
+        returns the index of an axis
+
+        axis can be a name or an Axis object (or an index)
+        if the Axis object is from another LArray, get_axis_idx will return the
+        index of the local axis with the same name, whether it is compatible
+        (has the same ticks) or not.
+        """
+        name_or_idx = axis.name if isinstance(axis, Axis) else axis
+        return self.axes_names.index(name_or_idx) \
+            if isinstance(name_or_idx, basestring) \
+            else name_or_idx
+
+    def get_axis(self, axis, idx=False):
+        """
+        axis can be an index, a name or an Axis object
+        if the Axis object is from another LArray, get_axis will return the
+        local axis with the same name, **whether it is compatible (has the
+        same ticks) or not**.
+        """
+        axis_idx = self.get_axis_idx(axis)
+        axis = self.axes[axis_idx]
+        return (axis, axis_idx) if idx else axis
+
+    def _aggregate(self, op_name, args, kwargs, commutative=False):
+        if not commutative and len(kwargs) > 1:
+            raise ValueError("grouping aggregates on multiple axes at the same "
+                             "time using keyword arguments is not supported "
+                             "for '%s' (because it is not a commutative"
+                             "operation and keyword arguments are *not* "
+                             "ordered in Python)" % op_name.__name__)
+
+        # Sort kwargs by axis name so that we have consistent results
+        # between runs because otherwise rounding errors could lead to
+        # slightly different results even for commutative operations.
+
+        #XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
+        operations = list(args) + sorted(kwargs.items())
+        if not operations:
+            # op() without args is equal to op(all_axes)
+            return self._axis_aggregate(op_name)
+
+        def isaxis(a):
+            return isinstance(a, (int, basestring, Axis))
+
+        res = self
+        # group *consecutive* same-type (group vs axis aggregates) operations
+        for are_axes, axes in groupby(operations, isaxis):
+            func = res._axis_aggregate if are_axes else res._group_aggregate
+            res = func(op_name, axes)
+        return res
+
+    # aggregate method factory
+    def _agg_method(name, commutative=False):
+        def method(self, *args, **kwargs):
+            return self._aggregate(name, args, kwargs,
+                                   commutative=commutative)
+        method.__name__ = name
+        return method
+
+    all = _agg_method('all', commutative=True)
+    any = _agg_method('any', commutative=True)
+    # commutative modulo float precision errors
+    sum = _agg_method('sum', commutative=True)
+    prod = _agg_method('prod', commutative=True)
+
+    # no level argument
+    # cumsum = _agg_method('cumsum', commutative=True)
+    # cumprod = _agg_method('cumprod', commutative=True)
+    min = _agg_method('min', commutative=True)
+    max = _agg_method('max', commutative=True)
+    mean = _agg_method('mean', commutative=True)
+
+    # not commutative
+    # N/A in pd.DataFrame
+    # ptp = _agg_method('ptp')
+    var = _agg_method('var')
+    std = _agg_method('std')
+
+    def ratio(self, *axes):
+        if not axes:
+            axes = self.axes
+        return self / self.sum(*axes)
+
+    def _wrap_pandas(self, res_data):
+        if isinstance(res_data, pd.DataFrame):
+            res_type = DataFrameLArray
+        elif isinstance(res_data, pd.Series):
+            res_type = SeriesLArray
+        else:
+            assert np.isscalar(res_data)
+            return res_data
+        return res_type(res_data)
+
+
+class SeriesLArray(LArray):
+    def __init__(self, data):
+        if not isinstance(data, pd.Series):
+            raise TypeError("data must be a pandas.Series")
+        axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
+        LArray.__init__(self, data, axes)
+
+
+#TODO: factorize with df_labels
+def _df_levels(df, axis):
+    idx = df.index if axis == 0 else df.columns
+    if isinstance(idx, pd.MultiIndex):
+        return [(name, idx.get_level_values(name).unique())
+                for name in idx.names]
+    else:
+        assert isinstance(idx, pd.Index)
+        # not sure the unique() is really useful here
+        return [(idx.name, idx.unique())]
+
+
+class DataFrameLArray(LArray):
+    def __init__(self, data):
+        """
+        data should be a DataFrame with a (potentially)MultiIndex set for rows
+        """
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("data must be a pandas.DataFrame")
+        #XXX: not sure always using sort_index would be enough
+        if isinstance(data.index, pd.MultiIndex):
+            data.index = data.index.sortlevel()[0]
+        else:
+            data = data.sort_index()
+        assert all(name is not None for name in data.index.names)
+        axes = [Axis(name, labels)
+                for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
+        LArray.__init__(self, data, axes)
+
+    @property
+    def df(self):
+        axes_names = self.axes_names[:-1]
+        if axes_names[-1] is not None:
+            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+
+        columns = self.axes[-1].labels
+        index = pd.MultiIndex.from_product(self.axes_labels[:-1],
+                                           names=axes_names)
+        data = np.asarray(self).reshape(len(index), len(columns))
+        return pd.DataFrame(data, index, columns)
+
+    @property
+    def series(self):
+        index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
+                                           names=self.axes_names)
+        return pd.Series(np.asarray(self).reshape(self.size), index)
+
+    #XXX: we only need axes length, so we might want to move this out of the
+    # class
+    # def translated_key(self, key):
+    #     return tuple(axis.translate(axis_key)
+    #                  for axis, axis_key in zip(self.axes, key))
+
+    def split_tuple(self, full_tuple):
+        """
+        splits a tuple with one value per axis to two tuples corresponding to
+        the DataFrame axes
+        """
+        index_ndim = self._df_index_ndim
+        return full_tuple[:index_ndim], full_tuple[index_ndim:]
+
+    def split_key(self, full_key):
+        """
+        spits an LArray key with all axes to a key with two axes
+        """
+        a0_key, a1_key = self.split_tuple(full_key)
+        # avoid producing length-1 tuples (it confuses Pandas)
+        a0_key = a0_key[0] if len(a0_key) == 1 else a0_key
+        a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
+        return a0_key, a1_key
+
+    def __getitem__(self, key, collapse_slices=False):
+        data = self.data
+        if isinstance(key, (np.ndarray, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            #TODO: return an LArray with Axis labels = combined keys
+            # these combined keys should be objects which display as:
+            # (axis1_label, axis2_label, ...) but should also store the axis
+            # (names). Should it be the same object as the NDValueGroup?/NDKey?
+            return data[np.asarray(key)]
+
+        full_key = self.full_key(key)
+        translated_key = self.translated_key(full_key)
+        a0_key, a1_key = self.split_key(translated_key)
+        res_data = data.loc[a0_key, a1_key]
+
+        #XXX: I wish I could avoid doing this manually. For some reason,
+        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
+        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
+        a0_axes, a1_axes = self.split_tuple(self.axes)
+        if isinstance(a0_key, tuple):
+            a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
+                         if k in axis]
+            res_data.index = res_data.index.droplevel(a0_tokill)
+        if isinstance(a1_key, tuple):
+            a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
+                         if k in axis]
+            res_data.columns = res_data.columns.droplevel(a1_tokill)
+
+        return self._wrap_pandas(res_data)
+
+    def __setitem__(self, key, value, collapse_slices=True):
+        data = np.asarray(self)
+
+        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            if isinstance(key, LArray):
+                key = key.broadcast_with(self.axes)
+            data[np.asarray(key)] = value
+            return
+
+        translated_key = self.translated_key(self.full_key(key))
+
+        #XXX: we might want to create fakes axes in this case, as we only
+        # use axes names and axes length, not the ticks, and those could
+        # theoretically take a significant time to compute
+
+        #FIXME: this breaks when using a boolean fancy index. eg
+        # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
+        # LArray.ratio())
+        axes = [axis.subaxis(axis_key)
+                for axis, axis_key in zip(self.axes, translated_key)
+                if not np.isscalar(axis_key)]
+
+        cross_key = self.cross_key(translated_key, collapse_slices)
+
+        # if value is a "raw" ndarray we rely on numpy broadcasting
+        data[cross_key] = value.broadcast_with(axes) \
+            if isinstance(value, LArray) else value
+
+    def broadcast_with(self, target):
+        """
+        returns an LArray that is (numpy) broadcastable with target
+        target can be either an LArray or any collection of Axis
+
+        * all common axes must be either 1 or the same length
+        * extra axes in source can have any length and will be moved to the
+          front
+        * extra axes in target can have any length and the result will have axes
+          of length 1 for those axes
+
+        this is different from reshape which ensures the result has exactly the
+        shape of the target.
+        """
+        if isinstance(target, LArray):
+            target_axes = target.axes
+        else:
+            target_axes = target
+            if not isinstance(target, AxisCollection):
+                target_axes = AxisCollection(target_axes)
+        target_names = [a.name for a in target_axes]
+
+        # 1) append length-1 axes for axes in target but not in source (I do not
+        #    think their position matters).
+        array = self.reshape(list(self.axes) +
+                             [Axis(name, ['*']) for name in target_names
+                              if name not in self.axes])
+        # 2) reorder axes to target order (move source only axes to the front)
+        sourceonly_axes = [axis for axis in self.axes
+                           if axis.name not in target_axes]
+        other_axes = [self.axes.get(name, Axis(name, ['*']))
+                      for name in target_names]
+        return array.transpose(sourceonly_axes + other_axes)
+
+    def __str__(self):
+        return str(self.data)
+        # if not self.ndim:
+        #     return str(np.asscalar(self))
+        # elif not len(self):
+        #     return 'LArray([])'
+        # else:
+        #     s = table2str(list(self.as_table()), 'nan', True,
+        #                   keepcols=self.ndim - 1)
+        #     return '\n' + s + '\n'
+    __repr__ = __str__
+
 
     @property
     def _df_index_ndim(self):
@@ -1359,31 +1423,6 @@ class DataFrameLArray(LArray):
 
         return self._wrap_pandas(res_data)
 
-    def get_axis_idx(self, axis):
-        """
-        returns the index of an axis
-
-        axis can be a name or an Axis object (or an index)
-        if the Axis object is from another LArray, get_axis_idx will return the
-        index of the local axis with the same name, whether it is compatible
-        (has the same ticks) or not.
-        """
-        name_or_idx = axis.name if isinstance(axis, Axis) else axis
-        return self.axes_names.index(name_or_idx) \
-            if isinstance(name_or_idx, basestring) \
-            else name_or_idx
-
-    def get_axis(self, axis, idx=False):
-        """
-        axis can be an index, a name or an Axis object
-        if the Axis object is from another LArray, get_axis will return the
-        local axis with the same name, **whether it is compatible (has the
-        same ticks) or not**.
-        """
-        axis_idx = self.get_axis_idx(axis)
-        axis = self.axes[axis_idx]
-        return (axis, axis_idx) if idx else axis
-
     def _group_aggregate(self, op_name, items):
         res = self
 
@@ -1451,6 +1490,7 @@ class DataFrameLArray(LArray):
             else:
                 # We never have to specify axis=1 because we always concatenate on
                 # a "new" axis.
+                #FIXME: str(g) is kinda ugly
                 groups = [str(g) for g in groups]
                 df_axis, df_level = self._df_axis_level(axis)
                 res_data = pd.concat(results, axis=df_axis, keys=groups,
@@ -1475,34 +1515,6 @@ class DataFrameLArray(LArray):
             res = self._wrap_pandas(res_data)
         return res
 
-    def _aggregate(self, op_name, args, kwargs, commutative=False):
-        if not commutative and len(kwargs) > 1:
-            raise ValueError("grouping aggregates on multiple axes at the same "
-                             "time using keyword arguments is not supported "
-                             "for '%s' (because it is not a commutative"
-                             "operation and keyword arguments are *not* "
-                             "ordered in Python)" % op_name.__name__)
-
-        # Sort kwargs by axis name so that we have consistent results
-        # between runs because otherwise rounding errors could lead to
-        # slightly different results even for commutative operations.
-
-        #XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
-        operations = list(args) + sorted(kwargs.items())
-        if not operations:
-            # op() without args is equal to op(all_axes)
-            return self._axis_aggregate(op_name)
-
-        def isaxis(a):
-            return isinstance(a, (int, basestring, Axis))
-
-        res = self
-        # group *consecutive* same-type (group vs axis aggregates) operations
-        for are_axes, axes in groupby(operations, isaxis):
-            func = res._axis_aggregate if are_axes else res._group_aggregate
-            res = func(op_name, axes)
-        return res
-
     def copy(self):
         return LArray(self.data.copy(), axes=self.axes[:])
 
@@ -1516,38 +1528,6 @@ class DataFrameLArray(LArray):
                  for axis, labels in zip(self.axes, axes_labels)]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
-
-    def ratio(self, *axes):
-        if not axes:
-            axes = self.axes
-        return self / self.sum(*axes)
-
-    # aggregate method factory
-    def _agg_method(name, commutative=False):
-        def method(self, *args, **kwargs):
-            return self._aggregate(name, args, kwargs,
-                                   commutative=commutative)
-        method.__name__ = name
-        return method
-
-    all = _agg_method('all', commutative=True)
-    any = _agg_method('any', commutative=True)
-    # commutative modulo float precision errors
-    sum = _agg_method('sum', commutative=True)
-    prod = _agg_method('prod', commutative=True)
-
-    # no level argument
-    # cumsum = _agg_method('cumsum', commutative=True)
-    # cumprod = _agg_method('cumprod', commutative=True)
-    min = _agg_method('min', commutative=True)
-    max = _agg_method('max', commutative=True)
-    mean = _agg_method('mean', commutative=True)
-    # not commutative
-
-    # N/A in pd.DataFrame
-    # ptp = _agg_method('ptp')
-    var = _agg_method('var')
-    std = _agg_method('std')
 
     # element-wise method factory
     def _binop(opname):
