@@ -1205,6 +1205,34 @@ class SeriesLArray(PandasLArray):
     def item(self):
         return self.data.item
 
+    def __getitem__(self, key, collapse_slices=False):
+        #TODO: factorize this with DataFrameLArray
+        data = self.data
+        if isinstance(key, (np.ndarray, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            #TODO: return an LArray with Axis labels = combined keys
+            # these combined keys should be objects which display as:
+            # (axis1_label, axis2_label, ...) but should also store the axis
+            # (names). Should it be the same object as the NDValueGroup?/NDKey?
+            return data[np.asarray(key)]
+
+        full_key = self.full_key(key)
+        translated_key = self.translated_key(full_key)
+        res_data = data.loc[translated_key]
+
+        #XXX: I wish I could avoid doing this manually. For some reason,
+        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
+        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
+        def mishandled_by_pandas(key):
+            return isinstance(key, tuple) and any(isinstance(k, slice)
+                                                  for k in key)
+        if mishandled_by_pandas(translated_key):
+            a0_tokill = [axis.name for axis, k in zip(self.axes, translated_key)
+                         if k in axis]
+            res_data.index = res_data.index.droplevel(a0_tokill)
+
+        return self._wrap_pandas(res_data)
+
 
 #TODO: factorize with df_labels
 def _df_levels(df, axis):
