@@ -286,7 +286,7 @@ def to_string(v):
         return slice_to_str(v)
     elif isinstance(v, (tuple, list)):
         if len(v) == 1:
-            return str(v) + ','
+            return str(v[0]) + ','
         else:
             return ','.join(str(k) for k in v)
     else:
