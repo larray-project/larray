@@ -1531,6 +1531,9 @@ class DataFrameLArray(PandasLArray):
                 df_axis, df_level = self._df_axis_level(axis)
                 res_data = pd.concat(results, axis=df_axis, keys=groups,
                                      names=[axis.name])
+                # workaround a bug in Pandas (names ignored when one result)
+                if len(results) == 1 and df_axis == 1:
+                    res_data.columns.name = axis.name
 
                 #XXX: this is very expensive (it rebuilds the whole index) !
                 # it would be nice if it could be avoided (but I have not found any
