@@ -1153,6 +1153,8 @@ class LArray(object):
             axes = self.axes
         return self / self.sum(*axes)
 
+
+class PandasLArray(LArray):
     def _wrap_pandas(self, res_data):
         if isinstance(res_data, pd.DataFrame):
             res_type = DataFrameLArray
@@ -1164,7 +1166,7 @@ class LArray(object):
         return res_type(res_data)
 
 
-class SeriesLArray(LArray):
+class SeriesLArray(PandasLArray):
     def __init__(self, data):
         if not isinstance(data, pd.Series):
             raise TypeError("data must be a pandas.Series")
@@ -1184,7 +1186,7 @@ def _df_levels(df, axis):
         return [(idx.name, idx.unique())]
 
 
-class DataFrameLArray(LArray):
+class DataFrameLArray(PandasLArray):
     def __init__(self, data):
         """
         data should be a DataFrame with a (potentially)MultiIndex set for rows
