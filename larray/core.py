@@ -1182,6 +1182,9 @@ class PandasLArray(LArray):
     def __len__(self):
         return len(self.data)
 
+    def __array__(self, dtype=None):
+        return np.asarray(self.data)
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data):
@@ -1292,12 +1295,16 @@ class DataFrameLArray(PandasLArray):
         #XXX: I wish I could avoid doing this manually. For some reason,
         # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
         # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
+        def mishandled_by_pandas(key):
+            return isinstance(key, tuple) and any(isinstance(k, slice)
+                                                  for k in key)
+
         a0_axes, a1_axes = self.split_tuple(self.axes)
-        if isinstance(a0_key, tuple):
+        if mishandled_by_pandas(a0_key):
             a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
                          if k in axis]
             res_data.index = res_data.index.droplevel(a0_tokill)
-        if isinstance(a1_key, tuple):
+        if mishandled_by_pandas(a1_key):
             a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
                          if k in axis]
             res_data.columns = res_data.columns.droplevel(a1_tokill)
@@ -1635,6 +1642,7 @@ class DataFrameLArray(PandasLArray):
             raise ValueError("Cannot append to several axes at the same time")
         axis_name, values = list(kwargs.items())[0]
         axis, axis_idx = self.get_axis(axis_name, idx=True)
+
         shape = self.shape
         values = np.asarray(values)
         if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
@@ -1764,9 +1772,6 @@ class DataFrameLArray(PandasLArray):
     @property
     def item(self):
         return self.data.item
-
-    def __array__(self, dtype=None):
-        return np.asarray(self.data)
 
     __array_priority__ = 100
 
