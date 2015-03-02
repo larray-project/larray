@@ -1519,8 +1519,6 @@ class DataFrameLArray(PandasLArray):
                 assert len(results) == 1
                 res_data = results[0]
             else:
-                # We never have to specify axis=1 because we always concatenate on
-                # a "new" axis.
                 #FIXME: str(g) is kinda ugly
                 groups = [str(g) for g in groups]
                 df_axis, df_level = self._df_axis_level(axis)
