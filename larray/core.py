@@ -1153,6 +1153,17 @@ class LArray(object):
             axes = self.axes
         return self / self.sum(*axes)
 
+    @property
+    def info(self):
+        def shorten(l):
+            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
+        axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
+                       for axis in self.axes]
+        lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
+                 for axis, labels in zip(self.axes, axes_labels)]
+        shape = " x ".join(str(s) for s in self.shape)
+        return ReprString('\n'.join([shape] + lines))
+
 
 class PandasLArray(LArray):
     def _wrap_pandas(self, res_data):
@@ -1165,6 +1176,12 @@ class PandasLArray(LArray):
             return res_data
         return res_type(res_data)
 
+    def copy(self):
+        return self._wrap_pandas(self.data.copy())
+
+    def __len__(self):
+        return len(self.data)
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data):
@@ -1172,6 +1189,18 @@ class SeriesLArray(PandasLArray):
             raise TypeError("data must be a pandas.Series")
         axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
         LArray.__init__(self, data, axes)
+
+    @property
+    def size(self):
+        return self.data.size
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    @property
+    def item(self):
+        return self.data.item
 
 
 #TODO: factorize with df_labels
@@ -1517,20 +1546,6 @@ class DataFrameLArray(PandasLArray):
             res = self._wrap_pandas(res_data)
         return res
 
-    def copy(self):
-        return LArray(self.data.copy(), axes=self.axes[:])
-
-    @property
-    def info(self):
-        def shorten(l):
-            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
-        axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
-                       for axis in self.axes]
-        lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
-                 for axis, labels in zip(self.axes, axes_labels)]
-        shape = " x ".join(str(s) for s in self.shape)
-        return ReprString('\n'.join([shape] + lines))
-
     # element-wise method factory
     def _binop(opname):
         fullname = '__%s__' % opname
@@ -1758,9 +1773,6 @@ class DataFrameLArray(PandasLArray):
     @property
     def item(self):
         return self.data.item
-
-    def __len__(self):
-        return len(self.data)
 
     def __array__(self, dtype=None):
         return np.asarray(self.data)
