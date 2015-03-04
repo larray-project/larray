@@ -1209,6 +1209,89 @@ class PandasLArray(LArray):
     def _df_index_ndim(self):
         return len(self.data.index.names)
 
+    def _group_aggregate(self, op_name, items):
+        res = self
+
+        # we cannot use Pandas groupby functionality because it is only meant
+        #  for disjoint groups, and we need to support a "row" being in
+        # several groups.
+
+        #TODO: when working with several "axes" at the same times, we should
+        # not produce the intermediary result at all. It should be faster and
+        # consume a bit less memory.
+        for item in items:
+            if isinstance(item, ValueGroup):
+                axis, groups = item.axis, item
+            else:
+                axis, groups = item
+            groups = to_keys(groups)
+            axis, axis_idx = res.get_axis(axis, idx=True)
+
+            if not isinstance(groups, tuple):
+                # groups is in fact a single group
+                assert isinstance(groups, (basestring, slice, list,
+                                           ValueGroup)), type(groups)
+                if isinstance(groups, list):
+                    assert len(groups) > 0
+
+                    # Make sure this is actually a single group, not multiple
+                    # mistakenly given as a list instead of a tuple
+                    assert all(not isinstance(g, (tuple, list)) for g in groups)
+
+                groups = (groups,)
+
+                # it is easier to kill the axis after the fact
+                killaxis = True
+            else:
+                killaxis = False
+
+            results = []
+            for group in groups:
+
+                # we need only lists of ticks, not single ticks, otherwise the
+                # dimension is discarded too early (in __getitem__ instead of in
+                # the aggregate func)
+                group = [group] if group in axis else group
+
+                # We do NOT modify the axis name (eg append "_agg" or "*") even
+                # though this creates a new axis that is independent from the
+                # original one because the original name is what users will
+                # want to use to access that axis (eg in .filter kwargs)
+                #TODO: we should bypass wrapping the result in DataFrameLArray
+                arr = res.__getitem__({axis.name: group}, collapse_slices=True)
+                result = arr._axis_aggregate(op_name, [axis])
+                del arr
+                results.append(result.data)
+
+            if killaxis:
+                assert len(results) == 1
+                res_data = results[0]
+            else:
+                groups = to_ticks(groups)
+                df_axis, df_level = self._df_axis_level(axis)
+                res_data = pd.concat(results, axis=df_axis, keys=groups,
+                                     names=[axis.name])
+                # workaround a bug in Pandas (names ignored when one result)
+                if len(results) == 1 and df_axis == 1:
+                    res_data.columns.name = axis.name
+
+                #XXX: this is very expensive (it rebuilds the whole index) !
+                # it would be nice if it could be avoided (but I have not found any
+                # way yet)
+                #XXX: only do this at the last iteration? Not sure if we can
+                # afford to temporarily loose sync between axes order and level
+                # orders?
+                if df_level != 0:
+                    # move the new axis to the correct place
+                    levels = list(range(1, self._df_axis_nlevels(df_axis)))
+                    levels.insert(df_level, 0)
+                    # Series.reorder_levels does not support axis argument
+                    kwargs = {'axis': df_axis} if df_axis else {}
+                    res_data = res_data.reorder_levels(levels, **kwargs)
+
+            res = self._wrap_pandas(res_data)
+        return res
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data):
@@ -1228,6 +1311,10 @@ class SeriesLArray(PandasLArray):
     @property
     def item(self):
         return self.data.item
+
+    def _df_axis_nlevels(self, df_axis):
+        assert df_axis == 0
+        return len(self.data.index.names)
 
     def __getitem__(self, key, collapse_slices=False):
         #TODO: factorize this with DataFrameLArray
@@ -1650,87 +1737,6 @@ class DataFrameLArray(PandasLArray):
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
-
-    def _group_aggregate(self, op_name, items):
-        res = self
-
-        # we cannot use Pandas groupby functionality because it is only meant
-        #  for disjoint groups, and we need to support a "row" being in
-        # several groups.
-
-        #TODO: when working with several "axes" at the same times, we should
-        # not produce the intermediary result at all. It should be faster and
-        # consume a bit less memory.
-        for item in items:
-            if isinstance(item, ValueGroup):
-                axis, groups = item.axis, item
-            else:
-                axis, groups = item
-            groups = to_keys(groups)
-            axis, axis_idx = res.get_axis(axis, idx=True)
-
-            if not isinstance(groups, tuple):
-                # groups is in fact a single group
-                assert isinstance(groups, (basestring, slice, list,
-                                           ValueGroup)), type(groups)
-                if isinstance(groups, list):
-                    assert len(groups) > 0
-
-                    # Make sure this is actually a single group, not multiple
-                    # mistakenly given as a list instead of a tuple
-                    assert all(not isinstance(g, (tuple, list)) for g in groups)
-
-                groups = (groups,)
-
-                # it is easier to kill the axis after the fact
-                killaxis = True
-            else:
-                killaxis = False
-
-            results = []
-            for group in groups:
-
-                # we need only lists of ticks, not single ticks, otherwise the
-                # dimension is discarded too early (in __getitem__ instead of in
-                # the aggregate func)
-                group = [group] if group in axis else group
-
-                # We do NOT modify the axis name (eg append "_agg" or "*") even
-                # though this creates a new axis that is independent from the
-                # original one because the original name is what users will
-                # want to use to access that axis (eg in .filter kwargs)
-                #TODO: we should bypass wrapping the result in DataFrameLArray
-                arr = res.__getitem__({axis.name: group}, collapse_slices=True)
-                result = arr._axis_aggregate(op_name, [axis])
-                del arr
-                results.append(result.data)
-
-            if killaxis:
-                assert len(results) == 1
-                res_data = results[0]
-            else:
-                groups = to_ticks(groups)
-                df_axis, df_level = self._df_axis_level(axis)
-                res_data = pd.concat(results, axis=df_axis, keys=groups,
-                                     names=[axis.name])
-                # workaround a bug in Pandas (names ignored when one result)
-                if len(results) == 1 and df_axis == 1:
-                    res_data.columns.name = axis.name
-
-                #XXX: this is very expensive (it rebuilds the whole index) !
-                # it would be nice if it could be avoided (but I have not found any
-                # way yet)
-                #XXX: only do this at the last iteration? Not sure if we can
-                # afford to temporarily loose sync between axes order and level
-                # orders?
-                if df_level != 0:
-                    # move the new axis to the correct place
-                    levels = list(range(1, self._df_axis_nlevels(df_axis)))
-                    levels.insert(df_level, 0)
-                    res_data = res_data.reorder_levels(levels, axis=df_axis)
-
-            res = self._wrap_pandas(res_data)
-        return res
 
     # element-wise method factory
     def _binop(opname):
