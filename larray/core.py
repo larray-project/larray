@@ -1152,6 +1152,12 @@ class LArray(object):
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
 
+    def __len__(self):
+        return len(self.data)
+
+    def __array__(self, dtype=None):
+        return np.asarray(self.data)
+
 
 class PandasLArray(LArray):
     def _wrap_pandas(self, res_data):
@@ -1382,10 +1388,10 @@ class SeriesLArray(PandasLArray):
     # element-wise method factory
     def _unaryop(opname):
         fullname = '__%s__' % opname
-        super_method = getattr(np.ndarray, fullname)
+        super_method = getattr(pd.Series, fullname)
 
         def opmethod(self):
-            return LArray(super_method(np.asarray(self)), self.axes)
+            return self._wrap_pandas(super_method(self.data))
         opmethod.__name__ = fullname
         return opmethod
 
@@ -1797,10 +1803,10 @@ class DataFrameLArray(PandasLArray):
     # element-wise method factory
     def _unaryop(opname):
         fullname = '__%s__' % opname
-        super_method = getattr(np.ndarray, fullname)
+        super_method = getattr(pd.DataFrame, fullname)
 
         def opmethod(self):
-            return LArray(super_method(np.asarray(self)), self.axes)
+            return self._wrap_pandas(super_method(self.data))
         opmethod.__name__ = fullname
         return opmethod
 
