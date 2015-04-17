@@ -792,6 +792,22 @@ class AxisCollection(object):
         for axis in to_add:
             self._map[axis.name] = axis
 
+    def index(self, axis):
+        """
+        returns the index of axis.
+
+        axis can be a name or an Axis object (or an index)
+        if the Axis object is from another LArray, index() will return the
+        index of the local axis with the same name, whether it is compatible
+        (has the same ticks) or not.
+
+        Raises ValueError if the axis is not present.
+        """
+        name_or_idx = axis.name if isinstance(axis, Axis) else axis
+        return self.names.index(name_or_idx) \
+            if isinstance(name_or_idx, basestring) \
+            else name_or_idx
+
     def insert(self, index, axis):
         """
         insert axis before index
@@ -818,6 +834,11 @@ class AxisCollection(object):
         for axis in axes:
             del res[axis]
         return res
+
+    @property
+    def names(self):
+        return [axis.name for axis in self._list]
+
 
 
 class LArray(object):
