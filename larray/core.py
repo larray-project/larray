@@ -769,6 +769,11 @@ class AxisCollection(object):
     def keys(self):
         return [a.name for a in self._list]
 
+    def pop(self, index=-1):
+        axis = self._list.pop(index)
+        del self._map[axis.name]
+        return axis
+
     def append(self, axis):
         """
         append axis at the end of the collection
