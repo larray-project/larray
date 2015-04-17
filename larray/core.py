@@ -1873,6 +1873,7 @@ class DataFrameLArray(PandasLArray):
         """
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
+        produces a copy in all cases (on Pandas)
         """
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             axes = args[0]
@@ -1886,9 +1887,26 @@ class DataFrameLArray(PandasLArray):
                         if axis.name not in axes_names]
         res_axes = axes + missing_axes
         axes_indices = [self.axes.index(axis) for axis in res_axes]
-        src_data = np.asarray(self)
-        res_data = src_data.transpose(axes_indices)
-        return LArray(res_data, res_axes)
+
+        src_data = self.data
+        cur_axes = self.axes[:]
+
+        if res_axes == cur_axes:
+            return self.copy()
+
+        # if last axis is different than before
+        if res_axes[-1].name != cur_axes[-1].name:
+            # stack old last axis (columns -> index) and unstack new last axis
+            res_data = src_data.stack().unstack(res_axes[-1].name)
+            cur_axes.append(cur_axes.pop(axes_indices[-1]))
+            axes_indices = [cur_axes.index(axis) for axis in res_axes]
+        else:
+            res_data = src_data
+
+        if res_axes != cur_axes:
+            res_data = res_data.reorder_levels(axes_indices[:-1])
+
+        return self._wrap_pandas(res_data)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
         """
