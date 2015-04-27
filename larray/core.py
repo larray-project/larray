@@ -204,6 +204,7 @@ import pandas as pd
 from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
+from larray.sorting import set_topological_index
 
 
 #TODO: return a generator, not a list
@@ -1510,11 +1511,37 @@ class SeriesLArray(PandasLArray):
     # __invert__ = _unaryop('invert')
 
 
+#TODO: this function should really be upstreamed in some way to Pandas
+def _index_level_unique_labels(idx, level):
+    """
+    returns the unique values for one level, respecting the parent ordering.
+    :param idx: pd.MultiIndex
+    :param level: num or name
+    :return: list of values
+    """
+    # * using idx.levels[level_num] as is does not work for DataFrame subsets
+    #   (it contains all the parent values even if not all of them are used in
+    #   the subset).
+    # * using idx.get_level_values(level).unique() is both slower and does not
+    #   respect the index order (unique() use a first-seen order)
+    # * if using .labels[level].values() gets unsupported at one point,
+    #   simply use "unique_values = set(idx.get_level_values(level))" instead
+
+    # .values() to get a straight ndarray from the FrozenNDArray that .labels[]
+    # gives us, which is slower to iterate on
+    # .astype(object) because set() needs python objects and it is faster to
+    # convert all ints in bulk than having them converted in the array iterator
+    level_num = idx._get_level_number(level)
+    unique_labels = set(idx.labels[level_num].values().astype(object))
+    order = idx.levels[level_num]
+    return [v for i, v in enumerate(order) if i in unique_labels]
+
+
 #TODO: factorize with df_labels
 def _df_levels(df, axis):
     idx = df.index if axis == 0 else df.columns
     if isinstance(idx, pd.MultiIndex):
-        return [(name, idx.get_level_values(name).unique())
+        return [(name, _index_level_unique_labels(idx, name))
                 for name in idx.names]
     else:
         assert isinstance(idx, pd.Index)
@@ -2011,7 +2038,6 @@ class DataFrameLArray(PandasLArray):
     __array_priority__ = 100
 
 
-
 def parse(s):
     """
     used to parse the "folded" axis ticks (usually periods)
@@ -2038,10 +2064,7 @@ def df_labels(df, sort=True):
     """
     idx = df.index
     if isinstance(idx, pd.core.index.MultiIndex):
-        if sort:
-            return list(idx.levels)
-        else:
-            return [list(unique(idx.get_level_values(l))) for l in idx.names]
+        return [_index_level_unique_labels(idx, l) for l in idx.names]
     else:
         assert isinstance(idx, pd.core.index.Index)
         # use .values if needed
@@ -2087,12 +2110,15 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
+             na=np.nan, sort_rows=False, sort_columns=True, **kwargs):
     """
     reads csv file and returns an Larray with the contents
         nb_index: number of leading index columns (ex. 4)
     or
         index_col : list of columns for the index (ex. [0, 1, 2, 3])
+
+    when sort_rows is False, LArray tries to produce a global order of labels
+    from all partial orders.
 
     format csv file:
     arr,ages,sex,nat\time,1991,1992,1993
@@ -2103,6 +2129,12 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     A1,A0,H,BE,0,0,0
 
     """
+    # TODO
+    # * make sure sort_rows=True works
+    # * implement sort_rows='firstseen' (this is what index.factorize does)
+    # * for "dense" arrays, this should result in the same thing as
+    #   sort_rows=True/"partial"
+
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
@@ -2121,8 +2153,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     else:
         index_col = list(range(nb_index))
 
-    if headersep is not None:
-        # we will set the index after having split the tick values
+    if not sort_rows or headersep is not None:
+        # we will set the index later
+        orig_index_col = index_col
         index_col = None
 
     # force str for dimensions
@@ -2132,6 +2165,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         dtype[axis] = np.str
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype,
                      **kwargs)
+    if not sort_rows:
+        set_topological_index(df, orig_index_col, inplace=True)
     if headersep is not None:
         labels_column = df[combined_axes_names]
         label_columns = unzip(label.split(headersep) for label in labels_column)

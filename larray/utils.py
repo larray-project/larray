@@ -17,6 +17,9 @@ except ImportError:
 
 import numpy as np
 
+from pandas import Index, MultiIndex
+
+
 if sys.version < '3':
     basestring = basestring
     bytes = str
@@ -207,3 +210,26 @@ def unzip(iterable):
 class ReprString(str):
     def __repr__(self):
         return self
+
+
+#TODO: this function should really be upstreamed in some way to Pandas
+def multi_index_from_arrays(arrays, sortorder=None, names=None,
+                            categories=None):
+    from pandas.core.categorical import Categorical
+
+    if len(arrays) == 1:
+        name = None if names is None else names[0]
+        return Index(arrays[0], name=name)
+
+    if categories is None:
+        cats = [Categorical(levelarr, ordered=True) for levelarr in arrays]
+    else:
+        cats = [Categorical(levelarr, levelcat, ordered=True)
+                for levelarr, levelcat in zip(arrays, categories)]
+    levels = [c.categories for c in cats]
+    labels = [c.codes for c in cats]
+    if names is None:
+        names = [c.name for c in cats]
+    return MultiIndex(levels=levels, labels=labels,
+                      sortorder=sortorder, names=names,
+                      verify_integrity=False)
