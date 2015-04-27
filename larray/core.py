@@ -1171,6 +1171,15 @@ class LArray(object):
         return np.asarray(self.data)
 
 
+class NumpyLArray(LArray):
+    def reshape(self, target_axes):
+        """
+        self.size must be equal to prod([len(axis) for axis in target_axes])
+        """
+        data = np.asarray(self).reshape([len(axis) for axis in target_axes])
+        return LArray(data, target_axes)
+
+
 class PandasLArray(LArray):
     def _wrap_pandas(self, res_data):
         if isinstance(res_data, pd.DataFrame):
