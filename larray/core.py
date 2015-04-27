@@ -1852,6 +1852,7 @@ class DataFrameLArray(PandasLArray):
             # adding a dimension of size one if it is missing
             new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
             values = values.reshape(new_shape)
+        #FIXME: use extend
         data = np.append(np.asarray(self), values, axis=axis_idx)
         new_axes = self.axes[:]
         new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
