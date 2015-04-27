@@ -154,6 +154,13 @@ def unique(iterable):
             yield element
 
 
+# inspired from SQLAlchemy util/_collection
+def unique_list(seq):
+    seen = set()
+    seen_add = seen.add
+    return [e for e in seq if e not in seen and not seen_add(e)]
+
+
 def duplicates(iterable):
     """
     List duplicated elements once, preserving order. Remember all elements ever
