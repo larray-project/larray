@@ -203,7 +203,7 @@ import pandas as pd
 
 from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
-                          duplicates)
+                          duplicates, _sort_level_inplace)
 from larray.sorting import set_topological_index
 
 
@@ -1297,19 +1297,23 @@ class PandasLArray(LArray):
                 if len(results) == 1 and df_axis == 1:
                     res_data.columns.name = axis.name
 
-                #XXX: this is very expensive (it rebuilds the whole index) !
-                # it would be nice if it could be avoided (but I have not found any
-                # way yet)
-                #XXX: only do this at the last iteration? Not sure if we can
-                # afford to temporarily loose sync between axes order and level
-                # orders?
                 if df_level != 0:
                     # move the new axis to the correct place
                     levels = list(range(1, self._df_axis_nlevels(df_axis)))
                     levels.insert(df_level, 0)
                     # Series.reorder_levels does not support axis argument
                     kwargs = {'axis': df_axis} if df_axis else {}
+
+                    # reordering levels is quite cheap (it creates a new
+                    # index but the data itself is not copied)
                     res_data = res_data.reorder_levels(levels, **kwargs)
+
+                    # sort using index levels order (to make index lexsorted)
+                    #XXX: this is expensive, but I am not sure it can be
+                    # avoided. Maybe only reorder_levels + sortlevel() after
+                    # the loop? Not sure whether we can afford to temporarily
+                    # loose sync between axes order and level orders?
+                    res_data = _sort_level_inplace(res_data)
 
             res = self._wrap_pandas(res_data)
         return res
@@ -1319,6 +1323,9 @@ class SeriesLArray(PandasLArray):
     def __init__(self, data):
         if not isinstance(data, pd.Series):
             raise TypeError("data must be a pandas.Series")
+        if isinstance(data.index, pd.MultiIndex) and \
+                not data.index.is_lexsorted():
+            data = data.sortlevel()
         axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
         LArray.__init__(self, data, axes)
 
@@ -1561,11 +1568,13 @@ class DataFrameLArray(PandasLArray):
         """
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas.DataFrame")
-        #XXX: not sure always using sort_index would be enough
-        if isinstance(data.index, pd.MultiIndex):
-            data.index = data.index.sortlevel()[0]
-        else:
-            data = data.sort_index()
+
+        if isinstance(data.index, pd.MultiIndex) and \
+                not data.index.is_lexsorted():
+            # let us be well behaved and not do it inplace even though that
+            # would be more efficient
+            data = data.sortlevel()
+
         assert all(name is not None for name in data.index.names)
         axes = [Axis(name, labels)
                 for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
@@ -1942,6 +1951,7 @@ class DataFrameLArray(PandasLArray):
 
         if res_axes != cur_axes:
             res_data = res_data.reorder_levels(axes_indices[:-1])
+            res_data = _sort_level_inplace(res_data)
 
         return self._wrap_pandas(res_data)
 

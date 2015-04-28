@@ -17,7 +17,7 @@ from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like, AxisCollection,
                     DataFrameLArray)
-from larray.utils import array_equal, array_nan_equal
+from larray.utils import array_equal, array_nan_equal, multi_index_from_product
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -498,8 +498,7 @@ class TestLArray(TestCase):
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.age = Axis('age', ':115')
-        # self.sex = Axis('sex', 'H,F')
-        self.sex = Axis('sex', 'F,H')
+        self.sex = Axis('sex', 'H,F')
 
         vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
               'A43,A44,A45,A46,A71,A72,A73'
@@ -511,9 +510,7 @@ class TestLArray(TestCase):
         # string without commas
         self.bru_str = bru
         # list of strings
-        belgium = union(vla, wal, bru)
-        belgium.sort()
-        self.belgium = belgium
+        self.belgium = union(vla, wal, bru)
 
         #belgium = vla + wal + bru # equivalent
         #wal_bru = belgium - vla
@@ -525,8 +522,9 @@ class TestLArray(TestCase):
                                                  .astype(float)
         dfarray = self.array.reshape(116 * 44 * 2, 15)
         names = ['age', 'geo', 'sex']
-        idx = pd.MultiIndex.from_product([self.age.labels, self.geo.labels,
-                                          self.sex.labels], names=names)
+        idx = multi_index_from_product([self.age.labels, self.geo.labels,
+                                        self.sex.labels], names=names,
+                                       sortvalues=False)
         columns = pd.Index(self.lipro.labels, name='lipro')
         df = pd.DataFrame(dfarray, idx, columns)
         self.larray = DataFrameLArray(df)
@@ -644,8 +642,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         subset = la[ertkey]
         axes = list(subset.axes)
 
-        #FIXME: ticks are not ordered?
-        geo2 = Axis('geo', ['BE', 'US', 'NL', 'UK'])
+        geo2 = Axis('geo', ['BE', 'NL', 'UK', 'US'])
         self.assertEqual(axes[1:], [unit, geo2, time])
         self.assertEqual(axes[0], Axis('ert', ['NEER37', 'NEEREA17']))
 
@@ -945,19 +942,16 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # slices
         # ------
 
-        # tests are broken due to Pandas sorting age labels '0', '1', '10',
-        # '100', '101', ...
-        numticks = 26  # should be 18
         # VG slice
-        self.assertEqual(la.filter(age=age[':17']).shape, (numticks, 44, 2, 15))
+        self.assertEqual(la.filter(age=age[':17']).shape, (18, 44, 2, 15))
         # string slice
-        self.assertEqual(la.filter(age=':17').shape, (numticks, 44, 2, 15))
+        self.assertEqual(la.filter(age=':17').shape, (18, 44, 2, 15))
         # raw slice
-        self.assertEqual(la.filter(age=slice('17')).shape, (numticks, 44, 2, 15))
+        self.assertEqual(la.filter(age=slice('17')).shape, (18, 44, 2, 15))
 
         # filter chain with a slice
         self.assertEqual(la.filter(age=':17').filter(geo='A12,A13').shape,
-                         (numticks, 2, 2, 15))
+                         (18, 2, 2, 15))
 
     def test_filter_multiple_axes(self):
         la = self.larray
@@ -1478,19 +1472,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes_names, ['age', 'time'])
-        self._assert_equal_raw(la[0, :], [3722, 3395, 3347])
+        #FIXME: ages should not be converted to strings
+        self._assert_equal_raw(la['0', :], [3722, 3395, 3347])
 
         la = read_csv(abspath('test3d.csv'))
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes_names, ['age', 'sex', 'time'])
-        self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
+        self._assert_equal_raw(la['0', 'F', :], [3722, 3395, 3347])
 
         la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
-        self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+        self._assert_equal_raw(la['1', '0', 'F', '1', :], [3722, 3395, 3347])
 
     def test_df_to_dflarray(self):
         s = """
@@ -1537,7 +1532,8 @@ REER27CPI,I05,US,96.66,99.07,100
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
-        self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+        #FIXME: int labels shouldn't be converted to strings
+        self._assert_equal_raw(la['1', '0', 'F', '1', :], [3722, 3395, 3347])
 
         la.to_csv('out.csv')
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',

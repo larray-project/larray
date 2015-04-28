@@ -18,6 +18,7 @@ except ImportError:
 import numpy as np
 
 from pandas import Index, MultiIndex
+import pandas as pd
 
 
 if sys.version < '3':
@@ -233,3 +234,67 @@ def multi_index_from_arrays(arrays, sortorder=None, names=None,
     return MultiIndex(levels=levels, labels=labels,
                       sortorder=sortorder, names=names,
                       verify_integrity=False)
+
+
+#TODO: this function should really be upstreamed in some way to Pandas
+def multi_index_from_product(iterables, sortorder=None, names=None,
+                             sortvalues=True):
+    """
+    Make a MultiIndex from the cartesian product of multiple iterables
+
+    Parameters
+    ----------
+    iterables : list / sequence of iterables
+        Each iterable has unique labels for each level of the index.
+    sortorder : int or None
+        Level of sortedness (must be lexicographically sorted by that
+        level).
+    names : list / sequence of strings or None
+        Names for the levels in the index.
+    sortvalues : bool
+        Whether each level values should be sorted alphabetically.
+
+    Returns
+    -------
+    index : MultiIndex
+
+    Examples
+    --------
+    >>> numbers = [0, 1]
+    >>> colors = [u'red', u'green', u'blue']
+    >>> MultiIndex.from_product([numbers, colors], names=['number', 'color'])
+    MultiIndex(levels=[[0, 1], ['blue', 'green', 'red']],
+               labels=[[0, 0, 0, 1, 1, 1], [2, 1, 0, 2, 1, 0]],
+               names=['number', 'color'])
+    >>> multi_index_from_product([numbers, colors], names=['number', 'color'],
+    ...                          sortvalues=False)
+    MultiIndex(levels=[[0, 1], ['red', 'green', 'blue']],
+               labels=[[0, 0, 0, 1, 1, 1], [0, 1, 2, 0, 1, 2]],
+               names=['number', 'color'],
+               sortorder=0)
+
+    See Also
+    --------
+    MultiIndex.from_arrays : Convert list of arrays to MultiIndex
+    MultiIndex.from_tuples : Convert list of tuples to MultiIndex
+    """
+    from pandas.core.categorical import Categorical
+    from pandas.tools.util import cartesian_product
+
+    if sortvalues:
+        categoricals = [Categorical(it, ordered=True) for it in iterables]
+    else:
+        categoricals = [Categorical(it, it, ordered=True) for it in iterables]
+        sortorder = 0
+    labels = cartesian_product([c.codes for c in categoricals])
+    return MultiIndex(levels=[c.categories for c in categoricals],
+                      labels=labels, sortorder=sortorder, names=names)
+
+
+def _sort_level_inplace(data):
+    if isinstance(data, pd.Series):
+        # as of Pandas 0.16 inplace not implemented for Series
+        data = data.sortlevel()
+    else:
+        data.sortlevel(inplace=True)
+    return data
