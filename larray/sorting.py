@@ -54,7 +54,7 @@ def get_topological_index(df, index_col):
     categories = [topological_sort(level_values, level_deps)
                   for level_values, level_deps
                   in zip(idx_columns, deps)]
-    return multi_index_from_arrays(idx_columns, len(idx_columns),
+    return multi_index_from_arrays(idx_columns, sortorder=0,
                                    names=df.columns[index_col],
                                    categories=categories)
 
