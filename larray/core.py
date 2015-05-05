@@ -1960,31 +1960,14 @@ class DataFrameLArray(PandasLArray):
         else:
             axes = args
         axes = [self.get_axis(a) for a in axes]
-        axes_names = set(axis.name for axis in axes)
+        axes_specified = set(axis.name for axis in axes)
         missing_axes = [axis for axis in self.axes
-                        if axis.name not in axes_names]
+                        if axis.name not in axes_specified]
         res_axes = axes + missing_axes
-        axes_indices = [self.axes.index(axis) for axis in res_axes]
+        res_axes = [a.name for a in res_axes]
 
-        src_data = self.data
-        cur_axes = self.axes[:]
-
-        if res_axes == cur_axes:
-            return self.copy()
-
-        # if last axis is different than before
-        if res_axes[-1].name != cur_axes[-1].name:
-            # stack old last axis (columns -> index) and unstack new last axis
-            res_data = src_data.stack().unstack(res_axes[-1].name)
-            cur_axes.append(cur_axes.pop(axes_indices[-1]))
-            axes_indices = [cur_axes.index(axis) for axis in res_axes]
-        else:
-            res_data = src_data
-
-        if res_axes != cur_axes:
-            res_data = res_data.reorder_levels(axes_indices[:-1])
-            res_data = _sort_level_inplace(res_data)
-
+        res_data = _pandas_transpose_any(self.data, res_axes[:-1],
+                                         [res_axes[-1]])
         return self._wrap_pandas(res_data)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
