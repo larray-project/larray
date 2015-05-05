@@ -1410,6 +1410,22 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = la.append(sex=la.sum(sex), label='sum')
         self.assertEqual(la.shape, (3, 16))
 
+        # test with more than 2 axes (ie with a MultiIndex)
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        la = la.append(geo=la.sum(geo), label='sum')
+        self.assertEqual(la.shape, (116, 45, 2, 15))
+
+        la = la.append(lipro=la.sum(lipro), label='sum')
+        self.assertEqual(la.shape, (116, 45, 2, 16))
+
+        la = la.append(age=la.sum(age), label='sum')
+        self.assertEqual(la.shape, (117, 45, 2, 16))
+
+        la = la.append(sex=la.sum(sex), label='sum')
+        self.assertEqual(la.shape, (117, 45, 3, 16))
+
         # crap the sex axis is different !!!! we don't have this problem with
         # the kwargs syntax below
         # la = la.append(la.mean(sex), axis=sex, label='mean')
