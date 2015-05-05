@@ -1903,9 +1903,9 @@ class DataFrameLArray(PandasLArray):
             transposed_value = _pandas_transpose_any_like(expanded_value, df,
                                                           sort=False)
             if isinstance(idx, pd.MultiIndex):
-                # using concat is a bit faster than combine_first (and we need to
-                # reindex/sort anyway because combine_first does not always give use
-                # the ordering we want).
+                # using concat is a bit faster than combine_first (and we need
+                # to reindex/sort anyway because combine_first does not always
+                # give use the ordering we want).
                 combined = pd.concat((df, transposed_value))
 
                 neworders = [level if i != axis_idx
