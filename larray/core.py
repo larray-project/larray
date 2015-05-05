@@ -203,7 +203,9 @@ import pandas as pd
 
 from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
-                          duplicates, _sort_level_inplace)
+                          duplicates, _sort_level_inplace,
+                          _pandas_insert_index_level, _pandas_transpose_any,
+                          _pandas_transpose_any_like)
 from larray.sorting import set_topological_index
 
 
@@ -1235,8 +1237,8 @@ class PandasLArray(LArray):
         res = self
 
         # we cannot use Pandas groupby functionality because it is only meant
-        #  for disjoint groups, and we need to support a "row" being in
-        # several groups.
+        # for disjoint groups, and we need to support a "row" being in several
+        # groups.
 
         #TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
@@ -1269,7 +1271,6 @@ class PandasLArray(LArray):
 
             results = []
             for group in groups:
-
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in __getitem__ instead of in
                 # the aggregate func)
@@ -1891,17 +1892,48 @@ class DataFrameLArray(PandasLArray):
         axis_name, values = list(kwargs.items())[0]
         axis, axis_idx = self.get_axis(axis_name, idx=True)
 
-        shape = self.shape
-        values = np.asarray(values)
-        if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
-            # adding a dimension of size one if it is missing
-            new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
-            values = values.reshape(new_shape)
-        #FIXME: use extend
-        data = np.append(np.asarray(self), values, axis=axis_idx)
-        new_axes = self.axes[:]
-        new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
-        return LArray(data, axes=new_axes)
+        pd_values = values.data
+        if axis_idx < self._df_index_ndim:
+            df = self.data
+            idx = df.index
+
+            #TODO: assert value has not already a "level" level
+            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
+                                                        label, axis_idx)
+            transposed_value = _pandas_transpose_any_like(expanded_value, df,
+                                                          sort=False)
+            if isinstance(idx, pd.MultiIndex):
+                # using concat is a bit faster than combine_first (and we need to
+                # reindex/sort anyway because combine_first does not always give use
+                # the ordering we want).
+                combined = pd.concat((df, transposed_value))
+
+                neworders = [level if i != axis_idx
+                               else level.insert(len(level), label)
+                             for i, level in enumerate(df.index.levels)]
+                result = combined
+                for i, neworder in enumerate(neworders):
+                    result = result.reindex(neworder, level=i)
+            else:
+                assert isinstance(idx, pd.Index)
+                result = pd.concat((df, transposed_value))
+        else:
+            # append on columns
+            result = self.data.copy()
+            result[label] = pd_values
+        return self._wrap_pandas(result)
+
+        # shape = self.shape
+        # values = np.asarray(values)
+        # if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
+        #     # adding a dimension of size one if it is missing
+        #     new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
+        #     values = values.reshape(new_shape)
+        # #FIXME: use extend
+        # data = np.append(np.asarray(self), values, axis=axis_idx)
+        # new_axes = self.axes[:]
+        # new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
+        # return LArray(data, axes=new_axes)
 
     def extend(self, axis, other):
         axis, axis_idx = self.get_axis(axis, idx=True)

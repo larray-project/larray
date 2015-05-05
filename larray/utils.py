@@ -298,3 +298,103 @@ def _sort_level_inplace(data):
     else:
         data.sortlevel(inplace=True)
     return data
+
+
+def _pandas_insert_index_level(obj, name, value, position=-1, inplace=False):
+    if not inplace:
+        obj = obj.copy()
+    idx = obj.index
+    names = [x for x in idx.names]
+    if isinstance(idx, MultiIndex):
+        arrays = [idx.get_level_values(i) for i in range(idx.nlevels)]
+    else:
+        arrays = [idx]
+
+    if np.isscalar(value):
+        dtype = object if isinstance(value, str) else type(value)
+        newlevel = np.empty(len(idx), dtype=dtype)
+        newlevel.fill(value)
+    else:
+        newlevel = value
+
+    arrays.insert(position, newlevel)
+    names.insert(position, name)
+    obj.index = pd.MultiIndex.from_arrays(arrays, names=names)
+    return obj
+
+
+def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True):
+    if column_levels is None:
+        column_levels = ()
+
+    idxnames = obj.index.names
+    colnames = obj.columns.names if isinstance(obj, pd.DataFrame) else ()
+
+    # if idxnames == index_levels and colnames == column_levels:
+    #     return obj.copy()
+
+    idxnames_set = set(idxnames)
+    colnames_set = set(colnames)
+
+    # levels that are in columns but should be in index
+    tostack = [l for l in index_levels if l in colnames_set]
+    # levels that are in index but should be in columns
+    tounstack = [l for l in column_levels if l in idxnames_set]
+
+    if tostack:
+        obj = obj.stack(tostack)
+
+    if tounstack:
+        obj = obj.unstack(tounstack)
+
+    if not tounstack and not tostack:
+        obj = obj.copy()
+
+    idxnames = obj.index.names
+    colnames = obj.columns.names if isinstance(obj, pd.DataFrame) else ()
+    if idxnames != index_levels:
+        obj = _pandas_reorder_levels(obj, index_levels, inplace=True)
+        if sort:
+            obj = _sort_level_inplace(obj)
+    if colnames != column_levels:
+        _pandas_reorder_levels(obj, column_levels, axis=1, inplace=True)
+        if sort:
+            obj.sortlevel(axis=1, inplace=True)
+    return obj
+
+
+def _pandas_transpose_any_like(obj, other, sort=True):
+    idxnames = other.index.names
+    colnames = other.columns.names if isinstance(other, pd.DataFrame) else ()
+    return _pandas_transpose_any(obj, idxnames, colnames, sort)
+
+
+# workaround for no inplace arg.
+def _pandas_reorder_levels(self, order, axis=0, inplace=False):
+    """
+    Rearrange index levels using input order.
+    May not drop or duplicate levels
+
+    Parameters
+    ----------
+    order : list of int or list of str
+        List representing new level order. Reference level by number
+        (position) or by key (label).
+    axis : int
+        Where to reorder levels.
+
+    Returns
+    -------
+    type of caller (new object)
+    """
+    axis = self._get_axis_number(axis)
+    if not isinstance(self._get_axis(axis), MultiIndex):
+        raise TypeError('Can only reorder levels on a hierarchical axis.')
+
+    result = self if inplace else self.copy()
+    if axis == 0:
+        result.index = result.index.reorder_levels(order)
+    else:
+        assert axis == 1
+        result.columns = result.columns.reorder_levels(order)
+    return result
