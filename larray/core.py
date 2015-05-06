@@ -1893,24 +1893,43 @@ class DataFrameLArray(PandasLArray):
         axis_name, values = list(kwargs.items())[0]
         axis, axis_idx = self.get_axis(axis_name, idx=True)
 
+        #TODO: add support for "raw" ndarrays (of the correct shape or
+        # missing length-one dimensions)
         pd_values = values.data
+        if axis_idx < self._df_index_ndim:
+            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
+                                                        label, axis_idx)
+        else:
+            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
+                                                        label, axis_idx)
+        expanded_value = self._wrap_pandas(expanded_value)
+        return self.extend(axis, expanded_value)
+
+    def extend(self, axis, other):
+        axis, axis_idx = self.get_axis(axis, idx=True)
+
+        # Get axis by name, so that we do *NOT* check they are "compatible",
+        # because it makes sense to append axes of different length
+        other_axis = other.get_axis(axis)
+
+        # TODO: also "broadcast" (handle missing dimensions) other to self
+        transposed_value = _pandas_transpose_any_like(other.data, self.data,
+                                                      sort=False)
         if axis_idx < self._df_index_ndim:
             df = self.data
             idx = df.index
 
             #TODO: assert value has not already a "level" level
-            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
-                                                        label, axis_idx)
-            transposed_value = _pandas_transpose_any_like(expanded_value, df,
-                                                          sort=False)
             if isinstance(idx, pd.MultiIndex):
                 # using concat is a bit faster than combine_first (and we need
                 # to reindex/sort anyway because combine_first does not always
                 # give use the ordering we want).
                 combined = pd.concat((df, transposed_value))
 
+                # Index.append() only works with a single value or an Index
+                newlabels = pd.Index(other_axis.labels)
                 neworders = [level if i != axis_idx
-                               else level.insert(len(level), label)
+                             else level.append(newlabels)
                              for i, level in enumerate(df.index.levels)]
                 result = combined
                 for i, neworder in enumerate(neworders):
@@ -1920,33 +1939,12 @@ class DataFrameLArray(PandasLArray):
                 result = pd.concat((df, transposed_value))
         else:
             # append on columns
-            result = self.data.copy()
-            result[label] = pd_values
+
+            # this is slower for 1 column than df.copy(); df[label] = values
+            # it fails (forget some level names) when transposed_value has not
+            # the same index order
+            result = pd.concat((self.data, transposed_value), axis=1)
         return self._wrap_pandas(result)
-
-        # shape = self.shape
-        # values = np.asarray(values)
-        # if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
-        #     # adding a dimension of size one if it is missing
-        #     new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
-        #     values = values.reshape(new_shape)
-        # #FIXME: use extend
-        # data = np.append(np.asarray(self), values, axis=axis_idx)
-        # new_axes = self.axes[:]
-        # new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
-        # return LArray(data, axes=new_axes)
-
-    def extend(self, axis, other):
-        axis, axis_idx = self.get_axis(axis, idx=True)
-        # Get axis by name, so that we do *NOT* check they are "compatible",
-        # because it makes sense to append axes of different length
-        other_axis = other.get_axis(axis)
-
-        data = np.append(np.asarray(self), np.asarray(other), axis=axis_idx)
-        new_axes = self.axes[:]
-        new_axes[axis_idx] = Axis(axis.name,
-                                  np.append(axis.labels, other_axis.labels))
-        return LArray(data, axes=new_axes)
 
     def transpose(self, *args):
         """
