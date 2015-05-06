@@ -1319,6 +1319,19 @@ class PandasLArray(LArray):
             res = self._wrap_pandas(res_data)
         return res
 
+    def __str__(self):
+        return str(self.data)
+        # if not self.ndim:
+        #     return str(np.asscalar(self))
+        # elif not len(self):
+        #     return 'LArray([])'
+        # else:
+        #     s = table2str(list(self.as_table()), 'nan', True,
+        #                   keepcols=self.ndim - 1)
+        #     return '\n' + s + '\n'
+
+    __repr__ = __str__
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data):
@@ -1721,18 +1734,6 @@ class DataFrameLArray(PandasLArray):
         other_axes = [self.axes.get(name, Axis(name, ['*']))
                       for name in target_names]
         return array.transpose(sourceonly_axes + other_axes)
-
-    def __str__(self):
-        return str(self.data)
-        # if not self.ndim:
-        #     return str(np.asscalar(self))
-        # elif not len(self):
-        #     return 'LArray([])'
-        # else:
-        #     s = table2str(list(self.as_table()), 'nan', True,
-        #                   keepcols=self.ndim - 1)
-        #     return '\n' + s + '\n'
-    __repr__ = __str__
 
     def _df_axis_nlevels(self, df_axis):
         idx = self.data.index if df_axis == 0 else self.data.columns
