@@ -300,26 +300,51 @@ def _sort_level_inplace(data):
     return data
 
 
-def _pandas_insert_index_level(obj, name, value, position=-1, inplace=False):
+# We need this function because
+# 1) set_index does not exist on Series
+# 2) set_index can only append at the end (not insert)
+# 3) set_index uses MultiIndex.from_arrays which loose "levels" ordering (it
+#    sorts values)
+def _pandas_insert_index_level(obj, name, value, position=-1,
+                               axis=0, inplace=False):
+    assert axis in (0, 1)
+    assert np.isscalar(value)
+
     if not inplace:
         obj = obj.copy()
-    idx = obj.index
-    names = [x for x in idx.names]
+
+    if axis == 0:
+        idx = obj.index
+    else:
+        idx = obj.columns
+
     if isinstance(idx, MultiIndex):
-        arrays = [idx.get_level_values(i) for i in range(idx.nlevels)]
+        levels = list(idx.levels)
+        labels = list(idx.labels)
     else:
-        arrays = [idx]
+        assert isinstance(idx, pd.Index)
+        levels = [idx]
+        labels = [np.arange(len(idx))]
+    names = [x for x in idx.names]
 
-    if np.isscalar(value):
-        dtype = object if isinstance(value, str) else type(value)
-        newlevel = np.empty(len(idx), dtype=dtype)
-        newlevel.fill(value)
-    else:
-        newlevel = value
+    dtype = object if isinstance(value, str) else type(value)
+    newlevel = np.empty(len(idx), dtype=dtype)
+    newlevel.fill(value)
+    newlabels = np.zeros(len(idx), dtype=np.int8)
 
-    arrays.insert(position, newlevel)
+    levels.insert(position, newlevel)
+    labels.insert(position, newlabels)
     names.insert(position, name)
-    obj.index = pd.MultiIndex.from_arrays(arrays, names=names)
+
+    sortorder = 0 if isinstance(idx, pd.Index) or idx.is_lexsorted() else None
+    newidx = MultiIndex(levels=levels, labels=labels,
+                        sortorder=sortorder, names=names,
+                        verify_integrity=False)
+    assert newidx.is_lexsorted()
+    if axis == 0:
+        obj.index = newidx
+    else:
+        obj.columns = newidx
     return obj
 
 
