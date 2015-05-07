@@ -662,13 +662,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
 
-        # breaks on Pandas because F and H got inverted. It is correct,
-        # but "raw" comparison is thus broken
-        # self._assert_equal_raw(subset, raw[[1, 5, 9]])
+        self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
         # ValueGroup at "incorrect" place
-        # print(la[age['0'], geo['A21']])
-        # print(la[lipro['P01']])
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
         # multiple ValueGroup key (in "incorrect" order)
@@ -1042,10 +1038,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # Include everything between two labels. Since A11 is the first label
         # and A21 is the last one, this should be equivalent to the previous
         # tests.
-        # BROKEN on Pandas
-        # self.assertEqual(la.sum(geo='A11:A21').shape, (116, 2, 15))
-        # assert_larray_equal(la.sum(geo='A11:A21'), la.sum(geo=':'))
-        # assert_larray_equal(la.sum(geo['A11:A21']), la.sum(geo=':'))
+        self.assertEqual(la.sum(geo='A11:A21').shape, (116, 2, 15))
+        assert_larray_equal(la.sum(geo='A11:A21'), la.sum(geo=':'))
+        assert_larray_equal(la.sum(geo['A11:A21']), la.sum(geo=':'))
 
         # a.2) a tuple of one group => do not collapse dimension
         self.assertEqual(la.sum(geo=(geo.all(),)).shape, (116, 1, 2, 15))
@@ -1187,9 +1182,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         byage = la.sum(age=(child, '5', working, retired))
         self.assertEqual(byage.shape, (4, 44, 2, 15))
 
-        # test is broken because la['5:10'] is empty on Pandas
-        # byage = la.sum(age=(child, '5:10', working, retired))
-        # self.assertEqual(byage.shape, (4, 44, 2, 15))
+        byage = la.sum(age=(child, '5:10', working, retired))
+        self.assertEqual(byage.shape, (4, 44, 2, 15))
 
         # filter on an aggregated larray created with mixed groups
         self.assertEqual(byage.filter(age=child).shape, (44, 2, 15))
@@ -1343,9 +1337,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la * 2, raw * 2)
         self._assert_equal_raw(2 * la, 2 * raw)
 
-        # Pandas 0 / 0 returns inf instead of nan like numpy
         target = raw / raw
-        target[0, 0] = np.inf #raw / raw
         self._assert_equal_raw(la / la, target)
         self._assert_equal_raw(la / 2, raw / 2)
         self._assert_equal_raw(30 / la, 30 / raw)
@@ -1397,9 +1389,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw = self.small_data
 
         sex, lipro = la.axes
-        result = la.mean(lipro)
-        self._assert_equal_raw(result, raw.mean(1))
-        # self._assert_equal_raw(la.mean(lipro), raw.mean(1))
+        self._assert_equal_raw(la.mean(lipro), raw.mean(1))
 
     def test_append(self):
         la = self.small
