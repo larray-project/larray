@@ -303,8 +303,9 @@ def _sort_level_inplace(data):
 # We need this function because
 # 1) set_index does not exist on Series
 # 2) set_index can only append at the end (not insert)
-# 3) set_index uses MultiIndex.from_arrays which loose "levels" ordering (it
-#    sorts values)
+# 3) set_index uses MultiIndex.from_arrays which loose "levels" inherent
+#    ordering (it sorts values), even though it keeps "apparent" ordering (if
+#    you print the df it seems in the same order)
 def _pandas_insert_index_level(obj, name, value, position=-1,
                                axis=0, inplace=False):
     assert axis in (0, 1)
