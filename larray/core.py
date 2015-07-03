@@ -842,6 +842,9 @@ class AxisCollection(object):
     def names(self):
         return [axis.name for axis in self._list]
 
+    @property
+    def shape(self):
+        return tuple(len(axis) for axis in self._list)
 
 
 class LArray(object):
