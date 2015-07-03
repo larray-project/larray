@@ -1670,8 +1670,7 @@ class DataFrameLArray(PandasLArray):
                 key = key.data
             return self._wrap_pandas(data[key])
 
-        full_key = self.full_key(key)
-        translated_key = self.translated_key(full_key)
+        translated_key = self.translated_key(self.full_key(key))
         a0_key, a1_key = self.split_key(translated_key)
         res_data = data.loc[a0_key, a1_key]
 
@@ -1695,7 +1694,7 @@ class DataFrameLArray(PandasLArray):
         return self._wrap_pandas(res_data)
 
     def __setitem__(self, key, value, collapse_slices=True):
-        data = np.asarray(self)
+        data = self.data
 
         if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
                 np.issubdtype(key.dtype, bool):
@@ -1705,23 +1704,17 @@ class DataFrameLArray(PandasLArray):
             return
 
         translated_key = self.translated_key(self.full_key(key))
+        a0_key, a1_key = self.split_key(translated_key)
+        #TODO: we should handle broadcasting
+        if a1_key == slice(None):
+            # workaround to assign full rows
+            data.loc[a0_key, a1_key] = np.asarray(value)
 
-        #XXX: we might want to create fakes axes in this case, as we only
-        # use axes names and axes length, not the ticks, and those could
-        # theoretically take a significant time to compute
-
-        #FIXME: this breaks when using a boolean fancy index. eg
-        # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
-        # LArray.ratio())
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
-
-        cross_key = self.cross_key(translated_key, collapse_slices)
-
+        else:
+            data.loc[a0_key, a1_key] = value
         # if value is a "raw" ndarray we rely on numpy broadcasting
-        data[cross_key] = value.broadcast_with(axes) \
-            if isinstance(value, LArray) else value
+        # data[cross_key] = value.broadcast_with(axes) \
+        #     if isinstance(value, LArray) else value
 
     def broadcast_with(self, target):
         """
