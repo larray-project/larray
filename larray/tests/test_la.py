@@ -520,22 +520,15 @@ class TestLArray(TestCase):
 
         self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
                                                  .astype(float)
-        dfarray = self.array.reshape(116 * 44 * 2, 15)
-        names = ['age', 'geo', 'sex']
-        idx = multi_index_from_product([self.age.labels, self.geo.labels,
-                                        self.sex.labels], names=names,
-                                       sortvalues=False)
-        columns = pd.Index(self.lipro.labels, name='lipro')
-        df = pd.DataFrame(dfarray, idx, columns)
-        self.larray = DataFrameLArray(df)
+        self.larray = DataFrameLArray(self.array, axes=(self.age, self.geo,
+                                                        self.sex, self.lipro))
         # self.larray = LArray(self.array,
         #                      axes=(self.age, self.geo, self.sex, self.lipro))
         # self.larray = read_hdf('c:/tmp/y.h5', 'y', sort_rows=False)
 
         self.small_data = np.arange(30).reshape(2, 15)
-        idx = pd.Index(self.sex.labels, name='sex')
-        df = pd.DataFrame(self.small_data, idx, columns)
-        self.small = DataFrameLArray(df)
+        self.small = DataFrameLArray(self.small_data,
+                                     axes=(self.sex, self.lipro))
         # self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
         # self.small = read_hdf('c:/tmp/x.h5', 'x', sort_rows=False)
 

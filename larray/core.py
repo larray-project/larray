@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 #         # data is a pd.DataFrame
 #         self.data = data
 
-
 __version__ = "0.2dev"
 
 """
@@ -205,7 +204,8 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, _sort_level_inplace,
                           _pandas_insert_index_level, _pandas_transpose_any,
-                          _pandas_transpose_any_like)
+                          _pandas_transpose_any_like,
+                          multi_index_from_product)
 from larray.sorting import set_topological_index
 
 
@@ -620,7 +620,7 @@ class Axis(object):
         res.labels.sort()
         res._update_mapping()
         return res
-        
+
 
 # We need a separate class for ValueGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
@@ -1579,22 +1579,38 @@ class MixedDtype(dict):
 
 
 class DataFrameLArray(PandasLArray):
-    def __init__(self, data):
+    def __init__(self, data, axes=None):
         """
         data should be a DataFrame with a (potentially)MultiIndex set for rows
         """
-        if not isinstance(data, pd.DataFrame):
+        if isinstance(data, np.ndarray):
+            axes = AxisCollection(axes)
+            #XXX: add a property "labels" on AxisCollection?
+            if len(axes) > 2:
+                idx = multi_index_from_product([axis.labels for axis in axes[:-1]],
+                                               names=axes.names[:-1],
+                                               sortvalues=False)
+            elif len(axes) == 2:
+                idx = pd.Index(axes[0].labels, name=axes[0].name)
+            else:
+                raise ValueError("need at least 2 axes")
+            array = data.reshape(prod(axes.shape[:-1]), axes.shape[-1])
+            columns = pd.Index(axes[-1].labels, name=axes[-1].name)
+            data = pd.DataFrame(array, idx, columns)
+        elif isinstance(data, pd.DataFrame):
+
+            if isinstance(data.index, pd.MultiIndex) and \
+                    not data.index.is_lexsorted():
+                # let us be well behaved and not do it inplace even though that
+                # would be more efficient
+                data = data.sortlevel()
+            assert axes is None
+            assert all(name is not None for name in data.index.names)
+            axes = [Axis(name, labels)
+                    for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
+        else:
             raise TypeError("data must be a pandas.DataFrame")
 
-        if isinstance(data.index, pd.MultiIndex) and \
-                not data.index.is_lexsorted():
-            # let us be well behaved and not do it inplace even though that
-            # would be more efficient
-            data = data.sortlevel()
-
-        assert all(name is not None for name in data.index.names)
-        axes = [Axis(name, labels)
-                for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
         LArray.__init__(self, data, axes)
 
     @property
