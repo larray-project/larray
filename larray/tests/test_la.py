@@ -533,7 +533,13 @@ class TestLArray(TestCase):
         # self.small = read_hdf('c:/tmp/x.h5', 'x', sort_rows=False)
 
     def test_zeros(self):
+        # real Axis objects
         la = zeros((self.geo, self.age))
+        self.assertEqual(la.shape, (44, 116))
+        self._assert_equal_raw(la, np.zeros((44, 116)))
+
+        # range axes
+        la = zeros((44, 116))
         self.assertEqual(la.shape, (44, 116))
         self._assert_equal_raw(la, np.zeros((44, 116)))
 

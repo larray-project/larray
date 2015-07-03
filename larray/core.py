@@ -674,11 +674,14 @@ class ValueGroup(object):
 class AxisCollection(object):
     def __init__(self, axes=None):
         """
-        :param axes: sequence of Axis objects
+        :param axes: sequence of Axis (or int) objects
         """
         if axes is None:
             axes = []
+        axes = [Axis(None, range(axis)) if isinstance(axis, int) else axis
+                for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
+
         if not isinstance(axes, list):
             axes = list(axes)
         self._list = axes
@@ -2272,13 +2275,18 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
                        fill_value=na)
 
 
-def zeros(axes):
-    return LArray(np.zeros(tuple(len(axis) for axis in axes)), axes)
+def zeros(axes, cls=LArray):
+    axes = AxisCollection(axes)
+    return cls(np.zeros(axes.shape), axes)
 
 
-def zeros_like(array):
-    return zeros(array.axes)
+def zeros_like(array, cls=None):
+    """
+    :param cls: use same than source by default
+    """
+    return zeros(array.axes, cls=array.__class__ if cls is None else cls)
 
 
-def empty(axes):
-    return LArray(np.empty(tuple(len(axis) for axis in axes)), axes)
+def empty(axes, cls=LArray):
+    axes = AxisCollection(axes)
+    return cls(np.empty(axes.shape), axes)
