@@ -548,6 +548,22 @@ class TestLArray(TestCase):
         self.assertEqual(la.shape, (116, 44, 2, 15))
         self._assert_equal_raw(la, np.zeros((116, 44, 2, 15)))
 
+    def test_ndrange(self):
+        # real Axis objects
+        la = ndrange((self.geo, self.age))
+        self.assertEqual(la.shape, (44, 116))
+        self._assert_equal_raw(la, np.arange(44 * 116))
+
+        # range axes
+        la = ndrange((44, 116))
+        self.assertEqual(la.shape, (44, 116))
+        self._assert_equal_raw(la, np.arange(44 * 116))
+
+        # dataframe larray
+        dfla = ndrange((44, 116), DataFrameLArray)
+        self.assertEqual(dfla.shape, (44, 116))
+        self._assert_equal_raw(dfla, np.arange(44 * 116))
+
     def test_rename(self):
         la = self.larray
         new = la.rename('sex', 'gender')

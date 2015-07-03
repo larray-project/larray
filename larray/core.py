@@ -2290,3 +2290,11 @@ def zeros_like(array, cls=None):
 def empty(axes, cls=LArray):
     axes = AxisCollection(axes)
     return cls(np.empty(axes.shape), axes)
+
+
+def ndrange(axes, cls=LArray):
+    """
+    :param axes: either a collection of axes or a shape
+    """
+    axes = AxisCollection(axes)
+    return cls(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
