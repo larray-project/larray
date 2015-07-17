@@ -1961,12 +1961,15 @@ class DataFrameLArray(PandasLArray):
             result = pd.concat((self.data, transposed_value), axis=1)
         return self._wrap_pandas(result)
 
-    def transpose(self, *args):
+    def transpose(self, *args, ncoldims=1):
         """
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
         produces a copy in all cases (on Pandas)
         """
+        assert 0 <= ncoldims <= len(self.axes)
+        # all in columns is equivalent to none (we get a Series)
+        ncoldims = ncoldims if ncoldims != len(self.axes) else 0
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             axes = args[0]
         elif len(args) == 0:
@@ -1980,8 +1983,9 @@ class DataFrameLArray(PandasLArray):
         res_axes = axes + missing_axes
         res_axes = [a.name for a in res_axes]
 
-        res_data = _pandas_transpose_any(self.data, res_axes[:-1],
-                                         [res_axes[-1]])
+        nrowdims = len(res_axes) - ncoldims
+        res_data = _pandas_transpose_any(self.data, res_axes[:nrowdims],
+                                         res_axes[nrowdims:])
         return self._wrap_pandas(res_data)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):

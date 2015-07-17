@@ -16,7 +16,7 @@ import larray
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
                     zeros, zeros_like, AxisCollection,
-                    DataFrameLArray)
+                    DataFrameLArray, SeriesLArray)
 from larray.utils import array_equal, array_nan_equal, multi_index_from_product
 
 
@@ -1350,6 +1350,17 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age, geo, sex, lipro = la.axes
 
         reordered = la.transpose(geo, age, lipro, sex)
+        self.assertEqual(reordered.shape, (44, 116, 15, 2))
+
+        reordered = la.transpose(geo, age, lipro, sex, ncoldims=2)
+        self.assertEqual(reordered.shape, (44, 116, 15, 2))
+
+        reordered = la.transpose(geo, age, lipro, sex, ncoldims=0)
+        assert isinstance(reordered, SeriesLArray)
+        self.assertEqual(reordered.shape, (44, 116, 15, 2))
+
+        reordered = la.transpose(geo, age, lipro, sex, ncoldims=4)
+        assert isinstance(reordered, SeriesLArray)
         self.assertEqual(reordered.shape, (44, 116, 15, 2))
 
         reordered = la.transpose(lipro, age)
