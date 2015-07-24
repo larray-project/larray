@@ -36,10 +36,41 @@ def abspath(relpath):
 # group(a, b, c)
 # family(group(a), b, c)
 
+def isnan(a):
+    if np.issubdtype(a.dtype, np.str):
+        return np.zeros_like(a, dtype=bool)
+    else:
+        return np.isnan(a)
+
+def nan_equal(a1, a2):
+    return (a1 == a2) | (isnan(a1) & isnan(a2))
 
 def assert_equal_factory(test_func):
     def assert_equal(a, b):
-        assert test_func(a, b), "got: %s\nexpected: %s" % (a, b)
+        if not test_func(a, b):
+            if a.shape != b.shape:
+                raise AssertionError("shape mismatch: %s vs %s"
+                                     % (a.shape, b.shape))
+            eq = nan_equal(a, b)
+            idx = (~eq).nonzero()[0]
+            numdiff = len(idx)
+            # show max 100 differences
+            idx = idx[:100]
+            raise AssertionError("""
+arrays do not match ({} differences)
+
+indices
+=======
+{}
+
+got
+===
+{}
+
+expected
+========
+{}
+""".format(numdiff, idx, a[idx], b[idx]))
     return assert_equal
 
 
