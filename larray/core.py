@@ -1340,13 +1340,30 @@ class PandasLArray(LArray):
 
 
 class SeriesLArray(PandasLArray):
-    def __init__(self, data):
-        if not isinstance(data, pd.Series):
-            raise TypeError("data must be a pandas.Series")
-        if isinstance(data.index, pd.MultiIndex) and \
-                not data.index.is_lexsorted():
-            data = data.sortlevel()
-        axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
+    def __init__(self, data, axes=None):
+        if isinstance(data, np.ndarray):
+            axes = AxisCollection(axes)
+            #XXX: add a property "labels" on AxisCollection?
+            if len(axes) > 1:
+                idx = multi_index_from_product([axis.labels for axis in axes],
+                                               names=axes.names,
+                                               sortvalues=False)
+            else:
+                idx = pd.Index(axes[0].labels, name=axes[0].name)
+            array = data.reshape(prod(axes.shape))
+            data = pd.Series(array, idx)
+        elif isinstance(data, pd.Series):
+            if isinstance(data.index, pd.MultiIndex) and \
+                    not data.index.is_lexsorted():
+                data = data.sortlevel()
+            #TODO: accept axes argument and check that it is consistent
+            # or possibly even override data in Series?
+            assert axes is None
+            assert all(name is not None for name in data.index.names)
+            axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
+        else:
+            raise TypeError("data must be an numpy ndarray or pandas.Series")
+
         LArray.__init__(self, data, axes)
 
     @property
@@ -1601,18 +1618,20 @@ class DataFrameLArray(PandasLArray):
             columns = pd.Index(axes[-1].labels, name=axes[-1].name)
             data = pd.DataFrame(array, idx, columns)
         elif isinstance(data, pd.DataFrame):
-
             if isinstance(data.index, pd.MultiIndex) and \
                     not data.index.is_lexsorted():
                 # let us be well behaved and not do it inplace even though that
                 # would be more efficient
                 data = data.sortlevel()
+            #TODO: accept axes argument and check that it is consistent
+            # or possibly even override data in DataFrame?
             assert axes is None
             assert all(name is not None for name in data.index.names)
+            assert all(name is not None for name in data.columns.names)
             axes = [Axis(name, labels)
                     for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
         else:
-            raise TypeError("data must be a pandas.DataFrame")
+            raise TypeError("data must be an numpy ndarray or pandas.DataFrame")
 
         LArray.__init__(self, data, axes)
 
