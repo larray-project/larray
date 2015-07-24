@@ -362,19 +362,26 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True):
     idxnames_set = set(idxnames)
     colnames_set = set(colnames)
 
-    # levels that are in columns but should be in index
-    tostack = [l for l in index_levels if l in colnames_set]
-    # levels that are in index but should be in columns
-    tounstack = [l for l in column_levels if l in idxnames_set]
+    if idxnames_set == set(column_levels) and colnames_set == set(index_levels):
+        obj = obj.transpose()
+    else:
+        # levels that are in columns but should be in index
+        tostack = [l for l in index_levels if l in colnames_set]
+        # levels that are in index but should be in columns
+        tounstack = [l for l in column_levels if l in idxnames_set]
 
-    if tostack:
-        obj = obj.stack(tostack)
+        #TODO: it is usually faster to go via the path which minimize
+        # max(len(axis0), len(axis1))
+        # eg 100x10 \ 100 to 100x100 \ 10
+        # will be faster via 100 \ 100x10 than via 100x10x100
+        if tostack:
+            obj = obj.stack(tostack)
 
-    if tounstack:
-        obj = obj.unstack(tounstack)
+        if tounstack:
+            obj = obj.unstack(tounstack)
 
-    if not tounstack and not tostack:
-        obj = obj.copy()
+        if not tounstack and not tostack:
+            obj = obj.copy()
 
     idxnames = tuple(obj.index.names)
     colnames = tuple(obj.columns.names) if isinstance(obj, pd.DataFrame) else ()
