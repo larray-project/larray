@@ -238,7 +238,7 @@ def multi_index_from_arrays(arrays, sortorder=None, names=None,
                       verify_integrity=False)
 
 
-#TODO: this function should really be upstreamed in some way to Pandas
+# TODO: this function should really be upstreamed in some way to Pandas
 def multi_index_from_product(iterables, sortorder=None, names=None,
                              sortvalues=True):
     """
@@ -373,7 +373,7 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
         # levels that are in index but should be in columns
         tounstack = [l for l in column_levels if l in idxnames_set]
 
-        #TODO: it is usually faster to go via the path which minimize
+        # TODO: it is usually faster to go via the path which minimize
         # max(len(axis0), len(axis1))
         # eg 100x10 \ 100 to 100x100 \ 10
         # will be faster via 100 \ 100x10 than via 100x10x100
