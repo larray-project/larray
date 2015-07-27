@@ -353,8 +353,13 @@ def _pandas_insert_index_level(obj, name, value, position=-1,
 
 def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
                           copy=False):
-    index_levels = tuple(index_levels)
-    column_levels = tuple(column_levels) if column_levels is not None else ()
+    if column_levels and not index_levels:
+        # we asked for a Series by asking for only column levels
+        index_levels = tuple(column_levels)
+        column_levels = ()
+    else:
+        index_levels = tuple(index_levels)
+        column_levels = tuple(column_levels) if column_levels is not None else ()
 
     idxnames = obj.index.names
     colnames = obj.columns.names if isinstance(obj, pd.DataFrame) else ()
