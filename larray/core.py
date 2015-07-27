@@ -204,7 +204,7 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, _sort_level_inplace,
                           _pandas_insert_index_level, _pandas_transpose_any,
-                          _pandas_transpose_any_like,
+                          _pandas_transpose_any_like, _pandas_align,
                           multi_index_from_product)
 from larray.sorting import set_topological_index
 
@@ -613,7 +613,7 @@ class Axis(object):
     def copy(self):
         #XXX: I wonder if we should make a copy of the labels
         return Axis(self.name, self.labels)
-        
+
     def sorted(self):
         res = self.copy()
         #FIXME: this probably also sorts the original axis !
@@ -1839,125 +1839,22 @@ class DataFrameLArray(PandasLArray):
         }
         fill_value = fill_values.get(opname)
         def opmethod(self, other):
-            if isinstance(other, DataFrameLArray):
-                # this, other = self.align(other, join='outer', level=level, copy=False)
-                local_dims = set(self.axes.names)
-                other_dims = set(other.axes.names)
-                if other_dims - local_dims:
-                    raise NotImplementedError("extra dimensions in other")
-                extra_dims = list(local_dims - other_dims)
-                data = self.data
-                # 1) transform extra dimensions into "data columns"
-                if extra_dims:
-                    data = data.reset_index(level=extra_dims)
-
-                # 2) align operands
-                # inner, outer and right joins would be interesting to
-                # support too but would be more complex because:
-                # * for "inner", we cannot use reindex_like (the index is not
-                #   exactly the same) and we loose the "extra dimensions data
-                #   columns"
-                # * for "outer" and "right" the "extra dimensions data
-                #   columns" column potentially contain nan's
-                self_al, other_al = data.align(other.data, join='left')
-
-                # 3) do the actual op
-                # use .values?
-                raw_res = df_method(self_al, other_al)
-                #                      fill_value=fill_value)
-
-                # 4) re-add the "extra dimensions data columns" to the result
-                raw_res[extra_dims] = self_al[extra_dims]
-                # 5) set the index back to what it was
-                indexed = raw_res.reset_index().set_index(self.data.index.names)
-                # 6) reorder like original dataframe
-                res_data = indexed.reindex_like(self.data)
-                # res_data = df_method(self.data, other.data,
-                #                      fill_value=fill_value)
-                return DataFrameLArray(res_data)
-            elif isinstance(other, SeriesLArray):
-                local_dims = set(self.axes.names)
-                other_dims = set(other.axes.names)
-                if other_dims - local_dims:
-                    raise NotImplementedError("extra dimensions in other")
-                extra_dims = list(local_dims - other_dims)
-
-                extra_dfaxes = [self._df_axis_level(axis) for axis in
-                                extra_dims]
-                # assume that either the "columns" axis is the only axis
-                # or that at least the "columns" axis (from the DataFrame) is
-                # missing/got aggregated. That is a strong (invalid) assumption
-                # that will need to be lifted at some point but let s go with it
-                # for now.
-                assert any(axis == 1 for axis, level in extra_dfaxes) or \
-                       len(other_dims) == 1
-                if any(axis == 1 for axis, level in extra_dfaxes):
-                    align_axis = 0
-                else:
-                    align_axis = 1
-                data = self.data
-                # 1) transform extra dimensions into "data columns"
-                extra_dims_in_index = [n for n, (a, l)
-                                       in zip(extra_dims, extra_dfaxes)
-                                       if a == 0]
-                if extra_dims_in_index:
-                    data = data.reset_index(level=extra_dims_in_index)
-                    # if d in index:
-                    # else: # d in columns
-
-                # 2) align operands
-                # axis and level arguments is the dimensions that are common
-                # to both
-                # * df index vs index series: ok with axis
-                # * df mi vs index series: ok with axis + level args
-                # * df mi vs mi series: need to unstack the extra dimensions
-                #                       or reset_index the extra dims
-                #                       or use merge/join
-                # * df index vs mi series (via df.stack()): ???
-
-                # inner, outer and right joins would be interesting to
-                # support too but would be more complex because:
-                # * for "inner", we cannot use reindex_like (the index is not
-                #   exactly the same) and we loose the "extra dimensions data
-                #   columns"
-                # * for "outer" and "right" the "extra dimensions data
-                #   columns" potentially contain nan's
-                self_al, other_al = data.align(other.data, join='left',
-                                               axis=align_axis)
-
-                # 3) do the actual op
-                # use .values?
-                raw_res = df_method(self_al, other_al, axis=align_axis)
-                #                      fill_value=fill_value)
-
-                # 4) re-add the "extra dimensions data columns" to the result
-                if extra_dims_in_index:
-                    raw_res[extra_dims] = self_al[extra_dims]
-
-                    # 5) set the index back to what it was
-                    reset_indexed = raw_res.reset_index()
-                    indexed = reset_indexed.set_index(self.data.index.names)
-
-                    # 6) reorder like original dataframe
-                    #FIXME: this does not produce a lexsorted index!
-                    # so it is sorted in the DataFrameLArray constructor
-                    # and thus the ordering of "ticks" is lost, grrrr !
-                    res_data = indexed.reindex_like(self.data)
-                else:
-                    res_data = raw_res
+            if isinstance(other, (SeriesLArray, DataFrameLArray)):
+                axis, level, (self_al, other_al) = _pandas_align(self.data,
+                                                                 other.data,
+                                                                 join='left')
+                res_data = df_method(self_al, other_al, axis=axis, level=level)
                 return self._wrap_pandas(res_data)
             elif isinstance(other, LArray):
                 raise NotImplementedError("mixed LArrays")
-                #TODO: first test if it is not already broadcastable
-                other = other.broadcast_with(self).data
             elif isinstance(other, np.ndarray):
+                # XXX: not sure how clever Pandas is. We should be able to
+                # handle extra/missing axes of length 1
                 res_data = df_method(self.data, other)
-                return DataFrameLArray(res_data)
-
-                raise NotImplementedError("DataFrameLArray and ndarray")
+                return self._wrap_pandas(res_data)
             elif np.isscalar(other):
                 res_data = df_method(self.data, other)
-                return DataFrameLArray(res_data)
+                return self._wrap_pandas(res_data)
             else:
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
