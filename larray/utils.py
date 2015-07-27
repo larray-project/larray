@@ -527,11 +527,11 @@ def _pandas_align_viamerge(left, right, on=None, join='left',
                         left_index=left_index, **kwargs)
     # right_index True means right_index is a subset of left_index
     if right_index and join == 'left':
-        merged.drop(on, axis=1, inplace=True)
+        merged.drop(orig_left.index.names, axis=1, inplace=True)
         # we can reuse left index as is
         merged.index = orig_left.index
     elif left_index and join == 'right':
-        merged.drop(on, axis=1, inplace=True)
+        merged.drop(orig_right.index.names, axis=1, inplace=True)
         # we can reuse right index as is
         merged.index = orig_right.index
     else:
