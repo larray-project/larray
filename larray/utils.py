@@ -616,8 +616,13 @@ def _pandas_align(left, right, join='left'):
     # a) right index should be (left index & right both) (left order) + right
     #    uncommon (from both index & columns), right columns should be
     #    (left columns)
-    new_ri = (new_li & right_names) | (right_names - new_lc)
-    new_rc = new_lc & right_names
+    if len(right_names) > 1:
+        new_ri = (new_li & right_names) | (right_names - new_lc)
+        new_rc = new_lc & right_names
+    else:
+        # do not modify Series with a single level/dimension
+        new_ri = ri_names
+        new_rc = rc_names
 
     # b) transpose
     right = _pandas_transpose_any(right, new_ri, new_rc, sort=False)
