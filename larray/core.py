@@ -1949,6 +1949,7 @@ class DataFrameLArray(PandasLArray):
         # TODO: also "broadcast" (handle missing dimensions) other to self
         transposed_value = _pandas_transpose_any_like(other.data, self.data,
                                                       sort=False)
+        # do we append on an index level?
         if axis_idx < self._df_index_ndim:
             df = self.data
             idx = df.index
