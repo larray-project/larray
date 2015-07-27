@@ -638,35 +638,44 @@ def _pandas_align(left, right, join='left'):
     # 3) (after binop) unstack all the levels stacked in "left" step in result
     # -------
     if right_names == left_names:
-        return left.align(right, join=join)
+        return None, None, left.align(right, join=join)
 
     # DF + Series (rc == [])
     if isinstance(left, pd.DataFrame) and isinstance(right, pd.Series):
         # Series levels match DF index levels
         if new_ri == new_li:
-            return left.align(right, join=join, axis=0)
+            return 0, None, left.align(right, join=join, axis=0)
         # Series levels match DF columns levels
         elif new_ri == new_lc:
-            return left.align(right, join=join, axis=1)
+            return 1, None, left.align(right, join=join, axis=1)
         # Series level match one DF columns levels
         elif len(new_ri) == 1:
             # it MUST be in either index or columns
-            axis = 0 if new_ri[0] in new_li else 1
-            return left.align(right, join=join, axis=axis, level=new_ri[0])
+            level = new_ri[0]
+            axis = 0 if level in new_li else 1
+            return axis, level, left.align(right, join=join, axis=axis,
+                                           level=level)
     elif isinstance(right, pd.DataFrame) and isinstance(left, pd.Series):
         raise NotImplementedError("do not know how to handle S + DF yet")
     elif isinstance(left, pd.DataFrame) and isinstance(right, pd.DataFrame):
         if len(new_li) == 1 or len(new_ri) == 1:
-            return left.align(right, join=join)
+            return None, None, left.align(right, join=join)
     elif isinstance(left, pd.Series) and isinstance(right, pd.Series):
         if len(new_li) == 1 or len(new_ri) == 1:
-            return left.align(right, join=join)
+            return None, None, left.align(right, join=join)
 
     # multi-index on both sides
     assert len(new_li) > 1 and len(new_ri) > 1
 
     right_index = new_ri.issubset(new_li)
     left_index = new_li.issubset(new_ri)
-    return _pandas_align_viamerge(left, right, on=list(new_ri & new_li),
-                                  join=join, right_index=right_index,
-                                  left_index=left_index)
+    merged = _pandas_align_viamerge(left, right,
+                                    on=list(new_ri & new_li),
+                                    join=join, right_index=right_index,
+                                    left_index=left_index)
+    if isinstance(left, pd.DataFrame) and isinstance(right, pd.Series):
+        # probably True for Series + DataFrame too
+        axis = 0
+    else:
+        axis = None
+    return axis, None, merged
