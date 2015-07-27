@@ -349,7 +349,8 @@ def _pandas_insert_index_level(obj, name, value, position=-1,
     return obj
 
 
-def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True):
+def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
+                          copy=False):
     index_levels = tuple(index_levels)
     column_levels = tuple(column_levels) if column_levels is not None else ()
 
@@ -380,7 +381,7 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True):
         if tounstack:
             obj = obj.unstack(tounstack)
 
-        if not tounstack and not tostack:
+        if not tounstack and not tostack and copy:
             obj = obj.copy()
 
     idxnames = tuple(obj.index.names)
