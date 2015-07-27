@@ -434,3 +434,226 @@ def _pandas_reorder_levels(self, order, axis=0, inplace=False):
         assert axis == 1
         result.columns = result.columns.reorder_levels(order)
     return result
+
+
+class oset(object):
+    def __init__(self, data):
+        self.l = []
+        self.s = set()
+        for e in data:
+            self.add(e)
+
+    def add(self, e):
+        if e not in self.s:
+            self.s.add(e)
+            self.l.append(e)
+
+    def __and__(self, other):
+        i = self.s & other.s
+        return oset([e for e in self.l if e in i])
+
+    def __or__(self, other):
+        # duplicates will be discarded automatically
+        if isinstance(other, oset):
+            other_l = other.l
+        else:
+            other_l = list(other)
+        return oset(self.l + other_l)
+
+    def __sub__(self, other):
+        if isinstance(other, oset):
+            other_s = other.s
+        else:
+            other_s = set(other)
+        return oset([e for e in self.l if e not in other_s])
+
+    def __eq__(self, other):
+        return self.s == other.s
+
+    def __iter__(self):
+        return iter(self.l)
+
+    def __len__(self):
+        return len(self.l)
+
+    def __getitem__(self, key):
+        return self.l[key]
+
+    def issubset(self, other):
+        return self.s.issubset(other.s)
+
+    def issuperset(self, other):
+        return self.s.issuperset(other.s)
+
+    def __repr__(self):
+        return "oset([" + ', '.join(repr(e) for e in self.l) + "])"
+
+
+def _pandas_align_viamerge(left, right, on=None, join='left',
+                           left_index=False, right_index=False):
+    orig_left, orig_right = left, right
+    if isinstance(left, pd.Series):
+        left = left.to_frame('__left__')
+    if isinstance(right, pd.Series):
+        right = right.to_frame('__right__')
+    else:
+        # make sure we can differentiate which column comes from where
+        col_renamings = {c: '__right__' + str(c) for c in right.columns}
+        right = right.rename(columns=col_renamings, copy=False)
+    if not left_index:
+        left = left.reset_index()
+    if not right_index:
+        right = right.reset_index()
+
+    if left_index and right_index:
+        kwargs = {}
+    elif left_index:
+        kwargs = {'right_on': on}
+    elif right_index:
+        kwargs = {'left_on': on}
+    else:
+        kwargs = {'on': on}
+
+    # FIXME: the columns are not aligned, so it does not work correctly if
+    # columns are not the same on both sides. If there are more columns on one
+    # side than the other, the side with less columns is not "expanded".
+    # XXX: would .stack() solve this problem?
+    merged = left.merge(right, how=join, sort=False, right_index=right_index,
+                        left_index=left_index, **kwargs)
+    # right_index True means right_index is a subset of left_index
+    if right_index and join == 'left':
+        merged.drop(on, axis=1, inplace=True)
+        # we can reuse left index as is
+        merged.index = orig_left.index
+    elif left_index and join == 'right':
+        merged.drop(on, axis=1, inplace=True)
+        # we can reuse right index as is
+        merged.index = orig_right.index
+    else:
+        lnames = oset(orig_left.index.names)
+        rnames = oset(orig_right.index.names)
+        # priority to left order for all join methods except "right"
+        merged_names = rnames | lnames if join == 'right' else lnames | rnames
+        merged.set_index(list(merged_names), inplace=True)
+        # FIXME: does not work if the "priority side" (eg left side on a left
+        # join) contains more values. There will be NaN in the index for the
+        # combination of the new dimension of the right side and those extra
+        # left side indexes.
+        # FIXME: at the minimum, we should detect this case and raise
+    left = merged[[c for c in merged.columns
+                   if not isinstance(c, str) or not c.startswith('__right__')]]
+    right = merged[[c for c in merged.columns
+                    if isinstance(c, str) and c.startswith('__right__')]]
+
+    def renamer(n):
+        return "right" if n == '__right__' else n[9:]
+    # not inplace to avoid warning
+    right = right.rename(columns={c: renamer(c) for c in right.columns},
+                         copy=False)
+    # if there was a type conversion, convert them back
+    if isinstance(orig_right, pd.DataFrame):
+        right.columns = right.columns.astype(orig_right.columns.dtype)
+    # XXX: if left or right was a Series, return a Series?
+    return left, right
+
+
+def _pandas_align(left, right, join='left'):
+    li_names = oset(left.index.names)
+    lc_names = oset(left.columns.names if isinstance(left, pd.DataFrame)
+                    else ())
+    ri_names = oset(right.index.names)
+    rc_names = oset(right.columns.names if isinstance(right, pd.DataFrame)
+                    else ())
+
+    left_names = li_names | lc_names
+    right_names = ri_names | rc_names
+    common_names = left_names & right_names
+
+    if not common_names:
+        raise NotImplementedError("Cannot do binary operations between arrays "
+                                  "with no common axis")
+
+    # rules imposed by Pandas (found empirically)
+    # -------------------------------------------
+    # a) there must be at least one common level on the index (unless right is
+    #    a Series)
+    # b) each common level need to be on the same "axis" for both operands
+    #    (eg level "a" need to be either on index for both operands or
+    #    on columns for both operands)
+    # c) there may only be common levels in columns
+    # d) common levels need to be in the same order
+    # e) cannot merge Series (with anything) and cannot join Series to Series
+    #    => must have at least one DataFrame if we need join
+    #    => must have 2 DataFrames for merge
+
+    # algorithm
+    # ---------
+
+    # 1) left
+
+    if isinstance(right, pd.DataFrame):
+        # a) if no common level on left index (there is implicitly at least
+        #    one in columns) move first common level in columns to index
+        #    (transposing left is a bad idea because there would be uncommon on
+        #    columns which we would need to move again)
+        to_stack = []
+        if isinstance(right, pd.DataFrame) and not (li_names & common_names):
+            to_stack.append(common_names[0])
+
+        # b) move all uncommon levels from columns to index
+        to_stack.extend(lc_names - common_names)
+
+        # c) transpose
+        new_li = li_names | to_stack
+        new_lc = lc_names - to_stack
+        left = _pandas_transpose_any(left, new_li, new_lc, sort=False)
+    else:
+        new_li = li_names
+        new_lc = lc_names
+
+    # 2) right
+
+    # a) right index should be (left index & right both) (left order) + right
+    #    uncommon (from both index & columns), right columns should be
+    #    (left columns)
+    new_ri = (new_li & right_names) | (right_names - new_lc)
+    new_rc = new_lc & right_names
+
+    # b) transpose
+    right = _pandas_transpose_any(right, new_ri, new_rc, sort=False)
+
+    # 3) (after binop) unstack all the levels stacked in "left" step in result
+    # -------
+    if right_names == left_names:
+        return left.align(right, join=join)
+
+    # DF + Series (rc == [])
+    if isinstance(left, pd.DataFrame) and isinstance(right, pd.Series):
+        # Series levels match DF index levels
+        if new_ri == new_li:
+            return left.align(right, join=join, axis=0)
+        # Series levels match DF columns levels
+        elif new_ri == new_lc:
+            return left.align(right, join=join, axis=1)
+        # Series level match one DF columns levels
+        elif len(new_ri) == 1:
+            # it MUST be in either index or columns
+            axis = 0 if new_ri[0] in new_li else 1
+            return left.align(right, join=join, axis=axis, level=new_ri[0])
+    elif isinstance(right, pd.DataFrame) and isinstance(left, pd.Series):
+        raise NotImplementedError("do not know how to handle S + DF yet")
+    elif isinstance(left, pd.DataFrame) and isinstance(right, pd.DataFrame):
+        if len(new_li) == 1 or len(new_ri) == 1:
+            return left.align(right, join=join)
+    elif isinstance(left, pd.Series) and isinstance(right, pd.Series):
+        if len(new_li) == 1 or len(new_ri) == 1:
+            return left.align(right, join=join)
+
+    # multi-index on both sides
+    assert len(new_li) > 1 and len(new_ri) > 1
+
+    right_index = new_ri.issubset(new_li)
+    left_index = new_li.issubset(new_ri)
+    return _pandas_align_viamerge(left, right, on=list(new_ri & new_li),
+                                  join=join, right_index=right_index,
+                                  left_index=left_index)
