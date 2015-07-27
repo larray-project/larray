@@ -614,6 +614,7 @@ def _pandas_align(left, right, join='left'):
         # c) transpose
         new_li = li_names | to_stack
         new_lc = lc_names - to_stack
+        #FIXME: (un)stacked levels are sorted!!!
         left = _pandas_transpose_any(left, new_li, new_lc, sort=False)
     else:
         new_li = li_names
