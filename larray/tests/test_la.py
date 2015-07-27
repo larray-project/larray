@@ -1447,6 +1447,56 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(raw2_ge_la.axes, la.axes)
         self._assert_equal_raw(raw2_ge_la, raw2 >= raw)
 
+    def test_binary_ops_wh_broadcasting(self):
+        raw = self.small_data
+        la = self.small
+
+        rawbysex = raw.sum(0, keepdims=True)
+        rawbylipro = raw.sum(1, keepdims=True)
+
+        sex, lipro = la.axes
+        bysex = la.sum(sex)
+        bylipro = la.sum(lipro)
+
+        self._assert_equal_raw(la / bysex, raw / rawbysex)
+        self._assert_equal_raw(la / bylipro, raw / rawbylipro)
+
+        # test with more than 2 axes (ie with a MultiIndex)
+        raw = self.array
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        rawbyage = raw.sum(0, keepdims=True)
+        rawbygeo = raw.sum(1, keepdims=True)
+        rawbysex = raw.sum(2, keepdims=True)
+        rawbylipro = raw.sum(3, keepdims=True)
+
+        byage = la.sum(age)
+        bygeo = la.sum(geo)
+        bysex = la.sum(sex)
+        bylipro = la.sum(lipro)
+
+        self._assert_equal_raw(la / byage, raw / rawbyage)
+        self._assert_equal_raw(la / bygeo, raw / rawbygeo)
+        self._assert_equal_raw(la / bysex, raw / rawbysex)
+        self._assert_equal_raw(la / bylipro, raw / rawbylipro)
+
+        # more than 1 missing/broadcasted axis
+        rawbyagesex = raw.sum((0, 2), keepdims=True)
+        rawbygeolipro = raw.sum((1, 3), keepdims=True)
+
+        byagesex = la.sum(age, sex)
+        bygeolipro = la.sum(geo, lipro)
+
+        self._assert_equal_raw(la / byagesex, raw / rawbyagesex)
+        self._assert_equal_raw(la / bygeolipro, raw / rawbygeolipro)
+
+        # with a length-1 axis
+        # I doubt it is a good idea to implement this. Broadcasting
+        # "all" or "sum" to other "ticks" seems like arbitrary. In those
+        # cases, it is better if the user subsets the array explicitly
+        # (eg array[dim["all"]]) to discard the dimension than broadcast.
+
     def test_unary_ops(self):
         raw = self.small_data
         la = self.small
