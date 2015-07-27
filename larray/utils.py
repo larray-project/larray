@@ -503,8 +503,8 @@ def _pandas_align_viamerge(left, right, on=None, join='left',
         right = right.to_frame('__right__')
     else:
         # make sure we can differentiate which column comes from where
-        col_renamings = {c: '__right__' + str(c) for c in right.columns}
-        right = right.rename(columns=col_renamings, copy=False)
+        colmap = {c: '__right__' + str(c) for c in right.columns}
+        right = right.rename(columns=colmap, copy=False)
     if not left_index:
         left = left.reset_index()
     if not right_index:
@@ -550,15 +550,18 @@ def _pandas_align_viamerge(left, right, on=None, join='left',
     right = merged[[c for c in merged.columns
                     if isinstance(c, str) and c.startswith('__right__')]]
 
-    def renamer(n):
-        return "right" if n == '__right__' else n[9:]
-    # not inplace to avoid warning
-    right = right.rename(columns={c: renamer(c) for c in right.columns},
-                         copy=False)
-    # if there was a type conversion, convert them back
     if isinstance(orig_right, pd.DataFrame):
+        # not inplace to avoid warning
+        right = right.rename(columns={c: c[9:] for c in right.columns},
+                             copy=False)
+        # if there was a type conversion, convert them back
         right.columns = right.columns.astype(orig_right.columns.dtype)
-    # XXX: if left or right was a Series, return a Series?
+    else:
+        assert right.columns == ['__right__']
+        right = right['__right__']
+    if isinstance(orig_left, pd.Series):
+        assert left.columns == ['__left__']
+        left = left['__left__']
     return left, right
 
 
