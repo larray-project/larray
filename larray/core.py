@@ -1979,12 +1979,14 @@ class DataFrameLArray(PandasLArray):
             result = pd.concat((self.data, transposed_value), axis=1)
         return self._wrap_pandas(result)
 
-    def transpose(self, *args, ncoldims=1):
+    # def transpose(self, *args, ncoldims=1):
+    def transpose(self, *args, **kwargs):
         """
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
         produces a copy in all cases (on Pandas)
         """
+        ncoldims = kwargs.pop('ncoldims', 1)
         assert 0 <= ncoldims <= len(self.axes)
         # all in columns is equivalent to none (we get a Series)
         ncoldims = ncoldims if ncoldims != len(self.axes) else 0
