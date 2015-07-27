@@ -1626,8 +1626,6 @@ class DataFrameLArray(PandasLArray):
             #TODO: accept axes argument and check that it is consistent
             # or possibly even override data in DataFrame?
             assert axes is None
-            assert all(name is not None for name in data.index.names)
-            assert all(name is not None for name in data.columns.names)
             axes = [Axis(name, labels)
                     for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
         else:
