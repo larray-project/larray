@@ -1179,6 +1179,71 @@ class LArray(object):
     def __array__(self, dtype=None):
         return np.asarray(self.data)
 
+    def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
+        """
+        write LArray to a csv file
+        """
+        if transpose:
+            self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
+        else:
+            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
+                               **kwargs)
+
+    def to_hdf(self, filepath, key, *args, **kwargs):
+        """
+        write LArray to an HDF file at the specified name
+        """
+        self.df.to_hdf(filepath, key, *args, **kwargs)
+
+    def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
+        """
+        write LArray to an excel file in the specified sheet
+        """
+        self.df.to_excel(filepath, sheet_name, *args, **kwargs)
+
+    #XXX: sep argument does not seem very useful
+    # def to_excel(self, filename, sep=None):
+    #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
+    #     # currently does not .xlsx (only .xls).
+    #     # PyExcelerate seem like a decent alternative too
+    #     import xlsxwriter as xl
+    #
+    #     if sep is None:
+    #         sep = '_'
+    #         #sep = self.sep
+    #     workbook = xl.Workbook(filename)
+    #     if self.ndim > 2:
+    #         for key in product(*[axis.labels for axis in self.axes[:-2]]):
+    #             sheetname = sep.join(str(k) for k in key)
+    #             # sheet names must not:
+    #             # * contain any of the following characters: : \ / ? * [ ]
+    #             #XXX: this will NOT work for unicode strings !
+    #             sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
+    #                                             r'\/?*') # chars to delete
+    #             # * exceed 31 characters
+    #             # sheetname = sheetname[:31]
+    #             # * be blank
+    #             assert sheetname, "sheet name cannot be blank"
+    #             worksheet = workbook.add_worksheet(sheetname)
+    #             worksheet.write_row(0, 1, self.axes[-1].labels)
+    #             worksheet.write_column(1, 0, self.axes[-2].labels)
+    #             for row, data in enumerate(np.asarray(self[key])):
+    #                 worksheet.write_row(1+row, 1, data)
+    #
+    #     else:
+    #         worksheet = workbook.add_worksheet('Sheet1')
+    #         worksheet.write_row(0, 1, self.axes[-1].labels)
+    #         if self.ndim == 2:
+    #             worksheet.write_column(1, 0, self.axes[-2].labels)
+    #         for row, data in enumerate(np.asarray(self)):
+    #             worksheet.write_row(1+row, 1, data)
+
+    def to_clipboard(self, *args, **kwargs):
+        self.df.to_clipboard(*args, **kwargs)
+
+    def plot(self, *args, **kwargs):
+        self.df.plot(*args, **kwargs)
+
 
 class NumpyLArray(LArray):
     def reshape(self, target_axes):
@@ -1199,6 +1264,14 @@ class PandasLArray(LArray):
             assert np.isscalar(res_data)
             return res_data
         return res_type(res_data)
+
+    @property
+    def size(self):
+        return self.data.size
+
+    @property
+    def item(self):
+        return self.data.item
 
     def copy(self):
         return self._wrap_pandas(self.data.copy())
@@ -1367,16 +1440,8 @@ class SeriesLArray(PandasLArray):
         LArray.__init__(self, data, axes)
 
     @property
-    def size(self):
-        return self.data.size
-
-    @property
     def dtype(self):
         return self.data.dtype
-
-    @property
-    def item(self):
-        return self.data.item
 
     def _df_axis_nlevels(self, df_axis):
         assert df_axis == 0
@@ -2008,83 +2073,6 @@ class DataFrameLArray(PandasLArray):
                                          res_axes[nrowdims:])
         return self._wrap_pandas(res_data)
 
-    def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
-        """
-        write LArray to a csv file
-        """
-        if transpose:
-            self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
-        else:
-            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
-                               **kwargs)
-
-    def to_hdf(self, filepath, key, *args, **kwargs):
-        """
-        write LArray to an HDF file at the specified name
-        """
-        self.df.to_hdf(filepath, key, *args, **kwargs)
-
-    def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
-        """
-        write LArray to an excel file in the specified sheet
-        """
-        self.df.to_excel(filepath, sheet_name, *args, **kwargs)
-
-    def to_clipboard(self, *args, **kwargs):
-        self.df.to_clipboard(*args, **kwargs)
-
-    #XXX: sep argument does not seem very useful
-    # def to_excel(self, filename, sep=None):
-    #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
-    #     # currently does not .xlsx (only .xls).
-    #     # PyExcelerate seem like a decent alternative too
-    #     import xlsxwriter as xl
-    #
-    #     if sep is None:
-    #         sep = '_'
-    #         #sep = self.sep
-    #     workbook = xl.Workbook(filename)
-    #     if self.ndim > 2:
-    #         for key in product(*[axis.labels for axis in self.axes[:-2]]):
-    #             sheetname = sep.join(str(k) for k in key)
-    #             # sheet names must not:
-    #             # * contain any of the following characters: : \ / ? * [ ]
-    #             #XXX: this will NOT work for unicode strings !
-    #             sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
-    #                                             r'\/?*') # chars to delete
-    #             # * exceed 31 characters
-    #             # sheetname = sheetname[:31]
-    #             # * be blank
-    #             assert sheetname, "sheet name cannot be blank"
-    #             worksheet = workbook.add_worksheet(sheetname)
-    #             worksheet.write_row(0, 1, self.axes[-1].labels)
-    #             worksheet.write_column(1, 0, self.axes[-2].labels)
-    #             for row, data in enumerate(np.asarray(self[key])):
-    #                 worksheet.write_row(1+row, 1, data)
-    #
-    #     else:
-    #         worksheet = workbook.add_worksheet('Sheet1')
-    #         worksheet.write_row(0, 1, self.axes[-1].labels)
-    #         if self.ndim == 2:
-    #             worksheet.write_column(1, 0, self.axes[-2].labels)
-    #         for row, data in enumerate(np.asarray(self)):
-    #             worksheet.write_row(1+row, 1, data)
-
-    def plot(self, *args, **kwargs):
-        self.df.plot(*args, **kwargs)
-
-    #XXX: one less indirection as we have all the info at this level?
-    # @property
-    # def shape(self):
-    #     return tuple(len(a) for a in self.axes)
-    #
-    # @property
-    # def ndim(self):
-    #     return len(self.axes)
-
-    @property
-    def size(self):
-        return self.data.size
 
     @property
     def dtype(self):
@@ -2093,10 +2081,6 @@ class DataFrameLArray(PandasLArray):
             return dtypes[0]
         else:
             return MixedDtype(dtypes.to_dict())
-
-    @property
-    def item(self):
-        return self.data.item
 
     __array_priority__ = 100
 
