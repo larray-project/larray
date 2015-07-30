@@ -1771,7 +1771,7 @@ class DataFrameLArray(PandasLArray):
     def __setitem__(self, key, value, collapse_slices=True):
         data = self.data
 
-        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
+        if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
             if isinstance(key, LArray):
                 key = key.broadcast_with(self.axes)
