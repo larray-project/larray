@@ -616,58 +616,58 @@ class TestLArray(TestCase):
  lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""
         self.assertEqual(self.larray.info, expected)
 
-    def test_str(self):
-        lipro = self.lipro
-        lipro3 = lipro['P01:P03']
-        sex = self.sex
-
-        # zero dimension / scalar
-        self.assertEqual(str(self.small[lipro['P01'], sex['F']]), "15")
-
-        # empty / len 0 first dimension
-        self.assertEqual(str(self.small[sex[[]]]), "LArray([])")
-
-        # one dimension
-        self.assertEqual(str(self.small[lipro3, sex['H']]), """
-lipro | P01 | P02 | P03
-      |   0 |   1 |   2
-""")
-        # two dimensions
-        self.assertEqual(str(self.small.filter(lipro=lipro3)), """
-sex\lipro | P01 | P02 | P03
-        H |   0 |   1 |   2
-        F |  15 |  16 |  17
-""")
-        # four dimensions (too many rows)
-        self.assertEqual(str(self.larray.filter(lipro=lipro3)), """
-age | geo | sex\lipro |      P01 |      P02 |      P03
-  0 | A11 |         H |      0.0 |      1.0 |      2.0
-  0 | A11 |         F |     15.0 |     16.0 |     17.0
-  0 | A12 |         H |     30.0 |     31.0 |     32.0
-  0 | A12 |         F |     45.0 |     46.0 |     47.0
-  0 | A13 |         H |     60.0 |     61.0 |     62.0
-... | ... |       ... |      ... |      ... |      ...
-115 | A92 |         F | 153045.0 | 153046.0 | 153047.0
-115 | A93 |         H | 153060.0 | 153061.0 | 153062.0
-115 | A93 |         F | 153075.0 | 153076.0 | 153077.0
-115 | A21 |         H | 153090.0 | 153091.0 | 153092.0
-115 | A21 |         F | 153105.0 | 153106.0 | 153107.0
-""")
-        # four dimensions (too many rows and columns)
-        self.assertEqual(str(self.larray), """
-age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
-  0 | A11 |         H |      0.0 |      1.0 | ... |     13.0 |     14.0
-  0 | A11 |         F |     15.0 |     16.0 | ... |     28.0 |     29.0
-  0 | A12 |         H |     30.0 |     31.0 | ... |     43.0 |     44.0
-  0 | A12 |         F |     45.0 |     46.0 | ... |     58.0 |     59.0
-  0 | A13 |         H |     60.0 |     61.0 | ... |     73.0 |     74.0
-... | ... |       ... |      ... |      ... | ... |      ... |      ...
-115 | A92 |         F | 153045.0 | 153046.0 | ... | 153058.0 | 153059.0
-115 | A93 |         H | 153060.0 | 153061.0 | ... | 153073.0 | 153074.0
-115 | A93 |         F | 153075.0 | 153076.0 | ... | 153088.0 | 153089.0
-115 | A21 |         H | 153090.0 | 153091.0 | ... | 153103.0 | 153104.0
-115 | A21 |         F | 153105.0 | 153106.0 | ... | 153118.0 | 153119.0
-""")
+#     def test_str(self):
+#         lipro = self.lipro
+#         lipro3 = lipro['P01:P03']
+#         sex = self.sex
+#
+#         # zero dimension / scalar
+#         self.assertEqual(str(self.small[lipro['P01'], sex['F']]), "15")
+#
+#         # empty / len 0 first dimension
+#         self.assertEqual(str(self.small[sex[[]]]), "LArray([])")
+#
+#         # one dimension
+#         self.assertEqual(str(self.small[lipro3, sex['H']]), """
+# lipro | P01 | P02 | P03
+#       |   0 |   1 |   2
+# """)
+#         # two dimensions
+#         self.assertEqual(str(self.small.filter(lipro=lipro3)), """
+# sex\lipro | P01 | P02 | P03
+#         H |   0 |   1 |   2
+#         F |  15 |  16 |  17
+# """)
+#         # four dimensions (too many rows)
+#         self.assertEqual(str(self.larray.filter(lipro=lipro3)), """
+# age | geo | sex\lipro |      P01 |      P02 |      P03
+#   0 | A11 |         H |      0.0 |      1.0 |      2.0
+#   0 | A11 |         F |     15.0 |     16.0 |     17.0
+#   0 | A12 |         H |     30.0 |     31.0 |     32.0
+#   0 | A12 |         F |     45.0 |     46.0 |     47.0
+#   0 | A13 |         H |     60.0 |     61.0 |     62.0
+# ... | ... |       ... |      ... |      ... |      ...
+# 115 | A92 |         F | 153045.0 | 153046.0 | 153047.0
+# 115 | A93 |         H | 153060.0 | 153061.0 | 153062.0
+# 115 | A93 |         F | 153075.0 | 153076.0 | 153077.0
+# 115 | A21 |         H | 153090.0 | 153091.0 | 153092.0
+# 115 | A21 |         F | 153105.0 | 153106.0 | 153107.0
+# """)
+#         # four dimensions (too many rows and columns)
+#         self.assertEqual(str(self.larray), """
+# age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
+#   0 | A11 |         H |      0.0 |      1.0 | ... |     13.0 |     14.0
+#   0 | A11 |         F |     15.0 |     16.0 | ... |     28.0 |     29.0
+#   0 | A12 |         H |     30.0 |     31.0 | ... |     43.0 |     44.0
+#   0 | A12 |         F |     45.0 |     46.0 | ... |     58.0 |     59.0
+#   0 | A13 |         H |     60.0 |     61.0 | ... |     73.0 |     74.0
+# ... | ... |       ... |      ... |      ... | ... |      ... |      ...
+# 115 | A92 |         F | 153045.0 | 153046.0 | ... | 153058.0 | 153059.0
+# 115 | A93 |         H | 153060.0 | 153061.0 | ... | 153073.0 | 153074.0
+# 115 | A93 |         F | 153075.0 | 153076.0 | ... | 153088.0 | 153089.0
+# 115 | A21 |         H | 153090.0 | 153091.0 | ... | 153103.0 | 153104.0
+# 115 | A21 |         F | 153105.0 | 153106.0 | ... | 153118.0 | 153119.0
+# """)
 
     def test_getitem_sparse(self):
         la = read_csv('c:/tmp/sparse.csv')
