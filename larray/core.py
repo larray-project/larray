@@ -1748,9 +1748,11 @@ class DataFrameLArray(PandasLArray):
 
         if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
-            if isinstance(key, LArray):
-                key = key.broadcast_with(self.axes)
-            data[np.asarray(key)] = value
+            if isinstance(key, PandasLArray):
+                #TODO: broadcast/transpose key
+                # key = key.broadcast_with(self.axes)
+                key = key.data
+            data[key] = value
             return
 
         translated_key = self.translated_key(self.full_key(key))
