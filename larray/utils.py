@@ -486,9 +486,17 @@ class oset(object):
 
     def issubset(self, other):
         return self.s.issubset(other.s)
+    __le__ = issubset
+
+    def __lt__(self, other):
+        return self.s < other.s
 
     def issuperset(self, other):
         return self.s.issuperset(other.s)
+    __ge__ = issuperset
+
+    def __gt__(self, other):
+        return self.s > other.s
 
     def __repr__(self):
         return "oset([" + ', '.join(repr(e) for e in self.l) + "])"
