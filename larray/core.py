@@ -1716,7 +1716,7 @@ class DataFrameLArray(PandasLArray):
             # these combined keys should be objects which display as:
             # (axis1_label, axis2_label, ...) but should also store the axis
             # (names). Should it be the same object as the NDValueGroup?/NDKey?
-            if isinstance(key, DataFrameLArray):
+            if isinstance(key, PandasLArray):
                 key = key.data
             return self._wrap_pandas(data[key])
 
