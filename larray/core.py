@@ -1990,6 +1990,7 @@ class DataFrameLArray(PandasLArray):
             expanded_value = _pandas_insert_index_level(pd_values, axis_name,
                                                         label, axis_idx)
         else:
+            #FIXME: this is likely bogus (same code than other if branch)
             expanded_value = _pandas_insert_index_level(pd_values, axis_name,
                                                         label, axis_idx)
         expanded_value = self._wrap_pandas(expanded_value)
