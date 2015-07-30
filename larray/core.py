@@ -1700,21 +1700,14 @@ class DataFrameLArray(PandasLArray):
 
     @property
     def df(self):
-        axes_names = self.axes_names[:-1]
-        if axes_names[-1] is not None:
-            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
-
-        columns = self.axes[-1].labels
-        index = pd.MultiIndex.from_product(self.axes_labels[:-1],
-                                           names=axes_names)
-        data = np.asarray(self).reshape(len(index), len(columns))
-        return pd.DataFrame(data, index, columns)
+        idx = self.data.index.copy()
+        names = idx.names
+        idx.names = names[:-1] + [names[-1] + '\\' + self.data.columns.name]
+        return pd.DataFrame(self.data, idx)
 
     @property
     def series(self):
-        index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
-                                           names=self.axes_names)
-        return pd.Series(np.asarray(self).reshape(self.size), index)
+        return self.data.stack()
 
     #XXX: we only need axes length, so we might want to move this out of the
     # class
