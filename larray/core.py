@@ -1712,8 +1712,9 @@ class DataFrameLArray(PandasLArray):
         data = self.data
         if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
-            #TODO: return an LArray with Axis labels = combined keys
-            # these combined keys should be objects which display as:
+            # XXX: would it be better to return an LArray with Axis labels =
+            # combined ticks where the "filter" (key) is True
+            # these combined ticks should be objects which display as:
             # (axis1_label, axis2_label, ...) but should also store the axis
             # (names). Should it be the same object as the NDValueGroup?/NDKey?
             if isinstance(key, PandasLArray):
