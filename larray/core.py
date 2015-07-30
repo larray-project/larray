@@ -205,7 +205,8 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           duplicates, _sort_level_inplace,
                           _pandas_insert_index_level, _pandas_transpose_any,
                           _pandas_transpose_any_like, _pandas_align,
-                          multi_index_from_product)
+                          _pandas_broadcast_to, multi_index_from_product,
+                          _index_level_unique_labels)
 from larray.sorting import set_topological_index
 
 
@@ -1620,32 +1621,6 @@ class SeriesLArray(PandasLArray):
     # __invert__ = _unaryop('invert')
 
 
-#TODO: this function should really be upstreamed in some way to Pandas
-def _index_level_unique_labels(idx, level):
-    """
-    returns the unique values for one level, respecting the parent ordering.
-    :param idx: pd.MultiIndex
-    :param level: num or name
-    :return: list of values
-    """
-    # * using idx.levels[level_num] as is does not work for DataFrame subsets
-    #   (it contains all the parent values even if not all of them are used in
-    #   the subset).
-    # * using idx.get_level_values(level).unique() is both slower and does not
-    #   respect the index order (unique() use a first-seen order)
-    # * if using .labels[level].values() gets unsupported at one point,
-    #   simply use "unique_values = set(idx.get_level_values(level))" instead
-
-    # .values() to get a straight ndarray from the FrozenNDArray that .labels[]
-    # gives us, which is slower to iterate on
-    # .astype(object) because set() needs python objects and it is faster to
-    # convert all ints in bulk than having them converted in the array iterator
-    level_num = idx._get_level_number(level)
-    unique_labels = set(idx.labels[level_num].values().astype(object))
-    order = idx.levels[level_num]
-    return [v for i, v in enumerate(order) if i in unique_labels]
-
-
 #TODO: factorize with df_labels
 def _df_levels(df, axis):
     idx = df.index if axis == 0 else df.columns
@@ -1780,16 +1755,33 @@ class DataFrameLArray(PandasLArray):
 
         translated_key = self.translated_key(self.full_key(key))
         a0_key, a1_key = self.split_key(translated_key)
-        #TODO: we should handle broadcasting
-        if a1_key == slice(None):
-            # workaround to assign full rows
-            data.loc[a0_key, a1_key] = np.asarray(value)
+        if isinstance(value, PandasLArray):
+            value = value.data
 
-        else:
-            data.loc[a0_key, a1_key] = value
-        # if value is a "raw" ndarray we rely on numpy broadcasting
-        # data[cross_key] = value.broadcast_with(axes) \
-        #     if isinstance(value, LArray) else value
+        #FIXME: only do this if we *need* to broadcast
+        if isinstance(data.index, pd.MultiIndex) and \
+                isinstance(value, (pd.Series, pd.DataFrame)):
+            # this is how Pandas works internally. Ugly (locs are bool arrays. Ugh!)
+            a0_locs = data.index.get_locs(a0_key)
+            a1_locs = a1_key if a1_key == slice(None) \
+                else data.columns.get_locs(a1_key)
+            # data.iloc[(a0_locs, a1_locs)] = ...
+            target_index = data.index[a0_locs]
+            # broadcast to the index so that we do not need to create the target
+            # slice
+
+            #TODO: also broadcast columns
+            value = _pandas_broadcast_to(value, target_index)
+        elif isinstance(value, (np.ndarray, list)):
+            a0size = data.index.get_locs(a0_key).sum()
+            a1size = len(data.columns) if a1_key == slice(None) \
+                else data.columns.get_locs(a1_key).sum()
+            shape2d = a0size, a1size
+            vsize = value.size if isinstance(value, np.ndarray) else len(value)
+            if vsize == a0size * a1size:
+                value = np.asarray(value).reshape(shape2d)
+
+        data.loc[a0_key, a1_key] = value
 
     def broadcast_with(self, target):
         """

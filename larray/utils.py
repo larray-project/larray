@@ -302,6 +302,50 @@ def _sort_level_inplace(data):
     return data
 
 
+def _pandas_index_as_df(index):
+    for labels in index.labels:
+        # I do not know when this can even happen
+        assert not np.any(labels == -1)
+    names = [name if name is not None else 'level_%d' % i
+             for i, name in enumerate(index.names)]
+    columns = [level.values[labels]
+               for level, labels in zip(index.levels, index.labels)]
+    return pd.DataFrame(dict(zip(names, columns)))
+
+
+
+def _pandas_broadcast_to(left, right):
+    """right is either a DataFrame/Series or an Index"""
+    # columns are ignored (they could be completely different)
+    right_index = right if isinstance(right, pd.Index) else right.index
+    left_names = oset(left.index.names)
+    right_names = oset(right_index.names)
+    if left_names == right_names:
+        # we do not need to broadcast
+        return left
+
+    if left_names > right_names:
+        left_extra = left_names - right_names
+        # this assertion is expensive to compute
+        assert all(len(_index_level_unique_labels(left.index, level)) == 1
+                   for level in left_extra)
+        left.index = left.index.droplevel(list(left_extra))
+        return left
+
+    common_names = left_names & right_names
+    if not common_names:
+        raise NotImplementedError("Cannot broadcast to an array with no common "
+                                  "axis")
+    # assuming left has a subset of right levels
+    assert left_names < right_names
+
+    rightdf = _pandas_index_as_df(right_index)
+    # left join because we use the levels of right but the labels of left
+    merged = left.merge(rightdf, how='left', right_on=list(common_names),
+                        left_index=True, sort=False)
+    return merged.set_index(right_index.names)
+
+
 # We need this function because
 # 1) set_index does not exist on Series
 # 2) set_index can only append at the end (not insert)
@@ -688,3 +732,29 @@ def _pandas_align(left, right, join='left'):
     else:
         axis = None
     return axis, None, merged
+
+
+#TODO: this function should really be upstreamed in some way to Pandas
+def _index_level_unique_labels(idx, level):
+    """
+    returns the unique values for one level, respecting the parent ordering.
+    :param idx: pd.MultiIndex
+    :param level: num or name
+    :return: list of values
+    """
+    # * using idx.levels[level_num] as is does not work for DataFrame subsets
+    #   (it contains all the parent values even if not all of them are used in
+    #   the subset).
+    # * using idx.get_level_values(level).unique() is both slower and does not
+    #   respect the index order (unique() use a first-seen order)
+    # * if using .labels[level].values() gets unsupported at one point,
+    #   simply use "unique_values = set(idx.get_level_values(level))" instead
+
+    # .values() to get a straight ndarray from the FrozenNDArray that .labels[]
+    # gives us, which is slower to iterate on
+    # .astype(object) because set() needs python objects and it is faster to
+    # convert all ints in bulk than having them converted in the array iterator
+    level_num = idx._get_level_number(level)
+    unique_labels = set(idx.labels[level_num].values().astype(object))
+    order = idx.levels[level_num]
+    return [v for i, v in enumerate(order) if i in unique_labels]
