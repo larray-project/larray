@@ -1886,11 +1886,11 @@ class DataFrameLArray(PandasLArray):
     def _binop(opname):
         fullname = '__%s__' % opname
         df_method = getattr(pd.DataFrame, opname)
-        fill_values = {
-            'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
-            'mul': 1, 'rmul': 0, 'div': 1, 'rdiv': 1
-        }
-        fill_value = fill_values.get(opname)
+        # fill_values = {
+        #     'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
+        #     'mul': 1, 'rmul': 1, 'div': 1, 'rdiv': 1
+        # }
+        # fill_value = fill_values.get(opname)
         def opmethod(self, other):
             if isinstance(other, (SeriesLArray, DataFrameLArray)):
                 axis, level, (self_al, other_al) = _pandas_align(self.data,
