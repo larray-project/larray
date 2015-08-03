@@ -1525,6 +1525,68 @@ class PandasLArray(LArray):
                                          res_axes[nrowdims:])
         return self._wrap_pandas(res_data)
 
+    def append(self, **kwargs):
+        label = kwargs.pop('label', None)
+        # It does not make sense to accept multiple axes at once, as "values"
+        # will not have the correct shape for all axes after the first one.
+        #XXX: Knowing that, it might be better to use a required (non kw) axis
+        # argument, but it would be inconsistent with filter and sum.
+        # It would look like: la.append(lipro, la.sum(lipro), label='sum')
+        if len(kwargs) > 1:
+            raise ValueError("Cannot append to several axes at the same time")
+        axis_name, values = list(kwargs.items())[0]
+        axis, axis_idx = self.get_axis(axis_name, idx=True)
+
+        #TODO: add support for "raw" ndarrays (of the correct shape or
+        # missing length-one dimensions)
+        pd_values = values.data
+        if axis_idx < self._df_index_ndim:
+            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
+                                                        label, axis_idx)
+        else:
+            #FIXME: this is likely bogus (same code than other if branch)
+            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
+                                                        label, axis_idx)
+        expanded_value = self._wrap_pandas(expanded_value)
+        return self.extend(axis, expanded_value)
+
+    def extend(self, axis, other):
+        axis, axis_idx = self.get_axis(axis, idx=True)
+
+        # Get axis by name, so that we do *NOT* check they are "compatible",
+        # because it makes sense to append axes of different length
+        other_axis = other.get_axis(axis)
+
+        # TODO: also "broadcast" (handle missing dimensions) other to self
+        transposed_value = _pandas_transpose_any_like(other.data, self.data,
+                                                      sort=False)
+        # do we append on an index level?
+        pd_axis = 0 if axis_idx < self._df_index_ndim else 1
+
+        # using concat is a bit faster than combine_first (and we need
+        # to reindex/sort anyway because combine_first does not always
+        # give use the ordering we want).
+        # when appending on columns, this is slower for 1 column than
+        # data.copy(); data[label] = values
+        # it fails (forget some level names) when transposed_value has not
+        # the same index order
+        result = pd.concat((self.data, transposed_value), axis=pd_axis)
+
+        if axis_idx < self._df_index_ndim:
+            idx = self.data.index
+
+            #TODO: assert value has not already a "level" level
+            if isinstance(idx, pd.MultiIndex):
+                # Index.append() only works with a single value or an Index
+                newlabels = pd.Index(other_axis.labels)
+                neworders = [level if i != axis_idx
+                             else level.append(newlabels)
+                             for i, level in enumerate(idx.levels)]
+                for i, neworder in enumerate(neworders):
+                    result = result.reindex(neworder, level=i)
+
+        return self._wrap_pandas(result)
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
@@ -1920,73 +1982,6 @@ class DataFrameLArray(PandasLArray):
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
-
-    def append(self, **kwargs):
-        label = kwargs.pop('label', None)
-        # It does not make sense to accept multiple axes at once, as "values"
-        # will not have the correct shape for all axes after the first one.
-        #XXX: Knowing that, it might be better to use a required (non kw) axis
-        # argument, but it would be inconsistent with filter and sum.
-        # It would look like: la.append(lipro, la.sum(lipro), label='sum')
-        if len(kwargs) > 1:
-            raise ValueError("Cannot append to several axes at the same time")
-        axis_name, values = list(kwargs.items())[0]
-        axis, axis_idx = self.get_axis(axis_name, idx=True)
-
-        #TODO: add support for "raw" ndarrays (of the correct shape or
-        # missing length-one dimensions)
-        pd_values = values.data
-        if axis_idx < self._df_index_ndim:
-            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
-                                                        label, axis_idx)
-        else:
-            #FIXME: this is likely bogus (same code than other if branch)
-            expanded_value = _pandas_insert_index_level(pd_values, axis_name,
-                                                        label, axis_idx)
-        expanded_value = self._wrap_pandas(expanded_value)
-        return self.extend(axis, expanded_value)
-
-    def extend(self, axis, other):
-        axis, axis_idx = self.get_axis(axis, idx=True)
-
-        # Get axis by name, so that we do *NOT* check they are "compatible",
-        # because it makes sense to append axes of different length
-        other_axis = other.get_axis(axis)
-
-        # TODO: also "broadcast" (handle missing dimensions) other to self
-        transposed_value = _pandas_transpose_any_like(other.data, self.data,
-                                                      sort=False)
-        # do we append on an index level?
-        if axis_idx < self._df_index_ndim:
-            df = self.data
-            idx = df.index
-
-            #TODO: assert value has not already a "level" level
-            if isinstance(idx, pd.MultiIndex):
-                # using concat is a bit faster than combine_first (and we need
-                # to reindex/sort anyway because combine_first does not always
-                # give use the ordering we want).
-                combined = pd.concat((df, transposed_value))
-
-                # Index.append() only works with a single value or an Index
-                newlabels = pd.Index(other_axis.labels)
-                neworders = [level if i != axis_idx
-                             else level.append(newlabels)
-                             for i, level in enumerate(df.index.levels)]
-                result = combined
-                for i, neworder in enumerate(neworders):
-                    result = result.reindex(neworder, level=i)
-            else:
-                assert isinstance(idx, pd.Index)
-                result = pd.concat((df, transposed_value))
-        else:
-            # append on columns
-
-            # this is slower for 1 column than df.copy(); df[label] = values
-            # it fails (forget some level names) when transposed_value has not
-            # the same index order
-            result = pd.concat((self.data, transposed_value), axis=1)
-        return self._wrap_pandas(result)
 
     # def transpose(self, *args, ncoldims=1):
     def transpose(self, *args, **kwargs):
