@@ -820,6 +820,23 @@ class TestLArray(TestCase):
         la[:] = 0
         self._assert_equal_raw(la, np.zeros_like(raw))
 
+    def test_setitem_series_larray(self):
+        """
+        tests SeriesLArray.__setitem__(key, value) where value is an LArray
+        """
+        age, geo, sex, lipro = self.larray.axes
+
+        # 1) using a ValueGroup key
+        ages1_5_9 = age['1,5,9']
+
+        # a) value has exactly the same shape as the target slice
+        la = self.larray.sum(lipro)
+        raw = self.array.sum(3)
+
+        la[ages1_5_9] = la[ages1_5_9] + 25.0
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
+        self._assert_equal_raw(la, raw)
+
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.

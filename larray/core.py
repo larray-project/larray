@@ -1711,6 +1711,60 @@ class PandasLArray(LArray):
 
         return self._wrap_pandas(res_data)
 
+    def __setitem__(self, key, value, collapse_slices=True):
+        data = self.data
+
+        if isinstance(key, (np.ndarray, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            if isinstance(key, PandasLArray):
+                #TODO: broadcast/transpose key
+                # key = key.broadcast_with(self.axes)
+                key = key.data
+            data[key] = value
+            return
+
+        translated_key = self.translated_key(self.full_key(key))
+        a0_key, a1_key = self.split_key(translated_key)
+        if isinstance(value, PandasLArray):
+            value = value.data
+
+        #FIXME: only do this if we *need* to broadcast
+        if isinstance(data.index, pd.MultiIndex) and \
+                isinstance(value, (pd.Series, pd.DataFrame)):
+            # this is how Pandas works internally. Ugly (locs are bool arrays.
+            # Ugh!)
+            a0_locs = data.index.get_locs(a0_key)
+            if isinstance(data, pd.DataFrame):
+                a1_locs = a1_key if a1_key == slice(None) \
+                    else data.columns.get_locs(a1_key)
+                target_columns = data.columns[a1_locs]
+
+            # data.iloc[(a0_locs, a1_locs)] = ...
+            target_index = data.index[a0_locs]
+
+            # broadcast to the index so that we do not need to create the target
+            # slice
+            #TODO: also broadcast columns
+            value = _pandas_broadcast_to(value, target_index)
+        elif isinstance(value, (np.ndarray, list)):
+            a0size = data.index.get_locs(a0_key).sum()
+            if isinstance(data, pd.DataFrame):
+                a1size = len(data.columns) if a1_key == slice(None) \
+                    else data.columns.get_locs(a1_key).sum()
+                target_shape = (a0size, a1size)
+            else:
+                target_shape = (a0size,)
+            vsize = value.size if isinstance(value, np.ndarray) else len(value)
+            if vsize == np.prod(target_shape):
+                value = np.asarray(value).reshape(target_shape)
+
+        if isinstance(data, pd.DataFrame):
+            data.loc[a0_key, a1_key] = value
+        else:
+            assert not a1_key
+            data.loc[a0_key] = value
+
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
@@ -1818,48 +1872,6 @@ class DataFrameLArray(PandasLArray):
     @property
     def series(self):
         return self.data.stack()
-
-    def __setitem__(self, key, value, collapse_slices=True):
-        data = self.data
-
-        if isinstance(key, (np.ndarray, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            if isinstance(key, PandasLArray):
-                #TODO: broadcast/transpose key
-                # key = key.broadcast_with(self.axes)
-                key = key.data
-            data[key] = value
-            return
-
-        translated_key = self.translated_key(self.full_key(key))
-        a0_key, a1_key = self.split_key(translated_key)
-        if isinstance(value, PandasLArray):
-            value = value.data
-
-        #FIXME: only do this if we *need* to broadcast
-        if isinstance(data.index, pd.MultiIndex) and \
-                isinstance(value, (pd.Series, pd.DataFrame)):
-            # this is how Pandas works internally. Ugly (locs are bool arrays. Ugh!)
-            a0_locs = data.index.get_locs(a0_key)
-            a1_locs = a1_key if a1_key == slice(None) \
-                else data.columns.get_locs(a1_key)
-            # data.iloc[(a0_locs, a1_locs)] = ...
-            target_index = data.index[a0_locs]
-            # broadcast to the index so that we do not need to create the target
-            # slice
-
-            #TODO: also broadcast columns
-            value = _pandas_broadcast_to(value, target_index)
-        elif isinstance(value, (np.ndarray, list)):
-            a0size = data.index.get_locs(a0_key).sum()
-            a1size = len(data.columns) if a1_key == slice(None) \
-                else data.columns.get_locs(a1_key).sum()
-            shape2d = a0size, a1size
-            vsize = value.size if isinstance(value, np.ndarray) else len(value)
-            if vsize == a0size * a1size:
-                value = np.asarray(value).reshape(shape2d)
-
-        data.loc[a0_key, a1_key] = value
 
     def broadcast_with(self, target):
         """
