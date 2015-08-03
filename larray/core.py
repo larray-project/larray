@@ -1587,6 +1587,67 @@ class PandasLArray(LArray):
 
         return self._wrap_pandas(result)
 
+    def _axis_aggregate(self, op_name, axes=()):
+        """
+        op is an aggregate function: func(arr, axis=(0, 1))
+        axes is a tuple of axes (Axis objects or integers)
+        """
+        data = self.data
+        if not axes:
+            axes = self.axes
+        else:
+            # axes can be an iterator
+            axes = tuple(axes)
+
+        # first x second x third \ fourth
+        # sum(first) -> x.sum(axis=0, level=[1, 2])
+        # sum(second) -> x.sum(axis=0, level=[0, 2])
+        # sum(third) -> x.sum(axis=0, level=[0, 1])
+        # sum(fourth) -> x.sum(axis=1)
+
+        # sum(first, second) -> x.sum(axis=0, level=2)
+        # sum(second, third) -> x.sum(axis=0, level=0)
+        # sum(first, third) -> x.sum(axis=0, level=1)
+
+        # sum(first, second, third) -> x.sum(axis=0)
+
+        # sum(third, fourth) -> x.sum(axis=0, level=[0, 1]).sum(axis=1)
+        # axis=1 first is faster
+        # sum(first, second, fourth) -> x.sum(axis=1).sum(level=2)
+
+        # sum(first, second, third, fourth) -> x.sum(axis=0).sum()
+        # axis=0 first is faster
+        # sum(first, second, third, fourth) -> x.sum(axis=1).sum()
+
+        dfaxes = [self._df_axis_level(axis) for axis in axes]
+        all_axis0_levels = list(range(self._df_index_ndim))
+        colnames = data.columns.names if isinstance(data, pd.DataFrame) else ()
+        all_axis1_levels = list(range(len(colnames)))
+        axis0_levels = [level for dfaxis, level in dfaxes if dfaxis == 0]
+        axis1_levels = [level for dfaxis, level in dfaxes if dfaxis == 1]
+
+        shift_axis1 = False
+        res_data = data
+        if axis0_levels:
+            levels_left = set(all_axis0_levels) - set(axis0_levels)
+            kwargs = {'level': sorted(levels_left)} if levels_left else {}
+            res_data = getattr(res_data, op_name)(axis=0, **kwargs)
+            if not levels_left:
+                assert isinstance(res_data, pd.Series) or np.isscalar(res_data)
+                shift_axis1 = True
+
+        if axis1_levels:
+            if shift_axis1:
+                axis_num = 0
+            else:
+                axis_num = 1
+            levels_left = set(all_axis1_levels) - set(axis1_levels)
+            kwargs = {'level': sorted(levels_left)} if levels_left else {}
+            res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
+
+        return self._wrap_pandas(res_data)
+
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
@@ -1648,68 +1709,6 @@ class SeriesLArray(PandasLArray):
             a0_tokill = [axis.name for axis, k in zip(self.axes, translated_key)
                          if k in axis]
             res_data.index = res_data.index.droplevel(a0_tokill)
-
-        return self._wrap_pandas(res_data)
-
-    def _axis_aggregate(self, op_name, axes=()):
-        #TODO: factorize with DataFrameLArray
-        """
-        op is an aggregate function: func(arr, axis=(0, 1))
-        axes is a tuple of axes (Axis objects or integers)
-        """
-        if not axes:
-            axes = self.axes
-        else:
-            # axes can be an iterator
-            axes = tuple(axes)
-
-        # first x second x third
-        # sum(first) -> x.sum(axis=0, level=[1, 2])
-        # sum(second) -> x.sum(axis=0, level=[0, 2])
-        # sum(third) -> x.sum(axis=0, level=[0, 1])
-
-        # sum(first, second) -> x.sum(axis=0, level=2)
-        # sum(second, third) -> x.sum(axis=0, level=0)
-        # sum(first, third) -> x.sum(axis=0, level=1)
-
-        # sum(first, second, third) -> x.sum(axis=0)
-
-        # sum(third, fourth) -> x.sum(axis=0, level=[0, 1]).sum(axis=1)
-        # axis=1 first is faster
-        # sum(first, second, fourth) -> x.sum(axis=1).sum(level=2)
-
-        # sum(first, second, third, fourth) -> x.sum(axis=0).sum()
-        # axis=0 first is faster
-        # sum(first, second, third, fourth) -> x.sum(axis=1).sum()
-
-        # TODO: move it to PandasLArray and allow all axis1 stuff to be empty for series
-        dfaxes = [self._df_axis_level(axis) for axis in axes]
-        all_axis0_levels = list(range(self._df_index_ndim))
-        if isinstance(self.data, pd.DataFrame):
-            all_axis1_levels = list(range(len(self.data.columns.names)))
-        else:
-            all_axis1_levels = []
-        axis0_levels = [level for dfaxis, level in dfaxes if dfaxis == 0]
-        axis1_levels = [level for dfaxis, level in dfaxes if dfaxis == 1]
-
-        shift_axis1 = False
-        res_data = self.data
-        if axis0_levels:
-            levels_left = set(all_axis0_levels) - set(axis0_levels)
-            kwargs = {'level': sorted(levels_left)} if levels_left else {}
-            res_data = getattr(res_data, op_name)(axis=0, **kwargs)
-            if not levels_left:
-                assert np.isscalar(res_data)
-                shift_axis1 = True
-
-        if axis1_levels:
-            if shift_axis1:
-                axis_num = 0
-            else:
-                axis_num = 1
-            levels_left = set(all_axis1_levels) - set(axis1_levels)
-            kwargs = {'level': sorted(levels_left)} if levels_left else {}
-            res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
 
@@ -1924,64 +1923,6 @@ class DataFrameLArray(PandasLArray):
     def _df_axis_nlevels(self, df_axis):
         idx = self.data.index if df_axis == 0 else self.data.columns
         return len(idx.names)
-
-    def _axis_aggregate(self, op_name, axes=()):
-        """
-        op is an aggregate function: func(arr, axis=(0, 1))
-        axes is a tuple of axes (Axis objects or integers)
-        """
-        if not axes:
-            axes = self.axes
-        else:
-            # axes can be an iterator
-            axes = tuple(axes)
-
-        # first x second x third \ fourth
-        # sum(first) -> x.sum(axis=0, level=[1, 2])
-        # sum(second) -> x.sum(axis=0, level=[0, 2])
-        # sum(third) -> x.sum(axis=0, level=[0, 1])
-        # sum(fourth) -> x.sum(axis=1)
-
-        # sum(first, second) -> x.sum(axis=0, level=2)
-        # sum(second, third) -> x.sum(axis=0, level=0)
-        # sum(first, third) -> x.sum(axis=0, level=1)
-
-        # sum(first, second, third) -> x.sum(axis=0)
-
-        # sum(third, fourth) -> x.sum(axis=0, level=[0, 1]).sum(axis=1)
-        # axis=1 first is faster
-        # sum(first, second, fourth) -> x.sum(axis=1).sum(level=2)
-
-        # sum(first, second, third, fourth) -> x.sum(axis=0).sum()
-        # axis=0 first is faster
-        # sum(first, second, third, fourth) -> x.sum(axis=1).sum()
-
-        dfaxes = [self._df_axis_level(axis) for axis in axes]
-        all_axis0_levels = list(range(self._df_index_ndim))
-        all_axis1_levels = list(range(len(self.data.columns.names)))
-        axis0_levels = [level for dfaxis, level in dfaxes if dfaxis == 0]
-        axis1_levels = [level for dfaxis, level in dfaxes if dfaxis == 1]
-
-        shift_axis1 = False
-        res_data = self.data
-        if axis0_levels:
-            levels_left = set(all_axis0_levels) - set(axis0_levels)
-            kwargs = {'level': sorted(levels_left)} if levels_left else {}
-            res_data = getattr(res_data, op_name)(axis=0, **kwargs)
-            if not levels_left:
-                assert isinstance(res_data, pd.Series)
-                shift_axis1 = True
-
-        if axis1_levels:
-            if shift_axis1:
-                axis_num = 0
-            else:
-                axis_num = 1
-            levels_left = set(all_axis1_levels) - set(axis1_levels)
-            kwargs = {'level': sorted(levels_left)} if levels_left else {}
-            res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
-
-        return self._wrap_pandas(res_data)
 
     # def transpose(self, *args, ncoldims=1):
     def transpose(self, *args, **kwargs):
