@@ -1412,6 +1412,91 @@ class PandasLArray(LArray):
 
     __repr__ = __str__
 
+    # element-wise method factory
+    def _binop(opname):
+        # fill_values = {
+        #     'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
+        #     'mul': 1, 'rmul': 1, 'div': 1, 'rdiv': 1
+        # }
+        # fill_value = fill_values.get(opname)
+        def opmethod(self, other):
+            pandas_method = getattr(self.data.__class__, opname)
+            if isinstance(other, PandasLArray):
+                axis, level, (self_al, other_al) = _pandas_align(self.data,
+                                                                 other.data,
+                                                                 join='left')
+                res_data = pandas_method(self_al, other_al, axis=axis,
+                                         level=level)
+                return self._wrap_pandas(res_data)
+            elif isinstance(other, LArray):
+                raise NotImplementedError("mixed LArrays")
+            elif isinstance(other, np.ndarray):
+                # XXX: not sure how clever Pandas is. We should be able to
+                # handle extra/missing axes of length 1 (that is why I
+                # separated the ndarray and scalar cases)
+                res_data = pandas_method(self.data, other)
+                return self._wrap_pandas(res_data)
+            elif np.isscalar(other):
+                res_data = pandas_method(self.data, other)
+                return self._wrap_pandas(res_data)
+            else:
+                raise TypeError("unsupported operand type(s) for %s: '%s' "
+                                "and '%s'" % (opname, type(self), type(other)))
+
+        opmethod.__name__ = '__%s__' % opname
+        return opmethod
+
+    __lt__ = _binop('lt')
+    __le__ = _binop('le')
+    __eq__ = _binop('eq')
+    __ne__ = _binop('ne')
+    __gt__ = _binop('gt')
+    __ge__ = _binop('ge')
+    __add__ = _binop('add')
+    __radd__ = _binop('radd')
+    __sub__ = _binop('sub')
+    __rsub__ = _binop('rsub')
+    __mul__ = _binop('mul')
+    __rmul__ = _binop('rmul')
+    if sys.version < '3':
+        __div__ = _binop('div')
+        __rdiv__ = _binop('rdiv')
+    __truediv__ = _binop('truediv')
+    __rtruediv__ = _binop('rtruediv')
+    __floordiv__ = _binop('floordiv')
+    __rfloordiv__ = _binop('rfloordiv')
+    __mod__ = _binop('mod')
+    __rmod__ = _binop('rmod')
+    # __divmod__ = _binop('divmod')
+    # __rdivmod__ = _binop('rdivmod')
+    __pow__ = _binop('pow')
+    __rpow__ = _binop('rpow')
+    # __lshift__ = _binop('lshift')
+    # __rlshift__ = _binop('rlshift')
+    # __rshift__ = _binop('rshift')
+    # __rrshift__ = _binop('rrshift')
+    # __and__ = _binop('and')
+    # __rand__ = _binop('rand')
+    # __xor__ = _binop('xor')
+    # __rxor__ = _binop('rxor')
+    # __or__ = _binop('or')
+    # __ror__ = _binop('ror')
+
+    # element-wise method factory
+    def _unaryop(opname):
+        def opmethod(self):
+            pandas_method = getattr(self.data.__class__, opname)
+            return self._wrap_pandas(pandas_method(self.data))
+        opmethod.__name__ = '__%s__' % opname
+        return opmethod
+
+    # unary ops do not need broadcasting so do not need to be overridden
+    # __neg__ = _unaryop('neg')
+    # __pos__ = _unaryop('pos')
+    __abs__ = _unaryop('abs')
+    # __invert__ = _unaryop('invert')
+
+
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
@@ -1537,88 +1622,6 @@ class SeriesLArray(PandasLArray):
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
-
-    # element-wise method factory
-    def _binop(opname):
-        fullname = '__%s__' % opname
-        df_method = getattr(pd.Series, opname)
-        fill_values = {
-            'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
-            'mul': 1, 'rmul': 0, 'div': 1, 'rdiv': 1
-        }
-        fill_value = fill_values.get(opname)
-        def opmethod(self, other):
-            if isinstance(other, PandasLArray):
-                res_data = df_method(self.data, other.data,
-                                     fill_value=fill_value)
-                return self._wrap_pandas(res_data)
-            elif isinstance(other, LArray):
-                raise NotImplementedError("mixed LArrays")
-                #TODO: first test if it is not already broadcastable
-                other = other.broadcast_with(self).data
-            elif isinstance(other, np.ndarray):
-                res_data = df_method(self.data, other)
-                return self._wrap_pandas(res_data)
-            elif np.isscalar(other):
-                res_data = df_method(self.data, other)
-                return self._wrap_pandas(res_data)
-            else:
-                raise TypeError("unsupported operand type(s) for %s: '%s' "
-                                "and '%s'" % (opname, type(self), type(other)))
-        opmethod.__name__ = fullname
-        return opmethod
-
-    __lt__ = _binop('lt')
-    __le__ = _binop('le')
-    __eq__ = _binop('eq')
-    __ne__ = _binop('ne')
-    __gt__ = _binop('gt')
-    __ge__ = _binop('ge')
-    __add__ = _binop('add')
-    __radd__ = _binop('radd')
-    __sub__ = _binop('sub')
-    __rsub__ = _binop('rsub')
-    __mul__ = _binop('mul')
-    __rmul__ = _binop('rmul')
-    if sys.version < '3':
-        __div__ = _binop('div')
-        __rdiv__ = _binop('rdiv')
-    __truediv__ = _binop('truediv')
-    __rtruediv__ = _binop('rtruediv')
-    __floordiv__ = _binop('floordiv')
-    __rfloordiv__ = _binop('rfloordiv')
-    __mod__ = _binop('mod')
-    __rmod__ = _binop('rmod')
-    # __divmod__ = _binop('divmod')
-    # __rdivmod__ = _binop('rdivmod')
-    __pow__ = _binop('pow')
-    __rpow__ = _binop('rpow')
-    # __lshift__ = _binop('lshift')
-    # __rlshift__ = _binop('rlshift')
-    # __rshift__ = _binop('rshift')
-    # __rrshift__ = _binop('rrshift')
-    # __and__ = _binop('and')
-    # __rand__ = _binop('rand')
-    # __xor__ = _binop('xor')
-    # __rxor__ = _binop('rxor')
-    # __or__ = _binop('or')
-    # __ror__ = _binop('ror')
-
-    # element-wise method factory
-    def _unaryop(opname):
-        fullname = '__%s__' % opname
-        super_method = getattr(pd.Series, fullname)
-
-        def opmethod(self):
-            return self._wrap_pandas(super_method(self.data))
-        opmethod.__name__ = fullname
-        return opmethod
-
-    # unary ops do not need broadcasting so do not need to be overridden
-    # __neg__ = _unaryop('neg')
-    # __pos__ = _unaryop('pos')
-    __abs__ = _unaryop('abs')
-    # __invert__ = _unaryop('invert')
 
 
 #TODO: factorize with df_labels
@@ -1881,90 +1884,6 @@ class DataFrameLArray(PandasLArray):
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
-
-    # element-wise method factory
-    def _binop(opname):
-        fullname = '__%s__' % opname
-        df_method = getattr(pd.DataFrame, opname)
-        # fill_values = {
-        #     'add': 0, 'radd': 0, 'sub': 0, 'rsub': 0,
-        #     'mul': 1, 'rmul': 1, 'div': 1, 'rdiv': 1
-        # }
-        # fill_value = fill_values.get(opname)
-        def opmethod(self, other):
-            if isinstance(other, (SeriesLArray, DataFrameLArray)):
-                axis, level, (self_al, other_al) = _pandas_align(self.data,
-                                                                 other.data,
-                                                                 join='left')
-                res_data = df_method(self_al, other_al, axis=axis, level=level)
-                return self._wrap_pandas(res_data)
-            elif isinstance(other, LArray):
-                raise NotImplementedError("mixed LArrays")
-            elif isinstance(other, np.ndarray):
-                # XXX: not sure how clever Pandas is. We should be able to
-                # handle extra/missing axes of length 1
-                res_data = df_method(self.data, other)
-                return self._wrap_pandas(res_data)
-            elif np.isscalar(other):
-                res_data = df_method(self.data, other)
-                return self._wrap_pandas(res_data)
-            else:
-                raise TypeError("unsupported operand type(s) for %s: '%s' "
-                                "and '%s'" % (opname, type(self), type(other)))
-        opmethod.__name__ = fullname
-        return opmethod
-
-    __lt__ = _binop('lt')
-    __le__ = _binop('le')
-    __eq__ = _binop('eq')
-    __ne__ = _binop('ne')
-    __gt__ = _binop('gt')
-    __ge__ = _binop('ge')
-    __add__ = _binop('add')
-    __radd__ = _binop('radd')
-    __sub__ = _binop('sub')
-    __rsub__ = _binop('rsub')
-    __mul__ = _binop('mul')
-    __rmul__ = _binop('rmul')
-    if sys.version < '3':
-        __div__ = _binop('div')
-        __rdiv__ = _binop('rdiv')
-    __truediv__ = _binop('truediv')
-    __rtruediv__ = _binop('rtruediv')
-    __floordiv__ = _binop('floordiv')
-    __rfloordiv__ = _binop('rfloordiv')
-    __mod__ = _binop('mod')
-    __rmod__ = _binop('rmod')
-    # __divmod__ = _binop('divmod')
-    # __rdivmod__ = _binop('rdivmod')
-    __pow__ = _binop('pow')
-    __rpow__ = _binop('rpow')
-    # __lshift__ = _binop('lshift')
-    # __rlshift__ = _binop('rlshift')
-    # __rshift__ = _binop('rshift')
-    # __rrshift__ = _binop('rrshift')
-    # __and__ = _binop('and')
-    # __rand__ = _binop('rand')
-    # __xor__ = _binop('xor')
-    # __rxor__ = _binop('rxor')
-    # __or__ = _binop('or')
-    # __ror__ = _binop('ror')
-
-    # element-wise method factory
-    def _unaryop(opname):
-        fullname = '__%s__' % opname
-        super_method = getattr(pd.DataFrame, fullname)
-
-        def opmethod(self):
-            return self._wrap_pandas(super_method(self.data))
-        opmethod.__name__ = fullname
-        return opmethod
-
-    # unary ops do not need broadcasting so do not need to be overridden
-    # __neg__ = _unaryop('neg')
-    # __pos__ = _unaryop('pos')
-    __abs__ = _unaryop('abs')
-    # __invert__ = _unaryop('invert')
 
     def append(self, **kwargs):
         label = kwargs.pop('label', None)
