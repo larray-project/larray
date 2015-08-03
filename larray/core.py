@@ -1294,6 +1294,11 @@ class PandasLArray(LArray):
 
         return to_key(key)
 
+    #XXX: we only need axes length, so we might want to move this out of the
+    # class
+    # def translated_key(self, key):
+    #     return tuple(axis.translate(axis_key)
+    #                  for axis, axis_key in zip(self.axes, key))
     def translated_key(self, key):
         """
         translate ValueGroups to lists
@@ -1647,6 +1652,64 @@ class PandasLArray(LArray):
 
         return self._wrap_pandas(res_data)
 
+    def split_tuple(self, full_tuple):
+        """
+        splits a tuple with one value per axis to two tuples corresponding to
+        the DataFrame axes
+        """
+        index_ndim = self._df_index_ndim
+        return full_tuple[:index_ndim], full_tuple[index_ndim:]
+
+    def split_key(self, full_key):
+        """
+        splits an LArray key with all axes to a key with two axes
+        """
+        a0_key, a1_key = self.split_tuple(full_key)
+        # avoid producing length-1 tuples (it confuses Pandas)
+        a0_key = a0_key[0] if len(a0_key) == 1 else a0_key
+        a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
+        return a0_key, a1_key
+
+    def __getitem__(self, key, collapse_slices=False):
+        data = self.data
+        if isinstance(key, (np.ndarray, LArray)) and \
+                np.issubdtype(key.dtype, bool):
+            # XXX: would it be better to return an LArray with Axis labels =
+            # combined ticks where the "filter" (key) is True
+            # these combined ticks should be objects which display as:
+            # (axis1_label, axis2_label, ...) but should also store the axis
+            # (names). Should it be the same object as the NDValueGroup?/NDKey?
+            if isinstance(key, PandasLArray):
+                key = key.data
+            return self._wrap_pandas(data[key])
+
+        translated_key = self.translated_key(self.full_key(key))
+        a0_key, a1_key = self.split_key(translated_key)
+        if isinstance(data, pd.DataFrame):
+            res_data = data.loc[a0_key, a1_key]
+        else:
+            assert not a1_key
+            res_data = data.loc[a0_key]
+
+        #XXX: I wish I could avoid doing this manually. For some reason,
+        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
+        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
+        def mishandled_by_pandas(key):
+            return isinstance(key, tuple) and any(isinstance(k, slice)
+                                                  for k in key)
+
+        a0_axes, a1_axes = self.split_tuple(self.axes)
+        if mishandled_by_pandas(a0_key):
+            a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
+                         if k in axis]
+            res_data.index = res_data.index.droplevel(a0_tokill)
+
+        if a1_key and mishandled_by_pandas(a1_key):
+            a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
+                         if k in axis]
+            res_data.columns = res_data.columns.droplevel(a1_tokill)
+
+        return self._wrap_pandas(res_data)
 
 
 class SeriesLArray(PandasLArray):
@@ -1683,34 +1746,6 @@ class SeriesLArray(PandasLArray):
     def _df_axis_nlevels(self, df_axis):
         assert df_axis == 0
         return len(self.data.index.names)
-
-    def __getitem__(self, key, collapse_slices=False):
-        #TODO: factorize this with DataFrameLArray
-        data = self.data
-        if isinstance(key, (np.ndarray, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            #TODO: return an LArray with Axis labels = combined keys
-            # these combined keys should be objects which display as:
-            # (axis1_label, axis2_label, ...) but should also store the axis
-            # (names). Should it be the same object as the NDValueGroup?/NDKey?
-            return data[np.asarray(key)]
-
-        full_key = self.full_key(key)
-        translated_key = self.translated_key(full_key)
-        res_data = data.loc[translated_key]
-
-        #XXX: I wish I could avoid doing this manually. For some reason,
-        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
-        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
-        def mishandled_by_pandas(key):
-            return isinstance(key, tuple) and any(isinstance(k, slice)
-                                                  for k in key)
-        if mishandled_by_pandas(translated_key):
-            a0_tokill = [axis.name for axis, k in zip(self.axes, translated_key)
-                         if k in axis]
-            res_data.index = res_data.index.droplevel(a0_tokill)
-
-        return self._wrap_pandas(res_data)
 
     def transpose(self, *args):
         """
@@ -1783,66 +1818,6 @@ class DataFrameLArray(PandasLArray):
     @property
     def series(self):
         return self.data.stack()
-
-    #XXX: we only need axes length, so we might want to move this out of the
-    # class
-    # def translated_key(self, key):
-    #     return tuple(axis.translate(axis_key)
-    #                  for axis, axis_key in zip(self.axes, key))
-
-    def split_tuple(self, full_tuple):
-        """
-        splits a tuple with one value per axis to two tuples corresponding to
-        the DataFrame axes
-        """
-        index_ndim = self._df_index_ndim
-        return full_tuple[:index_ndim], full_tuple[index_ndim:]
-
-    def split_key(self, full_key):
-        """
-        spits an LArray key with all axes to a key with two axes
-        """
-        a0_key, a1_key = self.split_tuple(full_key)
-        # avoid producing length-1 tuples (it confuses Pandas)
-        a0_key = a0_key[0] if len(a0_key) == 1 else a0_key
-        a1_key = a1_key[0] if len(a1_key) == 1 else a1_key
-        return a0_key, a1_key
-
-    def __getitem__(self, key, collapse_slices=False):
-        data = self.data
-        if isinstance(key, (np.ndarray, LArray)) and \
-                np.issubdtype(key.dtype, bool):
-            # XXX: would it be better to return an LArray with Axis labels =
-            # combined ticks where the "filter" (key) is True
-            # these combined ticks should be objects which display as:
-            # (axis1_label, axis2_label, ...) but should also store the axis
-            # (names). Should it be the same object as the NDValueGroup?/NDKey?
-            if isinstance(key, PandasLArray):
-                key = key.data
-            return self._wrap_pandas(data[key])
-
-        translated_key = self.translated_key(self.full_key(key))
-        a0_key, a1_key = self.split_key(translated_key)
-        res_data = data.loc[a0_key, a1_key]
-
-        #XXX: I wish I could avoid doing this manually. For some reason,
-        # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
-        # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
-        def mishandled_by_pandas(key):
-            return isinstance(key, tuple) and any(isinstance(k, slice)
-                                                  for k in key)
-
-        a0_axes, a1_axes = self.split_tuple(self.axes)
-        if mishandled_by_pandas(a0_key):
-            a0_tokill = [axis.name for axis, k in zip(a0_axes, a0_key)
-                         if k in axis]
-            res_data.index = res_data.index.droplevel(a0_tokill)
-        if mishandled_by_pandas(a1_key):
-            a1_tokill = [axis.name for axis, k in zip(a1_axes, a1_key)
-                         if k in axis]
-            res_data.columns = res_data.columns.droplevel(a1_tokill)
-
-        return self._wrap_pandas(res_data)
 
     def __setitem__(self, key, value, collapse_slices=True):
         data = self.data
