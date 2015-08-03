@@ -1496,6 +1496,34 @@ class PandasLArray(LArray):
     __abs__ = _unaryop('abs')
     # __invert__ = _unaryop('invert')
 
+    def _transpose(self, ncoldims, *args):
+        """
+        reorder axes
+        accepts either a tuple of axes specs or axes specs as *args
+        produces a copy if axes are not exactly the same (on Pandas)
+        """
+        assert 0 <= ncoldims <= len(self.axes)
+        # all in columns is equivalent to none (we get a Series)
+        ncoldims = ncoldims if ncoldims != len(self.axes) else 0
+        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+            axes = args[0]
+        else:
+            axes = args
+
+        if len(axes) == 0:
+            axes = self.axes[::-1]
+
+        axes = [self.get_axis(a) for a in axes]
+        axes_specified = set(axis.name for axis in axes)
+        missing_axes = [axis for axis in self.axes
+                        if axis.name not in axes_specified]
+        res_axes = axes + missing_axes
+        res_axes = [a.name for a in res_axes]
+
+        nrowdims = len(res_axes) - ncoldims
+        res_data = _pandas_transpose_any(self.data, res_axes[:nrowdims],
+                                         res_axes[nrowdims:])
+        return self._wrap_pandas(res_data)
 
 
 class SeriesLArray(PandasLArray):
@@ -1622,6 +1650,14 @@ class SeriesLArray(PandasLArray):
             res_data = getattr(res_data, op_name)(axis=axis_num, **kwargs)
 
         return self._wrap_pandas(res_data)
+
+    def transpose(self, *args):
+        """
+        reorder axes
+        accepts either a tuple of axes specs or axes specs as *args
+        produces a copy if axes are not exactly the same (on Pandas)
+        """
+        return self._transpose(0, *args)
 
 
 #TODO: factorize with df_labels
@@ -1957,30 +1993,11 @@ class DataFrameLArray(PandasLArray):
         """
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
-        produces a copy in all cases (on Pandas)
+        ncoldims: number of trailing dimensions to use as columns (default 1)
+        produces a copy if axes are not exactly the same (on Pandas)
         """
         ncoldims = kwargs.pop('ncoldims', 1)
-        assert 0 <= ncoldims <= len(self.axes)
-        # all in columns is equivalent to none (we get a Series)
-        ncoldims = ncoldims if ncoldims != len(self.axes) else 0
-        if len(args) == 1 and isinstance(args[0], (tuple, list)):
-            axes = args[0]
-        elif len(args) == 0:
-            axes = self.axes[::-1]
-        else:
-            axes = args
-        axes = [self.get_axis(a) for a in axes]
-        axes_specified = set(axis.name for axis in axes)
-        missing_axes = [axis for axis in self.axes
-                        if axis.name not in axes_specified]
-        res_axes = axes + missing_axes
-        res_axes = [a.name for a in res_axes]
-
-        nrowdims = len(res_axes) - ncoldims
-        res_data = _pandas_transpose_any(self.data, res_axes[:nrowdims],
-                                         res_axes[nrowdims:])
-        return self._wrap_pandas(res_data)
-
+        return self._transpose(ncoldims, *args)
 
     @property
     def dtype(self):
