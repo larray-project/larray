@@ -1745,10 +1745,11 @@ class PandasLArray(LArray):
             # this is how Pandas works internally. Ugly (locs are bool arrays.
             # Ugh!)
             a0_locs = data.index.get_locs(a0_key)
-            if isinstance(data, pd.DataFrame):
-                a1_locs = a1_key if a1_key == slice(None) \
-                    else data.columns.get_locs(a1_key)
-                target_columns = data.columns[a1_locs]
+            # if isinstance(data, pd.DataFrame):
+            #     # FIXME: simple Index have no .get_locs method
+            #     a1_locs = a1_key if a1_key == slice(None) \
+            #         else data.columns.get_locs(a1_key)
+            #     target_columns = data.columns[a1_locs]
 
             # data.iloc[(a0_locs, a1_locs)] = ...
             target_index = data.index[a0_locs]
