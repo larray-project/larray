@@ -374,24 +374,24 @@ def to_key(v):
     >>> to_key(10)
     10
     """
-    if isinstance(v, tuple):
+    if isinstance(v, (range, tuple)):
         return list(v)
-    elif not isinstance(v, basestring):
-        return v
-
-    numcolons = v.count(':')
-    if numcolons:
-        assert numcolons <= 2
-        # can be of len 2 or 3 (if step is provided)
-        bounds = [a if a else None for a in v.split(':')]
-        return slice(*bounds)
-    else:
-        if ',' in v:
-            # strip extremity commas to avoid empty string keys
-            v = v.strip(',')
-            return [v.strip() for v in v.split(',')]
+    elif isinstance(v, basestring):
+        numcolons = v.count(':')
+        if numcolons:
+            assert numcolons <= 2
+            # can be of len 2 or 3 (if step is provided)
+            bounds = [a if a else None for a in v.split(':')]
+            return slice(*bounds)
         else:
-            return v.strip()
+            if ',' in v:
+                # strip extremity commas to avoid empty string keys
+                v = v.strip(',')
+                return [v.strip() for v in v.split(',')]
+            else:
+                return v.strip()
+    else:
+        return v
 
 
 def to_keys(value):
@@ -428,9 +428,7 @@ def to_keys(value):
         else:
             # a single group => collapse dimension
             return to_key(value)
-    elif isinstance(value, ValueGroup):
-        return value
-    elif isinstance(value, list):
+    elif isinstance(value, (ValueGroup, range, list)):
         return to_key(value)
     else:
         assert isinstance(value, tuple), "%s is not a tuple" % value
