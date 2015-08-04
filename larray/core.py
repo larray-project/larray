@@ -652,6 +652,7 @@ class ValueGroup(object):
         # hashing them directly
         #XXX: but we might want to include that normalization feature in
         # to_tick directly, instead of using to_key explicitly here
+        # different name or axis hash to the same thing !
         return hash(to_tick(to_key(self.key)))
 
     def __eq__(self, other):
@@ -920,9 +921,10 @@ class LArray(object):
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
             #XXX: support ValueGroup without axis?
-            listkey = [(axis_key.axis.name
-                        if isinstance(axis_key, ValueGroup)
-                        else axis_name, axis_key)
+            # extract axis name from ValueGroup keys
+            listkey = [(axis_key.axis.name if isinstance(axis_key, ValueGroup)
+                            else axis_name,
+                        axis_key)
                        for axis_key, axis_name in zip(key, self.axes_names)]
             dupe_axes = list(duplicates(k for k, v in listkey))
             if dupe_axes:
@@ -1311,6 +1313,9 @@ class PandasLArray(LArray):
                      for axis, k in zip(self.axes, key))
 
     def _df_axis_level(self, axis):
+        """
+        translates LArray Axis spec into a Pandas axis + level
+        """
         axis_idx = self.axes.index(axis)
         index_ndim = self._df_index_ndim
         if axis_idx < index_ndim:
