@@ -343,7 +343,8 @@ def _pandas_broadcast_to(left, right):
         raise NotImplementedError("Cannot broadcast to an array with no common "
                                   "axis")
     # assuming left has a subset of right levels
-    assert left_names < right_names
+    assert left_names < right_names, \
+        "%s is not a subset of %s" % (left_names, right_names)
 
     rightdf = _pandas_index_as_df(right_index)
     # left join because we use the levels of right but the labels of left
