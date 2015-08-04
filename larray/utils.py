@@ -354,12 +354,11 @@ def _pandas_broadcast_to(left, right):
     # left join because we use the levels of right but the labels of left
     merged = left.merge(rightdf, how='left', right_on=list(common_names),
                         left_index=True, sort=False)
-    #XXX: do it inplace?
-    broadcasted = merged.set_index(right_index.names)
+    merged.set_index(right_index.names, inplace=True)
     if isinstance(orig_left, pd.Series):
-        assert broadcasted.columns == ['__left__']
-        broadcasted = broadcasted['__left__']
-    return broadcasted
+        assert merged.columns == ['__left__']
+        merged = merged['__left__']
+    return merged
 
 
 # We need this function because
