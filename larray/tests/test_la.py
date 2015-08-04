@@ -966,9 +966,11 @@ class TestLArray(TestCase):
         # self._assert_equal_raw(la, raw)
 
         # d) broadcasting with a missing dimension
-        # la = self.larray.copy()
-        # la.set(la[ages1_5_9].sum(geo), age=ages1_5_9)
-        # self._assert_equal_raw(la, raw)
+        la = self.larray.copy()
+        raw = self.array.copy()
+        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        la.set(la[ages1_5_9].sum(geo), age=ages1_5_9)
+        self._assert_equal_raw(la, raw)
 
         # 2) using a string key
         la = self.larray.copy()
