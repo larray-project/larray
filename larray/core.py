@@ -1434,13 +1434,14 @@ class PandasLArray(LArray):
         # }
         # fill_value = fill_values.get(opname)
         def opmethod(self, other):
-            pandas_method = getattr(self.data.__class__, opname)
             if isinstance(other, PandasLArray):
                 axis, level, (self_al, other_al) = _pandas_align(self.data,
                                                                  other.data,
                                                                  join='left')
-                res_data = pandas_method(self_al, other_al, axis=axis,
-                                         level=level)
+                method = getattr(self_al, opname)
+                res_data = method(other_al, axis=axis, level=level)
+                # XXX: sometimes align changes the type of object (DF ->
+                # Series), we might want to convert it back
                 return self._wrap_pandas(res_data)
             elif isinstance(other, LArray):
                 raise NotImplementedError("mixed LArrays")
@@ -1448,10 +1449,10 @@ class PandasLArray(LArray):
                 # XXX: not sure how clever Pandas is. We should be able to
                 # handle extra/missing axes of length 1 (that is why I
                 # separated the ndarray and scalar cases)
-                res_data = pandas_method(self.data, other)
+                res_data = getattr(self.data, opname)(other)
                 return self._wrap_pandas(res_data)
             elif np.isscalar(other):
-                res_data = pandas_method(self.data, other)
+                res_data = getattr(self.data, opname)(other)
                 return self._wrap_pandas(res_data)
             else:
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
