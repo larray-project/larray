@@ -313,6 +313,12 @@ def _pandas_index_as_df(index):
     return pd.DataFrame(dict(zip(names, columns)))
 
 
+def _pandas_rename_axis(obj, axis, level, newname):
+    """inplace rename"""
+    idx = obj.index if axis == 0 else obj.columns
+    names = idx.names
+    idx.names = names[:level] + [newname] + names[level + 1:]
+
 
 def _pandas_broadcast_to(left, right):
     """right is either a DataFrame/Series or an Index"""

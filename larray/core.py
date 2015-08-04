@@ -206,7 +206,7 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           _pandas_insert_index_level, _pandas_transpose_any,
                           _pandas_transpose_any_like, _pandas_align,
                           _pandas_broadcast_to, multi_index_from_product,
-                          _index_level_unique_labels)
+                          _index_level_unique_labels, _pandas_rename_axis)
 from larray.sorting import set_topological_index
 
 
@@ -893,21 +893,6 @@ class LArray(object):
     def ndim(self):
         return len(self.axes)
 
-    def axes_rename(self, **kwargs):
-        for k in kwargs.keys():
-            if k not in self.axes:
-                raise KeyError("'%s' axis not found in array")
-        axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
-                for a in self.axes]
-        self.axes = AxisCollection(axes)
-        return self
-
-    def rename(self, axis, newname):
-        axis = self.get_axis(axis)
-        axes = [Axis(newname, a.labels) if a is axis else a
-                for a in self.axes]
-        return LArray(self, axes)
-
     def full_key(self, key):
         """
         Returns a full nd-key from a key in any of the following forms:
@@ -1253,6 +1238,21 @@ class NumpyLArray(LArray):
         """
         data = np.asarray(self).reshape([len(axis) for axis in target_axes])
         return LArray(data, target_axes)
+
+    def axes_rename(self, **kwargs):
+        for k in kwargs.keys():
+            if k not in self.axes:
+                raise KeyError("'%s' axis not found in array")
+        axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
+                for a in self.axes]
+        self.axes = AxisCollection(axes)
+        return self
+
+    def rename(self, axis, newname):
+        axis = self.get_axis(axis)
+        axes = [Axis(newname, a.labels) if a is axis else a
+                for a in self.axes]
+        return LArray(self, axes)
 
 
 class PandasLArray(LArray):
@@ -1764,6 +1764,28 @@ class PandasLArray(LArray):
             assert not a1_key
             data.loc[a0_key] = value
 
+    def _rename_axis(self, axis, newname):
+        """inplace rename"""
+        axis = self.get_axis(axis)
+        axis.name = newname
+        pd_axis, level = self._df_axis_level(axis)
+        _pandas_rename_axis(self.data, pd_axis, level, newname)
+
+    def axes_rename(self, **kwargs):
+        for old, new in kwargs.items():
+            if old not in self.axes:
+                raise KeyError("'%s' axis not found in array" % old)
+            self._rename_axis(old, new)
+        return self
+
+    def rename(self, axis, newname):
+        data = self.data.copy(deep=False)
+        # DF.copy() does not make a copy of the Index
+        data.index = data.index.copy(deep=False)
+        result = self._wrap_pandas(data)
+        axis = result.get_axis(axis)
+        result._rename_axis(axis, newname)
+        return result
 
 
 class SeriesLArray(PandasLArray):
