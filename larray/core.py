@@ -1292,11 +1292,21 @@ class PandasLArray(LArray):
     def _translate_axis_key(self, axis, key):
         # we do not use axis.translate because we have to let Pandas do the
         # label -> position conversion
+        if isinstance(key, ValueGroup):
+            # this case is tricky because axis.__contains__(VG) use VG.key
+            # (because of the way VG.__hash__ is implemented), which means
+            # VG.key in axis => VG in axis even though only VG.key is really
+            # in the actual Axis ticks (and Pandas Index) and NOT the VG itself
+            if key in axis:
+                # we check if the VG itself is *really* in the axis
+                idx = axis.translate(key)
+                if isinstance(axis.labels[idx], ValueGroup):
+                    return key
+
+            key = key.key
+
         if key in axis:
             return key
-
-        if isinstance(key, ValueGroup):
-            key = key.key
 
         return to_key(key)
 
