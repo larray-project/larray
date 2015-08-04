@@ -706,7 +706,8 @@ def _pandas_align(left, right, join='left'):
     # 3) (after binop) unstack all the levels stacked in "left" step in result
     # -------
     if right_names == left_names:
-        return None, None, left.align(right, join=join)
+        axis = None if isinstance(left, pd.DataFrame) else 0
+        return axis, None, left.align(right, join=join)
 
     # DF + Series (rc == [])
     if isinstance(left, pd.DataFrame) and isinstance(right, pd.Series):
@@ -730,7 +731,7 @@ def _pandas_align(left, right, join='left'):
             return None, None, left.align(right, join=join)
     elif isinstance(left, pd.Series) and isinstance(right, pd.Series):
         if len(new_li) == 1 or len(new_ri) == 1:
-            return None, None, left.align(right, join=join)
+            return 0, None, left.align(right, join=join)
 
     # multi-index on both sides
     assert len(new_li) > 1 and len(new_ri) > 1
@@ -741,11 +742,10 @@ def _pandas_align(left, right, join='left'):
                                     on=list(new_ri & new_li),
                                     join=join, right_index=right_index,
                                     left_index=left_index)
-    if isinstance(left, pd.DataFrame) and isinstance(right, pd.Series):
-        # probably True for Series + DataFrame too
-        axis = 0
-    else:
+    if isinstance(left, pd.DataFrame) and isinstance(right, pd.DataFrame):
         axis = None
+    else:
+        axis = 0
     return axis, None, merged
 
 
