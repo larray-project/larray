@@ -756,11 +756,13 @@ def _index_level_unique_labels(idx, level):
     # * if using .labels[level].values() gets unsupported at one point,
     #   simply use "unique_values = set(idx.get_level_values(level))" instead
 
+    level_num = idx._get_level_number(level)
     # .values() to get a straight ndarray from the FrozenNDArray that .labels[]
     # gives us, which is slower to iterate on
     # .astype(object) because set() needs python objects and it is faster to
     # convert all ints in bulk than having them converted in the array iterator
-    level_num = idx._get_level_number(level)
-    unique_labels = set(idx.labels[level_num].values().astype(object))
+    # (it only pays for itself with len(unique) > ~100)
+    unique_labels = set(np.unique(idx.labels[level_num].values())
+                        .astype(object))
     order = idx.levels[level_num]
     return [v for i, v in enumerate(order) if i in unique_labels]
