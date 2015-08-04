@@ -336,6 +336,7 @@ def _pandas_broadcast_to(left, right):
         # this assertion is expensive to compute
         assert all(len(_index_level_unique_labels(left.index, level)) == 1
                    for level in left_extra)
+        left = left.copy(deep=False)
         left.index = left.index.droplevel(list(left_extra))
         return left
 
