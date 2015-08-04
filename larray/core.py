@@ -1589,13 +1589,15 @@ class PandasLArray(LArray):
         if axis_idx < self._df_index_ndim:
             idx = self.data.index
 
-            #TODO: assert value has not already a "level" level
             if isinstance(idx, pd.MultiIndex):
-                # Index.append() only works with a single value or an Index
-                newlabels = pd.Index(other_axis.labels)
-                neworders = [level if i != axis_idx
-                             else level.append(newlabels)
-                             for i, level in enumerate(idx.levels)]
+                idx_uq_labels = [_index_level_unique_labels(idx, i)
+                                 for i in range(len(idx.levels))]
+                neworders = idx_uq_labels
+                for i, labels in enumerate(idx_uq_labels):
+                    if i == axis_idx:
+                        labels.extend(other_axis.labels)
+                # TODO: this is probably awfully slow, there ought to be a
+                #       better way
                 for i, neworder in enumerate(neworders):
                     result = result.reindex(neworder, level=i)
 
