@@ -1757,6 +1757,10 @@ class PandasLArray(LArray):
             # slice
             #TODO: also broadcast columns
             value = _pandas_broadcast_to(value, target_index)
+            # workaround for bad broadcasting of Series ("df[:] = series" nor
+            # "df[:, :] = series" work but "df[:] = series.to_frame()" works !)
+            if isinstance(data, pd.DataFrame) and isinstance(value, pd.Series):
+                value = value.to_frame()
         elif isinstance(value, (np.ndarray, list)):
             a0size = data.index.get_locs(a0_key).sum()
             if isinstance(data, pd.DataFrame):
