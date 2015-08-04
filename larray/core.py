@@ -1962,8 +1962,10 @@ class DataFrameLArray(PandasLArray):
     @property
     def dtype(self):
         dtypes = self.data.dtypes
-        if all(dtypes == dtypes[0]):
-            return dtypes[0]
+        # dtypes is a Series
+        firstdtype = dtypes.iloc[0]
+        if all(dtypes == firstdtype):
+            return firstdtype
         else:
             return MixedDtype(dtypes.to_dict())
 
