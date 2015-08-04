@@ -1823,7 +1823,6 @@ class SeriesLArray(PandasLArray):
             #TODO: accept axes argument and check that it is consistent
             # or possibly even override data in Series?
             assert axes is None
-            assert all(name is not None for name in data.index.names)
             axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
         else:
             raise TypeError("data must be an numpy ndarray or pandas.Series")
