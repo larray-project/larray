@@ -15,7 +15,7 @@ import pandas as pd
 import larray
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
                     srange, larray_equal, read_csv, read_hdf, df_aslarray,
-                    zeros, zeros_like, AxisCollection,
+                    zeros, zeros_like, ndrange, AxisCollection,
                     DataFrameLArray, SeriesLArray)
 from larray.utils import array_equal, array_nan_equal
 
@@ -1743,6 +1743,73 @@ REER27CPI,I05,US,96.66,99.07,100
         #large.plot()
         #large.hist()
 
+
+class RangeAxisFactory(object):
+    def __init__(self, length, reverse=False):
+        self.length = length
+        self.reverse = reverse
+
+    def __getattr__(self, key):
+        r = range(self.length)
+        if self.reverse:
+            r = list(reversed(r))
+        return Axis(key, r)
+
+
+class TestLArrayBroadcasting(TestCase):
+    def test_simple(self):
+        ax2 = RangeAxisFactory(2)
+        ax2r = RangeAxisFactory(2, reverse=True)
+        ax3 = RangeAxisFactory(3)
+        ax3r = RangeAxisFactory(3, reverse=True)
+
+        a, b, c, d = ax2.a, ax3.b, ax2.c, ax3.d
+        a2, b2, c2, d2 = ax3r.a, ax2r.b, ax3r.c, ax2r.d
+
+        # OK (except Pandas join direction bug)
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((b2, c2), cls=DataFrameLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2,), cls=SeriesLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2, b2, c2), cls=SeriesLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2, b2), cls=SeriesLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2, c2), cls=SeriesLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c, d), cls=DataFrameLArray)
+        df2 = ndrange((a2, b2, d2), cls=DataFrameLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, d, b), cls=DataFrameLArray)
+        df2 = ndrange((a2, c2, b2), cls=DataFrameLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2, b2, d2), cls=SeriesLArray)
+        df1 + df2
+
+        # OK
+        df1 = ndrange((a, b, c), cls=DataFrameLArray)
+        df2 = ndrange((a2, b2, d2), cls=DataFrameLArray)
+        df1 + df2
 
 if __name__ == "__main__":
     import doctest
