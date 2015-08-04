@@ -322,6 +322,7 @@ def _pandas_rename_axis(obj, axis, level, newname):
 
 def _pandas_broadcast_to(left, right):
     """right is either a DataFrame/Series or an Index"""
+    orig_left = left
     # columns are ignored (they could be completely different)
     right_index = right if isinstance(right, pd.Index) else right.index
     left_names = oset(left.index.names)
@@ -346,11 +347,18 @@ def _pandas_broadcast_to(left, right):
     assert left_names < right_names, \
         "%s is not a subset of %s" % (left_names, right_names)
 
+    if isinstance(left, pd.Series):
+        left = left.to_frame('__left__')
     rightdf = _pandas_index_as_df(right_index)
     # left join because we use the levels of right but the labels of left
     merged = left.merge(rightdf, how='left', right_on=list(common_names),
                         left_index=True, sort=False)
-    return merged.set_index(right_index.names)
+    #XXX: do it inplace?
+    broadcasted = merged.set_index(right_index.names)
+    if isinstance(orig_left, pd.Series):
+        assert broadcasted.columns == ['__left__']
+        broadcasted = broadcasted['__left__']
+    return broadcasted
 
 
 # We need this function because
