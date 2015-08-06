@@ -1523,6 +1523,13 @@ class LArray(np.ndarray):
     def plot(self, *args, **kwargs):
         self.df.plot(*args, **kwargs)
 
+    def set_labels(self, **kwargs):
+        for axis, new_labels in kwargs.items():
+            if axis not in self.axes:
+                raise KeyError("'%s' axis not found in array" % axis)
+            axis = self.get_axis(axis)
+            axis.labels = new_labels
+
 
 def parse(s):
     """
