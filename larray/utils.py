@@ -809,3 +809,12 @@ def _index_level_unique_labels(idx, level):
                         .astype(object))
     order = idx.levels[level_num]
     return [v for i, v in enumerate(order) if i in unique_labels]
+
+
+def _pandas_set_level_labels(data, axis, level, new_labels):
+    """inplace"""
+    index = data.index if axis == 0 else data.columns
+    if isinstance(index, pd.MultiIndex):
+        index.set_levels(new_labels, level, inplace=True)
+    else:
+        data.set_axis(axis, new_labels)

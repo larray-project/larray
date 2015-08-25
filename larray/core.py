@@ -204,7 +204,8 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           _pandas_insert_index_level, _pandas_transpose_any,
                           _pandas_transpose_any_like, _pandas_align,
                           _pandas_broadcast_to, multi_index_from_product,
-                          _index_level_unique_labels, _pandas_rename_axis)
+                          _index_level_unique_labels, _pandas_rename_axis,
+                          _pandas_set_level_labels)
 from larray.sorting import set_topological_index
 
 
@@ -1819,6 +1820,15 @@ class PandasLArray(LArray):
         axis = result.get_axis(axis)
         result._rename_axis(axis, newname)
         return result
+
+    def set_labels(self, **kwargs):
+        for axis, new_labels in kwargs.items():
+            if axis not in self.axes:
+                raise KeyError("'%s' axis not found in array" % axis)
+            axis = self.get_axis(axis)
+            pd_axis, level = self._df_axis_level(axis)
+            # TODO: set all levels of each pd_axis in one go
+            _pandas_set_level_labels(self.data, pd_axis, level, new_labels)
 
 
 class SeriesLArray(PandasLArray):
