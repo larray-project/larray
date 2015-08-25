@@ -373,7 +373,9 @@ def to_key(v):
     >>> to_key(10)
     10
     """
-    if isinstance(v, (range, tuple)):
+    if isinstance(v, tuple):
+        return list(v)
+    elif sys.version >= '3' and isinstance(v, range):
         return list(v)
     elif isinstance(v, basestring):
         numcolons = v.count(':')
@@ -427,7 +429,9 @@ def to_keys(value):
         else:
             # a single group => collapse dimension
             return to_key(value)
-    elif isinstance(value, (ValueGroup, range, list)):
+    elif isinstance(value, (ValueGroup, list)):
+        return to_key(value)
+    elif sys.version >= '3' and isinstance(value, range):
         return to_key(value)
     else:
         assert isinstance(value, tuple), "%s is not a tuple" % value
