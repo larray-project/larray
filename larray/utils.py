@@ -476,7 +476,7 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
         # eg 100x10 \ 100 to 100x100 \ 10
         # will be faster via 100 \ 100x10 than via 100x10x100
         if tostack:
-            obj = obj.stack(tostack)
+            obj = obj.stack(tostack, dropna=False)
 
         if tounstack:
             obj = obj.unstack(tounstack)
