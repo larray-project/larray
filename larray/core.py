@@ -1535,7 +1535,8 @@ class PandasLArray(LArray):
         assert 0 <= ncoldims <= len(self.axes)
         # all in columns is equivalent to none (we get a Series)
         ncoldims = ncoldims if ncoldims != len(self.axes) else 0
-        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+        if len(args) == 1 and isinstance(args[0], (tuple, list,
+                                                   AxisCollection)):
             axes = args[0]
         else:
             axes = args
