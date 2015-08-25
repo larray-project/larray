@@ -2,25 +2,23 @@
 from __future__ import absolute_import, division, print_function
 
 
-# this branch tries to implement the following structure:
-# class LArray(object):  # abstract class (or possibly ndarray API)
-#     pass
-#
-#
-# class DataFrameLArray(LArray):
-#     def __init__(self, data):
-#         # data is a pd.DataFrame
-#         self.data = data
-
 __version__ = "0.2dev"
 
 """
 Matrix class
 """
-#TODO
+# TODO
+# * implement format(**kwargs) -> str
+
+# * implement show(**kwargs): print(self.format(**kwargs))
+
+# ? implement __format__(fmt_str). Does Pandas implement it?
+#   it is mostly useful when you want to print an LArray with something
+#   else, which I see little use for
+
 # * rename ValueGroup to LabelGroup
 
-# * implement named groups in strings
+# ? implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
 # ? implement multi group in one axis getitem:
@@ -58,11 +56,11 @@ Matrix class
 # * avg on last 10 years
 #     time = Axis('time', ...)
 #     x = time[-10:]  # <- does not work (-10 is not a tick on the Axis)!
-    # la.avg(time[-10:])
-    # la[time[-10:]].avg(time)
-    # la.append(la.avg(time[-10:]), axis=time)
-    # la.append(time=la.avg(time[-10:]))
-    # la.append(time=la.avg(time='-10:'))
+#     la.avg(time[-10:])
+#     la[time[-10:]].avg(time)
+#     la.append(la.avg(time[-10:]), axis=time)
+#     la.append(time=la.avg(time[-10:]))
+#     la.append(time=la.avg(time='-10:'))
 
 # * drop last year
 #   la = la[time[:-1]] # <- implement this !
