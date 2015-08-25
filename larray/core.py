@@ -208,7 +208,7 @@ from larray.utils import (prod, unique, array_equal, csv_open, unzip,
 from larray.sorting import set_topological_index
 
 
-#TODO: return a generator, not a list
+# TODO: return a generator, not a list
 def srange(*args):
     return list(map(str, range(*args)))
 
@@ -327,7 +327,7 @@ def to_ticks(s):
     >>> to_ticks('H , F')
     ['H', 'F']
 
-    #XXX: we might want to return real int instead, because if we ever
+    # XXX: we might want to return real int instead, because if we ever
     # want to have more complex queries, such as:
     # arr.filter(age > 10 and age < 20)
     # this would break for string values (because '10' < '2')
@@ -340,7 +340,8 @@ def to_ticks(s):
     elif isinstance(s, pd.Index):
         return s.values
     elif isinstance(s, np.ndarray):
-        #XXX: we assume it has already been translated. Is it a safe assumption?
+        # we assume it has already been translated
+        # XXX: Is it a safe assumption?
         return s
     elif isinstance(s, (list, tuple)):
         return [to_tick(e) for e in s]
@@ -434,7 +435,7 @@ def to_keys(value):
 
 
 def union(*args):
-    #TODO: add support for ValueGroup and lists
+    # TODO: add support for ValueGroup and lists
     """
     returns the union of several "value strings" as a list
     """
@@ -451,7 +452,7 @@ def larray_equal(first, other):
 
 class Axis(object):
     # ticks instead of labels?
-    #XXX: make name and labels optional?
+    # XXX: make name and labels optional?
     def __init__(self, name, labels):
         """
         labels should be an array-like (convertible to an ndarray)
@@ -459,7 +460,7 @@ class Axis(object):
         self.name = name
         labels = to_ticks(labels)
 
-        #TODO: move this to to_ticks????
+        # TODO: move this to to_ticks????
         # we convert to an ndarray to save memory (for scalar ticks, for
         # ValueGroup ticks, it does not make a difference since a list of VG
         # and an ndarray of VG are both arrays of pointers)
@@ -477,7 +478,7 @@ class Axis(object):
         self._mapping.update({label.name: i for i, label in enumerate(labels)
                               if isinstance(label, ValueGroup)})
 
-    #XXX: not sure I should offer an *args version
+    # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
         """
         key is label-based (slice and fancy indexing are supported)
@@ -567,7 +568,7 @@ class Axis(object):
             return key
         elif isinstance(key, (tuple, list, np.ndarray)):
             # handle fancy indexing with a sequence of labels
-            #TODO: the result should be cached
+            # TODO: the result should be cached
             res = np.empty(len(key), int)
             for i, label in enumerate(key):
                 res[i] = mapping[label]
@@ -600,7 +601,8 @@ class Axis(object):
         if isinstance(other, Axis):
             if self.name != other.name:
                 raise ValueError('cannot subtract Axes with different names')
-            return Axis(self.name, [l for l in self.labels if l not in other.labels])
+            return Axis(self.name,
+                        [l for l in self.labels if l not in other.labels])
         else:
             try:
                 return Axis(self.name, self.labels - other)
@@ -608,12 +610,12 @@ class Axis(object):
                 raise ValueError
 
     def copy(self):
-        #XXX: I wonder if we should make a copy of the labels
+        # XXX: I wonder if we should make a copy of the labels
         return Axis(self.name, self.labels)
 
     def sorted(self):
         res = self.copy()
-        #FIXME: this probably also sorts the original axis !
+        # FIXME: this probably also sorts the original axis !
         res.labels.sort()
         res._update_mapping()
         return res
@@ -638,8 +640,8 @@ class ValueGroup(object):
 
         if axis is not None:
             # check the key is valid
-            #TODO: for performance reasons, we should cache the result. This will
-            # need to be invalidated correctly
+            # TODO: for performance reasons, we should cache the result.
+            # This will need to be invalidated correctly
             axis.translate(key)
         self.axis = axis
 
@@ -648,7 +650,7 @@ class ValueGroup(object):
         # standardize on a single notation so that they can all target each
         # other. eg, this removes spaces in "list strings", instead of
         # hashing them directly
-        #XXX: but we might want to include that normalization feature in
+        # XXX: but we might want to include that normalization feature in
         # to_tick directly, instead of using to_key explicitly here
         # different name or axis hash to the same thing !
         return hash(to_tick(to_key(self.key)))
@@ -701,7 +703,7 @@ class AxisCollection(object):
         if isinstance(key, int):
             return self._list[key]
         elif isinstance(key, Axis):
-            #XXX: check that it is the same object????
+            # XXX: check that it is the same object????
             return self._map[key.name]
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
@@ -918,7 +920,7 @@ class LArray(object):
 
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
-            #XXX: support ValueGroup without axis?
+            # XXX: support ValueGroup without axis?
             # extract axis name from ValueGroup keys
             listkey = [(axis_key.axis.name if isinstance(axis_key, ValueGroup)
                             else axis_name,
@@ -978,7 +980,7 @@ class LArray(object):
                             for axis_key in key]
 
             # 2) expand slices to lists (ranges)
-            #TODO: cache the range in the axis?
+            # TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice)
                             else axis_key
@@ -1104,7 +1106,7 @@ class LArray(object):
         # between runs because otherwise rounding errors could lead to
         # slightly different results even for commutative operations.
 
-        #XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
+        # XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
         operations = list(args) + sorted(kwargs.items())
         if not operations:
             # op() without args is equal to op(all_axes)
@@ -1191,7 +1193,7 @@ class LArray(object):
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
-    #XXX: sep argument does not seem very useful
+    # XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
     #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
     #     # currently does not .xlsx (only .xls).
@@ -1207,9 +1209,10 @@ class LArray(object):
     #             sheetname = sep.join(str(k) for k in key)
     #             # sheet names must not:
     #             # * contain any of the following characters: : \ / ? * [ ]
-    #             #XXX: this will NOT work for unicode strings !
-    #             sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
-    #                                             r'\/?*') # chars to delete
+    #             # XXX: this will NOT work for unicode strings !
+    #             table = string.maketrans('[:]', '(-)')
+    #             todelete = r'\/?*'
+    #             sheetname = sheetname.translate(table, todelete)
     #             # * exceed 31 characters
     #             # sheetname = sheetname[:31]
     #             # * be blank
@@ -1308,7 +1311,7 @@ class PandasLArray(LArray):
 
         return to_key(key)
 
-    #XXX: we only need axes length, so we might want to move this out of the
+    # XXX: we only need axes length, so we might want to move this out of the
     # class
     # def translated_key(self, key):
     #     return tuple(axis.translate(axis_key)
@@ -1342,7 +1345,7 @@ class PandasLArray(LArray):
         # for disjoint groups, and we need to support a "row" being in several
         # groups.
 
-        #TODO: when working with several "axes" at the same times, we should
+        # TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for item in items:
@@ -1382,7 +1385,7 @@ class PandasLArray(LArray):
                 # though this creates a new axis that is independent from the
                 # original one because the original name is what users will
                 # want to use to access that axis (eg in .filter kwargs)
-                #TODO: we should bypass wrapping the result in DataFrameLArray
+                # TODO: we should bypass wrapping the result in DataFrameLArray
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 result = arr._axis_aggregate(op_name, [axis])
                 del arr
@@ -1412,7 +1415,7 @@ class PandasLArray(LArray):
                     res_data = res_data.reorder_levels(levels, **kwargs)
 
                     # sort using index levels order (to make index lexsorted)
-                    #XXX: this is expensive, but I am not sure it can be
+                    # XXX: this is expensive, but I am not sure it can be
                     # avoided. Maybe only reorder_levels + sortlevel() after
                     # the loop? Not sure whether we can afford to temporarily
                     # loose sync between axes order and level orders?
@@ -1552,7 +1555,7 @@ class PandasLArray(LArray):
         label = kwargs.pop('label', None)
         # It does not make sense to accept multiple axes at once, as "values"
         # will not have the correct shape for all axes after the first one.
-        #XXX: Knowing that, it might be better to use a required (non kw) axis
+        # XXX: Knowing that, it might be better to use a required (non kw) axis
         # argument, but it would be inconsistent with filter and sum.
         # It would look like: la.append(lipro, la.sum(lipro), label='sum')
         if len(kwargs) > 1:
@@ -1560,14 +1563,14 @@ class PandasLArray(LArray):
         axis_name, values = list(kwargs.items())[0]
         axis, axis_idx = self.get_axis(axis_name, idx=True)
 
-        #TODO: add support for "raw" ndarrays (of the correct shape or
+        # TODO: add support for "raw" ndarrays (of the correct shape or
         # missing length-one dimensions)
         pd_values = values.data
         if axis_idx < self._df_index_ndim:
             expanded_value = _pandas_insert_index_level(pd_values, axis_name,
                                                         label, axis_idx)
         else:
-            #FIXME: this is likely bogus (same code than other if branch)
+            # FIXME: this is likely bogus (same code than other if branch)
             expanded_value = _pandas_insert_index_level(pd_values, axis_name,
                                                         label, axis_idx)
         expanded_value = self._wrap_pandas(expanded_value)
@@ -1711,7 +1714,7 @@ class PandasLArray(LArray):
             assert not a1_key
             res_data = data.loc[a0_key]
 
-        #XXX: I wish I could avoid doing this manually. For some reason,
+        # XXX: I wish I could avoid doing this manually. For some reason,
         # df.loc['a'] kills the level but both df.loc[('a', slice(None)), :]
         # and (for other levels) df.loc(axis=0)[:, 'b'] leave the level
         def mishandled_by_pandas(key):
@@ -1737,7 +1740,7 @@ class PandasLArray(LArray):
         if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
             if isinstance(key, PandasLArray):
-                #TODO: broadcast/transpose key
+                # TODO: broadcast/transpose key
                 # key = key.broadcast_with(self.axes)
                 key = key.data
             data[key] = value
@@ -1748,7 +1751,7 @@ class PandasLArray(LArray):
         if isinstance(value, PandasLArray):
             value = value.data
 
-        #FIXME: only do this if we *need* to broadcast
+        # FIXME: only do this if we *need* to broadcast
         if isinstance(data.index, pd.MultiIndex) and \
                 isinstance(value, (pd.Series, pd.DataFrame)):
             # this is how Pandas works internally. Ugly (locs are bool arrays.
@@ -1765,7 +1768,7 @@ class PandasLArray(LArray):
 
             # broadcast to the index so that we do not need to create the target
             # slice
-            #TODO: also broadcast columns
+            # TODO: also broadcast columns
             value = _pandas_broadcast_to(value, target_index)
             # workaround for bad broadcasting of Series ("df[:] = series" nor
             # "df[:, :] = series" work but "df[:] = series.to_frame()" works !)
@@ -1817,7 +1820,7 @@ class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
         if isinstance(data, np.ndarray):
             axes = AxisCollection(axes)
-            #XXX: add a property "labels" on AxisCollection?
+            # XXX: add a property "labels" on AxisCollection?
             if len(axes) > 1:
                 idx = multi_index_from_product([axis.labels for axis in axes],
                                                names=axes.names,
@@ -1830,7 +1833,7 @@ class SeriesLArray(PandasLArray):
             if isinstance(data.index, pd.MultiIndex) and \
                     not data.index.is_lexsorted():
                 data = data.sortlevel()
-            #TODO: accept axes argument and check that it is consistent
+            # TODO: accept axes argument and check that it is consistent
             # or possibly even override data in Series?
             assert axes is None
             axes = [Axis(name, labels) for name, labels in _df_levels(data, 0)]
@@ -1856,7 +1859,7 @@ class SeriesLArray(PandasLArray):
         return self._transpose(0, *args)
 
 
-#TODO: factorize with df_labels
+# TODO: factorize with df_labels
 def _df_levels(df, axis):
     idx = df.index if axis == 0 else df.columns
     if isinstance(idx, pd.MultiIndex):
@@ -1880,7 +1883,7 @@ class DataFrameLArray(PandasLArray):
         """
         if isinstance(data, np.ndarray):
             axes = AxisCollection(axes)
-            #XXX: add a property "labels" on AxisCollection?
+            # XXX: add a property "labels" on AxisCollection?
             if len(axes) > 2:
                 idx = multi_index_from_product([axis.labels for axis in axes[:-1]],
                                                names=axes.names[:-1],
@@ -1898,7 +1901,7 @@ class DataFrameLArray(PandasLArray):
                 # let us be well behaved and not do it inplace even though that
                 # would be more efficient
                 data = data.sortlevel()
-            #TODO: accept axes argument and check that it is consistent
+            # TODO: accept axes argument and check that it is consistent
             # or possibly even override data in DataFrame?
             assert axes is None
             axes = [Axis(name, labels)
@@ -2029,7 +2032,7 @@ def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-#TODO: implement sort_columns
+# TODO: implement sort_columns
 def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
     if axes_names == [None]:
@@ -2037,14 +2040,14 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     else:
         last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
-    #FIXME: hardcoded "time"
+    # FIXME: hardcoded "time"
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
 
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
     column_labels = [parse(cell) for cell in df.columns.values]
 
-    #FIXME: do not modify original DataFrame !
+    # FIXME: do not modify original DataFrame !
     df.index.names = axes_names[:-1]
     df.columns = column_labels
     df.columns.name = axes_names[-1]
