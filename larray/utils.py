@@ -320,45 +320,79 @@ def _pandas_rename_axis(obj, axis, level, newname):
     idx.names = names[:level] + [newname] + names[level + 1:]
 
 
-def _pandas_broadcast_to(left, right):
-    """right is either a DataFrame/Series or an Index"""
+def _pandas_broadcast_to_index(left, right_index, right_columns=None):
     orig_left = left
-    # columns are ignored (they could be completely different)
-    right_index = right if isinstance(right, pd.Index) else right.index
-    left_names = oset(left.index.names)
-    right_names = oset(right_index.names)
-    if left_names == right_names:
-        # we do not need to broadcast
+    li_names = oset(left.index.names)
+    lc_names = oset(left.columns.names if isinstance(left, pd.DataFrame)
+                    else ())
+    ri_names = oset(right_index.names)
+    rc_names = oset(right_columns.names if isinstance(right_columns, pd.Index)
+                    else ())
+    if li_names == ri_names and lc_names == rc_names:
+        # we do not need to do anything
         return left
 
-    if left_names > right_names:
-        left_extra = left_names - right_names
+    # drop index levels if needed
+    if li_names > ri_names:
+        left_extra = li_names - ri_names
         # this assertion is expensive to compute
         assert all(len(_index_level_unique_labels(left.index, level)) == 1
                    for level in left_extra)
         left = left.copy(deep=False)
         left.index = left.index.droplevel(list(left_extra))
+
+    # drop column levels if needed
+    if lc_names > rc_names:
+        left_extra = lc_names - rc_names
+        # this assertion is expensive to compute
+        assert all(len(_index_level_unique_labels(left.columns, level)) == 1
+                   for level in left_extra)
+        left = left.copy(deep=False)
+        left.columns = left.columns.droplevel(list(left_extra))
+
+    li_names = oset(left.index.names)
+    lc_names = oset(left.columns.names if isinstance(left, pd.DataFrame)
+                    else ())
+    if li_names == ri_names and lc_names == rc_names:
+        # we do not need to do anything else
         return left
 
-    common_names = left_names & right_names
+    common_names = li_names & ri_names
     if not common_names:
         raise NotImplementedError("Cannot broadcast to an array with no common "
                                   "axis")
     # assuming left has a subset of right levels
-    assert left_names < right_names, \
-        "%s is not a subset of %s" % (left_names, right_names)
+    if li_names < ri_names:
+        if isinstance(left, pd.Series):
+            left = left.to_frame('__left__')
+        rightdf = _pandas_index_as_df(right_index)
+        # left join because we use the levels of right but the labels of left
+        # XXX: use left.join() instead?
+        merged = left.merge(rightdf, how='left', right_on=list(common_names),
+                            left_index=True, sort=False)
+        merged.set_index(right_index.names, inplace=True)
+        # TODO: index probably needs to be sorted!
+        if isinstance(orig_left, pd.Series):
+            assert merged.columns == ['__left__']
+            merged = merged['__left__']
+    else:
+        merged = left
 
-    if isinstance(left, pd.Series):
-        left = left.to_frame('__left__')
-    rightdf = _pandas_index_as_df(right_index)
-    # left join because we use the levels of right but the labels of left
-    merged = left.merge(rightdf, how='left', right_on=list(common_names),
-                        left_index=True, sort=False)
-    merged.set_index(right_index.names, inplace=True)
-    if isinstance(orig_left, pd.Series):
-        assert merged.columns == ['__left__']
-        merged = merged['__left__']
-    return merged
+    if lc_names == rc_names:
+        return merged
+    else:
+        assert lc_names < rc_names
+        if not lc_names:
+            return pd.DataFrame({c: merged for c in right_columns},
+                                index=merged.index,
+                                columns=right_columns)
+        else:
+            raise NotImplementedError("Cannot broadcast existing columns")
+
+
+def _pandas_broadcast_to(left, right):
+    columns = right.columns if isinstance(right, pd.DataFrame) else None
+    return _pandas_broadcast_to_index(left, right.index, columns)
 
 
 # We need this function because
