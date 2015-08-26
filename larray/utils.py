@@ -534,8 +534,9 @@ def _pandas_reorder_levels(self, order, axis=0, inplace=False):
     return result
 
 
+#FIXME: use oset.OrderedSet
 class oset(object):
-    def __init__(self, data):
+    def __init__(self, data=()):
         self.l = []
         self.s = set()
         for e in data:
