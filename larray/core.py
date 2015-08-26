@@ -1907,13 +1907,17 @@ class SeriesLArray(PandasLArray):
         assert df_axis == 0
         return len(self.data.index.names)
 
-    def transpose(self, *args):
+    # only difference with DFLA.transpose is the default value for ncoldims
+    # def transpose(self, *args, ncoldims=0):
+    def transpose(self, *args, **kwargs):
         """
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
+        ncoldims: number of trailing dimensions to use as columns (default 0)
         produces a copy if axes are not exactly the same (on Pandas)
         """
-        return self._transpose(0, *args)
+        ncoldims = kwargs.pop('ncoldims', 0)
+        return self._transpose(ncoldims, *args)
 
 
 # TODO: factorize with df_labels
