@@ -643,11 +643,19 @@ class ValueGroup(object):
         # impossible to know whether a name was explicitly given or computed
         self.name = name
 
-        if axis is not None:
+        # if axis is not None:
             # check the key is valid
             # TODO: for performance reasons, we should cache the result.
             # This will need to be invalidated correctly
-            axis.translate(key)
+
+            # we cannot do it via axis.translate anymore because that
+            # function is not valid in the case of sparse arrays (we
+            # cannot translate each axis individually)
+
+            # TODO: this should be replaced by something like
+            # axis.is_valid(key)
+            # for simple keys this is just a matter of "key in axis"
+            # axis.translate(key)
         self.axis = axis
 
     def __hash__(self):
