@@ -591,7 +591,7 @@ class Axis(object):
         return self.name if self.name is not None else 'Unnamed axis'
 
     def __repr__(self):
-        return 'Axis(%r, %r)' % (self.name, self.labels.tolist())
+        return 'Axis(%r, %r)' % (self.name, list(self.labels))
 
     def __add__(self, other):
         if isinstance(other, Axis):
@@ -626,6 +626,51 @@ class Axis(object):
         res.labels.sort()
         res._update_mapping()
         return res
+
+
+class PandasAxis(Axis):
+    def __init__(self, index):
+        self.index = index
+
+    @property
+    def name(self):
+        return self.index.name
+
+    @property
+    def labels(self):
+        return self.index.values
+
+    @property
+    def _mapping(self):
+        raise NotImplementedError("_mapping")
+
+    def translate(self, key):
+        raise NotImplementedError("translate")
+
+    def __contains__(self, key):
+        return to_tick(key) in self.index
+
+
+class PandasMIAxis(PandasAxis):
+    def __init__(self, index, level_num):
+        assert isinstance(index, pd.MultiIndex)
+        self.index = index
+        self.level_num = level_num
+        self._labels = None
+
+    @property
+    def name(self):
+        return self.index.names[self.level_num]
+
+    @property
+    def labels(self):
+        if self._labels is None:
+            self._labels = _index_level_unique_labels(self.index,
+                                                      self.level_num)
+        return self._labels
+
+    def __contains__(self, key):
+        return to_tick(key) in self.labels
 
 
 # We need a separate class for ValueGroup and cannot simply create a
@@ -1349,8 +1394,10 @@ class PandasLArray(LArray):
             # in the actual Axis ticks (and Pandas Index) and NOT the VG itself
             if key in axis:
                 # we check if the VG itself is *really* in the axis
-                idx = axis.translate(key)
-                if isinstance(axis.labels[idx], ValueGroup):
+                labels = list(axis.labels)
+                # we cannot check with "key in labels" either
+                idx = labels.index(key)
+                if isinstance(labels[idx], ValueGroup):
                     return key
 
             key = key.key
@@ -1914,7 +1961,6 @@ class PandasLArray(LArray):
     def _rename_axis(self, axis, newname):
         """inplace rename"""
         axis = self.get_axis(axis)
-        axis.name = newname
         pd_axis, level = self._df_axis_level(axis)
         _pandas_rename_axis(self.data, pd_axis, level, newname)
 
@@ -2009,6 +2055,13 @@ class MixedDtype(dict):
         dict.__init__(self, dtypes)
 
 
+def _pandas_axes(index):
+    if isinstance(index, pd.MultiIndex):
+        return [PandasMIAxis(index, level) for level in range(len(index.names))]
+    else:
+        return [PandasAxis(index)]
+
+
 class DataFrameLArray(PandasLArray):
     def __init__(self, data, axes=None):
         """
@@ -2037,8 +2090,7 @@ class DataFrameLArray(PandasLArray):
             # TODO: accept axes argument and check that it is consistent
             # or possibly even override data in DataFrame?
             assert axes is None
-            axes = [Axis(name, labels)
-                    for name, labels in _df_levels(data, 0) + _df_levels(data, 1)]
+            axes = _pandas_axes(data.index) + _pandas_axes(data.columns)
         else:
             raise TypeError("data must be an numpy ndarray or pandas.DataFrame")
 
