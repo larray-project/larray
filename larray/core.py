@@ -200,11 +200,13 @@ import pandas as pd
 
 from larray.utils import (prod, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
-                          duplicates, _sort_level_inplace,
+                          duplicates, _sort_level_inplace, oset,
                           _pandas_insert_index_level, _pandas_transpose_any,
                           _pandas_transpose_any_like, _pandas_align,
-                          _pandas_broadcast_to, multi_index_from_product,
+                          multi_index_from_product,
                           _index_level_unique_labels, _pandas_rename_axis,
+                          _pandas_transpose_any_like_index,
+                          _pandas_broadcast_to_index,
                           _pandas_set_level_labels)
 from larray.sorting import set_topological_index
 
@@ -1804,28 +1806,99 @@ class PandasLArray(LArray):
             # this is how Pandas works internally. Ugly (locs are bool arrays.
             # Ugh!)
             a0_locs = data.index.get_locs(a0_key)
-            # if isinstance(data, pd.DataFrame):
-            #     # FIXME: simple Index have no .get_locs method
-            #     a1_locs = a1_key if a1_key == slice(None) \
-            #         else data.columns.get_locs(a1_key)
-            #     target_columns = data.columns[a1_locs]
-
             # data.iloc[(a0_locs, a1_locs)] = ...
             target_index = data.index[a0_locs]
 
+            if isinstance(data, pd.DataFrame):
+                columns = data.columns
+                if isinstance(columns, pd.MultiIndex):
+                    a1_locs = columns.get_locs(a1_key)
+                    target_columns = columns[a1_locs]
+                else:
+                    if isinstance(a1_key, (list, np.ndarray)):
+                        a1_indexer = columns.get_indexer(a1_key)
+                        # assert we are not trying to set bad values
+                        # XXX: probably remove the assert and let it fail later,
+                        # it might be clearer
+                        assert not np.any(a1_indexer == -1)
+                        target_columns = columns[a1_indexer]
+                    elif isinstance(a1_key, slice):
+                        start, stop = a1_key.start, a1_key.stop
+                        assert a1_key.step is None
+                        start = columns.get_loc(start) if start is not None \
+                            else None
+                        # + 1 because we are inclusive
+                        stop = columns.get_loc(stop) + 1 if stop is not None \
+                            else None
+                        target_columns = columns[start:stop]
+                    else:
+                        assert np.isscalar(a1_key)
+                        start = columns.get_loc(a1_key)
+                        stop = start + 1
+                        target_columns = columns[start:stop]
+
+                value_index = oset(value.index.names)
+                value_columns = oset(value.columns.names) \
+                    if isinstance(value, pd.DataFrame) else oset()
+                value_levels = value_index | value_columns
+                # FIXME: this assumes only one dimension in columns
+                coldimnotinvalue = target_columns.names[0] not in value_levels
+                if (coldimnotinvalue and a1_key == slice(None)) or \
+                        len(target_columns) == 1:
+                    # no need to broadcast columns if Pandas will do it for us
+                    # df.loc[a0k, :] = Series
+                    target_columns = None
+            else:
+                target_columns = None
+
             # broadcast to the index so that we do not need to create the target
             # slice
-            # TODO: also broadcast columns
-            value = _pandas_broadcast_to(value, target_index)
+            value = _pandas_transpose_any_like_index(value, target_index,
+                                                     target_columns,
+                                                     sort=False)
+            value = _pandas_broadcast_to_index(value, target_index,
+                                               target_columns)
+
             # workaround for bad broadcasting of Series ("df[:] = series" nor
             # "df[:, :] = series" work but "df[:] = series.to_frame()" works !)
-            if isinstance(data, pd.DataFrame) and isinstance(value, pd.Series):
-                value = value.to_frame()
+            # for "simple" Index, it works too.
+            if isinstance(data, pd.DataFrame) and \
+                    isinstance(value, pd.Series) and a1_key == slice(None):
+                assert target_columns is None, (target_columns, a1_key)
+                # and (a1_key == slice(None) or len(a1_key) == 1)
+                value = value.to_frame("__series__")
         elif isinstance(value, (np.ndarray, list)):
-            a0size = data.index.get_locs(a0_key).sum()
+            if isinstance(data.index, pd.MultiIndex):
+                locs = data.index.get_locs(a0_key)
+                if isinstance(locs, np.ndarray):
+                    a0size = locs.sum()
+                elif isinstance(locs, slice):
+                    a0size = locs.stop - locs.start
+                else:
+                    raise NotImplementedError("abc")
+            else:
+                raise NotImplementedError("abc")
+            # a0size = data.index.get_locs(a0_key).sum()
             if isinstance(data, pd.DataFrame):
-                a1size = len(data.columns) if a1_key == slice(None) \
-                    else data.columns.get_locs(a1_key).sum()
+                cols = data.columns
+                if isinstance(cols, pd.MultiIndex):
+                    locs = cols.get_locs(a1_key)
+                    if isinstance(locs, np.ndarray):
+                        a1size = locs.sum()
+                    elif isinstance(locs, slice):
+                        a1size = locs.stop - locs.start
+                    else:
+                        raise NotImplementedError("abc")
+                else:
+                    if isinstance(a1_key, slice):
+                        start, stop, step = a1_key.indices(len(cols))
+                        a1size = (stop - start + step - 1) // step
+                    elif np.isscalar(a1_key):
+                        a1size = 1
+                    else:
+                        a1size = len(a1_key)
+                # a1size = len(data.columns) if a1_key == slice(None) \
+                #     else data.columns.get_locs(a1_key).sum()
                 target_shape = (a0size, a1size)
             else:
                 target_shape = (a0size,)
@@ -1833,10 +1906,9 @@ class PandasLArray(LArray):
             if vsize == np.prod(target_shape):
                 value = np.asarray(value).reshape(target_shape)
 
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, pd.DataFrame) and a1_key != slice(None):
             data.loc[a0_key, a1_key] = value
         else:
-            assert not a1_key
             data.loc[a0_key] = value
 
     def _rename_axis(self, axis, newname):

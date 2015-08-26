@@ -497,10 +497,15 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
     return obj
 
 
+def _pandas_transpose_any_like_index(obj, index, columns=None, sort=True):
+    assert isinstance(index, pd.Index)
+    colnames = columns.names if isinstance(columns, pd.Index) else ()
+    return _pandas_transpose_any(obj, index.names, colnames, sort)
+
+
 def _pandas_transpose_any_like(obj, other, sort=True):
-    idxnames = other.index.names
-    colnames = other.columns.names if isinstance(other, pd.DataFrame) else ()
-    return _pandas_transpose_any(obj, idxnames, colnames, sort)
+    columns = other.columns if isinstance(other, pd.DataFrame) else None
+    return _pandas_transpose_any_like_index(obj, other.index, columns, sort)
 
 
 # workaround for no inplace arg.
