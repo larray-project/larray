@@ -581,7 +581,10 @@ class oset(object):
         return oset([e for e in self.l if e not in other_s])
 
     def __eq__(self, other):
-        return self.s == other.s
+        # XXX: not sure checking ordering is the same is a good idea but
+        # _pandas_transpose_any relies on this for level orderings !
+        return self.l == other.l
+        # return self.s == other.s
 
     def __iter__(self):
         return iter(self.l)
