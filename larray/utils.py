@@ -444,32 +444,37 @@ def _pandas_insert_index_level(obj, name, value, position=-1,
     return obj
 
 
-def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
+def _pandas_transpose_any(obj, target_index, target_columns=None, sort=True,
                           copy=False):
-    if column_levels and not index_levels:
+    """
+    target_index & target_columns are level names
+    they may contain more levels than actually present in obj
+    """
+    target_index = oset(target_index)
+    target_columns = oset(target_columns) if target_columns is not None \
+        else oset()
+
+    if target_columns and not target_index:
         # we asked for a Series by asking for only column levels
-        index_levels = tuple(column_levels)
-        column_levels = ()
-    else:
-        index_levels = tuple(index_levels)
-        column_levels = tuple(column_levels) if column_levels is not None else ()
+        target_index, target_columns = target_columns, target_index
+    target_names = target_index | target_columns
 
-    idxnames = obj.index.names
-    colnames = obj.columns.names if isinstance(obj, pd.DataFrame) else ()
+    idxnames = oset(obj.index.names)
+    colnames = oset(obj.columns.names) if isinstance(obj, pd.DataFrame) \
+        else oset()
+    obj_names = idxnames | colnames
 
-    # if idxnames == index_levels and colnames == column_levels:
-    #     return obj.copy()
+    # limit targets to levels actually present
+    target_index = target_index & obj_names
+    target_columns = target_columns & obj_names
 
-    idxnames_set = set(idxnames)
-    colnames_set = set(colnames)
-
-    if idxnames_set == set(column_levels) and colnames_set == set(index_levels):
+    if idxnames <= target_columns and colnames <= target_index:
         obj = obj.transpose()
     else:
         # levels that are in columns but should be in index
-        tostack = [l for l in index_levels if l in colnames_set]
+        tostack = [l for l in target_index if l in colnames]
         # levels that are in index but should be in columns
-        tounstack = [l for l in column_levels if l in idxnames_set]
+        tounstack = [l for l in target_columns if l in idxnames]
 
         # TODO: it is usually faster to go via the path which minimize
         # max(len(axis0), len(axis1))
@@ -484,14 +489,18 @@ def _pandas_transpose_any(obj, index_levels, column_levels=None, sort=True,
         if not tounstack and not tostack and copy:
             obj = obj.copy()
 
-    idxnames = tuple(obj.index.names)
-    colnames = tuple(obj.columns.names) if isinstance(obj, pd.DataFrame) else ()
-    if idxnames != index_levels:
-        obj = _pandas_reorder_levels(obj, index_levels, inplace=True)
+    idxnames = oset(obj.index.names)
+    colnames = oset(obj.columns.names) if isinstance(obj, pd.DataFrame) \
+        else oset()
+
+    if idxnames & target_names != target_index:
+        obj = _pandas_reorder_levels(obj, tuple(target_index | idxnames),
+                                     inplace=True)
         if sort:
             obj = _sort_level_inplace(obj)
-    if colnames != column_levels:
-        _pandas_reorder_levels(obj, column_levels, axis=1, inplace=True)
+    if colnames & target_names != target_columns:
+        _pandas_reorder_levels(obj, tuple(target_columns | colnames), axis=1,
+                               inplace=True)
         if sort:
             obj.sortlevel(axis=1, inplace=True)
     return obj
