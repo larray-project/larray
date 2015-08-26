@@ -1274,6 +1274,40 @@ class NumpyLArray(LArray):
                 for a in self.axes]
         return LArray(self, axes)
 
+    def broadcast_with(self, target):
+        """
+        returns an LArray that is (numpy) broadcastable with target
+        target can be either an LArray or any collection of Axis
+
+        * all common axes must be either 1 or the same length
+        * extra axes in source can have any length and will be moved to the
+          front
+        * extra axes in target can have any length and the result will have axes
+          of length 1 for those axes
+
+        this is different from reshape which ensures the result has exactly the
+        shape of the target.
+        """
+        if isinstance(target, LArray):
+            target_axes = target.axes
+        else:
+            target_axes = target
+            if not isinstance(target, AxisCollection):
+                target_axes = AxisCollection(target_axes)
+        target_names = [a.name for a in target_axes]
+
+        # 1) append length-1 axes for axes in target but not in source (I do not
+        #    think their position matters).
+        array = self.reshape(list(self.axes) +
+                             [Axis(name, ['*']) for name in target_names
+                              if name not in self.axes])
+        # 2) reorder axes to target order (move source only axes to the front)
+        sourceonly_axes = [axis for axis in self.axes
+                           if axis.name not in target_axes]
+        other_axes = [self.axes.get(name, Axis(name, ['*']))
+                      for name in target_names]
+        return array.transpose(sourceonly_axes + other_axes)
+
 
 class PandasLArray(LArray):
     def _wrap_pandas(self, res_data):
@@ -1944,40 +1978,6 @@ class DataFrameLArray(PandasLArray):
     @property
     def series(self):
         return self.data.stack()
-
-    def broadcast_with(self, target):
-        """
-        returns an LArray that is (numpy) broadcastable with target
-        target can be either an LArray or any collection of Axis
-
-        * all common axes must be either 1 or the same length
-        * extra axes in source can have any length and will be moved to the
-          front
-        * extra axes in target can have any length and the result will have axes
-          of length 1 for those axes
-
-        this is different from reshape which ensures the result has exactly the
-        shape of the target.
-        """
-        if isinstance(target, LArray):
-            target_axes = target.axes
-        else:
-            target_axes = target
-            if not isinstance(target, AxisCollection):
-                target_axes = AxisCollection(target_axes)
-        target_names = [a.name for a in target_axes]
-
-        # 1) append length-1 axes for axes in target but not in source (I do not
-        #    think their position matters).
-        array = self.reshape(list(self.axes) +
-                             [Axis(name, ['*']) for name in target_names
-                              if name not in self.axes])
-        # 2) reorder axes to target order (move source only axes to the front)
-        sourceonly_axes = [axis for axis in self.axes
-                           if axis.name not in target_axes]
-        other_axes = [self.axes.get(name, Axis(name, ['*']))
-                      for name in target_names]
-        return array.transpose(sourceonly_axes + other_axes)
 
     def _df_axis_nlevels(self, df_axis):
         idx = self.data.index if df_axis == 0 else self.data.columns
