@@ -704,6 +704,15 @@ class ValueGroup(object):
             # axis.is_valid(key)
             # for simple keys this is just a matter of "key in axis"
             # axis.translate(key)
+
+        # !!!!!!!!!!!!!!!!!!!!!!!
+        # MEGA XXX: we might want to only store axis_name, not the axis object
+        # then the AxisFactory can produce real Axes with no ticks (it does not
+        # matter) but in that case we will no longer be able to cache the
+        # translated ValueGroup (eg label list -> [indices list or bool
+        # selector]) as easily. We could create a (label_key ->
+        # indices_or_bool key) cache in the LArray itself though
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!
         self.axis = axis
 
     def __hash__(self):
@@ -1471,6 +1480,12 @@ class PandasLArray(LArray):
             else:
                 killaxis = False
 
+            # !!!!!!!!!!!!!!!!!
+            # MEGA XXX: we probably want to create a GroupBy object manually
+            # (this is hopefuly possible) and
+            # aggregate on that, this would probably be much faster than
+            # aggregate each group separately then concat
+            # !!!!!!!!!!!!!!!!!
             results = []
             for group in groups:
                 # we need only lists of ticks, not single ticks, otherwise the
