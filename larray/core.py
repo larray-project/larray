@@ -1493,9 +1493,8 @@ class PandasLArray(LArray):
         # fill_value = fill_values.get(opname)
         def opmethod(self, other):
             if isinstance(other, PandasLArray):
-                axis, level, (self_al, other_al) = _pandas_align(self.data,
-                                                                 other.data,
-                                                                 join='left')
+                axis, level, (self_al, other_al) = \
+                    _pandas_align(self.data, other.data, join='left')
                 method = getattr(self_al, opname)
                 res_data = method(other_al, axis=axis, level=level)
                 # XXX: sometimes align changes the type of object (DF ->
@@ -1875,6 +1874,7 @@ class PandasLArray(LArray):
 
 class SeriesLArray(PandasLArray):
     def __init__(self, data, axes=None):
+        # TODO: factorize this with DataFrameLArray
         if isinstance(data, np.ndarray):
             axes = AxisCollection(axes)
             # XXX: add a property "labels" on AxisCollection?
