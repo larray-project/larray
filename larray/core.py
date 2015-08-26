@@ -867,12 +867,12 @@ class LArray(object):
     """
     def __init__(self, data, axes=None):
         ndim = data.ndim
-        if axes is not None:
+        # if axes is not None:
             # if len(axes) != ndim:
             #     raise ValueError("number of axes (%d) does not match "
             #                      "number of dimensions of data (%d)"
             #                      % (len(axes), ndim))
-            shape = tuple(len(axis) for axis in axes)
+            # shape = tuple(len(axis) for axis in axes)
             # if prod(data.shape) != prod(shape):
             #     raise ValueError("bad shape: %s vs %s" % (data.shape, shape))
             # if shape != data.shape:
