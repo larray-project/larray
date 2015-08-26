@@ -667,6 +667,7 @@ class PandasMIAxis(PandasAxis):
         if self._labels is None:
             self._labels = _index_level_unique_labels(self.index,
                                                       self.level_num)
+        # FIXME: the cached labels need to be invalidated on set_labels
         return self._labels
 
     def __contains__(self, key):
