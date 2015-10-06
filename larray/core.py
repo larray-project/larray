@@ -837,20 +837,24 @@ class LArray(object):
         return pd.Series(np.asarray(self).reshape(self.size), index)
 
     #noinspection PyAttributeOutsideInit
-    def __array_finalize__(self, obj):
-        if obj is None:
-            # We are in the middle of the LabeledArray.__new__ constructor,
-            # and our special attributes will be set when we return to that
-            # constructor, so we do not need to set them here.
-            return
+    # def __array_finalize__(self, obj):
+    #     """
+    #     used when arrays are allocated from subclasses of ndarrays
+    #     """
+    #     return np.ndarray.__array_finalize__(self.data, obj)
 
-        # obj is our "template" object (on which we have asked a view on).
-        if isinstance(obj, LArray) and self.shape == obj.shape:
-            # obj.view(LArray)
-            # larr[:3]
-            self.axes = obj.axes
-        else:
-            self.axes = None
+    # def __array_prepare__(self, arr, context=None):
+    #     """
+    #     called before ufuncs (must return an ndarray)
+    #     """
+    #     return np.ndarray.__array_prepare__(self.data, arr, context)
+
+    def __array_wrap__(self, out_arr, context=None):
+        """
+        called after ufuncs
+        """
+        data = np.ndarray.__array_wrap__(self.data, out_arr, context)
+        return LArray(data, self.axes)
 
     @property
     def axes_labels(self):
