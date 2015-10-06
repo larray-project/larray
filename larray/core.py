@@ -815,7 +815,7 @@ class LArray(object):
 
         if axes is not None and not isinstance(axes, AxisCollection):
             axes = AxisCollection(axes)
-        self.data = data
+        self.data = np.asarray(data)
         self.axes = axes
 
     @property
