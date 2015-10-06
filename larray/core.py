@@ -874,7 +874,7 @@ class LArray(object):
         axis = self.get_axis(axis)
         axes = [Axis(newname, a.labels) if a is axis else a
                 for a in self.axes]
-        return LArray(self, axes)
+        return LArray(self.data, axes)
 
     def full_key(self, key):
         """
