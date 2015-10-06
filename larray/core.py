@@ -863,7 +863,8 @@ class LArray(object):
     def axes_rename(self, **kwargs):
         for k in kwargs.keys():
             if k not in self.axes:
-                raise KeyError("'%s' axis not found in array")
+                raise KeyError("'%s' axis not found in array (%s)"
+                               % (k, ', '.join(self.axes_names)))
         axes = [Axis(kwargs[a.name] if a.name in kwargs else a.name, a.labels)
                 for a in self.axes]
         self.axes = AxisCollection(axes)
