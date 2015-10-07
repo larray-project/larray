@@ -652,6 +652,9 @@ class ValueGroup(object):
         name = ", %r" % self.name if self.name is not None else ''
         return "ValueGroup(%r%s)" % (self.key, name)
 
+    def __len__(self):
+        return len(self.key)
+
 
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a
