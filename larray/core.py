@@ -444,6 +444,8 @@ class Axis(object):
         """
         labels should be an array-like (convertible to an ndarray)
         """
+        if isinstance(name, Axis):
+            name = name.name
         self.name = name
         labels = to_ticks(labels)
 
