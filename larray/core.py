@@ -627,10 +627,11 @@ class ValueGroup(object):
         self.name = name
 
         if axis is not None:
+            pass
             # check the key is valid
             #TODO: for performance reasons, we should cache the result. This will
             # need to be invalidated correctly
-            axis.translate(key)
+            # axis.translate(key)
         self.axis = axis
 
     def __hash__(self):
@@ -1785,3 +1786,19 @@ def zeros_like(array):
 
 def empty(axes):
     return LArray(np.empty(tuple(len(axis) for axis in axes)), axes)
+
+
+class AxisRef(Axis):
+    def __init__(self, name):
+        self.name = name
+        self.labels = None
+
+    def translate(self, key):
+        raise NotImplementedError("an Axis reference (x.) cannot translate "
+                                  "labels")
+
+
+class AxisFactory(object):
+    def __getattr__(self, key):
+        return AxisRef(key)
+x = AxisFactory()
