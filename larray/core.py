@@ -192,6 +192,7 @@ import pandas as pd
 from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
+from larray.view import view
 
 
 #TODO: return a generator, not a list
@@ -1794,3 +1795,15 @@ class AxisFactory(object):
     def __getattr__(self, key):
         return AxisRef(key)
 x = AxisFactory()
+
+
+orig_hook = sys.displayhook
+
+
+def qt_display_hook(value):
+    if isinstance(value, LArray):
+        view(value)
+    else:
+        orig_hook(value)
+
+sys.displayhook = qt_display_hook
