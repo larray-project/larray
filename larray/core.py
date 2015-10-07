@@ -1269,7 +1269,8 @@ class LArray(object):
                 killaxis = False
 
             res_shape[axis_idx] = len(groups)
-            res_data = np.empty(res_shape, dtype=res.dtype)
+            res_dtype = res.dtype if op is not np.mean else float
+            res_data = np.empty(res_shape, dtype=res_dtype)
 
             group_idx = [slice(None) for _ in res_shape]
             for i, group in enumerate(groups):
