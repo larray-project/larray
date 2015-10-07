@@ -1433,24 +1433,15 @@ class LArray(object):
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
-    def append(self, **kwargs):
-        label = kwargs.pop('label', None)
-        # It does not make sense to accept multiple axes at once, as "values"
-        # will not have the correct shape for all axes after the first one.
-        #XXX: Knowing that, it might be better to use a required (non kw) axis
-        # argument, but it would be inconsistent with filter and sum.
-        # It would look like: la.append(lipro, la.sum(lipro), label='sum')
-        if len(kwargs) > 1:
-            raise ValueError("Cannot append to several axes at the same time")
-        axis_name, values = list(kwargs.items())[0]
-        axis, axis_idx = self.get_axis(axis_name, idx=True)
+    def append(self, axis, value, label=None):
+        axis, axis_idx = self.get_axis(axis, idx=True)
         shape = self.shape
-        values = np.asarray(values)
-        if values.shape == shape[:axis_idx] + shape[axis_idx+1:]:
+        value = np.asarray(value)
+        if value.shape == shape[:axis_idx] + shape[axis_idx+1:]:
             # adding a dimension of size one if it is missing
             new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
-            values = values.reshape(new_shape)
-        data = np.append(np.asarray(self), values, axis=axis_idx)
+            value = value.reshape(new_shape)
+        data = np.append(np.asarray(self), value, axis=axis_idx)
         new_axes = self.axes[:]
         new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
         return LArray(data, axes=new_axes)

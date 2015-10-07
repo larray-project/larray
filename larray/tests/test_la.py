@@ -1315,9 +1315,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = self.small
         sex, lipro = la.axes
 
-        la = la.append(lipro=la.sum(lipro), label='sum')
+        la = la.append(lipro, la.sum(lipro), label='sum')
         self.assertEqual(la.shape, (2, 16))
-        la = la.append(sex=la.sum(sex), label='sum')
+        la = la.append(sex, la.sum(sex), label='sum')
         self.assertEqual(la.shape, (3, 16))
 
         # crap the sex axis is different !!!! we don't have this problem with
