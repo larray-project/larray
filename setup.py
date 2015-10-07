@@ -38,17 +38,19 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries',
 ]
 
-setup(name=DISTNAME,
-      version=VERSION,
-      license=LICENSE,
-      author=AUTHOR,
-      author_email=AUTHOR_EMAIL,
-      classifiers=CLASSIFIERS,
-      description=DESCRIPTION,
-      long_description=LONG_DESCRIPTION,
-      install_requires=INSTALL_REQUIRES,
-      tests_require=TESTS_REQUIRE,
-      url=URL,
-      test_suite=TEST_SUITE,
-      packages=find_packages(),
-      package_data=PACKAGE_DATA)
+setup(
+    name=DISTNAME,
+    version=VERSION,
+    license=LICENSE,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    classifiers=CLASSIFIERS,
+    description=DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
+    install_requires=INSTALL_REQUIRES,
+    tests_require=TESTS_REQUIRE,
+    url=URL,
+    test_suite=TEST_SUITE,
+    packages=find_packages(),
+    package_data=PACKAGE_DATA,
+)
