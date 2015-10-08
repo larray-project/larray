@@ -1,0 +1,50 @@
+package:
+  name: larray
+  version: 0.2
+
+source:
+#  git_tag: 0.1
+  git_tag: master
+  git_url: file://c:/Users/gdm/devel/larray/.git
+#  git_url: https://github.com/liam2/larray.git
+
+# build:
+  # If this is a new build for the same version, increment the build
+  # number. If you do not include this key, it defaults to 0.
+  # number: 1
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - pandas
+
+  run:
+    - python
+    - numpy
+    - pandas
+
+test:
+  imports:
+    - larray
+
+  # commands:
+    # You can put test commands to be run here.  Use this to test that the
+    # entry points work.
+  
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+  # requires:
+    # Put any additional test requirements here.  For example
+    # - nose
+
+about:
+  home: http://github.com/liam2/larray
+  license: GPL
+  summary: "Labeled N-dimensional array."
+   
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml
