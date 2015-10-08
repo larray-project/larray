@@ -63,21 +63,26 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QApplication, QKeySequence, QLabel,
                          QSpinBox, QWidget, QVBoxLayout,
                          QAbstractItemDelegate,
-                         QFont, QAction, QItemSelection, QItemSelectionModel,
-                         QItemSelectionRange, QIcon, QStyle, QFontMetrics)
+                         QFont, QAction, QItemSelection,
+                         QItemSelectionModel, QItemSelectionRange,
+                         QIcon, QStyle, QFontMetrics)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
                           pyqtSlot as Slot)
 
 import numpy as np
 
-import matplotlib
-matplotlib.use('Qt4Agg')
-del matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvas as FigureCanvas
-from matplotlib.backends.backend_qt4agg \
-    import NavigationToolbar2QT as NavigationToolbar
-
+try:
+    import matplotlib
+    matplotlib.use('Qt4Agg')
+    del matplotlib
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_qt4agg import FigureCanvas as FigureCanvas
+    from matplotlib.backends.backend_qt4agg \
+        import NavigationToolbar2QT as NavigationToolbar
+    matplotlib_present = True
+except ImportError:
+    matplotlib_present = False
+        
 from larray.combo import FilterComboBox, FilterMenu
 import larray as la
 
@@ -736,6 +741,9 @@ class ArrayView(QTableView):
         clipboard.setText(text)
 
     def plot(self):
+        if not matplotlib_present:
+            raise Exception("plot() is not available because matplotlib is not "
+                            "installed")
         # we use np.asarray to work around missing "newaxis" implementation
         # in LArray
         data = self._selection_data(headers=False)
