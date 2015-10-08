@@ -39,6 +39,8 @@ Array Editor Dialog based on Qt
 #   them manually)
 #   > need to be generic
 # * copy to clipboard possibly too
+# * automatic change digits on resize column => different format per column
+# * keep "headers" visible
 # * keyboard shortcut for filter each dim
 # * tab in a filter combo, brings up next filter combo
 # * view/edit DataFrames too
@@ -62,7 +64,7 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QSpinBox, QWidget, QVBoxLayout,
                          QAbstractItemDelegate,
                          QFont, QAction, QItemSelection, QItemSelectionModel,
-                         QItemSelectionRange, QIcon, QStyle)
+                         QItemSelectionRange, QIcon, QStyle, QFontMetrics)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
                           pyqtSlot as Slot)
 
@@ -791,12 +793,9 @@ class ArrayEditorWidget(QWidget):
             self.old_data_shape = self.data.shape
             self.data.shape = (1, 1)
 
-        for data_frac_digits in range(6):
-            maxdiff = np.max(np.abs(data - np.round(data, data_frac_digits)))
-            if maxdiff < 1e-7:
-                break
-        else:
-            data_frac_digits = 6
+        data_frac_digits = self._data_digits(data)
+
+        max_digits = self.get_max_digits()
 
         # default width can fit 8 chars
         avail_digits = 8
@@ -878,6 +877,35 @@ class ArrayEditorWidget(QWidget):
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
+
+    def get_max_digits(self, need_sign=False, need_dot=False, scientific=False):
+        font = get_font("arreditor")  # QApplication.font()
+        col_width = 60
+        margin_width = 6  # a wild guess
+        avail_width = col_width - margin_width
+        metrics = QFontMetrics(font)
+
+        def str_width(c):
+            return metrics.size(Qt.TextSingleLine, c).width()
+
+        digit_width = max(str_width(str(i)) for i in range(10))
+        dot_width = metrics.size(Qt.TextSingleLine, '.').width()
+        sign_width = max(str_width('+'), str_width('-'))
+        if need_sign:
+            avail_width -= sign_width
+        if need_dot:
+            avail_width -= dot_width
+        if scientific:
+            avail_width -= str_width('e') + sign_width + 2 * digit_width
+        return avail_width // digit_width
+
+    def _data_digits(self, data, maxdigits=6):
+        threshold = 10 ** -(maxdigits + 1)
+        for ndigits in range(maxdigits):
+            maxdiff = np.max(np.abs(data - np.round(data, ndigits)))
+            if maxdiff < threshold:
+                return ndigits
+        return maxdigits
 
     def accept_changes(self):
         """Accept changes"""
@@ -1202,6 +1230,7 @@ if __name__ == "__main__":
     data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
     data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
+    data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
     arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
 
     # 8.5Gb... and still snappy, yeah!
