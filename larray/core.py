@@ -3,6 +3,13 @@ from __future__ import absolute_import, division, print_function
 
 __version__ = "0.2dev"
 
+__all__ = [
+    'LArray', 'Axis', 'AxisCollection',
+    'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
+    'x',
+    'zeros', 'zeros_like', 'empty', 'empty_like'
+]
+
 """
 Matrix class
 """
@@ -193,7 +200,7 @@ from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
 
-try:                          
+try:
     from PyQt4 import QtGui, QtCore
     from larray.view import view, edit
     qt_present = True
@@ -1804,6 +1811,10 @@ def zeros_like(array):
 
 def empty(axes):
     return LArray(np.empty(tuple(len(axis) for axis in axes)), axes)
+
+
+def empty_like(array):
+    return empty(array.axes)
 
 
 class AxisRef(Axis):
