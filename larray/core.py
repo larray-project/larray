@@ -1594,6 +1594,11 @@ class LArray(object):
             axis = self.get_axis(axis)
             axis.labels = new_labels
 
+    def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
+        return LArray(self.data.astype(dtype, order, casting, subok, copy),
+                      self.axes)
+    astype.__doc__ = np.ndarray.astype.__doc__
+
 
 def parse(s):
     """
