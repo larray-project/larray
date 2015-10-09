@@ -492,11 +492,14 @@ class Axis(object):
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
         if isinstance(key, ValueGroup):
-            if key.axis != self:
+            # XXX: I am not sure this test even makes sense. eg if we have two
+            # axes arr_from and arr_to, we might want to reuse groups
+            if key.axis != self.name:
                 raise ValueError("cannot subset an axis with a ValueGroup of "
                                  "an incompatible axis")
+            # FIXME: we should respect the given name (overrides key.name)
             return key
-        return ValueGroup(key, name, self)
+        return ValueGroup(key, name, self.name)
 
     def all(self, name=None):
         return self.group(slice(None), name=name if name is not None else "all")
@@ -639,8 +642,12 @@ class ValueGroup(object):
         # impossible to know whether a name was explicitly given or computed
         self.name = name
 
+        # we store the Axis name, instead of the axis object itself so that
+        # ValueGroups are more compatible between themselves.
+        if isinstance(axis, Axis):
+            axis = axis.name
         if axis is not None:
-            pass
+            assert isinstance(axis, str)
             # check the key is valid
             #TODO: for performance reasons, we should cache the result. This will
             # need to be invalidated correctly
@@ -922,7 +929,7 @@ class LArray(object):
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
             #XXX: support ValueGroup without axis?
-            listkey = [(axis_key.axis.name
+            listkey = [(axis_key.axis
                         if isinstance(axis_key, ValueGroup)
                         else axis_name, axis_key)
                        for axis_key, axis_name in zip(key, self.axes_names)]
