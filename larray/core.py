@@ -1491,6 +1491,7 @@ class LArray(object):
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, res_axes)
+    T = property(transpose)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
         """
