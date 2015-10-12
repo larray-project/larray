@@ -17,7 +17,7 @@ __all__ = [
 """
 Matrix class
 """
-#TODO
+# TODO
 # * rename ValueGroup to LabelGroup
 
 # * implement named groups in strings
@@ -218,7 +218,7 @@ except ImportError:
         raise Exception('edit() is not available because Qt is not installed')
 
 
-#TODO: return a generator, not a list
+# TODO: return a generator, not a list
 def srange(*args):
     return list(map(str, range(*args)))
 
@@ -337,7 +337,7 @@ def to_ticks(s):
     >>> to_ticks('H , F')
     ['H', 'F']
 
-    #XXX: we might want to return real int instead, because if we ever
+    # XXX: we might want to return real int instead, because if we ever
     # want to have more complex queries, such as:
     # arr.filter(age > 10 and age < 20)
     # this would break for string values (because '10' < '2')
@@ -350,7 +350,8 @@ def to_ticks(s):
     elif isinstance(s, pd.Index):
         return s.values
     elif isinstance(s, np.ndarray):
-        #XXX: we assume it has already been translated. Is it a safe assumption?
+        # we assume it has already been translated
+        # XXX: Is it a safe assumption?
         return s
     elif isinstance(s, (list, tuple)):
         return [to_tick(e) for e in s]
@@ -446,7 +447,7 @@ def to_keys(value):
 
 
 def union(*args):
-    #TODO: add support for ValueGroup and lists
+    # TODO: add support for ValueGroup and lists
     """
     returns the union of several "value strings" as a list
     """
@@ -463,7 +464,7 @@ def larray_equal(first, other):
 
 class Axis(object):
     # ticks instead of labels?
-    #XXX: make name and labels optional?
+    # XXX: make name and labels optional?
     def __init__(self, name, labels):
         """
         labels should be an array-like (convertible to an ndarray)
@@ -473,7 +474,7 @@ class Axis(object):
         self.name = name
         labels = to_ticks(labels)
 
-        #TODO: move this to to_ticks????
+        # TODO: move this to to_ticks????
         # we convert to an ndarray to save memory (for scalar ticks, for
         # ValueGroup ticks, it does not make a difference since a list of VG
         # and an ndarray of VG are both arrays of pointers)
@@ -491,7 +492,7 @@ class Axis(object):
         self._mapping.update({label.name: i for i, label in enumerate(labels)
                               if isinstance(label, ValueGroup)})
 
-    #XXX: not sure I should offer an *args version
+    # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
         """
         key is label-based (slice and fancy indexing are supported)
@@ -584,7 +585,7 @@ class Axis(object):
             return key
         elif isinstance(key, (tuple, list, np.ndarray)):
             # handle fancy indexing with a sequence of labels
-            #TODO: the result should be cached
+            # TODO: the result should be cached
             res = np.empty(len(key), int)
             for i, label in enumerate(key):
                 res[i] = mapping[label]
@@ -625,16 +626,16 @@ class Axis(object):
                 raise ValueError
 
     def copy(self):
-        #XXX: I wonder if we should make a copy of the labels
+        # XXX: I wonder if we should make a copy of the labels
         return Axis(self.name, self.labels)
-        
+
     def sorted(self):
         res = self.copy()
-        #FIXME: this probably also sorts the original axis !
+        # FIXME: this probably also sorts the original axis !
         res.labels.sort()
         res._update_mapping()
         return res
-        
+
 
 # We need a separate class for ValueGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
@@ -660,7 +661,7 @@ class ValueGroup(object):
         if axis is not None:
             assert isinstance(axis, str)
             # check the key is valid
-            #TODO: for performance reasons, we should cache the result. This will
+            # TODO: for performance reasons, we should cache the result. This will
             # need to be invalidated correctly
             # axis.translate(key)
         self.axis = axis
@@ -670,7 +671,7 @@ class ValueGroup(object):
         # standardize on a single notation so that they can all target each
         # other. eg, this removes spaces in "list strings", instead of
         # hashing them directly
-        #XXX: but we might want to include that normalization feature in
+        # XXX: but we might want to include that normalization feature in
         # to_tick directly, instead of using to_key explicitly here
         return hash(to_tick(to_key(self.key)))
 
@@ -939,7 +940,7 @@ class LArray(object):
 
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
-            #XXX: support ValueGroup without axis?
+            # XXX: support ValueGroup without axis?
             listkey = [(axis_key.axis
                         if isinstance(axis_key, ValueGroup)
                         else axis_name, axis_key)
@@ -963,7 +964,7 @@ class LArray(object):
 
         return key
 
-    #XXX: we only need axes length, so we might want to move this out of the
+    # XXX: we only need axes length, so we might want to move this out of the
     # class
     def cross_key(self, key, collapse_slices=False):
         """
@@ -1000,7 +1001,7 @@ class LArray(object):
                             for axis_key in key]
 
             # 2) expand slices to lists (ranges)
-            #TODO: cache the range in the axis?
+            # TODO: cache the range in the axis?
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice)
                             else axis_key
@@ -1019,7 +1020,7 @@ class LArray(object):
 
         if isinstance(key, (np.ndarray, LArray)) and \
                 np.issubdtype(key.dtype, bool):
-            #TODO: return an LArray with Axis labels = combined keys
+            # TODO: return an LArray with Axis labels = combined keys
             # these combined keys should be objects which display as:
             # (axis1_label, axis2_label, ...) but should also store the axis
             # (names). Should it be the same object as the NDValueGroup?/NDKey?
@@ -1053,11 +1054,11 @@ class LArray(object):
 
         translated_key = self.translated_key(self.full_key(key))
 
-        #XXX: we might want to create fakes axes in this case, as we only
+        # XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
         # theoretically take a significant time to compute
 
-        #FIXME: this breaks when using a boolean fancy index. eg
+        # FIXME: this breaks when using a boolean fancy index. eg
         # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
         # LArray.ratio())
         axes = [axis.subaxis(axis_key)
@@ -1255,7 +1256,7 @@ class LArray(object):
 
     def _group_aggregate(self, op, items):
         res = self
-        #TODO: when working with several "axes" at the same times, we should
+        # TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for item in items:
@@ -1334,7 +1335,7 @@ class LArray(object):
         # between runs because otherwise rounding errors could lead to
         # slightly different results even for commutative operations.
 
-        #XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
+        # XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
         operations = list(args) + sorted(kwargs.items())
         if not operations:
             # op() without args is equal to op(all_axes)
@@ -1401,7 +1402,7 @@ class LArray(object):
 
         def opmethod(self, other):
             if isinstance(other, LArray):
-                #TODO: first test if it is not already broadcastable
+                # TODO: first test if it is not already broadcastable
                 other = other.broadcast_with(self).data
             elif isinstance(other, np.ndarray):
                 pass
@@ -1536,7 +1537,7 @@ class LArray(object):
     def to_clipboard(self, *args, **kwargs):
         self.df.to_clipboard(*args, **kwargs)
 
-    #XXX: sep argument does not seem very useful
+    # XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
     #     # Why xlsxwriter? Because it is faster than openpyxl and xlwt
     #     # currently does not .xlsx (only .xls).
@@ -1552,9 +1553,10 @@ class LArray(object):
     #             sheetname = sep.join(str(k) for k in key)
     #             # sheet names must not:
     #             # * contain any of the following characters: : \ / ? * [ ]
-    #             #XXX: this will NOT work for unicode strings !
-    #             sheetname = sheetname.translate(string.maketrans('[:]', '(-)'),
-    #                                             r'\/?*') # chars to delete
+    #             # XXX: this will NOT work for unicode strings !
+    #             table = string.maketrans('[:]', '(-)')
+    #             todelete = r'\/?*'
+    #             sheetname = sheetname.translate(table, todelete)
     #             # * exceed 31 characters
     #             # sheetname = sheetname[:31]
     #             # * be blank
@@ -1676,7 +1678,7 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
     else:
         last_axis = axes_names[-1].split('\\')
     axes_names[-1] = last_axis[0]
-    #FIXME: hardcoded "time"
+    # FIXME: hardcoded "time"
     axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
     df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
                                            sort_columns=sort_columns, **kwargs)
