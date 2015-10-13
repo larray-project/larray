@@ -618,7 +618,8 @@ class Axis(object):
         if isinstance(other, Axis):
             if self.name != other.name:
                 raise ValueError('cannot subtract Axes with different names')
-            return Axis(self.name, [l for l in self.labels if l not in other.labels])
+            return Axis(self.name,
+                        [l for l in self.labels if l not in other.labels])
         else:
             try:
                 return Axis(self.name, self.labels - other)
