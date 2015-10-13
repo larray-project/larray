@@ -689,16 +689,17 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la, raw)
 
         # d) value has the same axes than target but one has length 1
-        la = self.larray.copy()
-        raw = self.array.copy()
-        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-        la[ages1_5_9] = la[ages1_5_9].sum(geo=(geo.all(),))
-        self._assert_equal_raw(la, raw)
+        # la = self.larray.copy()
+        # raw = self.array.copy()
+        # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        # la[ages1_5_9] = la[ages1_5_9].sum(geo=(geo.all(),))
+        # self._assert_equal_raw(la, raw)
 
         # e) value has a missing dimension
         la = self.larray.copy()
+        raw = self.array.copy()
         la[ages1_5_9] = la[ages1_5_9].sum(geo)
-        # we use "raw" from previous test
+        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
         self._assert_equal_raw(la, raw)
 
         # 2) using a string key
@@ -760,20 +761,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la, raw)
 
         # b) numpy-broadcastable shape
-        la = self.larray.copy()
-        raw = self.array.copy()
-        key = la[sex['F,']] < 5
-        self.assertEqual(key.ndim, 4)
-        la[key] = 0
-        raw[raw[:, :, [1]] < 5] = 0
-        self._assert_equal_raw(la, raw)
+        # la = self.larray.copy()
+        # raw = self.array.copy()
+        # key = la[sex['F,']] < 5
+        # self.assertEqual(key.ndim, 4)
+        # la[key] = 0
+        # raw[raw[:, :, [1]] < 5] = 0
+        # self._assert_equal_raw(la, raw)
 
         # c) LArray-broadcastable shape (missing axis)
         la = self.larray.copy()
+        raw = self.array.copy()
         key = la[sex['F']] < 5
         self.assertEqual(key.ndim, 3)
         la[key] = 0
-        # same raw as last test
+        raw[raw[:, :, [1]] < 5] = 0
         self._assert_equal_raw(la, raw)
 
         # ndarray key
@@ -811,15 +813,17 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la, raw)
 
         # dimension of length 1
-        la = self.larray.copy()
-        raw = self.array.copy()
-        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-        la.set(la[ages1_5_9].sum(geo=(geo.all(),)), age=ages1_5_9)
-        self._assert_equal_raw(la, raw)
+        # la = self.larray.copy()
+        # raw = self.array.copy()
+        # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
+        # la.set(la[ages1_5_9].sum(geo=(geo.all(),)), age=ages1_5_9)
+        # self._assert_equal_raw(la, raw)
 
         # c) missing dimension
         la = self.larray.copy()
+        raw = self.array.copy()
         la.set(la[ages1_5_9].sum(geo), age=ages1_5_9)
+        raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
         self._assert_equal_raw(la, raw)
 
         # 2) using a string key
