@@ -880,6 +880,8 @@ class AxisCollection(object):
             axes = axes.split(',')
         elif isinstance(axes, Axis):
             axes = [axes]
+        # transform positional axis to axis objects
+        axes = [self[axis] for axis in axes]
         for axis in axes:
             del res[axis]
         return res
