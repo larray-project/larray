@@ -1111,8 +1111,8 @@ class LArray(object):
     def __setitem__(self, key, value, collapse_slices=True):
         data = np.asarray(self)
 
-        if (isinstance(key, np.ndarray) or isinstance(key, LArray)) and \
-                np.issubdtype(key.dtype, bool):
+        if (isinstance(key, (np.ndarray, LArray)) and
+                np.issubdtype(key.dtype, bool)):
             if isinstance(key, LArray):
                 key = key.broadcast_with(self.axes)
             data[np.asarray(key)] = value
@@ -1205,7 +1205,8 @@ class LArray(object):
 
         # 1) append length-1 axes for axes in target but not in source (I do not
         #    think their position matters).
-        array = self.reshape(list(self.axes) +
+        # TODO: factorize with make_numpy_broadcastable
+        array = self.reshape(self.axes +
                              [Axis(name, ['*']) for name in target_names
                               if name not in self.axes])
         # 2) reorder axes to target order (move source only axes to the front)
@@ -1337,7 +1338,7 @@ class LArray(object):
         local axis with the same name, **whether it is compatible (has the
         same ticks) or not**.
         """
-        axis_idx = self.get_axis_idx(axis)
+        axis_idx = self.axes.index(axis)
         axis = self.axes[axis_idx]
         return (axis, axis_idx) if idx else axis
 
