@@ -104,14 +104,16 @@ def table2str(table, missing, fullinfo=False, summarize=True,
                     w = sum(minwidths[:keepcols]) + len(cont)
                     maxedges = (numcol - keepcols) // 2
                     if maxedges:
+                        maxi = 0
                         for i in range(1, maxedges + 1):
                             w += minwidths[i] + minwidths[-i]
                             # + 1 for the "continuation" column
                             ncol = keepcols + i * 2 + 1
                             sepw = (ncol - 1) * len(sep)
+                            maxi = i
                             if w + sepw > maxwidth:
                                 break
-                        numedges = i - 1
+                        numedges = maxi - 1
                     else:
                         numedges = 0
                 head = keepcols+numedges
