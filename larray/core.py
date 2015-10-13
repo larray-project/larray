@@ -1248,7 +1248,8 @@ class LArray(object):
         data = np.asarray(self).reshape(height, width)
 
         if self.axes is not None:
-            axes_names = self.axes_names[:]
+            axes_names = [name if name is not None else '-'
+                          for name in self.axes_names]
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
