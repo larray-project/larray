@@ -3,114 +3,151 @@
 
 import numpy as np
 
+from larray.core import LArray, make_numpy_broadcastable
+
+
+def wrapper(func):
+    def wrapped(*args, **kwargs):
+        # TODO: normalize args/kwargs like in LIAM2 so that we can also
+        # broadcast if args are given via kwargs (eg out=)
+        args, combined_axes = make_numpy_broadcastable(args)
+
+        # We pass only raw numpy arrays to the ufuncs even though numpy is
+        # normally meant to handle those case itself via __array_wrap__
+
+        # There is a problem with np.clip though (and possibly other ufuncs)
+        # np.clip is roughly equivalent to
+        # np.maximum(np.minimum(np.asarray(la), high), low)
+        # the np.asarray(la) is problematic because it lose original labels
+        # and then tries to get them back from high, where they are possibly
+        # incomplete if broadcasting happened
+
+        # It fails on "np.minimum(ndarray, LArray)" because it calls
+        # __array_wrap__(high, result) which cannot work if there was
+        # broadcasting involved (high has potentially less labels than result).
+        # it does this because numpy calls __array_wrap__ on the argument with
+        # the highest __array_priority__
+        raw_args = [np.asarray(a) if isinstance(a, LArray) else a
+                    for a in args]
+        res_data = func(*raw_args, **kwargs)
+        if combined_axes:
+            return LArray(res_data, combined_axes)
+        else:
+            return res_data
+        # return func(*args, **kwargs)
+    wrapped.__name__ = func.__name__
+    wrapped.__doc__ = func.__doc__
+    return wrapped
+
+
 # Trigonometric functions
 
-sin = np.sin
-cos = np.cos
-tan = np.tan
-arcsin = np.arcsin
-arccos = np.arccos
-arctan = np.arctan
-hypot = np.hypot
-arctan2 = np.arctan2
-degrees = np.degrees
-radians = np.radians
-unwrap = np.unwrap
-# deg2rad = np.deg2rad
-# rad2deg = np.rad2deg
+sin = wrapper(np.sin)
+cos = wrapper(np.cos)
+tan = wrapper(np.tan)
+arcsin = wrapper(np.arcsin)
+arccos = wrapper(np.arccos)
+arctan = wrapper(np.arctan)
+hypot = wrapper(np.hypot)
+arctan2 = wrapper(np.arctan2)
+degrees = wrapper(np.degrees)
+radians = wrapper(np.radians)
+unwrap = wrapper(np.unwrap)
+# deg2rad = wrapper(np.deg2rad)
+# rad2deg = wrapper(np.rad2deg)
 
 # Hyperbolic functions
 
-sinh = np.sinh
-cosh = np.cosh
-tanh = np.tanh
-arcsinh = np.arcsinh
-arccosh = np.arccosh
-arctanh = np.arctanh
+sinh = wrapper(np.sinh)
+cosh = wrapper(np.cosh)
+tanh = wrapper(np.tanh)
+arcsinh = wrapper(np.arcsinh)
+arccosh = wrapper(np.arccosh)
+arctanh = wrapper(np.arctanh)
 
 # Rounding
 
-around = np.around
-round_ = np.round_
-rint = np.rint
-fix = np.fix
-floor = np.floor
-ceil = np.ceil
-trunc = np.trunc
+around = wrapper(np.around)
+round_ = wrapper(np.round_)
+rint = wrapper(np.rint)
+fix = wrapper(np.fix)
+floor = wrapper(np.floor)
+ceil = wrapper(np.ceil)
+trunc = wrapper(np.trunc)
 
 # Sums, products, differences
 
-# prod = np.prod
-# sum = np.sum
-# nansum = np.nansum
-# cumprod = np.cumprod
-# cumsum = np.cumsum
-# diff = np.diff
-# ediff1d = np.ediff1d
-# gradient = np.gradient
-# cross = np.cross
-# trapz = np.trapz
+# prod = wrapper(np.prod)
+# sum = wrapper(np.sum)
+# nansum = wrapper(np.nansum)
+# cumprod = wrapper(np.cumprod)
+# cumsum = wrapper(np.cumsum)
+# diff = wrapper(np.diff)
+# ediff1d = wrapper(np.ediff1d)
+# gradient = wrapper(np.gradient)
+# cross = wrapper(np.cross)
+# trapz = wrapper(np.trapz)
 
 # Exponents and logarithms
 
-exp = np.exp
-expm1 = np.expm1
-exp2 = np.exp2
-log = np.log
-log10 = np.log10
-log2 = np.log2
-log1p = np.log1p
-logaddexp = np.logaddexp
-logaddexp2 = np.logaddexp2
+exp = wrapper(np.exp)
+expm1 = wrapper(np.expm1)
+exp2 = wrapper(np.exp2)
+log = wrapper(np.log)
+log10 = wrapper(np.log10)
+log2 = wrapper(np.log2)
+log1p = wrapper(np.log1p)
+logaddexp = wrapper(np.logaddexp)
+logaddexp2 = wrapper(np.logaddexp2)
 
 # Other special functions
 
-i0 = np.i0
-sinc = np.sinc
+i0 = wrapper(np.i0)
+sinc = wrapper(np.sinc)
 
 # Floating point routines
 
-signbit = np.signbit
-copysign = np.copysign
-frexp = np.frexp
-ldexp = np.ldexp
+signbit = wrapper(np.signbit)
+copysign = wrapper(np.copysign)
+frexp = wrapper(np.frexp)
+ldexp = wrapper(np.ldexp)
 
 # Arithmetic operations
 
-# add = np.add
-# reciprocal = np.reciprocal
-# negative = np.negative
-# multiply = np.multiply
-# divide = np.divide
-# power = np.power
-# subtract = np.subtract
-# true_divide = np.true_divide
-# floor_divide = np.floor_divide
-# fmod = np.fmod
-# mod = np.mod
-modf = np.modf
-# remainder = np.remainder
+# add = wrapper(np.add)
+# reciprocal = wrapper(np.reciprocal)
+# negative = wrapper(np.negative)
+# multiply = wrapper(np.multiply)
+# divide = wrapper(np.divide)
+# power = wrapper(np.power)
+# subtract = wrapper(np.subtract)
+# true_divide = wrapper(np.true_divide)
+# floor_divide = wrapper(np.floor_divide)
+# fmod = wrapper(np.fmod)
+# mod = wrapper(np.mod)
+modf = wrapper(np.modf)
+# remainder = wrapper(np.remainder)
 
 # Handling complex numbers
 
-angle = np.angle
-real = np.real
-imag = np.imag
-conj = np.conj
+angle = wrapper(np.angle)
+real = wrapper(np.real)
+imag = wrapper(np.imag)
+conj = wrapper(np.conj)
 
 # Miscellaneous
 
-convolve = np.convolve
-clip = np.clip
-sqrt = np.sqrt
-# square = np.square
-absolute = np.absolute
-fabs = np.fabs
-sign = np.sign
-maximum = np.maximum
-minimum = np.minimum
-fmax = np.fmax
-fmin = np.fmin
-nan_to_num = np.nan_to_num
-real_if_close = np.real_if_close
-interp = np.interp
+convolve = wrapper(np.convolve)
+clip = wrapper(np.clip)
+sqrt = wrapper(np.sqrt)
+# square = wrapper(np.square)
+absolute = wrapper(np.absolute)
+fabs = wrapper(np.fabs)
+sign = wrapper(np.sign)
+maximum = wrapper(np.maximum)
+minimum = wrapper(np.minimum)
+fmax = wrapper(np.fmax)
+fmin = wrapper(np.fmin)
+nan_to_num = wrapper(np.nan_to_num)
+real_if_close = wrapper(np.real_if_close)
+interp = wrapper(np.interp)

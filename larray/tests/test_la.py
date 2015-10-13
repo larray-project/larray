@@ -7,10 +7,11 @@ import unittest
 import numpy as np
 import pandas as pd
 
-import larray
+import larray as la
 from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
-                    srange, larray_equal, read_csv, read_hdf, df_aslarray,
-                    zeros, zeros_like, AxisCollection)
+                    srange, larray_equal, read_csv, df_aslarray,
+                    zeros, zeros_like, AxisCollection,
+                    clip, exp)
 from larray.utils import array_equal, array_nan_equal
 
 
@@ -1443,6 +1444,60 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         with open('out.csv') as f:
             self.assertEqual(f.readlines()[:3], result)
 
+    def test_ufuncs(self):
+        la = self.small
+        raw = self.small_data
+
+        # simple one-argument ufunc
+        self._assert_equal_raw(exp(la), np.exp(raw))
+
+        # with out=
+        la_out = zeros(la.axes)
+        raw_out = np.zeros(raw.shape)
+
+        la_out2 = exp(la, la_out)
+        raw_out2 = np.exp(raw, raw_out)
+
+        # FIXME: this is not the case currently
+        # self.assertIs(la_out2, la_out)
+        self.assertEqual(la_out2, la_out)
+        self.assertIs(raw_out2, raw_out)
+
+        self._assert_equal_raw(la_out, raw_out)
+
+        # with out= and broadcasting
+        # we need to put the 'a' axis first because raw numpy only supports that
+        la_out = zeros([Axis('a', [0, 1, 2])] + list(la.axes))
+        raw_out = np.zeros((3,) + raw.shape)
+
+        la_out2 = exp(la, la_out)
+        raw_out2 = np.exp(raw, raw_out)
+
+        # self.assertIs(la_out2, la_out)
+        self.assertEqual(la_out2, la_out)
+        self.assertIs(raw_out2, raw_out)
+
+        self._assert_equal_raw(la_out, raw_out)
+
+        sex, lipro = la.axes
+
+        low = la.sum(sex) // 4 + 3
+        raw_low = raw.sum(0) // 4 + 3
+        high = la.sum(sex) // 4 + 13
+        raw_high = raw.sum(0) // 4 + 13
+
+        # LA + scalars
+        self._assert_equal_raw(la.clip(0, 10), raw.clip(0, 10))
+        self._assert_equal_raw(clip(la, 0, 10), np.clip(raw, 0, 10))
+
+        # LA + LA (no broadcasting)
+        self._assert_equal_raw(clip(la, 21 - la, 9 + la // 2),
+                               np.clip(raw, 21 - raw, 9 + raw // 2))
+
+        # LA + LA (with broadcasting)
+        self._assert_equal_raw(clip(la, low, high),
+                               np.clip(raw, raw_low, raw_high))
+
     def test_plot(self):
         pass
         #small_h = small['H']
@@ -1461,5 +1516,5 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(larray.core)
+    doctest.testmod(la.core)
     unittest.main()

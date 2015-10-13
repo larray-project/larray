@@ -1601,6 +1601,10 @@ class LArray(object):
         return LArray(res_data, res_axes)
     T = property(transpose)
 
+    def clip(self, a_min, a_max, out=None):
+        from larray.ufuncs import clip
+        return clip(self, a_min, a_max, out)
+
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
         """
         write LArray to a csv file
@@ -1939,3 +1943,39 @@ if qt_present:
             orig_hook(value)
 
     sys.displayhook = qt_display_hook
+
+
+def make_numpy_broadcastable(values):
+    """
+    return values where LArrays are (numpy) broadcastable between them.
+    For that to be possible, all common axes must be either 1 or the same
+    length. Extra axes (in any array) can have any length.
+
+    * the resulting arrays will have the combination of all axes found in the
+      input arrays, the earlier arrays defining the order.
+    * axes with a single '*' label will be added for axes not present in input
+    """
+    # TODO: implement AxisCollection.union
+    # all_axes = [v.axes for v in values if isinstance(v, LArray)]
+    # all_axes = AxisCollection.union(all_axes)
+    all_axes = AxisCollection()
+    for v in values:
+        if isinstance(v, LArray):
+            all_axes.extend(v.axes)
+
+    # 1) add length one axes
+    # v.axes.extend([Axis(name, ['*']) for name in all_axes - v.axes])
+    # values = [v.reshape([v.axes.get(axis.name, Axis(axis, ['*']))
+    #                      for axis in all_axes]) if isinstance(v, LArray) else v
+    #           for v in values]
+    # 1) reorder axes
+    values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
+              for v in values]
+    # print("transposed")
+    # print(values)
+
+    # 2) add length one axes
+    # v.axes.extend([Axis(name, ['*']) for name in all_axes - v.axes])
+    return [v.reshape([v.axes.get(axis.name, Axis(axis, ['*']))
+                       for axis in all_axes]) if isinstance(v, LArray) else v
+            for v in values], all_axes
