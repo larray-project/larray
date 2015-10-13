@@ -794,7 +794,8 @@ class AxisCollection(object):
         return len(self._list)
 
     def __str__(self):
-        return "{%s}" % ', '.join(axis.name for axis in self._list)
+        return "{%s}" % ', '.join([axis.name if axis.name is not None else '-'
+                                   for axis in self._list])
 
     def __repr__(self):
         axes_repr = (repr(axis) for axis in self._list)
