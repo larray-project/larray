@@ -8,11 +8,11 @@ import numpy as np
 import pandas as pd
 
 import larray as la
-from larray import (LArray, Axis, ValueGroup, union, to_ticks, to_key,
-                    srange, larray_equal, read_csv, df_aslarray,
-                    zeros, zeros_like, AxisCollection,
+from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
+                    read_csv, zeros, zeros_like,
                     clip, exp)
 from larray.utils import array_equal, array_nan_equal
+from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
 
 
 TESTDATADIR = os.path.dirname(__file__)

@@ -9,9 +9,6 @@ __all__ = [
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    # TODO: these should be imported by tests explicitly from core, not from
-    # larray
-    'to_ticks', 'to_key', 'srange', 'larray_equal', 'df_aslarray'
 ]
 
 """
