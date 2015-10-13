@@ -5,7 +5,7 @@ __version__ = "0.2dev"
 
 __all__ = [
     'LArray', 'Axis', 'AxisCollection', 'ValueGroup',
-    'union',
+    'union', 'stack',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
@@ -1937,6 +1937,24 @@ def ndrange(axes):
     """
     axes = AxisCollection(axes)
     return LArray(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
+
+
+def stack(arrays, axis):
+    """
+    stack([numbirths * HMASC,
+           numbirths * (1 - HMASC)], Axis('sex', 'H,F'))
+    potential alternate syntaxes
+    stack(['H', numbirths * HMASC,
+           'F', numbirths * (1 - HMASC)], 'sex')
+    stack(('H', numbirths * HMASC),
+          ('F', numbirths * (1 - HMASC)), 'sex')
+    """
+    # append an extra length 1 dimension
+    data_arrays = [a.data.reshape(a.shape + (1,)) for a in arrays]
+    axes = arrays[0].axes
+    for a in arrays[1:]:
+        a.axes.check_compatible(axes)
+    return LArray(np.concatenate(data_arrays, axis=-1), axes + axis)
 
 
 class AxisRef(Axis):
