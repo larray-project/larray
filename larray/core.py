@@ -1901,7 +1901,8 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
 
 
 def zeros(axes):
-    return LArray(np.zeros(tuple(len(axis) for axis in axes)), axes)
+    axes = AxisCollection(axes)
+    return LArray(np.zeros(axes.shape), axes)
 
 
 def zeros_like(array):
@@ -1909,7 +1910,8 @@ def zeros_like(array):
 
 
 def empty(axes):
-    return LArray(np.empty(tuple(len(axis) for axis in axes)), axes)
+    axes = AxisCollection(axes)
+    return LArray(np.empty(axes.shape), axes)
 
 
 def empty_like(array):
