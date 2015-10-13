@@ -697,11 +697,14 @@ class ValueGroup(object):
 class AxisCollection(object):
     def __init__(self, axes=None):
         """
-        :param axes: sequence of Axis objects
+        :param axes: sequence of Axis (or int) objects
         """
         if axes is None:
             axes = []
+        axes = [Axis(None, range(axis)) if isinstance(axis, int) else axis
+                for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
+
         if not isinstance(axes, list):
             axes = list(axes)
         self._list = axes
@@ -716,6 +719,9 @@ class AxisCollection(object):
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._list[key]
+        elif isinstance(key, Axis):
+            # XXX: check that it is the same object????
+            return self._map[key.name]
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         else:
@@ -773,6 +779,8 @@ class AxisCollection(object):
         return self._list == other
 
     def __contains__(self, key):
+        if isinstance(key, Axis):
+            key = key.name
         return key in self._map
 
     def __len__(self):
@@ -785,11 +793,29 @@ class AxisCollection(object):
         axes_repr = (repr(axis) for axis in self._list)
         return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
 
+    def __and__(self, other):
+        """
+        returns the intersection of this collection and other
+        """
+        if isinstance(other, basestring):
+            other = set(other.split(','))
+        elif isinstance(other, Axis):
+            other = set(other.name)
+        return AxisCollection([axis for axis in self if axis.name in other])
+
     def get(self, key, default=None):
+        if isinstance(key, Axis):
+            # XXX: check that it is the same object????
+            key = key.name
         return self._map.get(key, default)
 
     def keys(self):
         return [a.name for a in self._list]
+
+    def pop(self, index=-1):
+        axis = self._list.pop(index)
+        del self._map[axis.name]
+        return axis
 
     def append(self, axis):
         """
@@ -808,6 +834,22 @@ class AxisCollection(object):
         self._list.extend(to_add)
         for axis in to_add:
             self._map[axis.name] = axis
+
+    def index(self, axis):
+        """
+        returns the index of axis.
+
+        axis can be a name or an Axis object (or an index)
+        if the Axis object is from another LArray, index() will return the
+        index of the local axis with the same name, whether it is compatible
+        (has the same ticks) or not.
+
+        Raises ValueError if the axis is not present.
+        """
+        name_or_idx = axis.name if isinstance(axis, Axis) else axis
+        return self.names.index(name_or_idx) \
+            if isinstance(name_or_idx, basestring) \
+            else name_or_idx
 
     def insert(self, index, axis):
         """
@@ -833,6 +875,14 @@ class AxisCollection(object):
         for axis in axes:
             del res[axis]
         return res
+
+    @property
+    def names(self):
+        return [axis.name for axis in self._list]
+
+    @property
+    def shape(self):
+        return tuple(len(axis) for axis in self._list)
 
 
 class LArray(object):
@@ -903,7 +953,7 @@ class LArray(object):
         return [axis.name for axis in self.axes]
 
     def rename(self, axis, newname):
-        axis = self.get_axis(axis)
+        axis = self.axes[axis]
         axes = [Axis(newname, a.labels) if a is axis else a
                 for a in self.axes]
         return LArray(self.data, axes)
