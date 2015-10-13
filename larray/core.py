@@ -833,11 +833,22 @@ class AxisCollection(object):
         self._list.append(axis)
         self._map[axis.name] = axis
 
+    def check_compatible(self, axes):
+        for axis in axes:
+            local_axis = self._map.get(axis.name)
+            if local_axis is not None:
+                if axis != local_axis:
+                    raise ValueError("incompatible axes:\n%r\nvs\n%r"
+                                     % (axis, local_axis))
+
     def extend(self, axes):
         """
         extend the collection by appending the axes from axes
         """
+        # check that common axes are the same
+        self.check_compatible(axes)
         to_add = [axis for axis in axes if axis.name not in self._map]
+
         # when __setitem__(slice) will be implemented, we could simplify this
         self._list.extend(to_add)
         for axis in to_add:
