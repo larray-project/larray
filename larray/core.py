@@ -8,7 +8,7 @@ __all__ = [
     'union',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
-    'zeros', 'zeros_like', 'empty', 'empty_like',
+    'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     # TODO: these should be imported by tests explicitly from core, not from
     # larray
     'to_ticks', 'to_key', 'srange', 'larray_equal', 'df_aslarray'
@@ -1907,6 +1907,15 @@ def zeros(axes):
 
 def zeros_like(array):
     return zeros(array.axes)
+
+
+def ones(axes):
+    axes = AxisCollection(axes)
+    return LArray(np.ones(axes.shape), axes)
+
+
+def ones_like(array):
+    return ones(array.axes)
 
 
 def empty(axes):
