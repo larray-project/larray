@@ -35,7 +35,9 @@ install:
     - source activate travisci
 
 script:
-    - nosetests -v --with-doctest
+    # exclude (doc)tests from ufuncs (because docstrings are copied from numpy
+    # and many of those doctests are failing
+    - nosetests -v --with-doctest --exclude=larray.ufuncs
 
 notifications:
     on_success: "change"
