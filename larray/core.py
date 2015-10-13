@@ -1495,7 +1495,8 @@ class LArray(object):
         reorder axes
         accepts either a tuple of axes specs or axes specs as *args
         """
-        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+        if len(args) == 1 and isinstance(args[0],
+                                         (tuple, list, AxisCollection)):
             axes = args[0]
         elif len(args) == 0:
             axes = self.axes[::-1]
