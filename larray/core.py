@@ -960,7 +960,9 @@ class LArray(object):
 
     def __array_wrap__(self, out_arr, context=None):
         """
-        called after ufuncs
+        Called after numpy ufuncs. This is never called during our wrapped
+        ufuncs, but if somebody uses raw numpy function, this works in some
+        cases.
         """
         data = np.ndarray.__array_wrap__(self.data, out_arr, context)
         return LArray(data, self.axes)
@@ -1002,6 +1004,7 @@ class LArray(object):
         # handle keys containing ValueGroups (at potentially wrong places)
         if any(isinstance(axis_key, ValueGroup) for axis_key in key):
             # XXX: support ValueGroup without axis?
+            # extract axis name from ValueGroup keys
             listkey = [(axis_key.axis
                         if isinstance(axis_key, ValueGroup)
                         else axis_name, axis_key)
@@ -1026,7 +1029,7 @@ class LArray(object):
         return key
 
     # XXX: we only need axes length, so we might want to move this out of the
-    # class
+    # class. to AxisCollection? but this backend/numpy-specific, so maybe not
     def cross_key(self, key, collapse_slices=False):
         """
         :param key: a complete (contains all dimensions) index-based key
@@ -1084,7 +1087,9 @@ class LArray(object):
             # TODO: return an LArray with Axis labels = combined keys
             # these combined keys should be objects which display as:
             # (axis1_label, axis2_label, ...) but should also store the axis
-            # (names). Should it be the same object as the NDValueGroup?/NDKey?
+            # (names).
+            # Q: Should it be the same object as the NDValueGroup?/NDKey?
+            # A: yes, probably
             return data[np.asarray(key)]
 
         translated_key = self.translated_key(self.full_key(key))
@@ -1146,6 +1151,17 @@ class LArray(object):
         """
         self.size must be equal to prod([len(axis) for axis in target_axes])
         """
+        # this is a dangerous operation, because except for adding
+        # length 1 axes (which is safe), it potentially modifies data
+        # TODO: add a check/flag? for "unsafe" reshapes (but allow merging
+        # several axes & "splitting" axes) etc.
+        # eg 4, 3, 2 -> 2, 3, 4 is wrong (even if size is respected)
+        #    4, 3, 2 -> 12, 2 is potentially ok (merging adjacent dimensions)
+        #            -> 4, 6 is potentially ok (merging dimensions)
+        #            -> 24 is potentially ok (merging dimensions)
+        #            -> 3, 8 WRONG (non adjacent dimentsions)
+        #            -> 8, 3 WRONG
+        #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
         data = np.asarray(self).reshape([len(axis) for axis in target_axes])
         return LArray(data, target_axes)
 
@@ -1176,6 +1192,16 @@ class LArray(object):
             if not isinstance(target, AxisCollection):
                 target_axes = AxisCollection(target_axes)
         target_names = [a.name for a in target_axes]
+
+        # self.axes.check_compatible(target_axes)
+        # this breaks la['1,5,9'] = la['2,7,3']
+        # solution?
+        # a) explicitly ask to drop labels
+        # la['1,5,9'] = la['2,7,3'].data
+        # la['1,5,9'] = la['2,7,3'].raw()
+        # what if there is another dimension we want to broadcast?
+        # b) ask to set correct labels explicitly
+        # la['1,5,9'] = la['2,7,3'].set_labels(x.ages, [1, 5, 9])
 
         # 1) append length-1 axes for axes in target but not in source (I do not
         #    think their position matters).
@@ -1406,7 +1432,7 @@ class LArray(object):
             return isinstance(a, (int, basestring, Axis))
 
         res = self
-        # group consecutive same-type (group vs axis aggregates) operations
+        # group *consecutive* same-type (group vs axis aggregates) operations
         for are_axes, axes in groupby(operations, isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
             res = func(op, axes)
