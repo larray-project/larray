@@ -691,6 +691,12 @@ class ValueGroup(object):
     def __len__(self):
         return len(self.key)
 
+    def __lt__(self, other):
+        return self.key.__lt__(other.key)
+
+    def __gt__(self, other):
+        return self.key.__gt__(other.key)
+
 
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a
