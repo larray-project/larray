@@ -1490,15 +1490,18 @@ class LArray(object):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self, other):
+            res_axes = self.axes
             if isinstance(other, LArray):
                 # TODO: first test if it is not already broadcastable
-                other = other.broadcast_with(self).data
+                (self, other), res_axes = \
+                    make_numpy_broadcastable([self, other])
+                other = other.data
             elif isinstance(other, np.ndarray):
                 pass
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))
-            return LArray(super_method(self.data, other), self.axes)
+            return LArray(super_method(self.data, other), res_axes)
         opmethod.__name__ = fullname
         return opmethod
 
