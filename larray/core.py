@@ -1931,6 +1931,14 @@ def empty_like(array):
     return empty(array.axes)
 
 
+def ndrange(axes):
+    """
+    :param axes: either a collection of axes or a shape
+    """
+    axes = AxisCollection(axes)
+    return LArray(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
+
+
 class AxisRef(Axis):
     def __init__(self, name):
         self.name = name
