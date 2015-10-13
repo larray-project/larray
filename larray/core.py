@@ -601,7 +601,7 @@ class Axis(object):
         return self.name if self.name is not None else 'Unnamed axis'
 
     def __repr__(self):
-        return 'Axis(%r, %r)' % (self.name, self.labels.tolist())
+        return 'Axis(%r, %r)' % (self.name, list(self.labels))
 
     def __add__(self, other):
         if isinstance(other, Axis):
