@@ -459,13 +459,19 @@ class TestAxisCollection(TestCase):
         # check the original has not been modified
         self.assertEqual(col, self.collection)
 
-        # b) with dupe
-        #XXX: the "new" age axis is ignored. We might want to ignore it if it
-        #  is the same but raise an exception if it is different
-        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
+        # b) with compatible dupe
+        # the "new" age axis is ignored (because it is compatible)
+        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':7')]
         self.assertEqual(new, [lipro, sex, age, geo])
 
-        # other col
+        # c) with incompatible dupe
+        #XXX: the "new" age axis is ignored. We might want to ignore it if it
+        #  is the same but raise an exception if it is different
+        # new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
+        self.assertRaises(ValueError, col.__add__,
+                          [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')])
+
+        # 2) other AxisCollection
         new = col + AxisCollection([geo, value])
         self.assertEqual(new, [lipro, sex, age, geo, value])
 
