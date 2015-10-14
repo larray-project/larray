@@ -1719,9 +1719,14 @@ class LArray(object):
     def shift(self, axis, n=1):
         axis = self.axes[axis]
         #TODO: use integer position slicing
-        stop_label = axis.labels[-(n + 1)]
-        res = self[axis[:stop_label]]
-        res.set_labels(axis, axis.labels[n:])
+        if n >= 0:
+            rng = axis[:axis.labels[-(n + 1)]]
+            new_labels = axis.labels[n:]
+        else:
+            rng = axis[axis.labels[-n]:]
+            new_labels = axis.labels[:n]
+        res = self[rng]
+        res.set_labels(axis, new_labels)
         return res
 
 
