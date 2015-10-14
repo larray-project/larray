@@ -415,6 +415,19 @@ class TestAxisCollection(TestCase):
         del col[self.sex]
         self.assertEqual(len(col), 0)
 
+    def test_pop(self):
+        col = self.collection[:]
+        self.assertEqual(len(col), 3)
+        self.assertIs(col.pop(), self.age)
+        self.assertEqual(len(col), 2)
+        self.assertEqual(col[0], self.lipro)
+        self.assertEqual(col[1], self.sex)
+        self.assertIs(col.pop(), self.sex)
+        self.assertEqual(len(col), 1)
+        self.assertEqual(col[0], self.lipro)
+        self.assertIs(col.pop(), self.lipro)
+        self.assertEqual(len(col), 0)
+
     #TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection
