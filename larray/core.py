@@ -1707,13 +1707,9 @@ class LArray(object):
 
     __array_priority__ = 100
 
-
-    def set_labels(self, **kwargs):
-        for axis, new_labels in kwargs.items():
-            if axis not in self.axes:
-                raise KeyError("'%s' axis not found in array" % axis)
-            axis = self.get_axis(axis)
-            axis.labels = new_labels
+    def set_labels(self, axis, labels):
+        axis = self.axes[axis]
+        axis.labels = labels
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
         return LArray(self.data.astype(dtype, order, casting, subok, copy),
