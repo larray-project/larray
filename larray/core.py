@@ -1716,6 +1716,14 @@ class LArray(object):
                       self.axes)
     astype.__doc__ = np.ndarray.astype.__doc__
 
+    def shift(self, axis, n=1):
+        axis = self.axes[axis]
+        #TODO: use integer position slicing
+        stop_label = axis.labels[-(n + 1)]
+        res = self[axis[:stop_label]]
+        res.set_labels(axis, axis.labels[n:])
+        return res
+
 
 def parse(s):
     """
