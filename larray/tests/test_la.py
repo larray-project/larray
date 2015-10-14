@@ -428,6 +428,15 @@ class TestAxisCollection(TestCase):
         self.assertIs(col.pop(), self.lipro)
         self.assertEqual(len(col), 0)
 
+    def test_replace(self):
+        col = self.collection[:]
+        col.replace('sex', self.geo)
+        self.assertEqual(len(col), 3)
+        self.assertEqual(col.names, ['lipro', 'geo', 'age'])
+        col.replace(self.geo, self.sex)
+        self.assertEqual(len(col), 3)
+        self.assertEqual(col.names, ['lipro', 'sex', 'age'])
+
     #TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection

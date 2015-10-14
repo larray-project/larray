@@ -885,6 +885,10 @@ class AxisCollection(object):
     def copy(self):
         return self[:]
 
+    def replace(self, oldaxis, newaxis):
+        idx = self.index(oldaxis)
+        self[idx] = newaxis
+
     def without(self, axes):
         """
         returns a new collection without some axes
