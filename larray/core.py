@@ -1711,9 +1711,14 @@ class LArray(object):
 
     __array_priority__ = 100
 
-    def set_labels(self, axis, labels):
+    def set_labels(self, axis, labels, inplace=False):
         axis = self.axes[axis]
-        axis.labels = labels
+        if inplace:
+            axis.labels = labels
+            return self
+        else:
+            return LArray(self.data,
+                          self.axes.replace(axis, Axis(axis.name, labels)))
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
         return LArray(self.data.astype(dtype, order, casting, subok, copy),
@@ -1730,8 +1735,7 @@ class LArray(object):
             rng = axis[axis.labels[-n]:]
             new_labels = axis.labels[:n]
         res = self[rng]
-        res.set_labels(axis, new_labels)
-        return res
+        return res.set_labels(axis, new_labels)
 
 
 def parse(s):
