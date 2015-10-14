@@ -475,12 +475,19 @@ class Axis(object):
         # we convert to an ndarray to save memory (for scalar ticks, for
         # ValueGroup ticks, it does not make a difference since a list of VG
         # and an ndarray of VG are both arrays of pointers)
-        self.labels = np.asarray(labels)
+        self._labels = None
         self._mapping = {}
+        self.labels = np.asarray(labels)
+
+    def get_labels(self):
+        return self._labels
+    def set_labels(self, new_labels):
+        self._labels = new_labels
         self._update_mapping()
+    labels = property(get_labels, set_labels)
 
     def _update_mapping(self):
-        labels = self.labels
+        labels = self._labels
         self._mapping = {label: i for i, label in enumerate(labels)}
         # we have no choice but to do that!
         # otherwise we could not make geo['Brussels'] work efficiently
@@ -1957,7 +1964,7 @@ def stack(arrays, axis):
 class AxisRef(Axis):
     def __init__(self, name):
         self.name = name
-        self.labels = None
+        self._labels = None
 
     def translate(self, key):
         raise NotImplementedError("an Axis reference (x.) cannot translate "
