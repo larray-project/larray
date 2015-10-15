@@ -9,6 +9,8 @@ __all__ = [
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
+    'ndrange',
+    '__version__'
 ]
 
 """
