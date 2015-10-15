@@ -43,7 +43,7 @@ Matrix class
 # arrays
 
 # ? keepdims=True instead of/in addition to group tuples
-# * implement newaxis
+# ? implement newaxis
 # * int labels vs indice-based indexing
 #   one way to disambiguate is to use marker objects:
 #   time[start + 5:]
@@ -57,9 +57,9 @@ Matrix class
 # * avg on last 10 years
 #     time = Axis('time', ...)
 #     x = time[-10:]  # <- does not work (-10 is not a tick on the Axis)!
-    # la.avg(time[-10:])
-    # la[time[-10:]].avg(time)
-    # la.append(la.avg(time[-10:]), axis=time)
+    # la.mean(time.i[-10:])
+    # la[time[-10:]].mean(time)
+    # la.append(la.mean(time[-10:]), axis=time)
     # la.append(time=la.avg(time[-10:]))
     # la.append(time=la.avg(time='-10:'))
 
