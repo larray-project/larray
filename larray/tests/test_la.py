@@ -430,12 +430,14 @@ class TestAxisCollection(TestCase):
 
     def test_replace(self):
         col = self.collection[:]
-        col.replace('sex', self.geo)
-        self.assertEqual(len(col), 3)
-        self.assertEqual(col.names, ['lipro', 'geo', 'age'])
-        col.replace(self.geo, self.sex)
-        self.assertEqual(len(col), 3)
-        self.assertEqual(col.names, ['lipro', 'sex', 'age'])
+        newcol = col.replace('sex', self.geo)
+        # original collection is not modified
+        self.assertEqual(col, self.collection)
+        self.assertEqual(len(newcol), 3)
+        self.assertEqual(newcol.names, ['lipro', 'geo', 'age'])
+        newcol = newcol.replace(self.geo, self.sex)
+        self.assertEqual(len(newcol), 3)
+        self.assertEqual(newcol.names, ['lipro', 'sex', 'age'])
 
     #TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):

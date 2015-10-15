@@ -888,8 +888,10 @@ class AxisCollection(object):
         return self[:]
 
     def replace(self, oldaxis, newaxis):
+        res = self[:]
         idx = self.index(oldaxis)
-        self[idx] = newaxis
+        res[idx] = newaxis
+        return res
 
     def without(self, axes):
         """
