@@ -160,6 +160,15 @@ class TestAxis(TestCase):
         self.assertEqual(group.key, slice(None))
         self.assertEqual(group.axis, 'age')
 
+    def test_positional(self):
+        age = Axis('age', ':115')
+
+        # these are NOT equivalent (not translated until used in an LArray
+        # self.assertEqual(age.i[:17], age[':17'])
+        key = age.i[:-1]
+        self.assertEqual(key.key, slice(None, -1))
+        self.assertEqual(key.axis, 'age')
+
     def test_all(self):
         age = Axis('age', ':115')
         group = age.all()
@@ -703,6 +712,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # key with duplicate axes
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age.i[1, 5]))
+
     def test_getitem_bool_array_key(self):
         raw = self.array
         la = self.larray
