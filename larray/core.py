@@ -461,6 +461,14 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
+class PositionalKeyMaker(object):
+    def __init__(self, axis):
+        self.axis = axis
+
+    def __getitem__(self, key):
+        return PositionalKey(key, None, self.axis)
+
+
 class Axis(object):
     # ticks instead of labels?
     # XXX: make name and labels optional?
@@ -480,6 +488,7 @@ class Axis(object):
         self._labels = None
         self._mapping = {}
         self.labels = np.asarray(labels)
+        self.i = PositionalKeyMaker(self.name)
 
     def get_labels(self):
         return self._labels
@@ -574,6 +583,9 @@ class Axis(object):
         except (KeyError, TypeError):
             pass
 
+        if isinstance(key, PositionalKey):
+            return key.key
+
         if isinstance(key, ValueGroup):
             key = key.key
 
@@ -648,7 +660,12 @@ class Axis(object):
 # new Axis with a subset of values/ticks/labels: the subset of
 # ticks/labels of the ValueGroup need to correspond to its *Axis*
 # indices
-class ValueGroup(object):
+class LKey(object):
+    def __init__(self, key, name, axis):
+        raise NotImplementedError()
+
+
+class ValueGroup(LKey):
     def __init__(self, key, name=None, axis=None):
         """
         key should be either a sequence of labels, a slice with label bounds
@@ -702,6 +719,22 @@ class ValueGroup(object):
 
     def __gt__(self, other):
         return self.key.__gt__(other.key)
+
+
+class PositionalKey(LKey):
+    def __init__(self, key, name=None, axis=None):
+        if isinstance(key, tuple):
+            key = list(key)
+        self.key = key
+        self.name = name
+        self.axis = axis
+
+    def __repr__(self):
+        name = ", %r" % self.name if self.name is not None else ''
+        return "PositionalKey(%r%s)" % (self.key, name)
+
+    def __len__(self):
+        return len(self.key)
 
 
 # not using OrderedDict because it does not support indices-based getitem
@@ -1014,11 +1047,11 @@ class LArray(object):
                 key = key[:pos] + none_slices + key[pos + 1:]
 
         # handle keys containing ValueGroups (at potentially wrong places)
-        if any(isinstance(axis_key, ValueGroup) for axis_key in key):
+        if any(isinstance(axis_key, LKey) for axis_key in key):
             # XXX: support ValueGroup without axis?
             # extract axis name from ValueGroup keys
             listkey = [(axis_key.axis
-                        if isinstance(axis_key, ValueGroup)
+                        if isinstance(axis_key, LKey)
                         else axis_name, axis_key)
                        for axis_key, axis_name in zip(key, self.axes_names)]
             dupe_axes = list(duplicates(k for k, v in listkey))

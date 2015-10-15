@@ -667,6 +667,42 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], age['1,5']))
 
+    def test_getitem_positional(self):
+        raw = self.array
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        age159 = age.i[1, 5, 9]
+        lipro159 = lipro.i[0, 4, 8]
+
+        # ValueGroup at "correct" place
+        subset = la[age159]
+        self.assertEqual(subset.axes[1:], (geo, sex, lipro))
+        self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
+        self._assert_equal_raw(subset, raw[[1, 5, 9]])
+
+        # ValueGroup at "incorrect" place
+        self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
+
+        # multiple ValueGroup key (in "incorrect" order)
+        self._assert_equal_raw(la[lipro159, age159],
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
+
+        # mixed ValueGroup/positional key
+        self._assert_equal_raw(la['1,5,9', lipro159],
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
+
+        # single None slice
+        self._assert_equal_raw(la[:], raw)
+
+        # only Ellipsis
+        self._assert_equal_raw(la[...], raw)
+
+        # Ellipsis and VG
+        self._assert_equal_raw(la[..., lipro159], raw[..., [0, 4, 8]])
+
+        # key with duplicate axes
+        # la[[1, 5, 9], age['1,5,9']]
+        self.assertRaises(ValueError, la.__getitem__, ([1, 5], age.i[1, 5]))
     def test_getitem_bool_array_key(self):
         raw = self.array
         la = self.larray
