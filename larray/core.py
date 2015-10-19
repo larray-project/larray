@@ -436,7 +436,7 @@ def to_keys(value):
         else:
             # a single group => collapse dimension
             return to_key(value)
-    elif isinstance(value, ValueGroup):
+    elif isinstance(value, LKey):
         return value
     elif isinstance(value, list):
         return to_key(value)
@@ -488,7 +488,10 @@ class Axis(object):
         self._labels = None
         self._mapping = {}
         self.labels = np.asarray(labels)
-        self.i = PositionalKeyMaker(self.name)
+
+    @property
+    def i(self):
+        return PositionalKeyMaker(self.name)
 
     def get_labels(self):
         return self._labels
@@ -1394,7 +1397,7 @@ class LArray(object):
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for item in items:
-            if isinstance(item, ValueGroup):
+            if isinstance(item, LKey):
                 axis, groups = item.axis, item
             else:
                 axis, groups = item
@@ -1406,8 +1409,8 @@ class LArray(object):
 
             if not isinstance(groups, tuple):
                 # groups is in fact a single group
-                assert isinstance(groups, (basestring, slice, list,
-                                           ValueGroup)), type(groups)
+                assert isinstance(groups, (basestring, slice, list, LKey)), \
+                       type(groups)
                 if isinstance(groups, list):
                     assert len(groups) > 0
 
