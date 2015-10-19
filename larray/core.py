@@ -203,19 +203,6 @@ from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
 
-try:
-    from PyQt4 import QtGui, QtCore
-    from larray.view import view, edit
-    qt_present = True
-except ImportError:
-    qt_present = False
-
-    def view(array):
-        raise Exception('view() is not available because Qt is not installed')
-
-    def edit(array):
-        raise Exception('edit() is not available because Qt is not installed')
-
 
 # TODO: return a generator, not a list
 def srange(*args):
@@ -2049,19 +2036,6 @@ class AxisFactory(object):
     def __getattr__(self, key):
         return AxisRef(key)
 x = AxisFactory()
-
-
-if qt_present:
-    orig_hook = sys.displayhook
-
-
-    def qt_display_hook(value):
-        if isinstance(value, LArray):
-            view(value)
-        else:
-            orig_hook(value)
-
-    sys.displayhook = qt_display_hook
 
 
 def make_numpy_broadcastable(values):
