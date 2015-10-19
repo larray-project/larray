@@ -1444,6 +1444,10 @@ class LArray(object):
             group_idx = [slice(None) for _ in res_shape]
             for i, group in enumerate(groups):
                 group_idx[axis_idx] = i
+                # this is only useful for ndim == 1 because
+                # a[(0,)] (equivalent to a[0] which kills the axis)
+                # is different from a[[0]] (which does not kill the axis)
+                idx = tuple(group_idx)
 
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in __getitem__ instead of in
@@ -1451,13 +1455,26 @@ class LArray(object):
                 group = [group] if group in axis else group
 
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
+                if res_data.ndim == 1:
+                    assert len(idx) == 1 and idx[0] == i
+
+                    # res_data[idx] but instead of returning a scalar (eg
+                    # np.int32), it returns a 0d array which is a view on
+                    # res_data, which can thus be used as out
+                    out = res_data[i:i + 1].reshape(())
+                else:
+                    out = res_data[idx]
+
                 arr = np.asarray(arr)
-                op(arr, axis=axis_idx, out=res_data[group_idx])
+                op(arr, axis=axis_idx, out=out)
                 del arr
             if killaxis:
                 assert group_idx[axis_idx] == 0
-                res_data = res_data[group_idx]
-            res = LArray(res_data, res_axes)
+                res_data = res_data[idx]
+            if isinstance(res_data, np.ndarray):
+                res = LArray(res_data, res_axes)
+            else:
+                res = res_data
         return res
 
     def _aggregate(self, op, args, kwargs, commutative=False):

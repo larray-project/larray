@@ -9,7 +9,7 @@ import pandas as pd
 
 import larray as la
 from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
-                    read_csv, zeros, zeros_like,
+                    read_csv, zeros, zeros_like, ndrange,
                     clip, exp)
 from larray.utils import array_equal, array_nan_equal
 from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
@@ -1092,6 +1092,13 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # c) chain group aggregate after axis aggregate
         reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(reg.shape, (4, 15))
+
+    def test_group_agg_one_axis(self):
+        a = Axis('a', range(3))
+        la = ndrange([a])
+        raw = np.asarray(la)
+
+        self._assert_equal_raw(la.sum(a[0, 2]), raw[[0, 2]].sum())
 
     # group aggregates on a group-aggregated array
     def test_group_agg_on_group_agg(self):
