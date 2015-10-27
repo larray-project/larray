@@ -713,6 +713,45 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age['1,5']))
 
+    def test_getitem_guess_axis(self):
+        raw = self.array
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        # ValueGroup at "correct" place
+        self._assert_equal_raw(la[['1', '5', '9']], raw[[1, 5, 9]])
+        subset = la['1,5,9']
+        self.assertEqual(subset.axes[1:], (geo, sex, lipro))
+        self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
+        self._assert_equal_raw(subset, raw[[1, 5, 9]])
+
+        # ValueGroup at "incorrect" place
+        self._assert_equal_raw(la['P01,P05,P09'], raw[..., [0, 4, 8]])
+        self._assert_equal_raw(la[['P01', 'P05', 'P09']], raw[..., [0, 4, 8]])
+
+        # multiple ValueGroup key (in "incorrect" order)
+        self._assert_equal_raw(la['P01,P05,P09', '1,5,9'],
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
+
+        # mixed ValueGroup/positional key
+        self._assert_equal_raw(la['1,5,9', 'P01,P05,P09'],
+                               raw[[1, 5, 9]][..., [0, 4, 8]])
+
+        # single None slice
+        self._assert_equal_raw(la[:], raw)
+
+        # only Ellipsis
+        self._assert_equal_raw(la[...], raw)
+
+        # Ellipsis and VG
+        self._assert_equal_raw(la[..., 'P01,P05,P09'], raw[..., [0, 4, 8]])
+        self._assert_equal_raw(la[..., ['P01', 'P05', 'P09']],
+                               raw[..., [0, 4, 8]])
+
+        # key with duplicate axes
+        # la[[1, 5, 9], age['1,5,9']]
+        self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age['1,5']))
+
     def test_getitem_positional(self):
         raw = self.array
         la = self.larray
@@ -1561,7 +1600,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
-        self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+        self._assert_equal_raw(la[x.arr[1], 0, 'F', x.nat[1], :],
+                               [3722, 3395, 3347])
 
     def test_df_aslarray(self):
         dt = [('age', int), ('sex\\time', 'U1'),
@@ -1590,7 +1630,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
-        self._assert_equal_raw(la[1, 0, 'F', 1, :], [3722, 3395, 3347])
+        self._assert_equal_raw(la[x.arr[1], 0, 'F', x.nat[1], :],
+                               [3722, 3395, 3347])
 
         la.to_csv('out.csv')
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',

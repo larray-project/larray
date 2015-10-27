@@ -1016,12 +1016,22 @@ class LArray(object):
                 for a in self.axes]
         return LArray(self.data, axes)
 
-    def full_key(self, key):
+    def translated_key(self, key):
         """
-        Returns a full nd-key from a key in any of the following forms:
-        a) a single value b) a tuple of values (possibly including ValueGroups)
+        Complete and translate key
+
+        Parameters
+        ----------
+        key can have any of the following forms
+        a) a single value
+        b) a tuple of values (possibly including ValueGroups)
         c) an {axis_name: value} dict
+
+        Returns
+        -------
+        Returns a full N dimensional positional key
         """
+
         # convert scalar keys to 1D keys
         if not isinstance(key, (tuple, dict)):
             key = (key,)
@@ -1056,12 +1066,40 @@ class LArray(object):
                     raise KeyError("'{}' is not an axis name".format(axis_name))
             key = tuple(key[axis.name] if axis.name in key else slice(None)
                         for axis in self.axes)
+        else:
+            # TODO: instead of checking all axes, we should have a big mapping
+            # (in AxisCollection or LArray):
+            # label -> (axis, index)
+            # but for Pandas, this wouldn't work, we'd need label -> axis
+            new_key = {}
+            for axis_key in key:
+                if axis_key == slice(None):
+                    continue
+                valid_axes = []
+                for axis in self.axes:
+                    try:
+                        axis_pos_key = axis.translate(axis_key)
+                        if axis.name in new_key:
+                            raise ValueError('%s is ambiguous' % axis_key)
+                        new_key[axis.name] = axis_pos_key
+                        valid_axes.append(axis.name)
+                    except KeyError:
+                        pass
+                if not valid_axes:
+                    raise ValueError("%s is not a valid label for any axis"
+                                     % axis_key)
+                elif len(valid_axes) > 1:
+                    raise ValueError('%s is ambiguous (valid in %s)' %
+                                     (axis_key, valid_axes))
+            return tuple(new_key[a.name] if a.name in new_key else slice(None)
+                         for a in self.axes)
 
         # convert xD keys to ND keys
         if len(key) < self.ndim:
             key += (slice(None),) * (self.ndim - len(key))
 
-        return key
+        return tuple(axis.translate(axis_key)
+                     for axis, axis_key in zip(self.axes, key))
 
     # XXX: we only need axes length, so we might want to move this out of the
     # class. to AxisCollection? but this backend/numpy-specific, so maybe not
@@ -1110,10 +1148,6 @@ class LArray(object):
         else:
             return key
 
-    def translated_key(self, key):
-        return tuple(axis.translate(axis_key)
-                     for axis, axis_key in zip(self.axes, key))
-
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
@@ -1127,7 +1161,8 @@ class LArray(object):
             # A: yes, probably
             return data[np.asarray(key)]
 
-        translated_key = self.translated_key(self.full_key(key))
+        # translated_key = self.translated_key(self.full_key(key))
+        translated_key = self.translated_key(key)
 
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
@@ -1153,7 +1188,8 @@ class LArray(object):
             data[np.asarray(key)] = value
             return
 
-        translated_key = self.translated_key(self.full_key(key))
+        # translated_key = self.translated_key(self.full_key(key))
+        translated_key = self.translated_key(key)
 
         # XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
