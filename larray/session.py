@@ -23,6 +23,20 @@ class Session(object):
     def __setattr__(self, key, value):
         self._objects[key] = value
 
+    # TODO: implement __iter__
+    # def load(self, fname, names):
+    #     # TODO: support path + *.csv
+    #     funcs = {'.h5': read_hdf, '.xls': read_excel}
+    #     func = funcs[ext]
+    #     for name in names:
+    #         self[name] = func(fname, name)
+    #
+    # def dump(self, fname, fmt='.h5'):
+    #     func = LArray.to_hdf
+    #     for obj in self.objects(kind=LArray):
+    #         func(obj, fname, name)
+
+    # TODO: rename to filter and return another Session
     def objects(self, pattern=None, kind=None):
         keys = self._objects.keys()
         if pattern is not None:
