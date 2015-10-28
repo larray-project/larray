@@ -1382,17 +1382,6 @@ class LArray(object):
         else:
             return LArray(res_data, res_axes)
 
-    def get_axis(self, axis, idx=False):
-        """
-        axis can be an index, a name or an Axis object
-        if the Axis object is from another LArray, get_axis will return the
-        local axis with the same name, **whether it is compatible (has the
-        same ticks) or not**.
-        """
-        axis_idx = self.axes.index(axis)
-        axis = self.axes[axis_idx]
-        return (axis, axis_idx) if idx else axis
-
     def _group_aggregate(self, op, items):
         res = self
         # TODO: when working with several "axes" at the same times, we should
@@ -1405,7 +1394,7 @@ class LArray(object):
                 axis, groups = item
             groups = to_keys(groups)
 
-            axis, axis_idx = res.get_axis(axis, idx=True)
+            axis, axis_idx = res.axes[axis], res.axes.index(axis)
             res_axes = res.axes[:]
             res_shape = list(res.shape)
 
@@ -1625,7 +1614,7 @@ class LArray(object):
     __invert__ = _unaryop('invert')
 
     def append(self, axis, value, label=None):
-        axis, axis_idx = self.get_axis(axis, idx=True)
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
         shape = self.shape
         value = np.asarray(value)
         if value.shape == shape[:axis_idx] + shape[axis_idx+1:]:
@@ -1638,10 +1627,10 @@ class LArray(object):
         return LArray(data, axes=new_axes)
 
     def extend(self, axis, other):
-        axis, axis_idx = self.get_axis(axis, idx=True)
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
         # Get axis by name, so that we do *NOT* check they are "compatible",
         # because it makes sense to append axes of different length
-        other_axis = other.get_axis(axis)
+        other_axis = other.axes[axis]
 
         data = np.append(np.asarray(self), np.asarray(other), axis=axis_idx)
         new_axes = self.axes[:]
@@ -1661,7 +1650,7 @@ class LArray(object):
             axes = self.axes[::-1]
         else:
             axes = args
-        axes = [self.get_axis(a) for a in axes]
+        axes = [self.axes[a] for a in axes]
         axes_names = set(axis.name for axis in axes)
         missing_axes = [axis for axis in self.axes
                         if axis.name not in axes_names]
