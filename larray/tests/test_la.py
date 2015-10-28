@@ -718,23 +718,23 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        # ValueGroup at "correct" place
+        # key at "correct" place
         self._assert_equal_raw(la[['1', '5', '9']], raw[[1, 5, 9]])
         subset = la['1,5,9']
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
         self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
-        # ValueGroup at "incorrect" place
+        # key at "incorrect" place
         self._assert_equal_raw(la['P01,P05,P09'], raw[..., [0, 4, 8]])
         self._assert_equal_raw(la[['P01', 'P05', 'P09']], raw[..., [0, 4, 8]])
 
-        # multiple ValueGroup key (in "incorrect" order)
+        # multiple keys (in "incorrect" order)
         self._assert_equal_raw(la['P01,P05,P09', '1,5,9'],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/positional key
-        self._assert_equal_raw(la['1,5,9', 'P01,P05,P09'],
+        # mixed ValueGroup/key
+        self._assert_equal_raw(la[lipro['P01,P05,P09'], '1,5,9'],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # single None slice

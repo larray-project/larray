@@ -711,6 +711,9 @@ class ValueGroup(LKey):
 
 
 class PositionalKey(LKey):
+    """
+    Positional Key
+    """
     def __init__(self, key, name=None, axis=None):
         if isinstance(key, tuple):
             key = list(key)
@@ -1015,6 +1018,29 @@ class LArray(object):
                 for a in self.axes]
         return LArray(self.data, axes)
 
+    def _translate_axis_key(self, axis_key):
+        if isinstance(axis_key, LKey):
+            return axis_key
+
+        # TODO: instead of checking all axes, we should have a big mapping
+        # (in AxisCollection or LArray):
+        # label -> (axis, index)
+        # but for Pandas, this wouldn't work, we'd need label -> axis
+        valid_axes = []
+        for axis in self.axes:
+            try:
+                axis_pos_key = axis.translate(axis_key)
+                valid_axes.append(axis.name)
+            except KeyError:
+                pass
+        if not valid_axes:
+            raise ValueError("%s is not a valid label for any axis"
+                             % axis_key)
+        elif len(valid_axes) > 1:
+            raise ValueError('%s is ambiguous (valid in %s)' %
+                             (axis_key, valid_axes))
+        return PositionalKey(axis_pos_key, axis=valid_axes[0])
+
     def translated_key(self, key):
         """
         Complete and translate key
@@ -1045,58 +1071,36 @@ class LArray(object):
                 none_slices = (slice(None),) * (self.ndim - len(key) + 1)
                 key = key[:pos] + none_slices + key[pos + 1:]
 
-        # handle keys containing ValueGroups (at potentially wrong places)
-        if any(isinstance(axis_key, LKey) for axis_key in key):
+            # translate non LKey to PositionalKey and drop slice(None) since
+            # they are meaningless at this point
+            # XXX: we might want to raise an exception when we find (most)
+            # slice(None) because except for a single slice(None) a[:], I don't
+            # think there is any point.
+            key = tuple(self._translate_axis_key(axis_key) for axis_key in key
+                        if axis_key != slice(None))
+
+            assert all(isinstance(axis_key, LKey) for axis_key in key)
+
+            # handle keys containing ValueGroups (at potentially wrong places)
+
             # XXX: support ValueGroup without axis?
             # extract axis name from ValueGroup keys
-            listkey = [(axis_key.axis
-                        if isinstance(axis_key, LKey)
-                        else axis_name, axis_key)
-                       for axis_key, axis_name in zip(key, self.axes_names)]
-            dupe_axes = list(duplicates(k for k, v in listkey))
+
+            dupe_axes = list(duplicates(axis_key.axis for axis_key in key))
             if dupe_axes:
                 raise ValueError("key with duplicate axis: %s" % dupe_axes)
-            key = dict(listkey)
+            key = dict((axis_key.axis, axis_key) for axis_key in key)
 
-        if isinstance(key, dict):
-            axes_names = set(self.axes_names)
-            for axis_name in key:
-                if axis_name not in axes_names:
-                    raise KeyError("'{}' is not an axis name".format(axis_name))
-            key = tuple(key[axis.name] if axis.name in key else slice(None)
-                        for axis in self.axes)
-        else:
-            # TODO: instead of checking all axes, we should have a big mapping
-            # (in AxisCollection or LArray):
-            # label -> (axis, index)
-            # but for Pandas, this wouldn't work, we'd need label -> axis
-            new_key = {}
-            for axis_key in key:
-                if axis_key == slice(None):
-                    continue
-                valid_axes = []
-                for axis in self.axes:
-                    try:
-                        axis_pos_key = axis.translate(axis_key)
-                        if axis.name in new_key:
-                            raise ValueError('%s is ambiguous' % axis_key)
-                        new_key[axis.name] = axis_pos_key
-                        valid_axes.append(axis.name)
-                    except KeyError:
-                        pass
-                if not valid_axes:
-                    raise ValueError("%s is not a valid label for any axis"
-                                     % axis_key)
-                elif len(valid_axes) > 1:
-                    raise ValueError('%s is ambiguous (valid in %s)' %
-                                     (axis_key, valid_axes))
-            return tuple(new_key[a.name] if a.name in new_key else slice(None)
-                         for a in self.axes)
+        # dict -> tuple (complete and order key)
+        assert isinstance(key, dict)
+        axes_names = set(self.axes_names)
+        for axis_name in key:
+            if axis_name not in axes_names:
+                raise KeyError("'{}' is not an axis name".format(axis_name))
+        key = tuple(key[axis.name] if axis.name in key else slice(None)
+                    for axis in self.axes)
 
-        # convert xD keys to ND keys
-        if len(key) < self.ndim:
-            key += (slice(None),) * (self.ndim - len(key))
-
+        # label -> raw positional
         return tuple(axis.translate(axis_key)
                      for axis, axis_key in zip(self.axes, key))
 
@@ -1187,7 +1191,6 @@ class LArray(object):
             data[np.asarray(key)] = value
             return
 
-        # translated_key = self.translated_key(self.full_key(key))
         translated_key = self.translated_key(key)
 
         # XXX: we might want to create fakes axes in this case, as we only
@@ -1285,15 +1288,6 @@ class LArray(object):
         other_axes = [self.axes.get(name, Axis(name, ['*']))
                       for name in target_names]
         return array.transpose(sourceonly_axes + other_axes)
-
-    # deprecated since Python 2.0 but we need to define it to catch "simple"
-    # slices (with integer bounds !) because ndarray is a "builtin" type
-    def __getslice__(self, i, j):
-        # sadly LArray[:] translates to LArray.__getslice__(0, sys.maxsize)
-        return self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)]
-
-    def __setslice__(self, i, j, value):
-        self[slice(i, j) if i != 0 or j != sys.maxsize else slice(None)] = value
 
     def __str__(self):
         if not self.ndim:
@@ -1975,6 +1969,12 @@ def read_eurostat(filepath, **kwargs):
     Returns
     -------
     result : LArray
+
+    Examples
+    --------
+
+    >>>
+
     """
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
@@ -2198,6 +2198,8 @@ class AxisRef(Axis):
         raise NotImplementedError("an Axis reference (x.) cannot translate "
                                   "labels")
 
+    def __repr__(self):
+        return 'AxisRef(%r)' % self.name
 
 class AxisFactory(object):
     def __getattr__(self, key):
