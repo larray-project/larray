@@ -1371,7 +1371,7 @@ class LArray(object):
         if not axes:
             axes = self.axes
 
-        axes_indices = tuple(self.get_axis_idx(a) for a in axes)
+        axes_indices = tuple(self.axes.index(a) for a in axes)
         res_data = op(src_data, axis=axes_indices)
         axes_tokill = set(axes_indices)
         res_axes = [axis for axis_num, axis in enumerate(self.axes)
@@ -1381,20 +1381,6 @@ class LArray(object):
             return res_data
         else:
             return LArray(res_data, res_axes)
-
-    def get_axis_idx(self, axis):
-        """
-        returns the index of an axis
-
-        axis can be a name or an Axis object (or an index)
-        if the Axis object is from another LArray, get_axis_idx will return the
-        index of the local axis with the same name, whether it is compatible
-        (has the same ticks) or not.
-        """
-        name_or_idx = axis.name if isinstance(axis, Axis) else axis
-        return self.axes_names.index(name_or_idx) \
-            if isinstance(name_or_idx, basestring) \
-            else name_or_idx
 
     def get_axis(self, axis, idx=False):
         """
@@ -1680,7 +1666,7 @@ class LArray(object):
         missing_axes = [axis for axis in self.axes
                         if axis.name not in axes_names]
         res_axes = axes + missing_axes
-        axes_indices = [self.get_axis_idx(axis) for axis in res_axes]
+        axes_indices = [self.axes.index(axis) for axis in res_axes]
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, res_axes)
