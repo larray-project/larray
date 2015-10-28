@@ -1800,14 +1800,12 @@ class LArray(object):
 
     def shift(self, axis, n=1):
         axis = self.axes[axis]
-        #TODO: use integer position slicing
-        if n >= 0:
-            rng = axis[:axis.labels[-(n + 1)]]
+        if n > 0:
+            res = self[axis.i[:-n]]
             new_labels = axis.labels[n:]
         else:
-            rng = axis[axis.labels[-n]:]
+            res = self[axis.i[-n:]]
             new_labels = axis.labels[:n]
-        res = self[rng]
         return res.set_labels(axis, new_labels)
 
 
@@ -2200,6 +2198,7 @@ class AxisRef(Axis):
 
     def __repr__(self):
         return 'AxisRef(%r)' % self.name
+
 
 class AxisFactory(object):
     def __getattr__(self, key):
