@@ -208,7 +208,6 @@ from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
 def srange(*args):
     return list(map(str, range(*args)))
 
-
 def range_to_slice(seq):
     """
     seq is a sequence-like (list, tuple or ndarray (*)) of integers
@@ -2006,35 +2005,167 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
 
 
 def zeros(axes):
+    """Returns a Larray with the shape defined by axes and filled with zeros.
+
+    Parameters
+    ----------
+    axes
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    Larray
+        Larray with a shape defined by axes and filled with 0.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> mat0 = zeros([xnat, xsex])    # mat0.shape = (2, 2) -> mat0.sum() = 0.0
+    """
     axes = AxisCollection(axes)
     return LArray(np.zeros(axes.shape), axes)
 
 
 def zeros_like(array):
+    """Returns a Larray with the same shape as array and filled with zeros.
+
+    Parameters
+    ----------
+    array
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    larray
+        Larray with the same shape as array and filled with zeros.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> a = ndrange((2, 3, 2))
+    >>> b = zeros(a)    # b.shape = (2, 3, 2) -> b.sum() = 0.0
+    """
     return zeros(array.axes)
 
 
 def ones(axes):
+     """Returns a Larray with the shape defined by axes and filled with ones.
+
+    Parameters
+    ----------
+    axes
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    larray
+        Larray with the shape defined by axes and filled with ones.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> mat0 = ones([xnat, xsex])    # mat0.shape = (2, 2) -> mat0.sum() = 1.0
+    """
     axes = AxisCollection(axes)
     return LArray(np.ones(axes.shape), axes)
 
 
 def ones_like(array):
+    """Returns a Larray with the same shape as array and filled with ones.
+    zeros
+
+    Parameters
+    ----------
+    array
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    Larray
+        Larray with the same shape as array and filled with ones.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> a = ndrange((2, 3, 2))
+    >>> b = ones(a)    # b.shape = (2, 3, 2) -> b.sum() = 1.0
+    """
     return ones(array.axes)
 
 
 def empty(axes):
+     """Returns a Larray with the shape defined by axes without initializing\
+     entries.
+
+    Parameters
+    ----------
+    axes
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    larray
+        Larray with a shape defined by axes and values are uninitialized \
+        (arbitrary) data.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> mat = empty([xnat, xsex])    # mat.shape = (2, 2) -> mat.sum() = ???
+    """
     axes = AxisCollection(axes)
     return LArray(np.empty(axes.shape), axes)
 
 
 def empty_like(array):
+    """Returns a Larray with the shape defined by axes without initializing\
+     entries.
+
+    Parameters
+    ----------
+    axes
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    larray
+        Larray with a shape defined by axes and values are uninitialized \
+        (arbitrary) data.
+
+    Example
+    -------
+    >>>from larray import *
+    >>> a = ndrange((2, 3, 2))
+    >>> b = empty_like(a)    # b.shape = (2, 2) -> b.sum() = ???
+    """
     return empty(array.axes)
 
 
 def ndrange(axes):
-    """
-    :param axes: either a collection of axes or a shape
+     """Returns a Larray with the shape defined by axes with random data.
+
+    Parameters
+    ----------
+    axes
+        either a collection of axes or a shape.
+
+    Returns
+    -------
+    larray
+        Larray with a shape defined by axes and random data.
+
+    Example
+    -------
+    >>> from larray import *
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> mat = ndrange([xnat, xsex])    # mat.shape = (2, 2) -> mat.sum() = ???
     """
     axes = AxisCollection(axes)
     return LArray(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
