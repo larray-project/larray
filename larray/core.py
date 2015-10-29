@@ -1491,6 +1491,8 @@ class LArray(object):
 
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
+        # we do not change the order of operations since we only group
+        # consecutive operations.
         for are_axes, axes in groupby(operations, isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
             res = func(op, axes)
