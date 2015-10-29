@@ -2020,13 +2020,13 @@ def zeros_like(array):
     -------
     >>> from larray import *
     >>> a = ndrange((2, 3, 2))
-    >>> b = zeros(a)    # b.shape = (2, 3, 2) -> b.sum() = 0.0
+    >>> b = zeros_like(a)    # b.shape = (2, 3, 2) -> b.sum() = 0.0
     """
     return zeros(array.axes)
 
 
 def ones(axes):
-     """Returns a Larray with the shape defined by axes and filled with ones.
+    """Returns a Larray with the shape defined by axes and filled with ones.
 
     Parameters
     ----------
@@ -2067,14 +2067,14 @@ def ones_like(array):
     -------
     >>> from larray import *
     >>> a = ndrange((2, 3, 2))
-    >>> b = ones(a)    # b.shape = (2, 3, 2) -> b.sum() = 1.0
+    >>> b = ones_like(a)    # b.shape = (2, 3, 2) -> b.sum() = 1.0
     """
     return ones(array.axes)
 
 
 def empty(axes):
-     """Returns a Larray with the shape defined by axes without initializing\
-     entries.
+    """Returns a Larray with the shape defined by axes without initializing\
+    entries.
 
     Parameters
     ----------
@@ -2100,7 +2100,7 @@ def empty(axes):
 
 def empty_like(array):
     """Returns a Larray with the shape defined by axes without initializing\
-     entries.
+    entries.
 
     Parameters
     ----------
@@ -2115,7 +2115,7 @@ def empty_like(array):
 
     Example
     -------
-    >>>from larray import *
+    >>> from larray import *
     >>> a = ndrange((2, 3, 2))
     >>> b = empty_like(a)    # b.shape = (2, 2) -> b.sum() = ???
     """
@@ -2123,7 +2123,7 @@ def empty_like(array):
 
 
 def ndrange(axes):
-     """Returns a Larray with the shape defined by axes with random data.
+    """Returns a Larray with the shape defined by axes with random data.
 
     Parameters
     ----------
