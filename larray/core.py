@@ -1010,9 +1010,52 @@ class LArray(object):
 
     @property
     def axes_names(self):
+        """Returns a list of names of the axes of a LArray.
+
+        Returns
+        -------
+        List
+            List of names of the axes of a LArray.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> a = zeros([xnat, xsex])
+        >>> a.axes_names
+        ['nat', 'sex']
+        """
         return [axis.name for axis in self.axes]
 
     def rename(self, axis, newname):
+        """Renames an axis of a LArray.
+
+        Parameters
+        ----------
+        axis
+            axis.
+        newname
+            string -> the new name for the axis.
+        Returns
+        -------
+        LArray
+            LArray with one of the axis renamed.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> a = ones[[xnat, xsex]]
+        nat\sex |   H |   F
+        BE | 1.0 | 1.0
+        FO | 1.0 | 1.0
+        >>> a = a.rename('nat', 'newnat')
+        newnat\sex |   H |   F
+        BE | 1.0 | 1.0
+        FO | 1.0 | 1.0
+        """
         axis = self.axes[axis]
         axes = [Axis(newname, a.labels) if a is axis else a
                 for a in self.axes]
@@ -1503,6 +1546,23 @@ class LArray(object):
 
     @property
     def info(self):
+        """Describes a LArray, its shape and labels for each axis.
+
+        Returns
+        -------
+        String
+            Description of the LArray (shape and labels for each axis).
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> mat0 = ones([xnat, xsex])
+        >>> mat0.info
+        nat [2]: 'BE' 'FO'
+        sex [2]: 'H' 'F'
+        """
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
         axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
@@ -1513,6 +1573,39 @@ class LArray(object):
         return ReprString('\n'.join([shape] + lines))
 
     def ratio(self, *axes):
+        """Returns a LArray with values LArray/LArray.sum(axes).
+
+        Parameters
+        ----------
+        *axes
+
+        Returns
+        -------
+        LArray
+            LArray = LArray/LArray.sum(axes).
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'typ3'])
+        >>> mat = ones([xnat, xsex, xtype])
+        >>> mat.ratio()
+        0.16666 = 1/mat.sum()
+        sex | nat\type |           type1 |           type2 |            typ3
+        H |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        H |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        F |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        F |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        >>> mat.ratio(xsex, xtype)
+        0.16666 = 1/mat.sum(xsex, xtype)
+        sex | nat\type |          type1 |          type2 |           typ3
+        H |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
+        H |       FO | 0.166666666667 | 0.166666666667 | 0.166666666667
+        F |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
+        F |       FO | 0.166666666667 | 0.166666666667 | 0.166666666667
+        """
         if not axes:
             axes = self.axes
         return self / self.sum(*axes)
