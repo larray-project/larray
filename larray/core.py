@@ -1546,7 +1546,7 @@ class LArray(object):
 
     @property
     def info(self):
-        """Describes a LArray, its shape and labels for each axis.
+        """Describes a LArray (shape and labels for each axis).
 
         Returns
         -------
@@ -1589,18 +1589,18 @@ class LArray(object):
         >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'typ3'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ones([xnat, xsex, xtype])
         >>> mat.ratio()
         0.16666 = 1/mat.sum()
-        sex | nat\type |           type1 |           type2 |            typ3
+        sex | nat\type |           type1 |           type2 |            type3
         H |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
         H |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
         F |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
         F |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
         >>> mat.ratio(xsex, xtype)
         0.16666 = 1/mat.sum(xsex, xtype)
-        sex | nat\type |          type1 |          type2 |           typ3
+        sex | nat\type |          type1 |          type2 |           type3
         H |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
         H |       FO | 0.166666666667 | 0.166666666667 | 0.166666666667
         F |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
@@ -1709,6 +1709,42 @@ class LArray(object):
     __invert__ = _unaryop('invert')
 
     def append(self, axis, value, label=None):
+        """Adds a LArray to a LArray ('self') along an axis.
+
+        Parameters
+        ----------
+        axis : axis
+            the axis
+        value : LArray
+            LArray of the same shape as self
+        label : string
+            optional
+            label for the new item in axis
+
+        Returns
+        -------
+        LArray
+            LArray expanded with 'value' along 'axis'.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ones([xnat, xsex, xtype])
+        nat | sex\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |  1.0
+         BE |        F |   1.0 |   1.0 |  1.0
+         FO |        H |   1.0 |   1.0 |  1.0
+         FO |        F |   1.0 |   1.0 |  1.0
+        >>> matexp = mat.append(x.type,mat.sum(x.type),'Type4')
+        nat | sex\type | type1 | type2 | type3 | Type4
+         BE |        H |   1.0 |   1.0 |  1.0 |   3.0
+         BE |        F |   1.0 |   1.0 |  1.0 |   3.0
+         FO |        H |   1.0 |   1.0 |  1.0 |   3.0
+         FO |        F |   1.0 |   1.0 |  1.0 |   3.0
+        """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         shape = self.shape
         value = np.asarray(value)
@@ -1722,6 +1758,46 @@ class LArray(object):
         return LArray(data, axes=new_axes)
 
     def extend(self, axis, other):
+        """Adds a LArray to a LArray ('self') along an axis.
+
+        Parameters
+        ----------
+        axis : axis
+            the axis
+        other : LArray
+            LArray of the same shape as self
+
+        Returns
+        -------
+        LArray
+            LArray expanded with 'other' along 'axis'.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xsex2 = Axis('sex', ['U'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat1 = ones([xnat, xsex, xtype])
+        nat | sex\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |  1.0
+         BE |        F |   1.0 |   1.0 |  1.0
+         FO |        H |   1.0 |   1.0 |  1.0
+         FO |        F |   1.0 |   1.0 |  1.0
+        >>> mat2 = zeros([xnat, xsex2, xtype])
+        nat | sex\type | type1 | type2 | type3
+        BE |        U |   0.0 |   0.0 |  0.0
+        FO |        U |   0.0 |   0.0 |  0.0
+        >>> matext = mat1.extend(x.sex,mat2)
+        nat | sex\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |  1.0
+         BE |        F |   1.0 |   1.0 |  1.0
+         BE |        U |   0.0 |   0.0 |  0.0
+         FO |        H |   1.0 |   1.0 |  1.0
+         FO |        F |   1.0 |   1.0 |  1.0
+         FO |        U |   0.0 |   0.0 |  0.0
+        """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         # Get axis by name, so that we do *NOT* check they are "compatible",
         # because it makes sense to append axes of different length
@@ -1736,7 +1812,48 @@ class LArray(object):
     def transpose(self, *args):
         """
         reorder axes
+
         accepts either a tuple of axes specs or axes specs as *args
+
+        Parameters
+        ----------
+        *args
+            accepts either a tuple of axes specs or axes specs as *args
+
+        Returns
+        -------
+        LArray
+            LArray with reordered axis.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat1 = ones([xnat, xsex, xtype])
+        >>> mat1
+        nat | sex\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |  1.0
+         BE |        F |   1.0 |   1.0 |  1.0
+         FO |        H |   1.0 |   1.0 |  1.0
+         FO |        F |   1.0 |   1.0 |  1.0
+        >>> mat1.transpose(xtype, xsex, xnat)
+         type | sex\nat |  BE |  FO
+        type1 |       H | 1.0 | 1.0
+        type1 |       F | 1.0 | 1.0
+        type2 |       H | 1.0 | 1.0
+        type2 |       F | 1.0 | 1.0
+        type3 |       H | 1.0 | 1.0
+        type3 |       F | 1.0 | 1.0
+        >>> mat1.transpose(xtype)
+         type | nat\sex |   H |   F
+        type1 |      BE | 1.0 | 1.0
+        type1 |      FO | 1.0 | 1.0
+        type2 |      BE | 1.0 | 1.0
+        type2 |      FO | 1.0 | 1.0
+        type3 |      BE | 1.0 | 1.0
+        type3 |      FO | 1.0 | 1.0
         """
         if len(args) == 1 and isinstance(args[0],
                                          (tuple, list, AxisCollection)):
@@ -1762,7 +1879,56 @@ class LArray(object):
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
         """
-        write LArray to a csv file
+        write LArray to a csv file.
+
+        Parameters
+        ----------
+        filepath : string
+            path where the csv file has to be written.
+        sep : string
+            seperator for the csv file.
+        na_rep : string
+            replace na values with na_rep.
+        transpose : boolean
+            transpose = True  => transpose over last axis.
+            transpose = False => no transpose.
+
+        Returns
+        -------
+        csv file
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        nat | sex\type | type1 | type2 | type3
+         BE |        H |     0 |     1 |     2
+         BE |        F |     3 |     4 |     5
+         FO |        H |     6 |     7 |     8
+         FO |        F |     9 |    10 |    11
+        >>> mat.to_csv('c:/tmp/test_transp.csv', ';', transpose=True)
+        nat;sex\type;type1;type2;type3
+        BE;H;0;1;2tra
+        BE;F;3;4;5
+        FO;H;6;7;8
+        FO;F;9;10;11
+        >>> mat.to_csv('c:/tmp/test_notransp.csv', ';', transpose=False)
+        nat;sex;type;0
+        BE;H;type1;0
+        BE;H;type2;1
+        BE;H;type3;2
+        BE;F;type1;3
+        BE;F;type2;4
+        BE;F;type3;5
+        FO;H;type1;6
+        FO;H;type2;7
+        FO;H;type3;8
+        FO;F;type1;9
+        FO;F;type2;10
+        FO;F;type3;11
         """
         if transpose:
             self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
@@ -1772,17 +1938,80 @@ class LArray(object):
 
     def to_hdf(self, filepath, key, *args, **kwargs):
         """
-        write LArray to an HDF file at the specified name
+        write LArray to a HDF file
+
+        a HDF file can contain multiple LArray's. The 'key' parameter
+        is a unique indentifies for the LArray.
+
+        Parameters
+        ----------
+        filepath : string
+            path where the hdf file has to be written.
+        key : string
+            name of the matrix within the HDF file.
+        *args
+        **kargs
+
+        Returns
+        -------
+        hdf file with LArray (self) added to it and named key
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.to_hdf('c:/tmp/test.hdf', 'mat')
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
         """
-        write LArray to an excel file in the specified sheet
+        write LArray to an excel file in the specified sheet 'sheet_name'
+
+        Parameters
+        ----------
+        filepath : string
+            path where the excel file has to be written.
+        sheet_name : string
+            sheet where the data has to be written.
+        *args
+        **kargs
+
+        Returns
+        -------
+        Excel file
+            with LArray pasted in sheet_name.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.to_excel('c:/tmp/test.xlsx', 'Sheet1')
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
+        """
+        sends the content of a LArray to clipboard
+
+        using to_clipboard() makes it possible to paste the content of LArray
+        into a file (Excel, ascii file,...)
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.to_clipboard()
+        """
         self.df.to_clipboard(*args, **kwargs)
 
     # XXX: sep argument does not seem very useful
@@ -1824,22 +2053,107 @@ class LArray(object):
     #             worksheet.write_row(1+row, 1, data)
 
     def plot(self, *args, **kwargs):
+        """
+        plots the data of a LArray into a graph (window pop-up).
+
+        the graph can be tweaked to achieve the desired formatting and can be
+        saved to a .png file
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.plot()
+        """
         self.df.plot(*args, **kwargs)
 
     @property
     def shape(self):
+        """
+        returns string representation of current shape.
+
+        Returns
+        -------
+            returns string representation of current shape.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.shape
+        (2, 2, 3)
+        """
         return self.data.shape
 
     @property
     def ndim(self):
+        """
+        returns the number of dimensions of a LArray.
+
+        Returns
+        -------
+            returns the number of dimensions of a LArray.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.ndim
+        3
+        """
         return self.data.ndim
 
     @property
     def size(self):
+        """
+        returns the number of cells in a LArray.
+
+        Returns
+        -------
+        integer
+            returns the number of cells in a LArray.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.size
+        12
+        """
         return self.data.size
 
     @property
     def dtype(self):
+        """
+        returns the type of the data in the cells of LArray.
+
+        Returns
+        -------
+        string
+            returns the type of the data in the cells of LArray.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.dtype
+        dtype('int32')
+        """
         return self.data.dtype
 
     @property
@@ -1855,6 +2169,37 @@ class LArray(object):
     __array_priority__ = 100
 
     def set_labels(self, axis, labels, inplace=False):
+        """
+        replaces the labels of axis of a LArray
+
+        Parameters
+        ----------
+        axis
+            the axis for which we want to replace the labels.
+        lables : list of axis labels
+            the new labels.
+        inplace : boolean
+            ???
+
+        Returns
+        -------
+        LArray
+            LArray with modified labels.
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat.set_labels(x.sex, ['Hommes', 'Femmes'])
+        nat | sex\type | type1 | type2 | type3
+        BE |   Hommes |     0 |     1 |     2
+        BE |   Femmes |     3 |     4 |     5
+        FO |   Hommes |     6 |     7 |     8
+        FO |   Femmes |     9 |    10 |    11
+        """
         axis = self.axes[axis]
         if inplace:
             axis.labels = labels
@@ -1869,6 +2214,43 @@ class LArray(object):
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1):
+        """
+        shifts the cells of a LArray n-times to the left along axis.
+
+        Parameters
+        ----------
+        axis
+            the axis for which we want to perform the shift.
+        n : intger
+            the numer of cells to shift.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> from LArray import *
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xnat, xsex, xtype])
+        nat | sex\type | type1 | type2 | type3
+        BE |   Hommes |     0 |     1 |     2
+        BE |   Femmes |     3 |     4 |     5
+        FO |   Hommes |     6 |     7 |     8
+        FO |   Femmes |     9 |    10 |    11
+        >>> mat.shift(x.type, n=-1)
+        nat | sex\type | type1 | type2
+        BE |   Hommes |     1 |     2
+        BE |   Femmes |     4 |     5
+        FO |   Hommes |     7 |     8
+        FO |   Femmes |    10 |    11
+        >>> mat.shift(x.sex, n=1)
+        nat | sex\type | type1 | type2 | type3
+        BE |   Femmes |     0 |     1 |     2
+        FO |   Femmes |     6 |     7 |     8
+        """
         axis = self.axes[axis]
         if n > 0:
             res = self[axis.i[:-n]]
@@ -1959,11 +2341,10 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
              na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
-    reads csv file and returns an Larray with the contents
-        nb_index: number of leading index columns (ex. 4)
-    or
-        index_col : list of columns for the index (ex. [0, 1, 2, 3])
+    reads csv file and returns a Larray with the contents
 
+    Note
+    ----
     format csv file:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0
@@ -1972,6 +2353,49 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     A1,BI,F,FO,0,0,0
     A1,A0,H,BE,0,0,0
 
+    Parameters
+    ----------
+    filepath : string
+        path where the csv file has to be written.
+    nb_index: integer
+        number of leading index columns (ex. 4).
+    index_col : list
+        list of columns for the index (ex. [0, 1, 2, 3]).
+    sep : string
+        seperator.
+    headersep : ???
+        ???.
+    na : ???
+        ???.
+    sort_rows : boolean
+        True (default) => ???.
+        False => ???.
+    sort_columns : boolean
+        True (default) => ???.
+        False => ???.
+    **kwargs
+
+    Example
+    -------
+    >>> from LArray import *
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+    >>> mat = ndrange([xnat, xsex, xtype])
+    >>> mat.to_csv('c:/tmp/test_transp.csv', ';')
+    >>> read_csv('c:/tmp/test_transp.csv', sep = ';')
+    nat | sex\type | type1 | type2 | type3
+    BE |        F |     3 |     4 |     5
+    BE |        H |     0 |     1 |     2
+    FO |        F |     9 |    10 |    11
+    FO |        H |     6 |     7 |     8
+    >>> read_csv('c:/tmp/test_transp.csv', sep = ';', sort_rows = False,
+    sort_columns = False)
+    nat | sex\type | type1 | type2 | type3
+    BE |        H |     0 |     1 |     2
+    BE |        F |     3 |     4 |     5
+    FO |        H |     6 |     7 |     8
+    FO |        F |     9 |    10 |    11
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
@@ -2015,9 +2439,6 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
 
 
 def read_tsv(filepath, **kwargs):
-    """
-    read an LArray from a tsv file
-    """
     return read_csv(filepath, sep='\t', **kwargs)
 
 
