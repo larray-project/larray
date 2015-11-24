@@ -2018,7 +2018,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.to_clipboard()
+        >>> # mat.to_clipboard()
         """
         self.df.to_clipboard(*args, **kwargs)
 
@@ -2073,7 +2073,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.plot()
+        >>> # mat.plot()
         """
         self.df.plot(*args, **kwargs)
 
