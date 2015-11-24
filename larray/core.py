@@ -1338,9 +1338,8 @@ class LArray(object):
         elif not len(self):
             return 'LArray([])'
         else:
-            s = table2str(list(self.as_table()), 'nan', True,
-                          keepcols=self.ndim - 1)
-            return '\n' + s + '\n'
+            return table2str(list(self.as_table()), 'nan', True,
+                             keepcols=self.ndim - 1)
     __repr__ = __str__
 
     def as_table(self, maxlines=80, edgeitems=5):
