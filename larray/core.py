@@ -1425,6 +1425,15 @@ class LArray(object):
         else:
             return LArray(res_data, res_axes)
 
+    def _cum_aggregate(self, op, axis):
+        """
+        op is a numpy cumulative aggregate function: func(arr, axis=0)
+        axis is an Axis object, a str or an int. Contrary to other aggregate
+        functions this only supports one axis at a time.
+        """
+        return LArray(op(np.asarray(self), axis=self.axes.index(axis)),
+                      self.axes)
+
     def _group_aggregate(self, op, items):
         res = self
         # TODO: when working with several "axes" at the same times, we should
@@ -1625,8 +1634,6 @@ class LArray(object):
     # commutative modulo float precision errors
     sum = _agg_method(np.sum, commutative=True)
     prod = _agg_method(np.prod, commutative=True)
-    cumsum = _agg_method(np.cumsum, commutative=True)
-    cumprod = _agg_method(np.cumprod, commutative=True)
     min = _agg_method(np.min, commutative=True)
     max = _agg_method(np.max, commutative=True)
     mean = _agg_method(np.mean, commutative=True)
@@ -1634,6 +1641,13 @@ class LArray(object):
     ptp = _agg_method(np.ptp)
     var = _agg_method(np.var)
     std = _agg_method(np.std)
+
+    # cumulative aggregates
+    def cumsum(self, axis):
+        return self._cum_aggregate(np.cumsum, axis)
+
+    def cumprod(self, axis):
+        return self._cum_aggregate(np.cumprod, axis)
 
     # element-wise method factory
     def _binop(opname):

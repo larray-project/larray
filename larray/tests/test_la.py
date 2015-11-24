@@ -1148,6 +1148,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # filter on aggregated
         self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
 
+    def test_cumsum(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        # using Axis objects
+        self._assert_equal_raw(la.cumsum(age), self.array.cumsum(0))
+        self._assert_equal_raw(la.cumsum(lipro), self.array.cumsum(3))
+
+        # using axes numbers
+        self._assert_equal_raw(la.cumsum(1), self.array.cumsum(1))
+
+        # using axes names
+        self._assert_equal_raw(la.cumsum('sex'), self.array.cumsum(2))
+
     def test_group_agg(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
