@@ -1407,8 +1407,8 @@ class LArray(object):
 
     def _axis_aggregate(self, op, axes=()):
         """
-        op is an aggregate function: func(arr, axis=(0, 1))
-        axes is a tuple of axes (Axis objects or integers)
+        op is a numpy aggregate function: func(arr, axis=(0, 1))
+        axes is a tuple of axes (each axis can be an Axis object, str or int)
         """
         src_data = np.asarray(self)
         if not axes:
