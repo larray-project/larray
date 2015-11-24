@@ -1019,7 +1019,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> a = zeros([xnat, xsex])
@@ -1044,17 +1043,17 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> a = ones[[xnat, xsex]]
-        nat\sex |   H |   F
-        BE | 1.0 | 1.0
-        FO | 1.0 | 1.0
-        >>> a = a.rename('nat', 'newnat')
-        newnat\sex |   H |   F
-        BE | 1.0 | 1.0
-        FO | 1.0 | 1.0
+        >>> a = ones([xnat, xsex])
+        >>> a
+        nat\\sex |   H |   F
+             BE | 1.0 | 1.0
+             FO | 1.0 | 1.0
+        >>> a.rename('nat', 'newnat')
+        newnat\\sex |   H |   F
+                BE | 1.0 | 1.0
+                FO | 1.0 | 1.0
         """
         axis = self.axes[axis]
         axes = [Axis(newname, a.labels) if a is axis else a
@@ -1563,13 +1562,13 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> mat0 = ones([xnat, xsex])
         >>> mat0.info
-        nat [2]: 'BE' 'FO'
-        sex [2]: 'H' 'F'
+        2 x 2
+         nat [2]: 'BE' 'FO'
+         sex [2]: 'H' 'F'
         """
         def shorten(l):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
@@ -1594,26 +1593,25 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ones([xnat, xsex, xtype])
+        >>> # 0.0833 == 1 / mat.sum()
         >>> mat.ratio()
-        0.16666 = 1/mat.sum()
-        sex | nat\type |           type1 |           type2 |            type3
-        H |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-        H |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-        F |       BE | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-        F |       FO | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        nat | sex\\type |           type1 |           type2 |           type3
+         BE |        H | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+         BE |        F | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+         FO |        H | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+         FO |        F | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
+        >>> # 0.16666 == 1 / mat.sum(xsex, xtype)
         >>> mat.ratio(xsex, xtype)
-        0.16666 = 1/mat.sum(xsex, xtype)
-        sex | nat\type |          type1 |          type2 |           type3
-        H |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
-        H |       FO | 0.166666666667 | 0.166666666667 | 0.166666666667
-        F |       BE | 0.166666666667 | 0.166666666667 | 0.166666666667
-        F |       FO | 0.166666666667 | 0.166666666667 | 0.166666666667
-        """
+        nat | sex\\type |          type1 |          type2 |          type3
+         BE |        H | 0.166666666667 | 0.166666666667 | 0.166666666667
+         BE |        F | 0.166666666667 | 0.166666666667 | 0.166666666667
+         FO |        H | 0.166666666667 | 0.166666666667 | 0.166666666667
+         FO |        F | 0.166666666667 | 0.166666666667 | 0.166666666667
+       """
         if not axes:
             axes = self.axes
         return self / self.sum(*axes)
@@ -1741,22 +1739,22 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ones([xnat, xsex, xtype])
-        nat | sex\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |  1.0
-         BE |        F |   1.0 |   1.0 |  1.0
-         FO |        H |   1.0 |   1.0 |  1.0
-         FO |        F |   1.0 |   1.0 |  1.0
-        >>> matexp = mat.append(x.type,mat.sum(x.type),'Type4')
-        nat | sex\type | type1 | type2 | type3 | Type4
-         BE |        H |   1.0 |   1.0 |  1.0 |   3.0
-         BE |        F |   1.0 |   1.0 |  1.0 |   3.0
-         FO |        H |   1.0 |   1.0 |  1.0 |   3.0
-         FO |        F |   1.0 |   1.0 |  1.0 |   3.0
+        >>> mat
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |   1.0
+         BE |        F |   1.0 |   1.0 |   1.0
+         FO |        H |   1.0 |   1.0 |   1.0
+         FO |        F |   1.0 |   1.0 |   1.0
+        >>> mat.append(x.type, mat.sum(x.type), 'Type4')
+        nat | sex\\type | type1 | type2 | type3 | Type4
+         BE |        H |   1.0 |   1.0 |   1.0 |   3.0
+         BE |        F |   1.0 |   1.0 |   1.0 |   3.0
+         FO |        H |   1.0 |   1.0 |   1.0 |   3.0
+         FO |        F |   1.0 |   1.0 |   1.0 |   3.0
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         shape = self.shape
@@ -1787,29 +1785,30 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xsex2 = Axis('sex', ['U'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat1 = ones([xnat, xsex, xtype])
-        nat | sex\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |  1.0
-         BE |        F |   1.0 |   1.0 |  1.0
-         FO |        H |   1.0 |   1.0 |  1.0
-         FO |        F |   1.0 |   1.0 |  1.0
+        >>> mat1
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |   1.0
+         BE |        F |   1.0 |   1.0 |   1.0
+         FO |        H |   1.0 |   1.0 |   1.0
+         FO |        F |   1.0 |   1.0 |   1.0
         >>> mat2 = zeros([xnat, xsex2, xtype])
-        nat | sex\type | type1 | type2 | type3
-        BE |        U |   0.0 |   0.0 |  0.0
-        FO |        U |   0.0 |   0.0 |  0.0
-        >>> matext = mat1.extend(x.sex,mat2)
-        nat | sex\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |  1.0
-         BE |        F |   1.0 |   1.0 |  1.0
-         BE |        U |   0.0 |   0.0 |  0.0
-         FO |        H |   1.0 |   1.0 |  1.0
-         FO |        F |   1.0 |   1.0 |  1.0
-         FO |        U |   0.0 |   0.0 |  0.0
+        >>> mat2
+        nat | sex\\type | type1 | type2 | type3
+         BE |        U |   0.0 |   0.0 |   0.0
+         FO |        U |   0.0 |   0.0 |   0.0
+        >>> mat1.extend(x.sex, mat2)
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |   1.0
+         BE |        F |   1.0 |   1.0 |   1.0
+         BE |        U |   0.0 |   0.0 |   0.0
+         FO |        H |   1.0 |   1.0 |   1.0
+         FO |        F |   1.0 |   1.0 |   1.0
+         FO |        U |   0.0 |   0.0 |   0.0
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         # Get axis by name, so that we do *NOT* check they are "compatible",
@@ -1840,19 +1839,18 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat1 = ones([xnat, xsex, xtype])
         >>> mat1
-        nat | sex\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |  1.0
-         BE |        F |   1.0 |   1.0 |  1.0
-         FO |        H |   1.0 |   1.0 |  1.0
-         FO |        F |   1.0 |   1.0 |  1.0
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |   1.0
+         BE |        F |   1.0 |   1.0 |   1.0
+         FO |        H |   1.0 |   1.0 |   1.0
+         FO |        F |   1.0 |   1.0 |   1.0
         >>> mat1.transpose(xtype, xsex, xnat)
-         type | sex\nat |  BE |  FO
+         type | sex\\nat |  BE |  FO
         type1 |       H | 1.0 | 1.0
         type1 |       F | 1.0 | 1.0
         type2 |       H | 1.0 | 1.0
@@ -1860,7 +1858,7 @@ class LArray(object):
         type3 |       H | 1.0 | 1.0
         type3 |       F | 1.0 | 1.0
         >>> mat1.transpose(xtype)
-         type | nat\sex |   H |   F
+         type | nat\\sex |   H |   F
         type1 |      BE | 1.0 | 1.0
         type1 |      FO | 1.0 | 1.0
         type2 |      BE | 1.0 | 1.0
@@ -1912,36 +1910,36 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        nat | sex\type | type1 | type2 | type3
+        >>> mat
+        nat | sex\\type | type1 | type2 | type3
          BE |        H |     0 |     1 |     2
          BE |        F |     3 |     4 |     5
          FO |        H |     6 |     7 |     8
          FO |        F |     9 |    10 |    11
         >>> mat.to_csv('c:/tmp/test_transp.csv', ';', transpose=True)
-        nat;sex\type;type1;type2;type3
-        BE;H;0;1;2tra
-        BE;F;3;4;5
-        FO;H;6;7;8
-        FO;F;9;10;11
+        >>> # nat;sex\type;type1;type2;type3
+        >>> # BE;H;0;1;2tra
+        >>> # BE;F;3;4;5
+        >>> # FO;H;6;7;8
+        >>> # FO;F;9;10;11
         >>> mat.to_csv('c:/tmp/test_notransp.csv', ';', transpose=False)
-        nat;sex;type;0
-        BE;H;type1;0
-        BE;H;type2;1
-        BE;H;type3;2
-        BE;F;type1;3
-        BE;F;type2;4
-        BE;F;type3;5
-        FO;H;type1;6
-        FO;H;type2;7
-        FO;H;type3;8
-        FO;F;type1;9
-        FO;F;type2;10
-        FO;F;type3;11
+        >>> # nat;sex;type;0
+        >>> # BE;H;type1;0
+        >>> # BE;H;type2;1
+        >>> # BE;H;type3;2
+        >>> # BE;F;type1;3
+        >>> # BE;F;type2;4
+        >>> # BE;F;type3;5
+        >>> # FO;H;type1;6
+        >>> # FO;H;type2;7
+        >>> # FO;H;type3;8
+        >>> # FO;F;type1;9
+        >>> # FO;F;type2;10
+        >>> # FO;F;type3;11
         """
         if transpose:
             self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
@@ -1971,7 +1969,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2000,7 +1997,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2018,7 +2014,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2074,7 +2069,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2094,7 +2088,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2115,7 +2108,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2137,7 +2129,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2159,7 +2150,6 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
@@ -2201,17 +2191,16 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.set_labels(x.sex, ['Hommes', 'Femmes'])
-        nat | sex\type | type1 | type2 | type3
-        BE |   Hommes |     0 |     1 |     2
-        BE |   Femmes |     3 |     4 |     5
-        FO |   Hommes |     6 |     7 |     8
-        FO |   Femmes |     9 |    10 |    11
+        nat | sex\\type | type1 | type2 | type3
+         BE |   Hommes |     0 |     1 |     2
+         BE |   Femmes |     3 |     4 |     5
+         FO |   Hommes |     6 |     7 |     8
+         FO |   Femmes |     9 |    10 |    11
         """
         axis = self.axes[axis]
         if inplace:
@@ -2243,26 +2232,26 @@ class LArray(object):
 
         Example
         -------
-        >>> from LArray import *
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        nat | sex\type | type1 | type2 | type3
-        BE |   Hommes |     0 |     1 |     2
-        BE |   Femmes |     3 |     4 |     5
-        FO |   Hommes |     6 |     7 |     8
-        FO |   Femmes |     9 |    10 |    11
+        >>> mat
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |     0 |     1 |     2
+         BE |        F |     3 |     4 |     5
+         FO |        H |     6 |     7 |     8
+         FO |        F |     9 |    10 |    11
         >>> mat.shift(x.type, n=-1)
-        nat | sex\type | type1 | type2
-        BE |   Hommes |     1 |     2
-        BE |   Femmes |     4 |     5
-        FO |   Hommes |     7 |     8
-        FO |   Femmes |    10 |    11
+        nat | sex\\type | type1 | type2
+         BE |        H |     1 |     2
+         BE |        F |     4 |     5
+         FO |        H |     7 |     8
+         FO |        F |    10 |    11
         >>> mat.shift(x.sex, n=1)
-        nat | sex\type | type1 | type2 | type3
-        BE |   Femmes |     0 |     1 |     2
-        FO |   Femmes |     6 |     7 |     8
+        nat | sex\\type | type1 | type2 | type3
+         BE |        F |     0 |     1 |     2
+         FO |        F |     6 |     7 |     8
         """
         axis = self.axes[axis]
         if n > 0:
@@ -2390,25 +2379,24 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
 
     Example
     -------
-    >>> from LArray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
     >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
     >>> mat = ndrange([xnat, xsex, xtype])
     >>> mat.to_csv('c:/tmp/test_transp.csv', ';')
-    >>> read_csv('c:/tmp/test_transp.csv', sep = ';')
-    nat | sex\type | type1 | type2 | type3
-    BE |        F |     3 |     4 |     5
-    BE |        H |     0 |     1 |     2
-    FO |        F |     9 |    10 |    11
-    FO |        H |     6 |     7 |     8
-    >>> read_csv('c:/tmp/test_transp.csv', sep = ';', sort_rows = False,
-    sort_columns = False)
-    nat | sex\type | type1 | type2 | type3
-    BE |        H |     0 |     1 |     2
-    BE |        F |     3 |     4 |     5
-    FO |        H |     6 |     7 |     8
-    FO |        F |     9 |    10 |    11
+    >>> read_csv('c:/tmp/test_transp.csv', sep=';')
+    nat | sex\\type | type1 | type2 | type3
+     BE |        F |     3 |     4 |     5
+     BE |        H |     0 |     1 |     2
+     FO |        F |     9 |    10 |    11
+     FO |        H |     6 |     7 |     8
+    >>> read_csv('c:/tmp/test_transp.csv', sep=';', sort_rows=False,
+    ...          sort_columns=False)
+    nat | sex\\type | type1 | type2 | type3
+     BE |        H |     0 |     1 |     2
+     BE |        F |     3 |     4 |     5
+     FO |        H |     6 |     7 |     8
+     FO |        F |     9 |    10 |    11
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
@@ -2521,7 +2509,6 @@ def zeros(axes):
 
     Example
     -------
-    >>> from LArray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
     >>> zeros([xnat, xsex])
@@ -2548,9 +2535,11 @@ def zeros_like(array):
 
     Example
     -------
-    >>> from LArray import *
-    >>> a = ndrange((2, 3, 2))
-    >>> b = zeros_like(a)    # b.shape = (2, 3, 2) -> b.sum() = 0.0
+    >>> a = ndrange((2, 3))
+    >>> zeros_like(a)
+    -\\- |   0 |   1 |   2
+      0 | 0.0 | 0.0 | 0.0
+      1 | 0.0 | 0.0 | 0.0
     """
     return zeros(array.axes)
 
@@ -2570,13 +2559,12 @@ def ones(axes):
 
     Example
     -------
-    >>> from LArray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> mat0 = ones([xnat, xsex])
-    nat\sex |   H |   F
-     BE | 1.0 | 1.0
-     FO | 1.0 | 1.0
+    >>> ones([xnat, xsex])
+    nat\\sex |   H |   F
+         BE | 1.0 | 1.0
+         FO | 1.0 | 1.0
     """
     axes = AxisCollection(axes)
     return LArray(np.ones(axes.shape), axes)
@@ -2625,10 +2613,10 @@ def empty(axes):
     >>> from larray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> mat = empty([xnat, xsex])
-    nat\sex |                  H |                  F
-     BE | 2.47311483356e-315 | 2.47498446195e-315
-     FO |                0.0 | 6.07684618082e-31
+    >>> # empty([xnat, xsex])
+    >>> # nat\\sex |                  H |                  F
+    >>> #      BE | 2.47311483356e-315 | 2.47498446195e-315
+    >>> #      FO |                0.0 | 6.07684618082e-31
     """
     axes = AxisCollection(axes)
     return LArray(np.empty(axes.shape), axes)
