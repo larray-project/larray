@@ -1920,13 +1920,13 @@ class LArray(object):
          BE |        F |     3 |     4 |     5
          FO |        H |     6 |     7 |     8
          FO |        F |     9 |    10 |    11
-        >>> mat.to_csv('c:/tmp/test_transp.csv', ';', transpose=True)
+        >>> mat.to_csv('test.csv', ';', transpose=True)
         >>> # nat;sex\type;type1;type2;type3
         >>> # BE;H;0;1;2tra
         >>> # BE;F;3;4;5
         >>> # FO;H;6;7;8
         >>> # FO;F;9;10;11
-        >>> mat.to_csv('c:/tmp/test_notransp.csv', ';', transpose=False)
+        >>> mat.to_csv('test.csv', ';', transpose=False)
         >>> # nat;sex;type;0
         >>> # BE;H;type1;0
         >>> # BE;H;type2;1
@@ -1973,7 +1973,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.to_hdf('c:/tmp/test.hdf', 'mat')
+        >>> # mat.to_hdf('test.h5', 'mat')
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
@@ -2001,7 +2001,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.to_excel('c:/tmp/test.xlsx', 'Sheet1')
+        >>> # mat.to_excel('test.xlsx', 'Sheet1')
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
@@ -2153,9 +2153,9 @@ class LArray(object):
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = zeros([xnat, xsex, xtype])
         >>> mat.dtype
-        dtype('int32')
+        dtype('float64')
         """
         return self.data.dtype
 
@@ -2383,14 +2383,14 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     >>> xsex = Axis('sex', ['H', 'F'])
     >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
     >>> mat = ndrange([xnat, xsex, xtype])
-    >>> mat.to_csv('c:/tmp/test_transp.csv', ';')
-    >>> read_csv('c:/tmp/test_transp.csv', sep=';')
+    >>> mat.to_csv('test.csv', ';')
+    >>> read_csv('test.csv', sep=';')
     nat | sex\\type | type1 | type2 | type3
      BE |        F |     3 |     4 |     5
      BE |        H |     0 |     1 |     2
      FO |        F |     9 |    10 |    11
      FO |        H |     6 |     7 |     8
-    >>> read_csv('c:/tmp/test_transp.csv', sep=';', sort_rows=False,
+    >>> read_csv('test.csv', sep=';', sort_rows=False,
     ...          sort_columns=False)
     nat | sex\\type | type1 | type2 | type3
      BE |        H |     0 |     1 |     2
