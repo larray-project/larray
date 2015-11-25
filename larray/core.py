@@ -1965,7 +1965,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.to_hdf('test.h5', 'mat')  # doctest: +SKIP
+        >>> mat.to_hdf('test.h5', 'mat')
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
@@ -1993,7 +1993,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.to_excel('test.xlsx', 'Sheet1')  # doctest: +SKIP
+        >>> mat.to_excel('test.xlsx', 'Sheet1')
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 

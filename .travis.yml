@@ -44,7 +44,8 @@ install:
     # pandas will bring dateutil numpy pytz setuptools six and scipy, we
     # might want to avoid the later by installing all dependencies manually
     # except scipy and install pandas with --no-deps
-    - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3} numpy pandas pytables pyqt matplotlib nose
+    - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
+            numpy pandas pytables pyqt matplotlib xlrd openpyxl xlsxwriter nose
     - source activate travisci
 
 script:
