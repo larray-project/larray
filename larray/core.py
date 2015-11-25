@@ -1965,7 +1965,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> # mat.to_hdf('test.h5', 'mat')
+        >>> mat.to_hdf('test.h5', 'mat')  # doctest: +SKIP
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
 
@@ -1993,7 +1993,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> # mat.to_excel('test.xlsx', 'Sheet1')
+        >>> mat.to_excel('test.xlsx', 'Sheet1')  # doctest: +SKIP
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
 
@@ -2010,7 +2010,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> # mat.to_clipboard()
+        >>> mat.to_clipboard()  # doctest: +SKIP
         """
         self.df.to_clipboard(*args, **kwargs)
 
@@ -2065,7 +2065,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> # mat.plot()
+        >>> mat.plot()  # doctest: +SKIP
         """
         self.df.plot(*args, **kwargs)
 
@@ -2084,7 +2084,7 @@ class LArray(object):
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.shape
+        >>> mat.shape  # doctest: +SKIP
         (2, 2, 3)
         """
         return self.data.shape
@@ -2604,13 +2604,12 @@ def empty(axes):
 
     Example
     -------
-    >>> from larray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> # empty([xnat, xsex])
-    >>> # nat\\sex |                  H |                  F
-    >>> #      BE | 2.47311483356e-315 | 2.47498446195e-315
-    >>> #      FO |                0.0 | 6.07684618082e-31
+    >>> empty([xnat, xsex])  # doctest: +SKIP
+    nat\\sex |                  H |                  F
+         BE | 2.47311483356e-315 | 2.47498446195e-315
+         FO |                0.0 | 6.07684618082e-31
     """
     axes = AxisCollection(axes)
     return LArray(np.empty(axes.shape), axes)
@@ -2632,8 +2631,12 @@ def empty_like(array):
 
     Example
     -------
-    >>> a = ndrange((2, 3, 2))
-    >>> b = empty_like(a)
+    >>> a = ndrange((3, 2))
+    >>> empty_like(a)   # doctest: +SKIP
+    -\- |                  0 |                  1
+      0 | 2.12199579097e-314 | 6.36598737388e-314
+      1 | 1.06099789568e-313 | 1.48539705397e-313
+      2 | 1.90979621226e-313 | 2.33419537056e-313
     """
     return empty(array.axes)
 
