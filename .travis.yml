@@ -15,7 +15,8 @@ branches:
         #- devel
 
 before_install:
-    - sudo apt-get update
+    # cannot use sudo with the container-based infrastructure
+    # - sudo apt-get update
 
     # Install Miniconda
     # We do this conditionally because it saves us some downloading if the
@@ -36,8 +37,8 @@ before_install:
 
     # The next couple lines fix a crash with multiprocessing on Travis
     # and are not specific to using Miniconda
-    - sudo rm -rf /dev/shm
-    - sudo ln -s /run/shm /dev/shm
+    # - sudo rm -rf /dev/shm
+    # - sudo ln -s /run/shm /dev/shm
 
 install:
     # Setup environment
@@ -56,3 +57,6 @@ script:
 notifications:
     on_success: "change"
     on_failure: "always"
+
+# use container-based infrastructure
+sudo: false
