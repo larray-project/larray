@@ -1595,7 +1595,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ones([xnat, xsex, xtype])
         >>> # 0.0833 == 1 / mat.sum()
         >>> mat.ratio()
@@ -1741,7 +1741,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ones([xnat, xsex, xtype])
         >>> mat
         nat | sex\\type | type1 | type2 | type3
@@ -1788,7 +1788,7 @@ class LArray(object):
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xsex2 = Axis('sex', ['U'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat1 = ones([xnat, xsex, xtype])
         >>> mat1
         nat | sex\\type | type1 | type2 | type3
@@ -1835,13 +1835,13 @@ class LArray(object):
         Returns
         -------
         LArray
-            LArray with reordered axis.
+            LArray with reordered axes.
 
         Example
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat1 = ones([xnat, xsex, xtype])
         >>> mat1
         nat | sex\\type | type1 | type2 | type3
@@ -1904,10 +1904,6 @@ class LArray(object):
             transpose = True  => transpose over last axis.
             transpose = False => no transpose.
 
-        Returns
-        -------
-        csv file
-
         Example
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
@@ -1952,7 +1948,7 @@ class LArray(object):
         write LArray to a HDF file
 
         a HDF file can contain multiple LArray's. The 'key' parameter
-        is a unique indentifies for the LArray.
+        is a unique identifier for the LArray.
 
         Parameters
         ----------
@@ -1963,15 +1959,11 @@ class LArray(object):
         *args
         **kargs
 
-        Returns
-        -------
-        hdf file with LArray (self) added to it and named key
-
         Example
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> # mat.to_hdf('test.h5', 'mat')
         """
@@ -1999,7 +1991,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> # mat.to_excel('test.xlsx', 'Sheet1')
         """
@@ -2016,7 +2008,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> # mat.to_clipboard()
         """
@@ -2071,7 +2063,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> # mat.plot()
         """
@@ -2090,7 +2082,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.shape
         (2, 2, 3)
@@ -2110,7 +2102,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.ndim
         3
@@ -2131,7 +2123,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.size
         12
@@ -2152,7 +2144,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = zeros([xnat, xsex, xtype])
         >>> mat.dtype
         dtype('float64')
@@ -2193,7 +2185,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.set_labels(x.sex, ['Hommes', 'Femmes'])
         nat | sex\\type | type1 | type2 | type3
@@ -2234,7 +2226,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat
         nat | sex\\type | type1 | type2 | type3
@@ -2359,7 +2351,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     ----------
     filepath : string
         path where the csv file has to be written.
-    nb_index: integer
+    nb_index : integer
         number of leading index columns (ex. 4).
     index_col : list
         list of columns for the index (ex. [0, 1, 2, 3]).
@@ -2381,7 +2373,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     -------
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> xtype = Axis ('type',['type1', 'type2', 'type3'])
+    >>> xtype = Axis('type',['type1', 'type2', 'type3'])
     >>> mat = ndrange([xnat, xsex, xtype])
     >>> mat.to_csv('test.csv', ';')
     >>> read_csv('test.csv', sep=';')
@@ -2482,10 +2474,10 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
 def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
                na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
     """
-    reads excel file from sheet name and returns an Larray with the contents
-        nb_index: number of leading index columns (ex. 4)
+    reads excel file from sheet name and returns an LArray with the contents
+        nb_index: number of leading index columns (e.g. 4)
     or
-        index_col : list of columns for the index (ex. [0, 1, 2, 3])
+        index_col : list of columns for the index (e.g. [0, 1, 3])
     """
     if len(index_col) == 0:
         index_col = list(range(nb_index))
@@ -2586,9 +2578,11 @@ def ones_like(array):
 
     Example
     -------
-    >>> from larray import *
-    >>> a = ndrange((2, 3, 2))
-    >>> b = ones_like(a)    # b.shape = (2, 3, 2) -> b.sum() = 1.0
+    >>> a = ndrange((2, 3))
+    >>> ones_like(a)
+    -\\- |   0 |   1 |   2
+      0 | 1.0 | 1.0 | 1.0
+      1 | 1.0 | 1.0 | 1.0
     """
     return ones(array.axes)
 
@@ -2638,7 +2632,6 @@ def empty_like(array):
 
     Example
     -------
-    >>> from larray import *
     >>> a = ndrange((2, 3, 2))
     >>> b = empty_like(a)
     """
@@ -2655,15 +2648,17 @@ def ndrange(axes):
 
     Returns
     -------
-    larray
+    LArray
         LArray with a shape defined by axes and filled with increasing int.
 
     Example
     -------
-    >>> from larray import *
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> mat = ndrange([xnat, xsex])
+    >>> ndrange([xnat, xsex])
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
     """
     axes = AxisCollection(axes)
     return LArray(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
