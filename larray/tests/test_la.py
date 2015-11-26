@@ -1437,13 +1437,27 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        reg = la.sum(age, sex, geo=(self.vla_str, self.wal_str, self.bru_str,
-                                    self.belgium))
+        regions = (self.vla_str, self.wal_str, self.bru_str, self.belgium)
+        reg = la.sum(age, sex, regions)
         self.assertEqual(reg.shape, (4, 15))
 
-        ratio = reg.ratio(geo, lipro)
-        self.assertEqual(ratio.shape, (4, 15))
+        fla = geo.group(self.vla_str, name='Flanders')
+        wal = geo.group(self.wal_str, name='Wallonia')
+        bru = geo.group(self.bru_str, name='Brussels')
+        regions = (fla, wal, bru)
+        reg = la.sum(age, sex, regions)
+
+        ratio = reg.ratio()
         assert_array_equal(ratio, reg / reg.sum(geo, lipro))
+        self.assertEqual(ratio.shape, (3, 15))
+
+        ratio = reg.ratio(geo)
+        assert_array_equal(ratio, reg / reg.sum(geo))
+        self.assertEqual(ratio.shape, (3, 15))
+
+        ratio = reg.ratio(geo, lipro)
+        assert_array_equal(ratio, reg / reg.sum(geo, lipro))
+        self.assertEqual(ratio.shape, (3, 15))
         self.assertEqual(ratio.sum(), 1.0)
 
     def test_transpose(self):
