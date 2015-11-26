@@ -426,9 +426,11 @@ def to_keys(value):
         return value
     elif isinstance(value, list):
         return to_key(value)
-    else:
-        assert isinstance(value, tuple), "%s is not a tuple" % value
+    elif isinstance(value, tuple):
         return tuple([to_key(group) for group in value])
+    else:
+        raise TypeError("%s has an invalid type (%s) for a key"
+                        % (value, type(value).__name__))
 
 
 def union(*args):
