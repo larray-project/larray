@@ -422,7 +422,7 @@ def to_keys(value):
         else:
             # a single group => collapse dimension
             return to_key(value)
-    elif isinstance(value, LKey):
+    elif isinstance(value, (int, slice, LKey)):
         return value
     elif isinstance(value, list):
         return to_key(value)
