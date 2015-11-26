@@ -1444,8 +1444,7 @@ class LArray(object):
         axes_indices = tuple(self.axes.index(a) for a in axes)
         res_data = op(src_data, axis=axes_indices)
         axes_tokill = set(axes_indices)
-        res_axes = [axis for axis_num, axis in enumerate(self.axes)
-                    if axis_num not in axes_tokill]
+        res_axes = self.axes.without(axes_tokill)
         if not res_axes:
             # scalars don't need to be wrapped in LArray
             return res_data
