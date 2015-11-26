@@ -2730,8 +2730,6 @@ def make_numpy_broadcastable(values):
     # 1) reorder axes
     values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
               for v in values]
-    # print("transposed")
-    # print(values)
 
     # 2) add length one axes
     # v.axes.extend([Axis(name, ['*']) for name in all_axes - v.axes])
