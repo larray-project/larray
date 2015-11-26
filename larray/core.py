@@ -331,7 +331,7 @@ def to_ticks(s):
     """
     if isinstance(s, LKey):
         # a single ValueGroup used for all ticks of an Axis
-        raise NotImplemented("not sure what to do with it yet")
+        raise NotImplementedError("not sure what to do with it yet")
     elif isinstance(s, pd.Index):
         return s.values
     elif isinstance(s, np.ndarray):
