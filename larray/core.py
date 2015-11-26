@@ -329,7 +329,7 @@ def to_ticks(s):
     >>> to_ticks(':3')
     ['0', '1', '2', '3']
     """
-    if isinstance(s, ValueGroup):
+    if isinstance(s, LKey):
         # a single ValueGroup used for all ticks of an Axis
         raise NotImplemented("not sure what to do with it yet")
     elif isinstance(s, pd.Index):
