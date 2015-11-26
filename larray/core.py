@@ -1620,31 +1620,26 @@ class LArray(object):
         Returns
         -------
         LArray
-            LArray = LArray/LArray.sum(axes).
+            LArray = LArray / LArray.sum(axes).
 
         Example
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ones([xnat, xsex, xtype])
-        >>> # 0.0833 == 1 / mat.sum()
+        >>> mat = ndrange([xnat, xsex])
+        >>> mat
+        nat\\sex | H | F
+             BE | 0 | 1
+             FO | 2 | 3
         >>> mat.ratio()
-        nat | sex\\type |           type1 |           type2 |           type3
-         BE |        H | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-         BE |        F | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-         FO |        H | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-         FO |        F | 0.0833333333333 | 0.0833333333333 | 0.0833333333333
-        >>> # 0.16666 == 1 / mat.sum(xsex, xtype)
-        >>> mat.ratio(xsex, xtype)
-        nat | sex\\type |          type1 |          type2 |          type3
-         BE |        H | 0.166666666667 | 0.166666666667 | 0.166666666667
-         BE |        F | 0.166666666667 | 0.166666666667 | 0.166666666667
-         FO |        H | 0.166666666667 | 0.166666666667 | 0.166666666667
-         FO |        F | 0.166666666667 | 0.166666666667 | 0.166666666667
-       """
-        if not axes:
-            axes = self.axes
+        nat\\sex |              H |              F
+             BE |            0.0 | 0.166666666667
+             FO | 0.333333333333 |            0.5
+        >>> mat.ratio(xsex)
+        nat\\sex |   H |   F
+             BE | 0.0 | 1.0
+             FO | 0.4 | 0.6
+        """
         return self / self.sum(*axes)
 
     # aggregate method factory
