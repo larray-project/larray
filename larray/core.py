@@ -199,7 +199,7 @@ import csv
 import numpy as np
 import pandas as pd
 
-from larray.utils import (prod, table2str, unique, array_equal, csv_open, unzip,
+from larray.utils import (table2str, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates)
 
@@ -1349,7 +1349,7 @@ class LArray(object):
         # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
         # NEER27 | I05  | AU       | 134.86 | 125.29 | 117.08
         width = self.shape[-1]
-        height = prod(self.shape[:-1])
+        height = np.prod(self.shape[:-1])
         data = np.asarray(self).reshape(height, width)
 
         if self.axes is not None:
@@ -2664,7 +2664,7 @@ def ndrange(axes):
          FO | 2 | 3
     """
     axes = AxisCollection(axes)
-    return LArray(np.arange(prod(axes.shape)).reshape(axes.shape), axes)
+    return LArray(np.arange(np.prod(axes.shape)).reshape(axes.shape), axes)
 
 
 def stack(arrays, axis):
