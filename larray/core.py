@@ -1115,15 +1115,13 @@ class LArray(object):
         return ValueGroup(axis_key, axis=valid_axes[0])
 
     def translated_key(self, key):
-        """
-        Complete and translate key
+        """Complete and translate key
 
         Parameters
         ----------
-        key can have any of the following forms
-        a) a single value
-        b) a tuple of values (possibly including ValueGroups)
-        c) an {axis_name: value} dict
+        key : single axis key or tuple of keys or dict {axis_name: axis_key}
+           each axis key can be either a scalar, a list of scalars or
+           an LKey
 
         Returns
         -------
