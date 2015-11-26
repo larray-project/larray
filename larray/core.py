@@ -1091,6 +1091,29 @@ class LArray(object):
                              (axis_key, valid_axes))
         return PositionalKey(axis_pos_key, axis=valid_axes[0])
 
+    def _guess_axis(self, axis_key):
+        if isinstance(axis_key, LKey):
+            return axis_key
+
+        # TODO: instead of checking all axes, we should have a big mapping
+        # (in AxisCollection or LArray):
+        # label -> (axis, index)
+        # but for Pandas, this wouldn't work, we'd need label -> axis
+        valid_axes = []
+        for axis in self.axes:
+            try:
+                axis.translate(axis_key)
+            except KeyError:
+                continue
+            valid_axes.append(axis.name)
+        if not valid_axes:
+            raise ValueError("%s is not a valid label for any axis"
+                             % axis_key)
+        elif len(valid_axes) > 1:
+            raise ValueError('%s is ambiguous (valid in %s)' %
+                             (axis_key, valid_axes))
+        return ValueGroup(axis_key, axis=valid_axes[0])
+
     def translated_key(self, key):
         """
         Complete and translate key
