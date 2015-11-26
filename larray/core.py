@@ -10,6 +10,8 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'ndrange',
+    'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var',
+    'std',
     '__version__'
 ]
 
@@ -195,6 +197,10 @@ Matrix class
 from itertools import product, chain, groupby, repeat, islice
 import sys
 import csv
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 import numpy as np
 import pandas as pd
@@ -976,6 +982,51 @@ class AxisCollection(object):
         return tuple(len(axis) for axis in self._list)
 
 
+# commutative modulo float precision errors
+def sum(array, over=None):
+    if isinstance(array, LArray):
+        return array.sum(over)
+    else:
+        return builtins.sum(array)
+
+
+def prod(array, over=None):
+    return array.prod(over)
+
+
+def cumsum(array, over=None):
+    return array.cumsum(over)
+
+
+def cumprod(array, over=None):
+    return array.cumprod(over)
+
+
+def min(array, over=None):
+    return array.min(over)
+
+
+def max(array, over=None):
+    return array.max(over)
+
+
+def mean(array, over=None):
+    return array.mean(over)
+
+
+# not commutative
+def ptp(array, over=None):
+    return array.ptp(over)
+
+
+def var(array, over=None):
+    return array.var(over)
+
+
+def std(array, over=None):
+    return array.std(over)
+
+
 class LArray(object):
     """
     LArray class
@@ -1618,7 +1669,6 @@ class LArray(object):
             assert isinstance(key, (str, list, slice))
             return ValueGroup(key, axis=axis)
 
-
         operations = [to_keys(a) if not self.axes.isaxis(a) else a
                       for a in args] + \
                      [to_vg(k, v) for k, v in sorted_kwargs]
@@ -1637,6 +1687,56 @@ class LArray(object):
         for are_axes, axes in groupby(operations, self.axes.isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
             res = func(op, axes, keepaxes=keepaxes)
+        return res
+
+    def with_total(self, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        args
+        kwargs
+        op : aggregate function
+            Defaults to `sum()`.
+        label : scalar value
+            label to use for the total. Defaults to "total".
+
+        Returns
+        -------
+        LArray
+        """
+        label = kwargs.pop('label', 'total')
+        op = kwargs.pop('op', sum)
+        npop = {
+            sum: np.sum,
+            prod: np.prod,
+            cumsum: np.cumsum,
+            cumprod: np.cumprod,
+            min: np.min,
+            max: np.max,
+            mean: np.mean,
+            ptp: np.ptp,
+            var: np.var,
+            std: np.std,
+        }
+        # TODO: commutative should be known for usual ops
+        operations = self._prepare_aggregate(op, args, kwargs, False)
+        res = self
+        for axis in operations:
+            # TODO: use res._aggregate(..., keepaxes=label) and use .extend in
+            # all cases
+            if self.axes.isaxis(axis):
+                value = res._axis_aggregate(npop[op], (axis,))
+                res = res.append(axis, value, label)
+            else:
+                # groups
+                assert isinstance(axis, tuple)
+                # XXX: we might want to move this step in _prepare (then we
+                # could remove it from _group_aggregate too)
+                vgkey = tuple(self._guess_axis(k) for k in axis)
+                # FIXME: check that axis is the same for all items
+                axis, groups = vgkey[0].axis, vgkey
+                value = res._group_aggregate(npop[op], (groups,))
+                res = res.extend(axis, value)
         return res
 
     def copy(self):

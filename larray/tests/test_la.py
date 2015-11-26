@@ -9,7 +9,7 @@ import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
                     read_csv, zeros, zeros_like, ndrange,
-                    clip, exp, x)
+                    clip, exp, x, view, mean, var, std)
 from larray.utils import array_equal, array_nan_equal
 from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
 
@@ -1636,6 +1636,48 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
         self.assertEqual(percent.shape, (3, 15))
         self.assertAlmostEqual(percent.sum(), 100.0)
+
+    def test_total(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        # la = self.small
+        # sex, lipro = la.axes
+
+        self.assertEqual(la.with_total().shape, (117, 45, 3, 16))
+        self.assertEqual(la.with_total(sex).shape, (116, 44, 3, 15))
+        self.assertEqual(la.with_total(lipro).shape, (116, 44, 2, 16))
+        self.assertEqual(la.with_total(sex, lipro).shape, (116, 44, 3, 16))
+
+        fla = geo.group(self.vla_str, name='Flanders')
+        wal = geo.group(self.wal_str, name='Wallonia')
+        bru = geo.group(self.bru_str, name='Brussels')
+        bel = geo.all('Belgium')
+
+        self.assertEqual(la.with_total(geo=(fla, wal, bru), op=mean).shape,
+                         (116, 47, 2, 15))
+        self.assertEqual(la.with_total((fla, wal, bru), op=mean).shape,
+                         (116, 47, 2, 15))
+        # works but "wrong" for x.geo (double what is expected because it
+        # includes fla wal & bru)
+        # TODO: we probably want to display a warning (or even an error?) in
+        #       that case. If we really want that behavior, we can still split
+        #       the operation: .with_total((fla, wal, bru)).with_total(x.geo)
+        # OR we might want to only sum the axis as it was before the op (but
+        #    that does not play well when working with multiple axes).
+        a1 = la.with_total(x.sex, (fla, wal, bru), x.geo, x.lipro)
+        self.assertEqual(a1.shape, (116, 48, 3, 16))
+
+        # correct total but the order is not very nice
+        a2 = la.with_total(x.sex, x.geo, (fla, wal, bru), x.lipro)
+        self.assertEqual(a2.shape, (116, 48, 3, 16))
+
+        # the correct way to do it
+        a3 = la.with_total(x.sex, (fla, wal, bru, bel), x.lipro)
+        self.assertEqual(a3.shape, (116, 48, 3, 16))
+
+        # a4 = la.with_total((lipro[':P05'], lipro['P05:']), op=mean)
+        a4 = la.with_total((':P05', 'P05:'), op=mean)
+        self.assertEqual(a4.shape, (116, 44, 2, 17))
 
     def test_transpose(self):
         la = self.larray
