@@ -7,7 +7,6 @@ import unittest
 import numpy as np
 import pandas as pd
 
-import larray as la
 from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
                     read_csv, zeros, zeros_like, ndrange,
                     clip, exp, x)
