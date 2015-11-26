@@ -823,6 +823,31 @@ class AxisCollection(object):
             key = key.name
         return key in self._map
 
+    def isaxis(self, value):
+        # this is tricky. 0 and 1 can be both axes indices and axes ticks.
+        # not sure what's worse:
+        # 1) disallow aggregates(axis_num)
+        #    users could still use arr.sum(arr.axes[0])
+        #    we could also provide an explicit kwarg (ie this would
+        #    effectively forbid having an axis named "axis").
+        #    arr.sum(axis=0). I think this is the sanest option. There
+        #    error message in case we use it without the keyword needs to
+        #    be clearer though.
+        return isinstance(value, (basestring, Axis)) and value in self
+        # 2) slightly inconsistent API: allow aggregate over single labels
+        #    if they are string, but not int
+        #    arr.sum(0) would sum on the first axis, but arr.sum('H') would
+        #    sum a single tick. I don't like this option.
+        # 3) disallow single tick aggregates. Single labels make little
+        #    sense in the context of an aggregate, but you don't always
+        #    know/want to differenciate the code in that case anyway.
+        #    It would be annoying for e.g. Brussels
+        # 4) give priority to axes,
+        #    arr.sum(0) would sum on the first axis but arr.sum(5) would
+        #    sum a single tick (assuming there is a int axis and less than
+        #    six axes).
+        # return value in self
+
     def __len__(self):
         return len(self._list)
 
@@ -1432,7 +1457,7 @@ class LArray(object):
         """
         return self.__getitem__(kwargs, collapse)
 
-    def _axis_aggregate(self, op, axes=()):
+    def _axis_aggregate(self, op, axes=(), keepaxes=False):
         """
         op is a numpy aggregate function: func(arr, axis=(0, 1))
         axes is a tuple of axes (each axis can be an Axis object, str or int)
@@ -1442,8 +1467,8 @@ class LArray(object):
             axes = self.axes
 
         axes_indices = tuple(self.axes.index(a) for a in axes)
-        res_data = op(src_data, axis=axes_indices)
-        axes_tokill = set(axes_indices)
+        res_data = op(src_data, axis=axes_indices, keepdims=keepaxes)
+        axes_tokill = set() if keepaxes else set(axes_indices)
         res_axes = self.axes.without(axes_tokill)
         if not res_axes:
             # scalars don't need to be wrapped in LArray
@@ -1460,7 +1485,12 @@ class LArray(object):
         return LArray(op(np.asarray(self), axis=self.axes.index(axis)),
                       self.axes)
 
-    def _group_aggregate(self, op, items):
+    # TODO: now that items is never a (k, v), it should be renamed to
+    # something else: args? (groups would be misleading because each "item"
+    # can contain several groups)
+    # XXX: rename keepaxes to label=value? For group_aggregates we might
+    # want to keep the VG label if any
+    def _group_aggregate(self, op, items, keepaxes=False):
         res = self
         # TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
@@ -1468,10 +1498,21 @@ class LArray(object):
         for item in items:
             if isinstance(item, LKey):
                 axis, groups = item.axis, item
+            elif isinstance(item, (int, slice, list, basestring)):
+                # it could be badly spelled Axis
+                groups = self._guess_axis(item)
+                axis = groups.axis
+            elif isinstance(item, tuple):
+                # a tuple is supposed to be several groups on the same axis
+                groups = tuple(self._guess_axis(k) for k in item)
+                axis = groups[0].axis
+                if not all(g.axis == axis for g in groups[1:]):
+                    raise ValueError("group with different axes: %s"
+                                     % str(item))
             else:
-                axis, groups = item
-            groups = to_keys(groups)
-
+                raise NotImplementedError("%s has invalid type (%s) for a "
+                                          "group aggregate key"
+                                          % (item, type(item).__name__))
             axis, axis_idx = res.axes[axis], res.axes.index(axis)
             res_axes = res.axes[:]
             res_shape = list(res.shape)
@@ -1521,7 +1562,10 @@ class LArray(object):
                 # we need only lists of ticks, not single ticks, otherwise the
                 # dimension is discarded too early (in __getitem__ instead of in
                 # the aggregate func)
-                group = [group] if group in axis else group
+                if isinstance(group, PositionalKey) and np.isscalar(group.key):
+                    group = PositionalKey([group.key], axis=group.axis)
+                elif group in axis:
+                    group = [group]
 
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 if res_data.ndim == 1:
@@ -1546,8 +1590,11 @@ class LArray(object):
                 res = res_data
         return res
 
-    def _aggregate(self, op, args, kwargs, commutative=False):
-        if not commutative and len(kwargs) > 1:
+    def _prepare_aggregate(self, op, args, kwargs=None, commutative=False):
+        """converts args to keys & VG and kwargs to VG"""
+
+        kwargs_items = [] if kwargs is None else kwargs.items()
+        if not commutative and len(kwargs_items) > 1:
             raise ValueError("grouping aggregates on multiple axes at the same "
                              "time using keyword arguments is not supported "
                              "for '%s' (because it is not a commutative"
@@ -1557,23 +1604,39 @@ class LArray(object):
         # Sort kwargs by axis name so that we have consistent results
         # between runs because otherwise rounding errors could lead to
         # slightly different results even for commutative operations.
+        sorted_kwargs = sorted(kwargs_items)
 
-        # XXX: transform kwargs to ValueGroups? ("geo", [1, 2]) -> geo[[1, 2]]
-        operations = list(args) + sorted(kwargs.items())
+        # convert kwargs to ValueGroup so that we can only use args afterwards
+        # but still keep the axis information
+        def to_vg(axis, key):
+            if isinstance(key, str):
+                key = to_keys(key)
+            if isinstance(key, tuple):
+                return tuple(to_vg(axis, k) for k in key)
+            if isinstance(key, ValueGroup):
+                return key
+            assert isinstance(key, (str, list, slice))
+            return ValueGroup(key, axis=axis)
+
+
+        operations = [to_keys(a) if not self.axes.isaxis(a) else a
+                      for a in args] + \
+                     [to_vg(k, v) for k, v in sorted_kwargs]
         if not operations:
             # op() without args is equal to op(all_axes)
-            return self._axis_aggregate(op)
+            operations = self.axes
+        return operations
 
-        def isaxis(a):
-            return isinstance(a, (int, basestring, Axis))
-
+    def _aggregate(self, op, args, kwargs=None, keepaxes=False,
+                   commutative=False):
+        operations = self._prepare_aggregate(op, args, kwargs, commutative)
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
         # we do not change the order of operations since we only group
         # consecutive operations.
-        for are_axes, axes in groupby(operations, isaxis):
+        for are_axes, axes in groupby(operations, self.axes.isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
-            res = func(op, axes)
+            res = func(op, axes, keepaxes=keepaxes)
         return res
 
     def copy(self):
