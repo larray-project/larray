@@ -906,7 +906,7 @@ class AxisCollection(object):
         """
         name_or_idx = axis.name if isinstance(axis, Axis) else axis
         return self.names.index(name_or_idx) \
-            if isinstance(name_or_idx, basestring) \
+            if isinstance(name_or_idx, (type(None), basestring)) \
             else name_or_idx
 
     def insert(self, index, axis):
