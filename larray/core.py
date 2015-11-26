@@ -1642,6 +1642,40 @@ class LArray(object):
         """
         return self / self.sum(*axes)
 
+    def percent(self, *axes):
+        """Returns a LArray with values LArray/LArray.sum(axes) * 100.
+
+        Parameters
+        ----------
+        *axes
+
+        Returns
+        -------
+        LArray
+            LArray = LArray / LArray.sum(axes) * 100
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> mat = ndrange([xnat, xsex])
+        >>> mat
+        nat\\sex | H | F
+             BE | 0 | 1
+             FO | 2 | 3
+        >>> mat.percent()
+        nat\\sex |             H |             F
+             BE |           0.0 | 16.6666666667
+             FO | 33.3333333333 |          50.0
+        >>> mat.percent(xsex)
+        nat\\sex |    H |     F
+             BE |  0.0 | 100.0
+             FO | 40.0 |  60.0
+        """
+        # dividing by self.sum(*axes) * 0.01 would be faster in many cases but
+        # I suspect it loose more precision.
+        return self * 100 / self.sum(*axes)
+
     # aggregate method factory
     def _agg_method(npfunc, name=None, commutative=False):
         def method(self, *args, **kwargs):

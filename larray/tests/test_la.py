@@ -1460,6 +1460,33 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(ratio.shape, (3, 15))
         self.assertEqual(ratio.sum(), 1.0)
 
+    def test_percent(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+
+        regions = (self.vla_str, self.wal_str, self.bru_str, self.belgium)
+        reg = la.sum(age, sex, regions)
+        self.assertEqual(reg.shape, (4, 15))
+
+        fla = geo.group(self.vla_str, name='Flanders')
+        wal = geo.group(self.wal_str, name='Wallonia')
+        bru = geo.group(self.bru_str, name='Brussels')
+        regions = (fla, wal, bru)
+        reg = la.sum(age, sex, regions)
+
+        percent = reg.percent()
+        assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
+        self.assertEqual(percent.shape, (3, 15))
+
+        percent = reg.percent(geo)
+        assert_array_equal(percent, reg * 100 / reg.sum(geo))
+        self.assertEqual(percent.shape, (3, 15))
+
+        percent = reg.percent(geo, lipro)
+        assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
+        self.assertEqual(percent.shape, (3, 15))
+        self.assertAlmostEqual(percent.sum(), 100.0)
+
     def test_transpose(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
