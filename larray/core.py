@@ -867,8 +867,14 @@ class AxisCollection(object):
         self._map[axis.name] = axis
 
     def check_compatible(self, axes):
-        for axis in axes:
-            local_axis = self._map.get(axis.name)
+        for i, axis in enumerate(axes):
+            if axis.name is not None:
+                local_axis = self._map.get(axis.name)
+            else:
+                if i < len(self):
+                    local_axis = self[i]
+                else:
+                    local_axis = None
             if local_axis is not None:
                 if axis != local_axis:
                     raise ValueError("incompatible axes:\n%r\nvs\n%r"
