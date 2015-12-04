@@ -2676,13 +2676,7 @@ def read_eurostat(filepath, **kwargs):
 
     Returns
     -------
-    result : LArray
-
-    Examples
-    --------
-
-    >>>
-
+    LArray
     """
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
