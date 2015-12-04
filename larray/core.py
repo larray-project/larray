@@ -2511,7 +2511,7 @@ def df_labels(df, sort=True):
         return [idx]
 
 
-def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
+def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     labels = df_labels(df, sort=sort_rows)
     if sort_rows:
         new_index = pd.MultiIndex.from_product(labels)
@@ -2526,7 +2526,7 @@ def cartesian_product_df(df, sort_rows=True, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
+def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
     if axes_names == [None]:
         last_axis = None, None
@@ -2553,7 +2553,7 @@ def df_aslarray(df, sort_rows=True, sort_columns=True, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
+             na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """
     reads csv file and returns a Larray with the contents
 
@@ -2582,11 +2582,11 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     na : ???
         ???.
     sort_rows : boolean
-        True (default) => ???.
-        False => ???.
+        Whether or not to sort the row dimensions alphabetically (sorting is
+        more efficient than not sorting). Defaults to False.
     sort_columns : boolean
-        True (default) => ???.
-        False => ???.
+        Whether or not to sort the column dimension alphabetically (sorting is
+        more efficient than not sorting). Defaults to False.
     **kwargs
 
     Example
@@ -2598,17 +2598,16 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     >>> mat.to_csv('test.csv', ';')
     >>> read_csv('test.csv', sep=';')
     nat | sex\\type | type1 | type2 | type3
-     BE |        F |     3 |     4 |     5
      BE |        H |     0 |     1 |     2
-     FO |        F |     9 |    10 |    11
+     BE |        F |     3 |     4 |     5
      FO |        H |     6 |     7 |     8
-    >>> read_csv('test.csv', sep=';', sort_rows=False,
-    ...          sort_columns=False)
+     FO |        F |     9 |    10 |    11
+    >>> read_csv('test.csv', sep=';', sort_rows=True)
     nat | sex\\type | type1 | type2 | type3
-     BE |        H |     0 |     1 |     2
      BE |        F |     3 |     4 |     5
-     FO |        H |     6 |     7 |     8
+     BE |        H |     0 |     1 |     2
      FO |        F |     9 |    10 |    11
+     FO |        H |     6 |     7 |     8
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
@@ -2681,7 +2680,7 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
+def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
              **kwargs):
     """
     read an LArray from a h5 file with the specified name
@@ -2692,7 +2691,7 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=True, sort_columns=True,
 
 
 def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
-               na=np.nan, sort_rows=True, sort_columns=True, **kwargs):
+               na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """
     reads excel file from sheet name and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
