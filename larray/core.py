@@ -1144,6 +1144,60 @@ class LArray(object):
                 for a in self.axes]
         return LArray(self.data, axes)
 
+    def sort_axis(self, axis=None, reverse=False):
+        """Sorts axes of the LArray.
+
+        Parameters
+        ----------
+        axis : axis reference (Axis, string, int)
+            axis to sort. If None, sorts all axes.
+        reverse : bool
+            descending sort (default: False -- ascending)
+
+        Returns
+        -------
+        LArray
+            LArray with sorted axes.
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['EU', 'FO', 'BE'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> a = ndrange([xnat, xsex])
+        >>> a
+        nat\\sex | H | F
+             EU | 0 | 1
+             FO | 2 | 3
+             BE | 4 | 5
+        >>> a.sort_axis(x.sex)
+        nat\\sex | F | H
+             EU | 1 | 0
+             FO | 3 | 2
+             BE | 5 | 4
+        >>> a.sort_axis()
+        nat\\sex | F | H
+             BE | 5 | 4
+             EU | 1 | 0
+             FO | 3 | 2
+        >>> a.sort_axis(reverse=True)
+        nat\\sex | H | F
+             FO | 2 | 3
+             EU | 0 | 1
+             BE | 4 | 5
+        """
+        if axis is None:
+            axes = self.axes
+        else:
+            axes = [self.axes[axis]]
+
+        def sort_key(axis):
+            key = np.argsort(axis.labels)
+            if reverse:
+                key = key[::-1]
+            return PositionalKey(key, axis=axis.name)
+
+        return self[tuple(sort_key(axis) for axis in axes)]
+
     def _translate_axis_key(self, axis_key):
         if isinstance(axis_key, LKey):
             return axis_key
