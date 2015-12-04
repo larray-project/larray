@@ -1820,11 +1820,11 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     #     print("done")
 
     def test_readcsv(self):
-        # la = read_csv(abspath('test1d.csv'))
-        # self.assertEqual(la.ndim, 1)
-        # self.assertEqual(la.shape, (5,))
-        # self.assertEqual(la.axes_names, ['age'])
-        # self._assert_equal_raw(la[0], [3722])
+        la = read_csv(abspath('test1d.csv'))
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes_names, ['time'])
+        self._assert_equal_raw(la, [3722, 3395, 3347])
 
         la = read_csv(abspath('test2d.csv'))
         self.assertEqual(la.ndim, 2)

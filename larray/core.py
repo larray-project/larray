@@ -2528,15 +2528,17 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
-    if axes_names == [None]:
-        last_axis = None, None
+    if axes_names == [None] and len(df) > 1:
+        axes_names = [None, None]
+    if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
+        axes_names = axes_names[:-1] + axes_names[-1].split('\\')
+
+    if len(axes_names) > 1:
+        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
+                                               sort_columns=sort_columns,
+                                               **kwargs)
     else:
-        last_axis = axes_names[-1].split('\\')
-    axes_names[-1] = last_axis[0]
-    # FIXME: hardcoded "time"
-    axes_names.append(last_axis[1] if len(last_axis) > 1 else 'time')
-    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
-                                           sort_columns=sort_columns, **kwargs)
+        axes_labels = []
 
     # we could inline df_aslarray into the functions that use it, so that the
     # original (non-cartesian) df is freed from memory at this point, but it
@@ -2616,7 +2618,12 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         if headersep is not None and headersep != sep:
             combined_axes_names = header[0]
             header = combined_axes_names.split(headersep)
-        pos_last = next(i for i, v in enumerate(header) if '\\' in v)
+        try:
+            # take the first cell which contains '\'
+            pos_last = next(i for i, v in enumerate(header) if '\\' in v)
+        except StopIteration:
+            # if there isn't any, assume 1d array
+            pos_last = 0
         axes_names = header[:pos_last + 1]
 
     if len(index_col) == 0 and nb_index == 0:
