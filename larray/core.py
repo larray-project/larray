@@ -2124,6 +2124,50 @@ class LArray(object):
         value = value.expand(self.axes.replace(axis, Axis(axis.name, [label])))
         return self.extend(axis, value)
 
+    def prepend(self, axis, value, label=None):
+        """Adds a LArray before 'self' along an axis.
+
+        Parameters
+        ----------
+        axis : axis
+            the axis
+        value : LArray
+            LArray with compatible axes
+        label : string
+            optional
+            label for the new item in axis
+
+        Returns
+        -------
+        LArray
+            LArray expanded with 'value' at the start of 'axis'.
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
+        >>> mat = ones([xnat, xsex, xtype])
+        >>> mat
+        nat | sex\\type | type1 | type2 | type3
+         BE |        H |   1.0 |   1.0 |   1.0
+         BE |        F |   1.0 |   1.0 |   1.0
+         FO |        H |   1.0 |   1.0 |   1.0
+         FO |        F |   1.0 |   1.0 |   1.0
+        >>> mat.prepend(x.type, mat.sum(x.type), 'type0')
+        nat | sex\\type | type0 | type1 | type2 | type3
+         BE |        H |   3.0 |   1.0 |   1.0 |   1.0
+         BE |        F |   3.0 |   1.0 |   1.0 |   1.0
+         FO |        H |   3.0 |   1.0 |   1.0 |   1.0
+         FO |        F |   3.0 |   1.0 |   1.0 |   1.0
+        """
+        axis = self.axes[axis]
+        if np.isscalar(value):
+            value = LArray(value, [])
+        # TODO: extend first with an empty array then expand with out=
+        value = value.expand(self.axes.replace(axis, Axis(axis.name, [label])))
+        return value.extend(axis, self)
+
     def extend(self, axis, other):
         """Adds a LArray to a LArray ('self') along an axis.
 
@@ -2132,7 +2176,7 @@ class LArray(object):
         axis : axis
             the axis
         other : LArray
-            LArray of the same shape as self
+            LArray with compatible axes
 
         Returns
         -------
@@ -2144,38 +2188,49 @@ class LArray(object):
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xsex2 = Axis('sex', ['U'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat1 = ones([xnat, xsex, xtype])
-        >>> mat1
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |   1.0
-         BE |        F |   1.0 |   1.0 |   1.0
-         FO |        H |   1.0 |   1.0 |   1.0
-         FO |        F |   1.0 |   1.0 |   1.0
-        >>> mat2 = zeros([xnat, xsex2, xtype])
-        >>> mat2
-        nat | sex\\type | type1 | type2 | type3
-         BE |        U |   0.0 |   0.0 |   0.0
-         FO |        U |   0.0 |   0.0 |   0.0
-        >>> mat1.extend(x.sex, mat2)
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |   1.0
-         BE |        F |   1.0 |   1.0 |   1.0
-         BE |        U |   0.0 |   0.0 |   0.0
-         FO |        H |   1.0 |   1.0 |   1.0
-         FO |        F |   1.0 |   1.0 |   1.0
-         FO |        U |   0.0 |   0.0 |   0.0
+        >>> xtype = Axis('type', ['type1', 'type2'])
+        >>> arr1 = ones([xsex, xtype])
+        >>> arr1
+        sex\\type | type1 | type2
+               H |   1.0 |   1.0
+               F |   1.0 |   1.0
+        >>> arr2 = zeros([xsex2, xtype])
+        >>> arr2
+        sex\\type | type1 | type2
+               U |   0.0 |   0.0
+        >>> arr1.extend(x.sex, arr2)
+        sex\\type | type1 | type2
+               H |   1.0 |   1.0
+               F |   1.0 |   1.0
+               U |   0.0 |   0.0
+        >>> arr3 = zeros([xsex2, xnat])
+        >>> arr3
+        sex\\nat |  BE |  FO
+              U | 0.0 | 0.0
+        >>> arr1.extend(x.sex, arr3)
+        sex | type\\nat |  BE |  FO
+          H |    type1 | 1.0 | 1.0
+          H |    type2 | 1.0 | 1.0
+          F |    type1 | 1.0 | 1.0
+          F |    type2 | 1.0 | 1.0
+          U |    type1 | 0.0 | 0.0
+          U |    type2 | 0.0 | 0.0
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         # Get axis by name, so that we do *NOT* check they are "compatible",
         # because it makes sense to append axes of different length
         other_axis = other.axes[axis]
+        # not using self.axes | other.axes to avoid compatibily check
+        combined_axes = self.axes | (other.axes - self.axes)
+        # TODO: only expand if necessary
+        # TODO: "extend" first with empty arrays then use expand with out=
+        expanded = self.expand(combined_axes)
+        other = other.expand(combined_axes.replace(axis, other_axis))
 
-        data = np.append(np.asarray(self), np.asarray(other), axis=axis_idx)
-        new_axes = self.axes[:]
-        new_axes[axis_idx] = Axis(axis.name,
-                                  np.append(axis.labels, other_axis.labels))
-        return LArray(data, axes=new_axes)
+        data = np.append(np.asarray(expanded), np.asarray(other), axis=axis_idx)
+        new_labels = np.append(axis.labels, other_axis.labels)
+        combined_axes[axis] = Axis(axis.name, new_labels)
+        return LArray(data, axes=combined_axes)
 
     def transpose(self, *args):
         """
