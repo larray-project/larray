@@ -1060,6 +1060,7 @@ class LArray(object):
     LArray class
     """
     def __init__(self, data, axes=None):
+        data = np.asarray(data)
         ndim = data.ndim
         if axes is not None:
             if len(axes) != ndim:
@@ -1073,7 +1074,7 @@ class LArray(object):
 
         if axes is not None and not isinstance(axes, AxisCollection):
             axes = AxisCollection(axes)
-        self.data = np.asarray(data)
+        self.data = data
         self.axes = axes
 
     @property
