@@ -21,7 +21,7 @@ Matrix class
 # TODO
 # * rename ValueGroup to LabelGroup
 
-# * implement named groups in strings
+# ? implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
 
 # ? implement multi group in one axis getitem:
@@ -584,6 +584,7 @@ class Axis(object):
             return key.key
 
         if isinstance(key, ValueGroup):
+            # at this point we do not care about the axis nor the name
             key = key.key
 
         if isinstance(key, basestring):
@@ -618,6 +619,7 @@ class Axis(object):
     def __repr__(self):
         return 'Axis(%r, %r)' % (self.name, list(self.labels))
 
+    # XXX: we might want to use | for union (like set)
     def __add__(self, other):
         if isinstance(other, Axis):
             if self.name != other.name:
@@ -629,6 +631,7 @@ class Axis(object):
             except Exception:
                 raise ValueError
 
+    # XXX: sub between two axes could mean set - set or elementwise -
     def __sub__(self, other):
         if isinstance(other, Axis):
             if self.name != other.name:
@@ -642,7 +645,8 @@ class Axis(object):
                 raise ValueError
 
     def copy(self):
-        # XXX: I wonder if we should make a copy of the labels
+        # XXX: I wonder if we should make a copy of the labels. There should
+        # at least be an option.
         return Axis(self.name, self.labels)
 
     def sorted(self):
@@ -940,6 +944,8 @@ class AxisCollection(object):
             if isinstance(name_or_idx, (type(None), basestring)) \
             else name_or_idx
 
+    # XXX: we might want to return a new AxisCollection (same question for
+    # other inplace operations: append, extend, pop, __delitem__, __setitem__)
     def insert(self, index, axis):
         """
         insert axis before index
@@ -1431,8 +1437,8 @@ class LArray(object):
         # several axes & "splitting" axes) etc.
         # eg 4, 3, 2 -> 2, 3, 4 is wrong (even if size is respected)
         #    4, 3, 2 -> 12, 2 is potentially ok (merging adjacent dimensions)
-        #            -> 4, 6 is potentially ok (merging dimensions)
-        #            -> 24 is potentially ok (merging dimensions)
+        #            -> 4, 6 is potentially ok (merging adjacent dimensions)
+        #            -> 24 is potentially ok (merging adjacent dimensions)
         #            -> 3, 8 WRONG (non adjacent dimentsions)
         #            -> 8, 3 WRONG
         #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
@@ -1778,6 +1784,8 @@ class LArray(object):
         for axis in operations:
             # TODO: use res._aggregate(..., keepaxes=label) and use .extend in
             # all cases
+            # TODO: append/extend first with an empty array then
+            #       _aggregate with out=
             if self.axes.isaxis(axis):
                 value = res._axis_aggregate(npop[op], (axis,))
                 res = res.append(axis, value, label)
