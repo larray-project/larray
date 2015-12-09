@@ -784,6 +784,9 @@ class AxisCollection(object):
             self._list[key] = value
             del self._map[axis.name]
             self._map[value.name] = value
+        elif isinstance(key, Axis):
+            # XXX: check that it is the same object????
+            self.__setitem__(key.name, value)
         else:
             assert isinstance(key, basestring)
             try:
