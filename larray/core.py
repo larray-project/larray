@@ -2082,7 +2082,7 @@ class LArray(object):
         axis : axis
             the axis
         value : LArray
-            LArray of the same shape as self
+            LArray with compatible axes
         label : string
             optional
             label for the new item in axis
@@ -2110,18 +2110,19 @@ class LArray(object):
          BE |        F |   1.0 |   1.0 |   1.0 |   3.0
          FO |        H |   1.0 |   1.0 |   1.0 |   3.0
          FO |        F |   1.0 |   1.0 |   1.0 |   3.0
+        >>> mat.append(x.type, 2, 'type4')
+        nat | sex\\type | type1 | type2 | type3 | type4
+         BE |        H |   1.0 |   1.0 |   1.0 |   2.0
+         BE |        F |   1.0 |   1.0 |   1.0 |   2.0
+         FO |        H |   1.0 |   1.0 |   1.0 |   2.0
+         FO |        F |   1.0 |   1.0 |   1.0 |   2.0
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        shape = self.shape
-        value = np.asarray(value)
-        if value.shape == shape[:axis_idx] + shape[axis_idx+1:]:
-            # adding a dimension of size one if it is missing
-            new_shape = shape[:axis_idx] + (1,) + shape[axis_idx+1:]
-            value = value.reshape(new_shape)
-        data = np.append(np.asarray(self), value, axis=axis_idx)
-        new_axes = self.axes[:]
-        new_axes[axis_idx] = Axis(axis.name, np.append(axis.labels, label))
-        return LArray(data, axes=new_axes)
+        axis = self.axes[axis]
+        if np.isscalar(value):
+            value = LArray(value, [])
+        # TODO: extend first with an empty array then expand with out=
+        value = value.expand(self.axes.replace(axis, Axis(axis.name, [label])))
+        return self.extend(axis, value)
 
     def extend(self, axis, other):
         """Adds a LArray to a LArray ('self') along an axis.
