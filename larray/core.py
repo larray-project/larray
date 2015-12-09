@@ -820,6 +820,8 @@ class AxisCollection(object):
         result.extend(other)
         return result
 
+    __or__ = __add__
+
     def __eq__(self, other):
         """
         other collection compares equal if all axes compare equal and in the
@@ -968,6 +970,7 @@ class AxisCollection(object):
         """
         returns a new collection without some axes
         you can use a comma separated list
+        axes must exist
         """
         res = self[:]
         if isinstance(axes, basestring):
@@ -979,6 +982,24 @@ class AxisCollection(object):
         for axis in axes:
             del res[axis]
         return res
+
+    def __sub__(self, axes):
+        """
+        returns a new collection without some axes
+        you can use a comma separated list
+        set operations so axes can contain axes not present in self
+        """
+        if isinstance(axes, basestring):
+            axes = axes.split(',')
+        elif isinstance(axes, Axis):
+            axes = [axes]
+
+        # transform positional axis to axis objects
+        axes = [self[axis] if isinstance(axis, int) else axis for axis in axes]
+        to_remove = set(axis.name if isinstance(axis, Axis) else axis
+                        for axis in axes)
+        return AxisCollection([axis for axis in self
+                               if axis.name not in to_remove])
 
     @property
     def names(self):
