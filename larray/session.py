@@ -133,6 +133,12 @@ class Session(object):
     # be any useful?
     @property
     def names(self):
+        """Returns the list of names of the objects in the session
+
+        Returns
+        -------
+        list of str
+        """
         return sorted(self._objects.keys())
 
     # XXX: sorted?

@@ -1833,7 +1833,7 @@ class LArray(object):
         return ReprString('\n'.join([shape] + lines))
 
     def ratio(self, *axes):
-        """Returns a LArray with values LArray/LArray.sum(axes).
+        """Returns a LArray with values LArray / LArray.sum(axes).
 
         Parameters
         ----------
@@ -1865,7 +1865,7 @@ class LArray(object):
         return self / self.sum(*axes)
 
     def percent(self, *axes):
-        """Returns a LArray with values LArray/LArray.sum(axes) * 100.
+        """Returns a LArray with values LArray / LArray.sum(axes) * 100.
 
         Parameters
         ----------
@@ -2031,8 +2031,8 @@ class LArray(object):
          BE |        F |   1.0 |   1.0 |   1.0
          FO |        H |   1.0 |   1.0 |   1.0
          FO |        F |   1.0 |   1.0 |   1.0
-        >>> mat.append(x.type, mat.sum(x.type), 'Type4')
-        nat | sex\\type | type1 | type2 | type3 | Type4
+        >>> mat.append(x.type, mat.sum(x.type), 'type4')
+        nat | sex\\type | type1 | type2 | type3 | type4
          BE |        H |   1.0 |   1.0 |   1.0 |   3.0
          BE |        F |   1.0 |   1.0 |   1.0 |   3.0
          FO |        H |   1.0 |   1.0 |   1.0 |   3.0
@@ -2745,8 +2745,18 @@ def read_eurostat(filepath, **kwargs):
 
 def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
              **kwargs):
-    """
-    read an LArray from a h5 file with the specified name
+    """Reads a LArray named key from a h5 file in filepath (path+name)
+
+    Parameters
+    ----------
+    filepath : str
+        the filepath and name where the h5 file is stored.
+    key : str
+        the name of the LArray
+
+    Returns
+    -------
+    LArray
     """
     df = pd.read_hdf(filepath, key, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
