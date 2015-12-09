@@ -811,11 +811,10 @@ class AxisCollection(object):
     def __add__(self, other):
         result = self[:]
         if isinstance(other, Axis):
-            result.append(other)
-        else:
-            # other should be a sequence
-            assert len(other) >= 0
-            result.extend(other)
+            other = [other]
+        # other should be a sequence
+        assert len(other) >= 0
+        result.extend(other)
         return result
 
     def __eq__(self, other):
