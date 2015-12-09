@@ -2024,6 +2024,56 @@ class LArray(object):
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
+    # XXX: rename/change to "add_axes" ?
+    def expand(self, target_axes):
+        """expands array to target_axes
+
+        target_axes will be added to array if not present. In most cases this
+        function is not needed because LArray can do operations with arrays
+        having different (compatible) axes.
+
+        Parameters
+        ----------
+        target_axes : list of Axis or AxisCollection
+            self can contain axes not present in target_axes
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> a = Axis('a', ['a1', 'a2'])
+        >>> b = Axis('b', ['b1', 'b2'])
+        >>> arr = ndrange([a, b])
+        >>> arr
+        a\\b | b1 | b2
+         a1 |  0 |  1
+         a2 |  2 |  3
+        >>> c = Axis('c', ['c1', 'c2'])
+        >>> arr.expand([a, c, b])
+         a | c\\b | b1 | b2
+        a1 |  c1 |  0 |  1
+        a1 |  c2 |  0 |  1
+        a2 |  c1 |  2 |  3
+        a2 |  c2 |  2 |  3
+        >>> arr.expand([b, c])
+         a | b\\c | c1 | c2
+        a1 |  b1 |  0 |  0
+        a1 |  b2 |  1 |  1
+        a2 |  b1 |  2 |  2
+        a2 |  b2 |  3 |  3
+        """
+        if not isinstance(target_axes, AxisCollection):
+            target_axes = AxisCollection(target_axes)
+        target_axes = (self.axes - target_axes) | target_axes
+        # TODO: return the "broad casted object" directly when possible,
+        # possibly add a flag copy=True to force a new array.
+        result = LArray(np.empty(target_axes.shape, dtype=self.dtype),
+                        target_axes)
+        result[:] = self.broadcast_with(target_axes)
+        return result
+
     def append(self, axis, value, label=None):
         """Adds a LArray to a LArray ('self') along an axis.
 
