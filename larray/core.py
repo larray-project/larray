@@ -756,9 +756,6 @@ class AxisCollection(object):
         axes = [Axis(None, range(axis)) if isinstance(axis, int) else axis
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
-
-        if not isinstance(axes, list):
-            axes = list(axes)
         self._list = axes
         self._map = {axis.name: axis for axis in axes}
 
