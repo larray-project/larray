@@ -731,6 +731,8 @@ class PositionalKey(LKey):
             key = list(key)
         self.key = key
         self.name = name
+        assert axis is None or isinstance(axis, basestring), \
+            "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
         self.axis = axis
 
     def __repr__(self):
