@@ -2025,7 +2025,8 @@ class LArray(object):
     __invert__ = _unaryop('invert')
 
     # XXX: rename/change to "add_axes" ?
-    def expand(self, target_axes):
+    # TODO: add a flag copy=True to force a new array.
+    def expand(self, target_axes, out=None):
         """expands array to target_axes
 
         target_axes will be added to array if not present. In most cases this
@@ -2036,10 +2037,13 @@ class LArray(object):
         ----------
         target_axes : list of Axis or AxisCollection
             self can contain axes not present in target_axes
+        out : LArray, optional
+            output array, must have the correct shape
 
         Returns
         -------
         LArray
+            original array if possible (and out is None)
 
         Example
         -------
@@ -2067,12 +2071,19 @@ class LArray(object):
         if not isinstance(target_axes, AxisCollection):
             target_axes = AxisCollection(target_axes)
         target_axes = (self.axes - target_axes) | target_axes
-        # TODO: return the "broad casted object" directly when possible,
-        # possibly add a flag copy=True to force a new array.
-        result = LArray(np.empty(target_axes.shape, dtype=self.dtype),
-                        target_axes)
-        result[:] = self.broadcast_with(target_axes)
-        return result
+        if out is None and self.axes == target_axes:
+            return self
+
+        broadcasted = self.broadcast_with(target_axes)
+        # this can only happen if only the order of axes differed
+        if out is None and broadcasted.axes == target_axes:
+            return broadcasted
+
+        if out is None:
+            out = LArray(np.empty(target_axes.shape, dtype=self.dtype),
+                         target_axes)
+        out[:] = broadcasted
+        return out
 
     def append(self, axis, value, label=None):
         """Adds a LArray to a LArray ('self') along an axis.
