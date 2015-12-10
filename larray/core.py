@@ -1474,7 +1474,7 @@ class LArray(object):
         """
         return self.reshape(target.axes)
 
-    def broadcast_with(self, target):
+    def broadcast_with(self, other):
         """
         returns an LArray that is (numpy) broadcastable with target
         target can be either an LArray or any collection of Axis
@@ -1488,15 +1488,15 @@ class LArray(object):
         this is different from reshape which ensures the result has exactly the
         shape of the target.
         """
-        if isinstance(target, LArray):
-            target_axes = target.axes
+        if isinstance(other, LArray):
+            other_axes = other.axes
         else:
-            target_axes = target
-            if not isinstance(target, AxisCollection):
-                target_axes = AxisCollection(target_axes)
-        target_names = [a.name for a in target_axes]
+            other_axes = other
+            if not isinstance(other, AxisCollection):
+                other_axes = AxisCollection(other_axes)
+        other_names = [a.name for a in other_axes]
 
-        # self.axes.check_compatible(target_axes)
+        # self.axes.check_compatible(other_axes)
         # this breaks la['1,5,9'] = la['2,7,3']
         # solution?
         # a) explicitly ask to drop labels
@@ -1506,18 +1506,15 @@ class LArray(object):
         # b) ask to set correct labels explicitly
         # la['1,5,9'] = la['2,7,3'].set_labels(x.ages, [1, 5, 9])
 
-        # 1) append length-1 axes for axes in target but not in source (I do not
-        #    think their position matters).
+        # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
         array = self.reshape(self.axes +
-                             [Axis(name, ['*']) for name in target_names
+                             [Axis(name, ['*']) for name in other_names
                               if name not in self.axes])
-        # 2) reorder axes to target order (move source only axes to the front)
-        sourceonly_axes = [axis for axis in self.axes
-                           if axis.name not in target_axes]
-        other_axes = [self.axes.get(name, Axis(name, ['*']))
-                      for name in target_names]
-        return array.transpose(sourceonly_axes + other_axes)
+        # 2) reorder axes to target order (move source-only axes to the front)
+        sourceonly_axes = self.axes - other_axes
+        axes_other_order = [array.axes[name] for name in other_names]
+        return array.transpose(sourceonly_axes + axes_other_order)
 
     def __str__(self):
         if not self.ndim:
