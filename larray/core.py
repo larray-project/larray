@@ -2231,17 +2231,26 @@ class LArray(object):
         # Get axis by name, so that we do *NOT* check they are "compatible",
         # because it makes sense to append axes of different length
         other_axis = other.axes[axis]
-        # not using self.axes | other.axes to avoid compatibily check
-        combined_axes = self.axes | (other.axes - self.axes)
-        # TODO: only expand if necessary
-        # TODO: "extend" first with empty arrays then use expand with out=
-        expanded = self.expand(combined_axes)
-        other = other.expand(combined_axes.replace(axis, other_axis))
-
-        data = np.append(np.asarray(expanded), np.asarray(other), axis=axis_idx)
+        # - other_axis to avoid a compatibily check for that axis
+        self_combined_axes = self.axes | (other.axes - other_axis)
+        other_combined_axes = self_combined_axes.replace(axis, other_axis)
         new_labels = np.append(axis.labels, other_axis.labels)
-        combined_axes[axis] = Axis(axis.name, new_labels)
-        return LArray(data, axes=combined_axes)
+        new_axis = Axis(axis.name, new_labels)
+        result_axes = self_combined_axes.replace(axis, new_axis)
+        result_data = np.empty(result_axes.shape, dtype=self.dtype)
+        result = LArray(result_data, result_axes)
+
+        # XXX: wouldn't it be nice to be able to say that? ie translation
+        # from position to label on the original axis then translation to
+        # position on the actual result axis?
+        # self_target = result[:axis.i[-1]]
+        self_target = result[new_axis.i[:len(axis)]]
+        other_target = result[new_axis.i[len(axis):]]
+
+        # TODO: only expand if necessary
+        self.expand(self_combined_axes, out=self_target)
+        other.expand(other_combined_axes, out=other_target)
+        return result
 
     def transpose(self, *args):
         """
