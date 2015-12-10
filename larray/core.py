@@ -1537,7 +1537,7 @@ class LArray(object):
         # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
         # NEER27 | I05  | AU       | 134.86 | 125.29 | 117.08
         width = self.shape[-1]
-        height = np.prod(self.shape[:-1])
+        height = int(np.prod(self.shape[:-1]))
         data = np.asarray(self).reshape(height, width)
 
         if self.axes is not None:
