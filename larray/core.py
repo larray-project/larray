@@ -1508,9 +1508,9 @@ class LArray(object):
 
         # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
-        array = self.reshape(self.axes +
-                             [Axis(name, ['*']) for name in other_names
-                              if name not in self.axes])
+        otheronly_axes = [Axis(axis.name, ['*']) if len(axis) > 1 else axis
+                          for axis in other_axes if axis.name not in self.axes]
+        array = self.reshape(self.axes + otheronly_axes)
         # 2) reorder axes to target order (move source-only axes to the front)
         sourceonly_axes = self.axes - other_axes
         axes_other_order = [array.axes[name] for name in other_names]
