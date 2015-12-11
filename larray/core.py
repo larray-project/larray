@@ -959,10 +959,16 @@ class AxisCollection(object):
     def copy(self):
         return self[:]
 
-    def replace(self, oldaxis, newaxis):
+    def replace(self, old, new):
         res = self[:]
-        idx = self.index(oldaxis)
-        res[idx] = newaxis
+        if not isinstance(old, (tuple, list, AxisCollection)):
+            old = [old]
+        if not isinstance(new, (tuple, list, AxisCollection)):
+            new = [new]
+        if len(old) != len(new):
+            raise ValueError('must have as many old axes as new axes')
+        for o, n in zip(old, new):
+            res[self.index(o)] = n
         return res
 
     def without(self, axes):
