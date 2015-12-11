@@ -19,6 +19,11 @@ __all__ = [
 Matrix class
 """
 # TODO
+# * add check there is no duplicate label in axes!
+
+# * when trying to aggregate on an non existing Axis (using x.blabla),
+#   the error message is awful
+
 # * rename ValueGroup to LabelGroup
 
 # ? implement named groups in strings
