@@ -2126,7 +2126,7 @@ class LArray(object):
         """
         axis = self.axes[axis]
         if np.isscalar(value):
-            value = LArray(value, [])
+            value = LArray(np.asarray(value, self.dtype), [])
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
         value = value.broadcast_with(target_axes)
         return self.extend(axis, value)
@@ -2170,7 +2170,7 @@ class LArray(object):
         """
         axis = self.axes[axis]
         if np.isscalar(value):
-            value = LArray(value, [])
+            value = LArray(np.asarray(value, self.dtype), [])
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
         value = value.broadcast_with(target_axes)
         return value.extend(axis, self)
