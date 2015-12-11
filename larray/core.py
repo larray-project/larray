@@ -1135,6 +1135,30 @@ def std(array, over=None):
     return array.std(over)
 
 
+def concat_empty(axis, array_axes, other_axes, dtype):
+    array_axis = array_axes[axis]
+    # Get axis by name, so that we do *NOT* check they are "compatible",
+    # because it makes sense to append axes of different length
+    other_axis = other_axes[axis]
+    new_labels = np.append(array_axis.labels, other_axis.labels)
+    new_axis = Axis(array_axis.name, new_labels)
+    array_axes = array_axes.replace(array_axis, new_axis)
+    other_axes = other_axes.replace(other_axis, new_axis)
+    array_axes.extend(other_axes)
+    other_axes.extend(array_axes)
+    result_axes = AxisCollection([
+        axis1 if len(axis2) <= len(axis1) else axis2
+        for axis1, axis2 in zip(array_axes, other_axes[array_axes])])
+    result_data = np.empty(result_axes.shape, dtype=dtype)
+    result = LArray(result_data, result_axes)
+    l = len(array_axis)
+    # XXX: wouldn't it be nice to be able to say that? ie translation
+    # from position to label on the original axis then translation to
+    # position on the actual result axis?
+    # result[:axis.i[-1]]
+    return result, result[new_axis.i[:l]], result[new_axis.i[l:]]
+
+
 class LArray(object):
     """
     LArray class
@@ -2346,27 +2370,8 @@ class LArray(object):
           U |    type1 | 0.0 | 0.0
           U |    type2 | 0.0 | 0.0
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        # Get axis by name, so that we do *NOT* check they are "compatible",
-        # because it makes sense to append axes of different length
-        other_axis = other.axes[axis]
-        # - other_axis to avoid a compatibily check for that axis
-        self_combined_axes = self.axes | (other.axes - other_axis)
-        other_combined_axes = self_combined_axes.replace(axis, other_axis)
-        new_labels = np.append(axis.labels, other_axis.labels)
-        new_axis = Axis(axis.name, new_labels)
-        result_axes = self_combined_axes.replace(axis, new_axis)
-        result_data = np.empty(result_axes.shape, dtype=self.dtype)
-        result = LArray(result_data, result_axes)
-
-        # XXX: wouldn't it be nice to be able to say that? ie translation
-        # from position to label on the original axis then translation to
-        # position on the actual result axis?
-        # self_target = result[:axis.i[-1]]
-        self_target = result[new_axis.i[:len(axis)]]
-        other_target = result[new_axis.i[len(axis):]]
-
-        # TODO: only expand if necessary
+        result, self_target, other_target = \
+            concat_empty(axis, self.axes, other.axes, self.dtype)
         self.expand(out=self_target)
         other.expand(out=other_target)
         return result
