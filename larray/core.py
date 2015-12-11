@@ -2102,7 +2102,7 @@ class LArray(object):
 
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
-    def expand(self, target_axes, out=None):
+    def expand(self, target_axes=None, out=None):
         """expands array to target_axes
 
         target_axes will be added to array if not present. In most cases this
@@ -2111,7 +2111,7 @@ class LArray(object):
 
         Parameters
         ----------
-        target_axes : list of Axis or AxisCollection
+        target_axes : list of Axis or AxisCollection, optional
             self can contain axes not present in target_axes
         out : LArray, optional
             output array, must have the correct shape
@@ -2144,9 +2144,16 @@ class LArray(object):
         a2 |  b1 |  2 |  2
         a2 |  b2 |  3 |  3
         """
-        if not isinstance(target_axes, AxisCollection):
-            target_axes = AxisCollection(target_axes)
-        target_axes = (self.axes - target_axes) | target_axes
+        if (target_axes is None and out is None or
+                target_axes is not None and out is not None):
+            raise ValueError("either target_axes or out must be defined "
+                             "(not both)")
+        if out is not None:
+            target_axes = out.axes
+        else:
+            if not isinstance(target_axes, AxisCollection):
+                target_axes = AxisCollection(target_axes)
+            target_axes = (self.axes - target_axes) | target_axes
         if out is None and self.axes == target_axes:
             return self
 
@@ -2324,8 +2331,8 @@ class LArray(object):
         other_target = result[new_axis.i[len(axis):]]
 
         # TODO: only expand if necessary
-        self.expand(self_combined_axes, out=self_target)
-        other.expand(other_combined_axes, out=other_target)
+        self.expand(out=self_target)
+        other.expand(out=other_target)
         return result
 
     def transpose(self, *args):
