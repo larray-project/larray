@@ -660,13 +660,6 @@ class Axis(object):
         # at least be an option.
         return Axis(self.name, self.labels)
 
-    def sorted(self):
-        res = self.copy()
-        # FIXME: this probably also sorts the original axis !
-        res.labels.sort()
-        res._update_mapping()
-        return res
-
 
 # We need a separate class for ValueGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
