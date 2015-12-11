@@ -1019,6 +1019,11 @@ class AxisCollection(object):
                                if axis.name not in to_remove])
 
     @property
+    def labels(self):
+        """Returns the list of labels of the axes"""
+        return [axis.labels for axis in self._list]
+
+    @property
     def names(self):
         return [axis.name for axis in self._list]
 
@@ -1096,12 +1101,12 @@ class LArray(object):
 
     @property
     def df(self):
-        axes_names = self.axes_names[:-1]
+        axes_names = self.axes.names[:-1]
         if axes_names[-1] is not None:
             axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
 
         columns = self.axes[-1].labels
-        index = pd.MultiIndex.from_product(self.axes_labels[:-1],
+        index = pd.MultiIndex.from_product(self.axes.labels[:-1],
                                            names=axes_names)
         data = np.asarray(self).reshape(len(index), len(columns))
         return pd.DataFrame(data, index, columns)
@@ -1109,7 +1114,7 @@ class LArray(object):
     @property
     def series(self):
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
-                                           names=self.axes_names)
+                                           names=self.axes.names)
         return pd.Series(np.asarray(self).reshape(self.size), index)
 
     #noinspection PyAttributeOutsideInit
@@ -1133,29 +1138,6 @@ class LArray(object):
         """
         data = np.ndarray.__array_wrap__(self.data, out_arr, context)
         return LArray(data, self.axes)
-
-    @property
-    def axes_labels(self):
-        return [axis.labels for axis in self.axes]
-
-    @property
-    def axes_names(self):
-        """Returns a list of names of the axes of a LArray.
-
-        Returns
-        -------
-        List
-            List of names of the axes of a LArray.
-
-        Example
-        -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> a = zeros([xnat, xsex])
-        >>> a.axes_names
-        ['nat', 'sex']
-        """
-        return [axis.name for axis in self.axes]
 
     def rename(self, axis, newname):
         """Renames an axis of a LArray.
@@ -1340,7 +1322,7 @@ class LArray(object):
 
         # dict -> tuple (complete and order key)
         assert isinstance(key, dict)
-        axes_names = set(self.axes_names)
+        axes_names = set(self.axes.names)
         for axis_name in key:
             if axis_name not in axes_names:
                 raise KeyError("'{}' is not an axis name".format(axis_name))
@@ -1556,19 +1538,18 @@ class LArray(object):
 
         if self.axes is not None:
             axes_names = [name if name is not None else '-'
-                          for name in self.axes_names]
+                          for name in self.axes.names]
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
-            labels = self.axes_labels[:-1]
+            labels = self.axes.labels[:-1]
             if self.ndim == 1:
                 # There is no vertical axis, so the axis name should not have
                 # any "tick" below it and we add an empty "tick".
                 ticks = [['']]
             else:
                 ticks = product(*labels)
-
-            yield axes_names + list(self.axes_labels[-1])
+            yield axes_names + list(self.axes.labels[-1])
         else:
             # endlessly repeat empty list
             ticks = repeat([])

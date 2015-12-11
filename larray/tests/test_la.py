@@ -568,13 +568,13 @@ class TestLArray(TestCase):
         la = self.larray
         new = la.rename('sex', 'gender')
         # old array axes names not modified
-        self.assertEqual(la.axes_names, ['age', 'geo', 'sex', 'lipro'])
-        self.assertEqual(new.axes_names, ['age', 'geo', 'gender', 'lipro'])
+        self.assertEqual(la.axes.names, ['age', 'geo', 'sex', 'lipro'])
+        self.assertEqual(new.axes.names, ['age', 'geo', 'gender', 'lipro'])
 
         new = la.rename(self.sex, 'gender')
         # old array axes names not modified
-        self.assertEqual(la.axes_names, ['age', 'geo', 'sex', 'lipro'])
-        self.assertEqual(new.axes_names, ['age', 'geo', 'gender', 'lipro'])
+        self.assertEqual(la.axes.names, ['age', 'geo', 'sex', 'lipro'])
+        self.assertEqual(new.axes.names, ['age', 'geo', 'gender', 'lipro'])
 
     def test_info(self):
         expected = """\
@@ -1689,7 +1689,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         reordered = la.transpose(lipro, age)
         self.assertEqual(reordered.shape, (15, 116, 44, 2))
 
-        self.assertEqual(la.transpose().axes_names,
+        self.assertEqual(la.transpose().axes.names,
                          ['lipro', 'sex', 'geo', 'age'])
 
     def test_binary_ops(self):
@@ -1823,25 +1823,25 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes_names, ['time'])
+        self.assertEqual(la.axes.names, ['time'])
         self._assert_equal_raw(la, [3722, 3395, 3347])
 
         la = read_csv(abspath('test2d.csv'))
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes_names, ['age', 'time'])
+        self.assertEqual(la.axes.names, ['age', 'time'])
         self._assert_equal_raw(la[0, :], [3722, 3395, 3347])
 
         la = read_csv(abspath('test3d.csv'))
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
-        self.assertEqual(la.axes_names, ['age', 'sex', 'time'])
+        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
 
         la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[x.arr[1], 0, 'F', x.nat[1], :],
                                [3722, 3395, 3347])
 
@@ -1864,14 +1864,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = df_aslarray(df)
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (4, 2, 3))
-        self.assertEqual(la.axes_names, ['age', 'sex', 'time'])
+        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         self._assert_equal_raw(la[0, 'F', :], [3722, 3395, 3347])
 
     def test_to_csv(self):
         la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes_names, ['arr', 'age', 'sex', 'nat', 'time'])
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         self._assert_equal_raw(la[x.arr[1], 0, 'F', x.nat[1], :],
                                [3722, 3395, 3347])
 

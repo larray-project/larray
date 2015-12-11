@@ -82,7 +82,7 @@ try:
     matplotlib_present = True
 except ImportError:
     matplotlib_present = False
-        
+
 from larray.combo import FilterComboBox, FilterMenu
 import larray as la
 
@@ -985,7 +985,7 @@ class ArrayEditor(QDialog):
             # convert that to array of Python strings
             return a.astype(object)
 
-        xlabels = [data.axes_names, to_str(data.axes_labels[-1])]
+        xlabels = [data.axes.names, to_str(data.axes.labels[-1])]
 
         class LazyLabels(object):
             def __init__(self, arrays):
@@ -1032,7 +1032,7 @@ class ArrayEditor(QDialog):
             def __len__(self):
                 return self.length
 
-        otherlabels = [to_str(axlabels) for axlabels in data.axes_labels[:-1]]
+        otherlabels = [to_str(axlabels) for axlabels in data.axes.labels[:-1]]
         # ylabels = LazyLabels(otherlabels)
         coldims = 1
         # ylabels = [str(i) for i in range(len(row_labels))]
@@ -1058,7 +1058,7 @@ class ArrayEditor(QDialog):
         return False if data is not supported, True otherwise
         """
         if isinstance(data, la.LArray):
-            title = ' x '.join(data.axes_names)
+            title = ' x '.join(data.axes.names)
             self.la_data = data
             data, xlabels, ylabels = self.larray_to_array_and_labels(data)
             self.current_filter = {}
