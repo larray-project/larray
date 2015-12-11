@@ -1789,57 +1789,23 @@ class LArray(object):
         # not produce the intermediary result at all. It should be faster and
         # consume a bit less memory.
         for item in items:
-            if isinstance(item, LKey):
-                axis, groups = item.axis, item
-            elif isinstance(item, (int, slice, list, basestring)):
-                # it could be badly spelled Axis
-                groups = self._guess_axis(item)
-                axis = groups.axis
-            elif isinstance(item, tuple):
-                # a tuple is supposed to be several groups on the same axis
-                groups = tuple(self._guess_axis(k) for k in item)
-                axis = groups[0].axis
-                if not all(g.axis == axis for g in groups[1:]):
-                    raise ValueError("group with different axes: %s"
-                                     % str(item))
-            else:
-                raise NotImplementedError("%s has invalid type (%s) for a "
-                                          "group aggregate key"
-                                          % (item, type(item).__name__))
-            axis, axis_idx = res.axes[axis], res.axes.index(axis)
             res_axes = res.axes[:]
             res_shape = list(res.shape)
 
-            if not isinstance(groups, tuple):
-                # groups is in fact a single group
-                assert isinstance(groups, (basestring, slice, list, LKey)), \
-                       type(groups)
-                if isinstance(groups, list):
-                    assert len(groups) > 0
-
-                    # Make sure this is actually a single group, not multiple
-                    # mistakenly given as a list instead of a tuple
-                    assert all(not isinstance(g, (tuple, list)) for g in groups)
-
-                groups = (groups,)
-                del res_axes[axis_idx]
-
+            if isinstance(item, tuple):
+                assert all(isinstance(g, LKey) for g in item)
+                groups = item
+                axis = groups[0].axis
+                killaxis = False
+            else:
+                # item is in fact a single group
+                assert isinstance(item, LKey), type(item)
+                groups = (item,)
+                axis = item.axis
                 # it is easier to kill the axis after the fact
                 killaxis = True
-            else:
-                # convert all value groups to strings
-                # groups = tuple(str(g) if isinstance(g, ValueGroup) else g
-                #                for g in groups)
-                # grx = tuple(g.key if isinstance(g, ValueGroup) else g
-                #             for g in groups)
 
-                # We do NOT modify the axis name (eg append "_agg" or "*") even
-                # though this creates a new axis that is independent from the
-                # original one because the original name is what users will
-                # want to use to access that axis (eg in .filter kwargs)
-                res_axes[axis_idx] = Axis(axis.name, groups)
-                killaxis = False
-
+            axis, axis_idx = res.axes[axis], res.axes.index(axis)
             res_shape[axis_idx] = len(groups)
             res_dtype = res.dtype if op is not np.mean else float
             res_data = np.empty(res_shape, dtype=res_dtype)
@@ -1857,8 +1823,12 @@ class LArray(object):
                 # the aggregate func)
                 if isinstance(group, PositionalKey) and np.isscalar(group.key):
                     group = PositionalKey([group.key], axis=group.axis)
-                elif group in axis:
-                    group = [group]
+                elif isinstance(group, ValueGroup):
+                    key = to_key(group.key)
+                    if np.isscalar(key):
+                        key = [key]
+                    # we do not care about the name at this point
+                    group = ValueGroup(key, axis=group.axis)
 
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 if res_data.ndim == 1:
@@ -1877,6 +1847,14 @@ class LArray(object):
             if killaxis:
                 assert group_idx[axis_idx] == 0
                 res_data = res_data[idx]
+                del res_axes[axis_idx]
+            else:
+                # We do NOT modify the axis name (eg append "_agg" or "*") even
+                # though this creates a new axis that is independent from the
+                # original one because the original name is what users will
+                # want to use to access that axis (eg in .filter kwargs)
+                res_axes[axis_idx] = Axis(axis.name, groups)
+
             if isinstance(res_data, np.ndarray):
                 res = LArray(res_data, res_axes)
             else:
@@ -1901,19 +1879,44 @@ class LArray(object):
 
         # convert kwargs to ValueGroup so that we can only use args afterwards
         # but still keep the axis information
-        def to_vg(axis, key):
+        def kw_to_vg(axis, key):
             if isinstance(key, str):
                 key = to_keys(key)
             if isinstance(key, tuple):
-                return tuple(to_vg(axis, k) for k in key)
+                return tuple(kw_to_vg(axis, k) for k in key)
             if isinstance(key, ValueGroup):
                 return key
             assert isinstance(key, (str, list, slice))
             return ValueGroup(key, axis=axis)
 
-        operations = [to_keys(a) if not self.axes.isaxis(a) else a
-                      for a in args] + \
-                     [to_vg(k, v) for k, v in sorted_kwargs]
+        def to_vg(key):
+            if isinstance(key, str):
+                key = to_keys(key)
+            if isinstance(key, tuple):
+                # a tuple is supposed to be several groups on the same axis
+                groups = tuple(self._guess_axis(k) for k in key)
+                axis = groups[0].axis
+                if not all(g.axis == axis for g in groups[1:]):
+                    raise ValueError("group with different axes: %s"
+                                     % str(key))
+                return groups
+            if isinstance(key, LKey):
+                return key
+            elif isinstance(key, (int, basestring, list, slice)):
+                return self._guess_axis(key)
+            else:
+                raise NotImplementedError("%s has invalid type (%s) for a "
+                                          "group aggregate key"
+                                          % (key, type(key).__name__))
+
+        def standardise(arg):
+            if self.axes.isaxis(arg):
+                return self.axes[arg]
+            else:
+                return to_vg(to_keys(arg))
+
+        operations = [standardise(a) for a in args] + \
+                     [kw_to_vg(k, v) for k, v in sorted_kwargs]
         if not operations:
             # op() without args is equal to op(all_axes)
             operations = self.axes
@@ -1963,24 +1966,24 @@ class LArray(object):
         # TODO: commutative should be known for usual ops
         operations = self._prepare_aggregate(op, args, kwargs, False)
         res = self
+        # TODO: we should allocate the final result directly and fill it
+        #       progressively, so that the original array is only copied once
         for axis in operations:
             # TODO: use res._aggregate(..., keepaxes=label) and use .extend in
             # all cases
             # TODO: append/extend first with an empty array then
             #       _aggregate with out=
             if self.axes.isaxis(axis):
-                value = res._axis_aggregate(npop[op], (axis,))
-                res = res.append(axis, value, label)
+                value = res._axis_aggregate(npop[op], (axis,), keepaxes=label)
             else:
                 # groups
-                assert isinstance(axis, tuple)
-                # XXX: we might want to move this step in _prepare (then we
-                # could remove it from _group_aggregate too)
-                vgkey = tuple(self._guess_axis(k) for k in axis)
-                # FIXME: check that axis is the same for all items
-                axis, groups = vgkey[0].axis, vgkey
-                value = res._group_aggregate(npop[op], (groups,))
-                res = res.extend(axis, value)
+                if not isinstance(axis, tuple):
+                    # assume a single group
+                    axis = (axis,)
+                vgkey = axis
+                axis = vgkey[0].axis
+                value = res._aggregate(npop[op], (vgkey,))
+            res = res.extend(axis, value)
         return res
 
     def copy(self):
