@@ -2307,6 +2307,7 @@ class LArray(object):
         axis = self.axes[axis]
         if np.isscalar(value):
             value = LArray(np.asarray(value, self.dtype), [])
+        # this does not prevent value to have more axes than self
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
         value = value.broadcast_with(target_axes)
         return self.extend(axis, value)
@@ -2357,7 +2358,10 @@ class LArray(object):
         axis = self.axes[axis]
         if np.isscalar(value):
             value = LArray(np.asarray(value, self.dtype), [])
+        # this does not prevent value to have more axes than self
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
+        # we cannot simply add the "new" axis to value because in that case
+        # the resulting axes would not be in the correct order
         value = value.broadcast_with(target_axes)
         return value.extend(axis, self)
 
