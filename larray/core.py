@@ -207,7 +207,7 @@ import pandas as pd
 
 from larray.utils import (table2str, unique, array_equal, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
-                          duplicates)
+                          duplicates, array_lookup)
 
 
 # TODO: return a generator, not a list
@@ -598,13 +598,25 @@ class Axis(object):
             return slice(start, stop, key.step)
         elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
             return key
-        elif isinstance(key, (tuple, list, np.ndarray)):
-            # handle fancy indexing with a sequence of labels
+        elif isinstance(key, (tuple, list)):
             # TODO: the result should be cached
+            # Note that this is faster than array_lookup(np.array(key), mapping)
             res = np.empty(len(key), int)
             for i, label in enumerate(key):
                 res[i] = mapping[label]
             return res
+        elif isinstance(key, np.ndarray):
+            # handle fancy indexing with a ndarray of labels
+            # TODO: the result should be cached (or at least the sorted_keys
+            # & sorted_values)
+            # TODO: benchmark this against the tuple/list version above when
+            # mapping is large
+            # array_lookup is O(len(key) * log(len(mapping)))
+            # vs
+            # tuple/list version is O(len(key)) (dict.getitem is O(1))
+            return array_lookup(key, mapping)
+        elif isinstance(key, LArray):
+            return LArray(array_lookup(key.data, mapping), key.axes)
         else:
             # the first mapping[key] above will cover most cases. This code
             # path is only used if the key was given in "non normalized form"

@@ -202,3 +202,17 @@ def unzip(iterable):
 class ReprString(str):
     def __repr__(self):
         return self
+
+
+def array_lookup(array, mapping):
+    """pass all elements of an np.ndarray through a mapping"""
+    sorted_keys, sorted_values = tuple(zip(*sorted(mapping.items())))
+    sorted_keys = np.array(sorted_keys)
+    if not np.all(np.in1d(array, sorted_keys)):
+        raise KeyError('all keys not in array')
+
+    sorted_values = np.array(sorted_values)
+    if not len(array):
+        return np.empty(0, dtype=sorted_values.dtype)
+    indices = np.searchsorted(sorted_keys, array)
+    return sorted_values[indices]
