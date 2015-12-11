@@ -1728,19 +1728,41 @@ class LArray(object):
         """
         return self.__getitem__(kwargs, collapse)
 
-    def _axis_aggregate(self, op, axes=(), keepaxes=False):
+    def _axis_aggregate(self, op, axes=(), keepaxes=False, out=None):
         """
-        op is a numpy aggregate function: func(arr, axis=(0, 1))
-        axes is a tuple of axes (each axis can be an Axis object, str or int)
+        Parameters
+        ----------
+        op : function
+            a aggregate function with this signature:
+            func(a, axis=None, dtype=None, out=None, keepdims=False)
+        axes : tuple of axes, optional
+            each axis can be an Axis object, str or int
+        out : LArray, optional
+        keepaxes : bool or scalar, optional
+
+        Returns
+        -------
+        LArray or scalar
         """
         src_data = np.asarray(self)
         if not axes:
             axes = self.axes
 
         axes_indices = tuple(self.axes.index(a) for a in axes)
-        res_data = op(src_data, axis=axes_indices, keepdims=keepaxes)
-        axes_tokill = set() if keepaxes else set(axes_indices)
-        res_axes = self.axes.without(axes_tokill)
+        keepdims = bool(keepaxes)
+        if out is None:
+            res_data = op(src_data, axis=axes_indices, keepdims=keepdims)
+        else:
+            res_data = op(src_data, axis=axes_indices, out=out.data,
+                          keepdims=keepdims)
+
+        if keepaxes:
+            label = op.__name__ if keepaxes is True else keepaxes
+            axes_to_kill = [self.axes[axis] for axis in axes]
+            new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
+            res_axes = self.axes.replace(axes_to_kill, new_axes)
+        else:
+            res_axes = self.axes.without(axes_indices)
         if not res_axes:
             # scalars don't need to be wrapped in LArray
             return res_data
