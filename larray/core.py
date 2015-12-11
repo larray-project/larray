@@ -1047,6 +1047,22 @@ class AxisCollection(object):
 
     @property
     def names(self):
+        """Returns the list of (raw) names of the axes
+
+        Returns
+        -------
+        List
+            List of names of the axes
+
+        Example
+        -------
+        >>> a = Axis('a', ['a1', 'a2'])
+        >>> b = Axis('b', 2)
+        >>> c = Axis(None, ['c1', 'c2'])
+        >>> arr = zeros([a, b, c])
+        >>> arr.axes.names
+        ['a', 'b', None]
+        """
         return [axis.name for axis in self._list]
 
     @property
