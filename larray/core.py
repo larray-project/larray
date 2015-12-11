@@ -3301,6 +3301,16 @@ def ndrange(axes):
     nat\\sex | H | F
          BE | 0 | 1
          FO | 2 | 3
+
+    potential alternate syntaxes:
+    ndrange((2, 3), names=('a', 'b'))
+    ndrange(2, 3, names=('a', 'b'))
+    ndrange([('a', 2), ('b', 3)])
+    ndrange(('a', 2), ('b', 3))
+    ndrange((2, 3)).rename([0, 1], ['a', 'b'])
+    # current syntaxes
+    ndrange((2, 3)).rename(0, 'a').rename(1, 'b')
+    ndrange([Axis('a', 2), Axis('b', 3)])
     """
     axes = AxisCollection(axes)
     return LArray(np.arange(np.prod(axes.shape)).reshape(axes.shape), axes)
@@ -3314,7 +3324,7 @@ def stack(arrays, axis):
     stack(['H', numbirths * HMASC,
            'F', numbirths * (1 - HMASC)], 'sex')
     stack(('H', numbirths * HMASC),
-          ('F', numbirths * (1 - HMASC)), 'sex')
+          ('F', numbirths * (1 - HMASC)), name='sex')
     """
     # append an extra length 1 dimension
     data_arrays = [a.data.reshape(a.shape + (1,)) for a in arrays]
