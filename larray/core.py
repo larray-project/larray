@@ -2276,26 +2276,33 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ones([xnat, xsex, xtype])
+        >>> xtype = Axis('type', ['type1', 'type2'])
+        >>> mat = ones([xnat, xsex])
         >>> mat
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |   1.0
-         BE |        F |   1.0 |   1.0 |   1.0
-         FO |        H |   1.0 |   1.0 |   1.0
-         FO |        F |   1.0 |   1.0 |   1.0
-        >>> mat.append(x.type, mat.sum(x.type), 'type4')
-        nat | sex\\type | type1 | type2 | type3 | type4
-         BE |        H |   1.0 |   1.0 |   1.0 |   3.0
-         BE |        F |   1.0 |   1.0 |   1.0 |   3.0
-         FO |        H |   1.0 |   1.0 |   1.0 |   3.0
-         FO |        F |   1.0 |   1.0 |   1.0 |   3.0
-        >>> mat.append(x.type, 2, 'type4')
-        nat | sex\\type | type1 | type2 | type3 | type4
-         BE |        H |   1.0 |   1.0 |   1.0 |   2.0
-         BE |        F |   1.0 |   1.0 |   1.0 |   2.0
-         FO |        H |   1.0 |   1.0 |   1.0 |   2.0
-         FO |        F |   1.0 |   1.0 |   1.0 |   2.0
+        nat\\sex |   H |   F
+             BE | 1.0 | 1.0
+             FO | 1.0 | 1.0
+        >>> mat.append(x.sex, mat.sum(x.sex), 'H+F')
+        nat\\sex |   H |   F | H+F
+             BE | 1.0 | 1.0 | 2.0
+             FO | 1.0 | 1.0 | 2.0
+        >>> mat.append(x.nat, 2, 'Other')
+        nat\\sex |   H |   F
+             BE | 1.0 | 1.0
+             FO | 1.0 | 1.0
+          Other | 2.0 | 2.0
+        >>> arr2 = zeros([xtype])
+        >>> arr2
+        type | type1 | type2
+             |   0.0 |   0.0
+        >>> mat.append(x.nat, arr2, 'Other')
+          nat | sex\\type | type1 | type2
+           BE |        H |   1.0 |   1.0
+           BE |        F |   1.0 |   1.0
+           FO |        H |   1.0 |   1.0
+           FO |        F |   1.0 |   1.0
+        Other |        H |   0.0 |   0.0
+        Other |        F |   0.0 |   0.0
         """
         axis = self.axes[axis]
         if np.isscalar(value):
@@ -2340,6 +2347,12 @@ class LArray(object):
          BE |        F |   3.0 |   1.0 |   1.0 |   1.0
          FO |        H |   3.0 |   1.0 |   1.0 |   1.0
          FO |        F |   3.0 |   1.0 |   1.0 |   1.0
+        >>> mat.prepend(x.type, 2, 'type0')
+        nat | sex\\type | type0 | type1 | type2 | type3
+         BE |        H |   2.0 |   1.0 |   1.0 |   1.0
+         BE |        F |   2.0 |   1.0 |   1.0 |   1.0
+         FO |        H |   2.0 |   1.0 |   1.0 |   1.0
+         FO |        F |   2.0 |   1.0 |   1.0 |   1.0
         """
         axis = self.axes[axis]
         if np.isscalar(value):
