@@ -468,19 +468,17 @@ class Axis(object):
     def __init__(self, name, labels):
         """
         labels should be an array-like (convertible to an ndarray)
+        or a int (the size of the Axis)
         """
         if isinstance(name, Axis):
             name = name.name
         self.name = name
-        labels = to_ticks(labels)
-
-        # TODO: move this to to_ticks????
-        # we convert to an ndarray to save memory (for scalar ticks, for
-        # ValueGroup ticks, it does not make a difference since a list of VG
-        # and an ndarray of VG are both arrays of pointers)
         self._labels = None
         self._mapping = {}
-        self.labels = np.asarray(labels)
+        self._length = None
+        self._iswildcard = False
+        self.labels = labels
+
 
     @property
     def i(self):
@@ -488,20 +486,34 @@ class Axis(object):
 
     def get_labels(self):
         return self._labels
-    def set_labels(self, new_labels):
-        self._labels = new_labels
-        self._update_mapping()
+    def set_labels(self, labels):
+        if labels is None:
+            raise TypeError("labels should be ndarray or int")
+        if isinstance(labels, int):
+            length = labels
+            labels = np.arange(length)
+            mapping = labels
+            iswildcard = True
+        else:
+            # TODO: move this to to_ticks????
+            # we convert to an ndarray to save memory (for scalar ticks, for
+            # ValueGroup ticks, it does not make a difference since a list of VG
+            # and an ndarray of VG are both arrays of pointers)
+            labels = np.asarray(to_ticks(labels))
+            length = len(labels)
+            mapping = {label: i for i, label in enumerate(labels)}
+            # we have no choice but to do that!
+            # otherwise we could not make geo['Brussels'] work efficiently
+            # (we could have to traverse the whole mapping checking for each
+            # name, which is not an option)
+            mapping.update({label.name: i for i, label in enumerate(labels)
+                            if isinstance(label, LKey)})
+            iswildcard = False
+        self._length = length
+        self._labels = labels
+        self._mapping = mapping
+        self._iswildcard = iswildcard
     labels = property(get_labels, set_labels)
-
-    def _update_mapping(self):
-        labels = self._labels
-        self._mapping = {label: i for i, label in enumerate(labels)}
-        # we have no choice but to do that!
-        # otherwise we could not make geo['Brussels'] work efficiently
-        # (we could have to traverse the whole mapping checking for each name,
-        # which is not an option)
-        self._mapping.update({label.name: i for i, label in enumerate(labels)
-                              if isinstance(label, ValueGroup)})
 
     # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
@@ -542,6 +554,17 @@ class Axis(object):
             name = self.name
         return Axis(name, self.labels[key])
 
+    def iscompatible(self, other):
+        if not isinstance(other, Axis) or self.name != other.name:
+            return False
+        # wildcard axes of length 1 match with anything
+        if self._iswildcard:
+            return len(self) == 1 or len(self) == len(other)
+        elif other._iswildcard:
+            return len(other) == 1 or len(self) == len(other)
+        else:
+            return array_equal(self.labels, other.labels)
+
     def __eq__(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
                 array_equal(self.labels, other.labels))
@@ -550,7 +573,7 @@ class Axis(object):
         return not self == other
 
     def __len__(self):
-        return len(self.labels)
+        return self._length
 
     def __getitem__(self, key):
         """
@@ -624,8 +647,13 @@ class Axis(object):
             # key is scalar (integer, float, string, ...)
             return mapping[key]
 
+    @property
+    def display_name(self):
+        name = self.name if self.name is not None else '-'
+        return (name + '*') if self._iswildcard else name
+
     def __str__(self):
-        return self.name if self.name is not None else 'Unnamed axis'
+        return self.display_name
 
     def __repr__(self):
         return 'Axis(%r, %r)' % (self.name, list(self.labels))
@@ -775,6 +803,8 @@ class AxisCollection(object):
         elif isinstance(key, Axis):
             # XXX: check that it is the same object????
             return self._map[key.name]
+        elif isinstance(key, (tuple, list, AxisCollection)):
+            return AxisCollection([self[k] for k in key])
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         else:
@@ -869,8 +899,7 @@ class AxisCollection(object):
         return len(self._list)
 
     def __str__(self):
-        return "{%s}" % ', '.join([axis.name if axis.name is not None else '-'
-                                   for axis in self._list])
+        return "{%s}" % ', '.join([axis.display_name for axis in self._list])
 
     def __repr__(self):
         axes_repr = (repr(axis) for axis in self._list)
@@ -918,7 +947,7 @@ class AxisCollection(object):
                 else:
                     local_axis = None
             if local_axis is not None:
-                if axis != local_axis:
+                if not local_axis.iscompatible(axis):
                     raise ValueError("incompatible axes:\n%r\nvs\n%r"
                                      % (axis, local_axis))
 
@@ -1500,13 +1529,73 @@ class LArray(object):
 
         # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
-        otheronly_axes = [Axis(axis.name, ['*']) if len(axis) > 1 else axis
+        otheronly_axes = [Axis(axis.name, 1) if len(axis) > 1 else axis
                           for axis in other_axes if axis.name not in self.axes]
         array = self.reshape(self.axes + otheronly_axes)
         # 2) reorder axes to target order (move source-only axes to the front)
         sourceonly_axes = self.axes - other_axes
         axes_other_order = [array.axes[name] for name in other_names]
         return array.transpose(sourceonly_axes + axes_other_order)
+
+    def drop_labels(self, axes=None):
+        """drop the labels from axes (replace those axes by "wildcard" axes)
+
+        Parameters
+        ----------
+        axes : Axis or list/tuple/AxisCollection of Axis
+
+        Returns
+        -------
+        LArray
+
+        Examples
+        --------
+        >>> a = Axis('a', ['a1', 'a2'])
+        >>> b = Axis('b', ['b1', 'b2'])
+        >>> b2 = Axis('b', ['b2', 'b3'])
+        >>> arr1 = ndrange([a, b])
+        >>> arr1
+        a\\b | b1 | b2
+         a1 |  0 |  1
+         a2 |  2 |  3
+        >>> arr1.drop_labels(b)
+        a\\b* | 0 | 1
+          a1 | 0 | 1
+          a2 | 2 | 3
+        >>> arr1.drop_labels([a, b])
+        a*\\b* | 0 | 1
+            0 | 0 | 1
+            1 | 2 | 3
+        >>> arr2 = ndrange([a, b2])
+        >>> arr2
+        a\\b | b2 | b3
+         a1 |  0 |  1
+         a2 |  2 |  3
+        >>> arr1 * arr2
+        Traceback (most recent call last):
+        ...
+        ValueError: incompatible axes:
+        Axis('b', ['b2', 'b3'])
+        vs
+        Axis('b', ['b1', 'b2'])
+        >>> arr1 * arr2.drop_labels()
+        a\\b | b1 | b2
+         a1 |  0 |  1
+         a2 |  4 |  9
+        >>> # TODO: use arr2.axes in this case
+        >>> arr1.drop_labels() * arr2
+        a*\\b* | 0 | 1
+            0 | 0 | 1
+            1 | 4 | 9
+        """
+        if axes is None:
+            axes = self.axes
+        if not isinstance(axes, (tuple, list, AxisCollection)):
+            axes = [axes]
+        old_axes = self.axes[axes]
+        new_axes = [Axis(axis.name, len(axis)) for axis in old_axes]
+        res_axes = self.axes.replace(axes, new_axes)
+        return LArray(self.data, res_axes)
 
     def __str__(self):
         if not self.ndim:
@@ -1530,8 +1619,7 @@ class LArray(object):
         data = np.asarray(self).reshape(height, width)
 
         if self.axes is not None:
-            axes_names = [name if name is not None else '-'
-                          for name in self.axes.names]
+            axes_names = [axis.display_name for axis in self.axes]
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
