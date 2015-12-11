@@ -951,12 +951,13 @@ class AxisCollection(object):
                     raise ValueError("incompatible axes:\n%r\nvs\n%r"
                                      % (axis, local_axis))
 
-    def extend(self, axes):
+    def extend(self, axes, validate=True):
         """
         extend the collection by appending the axes from axes
         """
         # check that common axes are the same
-        self.check_compatible(axes)
+        if validate:
+            self.check_compatible(axes)
         to_add = [axis for axis in axes if axis.name not in self._map]
 
         # when __setitem__(slice) will be implemented, we could simplify this
@@ -1145,7 +1146,7 @@ def concat_empty(axis, array_axes, other_axes, dtype):
     array_axes = array_axes.replace(array_axis, new_axis)
     other_axes = other_axes.replace(other_axis, new_axis)
     array_axes.extend(other_axes)
-    other_axes.extend(array_axes)
+    other_axes.extend(array_axes, validate=False)
     result_axes = AxisCollection([
         axis1 if len(axis2) <= len(axis1) else axis2
         for axis1, axis2 in zip(array_axes, other_axes[array_axes])])
