@@ -552,6 +552,8 @@ class Axis(object):
         # name is probably what users will want to use to filter
         if name is None:
             name = self.name
+        if isinstance(key, LArray):
+            return tuple(key.axes)
         return Axis(name, self.labels[key])
 
     def iscompatible(self, other):
@@ -748,10 +750,12 @@ class ValueGroup(LKey):
         return len(self.key)
 
     def __lt__(self, other):
-        return self.key.__lt__(other.key)
+        other_key = other.key if isinstance(other, ValueGroup) else other
+        return self.key.__lt__(other_key)
 
     def __gt__(self, other):
-        return self.key.__gt__(other.key)
+        other_key = other.key if isinstance(other, ValueGroup) else other
+        return self.key.__gt__(other_key)
 
 
 class PositionalKey(LKey):
@@ -1388,8 +1392,10 @@ class LArray(object):
             # XXX: we might want to raise an exception when we find (most)
             # slice(None) because except for a single slice(None) a[:], I don't
             # think there is any point.
+            def isnoneslice(v):
+                return isinstance(v, slice) and v == slice(None)
             key = tuple(self._translate_axis_key(axis_key) for axis_key in key
-                        if axis_key != slice(None))
+                        if not isnoneslice(axis_key))
 
             assert all(isinstance(axis_key, LKey) for axis_key in key)
 
@@ -1476,8 +1482,27 @@ class LArray(object):
             # A: yes, probably
             return data[np.asarray(key)]
 
-        # translated_key = self.translated_key(self.full_key(key))
         translated_key = self.translated_key(key)
+        if any(isinstance(axis_key, LArray) for axis_key in translated_key):
+            k2 = [k.data if isinstance(k, LArray) else k
+                  for k in translated_key]
+            data = data[k2]
+            axes = [axis.subaxis(axis_key)
+                    for axis, axis_key in zip(self.axes, translated_key)
+                    if not np.isscalar(axis_key)]
+
+            # subaxis can return tuple of axes and we want a single list of axes
+            # not a nested structure. We could do both in one step but it's
+            # awfully unreadable.
+            def flatten(l):
+                return [e for sublist in l for e in sublist]
+
+            def to2d(l):
+                return [mixed if isinstance(mixed, (tuple, list)) else [mixed]
+                        for mixed in l]
+
+            axes = flatten(to2d(axes))
+            return LArray(data, axes)
 
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
@@ -2127,6 +2152,9 @@ class LArray(object):
                 other = other.data
             elif isinstance(other, np.ndarray):
                 pass
+            # so that we can do key.count(Ellipsis)
+            elif other is Ellipsis:
+                return False
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
                                 "and '%s'" % (opname, type(self), type(other)))

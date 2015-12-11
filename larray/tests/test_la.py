@@ -821,7 +821,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age.i[1, 5]))
 
-    def test_getitem_bool_array_key(self):
+    def test_getitem_bool_larray_key(self):
         raw = self.array
         la = self.larray
 
@@ -829,6 +829,16 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la[la < 5], raw[raw < 5])
         # ndarray key
         self._assert_equal_raw(la[raw < 5], raw[raw < 5])
+
+    def test_getitem_non_bool_larray_key(self):
+        a = ndrange((2, 2)).rename(0, 'a').rename(1, 'b')
+        # make sure the values are in range(0, 3), so that the lookup works
+        # on dim "e"
+        a = a // 2
+        b = ndrange((2, 2, 3)).rename(0, 'c').rename(1, 'd').rename(2, 'e')
+        c = b[x.e[a]]
+        # c should have dimensions c,d,a,b
+        # AssertionError: XXX (<class 'larray.core.LArray'>) is not scalar
 
     def test_setitem_larray(self):
         """
