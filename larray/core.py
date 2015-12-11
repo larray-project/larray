@@ -822,7 +822,7 @@ class AxisCollection(object):
             # XXX: check that it is the same object????
             self.__setitem__(key.name, value)
         else:
-            assert isinstance(key, basestring)
+            assert isinstance(key, basestring), type(key)
             try:
                 axis = self._map[key]
             except KeyError:
