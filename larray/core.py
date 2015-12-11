@@ -376,22 +376,27 @@ def to_key(v):
     """
     if isinstance(v, tuple):
         return list(v)
-    elif not isinstance(v, basestring):
+    elif isinstance(v, LKey):
+        return v.__class__(to_key(v.key), v.name, v.axis)
+    elif v is Ellipsis or isinstance(v, (int, list, slice, LArray)):
         return v
-
-    numcolons = v.count(':')
-    if numcolons:
-        assert numcolons <= 2
-        # can be of len 2 or 3 (if step is provided)
-        bounds = [a if a else None for a in v.split(':')]
-        return slice(*bounds)
-    else:
-        if ',' in v:
-            # strip extremity commas to avoid empty string keys
-            v = v.strip(',')
-            return [v.strip() for v in v.split(',')]
+    elif isinstance(v, basestring):
+        numcolons = v.count(':')
+        if numcolons:
+            assert numcolons <= 2
+            # can be of len 2 or 3 (if step is provided)
+            bounds = [a if a else None for a in v.split(':')]
+            return slice(*bounds)
         else:
-            return v.strip()
+            if ',' in v:
+                # strip extremity commas to avoid empty string keys
+                v = v.strip(',')
+                return [v.strip() for v in v.split(',')]
+            else:
+                return v.strip()
+    else:
+        raise TypeError("%s has an invalid type (%s) for a key"
+                        % (v, type(v).__name__))
 
 
 def to_keys(value):
@@ -426,17 +431,11 @@ def to_keys(value):
         if ';' in value:
             return tuple([to_key(group) for group in value.split(';')])
         else:
-            # a single group => collapse dimension
             return to_key(value)
-    elif isinstance(value, (int, slice, LKey)):
-        return value
-    elif isinstance(value, list):
-        return to_key(value)
     elif isinstance(value, tuple):
         return tuple([to_key(group) for group in value])
     else:
-        raise TypeError("%s has an invalid type (%s) for a key"
-                        % (value, type(value).__name__))
+        return to_key(value)
 
 
 def union(*args):
