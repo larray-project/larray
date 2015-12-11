@@ -1066,6 +1066,26 @@ class AxisCollection(object):
         return [axis.name for axis in self._list]
 
     @property
+    def display_names(self):
+        """Returns the list of (display) names of the axes
+
+        Returns
+        -------
+        List
+            List of names of the axes
+
+        Example
+        -------
+        >>> a = Axis('a', ['a1', 'a2'])
+        >>> b = Axis('b', 2)
+        >>> c = Axis(None, ['c1', 'c2'])
+        >>> arr = zeros([a, b, c])
+        >>> arr.axes.display_names
+        ['a', 'b*', '-']
+        """
+        return [axis.display_name for axis in self._list]
+
+    @property
     def shape(self):
         return tuple(len(axis) for axis in self._list)
 
