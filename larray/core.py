@@ -908,7 +908,7 @@ class AxisCollection(object):
         return len(self._list)
 
     def __str__(self):
-        return "{%s}" % ', '.join([axis.display_name for axis in self._list])
+        return "{%s}" % ', '.join(self.display_names)
 
     def __repr__(self):
         axes_repr = (repr(axis) for axis in self._list)
@@ -1710,7 +1710,7 @@ class LArray(object):
         data = np.asarray(self).reshape(height, width)
 
         if self.axes is not None:
-            axes_names = [axis.display_name for axis in self.axes]
+            axes_names = self.axes.display_names[:]
             if len(axes_names) > 1:
                 axes_names[-2] = '\\'.join(axes_names[-2:])
                 axes_names.pop()
