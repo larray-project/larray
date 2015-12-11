@@ -1775,9 +1775,7 @@ class LArray(object):
         LArray or scalar
         """
         src_data = np.asarray(self)
-        if not axes:
-            axes = self.axes
-
+        axes = list(axes) if axes else self.axes
         axes_indices = tuple(self.axes.index(a) for a in axes)
         keepdims = bool(keepaxes)
         if out is None:
