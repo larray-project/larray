@@ -1231,6 +1231,11 @@ class LArray(object):
         data = np.ndarray.__array_wrap__(self.data, out_arr, context)
         return LArray(data, self.axes)
 
+    def __bool__(self):
+        return bool(self.data)
+    # Python 2
+    __nonzero__= __bool__
+
     def rename(self, axis, newname):
         """Renames an axis of a LArray.
 

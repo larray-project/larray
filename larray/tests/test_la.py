@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
-                    read_csv, zeros, zeros_like, ndrange,
+                    read_csv, zeros, zeros_like, ndrange, ones,
                     clip, exp, where, x, view, mean, var, std)
 from larray.utils import array_equal, array_nan_equal
 from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
@@ -563,6 +563,24 @@ class TestLArray(TestCase):
         la = zeros_like(self.larray)
         self.assertEqual(la.shape, (116, 44, 2, 15))
         self._assert_equal_raw(la, np.zeros((116, 44, 2, 15)))
+
+    def test_bool(self):
+        a = ones([2])
+        # ValueError: The truth value of an array with more than one element
+        #             is ambiguous. Use a.any() or a.all()
+        self.assertRaises(ValueError, bool, a)
+
+        a = ones([1])
+        self.assertTrue(bool(a))
+
+        a = zeros([1])
+        self.assertFalse(bool(a))
+
+        a = LArray(np.array(2), [])
+        self.assertTrue(bool(a))
+
+        a = LArray(np.array(0), [])
+        self.assertFalse(bool(a))
 
     def test_rename(self):
         la = self.larray
