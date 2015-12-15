@@ -497,7 +497,9 @@ class Axis(object):
         if isinstance(labels, int):
             length = labels
             labels = np.arange(length)
-            mapping = labels
+            # TODO: this would be more efficient but does not work in all cases
+            # mapping = labels
+            mapping = {label: i for i, label in enumerate(labels)}
             iswildcard = True
         else:
             # TODO: move this to to_ticks????
