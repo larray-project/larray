@@ -9,7 +9,7 @@ import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
                     read_csv, zeros, zeros_like, ndrange,
-                    clip, exp, x, view, mean, var, std)
+                    clip, exp, where, x, view, mean, var, std)
 from larray.utils import array_equal, array_nan_equal
 from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
 
@@ -1951,6 +1951,19 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # LA + LA (with broadcasting)
         self._assert_equal_raw(clip(la, low, high),
                                np.clip(raw, raw_low, raw_high))
+
+        # where (no broadcasting)
+        self._assert_equal_raw(where(la < 5, -5, la),
+                               np.where(raw < 5, -5, raw))
+
+        # where (transposed no broadcasting)
+        self._assert_equal_raw(where(la < 5, -5, la.T),
+                               np.where(raw < 5, -5, raw))
+
+        # where (with broadcasting)
+        result = where(la['P01'] < 5, -5, la)
+        self.assertEqual(result.axes.names, ['sex', 'lipro'])
+        self._assert_equal_raw(result, np.where(raw[:,[0]] < 5, -5, raw))
 
     def test_plot(self):
         pass
