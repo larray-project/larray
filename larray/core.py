@@ -1171,6 +1171,22 @@ def concat_empty(axis, array_axes, other_axes, dtype):
     return result, result[new_axis.i[:l]], result[new_axis.i[l:]]
 
 
+class LArrayIterator(object):
+    def __init__(self, array):
+        self.array = array
+        self.position = 0
+
+    def __next__(self):
+        array = self.array
+        if self.position == len(self.array):
+            raise StopIteration
+        result = array[array.axes[0].i[self.position]]
+        self.position += 1
+        return result
+    # Python 2
+    next = __next__
+
+
 class LArray(object):
     """
     LArray class
@@ -1704,6 +1720,9 @@ class LArray(object):
             return table2str(list(self.as_table()), 'nan', True,
                              keepcols=self.ndim - 1)
     __repr__ = __str__
+
+    def __iter__(self):
+        return LArrayIterator(self)
 
     def as_table(self, maxlines=80, edgeitems=5):
         if not self.ndim:

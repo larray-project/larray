@@ -582,6 +582,12 @@ class TestLArray(TestCase):
         a = LArray(np.array(0), [])
         self.assertFalse(bool(a))
 
+    def test_iter(self):
+        array = self.small
+        l = list(array)
+        assert_larray_equal(l[0], array['H'])
+        assert_larray_equal(l[1], array['F'])
+
     def test_rename(self):
         la = self.larray
         new = la.rename('sex', 'gender')
