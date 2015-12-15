@@ -1914,7 +1914,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         # FIXME: this is not the case currently
         # self.assertIs(la_out2, la_out)
-        self.assertEqual(la_out2, la_out)
+        assert_larray_equal(la_out2, la_out)
         self.assertIs(raw_out2, raw_out)
 
         self._assert_equal_raw(la_out, raw_out)
@@ -1928,7 +1928,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw_out2 = np.exp(raw, raw_out)
 
         # self.assertIs(la_out2, la_out)
-        self.assertEqual(la_out2, la_out)
+        # XXX: why is la_out2 transposed?
+        assert_larray_equal(la_out2.transpose(x.a), la_out)
         self.assertIs(raw_out2, raw_out)
 
         self._assert_equal_raw(la_out, raw_out)
