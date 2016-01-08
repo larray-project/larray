@@ -459,6 +459,9 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
+def isnoneslice(v):
+    return isinstance(v, slice) and v == slice(None)
+
 class PositionalKeyMaker(object):
     def __init__(self, axis):
         self.axis = axis
@@ -1415,8 +1418,8 @@ class LArray(object):
         if not isinstance(key, (tuple, dict)):
             key = (key,)
 
-        # handle keys containing an Ellipsis
         if isinstance(key, tuple):
+            # handle keys containing an Ellipsis
             num_ellipses = key.count(Ellipsis)
             if num_ellipses > 1:
                 raise ValueError("cannot use more than one Ellipsis (...)")
@@ -1430,8 +1433,6 @@ class LArray(object):
             # XXX: we might want to raise an exception when we find (most)
             # slice(None) because except for a single slice(None) a[:], I don't
             # think there is any point.
-            def isnoneslice(v):
-                return isinstance(v, slice) and v == slice(None)
             key = tuple(self._translate_axis_key(axis_key) for axis_key in key
                         if not isnoneslice(axis_key))
 
@@ -2033,8 +2034,6 @@ class LArray(object):
         # TODO: we should allocate the final result directly and fill it
         #       progressively, so that the original array is only copied once
         for axis in operations:
-            # TODO: use res._aggregate(..., keepaxes=label) and use .extend in
-            # all cases
             # TODO: append/extend first with an empty array then
             #       _aggregate with out=
             if self.axes.isaxis(axis):
