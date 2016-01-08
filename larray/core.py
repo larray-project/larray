@@ -2098,6 +2098,7 @@ class LArray(object):
             1 | 3 | 4 | 5 |    12
         total | 3 | 5 | 7 |    15
         """
+        # TODO: default to op.__name__
         label = kwargs.pop('label', 'total')
         op = kwargs.pop('op', sum)
         npop = {
