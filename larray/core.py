@@ -2159,7 +2159,7 @@ class LArray(object):
             return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
         axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
                        for axis in self.axes]
-        lines = [" %s [%d]: %s" % (axis.name, len(axis), labels)
+        lines = [" %s [%d]: %s" % (axis.display_name, len(axis), labels)
                  for axis, labels in zip(self.axes, axes_labels)]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
