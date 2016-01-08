@@ -1,6 +1,11 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
+#TODO: iterate over axis
+# for year in eipens.axes.year_p:
+# instead of
+# for year in eipens.axes.year_p.labels:
+
 __version__ = "0.5"
 
 __all__ = [
@@ -20,6 +25,23 @@ Matrix class
 """
 # TODO
 # * add check there is no duplicate label in axes!
+
+# * for NDGroups, we have two options: cross product or intersection.
+#   Technically, this is easy, we just need to store a boolean and in getitem
+#   act accordingly (use ix_ or not), but what is the best API for users?
+#   a different class or a flag? In fact, the same question applies to
+#   positional vs label (in total, we got 4 different possibilities).
+
+# ? how do you combine a product group with an intersection group?
+#   a[pgroup, igroup]
+#   -> no problem if they are on different dimensions: the igroup
+#      dimension(s) are collapsed into one, pgroup dimension(s) stay.
+#      The index need to be constructed carefully, but it can be done. See
+#      np_indexing.py
+#   -> if they are on the same dimensions, we have two options:
+#      * apply one then the other (left to right)
+#      * fail <-- I think this is safer at least to implement. One after the
+#                 other can still be achieved by a[pgroup][igroup]
 
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
@@ -1498,7 +1520,16 @@ class LArray(object):
                             for axis_key in key]
 
             # 2) expand slices to lists (ranges)
-            # TODO: cache the range in the axis?
+            # XXX: cache the range in the axis?
+            # TODO: fork np.ix_ to allow for slices directly
+            # it will be tricky to get right though because in that case the
+            # a[key] can have its dimensions in the wrong order (if the
+            # ix_arrays are not next to each other, the corresponding
+            # dimensions are moved to the front). It is probably worth the
+            # trouble though because it is much faster than the current
+            # solution (~5x in my simple test) but this case (num_ix_arrays >
+            # 1) is rare in the first place (at least in demo) so it is not a
+            # priority.
             listkey = tuple(np.arange(*axis_key.indices(len(axis)))
                             if isinstance(axis_key, slice)
                             else axis_key
