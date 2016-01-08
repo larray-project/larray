@@ -1,10 +1,6 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
-#TODO: iterate over axis
-# for year in eipens.axes.year_p:
-# instead of
-# for year in eipens.axes.year_p.labels:
 
 __version__ = "0.5"
 
@@ -609,6 +605,9 @@ class Axis(object):
 
     def __len__(self):
         return self._length
+
+    def __iter__(self):
+        return iter(self.labels)
 
     def __getitem__(self, key):
         """

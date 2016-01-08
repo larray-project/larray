@@ -159,6 +159,9 @@ class TestAxis(TestCase):
         self.assertEqual(group.key, slice(None))
         self.assertEqual(group.axis, 'age')
 
+    def test_iter(self):
+        self.assertEqual(list(Axis('sex', 'H,F')), ['H', 'F'])
+
     def test_positional(self):
         age = Axis('age', ':115')
 
