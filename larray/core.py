@@ -239,11 +239,9 @@ def srange(*args):
 
 def range_to_slice(seq):
     """
-    seq is a sequence-like (list, tuple or ndarray (*)) of integers
+    seq is a sequence-like (list, tuple or ndarray) of integers
     returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
-
-    (*) isinstance(ndarray, Sequence) is False but it behaves like one
     """
     if len(seq) < 1:
         return seq
