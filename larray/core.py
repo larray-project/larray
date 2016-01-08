@@ -801,7 +801,7 @@ class AxisCollection(object):
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
         self._list = axes
-        self._map = {axis.name: axis for axis in axes}
+        self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
     def __getattr__(self, key):
         try:
@@ -813,6 +813,8 @@ class AxisCollection(object):
         if isinstance(key, int):
             return self._list[key]
         elif isinstance(key, Axis):
+            if key.name is None and key in self._list:
+                return key
             # XXX: check that it is the same object????
             return self._map[key.name]
         elif isinstance(key, (tuple, list, AxisCollection)):
@@ -828,8 +830,10 @@ class AxisCollection(object):
         if isinstance(key, int):
             axis = self._list[key]
             self._list[key] = value
-            del self._map[axis.name]
-            self._map[value.name] = value
+            if axis.name is not None:
+                del self._map[axis.name]
+            if value.name is not None:
+                self._map[value.name] = value
         elif isinstance(key, Axis):
             # XXX: check that it is the same object????
             self.__setitem__(key.name, value)
@@ -879,6 +883,8 @@ class AxisCollection(object):
 
     def __contains__(self, key):
         if isinstance(key, Axis):
+            if key.name is None:
+                return key in self._list
             key = key.name
         return key in self._map
 
@@ -928,10 +934,10 @@ class AxisCollection(object):
         return AxisCollection([axis for axis in self if axis.name in other])
 
     def get(self, key, default=None):
-        if isinstance(key, Axis):
-            # XXX: check that it is the same object????
-            key = key.name
-        return self._map.get(key, default)
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def keys(self):
         return [a.name for a in self._list]
@@ -988,10 +994,13 @@ class AxisCollection(object):
 
         Raises ValueError if the axis is not present.
         """
-        name_or_idx = axis.name if isinstance(axis, Axis) else axis
-        return self.names.index(name_or_idx) \
-            if isinstance(name_or_idx, (type(None), basestring)) \
-            else name_or_idx
+        # first look by object
+        if isinstance(axis, Axis) and axis.name is None:
+            return self._list.index(axis)
+        elif isinstance(axis, int):
+            return axis
+        name = axis.name if isinstance(axis, Axis) else axis
+        return self.names.index(name)
 
     # XXX: we might want to return a new AxisCollection (same question for
     # other inplace operations: append, extend, pop, __delitem__, __setitem__)
@@ -1645,7 +1654,7 @@ class LArray(object):
         # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
         otheronly_axes = [Axis(axis.name, 1) if len(axis) > 1 else axis
-                          for axis in other_axes if axis.name not in self.axes]
+                          for axis in other_axes if axis not in self.axes]
         array = self.reshape(self.axes + otheronly_axes)
         # 2) reorder axes to target order (move source-only axes to the front)
         sourceonly_axes = self.axes - other_axes
