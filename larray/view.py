@@ -818,7 +818,8 @@ class ArrayEditorWidget(QWidget):
             frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
 
             # max(1, ...) because there is at least one integer digit
-            pos_int_digits = max(1, math.ceil(math.log10(vmax) if vmax else 0))
+            log10max = math.log10(vmax) if vmax > 0 else 0
+            pos_int_digits = max(1, math.ceil(log10max))
             if vmin < 0:
                 # + 1 for sign
                 logvmin = math.log10(-vmin) if vmin else 0
