@@ -2079,6 +2079,23 @@ class LArray(object):
         Returns
         -------
         LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = ndrange([xnat, xsex])
+        >>> arr.with_total()
+        nat\\sex | H | F | total
+             BE | 0 | 1 |     1
+             FO | 2 | 3 |     5
+          total | 2 | 4 |     6
+        >>> arr = ndrange([Axis('a', 2), Axis('b', 3)])
+        >>> arr.with_total()
+          a\\b | 0 | 1 | 2 | total
+            0 | 0 | 1 | 2 |     3
+            1 | 3 | 4 | 5 |    12
+        total | 3 | 5 | 7 |    15
         """
         label = kwargs.pop('label', 'total')
         op = kwargs.pop('op', sum)
