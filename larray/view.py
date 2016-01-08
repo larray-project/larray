@@ -451,10 +451,9 @@ class ArrayModel(QAbstractTableModel):
             #     return to_qvariant(value)
             if value is np.ma.masked:
                 return ''
-            elif isinstance(value, str):
+            # for headers
+            elif isinstance(value, str) and not isinstance(value, np.str_):
                 return value
-            elif isinstance(value, (bool, np.bool_)):
-                return ('False', 'True')[value]
             else:
                 return to_qvariant(self._format % value)
 
@@ -806,48 +805,53 @@ class ArrayEditorWidget(QWidget):
         # FIXME: use max_digits?
         avail_digits = 8
 
-        data_frac_digits = self._data_digits(data)
-
-        vmin, vmax = np.nanmin(data), np.nanmax(data)
-        absmax = max(abs(vmin), abs(vmax))
-        logabsmax = math.log10(absmax) if absmax else 0
-        frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
-
-        # max(1, ...) because there is at least one integer digit
-        pos_int_digits = max(1, math.ceil(math.log10(vmax) if vmax else 0))
-        if vmin < 0:
-            # + 1 for sign
-            logvmin = math.log10(-vmin) if vmin else 0
-            neg_int_digits = max(1, math.ceil(logvmin)) + 1
-        else:
-            neg_int_digits = 0
-
-        int_digits = max(pos_int_digits, neg_int_digits)
-
-        # if there are more integer digits than we can display
-        # or we can display more information by using scientific format, do so
-        # (scientific format "uses" 4 digits, so we win if have >= 4 zeros --
-        #  *including the integer one*)
-        if int_digits > avail_digits or frac_zeros >= 3:
-            use_scientific = True
-            # -1.5e+01
-            int_digits = 2 if vmin < 0 else 1
-            exp_digits = 4
-        else:
-            use_scientific = False
-            exp_digits = 0
-
-        # - 1 for the dot
-        ndecimals = avail_digits - 1 - int_digits - exp_digits
-
-        if ndecimals < 0:
+        if data.dtype.type in (np.str, np.str_, np.bool_, np.bool):
+            format = '%s'
             ndecimals = 0
+            use_scientific = False
+        else:
+            data_frac_digits = self._data_digits(data)
 
-        if data_frac_digits < ndecimals:
-            ndecimals = data_frac_digits
+            vmin, vmax = np.nanmin(data), np.nanmax(data)
+            absmax = max(abs(vmin), abs(vmax))
+            logabsmax = math.log10(absmax) if absmax else 0
+            frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
 
-        letter = 'e' if use_scientific else 'f'
-        format = '%%.%d%s' % (ndecimals, letter)
+            # max(1, ...) because there is at least one integer digit
+            pos_int_digits = max(1, math.ceil(math.log10(vmax) if vmax else 0))
+            if vmin < 0:
+                # + 1 for sign
+                logvmin = math.log10(-vmin) if vmin else 0
+                neg_int_digits = max(1, math.ceil(logvmin)) + 1
+            else:
+                neg_int_digits = 0
+
+            int_digits = max(pos_int_digits, neg_int_digits)
+
+            # if there are more integer digits than we can display
+            # or we can display more information by using scientific format, do so
+            # (scientific format "uses" 4 digits, so we win if have >= 4 zeros --
+            #  *including the integer one*)
+            if int_digits > avail_digits or frac_zeros >= 3:
+                use_scientific = True
+                # -1.5e+01
+                int_digits = 2 if vmin < 0 else 1
+                exp_digits = 4
+            else:
+                use_scientific = False
+                exp_digits = 0
+
+            # - 1 for the dot
+            ndecimals = avail_digits - 1 - int_digits - exp_digits
+
+            if ndecimals < 0:
+                ndecimals = 0
+
+            if data_frac_digits < ndecimals:
+                ndecimals = data_frac_digits
+
+            letter = 'e' if use_scientific else 'f'
+            format = '%%.%d%s' % (ndecimals, letter)
         # format = SUPPORTED_FORMATS.get(data.dtype.name, '%s')
         self.model = ArrayModel(self.data, format=format,
                                 xlabels=xlabels, ylabels=ylabels,
