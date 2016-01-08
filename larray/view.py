@@ -504,7 +504,6 @@ class ArrayModel(QAbstractTableModel):
         try:
             self.test_array[0] = val  # could raise an Exception
         except OverflowError as e:
-            print(type(e.message))
             QMessageBox.critical(self.dialog, "Error",
                                  "Overflow error: %s" % e.message)
             return False
@@ -736,7 +735,6 @@ class ArrayView(QTableView):
             else:
                 return str(v)
         text = '\n'.join('\t'.join(vrepr(v) for v in line) for line in data)
-        print(text)
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
 
@@ -1158,7 +1156,6 @@ class ArrayEditor(QDialog):
                 cur_filter[axis.name] = axis.labels[indices[0]]
             else:
                 cur_filter[axis.name] = axis.labels[indices]
-        print("new filter", cur_filter)
         filtered = self.la_data[cur_filter]
         if np.isscalar(filtered):
             #TODO: make it readonly
