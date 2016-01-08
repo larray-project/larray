@@ -849,10 +849,29 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw = self.array
         la = self.larray
 
-        # LArray key
-        self._assert_equal_raw(la[la < 5], raw[raw < 5])
-        # ndarray key
-        self._assert_equal_raw(la[raw < 5], raw[raw < 5])
+        # all dimensions
+        res = la[la < 5]
+        self.assertTrue(isinstance(res, LArray))
+        self.assertEqual(res.ndim, 1)
+        self._assert_equal_raw(res, raw[raw < 5])
+
+        # missing dimension
+        res = la[la['H'] % 5 == 0]
+        self.assertTrue(isinstance(res, LArray))
+        self.assertEqual(res.ndim, 2)
+        self.assertEqual(res.shape, (116 * 44 * 15 / 5, 2))
+        raw_key = raw[:, :, 0, :] % 5 == 0
+        raw_d1, raw_d2, raw_d4 = raw_key.nonzero()
+        self._assert_equal_raw(res, raw[raw_d1, raw_d2, :, raw_d4])
+
+    def test_getitem_bool_ndarray_key(self):
+        raw = self.array
+        la = self.larray
+
+        res = la[raw < 5]
+        self.assertTrue(isinstance(res, LArray))
+        self.assertEqual(res.ndim, 1)
+        self._assert_equal_raw(res, raw[raw < 5])
 
     def test_getitem_non_bool_larray_key(self):
         a = ndrange((2, 2)).rename(0, 'a').rename(1, 'b')

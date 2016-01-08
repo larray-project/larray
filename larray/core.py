@@ -1542,15 +1542,50 @@ class LArray(object):
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
 
-        if isinstance(key, (np.ndarray, LArray)) and \
+        # TODO: make the combined keys should be objects which display as:
+        # (axis1_label, axis2_label, ...) but should also store the axis (names)
+        # Q: Should it be the same object as the NDValueGroup?/NDKey?
+        # A: yes, probably. On the Pandas backend, we could/should have
+        #    separate axes. On the numpy backend we cannot.
+        if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, bool):
-            # TODO: return an LArray with Axis labels = combined keys
-            # these combined keys should be objects which display as:
-            # (axis1_label, axis2_label, ...) but should also store the axis
-            # (names).
-            # Q: Should it be the same object as the NDValueGroup?/NDKey?
-            # A: yes, probably
-            return data[np.asarray(key)]
+            if isinstance(key, LArray):
+                # if only the axes order is wrong, transpose
+                if key.size == self.size and key.shape != self.shape:
+                    key = np.asarray(key.transpose(self.axes)).nonzero()
+                # otherwise we need to transform the key to integer
+                elif key.size != self.size:
+                    dict_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
+                    key = tuple(dict_key[name] if name in dict_key else slice(None)
+                                for name in self.axes.names)
+                else:
+                    key = np.asarray(key).nonzero()
+            else:
+                key = key.nonzero()
+
+            combined_axes = [axis for axis_key, axis in zip(key, self.axes)
+                             if not isnoneslice(axis_key)]
+            other_axes = [axis for axis_key, axis in zip(key, self.axes)
+                          if isnoneslice(axis_key)]
+            axes_labels = [axis.labels[axis_key]
+                           for axis_key, axis in zip(key, self.axes)
+                           if not isnoneslice(axis_key)]
+            if len(combined_axes) == 1:
+                combined_labels = axes_labels[0]
+            else:
+                combined_labels = list(zip(*axes_labels))
+            axes_indices = [self.axes.index(axis) for axis in combined_axes]
+            diff = np.diff(axes_indices)
+            if np.any(diff > 1):
+                # combined axes in front
+                combined_axis_pos = 0
+            else:
+                combined_axis_pos = axes_indices[0]
+            combined_name = ','.join(axis.name for axis in combined_axes)
+            combined_axis = Axis(combined_name, combined_labels)
+            new_axes = other_axes
+            new_axes.insert(combined_axis_pos, combined_axis)
+            return LArray(data[key], new_axes)
 
         translated_key = self.translated_key(key)
         if any(isinstance(axis_key, LArray) for axis_key in translated_key):
