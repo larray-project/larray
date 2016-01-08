@@ -453,6 +453,8 @@ class ArrayModel(QAbstractTableModel):
                 return ''
             elif isinstance(value, str):
                 return value
+            elif isinstance(value, (bool, np.bool_)):
+                return ('False', 'True')[value]
             else:
                 return to_qvariant(self._format % value)
 
