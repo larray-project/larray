@@ -801,12 +801,13 @@ class ArrayEditorWidget(QWidget):
             self.old_data_shape = self.data.shape
             self.data.shape = (1, 1)
 
+        # max_digits = self.get_max_digits()
+        # default width can fit 8 chars
+        # FIXME: use max_digits?
+        avail_digits = 8
+
         data_frac_digits = self._data_digits(data)
 
-        max_digits = self.get_max_digits()
-
-        # default width can fit 8 chars
-        avail_digits = 8
         vmin, vmax = np.nanmin(data), np.nanmax(data)
         absmax = max(abs(vmin), abs(vmax))
         logabsmax = math.log10(absmax) if absmax else 0
