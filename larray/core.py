@@ -484,14 +484,16 @@ class Axis(object):
         self._iswildcard = False
         self.labels = labels
 
-
     @property
     def i(self):
         return PositionalKeyMaker(self.name)
 
-    def get_labels(self):
+    @property
+    def labels(self):
         return self._labels
-    def set_labels(self, labels):
+
+    @labels.setter
+    def labels(self, labels):
         if labels is None:
             raise TypeError("labels should be ndarray or int")
         if isinstance(labels, int):
@@ -520,7 +522,6 @@ class Axis(object):
         self._labels = labels
         self._mapping = mapping
         self._iswildcard = iswildcard
-    labels = property(get_labels, set_labels)
 
     # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
