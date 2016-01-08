@@ -521,7 +521,7 @@ class TestAxisCollection(TestCase):
 
 class TestLArray(TestCase):
     def _assert_equal_raw(self, la, raw):
-        assert_array_nan_equal(np.asarray(la), raw)
+        assert_array_nan_equal(np.asarray(la), np.asarray(raw))
 
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
