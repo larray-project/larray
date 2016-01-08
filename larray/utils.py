@@ -216,3 +216,49 @@ def array_lookup(array, mapping):
         return np.empty(0, dtype=sorted_values.dtype)
     indices = np.searchsorted(sorted_keys, array)
     return sorted_values[indices]
+
+
+def split_on_condition(seq, condition):
+    """splits an iterable into two lists depending on a condition
+
+    Parameters
+    ----------
+    seq : iterable
+    condition : function(e) -> True or False
+
+    Returns
+    -------
+    a, b: list
+
+    Notes
+    -----
+    If the condition can be inlined into a list comprehension, a double list
+    comprehension is faster than this function. So if performance is crucial,
+    you should inline this function with the condition itself inlined.
+    """
+    a, b = [], []
+    append_a, append_b = a.append, b.append
+    for e in seq:
+        append_a(e) if condition(e) else append_b(e)
+    return a, b
+
+
+def split_on_values(seq, values):
+    """splits an iterable into two lists depending on a list of values
+
+    Parameters
+    ----------
+    seq : iterable
+    values : iterable
+        set of values which must go to the first list
+
+    Returns
+    -------
+    a, b: list
+    """
+    values = set(values)
+    a, b = [], []
+    append_a, append_b = a.append, b.append
+    for e in seq:
+        append_a(e) if e in values else append_b(e)
+    return a, b
