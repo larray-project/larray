@@ -1914,7 +1914,8 @@ class LArray(object):
     # can contain several groups)
     # XXX: rename keepaxes to label=value? For group_aggregates we might
     # want to keep the VG label if any
-    def _group_aggregate(self, op, items, keepaxes=False):
+    def _group_aggregate(self, op, items, keepaxes=False, out=None):
+        assert out is None
         res = self
         # TODO: when working with several "axes" at the same times, we should
         # not produce the intermediary result at all. It should be faster and
@@ -2054,7 +2055,7 @@ class LArray(object):
         return operations
 
     def _aggregate(self, op, args, kwargs=None, keepaxes=False,
-                   commutative=False):
+                   commutative=False, out=None):
         operations = self._prepare_aggregate(op, args, kwargs, commutative)
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
@@ -2062,7 +2063,7 @@ class LArray(object):
         # consecutive operations.
         for are_axes, axes in groupby(operations, self.axes.isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
-            res = func(op, axes, keepaxes=keepaxes)
+            res = func(op, axes, keepaxes=keepaxes, out=out)
         return res
 
     def with_total(self, *args, **kwargs):
