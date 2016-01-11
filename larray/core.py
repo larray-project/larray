@@ -689,6 +689,11 @@ class Axis(object):
     def __repr__(self):
         return 'Axis(%r, %r)' % (self.name, list(self.labels))
 
+    def short_labels(self):
+        def shorten(l):
+            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
+        return ' '.join(shorten([repr(l) for l in self.labels]))
+
     # XXX: we might want to use | for union (like set)
     def __add__(self, other):
         if isinstance(other, Axis):
@@ -1138,6 +1143,31 @@ class AxisCollection(object):
     @property
     def shape(self):
         return tuple(len(axis) for axis in self._list)
+
+    @property
+    def info(self):
+        """Describes an AxisCollection (shape and labels for each axis).
+
+        Returns
+        -------
+        String
+            Description of the AxisCollection (shape and labels for each axis).
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FO'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> axes = AxisCollection([xnat, xsex])
+        >>> axes.info
+        2 x 2
+         nat [2]: 'BE' 'FO'
+         sex [2]: 'H' 'F'
+        """
+        lines = [" %s [%d]: %s" % (axis.display_name, len(axis),
+                                   axis.short_labels())
+                 for axis in self]
+        shape = " x ".join(str(s) for s in self.shape)
+        return ReprString('\n'.join([shape] + lines))
 
 
 def all(values, axis=None):
@@ -2431,14 +2461,7 @@ class LArray(object):
          nat [2]: 'BE' 'FO'
          sex [2]: 'H' 'F'
         """
-        def shorten(l):
-            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
-        axes_labels = [' '.join(shorten([repr(l) for l in axis.labels]))
-                       for axis in self.axes]
-        lines = [" %s [%d]: %s" % (axis.display_name, len(axis), labels)
-                 for axis, labels in zip(self.axes, axes_labels)]
-        shape = " x ".join(str(s) for s in self.shape)
-        return ReprString('\n'.join([shape] + lines))
+        return self.axes.info
 
     def ratio(self, *axes):
         """Returns a LArray with values LArray / LArray.sum(axes).
