@@ -1737,10 +1737,6 @@ class LArray(object):
         # XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
         # theoretically take a significant time to compute
-
-        # FIXME: this breaks when using a boolean fancy index. eg
-        # a[isnan(a)] = 0 (which breaks np.nan_to_num(a), which was used in
-        # LArray.ratio())
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
