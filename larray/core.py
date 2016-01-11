@@ -3548,8 +3548,8 @@ def zeros(axes):
 
     Parameters
     ----------
-    axes
-        either a collection of axes or a shape.
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+        a collection of axes or a shape.
 
     Returns
     -------
@@ -3574,7 +3574,7 @@ def zeros_like(array):
 
     Parameters
     ----------
-    array
+    array : LArray
          is an array object.
 
     Returns
@@ -3598,8 +3598,8 @@ def ones(axes):
 
     Parameters
     ----------
-    axes
-        either a collection of axes or a shape.
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+        a collection of axes or a shape.
 
     Returns
     -------
@@ -3625,7 +3625,7 @@ def ones_like(array):
 
     Parameters
     ----------
-    array
+    array : LArray
         is an array object.
 
     Returns
@@ -3650,8 +3650,8 @@ def empty(axes):
 
     Parameters
     ----------
-    axes
-        either a collection of axes or a shape.
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+        a collection of axes or a shape.
 
     Returns
     -------
@@ -3677,7 +3677,7 @@ def empty_like(array):
 
     Parameters
     ----------
-    array
+    array : LArray
         is an array object.
 
     Returns
@@ -3703,8 +3703,8 @@ def ndrange(axes):
 
     Parameters
     ----------
-    axes
-        either a collection of axes or a shape.
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+        a collection of axes or a shape.
 
     Returns
     -------
