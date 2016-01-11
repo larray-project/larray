@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 __version__ = "0.5"
 
 __all__ = [
-    'LArray', 'Axis', 'AxisCollection', 'ValueGroup',
+    'LArray', 'Axis', 'AxisCollection', 'LabelGroup',
     'union', 'stack',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
@@ -41,8 +41,6 @@ Matrix class
 
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
-
-# * rename ValueGroup to LabelGroup
 
 # ? implement named groups in strings
 #   eg "vla=A01,A02;bru=A21;wal=A55,A56"
@@ -155,7 +153,7 @@ Matrix class
 # * reorder an axis labels
 # * test to_csv: does it consume too much mem?
 #   ---> test pandas (one dimension horizontally)
-# * add labels in ValueGroups.__str__
+# * add labels in LabelGroups.__str__
 # * xlsx export workbook without overwriting some sheets (charts)
 
 # ? allow naming "one-shot" groups? e.g:
@@ -208,7 +206,7 @@ Matrix class
 #   compatible and raise an exception if they are not)
 # * test structured arrays
 # * review all method & argument names
-# * implement ValueGroup.__getitem__
+# * implement LabelGroup.__getitem__
 # ? move "utils" to its own project (so that it is not duplicated between
 #   larray and liam2)
 #   OR
@@ -325,15 +323,15 @@ def to_tick(e):
     list|tuple -> 'v1,v2,v3'
     other -> str(v)
     """
-    # the fact that an "aggregated tick" is passed as a ValueGroup or as a
+    # the fact that an "aggregated tick" is passed as a LabelGroup or as a
     # string should be as irrelevant as possible. The thing is that we cannot
     # (currently) use the more elegant to_tick(e.key) that means the
-    # ValueGroup is not available in Axis.__init__ after to_ticks, and we
+    # LabelGroup is not available in Axis.__init__ after to_ticks, and we
     # need it to update the mapping if it was named. Effectively,
     # this creates two entries in the mapping for a single tick. Besides,
-    # I like having the ValueGroup as the tick, as it provides extra info as
+    # I like having the LabelGroup as the tick, as it provides extra info as
     # to where it comes from.
-    if np.isscalar(e) or isinstance(e, ValueGroup):
+    if np.isscalar(e) or isinstance(e, LabelGroup):
         return e
     else:
         return to_string(e)
@@ -357,7 +355,7 @@ def to_ticks(s):
     ['0', '1', '2', '3']
     """
     if isinstance(s, LKey):
-        # a single ValueGroup used for all ticks of an Axis
+        # a single LabelGroup used for all ticks of an Axis
         raise NotImplementedError("not sure what to do with it yet")
     elif isinstance(s, pd.Index):
         return s.values
@@ -460,7 +458,7 @@ def to_keys(value):
 
 
 def union(*args):
-    # TODO: add support for ValueGroup and lists
+    # TODO: add support for LabelGroup and lists
     """
     returns the union of several "value strings" as a list
     """
@@ -525,7 +523,7 @@ class Axis(object):
         else:
             # TODO: move this to to_ticks????
             # we convert to an ndarray to save memory (for scalar ticks, for
-            # ValueGroup ticks, it does not make a difference since a list of VG
+            # LabelGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
             labels = np.asarray(to_ticks(labels))
             length = len(labels)
@@ -546,22 +544,22 @@ class Axis(object):
     def group(self, *args, **kwargs):
         """
         key is label-based (slice and fancy indexing are supported)
-        returns a ValueGroup usable in .sum or .filter
+        returns a LabelGroup usable in .sum or .filter
         """
         name = kwargs.pop('name', None)
         if kwargs:
             raise ValueError("invalid keyword argument(s): %s"
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, ValueGroup):
+        if isinstance(key, LabelGroup):
             # XXX: I am not sure this test even makes sense. eg if we have two
             # axes arr_from and arr_to, we might want to reuse groups
             if key.axis != self.name:
-                raise ValueError("cannot subset an axis with a ValueGroup of "
+                raise ValueError("cannot subset an axis with a LabelGroup of "
                                  "an incompatible axis")
             # FIXME: we should respect the given name (overrides key.name)
             return key
-        return ValueGroup(key, name, self.name)
+        return LabelGroup(key, name, self.name)
 
     def all(self, name=None):
         return self.group(slice(None), name=name if name is not None else "all")
@@ -627,7 +625,7 @@ class Axis(object):
         mapping = self._mapping
 
         # first, try the key as-is, so that we can target elements in aggregated
-        # arrays (those are either strings containing comas or ValueGroups)
+        # arrays (those are either strings containing comas or LabelGroups)
         try:
             return mapping[key]
         # we must catch TypeError because key might not be hashable (eg slice)
@@ -637,7 +635,7 @@ class Axis(object):
         if isinstance(key, PositionalKey):
             return key.key
 
-        if isinstance(key, ValueGroup):
+        if isinstance(key, LabelGroup):
             # at this point we do not care about the axis nor the name
             key = key.key
 
@@ -721,16 +719,16 @@ class Axis(object):
         return Axis(self.name, self.labels)
 
 
-# We need a separate class for ValueGroup and cannot simply create a
+# We need a separate class for LabelGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
-# ticks/labels of the ValueGroup need to correspond to its *Axis*
+# ticks/labels of the LabelGroup need to correspond to its *Axis*
 # indices
 class LKey(object):
     def __init__(self, key, name, axis):
         raise NotImplementedError()
 
 
-class ValueGroup(LKey):
+class LabelGroup(LKey):
     def __init__(self, key, name=None, axis=None):
         """
         key should be either a sequence of labels, a slice with label bounds
@@ -744,7 +742,7 @@ class ValueGroup(LKey):
         self.name = name
 
         # we store the Axis name, instead of the axis object itself so that
-        # ValueGroups are more compatible between themselves.
+        # LabelGroups are more compatible between themselves.
         if isinstance(axis, Axis):
             axis = axis.name
         if axis is not None:
@@ -766,7 +764,7 @@ class ValueGroup(LKey):
 
     def __eq__(self, other):
         # different name or axis compare equal !
-        other_key = other.key if isinstance(other, ValueGroup) else other
+        other_key = other.key if isinstance(other, LabelGroup) else other
         return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
     def __str__(self):
@@ -774,17 +772,17 @@ class ValueGroup(LKey):
 
     def __repr__(self):
         name = ", %r" % self.name if self.name is not None else ''
-        return "ValueGroup(%r%s)" % (self.key, name)
+        return "LabelGroup(%r%s)" % (self.key, name)
 
     def __len__(self):
         return len(self.key)
 
     def __lt__(self, other):
-        other_key = other.key if isinstance(other, ValueGroup) else other
+        other_key = other.key if isinstance(other, LabelGroup) else other
         return self.key.__lt__(other_key)
 
     def __gt__(self, other):
-        other_key = other.key if isinstance(other, ValueGroup) else other
+        other_key = other.key if isinstance(other, LabelGroup) else other
         return self.key.__gt__(other_key)
 
 
@@ -1419,7 +1417,7 @@ class LArray(object):
         elif len(valid_axes) > 1:
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
-        return ValueGroup(axis_key, axis=valid_axes[0])
+        return LabelGroup(axis_key, axis=valid_axes[0])
 
     def translated_key(self, key):
         """Complete and translate key
@@ -1459,10 +1457,10 @@ class LArray(object):
 
             assert all(isinstance(axis_key, LKey) for axis_key in key)
 
-            # handle keys containing ValueGroups (at potentially wrong places)
+            # handle keys containing LabelGroups (at potentially wrong places)
 
-            # XXX: support ValueGroup without axis?
-            # extract axis name from ValueGroup keys
+            # XXX: support LabelGroup without axis?
+            # extract axis name from LabelGroup keys
 
             dupe_axes = list(duplicates(axis_key.axis for axis_key in key))
             if dupe_axes:
@@ -1543,7 +1541,7 @@ class LArray(object):
 
         # TODO: make the combined keys should be objects which display as:
         # (axis1_label, axis2_label, ...) but should also store the axis (names)
-        # Q: Should it be the same object as the NDValueGroup?/NDKey?
+        # Q: Should it be the same object as the NDLabelGroup?/NDKey?
         # A: yes, probably. On the Pandas backend, we could/should have
         #    separate axes. On the numpy backend we cannot.
         if isinstance(key, (LArray, np.ndarray)) and \
@@ -1954,12 +1952,12 @@ class LArray(object):
                 # the aggregate func)
                 if isinstance(group, PositionalKey) and np.isscalar(group.key):
                     group = PositionalKey([group.key], axis=group.axis)
-                elif isinstance(group, ValueGroup):
+                elif isinstance(group, LabelGroup):
                     key = to_key(group.key)
                     if np.isscalar(key):
                         key = [key]
                     # we do not care about the name at this point
-                    group = ValueGroup(key, axis=group.axis)
+                    group = LabelGroup(key, axis=group.axis)
 
                 arr = res.__getitem__({axis.name: group}, collapse_slices=True)
                 if res_data.ndim == 1:
@@ -2008,17 +2006,17 @@ class LArray(object):
         # slightly different results even for commutative operations.
         sorted_kwargs = sorted(kwargs_items)
 
-        # convert kwargs to ValueGroup so that we can only use args afterwards
+        # convert kwargs to LabelGroup so that we can only use args afterwards
         # but still keep the axis information
         def kw_to_vg(axis, key):
             if isinstance(key, str):
                 key = to_keys(key)
             if isinstance(key, tuple):
                 return tuple(kw_to_vg(axis, k) for k in key)
-            if isinstance(key, ValueGroup):
+            if isinstance(key, LabelGroup):
                 return key
             assert isinstance(key, (str, list, slice))
-            return ValueGroup(key, axis=axis)
+            return LabelGroup(key, axis=axis)
 
         def to_vg(key):
             if isinstance(key, str):

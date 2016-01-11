@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from larray import (LArray, Axis, AxisCollection, ValueGroup, union,
+from larray import (LArray, Axis, AxisCollection, LabelGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones,
                     clip, exp, where, x, view, mean, var, std)
 from larray.utils import array_equal, array_nan_equal
@@ -128,13 +128,13 @@ class TestAxis(TestCase):
     def test_group(self):
         age = Axis('age', ':115')
         ages_list = ['1', '5', '9']
-        self.assertEqual(age.group(ages_list), ValueGroup(ages_list, axis=age))
-        self.assertEqual(age.group(ages_list), ValueGroup(ages_list))
-        self.assertEqual(age.group('1,5,9'), ValueGroup(ages_list))
-        self.assertEqual(age.group('1', '5', '9'), ValueGroup(ages_list))
+        self.assertEqual(age.group(ages_list), LabelGroup(ages_list, axis=age))
+        self.assertEqual(age.group(ages_list), LabelGroup(ages_list))
+        self.assertEqual(age.group('1,5,9'), LabelGroup(ages_list))
+        self.assertEqual(age.group('1', '5', '9'), LabelGroup(ages_list))
 
         # with a slice string
-        self.assertEqual(age.group('10:20'), ValueGroup(slice('10', '20')))
+        self.assertEqual(age.group('10:20'), LabelGroup(slice('10', '20')))
 
         # with name
         group = age.group(srange(10, 20), name='teens')
@@ -186,9 +186,9 @@ class TestAxis(TestCase):
         age2ter = age.group(['2'])
         age2qua = '2,'
 
-        age20 = ValueGroup('20')
-        age20bis = ValueGroup('20,')
-        age20ter = ValueGroup(['20'])
+        age20 = LabelGroup('20')
+        age20bis = LabelGroup('20,')
+        age20ter = LabelGroup(['20'])
         age20qua = '20,'
 
         #TODO: move assert to another test
@@ -274,16 +274,16 @@ class TestValueGroup(TestCase):
         self.age = Axis('age', ':115')
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
 
-        self.slice_full = ValueGroup('1:5', "full", self.age)
-        self.slice_named = ValueGroup('1:5', "named")
-        self.slice_both = ValueGroup('1:5')
-        self.slice_start = ValueGroup('1:')
-        self.slice_stop = ValueGroup(':5')
-        self.slice_none = ValueGroup(':')
+        self.slice_full = LabelGroup('1:5', "full", self.age)
+        self.slice_named = LabelGroup('1:5', "named")
+        self.slice_both = LabelGroup('1:5')
+        self.slice_start = LabelGroup('1:')
+        self.slice_stop = LabelGroup(':5')
+        self.slice_none = LabelGroup(':')
 
-        self.single_value = ValueGroup('P03')
-        self.list = ValueGroup('P01,P03,P07')
-        self.list_named = ValueGroup('P01,P03,P07', "P137")
+        self.single_value = LabelGroup('P03')
+        self.list = LabelGroup('P01,P03,P07')
+        self.list_named = LabelGroup('P01,P03,P07', "P137")
 
     def test_init(self):
         self.assertEqual(self.slice_full.name, "full")
@@ -302,11 +302,11 @@ class TestValueGroup(TestCase):
     def test_eq(self):
         self.assertEqual(self.slice_both, self.slice_full)
         self.assertEqual(self.slice_both, self.slice_named)
-        self.assertEqual(self.slice_both, ValueGroup(slice('1', '5')))
-        self.assertEqual(self.slice_start, ValueGroup(slice('1', None)))
-        self.assertEqual(self.slice_stop, ValueGroup(slice('5')))
-        self.assertEqual(self.slice_none, ValueGroup(slice(None)))
-        self.assertEqual(self.list, ValueGroup(['P01', 'P03', 'P07']))
+        self.assertEqual(self.slice_both, LabelGroup(slice('1', '5')))
+        self.assertEqual(self.slice_start, LabelGroup(slice('1', None)))
+        self.assertEqual(self.slice_stop, LabelGroup(slice('5')))
+        self.assertEqual(self.slice_none, LabelGroup(slice(None)))
+        self.assertEqual(self.list, LabelGroup(['P01', 'P03', 'P07']))
         # test with raw objects
         self.assertEqual(self.slice_both, '1:5')
         self.assertEqual(self.slice_start, '1:')
@@ -325,7 +325,7 @@ class TestValueGroup(TestCase):
         d = {self.slice_both: 1,
              self.single_value: 2,
              self.list_named: 3}
-        # target a ValueGroup with an equivalent ValueGroup
+        # target a LabelGroup with an equivalent LabelGroup
         self.assertEqual(d.get(self.slice_both), 1)
         self.assertEqual(d.get(self.single_value), 2)
         self.assertEqual(d.get(self.list), 3)
@@ -336,7 +336,7 @@ class TestValueGroup(TestCase):
         # yes, probably
         # self.assertEqual(d.get("P137"), 3)
 
-        # target a ValueGroup with an equivalent key
+        # target a LabelGroup with an equivalent key
         self.assertEqual(d.get('1:5'), 1)
         self.assertEqual(d.get('P03'), 2)
         self.assertEqual(d.get('P01,P03,P07'), 3)
@@ -348,15 +348,15 @@ class TestValueGroup(TestCase):
         # self.assertEqual(d.get(' P01 , P03 , P07 '), 3)
         # self.assertEqual(d.get(('P01', 'P03', 'P07')), 3)
 
-        # target a simple key with an equivalent ValueGroup
+        # target a simple key with an equivalent LabelGroup
         d = {'1:5': 1,
              'P03': 2,
              'P01,P03,P07': 3}
         self.assertEqual(d.get(self.slice_both), 1)
         self.assertEqual(d.get(self.single_value), 2)
         self.assertEqual(d.get(self.list), 3)
-        self.assertEqual(d.get(ValueGroup(' P01 , P03 , P07 ')), 3)
-        self.assertEqual(d.get(ValueGroup(('P01', 'P03', 'P07'))), 3)
+        self.assertEqual(d.get(LabelGroup(' P01 , P03 , P07 ')), 3)
+        self.assertEqual(d.get(LabelGroup(('P01', 'P03', 'P07'))), 3)
 
     def test_str(self):
         self.assertEqual(str(self.slice_full), 'full')
@@ -370,10 +370,10 @@ class TestValueGroup(TestCase):
 
     def test_repr(self):
         #FIXME: add axis
-        self.assertEqual(repr(self.slice_full), "ValueGroup('1:5', 'full')")
-        self.assertEqual(repr(self.slice_named), "ValueGroup('1:5', 'named')")
-        self.assertEqual(repr(self.slice_both), "ValueGroup('1:5')")
-        self.assertEqual(repr(self.list), "ValueGroup('P01,P03,P07')")
+        self.assertEqual(repr(self.slice_full), "LabelGroup('1:5', 'full')")
+        self.assertEqual(repr(self.slice_named), "LabelGroup('1:5', 'named')")
+        self.assertEqual(repr(self.slice_both), "LabelGroup('1:5')")
+        self.assertEqual(repr(self.list), "LabelGroup('P01,P03,P07')")
 
 
 class TestAxisCollection(TestCase):
@@ -668,20 +668,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age159 = age['1,5,9']
         lipro159 = lipro['P01,P05,P09']
 
-        # ValueGroup at "correct" place
+        # LabelGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
         self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
-        # ValueGroup at "incorrect" place
+        # LabelGroup at "incorrect" place
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
-        # multiple ValueGroup key (in "incorrect" order)
+        # multiple LabelGroup key (in "incorrect" order)
         self._assert_equal_raw(la[lipro159, age159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/positional key
+        # mixed LabelGroup/positional key
         self._assert_equal_raw(la['1,5,9', lipro159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
@@ -705,20 +705,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age159 = x.age['1,5,9']
         lipro159 = x.lipro['P01,P05,P09']
 
-        # ValueGroup at "correct" place
+        # LabelGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
         self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
-        # ValueGroup at "incorrect" place
+        # LabelGroup at "incorrect" place
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
-        # multiple ValueGroup key (in "incorrect" order)
+        # multiple LabelGroup key (in "incorrect" order)
         self._assert_equal_raw(la[lipro159, age159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/positional key
+        # mixed LabelGroup/positional key
         self._assert_equal_raw(la['1,5,9', lipro159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
@@ -755,7 +755,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la['P01,P05,P09', '1,5,9'],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/key
+        # mixed LabelGroup/key
         self._assert_equal_raw(la[lipro['P01,P05,P09'], '1,5,9'],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
@@ -781,20 +781,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age159 = age.i[1, 5, 9]
         lipro159 = lipro.i[0, 4, 8]
 
-        # ValueGroup at "correct" place
+        # LabelGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
         self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
-        # ValueGroup at "incorrect" place
+        # LabelGroup at "incorrect" place
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
-        # multiple ValueGroup key (in "incorrect" order)
+        # multiple LabelGroup key (in "incorrect" order)
         self._assert_equal_raw(la[lipro159, age159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/positional key
+        # mixed LabelGroup/positional key
         self._assert_equal_raw(la['1,5,9', lipro159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
@@ -818,20 +818,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age159 = x.age.i[1, 5, 9]
         lipro159 = x.lipro.i[0, 4, 8]
 
-        # ValueGroup at "correct" place
+        # LabelGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
         self.assertEqual(subset.axes[0], Axis('age', ['1', '5', '9']))
         self._assert_equal_raw(subset, raw[[1, 5, 9]])
 
-        # ValueGroup at "incorrect" place
+        # LabelGroup at "incorrect" place
         self._assert_equal_raw(la[lipro159], raw[..., [0, 4, 8]])
 
-        # multiple ValueGroup key (in "incorrect" order)
+        # multiple LabelGroup key (in "incorrect" order)
         self._assert_equal_raw(la[lipro159, age159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
-        # mixed ValueGroup/positional key
+        # mixed LabelGroup/positional key
         self._assert_equal_raw(la['1,5,9', lipro159],
                                raw[[1, 5, 9]][..., [0, 4, 8]])
 
@@ -892,7 +892,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         """
         age, geo, sex, lipro = self.larray.axes
 
-        # 1) using a ValueGroup key
+        # 1) using a LabelGroup key
         ages1_5_9 = age['1,5,9']
 
         # a) value has exactly the same shape as the target slice
@@ -1028,7 +1028,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
 
-        # 1) using a ValueGroup key
+        # 1) using a LabelGroup key
         ages1_5_9 = age.group('1,5,9')
 
         # a) value has exactly the same shape as the target slice
@@ -1080,7 +1080,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         ages1_5_9 = age.group('1,5,9')
         ages11 = age.group('11')
 
-        # with ValueGroup
+        # with LabelGroup
         self.assertEqual(la.filter(age=ages1_5_9).shape, (3, 44, 2, 15))
 
         #FIXME: this should raise a comprehensible error!
@@ -1448,7 +1448,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # one more level...
         self.assertEqual(reg[vla]['P03'], 389049848.0)
 
-        # using an anonymous ValueGroup
+        # using an anonymous LabelGroup
         vla = self.geo.group(self.vla_str)
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
@@ -1457,7 +1457,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(reg[vla, slice(None)].shape, (15,))
         self.assertEqual(reg[vla, :].shape, (15,))
 
-        # using a named ValueGroup
+        # using a named LabelGroup
         vla = self.geo.group(self.vla_str, name='Vlaanderen')
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
@@ -1485,7 +1485,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # one more level...
         self.assertEqual(reg[vla]['P03'], 389049848.0)
 
-        # using an anonymous ValueGroup
+        # using an anonymous LabelGroup
         vla = self.geo.group(self.vla_str)
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
@@ -1494,7 +1494,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(reg[vla, slice(None)].shape, (15,))
         self.assertEqual(reg[vla, :].shape, (15,))
 
-        # using a named ValueGroup
+        # using a named LabelGroup
         vla = self.geo.group(self.vla_str, name='Vlaanderen')
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
@@ -1514,10 +1514,10 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # using a string
         vla = self.vla_str
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
-        # using an anonymous ValueGroup
+        # using an anonymous LabelGroup
         vla = self.geo.group(self.vla_str)
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
-        # using a named ValueGroup
+        # using a named LabelGroup
         vla = self.geo.group(self.vla_str, name='Vlaanderen')
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
 
