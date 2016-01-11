@@ -11,8 +11,8 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'ndrange',
-    'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var',
-    'std',
+    'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
+    'ptp', 'var', 'std',
     '__version__'
 ]
 
@@ -1134,6 +1134,72 @@ class AxisCollection(object):
     @property
     def shape(self):
         return tuple(len(axis) for axis in self._list)
+
+
+def all(values, axis=None):
+    """Test whether all array elements along given axes evaluate to True.
+
+    Parameters
+    ----------
+    axis : None, int, str or Axis, tuple of int, str or Axis, optional
+        axes over which to aggregate. Defaults to None (all axes).
+
+    Returns
+    -------
+    LArray or scalar
+
+    Example
+    -------
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> b = ndrange([xnat, xsex]) >= 1
+    >>> b
+    nat\\sex |     H |    F
+         BE | False | True
+         FO |  True | True
+    >>> b.all()
+    False
+    >>> b.all(xnat)
+    sex |     H |    F
+        | False | True
+    """
+    if isinstance(values, LArray):
+        return values.all(axis)
+    else:
+        return builtins.all(values)
+
+
+def any(values, axis=None):
+    """Test whether any array elements along given axes evaluate to True.
+
+    Parameters
+    ----------
+    axis : int, str or Axis, tuple of int, str or Axis, optional
+        axes over which to aggregate. Defaults to None (all axes).
+
+    Returns
+    -------
+    LArray or scalar
+
+    Example
+    -------
+    >>> xnat = Axis('nat', ['BE', 'FO'])
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> b = ndrange([xnat, xsex]) >= 3
+    >>> b
+    nat\\sex |     H |     F
+         BE | False | False
+         FO | False |  True
+    >>> b.any()
+    True
+    >>> b.any(xnat)
+    sex |     H |    F
+        | False | True
+    """
+    if isinstance(values, LArray):
+        return values.any(axis)
+    else:
+        return builtins.any(values)
 
 
 # commutative modulo float precision errors
