@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 
-__version__ = "0.5"
+__version__ = "0.6"
 
 __all__ = [
     'LArray', 'Axis', 'AxisCollection', 'LabelGroup',
