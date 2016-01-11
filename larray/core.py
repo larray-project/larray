@@ -1,7 +1,6 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
-
 __version__ = "0.6"
 
 __all__ = [
@@ -49,15 +48,6 @@ Matrix class
 #   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
 #                        <=> (lipro['P01,P02'], lipro['P05'])
 
-# ? age, geo, sex, lipro = la.axes_names
-#   => user only use axes strings and this allows them to not have to bother
-#      about incompatible axes
-#   => sadly, this prevents slicing axes (time[-10:])
-#   => maybe la.axes should return another class (say GenericAxis) which only
-#      contain a name, and can be "indexed"/sliced. No check that the key is
-#      actually valid would be done until the valueGroup is actually used on
-#      a specific LArray
-
 # discuss VG with Geert:
 # I do not "expand" key (eg :) upon group creation for perf reason
 # VG[:] is much faster than [A01,A02,...,A99]
@@ -66,7 +56,9 @@ Matrix class
 # arrays
 
 # ? keepdims=True instead of/in addition to group tuples
+
 # ? implement newaxis
+
 # * int labels vs indice-based indexing
 #   one way to disambiguate is to use marker objects:
 #   time[start + 5:]
@@ -86,106 +78,26 @@ Matrix class
     # la.append(time=la.avg(time[-10:]))
     # la.append(time=la.avg(time='-10:'))
 
-# * drop last year
-#   la = la[time[:-1]] # <- implement this !
-
 # * split unit tests
-
-# * easily add sum column for a dimension
-#   - in all cases, we will need to define a new Axis object
-#   - in the examples below, we suppose a.label is 'income'
-#   - best candidates (IMO)
-#       - a.append(a.sum(age), age, 'total')
-#         * label can be optional (it could be set to either None or an
-#           autoincrementing int/label) not all operations need a label anyway
-#         * even axis can be optional in some (the usual) case: if value is
-# only missing one dimension compared to a and the other dimensions are
-# compatibles, we could assume it is the missing dimension. This would make
-# this possible: a.append(a.sum(age)). This is DRY but possibly too magical
-# and diverges from numpy where no axis => flattened result
-#         it is probably better to have an alias: with_total/append_total
-# which does it.
-#       - a.append_total(axis, func=np.sum, label=None) # label = func.__name__?
-#       - a.append_total(axis, func=np.mean, label=None)
-#       - a.extend(values, axis)
-#       - a.append(age, 'total', a.sum(age))
-#       - a.append(age=a.sum(age))   # label is "income.sum(age)"
-#                                    # ideally, it should be just "sum(age)"
-#                                    # (the label on the array stays "income"
-#                                    # after all, so it is redundant to add
-#                                    # it here) but that is probably harder
-#                                    # to get because a.sum(age).label should
-#                                    # really be "income.sum(age)", it is just
-#                                    # the label/tick on the new Axis that
-#                                    # should not contain "income".
-#       - a.append(age=a.sum(age).label('total'))  # label is "total"
-#       - a.append(a.sum(age), axis=age)
-#       - a.append_total(age)     # default aggregate is sum
-#                                 # default label is "total"
-#       - a.append_total(age=avg) # default aggregate is sum,
-#       - a.append_total(age, sum) # default aggregate is sum,
-#       - a.append_total(age, sex=avg) # default aggregate is sum,
-
-# other candidates
-#   - a.with_total(age=np.sum)
-#   - a.with_total(age=np.sum,np.avg) # potentially several totals
-#   - a.append(age=a.sum(age))
-#   - a.append(age='sum')
-#   - a.append(age=sum)
-
-#   - a.append(total=a.sum(age), axis=age) # total = the name of the new label
-#   - a.append(age='total=sum') # total = the name of the new label
-
-#   - the following should work already (modulo the axis name -> axis num)
-#   - all_ages = a.sum(age=(':',))
-#   - np.concatenate((a, all_ages), axis=age)
-
-#   - np.append(a, a.sum(age), axis=age)
-#   - a.append(a.sum(age), axis=age)
-
-# * check axes on arithmetics
 
 # * but special case for length 1 (to be able to do: "H + F" or "vla / belgium")
 
-# * reindex a dataset (ie make it conform to the index of another dataset)
-#   so that you can do operations involving both (add, divide, ...)
+# * reindex array (ie make it conform to another index, eg of another
+#   array). This can be used both for doing operations (add, divide, ...)
+#   involving arrays with incompatible axes and to (manually) reorder one axis
+#   labels
 
-# * reorder an axis labels
 # * test to_csv: does it consume too much mem?
 #   ---> test pandas (one dimension horizontally)
+
 # * add labels in LabelGroups.__str__
+
 # * xlsx export workbook without overwriting some sheets (charts)
 
 # ? allow naming "one-shot" groups? e.g:
 #   regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
 
-# * review __getitem__ vs labels
-#   o integer key on a non-integer label dimension is non-ambiguous:
-#     => treat them like indices
-#   o int key on in int label dimension is ambiguous:
-#     => treat them like indices
-#     OR
-#     => treat them like values to lookup (len(key) has not relation with
-#        len(dim) BUT if key is a tuple (nd-key), we have
-#        len(dim0) == dim(dimX)
-#   o bool key on a non-bool dimension is non-ambiguous:
-#     - treat them as a filter (len(key) must be == len(dim))
-#   o bool key on a bool dimension is ambiguous:
-#     - treat them as a filter (len(key) must be == len(dim) == 2)
-#       eg [False, True], [True, False], [True, True], [False, False]
-#       >>> I think this usage is unlikely to be used by users directly but...
-#     - treat them like a subset of values to include in the cartesian product
-#       eg, supposing we have a array of shape (bool[2], int[110], bool[2])
-#       the key ([False], [1, 5, 9], [False, True]) would return an array
-#       of shape [1, 3, 2]
-#     OR
-#     - treat them like values to lookup (len(key) has not relation with
-#       len(dim) BUT if key is a tuple (nd-key), we have len(dim0) == dim(dimX)
-# * evaluate the impact of label-only __getitem__: numpy/matplotlib/...
-#   functions probably rely on __getitem__ with indices
-
 # * docstring for all methods
-# * choose between subset and group. Having both is just confusing, I think.
 
 # * IO functions: csv/hdf/excel?/...?
 #   >> needs discussion of the formats (users involved in the discussion?)
@@ -202,8 +114,7 @@ Matrix class
 # * re-implement row_totals/col_totals? or what do we do with them?
 # * all the other TODO/XXX in the code
 # * time specific API so that we know if we go for a subclass or not
-# * data alignment in arithmetic methods (or at least check that axes are
-#   compatible and raise an exception if they are not)
+# * data alignment in arithmetic methods
 # * test structured arrays
 # * review all method & argument names
 # * implement LabelGroup.__getitem__
