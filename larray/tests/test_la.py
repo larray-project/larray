@@ -33,7 +33,8 @@ def abspath(relpath):
 def assert_equal_factory(test_func, check_shape=True, check_axes=True):
     def assert_equal(a, b):
         if isinstance(a, LArray) and isinstance(b, LArray) and a.axes != b.axes:
-            raise AssertionError("axes differ: %s != %s" % (a.axes, b.axes))
+            raise AssertionError("axes differ:\n%s\n\nvs\n\n%s"
+                                 % (a.axes.info, b.axes.info))
         if not isinstance(a, (np.ndarray, LArray)):
             a = np.asarray(a)
         if not isinstance(b, (np.ndarray, LArray)):
