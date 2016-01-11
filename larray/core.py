@@ -2131,6 +2131,212 @@ class LArray(object):
             res = res.extend(axis, value)
         return res
 
+    # TODO: make sure we can do
+    # arr[x.sex.i[arr.posargmin(x.sex)]]
+    # and
+    # arr[arr.argmin(x.sex)]
+    # should both be equal to arr.min(x.sex)
+    def argmin(self, axis):
+        """
+        Return labels of the minimum values along the given axis of `a`.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to work.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.argmin(x.sex)
+        nat | BE | FR | IT
+            |  H |  F |  H
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        data = axis.labels[self.data.argmin(axis_idx)]
+        return LArray(data, self.axes.without(axis))
+
+    def posargmin(self, axis):
+        """
+        Return indices of the minimum values along the given axis of `a`.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to work.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.posargmin(x.sex)
+        nat | BE | FR | IT
+            |  0 |  1 |  0
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        return LArray(self.data.argmin(axis_idx), self.axes.without(axis))
+
+    def argmax(self, axis):
+        """
+        Return labels of the maximum values along the given axis of `a`.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to work.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.argmax(x.sex)
+        nat | BE | FR | IT
+            |  F |  H |  F
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        data = axis.labels[self.data.argmax(axis_idx)]
+        return LArray(data, self.axes.without(axis))
+
+    def posargmax(self, axis):
+        """
+        Return indices of the maximum values along the given axis of `a`.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to work.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.posargmax(x.sex)
+        nat | BE | FR | IT
+            |  1 |  0 |  1
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        return LArray(self.data.argmax(axis_idx), self.axes.without(axis))
+
+    def argsort(self, axis, kind='quicksort'):
+        """
+        Returns the labels that would sort this array.
+
+        Perform an indirect sort along the given axis using the algorithm
+        specified by the `kind` keyword. It returns an array of labels of the
+        same shape as `a` that index data along the given axis in sorted order.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to sort.
+        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+            Sorting algorithm. Defaults to 'quicksort'.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.argsort(x.sex)
+        nat\\sex | 0 | 1
+             BE | H | F
+             FR | F | H
+             IT | H | F
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        data = axis.labels[self.data.argsort(axis_idx, kind=kind)]
+        new_axis = Axis(axis.name, np.arange(len(axis)))
+        return LArray(data, self.axes.replace(axis, new_axis))
+
+    def posargsort(self, axis, kind='quicksort'):
+        """
+        Returns the indices that would sort this array.
+
+        Perform an indirect sort along the given axis using the algorithm
+        specified by the `kind` keyword. It returns an array of indices
+        with the same axes as `a` that index data along the given axis in
+        sorted order.
+
+        Parameters
+        ----------
+        axis : int or str or Axis
+            Axis along which to sort.
+        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+            Sorting algorithm. Defaults to 'quicksort'.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> arr
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 3 | 2
+             IT | 2 | 5
+        >>> arr.posargsort(x.sex)
+        nat\\sex | H | F
+             BE | 0 | 1
+             FR | 1 | 0
+             IT | 0 | 1
+        """
+        axis, axis_idx = self.axes[axis], self.axes.index(axis)
+        return LArray(self.data.argsort(axis_idx), self.axes)
+
     def copy(self):
         return LArray(self.data.copy(), axes=self.axes[:])
 
