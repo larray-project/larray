@@ -23,7 +23,7 @@ def abspath(relpath):
     """
     return os.path.join(TESTDATADIR, relpath)
 
-#XXX: maybe we should force value groups to use tuple and families (group of
+# XXX: maybe we should force value groups to use tuple and families (group of
 # groups to use lists, or vice versa, so that we know which is which)
 # or use a class, just for that?
 # group(a, b, c)
@@ -75,7 +75,7 @@ class TestValueStrings(TestCase):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
 
     def test_range(self):
-        #XXX: we might want to return real int instead, because if we ever
+        # XXX: we might want to return real int instead, because if we ever
         # want to have more complex queries, such as:
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
@@ -97,11 +97,11 @@ class TestKeyStrings(TestCase):
         self.assertEqual(to_key('H'), 'H')
 
     def test_slice_strings(self):
-        #XXX: we might want to return real int instead, because if we ever
+        # XXX: we might want to return real int instead, because if we ever
         # want to have more complex queries, such as:
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
-        #XXX: these two examples return different things, do we want that?
+        # XXX: these two examples return different things, do we want that?
         self.assertEqual(to_key('0:115'), slice('0', '115'))
         self.assertEqual(to_key(':115'), slice('115'))
         self.assertEqual(to_key('10:'), slice('10', None))
@@ -165,7 +165,7 @@ class TestAxis(TestCase):
         self.assertEqual(group.name, 'teens')
         self.assertEqual(group.axis, 'age')
 
-        #TODO: support more stuff in string groups
+        # TODO: support more stuff in string groups
         # arr3x = geo.group('A3*') # * match one or more chars
         # arr3x = geo.group('A3?') # ? matches one char (equivalent in this case)
         # arr3x = geo.seq('A31', 'A38') # not equivalent to geo['A31:A38'] !
@@ -214,7 +214,7 @@ class TestAxis(TestCase):
         age20ter = LabelGroup(['20'])
         age20qua = '20,'
 
-        #TODO: move assert to another test
+        # TODO: move assert to another test
         self.assertEqual(age2bis, age2ter)
 
         age247 = age.group('2,4,7')
@@ -392,7 +392,7 @@ class TestValueGroup(TestCase):
         self.assertEqual(str(self.list), 'P01,P03,P07')
 
     def test_repr(self):
-        #FIXME: add axis
+        # FIXME: add axis
         self.assertEqual(repr(self.slice_full), "LabelGroup('1:5', 'full')")
         self.assertEqual(repr(self.slice_named), "LabelGroup('1:5', 'named')")
         self.assertEqual(repr(self.slice_both), "LabelGroup('1:5')")
@@ -473,7 +473,7 @@ class TestAxisCollection(TestCase):
         self.assertEqual(len(newcol), 3)
         self.assertEqual(newcol.names, ['lipro', 'sex', 'age'])
 
-    #TODO: add contains_test (using both axis name and axis objects)
+    # TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection
         self.assertEqual(col.get('lipro'), self.lipro)
@@ -524,7 +524,7 @@ class TestAxisCollection(TestCase):
         self.assertEqual(new, [lipro, sex, age, geo])
 
         # c) with incompatible dupe
-        #XXX: the "new" age axis is ignored. We might want to ignore it if it
+        # XXX: the "new" age axis is ignored. We might want to ignore it if it
         #  is the same but raise an exception if it is different
         # new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
         self.assertRaises(ValueError, col.__add__,
@@ -1107,7 +1107,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # with LabelGroup
         self.assertEqual(la.filter(age=ages1_5_9).shape, (3, 44, 2, 15))
 
-        #FIXME: this should raise a comprehensible error!
+        # FIXME: this should raise a comprehensible error!
         # self.assertEqual(la.filter(age=[ages1_5_9]).shape, (3, 44, 2, 15))
 
         # VG with 1 value => collapse
@@ -1120,7 +1120,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.filter(age=age.group('11,')).shape, (1, 44, 2, 15))
 
         # VG with 1 value
-        #XXX: this does not work. Do we want to make this work?
+        # XXX: this does not work. Do we want to make this work?
         # filtered = la.filter(age=(ages11,))
         # self.assertEqual(filtered.shape, (1, 44, 2, 15))
 
@@ -1147,11 +1147,11 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.filter(sex='H,').shape, (116, 44, 1, 15))
 
         # with duplicate keys
-        #XXX: do we want to support this? I don't see any value in that but
+        # XXX: do we want to support this? I don't see any value in that but
         # I might be short-sighted.
         # filtered = la.filter(lipro='P01,P02,P01')
 
-        #XXX: we could abuse python to allow naming groups via Axis.__getitem__
+        # XXX: we could abuse python to allow naming groups via Axis.__getitem__
         # (but I doubt it is a good idea).
         # child = age[':17', 'child']
 
@@ -1565,9 +1565,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(byage.filter(age=child).shape, (44, 2, 15))
         self.assertEqual(byage.filter(age=':17').shape, (44, 2, 15))
 
-        #TODO: make this work
+        # TODO: make this work
         # self.assertEqual(byage.filter(age=slice('17')).shape, (44, 2, 15))
-        #TODO: make it work for integer indices
+        # TODO: make it work for integer indices
         # self.assertEqual(byage.filter(age=slice(18)).shape, (44, 2, 15))
 
     # def test_sum_groups_vg_args(self):
@@ -1659,7 +1659,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(small.sum(lipro=lipro2.group('P01,P03')).shape, (2,))
 
         # use group from another *incompatible* axis
-        #XXX: I am not sure anymore we should be so precise
+        # XXX: I am not sure anymore we should be so precise
         # lipro3 = Axis('lipro', 'P01,P03,P05')
         # self.assertRaises(ValueError, small.sum, lipro=lipro3.group('P01,P03'))
 
@@ -1864,7 +1864,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         la = self.small
         sex, lipro = la.axes
 
-        #TODO: check how awful the syntax is with an axis that is not last
+        # TODO: check how awful the syntax is with an axis that is not last
         # or first
         l2 = LArray(la[:, :'P14'], axes=[sex, Axis('lipro', lipro.labels[1:])])
         l2 = LArray(la[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])

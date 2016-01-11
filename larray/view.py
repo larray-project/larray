@@ -620,7 +620,7 @@ class ArrayDelegate(QItemDelegate):
         editor.setText(text)
 
 
-#TODO: Implement "Paste" (from clipboard) feature
+# TODO: Implement "Paste" (from clipboard) feature
 class ArrayView(QTableView):
     """Array view class"""
     def __init__(self, parent, model, dtype, shape):
@@ -1167,14 +1167,14 @@ class ArrayEditor(QDialog):
                 cur_filter[axis.name] = axis.labels[indices]
         filtered = self.la_data[cur_filter]
         if np.isscalar(filtered):
-            #TODO: make it readonly
+            # TODO: make it readonly
             data, xlabels, ylabels = np.array([[filtered]]), None, None
         else:
             data, xlabels, ylabels = self.larray_to_array_and_labels(filtered)
 
         self.data = data
-        #FIXME: we should get model.changes and convert them to "global changes"
-        # (because set_data reset the changes dict)
+        # FIXME: we should get model.changes and convert them to
+        #        "global changes" (because set_data reset the changes dict)
         self.arraywidget.model.set_data(data, xlabels, ylabels)
 
     @Slot()
