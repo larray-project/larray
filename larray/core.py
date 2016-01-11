@@ -819,6 +819,8 @@ class AxisCollection(object):
         """
         if axes is None:
             axes = []
+        if isinstance(axes, int):
+            axes = [axes]
         axes = [Axis(None, range(axis)) if isinstance(axis, int) else axis
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
@@ -3624,6 +3626,13 @@ def ndrange(axes):
     nat\\sex | H | F
          BE | 0 | 1
          FO | 2 | 3
+    >>> ndrange([2, 3])
+    -\\- | 0 | 1 | 2
+      0 | 0 | 1 | 2
+      1 | 3 | 4 | 5
+    >>> ndrange(3)
+    - | 0 | 1 | 2
+      | 0 | 1 | 2
 
     potential alternate syntaxes:
     ndrange((2, 3), names=('a', 'b'))
