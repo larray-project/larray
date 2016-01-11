@@ -629,7 +629,8 @@ class Axis(object):
         try:
             return mapping[key]
         # we must catch TypeError because key might not be hashable (eg slice)
-        except (KeyError, TypeError):
+        # IndexError is for when mapping is an ndarray
+        except (KeyError, TypeError, IndexError):
             pass
 
         if isinstance(key, PositionalKey):
