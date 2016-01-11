@@ -121,6 +121,7 @@ class TestAxis(TestCase):
     def test_ne(self):
         self.assertFalse(Axis('sex', 'H,F') != Axis('sex', 'H,F'))
         self.assertFalse(Axis('sex', 'H,F') != Axis('sex', ['H', 'F']))
+        self.assertTrue(Axis('sex', 'H,F') != Axis('sex', 'F,H'))
         self.assertTrue(Axis('sex', 'M,F') != Axis('sex', 'H,F'))
         self.assertTrue(Axis('sex1', 'H,F') != Axis('sex2', 'H,F'))
         self.assertTrue(Axis('sex1', 'M,F') != Axis('sex2', 'H,F'))
