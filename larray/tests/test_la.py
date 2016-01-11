@@ -1872,7 +1872,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # We can also modify the axis in-place (dangerous!)
         # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
         l2 = la[:, 'P02':]
-        #FIXME: the mapping is not updated when .labels change
         l2.axes.lipro.labels = lipro.labels[1:]
 
     def test_extend(self):
