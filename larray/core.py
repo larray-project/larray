@@ -1010,6 +1010,7 @@ class AxisCollection(object):
         returns the index of axis.
 
         axis can be a name or an Axis object (or an index)
+        if the Axis object itself exists in the list, index() will return it
         if the Axis object is from another LArray, index() will return the
         index of the local axis with the same name, whether it is compatible
         (has the same ticks) or not.
