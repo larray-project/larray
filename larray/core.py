@@ -904,6 +904,10 @@ class AxisCollection(object):
             other = list(other)
         return self._list == other
 
+    # for python2, we need to define it explicitly
+    def __ne__(self, other):
+        return not self == other
+
     def __contains__(self, key):
         if isinstance(key, Axis):
             if key.name is None:
