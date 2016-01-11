@@ -174,12 +174,8 @@ def rproduct(*i):
 
 
 def array_nan_equal(a, b):
-    # np.array_equal is not implemented on strings in numpy < 1.9
     if np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype, np.str):
-        try:
-            return (a == b).all()
-        except ValueError:
-            return False
+        return np.array_equal(a, b)
     else:
         return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
 
