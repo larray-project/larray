@@ -1535,6 +1535,20 @@ class LArray(object):
         Returns a full N dimensional positional key
         """
 
+        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+            return key.nonzero()
+        if isinstance(key, LArray) and np.issubdtype(key.dtype, bool):
+            # if only the axes order is wrong, transpose
+            if key.size == self.size and key.shape != self.shape:
+                return np.asarray(key.transpose(self.axes)).nonzero()
+            # otherwise we need to transform the key to integer
+            elif key.size != self.size:
+                map_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
+                return tuple(map_key[name] if name in map_key else slice(None)
+                             for name in self.axes.names)
+            else:
+                return np.asarray(key).nonzero()
+
         # convert scalar keys to 1D keys
         if not isinstance(key, (tuple, dict)):
             key = (key,)
@@ -1640,6 +1654,7 @@ class LArray(object):
 
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)
+        translated_key = self.translated_key(key)
 
         # TODO: make the combined keys should be objects which display as:
         # (axis1_label, axis2_label, ...) but should also store the axis (names)
@@ -1648,45 +1663,9 @@ class LArray(object):
         #    separate axes. On the numpy backend we cannot.
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, bool):
-            if isinstance(key, LArray):
-                # if only the axes order is wrong, transpose
-                if key.size == self.size and key.shape != self.shape:
-                    key = np.asarray(key.transpose(self.axes)).nonzero()
-                # otherwise we need to transform the key to integer
-                elif key.size != self.size:
-                    dict_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
-                    key = tuple(dict_key[name] if name in dict_key else slice(None)
-                                for name in self.axes.names)
-                else:
-                    key = np.asarray(key).nonzero()
-            else:
-                key = key.nonzero()
+            return LArray(data[translated_key],
+                          self._bool_key_new_axes(translated_key))
 
-            combined_axes = [axis for axis_key, axis in zip(key, self.axes)
-                             if not isnoneslice(axis_key)]
-            other_axes = [axis for axis_key, axis in zip(key, self.axes)
-                          if isnoneslice(axis_key)]
-            axes_labels = [axis.labels[axis_key]
-                           for axis_key, axis in zip(key, self.axes)
-                           if not isnoneslice(axis_key)]
-            if len(combined_axes) == 1:
-                combined_labels = axes_labels[0]
-            else:
-                combined_labels = list(zip(*axes_labels))
-            axes_indices = [self.axes.index(axis) for axis in combined_axes]
-            diff = np.diff(axes_indices)
-            if np.any(diff > 1):
-                # combined axes in front
-                combined_axis_pos = 0
-            else:
-                combined_axis_pos = axes_indices[0]
-            combined_name = ','.join(axis.name for axis in combined_axes)
-            combined_axis = Axis(combined_name, combined_labels)
-            new_axes = other_axes
-            new_axes.insert(combined_axis_pos, combined_axis)
-            return LArray(data[key], new_axes)
-
-        translated_key = self.translated_key(key)
         if any(isinstance(axis_key, LArray) for axis_key in translated_key):
             k2 = [k.data if isinstance(k, LArray) else k
                   for k in translated_key]
@@ -1724,15 +1703,16 @@ class LArray(object):
 
     def __setitem__(self, key, value, collapse_slices=True):
         data = np.asarray(self)
-
-        if (isinstance(key, (np.ndarray, LArray)) and
-                np.issubdtype(key.dtype, bool)):
-            if isinstance(key, LArray):
-                key = key.broadcast_with(self.axes)
-            data[np.asarray(key)] = value
-            return
-
         translated_key = self.translated_key(key)
+
+        if isinstance(key, (LArray, np.ndarray)) and \
+                np.issubdtype(key.dtype, bool):
+            if isinstance(value, LArray):
+                new_axes = self._bool_key_new_axes(translated_key,
+                                                   wildcard_allowed=True)
+                value = value.broadcast_with(new_axes)
+            data[translated_key] = value
+            return
 
         # XXX: we might want to create fakes axes in this case, as we only
         # use axes names and axes length, not the ticks, and those could
@@ -1746,6 +1726,40 @@ class LArray(object):
         # if value is a "raw" ndarray we rely on numpy broadcasting
         data[cross_key] = value.broadcast_with(axes) \
             if isinstance(value, LArray) else value
+
+    def _bool_key_new_axes(self, key, wildcard_allowed=False):
+        combined_axes = [axis for axis_key, axis in zip(key, self.axes)
+                         if not isnoneslice(axis_key)]
+        other_axes = [axis for axis_key, axis in zip(key, self.axes)
+                      if isnoneslice(axis_key)]
+        assert len(combined_axes) > 0
+        assert len(key) > 0
+        axes_indices = [self.axes.index(axis) for axis in combined_axes]
+        diff = np.diff(axes_indices)
+        if np.any(diff > 1):
+            # combined axes in front
+            combined_axis_pos = 0
+        else:
+            combined_axis_pos = axes_indices[0]
+        combined_name = ','.join(axis.name for axis in combined_axes)
+        if wildcard_allowed:
+            combined_axis_len = len(key[0])
+            assert all(len(axis_key) == combined_axis_len for axis_key in key
+                       if not isnoneslice(axis_key))
+            combined_axis = Axis(combined_name, combined_axis_len)
+        else:
+            axes_labels = [axis.labels[axis_key]
+                           for axis_key, axis in zip(key, self.axes)
+                           if not isnoneslice(axis_key)]
+            if len(combined_axes) == 1:
+                combined_labels = axes_labels[0]
+            else:
+                combined_labels = list(zip(*axes_labels))
+
+            combined_axis = Axis(combined_name, combined_labels)
+        new_axes = other_axes
+        new_axes.insert(combined_axis_pos, combined_axis)
+        return new_axes
 
     def set(self, value, **kwargs):
         """

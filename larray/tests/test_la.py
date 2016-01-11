@@ -1011,13 +1011,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         age, geo, sex, lipro = self.larray.axes
 
         # LArray key
-        # a) same shape
+        # a1) same shape, same order
         la = self.larray.copy()
         raw = self.array.copy()
         la[la < 5] = 0
         raw[raw < 5] = 0
         assert_array_equal(la, raw)
 
+        # a2) same shape, different order
+        la = self.larray.copy()
+        raw = self.array.copy()
+        key = (la < 5).T
+        la[key] = 0
+        raw[raw < 5] = 0
+        assert_array_equal(la, raw)
 
         # b) numpy-broadcastable shape
         # la = self.larray.copy()
@@ -1035,12 +1042,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(key.ndim, 3)
         la[key] = 0
 
-        # FIXME: numpy broadcasting rules for boolean index are different
-        # (there is no broadcasting in fact, it just fill extra ticks with
-        # False)
-        # this is crap and it is pure luck that this test works
-        raw_key = raw[:, :, [0]] < 5
-        raw[raw_key] = 0
+        raw_key = raw[:, :, 0, :] < 5
+        raw_d1, raw_d2, raw_d4 = raw_key.nonzero()
+        raw[raw_d1, raw_d2, :, raw_d4] = 0
         assert_array_equal(la, raw)
 
         # ndarray key
