@@ -14,7 +14,7 @@ AUTHOR = 'Gaetan de Menten, Geert Bryon'
 AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
-INSTALL_REQUIRES = ['numpy >= 1.7', 'pandas >= 0.13.1']
+INSTALL_REQUIRES = ['numpy >= 1.9', 'pandas >= 0.13.1']
 TESTS_REQUIRE = ['nose >= 1.0']
 TEST_SUITE = 'nose.collector'
 

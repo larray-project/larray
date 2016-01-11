@@ -226,7 +226,7 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from larray.utils import (table2str, unique, array_equal, csv_open, unzip,
+from larray.utils import (table2str, unique, csv_open, unzip,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, array_lookup)
 
@@ -590,11 +590,11 @@ class Axis(object):
         elif other._iswildcard:
             return len(other) == 1 or len(self) == len(other)
         else:
-            return array_equal(self.labels, other.labels)
+            return np.array_equal(self.labels, other.labels)
 
     def __eq__(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
-                array_equal(self.labels, other.labels))
+                np.array_equal(self.labels, other.labels))
 
     def __ne__(self, other):
         return not self == other

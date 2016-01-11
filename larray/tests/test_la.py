@@ -10,7 +10,7 @@ import pandas as pd
 from larray import (LArray, Axis, AxisCollection, LabelGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones,
                     clip, exp, where, x, view, mean, var, std)
-from larray.utils import array_equal, array_nan_equal
+from larray.utils import array_nan_equal
 from larray.core import to_ticks, to_key, srange, larray_equal, df_aslarray
 
 
@@ -37,7 +37,7 @@ def assert_equal_factory(test_func):
     return assert_equal
 
 
-assert_array_equal = assert_equal_factory(array_equal)
+assert_array_equal = assert_equal_factory(np.array_equal)
 #TODO: when we will depend on numpy 1.9, we should be able to replace this by
 # numpy.testing.assert_array_equal, or even assert_equal
 assert_array_nan_equal = assert_equal_factory(array_nan_equal)
