@@ -3139,10 +3139,11 @@ class LArray(object):
         ----------
         axis
             the axis for which we want to replace the labels.
-        lables : list of axis labels
+        labels : list of axis labels
             the new labels.
         inplace : boolean
-            ???
+            whether or not to modify the original object or return a new
+            LArray and leave the original intact.
 
         Returns
         -------
@@ -3181,10 +3182,10 @@ class LArray(object):
 
         Parameters
         ----------
-        axis
+        axis : int, str or Axis
             the axis for which we want to perform the shift.
-        n : intger
-            the numer of cells to shift.
+        n : int
+            the number of cells to shift.
 
         Returns
         -------
@@ -3465,7 +3466,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
 
 
 def zeros(axes):
-    """Returns a LArray with the shape defined by axes and filled with zeros.
+    """Returns a LArray with the specified axes and filled with zeros.
 
     Parameters
     ----------
@@ -3475,7 +3476,6 @@ def zeros(axes):
     Returns
     -------
     LArray
-        LArray with a shape defined by axes and filled with zeros.
 
     Example
     -------
@@ -3491,7 +3491,7 @@ def zeros(axes):
 
 
 def zeros_like(array):
-    """Returns a LArray with the same shape as array and filled with zeros.
+    """Returns a LArray with the same axes as array and filled with zeros.
 
     Parameters
     ----------
@@ -3501,7 +3501,6 @@ def zeros_like(array):
     Returns
     -------
     LArray
-        LArray with the same shape as array and filled with zeros.
 
     Example
     -------
@@ -3515,7 +3514,7 @@ def zeros_like(array):
 
 
 def ones(axes):
-    """Returns a LArray with the shape defined by axes and filled with ones.
+    """Returns a LArray with the specified axes and filled with ones.
 
     Parameters
     ----------
@@ -3525,7 +3524,6 @@ def ones(axes):
     Returns
     -------
     LArray
-        LArray with the shape defined by axes and filled with ones.
 
     Example
     -------
@@ -3541,8 +3539,7 @@ def ones(axes):
 
 
 def ones_like(array):
-    """Returns a LArray with the same shape as array and filled with ones.
-    zeros
+    """Returns a LArray with the same axes as array and filled with ones.
 
     Parameters
     ----------
@@ -3552,7 +3549,6 @@ def ones_like(array):
     Returns
     -------
     LArray
-        LArray with the same shape as array and filled with ones.
 
     Example
     -------
@@ -3566,8 +3562,8 @@ def ones_like(array):
 
 
 def empty(axes):
-    """Returns a LArray with the shape defined by axes without initializing
-    entries.
+    """Returns a LArray with the specified axes and uninitialized (arbitrary)
+    data.
 
     Parameters
     ----------
@@ -3576,9 +3572,7 @@ def empty(axes):
 
     Returns
     -------
-    larray
-        LArray with a shape defined by axes and values are uninitialized
-        (arbitrary) data.
+    LArray
 
     Example
     -------
@@ -3594,7 +3588,8 @@ def empty(axes):
 
 
 def empty_like(array):
-    """Returns a LArray with the shape defined by axes without initial. entries.
+    """Returns a LArray with the same axes as array and uninitialized
+    (arbitrary) data.
 
     Parameters
     ----------
@@ -3604,8 +3599,6 @@ def empty_like(array):
     Returns
     -------
     LArray
-        LArray with a shape defined by axes and values are uninitialized
-        (arbitrary) data.
 
     Example
     -------
@@ -3620,7 +3613,7 @@ def empty_like(array):
 
 
 def ndrange(axes):
-    """Returns a LArray with the shape defined and filled with increasing int.
+    """Returns a LArray with the specified axes and filled with increasing int.
 
     Parameters
     ----------
@@ -3630,7 +3623,6 @@ def ndrange(axes):
     Returns
     -------
     LArray
-        LArray with a shape defined by axes and filled with increasing int.
 
     Example
     -------
