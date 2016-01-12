@@ -7,7 +7,7 @@ API Reference
 .. autoclass:: larray.Axis
    :members:
 
-.. autoclass:: larray.LabelGroup
+.. autoclass:: larray.LGroup
    :members:
 
 .. autoclass:: larray.LArray
