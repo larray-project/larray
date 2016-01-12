@@ -106,7 +106,6 @@ Matrix class
 # * data alignment in arithmetic methods
 # * test structured arrays
 # * review all method & argument names
-# * implement LGroup.__getitem__
 # ? move "utils" to its own project (so that it is not duplicated between
 #   larray and liam2)
 #   OR
@@ -425,7 +424,13 @@ class Axis(object):
             # we convert to an ndarray to save memory (for scalar ticks, for
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
-            labels = np.asarray(to_ticks(labels))
+            ticks = to_ticks(labels)
+            if any(isinstance(tick, LGroup) for tick in ticks):
+                # avoid getting a 2d array if all LGroup have the same length
+                labels = np.empty(len(ticks), dtype=object)
+                labels[:] = ticks
+            else:
+                labels = np.asarray(ticks)
             length = len(labels)
             mapping = {label: i for i, label in enumerate(labels)}
             # we have no choice but to do that!
@@ -692,6 +697,12 @@ class LGroup(Group):
     def __gt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__gt__(other_key)
+
+    def __iter__(self):
+        return iter(self.key)
+
+    def __getitem__(self, key):
+        return self.key[key]
 
 
 class PGroup(Group):
