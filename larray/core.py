@@ -69,18 +69,7 @@ Matrix class
 #   time.ix[5:]
 #   time.ix[-10:]
 
-# * avg on last 10 years
-#     time = Axis('time', ...)
-#     x = time[-10:]  # <- does not work (-10 is not a tick on the Axis)!
-    # la.mean(time.i[-10:])
-    # la[time[-10:]].mean(time)
-    # la.append(la.mean(time[-10:]), axis=time)
-    # la.append(time=la.avg(time[-10:]))
-    # la.append(time=la.avg(time='-10:'))
-
 # * split unit tests
-
-# * but special case for length 1 (to be able to do: "H + F" or "vla / belgium")
 
 # * reindex array (ie make it conform to another index, eg of another
 #   array). This can be used both for doing operations (add, divide, ...)
@@ -676,7 +665,9 @@ class LGroup(Group):
         # other. eg, this removes spaces in "list strings", instead of
         # hashing them directly
         # XXX: but we might want to include that normalization feature in
-        # to_tick directly, instead of using to_key explicitly here
+        #      to_tick directly, instead of using to_key explicitly here
+        # XXX: we probably want to include this normalization in __init__
+        #      instead
         return hash(to_tick(to_key(self.key)))
 
     def __eq__(self, other):
