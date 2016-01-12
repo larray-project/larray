@@ -1239,7 +1239,9 @@ class LArray(object):
     def __init__(self, data, axes=None):
         data = np.asarray(data)
         ndim = data.ndim
-        if axes is not None:
+        if axes is None:
+            axes = AxisCollection(data.shape)
+        else:
             if len(axes) != ndim:
                 raise ValueError("number of axes (%d) does not match "
                                  "number of dimensions of data (%d)"
@@ -1249,8 +1251,8 @@ class LArray(object):
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (shape, data.shape))
 
-        if axes is not None and not isinstance(axes, AxisCollection):
-            axes = AxisCollection(axes)
+            if not isinstance(axes, AxisCollection):
+                axes = AxisCollection(axes)
         self.data = data
         self.axes = axes
 
@@ -1832,32 +1834,27 @@ class LArray(object):
         height = int(np.prod(self.shape[:-1]))
         data = np.asarray(self).reshape(height, width)
 
-        if self.axes is not None:
-            axes_names = self.axes.display_names[:]
-            if len(axes_names) > 1:
-                axes_names[-2] = '\\'.join(axes_names[-2:])
-                axes_names.pop()
-            labels = self.axes.labels[:-1]
-            if self.ndim == 1:
-                # There is no vertical axis, so the axis name should not have
-                # any "tick" below it and we add an empty "tick".
-                ticks = [['']]
-            else:
-                ticks = product(*labels)
-            yield axes_names + list(self.axes.labels[-1])
+        axes_names = self.axes.display_names[:]
+        if len(axes_names) > 1:
+            axes_names[-2] = '\\'.join(axes_names[-2:])
+            axes_names.pop()
+        labels = self.axes.labels[:-1]
+        if self.ndim == 1:
+            # There is no vertical axis, so the axis name should not have
+            # any "tick" below it and we add an empty "tick".
+            ticks = [['']]
         else:
-            # endlessly repeat empty list
-            ticks = repeat([])
+            ticks = product(*labels)
+        yield axes_names + list(self.axes.labels[-1])
 
         # summary if needed
         if height > maxlines:
             data = chain(data[:edgeitems], [["..."] * width], data[-edgeitems:])
-            if self.axes is not None:
-                if height > maxlines:
-                    startticks = islice(ticks, edgeitems)
-                    midticks = [["..."] * (self.ndim - 1)]
-                    endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
-                    ticks = chain(startticks, midticks, endticks)
+            if height > maxlines:
+                startticks = islice(ticks, edgeitems)
+                midticks = [["..."] * (self.ndim - 1)]
+                endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
+                ticks = chain(startticks, midticks, endticks)
 
         for tick, dataline in izip(ticks, data):
             yield list(tick) + list(dataline)
@@ -2369,7 +2366,7 @@ class LArray(object):
 
         Returns
         -------
-        String
+        str
             Description of the LArray (shape and labels for each axis).
 
         Example
