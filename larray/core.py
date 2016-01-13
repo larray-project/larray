@@ -2017,7 +2017,13 @@ class LArray(object):
     def _prepare_aggregate(self, op, args, kwargs=None, commutative=False):
         """converts args to keys & VG and kwargs to VG"""
 
-        kwargs_items = [] if kwargs is None else kwargs.items()
+        if kwargs is None:
+            kwargs_items = []
+        else:
+            explicit_axis = kwargs.pop('axis', None)
+            if explicit_axis is not None:
+                args += (self.axes[explicit_axis],)
+            kwargs_items = kwargs.items()
         if not commutative and len(kwargs_items) > 1:
             raise ValueError("grouping aggregates on multiple axes at the same "
                              "time using keyword arguments is not supported "
