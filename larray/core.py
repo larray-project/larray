@@ -3309,7 +3309,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
 
     Note
     ----
-    format csv file:
+    csv file format:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0
     A1,BI,H,FO,2,0,0
@@ -3319,22 +3319,22 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
 
     Parameters
     ----------
-    filepath : string
+    filepath : str
         path where the csv file has to be written.
-    nb_index : integer
+    nb_index : int, optional
         number of leading index columns (ex. 4).
-    index_col : list
+    index_col : list, optional
         list of columns for the index (ex. [0, 1, 2, 3]).
-    sep : string
-        seperator.
-    headersep : ???
+    sep : str, optional
+        separator.
+    headersep : str or None, optional
         ???.
     na : ???
         ???.
-    sort_rows : boolean
+    sort_rows : bool, optional
         Whether or not to sort the row dimensions alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
-    sort_columns : boolean
+    sort_columns : bool, optional
         Whether or not to sort the column dimension alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
     **kwargs
