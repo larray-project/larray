@@ -793,10 +793,12 @@ class AxisCollection(object):
             raise NotImplementedError("slice delete")
         if isinstance(key, int):
             axis = self._list.pop(key)
-            del self._map[axis.name]
+            if axis.name is not None:
+                del self._map[axis.name]
         elif isinstance(key, Axis):
             self._list.remove(key)
-            del self._map[key.name]
+            if key.name is not None:
+                del self._map[key.name]
         else:
             assert isinstance(key, basestring)
             axis = self._map.pop(key)
