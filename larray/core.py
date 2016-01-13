@@ -1101,14 +1101,14 @@ def all(values, axis=None):
     -------
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> b = ndrange([xnat, xsex]) >= 1
-    >>> b
+    >>> a = ndrange([xnat, xsex]) >= 1
+    >>> a
     nat\\sex |     H |    F
          BE | False | True
          FO |  True | True
-    >>> b.all()
+    >>> all(a)
     False
-    >>> b.all(xnat)
+    >>> all(a, xnat)
     sex |     H |    F
         | False | True
     """
@@ -1134,14 +1134,14 @@ def any(values, axis=None):
     -------
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> b = ndrange([xnat, xsex]) >= 3
-    >>> b
+    >>> a = ndrange([xnat, xsex]) >= 3
+    >>> a
     nat\\sex |     H |     F
          BE | False | False
          FO | False |  True
-    >>> b.any()
+    >>> any(a)
     True
-    >>> b.any(xnat)
+    >>> any(a, xnat)
     sex |     H |    F
         | False | True
     """
@@ -2032,11 +2032,11 @@ class LArray(object):
 
         # convert kwargs to LGroup so that we can only use args afterwards
         # but still keep the axis information
-        def kw_to_vg(axis, key):
+        def standardise_kw_arg(axis, key):
             if isinstance(key, str):
                 key = to_keys(key)
             if isinstance(key, tuple):
-                return tuple(kw_to_vg(axis, k) for k in key)
+                return tuple(standardise_kw_arg(axis, k) for k in key)
             if isinstance(key, LGroup):
                 return key
             assert isinstance(key, (str, list, slice))
@@ -2062,14 +2062,14 @@ class LArray(object):
                                           "group aggregate key"
                                           % (key, type(key).__name__))
 
-        def standardise(arg):
+        def standardise_arg(arg):
             if self.axes.isaxis(arg):
                 return self.axes[arg]
             else:
                 return to_vg(to_keys(arg))
 
-        operations = [standardise(a) for a in args] + \
-                     [kw_to_vg(k, v) for k, v in sorted_kwargs]
+        operations = [standardise_arg(a) for a in args if a is not None] + \
+                     [standardise_kw_arg(k, v) for k, v in sorted_kwargs]
         if not operations:
             # op() without args is equal to op(all_axes)
             operations = self.axes
