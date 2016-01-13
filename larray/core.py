@@ -1313,13 +1313,16 @@ class LArray(object):
 
     @property
     def df(self):
-        axes_names = self.axes.names[:-1]
-        if axes_names[-1] is not None:
-            axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
-
         columns = self.axes[-1].labels
-        index = pd.MultiIndex.from_product(self.axes.labels[:-1],
-                                           names=axes_names)
+        if self.ndim > 1:
+            axes_names = self.axes.names[:-1]
+            if axes_names[-1] is not None:
+                axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+
+            index = pd.MultiIndex.from_product(self.axes.labels[:-1],
+                                               names=axes_names)
+        else:
+            index = pd.Index([0])
         data = np.asarray(self).reshape(len(index), len(columns))
         return pd.DataFrame(data, index, columns)
 
