@@ -1152,7 +1152,7 @@ def any(values, axis=None):
 
 
 # commutative modulo float precision errors
-def sum(array, axis=None):
+def sum(array, *args, **kwargs):
     """
     Sum of array elements over a given axis.
 
@@ -1204,46 +1204,46 @@ def sum(array, axis=None):
     if isinstance(array, (np.ndarray, list)):
         array = LArray(array)
     if isinstance(array, LArray):
-        return array.sum(axis=axis)
+        return array.sum(*args, **kwargs)
     else:
         return builtins.sum(array)
 
 
-def prod(array, over=None):
-    return array.prod(over)
+def prod(array, *args, **kwargs):
+    return array.prod(*args, **kwargs)
 
 
-def cumsum(array, over=None):
-    return array.cumsum(over)
+def cumsum(array, *args, **kwargs):
+    return array.cumsum(*args, **kwargs)
 
 
-def cumprod(array, over=None):
-    return array.cumprod(over)
+def cumprod(array, *args, **kwargs):
+    return array.cumprod(*args, **kwargs)
 
 
-def min(array, over=None):
-    return array.min(over)
+def min(array, *args, **kwargs):
+    return array.min(*args, **kwargs)
 
 
-def max(array, over=None):
-    return array.max(over)
+def max(array, *args, **kwargs):
+    return array.max(*args, **kwargs)
 
 
-def mean(array, over=None):
-    return array.mean(over)
+def mean(array, *args, **kwargs):
+    return array.mean(*args, **kwargs)
 
 
 # not commutative
-def ptp(array, over=None):
-    return array.ptp(over)
+def ptp(array, *args, **kwargs):
+    return array.ptp(*args, **kwargs)
 
 
-def var(array, over=None):
-    return array.var(over)
+def var(array, *args, **kwargs):
+    return array.var(*args, **kwargs)
 
 
-def std(array, over=None):
-    return array.std(over)
+def std(array, *args, **kwargs):
+    return array.std(*args, **kwargs)
 
 
 def concat_empty(axis, array_axes, other_axes, dtype):
