@@ -842,7 +842,7 @@ class AxisCollection(object):
         #    users could still use arr.sum(arr.axes[0])
         #    we could also provide an explicit kwarg (ie this would
         #    effectively forbid having an axis named "axis").
-        #    arr.sum(axis=0). I think this is the sanest option. There
+        #    arr.sum(axis=0). I think this is the sanest option. The
         #    error message in case we use it without the keyword needs to
         #    be clearer though.
         return isinstance(value, (basestring, Axis)) and value in self
@@ -1152,9 +1152,59 @@ def any(values, axis=None):
 
 
 # commutative modulo float precision errors
-def sum(array, over=None):
+def sum(array, axis=None):
+    """
+    Sum of array elements over a given axis.
+
+    Parameters
+    ----------
+    array : iterable or array-like or LArray
+        Elements to sum.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a sum is performed.
+        The default (`axis` = `None`) is to perform a sum over all
+        axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, a sum is performed on multiple axes.
+
+    Returns
+    -------
+    LArray
+
+    See Also
+    --------
+    LArray.sum : Equivalent method.
+
+    Notes
+    -----
+    The sum of an empty array is the neutral element 0:
+
+    >>> sum([])
+    0.0
+
+    Examples
+    --------
+    >>> a = ndrange((2, 3))
+    >>> a
+    -\\- | 0 | 1 | 2
+      0 | 0 | 1 | 2
+      1 | 3 | 4 | 5
+    >>> sum(a)
+    15
+    >>> sum(a, axis=0)
+    - | 0 | 1 | 2
+      | 3 | 5 | 7
+    >>> sum(a, axis=1)
+    - | 0 |  1
+      | 3 | 12
+    """
+    # XXX: we might want to be more aggressive here (more types to convert),
+    #      however, generators should still be computed via the builtin.
+    if isinstance(array, (np.ndarray, list)):
+        array = LArray(array)
     if isinstance(array, LArray):
-        return array.sum(over)
+        return array.sum(axis=axis)
     else:
         return builtins.sum(array)
 
