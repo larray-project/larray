@@ -375,7 +375,7 @@ def larray_equal(first, other):
 def isnoneslice(v):
     return isinstance(v, slice) and v == slice(None)
 
-class PositionalKeyMaker(object):
+class PGroupMaker(object):
     def __init__(self, axis):
         self.axis = axis
 
@@ -402,7 +402,7 @@ class Axis(object):
 
     @property
     def i(self):
-        return PositionalKeyMaker(self.name)
+        return PGroupMaker(self.name)
 
     @property
     def labels(self):
