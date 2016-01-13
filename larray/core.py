@@ -3715,23 +3715,23 @@ def stack(arrays, axis):
     return LArray(np.concatenate(data_arrays, axis=-1), axes + axis)
 
 
-class AxisRef(Axis):
+class AxisReference(Axis):
     def __init__(self, name):
         self.name = name
         self._labels = None
 
     def translate(self, key):
-        raise NotImplementedError("an Axis reference (x.) cannot translate "
+        raise NotImplementedError("an AxisReference (x.) cannot translate "
                                   "labels")
 
     def __repr__(self):
-        return 'AxisRef(%r)' % self.name
+        return 'AxisReference(%r)' % self.name
 
 
-class AxisFactory(object):
+class AxisReferenceFactory(object):
     def __getattr__(self, key):
-        return AxisRef(key)
-x = AxisFactory()
+        return AxisReference(key)
+x = AxisReferenceFactory()
 
 
 def make_numpy_broadcastable(values):
