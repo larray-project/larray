@@ -2937,34 +2937,25 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = ndrange([xnat, xsex])
         >>> mat
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |     0 |     1 |     2
-         BE |        F |     3 |     4 |     5
-         FO |        H |     6 |     7 |     8
-         FO |        F |     9 |    10 |    11
-        >>> mat.to_csv('test.csv', ';', transpose=True)
-        >>> # nat;sex\type;type1;type2;type3
-        >>> # BE;H;0;1;2tra
-        >>> # BE;F;3;4;5
-        >>> # FO;H;6;7;8
-        >>> # FO;F;9;10;11
-        >>> mat.to_csv('test.csv', ';', transpose=False)
-        >>> # nat;sex;type;0
-        >>> # BE;H;type1;0
-        >>> # BE;H;type2;1
-        >>> # BE;H;type3;2
-        >>> # BE;F;type1;3
-        >>> # BE;F;type2;4
-        >>> # BE;F;type3;5
-        >>> # FO;H;type1;6
-        >>> # FO;H;type2;7
-        >>> # FO;H;type3;8
-        >>> # FO;F;type1;9
-        >>> # FO;F;type2;10
-        >>> # FO;F;type3;11
+        nat\\sex | H | F
+             BE | 0 | 1
+             FO | 2 | 3
+        >>> mat.to_csv('test.csv')
+        >>> with open('test.csv') as f:
+        ...     print(f.read().strip())
+        nat\\sex,H,F
+        BE,0,1
+        FO,2,3
+        >>> mat.to_csv('test.csv', sep=';', transpose=False)
+        >>> with open('test.csv') as f:
+        ...     print(f.read().strip())
+        nat;sex;0
+        BE;H;0
+        BE;F;1
+        FO;H;2
+        FO;F;3
         """
         if transpose:
             self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
@@ -2992,8 +2983,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = ndrange([xnat, xsex])
         >>> mat.to_hdf('test.h5', 'mat')
         """
         self.df.to_hdf(filepath, key, *args, **kwargs)
@@ -3020,8 +3010,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = ndrange([xnat, xsex])
         >>> mat.to_excel('test.xlsx', 'Sheet1')
         """
         self.df.to_excel(filepath, sheet_name, *args, **kwargs)
@@ -3037,8 +3026,7 @@ class LArray(object):
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = ndrange([xnat, xsex])
         >>> mat.to_clipboard()  # doctest: +SKIP
         """
         self.df.to_clipboard(*args, **kwargs)
@@ -3405,21 +3393,16 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     -------
     >>> xnat = Axis('nat', ['BE', 'FO'])
     >>> xsex = Axis('sex', ['H', 'F'])
-    >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-    >>> mat = ndrange([xnat, xsex, xtype])
-    >>> mat.to_csv('test.csv', ';')
-    >>> read_csv('test.csv', sep=';')
-    nat | sex\\type | type1 | type2 | type3
-     BE |        H |     0 |     1 |     2
-     BE |        F |     3 |     4 |     5
-     FO |        H |     6 |     7 |     8
-     FO |        F |     9 |    10 |    11
-    >>> read_csv('test.csv', sep=';', sort_rows=True)
-    nat | sex\\type | type1 | type2 | type3
-     BE |        F |     3 |     4 |     5
-     BE |        H |     0 |     1 |     2
-     FO |        F |     9 |    10 |    11
-     FO |        H |     6 |     7 |     8
+    >>> mat = ndrange([xnat, xsex])
+    >>> mat.to_csv('test.csv')
+    >>> read_csv('test.csv')
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> read_csv('test.csv', sort_columns=True)
+    nat\\sex | F | H
+         BE | 1 | 0
+         FO | 3 | 2
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
