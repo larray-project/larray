@@ -3464,13 +3464,19 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
                        fill_value=na)
 
 
-def zeros(axes):
+def zeros(axes, dtype=float, order='C'):
     """Returns a LArray with the specified axes and filled with zeros.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         a collection of axes or a shape.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- (default) or
+        Fortran-contiguous (row- or column-wise) order in memory.
 
     Returns
     -------
@@ -3486,16 +3492,23 @@ def zeros(axes):
          FO | 0.0 | 0.0
     """
     axes = AxisCollection(axes)
-    return LArray(np.zeros(axes.shape), axes)
+    return LArray(np.zeros(axes.shape, dtype, order), axes)
 
 
-def zeros_like(array):
+def zeros_like(array, dtype=None, order='K'):
     """Returns a LArray with the same axes as array and filled with zeros.
 
     Parameters
     ----------
     array : LArray
          is an array object.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' (default) means match the layout of `a` as closely
+        as possible.
 
     Returns
     -------
@@ -3505,20 +3518,27 @@ def zeros_like(array):
     -------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
-    -\\- |   0 |   1 |   2
-      0 | 0.0 | 0.0 | 0.0
-      1 | 0.0 | 0.0 | 0.0
+    -\\- | 0 | 1 | 2
+      0 | 0 | 0 | 0
+      1 | 0 | 0 | 0
     """
-    return zeros(array.axes)
+    axes = array.axes
+    return LArray(np.zeros_like(array, dtype, order), axes)
 
 
-def ones(axes):
+def ones(axes, dtype=float, order='C'):
     """Returns a LArray with the specified axes and filled with ones.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         a collection of axes or a shape.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- (default) or
+        Fortran-contiguous (row- or column-wise) order in memory.
 
     Returns
     -------
@@ -3534,16 +3554,23 @@ def ones(axes):
          FO | 1.0 | 1.0
     """
     axes = AxisCollection(axes)
-    return LArray(np.ones(axes.shape), axes)
+    return LArray(np.ones(axes.shape, dtype, order), axes)
 
 
-def ones_like(array):
+def ones_like(array, dtype=None, order='K'):
     """Returns a LArray with the same axes as array and filled with ones.
 
     Parameters
     ----------
     array : LArray
         is an array object.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' (default) means match the layout of `a` as closely
+        as possible.
 
     Returns
     -------
@@ -3553,14 +3580,15 @@ def ones_like(array):
     -------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
-    -\\- |   0 |   1 |   2
-      0 | 1.0 | 1.0 | 1.0
-      1 | 1.0 | 1.0 | 1.0
+    -\\- | 0 | 1 | 2
+      0 | 1 | 1 | 1
+      1 | 1 | 1 | 1
     """
-    return ones(array.axes)
+    axes = array.axes
+    return LArray(np.ones_like(array, dtype, order), axes)
 
 
-def empty(axes):
+def empty(axes, dtype=float, order='C'):
     """Returns a LArray with the specified axes and uninitialized (arbitrary)
     data.
 
@@ -3568,6 +3596,12 @@ def empty(axes):
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         a collection of axes or a shape.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- (default) or
+        Fortran-contiguous (row- or column-wise) order in memory.
 
     Returns
     -------
@@ -3583,10 +3617,10 @@ def empty(axes):
          FO |                0.0 | 6.07684618082e-31
     """
     axes = AxisCollection(axes)
-    return LArray(np.empty(axes.shape), axes)
+    return LArray(np.empty(axes.shape, dtype, order), axes)
 
 
-def empty_like(array):
+def empty_like(array, dtype=None, order='K'):
     """Returns a LArray with the same axes as array and uninitialized
     (arbitrary) data.
 
@@ -3594,6 +3628,13 @@ def empty_like(array):
     ----------
     array : LArray
         is an array object.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' (default) means match the layout of `a` as closely
+        as possible.
 
     Returns
     -------
@@ -3608,16 +3649,18 @@ def empty_like(array):
       1 | 1.06099789568e-313 | 1.48539705397e-313
       2 | 1.90979621226e-313 | 2.33419537056e-313
     """
-    return empty(array.axes)
+    return empty(array.axes, dtype, order)
 
 
-def ndrange(axes):
+def ndrange(axes, dtype=int):
     """Returns a LArray with the specified axes and filled with increasing int.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         a collection of axes or a shape.
+    dtype : dtype, optional
+        The type of the output array.  Defaults to int.
 
     Returns
     -------
@@ -3631,10 +3674,10 @@ def ndrange(axes):
     nat\\sex | H | F
          BE | 0 | 1
          FO | 2 | 3
-    >>> ndrange([2, 3])
-    -\\- | 0 | 1 | 2
-      0 | 0 | 1 | 2
-      1 | 3 | 4 | 5
+    >>> ndrange([2, 3], dtype=float)
+    -\\- |   0 |   1 |   2
+      0 | 0.0 | 1.0 | 2.0
+      1 | 3.0 | 4.0 | 5.0
     >>> ndrange(3)
     - | 0 | 1 | 2
       | 0 | 1 | 2
@@ -3650,7 +3693,8 @@ def ndrange(axes):
     ndrange([Axis('a', 2), Axis('b', 3)])
     """
     axes = AxisCollection(axes)
-    return LArray(np.arange(np.prod(axes.shape)).reshape(axes.shape), axes)
+    return LArray(np.arange(np.prod(axes.shape), dtype=dtype).reshape(axes.shape),
+                  axes)
 
 
 def stack(arrays, axis):
