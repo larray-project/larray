@@ -125,7 +125,7 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from larray.utils import (table2str, unique, csv_open, unzip,
+from larray.utils import (table2str, unique, csv_open, unzip, long,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, array_lookup)
 
@@ -738,7 +738,8 @@ class AxisCollection(object):
             axes = []
         if isinstance(axes, int):
             axes = [axes]
-        axes = [Axis(None, range(axis)) if isinstance(axis, int) else axis
+        axes = [Axis(None, range(axis)) if isinstance(axis, (int, long))
+                    else axis
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
         self._list = axes

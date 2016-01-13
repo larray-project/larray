@@ -20,9 +20,11 @@ import numpy as np
 if sys.version < '3':
     basestring = basestring
     bytes = str
+    long = long
 else:
     basestring = str
     unicode = str
+    long = int
 
 
 def csv_open(filename, mode='r'):
