@@ -985,7 +985,7 @@ class AxisCollection(object):
         res = self[:]
         if isinstance(axes, basestring):
             axes = axes.split(',')
-        elif isinstance(axes, Axis):
+        elif isinstance(axes, (int, Axis)):
             axes = [axes]
         # transform positional axis to axis objects
         axes = [self[axis] for axis in axes]
