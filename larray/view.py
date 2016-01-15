@@ -172,6 +172,7 @@ def qapplication():
 
 # Note: string and unicode data types will be formatted with '%s' (see below)
 SUPPORTED_FORMATS = {
+    'object': '%s',
     'single': '%.2f',
     'double': '%.2f',
     'float_': '%.2f',
@@ -805,7 +806,7 @@ class ArrayEditorWidget(QWidget):
         # FIXME: use max_digits?
         avail_digits = 8
 
-        if data.dtype.type in (np.str, np.str_, np.bool_, np.bool):
+        if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
             format = '%s'
             ndecimals = 0
             use_scientific = False
