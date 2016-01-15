@@ -2,16 +2,112 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from pandas import ExcelWriter
-from larray.core import LArray, read_csv, read_excel, read_hdf
+from pandas import ExcelWriter, ExcelFile, HDFStore
+from larray.core import LArray, read_csv, read_excel, read_hdf, df_aslarray
 
 
 def check_pattern(k, pattern):
     return k.startswith(pattern)
 
 
-def read_multi_csv(fname, name):
-    return read_csv(fname)
+class FileHandler(object):
+    def __init__(self, fname):
+        self.fname = fname
+
+    def list(self):
+        raise NotImplementedError()
+
+    def _read_array(self, key, **kwargs):
+        raise NotImplementedError()
+
+    def read_arrays(self, keys, **kwargs):
+        display = kwargs.pop('display', False)
+        self._open_for_read()
+        res = {}
+        if keys is None:
+            keys = self.list()
+        for key in keys:
+            if display:
+                print("loading", key, "...", end=' ')
+            dest_key = key.strip('/')
+            res[dest_key] = self._read_array(key)
+            if display:
+                print("done")
+        self.close()
+        return res
+
+    def dump_arrays(self, key_values, *args, **kwargs):
+        display = kwargs.pop('display', False)
+        self._open_for_write()
+        for key, value in key_values:
+            if display:
+                print("dumping", key, "...", end=' ')
+            self._dump(key, value, *args, **kwargs)
+            if display:
+                print("done")
+        self.close()
+
+    def close(self):
+        raise NotImplementedError()
+
+
+class HDFHandler(FileHandler):
+    def _open_for_read(self):
+        self.handle = HDFStore(self.fname)
+
+    def _open_for_write(self):
+        self.handle = HDFStore(self.fname)
+
+    def list(self):
+        return self.handle.keys()
+
+    def _read_array(self, key, **kwargs):
+        return read_hdf(self.handle, key, **kwargs)
+
+    def _dump(self, key, value, *args, **kwargs):
+        value.to_hdf(self.handle, key, *args, **kwargs)
+
+    def close(self):
+        self.handle.close()
+
+
+class ExcelHandler(FileHandler):
+    def _open_for_read(self):
+        self.handle = ExcelFile(self.fname)
+
+    def _open_for_write(self):
+        self.handle = ExcelWriter(self.fname)
+
+    def list(self):
+        return self.handle.sheet_names
+
+    def _read_array(self, key, **kwargs):
+        df = self.handle.parse(key, **kwargs)
+        return df_aslarray(df)
+
+    def _dump(self, key, value, *args, **kwargs):
+        value.to_excel(self.handle, key, *args, **kwargs)
+
+    def close(self):
+        self.handle.close()
+
+
+class CSVHandler(FileHandler):
+    def open(self, fname):
+        self.path = fname
+
+    def _read_array(self, key, **kwargs):
+        df = self.handle.parse(key, **kwargs)
+        return df_aslarray(df)
+
+    def _dump(self, key, value, *args, **kwargs):
+        value.to_csv(os.path.join(self.path, '{}.csv'.format(key)), *args,
+                     **kwargs)
+
+
+ext_classes = {'h5': HDFHandler, 'hdf': HDFHandler,
+               'xls': ExcelHandler, 'xlsx': ExcelHandler,
+               'csv': CSVHandler}
 
 
 class Session(object):
@@ -52,7 +148,7 @@ class Session(object):
     def __setattr__(self, key, value):
         self._objects[key] = value
 
-    def load(self, fname, names):
+    def load(self, fname, names=None, display=False, **kwargs):
         """Load LArray objects from a file.
 
         Parameters
@@ -62,22 +158,24 @@ class Session(object):
         names : list of str
             List of arrays to load.
         """
-        # TODO: add support for names=None for .h5 or .xlsx => all in file
+        if display:
+            print("opening", fname)
         # TODO: support path + *.csv
-        funcs = {'.h5': read_hdf, '.xls': read_excel, '.xlsx': read_excel,
-                 '.csv': read_multi_csv}
         _, ext = os.path.splitext(fname)
-        func = funcs[ext]
-        for name in names:
-            self[name] = func(fname, name)
+        fmt = ext.strip('.')
+        handler = ext_classes[fmt](fname)
+        arrays = handler.read_arrays(names, display=display, **kwargs)
+        for k, v in arrays.items():
+            self[k] = v
 
-    def dump(self, fname, fmt='auto'):
+    def dump(self, fname, names=None, fmt='auto', display=False, **kwargs):
         """Dumps all LArray objects to a file.
 
         Parameters
         ----------
         fname : str
             Path for the dump.
+        names : list of str or None, optional
         fmt : str, optional
             Dump to the `fmt` format. Defaults to 'auto' (guess from
             filename).
@@ -85,24 +183,21 @@ class Session(object):
         if fmt == 'auto':
             _, ext = os.path.splitext(fname)
             fmt = ext.strip('.')
-        funcs = {'h5': self.dump_hdf, 'hdf': self.dump_hdf,
-                 'xlsx': self.dump_excel, 'xls': self.dump_excel,
-                 'csv': self.dump_csv}
-        funcs[fmt](fname)
+        handler = ext_classes[fmt](fname)
+        arrays = self.filter(kind=LArray).items()
+        if names is not None:
+            names_set = set(names)
+            arrays = [(k, v) for k, v in arrays if k in names_set]
+        handler.dump_arrays(arrays, display=display, **kwargs)
 
-    def dump_hdf(self, fname, *args, **kwargs):
-        for k, v in self.filter(kind=LArray).items():
-            v.to_hdf(fname, k, *args, **kwargs)
+    def dump_hdf(self, fname, names=None, *args, **kwargs):
+        self.dump(fname, names, 'hdf', *args, **kwargs)
 
-    def dump_excel(self, fname, *args, **kwargs):
-        writer = ExcelWriter(fname)
-        for k, v in self.filter(kind=LArray).items():
-            v.to_excel(writer, k, *args, **kwargs)
-        writer.save()
+    def dump_excel(self, fname, names=None, *args, **kwargs):
+        self.dump(fname, names, 'xlsx', *args, **kwargs)
 
-    def dump_csv(self, path, *args, **kwargs):
-        for k, v in self.filter(kind=LArray).items():
-            v.to_csv(os.path.join(path, '{}.csv'.format(k)), *args, **kwargs)
+    def dump_csv(self, fname, names=None, *args, **kwargs):
+        self.dump(fname, names, 'csv', *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):
         """Return a new Session with objects which match some criteria.
