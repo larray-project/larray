@@ -1065,8 +1065,9 @@ class ArrayEditor(QDialog):
         return False if data is not supported, True otherwise
         """
         if isinstance(data, la.LArray):
+            names = [name if name is not None else '' for name in data.axes.names]
             if not title:
-                title = ' x '.join(data.axes.names)
+                title = ' x '.join(names)
             self.la_data = data
             data, xlabels, ylabels = self.larray_to_array_and_labels(data)
             self.current_filter = {}
