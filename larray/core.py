@@ -1735,7 +1735,7 @@ class LArray(object):
             combined_axis = Axis(combined_name, combined_labels)
         new_axes = other_axes
         new_axes.insert(combined_axis_pos, combined_axis)
-        return new_axes
+        return AxisCollection(new_axes)
 
     def set(self, value, **kwargs):
         """
