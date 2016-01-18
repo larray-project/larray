@@ -97,8 +97,11 @@ class CSVHandler(FileHandler):
         pass
 
     def _open_for_write(self):
-        # TODO: create directory if it does not exist
-        pass
+        try:
+            os.makedirs(self.fname)
+        except OSError:
+            if not os.path.isdir(self.fname):
+                raise
 
     def list(self):
         # strip extension from files
