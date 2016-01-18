@@ -77,6 +77,7 @@ class TestSession(TestCase):
         self.session.dump('test.xlsx')
         self.session.dump('test_ef.xlsx', ['e', 'f'])
         self.session.dump_excel('test2.xlsx')
+        self.session.dump_csv('csvtest')
 
     def test_load(self):
         s = Session()
@@ -90,6 +91,9 @@ class TestSession(TestCase):
         s = Session()
         s.load('test_ef.xlsx')
         self.assertEqual(s.names, ['e', 'f'])
+
+        s = Session()
+        s.load('csvtest', fmt='csv')
 
 if __name__ == "__main__":
     # import doctest

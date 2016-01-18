@@ -93,16 +93,29 @@ class ExcelHandler(FileHandler):
 
 
 class CSVHandler(FileHandler):
-    def open(self, fname):
-        self.path = fname
+    def _open_for_read(self):
+        pass
 
-    def _read_array(self, key, **kwargs):
-        df = self.handle.parse(key, **kwargs)
-        return df_aslarray(df)
+    def _open_for_write(self):
+        # TODO: create directory if it does not exist
+        pass
+
+    def list(self):
+        # strip extension from files
+        # FIXME: only take .csv files
+        # TODO: also support fname pattern, eg. "dump_*.csv"
+        return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname)]
+
+    def _read_array(self, key, *args, **kwargs):
+        return read_csv(os.path.join(self.fname, '{}.csv'.format(key)),
+                        *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
-        value.to_csv(os.path.join(self.path, '{}.csv'.format(key)), *args,
+        value.to_csv(os.path.join(self.fname, '{}.csv'.format(key)), *args,
                      **kwargs)
+
+    def close(self):
+        pass
 
 
 ext_classes = {'h5': HDFHandler, 'hdf': HDFHandler,
@@ -148,7 +161,7 @@ class Session(object):
     def __setattr__(self, key, value):
         self._objects[key] = value
 
-    def load(self, fname, names=None, display=False, **kwargs):
+    def load(self, fname, names=None, fmt='auto', display=False, **kwargs):
         """Load LArray objects from a file.
 
         Parameters
@@ -157,12 +170,14 @@ class Session(object):
             Path to the file.
         names : list of str
             List of arrays to load.
+        fmt : str
         """
         if display:
             print("opening", fname)
         # TODO: support path + *.csv
-        _, ext = os.path.splitext(fname)
-        fmt = ext.strip('.')
+        if fmt == 'auto':
+            _, ext = os.path.splitext(fname)
+            fmt = ext.strip('.')
         handler = ext_classes[fmt](fname)
         arrays = handler.read_arrays(names, display=display, **kwargs)
         for k, v in arrays.items():
