@@ -1714,9 +1714,10 @@ class LArray(object):
             combined_axis_pos = axes_indices[0]
         combined_name = ','.join(axis.name for axis in combined_axes)
         if wildcard_allowed:
-            combined_axis_len = len(key[0])
-            assert all(len(axis_key) == combined_axis_len for axis_key in key
-                       if not isnoneslice(axis_key))
+            lengths = [len(axis_key) for axis_key in key
+                       if not isnoneslice(axis_key)]
+            combined_axis_len = lengths[0]
+            assert all(l == combined_axis_len for l in lengths)
             combined_axis = Axis(combined_name, combined_axis_len)
         else:
             axes_labels = [axis.labels[axis_key]
