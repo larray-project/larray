@@ -3702,13 +3702,14 @@ def empty_like(array, dtype=None, order='K'):
     return empty(array.axes, dtype, order)
 
 
-def ndrange(axes, dtype=int):
+def ndrange(axes, start=0, dtype=int):
     """Returns a LArray with the specified axes and filled with increasing int.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         a collection of axes or a shape.
+    start : number, optional
     dtype : dtype, optional
         The type of the output array.  Defaults to int.
 
@@ -3728,9 +3729,9 @@ def ndrange(axes, dtype=int):
     -\\- |   0 |   1 |   2
       0 | 0.0 | 1.0 | 2.0
       1 | 3.0 | 4.0 | 5.0
-    >>> ndrange(3)
+    >>> ndrange(3, start=2)
     - | 0 | 1 | 2
-      | 0 | 1 | 2
+      | 2 | 3 | 4
 
     potential alternate syntaxes:
     ndrange((2, 3), names=('a', 'b'))
@@ -3742,9 +3743,11 @@ def ndrange(axes, dtype=int):
     ndrange((2, 3)).rename(0, 'a').rename(1, 'b')
     ndrange([Axis('a', 2), Axis('b', 3)])
     """
+    # XXX: try to come up with a syntax where start is before "end". For ndim
+    #  > 1, I cannot think of anything nice.
     axes = AxisCollection(axes)
-    return LArray(np.arange(np.prod(axes.shape), dtype=dtype).reshape(axes.shape),
-                  axes)
+    data = np.arange(start, start + np.prod(axes.shape), dtype=dtype)
+    return LArray(data.reshape(axes.shape), axes)
 
 
 def stack(arrays, axis):
