@@ -73,27 +73,27 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
 
     def test_dump(self):
-        self.session.dump('test.h5')
-        self.session.dump('test.xlsx')
-        self.session.dump('test_ef.xlsx', ['e', 'f'])
-        self.session.dump_excel('test2.xlsx')
-        self.session.dump_csv('csvtest')
+        self.session.dump('test_session.h5')
+        self.session.dump('test_session.xlsx')
+        self.session.dump('test_session_ef.xlsx', ['e', 'f'])
+        self.session.dump_excel('test_session2.xlsx')
+        self.session.dump_csv('test_session_csv')
 
     def test_load(self):
         s = Session()
-        s.load('test.h5', ['e', 'f'])
+        s.load('test_session.h5', ['e', 'f'])
         self.assertEqual(s.names, ['e', 'f'])
 
         s = Session()
-        s.load('test.h5')
+        s.load('test_session.h5')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
         s = Session()
-        s.load('test_ef.xlsx')
+        s.load('test_session_ef.xlsx')
         self.assertEqual(s.names, ['e', 'f'])
 
         s = Session()
-        s.load('csvtest', fmt='csv')
+        s.load('test_session_csv', fmt='csv')
 
 if __name__ == "__main__":
     # import doctest
