@@ -20,7 +20,7 @@ class FileHandler(object):
     def _read_array(self, key, **kwargs):
         raise NotImplementedError()
 
-    def read_arrays(self, keys, **kwargs):
+    def read_arrays(self, keys, *args, **kwargs):
         display = kwargs.pop('display', False)
         self._open_for_read()
         res = {}
@@ -30,7 +30,7 @@ class FileHandler(object):
             if display:
                 print("loading", key, "...", end=' ')
             dest_key = key.strip('/')
-            res[dest_key] = self._read_array(key)
+            res[dest_key] = self._read_array(key, *args, **kwargs)
             if display:
                 print("done")
         self.close()
