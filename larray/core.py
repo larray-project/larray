@@ -1061,6 +1061,10 @@ class AxisCollection(object):
         return tuple(len(axis) for axis in self._list)
 
     @property
+    def size(self):
+        return np.prod(self.shape)
+
+    @property
     def info(self):
         """Describes an AxisCollection (shape and labels for each axis).
 
