@@ -131,14 +131,17 @@ class Session(object):
         # self._objects = {}
         object.__setattr__(self, '_objects', {})
 
-        if len(args) == 1 and not hasattr(args[0], 'name') and not \
-                isinstance(args[0], dict):
-            # assume we have an iterable of tuples
-            arg = args[0]
-            for k, v in arg:
-                self[k] = v
-        elif len(args) == 1 and isinstance(args[0], dict):
-            self.add(**args[0])
+        if len(args) == 1:
+            a0 = args[0]
+            if isinstance(a0, dict):
+                self.add(**a0)
+            elif isinstance(a0, str):
+                # assume a0 is a filename
+                self.load(a0)
+            else:
+                # assume we have an iterable of tuples
+                for k, v in a0:
+                    self[k] = v
         else:
             self.add(*args, **kwargs)
 

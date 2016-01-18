@@ -94,6 +94,18 @@ class TestSession(TestCase):
 
         s = Session()
         s.load('test_session_csv', fmt='csv')
+        self.assertEqual(s.names, ['e', 'f', 'g'])
+
+    def test_init(self):
+        s = Session('test_session.h5')
+        self.assertEqual(s.names, ['e', 'f', 'g'])
+
+        s = Session('test_session_ef.xlsx')
+        self.assertEqual(s.names, ['e', 'f'])
+
+        # TODO: format autodetection does not work in this case
+        # s = Session('test_session_csv')
+        # self.assertEqual(s.names, ['e', 'f', 'g'])
 
 if __name__ == "__main__":
     # import doctest
