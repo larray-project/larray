@@ -1065,9 +1065,9 @@ class ArrayEditor(QDialog):
         return False if data is not supported, True otherwise
         """
         if isinstance(data, la.LArray):
-            names = [name if name is not None else '' for name in data.axes.names]
-            if not title:
-                title = ' x '.join(names)
+            axes_info = ' x '.join("%s (%d)" % (axis.display_name, len(axis))
+                                   for axis in data.axes)
+            title = (title + ': ' + axes_info) if title else axes_info
             self.la_data = data
             data, xlabels, ylabels = self.larray_to_array_and_labels(data)
             self.current_filter = {}
@@ -1211,7 +1211,7 @@ def edit(array):
         dlg.exec_()
 
 
-def view(array, title=None):
+def view(array, title=''):
     _app = qapplication()
     dlg = ArrayEditor()
     if dlg.setup_and_check(array, title=title, readonly=True):
