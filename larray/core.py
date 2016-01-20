@@ -1808,7 +1808,7 @@ class LArray(object):
 
         # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
-        otheronly_axes = [Axis(axis.name, 1) if len(axis) > 1 else axis
+        otheronly_axes = [Axis(axis.name, 1) if len(axis) != 1 else axis
                           for axis in other_axes if axis not in self.axes]
         array = self.reshape(self.axes + otheronly_axes)
         # 2) reorder axes to target order (move source-only axes to the front)
