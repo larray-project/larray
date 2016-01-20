@@ -145,7 +145,7 @@ class Session(object):
         else:
             self.add(*args, **kwargs)
 
-    # XXX: behave like a dict and return keys instead?
+    # XXX: behave like a dict and return keys instead or return unsorted?
     def __iter__(self):
         return iter(self._objects[k] for k in self.names)
 

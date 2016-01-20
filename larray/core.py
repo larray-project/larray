@@ -1640,6 +1640,11 @@ class LArray(object):
         # Q: Should it be the same object as the NDLGroup?/NDKey?
         # A: yes, probably. On the Pandas backend, we could/should have
         #    separate axes. On the numpy backend we cannot.
+        # FIXME: the issubdtype test is buggy, int dtypes return True
+        # >>> key.dtype
+        # dtype('int32')
+        # >>> np.issubdtype(key.dtype, bool)
+        # True
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, bool):
             return LArray(data[translated_key],
