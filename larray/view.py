@@ -849,57 +849,70 @@ class ArrayEditorWidget(QWidget):
         self.bgcolor_checkbox.setChecked(self.model.bgcolor_enabled)
         self.bgcolor_checkbox.setEnabled(self.model.bgcolor_enabled)
 
-    def choose_format(self, data):
+    def choose_scientific(self, data):
         # max_digits = self.get_max_digits()
         # default width can fit 8 chars
         # FIXME: use max_digits?
         avail_digits = 8
-
         if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
-            ndecimals = 0
-            use_scientific = False
+            return False
+
+        _, frac_zeros, int_digits, _ = self.format_helper(data)
+
+        # if there are more integer digits than we can display or we can
+        # display more information by using scientific format, do so
+        # (scientific format "uses" 4 digits, so we win if have >= 4 zeros
+        #  -- *including the integer one*)
+        return int_digits > avail_digits or frac_zeros >= 3
+
+    def choose_ndecimals(self, data, scientific):
+        if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
+            return 0
+
+        # max_digits = self.get_max_digits()
+        # default width can fit 8 chars
+        # FIXME: use max_digits?
+        avail_digits = 8
+        data_frac_digits, frac_zeros, int_digits, vmin = self.format_helper(
+            data)
+        if scientific:
+            int_digits = 2 if vmin < 0 else 1
+            exp_digits = 4
         else:
-            data_frac_digits = self._data_digits(data)
+            exp_digits = 0
+        # - 1 for the dot
+        ndecimals = avail_digits - 1 - int_digits - exp_digits
 
-            vmin, vmax = np.nanmin(data), np.nanmax(data)
-            absmax = max(abs(vmin), abs(vmax))
-            logabsmax = math.log10(absmax) if absmax else 0
-            frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
+        if ndecimals < 0:
+            ndecimals = 0
 
-            # max(1, ...) because there is at least one integer digit
-            log10max = math.log10(vmax) if vmax > 0 else 0
-            pos_int_digits = max(1, math.ceil(log10max))
-            if vmin < 0:
-                # + 1 for sign
-                logvmin = math.log10(-vmin) if vmin else 0
-                neg_int_digits = max(1, math.ceil(logvmin)) + 1
-            else:
-                neg_int_digits = 0
+        if data_frac_digits < ndecimals:
+            ndecimals = data_frac_digits
+        return ndecimals
 
-            int_digits = max(pos_int_digits, neg_int_digits)
+    def choose_format(self, data):
+        # TODO: refactor so that the expensive format_helper is not called
+        # twice (or the values are cached)
+        use_scientific = self.choose_scientific(data)
+        return self.choose_ndecimals(data, use_scientific), use_scientific
 
-            # if there are more integer digits than we can display
-            # or we can display more information by using scientific format, do so
-            # (scientific format "uses" 4 digits, so we win if have >= 4 zeros --
-            #  *including the integer one*)
-            if int_digits > avail_digits or frac_zeros >= 3:
-                use_scientific = True
-                # -1.5e+01
-                int_digits = 2 if vmin < 0 else 1
-                exp_digits = 4
-            else:
-                use_scientific = False
-                exp_digits = 0
-
-            # - 1 for the dot
-            ndecimals = avail_digits - 1 - int_digits - exp_digits
-
-            if ndecimals < 0:
-                ndecimals = 0
-
-            if data_frac_digits < ndecimals:
-                ndecimals = data_frac_digits
-        return ndecimals, use_scientific
+    def format_helper(self, data):
+        data_frac_digits = self._data_digits(data)
+        vmin, vmax = np.nanmin(data), np.nanmax(data)
+        absmax = max(abs(vmin), abs(vmax))
+        logabsmax = math.log10(absmax) if absmax else 0
+        frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
+        # max(1, ...) because there is at least one integer digit
+        log10max = math.log10(vmax) if vmax > 0 else 0
+        pos_int_digits = max(1, math.ceil(log10max))
+        if vmin < 0:
+            # + 1 for sign
+            logvmin = math.log10(-vmin) if vmin else 0
+            neg_int_digits = max(1, math.ceil(logvmin)) + 1
+        else:
+            neg_int_digits = 0
+        int_digits = max(pos_int_digits, neg_int_digits)
+        return data_frac_digits, frac_zeros, int_digits, vmin
 
     def get_max_digits(self, need_sign=False, need_dot=False, scientific=False):
         font = get_font("arreditor")  # QApplication.font()
@@ -951,6 +964,8 @@ class ArrayEditorWidget(QWidget):
 
     def scientific_changed(self, value):
         self.use_scientific = value
+        self.digits = self.choose_ndecimals(self.data, value)
+        self.digits_spinbox.setValue(self.digits)
         self.model.set_format(self.cell_format)
 
     def digits_changed(self, value):
