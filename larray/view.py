@@ -18,10 +18,7 @@ Array Editor Dialog based on Qt
 
 
 # TODO:
-# * commit
 # * scientific toggle -> detect ndigits
-# * fix scientific toggle/digits changed wh digits > 9
-# * display dimension sizes
 # * document default icons situation (limitations)
 # * document paint speed experiments
 # * filter on headers
@@ -436,15 +433,7 @@ class ArrayModel(QAbstractTableModel):
                 return self.bold_font
             else:
                 return self.font
-        # elif role not in (Qt.DisplayRole, Qt.BackgroundColorRole):
-        #     return to_qvariant()
-
         # row, column = index.row(), index.column()
-        # if column == 0:
-        #     value = "yada"
-        # else:
-        #     value = self.changes.get((row, column - 1), self._data[row,
-        #                                                            column - 1])
         value = self.get_value(index)
         if role == Qt.DisplayRole:
             # if column == 0:
@@ -1109,7 +1098,6 @@ class ArrayEditor(QDialog):
         self.setWindowTitle(title)
         self.resize(800, 600)
 
-        # Stack widget
         self.arraywidget = ArrayEditorWidget(self, data, readonly,
                                              xlabels, ylabels)
         self.layout.addWidget(self.arraywidget, 1, 0)
