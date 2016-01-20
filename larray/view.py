@@ -1065,6 +1065,8 @@ class ArrayEditor(QDialog):
             data, xlabels, ylabels = larray_to_array_and_labels(data)
             self.current_filter = {}
         else:
+            if not isinstance(data, np.ndarray):
+                data = np.asarray(data)
             self.la_data = None
             self.current_filter = None
 
