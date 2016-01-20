@@ -18,7 +18,6 @@ Array Editor Dialog based on Qt
 
 
 # TODO:
-# * scientific toggle -> detect ndigits
 # * document default icons situation (limitations)
 # * document paint speed experiments
 # * filter on headers
@@ -320,6 +319,8 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def _set_data(self, data, xlabels, ylabels):
+        if data is None:
+            data = np.empty(0, dtype=np.int8).reshape(0, 0)
         if data.dtype.names is None:
             dtn = data.dtype.name
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
@@ -353,7 +354,9 @@ class ArrayModel(QAbstractTableModel):
             self.vmax = np.nanmax(self.color_func(data))
             if self.vmax == self.vmin:
                 self.vmin -= 1
-        except TypeError:
+            self.bgcolor_enabled = True
+        # ValueError for empty arrays
+        except (TypeError, ValueError):
             self.vmin = None
             self.vmax = None
             self.bgcolor_enabled = False
@@ -801,7 +804,7 @@ class ArrayEditorWidget(QWidget):
         self.digits = ndecimals
         self.use_scientific = use_scientific
         # format = SUPPORTED_FORMATS.get(data.dtype.name, '%s')
-        self.model = ArrayModel(self.data, format=self.cell_format,
+        self.model = ArrayModel(None, format=self.cell_format,
                                 xlabels=xlabels, ylabels=ylabels,
                                 readonly=readonly, parent=self)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
