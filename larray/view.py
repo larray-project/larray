@@ -279,23 +279,13 @@ class ArrayModel(QAbstractTableModel):
     ROWS_TO_LOAD = 500
     COLS_TO_LOAD = 40
 
-    def __init__(self, data, format="%.3f", xlabels=None, ylabels=None,
+    def __init__(self, data=None, format="%.3f", xlabels=None, ylabels=None,
                  column_labels=None, row_labels=None,
                  readonly=False, font=None, parent=None):
         QAbstractTableModel.__init__(self)
 
-        assert data.ndim == 2
         self.dialog = parent
         self.readonly = readonly
-        self.test_array = np.array([0], dtype=data.dtype)
-
-        # for complex numbers, shading will be based on absolute value
-        # but for all other types it will be the real part
-        if data.dtype in (np.complex64, np.complex128):
-            self.color_func = np.abs
-        else:
-            self.color_func = np.real
-
         self._format = format
 
         # Backgroundcolor settings
@@ -333,6 +323,15 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def _set_data(self, data, xlabels, ylabels):
+        assert data.ndim == 2
+        self.test_array = np.array([0], dtype=data.dtype)
+
+        # for complex numbers, shading will be based on absolute value
+        # but for all other types it will be the real part
+        if data.dtype in (np.complex64, np.complex128):
+            self.color_func = np.abs
+        else:
+            self.color_func = np.real
         self.changes = {}
         self._data = data
         if xlabels is None:
@@ -801,13 +800,65 @@ class ArrayEditorWidget(QWidget):
             self.old_data_shape = self.data.shape
             self.data.shape = (1, 1)
 
+        ndecimals, use_scientific = self.choose_format(data)
+        self.digits = ndecimals
+        self.use_scientific = use_scientific
+        # format = SUPPORTED_FORMATS.get(data.dtype.name, '%s')
+        self.model = ArrayModel(self.data, format=self.cell_format,
+                                xlabels=xlabels, ylabels=ylabels,
+                                readonly=readonly, parent=self)
+        self.view = ArrayView(self, self.model, data.dtype, data.shape)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.setAlignment(Qt.AlignLeft)
+
+        label = QLabel("Digits")
+        btn_layout.addWidget(label)
+        spin = QSpinBox(self)
+        spin.valueChanged.connect(self.digits_changed)
+        self.digits_spinbox = spin
+        btn_layout.addWidget(spin)
+
+        scientific = QCheckBox(_('Scientific'))
+        scientific.stateChanged.connect(self.scientific_changed)
+        self.scientific_checkbox = scientific
+        btn_layout.addWidget(scientific)
+
+        bgcolor = QCheckBox(_('Background color'))
+        bgcolor.stateChanged.connect(self.model.bgcolor)
+        self.bgcolor_checkbox = bgcolor
+        btn_layout.addWidget(bgcolor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.view)
+        layout.addLayout(btn_layout)
+        self.setLayout(layout)
+        self.set_data(data, xlabels, ylabels)
+
+    def set_data(self, data, xlabels, ylabels):
+        ndecimals, use_scientific = self.choose_format(data)
+        self.ndecimals = ndecimals
+        self.use_scientific = use_scientific
+        self.data = data
+        self.model.set_format(self.cell_format)
+        self.model.set_data(data, xlabels, ylabels)
+
+        self.digits_spinbox.setValue(ndecimals)
+        self.digits_spinbox.setEnabled(is_float(data.dtype))
+
+        self.scientific_checkbox.setChecked(use_scientific)
+        self.scientific_checkbox.setEnabled(is_number(data.dtype))
+
+        self.bgcolor_checkbox.setChecked(self.model.bgcolor_enabled)
+        self.bgcolor_checkbox.setEnabled(self.model.bgcolor_enabled)
+
+    def choose_format(self, data):
         # max_digits = self.get_max_digits()
         # default width can fit 8 chars
         # FIXME: use max_digits?
         avail_digits = 8
 
         if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
-            format = '%s'
             ndecimals = 0
             use_scientific = False
         else:
@@ -851,47 +902,7 @@ class ArrayEditorWidget(QWidget):
 
             if data_frac_digits < ndecimals:
                 ndecimals = data_frac_digits
-
-            letter = 'e' if use_scientific else 'f'
-            format = '%%.%d%s' % (ndecimals, letter)
-        # format = SUPPORTED_FORMATS.get(data.dtype.name, '%s')
-        self.model = ArrayModel(self.data, format=format,
-                                xlabels=xlabels, ylabels=ylabels,
-                                readonly=readonly, parent=self)
-        self.view = ArrayView(self, self.model, data.dtype, data.shape)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.setAlignment(Qt.AlignLeft)
-
-        label = QLabel("Digits")
-        spin = QSpinBox(self)
-        spin.setValue(ndecimals)
-        spin.setEnabled(is_float(data.dtype))
-        btn_layout.addWidget(label)
-        btn_layout.addWidget(spin)
-        spin.valueChanged.connect(self.digits_changed)
-
-        # btn = QPushButton(_("Format"))
-        # disable format button for int type
-        # btn.setEnabled(is_float(data.dtype))
-        # btn_layout.addWidget(btn)
-        # btn.clicked.connect(self.change_format)
-
-        scientific = QCheckBox(_('Scientific'))
-        scientific.setChecked(use_scientific)
-        scientific.stateChanged.connect(self.scientific_changed)
-        btn_layout.addWidget(scientific)
-
-        bgcolor = QCheckBox(_('Background color'))
-        bgcolor.setChecked(self.model.bgcolor_enabled)
-        bgcolor.setEnabled(self.model.bgcolor_enabled)
-        bgcolor.stateChanged.connect(self.model.bgcolor)
-        btn_layout.addWidget(bgcolor)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.view)
-        layout.addLayout(btn_layout)
-        self.setLayout(layout)
+        return ndecimals, use_scientific
 
     def get_max_digits(self, need_sign=False, need_dot=False, scientific=False):
         font = get_font("arreditor")  # QApplication.font()
@@ -934,36 +945,98 @@ class ArrayEditorWidget(QWidget):
         if self.old_data_shape is not None:
             self.data.shape = self.old_data_shape
 
+    @property
+    def cell_format(self):
+        if self.data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
+            return '%s'
+        else:
+            return '%%.%d%s' % (self.digits, 'e' if self.use_scientific else 'f')
+
     def scientific_changed(self, value):
-        cur_format = self.model.get_format()
-        # FIXME: will break if digits > 9
-        digits = int(cur_format[2])
-        letter = 'e' if value else 'f'
-        fmt = '%%.%d%s' % (digits, letter)
-        self.model.set_format(fmt)
+        self.use_scientific = value
+        self.model.set_format(self.cell_format)
 
     def digits_changed(self, value):
-        cur_format = self.model.get_format()
-        # FIXME: will break if digits > 9
-        letter = cur_format[3]
-        fmt = '%%.%d%s' % (value, letter)
-        self.model.set_format(fmt)
+        self.digits = value
+        self.model.set_format(self.cell_format)
 
-    def change_format(self):
-        """Change display format"""
-        fmt, valid = QInputDialog.getText(self, _('Format'),
-                                          _("Float formatting"),
-                                          QLineEdit.Normal,
-                                          self.model.get_format())
-        if valid:
-            fmt = str(fmt)
-            try:
-                fmt % 1.1
-            except:
-                msg = _("Format (%s) is incorrect") % fmt
-                QMessageBox.critical(self, _("Error"), msg)
-                return
-            self.model.set_format(fmt)
+
+def larray_to_array_and_labels(data):
+    assert isinstance(data, la.LArray)
+
+    def to_str(a):
+        if a.dtype.type != np.str_:
+            a = a.astype(np.str_)
+
+        # Numpy stores Strings as np.str_ by default, not Python strings
+        # convert that to array of Python strings
+        return a.astype(object)
+
+    xlabels = [data.axes.names, to_str(data.axes.labels[-1])]
+
+    class LazyLabels(object):
+        def __init__(self, arrays):
+            self.prod = Product(arrays)
+
+        def __getitem__(self, key):
+            return ' '.join(self.prod[key])
+
+        def __len__(self):
+            return len(self.prod)
+
+    class LazyDimLabels(object):
+        def __init__(self, prod, i):
+            self.prod = prod
+            self.i = i
+
+        def __getitem__(self, key):
+            return self.prod[key][self.i]
+
+        def __len__(self):
+            return len(self.prod)
+
+    class LazyRange(object):
+        def __init__(self, length, offset):
+            self.length = length
+            self.offset = offset
+
+        def __getitem__(self, key):
+            if key >= self.offset:
+                return key - self.offset
+            else:
+                return ''
+
+        def __len__(self):
+            return self.length + self.offset
+
+    class LazyNone(object):
+        def __init__(self, length):
+            self.length = length
+
+        def __getitem__(self, key):
+            return ' '
+
+        def __len__(self):
+            return self.length
+
+    otherlabels = [to_str(axlabels) for axlabels in data.axes.labels[:-1]]
+    # ylabels = LazyLabels(otherlabels)
+    coldims = 1
+    # ylabels = [str(i) for i in range(len(row_labels))]
+    data = data.data[:]
+    if data.ndim == 1:
+        data = data.reshape(1, data.shape[0])
+        ylabels = [[]]
+    else:
+        prod = Product(otherlabels)
+        ylabels = [LazyNone(len(prod) + coldims)] + [
+            LazyDimLabels(prod, i) for i in range(len(otherlabels))]
+        # ylabels = [LazyRange(len(prod), coldims)] + [
+        #     LazyDimLabels(prod, i) for i in range(len(otherlabels))]
+
+    if data.ndim > 2:
+        data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
+    return data, xlabels, ylabels
 
 
 class ArrayEditor(QDialog):
@@ -981,83 +1054,6 @@ class ArrayEditor(QDialog):
         self.arraywidget = None
         self.layout = None
 
-    def larray_to_array_and_labels(self, data):
-        assert isinstance(data, la.LArray)
-
-        def to_str(a):
-            if a.dtype.type != np.str_:
-                a = a.astype(np.str_)
-
-            # Numpy stores Strings as np.str_ by default, not Python strings
-            # convert that to array of Python strings
-            return a.astype(object)
-
-        xlabels = [data.axes.names, to_str(data.axes.labels[-1])]
-
-        class LazyLabels(object):
-            def __init__(self, arrays):
-                self.prod = Product(arrays)
-
-            def __getitem__(self, key):
-                return ' '.join(self.prod[key])
-
-            def __len__(self):
-                return len(self.prod)
-
-        class LazyDimLabels(object):
-            def __init__(self, prod, i):
-                self.prod = prod
-                self.i = i
-
-            def __getitem__(self, key):
-                return self.prod[key][self.i]
-
-            def __len__(self):
-                return len(self.prod)
-
-        class LazyRange(object):
-            def __init__(self, length, offset):
-                self.length = length
-                self.offset = offset
-
-            def __getitem__(self, key):
-                if key >= self.offset:
-                    return key - self.offset
-                else:
-                    return ''
-
-            def __len__(self):
-                return self.length + self.offset
-
-        class LazyNone(object):
-            def __init__(self, length):
-                self.length = length
-
-            def __getitem__(self, key):
-                return ' '
-
-            def __len__(self):
-                return self.length
-
-        otherlabels = [to_str(axlabels) for axlabels in data.axes.labels[:-1]]
-        # ylabels = LazyLabels(otherlabels)
-        coldims = 1
-        # ylabels = [str(i) for i in range(len(row_labels))]
-        data = data.data[:]
-        if data.ndim == 1:
-            data = data.reshape(1, data.shape[0])
-            ylabels = [[]]
-        else:
-            prod = Product(otherlabels)
-            ylabels = [LazyNone(len(prod) + coldims)] + [
-                LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-            # ylabels = [LazyRange(len(prod), coldims)] + [
-            #     LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-
-        if data.ndim > 2:
-            data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
-        return data, xlabels, ylabels
-
     def setup_and_check(self, data, title='', readonly=False,
                         xlabels=None, ylabels=None):
         """
@@ -1069,7 +1065,7 @@ class ArrayEditor(QDialog):
                                    for axis in data.axes)
             title = (title + ': ' + axes_info) if title else axes_info
             self.la_data = data
-            data, xlabels, ylabels = self.larray_to_array_and_labels(data)
+            data, xlabels, ylabels = larray_to_array_and_labels(data)
             self.current_filter = {}
         else:
             self.la_data = None
@@ -1126,13 +1122,15 @@ class ArrayEditor(QDialog):
             for axis in self.la_data.axes:
                 btn_layout.addWidget(QLabel(axis.name))
                 btn_layout.addWidget(self.create_filter_combo(axis))
-
-        # if is_record_array or is_masked_array or data.ndim == 3:
         btn_layout.addStretch()
 
-        bbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox.Ok
+        if not readonly:
+            buttons |= QDialogButtonBox.Cancel
+        bbox = QDialogButtonBox(buttons)
         bbox.accepted.connect(self.accept)
-        bbox.rejected.connect(self.reject)
+        if not readonly:
+            bbox.rejected.connect(self.reject)
         btn_layout.addWidget(bbox)
         self.layout.addLayout(btn_layout, 2, 0)
 
@@ -1143,11 +1141,6 @@ class ArrayEditor(QDialog):
         return True
 
     def create_filter_combo(self, axis):
-        # def filter_changed(index):
-        #     self.change_filter(axis, index)
-        # combo = QComboBox(self)
-        # combo.addItems(['--'] + [str(l) for l in axis.labels])
-        # combo.currentIndexChanged.connect(filter_changed)
         def filter_changed(checked_items):
             self.change_filter(axis, checked_items)
         combo = FilterComboBox(self)
@@ -1172,12 +1165,12 @@ class ArrayEditor(QDialog):
             # TODO: make it readonly
             data, xlabels, ylabels = np.array([[filtered]]), None, None
         else:
-            data, xlabels, ylabels = self.larray_to_array_and_labels(filtered)
+            data, xlabels, ylabels = larray_to_array_and_labels(filtered)
 
         self.data = data
         # FIXME: we should get model.changes and convert them to
         #        "global changes" (because set_data reset the changes dict)
-        self.arraywidget.model.set_data(data, xlabels, ylabels)
+        self.arraywidget.set_data(data, xlabels, ylabels)
 
     @Slot()
     def accept(self):
