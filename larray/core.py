@@ -657,7 +657,8 @@ class LGroup(Group):
         if isinstance(axis, Axis):
             axis = axis.name
         if axis is not None:
-            assert isinstance(axis, str)
+            assert isinstance(axis, basestring), \
+                "axis is not an instance of str (%s)" % axis
             # check the key is valid
             # TODO: for performance reasons, we should cache the result. This will
             # need to be invalidated correctly
