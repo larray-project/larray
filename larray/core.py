@@ -1802,15 +1802,9 @@ class LArray(object):
                 other_axes = AxisCollection(other_axes)
         other_names = [a.name for a in other_axes]
 
+        # XXX: this breaks la['1,5,9'] = la['2,7,3']
+        # but that use case should use drop_labels
         # self.axes.check_compatible(other_axes)
-        # this breaks la['1,5,9'] = la['2,7,3']
-        # solution?
-        # a) explicitly ask to drop labels
-        # la['1,5,9'] = la['2,7,3'].data
-        # la['1,5,9'] = la['2,7,3'].raw()
-        # what if there is another dimension we want to broadcast?
-        # b) ask to set correct labels explicitly
-        # la['1,5,9'] = la['2,7,3'].set_labels(x.ages, [1, 5, 9])
 
         # 1) append length-1 axes for other-only axes
         # TODO: factorize with make_numpy_broadcastable
