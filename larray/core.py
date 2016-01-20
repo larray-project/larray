@@ -3828,17 +3828,11 @@ def make_numpy_broadcastable(values):
         if isinstance(v, LArray):
             all_axes.extend(v.axes)
 
-    # 1) add length one axes
-    # v.axes.extend([Axis(name, ['*']) for name in all_axes - v.axes])
-    # values = [v.reshape([v.axes.get(axis.name, Axis(axis, ['*']))
-    #                      for axis in all_axes]) if isinstance(v, LArray) else v
-    #           for v in values]
     # 1) reorder axes
     values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
               for v in values]
 
     # 2) add length one axes
-    # v.axes.extend([Axis(name, ['*']) for name in all_axes - v.axes])
     return [v.reshape([v.axes.get(axis.name, Axis(axis, ['*']))
                        for axis in all_axes]) if isinstance(v, LArray) else v
             for v in values], all_axes
