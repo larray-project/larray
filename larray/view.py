@@ -320,6 +320,14 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def _set_data(self, data, xlabels, ylabels):
+        if data.dtype.names is None:
+            dtn = data.dtype.name
+            if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
+                    and not dtn.startswith('unicode'):
+                msg = _("%s arrays are currently not supported")
+                QMessageBox.critical(self.dialog, "Error",
+                                     msg % data.dtype.name)
+                return
         assert data.ndim == 2
         self.test_array = np.array([0], dtype=data.dtype)
 
@@ -1076,13 +1084,6 @@ class ArrayEditor(QDialog):
         #                  "number"))
         #     return False
 
-        if data.dtype.names is None:
-            dtn = data.dtype.name
-            if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
-                    and not dtn.startswith('unicode'):
-                self.error(_("%s arrays are currently not supported")
-                           % data.dtype.name)
-                return False
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
