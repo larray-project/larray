@@ -53,7 +53,7 @@ class FileHandler(object):
 
 class HDFHandler(FileHandler):
     def _open_for_read(self):
-        self.handle = HDFStore(self.fname)
+        self.handle = HDFStore(self.fname, mode='r')
 
     def _open_for_write(self):
         self.handle = HDFStore(self.fname)
