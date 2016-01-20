@@ -629,6 +629,9 @@ class Axis(object):
         # at least be an option.
         return Axis(self.name, self.labels)
 
+    def _rename(self, name):
+        return Axis(name, self.labels)
+
 
 # We need a separate class for LGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
