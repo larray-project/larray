@@ -9,7 +9,7 @@ __all__ = [
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    'ndrange',
+    'ndrange', 'identity', 'larray_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std',
     '__version__'
@@ -3748,6 +3748,28 @@ def ndrange(axes, start=0, dtype=int):
     axes = AxisCollection(axes)
     data = np.arange(start, start + np.prod(axes.shape), dtype=dtype)
     return LArray(data.reshape(axes.shape), axes)
+
+
+def identity(axis):
+    """Returns a LArray with the value equal to Axis
+
+    Parameters
+    ----------
+    axis : Axis object
+
+    Returns
+    -------
+    LArray
+
+    Example
+    -------
+    >>> xsex = Axis('sex', ['H', 'F'])
+    >>> identity(xsex)
+    sex | H | F
+        | H | F
+    """
+    axes = AxisCollection([axis])
+    return LArray(axis.labels, axes)
 
 
 def stack(arrays, axis):
