@@ -96,6 +96,10 @@ class TestSession(TestCase):
         s.load('test_session_csv', fmt='csv')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
+    def test_eq(self):
+        self.assertEqual(self.session.filter(kind=LArray),
+                         Session([('e', self.e), ('f', self.f), ('g', self.g)]))
+
     def test_init(self):
         s = Session('test_session.h5')
         self.assertEqual(s.names, ['e', 'f', 'g'])

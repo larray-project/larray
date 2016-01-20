@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 
 from pandas import ExcelWriter, ExcelFile, HDFStore
-from larray.core import LArray, read_csv, read_excel, read_hdf, df_aslarray
+from larray.core import LArray, read_csv, read_hdf, df_aslarray, larray_equal
 
 
 def check_pattern(k, pattern):
@@ -267,3 +267,6 @@ class Session(object):
 
     def __repr__(self):
         return 'Session({})'.format(', '.join(self.names))
+
+    def __eq__(self, other):
+        return all(larray_equal(a0, a1) for a0, a1 in zip(self, other))
