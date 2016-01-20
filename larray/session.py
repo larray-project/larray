@@ -156,7 +156,10 @@ class Session(object):
             self[k] = v
 
     def __getitem__(self, key):
-        return self._objects[key]
+        if isinstance(key, int):
+            return self._objects[self.names[key]]
+        else:
+            return self._objects[key]
 
     def __setitem__(self, key, value):
         self._objects[key] = value
