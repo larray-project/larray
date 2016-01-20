@@ -2570,7 +2570,7 @@ class LArray(object):
             elif isinstance(other, np.ndarray):
                 pass
             # so that we can do key.count(Ellipsis)
-            elif other is Ellipsis:
+            elif other is Ellipsis or other is None:
                 return False
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "
