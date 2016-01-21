@@ -9,7 +9,7 @@ def readlocal(fname):
 
 
 DISTNAME = 'larray'
-VERSION = '0.6.1'
+VERSION = '0.7'
 AUTHOR = 'Gaetan de Menten, Geert Bryon'
 AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
@@ -34,6 +34,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.3',
     'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
     'Topic :: Scientific/Engineering',
     'Topic :: Software Development :: Libraries',
 ]
