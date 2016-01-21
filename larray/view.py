@@ -52,7 +52,7 @@ import math
 import sys
 
 from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
-                         QItemDelegate,
+                         QItemDelegate, QListWidget, QSplitter,
                          QLineEdit, QCheckBox, QGridLayout,
                          QDoubleValidator, QDialog, QDialogButtonBox,
                          QMessageBox, QInputDialog, QMenu,
@@ -1217,6 +1217,97 @@ class ArrayEditor(QDialog):
         return self.data
 
 
+class SessionEditor(QDialog):
+    """Session Editor Dialog"""
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+
+        self.data = None
+        self.arraywidget = None
+
+    def setup_and_check(self, data, title='', readonly=False):
+        """
+        Setup SessionEditor:
+        return False if data is not supported, True otherwise
+        """
+        assert isinstance(data, la.Session)
+        self.data = data
+
+        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        if icon is not None:
+            self.setWindowIcon(icon)
+
+        if not title:
+            title = _("Session editor")
+        if readonly:
+            title += ' (' + _('read only') + ')'
+        self.setWindowTitle(title)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self._listwidget = QListWidget(self)
+        self._listwidget.addItems(self.data.names)
+        self._listwidget.currentItemChanged.connect(self.on_item_changed)
+
+        self.arraywidget = ArrayEditorWidget(self, data[0], readonly)
+
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.addWidget(self._listwidget)
+        splitter.addWidget(self.arraywidget)
+        splitter.setSizes([5, 95])
+        splitter.setCollapsible(1, False)
+
+        layout.addWidget(splitter)
+
+        # Buttons configuration
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        buttons = QDialogButtonBox.Ok
+        if not readonly:
+            buttons |= QDialogButtonBox.Cancel
+        bbox = QDialogButtonBox(buttons)
+        bbox.accepted.connect(self.accept)
+        if not readonly:
+            bbox.rejected.connect(self.reject)
+        btn_layout.addWidget(bbox)
+        layout.addLayout(btn_layout)
+
+        self.resize(800, 600)
+        self.setMinimumSize(400, 300)
+
+        # Make the dialog act as a window
+        self.setWindowFlags(Qt.Window)
+        return True
+
+    def on_item_changed(self, curr, prev):
+        self.arraywidget.set_data(self.data[str(curr.text())])
+
+    @Slot()
+    def accept(self):
+        """Reimplement Qt method"""
+        self.arraywidget.accept_changes()
+        QDialog.accept(self)
+
+    @Slot()
+    def reject(self):
+        """Reimplement Qt method"""
+        self.arraywidget.reject_changes()
+        QDialog.reject(self)
+
+    def get_value(self):
+        """Return modified array -- this is *not* a copy"""
+        # It is import to avoid accessing Qt C++ object as it has probably
+        # already been destroyed, due to the Qt.WA_DeleteOnClose attribute
+        return self.data
+
 
 def edit(array):
     _app = qapplication()
@@ -1225,10 +1316,13 @@ def edit(array):
         dlg.exec_()
 
 
-def view(array, title=''):
+def view(obj, title=''):
     _app = qapplication()
-    dlg = ArrayEditor()
-    if dlg.setup_and_check(array, title=title, readonly=True):
+    if isinstance(obj, la.Session):
+        dlg = SessionEditor()
+    else:
+        dlg = ArrayEditor()
+    if dlg.setup_and_check(obj, title=title, readonly=True):
         dlg.exec_()
 
 
@@ -1288,3 +1382,8 @@ if __name__ == "__main__":
     #                  axes=(la.Axis('d0', list(range(5000))),
     #                        la.Axis('d1', list(range(20)))))
     edit(arr2)
+
+
+    # view(['a', 'bb', 5599])
+    view(np.arange(12).reshape(2, 3, 2))
+    view([])
