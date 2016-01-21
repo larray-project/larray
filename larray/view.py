@@ -215,6 +215,14 @@ LARGE_NROWS = 1e5
 LARGE_COLS = 60
 
 
+def clear_layout(layout):
+    for i in reversed(range(layout.count())):
+        item = layout.itemAt(i)
+        widget = item.widget()
+        if widget is not None:
+            # widget.setParent(None)
+            widget.deleteLater()
+        layout.removeItem(item)
 
 
 class Product(object):
@@ -729,6 +737,7 @@ class ArrayView(QTableView):
     def copy(self):
         """Copy array as text to clipboard"""
         data = self._selection_data()
+
         # np.savetxt make things more complicated, especially on py3
         def vrepr(v):
             if isinstance(v, float):
@@ -788,27 +797,12 @@ class ArrayEditorWidget(QWidget):
     def __init__(self, parent, data, readonly=False,
                  xlabels=None, ylabels=None):
         QWidget.__init__(self, parent)
-        if np.isscalar(data):
+        if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
-            readonly = True
-        self.data = data
-        self.old_data_shape = None
-        if len(self.data.shape) == 1:
-            self.old_data_shape = self.data.shape
-            self.data.shape = (self.data.shape[0], 1)
-        elif len(self.data.shape) == 0:
-            self.old_data_shape = self.data.shape
-            self.data.shape = (1, 1)
-
-        ndecimals, use_scientific = self.choose_format(data)
-        self.digits = ndecimals
-        self.use_scientific = use_scientific
-        # format = SUPPORTED_FORMATS.get(data.dtype.name, '%s')
-        self.model = ArrayModel(None, format=self.cell_format,
-                                xlabels=xlabels, ylabels=ylabels,
-                                readonly=readonly, parent=self)
+        self.model = ArrayModel(None, readonly=readonly, parent=self)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
 
+        self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
         btn_layout.setAlignment(Qt.AlignLeft)
 
@@ -830,14 +824,66 @@ class ArrayEditorWidget(QWidget):
         btn_layout.addWidget(bgcolor)
 
         layout = QVBoxLayout()
+        layout.addLayout(self.filters_layout)
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
         self.set_data(data, xlabels, ylabels)
 
-    def set_data(self, data, xlabels, ylabels):
+    def set_data(self, data, xlabels=None, ylabels=None):
+        self.old_data_shape = None
+        self.current_filter = {}
+        if np.isscalar(data):
+            data = np.array(data)
+            readonly = True
+        if isinstance(data, la.LArray):
+            self.la_data = data
+            filters_layout = self.filters_layout
+            clear_layout(filters_layout)
+            filters_layout.addWidget(QLabel(_("Filters")))
+            # XXX: do this in Axis.display_name?
+            for i, axis in enumerate(data.axes):
+                name = axis.name if axis.name is not None else 'dim %d' % i
+                filters_layout.addWidget(QLabel(name))
+                filters_layout.addWidget(self.create_filter_combo(axis))
+            filters_layout.addStretch()
+            data, xlabels, ylabels = larray_to_array_and_labels(data)
+        else:
+            if not isinstance(data, np.ndarray):
+                data = np.asarray(data)
+            self.la_data = None
+        if data.size == 0:
+            QMessageBox.critical(self, _("Error"), _("Array is empty"))
+        if data.ndim == 1:
+            data = data.reshape(1, data.shape[0])
+            ylabels = [[]]
+        # FIXME: partially redundant with code above
+        if len(data.shape) == 1:
+            self.old_data_shape = data.shape
+            data.shape = (data.shape[0], 1)
+        elif len(data.shape) == 0:
+            self.old_data_shape = data.shape
+            data.shape = (1, 1)
+
+        if data.ndim > 2:
+            data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
+
+            # if xlabels is not None and len(xlabels) != self.data.shape[1]:
+            #     self.error(_("The 'xlabels' argument length do no match array "
+            #                  "column number"))
+            #     return False
+            # if ylabels is not None and len(ylabels) != self.data.shape[0]:
+            #     self.error(_("The 'ylabels' argument length do no match array row "
+            #                  "number"))
+            #     return False
+        self._set_raw_data(data, xlabels, ylabels)
+
+    def _set_raw_data(self, data, xlabels, ylabels):
+        # FIXME: this method should be *FAST*, as it is used for each filter
+        # change
         ndecimals, use_scientific = self.choose_format(data)
-        self.ndecimals = ndecimals
+        # XXX: self.ndecimals vs self.digits
+        self.digits = ndecimals
         self.use_scientific = use_scientific
         self.data = data
         self.model.set_format(self.cell_format)
@@ -900,6 +946,8 @@ class ArrayEditorWidget(QWidget):
         return self.choose_ndecimals(data, use_scientific), use_scientific
 
     def format_helper(self, data):
+        if not data.size:
+            return 0, 0, 0, 0
         data_frac_digits = self._data_digits(data)
         vmin, vmax = np.nanmin(data), np.nanmax(data)
         absmax = max(abs(vmin), abs(vmax))
@@ -939,6 +987,8 @@ class ArrayEditorWidget(QWidget):
         return avail_width // digit_width
 
     def _data_digits(self, data, maxdigits=6):
+        if not data.size:
+            return 0
         threshold = 10 ** -(maxdigits + 1)
         for ndigits in range(maxdigits):
             maxdiff = np.max(np.abs(data - np.round(data, ndigits)))
@@ -974,6 +1024,37 @@ class ArrayEditorWidget(QWidget):
     def digits_changed(self, value):
         self.digits = value
         self.model.set_format(self.cell_format)
+
+    def create_filter_combo(self, axis):
+        def filter_changed(checked_items):
+            self.change_filter(axis, checked_items)
+        combo = FilterComboBox(self)
+        combo.addItems([str(l) for l in axis.labels])
+        combo.checkedItemsChanged.connect(filter_changed)
+        return combo
+
+    def change_filter(self, axis, indices):
+        cur_filter = self.current_filter
+        # if index == 0:
+        if not indices or len(indices) == len(axis.labels):
+            if axis.name in cur_filter:
+                del cur_filter[axis.name]
+        else:
+            if len(indices) == 1:
+                cur_filter[axis.name] = axis.labels[indices[0]]
+            else:
+                cur_filter[axis.name] = axis.labels[indices]
+        filtered = self.la_data[cur_filter]
+        if np.isscalar(filtered):
+            # TODO: make it readonly
+            data, xlabels, ylabels = np.array([[filtered]]), None, None
+        else:
+            data, xlabels, ylabels = larray_to_array_and_labels(filtered)
+
+        # FIXME: we should get model.changes and convert them to
+        #        "global changes" (because set_data reset the changes dict)
+        self._set_raw_data(data, xlabels, ylabels)
+
 
 
 def larray_to_array_and_labels(data):
@@ -1067,7 +1148,6 @@ class ArrayEditor(QDialog):
 
         self.data = None
         self.arraywidget = None
-        self.layout = None
 
     def setup_and_check(self, data, title='', readonly=False,
                         xlabels=None, ylabels=None):
@@ -1079,34 +1159,10 @@ class ArrayEditor(QDialog):
             axes_info = ' x '.join("%s (%d)" % (axis.display_name, len(axis))
                                    for axis in data.axes)
             title = (title + ': ' + axes_info) if title else axes_info
-            self.la_data = data
-            data, xlabels, ylabels = larray_to_array_and_labels(data)
-            self.current_filter = {}
-        else:
-            if not isinstance(data, np.ndarray):
-                data = np.asarray(data)
-            self.la_data = None
-            self.current_filter = None
 
         self.data = data
-        if data.size == 0:
-            self.error(_("Array is empty"))
-            return False
-        if data.ndim > 3:
-            self.error(_("Arrays with more than 3 dimensions are not supported"))
-            return False
-        # if xlabels is not None and len(xlabels) != self.data.shape[1]:
-        #     self.error(_("The 'xlabels' argument length do no match array "
-        #                  "column number"))
-        #     return False
-        # if ylabels is not None and len(ylabels) != self.data.shape[0]:
-        #     self.error(_("The 'ylabels' argument length do no match array row "
-        #                  "number"))
-        #     return False
-
-
-        self.layout = QGridLayout()
-        self.setLayout(self.layout)
+        layout = QGridLayout()
+        self.setLayout(layout)
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         if icon is not None:
@@ -1118,19 +1174,14 @@ class ArrayEditor(QDialog):
             title += ' (' + _('read only') + ')'
         self.setWindowTitle(title)
         self.resize(800, 600)
+        self.setMinimumSize(400, 300)
 
         self.arraywidget = ArrayEditorWidget(self, data, readonly,
                                              xlabels, ylabels)
-        self.layout.addWidget(self.arraywidget, 1, 0)
+        layout.addWidget(self.arraywidget, 1, 0)
 
         # Buttons configuration
         btn_layout = QHBoxLayout()
-
-        if self.la_data is not None:
-            btn_layout.addWidget(QLabel(_("Filters")))
-            for axis in self.la_data.axes:
-                btn_layout.addWidget(QLabel(axis.name))
-                btn_layout.addWidget(self.create_filter_combo(axis))
         btn_layout.addStretch()
 
         buttons = QDialogButtonBox.Ok
@@ -1141,45 +1192,11 @@ class ArrayEditor(QDialog):
         if not readonly:
             bbox.rejected.connect(self.reject)
         btn_layout.addWidget(bbox)
-        self.layout.addLayout(btn_layout, 2, 0)
-
-        self.setMinimumSize(400, 300)
+        layout.addLayout(btn_layout, 2, 0)
 
         # Make the dialog act as a window
         self.setWindowFlags(Qt.Window)
         return True
-
-    def create_filter_combo(self, axis):
-        def filter_changed(checked_items):
-            self.change_filter(axis, checked_items)
-        combo = FilterComboBox(self)
-        combo.addItems([str(l) for l in axis.labels])
-        combo.checkedItemsChanged.connect(filter_changed)
-        return combo
-
-    # def change_filter(self, axis, index):
-    def change_filter(self, axis, indices):
-        cur_filter = self.current_filter
-        # if index == 0:
-        if not indices or len(indices) == len(axis.labels):
-            if axis.name in cur_filter:
-                del cur_filter[axis.name]
-        else:
-            if len(indices) == 1:
-                cur_filter[axis.name] = axis.labels[indices[0]]
-            else:
-                cur_filter[axis.name] = axis.labels[indices]
-        filtered = self.la_data[cur_filter]
-        if np.isscalar(filtered):
-            # TODO: make it readonly
-            data, xlabels, ylabels = np.array([[filtered]]), None, None
-        else:
-            data, xlabels, ylabels = larray_to_array_and_labels(filtered)
-
-        self.data = data
-        # FIXME: we should get model.changes and convert them to
-        #        "global changes" (because set_data reset the changes dict)
-        self.arraywidget.set_data(data, xlabels, ylabels)
 
     @Slot()
     def accept(self):
@@ -1199,11 +1216,6 @@ class ArrayEditor(QDialog):
         # already been destroyed, due to the Qt.WA_DeleteOnClose attribute
         return self.data
 
-    def error(self, message):
-        """An error occured, closing the dialog box"""
-        QMessageBox.critical(self, _("Array editor"), message)
-        self.setAttribute(Qt.WA_DeleteOnClose)
-        self.reject()
 
 
 def edit(array):
