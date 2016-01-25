@@ -3793,6 +3793,7 @@ class AxisReference(Axis):
     def __init__(self, name):
         self.name = name
         self._labels = None
+        self._iswildcard = False
 
     def translate(self, key):
         raise NotImplementedError("an AxisReference (x.) cannot translate "
