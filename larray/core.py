@@ -3253,23 +3253,19 @@ class LArray(object):
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> mat = ndrange([xsex, xtype])
         >>> mat
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |     0 |     1 |     2
-         BE |        F |     3 |     4 |     5
-         FO |        H |     6 |     7 |     8
-         FO |        F |     9 |    10 |    11
+        sex\\type | type1 | type2 | type3
+               H |     0 |     1 |     2
+               F |     3 |     4 |     5
+        >>> mat.shift(x.type)
+        sex\\type | type2 | type3
+               H |     0 |     1
+               F |     3 |     4
         >>> mat.shift(x.type, n=-1)
-        nat | sex\\type | type1 | type2
-         BE |        H |     1 |     2
-         BE |        F |     4 |     5
-         FO |        H |     7 |     8
-         FO |        F |    10 |    11
-        >>> mat.shift(x.sex, n=1)
-        nat | sex\\type | type1 | type2 | type3
-         BE |        F |     0 |     1 |     2
-         FO |        F |     6 |     7 |     8
+        sex\\type | type1 | type2
+               H |     1 |     2
+               F |     4 |     5
         """
         axis = self.axes[axis]
         if n > 0:
