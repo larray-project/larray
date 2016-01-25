@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 
 from pandas import ExcelWriter, ExcelFile, HDFStore
 from larray.core import LArray, read_csv, read_hdf, df_aslarray, larray_equal
@@ -273,3 +274,8 @@ class Session(object):
 
     def __eq__(self, other):
         return all(larray_equal(a0, a1) for a0, a1 in zip(self, other))
+
+
+def local_arrays():
+    g = sys._getframe(1).f_locals
+    return Session((k, v) for k, v in g.items() if isinstance(v, LArray))
