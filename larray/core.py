@@ -850,7 +850,7 @@ class AxisCollection(object):
         #    arr.sum(axis=0). I think this is the sanest option. The
         #    error message in case we use it without the keyword needs to
         #    be clearer though.
-        return isinstance(value, (basestring, Axis)) and value in self
+        return isinstance(value, Axis) or isinstance(value, basestring) and value in self
         # 2) slightly inconsistent API: allow aggregate over single labels
         #    if they are string, but not int
         #    arr.sum(0) would sum on the first axis, but arr.sum('H') would
