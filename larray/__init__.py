@@ -9,7 +9,7 @@ try:
 
     from PyQt4 import QtGui, QtCore
 
-    from larray.view import view, edit
+    from larray.view import view, edit, compare
 
     orig_hook = sys.displayhook
 

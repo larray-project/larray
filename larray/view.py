@@ -284,8 +284,8 @@ class ArrayModel(QAbstractTableModel):
     COLS_TO_LOAD = 40
 
     def __init__(self, data=None, format="%.3f", xlabels=None, ylabels=None,
-                 column_labels=None, row_labels=None,
-                 readonly=False, font=None, parent=None):
+                 readonly=False, font=None, parent=None,
+                 bg_gradient=None, bg_value=None):
         QAbstractTableModel.__init__(self)
 
         self.dialog = parent
@@ -293,6 +293,10 @@ class ArrayModel(QAbstractTableModel):
         self._format = format
 
         # Backgroundcolor settings
+        # TODO: use LinearGradient
+        self.bg_gradient = bg_gradient
+        self.bg_value = bg_value
+        # self.bgfunc = bgfunc
         huerange = [.66, .99]  # Hue
         self.sat = .7  # Saturation
         self.val = 1.  # Value
@@ -472,13 +476,21 @@ class ArrayModel(QAbstractTableModel):
                 color = QColor(Qt.lightGray)
                 color.setAlphaF(.4)
                 return color
-            else:
+            elif self.bg_gradient is None:
                 hue = self.hue0 + \
                       self.dhue * (self.vmax - self.color_func(value)) \
                                 / (self.vmax - self.vmin)
                 hue = float(np.abs(hue))
                 color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
                 return to_qvariant(color)
+            else:
+                bg_value = self.bg_value
+                x = index.row() - len(self.xlabels) + 1
+                y = index.column() - len(self.ylabels) + 1
+                # FIXME: this is buggy on filtered data
+                idx = y + x * bg_value.shape[-1]
+                value = bg_value.data.flat[idx]
+                return self.bg_gradient[value]
         elif role == Qt.ToolTipRole:
             return to_qvariant(repr(value))
         return to_qvariant()
@@ -795,11 +807,14 @@ class PlotDialog(QDialog):
 
 class ArrayEditorWidget(QWidget):
     def __init__(self, parent, data, readonly=False,
-                 xlabels=None, ylabels=None):
+                 xlabels=None, ylabels=None, bg_value=None,
+                 bg_gradient=None):
         QWidget.__init__(self, parent)
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
-        self.model = ArrayModel(None, readonly=readonly, parent=self)
+        self.model = ArrayModel(None, readonly=readonly, parent=self,
+                                bg_value=bg_value,
+                                bg_gradient=bg_gradient)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
 
         self.filters_layout = QHBoxLayout()
@@ -1309,6 +1324,117 @@ class SessionEditor(QDialog):
         return self.data
 
 
+class LinearGradient(object):
+    """
+    I cannot believe I had to roll my own class for this when PyQt already
+    contains QLinearGradient... but you cannot get intermediate values out of
+    QLinearGradient!
+    """
+    def __init__(self, stop_points=None):
+        if stop_points is None:
+            stop_points = []
+        # sort by position
+        stop_points = sorted(stop_points, key=lambda x: x[0])
+        positions, colors = zip(*stop_points)
+        self.positions = np.array(positions)
+        self.colors = np.array(colors)
+
+    def __getitem__(self, key):
+        pos_idx = np.searchsorted(self.positions, key, side='right') - 1
+        # if we are exactly on one of the bounds
+        if pos_idx > 0 and key in self.positions:
+            pos_idx -= 1
+        pos0, pos1 = self.positions[pos_idx:pos_idx + 2]
+        col0, col1 = self.colors[pos_idx:pos_idx + 2]
+        color = col0 + (col1 - col0) * (key - pos0) / (pos1 - pos0)
+        return to_qvariant(QColor.fromHsvF(*color))
+
+
+class ArrayComparator(QDialog):
+    """Session Editor Dialog"""
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+
+        self.data1 = None
+        self.data2 = None
+        self.array1widget = None
+        self.array2widget = None
+
+    def setup_and_check(self, data1, data2, title=''):
+        """
+        Setup SessionEditor:
+        return False if data is not supported, True otherwise
+        """
+        assert isinstance(data1, la.LArray)
+        assert isinstance(data2, la.LArray)
+        self.data1 = data1
+        self.data2 = data2
+
+        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        if icon is not None:
+            self.setWindowIcon(icon)
+
+        if not title:
+            title = _("Array comparator")
+        title += ' (' + _('read only') + ')'
+        self.setWindowTitle(title)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        diff = (data2 - data1)
+        vmax = np.nanmax(diff)
+        vmin = np.nanmin(diff)
+        absmax = max(abs(vmax), abs(vmin))
+        # scale diff to 0-1
+        bg_value = (diff / absmax) / 2 + 0.5
+        gradient = LinearGradient([(0, [.66, .85, 1., .6]),
+                                   (0.5 - 1e-300, [.66, .15, 1., .6]),
+                                   (0.5, [1., 0., 1., 1.]),
+                                   (0.5 + 1e-300, [.99, .15, 1., .6]),
+                                   (1, [.99, .85, 1., .6])])
+
+        self.array1widget = ArrayEditorWidget(self, data1, readonly=True,
+                                              bg_value=bg_value,
+                                              bg_gradient=gradient)
+        self.diffwidget = ArrayEditorWidget(self, diff, readonly=True,
+                                            bg_value=bg_value,
+                                            bg_gradient=gradient)
+        self.array2widget = ArrayEditorWidget(self, data2, readonly=True,
+                                              bg_value=1 - bg_value,
+                                              bg_gradient=gradient)
+
+        splitter = QHBoxLayout()
+        splitter.addWidget(self.array1widget)
+        splitter.addWidget(self.diffwidget)
+        splitter.addWidget(self.array2widget)
+
+        layout.addLayout(splitter)
+
+        # Buttons configuration
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        buttons = QDialogButtonBox.Ok
+        bbox = QDialogButtonBox(buttons)
+        bbox.accepted.connect(self.accept)
+        btn_layout.addWidget(bbox)
+        layout.addLayout(btn_layout)
+
+        self.resize(800, 600)
+        self.setMinimumSize(400, 300)
+
+        # Make the dialog act as a window
+        self.setWindowFlags(Qt.Window)
+        return True
+
+
 def edit(array):
     _app = qapplication()
     dlg = ArrayEditor()
@@ -1324,6 +1450,14 @@ def view(obj, title=''):
         dlg = ArrayEditor()
     if dlg.setup_and_check(obj, title=title, readonly=True):
         dlg.exec_()
+
+
+def compare(obj1, obj2, title=''):
+    _app = qapplication()
+    dlg = ArrayComparator()
+    if dlg.setup_and_check(obj1, obj2, title=title):
+        dlg.exec_()
+
 
 
 if __name__ == "__main__":
@@ -1351,11 +1485,11 @@ if __name__ == "__main__":
     #           .astype(float)
     # data2 = np.random.random(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
     #           .astype(float)
-    data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
-    data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
+    # data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
+    # data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
-    data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
-    arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    # data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
+    # arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
 
     # 8.5Gb... and still snappy, yeah!
     # dummy = la.Axis('dummy', range(7000))
@@ -1381,9 +1515,16 @@ if __name__ == "__main__":
     # arr2 = la.LArray(data2,
     #                  axes=(la.Axis('d0', list(range(5000))),
     #                        la.Axis('d1', list(range(20)))))
-    edit(arr2)
-
+    # edit(arr2)
 
     # view(['a', 'bb', 5599])
-    view(np.arange(12).reshape(2, 3, 2))
-    view([])
+    # view(np.arange(12).reshape(2, 3, 2))
+    # view([])
+
+    data3 = np.random.normal(0, 1, size=(2, 15))
+    arr3 = la.LArray(data3, axes=(sex, lipro))
+    data4 = np.random.normal(0, 1, size=(2, 15))
+    arr4 = la.LArray(data4, axes=(sex, lipro))
+    arr4 = arr3.copy()
+    arr4['F', 'P01':] = arr3['F', 'P01':] / 2
+    compare(arr3, arr4)
