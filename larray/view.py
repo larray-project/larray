@@ -756,14 +756,17 @@ class ArrayView(QTableView):
             topheaders = [dim_names +
                           list(xlabels[i][col_min:col_max+1])
                           for i in range(1, len(xlabels))]
-            if len(dim_names) > 1:
+            if not dim_names:
+                return raw_data
+            elif len(dim_names) == 1:
+                return chain(topheaders, [chain([''], row) for row in raw_data])
+            else:
+                assert len(dim_names) > 1
                 return chain(topheaders,
                              [chain([ylabels[j][r + row_min]
                                      for j in range(1, len(ylabels))],
                                     row)
                               for r, row in enumerate(raw_data)])
-            else:
-                return chain(topheaders, [chain([''], row) for row in raw_data])
         else:
             return raw_data
 
