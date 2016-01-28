@@ -63,7 +63,7 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QItemSelectionModel, QItemSelectionRange,
                          QIcon, QStyle, QFontMetrics)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
-                          pyqtSlot as Slot)
+                          QVariant, pyqtSlot as Slot)
 
 import numpy as np
 
@@ -115,6 +115,10 @@ def to_qvariant(obj=None):
 
 
 def from_qvariant(qobj=None, pytype=None):
+    # FIXME: force API level 2 instead of handling this
+    if isinstance(qobj, QVariant):
+        assert pytype is str
+        return pytype(qobj.toString())
     return qobj
 
 
@@ -640,7 +644,6 @@ class ArrayDelegate(QItemDelegate):
         editor.setText(text)
 
 
-# TODO: Implement "Paste" (from clipboard) feature
 class ArrayView(QTableView):
     """Array view class"""
     def __init__(self, parent, model, dtype, shape):
@@ -686,12 +689,16 @@ class ArrayView(QTableView):
                                          shortcut=keybinding('Copy'),
                                          icon=ima.icon('edit-copy'),
                                          triggered=self.copy)
+        self.paste_action = create_action(self, _('Paste'),
+                                          shortcut=keybinding('Paste'),
+                                          icon=ima.icon('edit-paste'),
+                                          triggered=self.paste)
         self.plot_action = create_action(self, _('Plot'),
                                          shortcut=keybinding('Print'),
                                          # icon=ima.icon('editcopy'),
                                          triggered=self.plot)
         menu = QMenu(self)
-        menu.addActions([self.copy_action, self.plot_action])
+        menu.addActions([self.copy_action, self.plot_action, self.paste_action])
         return menu
 
     def contextMenuEvent(self, event):
@@ -704,12 +711,14 @@ class ArrayView(QTableView):
 
         if event == QKeySequence.Copy:
             self.copy()
+        elif event == QKeySequence.Paste:
+            self.paste()
         elif event == QKeySequence.Print:
             self.plot()
         else:
             QTableView.keyPressEvent(self, event)
 
-    def _selection_bounds(self):
+    def _raw_selection_bounds(self):
         selection_model = self.selectionModel()
         assert isinstance(selection_model, QItemSelectionModel)
         selection = selection_model.selection()
@@ -719,8 +728,8 @@ class ArrayView(QTableView):
         assert isinstance(srange, QItemSelectionRange)
         return srange.top(), srange.bottom(), srange.left(), srange.right()
 
-    def _selection_data(self, headers=True):
-        row_min, row_max, col_min, col_max = self._selection_bounds()
+    def _selection_bounds(self, headers=True):
+        row_min, row_max, col_min, col_max = self._raw_selection_bounds()
         xlabels = self.model().xlabels
         ylabels = self.model().ylabels
         row_min -= len(xlabels) - 1
@@ -731,17 +740,30 @@ class ArrayView(QTableView):
         col_min = max(col_min, 0)
         col_max -= len(ylabels) - 1
         col_max = max(col_max, 0)
+        return row_min, row_max, col_min, col_max
+
+    def _selection_data(self, headers=True):
+        xlabels = self.model().xlabels
+        ylabels = self.model().ylabels
+        row_min, row_max, col_min, col_max = self._selection_bounds()
         data = self.model().get_data()
         raw_data = data[row_min:row_max + 1, col_min:col_max + 1]
         if headers:
-            topheaders = [['' for i in range(1, len(ylabels))] +
+            dim_names = xlabels[0]
+            if len(dim_names) > 1:
+                dim_names = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
+                                              dim_names[-1]]
+            topheaders = [dim_names +
                           list(xlabels[i][col_min:col_max+1])
                           for i in range(1, len(xlabels))]
-            return chain(topheaders,
-                         [chain([ylabels[i][r + row_min]
-                                 for i in range(1, len(ylabels))],
-                                row)
-                          for r, row in enumerate(raw_data)])
+            if len(dim_names) > 1:
+                return chain(topheaders,
+                             [chain([ylabels[j][r + row_min]
+                                     for j in range(1, len(ylabels))],
+                                    row)
+                              for r, row in enumerate(raw_data)])
+            else:
+                return chain(topheaders, [chain([''], row) for row in raw_data])
         else:
             return raw_data
 
@@ -759,6 +781,48 @@ class ArrayView(QTableView):
         text = '\n'.join('\t'.join(vrepr(v) for v in line) for line in data)
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
+
+    @Slot()
+    def paste(self):
+        model = self.model()
+        data = model.get_data()
+        row_min, row_max, col_min, col_max = self._selection_bounds()
+        clipboard = QApplication.clipboard()
+        text = str(clipboard.text())
+        list_data = [line.split('\t') for line in text.splitlines()]
+        try:
+            # take the first cell which contains '\'
+            pos_last = next(i for i, v in enumerate(list_data[0]) if '\\' in v)
+        except StopIteration:
+            # if there isn't any, assume 1d array
+            pos_last = 0
+        if pos_last:
+            # ndim > 1
+            list_data = [line[pos_last + 1:] for line in list_data[1:]]
+        elif len(list_data) == 2 and list_data[1][0] == '':
+            # ndim == 1
+            list_data = [list_data[1][1:]]
+        str_array = np.array(list_data)
+        new_data = str_array.astype(data.dtype)
+        if new_data.shape[0] > 1:
+            row_max = row_min + new_data.shape[0] - 1
+        if new_data.shape[1] > 1:
+            col_max = col_min + new_data.shape[1] - 1
+
+        # TODO: when pasting near bottom/right boundaries and size of
+        # new_data exceeds destination size, we should either have an error
+        # or clip new_data
+        data[row_min:row_max + 1, col_min:col_max + 1] = new_data
+
+        xlabels = model.xlabels
+        ylabels = model.ylabels
+        top_left = model.index(row_min + len(xlabels) - 1,
+                               col_min + len(ylabels) - 1)
+        bottom_right = model.index(row_max + len(xlabels) - 1,
+                                   col_max + len(ylabels) - 1)
+        self.selectionModel().select(QItemSelection(top_left, bottom_right),
+                                     QItemSelectionModel.ClearAndSelect)
+        model.dataChanged.emit(top_left, bottom_right)
 
     def plot(self):
         if not matplotlib_present:
@@ -1488,8 +1552,9 @@ if __name__ == "__main__":
     # data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
     # data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
-    # data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
-    # arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
+    arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    # arr2 = arr2['F', 'A11', '1']
 
     # 8.5Gb... and still snappy, yeah!
     # dummy = la.Axis('dummy', range(7000))
@@ -1508,7 +1573,7 @@ if __name__ == "__main__":
     # view(arr2['0', 'A11'])
     # edit(arr1)
     # print(arr2['0', 'A11', :, 'P01'])
-    # edit(arr2)
+    edit(arr2)
     # print(arr2['0', 'A11', :, 'P01'])
 
     # data2 = np.random.normal(0, 10.0, size=(5000, 20))
@@ -1521,10 +1586,10 @@ if __name__ == "__main__":
     # view(np.arange(12).reshape(2, 3, 2))
     # view([])
 
-    data3 = np.random.normal(0, 1, size=(2, 15))
-    arr3 = la.LArray(data3, axes=(sex, lipro))
-    data4 = np.random.normal(0, 1, size=(2, 15))
-    arr4 = la.LArray(data4, axes=(sex, lipro))
-    arr4 = arr3.copy()
-    arr4['F', 'P01':] = arr3['F', 'P01':] / 2
-    compare(arr3, arr4)
+    # data3 = np.random.normal(0, 1, size=(2, 15))
+    # arr3 = la.LArray(data3, axes=(sex, lipro))
+    # data4 = np.random.normal(0, 1, size=(2, 15))
+    # arr4 = la.LArray(data4, axes=(sex, lipro))
+    # arr4 = arr3.copy()
+    # arr4['F', 'P01':] = arr3['F', 'P01':] / 2
+    # compare(arr3, arr4)
