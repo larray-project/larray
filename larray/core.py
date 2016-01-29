@@ -3730,7 +3730,8 @@ def empty_like(array, dtype=None, order='K'):
       1 | 1.06099789568e-313 | 1.48539705397e-313
       2 | 1.90979621226e-313 | 2.33419537056e-313
     """
-    return empty(array.axes, dtype, order)
+    # cannot use empty() because order == 'K' is not understood
+    return LArray(np.empty_like(array.data, dtype, order), array.axes)
 
 
 def ndrange(axes, start=0, dtype=int):
