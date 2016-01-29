@@ -3296,8 +3296,11 @@ def parse(s):
     # parameters can be strings or numbers
     if isinstance(s, basestring):
         s = s.strip()
-        if s.lower() in ('0', '1', 'false', 'true'):
-            return s in ('1', 'true')
+        low = s.lower()
+        if low == 'true':
+            return True
+        elif low == 'false':
+            return False
         elif s.isdigit():
             return int(s)
         else:
