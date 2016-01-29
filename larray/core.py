@@ -756,19 +756,26 @@ class AxisCollection(object):
             return self.__getattribute__(key)
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            return self._list[key]
-        elif isinstance(key, Axis):
+        if isinstance(key, Axis):
+            # match by object if name is None
             if key.name is None and key in self._list:
                 return key
-            # XXX: check that it is the same object????
-            return self._map[key.name]
+            # we should NOT check that the object is the same, so that we can
+            # use AxisReference objects to target real axes
+            key = key.name
+
+        if isinstance(key, int):
+            return self._list[key]
         elif isinstance(key, (tuple, list, AxisCollection)):
             return AxisCollection([self[k] for k in key])
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         else:
-            return self._map[key]
+            assert isinstance(key, basestring), type(key)
+            if key in self._map:
+                return self._map[key]
+            else:
+                raise KeyError("axis '%s' not found in %s" % (key, self))
 
     def __setitem__(self, key, value):
         if isinstance(key, slice):
@@ -785,10 +792,10 @@ class AxisCollection(object):
             self.__setitem__(key.name, value)
         else:
             assert isinstance(key, basestring), type(key)
-            try:
+            if key in self._map:
                 axis = self._map[key]
-            except KeyError:
-                raise ValueError("inserting a new axis by name is not possible")
+            else:
+                raise KeyError("axis '%s' not found in %s" % (key, self))
             idx = self._list.index(axis)
             self._list[idx] = value
             self._map[key] = value
