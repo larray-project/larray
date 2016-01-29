@@ -1331,7 +1331,7 @@ class LArray(object):
             index = pd.MultiIndex.from_product(self.axes.labels[:-1],
                                                names=axes_names)
         else:
-            index = pd.Index([0])
+            index = pd.Index([''])
         data = np.asarray(self).reshape(len(index), len(columns))
         return pd.DataFrame(data, index, columns)
 
