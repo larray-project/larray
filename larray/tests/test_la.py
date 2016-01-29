@@ -1980,7 +1980,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         with open('test_out1d.csv') as f:
             self.assertEqual(f.readlines(), result)
 
-
     def test_ufuncs(self):
         la = self.small
         raw = self.small_data

@@ -1321,7 +1321,7 @@ class LArray(object):
 
     def to_frame(self, fold_last_axis_name=False):
         columns = pd.Index(self.axes[-1].labels)
-        if not fold_last_axis_name or self.ndim == 1:
+        if not fold_last_axis_name:
             columns.name = self.axes[-1].name
         if self.ndim > 1:
             axes_names = self.axes.names[:-1]
@@ -1332,6 +1332,8 @@ class LArray(object):
                                                names=axes_names)
         else:
             index = pd.Index([''])
+            if fold_last_axis_name:
+                index.name = self.axes.names[-1]
         data = np.asarray(self).reshape(len(index), len(columns))
         return pd.DataFrame(data, index, columns)
 
@@ -3345,9 +3347,11 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
-
     if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
-        axes_names = axes_names[:-1] + axes_names[-1].split('\\')
+        last_axes = [name.strip() for name in axes_names[-1].split('\\')]
+        axes_names = axes_names[:-1] + last_axes
+    elif len(df) == 1 and axes_names == [None]:
+        axes_names = [df.columns.name]
     elif len(df) > 1:
         axes_names += [df.columns.name]
 
