@@ -1407,6 +1407,8 @@ class LinearGradient(object):
         self.colors = np.array(colors)
 
     def __getitem__(self, key):
+        if key != key:
+            key = self.positions[0]
         pos_idx = np.searchsorted(self.positions, key, side='right') - 1
         # if we are exactly on one of the bounds
         if pos_idx > 0 and key in self.positions:
@@ -1460,7 +1462,12 @@ class ArrayComparator(QDialog):
         vmin = np.nanmin(diff)
         absmax = max(abs(vmax), abs(vmin))
         # scale diff to 0-1
-        bg_value = (diff / absmax) / 2 + 0.5
+        if absmax:
+            bg_value = (diff / absmax) / 2 + 0.5
+        else:
+            # TODO: implement full() and full_like()
+            bg_value = la.empty_like(diff)
+            bg_value[:] = 0.5
         gradient = LinearGradient([(0, [.66, .85, 1., .6]),
                                    (0.5 - 1e-300, [.66, .15, 1., .6]),
                                    (0.5, [1., 0., 1., 1.]),
