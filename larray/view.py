@@ -1509,8 +1509,22 @@ def edit(array):
         dlg.exec_()
 
 
+def find_names(obj, depth=1):
+    l = sys._getframe(depth).f_locals
+    return sorted(k for k, v in l.items() if v is obj)
+
 def view(obj, title=''):
     _app = qapplication()
+    if not title:
+        names = find_names(obj, depth=2)
+        assert names
+        if len(names) == 1:
+            title = names[0]
+        elif len(names) <= 3:
+            title = ', '.join(names)
+        else:
+            title = ', '.join(names[:3] + ['...'])
+
     if isinstance(obj, la.Session):
         dlg = SessionEditor()
     else:
