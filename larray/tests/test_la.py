@@ -1930,7 +1930,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
                            [3722, 3395, 3347])
 
     def test_df_aslarray(self):
-        dt = [('age', int), ('sex\\time', 'U1'),
+        dt = [('age', int), ('sex', 'U1'),
               ('2007', int), ('2010', int), ('2013', int)]
         data = np.array([
             (0, 'F', 3722, 3395, 3347),
@@ -1943,7 +1943,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
             (3, 'H', 2052, 2052, 2118),
         ], dtype=dt)
         df = pd.DataFrame(data)
-        df.set_index(['age', 'sex\\time'], inplace=True)
+        df.set_index(['age', 'sex'], inplace=True)
+        df.columns.name = 'time'
 
         la = df_aslarray(df)
         self.assertEqual(la.ndim, 3)
@@ -1971,6 +1972,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
                   '1,0,F,1,2010,3395\n']
         with open('out.csv') as f:
             self.assertEqual(f.readlines()[:3], result)
+
+        la = ndrange([Axis('time', range(2015, 2018))])
+        la.to_csv('test_out1d.csv')
+        result = ['time,2015,2016,2017\n',
+                  ',0,1,2\n']
+        with open('test_out1d.csv') as f:
+            self.assertEqual(f.readlines(), result)
+
 
     def test_ufuncs(self):
         la = self.small

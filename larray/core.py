@@ -1319,12 +1319,13 @@ class LArray(object):
         self.data = data
         self.axes = axes
 
-    @property
-    def df(self):
-        columns = self.axes[-1].labels
+    def to_frame(self, fold_last_axis_name=False):
+        columns = pd.Index(self.axes[-1].labels)
+        if not fold_last_axis_name or self.ndim == 1:
+            columns.name = self.axes[-1].name
         if self.ndim > 1:
             axes_names = self.axes.names[:-1]
-            if axes_names[-1] is not None:
+            if fold_last_axis_name and axes_names[-1] is not None:
                 axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
 
             index = pd.MultiIndex.from_product(self.axes.labels[:-1],
@@ -2925,7 +2926,8 @@ class LArray(object):
         from larray.ufuncs import clip
         return clip(self, a_min, a_max, out)
 
-    def to_csv(self, filepath, sep=',', na_rep='', transpose=True, **kwargs):
+    def to_csv(self, filepath, sep=',', na_rep='', transpose=True,
+               dialect='default', **kwargs):
         """
         write LArray to a csv file.
 
@@ -2940,6 +2942,8 @@ class LArray(object):
         transpose : boolean
             transpose = True  => transpose over last axis.
             transpose = False => no transpose.
+        dialect : 'default' | 'classic'
+            Whether or not to write the last axis name (using '\' )
 
         Example
         -------
@@ -2964,9 +2968,17 @@ class LArray(object):
         BE;F;1
         FO;H;2
         FO;F;3
+        >>> mat.to_csv('test.csv', dialect='classic')
+        >>> with open('test.csv') as f:
+        ...     print(f.read().strip())
+        nat,H,F
+        BE,0,1
+        FO,2,3
         """
+        fold = dialect == 'default'
         if transpose:
-            self.df.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
+            self.to_frame(fold).to_csv(filepath, sep=sep, na_rep=na_rep,
+                                       **kwargs)
         else:
             self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
                                **kwargs)
@@ -2994,7 +3006,7 @@ class LArray(object):
         >>> mat = ndrange([xnat, xsex])
         >>> mat.to_hdf('test.h5', 'mat')
         """
-        self.df.to_hdf(filepath, key, *args, **kwargs)
+        self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
         """
@@ -3021,7 +3033,7 @@ class LArray(object):
         >>> mat = ndrange([xnat, xsex])
         >>> mat.to_excel('test.xlsx', 'Sheet1')
         """
-        self.df.to_excel(filepath, sheet_name, *args, **kwargs)
+        self.to_frame().to_excel(filepath, sheet_name, *args, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """
@@ -3037,7 +3049,7 @@ class LArray(object):
         >>> mat = ndrange([xnat, xsex])
         >>> mat.to_clipboard()  # doctest: +SKIP
         """
-        self.df.to_clipboard(*args, **kwargs)
+        self.to_frame().to_clipboard(*args, **kwargs)
 
     # XXX: sep argument does not seem very useful
     # def to_excel(self, filename, sep=None):
@@ -3092,7 +3104,7 @@ class LArray(object):
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.plot()  # doctest: +SKIP
         """
-        self.df.plot(*args, **kwargs)
+        self.to_frame().plot(*args, **kwargs)
 
     @property
     def shape(self):
@@ -3330,10 +3342,11 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
-    if axes_names == [None] and len(df) > 1:
-        axes_names = [None, None]
+
     if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
         axes_names = axes_names[:-1] + axes_names[-1].split('\\')
+    elif len(df) > 1:
+        axes_names += [df.columns.name]
 
     if len(axes_names) > 1:
         df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
@@ -3407,6 +3420,11 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     nat\\sex | F | H
          BE | 1 | 0
          FO | 3 | 2
+    >>> mat.to_csv('no_axis_name.csv', dialect='classic')
+    >>> read_csv('no_axis_name.csv', nb_index=1)
+    nat\\- | H | F
+       BE | 0 | 1
+       FO | 2 | 3
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
