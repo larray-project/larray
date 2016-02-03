@@ -111,8 +111,8 @@ class CSVHandler(FileHandler):
         return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname)]
 
     def _read_array(self, key, *args, **kwargs):
-        return read_csv(os.path.join(self.fname, '{}.csv'.format(key)),
-                        *args, **kwargs)
+        fpath = os.path.join(self.fname, '{}.csv'.format(key))
+        return read_csv(fpath, *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
         value.to_csv(os.path.join(self.fname, '{}.csv'.format(key)), *args,
