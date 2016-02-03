@@ -35,7 +35,8 @@ Array Editor Dialog based on Qt
 #   them manually)
 #   > need to be generic
 # * copy to clipboard possibly too
-# * automatic change digits on resize column => different format per column
+# ? automatic change digits on resize column
+#   => different format per column, which is problematic UI-wise
 # * keep "headers" visible
 # * keyboard shortcut for filter each dim
 # * tab in a filter combo, brings up next filter combo
@@ -1509,28 +1510,33 @@ class ArrayComparator(QDialog):
         return True
 
 
-def edit(array):
-    _app = qapplication()
-    dlg = ArrayEditor()
-    if dlg.setup_and_check(array):
-        dlg.exec_()
-
-
 def find_names(obj, depth=1):
+    # noinspection PyProtectedMember
     l = sys._getframe(depth).f_locals
     return sorted(k for k, v in l.items() if v is obj)
+
+
+def get_title(obj, depth=1):
+    names = find_names(obj, depth=depth + 1)
+    assert names
+    if len(names) > 3:
+        names = names[:3] + ['...']
+    return ', '.join(names)
+
+
+def edit(array, title=''):
+    _app = qapplication()
+    if not title:
+        title = get_title(array, depth=2)
+    dlg = ArrayEditor()
+    if dlg.setup_and_check(array, title=title):
+        dlg.exec_()
+
 
 def view(obj, title=''):
     _app = qapplication()
     if not title:
-        names = find_names(obj, depth=2)
-        assert names
-        if len(names) == 1:
-            title = names[0]
-        elif len(names) <= 3:
-            title = ', '.join(names)
-        else:
-            title = ', '.join(names[:3] + ['...'])
+        title = get_title(obj, depth=2)
 
     if isinstance(obj, la.Session):
         dlg = SessionEditor()
