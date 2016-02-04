@@ -452,9 +452,9 @@ class ArrayModel(QAbstractTableModel):
         if role == Qt.TextAlignmentRole:
             if (index.row() < len(self.xlabels) - 1) or \
                     (index.column() < len(self.ylabels) - 1):
-                return to_qvariant(int(Qt.AlignCenter|Qt.AlignVCenter))
+                return to_qvariant(int(Qt.AlignCenter | Qt.AlignVCenter))
             else:
-                return to_qvariant(int(Qt.AlignRight|Qt.AlignVCenter))
+                return to_qvariant(int(Qt.AlignRight | Qt.AlignVCenter))
         elif role == Qt.FontRole:
             if (index.row() < len(self.xlabels) - 1) or \
                     (index.column() < len(self.ylabels) - 1):
