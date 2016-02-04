@@ -382,8 +382,9 @@ class ArrayModel(QAbstractTableModel):
         self.total_cols = self._data.shape[1]
         size = self.total_rows * self.total_cols
         try:
-            self.vmin = np.nanmin(self.color_func(data))
-            self.vmax = np.nanmax(self.color_func(data))
+            color_value = self.color_func(data)
+            self.vmin = np.nanmin(color_value)
+            self.vmax = np.nanmax(color_value)
             if self.vmax == self.vmin:
                 self.vmin -= 1
             self.bgcolor_enabled = True
@@ -489,28 +490,28 @@ class ArrayModel(QAbstractTableModel):
             else:
                 return to_qvariant(self._format % value)
 
-        elif role == Qt.BackgroundColorRole and self.bgcolor_enabled \
-                and value is not np.ma.masked:
+        elif role == Qt.BackgroundColorRole:
             if (index.row() < len(self.xlabels) - 1) or \
                     (index.column() < len(self.ylabels) - 1):
                 color = QColor(Qt.lightGray)
                 color.setAlphaF(.4)
                 return color
-            elif self.bg_gradient is None:
-                hue = self.hue0 + \
-                      self.dhue * (self.vmax - self.color_func(value)) \
-                                / (self.vmax - self.vmin)
-                hue = float(np.abs(hue))
-                color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
-                return to_qvariant(color)
-            else:
-                bg_value = self.bg_value
-                x = index.row() - len(self.xlabels) + 1
-                y = index.column() - len(self.ylabels) + 1
-                # FIXME: this is buggy on filtered data
-                idx = y + x * bg_value.shape[-1]
-                value = bg_value.data.flat[idx]
-                return self.bg_gradient[value]
+            elif self.bgcolor_enabled and value is not np.ma.masked:
+                if self.bg_gradient is None:
+                    hue = self.hue0 + \
+                          self.dhue * (self.vmax - self.color_func(value)) \
+                                    / (self.vmax - self.vmin)
+                    hue = float(np.abs(hue))
+                    color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
+                    return to_qvariant(color)
+                else:
+                    bg_value = self.bg_value
+                    x = index.row() - len(self.xlabels) + 1
+                    y = index.column() - len(self.ylabels) + 1
+                    # FIXME: this is buggy on filtered data
+                    idx = y + x * bg_value.shape[-1]
+                    value = bg_value.data.flat[idx]
+                    return self.bg_gradient[value]
         elif role == Qt.ToolTipRole:
             return to_qvariant(repr(value))
         return to_qvariant()
