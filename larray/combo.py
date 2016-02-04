@@ -182,8 +182,7 @@ class FilterComboBox(QtGui.QToolButton):
         self._menu.addItem(text)
 
     def addItems(self, items):
-        for item in items:
-            self.addItem(item)
+        self._menu.addItems(items)
 
     def eventFilter(self, obj, event):
         event_type = event.type()
