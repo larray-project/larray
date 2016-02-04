@@ -24,8 +24,12 @@ try:
     # cleanup namespace
     del QtGui, QtCore, sys
 except ImportError:
-    def view(array):
+    def view(*args, **kwargs):
         raise Exception('view() is not available because Qt is not installed')
 
-    def edit(array):
+    def edit(*args, **kwargs):
         raise Exception('edit() is not available because Qt is not installed')
+
+    def compare(*args, **kwargs):
+        raise Exception('compare() is not available because Qt is not '
+                        'installed')
