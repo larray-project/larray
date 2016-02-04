@@ -18,6 +18,12 @@ Array Editor Dialog based on Qt
 
 
 # TODO:
+# * drag & drop to reorder axes
+#   http://zetcode.com/gui/pyqt4/dragdrop/
+#   http://stackoverflow.com/questions/10264040/how-to-drag-and-drop-into-a-qtablewidget-pyqt
+#   http://stackoverflow.com/questions/3458542/multiple-drag-and-drop-in-pyqt4
+# * keep header columns & rows visible ("frozen")
+#   http://doc.qt.io/qt-5/qtwidgets-itemviews-frozencolumn-example.html
 # * document default icons situation (limitations)
 # * document paint speed experiments
 # * filter on headers
@@ -750,6 +756,11 @@ class ArrayView(QTableView):
         data = self.model().get_data()
         raw_data = data[row_min:row_max + 1, col_min:col_max + 1]
         if headers:
+            # FIXME: this is extremely ad-hoc. We should either use
+            # model.data.ndim (orig_ndim?) or add a new concept (eg dim_names)
+            # in addition to xlabels & ylabels,
+            # TODO: in the future (pandas-based branch) we should use
+            # to_string(data[self._selection_filter()])
             dim_names = xlabels[0]
             if len(dim_names) > 1:
                 dim_names = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
@@ -1129,7 +1140,8 @@ class ArrayEditorWidget(QWidget):
                 cur_filter[axis.name] = axis.labels[indices]
         filtered = self.la_data[cur_filter]
         if np.isscalar(filtered):
-            # TODO: make it readonly
+            # TODO: make it readonly... or not, we could still propagate the
+            # .changes back into the original array.
             data, xlabels, ylabels = np.array([[filtered]]), None, None
         else:
             data, xlabels, ylabels = larray_to_array_and_labels(filtered)
