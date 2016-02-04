@@ -1192,6 +1192,9 @@ def larray_to_array_and_labels(data):
             self.prod = prod
             self.i = i
 
+        def __iter__(self):
+            return iter(self.prod[:][self.i])
+
         def __getitem__(self, key):
             return self.prod[key][self.i]
 
