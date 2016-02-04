@@ -563,8 +563,10 @@ class ArrayModel(QAbstractTableModel):
         if (index.row() < len(self.xlabels) - 1) or \
                 (index.column() < len(self.ylabels) - 1):
             return Qt.ItemIsEnabled #QAbstractTableModel.flags(self, index)
-        return Qt.ItemFlags(QAbstractTableModel.flags(self, index)|
-                            Qt.ItemIsEditable)
+        flags = QAbstractTableModel.flags(self, index)
+        if not self.readonly:
+            flags |= Qt.ItemIsEditable
+        return Qt.ItemFlags(flags)
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Set header data"""
