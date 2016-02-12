@@ -1267,6 +1267,27 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la.median(age), np.median(raw, 0))
         self._assert_equal_raw(la.median(age, sex), np.median(raw, (0, 2)))
 
+    def test_percentile_full_axes(self):
+        la = self.larray
+        raw = self.array
+        age, geo, sex, lipro = la.axes
+
+        self.assertEqual(la.percentile(10),
+                         np.percentile(raw, 10))
+        self._assert_equal_raw(la.percentile(10, age),
+                               np.percentile(raw, 10, 0))
+        self._assert_equal_raw(la.percentile(10, age, sex),
+                               np.percentile(raw, 10, (0, 2)))
+
+    def test_percentile_groups(self):
+        la = self.larray
+        raw = self.array
+        age, geo, sex, lipro = la.axes
+
+        res = la.percentile(10, geo['A11', 'A13', 'A24'])
+        self.assertEqual(res.shape, (116, 2, 15))
+        self._assert_equal_raw(res, np.percentile(raw[:, [0, 2, 4]], 10, 1))
+
     def test_cumsum(self):
         la = self.larray
         age, geo, sex, lipro = la.axes

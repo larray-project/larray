@@ -1284,6 +1284,30 @@ def median(array, *args, **kwargs):
     return array.median(*args, **kwargs)
 
 
+def percentile(array, *args, **kwargs):
+    """
+    Examples
+    --------
+
+    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    -\\- |  0 | 1 | 2
+      0 | 10 | 7 | 4
+      1 |  3 | 2 | 1
+    >>> # this is a bug in numpy: np.nanpercentile(all axes) returns an ndarray,
+    >>> # instead of a scalar.
+    >>> percentile(a, 50)
+    array(3.5)
+    >>> percentile(a, 50, axis=0)
+    - |   0 |   1 |   2
+      | 6.5 | 4.5 | 2.5
+    >>> percentile(a, 50, axis=1)
+    - |   0 |   1
+      | 7.0 | 2.0
+    """
+    return array.percentile(*args, **kwargs)
+
+
 # not commutative
 def ptp(array, *args, **kwargs):
     return array.ptp(*args, **kwargs)
@@ -1989,7 +2013,7 @@ class LArray(object):
         """
         return self.__getitem__(kwargs, collapse)
 
-    def _axis_aggregate(self, op, axes=(), keepaxes=False, out=None):
+    def _axis_aggregate(self, op, axes=(), keepaxes=False, out=None, **kwargs):
         """
         Parameters
         ----------
@@ -2009,17 +2033,14 @@ class LArray(object):
         axes = list(axes) if axes else self.axes
         axes_indices = tuple(self.axes.index(a) for a in axes)
         keepdims = bool(keepaxes)
-        if out is None:
-            res_data = op(src_data, axis=axes_indices, keepdims=keepdims)
-        else:
-            res_data = op(src_data, axis=axes_indices, out=out.data,
-                          keepdims=keepdims)
+        if out is not None:
+            assert isinstance(out, LArray)
+            kwargs['out'] = out.data
+        res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
 
         if keepaxes:
-            if keepaxes is True:
-                label = op.__name__.replace('nan', '')
-            else:
-                label = keepaxes
+            label = op.__name__.replace('nan', '') if keepaxes is True \
+                else keepaxes
             axes_to_kill = [self.axes[axis] for axis in axes]
             new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
             res_axes = self.axes.replace(axes_to_kill, new_axes)
@@ -2045,7 +2066,7 @@ class LArray(object):
     # can contain several groups)
     # XXX: rename keepaxes to label=value? For group_aggregates we might
     # want to keep the VG label if any
-    def _group_aggregate(self, op, items, keepaxes=False, out=None):
+    def _group_aggregate(self, op, items, keepaxes=False, out=None, **kwargs):
         assert out is None
         res = self
         # TODO: when working with several "axes" at the same times, we should
@@ -2105,7 +2126,7 @@ class LArray(object):
                     out = res_data[idx]
 
                 arr = np.asarray(arr)
-                op(arr, axis=axis_idx, out=out)
+                op(arr, axis=axis_idx, out=out, **kwargs)
                 del arr
             if killaxis:
                 assert group_idx[axis_idx] == 0
@@ -2197,7 +2218,7 @@ class LArray(object):
         return operations
 
     def _aggregate(self, op, args, kwargs=None, keepaxes=False,
-                   commutative=False, out=None):
+                   commutative=False, out=None, extra_kwargs={}):
         operations = self._prepare_aggregate(op, args, kwargs, commutative)
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
@@ -2205,7 +2226,7 @@ class LArray(object):
         # consecutive operations.
         for are_axes, axes in groupby(operations, self.axes.isaxis):
             func = res._axis_aggregate if are_axes else res._group_aggregate
-            res = func(op, axes, keepaxes=keepaxes, out=out)
+            res = func(op, axes, keepaxes=keepaxes, out=out, **extra_kwargs)
         return res
 
     def with_total(self, *args, **kwargs):
@@ -2255,6 +2276,7 @@ class LArray(object):
             var: np.var,
             std: np.std,
             median: np.median,
+            percentile: np.percentile,
         }
         # TODO: commutative should be known for usual ops
         operations = self._prepare_aggregate(op, args, kwargs, False)
@@ -2600,6 +2622,18 @@ class LArray(object):
     max = _agg_method(np.max, np.nanmax, commutative=True)
     mean = _agg_method(np.mean, np.nanmean, commutative=True)
     median = _agg_method(np.median, np.nanmedian, commutative=True)
+
+    # percentile needs an explicit method because it has not the same
+    # signature as other aggregate functions (extra argument)
+    def percentile(self, q, *args, **kwargs):
+        keepaxes = kwargs.pop('keepaxes', False)
+        skipna = kwargs.pop('skipna', None)
+        if skipna is None:
+            skipna = True
+        func = np.nanpercentile if skipna else np.percentile
+        return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
+                               commutative=True, extra_kwargs={'q': q})
+
     # not commutative
     ptp = _agg_method(np.ptp)
     var = _agg_method(np.var, np.nanvar)
