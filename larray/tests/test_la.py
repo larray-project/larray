@@ -1241,6 +1241,15 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         for axis in agg.axes:
             self.assertEqual(axis.labels, ['total'])
 
+    def test_median_full_axes(self):
+        la = self.larray
+        raw = self.array
+        age, geo, sex, lipro = la.axes
+
+        self.assertEqual(la.median(), np.median(raw))
+        self._assert_equal_raw(la.median(age), np.median(raw, 0))
+        self._assert_equal_raw(la.median(age, sex), np.median(raw, (0, 2)))
+
     def test_cumsum(self):
         la = self.larray
         age, geo, sex, lipro = la.axes

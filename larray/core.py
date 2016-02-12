@@ -1249,6 +1249,41 @@ def mean(array, *args, **kwargs):
     return array.mean(*args, **kwargs)
 
 
+def median(array, *args, **kwargs):
+    """
+    Parameters
+    ----------
+    array : iterable or array-like or LArray
+    axis : None or int or str or Axis or tuple of those, optional
+
+    Returns
+    -------
+    LArray
+
+    See Also
+    --------
+    LArray.median : Equivalent method.
+
+    Examples
+    --------
+
+    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    -\\- |  0 | 1 | 2
+      0 | 10 | 7 | 4
+      1 |  3 | 2 | 1
+    >>> median(a)
+    3.5
+    >>> median(a, axis=0)
+    - |   0 |   1 |   2
+      | 6.5 | 4.5 | 2.5
+    >>> median(a, axis=1)
+    - |   0 |   1
+      | 7.0 | 2.0
+    """
+    return array.median(*args, **kwargs)
+
+
 # not commutative
 def ptp(array, *args, **kwargs):
     return array.ptp(*args, **kwargs)
@@ -2216,6 +2251,7 @@ class LArray(object):
             ptp: np.ptp,
             var: np.var,
             std: np.std,
+            median: np.median,
         }
         # TODO: commutative should be known for usual ops
         operations = self._prepare_aggregate(op, args, kwargs, False)
@@ -2553,6 +2589,7 @@ class LArray(object):
     min = _agg_method(np.min, commutative=True)
     max = _agg_method(np.max, commutative=True)
     mean = _agg_method(np.mean, commutative=True)
+    median = _agg_method(np.median, commutative=True)
     # not commutative
     ptp = _agg_method(np.ptp)
     var = _agg_method(np.var)
