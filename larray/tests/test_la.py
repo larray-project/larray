@@ -1267,6 +1267,15 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self._assert_equal_raw(la.median(age), np.median(raw, 0))
         self._assert_equal_raw(la.median(age, sex), np.median(raw, (0, 2)))
 
+    def test_median_groups(self):
+        la = self.larray
+        raw = self.array
+        age, geo, sex, lipro = la.axes
+
+        res = la.median(geo['A11', 'A13', 'A24'])
+        self.assertEqual(res.shape, (116, 2, 15))
+        self._assert_equal_raw(res, np.median(raw[:, [0, 2, 4]], 1))
+
     def test_percentile_full_axes(self):
         la = self.larray
         raw = self.array
