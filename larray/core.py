@@ -11,7 +11,7 @@ __all__ = [
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'ndrange', 'identity', 'larray_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
-    'ptp', 'var', 'std',
+    'ptp', 'var', 'std', 'median', 'percentile',
     '__version__'
 ]
 
