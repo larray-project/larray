@@ -1208,9 +1208,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.sum(), np.asarray(la).sum())
 
         # using axes numbers
-        # TODO: implement axis= kwonly argument
-        # self.assertEqual(la.sum(0, 2).shape, (44, 15))
-        # self.assertEqual(la.sum(axis=(0, 2)).shape, (44, 15))
+        self.assertEqual(la.sum(axis=2).shape, (116, 44, 15))
+        self.assertEqual(la.sum(axis=(0, 2)).shape, (44, 15))
 
         # using Axis objects
         self.assertEqual(la.sum(age).shape, (44, 2, 15))

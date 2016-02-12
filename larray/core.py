@@ -2094,7 +2094,12 @@ class LArray(object):
         else:
             explicit_axis = kwargs.pop('axis', None)
             if explicit_axis is not None:
-                args += (self.axes[explicit_axis],)
+                explicit_axis = self.axes[explicit_axis]
+                if isinstance(explicit_axis, Axis):
+                    args += (explicit_axis,)
+                else:
+                    assert isinstance(explicit_axis, AxisCollection)
+                    args += tuple(explicit_axis)
             kwargs_items = kwargs.items()
         if not commutative and len(kwargs_items) > 1:
             raise ValueError("grouping aggregates on multiple axes at the same "
