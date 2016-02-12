@@ -9,7 +9,7 @@ import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones,
-                    clip, exp, where, x, view, mean, var, std)
+                    clip, exp, where, x, view, mean, var, std, isnan)
 from larray.core import to_ticks, to_key, srange, df_aslarray
 
 
@@ -1229,8 +1229,25 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # filter on aggregated
         self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
 
-    def test_sum_full_axes_keep_axes(self):
+    def test_sum_full_axes_with_nan(self):
         la = self.larray.copy()
+        la.data[0, 1, 0, 4] = np.nan
+        age, geo, sex, lipro = la.axes
+        raw = la.data
+
+        # everything
+        self.assertEqual(la.sum(), np.nansum(raw))
+        self.assertTrue(isnan(la.sum(skipna=False)))
+
+        # using Axis objects
+        self._assert_equal_raw(la.sum(age), np.nansum(raw, 0))
+        self._assert_equal_raw(la.sum(age, skipna=False), raw.sum(0))
+
+        self._assert_equal_raw(la.sum(age, sex), np.nansum(raw, (0, 2)))
+        self._assert_equal_raw(la.sum(age, sex, skipna=False), raw.sum((0, 2)))
+
+    def test_sum_full_axes_keep_axes(self):
+        la = self.larray
         agg = la.sum(keepaxes=True)
         self.assertEqual(agg.shape, (1, 1, 1, 1))
         for axis in agg.axes:

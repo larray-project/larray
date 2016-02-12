@@ -2016,7 +2016,10 @@ class LArray(object):
                           keepdims=keepdims)
 
         if keepaxes:
-            label = op.__name__ if keepaxes is True else keepaxes
+            if keepaxes is True:
+                label = op.__name__.replace('nan', '')
+            else:
+                label = keepaxes
             axes_to_kill = [self.axes[axis] for axis in axes]
             new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
             res_axes = self.axes.replace(axes_to_kill, new_axes)
@@ -2571,10 +2574,17 @@ class LArray(object):
         return self * 100 / self.sum(*axes)
 
     # aggregate method factory
-    def _agg_method(npfunc, name=None, commutative=False):
+    def _agg_method(npfunc, nanfunc=None, name=None, commutative=False):
         def method(self, *args, **kwargs):
             keepaxes = kwargs.pop('keepaxes', False)
-            return self._aggregate(npfunc, args, kwargs, keepaxes=keepaxes,
+            skipna = kwargs.pop('skipna', None)
+            if skipna is None:
+                skipna = nanfunc is not None
+            if skipna and nanfunc is None:
+                raise ValueError("skipna is not available for %s" % name)
+            func = nanfunc if skipna else npfunc
+            return self._aggregate(func, args, kwargs,
+                                   keepaxes=keepaxes,
                                    commutative=commutative)
         if name is None:
             name = npfunc.__name__
@@ -2584,16 +2594,16 @@ class LArray(object):
     all = _agg_method(np.all, commutative=True)
     any = _agg_method(np.any, commutative=True)
     # commutative modulo float precision errors
-    sum = _agg_method(np.sum, commutative=True)
-    prod = _agg_method(np.prod, commutative=True)
-    min = _agg_method(np.min, commutative=True)
-    max = _agg_method(np.max, commutative=True)
-    mean = _agg_method(np.mean, commutative=True)
-    median = _agg_method(np.median, commutative=True)
+    sum = _agg_method(np.sum, np.nansum, commutative=True)
+    prod = _agg_method(np.prod, np.nanprod, commutative=True)
+    min = _agg_method(np.min, np.nanmin, commutative=True)
+    max = _agg_method(np.max, np.nanmax, commutative=True)
+    mean = _agg_method(np.mean, np.nanmean, commutative=True)
+    median = _agg_method(np.median, np.nanmedian, commutative=True)
     # not commutative
     ptp = _agg_method(np.ptp)
-    var = _agg_method(np.var)
-    std = _agg_method(np.std)
+    var = _agg_method(np.var, np.nanvar)
+    std = _agg_method(np.std, np.nanstd)
 
     # cumulative aggregates
     def cumsum(self, axis):
