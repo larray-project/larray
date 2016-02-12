@@ -2537,7 +2537,8 @@ class LArray(object):
     # aggregate method factory
     def _agg_method(npfunc, name=None, commutative=False):
         def method(self, *args, **kwargs):
-            return self._aggregate(npfunc, args, kwargs,
+            keepaxes = kwargs.pop('keepaxes', False)
+            return self._aggregate(npfunc, args, kwargs, keepaxes=keepaxes,
                                    commutative=commutative)
         if name is None:
             name = npfunc.__name__

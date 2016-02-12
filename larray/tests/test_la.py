@@ -1229,6 +1229,18 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # filter on aggregated
         self.assertEqual(aggregated.filter(geo=self.vla_str).shape, (22, 15))
 
+    def test_sum_full_axes_keep_axes(self):
+        la = self.larray.copy()
+        agg = la.sum(keepaxes=True)
+        self.assertEqual(agg.shape, (1, 1, 1, 1))
+        for axis in agg.axes:
+            self.assertEqual(axis.labels, ['sum'])
+
+        agg = la.sum(keepaxes='total')
+        self.assertEqual(agg.shape, (1, 1, 1, 1))
+        for axis in agg.axes:
+            self.assertEqual(axis.labels, ['total'])
+
     def test_cumsum(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
