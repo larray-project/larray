@@ -2460,9 +2460,9 @@ class LArray(object):
              IT | H | F
         """
         if axis is None:
-            if len(self.axes) > 1:
-                raise ValueError("more than one axis in array and no axis "
-                                 "specified for argsort")
+            if self.ndim > 1:
+                raise ValueError("array has ndim > 1 and no axis specified for "
+                                 "argsort")
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argsort(axis_idx, kind=kind)]
@@ -2506,9 +2506,9 @@ class LArray(object):
              IT | 0 | 1
         """
         if axis is None:
-            if len(self.axes) > 1:
-                raise ValueError("more than one axis in array and no axis "
-                                 "specified for argsort")
+            if self.ndim > 1:
+                raise ValueError("array has ndim > 1 and no axis specified for "
+                                 "posargsort")
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         return LArray(self.data.argsort(axis_idx, kind=kind), self.axes)
