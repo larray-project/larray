@@ -2267,8 +2267,6 @@ class LArray(object):
         npop = {
             sum: np.sum,
             prod: np.prod,
-            cumsum: np.cumsum,
-            cumprod: np.cumprod,
             min: np.min,
             max: np.max,
             mean: np.mean,
