@@ -2424,7 +2424,7 @@ class LArray(object):
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         return LArray(self.data.argmax(axis_idx), self.axes.without(axis))
 
-    def argsort(self, axis, kind='quicksort'):
+    def argsort(self, axis=None, kind='quicksort'):
         """
         Returns the labels that would sort this array.
 
@@ -2434,7 +2434,7 @@ class LArray(object):
 
         Parameters
         ----------
-        axis : int or str or Axis
+        axis : int or str or Axis, optional
             Axis along which to sort.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
@@ -2459,12 +2459,17 @@ class LArray(object):
              FR | F | H
              IT | H | F
         """
+        if axis is None:
+            if len(self.axes) > 1:
+                raise ValueError("more than one axis in array and no axis "
+                                 "specified for argsort")
+            axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argsort(axis_idx, kind=kind)]
         new_axis = Axis(axis.name, np.arange(len(axis)))
         return LArray(data, self.axes.replace(axis, new_axis))
 
-    def posargsort(self, axis, kind='quicksort'):
+    def posargsort(self, axis=None, kind='quicksort'):
         """
         Returns the indices that would sort this array.
 
@@ -2475,7 +2480,7 @@ class LArray(object):
 
         Parameters
         ----------
-        axis : int or str or Axis
+        axis : int or str or Axis, optional
             Axis along which to sort.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
@@ -2500,6 +2505,11 @@ class LArray(object):
              FR | 1 | 0
              IT | 0 | 1
         """
+        if axis is None:
+            if len(self.axes) > 1:
+                raise ValueError("more than one axis in array and no axis "
+                                 "specified for argsort")
+            axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         return LArray(self.data.argsort(axis_idx), self.axes)
 
