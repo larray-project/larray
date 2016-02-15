@@ -1249,7 +1249,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
     def test_sum_full_axes_with_nan(self):
         la = self.larray.copy()
-        la.data[0, 1, 0, 4] = np.nan
+        la['H', 'P02', 'A12', '0'] = np.nan
         age, geo, sex, lipro = la.axes
         raw = la.data
 
