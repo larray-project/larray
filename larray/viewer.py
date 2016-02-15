@@ -265,7 +265,8 @@ class Product(object):
             return tuple(array[i]
                          for array, i in zip(self.arrays, self.to_tuple(key)))
         else:
-            assert isinstance(key, slice)
+            assert isinstance(key, slice), \
+                "key (%s) has invalid type (%s)" % (key, type(key))
             start, stop, step = key.start, key.stop, key.step
             if start is None:
                 start = 0
