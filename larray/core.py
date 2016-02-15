@@ -1698,7 +1698,7 @@ class LArray(object):
             # np.ix_ computes the cross product of all lists
             return np.ix_(*listkey)
         else:
-            return key
+            return tuple(key)
 
     def __getitem__(self, key, collapse_slices=False):
         data = np.asarray(self)

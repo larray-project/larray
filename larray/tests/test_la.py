@@ -1007,6 +1007,24 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[[1, 5, 9]] = value
         assert_array_equal(la, raw)
 
+    def test_setitem_scalar(self):
+        """
+        tests LArray.__setitem__(key, value) where value is a scalar
+        """
+        # a) list key (one dimension)
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la[['1', '5', '9']] = 42
+        raw[[1, 5, 9]] = 42
+        assert_array_equal(la, raw)
+
+        # b) full scalar key (ie set one cell)
+        la = self.larray.copy()
+        raw = self.array.copy()
+        la['0', 'P02', 'A12', 'H'] = 42
+        raw[0, 1, 0, 1] = 42
+        assert_array_equal(la, raw)
+
     def test_setitem_bool_array_key(self):
         age, geo, sex, lipro = self.larray.axes
 
