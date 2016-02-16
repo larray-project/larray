@@ -347,11 +347,13 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None):
-        self._set_data(data, xlabels, ylabels)
+    def set_data(self, data, xlabels=None, ylabels=None, changes=None):
+        self._set_data(data, xlabels, ylabels, changes)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels):
+    def _set_data(self, data, xlabels, ylabels, changes=None):
+        if changes is None:
+            changes = {}
         if data is None:
             data = np.empty(0, dtype=np.int8).reshape(0, 0)
         if data.dtype.names is None:
@@ -371,7 +373,8 @@ class ArrayModel(QAbstractTableModel):
             self.color_func = np.abs
         else:
             self.color_func = np.real
-        self.changes = {}
+        assert isinstance(changes, dict)
+        self.changes = changes
         self._data = data
         if xlabels is None:
             xlabels = [[]]
@@ -994,7 +997,7 @@ class ArrayEditorWidget(QWidget):
             #     return False
         self._set_raw_data(data, xlabels, ylabels)
 
-    def _set_raw_data(self, data, xlabels, ylabels):
+    def _set_raw_data(self, data, xlabels, ylabels, changes=None):
         # FIXME: this method should be *FAST*, as it is used for each filter
         # change
         ndecimals, use_scientific = self.choose_format(data)
@@ -1003,7 +1006,9 @@ class ArrayEditorWidget(QWidget):
         self.use_scientific = use_scientific
         self.data = data
         self.model.set_format(self.cell_format)
-        self.model.set_data(data, xlabels, ylabels)
+        if changes is None:
+            changes = {}
+        self.model.set_data(data, xlabels, ylabels, changes)
 
         self.digits_spinbox.setValue(ndecimals)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
