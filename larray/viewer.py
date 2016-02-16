@@ -261,7 +261,7 @@ class Product(object):
         return self.length
 
     def __getitem__(self, key):
-        if isinstance(key, int):
+        if isinstance(key, (int, np.int64)):
             return tuple(array[i]
                          for array, i in zip(self.arrays, self.to_tuple(key)))
         else:
