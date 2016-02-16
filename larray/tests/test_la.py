@@ -9,7 +9,8 @@ import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones,
-                    clip, exp, where, x, view, mean, var, std, isnan)
+                    clip, exp, where, x, view, mean, var, std, isnan,
+                    local_arrays)
 from larray.core import to_ticks, to_key, srange, df_aslarray
 
 
