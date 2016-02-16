@@ -118,7 +118,7 @@ Matrix class
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
 
-from itertools import product, chain, groupby, repeat, islice
+from itertools import product, chain, groupby, islice
 import sys
 import csv
 try:
