@@ -1555,7 +1555,8 @@ def find_names(obj, depth=1):
 
 def get_title(obj, depth=1):
     names = find_names(obj, depth=depth + 1)
-    assert names
+    # names can be == [] if we compute an array just to view it
+    # eg. view(arr['H'])
     if len(names) > 3:
         names = names[:3] + ['...']
     return ', '.join(names)
@@ -1588,7 +1589,6 @@ def compare(obj1, obj2, title=''):
     dlg = ArrayComparator()
     if dlg.setup_and_check(obj1, obj2, title=title):
         dlg.exec_()
-
 
 
 if __name__ == "__main__":
