@@ -798,7 +798,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age['1,5']))
 
-    def test_getitem_positional(self):
+    def test_getitem_positional_group(self):
         raw = self.array
         la = self.larray
         age, geo, sex, lipro = la.axes
@@ -900,15 +900,16 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(res.ndim, 1)
         assert_array_equal(res, raw[raw < 5])
 
-    def test_getitem_non_bool_larray_key(self):
-        a = ndrange((2, 2)).rename(0, 'a').rename(1, 'b')
-        # make sure the values are in range(0, 3), so that the lookup works
-        # on dim "e"
-        a = a // 2
-        b = ndrange((2, 2, 3)).rename(0, 'c').rename(1, 'd').rename(2, 'e')
-        c = b[x.e[a]]
-        # c should have dimensions c,d,a,b
-        # AssertionError: XXX (<class 'larray.core.LArray'>) is not scalar
+    def test_getitem_int_larray_lgroup_key(self):
+        # e axis go from 0 to 3
+        arr = ndrange((2, 2, 4)).rename(0, 'c').rename(1, 'd').rename(2, 'e')
+        # key values go from 0 to 3
+        key = ndrange((2, 2)).rename(0, 'a').rename(1, 'b')
+        # this replaces 'e' axis by 'a' and 'b' axes
+        res = arr[x.e[key]]
+        self.assertEqual(res.shape, (2, 2, 2, 2))
+        self.assertEqual(res.axes.names, ['c', 'd', 'a', 'b'])
+
 
     def test_setitem_larray(self):
         """
