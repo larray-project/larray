@@ -375,6 +375,7 @@ def larray_equal(first, other):
 def isnoneslice(v):
     return isinstance(v, slice) and v == slice(None)
 
+
 class PGroupMaker(object):
     def __init__(self, axis):
         self.axis = axis
@@ -1468,6 +1469,72 @@ class LArray(object):
         axes = [Axis(newname, a.labels) if a is axis else a
                 for a in self.axes]
         return LArray(self.data, axes)
+
+    def sort_values(self, key):
+        """Sorts values of the LArray.
+
+        Parameters
+        ----------
+        key : scalar or tuple or Group
+            key along which to sort. Must have exactly one dimension less than
+            ndim.
+
+        Returns
+        -------
+        LArray
+            LArray with sorted values.
+
+        Example
+        -------
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xnat = Axis('nat', ['EU', 'FO', 'BE'])
+        >>> xtype = Axis('type', ['type1', 'type2'])
+        >>> a = LArray([[10, 2, 4], [3, 7, 1]], [xsex, xnat])
+        >>> a
+        sex\\nat | EU | FO | BE
+              H | 10 |  2 |  4
+              F |  3 |  7 |  1
+        >>> a.sort_values('F')
+        sex\\nat | BE | EU | FO
+              H |  4 | 10 |  2
+              F |  1 |  3 |  7
+        >>> b = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
+        ...            [xsex, xtype, xnat])
+        >>> b
+        sex | type\\nat | EU | FO | BE
+          H |    type1 | 10 |  2 |  4
+          H |    type2 |  3 |  7 |  1
+          F |    type1 |  5 |  1 |  6
+          F |    type2 |  2 |  8 |  9
+        >>> b.sort_values(('H', 'type2'))
+        sex | type\\nat | BE | EU | FO
+          H |    type1 |  4 | 10 |  2
+          H |    type2 |  1 |  3 |  7
+          F |    type1 |  6 |  5 |  1
+          F |    type2 |  9 |  2 |  8
+        """
+        subset = self[key]
+        if subset.ndim > 1:
+            raise NotImplementedError("sort_values key must have one "
+                                      "dimension less than array.ndim")
+        assert subset.ndim == 1
+        axis = subset.axes[0]
+        posargsort = subset.posargsort()
+
+        # FIXME: .data shouldn't be necessary, but currently, if we do not do
+        #  it, we get
+        # PGroup(nat | EU | FO | BE
+        #            |  1 |  2 |  0, axis='nat')
+        # which sorts the *data* correctly, but the labels on the nat axis are
+        # not sorted (because the __getitem__ in that case reuse the key
+        # axis as-is -- like it should).
+        # Both use cases have value, but I think reordering the ticks
+        # should be the default. Now, I am unsure where to change this.
+        # Probably in PGroupMaker.__getitem__, but then how do I get the
+        # "not reordering labels" behavior that I have now?
+        # FWIW, using .data, I get PGroup([1, 2, 0], axis='nat'), which works.
+        sorter = axis.i[posargsort.data]
+        return self[sorter]
 
     def sort_axis(self, axis=None, reverse=False):
         """Sorts axes of the LArray.
