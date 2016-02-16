@@ -19,6 +19,9 @@ __all__ = [
 Matrix class
 """
 # TODO
+# * axes with no name should display as (or even have their name assigned to?)
+#   their position
+
 # * add check there is no duplicate label in axes!
 
 # * for NDGroups, we have two options: cross product or intersection.
@@ -55,7 +58,8 @@ Matrix class
 # but that might introduce confusing differences if they update/setitem their
 # arrays
 
-# ? keepdims=True instead of/in addition to group tuples
+# * implement keepaxes=True for _group_aggregate instead of/in addition to
+#   group tuples
 
 # ? implement newaxis
 
@@ -1636,6 +1640,7 @@ class LArray(object):
                              (axis_key, valid_axes))
         return LGroup(axis_key, axis=valid_axes[0])
 
+    # TODO: move this to AxisCollection
     def translated_key(self, key):
         """Complete and translate key
 
@@ -1676,6 +1681,8 @@ class LArray(object):
             if num_ellipses > 1:
                 raise ValueError("cannot use more than one Ellipsis (...)")
             elif num_ellipses == 1:
+                # XXX: we might want to just ignore them, since their
+                # position do not matter anymore (guess axis)
                 pos = key.index(Ellipsis)
                 none_slices = (slice(None),) * (self.ndim - len(key) + 1)
                 key = key[:pos] + none_slices + key[pos + 1:]
@@ -1713,8 +1720,9 @@ class LArray(object):
         return tuple(axis.translate(axis_key)
                      for axis, axis_key in zip(self.axes, key))
 
-    # XXX: we only need axes length, so we might want to move this out of the
-    # class. to AxisCollection? but this backend/numpy-specific, so maybe not
+    # TODO: we only need axes length => move this to AxisCollection
+    # (but this backend/numpy-specific so we'll probably need to create a
+    #  subclass of it)
     def cross_key(self, key, collapse_slices=False):
         """
         :param key: a complete (contains all dimensions) index-based key
