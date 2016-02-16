@@ -63,16 +63,6 @@ Matrix class
 
 # ? implement newaxis
 
-# * int labels vs indice-based indexing
-#   one way to disambiguate is to use marker objects:
-#   time[start + 5:]
-#   time[end - 10:]
-#   time[end(-10):]
-#   time[stop - 10:]
-#   another way is to use a special attribute:
-#   time.ix[5:]
-#   time.ix[-10:]
-
 # * split unit tests
 
 # * reindex array (ie make it conform to another index, eg of another
@@ -97,7 +87,6 @@ Matrix class
 #      + check pandas dialects
 # * plotting (see plot.py)
 #   >> check pandas API
-# * implement iloc
 # * implement more Axis functions:
 #   - arithmetic operations: + -
 #   - regexp functions: geo.group('A3*')
