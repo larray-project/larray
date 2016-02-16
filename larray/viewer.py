@@ -952,6 +952,7 @@ class ArrayEditorWidget(QWidget):
     def set_data(self, data, xlabels=None, ylabels=None):
         self.old_data_shape = None
         self.current_filter = {}
+        self.global_changes = {}
         if np.isscalar(data):
             data = np.array(data)
             readonly = True
@@ -971,6 +972,7 @@ class ArrayEditorWidget(QWidget):
             if not isinstance(data, np.ndarray):
                 data = np.asarray(data)
             self.la_data = None
+        self.filtered_data = self.la_data
         if data.size == 0:
             QMessageBox.critical(self, _("Error"), _("Array is empty"))
         if data.ndim == 1:
@@ -1119,8 +1121,8 @@ class ArrayEditorWidget(QWidget):
 
     def accept_changes(self):
         """Accept changes"""
-        for (i, j), value in list(self.model.changes.items()):
-            self.data[i, j] = value
+        for k, v in self.global_changes.items():
+            self.la_data[k] = v
         if self.old_data_shape is not None:
             self.data.shape = self.old_data_shape
 
@@ -1155,6 +1157,8 @@ class ArrayEditorWidget(QWidget):
         return combo
 
     def change_filter(self, axis, indices):
+        # must be done before changing self.current_filter
+        self.update_global_changes()
         cur_filter = self.current_filter
         # if index == 0:
         if not indices or len(indices) == len(axis.labels):
@@ -1166,17 +1170,89 @@ class ArrayEditorWidget(QWidget):
             else:
                 cur_filter[axis.name] = axis.labels[indices]
         filtered = self.la_data[cur_filter]
+        local_changes = self.get_local_changes(filtered)
+        self.filtered_data = filtered
         if np.isscalar(filtered):
-            # TODO: make it readonly... or not, we could still propagate the
+            # no need to make the editor readonly as we can still propagate the
             # .changes back into the original array.
             data, xlabels, ylabels = np.array([[filtered]]), None, None
         else:
             data, xlabels, ylabels = larray_to_array_and_labels(filtered)
 
-        # FIXME: we should get model.changes and convert them to
-        #        "global changes" (because set_data reset the changes dict)
-        self._set_raw_data(data, xlabels, ylabels)
+        self._set_raw_data(data, xlabels, ylabels, local_changes)
 
+    def get_local_changes(self, filtered):
+        # we cannot apply the changes directly to data because it might be a
+        # view
+        changes = {}
+        for k, v in self.global_changes.items():
+            local_key = self.map_global_to_filtered(k, filtered)
+            if local_key is not None:
+                changes[local_key] = v
+        return changes
+
+    def update_global_changes(self):
+        changes = self.global_changes
+        model_changes = self.model.changes
+        for k, v in model_changes.items():
+            changes[self.map_filtered_to_global(k)] = v
+
+    def map_global_to_filtered(self, k, filtered):
+        """
+        map global ND key to local (filtered) 2D key
+        """
+        assert isinstance(k, tuple) and len(k) == self.la_data.ndim
+
+        dkey = {axis.name: axis_key
+                for axis_key, axis in zip(k, self.la_data.axes)}
+
+        # transform global dictionary key to "local" (filtered) key by removing
+        # the parts of the key
+        for axis_name, axis_filter in self.current_filter.items():
+            axis_key = dkey[axis_name]
+            if axis_key == axis_filter or axis_key in axis_filter:
+                del dkey[axis_name]
+            else:
+                # that key is invalid for/outside the current filter
+                return None
+
+        # transform local label key to local index key
+        try:
+            index_key = filtered.translated_key(dkey)
+        except ValueError:
+            return None
+
+        # transform local index ND key to local index 2D key
+        mult = np.append(1, np.cumprod(filtered.shape[1:-1][::-1]))[::-1]
+        return (index_key[:-1] * mult).sum(), index_key[-1]
+
+    def map_filtered_to_global(self, k):
+        """
+        map local (filtered) 2D key to global ND key
+        """
+        assert isinstance(k, tuple) and len(k) == 2
+
+        # transform local index key to local label key
+        model = self.model
+        ki, kj = k
+        xlabels = model.xlabels
+        ylabels = model.ylabels
+        xlabel = [xlabels[i][kj] for i in range(1, len(xlabels))]
+        ylabel = [ylabels[j][ki] for j in range(1, len(ylabels))]
+        label_key = tuple(ylabel + xlabel)
+
+        # compute dictionary key out of it
+        data = self.filtered_data
+        axes_names = data.axes.names if isinstance(data, la.LArray) else []
+        dkey = dict(zip(axes_names, label_key))
+
+        # add the "scalar" parts of the filter to it (ie the parts of the
+        # filter which removed dimensions)
+        dkey.update({k: v for k, v in self.current_filter.items()
+                     if np.isscalar(v)})
+
+        # re-transform it to tuple (to make it hashable/to store it in .changes)
+        return tuple(dkey[axis.name] for axis in self.la_data.axes)
 
 
 def larray_to_array_and_labels(data):
