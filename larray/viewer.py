@@ -382,19 +382,7 @@ class ArrayModel(QAbstractTableModel):
         self.total_rows = self._data.shape[0]
         self.total_cols = self._data.shape[1]
         size = self.total_rows * self.total_cols
-        try:
-            color_value = self.color_func(data)
-            self.vmin = np.nanmin(color_value)
-            self.vmax = np.nanmax(color_value)
-            if self.vmax == self.vmin:
-                self.vmin -= 1
-            self.bgcolor_enabled = True
-        # ValueError for empty arrays
-        except (TypeError, ValueError):
-            self.vmin = None
-            self.vmax = None
-            self.bgcolor_enabled = False
-
+        self.reset_minmax(data)
         # Use paging when the total size, number of rows or number of
         # columns is too large
         if size > LARGE_SIZE:
@@ -409,6 +397,23 @@ class ArrayModel(QAbstractTableModel):
                 self.cols_loaded = self.COLS_TO_LOAD
             else:
                 self.cols_loaded = self.total_cols
+
+    def reset_minmax(self, data):
+        # this will be awful to get right, because ideally, we should
+        # include self.changes.values() and ignore values corresponding to
+        # self.changes.keys()
+        try:
+            color_value = self.color_func(data)
+            self.vmin = np.nanmin(color_value)
+            self.vmax = np.nanmax(color_value)
+            if self.vmax == self.vmin:
+                self.vmin -= 1
+            self.bgcolor_enabled = True
+        # ValueError for empty arrays
+        except (TypeError, ValueError):
+            self.vmin = None
+            self.vmax = None
+            self.bgcolor_enabled = False
 
     def set_format(self, format):
         """Change display format"""
