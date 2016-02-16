@@ -1583,9 +1583,9 @@ class LArray(object):
         Returns a full N dimensional positional key
         """
 
-        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, bool):
+        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, np.bool_):
             return key.nonzero()
-        if isinstance(key, LArray) and np.issubdtype(key.dtype, bool):
+        if isinstance(key, LArray) and np.issubdtype(key.dtype, np.bool_):
             # if only the axes order is wrong, transpose
             if key.size == self.size and key.shape != self.shape:
                 return np.asarray(key.transpose(self.axes)).nonzero()
@@ -1715,7 +1715,7 @@ class LArray(object):
         # >>> np.issubdtype(key.dtype, bool)
         # True
         if isinstance(key, (LArray, np.ndarray)) and \
-                np.issubdtype(key.dtype, bool):
+                np.issubdtype(key.dtype, np.bool_):
             return LArray(data[translated_key],
                           self._bool_key_new_axes(translated_key))
 
@@ -1759,7 +1759,7 @@ class LArray(object):
         translated_key = self.translated_key(key)
 
         if isinstance(key, (LArray, np.ndarray)) and \
-                np.issubdtype(key.dtype, bool):
+                np.issubdtype(key.dtype, np.bool_):
             if isinstance(value, LArray):
                 new_axes = self._bool_key_new_axes(translated_key,
                                                    wildcard_allowed=True)

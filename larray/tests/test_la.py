@@ -910,6 +910,27 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(res.shape, (2, 2, 2, 2))
         self.assertEqual(res.axes.names, ['c', 'd', 'a', 'b'])
 
+    def test_getitem_larray_key_guess(self):
+        a = Axis('a', ['a1', 'a2'])
+        b = Axis('b', ['b1', 'b2'])
+        c = Axis('c', ['c1', 'c2'])
+        d = Axis('d', ['d1', 'd2'])
+        e = Axis('e', ['e1', 'e2', 'e3', 'e4'])
+
+        arr = ndrange([c, d, e])
+        key = LArray([['e1', 'e2'], ['e3', 'e4']], [a, b])
+        self.assertEqual(arr[key].axes, [c, d, a, b])
+
+    def test_getitem_int_larray_key_guess(self):
+        a = Axis('a', [0, 1])
+        b = Axis('b', [2, 3])
+        c = Axis('c', [4, 5])
+        d = Axis('d', [6, 7])
+        e = Axis('e', [8, 9, 10, 11])
+
+        arr = ndrange([c, d, e])
+        key = LArray([[8, 9], [10, 11]], [a, b])
+        self.assertEqual(arr[key].axes, [c, d, a, b])
 
     def test_setitem_larray(self):
         """
