@@ -1366,6 +1366,25 @@ class LArrayIterator(object):
     next = __next__
 
 
+class LArrayPositionalIndexer(object):
+    def __init__(self, array):
+        self.array = array
+
+    def translate_key(self, key):
+        if not isinstance(key, tuple):
+            key = (key,)
+        if len(key) < self.array.ndim:
+            key += (slice(None),) * (self.array.ndim - len(key))
+        return tuple(PGroup(axis_key, axis=axis.name)
+                     for axis_key, axis in zip(key, self.array.axes))
+
+    def __getitem__(self, key):
+        return self.array[self.translate_key(key)]
+
+    def __setitem__(self, key, value):
+        self.array[self.translate_key(key)] = value
+
+
 class LArray(object):
     """
     LArray class
@@ -1389,6 +1408,10 @@ class LArray(object):
                 axes = AxisCollection(axes)
         self.data = data
         self.axes = axes
+
+    @property
+    def i(self):
+        return LArrayPositionalIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False):
         columns = pd.Index(self.axes[-1].labels)
@@ -1786,11 +1809,6 @@ class LArray(object):
         # Q: Should it be the same object as the NDLGroup?/NDKey?
         # A: yes, probably. On the Pandas backend, we could/should have
         #    separate axes. On the numpy backend we cannot.
-        # FIXME: the issubdtype test is buggy, int dtypes return True
-        # >>> key.dtype
-        # dtype('int32')
-        # >>> np.issubdtype(key.dtype, bool)
-        # True
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, np.bool_):
             return LArray(data[translated_key],
