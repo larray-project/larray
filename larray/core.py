@@ -1603,7 +1603,9 @@ class LArray(object):
 
         if isinstance(key, tuple):
             # handle keys containing an Ellipsis
-            num_ellipses = key.count(Ellipsis)
+            # cannot use key.count(Ellipsis) because that calls == on each
+            # element and this breaks if there are ndarrays/LArrays in there.
+            num_ellipses = sum(isinstance(k, type(Ellipsis)) for k in key)
             if num_ellipses > 1:
                 raise ValueError("cannot use more than one Ellipsis (...)")
             elif num_ellipses == 1:
@@ -2668,8 +2670,7 @@ class LArray(object):
                 other = other.data
             elif isinstance(other, np.ndarray):
                 pass
-            # so that we can do key.count(Ellipsis)
-            elif other is Ellipsis or other is None:
+            elif other is None:
                 return False
             elif not np.isscalar(other):
                 raise TypeError("unsupported operand type(s) for %s: '%s' "

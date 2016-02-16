@@ -921,6 +921,17 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         key = LArray([['e1', 'e2'], ['e3', 'e4']], [a, b])
         self.assertEqual(arr[key].axes, [c, d, a, b])
 
+    def test_getitem_ndarray_key_guess(self):
+        raw = self.array
+        la = self.larray
+        keys = ['P04', 'P01', 'P03', 'P02']
+        key = np.array(keys)
+        res = la[key]
+        self.assertTrue(isinstance(res, LArray))
+        self.assertEqual(res.axes,
+                         la.axes.replace(x.lipro, Axis('lipro', keys)))
+        assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
+
     def test_getitem_int_larray_key_guess(self):
         a = Axis('a', [0, 1])
         b = Axis('b', [2, 3])
@@ -931,6 +942,18 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         arr = ndrange([c, d, e])
         key = LArray([[8, 9], [10, 11]], [a, b])
         self.assertEqual(arr[key].axes, [c, d, a, b])
+
+    def test_getitem_int_ndarray_key_guess(self):
+        c = Axis('c', [4, 5])
+        d = Axis('d', [6, 7])
+        e = Axis('e', [8, 9, 10, 11])
+
+        arr = ndrange([c, d, e])
+        # ND keys do not work yet
+        # key = np.array([[8, 11], [10, 9]])
+        key = np.array([8, 11, 10])
+        res = arr[key]
+        self.assertEqual(res.axes, [c, d, Axis('e', [8, 11, 10])])
 
     def test_setitem_larray(self):
         """
