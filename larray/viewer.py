@@ -557,14 +557,17 @@ class ArrayModel(QAbstractTableModel):
             return False
 
         # Add change to self.changes
-        oldvalue = self.color_func(self.changes.get((i, j), self._data[i, j]))
-        if (oldvalue == self.vmax and val < self.vmax) or \
-                (oldvalue == self.vmin and val > self.vmin):
-            # TODO: reset vmin & vmax
-            pass
+        old_value = self.changes.get((i, j), self._data[i, j])
+        if val == old_value:
+            return True
+
+        colorval = self.color_func(val)
+        old_colorval = self.color_func(old_value)
+        if (old_colorval == self.vmax and colorval < self.vmax) or \
+                (old_colorval == self.vmin and colorval > self.vmin):
+            self.reset_minmax(self._data)
 
         self.changes[(i, j)] = val
-        colorval = self.color_func(val)
         self.dataChanged.emit(index, index)
         if colorval > self.vmax:
             self.vmax = colorval
