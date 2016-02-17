@@ -1390,8 +1390,7 @@ class LArrayPositionalIndexer(object):
     def translate_key(self, key):
         if not isinstance(key, tuple):
             key = (key,)
-        if len(key) < self.array.ndim:
-            key += (slice(None),) * (self.array.ndim - len(key))
+        # no need to create a full nd key as that will be done later anyway
         return tuple(PGroup(axis_key, axis=axis.name)
                      for axis_key, axis in zip(key, self.array.axes))
 
