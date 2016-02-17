@@ -127,25 +127,53 @@ from larray.utils import (table2str, unique, csv_open, unzip, long,
 def srange(*args):
     return list(map(str, range(*args)))
 
-def range_to_slice(seq):
+def range_to_slice(seq, length=None):
     """
     seq is a sequence-like (list, tuple or ndarray) of integers
     returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
+
+    >>> range_to_slice([3, 4, 5])
+    slice(3, 6, None)
+    >>> range_to_slice([3, 5, 7])
+    slice(3, 9, 2)
+    >>> range_to_slice([-3, -2])
+    slice(-3, -1, None)
+    >>> range_to_slice([-1, -2])
+    slice(-1, -3, -1)
+    >>> range_to_slice([2, 1])
+    slice(2, 0, -1)
+    >>> range_to_slice([1, 0], 4)
+    slice(-3, -5, -1)
+    >>> range_to_slice([1, 0])
+    [1, 0]
+    >>> range_to_slice([1])
+    slice(1, 2, None)
+    >>> range_to_slice([])
+    []
     """
     if len(seq) < 1:
         return seq
-    first = seq[0]
+    start = seq[0]
     if len(seq) == 1:
-        return slice(first, first + 1)
+        return slice(start, start + 1)
     second = seq[1]
-    step = second - first
+    step = second - start
     prev_value = second
     for value in seq[2:]:
         if value != prev_value + step:
             return seq
         prev_value = value
-    return slice(first, prev_value + step, step)
+    stop = prev_value + step
+    if prev_value == 0 and step < 0:
+        if length is None:
+            return seq
+        else:
+            stop -= length
+            start -= length
+    if step == 1:
+        step = None
+    return slice(start, stop, step)
 
 
 def slice_to_str(key):
@@ -1745,10 +1773,10 @@ class LArray(object):
         # behaves like one
         sequence = (tuple, list, np.ndarray)
         if collapse_slices:
-            key = [range_to_slice(axis_key)
+            key = [range_to_slice(axis_key, len(axis))
                    if isinstance(axis_key, sequence)
                    else axis_key
-                   for axis_key in key]
+                   for axis_key, axis in zip(key, self.axes)]
 
         # count number of indexing arrays (ie non scalar/slices) in tuple
         num_ix_arrays = sum(isinstance(axis_key, sequence) for axis_key in key)

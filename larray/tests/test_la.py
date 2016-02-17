@@ -965,10 +965,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(la.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
 
     def test_positional_indexer_setitem(self):
-        # FIXME: for some reason decreasing indices break e.g.
-        # [1, 0] and ([1, 0], 2) fail (nothing is updated)
-        for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [0, 1],
-                    ([0, 1], 2)]:
+        for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0],
+                    ([1, 0], 2)]:
             la = self.larray.copy()
             raw = self.array.copy()
             la.i[key] = 42
@@ -977,8 +975,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         la = self.larray.copy()
         raw = self.array.copy()
-        # la.i[[1, 0], [5, 4]] = 42
-        la.i[[0, 1], [4, 5]] = 42
+        la.i[[1, 0], [5, 4]] = 42
         raw[np.ix_([1, 0], [5, 4])] = 42
         assert_array_equal(la, raw)
 
