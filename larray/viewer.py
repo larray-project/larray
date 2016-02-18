@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright © 2009-2012 Pierre Raybaut
-# Copyright © 2015 Gaëtan de Menten
+# Copyright © 2015-2016 Gaëtan de Menten
 # Licensed under the terms of the MIT License
 
 # based on
@@ -70,7 +70,8 @@ import sys
 from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QItemDelegate, QListWidget, QSplitter,
                          QLineEdit, QCheckBox, QGridLayout,
-                         QDoubleValidator, QDialog, QDialogButtonBox,
+                         QDoubleValidator, QIntValidator,
+                         QDialog, QDialogButtonBox, QPushButton,
                          QMessageBox, QMenu,
                          QKeySequence, QLabel,
                          QSpinBox, QWidget, QVBoxLayout,
@@ -1385,14 +1386,19 @@ class ArrayEditor(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
-        buttons = QDialogButtonBox.Ok
+        # not using a QDialogButtonBox with standard Ok/Cancel buttons
+        # because that makes it impossible to disable the AutoDefault on them
+        # (Enter always "accepts"/close the dialog) which is annoying for edit()
+        ok_button = QPushButton("&OK")
+        ok_button.clicked.connect(self.accept)
+        ok_button.setAutoDefault(False)
         if not readonly:
-            buttons |= QDialogButtonBox.Cancel
-        bbox = QDialogButtonBox(buttons)
-        bbox.accepted.connect(self.accept)
-        if not readonly:
-            bbox.rejected.connect(self.reject)
-        btn_layout.addWidget(bbox)
+            cancel_button = QPushButton("Cancel")
+            cancel_button.clicked.connect(self.reject)
+            cancel_button.setAutoDefault(False)
+
+        btn_layout.addWidget(ok_button)
+        btn_layout.addWidget(cancel_button)
         layout.addLayout(btn_layout, 2, 0)
 
         # Make the dialog act as a window
