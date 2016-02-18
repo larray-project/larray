@@ -77,7 +77,7 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QSpinBox, QWidget, QVBoxLayout,
                          QFont, QAction, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange,
-                         QIcon, QStyle, QFontMetrics)
+                         QIcon, QStyle, QFontMetrics, QToolTip)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
                           QVariant, pyqtSlot as Slot)
 
@@ -306,7 +306,7 @@ class ArrayModel(QAbstractTableModel):
 
     def __init__(self, data=None, format="%.3f", xlabels=None, ylabels=None,
                  readonly=False, font=None, parent=None,
-                 bg_gradient=None, bg_value=None):
+                 bg_gradient=None, bg_value=None, minvalue=None, maxvalue=None):
         QAbstractTableModel.__init__(self)
 
         self.dialog = parent
@@ -336,6 +336,9 @@ class ArrayModel(QAbstractTableModel):
         bold_font.setBold(True)
         self.bold_font = bold_font
 
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
+        # TODO: check that data respects minvalue/maxvalue
         self._set_data(data, xlabels, ylabels)
 
     def get_format(self):
@@ -480,6 +483,7 @@ class ArrayModel(QAbstractTableModel):
                 return to_qvariant(int(Qt.AlignCenter | Qt.AlignVCenter))
             else:
                 return to_qvariant(int(Qt.AlignRight | Qt.AlignVCenter))
+
         elif role == Qt.FontRole:
             if (index.row() < len(self.xlabels) - 1) or \
                     (index.column() < len(self.ylabels) - 1):
@@ -647,12 +651,15 @@ class ArrayModel(QAbstractTableModel):
 
 class ArrayDelegate(QItemDelegate):
     """Array Editor Item Delegate"""
-    def __init__(self, dtype, parent=None, font=None):
+    def __init__(self, dtype, parent=None, font=None,
+                 minvalue=None, maxvalue=None):
         QItemDelegate.__init__(self, parent)
         self.dtype = dtype
         if font is None:
             font = get_font('arrayeditor')
         self.font = font
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
 
         # We must keep a count instead of the "current" one, because when
         # switching from one cell to the next, the new editor is created
@@ -664,19 +671,47 @@ class ArrayDelegate(QItemDelegate):
         """Create editor widget"""
         model = index.model()
         value = model.get_value(index)
-        if model._data.dtype.name == "bool":
+        if self.dtype.name == "bool":
             # toggle value
             value = not value
             model.setData(index, to_qvariant(value))
             return
         elif value is not np.ma.masked:
+            minvalue, maxvalue = self.minvalue, self.maxvalue
+            if minvalue is not None and maxvalue is not None:
+                msg = "value must be between %s and %s" % (minvalue, maxvalue)
+            elif minvalue is not None:
+                msg = "value must be >= %s" % minvalue
+            elif maxvalue is not None:
+                msg = "value must be <= %s" % maxvalue
+            else:
+                msg = None
+
+            # Not using a QSpinBox for integer inputs because I could not find
+            # a way to prevent the spinbox/editor from closing if the value is
+            # invalid. Using the builtin minimum/maximum of the spinbox works
+            # but that provides no message so it is less clear.
             editor = QLineEdit(parent)
+            if is_number(self.dtype):
+                validator = QDoubleValidator(editor) if is_float(self.dtype) \
+                    else QIntValidator(editor)
+                if minvalue is not None:
+                    validator.setBottom(minvalue)
+                if maxvalue is not None:
+                    validator.setTop(maxvalue)
+                editor.setValidator(validator)
+
+                def on_editor_text_edited():
+                    if not editor.hasAcceptableInput():
+                        QToolTip.showText(editor.mapToGlobal(QPoint()), msg)
+                    else:
+                        QToolTip.hideText()
+                editor.textEdited.connect(on_editor_text_edited)
+
             editor.setFont(self.font)
             editor.setAlignment(Qt.AlignRight)
             editor.destroyed.connect(self.on_editor_destroyed)
             self.editor_count += 1
-            if is_number(self.dtype):
-                editor.setValidator(QDoubleValidator(editor))
             return editor
 
     def on_editor_destroyed(self):
@@ -695,7 +730,10 @@ class ArrayView(QTableView):
         QTableView.__init__(self, parent)
 
         self.setModel(model)
-        self.setItemDelegate(ArrayDelegate(dtype, self))
+        delegate = ArrayDelegate(dtype, self,
+                                 minvalue=model.minvalue,
+                                 maxvalue=model.maxvalue)
+        self.setItemDelegate(delegate)
         self.setSelectionMode(QTableView.ContiguousSelection)
 
         self.shape = shape
@@ -930,13 +968,13 @@ class PlotDialog(QDialog):
 class ArrayEditorWidget(QWidget):
     def __init__(self, parent, data, readonly=False,
                  xlabels=None, ylabels=None, bg_value=None,
-                 bg_gradient=None):
+                 bg_gradient=None, minvalue=None, maxvalue=None):
         QWidget.__init__(self, parent)
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
         self.model = ArrayModel(None, readonly=readonly, parent=self,
-                                bg_value=bg_value,
-                                bg_gradient=bg_gradient)
+                                bg_value=bg_value, bg_gradient=bg_gradient,
+                                minvalue=minvalue, maxvalue=maxvalue)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
 
         self.filters_layout = QHBoxLayout()
@@ -1369,7 +1407,8 @@ class ArrayEditor(QDialog):
         self.arraywidget = None
 
     def setup_and_check(self, data, title='', readonly=False,
-                        xlabels=None, ylabels=None):
+                        xlabels=None, ylabels=None,
+                        minvalue=None, maxvalue=None):
         """
         Setup ArrayEditor:
         return False if data is not supported, True otherwise
@@ -1396,7 +1435,9 @@ class ArrayEditor(QDialog):
         self.setMinimumSize(400, 300)
 
         self.arraywidget = ArrayEditorWidget(self, data, readonly,
-                                             xlabels, ylabels)
+                                             xlabels, ylabels,
+                                             minvalue=minvalue,
+                                             maxvalue=maxvalue)
         layout.addWidget(self.arraywidget, 1, 0)
 
         # Buttons configuration
@@ -1666,12 +1707,13 @@ def get_title(obj, depth=1):
     return ', '.join(names)
 
 
-def edit(array, title=''):
+def edit(array, title='', minvalue=None, maxvalue=None):
     _app = qapplication()
     if not title:
         title = get_title(array, depth=2)
     dlg = ArrayEditor()
-    if dlg.setup_and_check(array, title=title):
+    if dlg.setup_and_check(array, title=title,
+                           minvalue=minvalue, maxvalue=maxvalue):
         dlg.exec_()
 
 
@@ -1744,7 +1786,9 @@ if __name__ == "__main__":
     # view(arr2['0', 'A11'])
     # edit(arr1)
     # print(arr2['0', 'A11', :, 'P01'])
-    edit(arr2)
+    # edit(arr2.astype(int), minvalue=-99, maxvalue=55.123456)
+    # edit(arr2.astype(int), minvalue=-99)
+    edit(arr2, minvalue=-99, maxvalue=25.123456)
     # print(arr2['0', 'A11', :, 'P01'])
 
     # data2 = np.random.normal(0, 10.0, size=(5000, 20))
