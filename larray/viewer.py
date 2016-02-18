@@ -669,14 +669,8 @@ class ArrayDelegate(QItemDelegate):
             editor.setAlignment(Qt.AlignRight)
             if is_number(self.dtype):
                 editor.setValidator(QDoubleValidator(editor))
-            editor.returnPressed.connect(self.on_editor_return_pressed)
             return editor
 
-    def on_editor_return_pressed(self):
-        """Commit and close editor"""
-        editor = self.sender()
-        self.commitData.emit(editor)
-        self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, index):
         """Set editor widget's data"""
