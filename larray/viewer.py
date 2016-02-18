@@ -532,22 +532,30 @@ class ArrayModel(QAbstractTableModel):
         i = index.row() - len(self.xlabels) + 1
         j = index.column() - len(self.ylabels) + 1
         value = from_qvariant(value, str)
-        if self._data.dtype.name == "bool":
+        dtype = self._data.dtype
+        if dtype.name == "bool":
             try:
                 val = bool(float(value))
             except ValueError:
                 val = value.lower() == "true"
-        elif self._data.dtype.name.startswith("string"):
+        elif dtype.name.startswith("string"):
             val = str(value)
-        elif self._data.dtype.name.startswith("unicode"):
+        elif dtype.name.startswith("unicode"):
             val = to_text_string(value)
         else:
             if value.lower().startswith('e') or value.lower().endswith('e'):
                 return False
             try:
-                val = complex(value)
-                if not val.imag:
-                    val = val.real
+                if is_float(dtype):
+                    val = float(value)
+                elif is_number(dtype):
+                    val = int(value)
+                else:
+                    val = complex(value)
+                    # XXX: unsure this is necessary now that I handle float
+                    # explicitly
+                    if not val.imag:
+                        val = val.real
             except ValueError as e:
                 QMessageBox.critical(self.dialog, "Error",
                                      "Value error: %s" % str(e))
