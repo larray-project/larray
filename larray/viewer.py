@@ -601,11 +601,11 @@ class ArrayModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Set header data"""
         horizontal = orientation == Qt.Horizontal
-        if role == Qt.ToolTipRole:
-            if horizontal:
-                return to_qvariant("horiz %d" % section)
-            else:
-                return to_qvariant("vert %d" % section)
+        # if role == Qt.ToolTipRole:
+        #     if horizontal:
+        #         return to_qvariant("horiz %d" % section)
+        #     else:
+        #         return to_qvariant("vert %d" % section)
         if role != Qt.DisplayRole:
             # roles = {0: "display", 2: "edit", 8: "background", 9: "foreground",
             #          13: "sizehint", 4: "statustip", 11: "accessibletext",
