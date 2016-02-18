@@ -654,6 +654,12 @@ class ArrayDelegate(QItemDelegate):
             font = get_font('arrayeditor')
         self.font = font
 
+        # We must keep a count instead of the "current" one, because when
+        # switching from one cell to the next, the new editor is created
+        # before the old one is destroyed, which means it would be set to None
+        # when the old one is destroyed.
+        self.editor_count = 0
+
     def createEditor(self, parent, option, index):
         """Create editor widget"""
         model = index.model()
@@ -667,10 +673,15 @@ class ArrayDelegate(QItemDelegate):
             editor = QLineEdit(parent)
             editor.setFont(self.font)
             editor.setAlignment(Qt.AlignRight)
+            editor.destroyed.connect(self.on_editor_destroyed)
+            self.editor_count += 1
             if is_number(self.dtype):
                 editor.setValidator(QDoubleValidator(editor))
             return editor
 
+    def on_editor_destroyed(self):
+        self.editor_count -= 1
+        assert self.editor_count >= 0
 
     def setEditorData(self, editor, index):
         """Set editor widget's data"""
@@ -749,6 +760,11 @@ class ArrayView(QTableView):
             self.paste()
         elif event == QKeySequence.Print:
             self.plot()
+        # allow to start editing cells by pressing Enter
+        elif event.key() == Qt.Key_Return:
+            index = self.currentIndex()
+            if self.itemDelegate(index).editor_count == 0:
+                self.edit(index)
         else:
             QTableView.keyPressEvent(self, event)
 
