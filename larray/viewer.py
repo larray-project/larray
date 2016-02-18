@@ -75,7 +75,6 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QMessageBox, QMenu,
                          QKeySequence, QLabel,
                          QSpinBox, QWidget, QVBoxLayout,
-                         QAbstractItemDelegate,
                          QFont, QAction, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange,
                          QIcon, QStyle, QFontMetrics)
