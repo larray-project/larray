@@ -767,7 +767,8 @@ class ArrayDelegate(QItemDelegate):
                         QToolTip.showText(editor.mapToGlobal(QPoint()), msg)
                     else:
                         QToolTip.hideText()
-                editor.textEdited.connect(on_editor_text_edited)
+                if msg is not None:
+                    editor.textEdited.connect(on_editor_text_edited)
 
             editor.setFont(self.font)
             editor.setAlignment(Qt.AlignRight)
