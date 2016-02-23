@@ -2842,7 +2842,7 @@ class LArray(object):
 
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
-    def expand(self, target_axes=None, out=None):
+    def expand(self, target_axes=None, out=None, readonly=False):
         """expands array to target_axes
 
         target_axes will be added to array if not present. In most cases this
@@ -2855,6 +2855,9 @@ class LArray(object):
             self can contain axes not present in target_axes
         out : LArray, optional
             output array, must have the correct shape
+        readonly : bool, optional
+            whether returning a readonly view is acceptable or not (this is
+            much faster)
 
         Returns
         -------
@@ -2903,8 +2906,12 @@ class LArray(object):
             return broadcasted
 
         if out is None:
-            out = LArray(np.empty(target_axes.shape, dtype=self.dtype),
-                         target_axes)
+            if readonly:
+                return LArray(np.broadcast_to(broadcasted, target_axes.shape),
+                              target_axes)
+            else:
+                out = LArray(np.empty(target_axes.shape, dtype=self.dtype),
+                             target_axes)
         out[:] = broadcasted
         return out
 
