@@ -529,66 +529,127 @@ class ArrayModel(QAbstractTableModel):
             return to_qvariant(repr(value))
         return to_qvariant()
 
+    def get_values(self, left, top, right, bottom):
+        changes = self.changes
+        values = self._data[left:right, top:bottom].copy()
+        for i in range(left, right):
+            for j in range(top, bottom):
+                pos = i, j
+                if pos in changes:
+                    values[i - left, j - top] = changes[pos]
+        return values
+
+    def convert_value(self, value):
+        """
+        Parameters
+        ----------
+        value : str
+        """
+        dtype = self._data.dtype
+        if dtype.name == "bool":
+            try:
+                return bool(float(value))
+            except ValueError:
+                return value.lower() == "true"
+        elif dtype.name.startswith("string"):
+            return str(value)
+        elif dtype.name.startswith("unicode"):
+            return to_text_string(value)
+        elif is_float(dtype):
+            return float(value)
+        elif is_number(dtype):
+            return int(value)
+        else:
+            return complex(value)
+
+    def convert_values(self, values):
+        values = np.asarray(values)
+        res = np.empty_like(values, dtype=self._data.dtype)
+        try:
+            # TODO: try to use array/vectorized conversion functions
+            # new_data = str_array.astype(data.dtype)
+            for i, v in enumerate(values.flat):
+                res.flat[i] = self.convert_value(v)
+        except ValueError as e:
+            QMessageBox.critical(self.dialog, "Error",
+                                 "Value error: %s" % str(e))
+            return None
+        except OverflowError as e:
+            QMessageBox.critical(self.dialog, "Error",
+                                 "Overflow error: %s" % e.message)
+            return None
+        return res
+
+    def set_values(self, left, top, right, bottom, values):
+        """
+        Parameters
+        ----------
+        left : int
+        top : int
+        right : int
+            exclusive
+        bottom : int
+            exclusive
+        values : ndarray
+            must not be of the correct type
+
+        Returns
+        -------
+        tuple of QModelIndex or None
+            actual bounds (end bound is inclusive) if update was successful,
+            None otherwise
+        """
+        values = self.convert_values(values)
+        if values is None:
+            return
+        values = np.atleast_2d(values)
+        vshape = values.shape
+        vwidth, vheight = vshape
+        width, height = right - left, bottom - top
+        assert vwidth == 1 or vwidth == width
+        assert vheight == 1 or vheight == height
+
+        # Add change to self.changes
+        changes = self.changes
+        newvalues = np.broadcast_to(values, (width, height))
+        oldvalues = np.empty_like(newvalues)
+        for i in range(width):
+            for j in range(height):
+                pos = left + i, top + j
+                old_value = changes.get(pos, self._data[pos])
+                oldvalues[i, j] = old_value
+                val = newvalues[i, j]
+                if val != old_value:
+                    changes[pos] = val
+
+        # Update vmin/vmax if necessary
+        if self.vmin is not None and self.vmax is not None:
+            colorval = self.color_func(values)
+            old_colorval = self.color_func(oldvalues)
+            if np.any(((old_colorval == self.vmax) & (colorval < self.vmax)) |
+                      ((old_colorval == self.vmin) & (colorval > self.vmin))):
+                self.reset_minmax(self._data)
+            if np.any(colorval > self.vmax):
+                self.vmax = np.nanmax(colorval)
+            if np.any(colorval < self.vmin):
+                self.vmin = np.nanmin(colorval)
+
+        xoffset = len(self.xlabels) - 1
+        yoffset = len(self.ylabels) - 1
+        top_left = self.index(left + xoffset, top + yoffset)
+        # -1 because Qt index end bounds are inclusive
+        bottom_right = self.index(right + xoffset - 1, bottom + yoffset - 1)
+        self.dataChanged.emit(top_left, bottom_right)
+        return top_left, bottom_right
+
     def setData(self, index, value, role=Qt.EditRole):
         """Cell content change"""
         if not index.isValid() or self.readonly:
             return False
         i = index.row() - len(self.xlabels) + 1
         j = index.column() - len(self.ylabels) + 1
-        value = from_qvariant(value, str)
-        dtype = self._data.dtype
-        if dtype.name == "bool":
-            try:
-                val = bool(float(value))
-            except ValueError:
-                val = value.lower() == "true"
-        elif dtype.name.startswith("string"):
-            val = str(value)
-        elif dtype.name.startswith("unicode"):
-            val = to_text_string(value)
-        else:
-            if value.lower().startswith('e') or value.lower().endswith('e'):
-                return False
-            try:
-                if is_float(dtype):
-                    val = float(value)
-                elif is_number(dtype):
-                    val = int(value)
-                else:
-                    val = complex(value)
-                    # XXX: unsure this is necessary now that I handle float
-                    # explicitly
-                    if not val.imag:
-                        val = val.real
-            except ValueError as e:
-                QMessageBox.critical(self.dialog, "Error",
-                                     "Value error: %s" % str(e))
-                return False
-        try:
-            self.test_array[0] = val  # could raise an Exception
-        except OverflowError as e:
-            QMessageBox.critical(self.dialog, "Error",
-                                 "Overflow error: %s" % e.message)
-            return False
-
-        # Add change to self.changes
-        old_value = self.changes.get((i, j), self._data[i, j])
-        if val == old_value:
-            return True
-
-        colorval = self.color_func(val)
-        old_colorval = self.color_func(old_value)
-        if (old_colorval == self.vmax and colorval < self.vmax) or \
-                (old_colorval == self.vmin and colorval > self.vmin):
-            self.reset_minmax(self._data)
-
-        self.changes[(i, j)] = val
-        self.dataChanged.emit(index, index)
-        if colorval > self.vmax:
-            self.vmax = colorval
-        if val < self.vmin:
-            self.vmin = colorval
-        return True
+        result = self.set_values(i, j, i + 1, j + 1, from_qvariant(value, str))
+        return result is not None
 
     def flags(self, index):
         """Set editable flag"""
@@ -816,7 +877,13 @@ class ArrayView(QTableView):
         assert isinstance(srange, QItemSelectionRange)
         return srange.top(), srange.bottom(), srange.left(), srange.right()
 
-    def _selection_bounds(self, headers=True):
+    def _selection_bounds(self):
+        """
+        Returns
+        -------
+        tuple
+            selection bounds. end bound is exclusive
+        """
         row_min, row_max, col_min, col_max = self._raw_selection_bounds()
         xlabels = self.model().xlabels
         ylabels = self.model().ylabels
@@ -828,15 +895,14 @@ class ArrayView(QTableView):
         col_min = max(col_min, 0)
         col_max -= len(ylabels) - 1
         col_max = max(col_max, 0)
-        return row_min, row_max, col_min, col_max
+        return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True):
-        xlabels = self.model().xlabels
-        ylabels = self.model().ylabels
         row_min, row_max, col_min, col_max = self._selection_bounds()
-        data = self.model().get_data()
-        raw_data = data[row_min:row_max + 1, col_min:col_max + 1]
+        raw_data = self.model().get_values(row_min, col_min, row_max, col_max)
         if headers:
+            xlabels = self.model().xlabels
+            ylabels = self.model().ylabels
             # FIXME: this is extremely ad-hoc. We should either use
             # model.data.ndim (orig_ndim?) or add a new concept (eg dim_names)
             # in addition to xlabels & ylabels,
@@ -847,7 +913,7 @@ class ArrayView(QTableView):
                 dim_names = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
                                               dim_names[-1]]
             topheaders = [dim_names +
-                          list(xlabels[i][col_min:col_max+1])
+                          list(xlabels[i][col_min:col_max])
                           for i in range(1, len(xlabels))]
             if not dim_names:
                 return raw_data
@@ -881,7 +947,6 @@ class ArrayView(QTableView):
     @Slot()
     def paste(self):
         model = self.model()
-        data = model.get_data()
         row_min, row_max, col_min, col_max = self._selection_bounds()
         clipboard = QApplication.clipboard()
         text = str(clipboard.text())
@@ -898,27 +963,21 @@ class ArrayView(QTableView):
         elif len(list_data) == 2 and list_data[1][0] == '':
             # ndim == 1
             list_data = [list_data[1][1:]]
-        str_array = np.array(list_data)
-        new_data = str_array.astype(data.dtype)
+        new_data = np.array(list_data)
         if new_data.shape[0] > 1:
-            row_max = row_min + new_data.shape[0] - 1
+            row_max = row_min + new_data.shape[0]
         if new_data.shape[1] > 1:
-            col_max = col_min + new_data.shape[1] - 1
+            col_max = col_min + new_data.shape[1]
+
+        result = model.set_values(row_min, col_min, row_max, col_max, new_data)
+        if result is None:
+            return
 
         # TODO: when pasting near bottom/right boundaries and size of
         # new_data exceeds destination size, we should either have an error
         # or clip new_data
-        data[row_min:row_max + 1, col_min:col_max + 1] = new_data
-
-        xlabels = model.xlabels
-        ylabels = model.ylabels
-        top_left = model.index(row_min + len(xlabels) - 1,
-                               col_min + len(ylabels) - 1)
-        bottom_right = model.index(row_max + len(xlabels) - 1,
-                                   col_max + len(ylabels) - 1)
-        self.selectionModel().select(QItemSelection(top_left, bottom_right),
+        self.selectionModel().select(QItemSelection(*result),
                                      QItemSelectionModel.ClearAndSelect)
-        model.dataChanged.emit(top_left, bottom_right)
 
     def plot(self):
         if not matplotlib_present:
