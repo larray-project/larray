@@ -1513,13 +1513,12 @@ class ArrayEditor(QDialog):
         ok_button = QPushButton("&OK")
         ok_button.clicked.connect(self.accept)
         ok_button.setAutoDefault(False)
+        btn_layout.addWidget(ok_button)
         if not readonly:
             cancel_button = QPushButton("Cancel")
             cancel_button.clicked.connect(self.reject)
             cancel_button.setAutoDefault(False)
-
-        btn_layout.addWidget(ok_button)
-        btn_layout.addWidget(cancel_button)
+            btn_layout.addWidget(cancel_button)
         layout.addLayout(btn_layout, 2, 0)
 
         # Make the dialog act as a window
