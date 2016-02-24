@@ -1237,6 +1237,7 @@ class ArrayEditorWidget(QWidget):
 
     def accept_changes(self):
         """Accept changes"""
+        self.update_global_changes()
         for k, v in self.global_changes.items():
             self.la_data[k] = v
         if self.old_data_shape is not None:
@@ -1244,6 +1245,8 @@ class ArrayEditorWidget(QWidget):
 
     def reject_changes(self):
         """Reject changes"""
+        self.global_changes = {}
+        self.model.changes = {}
         if self.old_data_shape is not None:
             self.data.shape = self.old_data_shape
 
