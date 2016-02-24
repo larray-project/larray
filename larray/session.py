@@ -280,5 +280,5 @@ class Session(object):
 
 
 def local_arrays():
-    g = sys._getframe(1).f_locals
-    return Session((k, v) for k, v in g.items() if isinstance(v, LArray))
+    d = sys._getframe(1).f_locals
+    return Session((k, v) for k, v in d.items() if isinstance(v, LArray))
