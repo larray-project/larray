@@ -272,6 +272,9 @@ class Session(object):
     def __repr__(self):
         return 'Session({})'.format(', '.join(self.names))
 
+    def __len__(self):
+        return len(self._objects)
+
     def __eq__(self, other):
         return all(larray_equal(a0, a1) for a0, a1 in zip(self, other))
 
