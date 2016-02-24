@@ -1490,7 +1490,7 @@ class ArrayEditor(QDialog):
             self.setWindowIcon(icon)
 
         if not title:
-            title = _("Array editor")
+            title = _("Array viewer") if readonly else _("Array editor")
         if readonly:
             title += ' (' + _('read only') + ')'
         self.setWindowTitle(title)
@@ -1571,7 +1571,7 @@ class SessionEditor(QDialog):
             self.setWindowIcon(icon)
 
         if not title:
-            title = _("Session editor")
+            title = _("Session viewer") if readonly else _("Session editor")
         if readonly:
             title += ' (' + _('read only') + ')'
         self.setWindowTitle(title)
