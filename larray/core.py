@@ -2204,7 +2204,7 @@ class LArray(object):
 
             axis, axis_idx = res.axes[axis], res.axes.index(axis)
             res_shape[axis_idx] = len(groups)
-            res_dtype = res.dtype if op is not np.mean else float
+            res_dtype = res.dtype if op not in (np.mean, np.nanmean) else float
             res_data = np.empty(res_shape, dtype=res_dtype)
 
             group_idx = [slice(None) for _ in res_shape]

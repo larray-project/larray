@@ -1345,6 +1345,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         for axis in agg.axes:
             self.assertEqual(axis.labels, ['total'])
 
+    def test_mean_full_axes(self):
+        la = self.larray
+        raw = self.array
+
+        self.assertEqual(la.mean(), np.mean(raw))
+        self._assert_equal_raw(la.mean(x.age), np.mean(raw, 0))
+        self._assert_equal_raw(la.mean(x.age, x.sex), np.mean(raw, (0, 2)))
+
+    def test_mean_groups(self):
+        # using int type to test that we get a float in return
+        la = self.larray.astype(int)
+        raw = self.array
+        res = la.mean(x.geo['A11', 'A13', 'A24', 'A31'])
+        self._assert_equal_raw(res, np.mean(raw[:, [0, 2, 4, 5]], 1))
+
     def test_median_full_axes(self):
         la = self.larray
         raw = self.array
