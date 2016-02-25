@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from unittest import TestCase
 import unittest
 
+import numpy as np
 from larray import Session, Axis, LArray, ndrange
 
 
@@ -10,9 +11,9 @@ class TestSession(TestCase):
     def setUp(self):
         self.a = Axis('a', [])
         self.b = Axis('b', [])
-        self.e = ndrange((2, 3))
-        self.f = ndrange((3, 2))
-        self.g = ndrange((2, 4))
+        self.e = ndrange((2, 3)).rename(0, 'a0').rename(1, 'a1')
+        self.f = ndrange((3, 2)).rename(0, 'a0').rename(1, 'a1')
+        self.g = ndrange((2, 4)).rename(0, 'a0').rename(1, 'a1')
         self.session = Session(self.a, self.b, c='c', d={},
                                e=self.e, f=self.f, g=self.g)
 
@@ -97,8 +98,24 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
     def test_eq(self):
-        self.assertEqual(self.session.filter(kind=LArray),
-                         Session([('e', self.e), ('f', self.f), ('g', self.g)]))
+        sess = self.session.filter(kind=LArray)
+        expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
+        self.assertTrue(all(sess == expected))
+
+        other = Session({'e': self.e, 'f': self.f})
+        res = sess == other
+        self.assertEqual(res.ndim, 1)
+        self.assertEqual(res.axes.names, ['name'])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
+        self.assertEqual(list(res), [True, True, False])
+
+        e2 = self.e.copy()
+        e2.i[1, 1] = 42
+        other = Session({'e': e2, 'f': self.f})
+        res = sess == other
+        self.assertEqual(res.axes.names, ['name'])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
+        self.assertEqual(list(res), [False, True, False])
 
     def test_init(self):
         s = Session('test_session.h5')

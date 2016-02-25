@@ -4,7 +4,8 @@ import os
 import sys
 
 from pandas import ExcelWriter, ExcelFile, HDFStore
-from larray.core import LArray, read_csv, read_hdf, df_aslarray, larray_equal
+from larray.core import LArray, Axis, read_csv, read_hdf, df_aslarray, \
+    larray_equal
 
 
 def check_pattern(k, pattern):
@@ -282,7 +283,11 @@ class Session(object):
         return len(self._objects)
 
     def __eq__(self, other):
-        return all(larray_equal(a0, a1) for a0, a1 in zip(self, other))
+        self_names = set(self.names)
+        all_names = self.names + [n for n in other.names if n not in self_names]
+        res = [larray_equal(self.get(name), other.get(name))
+               for name in all_names]
+        return LArray(res, [Axis('name', all_names)])
 
 
 def local_arrays():
