@@ -389,6 +389,8 @@ def union(*args):
 
 
 def larray_equal(first, other):
+    if not isinstance(first, LArray) or not isinstance(other, LArray):
+        return False
     return (first.axes == other.axes and
             np.array_equal(np.asarray(first), np.asarray(other)))
 
