@@ -162,6 +162,12 @@ class Session(object):
         else:
             return self._objects[key]
 
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
     def __setitem__(self, key, value):
         self._objects[key] = value
 
