@@ -1319,7 +1319,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     def test_sum_full_axes_with_nan(self):
         la = self.larray.copy()
         la['H', 'P02', 'A12', '0'] = np.nan
-        age, geo, sex, lipro = la.axes
         raw = la.data
 
         # everything
@@ -1327,11 +1326,12 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertTrue(isnan(la.sum(skipna=False)))
 
         # using Axis objects
-        self._assert_equal_raw(la.sum(age), np.nansum(raw, 0))
-        self._assert_equal_raw(la.sum(age, skipna=False), raw.sum(0))
+        self._assert_equal_raw(la.sum(x.age), np.nansum(raw, 0))
+        self._assert_equal_raw(la.sum(x.age, skipna=False), raw.sum(0))
 
-        self._assert_equal_raw(la.sum(age, sex), np.nansum(raw, (0, 2)))
-        self._assert_equal_raw(la.sum(age, sex, skipna=False), raw.sum((0, 2)))
+        self._assert_equal_raw(la.sum(x.age, x.sex), np.nansum(raw, (0, 2)))
+        self._assert_equal_raw(la.sum(x.age, x.sex, skipna=False),
+                               raw.sum((0, 2)))
 
     def test_sum_full_axes_keep_axes(self):
         la = self.larray
@@ -1363,49 +1363,43 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     def test_median_full_axes(self):
         la = self.larray
         raw = self.array
-        age, geo, sex, lipro = la.axes
 
         self.assertEqual(la.median(), np.median(raw))
-        self._assert_equal_raw(la.median(age), np.median(raw, 0))
-        self._assert_equal_raw(la.median(age, sex), np.median(raw, (0, 2)))
+        self._assert_equal_raw(la.median(x.age), np.median(raw, 0))
+        self._assert_equal_raw(la.median(x.age, x.sex), np.median(raw, (0, 2)))
 
     def test_median_groups(self):
         la = self.larray
         raw = self.array
-        age, geo, sex, lipro = la.axes
 
-        res = la.median(geo['A11', 'A13', 'A24'])
+        res = la.median(x.geo['A11', 'A13', 'A24'])
         self.assertEqual(res.shape, (116, 2, 15))
         self._assert_equal_raw(res, np.median(raw[:, [0, 2, 4]], 1))
 
     def test_percentile_full_axes(self):
         la = self.larray
         raw = self.array
-        age, geo, sex, lipro = la.axes
 
         self.assertEqual(la.percentile(10),
                          np.percentile(raw, 10))
-        self._assert_equal_raw(la.percentile(10, age),
+        self._assert_equal_raw(la.percentile(10, x.age),
                                np.percentile(raw, 10, 0))
-        self._assert_equal_raw(la.percentile(10, age, sex),
+        self._assert_equal_raw(la.percentile(10, x.age, x.sex),
                                np.percentile(raw, 10, (0, 2)))
 
     def test_percentile_groups(self):
         la = self.larray
         raw = self.array
-        age, geo, sex, lipro = la.axes
 
-        res = la.percentile(10, geo['A11', 'A13', 'A24'])
-        self.assertEqual(res.shape, (116, 2, 15))
+        res = la.percentile(10, x.geo['A11', 'A13', 'A24'])
         self._assert_equal_raw(res, np.percentile(raw[:, [0, 2, 4]], 10, 1))
 
     def test_cumsum(self):
         la = self.larray
-        age, geo, sex, lipro = la.axes
 
         # using Axis objects
-        assert_array_equal(la.cumsum(age), self.array.cumsum(0))
-        assert_array_equal(la.cumsum(lipro), self.array.cumsum(3))
+        assert_array_equal(la.cumsum(x.age), self.array.cumsum(0))
+        assert_array_equal(la.cumsum(x.lipro), self.array.cumsum(3))
 
         # using axes numbers
         assert_array_equal(la.cumsum(1), self.array.cumsum(1))
