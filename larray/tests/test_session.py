@@ -117,6 +117,25 @@ class TestSession(TestCase):
         self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
         self.assertEqual(list(res), [False, True, False])
 
+    def test_ne(self):
+        sess = self.session.filter(kind=LArray)
+        expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
+        self.assertFalse(any(sess != expected))
+
+        other = Session({'e': self.e, 'f': self.f})
+        res = sess != other
+        self.assertEqual(res.axes.names, ['name'])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
+        self.assertEqual(list(res), [False, False, True])
+
+        e2 = self.e.copy()
+        e2.i[1, 1] = 42
+        other = Session({'e': e2, 'f': self.f})
+        res = sess != other
+        self.assertEqual(res.axes.names, ['name'])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
+        self.assertEqual(list(res), [True, False, True])
+
     def test_init(self):
         s = Session('test_session.h5')
         self.assertEqual(s.names, ['e', 'f', 'g'])

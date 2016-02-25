@@ -289,6 +289,9 @@ class Session(object):
                for name in all_names]
         return LArray(res, [Axis('name', all_names)])
 
+    def __ne__(self, other):
+        return ~(self == other)
+
 
 def local_arrays():
     d = sys._getframe(1).f_locals
