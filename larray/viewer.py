@@ -522,7 +522,8 @@ class ArrayModel(QAbstractTableModel):
                     bg_value = self.bg_value
                     x = index.row() - len(self.xlabels) + 1
                     y = index.column() - len(self.ylabels) + 1
-                    # FIXME: this is buggy on filtered data
+                    # FIXME: this is buggy on filtered data. We should change
+                    # bg_value when changing the filter.
                     idx = y + x * bg_value.shape[-1]
                     value = bg_value.data.flat[idx]
                     return self.bg_gradient[value]
@@ -567,7 +568,8 @@ class ArrayModel(QAbstractTableModel):
         values = np.asarray(values)
         res = np.empty_like(values, dtype=self._data.dtype)
         try:
-            # TODO: try to use array/vectorized conversion functions
+            # TODO: use array/vectorized conversion functions (but watch out
+            # for bool)
             # new_data = str_array.astype(data.dtype)
             for i, v in enumerate(values.flat):
                 res.flat[i] = self.convert_value(v)
@@ -936,6 +938,7 @@ class ArrayView(QTableView):
             return
 
         # np.savetxt make things more complicated, especially on py3
+        # XXX: why don't we use repr for everything?
         def vrepr(v):
             if isinstance(v, float):
                 return repr(v)
@@ -1242,6 +1245,8 @@ class ArrayEditorWidget(QWidget):
         self.update_global_changes()
         for k, v in self.global_changes.items():
             self.la_data[k] = v
+        # XXX: shouldn't this be done only in the dialog? (if we continue
+        # editing...)
         if self.old_data_shape is not None:
             self.data.shape = self.old_data_shape
 
@@ -1249,12 +1254,15 @@ class ArrayEditorWidget(QWidget):
         """Reject changes"""
         self.global_changes = {}
         self.model.changes = {}
+        # XXX: shouldn't this be done only in the dialog? (if we continue
+        # editing...)
         if self.old_data_shape is not None:
             self.data.shape = self.old_data_shape
 
     @property
     def cell_format(self):
-        if self.data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
+        if self.data.dtype.type in (np.str, np.str_, np.bool_, np.bool,
+                                    np.object_):
             return '%s'
         else:
             return '%%.%d%s' % (self.digits, 'e' if self.use_scientific else 'f')
