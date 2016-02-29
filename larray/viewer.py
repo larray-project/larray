@@ -1032,6 +1032,8 @@ class ArrayEditorWidget(QWidget):
                  xlabels=None, ylabels=None, bg_value=None,
                  bg_gradient=None, minvalue=None, maxvalue=None):
         QWidget.__init__(self, parent)
+        if np.isscalar(data):
+            readonly = True
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
         self.model = ArrayModel(None, readonly=readonly, parent=self,
@@ -1071,9 +1073,6 @@ class ArrayEditorWidget(QWidget):
         self.old_data_shape = None
         self.current_filter = {}
         self.global_changes = {}
-        if np.isscalar(data):
-            data = np.array(data)
-            readonly = True
         if isinstance(data, la.LArray):
             self.la_data = data
             filters_layout = self.filters_layout
@@ -1472,6 +1471,8 @@ class ArrayEditor(QDialog):
         Setup ArrayEditor:
         return False if data is not supported, True otherwise
         """
+        if np.isscalar(data):
+            readonly = True
         if isinstance(data, la.LArray):
             axes_info = ' x '.join("%s (%d)" % (axis.display_name, len(axis))
                                    for axis in data.axes)
