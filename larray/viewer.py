@@ -1326,11 +1326,13 @@ class ArrayEditorWidget(QWidget):
                 for axis_key, axis in zip(k, self.la_data.axes)}
 
         # transform global dictionary key to "local" (filtered) key by removing
-        # the parts of the key
+        # the parts of the key which are redundant with the filter
         for axis_name, axis_filter in self.current_filter.items():
             axis_key = dkey[axis_name]
-            if axis_key == axis_filter or axis_key in axis_filter:
+            if np.isscalar(axis_filter) and axis_key == axis_filter:
                 del dkey[axis_name]
+            elif not np.isscalar(axis_filter) and axis_key in axis_filter:
+                pass
             else:
                 # that key is invalid for/outside the current filter
                 return None
