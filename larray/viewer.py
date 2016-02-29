@@ -879,6 +879,8 @@ class ArrayView(QTableView):
         assert isinstance(selection_model, QItemSelectionModel)
         selection = selection_model.selection()
         assert isinstance(selection, QItemSelection)
+        if not selection:
+            return None
         assert len(selection) == 1
         srange = selection[0]
         assert isinstance(srange, QItemSelectionRange)
@@ -891,7 +893,10 @@ class ArrayView(QTableView):
         return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True):
-        row_min, row_max, col_min, col_max = self._selection_bounds()
+        bounds = self._selection_bounds()
+        if bounds is None:
+            return None
+        row_min, row_max, col_min, col_max = bounds
         raw_data = self.model().get_values(row_min, col_min, row_max, col_max)
         if headers:
             xlabels = self.model().xlabels
@@ -926,6 +931,8 @@ class ArrayView(QTableView):
     def copy(self):
         """Copy array as text to clipboard"""
         data = self._selection_data()
+        if data is None:
+            return
 
         # np.savetxt make things more complicated, especially on py3
         def vrepr(v):
@@ -940,7 +947,10 @@ class ArrayView(QTableView):
     @Slot()
     def paste(self):
         model = self.model()
-        row_min, row_max, col_min, col_max = self._selection_bounds()
+        bounds = self._selection_bounds()
+        if bounds is None:
+            return
+        row_min, row_max, col_min, col_max = bounds
         clipboard = QApplication.clipboard()
         text = str(clipboard.text())
         list_data = [line.split('\t') for line in text.splitlines()]
