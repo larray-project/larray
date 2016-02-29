@@ -1073,9 +1073,11 @@ class ArrayEditorWidget(QWidget):
         self.setLayout(layout)
         self.set_data(data, xlabels, ylabels)
 
-    def set_data(self, data, xlabels=None, ylabels=None):
+    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None):
         self.old_data_shape = None
-        self.current_filter = {}
+        if current_filter is None:
+            current_filter = {}
+        self.current_filter = current_filter
         self.global_changes = {}
         if isinstance(data, la.LArray):
             self.la_data = data
@@ -1242,6 +1244,8 @@ class ArrayEditorWidget(QWidget):
         self.update_global_changes()
         for k, v in self.global_changes.items():
             self.la_data[k] = v
+        # update model data & reset global_changes
+        self.set_data(self.la_data, current_filter=self.current_filter)
         # XXX: shouldn't this be done only in the dialog? (if we continue
         # editing...)
         if self.old_data_shape is not None:
