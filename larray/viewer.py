@@ -1096,16 +1096,13 @@ class ArrayEditorWidget(QWidget):
         self.filtered_data = self.la_data
         if data.size == 0:
             QMessageBox.critical(self, _("Error"), _("Array is empty"))
-        if data.ndim == 1:
-            data = data.reshape(1, data.shape[0])
-            ylabels = [[]]
-        # FIXME: partially redundant with code above
-        if len(data.shape) == 1:
-            self.old_data_shape = data.shape
-            data.shape = (data.shape[0], 1)
-        elif len(data.shape) == 0:
+        if data.ndim == 0:
             self.old_data_shape = data.shape
             data.shape = (1, 1)
+        elif data.ndim == 1:
+            self.old_data_shape = data.shape
+            data = data.reshape(1, data.shape[0])
+            ylabels = [[]]
 
         if data.ndim > 2:
             data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
