@@ -861,7 +861,7 @@ class ArrayView(QTableView):
         elif event == QKeySequence.Print:
             self.plot()
         # allow to start editing cells by pressing Enter
-        elif event.key() == Qt.Key_Return:
+        elif event.key() == Qt.Key_Return and not self.model().readonly:
             index = self.currentIndex()
             if self.itemDelegate(index).editor_count == 0:
                 self.edit(index)
