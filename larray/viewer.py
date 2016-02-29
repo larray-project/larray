@@ -1253,8 +1253,11 @@ class ArrayEditorWidget(QWidget):
 
     def reject_changes(self):
         """Reject changes"""
-        self.global_changes = {}
-        self.model.changes = {}
+        self.global_changes.clear()
+        # trigger view update
+        self.model.changes.clear()
+        self.model.reset_minmax()
+        self.model.reset()
         # XXX: shouldn't this be done only in the dialog? (if we continue
         # editing...)
         if self.old_data_shape is not None:
