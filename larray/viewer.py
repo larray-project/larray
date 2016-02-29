@@ -463,9 +463,9 @@ class ArrayModel(QAbstractTableModel):
         if i < 0 and j < 0:
             return ""
         if i < 0:
-            return self.xlabels[i][j]
+            return str(self.xlabels[i][j])
         if j < 0:
-            return self.ylabels[j][i]
+            return str(self.ylabels[j][i])
         return self.changes.get((i, j), self._data[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
@@ -1379,15 +1379,7 @@ class ArrayEditorWidget(QWidget):
 def larray_to_array_and_labels(data):
     assert isinstance(data, la.LArray)
 
-    def to_str(a):
-        if a.dtype.type != np.str_:
-            a = a.astype(np.str_)
-
-        # Numpy stores Strings as np.str_ by default, not Python strings
-        # convert that to array of Python strings
-        return a.astype(object)
-
-    xlabels = [data.axes.names, to_str(data.axes.labels[-1])]
+    xlabels = [data.axes.names, data.axes.labels[-1]]
 
     class LazyLabels(object):
         def __init__(self, arrays):
@@ -1437,7 +1429,7 @@ def larray_to_array_and_labels(data):
         def __len__(self):
             return self.length
 
-    otherlabels = [to_str(axlabels) for axlabels in data.axes.labels[:-1]]
+    otherlabels = data.axes.labels[:-1]
     # ylabels = LazyLabels(otherlabels)
     coldims = 1
     # ylabels = [str(i) for i in range(len(row_labels))]
@@ -1805,7 +1797,7 @@ if __name__ == "__main__":
     """Array editor test"""
 
     lipro = la.Axis('lipro', ['P%02d' % i for i in range(1, 16)])
-    age = la.Axis('age', ':115')
+    age = la.Axis('age', range(116))
     sex = la.Axis('sex', 'H,F')
 
     vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
