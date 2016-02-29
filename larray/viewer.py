@@ -1839,7 +1839,7 @@ if __name__ == "__main__":
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
     data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
     arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
-    # arr2 = arr2['F', 'A11', '1']
+    # arr2 = arr2['F', 'A11', 1]
 
     # 8.5Gb... and still snappy, yeah!
     # dummy = la.Axis('dummy', range(7000))
@@ -1853,15 +1853,15 @@ if __name__ == "__main__":
     # print(data3.nbytes)
     # print(np.prod(data3.shape[:-1]))
     # arr2 = la.LArray(data3, axes=(age, geo, sex, dummy, d2, d3, d4, lipro))
-    # view(arr2['0', 'A11', 'F', 'P01'])
+    # view(arr2[0, 'A11', 'F', 'P01'])
     # view(arr1)
-    # view(arr2['0', 'A11'])
+    # view(arr2[0, 'A11'])
     # edit(arr1)
-    # print(arr2['0', 'A11', :, 'P01'])
+    # print(arr2[0, 'A11', :, 'P01'])
     # edit(arr2.astype(int), minvalue=-99, maxvalue=55.123456)
     # edit(arr2.astype(int), minvalue=-99)
     edit(arr2, minvalue=-99, maxvalue=25.123456)
-    # print(arr2['0', 'A11', :, 'P01'])
+    # print(arr2[0, 'A11', :, 'P01'])
 
     # data2 = np.random.normal(0, 10.0, size=(5000, 20))
     # arr2 = la.LArray(data2,
