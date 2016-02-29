@@ -868,16 +868,6 @@ class ArrayView(QTableView):
         else:
             QTableView.keyPressEvent(self, event)
 
-    def _raw_selection_bounds(self):
-        selection_model = self.selectionModel()
-        assert isinstance(selection_model, QItemSelectionModel)
-        selection = selection_model.selection()
-        assert isinstance(selection, QItemSelection)
-        assert len(selection) == 1
-        srange = selection[0]
-        assert isinstance(srange, QItemSelectionRange)
-        return srange.top(), srange.bottom(), srange.left(), srange.right()
-
     def _selection_bounds(self):
         """
         Returns
@@ -885,17 +875,19 @@ class ArrayView(QTableView):
         tuple
             selection bounds. end bound is exclusive
         """
-        row_min, row_max, col_min, col_max = self._raw_selection_bounds()
-        xlabels = self.model().xlabels
-        ylabels = self.model().ylabels
-        row_min -= len(xlabels) - 1
-        row_min = max(row_min, 0)
-        row_max -= len(xlabels) - 1
-        row_max = max(row_max, 0)
-        col_min -= len(ylabels) - 1
-        col_min = max(col_min, 0)
-        col_max -= len(ylabels) - 1
-        col_max = max(col_max, 0)
+        selection_model = self.selectionModel()
+        assert isinstance(selection_model, QItemSelectionModel)
+        selection = selection_model.selection()
+        assert isinstance(selection, QItemSelection)
+        assert len(selection) == 1
+        srange = selection[0]
+        assert isinstance(srange, QItemSelectionRange)
+        xoffset = len(self.model().xlabels) - 1
+        yoffset = len(self.model().ylabels) - 1
+        row_min = max(srange.top() - xoffset, 0)
+        row_max = max(srange.bottom() - xoffset, 0)
+        col_min = max(srange.left() - yoffset, 0)
+        col_max = max(srange.right() - yoffset, 0)
         return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True):
