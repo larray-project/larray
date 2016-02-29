@@ -388,7 +388,7 @@ class ArrayModel(QAbstractTableModel):
         self.total_rows = self._data.shape[0]
         self.total_cols = self._data.shape[1]
         size = self.total_rows * self.total_cols
-        self.reset_minmax(data)
+        self.reset_minmax()
         # Use paging when the total size, number of rows or number of
         # columns is too large
         if size > LARGE_SIZE:
@@ -404,10 +404,11 @@ class ArrayModel(QAbstractTableModel):
             else:
                 self.cols_loaded = self.total_cols
 
-    def reset_minmax(self, data):
+    def reset_minmax(self):
         # this will be awful to get right, because ideally, we should
         # include self.changes.values() and ignore values corresponding to
         # self.changes.keys()
+        data = self._data
         try:
             color_value = self.color_func(data)
             self.vmin = np.nanmin(color_value)
@@ -628,7 +629,7 @@ class ArrayModel(QAbstractTableModel):
             old_colorval = self.color_func(oldvalues)
             if np.any(((old_colorval == self.vmax) & (colorval < self.vmax)) |
                       ((old_colorval == self.vmin) & (colorval > self.vmin))):
-                self.reset_minmax(self._data)
+                self.reset_minmax()
             if np.any(colorval > self.vmax):
                 self.vmax = np.nanmax(colorval)
             if np.any(colorval < self.vmin):
