@@ -398,6 +398,12 @@ def larray_equal(first, other):
 def isnoneslice(v):
     return isinstance(v, slice) and v == slice(None)
 
+def seq_summary(seq, num=3, func=repr):
+    def shorten(l):
+        return l if len(l) <= 2 * num else l[:num] + ['...'] + list(l[-num:])
+
+    return ' '.join(shorten([func(l) for l in seq]))
+
 
 class PGroupMaker(object):
     def __init__(self, axis):
@@ -618,10 +624,13 @@ class Axis(object):
     def __repr__(self):
         return 'Axis(%r, %r)' % (self.name, list(self.labels))
 
-    def short_labels(self):
-        def shorten(l):
-            return l if len(l) < 7 else l[:3] + ['...'] + list(l[-3:])
-        return ' '.join(shorten([repr(l) for l in self.labels]))
+    def labels_summary(self):
+        def repr_on_strings(v):
+            if isinstance(v, str):
+                return repr(v)
+            else:
+                return str(v)
+        return seq_summary(self.labels, func=repr_on_strings)
 
     # XXX: we might want to use | for union (like set)
     def __add__(self, other):
@@ -709,7 +718,16 @@ class LGroup(Group):
         return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
     def __str__(self):
-        return to_string(self.key) if self.name is None else self.name
+        key = to_key(self.key)
+        if isinstance(key, slice):
+            str_key = slice_to_str(key)
+        elif isinstance(key, (tuple, list, np.ndarray)):
+            str_key = '[%s]' % seq_summary(key, 1)
+        else:
+            str_key = repr(key)
+
+        return '%r (%s)' % (self.name, str_key) if self.name is not None \
+            else str_key
 
     def __repr__(self):
         name = ", %r" % self.name if self.name is not None else ''
@@ -1119,7 +1137,7 @@ class AxisCollection(object):
          sex [2]: 'H' 'F'
         """
         lines = [" %s [%d]: %s" % (axis.display_name, len(axis),
-                                   axis.short_labels())
+                                   axis.labels_summary())
                  for axis in self]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
