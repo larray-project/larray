@@ -384,14 +384,14 @@ class TestValueGroup(TestCase):
         self.assertEqual(d.get(LGroup(('P01', 'P03', 'P07'))), 3)
 
     def test_str(self):
-        self.assertEqual(str(self.slice_full), 'full')
-        self.assertEqual(str(self.slice_named), 'named')
-        self.assertEqual(str(self.slice_both), '1:5')
-        self.assertEqual(str(self.slice_start), '1:')
-        self.assertEqual(str(self.slice_stop), ':5')
+        self.assertEqual(str(self.slice_full), "'full' ('1':'5')")
+        self.assertEqual(str(self.slice_named), "'named' ('1':'5')")
+        self.assertEqual(str(self.slice_both), "'1':'5'")
+        self.assertEqual(str(self.slice_start), "'1':")
+        self.assertEqual(str(self.slice_stop), ":'5'")
         self.assertEqual(str(self.slice_none), ':')
-        self.assertEqual(str(self.single_value), 'P03')
-        self.assertEqual(str(self.list), 'P01,P03,P07')
+        self.assertEqual(str(self.single_value), "'P03'")
+        self.assertEqual(str(self.list), "['P01' ... 'P07']")
 
     def test_repr(self):
         # FIXME: add axis

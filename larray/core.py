@@ -176,7 +176,7 @@ def range_to_slice(seq, length=None):
     return slice(start, stop, step)
 
 
-def slice_to_str(key):
+def slice_to_str(key, use_repr=False):
     """
     converts a slice to a string
     >>> slice_to_str(slice(None))
@@ -191,9 +191,10 @@ def slice_to_str(key):
     ':5:2'
     """
     # examples of result: ":24" "25:" ":" ":5:2"
-    start = key.start if key.start is not None else ''
-    stop = key.stop if key.stop is not None else ''
-    step = (":" + str(key.step)) if key.step is not None else ''
+    func = repr if use_repr else str
+    start = func(key.start) if key.start is not None else ''
+    stop = func(key.stop) if key.stop is not None else ''
+    step = (":" + func(key.step)) if key.step is not None else ''
     return '%s:%s%s' % (start, stop, step)
 
 
@@ -720,7 +721,7 @@ class LGroup(Group):
     def __str__(self):
         key = to_key(self.key)
         if isinstance(key, slice):
-            str_key = slice_to_str(key)
+            str_key = slice_to_str(key, use_repr=True)
         elif isinstance(key, (tuple, list, np.ndarray)):
             str_key = '[%s]' % seq_summary(key, 1)
         else:
