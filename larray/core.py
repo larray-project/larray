@@ -813,8 +813,9 @@ class PGroup(Group):
         self.axis = axis
 
     def __repr__(self):
-        name = ", %r" % self.name if self.name is not None else ''
-        return "PGroup(%r%s)" % (self.key, name)
+        name = ", name=%r" % self.name if self.name is not None else ''
+        axis = ", axis=%r" % self.axis if self.axis is not None else ''
+        return "PGroup(%r%s%s)" % (self.key, name, axis)
 
     def __len__(self):
         return len(self.key)
