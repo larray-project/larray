@@ -821,6 +821,13 @@ class PGroup(Group):
         return len(self.key)
 
 
+def index_by_id(seq, value):
+    for i, item in enumerate(seq):
+        if item is value:
+            return i
+    raise ValueError("%s is not in list" % value)
+
+
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a
 # one-off class)
@@ -1046,11 +1053,20 @@ class AxisCollection(object):
 
         Raises ValueError if the axis is not present.
         """
-        # first look by object
-        if isinstance(axis, Axis) and axis.name is None:
-            return self._list.index(axis)
-        elif isinstance(axis, int):
-            return axis
+        if isinstance(axis, int):
+            if -len(self) <= axis < len(self):
+                return axis
+            else:
+                return ValueError("axis %d is not in collection" % axis)
+        elif isinstance(axis, Axis) and axis.name is None:
+            try:
+                # first look by id. This avoids testing labels of each axis
+                # and makes sure the result is correct even if there are
+                # several axes with no name and the same labels.
+                return index_by_id(self._list, axis)
+            except ValueError:
+                # fallback on comparing by values (ie testing labels)
+                return self._list.index(axis)
         name = axis.name if isinstance(axis, Axis) else axis
         return self.names.index(name)
 
