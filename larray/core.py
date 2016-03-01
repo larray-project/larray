@@ -30,8 +30,8 @@ Matrix class
 #   a different class or a flag? In fact, the same question applies to
 #   positional vs label (in total, we got 4 different possibilities).
 
-# ? how do you combine a product group with an intersection group?
-#   a[pgroup, igroup]
+# ? how do you combine a cross-product group with an intersection group?
+#   a[cpgroup, igroup]
 #   -> no problem if they are on different dimensions: the igroup
 #      dimension(s) are collapsed into one, pgroup dimension(s) stay.
 #      The index need to be constructed carefully, but it can be done. See
@@ -40,6 +40,53 @@ Matrix class
 #      * apply one then the other (left to right)
 #      * fail <-- I think this is safer at least to implement. One after the
 #                 other can still be achieved by a[pgroup][igroup]
+
+# API for ND groups (my example is mixing label with positional):
+
+# cross: x.axis1[5:10] * x.axis2.i[3:4]
+# intersection: x.axis1[5:10] & x.axis2.i[3:4]
+#
+# this is very nice, but prevents:
+# * normal element-wise multiplication (which has little use in most cases --
+#   at least for string labels)
+# * set-like operations, which could make a lot of sense. set do not use
+#   +, *, /
+#   cross: x.axis1[5:10] * x.axis2.i[2:5]
+#   intersect: x.axis1[5:10] + x.axis2.i[2:5]
+
+# or we could only allow set operations on groups from axes with the same
+# name (including None)
+
+#   union: x.axis1[5:10] | x.axis1.i[2:5]
+#   set intersect: x.axis1[5:10] & x.axis1.i[2:5]
+
+#   cross: x.axis1[5:10] | x.axis2.i[2:5]
+#   intersect: x.axis1[5:10] & x.axis2.i[2:5]
+
+# Note that cross sections is the default and it is useless to introduce
+# another API **except to give a name**, so the * or | syntaxes are useless.
+# hmmm, maybe not if we name it after the fact
+
+# => NDGroup((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
+# => Group((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
+# => (x.axis1[5:10] | x.axis2.i[2.5]).named('exports')
+
+# generalizing "named" and suppressing .group seems like a good idea!
+# => x.axis1.group([5, 7, 10], name='brussels')
+# => x.axis1[[5, 7, 10]].named('brussels')
+
+# I wonder if, for axes subscripting, I could not allow tuples as sequences,
+# which would make it a bit nicer:
+# x.axis1[5, 7, 10].named('brussels')
+# instead of
+# x.axis1[[5, 7, 10]].named('brussels')
+# since axes are always 1D, this is not a direct problem. However the
+# question is whether this would lead to an inconsistent API/confuse users
+# because they would still have to write the brackets when no axis is present
+# a[[5, 7, 9]]
+# a[x.axis1[5, 7, 9]]
+# in practice, this syntax is little used anyway
+
 
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
