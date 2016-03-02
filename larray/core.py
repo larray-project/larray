@@ -4116,7 +4116,7 @@ def ndrange(axes, start=0, dtype=int):
     # XXX: try to come up with a syntax where start is before "end". For ndim
     #  > 1, I cannot think of anything nice.
     axes = AxisCollection(axes)
-    data = np.arange(start, start + np.prod(axes.shape), dtype=dtype)
+    data = np.arange(start, start + axes.size, dtype=dtype)
     return LArray(data.reshape(axes.shape), axes)
 
 
