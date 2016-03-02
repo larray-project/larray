@@ -1159,7 +1159,7 @@ class AxisCollection(object):
     def __sub__(self, axes):
         """
         returns a new collection without some axes
-        you can use a comma separated list
+        you can use a comma separated list of names
         set operations so axes can contain axes not present in self
         """
         if isinstance(axes, basestring):
