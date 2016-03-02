@@ -20,7 +20,12 @@ Matrix class
 """
 # TODO
 # * axes with no name should display as (or even have their name assigned to?)
-#   their position
+#   their position. Assigning does not work because after aggregating axis 0,
+#   we get the first axis named "1" which is a no-go.
+#   it would be much easier to have a .id attribute/property on axis with
+#   either the name or position in it, but this requires that axes know about
+#   their AxisCollection. id might not be defined when axis is not attached
+#   to a Collection
 
 # * add check there is no duplicate label in axes!
 
@@ -477,6 +482,7 @@ class Axis(object):
         self._length = None
         self._iswildcard = False
         self.labels = labels
+        self.collection = None
 
     @property
     def i(self):
@@ -662,8 +668,22 @@ class Axis(object):
             return mapping[key]
 
     @property
+    def id(self):
+        if self.name is not None:
+            return self.name
+        elif self.collection is not None:
+            return self.collection.index(self)
+        else:
+            raise ValueError('Axis has no name nor collection, so no id')
+
+    @property
     def display_name(self):
-        name = self.name if self.name is not None else '-'
+        if self.name is not None:
+            name = self.name
+        elif self.collection is not None:
+            name = 'axis%d' % self.collection.index(self)
+        else:
+            name = '-'
         return (name + '*') if self._iswildcard else name
 
     def __str__(self):
@@ -841,9 +861,11 @@ class AxisCollection(object):
         if isinstance(axes, int):
             axes = [axes]
         axes = [Axis(None, range(axis)) if isinstance(axis, (int, long))
-                    else axis
+                    else axis.copy()
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
+        for a in axes:
+            a.collection = self
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
@@ -876,6 +898,9 @@ class AxisCollection(object):
                 raise KeyError("axis '%s' not found in %s" % (key, self))
 
     def __setitem__(self, key, value):
+        assert isinstance(value, Axis)
+        value = value.copy()
+        value.collection = self
         if isinstance(key, slice):
             raise NotImplementedError("slice set")
         if isinstance(key, int):
@@ -901,18 +926,11 @@ class AxisCollection(object):
     def __delitem__(self, key):
         if isinstance(key, slice):
             raise NotImplementedError("slice delete")
-        if isinstance(key, int):
-            axis = self._list.pop(key)
-            if axis.name is not None:
-                del self._map[axis.name]
-        elif isinstance(key, Axis):
-            self._list.remove(key)
-            if key.name is not None:
-                del self._map[key.name]
-        else:
-            assert isinstance(key, basestring)
-            axis = self._map.pop(key)
-            self._list.remove(axis)
+        idx = self.index(key)
+        axis = self._list.pop(idx)
+        if axis.name is not None:
+            del self._map[axis.name]
+        axis.collection = None
 
     def __add__(self, other):
         result = self[:]
@@ -1003,6 +1021,7 @@ class AxisCollection(object):
     def pop(self, axis=-1):
         axis = self[axis]
         del self[axis]
+        assert axis.collection is None
         return axis
 
     def append(self, axis):
@@ -1010,6 +1029,10 @@ class AxisCollection(object):
         append axis at the end of the collection
         """
         # when __setitem__(slice) will be implemented, we could simplify this
+        # XXX: in all "append"-like operations, we might want to only make a
+        # copy if axis.collection is not None
+        axis = axis.copy()
+        axis.collection = self
         self._list.append(axis)
         self._map[axis.name] = axis
 
@@ -1034,8 +1057,10 @@ class AxisCollection(object):
         # check that common axes are the same
         if validate:
             self.check_compatible(axes)
-        to_add = [axis for axis in axes if axis.name not in self._map]
-
+        # FIXME: buggy for axes with no name
+        to_add = [axis.copy() for axis in axes if axis.name not in self._map]
+        for axis in to_add:
+            axis.collection = self
         # when __setitem__(slice) will be implemented, we could simplify this
         self._list.extend(to_add)
         for axis in to_add:
@@ -1077,6 +1102,8 @@ class AxisCollection(object):
         insert axis before index
         """
         # when __setitem__(slice) will be implemented, we could simplify this
+        axis = axis.copy()
+        axis.collection = self
         self._list.insert(index, axis)
         self._map[axis.name] = axis
 
@@ -1091,8 +1118,12 @@ class AxisCollection(object):
             new = [new]
         if len(old) != len(new):
             raise ValueError('must have as many old axes as new axes')
+        new = [axis.copy() for axis in new]
         for o, n in zip(old, new):
-            res[self.index(o)] = n
+            n.collection = res
+            idx = self.index(o)
+            res[idx].collection = None
+            res[idx] = n
         return res
 
     def without(self, axes):
@@ -1171,7 +1202,7 @@ class AxisCollection(object):
         >>> c = Axis(None, ['c1', 'c2'])
         >>> arr = zeros([a, b, c])
         >>> arr.axes.display_names
-        ['a', 'b*', '-']
+        ['a', 'b*', 'axis2']
         """
         return [axis.display_name for axis in self._list]
 
@@ -1311,17 +1342,17 @@ def sum(array, *args, **kwargs):
     --------
     >>> a = ndrange((2, 3))
     >>> a
-    -\\- | 0 | 1 | 2
-      0 | 0 | 1 | 2
-      1 | 3 | 4 | 5
+    axis0\\axis1 | 0 | 1 | 2
+              0 | 0 | 1 | 2
+              1 | 3 | 4 | 5
     >>> sum(a)
     15
     >>> sum(a, axis=0)
-    - | 0 | 1 | 2
-      | 3 | 5 | 7
+    axis0 | 0 | 1 | 2
+          | 3 | 5 | 7
     >>> sum(a, axis=1)
-    - | 0 |  1
-      | 3 | 12
+    axis0 | 0 |  1
+          | 3 | 12
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -1377,17 +1408,17 @@ def median(array, *args, **kwargs):
 
     >>> a = LArray([[10, 7, 4], [3, 2, 1]])
     >>> a
-    -\\- |  0 | 1 | 2
-      0 | 10 | 7 | 4
-      1 |  3 | 2 | 1
+    axis0\\axis1 |  0 | 1 | 2
+              0 | 10 | 7 | 4
+              1 |  3 | 2 | 1
     >>> median(a)
     3.5
     >>> median(a, axis=0)
-    - |   0 |   1 |   2
-      | 6.5 | 4.5 | 2.5
+    axis0 |   0 |   1 |   2
+          | 6.5 | 4.5 | 2.5
     >>> median(a, axis=1)
-    - |   0 |   1
-      | 7.0 | 2.0
+    axis0 |   0 |   1
+          | 7.0 | 2.0
     """
     return array.median(*args, **kwargs)
 
@@ -1399,19 +1430,19 @@ def percentile(array, *args, **kwargs):
 
     >>> a = LArray([[10, 7, 4], [3, 2, 1]])
     >>> a
-    -\\- |  0 | 1 | 2
-      0 | 10 | 7 | 4
-      1 |  3 | 2 | 1
+    axis0\\axis1 |  0 | 1 | 2
+              0 | 10 | 7 | 4
+              1 |  3 | 2 | 1
     >>> # this is a bug in numpy: np.nanpercentile(all axes) returns an ndarray,
     >>> # instead of a scalar.
     >>> percentile(a, 50)
     array(3.5)
     >>> percentile(a, 50, axis=0)
-    - |   0 |   1 |   2
-      | 6.5 | 4.5 | 2.5
+    axis0 |   0 |   1 |   2
+          | 6.5 | 4.5 | 2.5
     >>> percentile(a, 50, axis=1)
-    - |   0 |   1
-      | 7.0 | 2.0
+    axis0 |   0 |   1
+          | 7.0 | 2.0
     """
     return array.percentile(*args, **kwargs)
 
@@ -1477,7 +1508,7 @@ class LArrayPositionalIndexer(object):
         if not isinstance(key, tuple):
             key = (key,)
         # no need to create a full nd key as that will be done later anyway
-        return tuple(PGroup(axis_key, axis=axis.name)
+        return tuple(PGroup(axis_key, axis=axis.id)
                      for axis_key, axis in zip(key, self.array.axes))
 
     def __getitem__(self, key):
@@ -1715,7 +1746,7 @@ class LArray(object):
             key = np.argsort(axis.labels)
             if reverse:
                 key = key[::-1]
-            return PGroup(key, axis=axis.name)
+            return PGroup(key, axis=axis.id)
 
         return self[tuple(sort_key(axis) for axis in axes)]
 
@@ -1731,7 +1762,7 @@ class LArray(object):
         for axis in self.axes:
             try:
                 axis_pos_key = axis.translate(axis_key)
-                valid_axes.append(axis.name)
+                valid_axes.append(axis.id)
             except KeyError:
                 pass
         if not valid_axes:
@@ -1756,7 +1787,7 @@ class LArray(object):
                 axis.translate(axis_key)
             except KeyError:
                 continue
-            valid_axes.append(axis.name)
+            valid_axes.append(axis.id)
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
@@ -1834,11 +1865,10 @@ class LArray(object):
 
         # dict -> tuple (complete and order key)
         assert isinstance(key, dict)
-        axes_names = set(self.axes.names)
-        for axis_name in key:
-            if axis_name not in axes_names:
-                raise KeyError("'{}' is not an axis name".format(axis_name))
-        key = tuple(key[axis.name] if axis.name in key else slice(None)
+        for axis_id in key:
+            if axis_id not in self.axes:
+                raise KeyError("{} is not a valid axis".format(repr(axis_id)))
+        key = tuple(key[axis.id] if axis.id in key else slice(None)
                     for axis in self.axes)
 
         # label -> raw positional
@@ -1991,7 +2021,7 @@ class LArray(object):
             combined_axis_pos = 0
         else:
             combined_axis_pos = axes_indices[0]
-        combined_name = ','.join(axis.name for axis in combined_axes)
+        combined_name = ','.join(str(axis.id) for axis in combined_axes)
         if wildcard_allowed:
             lengths = [len(axis_key) for axis_key in key
                        if not isnoneslice(axis_key)]
@@ -3219,6 +3249,7 @@ class LArray(object):
         else:
             axes = args
         axes = [self.axes[a] for a in axes]
+        # FIXME: this is not unnamed axes friendly
         axes_names = set(axis.name for axis in axes)
         missing_axes = [axis for axis in self.axes
                         if axis.name not in axes_names]
@@ -3734,9 +3765,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
          FO | 3 | 2
     >>> mat.to_csv('no_axis_name.csv', dialect='classic')
     >>> read_csv('no_axis_name.csv', nb_index=1)
-    nat\\- | H | F
-       BE | 0 | 1
-       FO | 2 | 3
+    nat\\axis1 | H | F
+           BE | 0 | 1
+           FO | 2 | 3
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
@@ -3897,9 +3928,9 @@ def zeros_like(array, dtype=None, order='K'):
     -------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
-    -\\- | 0 | 1 | 2
-      0 | 0 | 0 | 0
-      1 | 0 | 0 | 0
+    axis0\\axis1 | 0 | 1 | 2
+              0 | 0 | 0 | 0
+              1 | 0 | 0 | 0
     """
     axes = array.axes
     return LArray(np.zeros_like(array, dtype, order), axes)
@@ -3959,9 +3990,9 @@ def ones_like(array, dtype=None, order='K'):
     -------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
-    -\\- | 0 | 1 | 2
-      0 | 1 | 1 | 1
-      1 | 1 | 1 | 1
+    axis0\\axis1 | 0 | 1 | 2
+              0 | 1 | 1 | 1
+              1 | 1 | 1 | 1
     """
     axes = array.axes
     return LArray(np.ones_like(array, dtype, order), axes)
@@ -4056,12 +4087,12 @@ def ndrange(axes, start=0, dtype=int):
          BE | 0 | 1
          FO | 2 | 3
     >>> ndrange([2, 3], dtype=float)
-    -\\- |   0 |   1 |   2
-      0 | 0.0 | 1.0 | 2.0
-      1 | 3.0 | 4.0 | 5.0
+    axis0\\axis1 |   0 |   1 |   2
+              0 | 0.0 | 1.0 | 2.0
+              1 | 3.0 | 4.0 | 5.0
     >>> ndrange(3, start=2)
-    - | 0 | 1 | 2
-      | 2 | 3 | 4
+    axis0 | 0 | 1 | 2
+          | 2 | 3 | 4
 
     potential alternate syntaxes:
     ndrange((2, 3), names=('a', 'b'))
@@ -4163,6 +4194,7 @@ def make_numpy_broadcastable(values):
               for v in values]
 
     # 2) add length one axes
+    # TODO: this is probably broken for unnamed axes (but tricky to get right)
     return [v.reshape([v.axes.get(axis.name, Axis(axis.name, 1))
                        for axis in all_axes]) if isinstance(v, LArray) else v
             for v in values], all_axes

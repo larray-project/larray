@@ -453,15 +453,16 @@ class TestAxisCollection(TestCase):
 
     def test_pop(self):
         col = self.collection[:]
+        lipro, sex, age = col
         self.assertEqual(len(col), 3)
-        self.assertIs(col.pop(), self.age)
+        self.assertIs(col.pop(), age)
         self.assertEqual(len(col), 2)
-        self.assertEqual(col[0], self.lipro)
-        self.assertEqual(col[1], self.sex)
-        self.assertIs(col.pop(), self.sex)
+        self.assertIs(col[0], lipro)
+        self.assertIs(col[1], sex)
+        self.assertIs(col.pop(), sex)
         self.assertEqual(len(col), 1)
-        self.assertEqual(col[0], self.lipro)
-        self.assertIs(col.pop(), self.lipro)
+        self.assertIs(col[0], lipro)
+        self.assertIs(col.pop(), lipro)
         self.assertEqual(len(col), 0)
 
     def test_replace(self):
