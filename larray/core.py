@@ -1046,7 +1046,8 @@ class AxisCollection(object):
         axis = axis.copy()
         axis.collection = self
         self._list.append(axis)
-        self._map[axis.name] = axis
+        if axis.name is not None:
+            self._map[axis.name] = axis
 
     def check_compatible(self, axes):
         for i, axis in enumerate(axes):
@@ -1076,7 +1077,8 @@ class AxisCollection(object):
         # when __setitem__(slice) will be implemented, we could simplify this
         self._list.extend(to_add)
         for axis in to_add:
-            self._map[axis.name] = axis
+            if axis.name is not None:
+                self._map[axis.name] = axis
 
     def index(self, axis):
         """
