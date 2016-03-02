@@ -1869,6 +1869,7 @@ class LArray(object):
 
             dupe_axes = list(duplicates(axis_key.axis for axis_key in key))
             if dupe_axes:
+                dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
                 raise ValueError("key with duplicate axis: %s" % dupe_axes)
             key = dict((axis_key.axis, axis_key) for axis_key in key)
 
