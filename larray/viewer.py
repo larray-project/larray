@@ -408,7 +408,7 @@ class ArrayModel(QAbstractTableModel):
         # this will be awful to get right, because ideally, we should
         # include self.changes.values() and ignore values corresponding to
         # self.changes.keys()
-        data = self._data
+        data = self.get_values()
         try:
             color_value = self.color_func(data)
             self.vmin = np.nanmin(color_value)
@@ -531,8 +531,13 @@ class ArrayModel(QAbstractTableModel):
             return to_qvariant(repr(value))
         return to_qvariant()
 
-    def get_values(self, left, top, right, bottom):
+    def get_values(self, left=0, top=0, right=None, bottom=None):
         changes = self.changes
+        width, height = self._data.shape
+        if right is None:
+            right = width
+        if bottom is None:
+            bottom = height
         values = self._data[left:right, top:bottom].copy()
         for i in range(left, right):
             for j in range(top, bottom):
