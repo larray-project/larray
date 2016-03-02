@@ -726,9 +726,15 @@ class Axis(object):
                 raise ValueError
 
     def copy(self):
-        # XXX: I wonder if we should make a copy of the labels. There should
-        # at least be an option.
-        return Axis(self.name, self.labels)
+        new_axis = Axis(self.name, [])
+        # XXX: I wonder if we should make a copy of the labels + mapping.
+        # There should at least be an option.
+        new_axis._labels = self._labels
+        new_axis._mapping = self._mapping
+        new_axis._length = self._length
+        new_axis._iswildcard = self._iswildcard
+        # collection is intentionally not copied
+        return new_axis
 
     def _rename(self, name):
         return Axis(name, self.labels)
