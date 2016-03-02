@@ -1240,8 +1240,9 @@ class ArrayEditorWidget(QWidget):
     def accept_changes(self):
         """Accept changes"""
         self.update_global_changes()
+        la_data = self.la_data
         for k, v in self.global_changes.items():
-            self.la_data[k] = v
+            la_data.i[la_data.axes.translate_full_key(k)] = v
         # update model data & reset global_changes
         self.set_data(self.la_data, current_filter=self.current_filter)
         # XXX: shouldn't this be done only in the dialog? (if we continue

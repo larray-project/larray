@@ -1174,6 +1174,23 @@ class AxisCollection(object):
         return AxisCollection([axis for axis in self
                                if axis.name not in to_remove])
 
+    def translate_full_key(self, key):
+        """
+        Parameters
+        ----------
+        key : tuple
+            a full label-based key. All dimensions must be present and in
+            the correct order.
+
+        Returns
+        -------
+        tuple
+            a full positional key
+        """
+        assert len(key) == len(self)
+        return tuple(axis.translate(axis_key)
+                     for axis_key, axis in zip(key, self))
+
     @property
     def labels(self):
         """Returns the list of labels of the axes"""
