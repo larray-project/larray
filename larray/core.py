@@ -963,7 +963,9 @@ class AxisCollection(object):
         return not self == other
 
     def __contains__(self, key):
-        if isinstance(key, Axis):
+        if isinstance(key, int):
+            return -len(self) <= key < len(self)
+        elif isinstance(key, Axis):
             if key.name is None:
                 return key in self._list
             key = key.name
