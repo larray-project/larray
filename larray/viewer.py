@@ -1249,6 +1249,11 @@ class ArrayEditorWidget(QWidget):
                 return ndigits
         return maxdigits
 
+    @property
+    def dirty(self):
+        self.update_global_changes()
+        return len(self.global_changes) > 1
+
     def accept_changes(self):
         """Accept changes"""
         self.update_global_changes()
