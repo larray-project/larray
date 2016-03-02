@@ -1084,10 +1084,8 @@ class ArrayEditorWidget(QWidget):
             filters_layout = self.filters_layout
             clear_layout(filters_layout)
             filters_layout.addWidget(QLabel(_("Filters")))
-            # XXX: do this in Axis.display_name?
-            for i, axis in enumerate(data.axes):
-                name = axis.name if axis.name is not None else 'dim %d' % i
-                filters_layout.addWidget(QLabel(name))
+            for axis in data.axes:
+                filters_layout.addWidget(QLabel(axis.display_name))
                 filters_layout.addWidget(self.create_filter_combo(axis))
             filters_layout.addStretch()
             data, xlabels, ylabels = larray_to_array_and_labels(data)
