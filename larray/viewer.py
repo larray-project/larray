@@ -1325,10 +1325,10 @@ class ArrayEditorWidget(QWidget):
         return changes
 
     def update_global_changes(self):
-        changes = self.global_changes
-        model_changes = self.model.changes
-        for k, v in model_changes.items():
-            changes[self.map_filtered_to_global(k)] = v
+        # TODO: it would be a better idea to handle the filter in the model,
+        # and only store changes as "global changes".
+        for k, v in self.model.changes.items():
+            self.global_changes[self.map_filtered_to_global(k)] = v
 
     def map_global_to_filtered(self, k, filtered):
         """
