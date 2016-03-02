@@ -765,6 +765,8 @@ class LGroup(Group):
         # we store the Axis name, instead of the axis object itself so that
         # LGroups are more compatible between themselves.
         if isinstance(axis, Axis):
+            # XXX: probably broken for unnamed axes. Not sure .id would be
+            # good in all cases. Storing the actual object would be nice.
             axis = axis.name
         if axis is not None:
             assert isinstance(axis, basestring), \
@@ -967,6 +969,7 @@ class AxisCollection(object):
             return -len(self) <= key < len(self)
         elif isinstance(key, Axis):
             if key.name is None:
+                # XXX: does this compare each axis by value (by labels)?
                 return key in self._list
             key = key.name
         return key in self._map
@@ -1135,6 +1138,7 @@ class AxisCollection(object):
             res[idx] = n
         return res
 
+    # TODO: factorize with __sub__
     def without(self, axes):
         """
         returns a new collection without some axes
@@ -1517,6 +1521,7 @@ class LArrayPositionalIndexer(object):
         if not isinstance(key, tuple):
             key = (key,)
         # no need to create a full nd key as that will be done later anyway
+        # XXX: use axis.i?
         return tuple(PGroup(axis_key, axis=axis.id)
                      for axis_key, axis in zip(key, self.array.axes))
 
