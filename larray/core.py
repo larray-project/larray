@@ -2401,15 +2401,15 @@ class LArray(object):
 
         # convert kwargs to LGroup so that we can only use args afterwards
         # but still keep the axis information
-        def standardise_kw_arg(axis, key):
+        def standardise_kw_arg(axis_name, key):
             if isinstance(key, str):
                 key = to_keys(key)
             if isinstance(key, tuple):
-                return tuple(standardise_kw_arg(axis, k) for k in key)
+                return tuple(standardise_kw_arg(axis_name, k) for k in key)
             if isinstance(key, LGroup):
                 return key
             assert isinstance(key, (str, list, slice))
-            return LGroup(key, axis=axis)
+            return LGroup(key, axis=axis_name)
 
         def to_vg(key):
             if isinstance(key, str):
