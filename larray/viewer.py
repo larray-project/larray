@@ -1391,7 +1391,7 @@ class ArrayEditorWidget(QWidget):
 def larray_to_array_and_labels(data):
     assert isinstance(data, la.LArray)
 
-    xlabels = [data.axes.names, data.axes.labels[-1]]
+    xlabels = [data.axes.display_names, data.axes.labels[-1]]
 
     class LazyLabels(object):
         def __init__(self, arrays):
