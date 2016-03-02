@@ -539,11 +539,18 @@ class ArrayModel(QAbstractTableModel):
         if bottom is None:
             bottom = height
         values = self._data[left:right, top:bottom].copy()
-        for i in range(left, right):
-            for j in range(top, bottom):
-                pos = i, j
-                if pos in changes:
-                    values[i - left, j - top] = changes[pos]
+        # both versions get the same result, but depending on inputs, the
+        # speed difference can be large.
+        if values.size < len(changes):
+            for i in range(left, right):
+                for j in range(top, bottom):
+                    pos = i, j
+                    if pos in changes:
+                        values[i - left, j - top] = changes[pos]
+        else:
+            for (i, j), value in changes.items():
+                if left <= i < right and top <= j < bottom:
+                    values[i - left, j - top] = value
         return values
 
     def convert_value(self, value):
