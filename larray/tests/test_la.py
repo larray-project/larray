@@ -466,6 +466,11 @@ class TestAxisCollection(TestCase):
         col[-1] = self.age
         self.assertEqual(col, [self.lipro, self.geo, self.age])
 
+    def test_setitem_list_replace(self):
+        col = self.collection[:]
+        col[['lipro', 'age']] = [self.geo, self.lipro]
+        self.assertEqual(col, [self.geo, self.sex, self.lipro])
+
     def test_setitem_slice_replace(self):
         col = self.collection[:]
         # replace by list

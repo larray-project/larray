@@ -930,7 +930,12 @@ class AxisCollection(object):
                 if axis.name is not None:
                     self._map[axis.name] = axis
             self._list[start_idx:stop_idx:key.step] = new
-            return
+        elif isinstance(key, (tuple, list, AxisCollection)):
+            assert isinstance(value, (tuple, list, AxisCollection))
+            if len(key) != len(value):
+                raise ValueError('must have as many old axes as new axes')
+            for k, v in zip(key, value):
+                self[k] = v
         else:
             assert isinstance(value, Axis)
             idx = self.index(key)
