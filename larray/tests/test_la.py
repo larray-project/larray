@@ -438,6 +438,27 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col[0], self.lipro)
         self.assertEqual(col[1], self.sex)
 
+    def test_setitem_slice_replace(self):
+        col = self.collection[:]
+        # replace by list
+        col[1:] = [self.geo, self.sex]
+        self.assertEqual(col, [self.lipro, self.geo, self.sex])
+        # replace by collection
+        col[1:] = self.collection[1:]
+        self.assertEqual(col, self.collection)
+
+    def test_setitem_slice_insert(self):
+        col = self.collection[:]
+        col[1:1] = [self.geo]
+        self.assertEqual(col, [self.lipro, self.geo, self.sex, self.age])
+
+    def test_setitem_slice_delete(self):
+        col = self.collection[:]
+        col[1:2] = []
+        self.assertEqual(col, [self.lipro, self.age])
+        col[0:1] = []
+        self.assertEqual(col, [self.age])
+
     def test_delitem(self):
         col = self.collection[:]
         self.assertEqual(len(col), 3)

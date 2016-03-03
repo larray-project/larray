@@ -906,30 +906,36 @@ class AxisCollection(object):
                 raise KeyError("axis '%s' not found in %s" % (key, self))
 
     def __setitem__(self, key, value):
-        assert isinstance(value, Axis)
-        value = value.copy()
-        value.collection = self
         if isinstance(key, slice):
-            raise NotImplementedError("slice set")
-        if isinstance(key, int):
-            axis = self._list[key]
-            self._list[key] = value
-            if axis.name is not None:
-                del self._map[axis.name]
-            if value.name is not None:
-                self._map[value.name] = value
-        elif isinstance(key, Axis):
-            # XXX: check that it is the same object????
-            self.__setitem__(key.name, value)
+            assert isinstance(value, (tuple, list, AxisCollection))
+            def slice_bound(bound):
+                if bound is None or isinstance(bound, int):
+                    # out of bounds integer bounds are allowed in slice setitem
+                    # so we cannot use .index
+                    return bound
+                else:
+                    return self.index(bound)
+            start_idx = slice_bound(key.start)
+            # XXX: we might want to make the stop bound inclusive, which makes
+            # more sense for label bounds (but prevents inserts via setitem)
+            stop_idx = slice_bound(key.stop)
+            old = self._list[start_idx:stop_idx:key.step]
+            for axis in old:
+                axis.collection = None
+                if axis.name is not None:
+                    del self._map[axis.name]
+            new = [axis.copy() for axis in value]
+            for axis in new:
+                axis.collection = self
+                if axis.name is not None:
+                    self._map[axis.name] = axis
+            self._list[start_idx:stop_idx:key.step] = new
+            return
         else:
-            assert isinstance(key, basestring), type(key)
-            if key in self._map:
-                axis = self._map[key]
-            else:
-                raise KeyError("axis '%s' not found in %s" % (key, self))
-            idx = self._list.index(axis)
-            self._list[idx] = value
-            self._map[key] = value
+            assert isinstance(value, Axis)
+            idx = self.index(key)
+            step = 1 if idx >= 0 else -1
+            self[idx:idx + step:step] = [value]
 
     def __delitem__(self, key):
         if isinstance(key, slice):
