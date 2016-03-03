@@ -1145,12 +1145,10 @@ class AxisCollection(object):
         elif isinstance(axes, Axis):
             axes = [axes]
 
-        # transform positional axis to axis objects
-        axes = [self[axis] if isinstance(axis, int) else axis for axis in axes]
-        to_remove = set(axis.name if isinstance(axis, Axis) else axis
-                        for axis in axes)
-        return AxisCollection([axis for axis in self
-                               if axis.name not in to_remove])
+        # only keep indices (as this works for unnamed axes too)
+        to_remove = set(self.index(axis) for axis in axes if axis in self)
+        return AxisCollection([axis for i, axis in enumerate(self)
+                               if i not in to_remove])
 
     def translate_full_key(self, key):
         """
