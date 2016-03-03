@@ -1096,7 +1096,7 @@ class AxisCollection(object):
             if -len(self) <= axis < len(self):
                 return axis
             else:
-                return ValueError("axis %d is not in collection" % axis)
+                raise ValueError("axis %d is not in collection" % axis)
         elif isinstance(axis, Axis) and axis.name is None:
             try:
                 # first look by id. This avoids testing labels of each axis
