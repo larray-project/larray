@@ -924,6 +924,8 @@ class AxisCollection(object):
                 axis.collection = None
                 if axis.name is not None:
                     del self._map[axis.name]
+            # XXX: in all "append"-like operations, we might want to only make a
+            # copy if axis.collection is not None
             new = [axis.copy() for axis in value]
             for axis in new:
                 axis.collection = self
@@ -1051,14 +1053,7 @@ class AxisCollection(object):
         """
         append axis at the end of the collection
         """
-        # when __setitem__(slice) will be implemented, we could simplify this
-        # XXX: in all "append"-like operations, we might want to only make a
-        # copy if axis.collection is not None
-        axis = axis.copy()
-        axis.collection = self
-        self._list.append(axis)
-        if axis.name is not None:
-            self._map[axis.name] = axis
+        self[len(self):len(self)] = [axis]
 
     def check_compatible(self, axes):
         for i, axis in enumerate(axes):
@@ -1082,14 +1077,8 @@ class AxisCollection(object):
         if validate:
             self.check_compatible(axes)
         # FIXME: buggy for axes with no name
-        to_add = [axis.copy() for axis in axes if axis.name not in self._map]
-        for axis in to_add:
-            axis.collection = self
-        # when __setitem__(slice) will be implemented, we could simplify this
-        self._list.extend(to_add)
-        for axis in to_add:
-            if axis.name is not None:
-                self._map[axis.name] = axis
+        to_add = [axis for axis in axes if axis.name not in self._map]
+        self[len(self):len(self)] = to_add
 
     def index(self, axis):
         """
@@ -1126,48 +1115,24 @@ class AxisCollection(object):
         """
         insert axis before index
         """
-        # when __setitem__(slice) will be implemented, we could simplify this
-        axis = axis.copy()
-        axis.collection = self
-        self._list.insert(index, axis)
-        self._map[axis.name] = axis
+        self[index:index] = [axis]
 
     def copy(self):
         return self[:]
 
     def replace(self, old, new):
         res = self[:]
-        if not isinstance(old, (tuple, list, AxisCollection)):
-            old = [old]
-        if not isinstance(new, (tuple, list, AxisCollection)):
-            new = [new]
-        if len(old) != len(new):
-            raise ValueError('must have as many old axes as new axes')
-        new = [axis.copy() for axis in new]
-        for o, n in zip(old, new):
-            n.collection = res
-            idx = self.index(o)
-            res[idx].collection = None
-            res[idx] = n
+        res[old] = new
         return res
 
-    # TODO: factorize with __sub__
+    # XXX: kill this method?
     def without(self, axes):
         """
         returns a new collection without some axes
-        you can use a comma separated list
-        axes must exist
+        you can use a comma separated list of names
+        set operations so axes can contain axes not present in self
         """
-        res = self[:]
-        if isinstance(axes, basestring):
-            axes = axes.split(',')
-        elif isinstance(axes, (int, Axis)):
-            axes = [axes]
-        # transform positional axis to axis objects
-        axes = [self[axis] for axis in axes]
-        for axis in axes:
-            del res[axis]
-        return res
+        return self - axes
 
     def __sub__(self, axes):
         """
