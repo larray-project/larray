@@ -505,6 +505,15 @@ class TestAxisCollection(TestCase):
         del col[self.sex]
         self.assertEqual(len(col), 0)
 
+    def test_delitem_slice(self):
+        col = self.collection[:]
+        self.assertEqual(len(col), 3)
+        del col[0:2]
+        self.assertEqual(len(col), 1)
+        self.assertEqual(col, [self.age])
+        del col[:]
+        self.assertEqual(len(col), 0)
+
     def test_pop(self):
         col = self.collection[:]
         lipro, sex, age = col

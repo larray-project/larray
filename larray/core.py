@@ -946,12 +946,13 @@ class AxisCollection(object):
 
     def __delitem__(self, key):
         if isinstance(key, slice):
-            raise NotImplementedError("slice delete")
-        idx = self.index(key)
-        axis = self._list.pop(idx)
-        if axis.name is not None:
-            del self._map[axis.name]
-        axis.collection = None
+            self[key] = []
+        else:
+            idx = self.index(key)
+            axis = self._list.pop(idx)
+            if axis.name is not None:
+                del self._map[axis.name]
+            axis.collection = None
 
     def __add__(self, other):
         result = self[:]
