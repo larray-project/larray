@@ -405,6 +405,7 @@ class TestAxisCollection(TestCase):
     def setUp(self):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 5)])
         self.sex = Axis('sex', 'H,F')
+        self.sex2 = Axis('sex', 'F,H')
         self.age = Axis('age', ':7')
         self.geo = Axis('geo', 'A11,A12,A13')
         self.value = Axis('value', ':10')
@@ -437,6 +438,33 @@ class TestAxisCollection(TestCase):
         self.assertEqual(len(col), 2)
         self.assertEqual(col[0], self.lipro)
         self.assertEqual(col[1], self.sex)
+
+    def test_setitem_name(self):
+        col = self.collection[:]
+        # replace an axis with one with another name
+        col['lipro'] = self.geo
+        self.assertEqual(len(col), 3)
+        self.assertEqual(col, [self.geo, self.sex, self.age])
+        # replace an axis with one with the same name
+        col['sex'] = self.sex2
+        self.assertEqual(col, [self.geo, self.sex2, self.age])
+        col['geo'] = self.lipro
+        self.assertEqual(col, [self.lipro, self.sex2, self.age])
+        col['age'] = self.geo
+        self.assertEqual(col, [self.lipro, self.sex2, self.geo])
+        col['sex'] = self.sex
+        col['geo'] = self.age
+        self.assertEqual(col, self.collection)
+
+    def test_setitem_int(self):
+        col = self.collection[:]
+        col[1] = self.geo
+        self.assertEqual(len(col), 3)
+        self.assertEqual(col, [self.lipro, self.geo, self.age])
+        col[2] = self.sex
+        self.assertEqual(col, [self.lipro, self.geo, self.sex])
+        col[-1] = self.age
+        self.assertEqual(col, [self.lipro, self.geo, self.age])
 
     def test_setitem_slice_replace(self):
         col = self.collection[:]
