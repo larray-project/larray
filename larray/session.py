@@ -16,10 +16,22 @@ class FileHandler(object):
     def __init__(self, fname):
         self.fname = fname
 
+    def _open_for_read(self):
+        raise NotImplementedError()
+
+    def _open_for_write(self):
+        raise NotImplementedError()
+
     def list(self):
         raise NotImplementedError()
 
-    def _read_array(self, key, **kwargs):
+    def _read_array(self, key, *args, **kwargs):
+        raise NotImplementedError()
+
+    def _dump(self, key, value, *args, **kwargs):
+        raise NotImplementedError()
+
+    def close(self):
         raise NotImplementedError()
 
     def read_arrays(self, keys, *args, **kwargs):
@@ -49,9 +61,6 @@ class FileHandler(object):
                 print("done")
         self.close()
 
-    def close(self):
-        raise NotImplementedError()
-
 
 class HDFHandler(FileHandler):
     def _open_for_read(self):
@@ -63,8 +72,8 @@ class HDFHandler(FileHandler):
     def list(self):
         return self.handle.keys()
 
-    def _read_array(self, key, **kwargs):
-        return read_hdf(self.handle, key, **kwargs)
+    def _read_array(self, key, *args, **kwargs):
+        return read_hdf(self.handle, key, *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
         value.to_hdf(self.handle, key, *args, **kwargs)
@@ -83,8 +92,8 @@ class ExcelHandler(FileHandler):
     def list(self):
         return self.handle.sheet_names
 
-    def _read_array(self, key, **kwargs):
-        df = self.handle.parse(key, **kwargs)
+    def _read_array(self, key, *args, **kwargs):
+        df = self.handle.parse(key, *args, **kwargs)
         return df_aslarray(df)
 
     def _dump(self, key, value, *args, **kwargs):
