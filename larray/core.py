@@ -2281,7 +2281,7 @@ class LArray(object):
             new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
             res_axes = self.axes.replace(axes_to_kill, new_axes)
         else:
-            res_axes = self.axes.without(axes_indices)
+            res_axes = self.axes - axes_indices
         if not res_axes:
             # scalars don't need to be wrapped in LArray
             return res_data
@@ -2567,7 +2567,7 @@ class LArray(object):
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argmin(axis_idx)]
-        return LArray(data, self.axes.without(axis))
+        return LArray(data, self.axes - axis)
 
     def posargmin(self, axis):
         """
@@ -2597,7 +2597,7 @@ class LArray(object):
             |  0 |  1 |  0
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        return LArray(self.data.argmin(axis_idx), self.axes.without(axis))
+        return LArray(self.data.argmin(axis_idx), self.axes - axis)
 
     def argmax(self, axis):
         """
@@ -2628,7 +2628,7 @@ class LArray(object):
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argmax(axis_idx)]
-        return LArray(data, self.axes.without(axis))
+        return LArray(data, self.axes - axis)
 
     def posargmax(self, axis):
         """
@@ -2658,7 +2658,7 @@ class LArray(object):
             |  1 |  0 |  1
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        return LArray(self.data.argmax(axis_idx), self.axes.without(axis))
+        return LArray(self.data.argmax(axis_idx), self.axes - axis)
 
     def argsort(self, axis=None, kind='quicksort'):
         """
