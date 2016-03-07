@@ -314,5 +314,6 @@ class Session(object):
 
 
 def local_arrays():
+    # noinspection PyProtectedMember
     d = sys._getframe(1).f_locals
     return Session((k, v) for k, v in d.items() if isinstance(v, LArray))
