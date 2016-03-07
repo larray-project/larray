@@ -194,9 +194,15 @@ class Session(object):
         ----------
         fname : str
             Path to the file.
-        names : list of str
-            List of arrays to load.
-        fmt : str
+        names : list of str, optional
+            List of arrays to load. Defaults to all valid objects present in
+            the file/directory.
+        fmt : str, optional
+            Dump to the `fmt` format. Defaults to 'auto' (guess from
+            filename).
+        display : bool, optional
+            whether or not to display which file is being worked on. Defaults
+            to False.
         """
         if display:
             print("opening", fname)
@@ -217,9 +223,14 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
+            list of names of objects to dump. Defaults to all objects
+            present in the Session.
         fmt : str, optional
             Dump to the `fmt` format. Defaults to 'auto' (guess from
             filename).
+        display : bool, optional
+            whether or not to display which file is being worked on. Defaults
+            to False.
         """
         if fmt == 'auto':
             _, ext = os.path.splitext(fname)
