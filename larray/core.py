@@ -1707,12 +1707,13 @@ class LArray(object):
         sorter = axis.i[posargsort.data]
         return self[sorter]
 
-    def sort_axis(self, axis=None, reverse=False):
+    # XXX: rename to sort_axes?
+    def sort_axis(self, axes=None, reverse=False):
         """Sorts axes of the LArray.
 
         Parameters
         ----------
-        axis : axis reference (Axis, string, int)
+        axes : axis reference (Axis, string, int) or list of them
             axis to sort. If None, sorts all axes.
         reverse : bool
             descending sort (default: False -- ascending)
@@ -1742,16 +1743,24 @@ class LArray(object):
              BE | 5 | 4
              EU | 1 | 0
              FO | 3 | 2
+        >>> a.sort_axis((x.sex, x.nat))
+        nat\\sex | F | H
+             BE | 5 | 4
+             EU | 1 | 0
+             FO | 3 | 2
         >>> a.sort_axis(reverse=True)
         nat\\sex | H | F
              FO | 2 | 3
              EU | 0 | 1
              BE | 4 | 5
         """
-        if axis is None:
+        if axes is None:
             axes = self.axes
-        else:
-            axes = [self.axes[axis]]
+        elif not isinstance(axes, (tuple, list, AxisCollection)):
+            axes = [axes]
+
+        if not isinstance(axes, AxisCollection):
+            axes = self.axes[axes]
 
         def sort_key(axis):
             key = np.argsort(axis.labels)
