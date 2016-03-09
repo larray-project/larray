@@ -460,10 +460,11 @@ def seq_summary(seq, num=3, func=repr):
 
 class PGroupMaker(object):
     def __init__(self, axis):
+        assert isinstance(axis, Axis)
         self.axis = axis
 
     def __getitem__(self, key):
-        return PGroup(key, None, self.axis)
+        return PGroup(key, None, self.axis.id)
 
 
 class Axis(object):
@@ -486,7 +487,7 @@ class Axis(object):
 
     @property
     def i(self):
-        return PGroupMaker(self.name)
+        return PGroupMaker(self)
 
     @property
     def labels(self):
@@ -548,7 +549,7 @@ class Axis(object):
                                  "an incompatible axis")
             # FIXME: we should respect the given name (overrides key.name)
             return key
-        return LGroup(key, name, self.name)
+        return LGroup(key, name, self.id)
 
     def all(self, name=None):
         return self.group(slice(None), name=name if name is not None else "all")
@@ -769,7 +770,7 @@ class LGroup(Group):
             # good in all cases. Storing the actual object would be nice.
             axis = axis.name
         if axis is not None:
-            assert isinstance(axis, basestring), \
+            assert isinstance(axis, (int, basestring)), \
                 "axis is not an instance of str (%s)" % axis
             # check the key is valid
             # TODO: for performance reasons, we should cache the result. This will
@@ -836,7 +837,7 @@ class PGroup(Group):
             key = list(key)
         self.key = key
         self.name = name
-        assert axis is None or isinstance(axis, basestring), \
+        assert axis is None or isinstance(axis, (basestring, int)), \
             "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
         self.axis = axis
 
