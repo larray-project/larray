@@ -1028,6 +1028,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
                     ([1, 0], 5)]:
             assert_array_equal(la.i[key], raw[key])
         assert_array_equal(la.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
+        self.assertRaises(IndexError, la.i.__getitem__, (0, 0, 0, 0, 0))
 
     def test_positional_indexer_setitem(self):
         for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0],
