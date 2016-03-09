@@ -4,7 +4,8 @@ from unittest import TestCase
 import unittest
 
 import numpy as np
-from larray import Session, Axis, LArray, ndrange
+from larray import Session, Axis, LArray, ndrange, isnan, view, local_arrays
+from larray.tests.test_la import assert_array_nan_equal
 
 
 class TestSession(TestCase):
@@ -135,6 +136,26 @@ class TestSession(TestCase):
         self.assertEqual(res.axes.names, ['name'])
         self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
         self.assertEqual(list(res), [True, False, True])
+
+    def test_sub(self):
+        sess = self.session.filter(kind=LArray)
+        other = Session({'e': self.e - 1, 'f': 1})
+        diff = sess - other
+        assert_array_nan_equal(diff['e'], np.full((2, 3), 1, dtype=np.int32))
+        assert_array_nan_equal(diff['f'], np.arange(-1, 5).reshape(3, 2))
+        self.assertTrue(isnan(diff['g']).all())
+
+    def test_div(self):
+        sess = self.session.filter(kind=LArray)
+        other = Session({'e': self.e - 1, 'f': self.f + 1})
+        res = sess / other
+
+        flat_e = np.arange(6) / np.arange(-1, 5)
+        assert_array_nan_equal(res['e'], flat_e.reshape(2, 3))
+
+        flat_f = np.arange(6) / np.arange(1, 7)
+        assert_array_nan_equal(res['f'], flat_f.reshape(3, 2))
+        self.assertTrue(isnan(res['g']).all())
 
     def test_init(self):
         s = Session('test_session.h5')

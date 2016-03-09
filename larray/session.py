@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
+import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
 from larray.core import LArray, Axis, read_csv, read_hdf, df_aslarray, \
     larray_equal
@@ -311,6 +312,32 @@ class Session(object):
 
     def __ne__(self, other):
         return ~(self == other)
+
+    # elementwise add: consider Session as an array-like and try to add the
+    # each array individually
+    def __add__(self, other):
+        self_names = set(self.names)
+        all_names = self.names + [n for n in other.names if n not in self_names]
+        return Session({name: self.get(name, np.nan) + other.get(name, np.nan)
+                       for name in all_names})
+
+    def __sub__(self, other):
+        self_names = set(self.names)
+        all_names = self.names + [n for n in other.names if n not in self_names]
+        return Session({name: self.get(name, np.nan) - other.get(name, np.nan)
+                       for name in all_names})
+
+    def __mul__(self, other):
+        self_names = set(self.names)
+        all_names = self.names + [n for n in other.names if n not in self_names]
+        return Session({name: self.get(name, np.nan) * other.get(name, np.nan)
+                       for name in all_names})
+
+    def __truediv__(self, other):
+        self_names = set(self.names)
+        all_names = self.names + [n for n in other.names if n not in self_names]
+        return Session({name: self.get(name, np.nan) / other.get(name, np.nan)
+                       for name in all_names})
 
 
 def local_arrays():
