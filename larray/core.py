@@ -1552,8 +1552,14 @@ class LArray(object):
 
             if not isinstance(axes, AxisCollection):
                 axes = AxisCollection(axes)
-        self.data = data
-        self.axes = axes
+        object.__setattr__(self, 'data', data)
+        object.__setattr__(self, 'axes', axes)
+
+    def __getattr__(self, key):
+        return self.__getitem__(key)
+
+    def __setattr__(self, key, value):
+        return self.__setitem__(key, value)
 
     @property
     def i(self):
@@ -1958,7 +1964,7 @@ class LArray(object):
             return tuple(key)
 
     def __getitem__(self, key, collapse_slices=False):
-        data = np.asarray(self)
+        data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
         # TODO: make the combined keys should be objects which display as:
@@ -2007,7 +2013,7 @@ class LArray(object):
             return LArray(data, axes)
 
     def __setitem__(self, key, value, collapse_slices=True):
-        data = np.asarray(self)
+        data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
         if isinstance(key, (LArray, np.ndarray)) and \
