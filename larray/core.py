@@ -1515,8 +1515,7 @@ class LArrayPositionalIndexer(object):
         if not isinstance(key, tuple):
             key = (key,)
         # no need to create a full nd key as that will be done later anyway
-        # XXX: use axis.i?
-        return tuple(PGroup(axis_key, axis=axis.id)
+        return tuple(axis.i[axis_key]
                      for axis_key, axis in zip(key, self.array.axes))
 
     def __getitem__(self, key):
@@ -1754,7 +1753,7 @@ class LArray(object):
             key = np.argsort(axis.labels)
             if reverse:
                 key = key[::-1]
-            return PGroup(key, axis=axis.id)
+            return axis.i[key]
 
         return self[tuple(sort_key(axis) for axis in axes)]
 
@@ -1770,16 +1769,17 @@ class LArray(object):
         for axis in self.axes:
             try:
                 axis_pos_key = axis.translate(axis_key)
-                valid_axes.append(axis.id)
+                valid_axes.append(axis)
             except KeyError:
                 pass
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
+            valid_axes = ', '.join(str(a.id) for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
-        return PGroup(axis_pos_key, axis=valid_axes[0])
+        return valid_axes[0].i[axis_pos_key]
 
     def _guess_axis(self, axis_key):
         if isinstance(axis_key, Group):
@@ -1795,14 +1795,15 @@ class LArray(object):
                 axis.translate(axis_key)
             except KeyError:
                 continue
-            valid_axes.append(axis.id)
+            valid_axes.append(axis)
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
+            valid_axes = ', '.join(str(a.id) for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
-        return LGroup(axis_key, axis=valid_axes[0])
+        return valid_axes[0][axis_key]
 
     # TODO: move this to AxisCollection
     def translated_key(self, key):
