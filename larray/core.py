@@ -2434,7 +2434,6 @@ class LArray(object):
                 return tuple(standardise_kw_arg(axis_name, k) for k in key)
             if isinstance(key, LGroup):
                 return key
-            assert isinstance(key, (str, list, slice))
             return LGroup(key, axis=axis_name)
 
         def to_vg(key):
