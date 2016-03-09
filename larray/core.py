@@ -1784,7 +1784,7 @@ class LArray(object):
                 axis_pos_key = axis.translate(axis_key)
                 valid_axes.append(axis)
             except KeyError:
-                pass
+                continue
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
@@ -1806,9 +1806,9 @@ class LArray(object):
         for axis in self.axes:
             try:
                 axis.translate(axis_key)
+                valid_axes.append(axis)
             except KeyError:
                 continue
-            valid_axes.append(axis)
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
