@@ -750,6 +750,8 @@ class Group(object):
         raise NotImplementedError()
 
 
+# TODO: factorize as much as possible between LGroup & PGroup (move stuff to
+#       Group)
 class LGroup(Group):
     def __init__(self, key, name=None, axis=None):
         """
@@ -2308,6 +2310,7 @@ class LArray(object):
         axis is an Axis object, a str or an int. Contrary to other aggregate
         functions this only supports one axis at a time.
         """
+        # TODO: accept a single group in axis, to filter & aggregate in one shot
         return LArray(op(np.asarray(self), axis=self.axes.index(axis)),
                       self.axes)
 
