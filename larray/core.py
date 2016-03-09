@@ -2434,7 +2434,7 @@ class LArray(object):
                 return tuple(standardise_kw_arg(axis_name, k) for k in key)
             if isinstance(key, LGroup):
                 return key
-            return LGroup(key, axis=axis_name)
+            return self.axes[axis_name][key]
 
         def to_vg(key):
             if isinstance(key, str):
