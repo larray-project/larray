@@ -39,10 +39,6 @@ Array Editor Dialog based on Qt
 # * tooltip on header with current filter
 
 # * selection change -> select headers too
-# * fix vmax/vmin on edit cell with max/min
-# * fix filtered edit:
-#   - translate "local" changes + filter to global changes
-#     -> try to be as generic as possible (DataFrame, ...)
 # * nicer error on plot with more than one row/column
 #   OR
 # * plotting a subset should probably (to think) go via LArray/pandas objects
