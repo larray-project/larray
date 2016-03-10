@@ -3536,6 +3536,26 @@ class LArray(object):
         return self.data.size
 
     @property
+    def nbytes(self):
+        """
+        returns the number of bytes in a LArray.
+
+        Returns
+        -------
+        integer
+            returns the number of bytes in a LArray.
+
+        Example
+        -------
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xsex, xtype])
+        >>> mat.nbytes
+        24
+        """
+        return self.data.nbytes
+
+    @property
     def dtype(self):
         """
         returns the type of the data in the cells of LArray.
