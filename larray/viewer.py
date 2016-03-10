@@ -1043,6 +1043,30 @@ class PlotDialog(QDialog):
         canvas.draw()
 
 
+def ndigits(value):
+    """
+    number of integer digits
+
+    >>> ndigits(1)
+    1
+    >>> ndigits(99)
+    2
+    >>> ndigits(-99.1)
+    3
+    """
+    negative = value < 0
+    value = abs(value)
+    log10 = math.log10(value) if value > 0 else 0
+    if log10 == np.inf:
+        int_digits = 308
+    else:
+        # max(1, ...) because there is at least one integer digit
+        # explicit conversion to int for Python2.x
+        int_digits = max(1, int(math.floor(log10)) + 1)
+    # one digit for sign if negative
+    return int_digits + negative
+
+
 class ArrayEditorWidget(QWidget):
     def __init__(self, parent, data, readonly=False,
                  xlabels=None, ylabels=None, bg_value=None,
@@ -1159,13 +1183,17 @@ class ArrayEditorWidget(QWidget):
         if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
             return False
 
-        _, frac_zeros, int_digits, _ = self.format_helper(data)
+        frac_zeros, int_digits, _ = self.format_helper(data)
 
         # if there are more integer digits than we can display or we can
         # display more information by using scientific format, do so
         # (scientific format "uses" 4 digits, so we win if have >= 4 zeros
         #  -- *including the integer one*)
-        return int_digits > avail_digits or frac_zeros >= 3
+        # TODO: only do so if we would actually display more information
+        # 0.00001 can be displayed with 8 chars
+        # 1e-05
+        # would
+        return int_digits > avail_digits or frac_zeros >= 4
 
     def choose_ndecimals(self, data, scientific):
         if data.dtype.type in (np.str, np.str_, np.bool_, np.bool, np.object_):
@@ -1175,10 +1203,10 @@ class ArrayEditorWidget(QWidget):
         # default width can fit 8 chars
         # FIXME: use max_digits?
         avail_digits = 8
-        data_frac_digits, frac_zeros, int_digits, vmin = self.format_helper(
-            data)
+        data_frac_digits = self._data_digits(data)
+        _, int_digits, negative = self.format_helper(data)
         if scientific:
-            int_digits = 2 if vmin < 0 else 1
+            int_digits = 2 if negative else 1
             exp_digits = 4
         else:
             exp_digits = 0
@@ -1200,23 +1228,15 @@ class ArrayEditorWidget(QWidget):
 
     def format_helper(self, data):
         if not data.size:
-            return 0, 0, 0, 0
-        data_frac_digits = self._data_digits(data)
+            return 0, 0, False
+        data = np.where(np.isfinite(data), data, 0)
         vmin, vmax = np.nanmin(data), np.nanmax(data)
         absmax = max(abs(vmin), abs(vmax))
         logabsmax = math.log10(absmax) if absmax else 0
-        frac_zeros = math.ceil(-logabsmax) if logabsmax < 0 else 0
-        # max(1, ...) because there is at least one integer digit
-        log10max = math.log10(vmax) if vmax > 0 else 0
-        pos_int_digits = max(1, math.ceil(log10max))
-        if vmin < 0:
-            # + 1 for sign
-            logvmin = math.log10(-vmin) if vmin else 0
-            neg_int_digits = max(1, math.ceil(logvmin)) + 1
-        else:
-            neg_int_digits = 0
-        int_digits = max(pos_int_digits, neg_int_digits)
-        return data_frac_digits, frac_zeros, int_digits, vmin
+        # minimum number of zeros before meaningful fractional part
+        frac_zeros = math.ceil(-logabsmax) - 1 if logabsmax < 0 else 0
+        int_digits = max(ndigits(vmin), ndigits(vmax))
+        return frac_zeros, int_digits, vmin < 0
 
     def get_max_digits(self, need_sign=False, need_dot=False, scientific=False):
         font = get_font("arreditor")  # QApplication.font()
