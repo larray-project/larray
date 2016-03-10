@@ -3527,12 +3527,11 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
+        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
+        >>> mat = ndrange([xsex, xtype])
         >>> mat.size
-        12
+        6
         """
         return self.data.size
 
