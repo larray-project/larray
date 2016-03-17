@@ -7,6 +7,7 @@ __all__ = [
     'LArray', 'Axis', 'AxisCollection', 'LGroup',
     'union', 'stack',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
+    'read_sas',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'ndrange', 'identity', 'larray_equal',
@@ -3920,6 +3921,21 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
     if len(index_col) == 0:
         index_col = list(range(nb_index))
     df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=na)
+
+
+def read_sas(filepath, nb_index=0, index_col=[],
+             na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+    """
+    reads sas file and returns an LArray with the contents
+        nb_index: number of leading index columns (e.g. 4)
+    or
+        index_col: list of columns for the index (e.g. [0, 1, 3])
+    """
+    if len(index_col) == 0:
+        index_col = list(range(nb_index))
+    df = pd.read_sas(filepath, index=index_col, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
                        fill_value=na)
 
