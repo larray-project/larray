@@ -1566,7 +1566,7 @@ class LArray(object):
     def i(self):
         return LArrayPositionalIndexer(self)
 
-    def to_frame(self, fold_last_axis_name=False):
+    def to_frame(self, fold_last_axis_name=False, dropna=None):
         columns = pd.Index(self.axes[-1].labels)
         if not fold_last_axis_name:
             columns.name = self.axes[-1].name
@@ -1582,13 +1582,21 @@ class LArray(object):
             if fold_last_axis_name:
                 index.name = self.axes.names[-1]
         data = np.asarray(self).reshape(len(index), len(columns))
-        return pd.DataFrame(data, index, columns)
+        df = pd.DataFrame(data, index, columns)
+        if dropna is not None:
+            dropna = dropna if dropna is not True else 'all'
+            df.dropna(inplace=True, how=dropna)
+        return df
+    df = property(to_frame)
 
-    @property
-    def series(self):
+    def to_series(self, dropna=False):
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
                                            names=self.axes.names)
-        return pd.Series(np.asarray(self).reshape(self.size), index)
+        series = pd.Series(np.asarray(self).reshape(self.size), index)
+        if dropna:
+            series.dropna(inplace=True)
+        return series
+    series = property(to_series)
 
     #noinspection PyAttributeOutsideInit
     # def __array_finalize__(self, obj):
@@ -3297,7 +3305,7 @@ class LArray(object):
         return clip(self, a_min, a_max, out)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True,
-               dialect='default', **kwargs):
+               dropna=None, dialect='default', **kwargs):
         """
         write LArray to a csv file.
 
@@ -3308,12 +3316,15 @@ class LArray(object):
         sep : string
             seperator for the csv file.
         na_rep : string
-            replace na values with na_rep.
+            replace NA values with na_rep.
         transpose : boolean
             transpose = True  => transpose over last axis.
             transpose = False => no transpose.
         dialect : 'default' | 'classic'
             Whether or not to write the last axis name (using '\' )
+        dropna : None, 'all', 'any' or True, optional
+            Drop lines if 'all' its values are NA, if 'any' value is NA or do
+            not drop any line (default). True is equivalent to 'all'.
 
         Example
         -------
@@ -3347,11 +3358,12 @@ class LArray(object):
         """
         fold = dialect == 'default'
         if transpose:
-            self.to_frame(fold).to_csv(filepath, sep=sep, na_rep=na_rep,
-                                       **kwargs)
+            frame = self.to_frame(fold, dropna)
+            frame.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
         else:
-            self.series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
-                               **kwargs)
+            series = self.to_series(dropna is not None)
+            series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True,
+                          **kwargs)
 
     def to_hdf(self, filepath, key, *args, **kwargs):
         """
