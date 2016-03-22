@@ -3562,9 +3562,9 @@ class LArray(object):
         -------
         >>> xsex = Axis('sex', ['H', 'F'])
         >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xsex, xtype])
+        >>> mat = ndrange([xsex, xtype], dtype=float)
         >>> mat.nbytes
-        24
+        48
         """
         return self.data.nbytes
 
