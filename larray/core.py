@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
-__version__ = "0.9.2"
+__version__ = "0.10"
 
 __all__ = [
     'LArray', 'Axis', 'AxisCollection', 'LGroup',
