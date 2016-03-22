@@ -1270,9 +1270,6 @@ class ArrayEditorWidget(QWidget):
         self.update_global_changes()
         return len(self.global_changes) > 1
 
-    def reset(self):
-        self.model.reset()
-
     def accept_changes(self):
         """Accept changes"""
         self.update_global_changes()
