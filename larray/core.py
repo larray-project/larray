@@ -160,9 +160,10 @@ Matrix class
 # ? move "excelcom" to its own project (so that it is not duplicated between
 #   potential projects using it)
 
+import csv
+import os
 from itertools import product, chain, groupby, islice
 import sys
-import csv
 try:
     import builtins
 except ImportError:
@@ -175,10 +176,16 @@ from larray.utils import (table2str, unique, csv_open, unzip, long,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, array_lookup)
 
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
+
 
 # TODO: return a generator, not a list
 def srange(*args):
     return list(map(str, range(*args)))
+
 
 def range_to_slice(seq, length=None):
     """
@@ -3390,32 +3397,143 @@ class LArray(object):
         """
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
-    def to_excel(self, filepath, sheet_name='Sheet1', *args, **kwargs):
+    def to_excel(self, filepath=None, sheet_name=None, position='A1',
+                 overwrite_file=False, clear_sheet=False, header=True,
+                 transpose=False, engine=None, *args, **kwargs):
         """
-        write LArray to an excel file in the specified sheet 'sheet_name'
+        write LArray in the specified sheet of specified excel workbook
 
         Parameters
         ----------
-        filepath : string
-            path where the excel file has to be written.
-        sheet_name : string
-            sheet where the data has to be written.
+        filepath : str or int or None, optional
+            path where the excel file has to be written. If None (default),
+            creates a new Excel Workbook in a live Excel instance
+            (Windows only). Use -1 to use the currently active Excel
+            Workbook. Use a name without extension (.xlsx) to use any
+            *unsaved* workbook.
+        sheet_name : str or int or None, optional
+            sheet where the data has to be written. Defaults to None,
+            Excel standard name if adding a sheet to an existing file,
+            "Sheet1" otherwise. sheet_name can also refer to the position of
+            the sheet (e.g. 0 for the first sheet, -1 for the last one).
+        position : str, optional
+            Defaults to 'A1'.
+        overwrite_file : bool, optional
+            whether or not to overwrite the existing file (or just modify the
+            specified sheet). Defaults to False.
+        clear_sheet : bool, optional
+            whether or not to clear the existing sheet (if any) before writing.
+            Defaults to False.
+        header : bool, optional
+            whether or not to write a header (axes names and labels).
+            Defaults to True.
+        transpose : bool, optional
+            whether or not to transpose the resulting array. This can be used,
+            for example, for writing one dimensional arrays vertically.
+            Defaults to False.
+        engine : 'xlwings' | 'openpyxl' | 'xlsxwriter' | 'xlwt' | None, optional
+            engine to use to make the output. If None (default), it will use
+            'xlwings' by default if the module is installed and relies on
+            Pandas default writer otherwise.
         *args
         **kargs
-
-        Returns
-        -------
-        Excel file
-            with LArray pasted in sheet_name.
 
         Example
         -------
         >>> xnat = Axis('nat', ['BE', 'FO'])
         >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat.to_excel('test.xlsx', 'Sheet1')
+        >>> a = ndrange([xnat, xsex])
+        >>> # write to a new (unnamed) sheet
+        >>> a.to_excel('test.xlsx')  # doctest: +SKIP
+        >>> # write to top-left corner of an existing sheet
+        >>> a.to_excel('test.xlsx', 'Sheet1')  # doctest: +SKIP
+        >>> # add to existing sheet starting at position A15
+        >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
-        self.to_frame().to_excel(filepath, sheet_name, *args, **kwargs)
+        df = self.to_frame(fold_last_axis_name=True)
+        if engine is None:
+            engine = 'xlwings' if xw is not None else None
+
+        if engine == 'xlwings':
+            save = False
+            new_workbook = False
+            if filepath == -1:
+                wb = xw.Workbook.active()
+            elif filepath is None:
+                # creates a new/blank Workbook
+                wb = xw.Workbook(app_visible=True)
+                new_workbook = True
+            else:
+                basename, ext = os.path.splitext(filepath)
+                if ext:
+                    # XXX: not sure writing anything else than .xlsx will
+                    # work as intended
+                    if not ext.startswith('.xl'):
+                        raise ValueError("'%s' is not a supported file "
+                                         "extension" % ext)
+
+                    # This is necessary because otherwise we cannot open/save to
+                    # a workbook in the current directory without giving the
+                    # full/absolute path. By doing this, we basically loose the
+                    # ability to target an already open workbook *of a saved
+                    # file* not in the current directory without using its
+                    # path. I can live with that restriction though because you
+                    # usually either work with relative paths or with the
+                    # currently active workbook.
+                    filepath = os.path.abspath(filepath)
+                    save = True
+                    if os.path.isfile(filepath) and overwrite_file:
+                        os.remove(filepath)
+
+                    # file already exists (and is a file)
+                    if os.path.isfile(filepath):
+                        # do not change Excel visibility
+                        wb = xw.Workbook(filepath, app_visible=None)
+                    else:
+                        # open new workbook, do not change Excel visibility
+                        wb = xw.Workbook(app_visible=None)
+                        new_workbook = True
+                else:
+                    # open existing unsaved workbook
+                    wb = xw.Workbook(filepath, app_visible=True)
+
+            def sheet_exists(wb, sheet):
+                if isinstance(sheet, int):
+                    length = xw.Sheet.count(wb)
+                    return -length <= sheet < length
+                else:
+                    assert isinstance(sheet_name, str)
+                    sheet_names = [i.name.lower() for i in xw.Sheet.all(wkb=wb)]
+                    return sheet_name.lower() in sheet_names
+
+            if new_workbook:
+                sheet = xw.Sheet(1, wkb=wb)
+                if sheet_name is not None:
+                    sheet.name = sheet_name
+            elif sheet_name is not None and sheet_exists(wb, sheet_name):
+                if isinstance(sheet_name, int):
+                    if sheet_name < 0:
+                        sheet_name += xw.Sheet.count(wb)
+                    sheet_name += 1
+                sheet = xw.Sheet(sheet_name, wkb=wb)
+                if clear_sheet:
+                    sheet.clear()
+            else:
+                sheet = xw.Sheet.add(sheet_name, wkb=wb)
+
+            options = dict(header=header, index=header, transpose=transpose)
+            xw.Range(sheet, position).options(**options).value = df
+            if save:
+                wb.save(filepath)
+                wb.close()
+                # not need to explicitly quit. If this is the last workbook,
+                # excel seems to quit by itself.
+        else:
+            if sheet_name is None:
+                sheet_name = 'Sheet1'
+            # TODO: implement position in this case
+            # startrow, startcol
+            df.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """
@@ -3928,7 +4046,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
     reads excel file from sheet name and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
-        index_col : list of columns for the index (e.g. [0, 1, 3])
+        index_col: list of columns for the index (e.g. [0, 1, 3])
     """
     if len(index_col) == 0:
         index_col = list(range(nb_index))
