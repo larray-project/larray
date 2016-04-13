@@ -73,7 +73,7 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QSpinBox, QWidget, QVBoxLayout,
                          QFont, QAction, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange,
-                         QIcon, QStyle, QFontMetrics, QToolTip)
+                         QIcon, QStyle, QFontMetrics, QToolTip, QCursor)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
                           QVariant, pyqtSlot as Slot)
 
@@ -622,6 +622,7 @@ class ArrayModel(QAbstractTableModel):
 
         # Add change to self.changes
         changes = self.changes
+        # requires numpy 1.10
         newvalues = np.broadcast_to(values, (width, height))
         oldvalues = np.empty_like(newvalues)
         for i in range(width):
@@ -856,6 +857,16 @@ class ArrayView(QTableView):
         menu = QMenu(self)
         menu.addActions([self.copy_action, self.plot_action, self.paste_action])
         return menu
+
+    def autofit_columns(self):
+        """Resize cells to contents"""
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+
+        # Spyder loads more columns before resizing, but since it does not
+        # load all columns anyway, I do not see the point
+        # self.model().fetch_more_columns()
+        self.resizeColumnsToContents()
+        QApplication.restoreOverrideCursor()
 
     def contextMenuEvent(self, event):
         """Reimplement Qt method"""
@@ -1561,11 +1572,17 @@ class ArrayEditor(QDialog):
             cancel_button.clicked.connect(self.reject)
             cancel_button.setAutoDefault(False)
             btn_layout.addWidget(cancel_button)
+        # r_button = QPushButton("resize")
+        # r_button.clicked.connect(self.resize_to_contents)
+        # btn_layout.addWidget(r_button)
         layout.addLayout(btn_layout, 2, 0)
 
         # Make the dialog act as a window
         self.setWindowFlags(Qt.Window)
         return True
+
+    def autofit_columns(self):
+        self.arraywidget.view.autofit_columns()
 
     @Slot()
     def accept(self):
@@ -1891,7 +1908,7 @@ if __name__ == "__main__":
     # arr2 = la.LArray(data2,
     #                  axes=(la.Axis('d0', list(range(5000))),
     #                        la.Axis('d1', list(range(20)))))
-    # edit(arr2)
+    edit(arr2)
 
     # view(['a', 'bb', 5599])
     # view(np.arange(12).reshape(2, 3, 2))

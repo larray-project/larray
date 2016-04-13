@@ -3,6 +3,7 @@ Misc tools
 """
 from __future__ import absolute_import, division, print_function
 
+import itertools
 import sys
 import operator
 from textwrap import wrap
@@ -21,10 +22,12 @@ if sys.version < '3':
     basestring = basestring
     bytes = str
     long = long
+    PY3 = False
 else:
     basestring = str
     unicode = str
     long = int
+    PY3 = True
 
 
 def csv_open(filename, mode='r'):
@@ -193,14 +196,49 @@ class ReprString(str):
 
 def array_lookup(array, mapping):
     """pass all elements of an np.ndarray through a mapping"""
+    array = np.asarray(array)
+    # TODO: this must be cached in the Axis
+    # TODO: range axes should be optimized (reuse Pandas 0.18 indexes)
     sorted_keys, sorted_values = tuple(zip(*sorted(mapping.items())))
     sorted_keys = np.array(sorted_keys)
+    # prevent an array of booleans from matching a integer axis (sorted_keys)
+    # XXX: we might want to allow signed and unsigned integers to match
+    #      against each other
+    if array.dtype.kind != sorted_keys.dtype.kind:
+        raise KeyError('key has not the same dtype than axis')
+    # TODO: it is very important to fail quickly, so guess_axis should try
+    # this in chunks (first test first element of key, if several axes match,
+    #  try [1:11] elements, [12:112], [113:1113], ...
     if not np.all(np.in1d(array, sorted_keys)):
         raise KeyError('all keys not in array')
 
     sorted_values = np.array(sorted_values)
     if not len(array):
         return np.empty(0, dtype=sorted_values.dtype)
+    indices = np.searchsorted(sorted_keys, array)
+    return sorted_values[indices]
+
+
+def array_lookup2(array, sorted_keys, sorted_values):
+    """pass all elements of an np.ndarray through a "mapping" """
+    if not len(array):
+        return np.empty(0, dtype=sorted_values.dtype)
+
+    array = np.asarray(array)
+    # TODO: this must be cached in the Axis
+    # TODO: range axes should be optimized (reuse Pandas 0.18 indexes)
+
+    # prevent an array of booleans from matching a integer axis (sorted_keys)
+    # XXX: we might want to allow signed and unsigned integers to match
+    #      against each other
+    if array.dtype.kind != sorted_keys.dtype.kind:
+        raise KeyError('key has not the same dtype than axis')
+    # TODO: it is very important to fail quickly, so guess_axis should try
+    # this in chunks (first test first element of key, if several axes match,
+    #  try [1:11] elements, [12:112], [113:1113], ...
+    if not np.all(np.in1d(array, sorted_keys)):
+        raise KeyError('all keys not in array')
+
     indices = np.searchsorted(sorted_keys, array)
     return sorted_values[indices]
 
@@ -249,3 +287,24 @@ def split_on_values(seq, values):
     for e in seq:
         append_a(e) if e in values else append_b(e)
     return a, b
+
+
+def skip_comment_cells(lines):
+    def notacomment(v):
+        return not v.startswith('#')
+    for line in lines:
+        stripped_line = list(itertools.takewhile(notacomment, line))
+        if stripped_line:
+            yield stripped_line
+
+
+def strip_rows(lines):
+    """
+    returns an iterator of lines with trailing blank (empty or
+    which contain only space) cells.
+    """
+    def isblank(s):
+        return s == '' or s.isspace()
+    for line in lines:
+        rev_line = list(itertools.dropwhile(isblank, reversed(line)))
+        yield list(reversed(rev_line))

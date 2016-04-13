@@ -81,6 +81,15 @@ Matrix class
 # => x.axis1.group([5, 7, 10], name='brussels')
 # => x.axis1[[5, 7, 10]].named('brussels')
 
+# http://xarray.pydata.org/en/stable/indexing.html#pointwise-indexing
+# http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.lookup.html#pandas.DataFrame.lookup
+
+# I think I would go for
+# ARRAY.points[dim0_labels, ..., dimX_labels]
+# and
+# ARRAY.ipoints[dim0_indices, ..., dimX_indices]
+# so that we can have a symmetrical API for get and set.
+
 # I wonder if, for axes subscripting, I could not allow tuples as sequences,
 # which would make it a bit nicer:
 # x.axis1[5, 7, 10].named('brussels')
@@ -174,13 +183,18 @@ import pandas as pd
 
 from larray.utils import (table2str, unique, csv_open, unzip, long,
                           decode, basestring, izip, rproduct, ReprString,
-                          duplicates, array_lookup)
+                          duplicates, array_lookup2, skip_comment_cells,
+                          strip_rows, PY3)
 
 try:
     import xlwings as xw
 except ImportError:
     xw = None
 
+try:
+    from numpy import nanprod as np_nanprod
+except ImportError:
+    np_nanprod = None
 
 # TODO: return a generator, not a list
 def srange(*args):
@@ -475,6 +489,16 @@ class PGroupMaker(object):
         return PGroup(key, None, self.axis.id)
 
 
+class LazyAttribute(object):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __get__(self, instance, owner):
+        return self.func(*args, **kwargs)
+
+
 class Axis(object):
     # ticks instead of labels?
     # XXX: make name and labels optional?
@@ -487,11 +511,66 @@ class Axis(object):
             name = name.name
         self.name = name
         self._labels = None
-        self._mapping = {}
+        self.__mapping = None
+        self.__sorted_keys = None
+        self.__sorted_values = None
         self._length = None
         self._iswildcard = False
         self.labels = labels
         self.collection = None
+        # if self._length != len(self._sorted_keys):
+        #     print("gotcha")
+
+    @property
+    def _mapping(self):
+        mapping = self.__mapping
+        if mapping is None:
+            labels = self._labels
+            # TODO: this would be more efficient for wildcard axes but
+            # does not work in all cases
+            # mapping = labels
+            mapping = {label: i for i, label in enumerate(labels)}
+            if not self._iswildcard:
+                # we have no choice but to do that!
+                # otherwise we could not make geo['Brussels'] work efficiently
+                # (we could have to traverse the whole mapping checking for each
+                # name, which is not an option)
+                # TODO: only do this if labels.dtype is object, or add "contains_lgroup"
+                # flag in above code (if any(...))
+                # 0.179
+                mapping.update({label.name: i for i, label in enumerate(labels)
+                                if isinstance(label, Group)})
+            self.__mapping = mapping
+        return mapping
+
+    # XXX: this is only for copy()
+    @_mapping.setter
+    def _mapping(self, mapping):
+        self.__mapping = mapping
+
+    def _update_key_values(self):
+        mapping = self._mapping
+        if mapping:
+            sorted_keys, sorted_values = tuple(zip(*sorted(mapping.items())))
+        else:
+            sorted_keys, sorted_values = (), ()
+        keys, values = np.array(sorted_keys), np.array(sorted_values)
+        self.__sorted_keys = keys
+        self.__sorted_values = values
+        return keys, values
+
+    @property
+    def _sorted_keys(self):
+        if self.__sorted_keys is None:
+            keys, _ = self._update_key_values()
+        return self.__sorted_keys
+
+    @property
+    def _sorted_values(self):
+        values = self.__sorted_values
+        if values is None:
+            _, values = self._update_key_values()
+        return values
 
     @property
     def i(self):
@@ -508,9 +587,6 @@ class Axis(object):
         if isinstance(labels, int):
             length = labels
             labels = np.arange(length)
-            # TODO: this would be more efficient but does not work in all cases
-            # mapping = labels
-            mapping = {label: i for i, label in enumerate(labels)}
             iswildcard = True
         else:
             # TODO: move this to to_ticks????
@@ -518,24 +594,24 @@ class Axis(object):
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
             ticks = to_ticks(labels)
-            if any(isinstance(tick, LGroup) for tick in ticks):
+            object_array = isinstance(ticks, np.ndarray) and \
+                           ticks.dtype.type == np.object_
+            can_have_groups = object_array or isinstance(ticks, (tuple, list))
+            if can_have_groups and any(
+                    isinstance(tick, LGroup) for tick in ticks):
                 # avoid getting a 2d array if all LGroup have the same length
                 labels = np.empty(len(ticks), dtype=object)
                 labels[:] = ticks
             else:
                 labels = np.asarray(ticks)
             length = len(labels)
-            mapping = {label: i for i, label in enumerate(labels)}
-            # we have no choice but to do that!
-            # otherwise we could not make geo['Brussels'] work efficiently
-            # (we could have to traverse the whole mapping checking for each
-            # name, which is not an option)
-            mapping.update({label.name: i for i, label in enumerate(labels)
-                            if isinstance(label, Group)})
+            # TODO: delay creating this when first accessed
+            # XXX: isn't it faster to enumerate(ticks) instead
+            # 0.057
             iswildcard = False
+
         self._length = length
         self._labels = labels
-        self._mapping = mapping
         self._iswildcard = iswildcard
 
     # XXX: not sure I should offer an *args version
@@ -615,7 +691,17 @@ class Axis(object):
     def __hash__(self):
         return id(self)
 
-    def translate(self, key):
+    def _is_key_type_compatible(self, key):
+        label_kind = self.labels.dtype.kind
+        key_kind = np.dtype(type(key)).kind
+        str_key = key_kind in ('S', 'U')
+        # on Python2, ascii-only unicode string can match byte strings,
+        # so we shouldn't be more picky here than dict hashing
+        allowed_str_kinds = ('O',) if PY3 else ('O', 'S', 'U')
+        str_match = str_key and label_kind in allowed_str_kinds
+        return key_kind == label_kind or str_match
+
+    def translate(self, key, bool_passthrough=True):
         """
         translates a label key to its numerical index counterpart
         fancy index with boolean vectors are passed through unmodified
@@ -625,7 +711,9 @@ class Axis(object):
         # first, try the key as-is, so that we can target elements in aggregated
         # arrays (those are either strings containing comas or LGroups)
         try:
-            return mapping[key]
+            # avoid matching 0 against False or 0.0
+            if self._is_key_type_compatible(key):
+                return mapping[key]
         # we must catch TypeError because key might not be hashable (eg slice)
         # IndexError is for when mapping is an ndarray
         except (KeyError, TypeError, IndexError):
@@ -648,7 +736,9 @@ class Axis(object):
             # stop is inclusive in the input key and exclusive in the output !
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
-        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
+        # XXX: bool LArray do not pass through???
+        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b' and \
+                bool_passthrough:
             return key
         elif isinstance(key, (tuple, list)):
             # TODO: the result should be cached
@@ -666,15 +756,27 @@ class Axis(object):
             # array_lookup is O(len(key) * log(len(mapping)))
             # vs
             # tuple/list version is O(len(key)) (dict.getitem is O(1))
-            return array_lookup(key, mapping)
+            # XXX: we might want to special case dtype bool, because in that
+            # case the mapping will in most case be {False: 0, True: 1} or
+            # {False: 1, True: 0} and in those case key.astype(int) and
+            # (~key).astype(int) are MUCH faster
+            # see C:\Users\gdm\devel\lookup_methods.py and
+            #     C:\Users\gdm\Desktop\lookup_methods.html
+            # print('pouet', key)
+            return array_lookup2(key, self._sorted_keys, self._sorted_values)
         elif isinstance(key, LArray):
-            return LArray(array_lookup(key.data, mapping), key.axes)
+            pkey = array_lookup2(key.data, self._sorted_keys, self._sorted_values)
+            return LArray(pkey, key.axes)
         else:
             # the first mapping[key] above will cover most cases. This code
             # path is only used if the key was given in "non normalized form"
             assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
             # key is scalar (integer, float, string, ...)
-            return mapping[key]
+            if np.dtype(type(key)).kind == self.labels.dtype.kind:
+                return mapping[key]
+            else:
+                # print("diff dtype", )
+                raise KeyError(key)
 
     @property
     def id(self):
@@ -739,9 +841,14 @@ class Axis(object):
         # XXX: I wonder if we should make a copy of the labels + mapping.
         # There should at least be an option.
         new_axis._labels = self._labels
-        new_axis._mapping = self._mapping
+        new_axis.__mapping = self.__mapping
         new_axis._length = self._length
         new_axis._iswildcard = self._iswildcard
+        new_axis.__sorted_keys = self.__sorted_keys
+        new_axis.__sorted_values = self.__sorted_values
+        # if new_axis._length != len(new_axis._sorted_keys):
+        #     print("gotcha here too")
+        # assert new_axis._length == len(new_axis._sorted_keys)
         # collection is intentionally not copied
         return new_axis
 
@@ -787,6 +894,16 @@ class LGroup(Group):
             # need to be invalidated correctly
             # axis.translate(key)
         self.axis = axis
+
+    # this makes range(LGroups(int)) possible
+    def __index__(self):
+        return self.key.__index__()
+
+    def __int__(self):
+        return self.key.__int__()
+
+    def __float__(self):
+        return self.key.__float__()
 
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this
@@ -1507,11 +1624,15 @@ class LArrayIterator(object):
         self.array = array
         self.position = 0
 
+    def __iter__(self):
+        return self
+
     def __next__(self):
         array = self.array
         if self.position == len(self.array):
             raise StopIteration
-        result = array[array.axes[0].i[self.position]]
+        # result = array.i[array.axes[0].i[self.position]]
+        result = array.i[self.position]
         self.position += 1
         return result
     # Python 2
@@ -1534,6 +1655,39 @@ class LArrayPositionalIndexer(object):
 
     def __getitem__(self, key):
         return self.array[self.translate_key(key)]
+
+    def __setitem__(self, key, value):
+        self.array[self.translate_key(key)] = value
+
+
+class LArrayPointsIndexer(object):
+    def __init__(self, array):
+        self.array = array
+
+    # def translate_key(self, key):
+    #     if not isinstance(key, tuple):
+    #         key = (key,)
+    #     if len(key) > self.array.ndim:
+    #         raise IndexError("key has too many indices (%d) for array with %d "
+    #                          "dimensions" % (len(key), self.array.ndim))
+    #     # no need to create a full nd key as that will be done later anyway
+    #     return tuple(axis.i[axis_key]
+    #                  for axis_key, axis in zip(key, self.array.axes))
+
+    def __getitem__(self, key):
+        data = np.asarray(self.array)
+        translated_key = self.array.translated_key(key, bool_stuff=True)
+
+        # FIXME: ideally we should use wildcard_allowed=False, but this is currently too slow
+        axes = self.array._bool_key_new_axes(translated_key, wildcard_allowed=True)
+        data = data[translated_key]
+        # drop length 1 dimensions created by scalar keys
+        # data = data.reshape(tuple(len(axis) for axis in axes))
+        if not axes:
+            # scalars do not need to be wrapped in LArray
+            return data
+        else:
+            return LArray(data, axes)
 
     def __setitem__(self, key, value):
         self.array[self.translate_key(key)] = value
@@ -1572,6 +1726,19 @@ class LArray(object):
     @property
     def i(self):
         return LArrayPositionalIndexer(self)
+
+    @property
+    def points(self):
+        return LArrayPointsIndexer(self)
+
+    @property
+    def ipoints(self):
+        return LArrayPositionalPointsIndexer(self)
+
+    def apply_sequential(self, axis, func):
+        axis = self.axes[axis]
+        for i in range(1, len(axis)):
+            self[axis.i[i]] = func(self[axis.i[i - 1]])
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
         columns = pd.Index(self.axes[-1].labels)
@@ -1794,7 +1961,7 @@ class LArray(object):
 
         return self[tuple(sort_key(axis) for axis in axes)]
 
-    def _translate_axis_key(self, axis_key):
+    def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
         if isinstance(axis_key, Group):
             return axis_key
 
@@ -1803,9 +1970,10 @@ class LArray(object):
         # label -> (axis, index)
         # but for Pandas, this wouldn't work, we'd need label -> axis
         valid_axes = []
+        # TODO: use axis_key dtype to only check compatible axes
         for axis in self.axes:
             try:
-                axis_pos_key = axis.translate(axis_key)
+                axis_pos_key = axis.translate(axis_key, bool_passthrough)
                 valid_axes.append(axis)
             except KeyError:
                 continue
@@ -1817,6 +1985,31 @@ class LArray(object):
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
         return valid_axes[0].i[axis_pos_key]
+
+    def _translate_axis_key(self, axis_key, bool_passthrough=True):
+        # TODO: do it for LArray key too (but using .i[] instead)
+        if isinstance(axis_key, (tuple, list, np.ndarray)):
+            axis = None
+            for size in (1, 10, 100, 1000):
+                # TODO: do not recheck already checked elements
+                key_chunk = axis_key[:size]
+                try:
+                    tkey = self._translate_axis_key_chunk(key_chunk,
+                                                          bool_passthrough)
+                    axis = tkey.axis
+                    break
+                except ValueError:
+                    continue
+            if axis is not None:
+                # make sure we have an Axis object
+                axis = self.axes[axis]
+                # wrap key in LGroup
+                axis_key = axis[axis_key]
+                # XXX: reuse tkey chunks and only translate the rest?
+            return self._translate_axis_key_chunk(axis_key,
+                                                  bool_passthrough)
+        else:
+            return self._translate_axis_key_chunk(axis_key, bool_passthrough)
 
     def _guess_axis(self, axis_key):
         if isinstance(axis_key, Group):
@@ -1843,7 +2036,7 @@ class LArray(object):
         return valid_axes[0][axis_key]
 
     # TODO: move this to AxisCollection
-    def translated_key(self, key):
+    def translated_key(self, key, bool_stuff=False):
         """Complete and translate key
 
         Parameters
@@ -1857,9 +2050,11 @@ class LArray(object):
         Returns a full N dimensional positional key
         """
 
-        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, np.bool_):
+        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, np.bool_) \
+                and not bool_stuff:
             return key.nonzero()
-        if isinstance(key, LArray) and np.issubdtype(key.dtype, np.bool_):
+        if isinstance(key, LArray) and np.issubdtype(key.dtype, np.bool_) \
+                and not bool_stuff:
             # if only the axes order is wrong, transpose
             if key.size == self.size and key.shape != self.shape:
                 return np.asarray(key.transpose(self.axes)).nonzero()
@@ -1894,8 +2089,10 @@ class LArray(object):
             # XXX: we might want to raise an exception when we find (most)
             # slice(None) because except for a single slice(None) a[:], I don't
             # think there is any point.
-            key = tuple(self._translate_axis_key(axis_key) for axis_key in key
-                        if not isnoneslice(axis_key))
+            key = tuple(
+                self._translate_axis_key(axis_key,
+                                         bool_passthrough=not bool_stuff)
+                for axis_key in key if not isnoneslice(axis_key))
 
             assert all(isinstance(axis_key, Group) for axis_key in key)
 
@@ -1919,7 +2116,7 @@ class LArray(object):
                     for axis in self.axes)
 
         # label -> raw positional
-        return tuple(axis.translate(axis_key)
+        return tuple(axis.translate(axis_key, bool_passthrough=not bool_stuff)
                      for axis, axis_key in zip(self.axes, key))
 
     # TODO: we only need axes length => move this to AxisCollection
@@ -1980,6 +2177,10 @@ class LArray(object):
             return tuple(key)
 
     def __getitem__(self, key, collapse_slices=False):
+        if isinstance(key, str) and key in ('__array_struct__',
+                                      '__array_interface__'):
+            raise KeyError("bla")
+        # print("key", key)
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -1988,6 +2189,8 @@ class LArray(object):
         # Q: Should it be the same object as the NDLGroup?/NDKey?
         # A: yes, probably. On the Pandas backend, we could/should have
         #    separate axes. On the numpy backend we cannot.
+
+        # I have a huge problem with boolean labels + non points
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, np.bool_):
             return LArray(data[translated_key],
@@ -2014,18 +2217,27 @@ class LArray(object):
             axes = flatten(to2d(axes))
             return LArray(data, axes)
 
+        # TODO: if the original key was a label key, subaxis(translated_key) == orig_key, so we should use
+        # orig_axis_key.copy()
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
 
         cross_key = self.cross_key(translated_key, collapse_slices)
         data = data[cross_key]
-        # drop length 1 dimensions created by scalar keys
-        data = data.reshape(tuple(len(axis) for axis in axes))
+        # print("orig data", self.data)
+        # dd = np.asarray(self.data)
+        # print("dd", dd)
+        # print("new data", data)
+        # print("axes", self.axes.info, "\n", axes, self.data.shape, data.shape)
+        # print("tkey", translated_key)
+        # print("ckey", cross_key)
         if not axes:
             # scalars do not need to be wrapped in LArray
             return data
         else:
+            # drop length 1 dimensions created by scalar keys
+            data = data.reshape(tuple(len(axis) for axis in axes))
             return LArray(data, axes)
 
     def __setitem__(self, key, value, collapse_slices=True):
@@ -2056,7 +2268,9 @@ class LArray(object):
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
-                         if not isnoneslice(axis_key)]
+                         if not isnoneslice(axis_key) and
+                            not np.isscalar(axis_key)]
+        # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
                       if isnoneslice(axis_key)]
         assert len(combined_axes) > 0
@@ -2071,19 +2285,22 @@ class LArray(object):
         combined_name = ','.join(str(axis.id) for axis in combined_axes)
         if wildcard_allowed:
             lengths = [len(axis_key) for axis_key in key
-                       if not isnoneslice(axis_key)]
+                       if not isnoneslice(axis_key) and
+                          not np.isscalar(axis_key)]
             combined_axis_len = lengths[0]
             assert all(l == combined_axis_len for l in lengths)
             combined_axis = Axis(combined_name, combined_axis_len)
         else:
             axes_labels = [axis.labels[axis_key]
                            for axis_key, axis in zip(key, self.axes)
-                           if not isnoneslice(axis_key)]
+                           if not isnoneslice(axis_key) and
+                              not np.isscalar(axis_key)]
             if len(combined_axes) == 1:
                 combined_labels = axes_labels[0]
             else:
                 combined_labels = list(zip(*axes_labels))
 
+            # CRAP, this can lead to duplicate labels (especially using .points)
             combined_axis = Axis(combined_name, combined_labels)
         new_axes = other_axes
         new_axes.insert(combined_axis_pos, combined_axis)
@@ -2232,7 +2449,7 @@ class LArray(object):
     def __iter__(self):
         return LArrayIterator(self)
 
-    def as_table(self, maxlines=80, edgeitems=5):
+    def as_table(self, maxlines=200, edgeitems=5):
         if not self.ndim:
             return
 
@@ -2339,6 +2556,8 @@ class LArray(object):
     # TODO: now that items is never a (k, v), it should be renamed to
     # something else: args? (groups would be misleading because each "item"
     # can contain several groups)
+    # TODO: experiment implementing this using ufunc.reduceat
+    # http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.ufunc.reduceat.html
     # XXX: rename keepaxes to label=value? For group_aggregates we might
     # want to keep the VG label if any
     def _group_aggregate(self, op, items, keepaxes=False, out=None, **kwargs):
@@ -2458,11 +2677,14 @@ class LArray(object):
                 return key
             return self.axes[axis_name][key]
 
-        def to_vg(key):
+        def to_labelgroup(key):
             if isinstance(key, str):
                 key = to_keys(key)
             if isinstance(key, tuple):
                 # a tuple is supposed to be several groups on the same axis
+                # XXX: we might want to use self._translate_axis_key directly
+                # (so that we do not need to do the label -> position
+                #  translation twice)
                 groups = tuple(self._guess_axis(k) for k in key)
                 axis = groups[0].axis
                 if not all(g.axis == axis for g in groups[1:]):
@@ -2482,7 +2704,7 @@ class LArray(object):
             if self.axes.isaxis(arg):
                 return self.axes[arg]
             else:
-                return to_vg(to_keys(arg))
+                return to_labelgroup(to_keys(arg))
 
         operations = [standardise_arg(a) for a in args if a is not None] + \
                      [standardise_kw_arg(k, v) for k, v in sorted_kwargs]
@@ -2899,7 +3121,8 @@ class LArray(object):
     any = _agg_method(np.any, commutative=True)
     # commutative modulo float precision errors
     sum = _agg_method(np.sum, np.nansum, commutative=True)
-    prod = _agg_method(np.prod, np.nanprod, commutative=True)
+    # nanprod needs numpy 1.10
+    prod = _agg_method(np.prod, np_nanprod, commutative=True)
     min = _agg_method(np.min, np.nanmin, commutative=True)
     max = _agg_method(np.max, np.nanmax, commutative=True)
     mean = _agg_method(np.mean, np.nanmean, commutative=True)
@@ -3070,6 +3293,7 @@ class LArray(object):
 
         if out is None:
             if readonly:
+                # requires numpy 1.10
                 return LArray(np.broadcast_to(broadcasted, target_axes.shape),
                               target_axes)
             else:
@@ -3894,7 +4118,8 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+             na=np.nan, sort_rows=False, sort_columns=False,
+             dialect='larray', **kwargs):
     """
     reads csv file and returns a Larray with the contents
 
@@ -3928,6 +4153,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     sort_columns : bool, optional
         Whether or not to sort the column dimension alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
+    dialect : 'classic' | 'larray' | 'liam2', optional
+        Name of dialect. Defaults to 'larray'.
     **kwargs
 
     Example
@@ -3953,7 +4180,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
         reader = csv.reader(f, delimiter=sep)
-        header = next(reader)
+        line_stream = skip_comment_cells(strip_rows(reader))
+        header = next(line_stream)
         if headersep is not None and headersep != sep:
             combined_axes_names = header[0]
             header = combined_axes_names.split(headersep)
@@ -3961,12 +4189,14 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
             # take the first cell which contains '\'
             pos_last = next(i for i, v in enumerate(header) if '\\' in v)
         except StopIteration:
-            # if there isn't any, assume 1d array
-            pos_last = 0
+            # if there isn't any, assume 1d array, unless "liam2 dialect"
+            pos_last = 0 if dialect != 'liam2' else len(header) - 1
         axes_names = header[:pos_last + 1]
 
     if len(index_col) == 0 and nb_index == 0:
         nb_index = len(axes_names)
+        if dialect == 'liam2':
+            nb_index -= 1
 
     if len(index_col) > 0:
         nb_index = len(index_col)
@@ -3982,8 +4212,19 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     dtype = {}
     for axis in axes_names[:nb_index]:
         dtype[axis] = np.str
+    if dialect == 'liam2':
+        if len(axes_names) < 2:
+            index_col = None
+        # FIXME: add number of lines skipped by comments (or npt, pandas
+        # skips them by default I think)
+        kwargs['skiprows'] = 1
+        kwargs['comment'] = '#'
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype,
                      **kwargs)
+    if dialect == 'liam2':
+        if len(axes_names) > 1:
+            df.index.names = axes_names[:-1]
+        df.columns.name = axes_names[-1]
     if headersep is not None:
         labels_column = df[combined_axes_names]
         label_columns = unzip(label.split(headersep) for label in labels_column)
@@ -4394,3 +4635,26 @@ def make_numpy_broadcastable(values):
     return [v.reshape([v.axes.get(axis.name, Axis(axis.name, 1))
                        for axis in all_axes]) if isinstance(v, LArray) else v
             for v in values], all_axes
+
+
+# excel IO tools in Python
+# - openpyxl, the slowest but most-complete package but still lags behind
+#   PHPExcel from which it was ported. despite the drawbacks the API is very
+#   complete.
+#   biggest drawbacks:
+#   * you can get either the "cached" value of cells OR their formulas but NOT
+#     BOTH and this is a file-wide setting (data_only=True).
+#     if you have an excel file and want to add a sheet to it, you either loose
+#     all cached values (which is problematic in many cases since you do not
+#     necessarily have linked files) or loose all formulas.
+#   * it loose "charts" on read. => cannot append/update a sheet to a file with
+#     charts, which is precisely what many users asked. => users need to
+#     create their charts using code.
+# - xlsxwriter: faster and slightly more feature-complete than openpyxl
+#   regarding writing but does not read anything => cannot update an existing
+#   file. API seems extremely complete.
+# - pyexcelerate: yet faster but also write only. Didn't check whether API
+#   is more featured than xlsxwriter or not.
+# - xlwings: wraps win32com & equivalent on mac, so can potentially do
+#   everything (I guess) but this is SLOW and needs a running excel instance,
+#   etc.

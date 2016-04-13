@@ -98,6 +98,7 @@ class ExcelHandler(FileHandler):
         return df_aslarray(df)
 
     def _dump(self, key, value, *args, **kwargs):
+        kwargs['engine'] = 'xlsxwriter'
         value.to_excel(self.handle, key, *args, **kwargs)
 
     def close(self):
@@ -170,6 +171,12 @@ class Session(object):
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._objects[self.names[key]]
+        elif isinstance(key, LArray):
+            assert np.issubdtype(key.dtype, np.bool_)
+            assert key.ndim == 1
+            # only keep True values
+            truenames = key[key].axes[0].labels
+            return Session({name: self[name] for name in truenames})
         else:
             return self._objects[key]
 
@@ -312,6 +319,16 @@ class Session(object):
 
     def __ne__(self, other):
         return ~(self == other)
+
+    # we could implement two(?) very different behavior:
+    # set-like behavior: combination of two Session, if same name,
+    # check that it is the same. a Session is more ordered-dict-like than
+    # set-like, so this might not make a lot of sense. an "update" method
+    # might make more sense. However most set-like operations do make sense.
+
+    # intersection: check common are the same or take left?
+    # union: check common are the same or take left?
+    # difference
 
     # elementwise add: consider Session as an array-like and try to add the
     # each array individually
