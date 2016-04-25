@@ -171,6 +171,7 @@ except ImportError:
 
 import numpy as np
 import pandas as pd
+import re
 
 from larray.utils import (table2str, unique, csv_open, unzip, long,
                           decode, basestring, izip, rproduct, ReprString,
@@ -3894,7 +3895,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
 
 
 def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
-             na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+             na=np.nan, sort_rows=False, sort_columns=False, keep_consecutive_headersep=False, **kwargs):
     """
     reads csv file and returns a Larray with the contents
 
@@ -3928,6 +3929,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     sort_columns : bool, optional
         Whether or not to sort the column dimension alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
+    keep_consecutive_headersep: bool optional
+        Wether to interpret consecutive headerseps as one.Defaults to False
     **kwargs
 
     Example
@@ -3986,6 +3989,11 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
                      **kwargs)
     if headersep is not None:
         labels_column = df[combined_axes_names]
+        if keep_consecutive_headersep:
+            label_columns = unzip(re.split("%s+"%headersep, label.rstrip(headersep)) for label in labels_column)
+        else:
+            label_columns = unzip(label.split(headersep) for label in labels_column)
+
         label_columns = unzip(label.split(headersep) for label in labels_column)
         for name, column in zip(axes_names, label_columns):
             df[name] = column
