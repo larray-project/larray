@@ -3640,8 +3640,8 @@ class LArray(object):
             Excel standard name if adding a sheet to an existing file,
             "Sheet1" otherwise. sheet_name can also refer to the position of
             the sheet (e.g. 0 for the first sheet, -1 for the last one).
-        position : str, optional
-            Defaults to 'A1'.
+        position : str or tuple of integers, optional
+            Integer position (row, column) must be 1-based. Defaults to 'A1'.
         overwrite_file : bool, optional
             whether or not to overwrite the existing file (or just modify the
             specified sheet). Defaults to False.
