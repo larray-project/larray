@@ -82,6 +82,9 @@ trunc = wrapper(np.trunc)
 # nansum = wrapper(np.nansum)
 # cumprod = wrapper(np.cumprod)
 # cumsum = wrapper(np.cumsum)
+
+# cannot use a simple wrapped ufunc because those ufuncs do not preserve
+# shape or dimensions so labels are wrong
 # diff = wrapper(np.diff)
 # ediff1d = wrapper(np.ediff1d)
 # gradient = wrapper(np.gradient)
