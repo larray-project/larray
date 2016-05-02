@@ -1737,6 +1737,7 @@ class LArray(object):
     def ipoints(self):
         return LArrayPositionalPointsIndexer(self)
 
+    # see https://github.com/pydata/pandas/issues/4567
     def apply_sequential(self, axis, func):
         axis = self.axes[axis]
         for i in range(1, len(axis)):
@@ -3692,8 +3693,9 @@ class LArray(object):
             else:
                 basename, ext = os.path.splitext(filepath)
                 if ext:
-                    # XXX: not sure writing anything else than .xlsx will
-                    # work as intended
+                    # XXX: we might want to be more precise than .xl* because
+                    #      I am unsure writing anything else than .xlsx will
+                    #      work as intended
                     if not ext.startswith('.xl'):
                         raise ValueError("'%s' is not a supported file "
                                          "extension" % ext)
@@ -3720,7 +3722,7 @@ class LArray(object):
                         wb = xw.Workbook(app_visible=None)
                         new_workbook = True
                 else:
-                    # open existing unsaved workbook
+                    # try to open an existing unsaved workbook
                     wb = xw.Workbook(filepath, app_visible=True)
 
             def sheet_exists(wb, sheet):
@@ -3752,8 +3754,14 @@ class LArray(object):
             if save:
                 wb.save(filepath)
                 wb.close()
-                # not need to explicitly quit. If this is the last workbook,
-                # excel seems to quit by itself.
+                # using app.quit() unconditionally is NOT a good idea because
+                # it quits excel even if there are other workbooks open.
+                # XXX: we might want to use:
+                # app = xw.Application(wb)
+                # wbs = xw.xlplatform.get_all_open_xl_workbooks(app.xl_app)
+                # if not wbs:
+                #    app.quit()
+                # but it is not cross-platform (get_all_open_xl...)
         else:
             if sheet_name is None:
                 sheet_name = 'Sheet1'
