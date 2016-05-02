@@ -757,7 +757,6 @@ class Axis(object):
             # (~key).astype(int) are MUCH faster
             # see C:\Users\gdm\devel\lookup_methods.py and
             #     C:\Users\gdm\Desktop\lookup_methods.html
-            # print('pouet', key)
             return array_lookup2(key, self._sorted_keys, self._sorted_values)
         elif isinstance(key, LArray):
             pkey = array_lookup2(key.data, self._sorted_keys, self._sorted_values)
@@ -841,9 +840,6 @@ class Axis(object):
         new_axis._iswildcard = self._iswildcard
         new_axis.__sorted_keys = self.__sorted_keys
         new_axis.__sorted_values = self.__sorted_values
-        # if new_axis._length != len(new_axis._sorted_keys):
-        #     print("gotcha here too")
-        # assert new_axis._length == len(new_axis._sorted_keys)
         # collection is intentionally not copied
         return new_axis
 
