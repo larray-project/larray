@@ -2276,37 +2276,40 @@ class LArray(object):
         # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
                       if isnoneslice(axis_key)]
-        assert len(combined_axes) > 0
         assert len(key) > 0
         axes_indices = [self.axes.index(axis) for axis in combined_axes]
         diff = np.diff(axes_indices)
-        if np.any(diff > 1):
+        # this can happen if key has only None slices and scalars
+        if not len(combined_axes):
+            combined_axis_pos = None
+        elif np.any(diff > 1):
             # combined axes in front
             combined_axis_pos = 0
         else:
             combined_axis_pos = axes_indices[0]
         combined_name = ','.join(str(axis.id) for axis in combined_axes)
-        if wildcard_allowed:
-            lengths = [len(axis_key) for axis_key in key
-                       if not isnoneslice(axis_key) and
-                          not np.isscalar(axis_key)]
-            combined_axis_len = lengths[0]
-            assert all(l == combined_axis_len for l in lengths)
-            combined_axis = Axis(combined_name, combined_axis_len)
-        else:
-            axes_labels = [axis.labels[axis_key]
-                           for axis_key, axis in zip(key, self.axes)
+        new_axes = other_axes
+        if combined_axis_pos is not None:
+            if wildcard_allowed:
+                lengths = [len(axis_key) for axis_key in key
                            if not isnoneslice(axis_key) and
                               not np.isscalar(axis_key)]
-            if len(combined_axes) == 1:
-                combined_labels = axes_labels[0]
+                combined_axis_len = lengths[0]
+                assert all(l == combined_axis_len for l in lengths)
+                combined_axis = Axis(combined_name, combined_axis_len)
             else:
-                combined_labels = list(zip(*axes_labels))
+                axes_labels = [axis.labels[axis_key]
+                               for axis_key, axis in zip(key, self.axes)
+                               if not isnoneslice(axis_key) and
+                                  not np.isscalar(axis_key)]
+                if len(combined_axes) == 1:
+                    combined_labels = axes_labels[0]
+                else:
+                    combined_labels = list(zip(*axes_labels))
 
-            # CRAP, this can lead to duplicate labels (especially using .points)
-            combined_axis = Axis(combined_name, combined_labels)
-        new_axes = other_axes
-        new_axes.insert(combined_axis_pos, combined_axis)
+                # CRAP, this can lead to duplicate labels (especially using .points)
+                combined_axis = Axis(combined_name, combined_labels)
+            new_axes.insert(combined_axis_pos, combined_axis)
         return AxisCollection(new_axes)
 
     def set(self, value, **kwargs):
