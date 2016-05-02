@@ -3683,6 +3683,7 @@ class LArray(object):
 
         if engine == 'xlwings':
             save = False
+            close = False
             new_workbook = False
             if filepath == -1:
                 wb = xw.Workbook.active()
@@ -3710,6 +3711,7 @@ class LArray(object):
                     # currently active workbook.
                     filepath = os.path.abspath(filepath)
                     save = True
+                    close = not xw.xlplatform.is_file_open(filepath)
                     if os.path.isfile(filepath) and overwrite_file:
                         os.remove(filepath)
 
@@ -3753,7 +3755,8 @@ class LArray(object):
             xw.Range(sheet, position).options(**options).value = df
             if save:
                 wb.save(filepath)
-                wb.close()
+                if close:
+                    wb.close()
                 # using app.quit() unconditionally is NOT a good idea because
                 # it quits excel even if there are other workbooks open.
                 # XXX: we might want to use:
