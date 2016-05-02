@@ -3823,7 +3823,8 @@ class LArray(object):
     #         for row, data in enumerate(np.asarray(self)):
     #             worksheet.write_row(1+row, 1, data)
 
-    def plot(self, *args, **kwargs):
+    @property
+    def plot(self):
         """
         plots the data of a LArray into a graph (window pop-up).
 
@@ -3838,7 +3839,7 @@ class LArray(object):
         >>> mat = ndrange([xnat, xsex, xtype])
         >>> mat.plot()  # doctest: +SKIP
         """
-        self.to_frame().plot(*args, **kwargs)
+        return self.to_frame().plot
 
     @property
     def shape(self):
