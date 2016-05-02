@@ -4223,8 +4223,8 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     if dialect == 'liam2':
         if len(axes_names) < 2:
             index_col = None
-        # FIXME: add number of lines skipped by comments (or npt, pandas
-        # skips them by default I think)
+        # FIXME: add number of lines skipped by comments (or not, pandas
+        # might skip them by default)
         kwargs['skiprows'] = 1
         kwargs['comment'] = '#'
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, **kwargs)
