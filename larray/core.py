@@ -4220,11 +4220,6 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         # we will set the index after having split the tick values
         index_col = None
 
-    # force str for dimensions
-    # because pandas autodetect failed (thought it was int when it was a string)
-    dtype = {}
-    for axis in axes_names[:nb_index]:
-        dtype[axis] = np.str
     if dialect == 'liam2':
         if len(axes_names) < 2:
             index_col = None
@@ -4232,8 +4227,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         # skips them by default I think)
         kwargs['skiprows'] = 1
         kwargs['comment'] = '#'
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep, dtype=dtype,
-                     **kwargs)
+    df = pd.read_csv(filepath, index_col=index_col, sep=sep, **kwargs)
     if dialect == 'liam2':
         if len(axes_names) > 1:
             df.index.names = axes_names[:-1]
