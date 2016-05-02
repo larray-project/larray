@@ -1026,6 +1026,8 @@ class AxisCollection(object):
             return AxisCollection([self[k] for k in key])
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
+        elif key is None:
+            raise KeyError("axis %s not found in %s" % (key, self))
         else:
             assert isinstance(key, basestring), type(key)
             if key in self._map:
