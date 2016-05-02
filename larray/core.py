@@ -543,11 +543,6 @@ class Axis(object):
             self.__mapping = mapping
         return mapping
 
-    # XXX: this is only for copy()
-    @_mapping.setter
-    def _mapping(self, mapping):
-        self.__mapping = mapping
-
     def _update_key_values(self):
         mapping = self._mapping
         if mapping:
