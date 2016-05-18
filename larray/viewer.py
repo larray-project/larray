@@ -930,16 +930,19 @@ class ArrayView(QTableView):
             # to_string(data[self._selection_filter()])
             dim_names = xlabels[0]
             if len(dim_names) > 1:
-                dim_names = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
-                                              dim_names[-1]]
-            topheaders = [dim_names +
-                          list(xlabels[i][col_min:col_max])
+                dim_headers = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
+                                                dim_names[-1]]
+            else:
+                dim_headers = dim_names
+            topheaders = [dim_headers + list(xlabels[i][col_min:col_max])
                           for i in range(1, len(xlabels))]
             if not dim_names:
                 return raw_data
             elif len(dim_names) == 1:
+                # 1 dimension
                 return chain(topheaders, [chain([''], row) for row in raw_data])
             else:
+                # >1 dimension
                 assert len(dim_names) > 1
                 return chain(topheaders,
                              [chain([ylabels[j][r + row_min]
