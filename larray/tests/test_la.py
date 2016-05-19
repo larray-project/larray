@@ -10,7 +10,7 @@ import pandas as pd
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones,
                     clip, exp, where, x, view, mean, var, std, isnan,
-                    local_arrays)
+                    round, local_arrays)
 from larray.core import to_ticks, to_key, srange, df_aslarray
 
 
@@ -2276,6 +2276,11 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         result = where(la['P01'] < 5, -5, la)
         self.assertEqual(result.axes.names, ['sex', 'lipro'])
         assert_array_equal(result, np.where(raw[:,[0]] < 5, -5, raw))
+
+        # round
+        small_float = self.small + 0.6
+        rounded = round(small_float)
+        assert_array_equal(rounded, np.round(self.small_data + 0.6))
 
     def test_plot(self):
         pass
