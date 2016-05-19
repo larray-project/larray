@@ -489,16 +489,6 @@ class PGroupMaker(object):
         return PGroup(key, None, self.axis.id)
 
 
-class LazyAttribute(object):
-    def __init__(self, func, *args, **kwargs):
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def __get__(self, instance, owner):
-        return self.func(*args, **kwargs)
-
-
 class Axis(object):
     # ticks instead of labels?
     # XXX: make name and labels optional?
@@ -518,8 +508,6 @@ class Axis(object):
         self._iswildcard = False
         self.labels = labels
         self.collection = None
-        # if self._length != len(self._sorted_keys):
-        #     print("gotcha")
 
     @property
     def _mapping(self):
@@ -744,8 +732,7 @@ class Axis(object):
             return res
         elif isinstance(key, np.ndarray):
             # handle fancy indexing with a ndarray of labels
-            # TODO: the result should be cached (or at least the sorted_keys
-            # & sorted_values)
+            # TODO: the result should be cached
             # TODO: benchmark this against the tuple/list version above when
             # mapping is large
             # array_lookup is O(len(key) * log(len(mapping)))
@@ -1657,22 +1644,14 @@ class LArrayPointsIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    # def translate_key(self, key):
-    #     if not isinstance(key, tuple):
-    #         key = (key,)
-    #     if len(key) > self.array.ndim:
-    #         raise IndexError("key has too many indices (%d) for array with %d "
-    #                          "dimensions" % (len(key), self.array.ndim))
-    #     # no need to create a full nd key as that will be done later anyway
-    #     return tuple(axis.i[axis_key]
-    #                  for axis_key, axis in zip(key, self.array.axes))
-
     def __getitem__(self, key):
         data = np.asarray(self.array)
         translated_key = self.array.translated_key(key, bool_stuff=True)
 
-        # FIXME: ideally we should use wildcard_allowed=False, but this is currently too slow
-        axes = self.array._bool_key_new_axes(translated_key, wildcard_allowed=True)
+        # FIXME: ideally we should use wildcard_allowed=False, but this is
+        #        currently too slow
+        axes = self.array._bool_key_new_axes(translated_key,
+                                             wildcard_allowed=True)
         data = data[translated_key]
         # drop length 1 dimensions created by scalar keys
         # data = data.reshape(tuple(len(axis) for axis in axes))
@@ -1682,8 +1661,9 @@ class LArrayPointsIndexer(object):
         else:
             return LArray(data, axes)
 
+    # FIXME
     def __setitem__(self, key, value):
-        self.array[self.translate_key(key)] = value
+        raise NotImplementedError()
 
 
 class LArray(object):
@@ -2174,7 +2154,6 @@ class LArray(object):
         if isinstance(key, str) and key in ('__array_struct__',
                                       '__array_interface__'):
             raise KeyError("bla")
-        # print("key", key)
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -2219,13 +2198,6 @@ class LArray(object):
 
         cross_key = self.cross_key(translated_key, collapse_slices)
         data = data[cross_key]
-        # print("orig data", self.data)
-        # dd = np.asarray(self.data)
-        # print("dd", dd)
-        # print("new data", data)
-        # print("axes", self.axes.info, "\n", axes, self.data.shape, data.shape)
-        # print("tkey", translated_key)
-        # print("ckey", cross_key)
         if not axes:
             # scalars do not need to be wrapped in LArray
             return data
