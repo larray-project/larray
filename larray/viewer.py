@@ -890,19 +890,23 @@ class ArrayView(QTableView):
         else:
             QTableView.keyPressEvent(self, event)
 
-    def _selection_bounds(self):
+    def _selection_bounds(self, none_selects_all=True):
         """
         Returns
         -------
         tuple
             selection bounds. end bound is exclusive
         """
+        model = self.model()
         selection_model = self.selectionModel()
         assert isinstance(selection_model, QItemSelectionModel)
         selection = selection_model.selection()
         assert isinstance(selection, QItemSelection)
         if not selection:
-            return None
+            if none_selects_all:
+                return 0, model.total_rows, 0, model.total_cols
+            else:
+                return None
         assert len(selection) == 1
         srange = selection[0]
         assert isinstance(srange, QItemSelectionRange)
@@ -914,8 +918,8 @@ class ArrayView(QTableView):
         col_max = max(srange.right() - yoffset, 0)
         return row_min, row_max + 1, col_min, col_max + 1
 
-    def _selection_data(self, headers=True):
-        bounds = self._selection_bounds()
+    def _selection_data(self, headers=True, none_selects_all=True):
+        bounds = self._selection_bounds(none_selects_all=none_selects_all)
         if bounds is None:
             return None
         row_min, row_max, col_min, col_max = bounds
