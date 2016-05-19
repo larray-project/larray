@@ -91,6 +91,11 @@ try:
 except ImportError:
     matplotlib_present = False
 
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
+
 from larray.combo import FilterComboBox, FilterMenu
 import larray as la
 
@@ -846,6 +851,10 @@ class ArrayView(QTableView):
                                          shortcut=keybinding('Copy'),
                                          icon=ima.icon('edit-copy'),
                                          triggered=self.copy)
+        self.excel_action = create_action(self, _('Copy to Excel'),
+                                          shortcut=QKeySequence("Ctrl+E"),
+                                          # icon=ima.icon('edit-copy'),
+                                          triggered=self.to_excel)
         self.paste_action = create_action(self, _('Paste'),
                                           shortcut=keybinding('Paste'),
                                           icon=ima.icon('edit-paste'),
@@ -855,7 +864,8 @@ class ArrayView(QTableView):
                                          # icon=ima.icon('editcopy'),
                                          triggered=self.plot)
         menu = QMenu(self)
-        menu.addActions([self.copy_action, self.plot_action, self.paste_action])
+        menu.addActions([self.copy_action, self.excel_action, self.plot_action,
+                         self.paste_action])
         return menu
 
     def autofit_columns(self):
@@ -876,12 +886,19 @@ class ArrayView(QTableView):
     def keyPressEvent(self, event):
         """Reimplement Qt method"""
 
-        if event == QKeySequence.Copy:
+        # comparing with the keysequence and not with event directly as we
+        # did before because that only seems to work for shortcut
+        # defined using QKeySequence.StandardKey, which is not the case for
+        # Ctrl + E
+        keyseq = QKeySequence(event.modifiers() | event.key())
+        if keyseq == QKeySequence.Copy:
             self.copy()
-        elif event == QKeySequence.Paste:
+        elif keyseq == QKeySequence.Paste:
             self.paste()
-        elif event == QKeySequence.Print:
+        elif keyseq == QKeySequence.Print:
             self.plot()
+        elif keyseq == QKeySequence("Ctrl+E"):
+            self.to_excel()
         # allow to start editing cells by pressing Enter
         elif event.key() == Qt.Key_Return and not self.model().readonly:
             index = self.currentIndex()
@@ -973,6 +990,19 @@ class ArrayView(QTableView):
         text = '\n'.join('\t'.join(vrepr(v) for v in line) for line in data)
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
+
+    @Slot()
+    def to_excel(self):
+        """Copy array as text to clipboard"""
+        if xw is None:
+            raise Exception("to_excel() is not available because xlwings is "
+                            "not installed")
+        data = self._selection_data()
+        if data is None:
+            return
+        # convert (row) generators to lists then array
+        a = np.array([list(r) for r in data])
+        xw.view(a)
 
     @Slot()
     def paste(self):
