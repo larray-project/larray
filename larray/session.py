@@ -177,6 +177,9 @@ class Session(object):
             # only keep True values
             truenames = key[key].axes[0].labels
             return Session({name: self[name] for name in truenames})
+        elif isinstance(key, (tuple, list)):
+            assert all(isinstance(k, str) for k in key)
+            return Session({k: self[k] for k in key})
         else:
             return self._objects[key]
 
