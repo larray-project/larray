@@ -1880,6 +1880,9 @@ def view(obj, title=''):
     if not title:
         title = get_title(obj, depth=2)
 
+    if isinstance(obj, dict) and all(isinstance(o, la.LArray) for o in obj.values()):
+        obj = la.Session(obj)
+
     if isinstance(obj, la.Session):
         dlg = SessionEditor()
     else:
