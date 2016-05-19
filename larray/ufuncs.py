@@ -67,6 +67,8 @@ arctanh = wrapper(np.arctanh)
 
 # Rounding
 
+# all 3 are equivalent, I am unsure I should support around and round_
+round = wrapper(np.round)
 around = wrapper(np.around)
 round_ = wrapper(np.round_)
 rint = wrapper(np.rint)
