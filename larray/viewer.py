@@ -529,7 +529,7 @@ class ArrayModel(QAbstractTableModel):
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
         changes = self.changes
-        width, height = self._data.shape
+        width, height = self.total_rows, self.total_cols
         if right is None:
             right = width
         if bottom is None:
