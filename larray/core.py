@@ -4028,6 +4028,69 @@ class LArray(object):
         else:
             return self[:]
 
+    def diff(self, axis=-1, d=1, n=1, label='upper'):
+        """
+        Calculate the n-th order discrete difference along a given axis.
+
+        The first order difference is given by out[n] = a[n + 1] - a[n] along the
+        given axis, higher order differences are calculated by using diff
+        recursively.
+
+        Parameters
+        ----------
+        axis : int, str or Axis, optional
+            The axis along which the difference is taken. Defaults to the last
+            axis.
+
+        d : int, optional
+            Periods to shift for forming difference. Defaults to 1.
+
+        n : int, optional
+            The number of times values are differenced. Defaults to 1.
+
+        label : 'lower' or 'upper', optional
+            The new labels in `axis` will have the labels of either
+            the array being subtracted ('lower') or the array it is
+            subtracted from ('upper'). Defaults to 'upper'.
+
+        Returns
+        -------
+        LArray : The n-th order differences. The shape of the output is the same
+        as `a` except for `axis` which is smaller by `n` * `d`.
+
+        Example
+        -------
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
+        >>> a = ndrange([sex, xtype]).cumsum(x.type)
+        >>> a
+        sex\\type | type1 | type2 | type3
+               M |     0 |     1 |     3
+               F |     3 |     7 |    12
+        >>> a.diff()
+        sex\\type | type2 | type3
+               M |     1 |     2
+               F |     4 |     5
+        >>> a.diff(n=2)
+        sex\\type | type3
+               M |     1
+               F |     1
+        >>> a.diff(x.sex)
+        sex\\type | type1 | type2 | type3
+               F |     3 |     6 |     9
+        """
+        array = self
+        for _ in range(n):
+            axis_obj = array.axes[axis]
+            left = array[axis_obj.i[d:]]
+            right = array[axis_obj.i[:-d]]
+            if label == 'upper':
+                right = right.drop_labels(axis)
+            else:
+                left = left.drop_labels(axis)
+            array = left - right
+        return array
+
 
 def parse(s):
     """
