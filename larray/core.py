@@ -3214,6 +3214,10 @@ class LArray(object):
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
+    def __round__(self, n=0):
+        # XXX: use the ufuncs.round instead?
+        return np.round(self, decimals=n)
+
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False):
