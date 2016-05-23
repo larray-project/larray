@@ -994,6 +994,9 @@ class AxisCollection(object):
     def __getitem__(self, key):
         if isinstance(key, Axis):
             # match by object if name is None
+            # XXX: "key in self._list" uses Axis.__eq__ which compares labels,
+            # and this is not "match by object" and I do not think we want
+            # this.
             if key.name is None and key in self._list:
                 return key
             # we should NOT check that the object is the same, so that we can
@@ -1650,6 +1653,8 @@ class LArrayPointsIndexer(object):
         self.array = array
 
     def __getitem__(self, key):
+        # TODO: this should generate an "intersection"/points NDGroup and simply
+        #       do return self.array[nd_group]
         data = np.asarray(self.array)
         translated_key = self.array.translated_key(key, bool_stuff=True)
 
@@ -1698,6 +1703,8 @@ class LArray(object):
     def __getattr__(self, key):
         try:
             return self.__getitem__(key)
+        # XXX: maybe I should only catch KeyError here and be more aggressive
+        #  in __getitem__ to raise KeyError on any exception
         except Exception:
             return self.__getattribute__(key)
 
@@ -2159,9 +2166,10 @@ class LArray(object):
             return tuple(key)
 
     def __getitem__(self, key, collapse_slices=False):
-        if isinstance(key, str) and key in ('__array_struct__',
-                                      '__array_interface__'):
-            raise KeyError("bla")
+        # move this to getattr
+        # if isinstance(key, str) and key in ('__array_struct__',
+        #                               '__array_interface__'):
+        #     raise KeyError("bla")
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -2171,7 +2179,7 @@ class LArray(object):
         # A: yes, probably. On the Pandas backend, we could/should have
         #    separate axes. On the numpy backend we cannot.
 
-        # I have a huge problem with boolean labels + non points
+        # FIXME: I have a huge problem with boolean labels + non points
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, np.bool_):
             return LArray(data[translated_key],
