@@ -847,6 +847,9 @@ class Group(object):
     def __init__(self, key, name, axis):
         raise NotImplementedError()
 
+    def __len__(self):
+        return len(self.key)
+
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
@@ -920,9 +923,6 @@ class LGroup(Group):
         name = ", %r" % self.name if self.name is not None else ''
         return "LGroup(%r%s)" % (self.key, name)
 
-    def __len__(self):
-        return len(self.key)
-
     def __lt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__lt__(other_key)
@@ -955,9 +955,6 @@ class PGroup(Group):
         name = ", name=%r" % self.name if self.name is not None else ''
         axis = ", axis=%r" % self.axis if self.axis is not None else ''
         return "PGroup(%r%s%s)" % (self.key, name, axis)
-
-    def __len__(self):
-        return len(self.key)
 
 
 def index_by_id(seq, value):
