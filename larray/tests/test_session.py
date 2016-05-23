@@ -25,10 +25,12 @@ class TestSession(TestCase):
         self.assertEqual(s['c'], 'c')
         self.assertEqual(s['d'], {})
 
-    # def test_getitem_list(self):
-    #     s = self.session
-    #     self.assertTrue(s[['a', 'b']], self.a)
-    #
+    def test_getitem_list(self):
+        s = self.session
+        self.assertEqual(list(s[[]]), [])
+        self.assertEqual(list(s[['a', 'b']]), [self.a, self.b])
+        self.assertEqual(list(s[['a', 'e', 'g']]), [self.a, self.e, self.g])
+
     # def test_getitem_larray(self):
     #     pass
 
