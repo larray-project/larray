@@ -1064,16 +1064,15 @@ class AxisCollection(object):
                 del self._map[axis.name]
             axis.collection = None
 
-    def __add__(self, other):
+    def union(self, *args):
         result = self[:]
-        if isinstance(other, Axis):
-            other = [other]
-        # other should be a sequence
-        assert len(other) >= 0
-        result.extend(other)
+        for a in args:
+            if isinstance(a, Axis):
+                a = [a]
+            result.extend(a, replace_wildcards=True)
         return result
-
-    __or__ = __add__
+    __or__ = union
+    __add__ = union
 
     def __eq__(self, other):
         """
