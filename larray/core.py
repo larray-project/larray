@@ -1696,7 +1696,10 @@ class LArray(object):
         object.__setattr__(self, 'axes', axes)
 
     def __getattr__(self, key):
-        return self.__getitem__(key)
+        try:
+            return self.__getitem__(key)
+        except Exception:
+            return self.__getattribute__(key)
 
     def __setattr__(self, key, value):
         return self.__setitem__(key, value)
@@ -2395,11 +2398,14 @@ class LArray(object):
         a\\b | b1 | b2
          a1 |  0 |  1
          a2 |  4 |  9
-        >>> # TODO: use arr2.axes in this case
         >>> arr1.drop_labels() * arr2
-        a*\\b* | 0 | 1
-            0 | 0 | 1
-            1 | 4 | 9
+        a\\b | b2 | b3
+         a1 |  0 |  1
+         a2 |  4 |  9
+        >>> arr1.drop_labels('a') * arr2.drop_labels('b')
+        a\\b | b1 | b2
+         a1 |  0 |  1
+         a2 |  4 |  9
         """
         if axes is None:
             axes = self.axes
@@ -4592,16 +4598,13 @@ def make_numpy_broadcastable(values):
     length. Extra axes (in any array) can have any length.
 
     * the resulting arrays will have the combination of all axes found in the
-      input arrays, the earlier arrays defining the order.
+      input arrays, the earlier arrays defining the order of axes. Axes with
+      labels take priority over wildcard axes.
     * axes with a single '*' label will be added for axes not present in input
     """
-    # TODO: implement AxisCollection.union
-    # all_axes = [v.axes for v in values if isinstance(v, LArray)]
-    # all_axes = AxisCollection.union(all_axes)
-    all_axes = AxisCollection()
-    for v in values:
-        if isinstance(v, LArray):
-            all_axes.extend(v.axes)
+    axis_collections = [v.axes for v in values if isinstance(v, LArray)]
+    all_axes = AxisCollection.union(*axis_collections) \
+        if axis_collections else AxisCollection()
 
     # 1) reorder axes
     values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
