@@ -4005,12 +4005,11 @@ class LArray(object):
         """
         axis = self.axes[axis]
         if n > 0:
-            res = self[axis.i[:-n]]
-            new_labels = axis.labels[n:]
+            return self[axis.i[:-n]].set_labels(axis, axis.labels[n:])
+        elif n < 0:
+            return self[axis.i[-n:]].set_labels(axis, axis.labels[:n])
         else:
-            res = self[axis.i[-n:]]
-            new_labels = axis.labels[:n]
-        return res.set_labels(axis, new_labels)
+            return self[:]
 
 
 def parse(s):
