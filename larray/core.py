@@ -597,6 +597,10 @@ class Axis(object):
         self._labels = labels
         self._iswildcard = iswildcard
 
+    @property
+    def iswildcard(self):
+        return self._iswildcard
+
     # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
         """
@@ -642,15 +646,16 @@ class Axis(object):
         if not isinstance(other, Axis) or self.name != other.name:
             return False
         # wildcard axes of length 1 match with anything
-        if self._iswildcard:
+        if self.iswildcard:
             return len(self) == 1 or len(self) == len(other)
-        elif other._iswildcard:
+        elif other.iswildcard:
             return len(other) == 1 or len(self) == len(other)
         else:
             return np.array_equal(self.labels, other.labels)
 
     def __eq__(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
+                self.iswildcard == other.iswildcard and
                 np.array_equal(self.labels, other.labels))
 
     def __ne__(self, other):
@@ -776,7 +781,7 @@ class Axis(object):
             name = 'axis%d' % self.collection.index(self)
         else:
             name = '-'
-        return (name + '*') if self._iswildcard else name
+        return (name + '*') if self.iswildcard else name
 
     def __str__(self):
         return self.display_name
