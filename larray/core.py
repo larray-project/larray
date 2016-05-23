@@ -1180,16 +1180,23 @@ class AxisCollection(object):
                     raise ValueError("incompatible axes:\n%r\nvs\n%r"
                                      % (axis, local_axis))
 
-    def extend(self, axes, validate=True):
+    def extend(self, axes, validate=True, replace_wildcards=False):
         """
         extend the collection by appending the axes from axes
         """
+        # axes should be a sequence
+        if not isinstance(axes, (tuple, list, AxisCollection)):
+            raise TypeError("AxisCollection can only be extended by a "
+                            "sequence of Axis, not %s" % type(axes).__name__)
         # check that common axes are the same
         if validate:
             self.check_compatible(axes)
-        # FIXME: buggy for axes with no name
-        to_add = [axis for axis in axes if axis.name not in self._map]
-        self[len(self):len(self)] = to_add
+        for axis in axes:
+            if axis not in self:
+                # append axis
+                self[len(self):len(self)] = [axis]
+            elif replace_wildcards and self[axis].iswildcard:
+                self[axis] = axis
 
     def index(self, axis):
         """
