@@ -4091,6 +4091,55 @@ class LArray(object):
             array = left - right
         return array
 
+    # XXX: this is called pct_change in Pandas (but returns the same results,
+    # not results * 100, which I find silly). Maybe change_rate would be
+    # better (because growth is not always positive)?
+    def growth_rate(self, axis=-1, d=1, label='upper'):
+        """
+        Calculate the growth along a given axis.
+
+        roughly equivalent to a.diff(axis, d, label) / a[axis.i[:-d]]
+
+        Parameters
+        ----------
+        axis : int, str or Axis, optional
+            The axis along which the difference is taken. Defaults to the last
+            axis.
+
+        d : int, optional
+            Periods to shift for forming difference. Defaults to 1.
+
+        label : 'lower' or 'upper', optional
+            The new labels in `axis` will have the labels of either
+            the array being subtracted ('lower') or the array it is
+            subtracted from ('upper'). Defaults to 'upper'.
+
+        Returns
+        -------
+        LArray
+
+        Example
+        -------
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> year = Axis('year', [2015, 2016, 2017])
+        >>> a = ndrange([sex, year]).cumsum(x.year)
+        >>> a
+        sex\\year | 2015 | 2016 | 2017
+               M |    0 |    1 |    3
+               F |    3 |    7 |   12
+        >>> a.growth_rate()
+        sex\\year |          2016 |           2017
+               M |           inf |            2.0
+               F | 1.33333333333 | 0.714285714286
+        >>> a.growth_rate(d=2)
+        sex\\year | 2017
+               M |  inf
+               F |  3.0
+        """
+        diff = self.diff(axis=axis, d=d, label=label)
+        axis_obj = self.axes[axis]
+        return diff / self[axis_obj.i[:-d]].drop_labels(axis)
+
 
 def parse(s):
     """
