@@ -4605,8 +4605,7 @@ def make_numpy_broadcastable(values):
               for v in values]
 
     # 2) add length one axes
-    # TODO: this is probably broken for unnamed axes (but tricky to get right)
-    return [v.reshape([v.axes.get(axis.name, Axis(axis.name, 1))
+    return [v.reshape([v.axes.get(axis, Axis(axis.name, 1))
                        for axis in all_axes]) if isinstance(v, LArray) else v
             for v in values], all_axes
 
