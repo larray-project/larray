@@ -1592,11 +1592,8 @@ def concat_empty(axis, array_axes, other_axes, dtype):
     new_axis = Axis(array_axis.name, new_labels)
     array_axes = array_axes.replace(array_axis, new_axis)
     other_axes = other_axes.replace(other_axis, new_axis)
-    array_axes.extend(other_axes)
-    other_axes.extend(array_axes, validate=False)
-    result_axes = AxisCollection([
-        axis1 if len(axis2) <= len(axis1) else axis2
-        for axis1, axis2 in zip(array_axes, other_axes[array_axes])])
+    # combine axes from both sides (using labels from either side if any)
+    result_axes = array_axes | other_axes
     result_data = np.empty(result_axes.shape, dtype=dtype)
     result = LArray(result_data, result_axes)
     l = len(array_axis)
