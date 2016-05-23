@@ -2052,6 +2052,92 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(raw2_ge_la.axes, la.axes)
         assert_array_equal(raw2_ge_la, raw2 >= raw)
 
+    def test_binary_ops_no_name_axes(self):
+        raw = self.small_data
+        raw2 = self.small_data + 1
+        la = ndrange(self.small.shape)
+        la2 = ndrange(self.small.shape) + 1
+
+        assert_array_equal(la + la2, raw + raw2)
+        assert_array_equal(la + 1, raw + 1)
+        assert_array_equal(1 + la, 1 + raw)
+
+        assert_array_equal(la - la2, raw - raw2)
+        assert_array_equal(la - 1, raw - 1)
+        assert_array_equal(1 - la, 1 - raw)
+
+        assert_array_equal(la * la2, raw * raw2)
+        assert_array_equal(la * 2, raw * 2)
+        assert_array_equal(2 * la, 2 * raw)
+
+        assert_array_nan_equal(la / la2, raw / raw2)
+        assert_array_equal(la / 2, raw / 2)
+        assert_array_equal(30 / la, 30 / raw)
+        assert_array_equal(30 / (la + 1), 30 / (raw + 1))
+
+        raw_int = raw.astype(int)
+        la_int = LArray(raw_int)
+        assert_array_equal(la_int / 2, raw_int / 2)
+        assert_array_equal(la_int // 2, raw_int // 2)
+
+        # adding two larrays with different axes order cannot work with
+        # unnamed axes
+        # assert_array_equal(la + la.transpose(), raw * 2)
+
+        # mixed operations
+        raw2 = raw / 2
+        la_raw2 = la - raw2
+        self.assertEqual(la_raw2.axes, la.axes)
+        assert_array_equal(la_raw2, raw - raw2)
+        raw2_la = raw2 - la
+        self.assertEqual(raw2_la.axes, la.axes)
+        assert_array_equal(raw2_la, raw2 - raw)
+
+        la_ge_raw2 = la >= raw2
+        self.assertEqual(la_ge_raw2.axes, la.axes)
+        assert_array_equal(la_ge_raw2, raw >= raw2)
+
+        raw2_ge_la = raw2 >= la
+        self.assertEqual(raw2_ge_la.axes, la.axes)
+        assert_array_equal(raw2_ge_la, raw2 >= raw)
+
+    def test_broadcasting_no_name(self):
+        """
+        >>> a = ndrange((2, 3))
+        >>> b = ndrange(3)
+        >>> c = ndrange(2)
+        >>> a
+        axis0\\axis1 | 0 | 1 | 2
+                  0 | 0 | 1 | 2
+                  1 | 3 | 4 | 5
+        >>> b
+        axis0 | 0 | 1 | 2
+              | 0 | 1 | 2
+        >>> c
+        axis0 | 0 | 1
+              | 0 | 1
+
+        >>> # it is unfortunate that the behavior is different from numpy
+        >>> # (even though I find our behavior more intuitive)
+        >>> # a * b
+        ValueError: incompatible axes:
+        Axis(None, [0, 1, 2])
+        vs
+        Axis(None, [0, 1])
+
+        >>> a * c
+        axis0\\axis1 | 0 | 1 | 2
+                  0 | 0 | 0 | 0
+                  1 | 3 | 4 | 5
+
+        >>> np.asarray(a) * np.asarray(b)
+        array([[ 0,  1,  4],
+               [ 0,  4, 10]])
+
+        >>> # np.asarray(a) * np.asarray(c)
+        ValueError: operands could not be broadcast together with shapes (2,3) (2,)
+        """
+
     def test_unary_ops(self):
         raw = self.small_data
         la = self.small
