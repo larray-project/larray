@@ -881,7 +881,7 @@ class LGroup(Group):
             # axis.translate(key)
         self.axis = axis
 
-    # this makes range(LGroups(int)) possible
+    # this makes range(LGroup(int)) possible
     def __index__(self):
         return self.key.__index__()
 
