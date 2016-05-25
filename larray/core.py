@@ -4716,6 +4716,10 @@ class AxisReferenceFactory(object):
 x = AxisReferenceFactory()
 
 
+def get_axes(value):
+    return value.axes if isinstance(value, LArray) else AxisCollection([])
+
+
 def make_numpy_broadcastable(values):
     """
     return values where LArrays are (numpy) broadcastable between them.
@@ -4727,9 +4731,7 @@ def make_numpy_broadcastable(values):
       labels take priority over wildcard axes.
     * axes with a single '*' label will be added for axes not present in input
     """
-    axis_collections = [v.axes for v in values if isinstance(v, LArray)]
-    all_axes = AxisCollection.union(*axis_collections) \
-        if axis_collections else AxisCollection()
+    all_axes = AxisCollection.union(*[get_axes(v) for v in values])
 
     # 1) reorder axes
     values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
