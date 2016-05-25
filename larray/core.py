@@ -4608,6 +4608,87 @@ def empty_like(array, dtype=None, order='K'):
     return LArray(np.empty_like(array.data, dtype, order), array.axes)
 
 
+def full(axes, fill_value, dtype=None, order='C'):
+    """Returns a LArray with the specified axes and filled with fill_value.
+
+    Parameters
+    ----------
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+        a collection of axes or a shape.
+    fill_value : scalar or LArray
+        value to fill the array
+    dtype : data-type, optional
+        The desired data-type for the array. Default is the data type of
+        fill_value.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- (default) or
+        Fortran-contiguous (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    ========
+
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> full([nat, sex], 42.0)
+    nat\\sex |    M |    F
+         BE | 42.0 | 42.0
+         FO | 42.0 | 42.0
+    >>> initial_value = ndrange([sex])
+    >>> initial_value
+    sex | M | F
+        | 0 | 1
+    >>> full([nat, sex], initial_value)
+    nat\\sex | M | F
+         BE | 0 | 1
+         FO | 0 | 1
+    """
+    dtype = np.asarray(fill_value).dtype
+    res = empty(axes, dtype, order)
+    res[:] = fill_value
+    return res
+
+
+def full_like(array, fill_value, dtype=None, order='K'):
+    """Returns a LArray with the same axes as array and filled with fill_value.
+
+    Parameters
+    ----------
+    array : LArray
+        is an array object.
+    fill_value : scalar or LArray
+        value to fill the array
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' (default) means match the layout of `a` as closely
+        as possible.
+
+    Returns
+    -------
+    LArray
+
+    Example
+    -------
+    >>> a = ndrange((2, 3))
+    >>> full_like(a, 5)
+    axis0\\axis1 | 0 | 1 | 2
+              0 | 5 | 5 | 5
+              1 | 5 | 5 | 5
+    """
+    # cannot use full() because order == 'K' is not understood
+    # cannot use np.full_like() because it would not handle LArray fill_value
+    dtype = np.asarray(fill_value).dtype
+    res = empty_like(array, dtype, order)
+    res[:] = fill_value
+    return res
+
+
 def ndrange(axes, start=0, dtype=int):
     """Returns a LArray with the specified axes and filled with increasing int.
 
