@@ -993,15 +993,16 @@ class AxisCollection(object):
 
     def __getitem__(self, key):
         if isinstance(key, Axis):
-            # match by object if name is None
-            # XXX: "key in self._list" uses Axis.__eq__ which compares labels,
-            # and this is not "match by object" and I do not think we want
-            # this.
-            if key.name is None and key in self._list:
-                return key
-            # we should NOT check that the object is the same, so that we can
-            # use AxisReference objects to target real axes
-            key = key.name
+            if key.name is None:
+                try:
+                    key = self.index(key)
+                # transform ValueError to KeyError
+                except ValueError:
+                    raise KeyError("axis %s not found in %s" % (key, self))
+            else:
+                # we should NOT check that the object is the same, so that we can
+                # use AxisReference objects to target real axes
+                key = key.name
 
         if isinstance(key, int):
             return self._list[key]
