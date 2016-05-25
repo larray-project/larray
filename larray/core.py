@@ -4732,7 +4732,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     sex | M | F
         | 1 | 2
     >>> create_sequential(year, 1.0, inc)
-    sex\year | 2016 | 2017 | 2018 | 2019
+    sex\\year | 2016 | 2017 | 2018 | 2019
            M |  1.0 |  2.0 |  3.0 |  4.0
            F |  1.0 |  3.0 |  5.0 |  7.0
     >>> mult = LArray([2, 3], [sex])
@@ -4748,7 +4748,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     sex | M | F
         | 3 | 4
     >>> create_sequential(year, initial, inc, mult)
-    sex\year | 2016 | 2017 | 2018 | 2019
+    sex\\year | 2016 | 2017 | 2018 | 2019
            M |    3 |    7 |   15 |   31
            F |    4 |   14 |   44 |  134
     >>> def modify(prev_value):
