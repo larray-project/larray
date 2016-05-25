@@ -1724,12 +1724,6 @@ class LArray(object):
     def ipoints(self):
         return LArrayPositionalPointsIndexer(self)
 
-    # see https://github.com/pydata/pandas/issues/4567
-    def apply_sequential(self, axis, func):
-        axis = self.axes[axis]
-        for i in range(1, len(axis)):
-            self[axis.i[i]] = func(self[axis.i[i - 1]])
-
     def to_frame(self, fold_last_axis_name=False, dropna=None):
         columns = pd.Index(self.axes[-1].labels)
         if not fold_last_axis_name:
@@ -4686,6 +4680,107 @@ def full_like(array, fill_value, dtype=None, order='K'):
     dtype = np.asarray(fill_value).dtype
     res = empty_like(array, dtype, order)
     res[:] = fill_value
+    return res
+
+
+# XXX: would it be possible to generalize to multiple axes and deprecate
+#      ndrange (or rename this one to ndrange)? ndrange is only ever used to
+#      create test data (except for 1d)
+# see https://github.com/pydata/pandas/issues/4567
+def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
+    """
+    Creates an array by sequentially applying modifications to the array along
+    axis.
+
+    The value for each label in axis will be given by sequentially transforming
+    the value for the previous label. This transformation on the previous label
+    value consists of applying the function "func" on that value if provided, or
+    to multiply it by mult and increment it by inc otherwise.
+
+    Parameters
+    ----------
+    axis : axis reference (Axis, string, int)
+        axis along which to apply mod.
+    initial : scalar or LArray, optional
+        value for the first label of axis. Defaults to 0.
+    inc : scalar, LArray, optional
+        value to increment the previous value by. Defaults to 0 if mult is
+        provided, 1 otherwise.
+    mult : scalar, LArray, optional
+        value to multiply the previous value by. Defaults to 1.
+    func : function/callable, optional
+        function to apply to the previous value. Defaults to None.
+    axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
+        axes of the result. Defaults to the union of axes present in other
+        arguments.
+
+    Example
+    -------
+    >>> year = Axis('year', range(2016, 2020))
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> create_sequential(year)
+    year | 2016 | 2017 | 2018 | 2019
+         |    0 |    1 |    2 |    3
+    >>> create_sequential(year, 1.0, 0.1)
+    year | 2016 | 2017 | 2018 | 2019
+         |  1.0 |  1.1 |  1.2 |  1.3
+    >>> create_sequential(year, 1.0, mult=1.1)
+    year | 2016 | 2017 | 2018 |  2019
+         |  1.0 |  1.1 | 1.21 | 1.331
+    >>> inc = LArray([1, 2], [sex])
+    >>> inc
+    sex | M | F
+        | 1 | 2
+    >>> create_sequential(year, 1.0, inc)
+    sex\year | 2016 | 2017 | 2018 | 2019
+           M |  1.0 |  2.0 |  3.0 |  4.0
+           F |  1.0 |  3.0 |  5.0 |  7.0
+    >>> mult = LArray([2, 3], [sex])
+    >>> mult
+    sex | M | F
+        | 2 | 3
+    >>> create_sequential(year, 1.0, mult=mult)
+    sex\\year | 2016 | 2017 | 2018 | 2019
+           M |  1.0 |  2.0 |  4.0 |  8.0
+           F |  1.0 |  3.0 |  9.0 | 27.0
+    >>> initial = LArray([3, 4], [sex])
+    >>> initial
+    sex | M | F
+        | 3 | 4
+    >>> create_sequential(year, initial, inc, mult)
+    sex\year | 2016 | 2017 | 2018 | 2019
+           M |    3 |    7 |   15 |   31
+           F |    4 |   14 |   44 |  134
+    >>> def modify(prev_value):
+    ...     return prev_value / 2
+    >>> create_sequential(year, 8, func=modify)
+    year | 2016 | 2017 | 2018 | 2019
+         |    8 |    4 |    2 |    1
+    >>> create_sequential(3)
+    axis0* | 0 | 1 | 2
+           | 0 | 1 | 2
+    >>> create_sequential(x.year, axes=(sex, year))
+    sex\\year | 2016 | 2017 | 2018 | 2019
+           M |    0 |    1 |    2 |    3
+           F |    0 |    1 |    2 |    3
+    """
+    if inc is None:
+        inc = 1 if mult is 1 else 0
+    if isinstance(axis, int):
+        axis = Axis(None, axis)
+    if axes is None:
+        axes = get_axes(initial) | get_axes(inc) | get_axes(mult) | axis
+    else:
+        axes = AxisCollection(axes)
+    axis = axes[axis]
+    res = empty(axes, dtype=np.asarray(initial).dtype)
+    res[axis.i[0]] = initial
+    if func is not None:
+        for i in range(1, len(axis)):
+            res[axis.i[i]] = func(res[axis.i[i - 1]])
+    else:
+        for i in range(1, len(axis)):
+            res[axis.i[i]] = res[axis.i[i - 1]] * mult + inc
     return res
 
 
