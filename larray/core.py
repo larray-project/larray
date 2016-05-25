@@ -4764,24 +4764,50 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     sex\\year | 2016 | 2017 | 2018 | 2019
            M |    0 |    1 |    2 |    3
            F |    0 |    1 |    2 |    3
+    >>> a = ndrange([sex, year], start=1, dtype=float)
+    >>> a
+    sex\year | 2016 | 2017 | 2018 | 2019
+           M |  1.0 |  2.0 |  3.0 |  4.0
+           F |  5.0 |  6.0 |  7.0 |  8.0
+    >>> g = a.growth_rate() + 1
+    >>> g
+    sex\year | 2017 |          2018 |          2019
+           M |  2.0 |           1.5 | 1.33333333333
+           F |  1.2 | 1.16666666667 | 1.14285714286
+    >>> create_sequential(a.axes.year, a[2016], mult=g)
+    sex\year | 2016 | 2017 | 2018 | 2019
+           M |  1.0 |  2.0 |  3.0 |  4.0
+           F |  5.0 |  6.0 |  7.0 |  8.0
     """
     if inc is None:
         inc = 1 if mult is 1 else 0
     if isinstance(axis, int):
         axis = Axis(None, axis)
     if axes is None:
-        axes = get_axes(initial) | get_axes(inc) | get_axes(mult) | axis
+        def strip_axes(col):
+            return get_axes(col) - axis
+        # we need to remove axis if present, because it might be incompatible
+        axes = strip_axes(initial) | strip_axes(inc) | strip_axes(mult) | axis
     else:
         axes = AxisCollection(axes)
     axis = axes[axis]
+    # FIXME: we should compute combined dtype for inital, inc, mult
     res = empty(axes, dtype=np.asarray(initial).dtype)
     res[axis.i[0]] = initial
     if func is not None:
         for i in range(1, len(axis)):
             res[axis.i[i]] = func(res[axis.i[i - 1]])
     else:
+        def index_if_exists(a, axis, i):
+            if isinstance(a, LArray) and axis in a.axes:
+                a_axis = a.axes[axis]
+                return a[a_axis[axis.labels[i]]]
+            else:
+                return a
         for i in range(1, len(axis)):
-            res[axis.i[i]] = res[axis.i[i - 1]] * mult + inc
+            i_mult = index_if_exists(mult, axis, i)
+            i_inc = index_if_exists(inc, axis, i)
+            res[axis.i[i]] = res[axis.i[i - 1]] * i_mult + i_inc
     return res
 
 
