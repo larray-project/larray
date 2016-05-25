@@ -4832,6 +4832,15 @@ def ndrange(axes, start=0, dtype=int):
     return LArray(data.reshape(axes.shape), axes)
 
 
+# TODO: I could generalize this to multiple axes
+# >>> nat = Axis('nat', ['BE', 'FO'])
+# >>> sex = Axis('sex', ['H', 'F'])
+# >>> identity((nat, sex))
+# nat\\sex |    H |    F
+#      BE | BE,H | BE,F
+#      FO | FO,H | FO,F
+
+
 def identity(axis):
     """Returns a LArray with the value equal to Axis
 
