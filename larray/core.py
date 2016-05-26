@@ -1731,8 +1731,10 @@ class LArray(object):
             columns.name = self.axes[-1].name
         if self.ndim > 1:
             axes_names = self.axes.names[:-1]
-            if fold_last_axis_name and axes_names[-1] is not None:
-                axes_names[-1] = axes_names[-1] + '\\' + self.axes[-1].name
+            if fold_last_axis_name:
+                tmp = axes_names[-1] if axes_names[-1] is not None else ''
+                if self.axes[-1].name:
+                    axes_names[-1] = "{}\\{}".format(tmp, self.axes[-1].name)
 
             index = pd.MultiIndex.from_product(self.axes.labels[:-1],
                                                names=axes_names)
@@ -3710,6 +3712,7 @@ class LArray(object):
                         new_workbook = True
                 else:
                     # try to open an existing unsaved workbook
+                    # XXX: I wonder if app_visible=None wouldn't be better in this case?
                     wb = xw.Workbook(filepath, app_visible=True)
 
             def sheet_exists(wb, sheet):
