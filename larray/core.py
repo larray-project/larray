@@ -487,7 +487,7 @@ class PGroupMaker(object):
         self.axis = axis
 
     def __getitem__(self, key):
-        return PGroup(key, None, self.axis.id)
+        return PGroup(key, None, self.axis)
 
 
 class Axis(object):
@@ -621,7 +621,7 @@ class Axis(object):
                                  "an incompatible axis")
             # FIXME: we should respect the given name (overrides key.name)
             return key
-        return LGroup(key, name, self.id)
+        return LGroup(key, name, self)
 
     def all(self, name=None):
         return self.group(slice(None), name=name if name is not None else "all")
@@ -845,43 +845,48 @@ class Axis(object):
 # ticks/labels of the LGroup need to correspond to its *Axis*
 # indices
 class Group(object):
-    def __init__(self, key, name, axis):
-        raise NotImplementedError()
+    def __init__(self, key, name=None, axis=None):
+        if isinstance(key, tuple):
+            key = list(key)
+        self.key = key
+
+        # we do NOT assign a name automatically when missing because that
+        # makes it impossible to know whether a name was explicitly given or
+        # not
+        self.name = name
+        assert axis is None or isinstance(axis, (basestring, int, Axis)), \
+            "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
+
+        # we could check the key is valid but this can be slow and could be
+        # useless
+        # TODO: for performance reasons, we should cache the result. This will
+        # need to be invalidated correctly
+        # axis.translate(key)
+
+        # we store the Axis object and not its name like we did previously
+        # so that groups on anonymous axes are more meaningful and that we
+        # can iterate on a slice of an axis (an LGroup). The reason to store
+        # the name instead of the object was to make sure that a Group from an
+        # axis (or without axis) could be used on another axis with the same
+        # name. See test_la.py:test_...
+        self.axis = axis
 
     def __len__(self):
         return len(self.key)
+
+    @property
+    def axis_id(self):
+        return self.axis.id if isinstance(self.axis, Axis) else self.axis
 
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
 class LGroup(Group):
-    def __init__(self, key, name=None, axis=None):
-        """
-        key should be either a sequence of labels, a slice with label bounds
-        or a string
-        axis, is only used to check the key and later to cache the translated
-        key
-        """
-        self.key = key
-        # we do NOT assign a name in all cases because that makes it
-        # impossible to know whether a name was explicitly given or computed
-        self.name = name
-
-        # we store the Axis name, instead of the axis object itself so that
-        # LGroups are more compatible between themselves.
-        if isinstance(axis, Axis):
-            # XXX: probably broken for unnamed axes. Not sure .id would be
-            # good in all cases. Storing the actual object would be nice.
-            axis = axis.name
-        if axis is not None:
-            assert isinstance(axis, (int, basestring)), \
-                "axis is not an instance of str (%s)" % axis
-            # check the key is valid
-            # TODO: for performance reasons, we should cache the result. This will
-            # need to be invalidated correctly
-            # axis.translate(key)
-        self.axis = axis
-
+    """
+    key should be either a sequence of labels, a slice with label bounds
+    or a string
+    axis can be an int, str or Axis
+    """
     # this makes range(LGroup(int)) possible
     def __index__(self):
         return self.key.__index__()
@@ -943,15 +948,6 @@ class PGroup(Group):
     """
     Positional Group
     """
-    def __init__(self, key, name=None, axis=None):
-        if isinstance(key, tuple):
-            key = list(key)
-        self.key = key
-        self.name = name
-        assert axis is None or isinstance(axis, (basestring, int)), \
-            "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
-        self.axis = axis
-
     def __repr__(self):
         name = ", name=%r" % self.name if self.name is not None else ''
         axis = ", axis=%r" % self.axis if self.axis is not None else ''
@@ -2092,7 +2088,7 @@ class LArray(object):
             if dupe_axes:
                 dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
                 raise ValueError("key with duplicate axis: %s" % dupe_axes)
-            key = dict((axis_key.axis, axis_key) for axis_key in key)
+            key = dict((axis_key.axis_id, axis_key) for axis_key in key)
 
         # dict -> tuple (complete and order key)
         assert isinstance(key, dict)

@@ -165,7 +165,7 @@ class TestAxis(TestCase):
         group = age.group(srange(10, 20), name='teens')
         self.assertEqual(group.key, srange(10, 20))
         self.assertEqual(group.name, 'teens')
-        self.assertEqual(group.axis, 'age')
+        self.assertEqual(group.axis, age)
 
         # TODO: support more stuff in string groups
         # arr3x = geo.group('A3*') # * match one or more chars
@@ -182,7 +182,7 @@ class TestAxis(TestCase):
 
         group = age[:]
         self.assertEqual(group.key, slice(None))
-        self.assertEqual(group.axis, 'age')
+        self.assertEqual(group.axis, age)
 
     def test_iter(self):
         self.assertEqual(list(Axis('sex', 'H,F')), ['H', 'F'])
@@ -194,13 +194,13 @@ class TestAxis(TestCase):
         # self.assertEqual(age.i[:17], age[':17'])
         key = age.i[:-1]
         self.assertEqual(key.key, slice(None, -1))
-        self.assertEqual(key.axis, 'age')
+        self.assertEqual(key.axis, age)
 
     def test_all(self):
         age = Axis('age', ':115')
         group = age.all()
         self.assertEqual(group.key, slice(None))
-        self.assertEqual(group.axis, 'age')
+        self.assertEqual(group.axis, age)
 
     def test_contains(self):
         # normal Axis
@@ -313,7 +313,7 @@ class TestValueGroup(TestCase):
     def test_init(self):
         self.assertEqual(self.slice_full.name, "full")
         self.assertEqual(self.slice_full.key, '1:5')
-        self.assertEqual(self.slice_full.axis, 'age')
+        self.assertEqual(self.slice_full.axis.name, 'age')
         self.assertEqual(self.slice_named.name, "named")
         self.assertEqual(self.slice_named.key, '1:5')
         self.assertEqual(self.slice_both.key, '1:5')
