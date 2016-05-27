@@ -568,7 +568,7 @@ class Axis(object):
     def labels(self, labels):
         if labels is None:
             raise TypeError("labels should be ndarray or int")
-        if isinstance(labels, int):
+        if isinstance(labels, (int, long)):
             length = labels
             labels = np.arange(length)
             iswildcard = True
