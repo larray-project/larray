@@ -785,7 +785,8 @@ class Axis(object):
         return self.display_name
 
     def __repr__(self):
-        return 'Axis(%r, %r)' % (self.name, list(self.labels))
+        labels = len(self) if self.iswildcard else list(self.labels)
+        return 'Axis(%r, %r)' % (self.name, labels)
 
     def labels_summary(self):
         def repr_on_strings(v):
