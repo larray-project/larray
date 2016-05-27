@@ -1892,12 +1892,19 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         # use a group from another *compatible* axis
         lipro2 = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
-        self.assertEqual(small.sum(lipro=lipro2.group('P01,P03')).shape, (2,))
+        self.assertEqual(small.sum(lipro=lipro2['P01,P03']).shape, (2,))
 
         # use group from another *incompatible* axis
-        # XXX: I am not sure anymore we should be so precise
-        # lipro3 = Axis('lipro', 'P01,P03,P05')
-        # self.assertRaises(ValueError, small.sum, lipro=lipro3.group('P01,P03'))
+        # XXX: I am unsure whether or not this should be allowed. Maybe we
+        # should simply check that the group is valid in axis, but that
+        # will trigger a pretty meaningful error anyway
+        lipro3 = Axis('lipro', 'P01,P03,P05')
+        self.assertEqual(small.sum(lipro3['P01,P03']).shape, (2,))
+
+        # use a group (from another axis) which is incompatible with the axis of
+        # the same name in the array
+        lipro4 = Axis('lipro', 'P01,P03,P16')
+        self.assertRaises(KeyError, small.sum, lipro4['P01,P16'])
 
     def test_ratio(self):
         la = self.larray
