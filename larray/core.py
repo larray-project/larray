@@ -574,7 +574,7 @@ class Axis(object):
             iswildcard = True
         else:
             # TODO: move this to to_ticks????
-            # we convert to an ndarray to save memory (for scalar ticks, for
+            # we convert to an ndarray to save memory for scalar ticks (for
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
             ticks = to_ticks(labels)
@@ -589,9 +589,6 @@ class Axis(object):
             else:
                 labels = np.asarray(ticks)
             length = len(labels)
-            # TODO: delay creating this when first accessed
-            # XXX: isn't it faster to enumerate(ticks) instead
-            # 0.057
             iswildcard = False
 
         self._length = length
@@ -910,6 +907,8 @@ class LGroup(Group):
 
     def __eq__(self, other):
         # different name or axis compare equal !
+        # XXX: we might want to compare "expanded" keys, so that slices
+        # can match lists and vice-versa.
         other_key = other.key if isinstance(other, LGroup) else other
         return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
 
@@ -4847,6 +4846,7 @@ def ndrange(axes, start=0, dtype=int):
     ndrange([('a', 2), ('b', 3)])
     ndrange(('a', 2), ('b', 3))
     ndrange((2, 3)).rename([0, 1], ['a', 'b'])
+    ndrange((2, 3)).rename({0: 'a', 1: 'b'})
     # current syntaxes
     ndrange((2, 3)).rename(0, 'a').rename(1, 'b')
     ndrange([Axis('a', 2), Axis('b', 3)])

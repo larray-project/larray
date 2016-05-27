@@ -355,7 +355,8 @@ class TestValueGroup(TestCase):
         self.assertEqual(d.get(self.single_value), 2)
         self.assertEqual(d.get(self.list), 3)
         self.assertEqual(d.get(self.list_named), 3)
-        # this cannot and will never work!
+        # this cannot and will never work, because we cannot have the LGroup
+        # hash both like its key and like its name!
         # we could make it work with a special dict class, but do we WANT to
         # make it work?
         # yes, probably
@@ -633,9 +634,9 @@ class TestLArray(TestCase):
         # list of strings
         self.belgium = union(vla, wal, bru)
 
-        #belgium = vla + wal + bru # equivalent
-        #wal_bru = belgium - vla
-        #wal_bru = wal + bru # equivalent
+        # belgium = vla + wal + bru # equivalent
+        # wal_bru = belgium - vla
+        # wal_bru = wal + bru # equivalent
 
         self.geo = Axis('geo', self.belgium)
 
@@ -825,6 +826,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age['1,5']))
 
+    # TODO: add test for getitem on array with anonymous axes
     def test_getitem_guess_axis(self):
         raw = self.array
         la = self.larray
