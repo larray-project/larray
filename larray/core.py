@@ -834,6 +834,31 @@ class Axis(object):
         # collection is intentionally not copied
         return new_axis
 
+    def rename(self, name):
+        """Renames the axis.
+
+        Parameters
+        ----------
+        newname : str
+            the new name for the axis.
+
+        Returns
+        -------
+        Axis
+            a new Axis with the same labels but a different name.
+
+        Example
+        -------
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> sex
+        Axis('sex', ['M', 'F'])
+        >>> sex.rename('gender')
+        Axis('gender', ['M', 'F'])
+        """
+        res = self.copy()
+        res.name = name
+        return res
+
     def _rename(self, name):
         return Axis(name, self.labels)
 
@@ -1809,7 +1834,7 @@ class LArray(object):
                 FO | 1.0 | 1.0
         """
         axis = self.axes[axis]
-        axes = [Axis(newname, a.labels) if a is axis else a
+        axes = [axis.rename(newname) if a is axis else a
                 for a in self.axes]
         return LArray(self.data, axes)
 
