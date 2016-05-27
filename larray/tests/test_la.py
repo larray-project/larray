@@ -2109,15 +2109,15 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         >>> b = ndrange(3)
         >>> c = ndrange(2)
         >>> a
-        axis0\\axis1 | 0 | 1 | 2
-                  0 | 0 | 1 | 2
-                  1 | 3 | 4 | 5
+        {0}*\\{1}* | 0 | 1 | 2
+                0 | 0 | 1 | 2
+                1 | 3 | 4 | 5
         >>> b
-        axis0 | 0 | 1 | 2
-              | 0 | 1 | 2
+        {0}* | 0 | 1 | 2
+             | 0 | 1 | 2
         >>> c
-        axis0 | 0 | 1
-              | 0 | 1
+        {0}* | 0 | 1
+             | 0 | 1
 
         >>> # it is unfortunate that the behavior is different from numpy
         >>> # (even though I find our behavior more intuitive)
@@ -2128,9 +2128,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         Axis(None, [0, 1])
 
         >>> a * c
-        axis0\\axis1 | 0 | 1 | 2
-                  0 | 0 | 0 | 0
-                  1 | 3 | 4 | 5
+        {0}*\\{1}* | 0 | 1 | 2
+                0 | 0 | 0 | 0
+                1 | 3 | 4 | 5
 
         >>> np.asarray(a) * np.asarray(b)
         array([[ 0,  1,  4],

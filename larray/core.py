@@ -776,7 +776,7 @@ class Axis(object):
         if self.name is not None:
             name = self.name
         elif self.collection is not None:
-            name = 'axis%d' % self.collection.index(self)
+            name = '{%d}' % self.collection.index(self)
         else:
             name = '-'
         return (name + '*') if self.iswildcard else name
@@ -994,10 +994,9 @@ class AxisCollection(object):
         """
         if axes is None:
             axes = []
-        if isinstance(axes, int):
+        if isinstance(axes, (int, long, str)):
             axes = [axes]
-        axes = [Axis(None, range(axis)) if isinstance(axis, (int, long))
-                    else axis.copy()
+        axes = [axis.copy() if isinstance(axis, Axis) else Axis(None, axis)
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
         for a in axes:
@@ -1347,9 +1346,10 @@ class AxisCollection(object):
         >>> a = Axis('a', ['a1', 'a2'])
         >>> b = Axis('b', 2)
         >>> c = Axis(None, ['c1', 'c2'])
-        >>> arr = zeros([a, b, c])
-        >>> arr.axes.display_names
-        ['a', 'b*', 'axis2']
+        >>> d = Axis(None, 3)
+        >>> col = AxisCollection([a, b, c, d])
+        >>> col.display_names
+        ['a', 'b*', '{2}', '{3}*']
         """
         return [axis.display_name for axis in self._list]
 
@@ -1489,17 +1489,17 @@ def sum(array, *args, **kwargs):
     --------
     >>> a = ndrange((2, 3))
     >>> a
-    axis0\\axis1 | 0 | 1 | 2
-              0 | 0 | 1 | 2
-              1 | 3 | 4 | 5
+    {0}*\\{1}* | 0 | 1 | 2
+            0 | 0 | 1 | 2
+            1 | 3 | 4 | 5
     >>> sum(a)
     15
     >>> sum(a, axis=0)
-    axis0 | 0 | 1 | 2
-          | 3 | 5 | 7
+    {0}* | 0 | 1 | 2
+         | 3 | 5 | 7
     >>> sum(a, axis=1)
-    axis0 | 0 |  1
-          | 3 | 12
+    {0}* | 0 |  1
+         | 3 | 12
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -1555,17 +1555,17 @@ def median(array, *args, **kwargs):
 
     >>> a = LArray([[10, 7, 4], [3, 2, 1]])
     >>> a
-    axis0\\axis1 |  0 | 1 | 2
-              0 | 10 | 7 | 4
-              1 |  3 | 2 | 1
+    {0}*\\{1}* |  0 | 1 | 2
+            0 | 10 | 7 | 4
+            1 |  3 | 2 | 1
     >>> median(a)
     3.5
     >>> median(a, axis=0)
-    axis0 |   0 |   1 |   2
-          | 6.5 | 4.5 | 2.5
+    {0}* |   0 |   1 |   2
+         | 6.5 | 4.5 | 2.5
     >>> median(a, axis=1)
-    axis0 |   0 |   1
-          | 7.0 | 2.0
+    {0}* |   0 |   1
+         | 7.0 | 2.0
     """
     return array.median(*args, **kwargs)
 
@@ -1577,19 +1577,19 @@ def percentile(array, *args, **kwargs):
 
     >>> a = LArray([[10, 7, 4], [3, 2, 1]])
     >>> a
-    axis0\\axis1 |  0 | 1 | 2
-              0 | 10 | 7 | 4
-              1 |  3 | 2 | 1
+    {0}*\\{1}* |  0 | 1 | 2
+            0 | 10 | 7 | 4
+            1 |  3 | 2 | 1
     >>> # this is a bug in numpy: np.nanpercentile(all axes) returns an ndarray,
     >>> # instead of a scalar.
     >>> percentile(a, 50)
     array(3.5)
     >>> percentile(a, 50, axis=0)
-    axis0 |   0 |   1 |   2
-          | 6.5 | 4.5 | 2.5
+    {0}* |   0 |   1 |   2
+         | 6.5 | 4.5 | 2.5
     >>> percentile(a, 50, axis=1)
-    axis0 |   0 |   1
-          | 7.0 | 2.0
+    {0}* |   0 |   1
+         | 7.0 | 2.0
     """
     return array.percentile(*args, **kwargs)
 
@@ -4304,9 +4304,9 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
          FO | 3 | 2
     >>> mat.to_csv('no_axis_name.csv', dialect='classic')
     >>> read_csv('no_axis_name.csv', nb_index=1)
-    nat\\axis1 | H | F
-           BE | 0 | 1
-           FO | 2 | 3
+    nat\\{1} | H | F
+         BE | 0 | 1
+         FO | 2 | 3
     """
     # read the first line to determine how many axes (time excluded) we have
     with csv_open(filepath) as f:
@@ -4490,9 +4490,9 @@ def zeros_like(array, dtype=None, order='K'):
     -------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
-    axis0\\axis1 | 0 | 1 | 2
-              0 | 0 | 0 | 0
-              1 | 0 | 0 | 0
+    {0}*\\{1}* | 0 | 1 | 2
+            0 | 0 | 0 | 0
+            1 | 0 | 0 | 0
     """
     axes = array.axes
     return LArray(np.zeros_like(array, dtype, order), axes)
@@ -4552,9 +4552,9 @@ def ones_like(array, dtype=None, order='K'):
     -------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
-    axis0\\axis1 | 0 | 1 | 2
-              0 | 1 | 1 | 1
-              1 | 1 | 1 | 1
+    {0}*\\{1}* | 0 | 1 | 2
+            0 | 1 | 1 | 1
+            1 | 1 | 1 | 1
     """
     axes = array.axes
     return LArray(np.ones_like(array, dtype, order), axes)
@@ -4694,9 +4694,9 @@ def full_like(array, fill_value, dtype=None, order='K'):
     -------
     >>> a = ndrange((2, 3))
     >>> full_like(a, 5)
-    axis0\\axis1 | 0 | 1 | 2
-              0 | 5 | 5 | 5
-              1 | 5 | 5 | 5
+    {0}*\\{1}* | 0 | 1 | 2
+            0 | 5 | 5 | 5
+            1 | 5 | 5 | 5
     """
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
@@ -4780,8 +4780,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     year | 2016 | 2017 | 2018 | 2019
          |    8 |    4 |    2 |    1
     >>> create_sequential(3)
-    axis0* | 0 | 1 | 2
-           | 0 | 1 | 2
+    {0}* | 0 | 1 | 2
+         | 0 | 1 | 2
     >>> create_sequential(x.year, axes=(sex, year))
     sex\\year | 2016 | 2017 | 2018 | 2019
            M |    0 |    1 |    2 |    3
@@ -4857,12 +4857,12 @@ def ndrange(axes, start=0, dtype=int):
          BE | 0 | 1
          FO | 2 | 3
     >>> ndrange([2, 3], dtype=float)
-    axis0\\axis1 |   0 |   1 |   2
-              0 | 0.0 | 1.0 | 2.0
-              1 | 3.0 | 4.0 | 5.0
+    {0}*\\{1}* |   0 |   1 |   2
+            0 | 0.0 | 1.0 | 2.0
+            1 | 3.0 | 4.0 | 5.0
     >>> ndrange(3, start=2)
-    axis0 | 0 | 1 | 2
-          | 2 | 3 | 4
+    {0}* | 0 | 1 | 2
+         | 2 | 3 | 4
 
     potential alternate syntaxes:
     ndrange((2, 3), names=('a', 'b'))
