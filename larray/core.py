@@ -1811,14 +1811,15 @@ class LArray(object):
     __nonzero__= __bool__
 
     def rename(self, axis, newname):
-        """Renames an axis of a LArray.
+        """Renames an axis of the array.
 
         Parameters
         ----------
-        axis
+        axis : int, str or Axis
             axis.
-        newname
-            string -> the new name for the axis.
+        newname : str
+            the new name for the axis.
+
         Returns
         -------
         LArray
