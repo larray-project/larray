@@ -906,6 +906,14 @@ class Group(object):
     def axis_id(self):
         return self.axis.id if isinstance(self.axis, Axis) else self.axis
 
+    def __iter__(self):
+        if isinstance(self.axis, Axis):
+            # the only interest is to expand slices
+            pos = self.axis.translate(self)
+            return iter(self.axis.labels[pos])
+        else:
+            raise Exception('not iterable')
+
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
@@ -962,9 +970,6 @@ class LGroup(Group):
     def __gt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__gt__(other_key)
-
-    def __iter__(self):
-        return iter(self.key)
 
     def __getitem__(self, key):
         return self.key[key]
