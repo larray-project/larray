@@ -4954,6 +4954,10 @@ class AxisReference(Axis):
 class AxisReferenceFactory(object):
     def __getattr__(self, key):
         return AxisReference(key)
+
+    def __getitem__(self, key):
+        return AxisReference(key)
+
 x = AxisReferenceFactory()
 
 

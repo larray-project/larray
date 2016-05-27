@@ -826,6 +826,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # la[[1, 5, 9], age['1,5,9']]
         self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age['1,5']))
 
+    def test_getitem_anonymous_axes(self):
+        la = ndrange((3, 4))
+        raw = la.data
+        assert_array_equal(la[x[0][1:]], raw[1:])
+        assert_array_equal(la[x[1][2:]], raw[:, 2:])
+        assert_array_equal(la[x[0][2:], x[1][1:]], raw[2:, 1:])
+        assert_array_equal(la.i[2:, 1:], raw[2:, 1:])
+
     # TODO: add test for getitem on array with anonymous axes
     def test_getitem_guess_axis(self):
         raw = self.array
