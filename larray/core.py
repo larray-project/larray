@@ -291,7 +291,7 @@ def slice_str_to_range(s):
     if start is None:
         start = 0
     if stop is None:
-        raise ValueError("no stop bound provided in range: %s" % s)
+        raise ValueError("no stop bound provided in range: %r" % s)
     stop += 1
     return srange(start, stop, step)
 
