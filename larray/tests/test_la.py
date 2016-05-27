@@ -294,7 +294,7 @@ class TestAxis(TestCase):
         self.assertFalse(age.group(['2', '7']) in agg)
 
 
-class TestValueGroup(TestCase):
+class TestLGroup(TestCase):
     def setUp(self):
         self.age = Axis('age', ':115')
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
@@ -395,9 +395,9 @@ class TestValueGroup(TestCase):
         self.assertEqual(str(self.list), "['P01' ... 'P07']")
 
     def test_repr(self):
-        # FIXME: add axis
-        self.assertEqual(repr(self.slice_full), "LGroup('1:5', 'full')")
-        self.assertEqual(repr(self.slice_named), "LGroup('1:5', 'named')")
+        self.assertEqual(repr(self.slice_full),
+                         "LGroup('1:5', name='full', axis='age')")
+        self.assertEqual(repr(self.slice_named), "LGroup('1:5', name='named')")
         self.assertEqual(repr(self.slice_both), "LGroup('1:5')")
         self.assertEqual(repr(self.list), "LGroup('P01,P03,P07')")
 

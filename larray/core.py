@@ -869,6 +869,11 @@ class Group(object):
         # name. See test_la.py:test_...
         self.axis = axis
 
+    def __repr__(self):
+        name = ", name=%r" % self.name if self.name is not None else ''
+        axis = ", axis=%r" % self.axis_id if self.axis is not None else ''
+        return "%s(%r%s%s)" % (self.__class__.__name__, self.key, name, axis)
+
     def __len__(self):
         return len(self.key)
 
@@ -925,10 +930,6 @@ class LGroup(Group):
         return '%r (%s)' % (self.name, str_key) if self.name is not None \
             else str_key
 
-    def __repr__(self):
-        name = ", %r" % self.name if self.name is not None else ''
-        return "LGroup(%r%s)" % (self.key, name)
-
     def __lt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__lt__(other_key)
@@ -948,10 +949,7 @@ class PGroup(Group):
     """
     Positional Group
     """
-    def __repr__(self):
-        name = ", name=%r" % self.name if self.name is not None else ''
-        axis = ", axis=%r" % self.axis if self.axis is not None else ''
-        return "PGroup(%r%s%s)" % (self.key, name, axis)
+    pass
 
 
 def index_by_id(seq, value):
