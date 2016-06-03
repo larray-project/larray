@@ -3092,21 +3092,31 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat
-        nat\\sex | H | F
-             BE | 0 | 1
-             FO | 2 | 3
-        >>> mat.ratio()
-        nat\\sex |              H |              F
-             BE |            0.0 | 0.166666666667
-             FO | 0.333333333333 |            0.5
-        >>> mat.ratio(xsex)
-        nat\\sex |   H |   F
-             BE | 0.0 | 1.0
-             FO | 0.4 | 0.6
+        >>> age = Axis('age', range(3))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = ndrange([age, sex])
+        >>> a
+        age\\sex | M | F
+              0 | 0 | 1
+              1 | 2 | 3
+              2 | 4 | 5
+        >>> a.sum()
+        15
+        >>> a.ratio()
+        age\\sex |              M |               F
+              0 |            0.0 | 0.0666666666667
+              1 | 0.133333333333 |             0.2
+              2 | 0.266666666667 |  0.333333333333
+        >>> a.ratio(sex)
+        age\\sex |              M |              F
+              0 |            0.0 |            1.0
+              1 |            0.4 |            0.6
+              2 | 0.444444444444 | 0.555555555556
+        >>> a.ratio('F')
+        age\\sex |              M |   F
+              0 |            0.0 | 1.0
+              1 | 0.666666666667 | 1.0
+              2 |            0.8 | 1.0
         """
         # >>> FIXME, this does not work, but it should
         # >>> NotImplementedError: an AxisReference (x.) cannot translate labels
