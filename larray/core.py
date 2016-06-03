@@ -186,7 +186,6 @@ from larray.utils import (table2str, unique, csv_open, unzip, long,
                           decode, basestring, izip, rproduct, ReprString,
                           duplicates, array_lookup2, skip_comment_cells,
                           strip_rows, PY3)
-
 try:
     import xlwings as xw
 except ImportError:
@@ -2068,6 +2067,8 @@ class LArray(object):
         if isinstance(key, LArray) and np.issubdtype(key.dtype, np.bool_) \
                 and not bool_stuff:
             # if only the axes order is wrong, transpose
+            # FIXME: if the key has both missing and extra axes, it could be
+            # the correct size (or event shape, see below)
             if key.size == self.size and key.shape != self.shape:
                 return np.asarray(key.transpose(self.axes)).nonzero()
             # otherwise we need to transform the key to integer
@@ -2082,6 +2083,10 @@ class LArray(object):
                 return tuple(map_key[name] if name in map_key else slice(None)
                              for name in total_axes.names)
             else:
+                # correct shape
+                # FIXME: if the key has both missing and extra axes (at the
+                # position of the missing axes), the shape could be the same
+                # while the result should not
                 return np.asarray(key).nonzero()
 
         # convert scalar keys to 1D keys
@@ -2178,8 +2183,8 @@ class LArray(object):
             # XXX: cache the range in the axis?
             # TODO: fork np.ix_ to allow for slices directly
             # it will be tricky to get right though because in that case the
-            # a[key] can have its dimensions in the wrong order (if the
-            # ix_arrays are not next to each other, the corresponding
+            # result of a[key] can have its dimensions in the wrong order
+            # (if the ix_arrays are not next to each other, the corresponding
             # dimensions are moved to the front). It is probably worth the
             # trouble though because it is much faster than the current
             # solution (~5x in my simple test) but this case (num_ix_arrays >
@@ -2201,12 +2206,6 @@ class LArray(object):
         #     raise KeyError("bla")
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
-
-        # TODO: make the combined keys should be objects which display as:
-        # (axis1_label, axis2_label, ...) but should also store the axis (names)
-        # Q: Should it be the same object as the NDLGroup?/NDKey?
-        # A: yes, probably. On the Pandas backend, we could/should have
-        #    separate axes. On the numpy backend we cannot.
 
         # FIXME: I have a huge problem with boolean labels + non points
         if isinstance(key, (LArray, np.ndarray)) and \
@@ -2235,7 +2234,8 @@ class LArray(object):
             axes = flatten(to2d(axes))
             return LArray(data, axes)
 
-        # TODO: if the original key was a label key, subaxis(translated_key) == orig_key, so we should use
+        # TODO: if the original key was a label key,
+        # subaxis(translated_key) == orig_key, so we should use
         # orig_axis_key.copy()
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
@@ -2252,6 +2252,27 @@ class LArray(object):
             return LArray(data, axes)
 
     def __setitem__(self, key, value, collapse_slices=True):
+        # TODO: if key or value has more axes than self, we should use
+        # total_axes = self.axes + key.axes + value.axes
+        # expanded = self.expand(total_axes)
+        # data = np.asarray(expanded.data)
+
+        # concerning keys this can make sense in several cases:
+        # single bool LArray key with extra axes.
+        # tuple of bool LArray keys (eg one for each axis). each could have
+        # extra axes. Common axes between keys are not a problem, we can
+        # simply "and" them. Though we should avoid explicitly "and"ing them
+        # if there is no common axis because that is less efficient than
+        # the implicit "and" that is done by numpy __getitem__ (and the fact we
+        # need to combine dimensions when any key has more than 1 dim).
+
+        # the bool value represents whether the axis label is taken or not
+        # if any bool key (part) has more than one axis, we get combined
+        # dimensions out of it.
+
+        # int LArray keys
+        # the int value represent a position along ONE particular axis,
+        # even if the key has more than one axis.
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -2264,9 +2285,9 @@ class LArray(object):
             data[translated_key] = value
             return
 
-        # XXX: we might want to create fakes axes in this case, as we only
-        # use axes names and axes length, not the ticks, and those could
-        # theoretically take a significant time to compute
+        # XXX: we might want to create fakes (or wildcard?) axes in this case,
+        # as we only use axes names and axes length, not the ticks, and those
+        # could theoretically take a significant time to compute
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
@@ -2306,6 +2327,12 @@ class LArray(object):
                 assert all(l == combined_axis_len for l in lengths)
                 combined_axis = Axis(combined_name, combined_axis_len)
             else:
+                # TODO: the combined keys should be objects which display as:
+                # (axis1_label, axis2_label, ...) but which should also store
+                # the axis (names?)
+                # Q: Should it be the same object as the NDLGroup?/NDKey?
+                # A: yes, probably. On the Pandas backend, we could/should have
+                #    separate axes. On the numpy backend we cannot.
                 axes_labels = [axis.labels[axis_key]
                                for axis_key, axis in zip(key, self.axes)
                                if not isnoneslice(axis_key) and
@@ -2315,7 +2342,8 @@ class LArray(object):
                 else:
                     combined_labels = list(zip(*axes_labels))
 
-                # CRAP, this can lead to duplicate labels (especially using .points)
+                # CRAP, this can lead to duplicate labels (especially using
+                # .points)
                 combined_axis = Axis(combined_name, combined_labels)
             new_axes.insert(combined_axis_pos, combined_axis)
         return AxisCollection(new_axes)
@@ -3259,7 +3287,8 @@ class LArray(object):
         Parameters
         ----------
         target_axes : list of Axis or AxisCollection, optional
-            self can contain axes not present in target_axes
+            self can contain axes not present in target_axes. The result axes will be:
+            [self.axes not in target_axes] + target_axes
         out : LArray, optional
             output array, must have the correct shape
         readonly : bool, optional
