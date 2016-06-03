@@ -834,7 +834,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(la[x[0][2:], x[1][1:]], raw[2:, 1:])
         assert_array_equal(la.i[2:, 1:], raw[2:, 1:])
 
-    # TODO: add test for getitem on array with anonymous axes
     def test_getitem_guess_axis(self):
         raw = self.array
         la = self.larray

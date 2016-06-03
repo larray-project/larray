@@ -3108,6 +3108,69 @@ class LArray(object):
              BE | 0.0 | 1.0
              FO | 0.4 | 0.6
         """
+        # >>> FIXME, this does not work, but it should
+        # >>> NotImplementedError: an AxisReference (x.) cannot translate labels
+        # >>> b = a.sum((x.age[[0, 1]], x.age[[1, 2]]))
+        # This works though
+        # >>> a.sum(([0, 1], [1, 2]))
+        # age\\sex | M | F
+        #   [0 1] | 2 | 4
+        #   [1 2] | 6 | 8
+        # >>> a.sum((age[[0, 1]], age[2]))
+        # >>> a.sum(([0, 1], 2))
+        # # this does not work, but I am unsure it should
+        # # >>> a.sum(age[[0, 1]], age[2]) / a.sum(age)
+        # >>> a.sum(([0, 1], 2)) / a.sum(age)
+        # # >>> a / a.sum(([0, 1], 2))
+        # >>> a.sum(x.sex)
+        # >>> a.sum(x.age)
+        # >>> a.sum(x.sex) / a.sum(x.age)
+        # >>> a.ratio('F')
+        # could mean
+        # >>> a.sum('F') / a.sum(a.get_axis('F'))
+        # >>> a.sum('F') / a.sum(x.sex)
+        # age |   0 |   1 |              2
+        #     | 1.0 | 0.6 | 0.555555555556
+        # OR (current meaning)
+        # >>> a / a.sum('F')
+        # age\\sex |              M |   F
+        #       0 |            0.0 | 1.0
+        #       1 | 0.666666666667 | 1.0
+        #       2 |            0.8 | 1.0
+        # One solution is to add an argument
+        # >>> a.ratio(what='F', by=x.sex)
+        # age |   0 |   1 |              2
+        #     | 1.0 | 0.6 | 0.555555555556
+        # >>> a.sum('F') / a.sum(x.sex)
+
+        # >>> a.sum((age[[0, 1]], age[[1, 2]])) / a.sum(age)
+        # >>> a.ratio((age[[0, 1]], age[[1, 2]]), by=age)
+
+        # >>> a.sum((x.age[[0, 1]], x.age[[1, 2]])) / a.sum(x.age)
+        # >>> a.ratio((x.age[[0, 1]], x.age[[1, 2]], by=x.age)
+
+        # >>> lalala.sum(([0, 1], [1, 2])) / lalala.sum(x.age)
+        # >>> lalala.ratio(([0, 1], [1, 2]), by=x.age)
+
+        # >>> b = a.sum((age[[0, 1]], age[[1, 2]]))
+        # >>> b
+        # age\sex | M | F
+        #   [0 1] | 2 | 4
+        #   [1 2] | 6 | 8
+        # >>> b / b.sum(x.age)
+        # age\\sex |    M |              F
+        #   [0 1] | 0.25 | 0.333333333333
+        #   [1 2] | 0.75 | 0.666666666667
+        # >>> b / a.sum(x.age)
+        # age\\sex |              M |              F
+        #   [0 1] | 0.333333333333 | 0.444444444444
+        #   [1 2] |            1.0 | 0.888888888889
+        # # >>> a.ratio([0, 1], [2])
+        # # >>> a.ratio(x.age[[0, 1]], x.age[2])
+        # >>> a.ratio((x.age[[0, 1]], x.age[2]))
+        # nat\\sex |            H |   F
+        #      BE |          0.0 | 1.0
+        #      FO | 0.6666666666 | 1.0
         return self / self.sum(*axes)
 
     def percent(self, *axes):
