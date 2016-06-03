@@ -1217,6 +1217,14 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         raw[raw < 5] = 0
         assert_array_equal(la, raw)
 
+        # d) LArray with extra axes
+        la = self.larray.copy()
+        raw = self.array.copy()
+        key = (la < 5).expand([Axis('extra', 2)])
+        self.assertEqual(key.ndim, 5)
+        # TODO: make this work
+        self.assertRaises(ValueError, la.__setitem__, key, 0)
+
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
 
