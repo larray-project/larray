@@ -2072,9 +2072,15 @@ class LArray(object):
                 return np.asarray(key.transpose(self.axes)).nonzero()
             # otherwise we need to transform the key to integer
             elif key.size != self.size:
+                extra_key_axes = key.axes - self.axes
+                if extra_key_axes:
+                    raise ValueError("subset key %s contains more axes than "
+                                     "array %s" % (key.axes, self.axes))
+
+                total_axes = self.axes + key.axes
                 map_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
                 return tuple(map_key[name] if name in map_key else slice(None)
-                             for name in self.axes.names)
+                             for name in total_axes.names)
             else:
                 return np.asarray(key).nonzero()
 
