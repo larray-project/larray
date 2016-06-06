@@ -1091,12 +1091,14 @@ class AxisCollection(object):
                 del self._map[axis.name]
             axis.collection = None
 
-    def union(self, *args):
+    def union(self, *args, **kwargs):
+        validate = kwargs.pop('validate', True)
+        replace_wildcards = kwargs.pop('replace_wildcards', True)
         result = self[:]
         for a in args:
             if isinstance(a, Axis):
                 a = [a]
-            result.extend(a, replace_wildcards=True)
+            result.extend(a, validate=validate, replace_wildcards=replace_wildcards)
         return result
     __or__ = union
     __add__ = union
