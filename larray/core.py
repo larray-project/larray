@@ -990,7 +990,7 @@ def index_by_id(seq, value):
 
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a
-# one-off class)
+# one-off class) and we need more functionality than just a named tuple
 class AxisCollection(object):
     def __init__(self, axes=None):
         """
@@ -3685,16 +3685,18 @@ class LArray(object):
             axes = self.axes[::-1]
         else:
             axes = args
-        axes = [self.axes[a] for a in axes]
-        # FIXME: this is not unnamed axes friendly
-        axes_names = set(axis.name for axis in axes)
-        missing_axes = [axis for axis in self.axes
-                        if axis.name not in axes_names]
-        res_axes = axes + missing_axes
-        axes_indices = [self.axes.index(axis) for axis in res_axes]
+
+        # not using "axes | self.axes" because axes is not an AxisCollection
+        # and creating one would copy & change the id of axes. What we need is
+        # self.axes.prepend(axes)
+        axes_indices = [self.axes.index(axis) for axis in axes]
+        indices_present = set(axes_indices)
+        missing_indices = [i for i in range(len(self.axes))
+                           if i not in indices_present]
+        axes_indices = axes_indices + missing_indices
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
-        return LArray(res_data, res_axes)
+        return LArray(res_data, self.axes[axes_indices])
     T = property(transpose)
 
     def clip(self, a_min, a_max, out=None):

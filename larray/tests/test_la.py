@@ -2030,6 +2030,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(la.transpose().axes.names,
                          ['lipro', 'sex', 'geo', 'age'])
 
+    def test_transpose_anonymous(self):
+        a = ndrange((2, 3, 4))
+
+        reordered = a.transpose(0, 2, 1)
+        self.assertEqual(reordered.shape, (2, 4, 3))
+
+        reordered = a.transpose(1, 2)
+        self.assertEqual(reordered.shape, (3, 4, 2))
+
+        reordered = a.transpose(2, 0)
+        self.assertEqual(reordered.shape, (4, 2, 3))
+
+        reordered = a.transpose()
+        self.assertEqual(reordered.shape, (4, 3, 2))
+
     def test_binary_ops(self):
         raw = self.small_data
         la = self.small
