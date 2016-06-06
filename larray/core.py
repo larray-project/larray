@@ -1514,7 +1514,7 @@ def sum(array, *args, **kwargs):
     if isinstance(array, LArray):
         return array.sum(*args, **kwargs)
     else:
-        return builtins.sum(array)
+        return builtins.sum(array, *args, **kwargs)
 
 
 def prod(array, *args, **kwargs):
@@ -1530,11 +1530,17 @@ def cumprod(array, *args, **kwargs):
 
 
 def min(array, *args, **kwargs):
-    return array.min(*args, **kwargs)
+    if isinstance(array, LArray):
+        return array.min(*args, **kwargs)
+    else:
+        return builtins.min(array, *args, **kwargs)
 
 
 def max(array, *args, **kwargs):
-    return array.max(*args, **kwargs)
+    if isinstance(array, LArray):
+        return array.max(*args, **kwargs)
+    else:
+        return builtins.max(array, *args, **kwargs)
 
 
 def mean(array, *args, **kwargs):
