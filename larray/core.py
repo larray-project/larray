@@ -3655,32 +3655,28 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat1 = ones([xnat, xsex, xtype])
-        >>> mat1
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |   1.0
-         BE |        F |   1.0 |   1.0 |   1.0
-         FO |        H |   1.0 |   1.0 |   1.0
-         FO |        F |   1.0 |   1.0 |   1.0
-        >>> mat1.transpose(xtype, xsex, xnat)
-         type | sex\\nat |  BE |  FO
-        type1 |       H | 1.0 | 1.0
-        type1 |       F | 1.0 | 1.0
-        type2 |       H | 1.0 | 1.0
-        type2 |       F | 1.0 | 1.0
-        type3 |       H | 1.0 | 1.0
-        type3 |       F | 1.0 | 1.0
-        >>> mat1.transpose(xtype)
-         type | nat\\sex |   H |   F
-        type1 |      BE | 1.0 | 1.0
-        type1 |      FO | 1.0 | 1.0
-        type2 |      BE | 1.0 | 1.0
-        type2 |      FO | 1.0 | 1.0
-        type3 |      BE | 1.0 | 1.0
-        type3 |      FO | 1.0 | 1.0
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> alive = Axis('alive', [False, True])
+        >>> a = ndrange([nat, sex, alive])
+        >>> a
+        nat | sex\\alive | False | True
+         BE |         M |     0 |    1
+         BE |         F |     2 |    3
+         FO |         M |     4 |    5
+         FO |         F |     6 |    7
+        >>> a.transpose(alive, sex, nat)
+        alive | sex\\nat | BE | FO
+        False |       M |  0 |  4
+        False |       F |  2 |  6
+         True |       M |  1 |  5
+         True |       F |  3 |  7
+        >>> a.transpose(alive)
+        alive | nat\\sex | M | F
+        False |      BE | 0 | 2
+        False |      FO | 4 | 6
+         True |      BE | 1 | 3
+         True |      FO | 5 | 7
         """
         if len(args) == 1 and isinstance(args[0],
                                          (tuple, list, AxisCollection)):
