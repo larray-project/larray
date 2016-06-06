@@ -2080,10 +2080,10 @@ class LArray(object):
                     raise ValueError("subset key %s contains more axes than "
                                      "array %s" % (key.axes, self.axes))
 
-                total_axes = self.axes + key.axes
+                # FIXME: this not anonymous-axes friendly
                 map_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
                 return tuple(map_key[name] if name in map_key else slice(None)
-                             for name in total_axes.names)
+                             for name in (self.axes | key.axes).names)
             else:
                 # correct shape
                 # FIXME: if the key has both missing and extra axes (at the
