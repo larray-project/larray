@@ -3350,6 +3350,51 @@ class LArray(object):
         # XXX: use the ufuncs.round instead?
         return np.round(self, decimals=n)
 
+    def divnot0(self, other):
+        """divide array by other, but where other is 0 return 0.0
+
+        Parameters
+        ----------
+        other : scalar or LArray
+            what to divide by
+
+        Returns
+        -------
+        LArray
+            array divided by other, 0.0 where other is 0
+
+        Example
+        -------
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = ndrange((nat, sex))
+        >>> a
+        nat\\sex | M | F
+             BE | 0 | 1
+             FO | 2 | 3
+        >>> b = ndrange(sex)
+        >>> b
+        sex | M | F
+            | 0 | 1
+        >>> a / b
+        nat\\sex |   M |   F
+             BE | nan | 1.0
+             FO | inf | 3.0
+        >>> a.divnot0(b)
+        nat\\sex |   M |   F
+             BE | 0.0 | 1.0
+             FO | 0.0 | 3.0
+        """
+        if np.isscalar(other):
+            if other == 0:
+                return zeros_like(self, dtype=float)
+            else:
+                return self / other
+        else:
+            res = self / other
+            res[other == 0] = 0
+            return res
+
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False):
