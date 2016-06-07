@@ -10,7 +10,7 @@ __all__ = [
     'read_sas',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    'full', 'full_like', 'create_sequential', 'ndrange', 'identity',
+    'full', 'full_like', 'create_sequential', 'ndrange', 'identity', 'diag',
     'larray_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std', 'median', 'percentile',
@@ -5079,6 +5079,97 @@ def ndrange(axes, start=0, dtype=int):
     axes = AxisCollection(axes)
     data = np.arange(start, start + axes.size, dtype=dtype)
     return LArray(data.reshape(axes.shape), axes)
+
+
+def kth_diag_indices(shape, k):
+    indices = np.diag_indices(min(shape), ndim=len(shape))
+    if len(shape) == 2 and k != 0:
+        rows, cols = indices
+        if k < 0:
+            return rows[-k:], cols[:k]
+        elif k > 0:
+            return rows[:-k], cols[k:]
+    elif k != 0:
+        raise NotImplementedError("k != 0 and len(axes) != 2")
+    else:
+        return indices
+
+
+def diag(a, k=0, axes=(0, 1), ndim=2):
+    """
+    Extract a diagonal or construct a diagonal array.
+
+    Parameters
+    ----------
+    a : LArray
+        If `a` has 2 dimensions or more, return a copy of its `k`-th diagonal.
+        If `a` has 1 dimension, return an array with `ndim` dimensions on the
+        `k`-th diagonal.
+    k : int, optional
+        Offset of the diagonal from the main diagonal.  Can be positive or
+        negative.  Defaults to main diagonal (0).
+    axes : tuple or list or AxisCollection of axes references, optional
+        Axes along which the diagonals should be taken.  Use None for all axes.
+        Defaults to the first two axes (0, 1).
+    ndim : int, optional
+        Target number of dimensions when constructing a diagonal array from
+        an array without axes names/labels. Defaults to 2.
+
+    Returns
+    -------
+    LArray
+        The extracted diagonal or constructed diagonal array.
+
+    Examples
+    --------
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([nat, sex], start=1)
+    >>> a
+    nat\\sex | M | F
+         BE | 1 | 2
+         FO | 3 | 4
+    >>> d = diag(a)
+    >>> d
+    nat,sex | BE,M | FO,F
+            |    1 |    4
+    >>> diag(d)
+    nat\\sex | M | F
+         BE | 1 | 0
+         FO | 0 | 4
+    """
+    if a.ndim == 1:
+        axis = a.axes[0]
+        axis_name = axis.name
+        if isinstance(axis_name, str) and ',' in axis_name:
+            if k != 0:
+                raise NotImplementedError("k != 0 and axis.name contains a "
+                                          "comma (,). Use array.rename(axis, "
+                                          "None) if you want to ignore axes "
+                                          "names and labels")
+            axes_names = axis_name.split(',')
+            axes_labels = list(zip(*np.char.split(axis.labels, ',')))
+            axes = [Axis(name, labels)
+                    for name, labels in zip(axes_names, axes_labels)]
+        else:
+            if ndim is None:
+                ndim = 2
+            axes = [Axis(None, len(axis) + abs(k)) for _ in range(ndim)]
+        res = zeros(axes, dtype=a.dtype)
+        diag_indices = kth_diag_indices(res.shape, k)
+        res.ipoints[diag_indices] = a
+        return res
+    else:
+        if k != 0 and len(axes) > 2:
+            raise NotImplementedError("k != 0 and len(axes) > 2")
+        if axes is None:
+            axes = a.axes
+        else:
+            axes = a.axes[axes]
+        axes_indices = kth_diag_indices(axes.shape, k)
+        indexer = tuple(axis.i[indices]
+                        for axis, indices in zip(axes, axes_indices))
+        return a.points[indexer]
 
 
 # TODO: I could generalize this to multiple axes

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
-                    read_csv, zeros, zeros_like, ndrange, ones,
+                    read_csv, zeros, zeros_like, ndrange, ones, diag,
                     clip, exp, where, x, view, mean, var, std, isnan,
                     round, local_arrays)
 from larray.core import to_ticks, to_key, srange, df_aslarray
@@ -2406,6 +2406,33 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         small_float = self.small + 0.6
         rounded = round(small_float)
         assert_array_equal(rounded, np.round(self.small_data + 0.6))
+
+    def test_diag(self):
+        a = ndrange((3, 3))
+        d = diag(a)
+        self.assertEqual(d.i[0], a.i[0, 0])
+        self.assertEqual(d.i[1], a.i[1, 1])
+        self.assertEqual(d.i[2], a.i[2, 2])
+
+        d2 = diag(d)
+        self.assertEqual(d2.i[0, 0], a.i[0, 0])
+        self.assertEqual(d2.i[1, 1], a.i[1, 1])
+        self.assertEqual(d2.i[2, 2], a.i[2, 2])
+
+        a = ndrange((3, 3, 3))
+        d = diag(a)
+        self.assertEqual(d.i[0, 0], a.i[0, 0, 0])
+        self.assertEqual(d.i[1, 1], a.i[1, 1, 1])
+        self.assertEqual(d.i[2, 2], a.i[2, 2, 2])
+
+        d = diag(a, axes=(0, 1, 2))
+        d_anon = d.rename(0, None).drop_labels()
+        d2 = diag(d_anon)
+        self.assertEqual(d2.ndim, 2)
+        d3 = diag(d_anon, ndim=3)
+        self.assertEqual(d3.i[0, 0, 0], a.i[0, 0, 0])
+        self.assertEqual(d3.i[1, 1, 1], a.i[1, 1, 1])
+        self.assertEqual(d3.i[2, 2, 2], a.i[2, 2, 2])
 
     def test_plot(self):
         pass
