@@ -1709,6 +1709,28 @@ class LArrayPointsIndexer(object):
         raise NotImplementedError()
 
 
+class LArrayPositionalPointsIndexer(object):
+    def __init__(self, array):
+        self.array = array
+
+    def __getitem__(self, key):
+        data = np.asarray(self.array)
+
+        axes = self.array._bool_key_new_axes(key, wildcard_allowed=False)
+        data = data[key]
+        # drop length 1 dimensions created by scalar keys
+        # data = data.reshape(tuple(len(axis) for axis in axes))
+        if not axes:
+            # scalars do not need to be wrapped in LArray
+            return data
+        else:
+            return LArray(data, axes)
+
+    def __setitem__(self, key, value):
+        data = np.asarray(self.array)
+        data[key] = value
+
+
 class LArray(object):
     """
     LArray class
@@ -2307,6 +2329,18 @@ class LArray(object):
             if isinstance(value, LArray) else value
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
+        """
+
+        Parameters
+        ----------
+        key : tuple
+            position-based key
+        wildcard_allowed : bool
+
+        Returns
+        -------
+        AxisCollection
+        """
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
                          if not isnoneslice(axis_key) and
                             not np.isscalar(axis_key)]
