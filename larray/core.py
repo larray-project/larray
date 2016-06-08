@@ -10,7 +10,8 @@ __all__ = [
     'read_sas',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    'full', 'full_like', 'create_sequential', 'ndrange', 'identity', 'diag',
+    'full', 'full_like', 'create_sequential', 'ndrange',
+    'identity', 'diag', 'eye',
     'larray_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std', 'median', 'percentile',
@@ -5244,6 +5245,55 @@ def identity(axis):
     """
     axes = AxisCollection([axis])
     return LArray(axis.labels, axes)
+
+
+def eye(rows, columns=None, k=0, dtype=None):
+    """Return a 2-D array with ones on the diagonal and zeros elsewhere.
+
+    Parameters
+    ----------
+    rows : int or Axis
+        Rows of the output.
+    columns : int or Axis, optional
+        Columns in the output. If None, defaults to rows.
+    k : int, optional
+        Index of the diagonal: 0 (the default) refers to the main diagonal, a
+        positive value refers to an upper diagonal, and a negative value to a
+        lower diagonal.
+    dtype : data-type, optional
+        Data-type of the returned array. Defaults to float.
+
+    Returns
+    -------
+    LArray of shape (rows, columns)
+        An array where all elements are equal to zero, except for the k-th
+        diagonal, whose values are equal to one.
+
+    Example
+    -------
+    >>> eye(2, dtype=int)
+    {0}*\\{1}* | 0 | 1
+            0 | 1 | 0
+            1 | 0 | 1
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> eye(sex)
+    sex\\sex |   M |   F
+          M | 1.0 | 0.0
+          F | 0.0 | 1.0
+    >>> eye(3, k=1)
+    {0}*\\{1}* |   0 |   1 |   2
+            0 | 0.0 | 1.0 | 0.0
+            1 | 0.0 | 0.0 | 1.0
+            2 | 0.0 | 0.0 | 0.0
+    """
+    if columns is None:
+        axes = [rows, rows]
+    else:
+        axes = [rows, columns]
+    axes = AxisCollection(axes)
+    shape = axes.shape
+    data = np.eye(shape[0], shape[1], k, dtype)
+    return LArray(data, axes)
 
 
 def stack(arrays, axis):
