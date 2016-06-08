@@ -5175,13 +5175,50 @@ def diag(a, k=0, axes=(0, 1), ndim=2):
         return a.points[indexer]
 
 
-# TODO: I could generalize this to multiple axes
-# >>> nat = Axis('nat', ['BE', 'FO'])
-# >>> sex = Axis('sex', ['H', 'F'])
-# >>> identity((nat, sex))
-# nat\\sex |    H |    F
-#      BE | BE,H | BE,F
-#      FO | FO,H | FO,F
+def labels_array(axes):
+    """Returns an array with specified axes and the combination of
+    corresponding labels as value.
+
+    Parameters
+    ----------
+    axes : Axis or collection of Axis
+
+    Returns
+    -------
+    LArray
+
+    Example
+    -------
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> labels_array(sex)
+    sex | M | F
+        | M | F
+    >>> labels_array((nat, sex))
+    nat | sex\\axis | nat | sex
+     BE |        M |  BE |   M
+     BE |        F |  BE |   F
+     FO |        M |  FO |   M
+     FO |        F |  FO |   F
+    """
+    # >>> labels_array((nat, sex))
+    # nat\\sex |    M |    F
+    #      BE | BE,M | BE,F
+    #      FO | FO,M | FO,F
+    axes = AxisCollection(axes)
+    if len(axes) > 1:
+        res_axes = axes + Axis('axis', axes.names)
+        res_data = np.empty(res_axes.shape, dtype=object)
+        res_data.flat[:] = list(product(*axes.labels))
+        # XXX: I wonder if it wouldn't be better to return LGroups or a
+        # similar object which would display as "a,b" but where each label is
+        # stored separately.
+        # flat_data = np.array([p for p in product(*axes.labels)])
+        # res_data = flat_data.reshape(axes.shape)
+    else:
+        res_axes = axes
+        res_data = axes[0].labels
+    return LArray(res_data, res_axes)
 
 
 def identity(axis):
