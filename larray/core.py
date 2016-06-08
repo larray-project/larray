@@ -1008,6 +1008,9 @@ class AxisCollection(object):
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
+    def __iter__(self):
+        return iter(self._list)
+
     def __getattr__(self, key):
         try:
             return self._map[key]
