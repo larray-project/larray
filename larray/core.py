@@ -4988,6 +4988,9 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     sex\\year | 2016 | 2017 | 2018 | 2019
            M |    0 |    1 |    2 |    3
            F |    0 |    1 |    2 |    3
+
+    create_sequential can be used as the inverse of growth_rate:
+
     >>> a = ndrange([sex, year], start=1, dtype=float)
     >>> a
     sex\year | 2016 | 2017 | 2018 | 2019
