@@ -159,3 +159,5 @@ interp = wrapper(np.interp)
 where = wrapper(np.where)
 isnan = wrapper(np.isnan)
 isinf = wrapper(np.isinf)
+
+inverse = wrapper(np.linalg.inv)
