@@ -51,29 +51,21 @@ Matrix class
 
 # API for ND groups (my example is mixing label with positional):
 
-# cross: x.axis1[5:10] * x.axis2.i[3:4]
-# intersection: x.axis1[5:10] & x.axis2.i[3:4]
-#
-# this is very nice, but prevents:
-# * normal element-wise multiplication (which has little use in most cases --
-#   at least for string labels)
-# * set-like operations, which could make a lot of sense. set do not use
-#   +, *, /
-#   cross: x.axis1[5:10] * x.axis2.i[2:5]
-#   intersect: x.axis1[5:10] + x.axis2.i[2:5]
+# union (bands): x.axis1[5:10] | x.axis2.i[3:4]
+# intersection/cross/default: x.axis1[5:10] & x.axis2.i[3:4]
+# points: x.axis1[5:10] ^ x.axis2.i[1:6]
 
-# or we could only allow set operations on groups from axes with the same
-# name (including None)
+# this is very nice and would have orderedset-like semantics
 
-#   union: x.axis1[5:10] | x.axis1.i[2:5]
-#   set intersect: x.axis1[5:10] & x.axis1.i[2:5]
+# it does not seem to conflict with the axis methods (even though that might be
+# confusing):
 
-#   cross: x.axis1[5:10] | x.axis2.i[2:5]
-#   intersect: x.axis1[5:10] & x.axis2.i[2:5]
+# x.axis1 | x.axis2 would have a very different meaning than
+# x.axis1[:] | x.axis2[:]
 
 # Note that cross sections is the default and it is useless to introduce
-# another API **except to give a name**, so the * or | syntaxes are useless.
-# hmmm, maybe not if we name it after the fact
+# another API **except to give a name**, so the & syntax is useless unless
+# we allow naming groups after the fact
 
 # => NDGroup((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
 # => Group((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
@@ -104,6 +96,49 @@ Matrix class
 # a[x.axis1[5, 7, 9]]
 # in practice, this syntax is little used anyway
 
+# also think about G (for group) or L (for label):
+
+# a[G[5:10]]
+# a[G[5, 7, 9]]
+
+# a[G[5:10].named('brussels')]
+# a[G[5, 7, 9].named('brussels')]
+
+# this is ugly
+# a[G[5, 7, 9].axed('age')]
+# a[G[5, 7, 9].x('age')]
+
+# nice for the simple cases, but cannot target anonymous axes G[0] or axes with
+# strange names G['strange axis']. would both try to find labels on axes, not
+# the axes themselves.
+
+# a[G.age[5, 7, 9]]
+# a[G.geo[5, 7, 9].named('brussels')]
+
+# a[x.age[G[5, 7, 9]]]
+# a[x.age[G[5, 7, 9].named('brussels')]]
+
+# a[G.get('strange axis')[5, 7, 9].named('Brussels')]
+
+# a[x.age[5, 7, 9]]
+
+# positional groups *without axis* (G.i, P[], or I[]) does not make much sense,
+# because it will matches all axes, but might be useful as an intermediate
+# construct:
+
+# g = G.i[2, 5, 7]
+# g2 = X.age[g]
+
+# positional groups with axis can be useful as a shorter alternative:
+
+# g = P.age[2, 5, 7]
+# instead of
+# g = X.age.i[2, 5, 7]
+
+# we might want to also consider multi-dimensional groups:
+# using K (for key) or I (for indexer) or G (without axis obviously):
+
+# g = G[2:7, 'M', ['P01', 'P05']]
 
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
@@ -138,8 +173,6 @@ Matrix class
 #   ---> test pandas (one dimension horizontally)
 
 # * add labels in LGroups.__str__
-
-# * xlsx export workbook without overwriting some sheets (charts)
 
 # ? allow naming "one-shot" groups? e.g:
 #   regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
