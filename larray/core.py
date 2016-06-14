@@ -1728,10 +1728,7 @@ class LArrayPointsIndexer(object):
         data = np.asarray(self.array)
         translated_key = self.array.translated_key(key, bool_stuff=True)
 
-        # FIXME: ideally we should use wildcard_allowed=False, but this is
-        #        currently too slow
-        axes = self.array._bool_key_new_axes(translated_key,
-                                             wildcard_allowed=False)
+        axes = self.array._bool_key_new_axes(translated_key)
         data = data[translated_key]
         # drop length 1 dimensions created by scalar keys
         # data = data.reshape(tuple(len(axis) for axis in axes))
