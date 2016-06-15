@@ -5256,25 +5256,11 @@ def labels_array(axes):
 
 
 def identity(axis):
-    """Returns a LArray with the value equal to Axis
-
-    Parameters
-    ----------
-    axis : Axis object
-
-    Returns
-    -------
-    LArray
-
-    Example
-    -------
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> identity(xsex)
-    sex | H | F
-        | H | F
-    """
-    axes = AxisCollection([axis])
-    return LArray(axis.labels, axes)
+    raise NotImplementedError("identity(axis) is deprecated. In most cases, "
+                              "you can now use the axis directly. For example, "
+                              "'identity(age) < 10' can be replaced by "
+                              "'age < 10'. In other cases, you should use "
+                              "labels_array(axis) instead.")
 
 
 def eye(rows, columns=None, k=0, dtype=None):
