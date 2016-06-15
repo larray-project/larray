@@ -1164,8 +1164,8 @@ class ArrayEditorWidget(QWidget):
             filters_layout = self.filters_layout
             clear_layout(filters_layout)
             filters_layout.addWidget(QLabel(_("Filters")))
-            for axis in data.axes:
-                filters_layout.addWidget(QLabel(axis.display_name))
+            for axis, display_name in zip(data.axes, data.axes.display_names):
+                filters_layout.addWidget(QLabel(display_name))
                 filters_layout.addWidget(self.create_filter_combo(axis))
             filters_layout.addStretch()
             data, xlabels, ylabels = larray_to_array_and_labels(data)
@@ -1567,8 +1567,9 @@ class ArrayEditor(QDialog):
         if np.isscalar(data):
             readonly = True
         if isinstance(data, la.LArray):
-            axes_info = ' x '.join("%s (%d)" % (axis.display_name, len(axis))
-                                   for axis in data.axes)
+            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
+                                   for display_name, axis
+                                   in zip(data.axes.display_names, data.axes))
             title = (title + ': ' + axes_info) if title else axes_info
 
         self.data = data

@@ -815,7 +815,8 @@ class Axis(object):
         return (name + '*') if self.iswildcard else name
 
     def __str__(self):
-        return self.display_name
+        name = self.name if self.name is not None else '{?}'
+        return (name + '*') if self.iswildcard else name
 
     def __repr__(self):
         labels = len(self) if self.iswildcard else list(self.labels)
