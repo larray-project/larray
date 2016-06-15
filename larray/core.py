@@ -1426,9 +1426,8 @@ class AxisCollection(object):
          nat [2]: 'BE' 'FO'
          sex [2]: 'H' 'F'
         """
-        lines = [" %s [%d]: %s" % (axis.display_name, len(axis),
-                                   axis.labels_summary())
-                 for axis in self]
+        lines = [" %s [%d]: %s" % (name, len(axis), axis.labels_summary())
+                 for name, axis in zip(self.display_names, self._list)]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
 
