@@ -1061,7 +1061,7 @@ class AxisCollection(object):
                     key = self.index(key)
                 # transform ValueError to KeyError
                 except ValueError:
-                    raise KeyError("axis %s not found in %s" % (key, self))
+                    raise KeyError("axis '%s' not found in %s" % (key, self))
             else:
                 # we should NOT check that the object is the same, so that we can
                 # use AxisReference objects to target real axes
@@ -1074,7 +1074,7 @@ class AxisCollection(object):
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         elif key is None:
-            raise KeyError("axis %s not found in %s" % (key, self))
+            raise KeyError("axis '%s' not found in %s" % (key, self))
         else:
             assert isinstance(key, basestring), type(key)
             if key in self._map:
