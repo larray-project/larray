@@ -658,10 +658,12 @@ class Axis(object):
 
     def subaxis(self, key, name=None):
         """
-        key is index-based (slice and fancy indexing are supported)
         returns an Axis for a sub-array
+        key is index-based (slice and fancy indexing are supported)
+
+        if key is a None slice and name is None, returns the original Axis
         """
-        if (isinstance(key, slice) and
+        if (name is None and isinstance(key, slice) and
                 key.start is None and key.stop is None and key.step is None):
             return self
         # we must NOT modify the axis name, even though this creates a new axis
