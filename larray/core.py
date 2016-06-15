@@ -3157,7 +3157,7 @@ class LArray(object):
         return self.axes.info
 
     def ratio(self, *axes):
-        """Returns a LArray with values LArray / LArray.sum(axes).
+        """Returns a LArray with values array / array.sum(axes).
 
         Parameters
         ----------
@@ -3166,7 +3166,7 @@ class LArray(object):
         Returns
         -------
         LArray
-            LArray = LArray / LArray.sum(axes).
+            array / array.sum(axes)
 
         Example
         -------
