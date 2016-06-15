@@ -893,7 +893,7 @@ class Axis(object):
         return res
 
     def _rename(self, name):
-        return Axis(name, self.labels)
+        raise TypeError("Axis._rename is deprecated, use Axis.rename instead")
 
 
 # We need a separate class for LGroup and cannot simply create a
