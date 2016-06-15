@@ -1136,8 +1136,8 @@ class AxisCollection(object):
         replace_wildcards = kwargs.pop('replace_wildcards', True)
         result = self[:]
         for a in args:
-            if isinstance(a, Axis):
-                a = [a]
+            if not isinstance(a, AxisCollection):
+                a = AxisCollection(a)
             result.extend(a, validate=validate, replace_wildcards=replace_wildcards)
         return result
     __or__ = union
