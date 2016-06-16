@@ -2134,7 +2134,7 @@ class LArray(object):
                 and not bool_stuff:
             # if only the axes order is wrong, transpose
             # FIXME: if the key has both missing and extra axes, it could be
-            # the correct size (or event shape, see below)
+            # the correct size (or even shape, see below)
             if key.size == self.size and key.shape != self.shape:
                 return np.asarray(key.transpose(self.axes)).nonzero()
             # otherwise we need to transform the key to integer
