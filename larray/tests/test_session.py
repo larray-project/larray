@@ -20,8 +20,8 @@ class TestSession(TestCase):
 
     def test_getitem(self):
         s = self.session
-        self.assertEqual(s['a'], self.a)
-        self.assertEqual(s['b'], self.b)
+        self.assertIs(s['a'], self.a)
+        self.assertIs(s['b'], self.b)
         self.assertEqual(s['c'], 'c')
         self.assertEqual(s['d'], {})
 
@@ -46,8 +46,8 @@ class TestSession(TestCase):
 
     def test_getattr(self):
         s = self.session
-        self.assertEqual(s.a, self.a)
-        self.assertEqual(s.b, self.b)
+        self.assertIs(s.a, self.a)
+        self.assertIs(s.b, self.b)
         self.assertEqual(s.c, 'c')
         self.assertEqual(s.d, {})
 
@@ -60,7 +60,7 @@ class TestSession(TestCase):
         s = self.session
         h = Axis('h', [])
         s.add(h, i='i')
-        self.assertEqual(s.h, h)
+        self.assertTrue(h.equals(s.h))
         self.assertEqual(s.i, 'i')
 
     def test_iter(self):

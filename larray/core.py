@@ -541,7 +541,6 @@ class Axis(object):
         self._length = None
         self._iswildcard = False
         self.labels = labels
-        self.collection = None
 
     @property
     def _mapping(self):
@@ -686,13 +685,10 @@ class Axis(object):
         else:
             return np.array_equal(self.labels, other.labels)
 
-    def __eq__(self, other):
+    def equals(self, other):
         return (isinstance(other, Axis) and self.name == other.name and
                 self.iswildcard == other.iswildcard and
                 np.array_equal(self.labels, other.labels))
-
-    def __ne__(self, other):
-        return not self == other
 
     def __len__(self):
         return self._length
@@ -797,24 +793,13 @@ class Axis(object):
                 # print("diff dtype", )
                 raise KeyError(key)
 
+    # FIXME: remove id
     @property
     def id(self):
         if self.name is not None:
             return self.name
-        elif self.collection is not None:
-            return self.collection.index(self)
         else:
-            raise ValueError('Axis has no name nor collection, so no id')
-
-    @property
-    def display_name(self):
-        if self.name is not None:
-            name = self.name
-        elif self.collection is not None:
-            name = '{%d}' % self.collection.index(self)
-        else:
-            name = '-'
-        return (name + '*') if self.iswildcard else name
+            raise ValueError('Axis has no name, so no id')
 
     def __str__(self):
         name = self.name if self.name is not None else '{?}'
@@ -832,30 +817,54 @@ class Axis(object):
                 return str(v)
         return seq_summary(self.labels, func=repr_on_strings)
 
-    # XXX: we might want to use | for union (like set)
-    def __add__(self, other):
-        if isinstance(other, Axis):
-            if self.name != other.name:
-                raise ValueError('cannot add Axes with different names')
-            return Axis(self.name, union(self.labels, other.labels))
-        else:
-            try:
-                return Axis(self.name, self.labels + other)
-            except Exception:
-                raise ValueError
+    # method factory
+    def _binop(opname):
+        fullname = '__%s__' % opname
 
-    # XXX: sub between two axes could mean set - set or elementwise -
-    def __sub__(self, other):
-        if isinstance(other, Axis):
-            if self.name != other.name:
-                raise ValueError('cannot subtract Axes with different names')
-            return Axis(self.name,
-                        [l for l in self.labels if l not in other.labels])
-        else:
-            try:
-                return Axis(self.name, self.labels - other)
-            except Exception:
-                raise ValueError
+        def opmethod(self, other):
+            self_array = labels_array(self)
+            if isinstance(other, Axis):
+                other = labels_array(other)
+            return getattr(self_array, fullname)(other)
+        opmethod.__name__ = fullname
+        return opmethod
+
+    __lt__ = _binop('lt')
+    __le__ = _binop('le')
+    __eq__ = _binop('eq')
+    __ne__ = _binop('ne')
+    __gt__ = _binop('gt')
+    __ge__ = _binop('ge')
+    __add__ = _binop('add')
+    __radd__ = _binop('radd')
+    __sub__ = _binop('sub')
+    __rsub__ = _binop('rsub')
+    __mul__ = _binop('mul')
+    __rmul__ = _binop('rmul')
+    if sys.version < '3':
+        __div__ = _binop('div')
+        __rdiv__ = _binop('rdiv')
+    __truediv__ = _binop('truediv')
+    __rtruediv__ = _binop('rtruediv')
+    __floordiv__ = _binop('floordiv')
+    __rfloordiv__ = _binop('rfloordiv')
+    __mod__ = _binop('mod')
+    __rmod__ = _binop('rmod')
+    __divmod__ = _binop('divmod')
+    __rdivmod__ = _binop('rdivmod')
+    __pow__ = _binop('pow')
+    __rpow__ = _binop('rpow')
+    __lshift__ = _binop('lshift')
+    __rlshift__ = _binop('rlshift')
+    __rshift__ = _binop('rshift')
+    __rrshift__ = _binop('rrshift')
+    __and__ = _binop('and')
+    __rand__ = _binop('rand')
+    __xor__ = _binop('xor')
+    __rxor__ = _binop('rxor')
+    __or__ = _binop('or')
+    __ror__ = _binop('ror')
+    __matmul__ = _binop('matmul')
 
     def copy(self):
         new_axis = Axis(self.name, [])
@@ -867,7 +876,6 @@ class Axis(object):
         new_axis._iswildcard = self._iswildcard
         new_axis.__sorted_keys = self.__sorted_keys
         new_axis.__sorted_values = self.__sorted_values
-        # collection is intentionally not copied
         return new_axis
 
     def rename(self, name):
@@ -892,6 +900,8 @@ class Axis(object):
         Axis('gender', ['M', 'F'])
         """
         res = self.copy()
+        if isinstance(name, Axis):
+            name = name.name
         res.name = name
         return res
 
@@ -932,15 +942,11 @@ class Group(object):
 
     def __repr__(self):
         name = ", name=%r" % self.name if self.name is not None else ''
-        axis = ", axis=%r" % self.axis_id if self.axis is not None else ''
+        axis = ", axis=%r" % self.axis if self.axis is not None else ''
         return "%s(%r%s%s)" % (self.__class__.__name__, self.key, name, axis)
 
     def __len__(self):
         return len(self.key)
-
-    @property
-    def axis_id(self):
-        return self.axis.id if isinstance(self.axis, Axis) else self.axis
 
     def __iter__(self):
         if isinstance(self.axis, Axis):
@@ -1037,11 +1043,17 @@ class AxisCollection(object):
             axes = []
         if isinstance(axes, (int, long, str, Axis)):
             axes = [axes]
-        axes = [axis.copy() if isinstance(axis, Axis) else Axis(None, axis)
+        axes = [axis if isinstance(axis, Axis) else Axis(None, axis)
                 for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
-        for a in axes:
-            a.collection = self
+        dupe_axes = list(duplicates(axes))
+        if dupe_axes:
+            axis = dupe_axes[0]
+            raise ValueError("Cannot have multiple occurences of the same axis "
+                             "object in a collection ('%s' -- %s with id %d). "
+                             "Several axes with the same name are allowed "
+                             "though (but not recommended)."
+                             % (axis.name, axis.labels_summary(), id(axis)))
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
@@ -1069,8 +1081,12 @@ class AxisCollection(object):
 
         if isinstance(key, int):
             return self._list[key]
-        elif isinstance(key, (tuple, list, AxisCollection)):
+        elif isinstance(key, (tuple, list)):
+            # XXX: also use get_by_pos if tuple/list of Axis?
             return AxisCollection([self[k] for k in key])
+        elif isinstance(key, AxisCollection):
+            return AxisCollection([self.get_by_pos(k, i)
+                                   for i, k in enumerate(key)])
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         elif key is None:
@@ -1081,6 +1097,38 @@ class AxisCollection(object):
                 return self._map[key]
             else:
                 raise KeyError("axis '%s' not found in %s" % (key, self))
+
+    def get_by_pos(self, key, i):
+        """
+        returns axis corresponding to key, or to i if key has no name and
+        key object not found
+
+        Parameters
+        ----------
+        key
+        i
+
+        Returns
+        -------
+
+        """
+        if isinstance(key, Axis) and key.name is None:
+            try:
+                # try by object
+                return self[key]
+            except KeyError:
+                if i in self:
+                    res = self[i]
+                    if res.iscompatible(key):
+                        return res
+                    else:
+                        raise ValueError("axis %s is not compatible with %s"
+                                         % (res, key))
+                # XXX: KeyError instead?
+                raise ValueError("axis %s not found in %s"
+                                 % (key, self))
+        else:
+            return self[key]
 
     def __setitem__(self, key, value):
         if isinstance(key, slice):
@@ -1098,17 +1146,12 @@ class AxisCollection(object):
             stop_idx = slice_bound(key.stop)
             old = self._list[start_idx:stop_idx:key.step]
             for axis in old:
-                axis.collection = None
                 if axis.name is not None:
                     del self._map[axis.name]
-            # XXX: in all "append"-like operations, we might want to only make a
-            # copy if axis.collection is not None
-            new = [axis.copy() for axis in value]
-            for axis in new:
-                axis.collection = self
+            for axis in value:
                 if axis.name is not None:
                     self._map[axis.name] = axis
-            self._list[start_idx:stop_idx:key.step] = new
+            self._list[start_idx:stop_idx:key.step] = value
         elif isinstance(key, (tuple, list, AxisCollection)):
             assert isinstance(value, (tuple, list, AxisCollection))
             if len(key) != len(value):
@@ -1129,7 +1172,6 @@ class AxisCollection(object):
             axis = self._list.pop(idx)
             if axis.name is not None:
                 del self._map[axis.name]
-            axis.collection = None
 
     def union(self, *args, **kwargs):
         validate = kwargs.pop('validate', True)
@@ -1143,6 +1185,22 @@ class AxisCollection(object):
     __or__ = union
     __add__ = union
 
+    def __and__(self, other):
+        """
+        returns the intersection of this collection and other
+        """
+        if not isinstance(other, AxisCollection):
+            other = AxisCollection(other)
+
+        # XXX: add iscompatible when matching by position?
+        # TODO: move this to a class method (possibly private) so that
+        # we make sure we use same heuristic than in .extend
+        def contains(col, i, axis):
+            return axis in col or (axis.name is None and i in col)
+
+        return AxisCollection([axis for i, axis in enumerate(self)
+                               if contains(other, i, axis)])
+
     def __eq__(self, other):
         """
         other collection compares equal if all axes compare equal and in the
@@ -1150,7 +1208,8 @@ class AxisCollection(object):
         """
         if not isinstance(other, list):
             other = list(other)
-        return self._list == other
+        return len(self._list) == len(other) and \
+               all(a.equals(b) for a, b in zip(self._list, other))
 
     # for python2, we need to define it explicitly
     def __ne__(self, other):
@@ -1161,9 +1220,14 @@ class AxisCollection(object):
             return -len(self) <= key < len(self)
         elif isinstance(key, Axis):
             if key.name is None:
-                # XXX: does this compare each axis by value (by labels)?
-                return key in self._list
-            key = key.name
+                # XXX: use only this in all cases?
+                try:
+                    self.index(key)
+                    return True
+                except ValueError:
+                    return False
+            else:
+                key = key.name
         return key in self._map
 
     def isaxis(self, value):
@@ -1203,29 +1267,47 @@ class AxisCollection(object):
         axes_repr = (repr(axis) for axis in self._list)
         return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
 
-    def __and__(self, other):
-        """
-        returns the intersection of this collection and other
-        """
-        if isinstance(other, basestring):
-            other = set(other.split(','))
-        elif isinstance(other, Axis):
-            other = set(other.name)
-        return AxisCollection([axis for axis in self if axis.name in other])
-
-    def get(self, key, default=None):
+    def get(self, key, default=None, name=None):
+        # XXX: use if key in self?
         try:
             return self[key]
         except KeyError:
-            return default
+            if name is None:
+                return default
+            else:
+                return Axis(name, 1)
+
+    def get_all(self, key):
+        """
+        returns all axes from key if present and length 1 wildcard axes
+        otherwise
+
+        Parameters
+        ----------
+        key : AxisCollection
+
+        Returns
+        -------
+        AxisCollection
+        """
+        assert isinstance(key, AxisCollection)
+        def get_pos_default(k, i):
+            try:
+                return self.get_by_pos(k, i)
+            except (ValueError, KeyError):
+                # XXX: is having i as name really helps?
+                return Axis(k.name if k.name is not None else i, 1)
+
+        return AxisCollection([get_pos_default(k, i)
+                               for i, k in enumerate(key)])
 
     def keys(self):
+        # XXX: include id/num for anonymous axes? I think I should
         return [a.name for a in self._list]
 
     def pop(self, axis=-1):
         axis = self[axis]
         del self[axis]
-        assert axis.collection is None
         return axis
 
     def append(self, axis):
@@ -1236,13 +1318,16 @@ class AxisCollection(object):
 
     def check_compatible(self, axes):
         for i, axis in enumerate(axes):
+            # XXX: use self.get_by_pos?
+            # if axis in self:
+            #     local_axis = self[axis]
+            # else:
+            #     local_axis = self[i] if i < len(self) else None
+
             if axis.name is not None:
                 local_axis = self._map.get(axis.name)
             else:
-                if i < len(self):
-                    local_axis = self[i]
-                else:
-                    local_axis = None
+                local_axis = self[i] if i < len(self) else None
             if local_axis is not None:
                 if not local_axis.iscompatible(axis):
                     raise ValueError("incompatible axes:\n%r\nvs\n%r"
@@ -1257,14 +1342,32 @@ class AxisCollection(object):
             raise TypeError("AxisCollection can only be extended by a "
                             "sequence of Axis, not %s" % type(axes).__name__)
         # check that common axes are the same
-        if validate:
-            self.check_compatible(axes)
-        for axis in axes:
-            if axis not in self:
+        # if validate:
+        #     self.check_compatible(axes)
+
+        # TODO: factorize with get_by_pos
+        def get_axis(col, i, axis):
+            if axis in col:
+                return col[axis]
+            elif axis.name is None and i in col:
+                return col[i]
+            else:
+                return None
+
+        for i, axis in enumerate(axes):
+            old_axis = get_axis(self, i, axis)
+            if old_axis is None:
                 # append axis
                 self[len(self):len(self)] = [axis]
-            elif replace_wildcards and self[axis].iswildcard:
-                self[axis] = axis
+            # elif replace_wildcards and old_axis.iswildcard:
+            #     self[old_axis] = axis
+            else:
+                # check that common axes are the same
+                if validate and not old_axis.iscompatible(axis):
+                    raise ValueError("incompatible axes:\n%r\nvs\n%r"
+                                     % (axis, old_axis))
+                if replace_wildcards and old_axis.iswildcard:
+                    self[old_axis] = axis
 
     def index(self, axis):
         """
@@ -1272,9 +1375,8 @@ class AxisCollection(object):
 
         axis can be a name or an Axis object (or an index)
         if the Axis object itself exists in the list, index() will return it
-        if the Axis object is from another LArray, index() will return the
-        index of the local axis with the same name, whether it is compatible
-        (has the same ticks) or not.
+        otherwise, it will return the index of the local axis with the same
+        name than the key (whether it is compatible or not).
 
         Raises ValueError if the axis is not present.
         """
@@ -1283,16 +1385,18 @@ class AxisCollection(object):
                 return axis
             else:
                 raise ValueError("axis %d is not in collection" % axis)
-        elif isinstance(axis, Axis) and axis.name is None:
+        elif isinstance(axis, Axis):
             try:
                 # first look by id. This avoids testing labels of each axis
                 # and makes sure the result is correct even if there are
                 # several axes with no name and the same labels.
                 return index_by_id(self._list, axis)
             except ValueError:
-                # fallback on comparing by values (ie testing labels)
-                return self._list.index(axis)
-        name = axis.name if isinstance(axis, Axis) else axis
+                name = axis.name
+        else:
+            name = axis
+        if name is None:
+            raise ValueError("%r is not in collection" % axis)
         return self.names.index(name)
 
     # XXX: we might want to return a new AxisCollection (same question for
@@ -1397,7 +1501,56 @@ class AxisCollection(object):
         >>> col.display_names
         ['a', 'b*', '{2}', '{3}*']
         """
-        return [axis.display_name for axis in self._list]
+        def display_name(i, axis):
+            name = axis.name if axis.name is not None else '{%d}' % i
+            return (name + '*') if axis.iswildcard else name
+
+        return [display_name(i, axis) for i, axis in enumerate(self._list)]
+
+    @property
+    def ids(self):
+        """Returns the list of ids of the axes
+
+        Returns
+        -------
+        list
+            List of ids of the axes
+
+        Example
+        -------
+        >>> a = Axis('a', 2)
+        >>> b = Axis(None, 2)
+        >>> c = Axis('c', 2)
+        >>> col = AxisCollection([a, b, c])
+        >>> col.ids
+        ['a', 1, 'c']
+        """
+        return [axis.name if axis.name is not None else i
+                for i, axis in enumerate(self._list)]
+
+    def axis_id(self, axis):
+        """Returns the id of an axis
+
+        Returns
+        -------
+        str or int
+            id of axis, which is its name if defined and its position otherwise
+
+        Example
+        -------
+        >>> a = Axis('a', 2)
+        >>> b = Axis(None, 2)
+        >>> c = Axis('c', 2)
+        >>> col = AxisCollection([a, b, c])
+        >>> col.axis_id(a)
+        'a'
+        >>> col.axis_id(b)
+        1
+        >>> col.axis_id(c)
+        'c'
+        """
+        axis = self[axis]
+        return axis.name if axis.name is not None else self.index(axis)
 
     @property
     def shape(self):
@@ -1767,6 +1920,10 @@ class LArrayPositionalPointsIndexer(object):
         data[key] = value
 
 
+def get_axis(obj, i):
+    return obj.axes[i] if isinstance(obj, LArray) else Axis(None, obj.shape[i])
+
+
 class LArray(object):
     """
     LArray class
@@ -2057,6 +2214,7 @@ class LArray(object):
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
+            # FIXME: .id
             valid_axes = ', '.join(str(a.id) for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
@@ -2106,6 +2264,7 @@ class LArray(object):
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
+            # FIXME: .id
             valid_axes = ', '.join(str(a.id) for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
@@ -2143,10 +2302,21 @@ class LArray(object):
                     raise ValueError("subset key %s contains more axes than "
                                      "array %s" % (key.axes, self.axes))
 
-                # FIXME: this not anonymous-axes friendly
-                map_key = dict(zip(key.axes.names, np.asarray(key).nonzero()))
-                return tuple(map_key[name] if name in map_key else slice(None)
-                             for name in (self.axes | key.axes).names)
+                # do I want to allow key_axis.name to match against
+                # axis.num? does not seem like a good idea.
+                # but this should work
+                # >>> a = ndrange((3, 4))
+                # >>> x1, x2 = a.axes
+                # >>> a[x2 > 2]
+
+                # the current solution with hash = (name, labels) works
+                # but is slow for large axes and broken if axis labels are
+                # modified in-place, which I am unsure I want to support
+                # anyway
+
+                map_key = dict(zip(key.axes, np.asarray(key).nonzero()))
+                return tuple(map_key.get(axis, slice(None))
+                             for axis in self.axes)
             else:
                 # correct shape
                 # FIXME: if the key has both missing and extra axes (at the
@@ -2186,21 +2356,30 @@ class LArray(object):
 
             # handle keys containing LGroups (at potentially wrong places)
 
-            # XXX: support LGroup without axis?
-            # extract axis name from LGroup keys
+            # XXX:
+            # Q: support LGroup without axis?
+            # A: we should support them, but that should be done before.
+            #    at this point they should all have an axis (not necessarily
+            #    valid though)
 
+            # extract axis from Group keys
             dupe_axes = list(duplicates(axis_key.axis for axis_key in key))
             if dupe_axes:
                 dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
                 raise ValueError("key with duplicate axis: %s" % dupe_axes)
-            key = dict((axis_key.axis_id, axis_key) for axis_key in key)
+
+            key = dict((axis_key.axis, axis_key) for axis_key in key)
+
+        # keys could be strings or axis references and we want real axes
+        key = {self.axes[k]: v for k, v in key.items()}
 
         # dict -> tuple (complete and order key)
-        assert isinstance(key, dict)
-        for axis_id in key:
-            if axis_id not in self.axes:
-                raise KeyError("{} is not a valid axis".format(repr(axis_id)))
-        key = tuple(key[axis.id] if axis.id in key else slice(None)
+        assert isinstance(key, dict) and all(isinstance(k, Axis) for k in key)
+        # XXX: probably useless (due to new code above)
+        for axis in key:
+            if axis not in self.axes:
+                raise KeyError("{} is not a valid axis".format(repr(axis)))
+        key = tuple(key[axis] if axis in key else slice(None)
                     for axis in self.axes)
 
         # label -> raw positional
@@ -2299,8 +2478,8 @@ class LArray(object):
             axes = flatten(to2d(axes))
             return LArray(data, axes)
 
-        # TODO: if the original key was a label key,
-        # subaxis(translated_key) == orig_key, so we should use
+        # TODO: if the original key was a list of labels,
+        # subaxis(translated_key).labels == orig_key, so we should use
         # orig_axis_key.copy()
         axes = [axis.subaxis(axis_key)
                 for axis, axis_key in zip(self.axes, translated_key)
@@ -2393,7 +2572,13 @@ class LArray(object):
             combined_axis_pos = 0
         else:
             combined_axis_pos = axes_indices[0]
-        combined_name = ','.join(str(axis.id) for axis in combined_axes)
+        # XXX: I am not sure we should keep axis.id (when axis had no name),
+        #      especially if there was only one combined axis because that
+        #      transforms an anonymous axis into a "normal" name. On the other
+        #      hand, not keeping it loose information. The question is whether
+        #      that information is worth keeping :)
+        combined_name = ','.join(str(self.axes.axis_id(axis))
+                                 for axis in combined_axes)
         new_axes = other_axes
         if combined_axis_pos is not None:
             if wildcard_allowed:
@@ -2415,6 +2600,8 @@ class LArray(object):
                                if not isnoneslice(axis_key) and
                                   not np.isscalar(axis_key)]
                 if len(combined_axes) == 1:
+                    # Q: if axis is a wildcard axis, should the result be a
+                    #    wildcard axis (and axes_labels discarded?)
                     combined_labels = axes_labels[0]
                 else:
                     combined_labels = list(zip(*axes_labels))
@@ -2479,7 +2666,7 @@ class LArray(object):
             other_axes = other
             if not isinstance(other, AxisCollection):
                 other_axes = AxisCollection(other_axes)
-        other_names = [a.name for a in other_axes]
+        # other_names = [a.name for a in other_axes]
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
         # but that use case should use drop_labels
@@ -2492,7 +2679,8 @@ class LArray(object):
         array = self.reshape(self.axes + otheronly_axes)
         # 2) reorder axes to target order (move source-only axes to the front)
         sourceonly_axes = self.axes - other_axes
-        axes_other_order = [array.axes[name] for name in other_names]
+        # axes_other_order = [array.axes[name] for name in other_names]
+        axes_other_order = array.axes[other_axes]
         return array.transpose(sourceonly_axes + axes_other_order)
 
     def drop_labels(self, axes=None):
@@ -2809,7 +2997,7 @@ class LArray(object):
                 #  translation twice)
                 groups = tuple(self._guess_axis(k) for k in key)
                 axis = groups[0].axis
-                if not all(g.axis == axis for g in groups[1:]):
+                if not all(g.axis.equals(axis) for g in groups[1:]):
                     raise ValueError("group with different axes: %s"
                                      % str(key))
                 return groups
@@ -3405,6 +3593,36 @@ class LArray(object):
     __or__ = _binop('or')
     __ror__ = _binop('ror')
 
+    def __matmul__(self, other):
+        # TODO: implement for matrices of any dimensions
+        if not isinstance(other, (LArray, np.ndarray)):
+            raise NotImplementedError("matrix multiplication not "
+                                      "implemented for %s" % type(other))
+
+        if self.ndim != 2 or other.ndim != 2:
+            raise NotImplementedError("matrix multiplication not "
+                                      "implemented for ndim != 2 (%d @ %d)"
+                                      % (self.ndim, other.ndim))
+        # 4,2 @ 2,3 = 4,3
+        res_axes = [get_axis(self, 0), get_axis(other, 1)]
+        # TODO: implement AxisCollection.__init__(copy_duplicates=True)
+        if res_axes[1] is res_axes[0]:
+            res_axes[1] = res_axes[1].copy()
+        # XXX: check that other axes are compatible?
+        # other_axes = [get_axis(self, 1), get_axis(other, 0)]
+        # if not other_axes[0].iscompatible(other_axes[1]):
+        #     raise ValueError("%s is not compatible with %s"
+        #                      % (other_axes[0], other_axes[1]))
+        return LArray(self.data.__matmul__(other.data), res_axes)
+
+    def __rmatmul__(self, other):
+        if isinstance(other, np.ndarray):
+            other = LArray(other)
+        if not isinstance(other, LArray):
+            raise NotImplementedError("matrix multiplication not "
+                                      "implemented for %s" % type(other))
+        return other.__matmul__(self)
+
     # element-wise method factory
     def _unaryop(opname):
         fullname = '__%s__' % opname
@@ -3531,6 +3749,7 @@ class LArray(object):
         if out is None and self.axes == target_axes:
             return self
 
+        # TODO: this is not necessary if out is not None ([:] already broadcast)
         broadcasted = self.broadcast_with(target_axes)
         # this can only happen if only the order of axes differed
         if out is None and broadcasted.axes == target_axes:
@@ -3761,9 +3980,6 @@ class LArray(object):
         else:
             axes = args
 
-        # not using "axes | self.axes" because axes is not an AxisCollection
-        # and creating one would copy & change the id of axes. What we need is
-        # self.axes.prepend(axes)
         axes_indices = [self.axes.index(axis) for axis in axes]
         indices_present = set(axes_indices)
         missing_indices = [i for i in range(len(self.axes))
@@ -3772,6 +3988,24 @@ class LArray(object):
         src_data = np.asarray(self)
         res_data = src_data.transpose(axes_indices)
         return LArray(res_data, self.axes[axes_indices])
+
+        # if len(args) == 1 and isinstance(args[0],
+        #                                  (tuple, list, AxisCollection)):
+        #     axes = args[0]
+        # else:
+        #     axes = args
+        # # this SHOULD work but does not currently for positional axes
+        # # on anonymous axes. e.g. axes = (1, 2) because that ends up
+        # # trying to do:
+        # # self.axes[(1, 2)] | self.axes
+        # # self.axes[(1, 2)] | self.axes[0]
+        # # since self.axes[0] does not exist in self.axes[1, 2], BUT has
+        # # a position < len(self.axes[1, 2]), it tries to match
+        # # against self.axes[1, 2][0], (ie self.axes[1]) which breaks
+        # res_axes = (self.axes[axes] | self.axes) if axes else self.axes[::-1]
+        # axes_indices = [self.axes.index(axis) for axis in res_axes]
+        # res_data = np.asarray(self).transpose(axes_indices)
+        # return LArray(res_data, res_axes)
     T = property(transpose)
 
     def clip(self, a_min, a_max, out=None):
@@ -5133,7 +5367,7 @@ def kth_diag_indices(shape, k):
         return indices
 
 
-def diag(a, k=0, axes=(0, 1), ndim=2):
+def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     """
     Extract a diagonal or construct a diagonal array.
 
@@ -5152,6 +5386,8 @@ def diag(a, k=0, axes=(0, 1), ndim=2):
     ndim : int, optional
         Target number of dimensions when constructing a diagonal array from
         an array without axes names/labels. Defaults to 2.
+    split : bool, optional
+        Whether or not to try to split the axis name and labels
 
     Returns
     -------
@@ -5175,24 +5411,27 @@ def diag(a, k=0, axes=(0, 1), ndim=2):
     nat\\sex | M | F
          BE | 1 | 0
          FO | 0 | 4
+    >>> a = ndrange(sex, start=1)
+    >>> a
+    sex | M | F
+        | 1 | 2
+    >>> diag(a, split=False)
+    sex\sex | M | F
+          M | 1 | 0
+          F | 0 | 2
     """
     if a.ndim == 1:
         axis = a.axes[0]
         axis_name = axis.name
-        if isinstance(axis_name, str) and ',' in axis_name:
-            if k != 0:
-                raise NotImplementedError("k != 0 and axis.name contains a "
-                                          "comma (,). Use array.rename(axis, "
-                                          "None) if you want to ignore axes "
-                                          "names and labels")
+        if k != 0:
+            raise NotImplementedError("k != 0 not supported for 1D arrays")
+        if split and isinstance(axis_name, str) and ',' in axis_name:
             axes_names = axis_name.split(',')
             axes_labels = list(zip(*np.char.split(axis.labels, ',')))
             axes = [Axis(name, labels)
                     for name, labels in zip(axes_names, axes_labels)]
         else:
-            if ndim is None:
-                ndim = 2
-            axes = [Axis(None, len(axis) + abs(k)) for _ in range(ndim)]
+            axes = [axis] + [axis.copy() for _ in range(ndim - 1)]
         res = zeros(axes, dtype=a.dtype)
         diag_indices = kth_diag_indices(res.shape, k)
         res.ipoints[diag_indices] = a
@@ -5304,10 +5543,8 @@ def eye(rows, columns=None, k=0, dtype=None):
             2 | 0.0 | 0.0 | 0.0
     """
     if columns is None:
-        axes = [rows, rows]
-    else:
-        axes = [rows, columns]
-    axes = AxisCollection(axes)
+        columns = rows.copy() if isinstance(rows, Axis) else rows
+    axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
     return LArray(data, axes)
@@ -5377,12 +5614,16 @@ def make_numpy_broadcastable(values):
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
 
     # 1) reorder axes
-    values = [v.transpose(all_axes & v.axes) if isinstance(v, LArray) else v
+    def transpose(v):
+        # XXX: v.transpose(all_axes & v.axes) SHOULD work
+        return v.transpose(v.axes[all_axes & v.axes])
+    values = [transpose(v) if isinstance(v, LArray) else v
               for v in values]
 
     # 2) add length one axes
-    return [v.reshape([v.axes.get(axis, Axis(axis.name, 1))
-                       for axis in all_axes]) if isinstance(v, LArray) else v
+    def reshape(v):
+        return v.reshape(v.axes.get_all(all_axes))
+    return [reshape(v) if isinstance(v, LArray) else v
             for v in values], all_axes
 
 
