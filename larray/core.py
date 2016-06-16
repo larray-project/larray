@@ -1777,17 +1777,16 @@ class LArray(object):
         if axes is None:
             axes = AxisCollection(data.shape)
         else:
-            if len(axes) != ndim:
-                raise ValueError("number of axes (%d) does not match "
-                                 "number of dimensions of data (%d)"
-                                 % (len(axes), ndim))
-            shape = tuple(len(axis) for axis in axes)
-            if shape != data.shape:
-                raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (shape, data.shape))
-
             if not isinstance(axes, AxisCollection):
                 axes = AxisCollection(axes)
+            if axes.ndim != ndim:
+                raise ValueError("number of axes (%d) does not match "
+                                 "number of dimensions of data (%d)"
+                                 % (axes.ndim, ndim))
+            if axes.shape != data.shape:
+                raise ValueError("length of axes %s does not match "
+                                 "data shape %s" % (axes.shape, data.shape))
+
         object.__setattr__(self, 'data', data)
         object.__setattr__(self, 'axes', axes)
 
