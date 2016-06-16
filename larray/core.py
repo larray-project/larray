@@ -5359,16 +5359,20 @@ def get_axes(value):
     return value.axes if isinstance(value, LArray) else AxisCollection([])
 
 
+# assigning a temporary name to anonymous axes before broadcasting and
+# removing it afterwards is not a good idea after all because it copies the
+# axes/change the object, and thus "flatten" wouldn't work with position axes:
+# a[ones(a.axes[axes], dtype=bool)]
 def make_numpy_broadcastable(values):
     """
     return values where LArrays are (numpy) broadcastable between them.
-    For that to be possible, all common axes must be either 1 or the same
-    length. Extra axes (in any array) can have any length.
+    For that to be possible, all common axes must be compatible.
+    Extra axes (in any array) can have any length.
 
     * the resulting arrays will have the combination of all axes found in the
       input arrays, the earlier arrays defining the order of axes. Axes with
       labels take priority over wildcard axes.
-    * axes with a single '*' label will be added for axes not present in input
+    * length 1 wildcard axes will be added for axes not present in input
     """
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
 
