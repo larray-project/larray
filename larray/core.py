@@ -20,6 +20,32 @@ __all__ = [
 
 """
 Matrix class
+
+a(sex, age)
+age_limit(sex)
+
+step 1:
+
+a[age > age_limit]
+a[age + clength < age_limit]
+b = a * (age > age_limit)
+
+step 2:
+
+a[x.age > age_limit]
+# this is also possible ("x.age > age_limit" return an Expr, expr is evaluated
+# during the binop (axes ref replace by real axe)
+b = a * (x.age > age_limit)
+
+==============
+in general:
+1) match axes by Axis object => No axis.id because we need to be able to share
+   the same axis in several collections/arrays.
+   => this is slightly annoying for Group.__repr__ which uses axis.id
+   => we cannot have twice the same axis object in a collection
+      (we can have the same name twice though)
+2) match axes by name if any, by position otherwise
+3) match axes by position
 """
 # TODO
 # * axes with no name should display as (or even have their name assigned to?)
@@ -142,6 +168,114 @@ Matrix class
 # using K (for key) or I (for indexer) or G (without axis obviously):
 
 # g = G[2:7, 'M', ['P01', 'P05']]
+
+# but it might be better to allow multiple slices from the same dimension in
+# the same group:
+
+# g = G.age[:9, 10:14, 15:25]
+
+# it seems nifty, but that changes the semantic of a group (we would need
+# multiple names???)
+
+# in that cases, having NDG to create N dimensional groups might be a good idea
+
+# g = NDG[2:7, 'M', ['P01', 'P05']]
+
+# we also need the best possible syntax to handle, "arbitrary" resampling
+
+# pure_min_w1_comp_agg = zeros(result_axes)
+# pure_min_w1_comp_agg[x.LBMosesXLS[1]] = pure_min_w1_comp.sum(x.clength[1:15])
+# pure_min_w1_comp_agg[x.LBMosesXLS[2]] = pure_min_w1_comp.sum(x.clength[16:25])
+# pure_min_w1_comp_agg[x.LBMosesXLS[3]] = pure_min_w1_comp.sum(x.clength[26:30])
+# pure_min_w1_comp_agg[x.LBMosesXLS[4]] = pure_min_w1_comp.sum(x.clength[31:35])
+# pure_min_w1_comp_agg[x.LBMosesXLS[5]] = pure_min_w1_comp.sum(x.clength[36:40])
+# pure_min_w1_comp_agg[x.LBMosesXLS[6]] = pure_min_w1_comp.sum(x.clength[41:50])
+#
+# clength_groups = (x.clength[1:15], x.clength[16:25], x.clength[26:30],
+#                   x.clength[31:35], x.clength[36:40], x.clength[41:50])
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups).rename(
+#     x.clength, x.LBMosesXLS)
+#
+# clength_groups = x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups)
+#
+# clength_groups = G[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups) \
+#                                         .replace(x.clength, LBMosesXLS)
+# XXX: what if I want to sum on all the slices (as if it was a single slice)
+# clength_groups = G[1:15] | G[16:25] | G[26:30] | G[31:35] | G[36:40] | G[41:50]
+# OR
+# G.clength.union[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+#
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups) \
+
+# I would also like to have a nice syntax for assigning (multiple) values to
+# multiple slices (example courtesy of MOSES)
+
+# clength = Axis('clength', range(1, 51))
+# year = Axis('year', range(2010, 2050))
+# result_axes = AxisCollection([
+#     clength,
+#     year
+# ])
+#
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.clength[1:15], x.year[first_year_p:2024]] = 7 / 7
+# multip_mat_min[x.clength[16:25], x.year[first_year_p:2024]] = 20 / 20
+# multip_mat_min[x.clength[26:30], x.year[first_year_p:2024]] = 27 / 27
+# multip_mat_min[x.clength[31:35], x.year[first_year_p:2024]] = 32 / 32
+# multip_mat_min[x.clength[36:40], x.year[first_year_p:2024]] = 37 / 37
+# multip_mat_min[x.clength[41:50], x.year[first_year_p:2024]] = 42 / 42
+# multip_mat_min[x.clength[1:15], x.year[2025:2029]] = 8 / 7
+# multip_mat_min[x.clength[16:25], x.year[2025:2029]] = 21 / 20
+# multip_mat_min[x.clength[26:30], x.year[2025:2029]] = 28 / 27
+# multip_mat_min[x.clength[31:35], x.year[2025:2029]] = 33 / 32
+# multip_mat_min[x.clength[36:40], x.year[2025:2029]] = 38 / 37
+# multip_mat_min[x.clength[41:50], x.year[2025:2029]] = 43 / 42
+# multip_mat_min[x.clength[1:15], x.year[2030:]] = 9 / 7
+# multip_mat_min[x.clength[16:25], x.year[2030:]] = 22 / 20
+# multip_mat_min[x.clength[26:30], x.year[2030:]] = 29 / 27
+# multip_mat_min[x.clength[31:35], x.year[2030:]] = 34 / 32
+# multip_mat_min[x.clength[36:40], x.year[2030:]] = 39 / 37
+# multip_mat_min[x.clength[41:50], x.year[2030:]] = 44 / 42
+#
+# # already possible
+# m = zeros(clength)
+# m[x.clength[1:15]] = 7
+# m[x.clength[16:25]] = 20
+# m[x.clength[26:30]] = 27
+# m[x.clength[31:35]] = 32
+# m[x.clength[36:40]] = 37
+# m[x.clength[41:50]] = 42
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.year[:2024]] = m / m
+# multip_mat_min[x.year[2025:2029]] = (m + 1) / m
+# multip_mat_min[x.year[2030:]] = (m + 2) / m
+
+# TODO: it would be nice to be able to say:
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]
+# but I am unsure it is possible/unambiguous
+
+# this kind of pattern is not supported by numpy
+# in numpy, you can assign multiple slices to the SAME value (not one value per
+# slice, using m[np._r[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = 7, but
+# this actually construct a single array of indices, and ultimately,
+# it is much slower than repeatedly doing m[slice()] = value
+# %timeit j = np.r_[tuple(slice(i, i+5) for i in range(0, 1000, 10))]; a[j] = 9
+# 1000 loops, best of 3: 307 µs per loop
+# %timeit for i in range(0, 1000, 10): a[i:i+5] = i
+# 10000 loops, best of 3: 45.9 µs per loop
+
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
+#            [7, 20, 27, 32, 37, 42]
+# multip_mat_min[x.year[:2024, 2025:2029, 2030:]] = [m / m, (m + 1) / m,
+#                                                   (m + 2) / m]
+
+# for the multi-value case to work I would probably have to make
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]]
+# return multiple arrays (as a tuple of arrays or an array of arrays)
+# with pandas/MI support, we could just return an array with
+# a (second) clength axis
 
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
