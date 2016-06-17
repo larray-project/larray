@@ -54,6 +54,8 @@ Matrix class
 # union (bands): x.axis1[5:10] | x.axis2.i[3:4]
 # intersection/cross/default: x.axis1[5:10] & x.axis2.i[3:4]
 # points: x.axis1[5:10] ^ x.axis2.i[1:6]
+# ----> this prevents symetric difference. this is little used but...
+# ----> Points(x.axis[5:10], x.axis2.i[1:6])
 
 # this is very nice and would have orderedset-like semantics
 
@@ -129,7 +131,8 @@ Matrix class
 # g = G.i[2, 5, 7]
 # g2 = X.age[g]
 
-# positional groups with axis can be useful as a shorter alternative:
+# positional groups *with axis* can be useful as a shorter alternative (but
+# not worth it IMO, unless the whole API is more consistent for users):
 
 # g = P.age[2, 5, 7]
 # instead of
