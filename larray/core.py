@@ -4456,16 +4456,17 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.set_labels(x.sex, ['Hommes', 'Femmes'])
-        nat | sex\\type | type1 | type2 | type3
-         BE |   Hommes |     0 |     1 |     2
-         BE |   Femmes |     3 |     4 |     5
-         FO |   Hommes |     6 |     7 |     8
-         FO |   Femmes |     9 |    10 |    11
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = ndrange([nat, sex])
+        >>> a
+        nat\\sex | M | F
+             BE | 0 | 1
+             FO | 2 | 3
+        >>> a.set_labels(x.sex, ['Men', 'Women'])
+        nat\\sex | Men | Women
+             BE |   0 |     1
+             FO |   2 |     3
         """
         axis = self.axes[axis]
         if inplace:
