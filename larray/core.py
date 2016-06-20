@@ -1093,6 +1093,20 @@ class Group(object):
         else:
             raise Exception('not iterable')
 
+    def named(self, name):
+        """Returns group with a different name.
+
+        Parameters
+        ----------
+        name : str
+            new name for group
+
+        Returns
+        -------
+        Group
+        """
+        return self.__class__(self.key, name, self.axis)
+
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
