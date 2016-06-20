@@ -2497,6 +2497,16 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(a3.i[1, 1, 1], a.i[1, 1, 1])
         self.assertEqual(a3.i[2, 2, 2], a.i[2, 2, 2])
 
+        # using Axis object
+        sex = Axis('sex', 'M,F')
+        a = eye(sex)
+        d = diag(a)
+        self.assertEqual(d.ndim, 1)
+        self.assertEqual(d.axes.names, ['sex,sex'])
+        assert_array_equal(d.axes.labels, [['M,M', 'F,F']])
+        self.assertEqual(d.i[0], 1.0)
+        self.assertEqual(d.i[1], 1.0)
+
     # cannot use @ in the tests because that is an invalid syntax in Python 2
     def test_matmul(self):
         a1 = eye(3) * 2

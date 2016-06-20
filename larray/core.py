@@ -1205,16 +1205,16 @@ class AxisCollection(object):
 
     def __getitem__(self, key):
         if isinstance(key, Axis):
-            if key.name is None:
-                try:
-                    key = self.index(key)
-                # transform ValueError to KeyError
-                except ValueError:
+            try:
+                key = self.index(key)
+            # transform ValueError to KeyError
+            except ValueError:
+                if key.name is None:
                     raise KeyError("axis '%s' not found in %s" % (key, self))
-            else:
-                # we should NOT check that the object is the same, so that we can
-                # use AxisReference objects to target real axes
-                key = key.name
+                else:
+                    # we should NOT check that the object is the same, so that we can
+                    # use AxisReference objects to target real axes
+                    key = key.name
 
         if isinstance(key, int):
             return self._list[key]
@@ -1235,6 +1235,9 @@ class AxisCollection(object):
             else:
                 raise KeyError("axis '%s' not found in %s" % (key, self))
 
+    # XXX: I wonder if this whole positional crap should really be part of
+    # AxisCollection or the default behavior. It could either be moved to
+    # make_numpy_broadcastable or made non default
     def get_by_pos(self, key, i):
         """
         returns axis corresponding to key, or to i if key has no name and
@@ -5553,8 +5556,8 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     >>> a
     sex | M | F
         | 1 | 2
-    >>> diag(a, split=False)
-    sex\sex | M | F
+    >>> diag(a)
+    sex\\sex | M | F
           M | 1 | 0
           F | 0 | 2
     """
@@ -5738,6 +5741,8 @@ def get_axes(value):
 # removing it afterwards is not a good idea after all because it copies the
 # axes/change the object, and thus "flatten" wouldn't work with position axes:
 # a[ones(a.axes[axes], dtype=bool)]
+# but if we had assigned axes names from the start (without dropping them)
+# this wouldn't be a problem.
 def make_numpy_broadcastable(values):
     """
     return values where LArrays are (numpy) broadcastable between them.
