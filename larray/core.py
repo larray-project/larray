@@ -939,7 +939,7 @@ class Axis(object):
             raise ValueError('Axis has no name, so no id')
 
     def __str__(self):
-        name = self.name if self.name is not None else '{?}'
+        name = str(self.name) if self.name is not None else '{?}'
         return (name + '*') if self.iswildcard else name
 
     def __repr__(self):
