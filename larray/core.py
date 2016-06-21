@@ -2602,6 +2602,9 @@ class LArray(object):
         # if isinstance(key, str) and key in ('__array_struct__',
         #                               '__array_interface__'):
         #     raise KeyError("bla")
+        if isinstance(key, ExprNode):
+            key = key.evaluate(self.axes)
+
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -2671,6 +2674,9 @@ class LArray(object):
         # int LArray keys
         # the int value represent a position along ONE particular axis,
         # even if the key has more than one axis.
+        if isinstance(key, ExprNode):
+            key = key.evaluate(self.axes)
+
         data = np.asarray(self.data)
         translated_key = self.translated_key(key)
 
@@ -3695,6 +3701,10 @@ class LArray(object):
 
         def opmethod(self, other):
             res_axes = self.axes
+
+            if isinstance(other, ExprNode):
+                other = other.evaluate(self.axes)
+
             if isinstance(other, LArray):
                 # TODO: first test if it is not already broadcastable
                 (self, other), res_axes = \
@@ -5723,7 +5733,74 @@ def stack(arrays, axis):
     return LArray(np.concatenate(data_arrays, axis=-1), axes + axis)
 
 
-class AxisReference(Axis):
+class ExprNode(object):
+    # method factory
+    def _binop(opname):
+        def opmethod(self, other):
+            return BinaryOp(opname, self, other)
+
+        opmethod.__name__ = '__%s__' % opname
+        return opmethod
+
+    __matmul__ = _binop('matmul')
+    __ror__ = _binop('ror')
+    __or__ = _binop('or')
+    __rxor__ = _binop('rxor')
+    __xor__ = _binop('xor')
+    __rand__ = _binop('rand')
+    __and__ = _binop('and')
+    __rrshift__ = _binop('rrshift')
+    __rshift__ = _binop('rshift')
+    __rlshift__ = _binop('rlshift')
+    __lshift__ = _binop('lshift')
+    __rpow__ = _binop('rpow')
+    __pow__ = _binop('pow')
+    __rdivmod__ = _binop('rdivmod')
+    __divmod__ = _binop('divmod')
+    __rmod__ = _binop('rmod')
+    __mod__ = _binop('mod')
+    __rfloordiv__ = _binop('rfloordiv')
+    __floordiv__ = _binop('floordiv')
+    __rtruediv__ = _binop('rtruediv')
+    __truediv__ = _binop('truediv')
+    if sys.version < '3':
+        __div__ = _binop('div')
+        __rdiv__ = _binop('rdiv')
+    __rmul__ = _binop('rmul')
+    __mul__ = _binop('mul')
+    __rsub__ = _binop('rsub')
+    __sub__ = _binop('sub')
+    __radd__ = _binop('radd')
+    __add__ = _binop('add')
+    __ge__ = _binop('ge')
+    __gt__ = _binop('gt')
+    __ne__ = _binop('ne')
+    __eq__ = _binop('eq')
+    __le__ = _binop('le')
+    __lt__ = _binop('lt')
+
+    def _unaryop(opname):
+        def opmethod(self):
+            return UnaryOp(opname, self)
+
+        opmethod.__name__ = '__%s__' % opname
+        return opmethod
+
+    # unary ops do not need broadcasting so do not need to be overridden
+    __neg__ = _unaryop('neg')
+    __pos__ = _unaryop('pos')
+    __abs__ = _unaryop('abs')
+    __invert__ = _unaryop('invert')
+
+    def evaluate(self, context):
+        raise NotImplementedError()
+
+
+def expr_eval(expr, context):
+    return expr.evaluate(context) if isinstance(expr, ExprNode) else expr
+
+
+class AxisReference(ExprNode, Axis):
     def __init__(self, name):
         self.name = name
         self._labels = None
@@ -5735,6 +5812,44 @@ class AxisReference(Axis):
 
     def __repr__(self):
         return 'AxisReference(%r)' % self.name
+
+    def evaluate(self, context):
+        """
+        Parameters
+        ----------
+        context : AxisCollection
+            use axes from this collection
+        """
+        return context[self]
+
+    # needed because ExprNode.__hash__ (which is object.__hash__)
+    # takes precedence over Axis.__hash__
+    def __hash__(self):
+        return id(self)
+
+
+class BinaryOp(ExprNode):
+    def __init__(self, op, expr1, expr2):
+        self.op = op
+        self.expr1 = expr1
+        self.expr2 = expr2
+
+    def evaluate(self, context):
+        # TODO: implement eval via numexpr
+        expr1 = expr_eval(self.expr1, context)
+        expr2 = expr_eval(self.expr2, context)
+        return getattr(expr1, '__%s__' % self.op)(expr2)
+
+
+class UnaryOp(ExprNode):
+    def __init__(self, op, expr):
+        self.op = op
+        self.expr = expr
+
+    def evaluate(self, context):
+        # TODO: implement eval via numexpr
+        expr = expr_eval(self.expr, context)
+        return getattr(expr, '__%s__' % self.op)()
 
 
 class AxisReferenceFactory(object):
