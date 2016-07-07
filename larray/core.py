@@ -1209,6 +1209,16 @@ class AxisCollection(object):
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
+    def __dir__(self):
+        # called by dir() and tab-completion at the interactive prompt,
+        # should return a list of all valid attributes, ie all normal
+        # attributes plus anything valid in getattr (string keys only).
+        # make sure we return unique results because dir() does not ensure that
+        # (ipython tab-completion does though).
+        # order does not matter though (dir() sorts the results)
+        names = set(axis.name for axis in self._list if axis.name is not None)
+        return list(set(dir(self.__class__)) | names)
+
     def __iter__(self):
         return iter(self._list)
 
