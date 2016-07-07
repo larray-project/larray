@@ -353,10 +353,6 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from larray.utils import (table2str, unique, csv_open, unzip, long,
-                          decode, basestring, izip, rproduct, ReprString,
-                          duplicates, array_lookup2, skip_comment_cells,
-                          strip_rows, PY3)
 try:
     import xlwings as xw
 except ImportError:
@@ -366,6 +362,11 @@ try:
     from numpy import nanprod as np_nanprod
 except ImportError:
     np_nanprod = None
+
+from larray.utils import (table2str, unique, csv_open, unzip, long,
+                          decode, basestring, izip, rproduct, ReprString,
+                          duplicates, array_lookup2, skip_comment_cells,
+                          strip_rows, PY3)
 
 # TODO: return a generator, not a list
 def srange(*args):
