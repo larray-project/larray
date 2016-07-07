@@ -1460,7 +1460,10 @@ class AxisCollection(object):
                 return self.get_by_pos(k, i)
             except (ValueError, KeyError):
                 # XXX: is having i as name really helps?
-                return Axis(k.name if k.name is not None else i, 1)
+                if len(k) == 1:
+                    return k
+                else:
+                    return Axis(k.name if k.name is not None else i, 1)
 
         return AxisCollection([get_pos_default(k, i)
                                for i, k in enumerate(key)])
