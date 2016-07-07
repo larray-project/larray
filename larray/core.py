@@ -815,11 +815,10 @@ class Axis(object):
     def iscompatible(self, other):
         if not isinstance(other, Axis) or self.name != other.name:
             return False
-        # wildcard axes of length 1 match with anything
-        if self.iswildcard:
-            return len(self) == 1 or len(self) == len(other)
-        elif other.iswildcard:
-            return len(other) == 1 or len(self) == len(other)
+        if self.iswildcard or other.iswildcard:
+            # wildcard axes of length 1 match with anything
+            # wildcard axes of length > 1 match with equal len or len 1
+            return len(self) == 1 or len(other) == 1 or len(self) == len(other)
         else:
             return np.array_equal(self.labels, other.labels)
 
