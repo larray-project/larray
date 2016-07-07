@@ -4626,7 +4626,7 @@ class LArray(object):
         return len(self.data)
 
     def __array__(self, dtype=None):
-        return self.data
+        return np.asarray(self.data, dtype=dtype)
 
     __array_priority__ = 100
 
