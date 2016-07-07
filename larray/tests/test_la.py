@@ -2528,6 +2528,21 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
             self.assertIsInstance(res, LArray)
             assert_array_equal(res, ndrange((3, 3)) * 2)
 
+    def test_broadcast_with(self):
+        a1 = ndrange((3, 2))
+        a2 = ndrange(3)
+        b = a2.broadcast_with(a1)
+        self.assertEqual(b.ndim, a1.ndim)
+        self.assertEqual(b.shape, (3, 1))
+        assert_array_equal(b.i[:, 0], a2)
+
+        a1 = ndrange((1, 3))
+        a2 = ndrange((3, 1))
+        b = a2.broadcast_with(a1)
+        self.assertEqual(b.ndim, 2)
+        self.assertEqual(b.shape, (3, 1))
+        assert_array_equal(b, a2)
+
     def test_plot(self):
         pass
         #small_h = small['H']
