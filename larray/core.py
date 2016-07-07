@@ -4958,21 +4958,21 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
 
     Example
     -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> mat = ndrange([xnat, xsex])
-    >>> mat.to_csv('test.csv')
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([nat, sex])
+    >>> a.to_csv('test.csv')
     >>> read_csv('test.csv')
-    nat\\sex | H | F
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     >>> read_csv('test.csv', sort_columns=True)
-    nat\\sex | F | H
+    nat\\sex | F | M
          BE | 1 | 0
          FO | 3 | 2
-    >>> mat.to_csv('no_axis_name.csv', dialect='classic')
+    >>> a.to_csv('no_axis_name.csv', dialect='classic')
     >>> read_csv('no_axis_name.csv', nb_index=1)
-    nat\\{1} | H | F
+    nat\\{1} | M | F
          BE | 0 | 1
          FO | 2 | 3
     """
