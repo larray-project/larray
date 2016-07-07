@@ -810,7 +810,9 @@ class Axis(object):
             name = self.name
         if isinstance(key, LArray):
             return tuple(key.axes)
-        return Axis(name, self.labels[key])
+        # TODO: compute length for wildcard axes more efficiently
+        labels = len(self.labels[key]) if self.iswildcard else self.labels[key]
+        return Axis(name, labels)
 
     def iscompatible(self, other):
         if not isinstance(other, Axis) or self.name != other.name:
