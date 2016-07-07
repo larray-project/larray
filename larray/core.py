@@ -1017,6 +1017,7 @@ class Axis(object):
         new_axis.__sorted_values = self.__sorted_values
         return new_axis
 
+    # XXX: rename to named like Group?
     def rename(self, name):
         """Renames the axis.
 
