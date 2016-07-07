@@ -5918,18 +5918,7 @@ def make_numpy_broadcastable(values):
     * length 1 wildcard axes will be added for axes not present in input
     """
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
-
-    # 1) reorder axes
-    def transpose(v):
-        # XXX: v.transpose(all_axes & v.axes) SHOULD work
-        return v.transpose(v.axes[all_axes & v.axes])
-    values = [transpose(v) if isinstance(v, LArray) else v
-              for v in values]
-
-    # 2) add length one axes
-    def reshape(v):
-        return v.reshape(v.axes.get_all(all_axes))
-    return [reshape(v) if isinstance(v, LArray) else v
+    return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
             for v in values], all_axes
 
 
