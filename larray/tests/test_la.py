@@ -2179,50 +2179,36 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(raw2_ge_la, raw2 >= raw)
 
     def test_broadcasting_no_name(self):
-        """
-        >>> a = ndrange((2, 3))
-        >>> b = ndrange(3)
-        >>> c = ndrange(2)
-        >>> a
-        {0}*\\{1}* | 0 | 1 | 2
-                0 | 0 | 1 | 2
-                1 | 3 | 4 | 5
-        >>> b
-        {0}* | 0 | 1 | 2
-             | 0 | 1 | 2
-        >>> c
-        {0}* | 0 | 1
-             | 0 | 1
-
-        >>> # it is unfortunate that the behavior is different from numpy
-        >>> # (even though I find our behavior more intuitive)
-        >>> # a * b
-        ValueError: incompatible axes:
-        Axis(None, [0, 1, 2])
-        vs
-        Axis(None, [0, 1])
-
-        >>> a * c
-        {0}*\\{1}* | 0 | 1 | 2
-                0 | 0 | 0 | 0
-                1 | 3 | 4 | 5
-
-        >>> np.asarray(a) * np.asarray(b)
-        array([[ 0,  1,  4],
-               [ 0,  4, 10]])
-
-        >>> # np.asarray(a) * np.asarray(c)
-        ValueError: operands could not be broadcast together with shapes (2,3) (2,)
-        """
-
         a = ndrange((2, 3))
         b = ndrange(3)
         c = ndrange(2)
-        # axes objects are != and no common name => considered to be
-        # different axes
-        d = a * c
 
+        with self.assertRaises(ValueError):
+            # ValueError: incompatible axes:
+            # Axis(None, [0, 1, 2])
+            # vs
+            # Axis(None, [0, 1])
+            a * b
+
+        d = a * c
         self.assertEqual(d.shape, (2, 3))
+        # {0}*\{1}* | 0 | 1 | 2
+        #         0 | 0 | 0 | 0
+        #         1 | 3 | 4 | 5
+        self.assertTrue(np.array_equal(d, [[0, 0, 0],
+                                           [3, 4, 5]]))
+
+        # it is unfortunate that the behavior is different from numpy
+        # (even though I find our behavior more intuitive)
+        d = np.asarray(a) * np.asarray(b)
+        self.assertEqual(d.shape, (2, 3))
+        self.assertTrue(np.array_equal(d, [[0, 1,  4],
+                                           [0, 4, 10]]))
+
+        with self.assertRaises(ValueError):
+            # ValueError: operands could not be broadcast together with shapes
+            # (2,3) (2,)
+            np.asarray(a) * np.asarray(c)
 
     def test_unary_ops(self):
         raw = self.small_data
