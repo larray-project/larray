@@ -4180,6 +4180,7 @@ class LArray(object):
         else:
             axes = args
 
+        axes = self.axes[axes]
         axes_indices = [self.axes.index(axis) for axis in axes]
         indices_present = set(axes_indices)
         missing_indices = [i for i in range(len(self.axes))
