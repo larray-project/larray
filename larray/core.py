@@ -2186,37 +2186,58 @@ class LArray(object):
     # Python 2
     __nonzero__= __bool__
 
-    def rename(self, axis, newname):
-        """Renames an axis of the array.
+    def rename(self, renames=None, to=None, **kwargs):
+        """Renames some array axes.
 
         Parameters
         ----------
-        axis : int, str or Axis
-            axis.
-        newname : str
-            the new name for the axis.
+        renames : axis ref or dict {axis ref: str} or
+                  list of tuple (axis ref, str)
+            renames to apply. If a single axis reference is given, the "to"
+            argument must be used.
+        to : str or Axis
+            new name if renames contains a single axis reference
+        **kwargs : str
+            new name for each axis given as a keyword argument.
 
         Returns
         -------
         LArray
-            LArray with one of the axis renamed.
+            array with some axes renamed.
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> a = ones([xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = ndrange([nat, sex])
         >>> a
-        nat\\sex |   H |   F
-             BE | 1.0 | 1.0
-             FO | 1.0 | 1.0
-        >>> a.rename('nat', 'newnat')
-        newnat\\sex |   H |   F
-                BE | 1.0 | 1.0
-                FO | 1.0 | 1.0
+        nat\\sex | M | F
+             BE | 0 | 1
+             FO | 2 | 3
+        >>> a.rename(x.nat, 'nat2')
+        nat2\\sex | M | F
+              BE | 0 | 1
+              FO | 2 | 3
+        >>> a.rename(nat='nat2')
+        nat2\\sex | M | F
+              BE | 0 | 1
+              FO | 2 | 3
+        >>> a.rename({'nat': 'nat2'})
+        nat2\\sex | M | F
+              BE | 0 | 1
+              FO | 2 | 3
         """
-        axis = self.axes[axis]
-        axes = [axis.rename(newname) if a is axis else a
+        if isinstance(renames, dict):
+            items = list(renames.items())
+        elif isinstance(renames, list):
+            items = renames.copy()
+        elif isinstance(renames, (str, Axis, int)):
+            items = [(renames, to)]
+        else:
+            items = []
+        items += kwargs.items()
+        renames = {self.axes[k]: v for k, v in items}
+        axes = [a.rename(renames[a]) if a in renames else a
                 for a in self.axes]
         return LArray(self.data, axes)
 
