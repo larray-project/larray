@@ -2862,22 +2862,17 @@ class LArray(object):
             other_axes = other
             if not isinstance(other, AxisCollection):
                 other_axes = AxisCollection(other_axes)
-        # other_names = [a.name for a in other_axes]
+        target_axes = (self.axes - other_axes) | other_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
         # but that use case should use drop_labels
-        # self.axes.check_compatible(other_axes)
+        # self.axes.check_compatible(target_axes)
 
-        # 1) append length-1 axes for other-only axes
-        # TODO: factorize with make_numpy_broadcastable
-        otheronly_axes = [Axis(axis.name, 1) if len(axis) != 1 else axis
-                          for axis in other_axes if axis not in self.axes]
-        array = self.reshape(self.axes + otheronly_axes)
-        # 2) reorder axes to target order (move source-only axes to the front)
-        sourceonly_axes = self.axes - other_axes
-        # axes_other_order = [array.axes[name] for name in other_names]
-        axes_other_order = array.axes[other_axes]
-        return array.transpose(sourceonly_axes + axes_other_order)
+        # 1) reorder axes to target order
+        array = self.transpose(target_axes & self.axes)
+
+        # 2) add length one axes
+        return array.reshape(array.axes.get_all(target_axes))
 
     def drop_labels(self, axes=None):
         """drop the labels from axes (replace those axes by "wildcard" axes)
@@ -4203,6 +4198,8 @@ class LArray(object):
         # # since self.axes[0] does not exist in self.axes[1, 2], BUT has
         # # a position < len(self.axes[1, 2]), it tries to match
         # # against self.axes[1, 2][0], (ie self.axes[1]) which breaks
+        # # the problem is that AxisCollection.union should not try to match
+        # # by position in this case.
         # res_axes = (self.axes[axes] | self.axes) if axes else self.axes[::-1]
         # axes_indices = [self.axes.index(axis) for axis in res_axes]
         # res_data = np.asarray(self).transpose(axes_indices)
