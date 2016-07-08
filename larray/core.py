@@ -2987,6 +2987,24 @@ class LArray(object):
         for tick, dataline in izip(ticks, data):
             yield list(tick) + list(dataline)
 
+    def dump(self, header=True):
+        """dump array as a 2D nested list
+
+        Parameters
+        ----------
+        header : bool
+            whether or not to output axes names and labels
+
+        Returns
+        -------
+        list
+        """
+        if not header:
+            # flatten all dimensions except the last one
+            return self.data.reshape(-1, self.shape[-1]).tolist()
+        else:
+            return list(self.as_table())
+
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
     # behavior, because that would introduce a subtle difference between
