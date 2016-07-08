@@ -34,3 +34,11 @@ except ImportError:
     def compare(*args, **kwargs):
         raise Exception('compare() is not available because Qt is not '
                         'installed')
+
+
+try:
+    from larray.excel import open_excel
+except ImportError:
+    def open_excel(*args, **kwargs):
+        raise Exception("open_excel() is not available because xlwings "
+                        "is not installed")
