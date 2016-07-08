@@ -2944,14 +2944,14 @@ class LArray(object):
         elif not len(self):
             return 'LArray([])'
         else:
-            return table2str(list(self.as_table()), 'nan', True,
-                             keepcols=self.ndim - 1)
+            return table2str(list(self.as_table(maxlines=200, edgeitems=5)),
+                             'nan', True, keepcols=self.ndim - 1)
     __repr__ = __str__
 
     def __iter__(self):
         return LArrayIterator(self)
 
-    def as_table(self, maxlines=200, edgeitems=5):
+    def as_table(self, maxlines=None, edgeitems=5):
         if not self.ndim:
             return
 
@@ -2976,7 +2976,7 @@ class LArray(object):
         yield axes_names + list(self.axes.labels[-1])
 
         # summary if needed
-        if height > maxlines:
+        if maxlines is not None and height > maxlines:
             data = chain(data[:edgeitems], [["..."] * width], data[-edgeitems:])
             if height > maxlines:
                 startticks = islice(ticks, edgeitems)
