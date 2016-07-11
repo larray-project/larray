@@ -1,8 +1,12 @@
 import os
 
 import numpy as np
-import xlwings as xw
-from xlwings.conversion.pandas_conv import PandasDataFrameConverter
+try:
+    import xlwings as xw
+    from xlwings.conversion.pandas_conv import PandasDataFrameConverter
+except ImportError:
+    xw = None
+    PandasDataFrameConverter = object
 
 from .core import LArray, df_aslarray, Axis
 from .utils import unique, basestring
@@ -23,8 +27,8 @@ class LArrayConverter(PandasDataFrameConverter):
         df = value.to_frame(fold_last_axis_name=True)
         return PandasDataFrameConverter.write_value(df, options)
 
-
-LArrayConverter.register(LArray)
+if xw is not None:
+    LArrayConverter.register(LArray)
 
 
 class Workbook(object):
