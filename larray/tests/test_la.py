@@ -2497,8 +2497,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     def test_matmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
-
-        if sys.version >= '3':
+        # FIXME: this will break for python 3.10 and later
+        if sys.version >= '3.5':
             # LArray value
             assert_array_equal(a1.__matmul__(a2), ndrange((3, 3)) * 2)
 
@@ -2508,7 +2508,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
     def test_rmatmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
-        if sys.version >= '3':
+        # FIXME: this will break for python 3.10 and later
+        if sys.version >= '3.5':
             # equivalent to a1.data @ a2
             res = a2.__rmatmul__(a1.data)
             self.assertIsInstance(res, LArray)
