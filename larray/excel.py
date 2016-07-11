@@ -213,15 +213,15 @@ class Range(object):
         else:
             return getattr(self.xw_range, key)
 
+    def __setattr__(self, key, value):
+        return setattr(self.xw_range, key, value)
+
     # TODO: implement all binops
     # def __mul__(self, other):
     #     return self.__larray__() * other
 
     def __str__(self):
         return str(self.__larray__())
-
-    def __setattr__(self, key, value):
-        return setattr(self.xw_range, key, value)
 
     def load(self, header=True, convert_float=True):
         list_data = self.xw_range.value
