@@ -1375,9 +1375,11 @@ class ArrayEditorWidget(QWidget):
         cur_filter = self.current_filter
         # if index == 0:
         if not indices or len(indices) == len(axis.labels):
+            # FIXME: anonymous...
             if axis.name in cur_filter:
                 del cur_filter[axis.name]
         else:
+            # FIXME: anonymous...
             if len(indices) == 1:
                 cur_filter[axis.name] = axis.labels[indices[0]]
             else:
@@ -1416,6 +1418,7 @@ class ArrayEditorWidget(QWidget):
         """
         assert isinstance(k, tuple) and len(k) == self.la_data.ndim
 
+        # FIXME: not anonymous-friendly (use axis instead of axis.name)
         dkey = {axis.name: axis_key
                 for axis_key, axis in zip(k, self.la_data.axes)}
 
@@ -1448,6 +1451,7 @@ class ArrayEditorWidget(QWidget):
         assert isinstance(k, tuple) and len(k) == 2
 
         # transform local index key to local label key
+        # XXX: why can't we store the filter as index?
         model = self.model
         ki, kj = k
         xlabels = model.xlabels
@@ -1458,6 +1462,7 @@ class ArrayEditorWidget(QWidget):
 
         # compute dictionary key out of it
         data = self.filtered_data
+        # FIXME: anonymous...
         axes_names = data.axes.names if isinstance(data, la.LArray) else []
         dkey = dict(zip(axes_names, label_key))
 
@@ -1467,6 +1472,7 @@ class ArrayEditorWidget(QWidget):
                      if np.isscalar(v)})
 
         # re-transform it to tuple (to make it hashable/to store it in .changes)
+        # FIXME: anonymous...
         return tuple(dkey[axis.name] for axis in self.la_data.axes)
 
 
