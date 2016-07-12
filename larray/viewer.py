@@ -27,8 +27,11 @@ Array Editor Dialog based on Qt
 # TODO:
 # * drag & drop to reorder axes
 #   http://zetcode.com/gui/pyqt4/dragdrop/
-#   http://stackoverflow.com/questions/10264040/how-to-drag-and-drop-into-a-qtablewidget-pyqt
+#   http://stackoverflow.com/questions/10264040/
+#       how-to-drag-and-drop-into-a-qtablewidget-pyqt
 #   http://stackoverflow.com/questions/3458542/multiple-drag-and-drop-in-pyqt4
+#   http://ux.stackexchange.com/questions/34158/
+#       how-to-make-it-obvious-that-you-can-drag-things-that-you-normally-cant
 # * keep header columns & rows visible ("frozen")
 #   http://doc.qt.io/qt-5/qtwidgets-itemviews-frozencolumn-example.html
 # * document default icons situation (limitations)
@@ -44,18 +47,25 @@ Array Editor Dialog based on Qt
 # * plotting a subset should probably (to think) go via LArray/pandas objects
 #   so that I have the headers info in the plots (and do not have to deal with
 #   them manually)
-#   > need to be generic
-# * copy to clipboard possibly too
+#   > ideally, I would like to keep this generic (not LArray-specific)
 # ? automatic change digits on resize column
 #   => different format per column, which is problematic UI-wise
-# * keep "headers" visible
 # * keyboard shortcut for filter each dim
 # * tab in a filter combo, brings up next filter combo
 # * view/edit DataFrames too
-# * view/edit LArray over Pandas
+# * view/edit LArray over Pandas (ie sparse)
 # * resubmit editor back for inclusion in Spyder
-# * custom delegates for each type (spinner for int, checkbox for bool, ...)
+# ? custom delegates for each type (spinner for int, checkbox for bool, ...)
 # ? "light" headers (do not repeat the same header several times (on the screen)
+#   it would be nicer but I am not sure it is a good idea because with many
+#   dimensions, you can no longer see the current label for the first
+#   dimension(s) if you scroll down a bit. This is solvable if, instead
+#   of only the first line ever corresponding to the label displaying it,
+#   I could make it so that it is the first line displayable on the screen
+#   which gets it. It would be a bit less nice because of strange artifacts
+#   when scrolling, but would be more useful. The beauty problem could be
+#   solved later too via fading or something like that, but probably not
+#   worth it for a while.
 
 from __future__ import print_function
 
@@ -1935,6 +1945,7 @@ if __name__ == "__main__":
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
     data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
     arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    # arr2 = la.ndrange([100, 100, 100, 100, 5])
     # arr2 = arr2['F', 'A11', 1]
 
     # view(arr2[0, 'A11', 'F', 'P01'])
