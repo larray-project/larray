@@ -80,7 +80,9 @@ class Workbook(object):
     def __len__(self):
         return len(xw.Sheet.all(self.xw_wkb))
 
-    # TODO: implement __dir__ so that tab-completion works
+    def __dir__(self):
+        return list(set(dir(self.__class__)) | set(dir(self.xw_wkb)))
+
     def __getattr__(self, key):
         return getattr(self.xw_wkb, key)
 
@@ -141,7 +143,9 @@ class Sheet(object):
     def __array__(self, dtype=None):
         return np.array(self[:].value, dtype=dtype)
 
-    # TODO: implement __dir__ so that tab-completion works
+    def __dir__(self):
+        return list(set(dir(self.__class__)) | set(dir(self.xw_sheet)))
+
     def __getattr__(self, key):
         return getattr(self.xw_sheet, key)
 
@@ -209,7 +213,9 @@ class Range(object):
     def __larray__(self):
         return LArray(np.array(self.xw_range.value))
 
-    # TODO: implement __dir__ so that tab-completion works
+    def __dir__(self):
+        return list(set(dir(self.__class__)) | set(dir(self.xw_range)))
+
     def __getattr__(self, key):
         if hasattr(LArray, key):
             return getattr(self.__larray__(), key)
