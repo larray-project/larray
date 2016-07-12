@@ -49,16 +49,16 @@ class Workbook(object):
             key += 1
         return key
 
-    def __getitem__(self, key):
-        key = self._concrete_key(key)
-        return Sheet(self, key)
-
     def __contains__(self, key):
         if isinstance(key, int):
             length = len(self)
             return -length <= key < length
         else:
             return key in self.sheet_names()
+
+    def __getitem__(self, key):
+        key = self._concrete_key(key)
+        return Sheet(self, key)
 
     def __setitem__(self, key, value):
         if key in self:
