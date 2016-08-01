@@ -10,7 +10,7 @@ __all__ = [
     'read_sas',
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    'full', 'full_like', 'create_sequential', 'ndrange',
+    'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
     'identity', 'diag', 'eye',
     'larray_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
