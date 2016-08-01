@@ -3681,7 +3681,7 @@ class LArray(object):
         return self / self.sum(*axes)
 
     def percent(self, *axes):
-        """Returns a LArray with values LArray / LArray.sum(axes) * 100.
+        """Returns an array with values array / array.sum(axes) * 100.
 
         Parameters
         ----------
@@ -3690,7 +3690,7 @@ class LArray(object):
         Returns
         -------
         LArray
-            LArray = LArray / LArray.sum(axes) * 100
+            array / array.sum(axes) * 100
 
         Example
         -------
