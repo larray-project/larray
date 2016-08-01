@@ -4011,18 +4011,17 @@ class LArray(object):
 
         Parameters
         ----------
-        axis : axis
+        axis : axis reference
             the axis
         value : LArray
-            LArray with compatible axes
-        label : string
-            optional
+            array with compatible axes
+        label : str, optional
             label for the new item in axis
 
         Returns
         -------
         LArray
-            LArray expanded with 'value' along 'axis'.
+            array expanded with 'value' along 'axis'.
 
         Example
         -------
@@ -4058,8 +4057,10 @@ class LArray(object):
         """
         axis = self.axes[axis]
         if np.isscalar(value):
-            value = LArray(np.asarray(value, self.dtype), [])
-        # this does not prevent value to have more axes than self
+            value = LArray(np.asarray(value, self.dtype))
+        # This does not prevent value to have more axes than self.
+        # We do not use .expand(..., readonly=True) so that the code is more
+        # similar to .prepend().
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
         value = value.broadcast_with(target_axes)
         return self.extend(axis, value)
@@ -4069,18 +4070,17 @@ class LArray(object):
 
         Parameters
         ----------
-        axis : axis
+        axis : axis reference
             the axis
         value : LArray
-            LArray with compatible axes
-        label : string
-            optional
+            array with compatible axes
+        label : str, optional
             label for the new item in axis
 
         Returns
         -------
         LArray
-            LArray expanded with 'value' at the start of 'axis'.
+            array expanded with 'value' at the start of 'axis'.
 
         Example
         -------
@@ -4109,11 +4109,11 @@ class LArray(object):
         """
         axis = self.axes[axis]
         if np.isscalar(value):
-            value = LArray(np.asarray(value, self.dtype), [])
-        # this does not prevent value to have more axes than self
+            value = LArray(np.asarray(value, self.dtype))
+        # This does not prevent value to have more axes than self
         target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
-        # we cannot simply add the "new" axis to value because in that case
-        # the resulting axes would not be in the correct order
+        # We cannot simply add the "new" axis to value (e.g. using expand)
+        # because the resulting axes would not be in the correct order.
         value = value.broadcast_with(target_axes)
         return value.extend(axis, self)
 
@@ -4125,12 +4125,12 @@ class LArray(object):
         axis : axis
             the axis
         other : LArray
-            LArray with compatible axes
+            array with compatible axes
 
         Returns
         -------
         LArray
-            LArray expanded with 'other' along 'axis'.
+            array expanded with 'other' along 'axis'.
 
         Example
         -------
@@ -4167,8 +4167,8 @@ class LArray(object):
         """
         result, (self_target, other_target) = \
             concat_empty(axis, (self.axes, other.axes), self.dtype)
-        self.expand(out=self_target)
-        other.expand(out=other_target)
+        self_target[:] = self
+        other_target[:] = other
         return result
 
     def transpose(self, *args):
