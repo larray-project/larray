@@ -538,14 +538,18 @@ def to_ticks(s):
         return [to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
+    elif isinstance(s, basestring):
+        if ':' in s:
+            return slice_str_to_range(s)
+        else:
+            return [v.strip() for v in s.split(',')]
+    elif hasattr(s, '__array__'):
+        return s.__array__()
     else:
-        assert isinstance(s, basestring), "%s is not a supported type for " \
-                                          "ticks" % type(s)
-
-    if ':' in s:
-        return slice_str_to_range(s)
-    else:
-        return [v.strip() for v in s.split(',')]
+        try:
+            return list(s)
+        except TypeError:
+            raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
 def to_key(v):
