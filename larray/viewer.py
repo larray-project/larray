@@ -1011,6 +1011,8 @@ class ArrayView(QTableView):
         if data is None:
             return
         # convert (row) generators to lists then array
+        # XXX: is the conversion to array necesarry? I think xlwings will
+        # translate back to a list anyway?!
         a = np.array([list(r) for r in data])
         xw.view(a)
 
@@ -1074,6 +1076,7 @@ class ArrayView(QTableView):
         # discards the old graph
         ax.hold(False)
 
+        # FIXME: use labels instead
         x = np.arange(data.shape[0])
         ax.plot(x, data)
 

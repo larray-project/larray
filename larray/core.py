@@ -294,6 +294,10 @@ in general:
 # but that might introduce confusing differences if they update/setitem their
 # arrays
 
+# * we need an API to get to the "next" label. Sometimes, we want to use
+#   label+1, but when label is not numeric, or has not a step of 1, that's
+#   problematic. x.agegroup[x.agegroup.after(25):]
+
 # * implement keepaxes=True for _group_aggregate instead of/in addition to
 #   group tuples
 
@@ -694,8 +698,8 @@ class Axis(object):
                 # otherwise we could not make geo['Brussels'] work efficiently
                 # (we could have to traverse the whole mapping checking for each
                 # name, which is not an option)
-                # TODO: only do this if labels.dtype is object, or add "contains_lgroup"
-                # flag in above code (if any(...))
+                # TODO: only do this if labels.dtype is object, or add
+                # "contains_lgroup" flag in above code (if any(...))
                 # 0.179
                 mapping.update({label.name: i for i, label in enumerate(labels)
                                 if isinstance(label, Group)})
@@ -2875,6 +2879,15 @@ class LArray(object):
         # 2) add length one axes
         return array.reshape(array.axes.get_all(target_axes))
 
+    # XXX: I wonder if effectively dropping the labels is necessary or not
+    # we could perfectly only mark the axis as being a wildcard axis and keep
+    # the labels intact. These wildcard axes with labels
+    # could be useful in a few situations. For example, Excel sheets could
+    # have such behavior: you can slice columns using letters, but that
+    # wouldn't prevent doing computation between arrays using different
+    # columns. On the other hand, it makes wild axes less obvious and I
+    # wonder if there would be a risk of wildcard axes inadvertently leaking.
+    # plus it might be confusing if incompatible labels "work".
     def drop_labels(self, axes=None):
         """drop the labels from axes (replace those axes by "wildcard" axes)
 
