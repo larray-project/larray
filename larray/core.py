@@ -1992,6 +1992,14 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
+def common_type(arrays):
+    arrays = [np.asarray(a) for a in arrays]
+    try:
+        return np.common_type(*arrays)
+    except TypeError:
+        return object
+
+
 def concat_empty(axis, arrays_axes, dtype):
     # Get axis by name, so that we do *NOT* check they are "compatible",
     # because it makes sense to append axes of different length
@@ -5797,13 +5805,37 @@ def stack(arrays, axis):
            'F', numbirths * (1 - HMASC)], 'sex')
     stack(('H', numbirths * HMASC),
           ('F', numbirths * (1 - HMASC)), name='sex')
+
+    Example
+    -------
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['H', 'F'])
+    >>> arr1 = ones(nat)
+    >>> arr1
+    nat |  BE |  FO
+        | 1.0 | 1.0
+    >>> arr2 = zeros(nat)
+    >>> arr2
+    nat |  BE |  FO
+        | 0.0 | 0.0
+    >>> stack((arr1, arr2), sex)
+    nat\\sex |   H |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
+
+    It also works for arrays with different axes:
+
+    >>> stack((arr1, 0), sex)
+    nat\\sex |   H |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
     """
-    # append an extra length 1 dimension
-    data_arrays = [a.data.reshape(a.shape + (1,)) for a in arrays]
-    axes = arrays[0].axes
-    for a in arrays[1:]:
-        a.axes.check_compatible(axes)
-    return LArray(np.concatenate(data_arrays, axis=-1), axes + axis)
+    assert len(axis) == len(arrays)
+    result_axes = AxisCollection.union(*[get_axes(v) for v in arrays]) | axis
+    result = empty(result_axes, common_type(arrays))
+    for label, array in zip(axis, arrays):
+        result[label] = array
+    return result
 
 
 class ExprNode(object):
