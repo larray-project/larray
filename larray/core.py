@@ -1992,25 +1992,31 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
-def concat_empty(axis, array_axes, other_axes, dtype):
-    array_axis = array_axes[axis]
+def concat_empty(axis, arrays_axes, dtype):
     # Get axis by name, so that we do *NOT* check they are "compatible",
     # because it makes sense to append axes of different length
-    other_axis = other_axes[axis]
-    new_labels = np.append(array_axis.labels, other_axis.labels)
-    new_axis = Axis(array_axis.name, new_labels)
-    array_axes = array_axes.replace(array_axis, new_axis)
-    other_axes = other_axes.replace(other_axis, new_axis)
-    # combine axes from both sides (using labels from either side if any)
-    result_axes = array_axes | other_axes
-    result_data = np.empty(result_axes.shape, dtype=dtype)
-    result = LArray(result_data, result_axes)
-    l = len(array_axis)
+    arrays_axis = [axes[axis] for axes in arrays_axes]
+    arrays_labels = [axis.labels for axis in arrays_axis]
+    new_labels = np.concatenate(arrays_labels)
+    combined_axis = Axis(arrays_axis[0].name, new_labels)
+
+    new_axes = [axes.replace(axis, combined_axis)
+                for axes, axis in zip(arrays_axes, arrays_axis)]
+
+    # combine all axes (using labels from any side if any)
+    result_axes = AxisCollection.union(*new_axes)
+
+    result = empty(result_axes, dtype=dtype)
+    lengths = [len(axis) for axis in arrays_axis]
+    cumlen = np.cumsum(lengths)
+    start_bounds = np.concatenate(([0], cumlen[:-1]))
+    stop_bounds = cumlen
     # XXX: wouldn't it be nice to be able to say that? ie translation
     # from position to label on the original axis then translation to
     # position on the actual result axis?
     # result[:axis.i[-1]]
-    return result, result[new_axis.i[:l]], result[new_axis.i[l:]]
+    return result, [result[combined_axis.i[start:stop]]
+                    for start, stop in zip(start_bounds, stop_bounds)]
 
 
 class LArrayIterator(object):
@@ -4159,8 +4165,8 @@ class LArray(object):
           U |    type1 | 0.0 | 0.0
           U |    type2 | 0.0 | 0.0
         """
-        result, self_target, other_target = \
-            concat_empty(axis, self.axes, other.axes, self.dtype)
+        result, (self_target, other_target) = \
+            concat_empty(axis, (self.axes, other.axes), self.dtype)
         self.expand(out=self_target)
         other.expand(out=other_target)
         return result
