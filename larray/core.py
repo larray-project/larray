@@ -3593,31 +3593,27 @@ class LArray(object):
 
         Example
         -------
-        >>> age = Axis('age', range(3))
+        >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
-        >>> a = ndrange([age, sex])
+        >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
-        age\\sex | M | F
-              0 | 0 | 1
-              1 | 2 | 3
-              2 | 4 | 5
+        nat\\sex | M | F
+             BE | 4 | 6
+             FO | 2 | 8
         >>> a.sum()
-        15
+        20
         >>> a.ratio()
-        age\\sex |              M |               F
-              0 |            0.0 | 0.0666666666667
-              1 | 0.133333333333 |             0.2
-              2 | 0.266666666667 |  0.333333333333
-        >>> a.ratio(sex)
-        age\\sex |              M |              F
-              0 |            0.0 |            1.0
-              1 |            0.4 |            0.6
-              2 | 0.444444444444 | 0.555555555556
-        >>> a.ratio('F')
-        age\\sex |              M |   F
-              0 |            0.0 | 1.0
-              1 | 0.666666666667 | 1.0
-              2 |            0.8 | 1.0
+        nat\\sex |   M |   F
+             BE | 0.2 | 0.3
+             FO | 0.1 | 0.4
+        >>> a.ratio(x.sex)
+        nat\\sex |   M |   F
+             BE | 0.4 | 0.6
+             FO | 0.2 | 0.8
+        >>> a.ratio('M')
+        nat\\sex |   M |   F
+             BE | 1.0 | 1.5
+             FO | 1.0 | 4.0
         """
         # >>> FIXME, this does not work, but it should
         # >>> NotImplementedError: an AxisReference (x.) cannot translate labels
@@ -3698,21 +3694,21 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat
-        nat\\sex | H | F
-             BE | 0 | 1
-             FO | 2 | 3
-        >>> mat.percent()
-        nat\\sex |             H |             F
-             BE |           0.0 | 16.6666666667
-             FO | 33.3333333333 |          50.0
-        >>> mat.percent(xsex)
-        nat\\sex |    H |     F
-             BE |  0.0 | 100.0
-             FO | 40.0 |  60.0
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
+        >>> a
+        nat\\sex | M | F
+             BE | 4 | 6
+             FO | 2 | 8
+        >>> a.percent()
+        nat\\sex |    M |    F
+             BE | 20.0 | 30.0
+             FO | 10.0 | 40.0
+        >>> a.percent(x.sex)
+        nat\\sex |    M |    F
+             BE | 40.0 | 60.0
+             FO | 20.0 | 80.0
         """
         # dividing by self.sum(*axes) * 0.01 would be faster in many cases but
         # I suspect it loose more precision.
@@ -4855,20 +4851,21 @@ class LArray(object):
         Example
         -------
         >>> sex = Axis('sex', ['M', 'F'])
-        >>> year = Axis('year', [2015, 2016, 2017])
-        >>> a = ndrange([sex, year]).cumsum(x.year)
+        >>> year = Axis('year', range(2016, 2020))
+        >>> a = LArray([[1.0, 2.0, 3.0, 3.0], [2.0, 3.0, 1.5, 3.0]],
+        ...            [sex, year])
         >>> a
-        sex\\year | 2015 | 2016 | 2017
-               M |    0 |    1 |    3
-               F |    3 |    7 |   12
+        sex\\year | 2016 | 2017 | 2018 | 2019
+               M |  1.0 |  2.0 |  3.0 |  3.0
+               F |  2.0 |  3.0 |  1.5 |  3.0
         >>> a.growth_rate()
-        sex\\year |          2016 |           2017
-               M |           inf |            2.0
-               F | 1.33333333333 | 0.714285714286
+        sex\\year | 2017 | 2018 | 2019
+               M |  1.0 |  0.5 |  0.0
+               F |  0.5 | -0.5 |  1.0
         >>> a.growth_rate(d=2)
-        sex\\year | 2017
-               M |  inf
-               F |  3.0
+        sex\\year |  2018 | 2019
+               M |   2.0 |  0.5
+               F | -0.25 |  0.0
         """
         diff = self.diff(axis=axis, d=d, label=label)
         axis_obj = self.axes[axis]
@@ -5456,12 +5453,12 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     >>> create_sequential(year)
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
-    >>> create_sequential(year, 1.0, 0.1)
+    >>> create_sequential(year, 1.0, 0.5)
     year | 2016 | 2017 | 2018 | 2019
-         |  1.0 |  1.1 |  1.2 |  1.3
-    >>> create_sequential(year, 1.0, mult=1.1)
+         |  1.0 |  1.5 |  2.0 |  2.5
+    >>> create_sequential(year, 1.0, mult=1.5)
     year | 2016 | 2017 | 2018 |  2019
-         |  1.0 |  1.1 | 1.21 | 1.331
+         |  1.0 |  1.5 | 2.25 | 3.375
     >>> inc = LArray([1, 2], [sex])
     >>> inc
     sex | M | F
@@ -5501,20 +5498,17 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
 
     create_sequential can be used as the inverse of growth_rate:
 
-    >>> a = ndrange([sex, year], start=1, dtype=float)
+    >>> a = LArray([1.0, 2.0, 3.0, 3.0], year)
     >>> a
-    sex\year | 2016 | 2017 | 2018 | 2019
-           M |  1.0 |  2.0 |  3.0 |  4.0
-           F |  5.0 |  6.0 |  7.0 |  8.0
+    year | 2016 | 2017 | 2018 | 2019
+         |  1.0 |  2.0 |  3.0 |  3.0
     >>> g = a.growth_rate() + 1
     >>> g
-    sex\year | 2017 |          2018 |          2019
-           M |  2.0 |           1.5 | 1.33333333333
-           F |  1.2 | 1.16666666667 | 1.14285714286
+    year | 2017 | 2018 | 2019
+         |  2.0 |  1.5 |  1.0
     >>> create_sequential(a.axes.year, a[2016], mult=g)
-    sex\year | 2016 | 2017 | 2018 | 2019
-           M |  1.0 |  2.0 |  3.0 |  4.0
-           F |  5.0 |  6.0 |  7.0 |  8.0
+    year | 2016 | 2017 | 2018 | 2019
+         |  1.0 |  2.0 |  3.0 |  3.0
     """
     if inc is None:
         inc = 1 if mult is 1 else 0
