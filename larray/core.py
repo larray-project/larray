@@ -823,7 +823,10 @@ class Axis(object):
         return Axis(name, labels)
 
     def iscompatible(self, other):
-        if not isinstance(other, Axis) or self.name != other.name:
+        if not isinstance(other, Axis):
+            return False
+        if self.name is not None and other.name is not None and \
+                self.name != other.name:
             return False
         if self.iswildcard or other.iswildcard:
             # wildcard axes of length 1 match with anything
