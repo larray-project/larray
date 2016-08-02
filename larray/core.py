@@ -836,6 +836,8 @@ class Axis(object):
             return np.array_equal(self.labels, other.labels)
 
     def equals(self, other):
+        if self is other:
+            return True
         return (isinstance(other, Axis) and self.name == other.name and
                 self.iswildcard == other.iswildcard and
                 np.array_equal(self.labels, other.labels))
@@ -1384,6 +1386,8 @@ class AxisCollection(object):
         other collection compares equal if all axes compare equal and in the
         same order. Works with a list.
         """
+        if self is other:
+            return True
         if not isinstance(other, list):
             other = list(other)
         return len(self._list) == len(other) and \
@@ -2888,6 +2892,8 @@ class LArray(object):
             other_axes = other
             if not isinstance(other, AxisCollection):
                 other_axes = AxisCollection(other_axes)
+        if self.axes == other_axes:
+            return self
         target_axes = (self.axes - other_axes) | other_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
