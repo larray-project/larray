@@ -1996,11 +1996,27 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
+_numeric_kinds = 'buifc'
+_string_kinds = 'SU'
+_meta_kind = {k: 'str' for k in _string_kinds}
+_meta_kind.update({k: 'numeric' for k in _numeric_kinds})
+
+
 def common_type(arrays):
     arrays = [np.asarray(a) for a in arrays]
-    try:
-        return np.common_type(*arrays)
-    except TypeError:
+    dtypes = [a.dtype for a in arrays]
+    meta_kinds = [_meta_kind.get(dt.kind, 'other') for dt in dtypes]
+    # mixing string and numeric => object
+    if any(mk != meta_kinds[0] for mk in meta_kinds[1:]):
+        return object
+    elif meta_kinds[0] == 'numeric':
+        return np.find_common_type(dtypes, [])
+    elif meta_kinds[0] == 'str':
+        need_unicode = any(dt.kind == 'U' for dt in dtypes)
+        max_size = max(dt.itemsize // 4 if dt.kind == 'U' else dt.itemsize
+                       for dt in dtypes)
+        return np.dtype(('U' if need_unicode else 'S', max_size))
+    else:
         return object
 
 
