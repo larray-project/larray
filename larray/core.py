@@ -2025,6 +2025,16 @@ def concat_empty(axis, arrays_axes, dtype):
     # because it makes sense to append axes of different length
     arrays_axis = [axes[axis] for axes in arrays_axes]
     arrays_labels = [axis.labels for axis in arrays_axis]
+
+    # switch to object dtype if labels are of incompatible types, so that
+    # we do not implicitly convert numeric types to strings (numpy should not
+    # do this in the first place but that is another story). This can happen for
+    # example when we want to add a "total" tick to a numeric axis (eg age).
+    labels_type = common_type(arrays_labels)
+    if labels_type is object:
+        # astype always copies, while asarray only copies if necessary
+        arrays_labels = [np.asarray(labels, dtype=object)
+                         for labels in arrays_labels]
     new_labels = np.concatenate(arrays_labels)
     combined_axis = Axis(arrays_axis[0].name, new_labels)
 
