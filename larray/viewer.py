@@ -1794,20 +1794,18 @@ class ArrayComparator(QDialog):
         # a segmentation fault on UNIX or an application crash on Windows
         self.setAttribute(Qt.WA_DeleteOnClose)
 
-        self.data1 = None
-        self.data2 = None
-        self.array1widget = None
-        self.array2widget = None
+        self.arrays = None
+        self.array = None
+        self.arraywidget = None
 
-    def setup_and_check(self, data1, data2, title=''):
+    def setup_and_check(self, arrays, names, title=''):
         """
-        Setup SessionEditor:
+        Setup ArrayComparator:
         return False if data is not supported, True otherwise
         """
-        assert isinstance(data1, la.LArray)
-        assert isinstance(data2, la.LArray)
-        self.data1 = data1
-        self.data2 = data2
+        assert all(isinstance(a, la.LArray) for a in arrays)
+        self.arrays = arrays
+        self.array = la.stack(arrays, la.Axis('arrays', names))
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         if icon is not None:
@@ -1821,39 +1819,33 @@ class ArrayComparator(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        diff = (data2 - data1)
-        vmax = np.nanmax(diff)
-        vmin = np.nanmin(diff)
-        absmax = max(abs(vmax), abs(vmin))
-        # scale diff to 0-1
+        diff = self.array - self.array[la.x.arrays.i[0]]
+        absmax = abs(diff).max()
+
+        # max diff label
+        maxdiff_layout = QHBoxLayout()
+        maxdiff_layout.addWidget(QLabel('maximum absolute difference: ' +
+                                        str(absmax)))
+        maxdiff_layout.addStretch()
+        layout.addLayout(maxdiff_layout)
+
         if absmax:
+            # scale diff to 0-1
             bg_value = (diff / absmax) / 2 + 0.5
         else:
-            # TODO: implement full() and full_like()
-            bg_value = la.empty_like(diff)
-            bg_value[:] = 0.5
+            # all 0.5 (white)
+            bg_value = la.full_like(diff, 0.5)
         gradient = LinearGradient([(0, [.66, .85, 1., .6]),
                                    (0.5 - 1e-300, [.66, .15, 1., .6]),
                                    (0.5, [1., 0., 1., 1.]),
                                    (0.5 + 1e-300, [.99, .15, 1., .6]),
                                    (1, [.99, .85, 1., .6])])
 
-        self.array1widget = ArrayEditorWidget(self, data1, readonly=True,
-                                              bg_value=bg_value,
-                                              bg_gradient=gradient)
-        self.diffwidget = ArrayEditorWidget(self, diff, readonly=True,
-                                            bg_value=bg_value,
-                                            bg_gradient=gradient)
-        self.array2widget = ArrayEditorWidget(self, data2, readonly=True,
-                                              bg_value=1 - bg_value,
-                                              bg_gradient=gradient)
+        self.arraywidget = ArrayEditorWidget(self, self.array, readonly=True,
+                                             bg_value=bg_value,
+                                             bg_gradient=gradient)
 
-        splitter = QHBoxLayout()
-        splitter.addWidget(self.array1widget)
-        splitter.addWidget(self.diffwidget)
-        splitter.addWidget(self.array2widget)
-
-        layout.addLayout(splitter)
+        layout.addWidget(self.arraywidget)
 
         # Buttons configuration
         btn_layout = QHBoxLayout()
@@ -1871,6 +1863,136 @@ class ArrayComparator(QDialog):
         # Make the dialog act as a window
         self.setWindowFlags(Qt.Window)
         return True
+
+
+# TODO: it should be possible to reuse both SessionEditor and ArrayComparator
+class SessionComparator(QDialog):
+    """Session Comparator Dialog"""
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+
+        self.sessions = None
+        self.names = None
+        self.arraywidget = None
+        self.maxdiff_label = None
+        self.gradient = LinearGradient([(0, [.66, .85, 1., .6]),
+                                        (0.5 - 1e-300, [.66, .15, 1., .6]),
+                                        (0.5, [1., 0., 1., 1.]),
+                                        (0.5 + 1e-300, [.99, .15, 1., .6]),
+                                        (1, [.99, .85, 1., .6])])
+
+    def setup_and_check(self, sessions, names, title=''):
+        """
+        Setup SessionComparator:
+        return False if data is not supported, True otherwise
+        """
+        assert all(isinstance(s, la.Session) for s in sessions)
+        self.sessions = sessions
+        self.names = names
+
+        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        if icon is not None:
+            self.setWindowIcon(icon)
+
+        if not title:
+            title = _("Session comparator")
+        title += ' (' + _('read only') + ')'
+        self.setWindowTitle(title)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        names = sorted(set.union(*[set(s.names) for s in self.sessions]))
+        self._listwidget = listwidget = QListWidget(self)
+        self._listwidget.addItems(names)
+        self._listwidget.currentItemChanged.connect(self.on_item_changed)
+
+        for i, name in enumerate(names):
+            arrays = [s.get(name) for s in self.sessions]
+            eq = [la.larray_equal(a, arrays[0]) for a in arrays[1:]]
+            if not all(eq):
+                listwidget.item(i).setForeground(Qt.red)
+
+        array, absmax, bg_value = self.get_array(names[0])
+
+        if not array.size:
+            array = la.LArray(['no data'])
+        self.arraywidget = ArrayEditorWidget(self, array, readonly=True,
+                                             bg_value=bg_value,
+                                             bg_gradient=self.gradient)
+
+        right_panel_layout = QVBoxLayout()
+
+        # max diff label
+        maxdiff_layout = QHBoxLayout()
+        maxdiff_layout.addWidget(QLabel('maximum absolute difference:'))
+        self.maxdiff_label = QLabel(str(absmax))
+        maxdiff_layout.addWidget(self.maxdiff_label)
+        maxdiff_layout.addStretch()
+        right_panel_layout.addLayout(maxdiff_layout)
+
+        # array_splitter.setSizePolicy(QSizePolicy.Expanding,
+        #                              QSizePolicy.Expanding)
+        right_panel_layout.addWidget(self.arraywidget)
+
+        # you cant add a layout directly in a splitter, so we have to wrap it
+        # in a widget
+        right_panel_widget = QWidget()
+        right_panel_widget.setLayout(right_panel_layout)
+
+        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter.addWidget(self._listwidget)
+        main_splitter.addWidget(right_panel_widget)
+        main_splitter.setSizes([5, 95])
+        main_splitter.setCollapsible(1, False)
+
+        layout.addWidget(main_splitter)
+
+        # Buttons configuration
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        buttons = QDialogButtonBox.Ok
+        bbox = QDialogButtonBox(buttons)
+        bbox.accepted.connect(self.accept)
+        btn_layout.addWidget(bbox)
+        layout.addLayout(btn_layout)
+
+        self.resize(800, 600)
+        self.setMinimumSize(400, 300)
+
+        # Make the dialog act as a window
+        self.setWindowFlags(Qt.Window)
+        return True
+
+    def get_array(self, name):
+        arrays = [s.get(name) for s in self.sessions]
+        array = la.stack(arrays, la.Axis('sessions', self.names))
+        diff = array - array[la.x.sessions.i[0]]
+        absmax = abs(diff).max()
+        # scale diff to 0-1
+        if absmax:
+            bg_value = (diff / absmax) / 2 + 0.5
+        else:
+            bg_value = la.full_like(diff, 0.5)
+        # only show rows with a difference. For some reason, this is abysmally
+        # slow though.
+        # row_filter = (array != array[la.x.sessions.i[0]]).any(la.x.sessions)
+        # array = array[row_filter]
+        # bg_value = bg_value[row_filter]
+        return array, absmax, bg_value
+
+    def on_item_changed(self, curr, prev):
+        array, absmax, bg_value = self.get_array(str(curr.text()))
+        self.maxdiff_label.setText(str(absmax))
+        self.arraywidget.set_data(array, bg_value=bg_value,
+                                  bg_gradient=self.gradient)
 
 
 def find_names(obj, depth=1):
@@ -1914,10 +2036,21 @@ def view(obj, title=''):
         dlg.exec_()
 
 
-def compare(obj1, obj2, title=''):
+def compare(*args, **kwargs):
+    title = kwargs.pop('title', '')
     _app = qapplication()
-    dlg = ArrayComparator()
-    if dlg.setup_and_check(obj1, obj2, title=title):
+    if any(isinstance(a, la.Session) for a in args):
+        dlg = SessionComparator()
+        default_name = 'session'
+    else:
+        dlg = ArrayComparator()
+        default_name = 'array'
+
+    def get_name(i, obj):
+        names = find_names(obj, depth=4)
+        return names[0] if names else '%s %d' % (default_name, i)
+    names = [get_name(i, a) for i, a in enumerate(args)]
+    if dlg.setup_and_check(args, names=names, title=title):
         dlg.exec_()
 
 
@@ -1972,19 +2105,24 @@ if __name__ == "__main__":
     # arr2 = la.LArray(data2,
     #                  axes=(la.Axis('d0', list(range(5000))),
     #                        la.Axis('d1', list(range(20)))))
-    edit(arr2)
+    # edit(arr2)
 
     # view(['a', 'bb', 5599])
     # view(np.arange(12).reshape(2, 3, 2))
     # view([])
 
-    # data3 = np.random.normal(0, 1, size=(2, 15))
-    # arr3 = la.LArray(data3, axes=(sex, lipro))
+    data3 = np.random.normal(0, 1, size=(2, 15))
+    arr3 = la.ndrange((30, sex))
     # data4 = np.random.normal(0, 1, size=(2, 15))
     # arr4 = la.LArray(data4, axes=(sex, lipro))
+
     # arr4 = arr3.copy()
-    # arr4['F', 'P01':] = arr3['F', 'P01':] / 2
-    # compare(arr3, arr4)
+    # arr4['F'] /= 2
+    arr4 = arr3.min(la.x.sex)
+    arr5 = arr3.max(la.x.sex)
+    arr6 = arr3.mean(la.x.sex)
+    # view(la.stack((arr3, arr4), la.Axis('arrays', 'arr3,arr4')))
+    compare(arr3, arr4, arr5, arr6)
 
     # arr3 = la.ndrange((1000, 1000, 500))
     # print(arr3.nbytes * 1e-9 + 'Gb')
