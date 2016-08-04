@@ -326,8 +326,6 @@ class ArrayModel(QAbstractTableModel):
 
         # Backgroundcolor settings
         # TODO: use LinearGradient
-        self.bg_gradient = bg_gradient
-        self.bg_value = bg_value
         # self.bgfunc = bgfunc
         huerange = [.66, .99]  # Hue
         self.sat = .7  # Saturation
@@ -350,7 +348,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels)
+        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -361,11 +359,11 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None, changes=None):
-        self._set_data(data, xlabels, ylabels, changes)
+    def set_data(self, data, xlabels=None, ylabels=None, changes=None, bg_gradient=None, bg_value=None):
+        self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None):
+    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
@@ -387,6 +385,9 @@ class ArrayModel(QAbstractTableModel):
             self.color_func = np.abs
         else:
             self.color_func = np.real
+        self.bg_gradient = bg_gradient
+        self.bg_value = bg_value
+
         assert isinstance(changes, dict)
         self.changes = changes
         self._data = data
@@ -1117,7 +1118,7 @@ def ndigits(value):
     if log10 == np.inf:
         int_digits = 308
     else:
-        # max(1, ...) because there is at least one integer digit
+        # max(1, ...) because there is at least one integer digit.
         # explicit conversion to int for Python2.x
         int_digits = max(1, int(math.floor(log10)) + 1)
     # one digit for sign if negative
@@ -1164,9 +1165,11 @@ class ArrayEditorWidget(QWidget):
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        self.set_data(data, xlabels, ylabels)
+        self.set_data(data, xlabels, ylabels, bg_value=bg_value,
+                      bg_gradient=bg_gradient)
 
-    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None):
+    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None,
+                 bg_gradient=None, bg_value=None):
         self.old_data_shape = None
         if current_filter is None:
             current_filter = {}
@@ -1208,9 +1211,9 @@ class ArrayEditorWidget(QWidget):
             #     self.error(_("The 'ylabels' argument length do no match array row "
             #                  "number"))
             #     return False
-        self._set_raw_data(data, xlabels, ylabels)
+        self._set_raw_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None):
+    def _set_raw_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
         # FIXME: this method should be *FAST*, as it is used for each filter
         # change
         ndecimals, use_scientific = self.choose_format(data)
@@ -1221,7 +1224,7 @@ class ArrayEditorWidget(QWidget):
         self.model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes)
+        self.model.set_data(data, xlabels, ylabels, changes, bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(ndecimals)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
