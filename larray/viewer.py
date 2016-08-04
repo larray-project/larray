@@ -1309,7 +1309,7 @@ class ArrayEditorWidget(QWidget):
             return metrics.size(Qt.TextSingleLine, c).width()
 
         digit_width = max(str_width(str(i)) for i in range(10))
-        dot_width = metrics.size(Qt.TextSingleLine, '.').width()
+        dot_width = str_width('.')
         sign_width = max(str_width('+'), str_width('-'))
         if need_sign:
             avail_width -= sign_width
