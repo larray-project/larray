@@ -149,8 +149,9 @@ class Sheet(object):
     def __getattr__(self, key):
         return getattr(self.xw_sheet, key)
 
-    def load(self, header=True):
-        return self[:].load(header=header)
+    def load(self, header=True, nb_index=0, index_col=None):
+        return self[:].load(header=header, nb_index=nb_index,
+                            index_col=index_col)
 
     # TODO: generalize to more than 2 dimensions or scrap it
     def array(self, data, row_labels=None, column_labels=None, names=None):
@@ -207,8 +208,31 @@ class Range(object):
     def __setitem__(self, key, value):
         self.sheet[self._range_key_to_sheet_key(key)] = value
 
+    def _converted_value(self, convert_float=True):
+        list_data = self.xw_range.value
+
+        # As of version 0.7.2 of xlwings, there is no built-in converter for
+        # this. The builtin .options(numbers=int) converter converts all
+        # values to int, whether that would loose information or not, but this
+        # is not what we want.
+        if convert_float:
+            # Excel 'numbers' are always floats
+            def convert(value):
+                if isinstance(value, float):
+                    int_val = int(value)
+                    if int_val == value:
+                        return int_val
+                return value
+            if self.ndim == 1:
+                list_data = [convert(v) for v in list_data]
+            elif self.ndim == 2:
+                list_data = [[convert(v) for v in line] for line in list_data]
+            else:
+                raise ValueError("invalid ndim: %d" % self.ndim)
+        return list_data
+
     def __array__(self, dtype=None):
-        return np.array(self.xw_range.value, dtype=dtype)
+        return np.array(self._converted_value(), dtype=dtype)
 
     def __larray__(self):
         return LArray(np.array(self.xw_range.value))
@@ -231,19 +255,13 @@ class Range(object):
 
     def __str__(self):
         return str(self.__larray__())
+    __repr__ = __str__
 
-    def load(self, header=True, convert_float=True):
-        list_data = self.xw_range.value
-        if convert_float:
-            # Excel 'numbers' are always floats
-            def convert(value):
-                if isinstance(value, float):
-                    int_val = int(value)
-                    if int_val == value:
-                        return int_val
-                return value
+    def load(self, header=True, convert_float=True, nb_index=0, index_col=None):
+        if index_col is None and nb_index > 0:
+            index_col = list(range(nb_index))
 
-            list_data = [[convert(v) for v in line] for line in list_data]
+        list_data = self._converted_value(convert_float=convert_float)
 
         if header:
             # TODO: try getting values via self[1:] instead of via the
@@ -266,15 +284,23 @@ class Range(object):
                              for name in axes_names[-1].split('\\')]
                 axes_names = axes_names[:-1] + last_axes
 
-            nb_index = len(axes_names) - 1
-            index_col = list(range(nb_index))
-
-            if nb_index == 0:
-                nb_index = 1
-            data = np.array([line[nb_index:] for line in list_data[1:]])
-            axes_labels = [list(unique([line[i] for line in list_data[1:]]))
+            # this can only happen if both nb_index=0 and index_col is None
+            # XXX: we might want to have nb_index default to None instead of
+            #      0 so that we can force "no index at all"
+            if index_col is None:
+                nb_index = len(axes_names) - 1
+                index_col = list(range(nb_index))
+            assert isinstance(index_col, list)
+            # at this point index_col should be a list but it could be empty
+            col_offset = (max(index_col) + 1) if index_col else 1
+            # number of header lines or comment lines at the start of the file
+            # TODO: we need to support comments & more
+            row_offset = 1
+            data_no_header = list_data[row_offset:]
+            data = np.array([line[col_offset:] for line in data_no_header])
+            axes_labels = [list(unique([line[i] for line in data_no_header]))
                            for i in index_col]
-            axes_labels.append(header_line[nb_index:])
+            axes_labels.append(header_line[col_offset:])
             # TODO: detect anonymous axes
             axes = [Axis(name, labels)
                     for name, labels in zip(axes_names, axes_labels)]
