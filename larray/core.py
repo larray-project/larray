@@ -1123,6 +1123,20 @@ class Group(object):
         """
         return self.__class__(self.key, name, self.axis)
 
+    def with_axis(self, axis):
+        """Returns group with a different axis.
+
+        Parameters
+        ----------
+        axis : int, str, Axis
+            new axis for group
+
+        Returns
+        -------
+        Group
+        """
+        return self.__class__(self.key, self.name, axis)
+
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
