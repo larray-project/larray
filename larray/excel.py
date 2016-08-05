@@ -31,6 +31,11 @@ if xw is not None:
     LArrayConverter.register(LArray)
 
 
+class ClosedBook(object):
+    def __getattribute__(self, key):
+        raise AttributeError("workbook is closed")
+
+
 class Workbook(object):
     def __init__(self, filepath, *args, **kwargs):
         """
@@ -112,6 +117,56 @@ class Workbook(object):
 
     def sheet_names(self):
         return [s.name for s in self]
+
+    def save(self, path=None):
+        """
+        Saves the Workbook. If a path is being provided, this works like
+        SaveAs() in Excel. If no path is specified and if the file hasn't been
+        saved previously, it's being saved in the current working directory
+        with the current filename. Existing files are overwritten without
+        prompting.
+
+        Arguments
+        ---------
+        path : str, default None
+            path to the workbook
+
+        Example
+        -------
+        >>> wb = open_excel()
+        >>> wb.save()
+        >>> # wb.save("c:/path/to/new_file_name.xlsx")
+        >>> wb.close()
+        """
+        if path is not None:
+            path = os.path.abspath(path)
+        self.xw_wkb.save(path)
+
+    def close(self, force=False):
+        """
+        Close the current connection to the Workbook. If the workbook was
+        not already open in Excel when this connection was created, it is
+        closed in Excel, otherwise it is left open in Excel unless `force` is
+        used. In the case the workbook is left open in Excel, the connection
+        to it becomes non functional.
+
+        Parameters
+        ----------
+        force : bool, optional
+            whether or not to force closing the workbook in Excel,
+            in addition to our connection to it. If not provided,
+            the workbook is closed in excel only if it was not open before
+            this python connection to it was created.
+        """
+        if not self.was_open or force:
+            self.xw_wkb.close()
+
+        # not using None, because that is the default value for xlwings,
+        # and means that this Workbook object would remain functional (but
+        # possibly pointing at another file!) if there is any Excel file
+        # left open.
+        self.xw_wkb = ClosedBook()
+        self.was_open = False
 
     def __iter__(self):
         xw_sheets = xw.Sheet.all(self.xw_wkb)
