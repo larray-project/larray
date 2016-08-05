@@ -3052,26 +3052,28 @@ class LArray(object):
         if len(axes_names) > 1:
             axes_names[-2] = '\\'.join(axes_names[-2:])
             axes_names.pop()
-        labels = self.axes.labels[:-1]
+        labels = [axis.labels.tolist() for axis in self.axes[:-1]]
         if self.ndim == 1:
             # There is no vertical axis, so the axis name should not have
             # any "tick" below it and we add an empty "tick".
             ticks = [['']]
         else:
             ticks = product(*labels)
-        yield axes_names + list(self.axes.labels[-1])
-
+        yield axes_names + self.axes[-1].labels.tolist()
         # summary if needed
         if maxlines is not None and height > maxlines:
-            data = chain(data[:edgeitems], [["..."] * width], data[-edgeitems:])
-            if height > maxlines:
-                startticks = islice(ticks, edgeitems)
-                midticks = [["..."] * (self.ndim - 1)]
-                endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
-                ticks = chain(startticks, midticks, endticks)
-
-        for tick, dataline in izip(ticks, data):
-            yield list(tick) + list(dataline)
+            startticks = islice(ticks, edgeitems)
+            midticks = [["..."] * (self.ndim - 1)]
+            endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
+            ticks = chain(startticks, midticks, endticks)
+            data = chain(data[:edgeitems].tolist(),
+                         [["..."] * width],
+                         data[-edgeitems:].tolist())
+            for tick, dataline in izip(ticks, data):
+                yield list(tick) + dataline
+        else:
+            for tick, dataline in izip(ticks, data):
+                yield list(tick) + dataline.tolist()
 
     def dump(self, header=True):
         """dump array as a 2D nested list
