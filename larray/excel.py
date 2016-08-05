@@ -106,6 +106,18 @@ class Workbook(object):
         return Sheet(self, key)
 
     def __setitem__(self, key, value):
+        if isinstance(value, Sheet):
+            if key in self:
+                xw_sheet = self[key].xw_sheet
+                # avoid having the sheet name renamed to "name (1)"
+                xw_sheet.name = '__tmp__'
+                # add new sheet before sheet to overwrite
+                value.xw_sheet.xl_sheet.Copy(xw_sheet.xl_sheet)
+                xw_sheet.delete()
+            else:
+                xw_sheet = self[-1]
+                value.xw_sheet.xl_sheet.Copy(xw_sheet.xl_sheet)
+            return
         if key in self:
             key = self._concrete_key(key)
             sheet = Sheet(self, key)
