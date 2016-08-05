@@ -1236,8 +1236,9 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
-            raise ValueError("Cannot have multiple occurences of the same axis "
-                             "object in a collection ('%s' -- %s with id %d). "
+            raise ValueError("Cannot have multiple occurrences of the same "
+                             "axis object in a collection "
+                             "('%s' -- %s with id %d). "
                              "Several axes with the same name are allowed "
                              "though (but not recommended)."
                              % (axis.name, axis.labels_summary(), id(axis)))
