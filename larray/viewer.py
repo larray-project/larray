@@ -1211,22 +1211,31 @@ class ArrayEditorWidget(QWidget):
             #     self.error(_("The 'ylabels' argument length do no match array row "
             #                  "number"))
             #     return False
-        self._set_raw_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._set_raw_data(data, xlabels, ylabels,
+                           bg_gradient=bg_gradient, bg_value=bg_value)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
-        # FIXME: this method should be *FAST*, as it is used for each filter
-        # change
-        ndecimals, use_scientific = self.choose_format(data)
+    def _set_raw_data(self, data, xlabels, ylabels, changes=None,
+                      bg_gradient=None, bg_value=None):
+        size = data.size
+        # this will yield a data sample of max 199
+        step = (size // 100) if size > 100 else 1
+        data_sample = data.flat[::step]
+
+        # TODO: refactor so that the expensive format_helper is not called
+        # twice (or the values are cached)
+        use_scientific = self.choose_scientific(data_sample)
+
         # XXX: self.ndecimals vs self.digits
-        self.digits = ndecimals
+        self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
         self.data = data
         self.model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes, bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model.set_data(data, xlabels, ylabels, changes,
+                            bg_gradient=bg_gradient, bg_value=bg_value)
 
-        self.digits_spinbox.setValue(ndecimals)
+        self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
 
         self.scientific_checkbox.setChecked(use_scientific)
@@ -1279,12 +1288,6 @@ class ArrayEditorWidget(QWidget):
         if data_frac_digits < ndecimals:
             ndecimals = data_frac_digits
         return ndecimals
-
-    def choose_format(self, data):
-        # TODO: refactor so that the expensive format_helper is not called
-        # twice (or the values are cached)
-        use_scientific = self.choose_scientific(data)
-        return self.choose_ndecimals(data, use_scientific), use_scientific
 
     def format_helper(self, data):
         if not data.size:
