@@ -1998,38 +1998,72 @@ class SessionComparator(QDialog):
                                   bg_gradient=self.gradient)
 
 
-def find_names(obj, depth=1):
+def find_names(obj, depth=0):
+    """Return all names an object is bound to.
+
+    Parameters
+    ----------
+    obj : object
+        the object to find names for.
+    depth : int
+        depth of call frame to inspect. 0 is where find_names was called,
+        1 the caller of find_names, etc.
+
+    Returns
+    -------
+    list of str
+        all names obj is bound to, sorted alphabetically. Can be [] if we
+        computed an array just to view it.
+    """
     # noinspection PyProtectedMember
-    l = sys._getframe(depth).f_locals
+    l = sys._getframe(depth + 1).f_locals
     return sorted(k for k, v in l.items() if v is obj)
 
 
-def get_title(obj, depth=1):
+def get_title(obj, depth=0, maxnames=3):
+    """Return a title for an object (a combination of the names it is bound to).
+
+    Parameters
+    ----------
+    obj : object
+        the object to find a title for.
+    depth : int
+        depth of call frame to inspect. 0 is where get_title was called,
+        1 the caller of get_title, etc.
+
+    Returns
+    -------
+    str
+        title for obj. This can be '' if we computed an array just to view it.
+    """
     names = find_names(obj, depth=depth + 1)
-    # names can be == [] if we compute an array just to view it
+    # names can be == []
     # eg. view(arr['H'])
-    if len(names) > 3:
-        names = names[:3] + ['...']
+    if len(names) > maxnames:
+        names = names[:maxnames] + ['...']
     return ', '.join(names)
 
 
 def edit(array, title='', minvalue=None, maxvalue=None):
     _app = qapplication()
     if not title:
-        title = get_title(array, depth=2)
+        title = get_title(array, depth=1)
     dlg = ArrayEditor()
     if dlg.setup_and_check(array, title=title,
                            minvalue=minvalue, maxvalue=maxvalue):
         dlg.exec_()
 
 
-def view(obj, title=''):
+def view(obj=None, title=''):
     _app = qapplication()
-    if not title:
-        title = get_title(obj, depth=2)
-
-    if isinstance(obj, dict) and all(isinstance(o, la.LArray) for o in obj.values()):
+    if obj is None:
+        obj = la.local_arrays(depth=1)
+    elif isinstance(obj, dict) and \
+            all(isinstance(o, la.LArray) for o in obj.values()):
         obj = la.Session(obj)
+
+    if not title:
+        title = get_title(obj, depth=1)
 
     if isinstance(obj, la.Session):
         dlg = SessionEditor()
@@ -2049,10 +2083,11 @@ def compare(*args, **kwargs):
         dlg = ArrayComparator()
         default_name = 'array'
 
-    def get_name(i, obj):
-        names = find_names(obj, depth=4)
-        return names[0] if names else '%s %d' % (default_name, i)
-    names = [get_name(i, a) for i, a in enumerate(args)]
+    def get_name(i, obj, depth=0):
+        obj_names = find_names(obj, depth=depth + 1)
+        return obj_names[0] if obj_names else '%s %d' % (default_name, i)
+
+    names = [get_name(i, a, depth=1) for i, a in enumerate(args)]
     if dlg.setup_and_check(args, names=names, title=title):
         dlg.exec_()
 
