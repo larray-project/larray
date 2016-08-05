@@ -3850,18 +3850,21 @@ class LArray(object):
             if isinstance(other, ExprNode):
                 other = other.evaluate(self.axes)
 
+            # we could pass scalars through aslarray too but it is too costly
+            # performance-wise for only suppressing one isscalar test and an
+            # if statement.
+            # TODO: ndarray should probably be converted to larrays because
+            # that would harmonize broadcasting rules, but it makes some
+            # tests fail for some reason.
+            if not isinstance(other, (LArray, np.ndarray)) and \
+                    not np.isscalar(other):
+                other = aslarray(other)
+
             if isinstance(other, LArray):
                 # TODO: first test if it is not already broadcastable
                 (self, other), res_axes = \
                     make_numpy_broadcastable([self, other])
                 other = other.data
-            elif isinstance(other, np.ndarray):
-                pass
-            elif other is None:
-                return False
-            elif not np.isscalar(other):
-                raise TypeError("unsupported operand type(s) for %s: '%s' "
-                                "and '%s'" % (opname, type(self), type(other)))
             return LArray(super_method(self.data, other), res_axes)
         opmethod.__name__ = fullname
         return opmethod
