@@ -5503,7 +5503,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     mult : scalar, LArray, optional
         value to multiply the previous value by. Defaults to 1.
     func : function/callable, optional
-        function to apply to the previous value. Defaults to None.
+        function to apply to the previous value. Defaults to None. Note that
+        this is much slower than using inc and/or mult.
     axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
         axes of the result. Defaults to the union of axes present in other
         arguments.
@@ -5576,6 +5577,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
         inc = 1 if mult is 1 else 0
     if isinstance(axis, int):
         axis = Axis(None, axis)
+    elif isinstance(axis, Group):
+        axis = Axis(axis.axis.name, list(axis))
     if axes is None:
         def strip_axes(col):
             return get_axes(col) - axis
@@ -5584,13 +5587,40 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     else:
         axes = AxisCollection(axes)
     axis = axes[axis]
-    # FIXME: we should compute combined dtype for inital, inc, mult
-    res = empty(axes, dtype=np.asarray(initial).dtype)
+    res_dtype = np.dtype(common_type((initial, inc, mult)))
+    res = empty(axes, dtype=res_dtype)
     res[axis.i[0]] = initial
+    def has_axis(a, axis):
+        return isinstance(a, LArray) and axis in a.axes
     if func is not None:
         for i in range(1, len(axis)):
             res[axis.i[i]] = func(res[axis.i[i - 1]])
-    else:
+    elif has_axis(inc, axis) and has_axis(mult, axis):
+        # This case is more complicated to vectorize. It seems
+        # doable (probably by adding a fictive axis), but let us wait until
+        # someone requests it. The trick is to be able to write this:
+        # a[i] = initial * prod(mult[j]) + inc[1] * prod(mult[j]) + ...
+        #                 j=1..i                    j=2..i
+        #      + inc[i-2] * prod(mult[j]) + inc[i-1] * mult[i] + inc[i]
+        #                 j=i-1..i
+
+        # a[0] = initial
+        # a[1] = initial * mult[1]
+        #      + inc[1]
+        # a[2] = initial * mult[1] * mult[2]
+        #      + inc[1] * mult[2]
+        #      + inc[2]
+        # a[3] = initial * mult[1] * mult[2] * mult[3]
+        #      + inc[1] * mult[2] * mult[3]
+        #      + inc[2]           * mult[3]
+        #      + inc[3]
+        # a[4] = initial * mult[1] * mult[2] * mult[3] * mult[4]
+        #      + inc[1] * mult[2] * mult[3] * mult[4]
+        #      + inc[2]           * mult[3] * mult[4]
+        #      + inc[3]                     * mult[4]
+        #      + inc[4]
+
+        # a[1:] = initial * cumprod(mult[1:]) + ...
         def index_if_exists(a, axis, i):
             if isinstance(a, LArray) and axis in a.axes:
                 a_axis = a.axes[axis]
@@ -5601,6 +5631,53 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
             i_mult = index_if_exists(mult, axis, i)
             i_inc = index_if_exists(inc, axis, i)
             res[axis.i[i]] = res[axis.i[i - 1]] * i_mult + i_inc
+    else:
+        # TODO: use cumprod and cumsum to avoid the explicit loop
+        # it is easy for constant inc OR constant mult.
+        # it is easy for array inc OR array mult.
+        # it is a bit more complicated for constant inc AND constant mult
+        #
+        # it gets hairy for array inc AND array mult. It seems doable but let us
+        #    wait until someone requests it.
+        def array_or_full(a, axis, initial):
+            dt = common_type((a, initial))
+            r = empty((get_axes(a) - axis) | axis, dtype=dt)
+            r[axis.i[0]] = initial
+            if isinstance(a, LArray) and axis in a.axes:
+                # not using axis.i[1:] because a could have less ticks
+                # on axis than axis
+                r[axis.i[1:]] = a[axis[axis.labels[1]:]]
+            else:
+                r[axis.i[1:]] = a
+            return r
+
+        # inc only (integer scalar)
+        if np.isscalar(mult) and mult == 1 and np.isscalar(inc) and \
+                res_dtype.kind == 'i':
+            # stop is not included
+            stop = initial + inc * len(axis)
+            data = np.arange(initial, stop, inc)
+            res[:] = LArray(data, axis)
+        # inc only (other scalar)
+        elif np.isscalar(mult) and mult == 1 and np.isscalar(inc):
+            # stop is included
+            stop = initial + inc * (len(axis) - 1)
+            data = np.linspace(initial, stop=stop, num=len(axis))
+            res[:] = LArray(data, axis)
+        # inc only (array)
+        elif np.isscalar(mult) and mult == 1:
+            inc_array = array_or_full(inc, axis, initial)
+            res[axis.i[1:]] = inc_array.cumsum(axis)[axis.i[1:]]
+        # mult only (scalar or array)
+        elif np.isscalar(inc) and inc == 0:
+            mult_array = array_or_full(mult, axis, initial)
+            res[axis.i[1:]] = mult_array.cumprod(axis)[axis.i[1:]]
+        # both inc and mult defined but scalars or axis not present
+        else:
+            mult_array = array_or_full(mult, axis, 1.0)
+            cum_mult = mult_array.cumprod(axis)[axis.i[1:]]
+            res[axis.i[1:]] = \
+                ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
 
 
