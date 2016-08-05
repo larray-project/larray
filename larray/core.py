@@ -2480,9 +2480,44 @@ class LArray(object):
         return self[tuple(sort_key(axis) for axis in axes)]
 
     def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
+        """
+        Parameters
+        ----------
+        axis_key : any kind of key
+        bool_passthrough
+
+        Returns
+        -------
+        PGroup with valid axis (from self.axes)
+        """
+
         if isinstance(axis_key, Group):
+            axis = axis_key.axis
+            # we have axis information but not necessarily an Axis object
+            # from self.axes
+            if axis is not None:
+                real_axis = self.axes[axis]
+                if axis is not real_axis:
+                    axis_key = axis_key.with_axis(real_axis)
+
+        # already positional
+        if isinstance(axis_key, PGroup):
+            if axis is None:
+                raise ValueError("positional groups without axis are not "
+                                 "supported")
             return axis_key
 
+        # labels but known axis
+        if isinstance(axis_key, LGroup) and axis_key.axis is not None:
+            axis = axis_key.axis
+            try:
+                axis_pos_key = axis.translate(axis_key, bool_passthrough)
+            except KeyError:
+                raise ValueError("%s is not a valid label for any axis"
+                                 % axis_key)
+            return axis.i[axis_pos_key]
+
+        # otherwise we need to guess the axis
         # TODO: instead of checking all axes, we should have a big mapping
         # (in AxisCollection or LArray):
         # label -> (axis, index)
@@ -2506,9 +2541,18 @@ class LArray(object):
         return valid_axes[0].i[axis_pos_key]
 
     def _translate_axis_key(self, axis_key, bool_passthrough=True):
+        """same as chunk
+
+        Returns
+        -------
+        PGroup with valid axis (from self.axes)
+        """
+        # TODO: do it for Group without axis too
         # TODO: do it for LArray key too (but using .i[] instead)
         if isinstance(axis_key, (tuple, list, np.ndarray)):
             axis = None
+            # TODO: I should actually do some benchmarks to see if this is
+            #       useful, and estimate which numbers to use
             for size in (1, 10, 100, 1000):
                 # TODO: do not recheck already checked elements
                 key_chunk = axis_key[:size]
@@ -2519,6 +2563,7 @@ class LArray(object):
                     break
                 except ValueError:
                     continue
+            # the (start of the) key match a single axis
             if axis is not None:
                 # make sure we have an Axis object
                 axis = self.axes[axis]
@@ -2614,60 +2659,47 @@ class LArray(object):
             key = (key,)
 
         if isinstance(key, tuple):
-            # handle keys containing an Ellipsis
-            # cannot use key.count(Ellipsis) because that calls == on each
-            # element and this breaks if there are ndarrays/LArrays in there.
-            num_ellipses = sum(isinstance(k, type(Ellipsis)) for k in key)
-            if num_ellipses > 1:
-                raise ValueError("cannot use more than one Ellipsis (...)")
-            elif num_ellipses == 1:
-                # XXX: we might want to just ignore them, since their
-                # position do not matter anymore (guess axis)
-                pos = key.index(Ellipsis)
-                none_slices = (slice(None),) * (self.ndim - len(key) + 1)
-                key = key[:pos] + none_slices + key[pos + 1:]
+            # drop slice(None) and Ellipsis since they are meaningless because
+            # of guess_axis.
+            # XXX: we might want to raise an exception when we find Ellipses
+            # or (most) slice(None) because except for a single slice(None)
+            # a[:], I don't think there is any point.
+            key = [axis_key for axis_key in key
+                   if not isnoneslice(axis_key) and axis_key is not Ellipsis]
 
-            # translate non LKey to PGroup and drop slice(None) since
-            # they are meaningless at this point
-            # XXX: we might want to raise an exception when we find (most)
-            # slice(None) because except for a single slice(None) a[:], I don't
-            # think there is any point.
-            key = tuple(
-                self._translate_axis_key(axis_key,
-                                         bool_passthrough=not bool_stuff)
-                for axis_key in key if not isnoneslice(axis_key))
+            # translate all keys to PGroup
+            key = [self._translate_axis_key(axis_key,
+                                            bool_passthrough=not bool_stuff)
+                   for axis_key in key]
 
-            assert all(isinstance(axis_key, Group) for axis_key in key)
-
-            # handle keys containing LGroups (at potentially wrong places)
-
-            # XXX:
-            # Q: support LGroup without axis?
-            # A: we should support them, but that should be done before.
-            #    at this point they should all have an axis (not necessarily
-            #    valid though)
+            assert all(isinstance(axis_key, PGroup) for axis_key in key)
 
             # extract axis from Group keys
-            dupe_axes = list(duplicates(axis_key.axis for axis_key in key))
-            if dupe_axes:
-                dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-                raise ValueError("key with duplicate axis: %s" % dupe_axes)
+            key_items = [(k.axis, k) for k in key]
+        else:
+            # key axes could be strings or axis references and we want real axes
+            key_items = [(self.axes[k], v) for k, v in key.items()]
+            # TODO: use _translate_axis_key (to translate to PGroup here too)
+            # key_items = [axis.translate(axis_key,
+            #                             bool_passthrough=not bool_stuff)
+            #              for axis, axis_key in key_items]
 
-            key = dict((axis_key.axis, axis_key) for axis_key in key)
+        # even keys given as dict can contain duplicates (if the same axis was
+        # given under different forms, e.g. name and AxisReference).
+        dupe_axes = list(duplicates(axis for axis, axis_key in key_items))
+        if dupe_axes:
+            dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
+            raise ValueError("key has several values for axis: %s"
+                             % dupe_axes)
 
-        # keys could be strings or axis references and we want real axes
-        key = {self.axes[k]: v for k, v in key.items()}
+        key = dict(key_items)
 
         # dict -> tuple (complete and order key)
-        assert isinstance(key, dict) and all(isinstance(k, Axis) for k in key)
-        # XXX: probably useless (due to new code above)
-        for axis in key:
-            if axis not in self.axes:
-                raise KeyError("{} is not a valid axis".format(repr(axis)))
-        key = tuple(key[axis] if axis in key else slice(None)
-                    for axis in self.axes)
+        assert all(isinstance(k, Axis) for k in key)
+        key = [key[axis] if axis in key else slice(None)
+               for axis in self.axes]
 
-        # label -> raw positional
+        # pgroup -> raw positional
         return tuple(axis.translate(axis_key, bool_passthrough=not bool_stuff)
                      for axis, axis_key in zip(self.axes, key))
 
@@ -3309,9 +3341,15 @@ class LArray(object):
                 key = to_keys(key)
             if isinstance(key, tuple):
                 # a tuple is supposed to be several groups on the same axis
-                # XXX: we might want to use self._translate_axis_key directly
+                # TODO: it would be better to use
+                # self._translate_axis_key directly
                 # (so that we do not need to do the label -> position
-                #  translation twice)
+                #  translation twice) but this fails because the groups are
+                # also used as ticks on the new axis, and pgroups are not the
+                # same that LGroups in this regard (I wonder if
+                # ideally it shouldn't be the same???)
+                # groups = tuple(self._translate_axis_key(k)
+                #                for k in key)
                 groups = tuple(self._guess_axis(k) for k in key)
                 axis = groups[0].axis
                 if not all(g.axis.equals(axis) for g in groups[1:]):
@@ -3804,6 +3842,7 @@ class LArray(object):
                 skipna = nanfunc is not None
             if skipna and nanfunc is None:
                 raise ValueError("skipna is not available for %s" % name)
+            # func = npfunc
             func = nanfunc if skipna else npfunc
             return self._aggregate(func, args, kwargs,
                                    keepaxes=keepaxes,
