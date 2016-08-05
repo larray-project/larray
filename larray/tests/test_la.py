@@ -84,8 +84,10 @@ class TestValueStrings(TestCase):
         # this would break for string values (because '10' < '2')
         self.assertEqual(to_ticks('0:115'), srange(116))
         self.assertEqual(to_ticks(':115'), srange(116))
-        self.assertRaises(ValueError, to_ticks, '10:')
-        self.assertRaises(ValueError, to_ticks, ':')
+        with self.assertRaises(ValueError):
+            to_ticks('10:')
+        with self.assertRaises(ValueError):
+            to_ticks(':')
 
 
 class TestKeyStrings(TestCase):
@@ -606,9 +608,8 @@ class TestAxisCollection(TestCase):
         # c) with incompatible dupe
         # XXX: the "new" age axis is ignored. We might want to ignore it if it
         #  is the same but raise an exception if it is different
-        # new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
-        self.assertRaises(ValueError, col.__add__,
-                          [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')])
+        with self.assertRaises(ValueError):
+            col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
 
         # 2) other AxisCollection
         new = col + AxisCollection([geo, value])
@@ -916,8 +917,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
-        # la[[1, 5, 9], age['1,5,9']]
-        self.assertRaises(ValueError, la.__getitem__, ([1, 5], age.i[1, 5]))
+        with self.assertRaisesRegexp(ValueError,
+                                     "key has several values for axis: age"):
+            la[age.i[1, 2], age.i[3, 4]]
 
     def test_getitem_abstract_positional(self):
         raw = self.array
@@ -953,8 +955,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
-        # la[[1, 5, 9], age['1,5,9']]
-        self.assertRaises(ValueError, la.__getitem__, ([1, 5], x.age.i[1, 5]))
+        with self.assertRaisesRegexp(ValueError,
+                                     "key has several values for axis: age"):
+            la[x.age.i[2, 3], x.age.i[1, 5]]
 
     def test_getitem_bool_larray_key(self):
         raw = self.array
@@ -1009,7 +1012,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(res.shape, (2, 2, 2, 2))
         self.assertEqual(res.axes.names, ['c', 'd', 'a', 'b'])
 
-
     def test_getitem_larray_key_guess(self):
         a = Axis('a', ['a1', 'a2'])
         b = Axis('b', ['b1', 'b2'])
@@ -1062,7 +1064,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
                     ([1, 0], 5)]:
             assert_array_equal(la.i[key], raw[key])
         assert_array_equal(la.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
-        self.assertRaises(IndexError, la.i.__getitem__, (0, 0, 0, 0, 0))
+        with self.assertRaises(IndexError):
+            la.i[0, 0, 0, 0, 0]
 
     def test_positional_indexer_setitem(self):
         for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0],
@@ -1248,7 +1251,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         key = (la < 5).expand([Axis('extra', 2)])
         self.assertEqual(key.ndim, 5)
         # TODO: make this work
-        self.assertRaises(ValueError, la.__setitem__, key, 0)
+        with self.assertRaises(ValueError):
+            la[key] = 0
 
     def test_set(self):
         age, geo, sex, lipro = self.larray.axes
@@ -1945,7 +1949,8 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # use a group (from another axis) which is incompatible with the axis of
         # the same name in the array
         lipro4 = Axis('lipro', 'P01,P03,P16')
-        self.assertRaises(KeyError, small.sum, lipro4['P01,P16'])
+        with self.assertRaises(KeyError):
+            small.sum(lipro4['P01,P16'])
 
     def test_ratio(self):
         la = self.larray
