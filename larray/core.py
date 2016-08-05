@@ -5828,7 +5828,7 @@ def eye(rows, columns=None, k=0, dtype=None):
     return LArray(data, axes)
 
 
-def stack(arrays, axis):
+def stack(arrays, axis=None):
     """
     stack([numbirths * HMASC,
            numbirths * (1 - HMASC)], Axis('sex', 'H,F'))
@@ -5861,12 +5861,24 @@ def stack(arrays, axis):
     nat\\sex |   H |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
+
+    or without axis:
+
+    >>> stack((arr1, arr2))
+    nat\\{1}* |   0 |   1
+          BE | 1.0 | 0.0
+          FO | 1.0 | 0.0
+
     """
-    assert len(axis) == len(arrays)
-    result_axes = AxisCollection.union(*[get_axes(v) for v in arrays]) | axis
+    if axis is None:
+        axis = Axis(None, len(arrays))
+    else:
+        assert len(axis) == len(arrays)
+    result_axes = AxisCollection.union(*[get_axes(v) for v in arrays])
+    result_axes.append(axis)
     result = empty(result_axes, common_type(arrays))
-    for label, array in zip(axis, arrays):
-        result[label] = array
+    for i, array in enumerate(arrays):
+        result[axis.i[i]] = array
     return result
 
 
