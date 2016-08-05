@@ -12,7 +12,7 @@ __all__ = [
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
     'identity', 'diag', 'eye',
-    'larray_equal',
+    'larray_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std', 'median', 'percentile',
     '__version__'
@@ -2167,6 +2167,17 @@ class LArrayPositionalPointsIndexer(object):
 
 def get_axis(obj, i):
     return obj.axes[i] if isinstance(obj, LArray) else Axis(None, obj.shape[i])
+
+
+def aslarray(a):
+    if isinstance(a, LArray):
+        return a
+    elif hasattr(a, '__larray__'):
+        return a.__larray__()
+    elif isinstance(a, pd.DataFrame):
+        return df_aslarray(a)
+    else:
+        return LArray(a)
 
 
 class LArray(object):
