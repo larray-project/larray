@@ -32,15 +32,55 @@ if xw is not None:
 
 
 class Workbook(object):
-    def __init__(self, *args, **kwargs):
-        xw_wkb = kwargs.pop('xw_wkb', None)
-        if xw_wkb is None:
+    def __init__(self, filepath, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        filepath : None, int or str
+            use None for a new blank workbook, -1 for the last active workbook
+        args
+        kwargs
+        """
+        # in many cases, it would be better to open a new Excel instance but
+        # xlwings does not support that currently (it uses Dispatch instead
+        # of DispatchEx).
+        # See: https://github.com/ZoomerAnalytics/xlwings/issues/335
+        if filepath is None:
+            # creates a new/blank Workbook
+            if 'app_visible' not in kwargs:
+                kwargs['app_visible'] = True
+            self.was_open = False
             xw_wkb = xw.Workbook(*args, **kwargs)
-        self.xw_wkb = xw_wkb
+        elif filepath == -1:
+            # not really True, but in this case close() should really close
+            self.was_open = False
+            xw_wkb = xw.Workbook.active()
+        else:
+            basename, ext = os.path.splitext(filepath)
+            if ext:
+                # XXX: we might want to be more precise than .xl* because
+                #      I am unsure writing .xls (or anything other than .xlsx
+                #      and .xlsm) would work
+                if not ext.startswith('.xl'):
+                    raise ValueError("'%s' is not a supported file "
+                                     "extension" % ext)
 
-    @classmethod
-    def active(cls):
-        return Workbook(xw_wkb=xw.Workbook.active())
+                # This is necessary because otherwise we cannot open/save to
+                # a workbook in the current directory without giving the
+                # full/absolute path. By doing this, we basically loose the
+                # ability to target an already open workbook *of a saved
+                # file* not in the current directory without using its
+                # path. I can live with that restriction though because you
+                # usually either work with relative paths or with the
+                # currently active workbook.
+                filepath = os.path.abspath(filepath)
+            if 'app_visible' not in kwargs:
+                kwargs['app_visible'] = None
+            self.was_open = xw.xlplatform.is_file_open(filepath)
+            xw_wkb = xw.Workbook(filepath, *args, **kwargs)
+            # if os.path.isfile(filepath) and overwrite_file:
+            #     os.remove(filepath)
+        self.xw_wkb = xw_wkb
 
     def _concrete_key(self, key):
         if isinstance(key, int):
@@ -310,33 +350,6 @@ class Range(object):
             return LArray(list_data)
 
 
-def open_excel(filepath=None):
-    if filepath == -1:
-        return Workbook.active()
-    elif filepath is None:
-        # creates a new/blank Workbook
-        return Workbook(app_visible=True)
-    else:
-        basename, ext = os.path.splitext(filepath)
-        if ext:
-            # XXX: we might want to be more precise than .xl* because
-            #      I am unsure writing anything else than .xlsx will
-            #      work as intended
-            if not ext.startswith('.xl'):
-                raise ValueError("'%s' is not a supported file "
-                                 "extension" % ext)
-
-            # This is necessary because otherwise we cannot open/save to
-            # a workbook in the current directory without giving the
-            # full/absolute path. By doing this, we basically loose the
-            # ability to target an already open workbook *of a saved
-            # file* not in the current directory without using its
-            # path. I can live with that restriction though because you
-            # usually either work with relative paths or with the
-            # currently active workbook.
-            filepath = os.path.abspath(filepath)
-            # save = True
-            # close = not xw.xlplatform.is_file_open(filepath)
-            # if os.path.isfile(filepath) and overwrite_file:
-            #     os.remove(filepath)
-        return Workbook(filepath, app_visible=None)
+# XXX: remove this function?
+def open_excel(filepath=None, **kwargs):
+    return Workbook(filepath, **kwargs)
