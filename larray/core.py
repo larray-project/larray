@@ -861,14 +861,17 @@ class Axis(object):
         return id(self)
 
     def _is_key_type_compatible(self, key):
-        label_kind = self.labels.dtype.kind
         key_kind = np.dtype(type(key)).kind
+        label_kind = self.labels.dtype.kind
+        # on Python2, ascii-only unicode string can match byte strings (and
+        # vice versa), so we shouldn't be more picky here than dict hashing
         str_key = key_kind in ('S', 'U')
-        # on Python2, ascii-only unicode string can match byte strings,
-        # so we shouldn't be more picky here than dict hashing
-        allowed_str_kinds = ('O',) if PY3 else ('O', 'S', 'U')
-        str_match = str_key and label_kind in allowed_str_kinds
-        return key_kind == label_kind or str_match
+        str_label = label_kind in ('S', 'U')
+        py2_str_match = not PY3 and str_key and str_label
+        # object kind can match anything
+        return key_kind == label_kind or \
+               key_kind == 'O' or label_kind == 'O' or \
+               py2_str_match
 
     def translate(self, key, bool_passthrough=True):
         """
