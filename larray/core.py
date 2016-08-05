@@ -3822,10 +3822,10 @@ class LArray(object):
     std = _agg_method(np.std, np.nanstd)
 
     # cumulative aggregates
-    def cumsum(self, axis):
+    def cumsum(self, axis=-1):
         return self._cum_aggregate(np.cumsum, axis)
 
-    def cumprod(self, axis):
+    def cumprod(self, axis=-1):
         return self._cum_aggregate(np.cumprod, axis)
 
     # element-wise method factory
