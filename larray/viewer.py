@@ -71,6 +71,7 @@ from __future__ import print_function
 
 from itertools import chain
 import math
+import re
 import sys
 
 from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
@@ -105,6 +106,14 @@ try:
     import xlwings as xw
 except ImportError:
     xw = None
+
+try:
+    from qtconsole.rich_jupyter_widget import RichJupyterWidget
+    from qtconsole.inprocess import QtInProcessKernelManager
+    qtconsole_present = True
+except ImportError:
+    qtconsole_present = False
+
 
 from larray.combo import FilterComboBox, FilterMenu
 import larray as la
@@ -1666,6 +1675,10 @@ class ArrayEditor(QDialog):
         return self.data
 
 
+statement_pattern = re.compile('.*[^=]=[^=].*')
+history_vars_pattern = re.compile('_i?\d+')
+
+
 class SessionEditor(QDialog):
     """Session Editor Dialog"""
     def __init__(self, parent=None):
@@ -1679,6 +1692,7 @@ class SessionEditor(QDialog):
 
         self.data = None
         self.arraywidget = None
+        self.expressions = {}
 
     def setup_and_check(self, data, title='', readonly=False):
         """
@@ -1704,30 +1718,83 @@ class SessionEditor(QDialog):
         self._listwidget = QListWidget(self)
         self._listwidget.addItems(self.data.names)
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
+        self._listwidget.setMinimumWidth(45)
 
-        self.arraywidget = ArrayEditorWidget(self, data[0], readonly)
+        self.arraywidget = ArrayEditorWidget(self, la.zeros(1), readonly)
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self._listwidget)
-        splitter.addWidget(self.arraywidget)
-        splitter.setSizes([5, 95])
-        splitter.setCollapsible(1, False)
+        if qtconsole_present:
+            # Create an in-process kernel
+            kernel_manager = QtInProcessKernelManager()
+            kernel_manager.start_kernel(show_banner=False)
+            kernel = kernel_manager.kernel
+            kernel.gui = 'qt4'
 
-        layout.addWidget(splitter)
+            kernel.shell.run_cell('from larray import *')
+            kernel.shell.push(self.data._objects)
+            text_formatter = \
+                kernel.shell.display_formatter.formatters['text/plain']
+            text_formatter.for_type(la.LArray, self.view_expr)
 
-        # Buttons configuration
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
+            self.kernel = kernel
 
-        buttons = QDialogButtonBox.Ok
-        if not readonly:
-            buttons |= QDialogButtonBox.Cancel
-        bbox = QDialogButtonBox(buttons)
-        bbox.accepted.connect(self.accept)
-        if not readonly:
-            bbox.rejected.connect(self.reject)
-        btn_layout.addWidget(bbox)
-        layout.addLayout(btn_layout)
+            kernel_client = kernel_manager.client()
+            kernel_client.start_channels()
+
+            ipython_widget = RichJupyterWidget()
+            ipython_widget.kernel_manager = kernel_manager
+            ipython_widget.kernel_client = kernel_client
+            ipython_widget.executed.connect(self.ipython_cell_executed)
+            ipython_widget._display_banner = False
+
+            self.eval_box = ipython_widget
+            self.eval_box.setMinimumHeight(20)
+
+            right_panel_widget = QSplitter(Qt.Vertical)
+            right_panel_widget.addWidget(self.arraywidget)
+            right_panel_widget.addWidget(self.eval_box)
+            right_panel_widget.setSizes([90, 10])
+        else:
+            self.eval_box = QLineEdit()
+            self.eval_box.returnPressed.connect(self.line_edit_update)
+
+            right_panel_layout = QVBoxLayout()
+            right_panel_layout.addWidget(self.arraywidget)
+            right_panel_layout.addWidget(self.eval_box)
+
+            # you cant add a layout directly in a splitter, so we have to wrap
+            # it in a widget
+            right_panel_widget = QWidget()
+            right_panel_widget.setLayout(right_panel_layout)
+
+        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter.addWidget(self._listwidget)
+        main_splitter.addWidget(right_panel_widget)
+        main_splitter.setSizes([10, 90])
+        main_splitter.setCollapsible(1, False)
+
+        layout.addWidget(main_splitter)
+
+        # the problem is that the qlineedit (when ipython not present) does
+        # not eat the enter key, so it gets handled by the buttons below
+        # and this closes the window.
+        # FIXME: not having the buttons is a bit radical but I am out of time
+        #        for this.
+        if qtconsole_present:
+            # Buttons configuration
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            buttons = QDialogButtonBox.Ok
+            if not readonly:
+                buttons |= QDialogButtonBox.Cancel
+            bbox = QDialogButtonBox(buttons)
+            bbox.accepted.connect(self.accept)
+            if not readonly:
+                bbox.rejected.connect(self.reject)
+            btn_layout.addWidget(bbox)
+            layout.addLayout(btn_layout)
+
+        self._listwidget.setCurrentRow(0)
 
         self.resize(800, 600)
         self.setMinimumSize(400, 300)
@@ -1736,8 +1803,80 @@ class SessionEditor(QDialog):
         self.setWindowFlags(Qt.Window)
         return True
 
+    def update_session(self, value):
+        keys_before = set(self.data.keys())
+        keys_after = set(value.keys())
+        new_keys = list(keys_after - keys_before)
+        self._listwidget.addItems(new_keys)
+        # TODO: add support for deleting keys
+
+        # display only first result if there are more than one
+        changed_keys = [k for k in keys_before | keys_after
+                        if value.get(k) is not self.data.get(k)]
+        if len(changed_keys) > 1:
+            raise NotImplementedError("modifying more than one variable at "
+                                      "once is not supported yet")
+        if changed_keys:
+            # update session
+            for k in changed_keys:
+                self.data[k] = value[k]
+
+            to_display = changed_keys[0]
+
+            if not qtconsole_present:
+                self.expressions[to_display] = s
+
+            changed_items = self._listwidget.findItems(to_display,
+                                                       Qt.MatchExactly)
+            assert len(changed_items) == 1
+
+            prev_selected = self._listwidget.selectedItems()
+            assert len(prev_selected) <= 1
+            if prev_selected and prev_selected[0] == changed_items[0]:
+                # otherwise it's not updated in this case
+                self.arraywidget.set_data(self.data[to_display])
+            else:
+                self._listwidget.setCurrentItem(changed_items[0])
+
+    def line_edit_update(self):
+        s = self.eval_box.text()
+        if statement_pattern.match(s):
+            context = self.data._objects.copy()
+            exec(s, la.__dict__, context)
+            self.update_session(context)
+        else:
+            self.view_expr(eval(s, la.__dict__, self.data))
+
+    def view_expr(self, array, *args, **kwargs):
+        self._listwidget.clearSelection()
+        self.arraywidget.set_data(array)
+
+    def ipython_cell_executed(self):
+        user_ns = self.kernel.shell.user_ns
+        ip_keys = set(['In', 'Out', '_', '__', '___',
+                       '__builtin__', '__builtins__',
+                       '__doc__', '__loader__', '__name__', '__package__',
+                       '__spec__', '_dh',
+                       '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
+                       'exit', 'get_ipython', 'quit'])
+        ns_keys = set([k for k, v in user_ns.items()
+                       if not history_vars_pattern.match(k) and
+                          (isinstance(v, (la.LArray, np.ndarray)) or
+                           np.isscalar(v))]) - ip_keys
+        clean_ns = {k: v for k, v in user_ns.items() if k in ns_keys}
+        self.update_session(clean_ns)
+
     def on_item_changed(self, curr, prev):
-        self.arraywidget.set_data(self.data[str(curr.text())])
+        name = str(curr.text())
+        self.arraywidget.set_data(self.data[name])
+        expr = self.expressions.get(name, name)
+        if qtconsole_present:
+            # # does not update
+            # self.kernel.shell.set_next_input(expr, replace=True)
+            # self.kernel_client.input(expr)
+            pass
+        else:
+            self.eval_box.setText(expr)
 
     @Slot()
     def accept(self):
@@ -2160,7 +2299,8 @@ if __name__ == "__main__":
     arr5 = arr3.max(la.x.sex)
     arr6 = arr3.mean(la.x.sex)
     # view(la.stack((arr3, arr4), la.Axis('arrays', 'arr3,arr4')))
-    compare(arr3, arr4, arr5, arr6)
+    view()
+    # compare(arr3, arr4, arr5, arr6)
 
     # arr3 = la.ndrange((1000, 1000, 500))
     # print(arr3.nbytes * 1e-9 + 'Gb')
