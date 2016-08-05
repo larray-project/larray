@@ -838,9 +838,13 @@ class Axis(object):
     def equals(self, other):
         if self is other:
             return True
-        return (isinstance(other, Axis) and self.name == other.name and
-                self.iswildcard == other.iswildcard and
-                np.array_equal(self.labels, other.labels))
+
+        # this might need to change if we ever support wildcard axes with
+        # real labels
+        return isinstance(other, Axis) and self.name == other.name and \
+               self.iswildcard == other.iswildcard and \
+               (len(self) == len(other) if self.iswildcard else
+                    np.array_equal(self.labels, other.labels))
 
     def __len__(self):
         return self._length
