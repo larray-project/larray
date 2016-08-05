@@ -1021,6 +1021,9 @@ class Axis(object):
     __ror__ = _binop('ror')
     __matmul__ = _binop('matmul')
 
+    def __larray__(self):
+        return labels_array(self)
+
     def copy(self):
         new_axis = Axis(self.name, [])
         # XXX: I wonder if we should make a copy of the labels + mapping.
