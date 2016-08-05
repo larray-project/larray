@@ -2111,6 +2111,9 @@ class LArrayPositionalIndexer(object):
     def __setitem__(self, key, value):
         self.array[self.translate_key(key)] = value
 
+    def __len__(self):
+        return len(self.array)
+
 
 class LArrayPointsIndexer(object):
     def __init__(self, array):
