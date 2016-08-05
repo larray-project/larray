@@ -1694,7 +1694,8 @@ class SessionEditor(QDialog):
         self.arraywidget = None
         self.expressions = {}
 
-    def setup_and_check(self, data, title='', readonly=False):
+    def setup_and_check(self, data, title='', readonly=False,
+                        minvalue=None, maxvalue=None):
         """
         Setup SessionEditor:
         return False if data is not supported, True otherwise
@@ -2183,12 +2184,22 @@ def get_title(obj, depth=0, maxnames=3):
     return ', '.join(names)
 
 
-def edit(array, title='', minvalue=None, maxvalue=None):
+def edit(obj=None, title='', minvalue=None, maxvalue=None):
     _app = qapplication()
+    if obj is None:
+        obj = la.local_arrays(depth=1)
+    elif isinstance(obj, dict) and \
+            all(isinstance(o, la.LArray) for o in obj.values()):
+        obj = la.Session(obj)
+
     if not title:
-        title = get_title(array, depth=1)
-    dlg = ArrayEditor()
-    if dlg.setup_and_check(array, title=title,
+        title = get_title(obj, depth=1)
+
+    if isinstance(obj, la.Session):
+        dlg = SessionEditor()
+    else:
+        dlg = ArrayEditor()
+    if dlg.setup_and_check(obj, title=title,
                            minvalue=minvalue, maxvalue=maxvalue):
         dlg.exec_()
 
