@@ -366,7 +366,7 @@ class Session(object):
                        for name in all_names})
 
 
-def local_arrays():
+def local_arrays(depth=0):
     # noinspection PyProtectedMember
-    d = sys._getframe(1).f_locals
+    d = sys._getframe(depth + 1).f_locals
     return Session((k, v) for k, v in d.items() if isinstance(v, LArray))
