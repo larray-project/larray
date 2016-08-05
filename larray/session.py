@@ -299,6 +299,12 @@ class Session(object):
         """
         return sorted(self._objects.keys())
 
+    def copy(self):
+        return Session(self._objects)
+
+    def keys(self):
+        return self._objects.keys()
+
     # XXX: sorted?
     def values(self):
         return self._objects.values()
