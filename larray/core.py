@@ -1228,7 +1228,7 @@ class AxisCollection(object):
         """
         if axes is None:
             axes = []
-        if isinstance(axes, (int, long, str, Axis)):
+        elif isinstance(axes, (int, long, str, Axis)):
             axes = [axes]
         axes = [axis if isinstance(axis, Axis) else Axis(None, axis)
                 for axis in axes]
