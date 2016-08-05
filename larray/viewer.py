@@ -2309,8 +2309,17 @@ if __name__ == "__main__":
     arr4 = arr3.min(la.x.sex)
     arr5 = arr3.max(la.x.sex)
     arr6 = arr3.mean(la.x.sex)
+
+    # compare(arr3, arr4, arr5, arr6)
+
     # view(la.stack((arr3, arr4), la.Axis('arrays', 'arr3,arr4')))
-    view()
+    edit()
+
+    # s = la.local_arrays()
+    # edit(s)
+    # s.dump('x.h5')
+    # view(la.Session('x.h5'))
+
     # compare(arr3, arr4, arr5, arr6)
 
     # arr3 = la.ndrange((1000, 1000, 500))
