@@ -5238,19 +5238,26 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
                        fill_value=na)
 
 
-def read_excel(filepath, sheetname=0, nb_index=0, index_col=[],
-               na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
+               na=np.nan, sort_rows=False, sort_columns=False,
+               engine='xlwings', **kwargs):
     """
     reads excel file from sheet name and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
     """
-    if isinstance(index_col, list) and len(index_col) == 0:
-        index_col = list(range(nb_index))
-    df = pd.read_excel(filepath, sheetname, index_col=index_col, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    if engine == 'xlwings':
+        from .excel import open_excel
+        with open_excel(filepath) as wb:
+            return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
+    else:
+        if isinstance(index_col, list) and len(index_col) == 0:
+            index_col = list(range(nb_index))
+        df = pd.read_excel(filepath, sheetname, index_col=index_col,
+                           engine=engine, **kwargs)
+        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                           fill_value=na)
 
 
 def read_sas(filepath, nb_index=0, index_col=[],
