@@ -109,7 +109,7 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['e', 'f'])
 
         s = Session()
-        s.load('test_session_csv', fmt='csv')
+        s.load('test_session_csv', engine='pandas_csv')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
     def test_eq(self):
