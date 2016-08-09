@@ -823,6 +823,8 @@ class Axis(object):
         return Axis(name, labels)
 
     def iscompatible(self, other):
+        if self is other:
+            return True
         if not isinstance(other, Axis):
             return False
         if self.name is not None and other.name is not None and \
