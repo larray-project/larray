@@ -1530,20 +1530,10 @@ class AxisCollection(object):
 
     def check_compatible(self, axes):
         for i, axis in enumerate(axes):
-            # XXX: use self.get_by_pos?
-            # if axis in self:
-            #     local_axis = self[axis]
-            # else:
-            #     local_axis = self[i] if i < len(self) else None
-
-            if axis.name is not None:
-                local_axis = self._map.get(axis.name)
-            else:
-                local_axis = self[i] if i < len(self) else None
-            if local_axis is not None:
-                if not local_axis.iscompatible(axis):
-                    raise ValueError("incompatible axes:\n%r\nvs\n%r"
-                                     % (axis, local_axis))
+            local_axis = self.get_by_pos(axis, i)
+            if not local_axis.iscompatible(axis):
+                raise ValueError("incompatible axes:\n%r\nvs\n%r"
+                                 % (axis, local_axis))
 
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
