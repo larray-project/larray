@@ -11,7 +11,7 @@ import pandas as pd
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones, eye, diag,
                     clip, exp, where, x, view, mean, var, std, isnan,
-                    round, local_arrays)
+                    round)
 from larray.core import to_ticks, to_key, srange, df_aslarray
 
 
