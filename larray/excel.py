@@ -427,3 +427,7 @@ if xw is not None:
     # XXX: remove this function?
     def open_excel(filepath=None, **kwargs):
         return Workbook(filepath, **kwargs)
+else:
+    def open_excel(filepath=None, **kwargs):
+        raise Exception("open_excel() is not available because xlwings "
+                        "is not installed")
