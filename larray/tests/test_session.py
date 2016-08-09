@@ -90,9 +90,12 @@ class TestSession(TestCase):
 
     def test_dump(self):
         self.session.dump('test_session.h5')
-        self.session.dump('test_session.xlsx')
-        self.session.dump('test_session_ef.xlsx', ['e', 'f'])
-        self.session.dump_excel('test_session2.xlsx')
+        self.session.dump('test_session.xlsx', engine='pandas_excel')
+        self.session.dump('test_session_ef.xlsx', ['e', 'f'],
+                          engine='pandas_excel')
+        # dump_excel uses default engine (xlwings) which is not available on
+        # travis
+        # self.session.dump_excel('test_session2.xlsx')
         self.session.dump_csv('test_session_csv')
 
     def test_load(self):
@@ -105,7 +108,7 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
         s = Session()
-        s.load('test_session_ef.xlsx')
+        s.load('test_session_ef.xlsx', engine='pandas_excel')
         self.assertEqual(s.names, ['e', 'f'])
 
         s = Session()
@@ -175,8 +178,9 @@ class TestSession(TestCase):
         s = Session('test_session.h5')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
-        s = Session('test_session_ef.xlsx')
-        self.assertEqual(s.names, ['e', 'f'])
+        # this needs xlwings installed
+        # s = Session('test_session_ef.xlsx')
+        # self.assertEqual(s.names, ['e', 'f'])
 
         # TODO: format autodetection does not work in this case
         # s = Session('test_session_csv')
