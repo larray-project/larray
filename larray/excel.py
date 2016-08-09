@@ -54,15 +54,16 @@ if xw is not None:
             # of DispatchEx).
             # See: https://github.com/ZoomerAnalytics/xlwings/issues/335
             if filepath is None:
-                # creates a new/blank Workbook
-                if 'app_visible' not in kwargs:
-                    kwargs['app_visible'] = True
+                # creates a new/blank Book
                 self.was_open = False
-                xw_wkb = xw.Workbook(*args, **kwargs)
+                # new App is visible by default
+                app = xw.App()
+                xw_wkb = app.books[0]
             elif filepath == -1:
                 # not really True, but in this case close() should really close
                 self.was_open = False
-                xw_wkb = xw.Workbook.active()
+                # active book in active app/instance
+                xw_wkb = xw.books.active
             else:
                 basename, ext = os.path.splitext(filepath)
                 if ext:
@@ -82,20 +83,12 @@ if xw is not None:
                     # usually either work with relative paths or with the
                     # currently active workbook.
                     filepath = os.path.abspath(filepath)
-                if 'app_visible' not in kwargs:
-                    kwargs['app_visible'] = None
-                self.was_open = xw.xlplatform.is_file_open(filepath)
-                if os.path.isfile(filepath):
-                    # if os.path.isfile(filepath) and overwrite_file:
-                    #     os.remove(filepath)
-                    xw_wkb = xw.Workbook(filepath, *args, **kwargs)
-                else:
-                    # this is ugly but this is the only way I found to
-                    # create a new workbook and set its filepath
-                    # XXX: this is confusing for the user if he tries to
-                    # open the file before it is saved.
-                    xw_wkb = xw.Workbook(*args, **kwargs)
-                    xw_wkb.save(filepath)
+                # if 'visible' not in kwargs:
+                #     kwargs['visible'] = None
+                self.was_open = False  #xw.xlplatform.is_file_open(filepath)
+                xw_wkb = xw.Book(filepath, *args, **kwargs)
+                # if os.path.isfile(filepath) and overwrite_file:
+                #     os.remove(filepath)
             self.xw_wkb = xw_wkb
 
         def _concrete_key(self, key):
@@ -123,18 +116,17 @@ if xw is not None:
                     # avoid having the sheet name renamed to "name (1)"
                     xw_sheet.name = '__tmp__'
                     # add new sheet before sheet to overwrite
-                    value.xw_sheet.xl_sheet.Copy(xw_sheet.xl_sheet)
+                    value.xw_sheet.api.Copy(xw_sheet.api)
                     xw_sheet.delete()
                 else:
                     xw_sheet = self[-1]
-                    value.xw_sheet.xl_sheet.Copy(xw_sheet.xl_sheet)
+                    value.xw_sheet.api.Copy(xw_sheet.api)
                 return
             if key in self:
-                key = self._concrete_key(key)
-                sheet = Sheet(self, key)
+                sheet = self[key]
                 sheet.clear()
             else:
-                xw_sheet = xw.Sheet.add(name=key, wkb=self.xw_wkb)
+                xw_sheet = self.xw_wkb.sheets.add(key)
                 sheet = Sheet(None, None, xw_sheet=xw_sheet)
             sheet["A1"] = value
 
@@ -143,7 +135,7 @@ if xw is not None:
 
         def save(self, path=None):
             """
-            Saves the Workbook. If a path is being provided, this works like
+            Saves the Book. If a path is being provided, this works like
             SaveAs() in Excel. If no path is specified and if the file has
             not been saved previously, it's being saved in the current working
             directory with the current filename. Existing files are overwritten
@@ -168,7 +160,7 @@ if xw is not None:
 
         def close(self, force=False):
             """
-            Close the current connection to the Workbook. If the workbook was
+            Close the current connection to the Book. If the workbook was
             not already open in Excel when this connection was created, it is
             closed in Excel, otherwise it is left open in Excel unless `force`
             is used. In the case the workbook is left open in Excel, the
@@ -186,18 +178,18 @@ if xw is not None:
                 self.xw_wkb.close()
 
             # not using None, because that is the default value for xlwings,
-            # and means that this Workbook object would remain functional (but
+            # and means that this Book object would remain functional (but
             # possibly pointing at another file!) if there is any Excel file
             # left open.
             self.xw_wkb = ClosedBook()
             self.was_open = False
 
         def __iter__(self):
-            xw_sheets = xw.Sheet.all(self.xw_wkb)
-            return iter([Sheet(None, None, xw_sheet) for xw_sheet in xw_sheets])
+            return iter([Sheet(None, None, xw_sheet)
+                         for xw_sheet in self.xw_wkb.sheets])
 
         def __len__(self):
-            return len(xw.Sheet.all(self.xw_wkb))
+            return len(self.xw_wkb.sheets)
 
         def __dir__(self):
             return list(set(dir(self.__class__)) | set(dir(self.xw_wkb)))
@@ -226,7 +218,7 @@ if xw is not None:
     class Sheet(object):
         def __init__(self, workbook, key, xw_sheet=None):
             if xw_sheet is None:
-                xw_sheet = xw.Sheet(key, wkb=workbook.xw_wkb)
+                xw_sheet = workbook.xw_wkb.sheets[key]
             self.xw_sheet = xw_sheet
 
         def __getitem__(self, key):
@@ -251,7 +243,8 @@ if xw is not None:
         @property
         def shape(self):
             # include top-left empty rows/columns
-            used = self.xw_sheet.xl_sheet.UsedRange
+            # XXX: is there an exposed xlwings API for this? expand maybe?
+            used = self.xw_sheet.api.UsedRange
             return (used.Row + used.Rows.Count - 1,
                     used.Column + used.Columns.Count - 1)
 
@@ -260,6 +253,7 @@ if xw is not None:
             return 2
 
         def __array__(self, dtype=None):
+            # FIXME: convert value like in Range
             return np.array(self[:].value, dtype=dtype)
 
         def __dir__(self):
@@ -305,7 +299,7 @@ if xw is not None:
 
     class Range(object):
         def __init__(self, sheet, *args):
-            xw_range = xw.Range(sheet.xw_sheet, *args)
+            xw_range = sheet.xw_sheet.range(*args)
 
             object.__setattr__(self, 'sheet', sheet)
             object.__setattr__(self, 'xw_range', xw_range)
