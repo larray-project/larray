@@ -161,6 +161,24 @@ def unique(iterable):
             yield element
 
 
+def unique_list(iterable):
+    """
+    Returns a list of all unique elements, preserving order. Remember all
+    elements ever seen.
+    >>> unique_list('AAAABBBCCDAABBB')
+    ['A', 'B', 'C', 'D']
+    """
+    seen = set()
+    seen_add = seen.add
+    res = []
+    res_append = res.append
+    for element in iterable:
+        if element not in seen:
+            seen_add(element)
+            res_append(element)
+    return res
+
+
 def duplicates(iterable):
     """
     List duplicated elements once, preserving order. Remember all elements ever
