@@ -2635,8 +2635,9 @@ class LArray(object):
                 # but is slow for large axes and broken if axis labels are
                 # modified in-place, which I am unsure I want to support
                 # anyway
-
-                map_key = dict(zip(key.axes, np.asarray(key).nonzero()))
+                self.axes.check_compatible(key.axes)
+                local_axes = [self.axes[axis] for axis in key.axes]
+                map_key = dict(zip(local_axes, np.asarray(key).nonzero()))
                 return tuple(map_key.get(axis, slice(None))
                              for axis in self.axes)
             else:
