@@ -5,8 +5,9 @@ import sys
 
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
-from larray.core import LArray, Axis, read_csv, read_hdf, df_aslarray, \
-    larray_equal
+
+from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_equal
+from .excel import open_excel
 
 
 def check_pattern(k, pattern):
@@ -63,7 +64,7 @@ class FileHandler(object):
         self.close()
 
 
-class HDFHandler(FileHandler):
+class PandasHDFHandler(FileHandler):
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 
@@ -83,7 +84,7 @@ class HDFHandler(FileHandler):
         self.handle.close()
 
 
-class ExcelHandler(FileHandler):
+class PandasExcelHandler(FileHandler):
     def _open_for_read(self):
         self.handle = ExcelFile(self.fname)
 
@@ -105,7 +106,27 @@ class ExcelHandler(FileHandler):
         self.handle.close()
 
 
-class CSVHandler(FileHandler):
+class XLWingsHandler(FileHandler):
+    def _open_for_read(self):
+        self.handle = open_excel(self.fname)
+
+    def _open_for_write(self):
+        self.handle = open_excel(self.fname)
+
+    def list(self):
+        return self.handle.sheet_names()
+
+    def _read_array(self, key, *args, **kwargs):
+        return self.handle[key].load(*args, **kwargs)
+
+    def _dump(self, key, value, *args, **kwargs):
+        self.handle[key] = value.dump(*args, **kwargs)
+
+    def close(self):
+        self.handle.close()
+
+
+class PandasCSVHandler(FileHandler):
     def _open_for_read(self):
         pass
 
@@ -134,9 +155,18 @@ class CSVHandler(FileHandler):
         pass
 
 
-ext_classes = {'h5': HDFHandler, 'hdf': HDFHandler,
-               'xls': ExcelHandler, 'xlsx': ExcelHandler,
-               'csv': CSVHandler}
+handler_classes = {
+    'pandas_hdf': PandasHDFHandler,
+    'pandas_excel': PandasExcelHandler,
+    'xlwings_excel': XLWingsHandler,
+    'pandas_csv': PandasCSVHandler
+}
+
+ext_default_engine = {
+    'h5': 'pandas_hdf', 'hdf': 'pandas_hdf',
+    'xls': 'xlwings_excel', 'xlsx': 'xlwings_excel',
+    'csv': 'pandas_csv'
+}
 
 
 class Session(object):
@@ -198,7 +228,7 @@ class Session(object):
     def __setattr__(self, key, value):
         self._objects[key] = value
 
-    def load(self, fname, names=None, fmt='auto', display=False, **kwargs):
+    def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """Load LArray objects from a file.
 
         Parameters
@@ -208,9 +238,9 @@ class Session(object):
         names : list of str, optional
             List of arrays to load. Defaults to all valid objects present in
             the file/directory.
-        fmt : str, optional
-            Dump to the `fmt` format. Defaults to 'auto' (guess from
-            filename).
+        engine : str, optional
+            Load using `engine`. Defaults to 'auto' (use default engine for
+            the format guessed from the file extension).
         display : bool, optional
             whether or not to display which file is being worked on. Defaults
             to False.
@@ -218,16 +248,17 @@ class Session(object):
         if display:
             print("opening", fname)
         # TODO: support path + *.csv
-        if fmt == 'auto':
+        if engine == 'auto':
             _, ext = os.path.splitext(fname)
-            fmt = ext.strip('.')
-        handler = ext_classes[fmt](fname)
+            engine = ext_default_engine[ext.strip('.')]
+        handler_cls = handler_classes[engine]
+        handler = handler_cls(fname)
         arrays = handler.read_arrays(names, display=display, **kwargs)
         for k, v in arrays.items():
             self[k] = v
 
-    def dump(self, fname, names=None, fmt='auto', display=False, **kwargs):
-        """Dumps all LArray objects to a file.
+    def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
+        """Dumps all arrays from session to a file.
 
         Parameters
         ----------
@@ -236,17 +267,18 @@ class Session(object):
         names : list of str or None, optional
             list of names of objects to dump. Defaults to all objects
             present in the Session.
-        fmt : str, optional
-            Dump to the `fmt` format. Defaults to 'auto' (guess from
-            filename).
+        engine : str, optional
+            Dump using `engine`. Defaults to 'auto' (use default engine for
+            the format guessed from the file extension).
         display : bool, optional
             whether or not to display which file is being worked on. Defaults
             to False.
         """
-        if fmt == 'auto':
+        if engine == 'auto':
             _, ext = os.path.splitext(fname)
-            fmt = ext.strip('.')
-        handler = ext_classes[fmt](fname)
+            engine = ext_default_engine[ext.strip('.')]
+        handler_cls = handler_classes[engine]
+        handler = handler_cls(fname)
         arrays = self.filter(kind=LArray).items()
         if names is not None:
             names_set = set(names)
@@ -254,13 +286,13 @@ class Session(object):
         handler.dump_arrays(arrays, display=display, **kwargs)
 
     def dump_hdf(self, fname, names=None, *args, **kwargs):
-        self.dump(fname, names, 'hdf', *args, **kwargs)
+        self.dump(fname, names, ext_default_engine['hdf'], *args, **kwargs)
 
     def dump_excel(self, fname, names=None, *args, **kwargs):
-        self.dump(fname, names, 'xlsx', *args, **kwargs)
+        self.dump(fname, names, ext_default_engine['xlsx'], *args, **kwargs)
 
     def dump_csv(self, fname, names=None, *args, **kwargs):
-        self.dump(fname, names, 'csv', *args, **kwargs)
+        self.dump(fname, names, ext_default_engine['csv'], *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):
         """Return a new Session with objects which match some criteria.
