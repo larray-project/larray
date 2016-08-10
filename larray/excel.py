@@ -376,6 +376,8 @@ if xw is not None:
 
         def load(self, header=True, convert_float=True, nb_index=0,
                  index_col=None):
+            if not self.ndim:
+                return LArray([])
             if index_col is None and nb_index > 0:
                 index_col = list(range(nb_index))
 
