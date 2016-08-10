@@ -286,7 +286,9 @@ class Session(object):
             engine = ext_default_engine[ext.strip('.')]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
-        arrays = self.filter(kind=LArray).items()
+        filtered = self.filter(kind=LArray)
+        # not using .items() so that arrays are sorted
+        arrays = [(k, filtered[k]) for k in filtered.names]
         if names is not None:
             names_set = set(names)
             arrays = [(k, v) for k, v in arrays if k in names_set]
