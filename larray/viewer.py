@@ -110,9 +110,26 @@ except ImportError:
 try:
     from qtconsole.rich_jupyter_widget import RichJupyterWidget
     from qtconsole.inprocess import QtInProcessKernelManager
-    qtconsole_present = True
+    from IPython import get_ipython
+
+    ipython_instance = get_ipython()
+
+    # Having several instances of IPython of different types in the same
+    # process are not supported. We use
+    # ipykernel.inprocess.ipkernel.InProcessInteractiveShell
+    # and qtconsole and notebook use
+    # ipykernel.zmqshell.ZMQInteractiveShell, so this cannot work.
+    # For now, we simply fallback to not using IPython if we are run
+    # from IPython (whether qtconsole or notebook). The correct solution is
+    # probably to run the IPython console in a different process but I do not
+    # know what would be the consequences. I fear it could be slow to transfer
+    # the session data to the other process.
+    if ipython_instance is None:
+        qtconsole_available = True
+    else:
+        qtconsole_available = False
 except ImportError:
-    qtconsole_present = False
+    qtconsole_available = False
 
 
 from larray.combo import FilterComboBox, FilterMenu
@@ -1723,7 +1740,7 @@ class SessionEditor(QDialog):
 
         self.arraywidget = ArrayEditorWidget(self, la.zeros(1), readonly)
 
-        if qtconsole_present:
+        if qtconsole_available:
             # Create an in-process kernel
             kernel_manager = QtInProcessKernelManager()
             kernel_manager.start_kernel(show_banner=False)
@@ -1780,7 +1797,7 @@ class SessionEditor(QDialog):
         # and this closes the window.
         # FIXME: not having the buttons is a bit radical but I am out of time
         #        for this.
-        if qtconsole_present:
+        if qtconsole_available:
             # Buttons configuration
             btn_layout = QHBoxLayout()
             btn_layout.addStretch()
@@ -1824,7 +1841,7 @@ class SessionEditor(QDialog):
 
             to_display = changed_keys[0]
 
-            if not qtconsole_present:
+            if not qtconsole_available:
                 self.expressions[to_display] = s
 
             changed_items = self._listwidget.findItems(to_display,
@@ -1871,7 +1888,7 @@ class SessionEditor(QDialog):
         name = str(curr.text())
         self.arraywidget.set_data(self.data[name])
         expr = self.expressions.get(name, name)
-        if qtconsole_present:
+        if qtconsole_available:
             # # does not update
             # self.kernel.shell.set_next_input(expr, replace=True)
             # self.kernel_client.input(expr)
