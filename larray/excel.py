@@ -380,6 +380,8 @@ if xw is not None:
                 return LArray([])
             if index_col is None and nb_index > 0:
                 index_col = list(range(nb_index))
+            elif isinstance(index_col, int):
+                index_col = [index_col]
 
             list_data = self._converted_value(convert_float=convert_float)
 
