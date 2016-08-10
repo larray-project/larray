@@ -84,9 +84,15 @@ if xw is not None:
                 if 'app_visible' not in kwargs:
                     kwargs['app_visible'] = None
                 self.was_open = xw.xlplatform.is_file_open(filepath)
-                xw_wkb = xw.Workbook(filepath, *args, **kwargs)
-                # if os.path.isfile(filepath) and overwrite_file:
-                #     os.remove(filepath)
+                if os.path.isfile(filepath):
+                    # if os.path.isfile(filepath) and overwrite_file:
+                    #     os.remove(filepath)
+                    xw_wkb = xw.Workbook(filepath, *args, **kwargs)
+                else:
+                    # this is ugly but this is the only way I found to
+                    # create a new workbook and set its filepath
+                    xw_wkb = xw.Workbook(*args, **kwargs)
+                    xw_wkb.save(filepath)
             self.xw_wkb = xw_wkb
 
         def _concrete_key(self, key):
