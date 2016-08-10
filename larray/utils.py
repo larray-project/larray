@@ -21,10 +21,12 @@ import numpy as np
 if sys.version < '3':
     basestring = basestring
     bytes = str
+    unicode = unicode
     long = long
     PY3 = False
 else:
     basestring = str
+    bytes = bytes
     unicode = str
     long = int
     PY3 = True
