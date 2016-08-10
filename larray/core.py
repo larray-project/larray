@@ -368,7 +368,7 @@ except ImportError:
     np_nanprod = None
 
 from larray.utils import (table2str, unique, csv_open, unzip, long,
-                          decode, basestring, izip, rproduct, ReprString,
+                          decode, basestring, bytes, izip, rproduct, ReprString,
                           duplicates, array_lookup2, skip_comment_cells,
                           strip_rows, PY3)
 
@@ -679,6 +679,11 @@ class Axis(object):
         """
         if isinstance(name, Axis):
             name = name.name
+        # make sure we do not have np.str_ as it causes problems down the
+        # line with xlwings. Cannot use isinstance to check that though.
+        is_python_str = type(name) is str or type(name) is bytes
+        assert name is None or isinstance(name, int) or is_python_str, \
+            type(name)
         self.name = name
         self._labels = None
         self.__mapping = None
@@ -5067,6 +5072,8 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
     axes_labels.append([parse(cell) for cell in df.columns.values])
+    axes_names = [str(name) if name is not None else name
+                  for name in axes_names]
 
     axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
     data = df.values.reshape([len(axis) for axis in axes])
