@@ -33,6 +33,9 @@ class FileHandler(object):
     def _dump(self, key, value, *args, **kwargs):
         raise NotImplementedError()
 
+    def save(self):
+        pass
+
     def close(self):
         raise NotImplementedError()
 
@@ -61,6 +64,7 @@ class FileHandler(object):
             self._dump(key, value, *args, **kwargs)
             if display:
                 print("done")
+        self.save()
         self.close()
 
 
@@ -121,6 +125,9 @@ class XLWingsHandler(FileHandler):
 
     def _dump(self, key, value, *args, **kwargs):
         self.handle[key] = value.dump(*args, **kwargs)
+
+    def save(self):
+        self.handle.save()
 
     def close(self):
         self.handle.close()
