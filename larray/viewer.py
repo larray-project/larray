@@ -27,8 +27,11 @@ Array Editor Dialog based on Qt
 # TODO:
 # * drag & drop to reorder axes
 #   http://zetcode.com/gui/pyqt4/dragdrop/
-#   http://stackoverflow.com/questions/10264040/how-to-drag-and-drop-into-a-qtablewidget-pyqt
+#   http://stackoverflow.com/questions/10264040/
+#       how-to-drag-and-drop-into-a-qtablewidget-pyqt
 #   http://stackoverflow.com/questions/3458542/multiple-drag-and-drop-in-pyqt4
+#   http://ux.stackexchange.com/questions/34158/
+#       how-to-make-it-obvious-that-you-can-drag-things-that-you-normally-cant
 # * keep header columns & rows visible ("frozen")
 #   http://doc.qt.io/qt-5/qtwidgets-itemviews-frozencolumn-example.html
 # * document default icons situation (limitations)
@@ -44,23 +47,31 @@ Array Editor Dialog based on Qt
 # * plotting a subset should probably (to think) go via LArray/pandas objects
 #   so that I have the headers info in the plots (and do not have to deal with
 #   them manually)
-#   > need to be generic
-# * copy to clipboard possibly too
+#   > ideally, I would like to keep this generic (not LArray-specific)
 # ? automatic change digits on resize column
 #   => different format per column, which is problematic UI-wise
-# * keep "headers" visible
 # * keyboard shortcut for filter each dim
 # * tab in a filter combo, brings up next filter combo
 # * view/edit DataFrames too
-# * view/edit LArray over Pandas
+# * view/edit LArray over Pandas (ie sparse)
 # * resubmit editor back for inclusion in Spyder
-# * custom delegates for each type (spinner for int, checkbox for bool, ...)
+# ? custom delegates for each type (spinner for int, checkbox for bool, ...)
 # ? "light" headers (do not repeat the same header several times (on the screen)
+#   it would be nicer but I am not sure it is a good idea because with many
+#   dimensions, you can no longer see the current label for the first
+#   dimension(s) if you scroll down a bit. This is solvable if, instead
+#   of only the first line ever corresponding to the label displaying it,
+#   I could make it so that it is the first line displayable on the screen
+#   which gets it. It would be a bit less nice because of strange artifacts
+#   when scrolling, but would be more useful. The beauty problem could be
+#   solved later too via fading or something like that, but probably not
+#   worth it for a while.
 
 from __future__ import print_function
 
 from itertools import chain
 import math
+import re
 import sys
 
 from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
@@ -73,7 +84,7 @@ from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
                          QSpinBox, QWidget, QVBoxLayout,
                          QFont, QAction, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange,
-                         QIcon, QStyle, QFontMetrics, QToolTip)
+                         QIcon, QStyle, QFontMetrics, QToolTip, QCursor)
 from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
                           QVariant, pyqtSlot as Slot)
 
@@ -90,6 +101,36 @@ try:
     matplotlib_present = True
 except ImportError:
     matplotlib_present = False
+
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
+
+try:
+    from qtconsole.rich_jupyter_widget import RichJupyterWidget
+    from qtconsole.inprocess import QtInProcessKernelManager
+    from IPython import get_ipython
+
+    ipython_instance = get_ipython()
+
+    # Having several instances of IPython of different types in the same
+    # process are not supported. We use
+    # ipykernel.inprocess.ipkernel.InProcessInteractiveShell
+    # and qtconsole and notebook use
+    # ipykernel.zmqshell.ZMQInteractiveShell, so this cannot work.
+    # For now, we simply fallback to not using IPython if we are run
+    # from IPython (whether qtconsole or notebook). The correct solution is
+    # probably to run the IPython console in a different process but I do not
+    # know what would be the consequences. I fear it could be slow to transfer
+    # the session data to the other process.
+    if ipython_instance is None:
+        qtconsole_available = True
+    else:
+        qtconsole_available = False
+except ImportError:
+    qtconsole_available = False
+
 
 from larray.combo import FilterComboBox, FilterMenu
 import larray as la
@@ -311,8 +352,6 @@ class ArrayModel(QAbstractTableModel):
 
         # Backgroundcolor settings
         # TODO: use LinearGradient
-        self.bg_gradient = bg_gradient
-        self.bg_value = bg_value
         # self.bgfunc = bgfunc
         huerange = [.66, .99]  # Hue
         self.sat = .7  # Saturation
@@ -335,7 +374,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels)
+        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -346,11 +385,11 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None, changes=None):
-        self._set_data(data, xlabels, ylabels, changes)
+    def set_data(self, data, xlabels=None, ylabels=None, changes=None, bg_gradient=None, bg_value=None):
+        self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None):
+    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
@@ -372,6 +411,9 @@ class ArrayModel(QAbstractTableModel):
             self.color_func = np.abs
         else:
             self.color_func = np.real
+        self.bg_gradient = bg_gradient
+        self.bg_value = bg_value
+
         assert isinstance(changes, dict)
         self.changes = changes
         self._data = data
@@ -529,7 +571,7 @@ class ArrayModel(QAbstractTableModel):
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
         changes = self.changes
-        width, height = self._data.shape
+        width, height = self.total_rows, self.total_cols
         if right is None:
             right = width
         if bottom is None:
@@ -622,6 +664,7 @@ class ArrayModel(QAbstractTableModel):
 
         # Add change to self.changes
         changes = self.changes
+        # requires numpy 1.10
         newvalues = np.broadcast_to(values, (width, height))
         oldvalues = np.empty_like(newvalues)
         for i in range(width):
@@ -845,6 +888,10 @@ class ArrayView(QTableView):
                                          shortcut=keybinding('Copy'),
                                          icon=ima.icon('edit-copy'),
                                          triggered=self.copy)
+        self.excel_action = create_action(self, _('Copy to Excel'),
+                                          shortcut=QKeySequence("Ctrl+E"),
+                                          # icon=ima.icon('edit-copy'),
+                                          triggered=self.to_excel)
         self.paste_action = create_action(self, _('Paste'),
                                           shortcut=keybinding('Paste'),
                                           icon=ima.icon('edit-paste'),
@@ -854,8 +901,19 @@ class ArrayView(QTableView):
                                          # icon=ima.icon('editcopy'),
                                          triggered=self.plot)
         menu = QMenu(self)
-        menu.addActions([self.copy_action, self.plot_action, self.paste_action])
+        menu.addActions([self.copy_action, self.excel_action, self.plot_action,
+                         self.paste_action])
         return menu
+
+    def autofit_columns(self):
+        """Resize cells to contents"""
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+
+        # Spyder loads more columns before resizing, but since it does not
+        # load all columns anyway, I do not see the point
+        # self.model().fetch_more_columns()
+        self.resizeColumnsToContents()
+        QApplication.restoreOverrideCursor()
 
     def contextMenuEvent(self, event):
         """Reimplement Qt method"""
@@ -865,12 +923,19 @@ class ArrayView(QTableView):
     def keyPressEvent(self, event):
         """Reimplement Qt method"""
 
-        if event == QKeySequence.Copy:
+        # comparing with the keysequence and not with event directly as we
+        # did before because that only seems to work for shortcut
+        # defined using QKeySequence.StandardKey, which is not the case for
+        # Ctrl + E
+        keyseq = QKeySequence(event.modifiers() | event.key())
+        if keyseq == QKeySequence.Copy:
             self.copy()
-        elif event == QKeySequence.Paste:
+        elif keyseq == QKeySequence.Paste:
             self.paste()
-        elif event == QKeySequence.Print:
+        elif keyseq == QKeySequence.Print:
             self.plot()
+        elif keyseq == QKeySequence("Ctrl+E"):
+            self.to_excel()
         # allow to start editing cells by pressing Enter
         elif event.key() == Qt.Key_Return and not self.model().readonly:
             index = self.currentIndex()
@@ -879,19 +944,23 @@ class ArrayView(QTableView):
         else:
             QTableView.keyPressEvent(self, event)
 
-    def _selection_bounds(self):
+    def _selection_bounds(self, none_selects_all=True):
         """
         Returns
         -------
         tuple
             selection bounds. end bound is exclusive
         """
+        model = self.model()
         selection_model = self.selectionModel()
         assert isinstance(selection_model, QItemSelectionModel)
         selection = selection_model.selection()
         assert isinstance(selection, QItemSelection)
         if not selection:
-            return None
+            if none_selects_all:
+                return 0, model.total_rows, 0, model.total_cols
+            else:
+                return None
         assert len(selection) == 1
         srange = selection[0]
         assert isinstance(srange, QItemSelectionRange)
@@ -903,8 +972,8 @@ class ArrayView(QTableView):
         col_max = max(srange.right() - yoffset, 0)
         return row_min, row_max + 1, col_min, col_max + 1
 
-    def _selection_data(self, headers=True):
-        bounds = self._selection_bounds()
+    def _selection_data(self, headers=True, none_selects_all=True):
+        bounds = self._selection_bounds(none_selects_all=none_selects_all)
         if bounds is None:
             return None
         row_min, row_max, col_min, col_max = bounds
@@ -919,16 +988,19 @@ class ArrayView(QTableView):
             # to_string(data[self._selection_filter()])
             dim_names = xlabels[0]
             if len(dim_names) > 1:
-                dim_names = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
-                                              dim_names[-1]]
-            topheaders = [dim_names +
-                          list(xlabels[i][col_min:col_max])
+                dim_headers = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
+                                                dim_names[-1]]
+            else:
+                dim_headers = dim_names
+            topheaders = [dim_headers + list(xlabels[i][col_min:col_max])
                           for i in range(1, len(xlabels))]
             if not dim_names:
                 return raw_data
             elif len(dim_names) == 1:
+                # 1 dimension
                 return chain(topheaders, [chain([''], row) for row in raw_data])
             else:
+                # >1 dimension
                 assert len(dim_names) > 1
                 return chain(topheaders,
                              [chain([ylabels[j][r + row_min]
@@ -955,6 +1027,21 @@ class ArrayView(QTableView):
         text = '\n'.join('\t'.join(vrepr(v) for v in line) for line in data)
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
+
+    @Slot()
+    def to_excel(self):
+        """Copy array as text to clipboard"""
+        if xw is None:
+            raise Exception("to_excel() is not available because xlwings is "
+                            "not installed")
+        data = self._selection_data()
+        if data is None:
+            return
+        # convert (row) generators to lists then array
+        # XXX: is the conversion to array necesarry? I think xlwings will
+        # translate back to a list anyway?!
+        a = np.array([list(r) for r in data])
+        xw.view(a)
 
     @Slot()
     def paste(self):
@@ -1016,6 +1103,7 @@ class ArrayView(QTableView):
         # discards the old graph
         ax.hold(False)
 
+        # FIXME: use labels instead
         x = np.arange(data.shape[0])
         ax.plot(x, data)
 
@@ -1056,7 +1144,7 @@ def ndigits(value):
     if log10 == np.inf:
         int_digits = 308
     else:
-        # max(1, ...) because there is at least one integer digit
+        # max(1, ...) because there is at least one integer digit.
         # explicit conversion to int for Python2.x
         int_digits = max(1, int(math.floor(log10)) + 1)
     # one digit for sign if negative
@@ -1103,9 +1191,11 @@ class ArrayEditorWidget(QWidget):
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        self.set_data(data, xlabels, ylabels)
+        self.set_data(data, xlabels, ylabels, bg_value=bg_value,
+                      bg_gradient=bg_gradient)
 
-    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None):
+    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None,
+                 bg_gradient=None, bg_value=None):
         self.old_data_shape = None
         if current_filter is None:
             current_filter = {}
@@ -1116,8 +1206,8 @@ class ArrayEditorWidget(QWidget):
             filters_layout = self.filters_layout
             clear_layout(filters_layout)
             filters_layout.addWidget(QLabel(_("Filters")))
-            for axis in data.axes:
-                filters_layout.addWidget(QLabel(axis.display_name))
+            for axis, display_name in zip(data.axes, data.axes.display_names):
+                filters_layout.addWidget(QLabel(display_name))
                 filters_layout.addWidget(self.create_filter_combo(axis))
             filters_layout.addStretch()
             data, xlabels, ylabels = larray_to_array_and_labels(data)
@@ -1147,22 +1237,31 @@ class ArrayEditorWidget(QWidget):
             #     self.error(_("The 'ylabels' argument length do no match array row "
             #                  "number"))
             #     return False
-        self._set_raw_data(data, xlabels, ylabels)
+        self._set_raw_data(data, xlabels, ylabels,
+                           bg_gradient=bg_gradient, bg_value=bg_value)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None):
-        # FIXME: this method should be *FAST*, as it is used for each filter
-        # change
-        ndecimals, use_scientific = self.choose_format(data)
+    def _set_raw_data(self, data, xlabels, ylabels, changes=None,
+                      bg_gradient=None, bg_value=None):
+        size = data.size
+        # this will yield a data sample of max 199
+        step = (size // 100) if size > 100 else 1
+        data_sample = data.flat[::step]
+
+        # TODO: refactor so that the expensive format_helper is not called
+        # twice (or the values are cached)
+        use_scientific = self.choose_scientific(data_sample)
+
         # XXX: self.ndecimals vs self.digits
-        self.digits = ndecimals
+        self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
         self.data = data
         self.model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes)
+        self.model.set_data(data, xlabels, ylabels, changes,
+                            bg_gradient=bg_gradient, bg_value=bg_value)
 
-        self.digits_spinbox.setValue(ndecimals)
+        self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
 
         self.scientific_checkbox.setChecked(use_scientific)
@@ -1216,12 +1315,6 @@ class ArrayEditorWidget(QWidget):
             ndecimals = data_frac_digits
         return ndecimals
 
-    def choose_format(self, data):
-        # TODO: refactor so that the expensive format_helper is not called
-        # twice (or the values are cached)
-        use_scientific = self.choose_scientific(data)
-        return self.choose_ndecimals(data, use_scientific), use_scientific
-
     def format_helper(self, data):
         if not data.size:
             return 0, 0, False
@@ -1245,7 +1338,7 @@ class ArrayEditorWidget(QWidget):
             return metrics.size(Qt.TextSingleLine, c).width()
 
         digit_width = max(str_width(str(i)) for i in range(10))
-        dot_width = metrics.size(Qt.TextSingleLine, '.').width()
+        dot_width = str_width('.')
         sign_width = max(str_width('+'), str_width('-'))
         if need_sign:
             avail_width -= sign_width
@@ -1327,9 +1420,11 @@ class ArrayEditorWidget(QWidget):
         cur_filter = self.current_filter
         # if index == 0:
         if not indices or len(indices) == len(axis.labels):
+            # FIXME: anonymous...
             if axis.name in cur_filter:
                 del cur_filter[axis.name]
         else:
+            # FIXME: anonymous...
             if len(indices) == 1:
                 cur_filter[axis.name] = axis.labels[indices[0]]
             else:
@@ -1368,6 +1463,7 @@ class ArrayEditorWidget(QWidget):
         """
         assert isinstance(k, tuple) and len(k) == self.la_data.ndim
 
+        # FIXME: not anonymous-friendly (use axis instead of axis.name)
         dkey = {axis.name: axis_key
                 for axis_key, axis in zip(k, self.la_data.axes)}
 
@@ -1400,6 +1496,7 @@ class ArrayEditorWidget(QWidget):
         assert isinstance(k, tuple) and len(k) == 2
 
         # transform local index key to local label key
+        # XXX: why can't we store the filter as index?
         model = self.model
         ki, kj = k
         xlabels = model.xlabels
@@ -1410,6 +1507,7 @@ class ArrayEditorWidget(QWidget):
 
         # compute dictionary key out of it
         data = self.filtered_data
+        # FIXME: anonymous...
         axes_names = data.axes.names if isinstance(data, la.LArray) else []
         dkey = dict(zip(axes_names, label_key))
 
@@ -1419,6 +1517,7 @@ class ArrayEditorWidget(QWidget):
                      if np.isscalar(v)})
 
         # re-transform it to tuple (to make it hashable/to store it in .changes)
+        # FIXME: anonymous...
         return tuple(dkey[axis.name] for axis in self.la_data.axes)
 
 
@@ -1519,8 +1618,9 @@ class ArrayEditor(QDialog):
         if np.isscalar(data):
             readonly = True
         if isinstance(data, la.LArray):
-            axes_info = ' x '.join("%s (%d)" % (axis.display_name, len(axis))
-                                   for axis in data.axes)
+            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
+                                   for display_name, axis
+                                   in zip(data.axes.display_names, data.axes))
             title = (title + ': ' + axes_info) if title else axes_info
 
         self.data = data
@@ -1561,11 +1661,17 @@ class ArrayEditor(QDialog):
             cancel_button.clicked.connect(self.reject)
             cancel_button.setAutoDefault(False)
             btn_layout.addWidget(cancel_button)
+        # r_button = QPushButton("resize")
+        # r_button.clicked.connect(self.resize_to_contents)
+        # btn_layout.addWidget(r_button)
         layout.addLayout(btn_layout, 2, 0)
 
         # Make the dialog act as a window
         self.setWindowFlags(Qt.Window)
         return True
+
+    def autofit_columns(self):
+        self.arraywidget.view.autofit_columns()
 
     @Slot()
     def accept(self):
@@ -1586,6 +1692,10 @@ class ArrayEditor(QDialog):
         return self.data
 
 
+statement_pattern = re.compile('.*[^=]=[^=].*')
+history_vars_pattern = re.compile('_i?\d+')
+
+
 class SessionEditor(QDialog):
     """Session Editor Dialog"""
     def __init__(self, parent=None):
@@ -1599,8 +1709,10 @@ class SessionEditor(QDialog):
 
         self.data = None
         self.arraywidget = None
+        self.expressions = {}
 
-    def setup_and_check(self, data, title='', readonly=False):
+    def setup_and_check(self, data, title='', readonly=False,
+                        minvalue=None, maxvalue=None):
         """
         Setup SessionEditor:
         return False if data is not supported, True otherwise
@@ -1624,30 +1736,83 @@ class SessionEditor(QDialog):
         self._listwidget = QListWidget(self)
         self._listwidget.addItems(self.data.names)
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
+        self._listwidget.setMinimumWidth(45)
 
-        self.arraywidget = ArrayEditorWidget(self, data[0], readonly)
+        self.arraywidget = ArrayEditorWidget(self, la.zeros(1), readonly)
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self._listwidget)
-        splitter.addWidget(self.arraywidget)
-        splitter.setSizes([5, 95])
-        splitter.setCollapsible(1, False)
+        if qtconsole_available:
+            # Create an in-process kernel
+            kernel_manager = QtInProcessKernelManager()
+            kernel_manager.start_kernel(show_banner=False)
+            kernel = kernel_manager.kernel
+            kernel.gui = 'qt4'
 
-        layout.addWidget(splitter)
+            kernel.shell.run_cell('from larray import *')
+            kernel.shell.push(self.data._objects)
+            text_formatter = \
+                kernel.shell.display_formatter.formatters['text/plain']
+            text_formatter.for_type(la.LArray, self.view_expr)
 
-        # Buttons configuration
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
+            self.kernel = kernel
 
-        buttons = QDialogButtonBox.Ok
-        if not readonly:
-            buttons |= QDialogButtonBox.Cancel
-        bbox = QDialogButtonBox(buttons)
-        bbox.accepted.connect(self.accept)
-        if not readonly:
-            bbox.rejected.connect(self.reject)
-        btn_layout.addWidget(bbox)
-        layout.addLayout(btn_layout)
+            kernel_client = kernel_manager.client()
+            kernel_client.start_channels()
+
+            ipython_widget = RichJupyterWidget()
+            ipython_widget.kernel_manager = kernel_manager
+            ipython_widget.kernel_client = kernel_client
+            ipython_widget.executed.connect(self.ipython_cell_executed)
+            ipython_widget._display_banner = False
+
+            self.eval_box = ipython_widget
+            self.eval_box.setMinimumHeight(20)
+
+            right_panel_widget = QSplitter(Qt.Vertical)
+            right_panel_widget.addWidget(self.arraywidget)
+            right_panel_widget.addWidget(self.eval_box)
+            right_panel_widget.setSizes([90, 10])
+        else:
+            self.eval_box = QLineEdit()
+            self.eval_box.returnPressed.connect(self.line_edit_update)
+
+            right_panel_layout = QVBoxLayout()
+            right_panel_layout.addWidget(self.arraywidget)
+            right_panel_layout.addWidget(self.eval_box)
+
+            # you cant add a layout directly in a splitter, so we have to wrap
+            # it in a widget
+            right_panel_widget = QWidget()
+            right_panel_widget.setLayout(right_panel_layout)
+
+        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter.addWidget(self._listwidget)
+        main_splitter.addWidget(right_panel_widget)
+        main_splitter.setSizes([10, 90])
+        main_splitter.setCollapsible(1, False)
+
+        layout.addWidget(main_splitter)
+
+        # the problem is that the qlineedit (when ipython not present) does
+        # not eat the enter key, so it gets handled by the buttons below
+        # and this closes the window.
+        # FIXME: not having the buttons is a bit radical but I am out of time
+        #        for this.
+        if qtconsole_available:
+            # Buttons configuration
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            buttons = QDialogButtonBox.Ok
+            if not readonly:
+                buttons |= QDialogButtonBox.Cancel
+            bbox = QDialogButtonBox(buttons)
+            bbox.accepted.connect(self.accept)
+            if not readonly:
+                bbox.rejected.connect(self.reject)
+            btn_layout.addWidget(bbox)
+            layout.addLayout(btn_layout)
+
+        self._listwidget.setCurrentRow(0)
 
         self.resize(800, 600)
         self.setMinimumSize(400, 300)
@@ -1656,8 +1821,80 @@ class SessionEditor(QDialog):
         self.setWindowFlags(Qt.Window)
         return True
 
+    def update_session(self, value):
+        keys_before = set(self.data.keys())
+        keys_after = set(value.keys())
+        new_keys = list(keys_after - keys_before)
+        self._listwidget.addItems(new_keys)
+        # TODO: add support for deleting keys
+
+        # display only first result if there are more than one
+        changed_keys = [k for k in keys_before | keys_after
+                        if value.get(k) is not self.data.get(k)]
+        if len(changed_keys) > 1:
+            raise NotImplementedError("modifying more than one variable at "
+                                      "once is not supported yet")
+        if changed_keys:
+            # update session
+            for k in changed_keys:
+                self.data[k] = value[k]
+
+            to_display = changed_keys[0]
+
+            if not qtconsole_available:
+                self.expressions[to_display] = s
+
+            changed_items = self._listwidget.findItems(to_display,
+                                                       Qt.MatchExactly)
+            assert len(changed_items) == 1
+
+            prev_selected = self._listwidget.selectedItems()
+            assert len(prev_selected) <= 1
+            if prev_selected and prev_selected[0] == changed_items[0]:
+                # otherwise it's not updated in this case
+                self.arraywidget.set_data(self.data[to_display])
+            else:
+                self._listwidget.setCurrentItem(changed_items[0])
+
+    def line_edit_update(self):
+        s = self.eval_box.text()
+        if statement_pattern.match(s):
+            context = self.data._objects.copy()
+            exec(s, la.__dict__, context)
+            self.update_session(context)
+        else:
+            self.view_expr(eval(s, la.__dict__, self.data))
+
+    def view_expr(self, array, *args, **kwargs):
+        self._listwidget.clearSelection()
+        self.arraywidget.set_data(array)
+
+    def ipython_cell_executed(self):
+        user_ns = self.kernel.shell.user_ns
+        ip_keys = set(['In', 'Out', '_', '__', '___',
+                       '__builtin__', '__builtins__',
+                       '__doc__', '__loader__', '__name__', '__package__',
+                       '__spec__', '_dh',
+                       '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
+                       'exit', 'get_ipython', 'quit'])
+        ns_keys = set([k for k, v in user_ns.items()
+                       if not history_vars_pattern.match(k) and
+                          (isinstance(v, (la.LArray, np.ndarray)) or
+                           np.isscalar(v))]) - ip_keys
+        clean_ns = {k: v for k, v in user_ns.items() if k in ns_keys}
+        self.update_session(clean_ns)
+
     def on_item_changed(self, curr, prev):
-        self.arraywidget.set_data(self.data[str(curr.text())])
+        name = str(curr.text())
+        self.arraywidget.set_data(self.data[name])
+        expr = self.expressions.get(name, name)
+        if qtconsole_available:
+            # # does not update
+            # self.kernel.shell.set_next_input(expr, replace=True)
+            # self.kernel_client.input(expr)
+            pass
+        else:
+            self.eval_box.setText(expr)
 
     @Slot()
     def accept(self):
@@ -1717,20 +1954,18 @@ class ArrayComparator(QDialog):
         # a segmentation fault on UNIX or an application crash on Windows
         self.setAttribute(Qt.WA_DeleteOnClose)
 
-        self.data1 = None
-        self.data2 = None
-        self.array1widget = None
-        self.array2widget = None
+        self.arrays = None
+        self.array = None
+        self.arraywidget = None
 
-    def setup_and_check(self, data1, data2, title=''):
+    def setup_and_check(self, arrays, names, title=''):
         """
-        Setup SessionEditor:
+        Setup ArrayComparator:
         return False if data is not supported, True otherwise
         """
-        assert isinstance(data1, la.LArray)
-        assert isinstance(data2, la.LArray)
-        self.data1 = data1
-        self.data2 = data2
+        assert all(isinstance(a, la.LArray) for a in arrays)
+        self.arrays = arrays
+        self.array = la.stack(arrays, la.Axis('arrays', names))
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         if icon is not None:
@@ -1744,39 +1979,33 @@ class ArrayComparator(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        diff = (data2 - data1)
-        vmax = np.nanmax(diff)
-        vmin = np.nanmin(diff)
-        absmax = max(abs(vmax), abs(vmin))
-        # scale diff to 0-1
+        diff = self.array - self.array[la.x.arrays.i[0]]
+        absmax = abs(diff).max()
+
+        # max diff label
+        maxdiff_layout = QHBoxLayout()
+        maxdiff_layout.addWidget(QLabel('maximum absolute difference: ' +
+                                        str(absmax)))
+        maxdiff_layout.addStretch()
+        layout.addLayout(maxdiff_layout)
+
         if absmax:
+            # scale diff to 0-1
             bg_value = (diff / absmax) / 2 + 0.5
         else:
-            # TODO: implement full() and full_like()
-            bg_value = la.empty_like(diff)
-            bg_value[:] = 0.5
+            # all 0.5 (white)
+            bg_value = la.full_like(diff, 0.5)
         gradient = LinearGradient([(0, [.66, .85, 1., .6]),
                                    (0.5 - 1e-300, [.66, .15, 1., .6]),
                                    (0.5, [1., 0., 1., 1.]),
                                    (0.5 + 1e-300, [.99, .15, 1., .6]),
                                    (1, [.99, .85, 1., .6])])
 
-        self.array1widget = ArrayEditorWidget(self, data1, readonly=True,
-                                              bg_value=bg_value,
-                                              bg_gradient=gradient)
-        self.diffwidget = ArrayEditorWidget(self, diff, readonly=True,
-                                            bg_value=bg_value,
-                                            bg_gradient=gradient)
-        self.array2widget = ArrayEditorWidget(self, data2, readonly=True,
-                                              bg_value=1 - bg_value,
-                                              bg_gradient=gradient)
+        self.arraywidget = ArrayEditorWidget(self, self.array, readonly=True,
+                                             bg_value=bg_value,
+                                             bg_gradient=gradient)
 
-        splitter = QHBoxLayout()
-        splitter.addWidget(self.array1widget)
-        splitter.addWidget(self.diffwidget)
-        splitter.addWidget(self.array2widget)
-
-        layout.addLayout(splitter)
+        layout.addWidget(self.arraywidget)
 
         # Buttons configuration
         btn_layout = QHBoxLayout()
@@ -1796,35 +2025,212 @@ class ArrayComparator(QDialog):
         return True
 
 
-def find_names(obj, depth=1):
+# TODO: it should be possible to reuse both SessionEditor and ArrayComparator
+class SessionComparator(QDialog):
+    """Session Comparator Dialog"""
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+
+        self.sessions = None
+        self.names = None
+        self.arraywidget = None
+        self.maxdiff_label = None
+        self.gradient = LinearGradient([(0, [.66, .85, 1., .6]),
+                                        (0.5 - 1e-300, [.66, .15, 1., .6]),
+                                        (0.5, [1., 0., 1., 1.]),
+                                        (0.5 + 1e-300, [.99, .15, 1., .6]),
+                                        (1, [.99, .85, 1., .6])])
+
+    def setup_and_check(self, sessions, names, title=''):
+        """
+        Setup SessionComparator:
+        return False if data is not supported, True otherwise
+        """
+        assert all(isinstance(s, la.Session) for s in sessions)
+        self.sessions = sessions
+        self.names = names
+
+        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        if icon is not None:
+            self.setWindowIcon(icon)
+
+        if not title:
+            title = _("Session comparator")
+        title += ' (' + _('read only') + ')'
+        self.setWindowTitle(title)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        names = sorted(set.union(*[set(s.names) for s in self.sessions]))
+        self._listwidget = listwidget = QListWidget(self)
+        self._listwidget.addItems(names)
+        self._listwidget.currentItemChanged.connect(self.on_item_changed)
+
+        for i, name in enumerate(names):
+            arrays = [s.get(name) for s in self.sessions]
+            eq = [la.larray_equal(a, arrays[0]) for a in arrays[1:]]
+            if not all(eq):
+                listwidget.item(i).setForeground(Qt.red)
+
+        array, absmax, bg_value = self.get_array(names[0])
+
+        if not array.size:
+            array = la.LArray(['no data'])
+        self.arraywidget = ArrayEditorWidget(self, array, readonly=True,
+                                             bg_value=bg_value,
+                                             bg_gradient=self.gradient)
+
+        right_panel_layout = QVBoxLayout()
+
+        # max diff label
+        maxdiff_layout = QHBoxLayout()
+        maxdiff_layout.addWidget(QLabel('maximum absolute difference:'))
+        self.maxdiff_label = QLabel(str(absmax))
+        maxdiff_layout.addWidget(self.maxdiff_label)
+        maxdiff_layout.addStretch()
+        right_panel_layout.addLayout(maxdiff_layout)
+
+        # array_splitter.setSizePolicy(QSizePolicy.Expanding,
+        #                              QSizePolicy.Expanding)
+        right_panel_layout.addWidget(self.arraywidget)
+
+        # you cant add a layout directly in a splitter, so we have to wrap it
+        # in a widget
+        right_panel_widget = QWidget()
+        right_panel_widget.setLayout(right_panel_layout)
+
+        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter.addWidget(self._listwidget)
+        main_splitter.addWidget(right_panel_widget)
+        main_splitter.setSizes([5, 95])
+        main_splitter.setCollapsible(1, False)
+
+        layout.addWidget(main_splitter)
+
+        # Buttons configuration
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        buttons = QDialogButtonBox.Ok
+        bbox = QDialogButtonBox(buttons)
+        bbox.accepted.connect(self.accept)
+        btn_layout.addWidget(bbox)
+        layout.addLayout(btn_layout)
+
+        self.resize(800, 600)
+        self.setMinimumSize(400, 300)
+
+        # Make the dialog act as a window
+        self.setWindowFlags(Qt.Window)
+        return True
+
+    def get_array(self, name):
+        arrays = [s.get(name) for s in self.sessions]
+        array = la.stack(arrays, la.Axis('sessions', self.names))
+        diff = array - array[la.x.sessions.i[0]]
+        absmax = abs(diff).max()
+        # scale diff to 0-1
+        if absmax:
+            bg_value = (diff / absmax) / 2 + 0.5
+        else:
+            bg_value = la.full_like(diff, 0.5)
+        # only show rows with a difference. For some reason, this is abysmally
+        # slow though.
+        # row_filter = (array != array[la.x.sessions.i[0]]).any(la.x.sessions)
+        # array = array[row_filter]
+        # bg_value = bg_value[row_filter]
+        return array, absmax, bg_value
+
+    def on_item_changed(self, curr, prev):
+        array, absmax, bg_value = self.get_array(str(curr.text()))
+        self.maxdiff_label.setText(str(absmax))
+        self.arraywidget.set_data(array, bg_value=bg_value,
+                                  bg_gradient=self.gradient)
+
+
+def find_names(obj, depth=0):
+    """Return all names an object is bound to.
+
+    Parameters
+    ----------
+    obj : object
+        the object to find names for.
+    depth : int
+        depth of call frame to inspect. 0 is where find_names was called,
+        1 the caller of find_names, etc.
+
+    Returns
+    -------
+    list of str
+        all names obj is bound to, sorted alphabetically. Can be [] if we
+        computed an array just to view it.
+    """
     # noinspection PyProtectedMember
-    l = sys._getframe(depth).f_locals
+    l = sys._getframe(depth + 1).f_locals
     return sorted(k for k, v in l.items() if v is obj)
 
 
-def get_title(obj, depth=1):
+def get_title(obj, depth=0, maxnames=3):
+    """Return a title for an object (a combination of the names it is bound to).
+
+    Parameters
+    ----------
+    obj : object
+        the object to find a title for.
+    depth : int
+        depth of call frame to inspect. 0 is where get_title was called,
+        1 the caller of get_title, etc.
+
+    Returns
+    -------
+    str
+        title for obj. This can be '' if we computed an array just to view it.
+    """
     names = find_names(obj, depth=depth + 1)
-    # names can be == [] if we compute an array just to view it
+    # names can be == []
     # eg. view(arr['H'])
-    if len(names) > 3:
-        names = names[:3] + ['...']
+    if len(names) > maxnames:
+        names = names[:maxnames] + ['...']
     return ', '.join(names)
 
 
-def edit(array, title='', minvalue=None, maxvalue=None):
+def edit(obj=None, title='', minvalue=None, maxvalue=None):
     _app = qapplication()
+    if obj is None:
+        obj = la.local_arrays(depth=1)
+    elif isinstance(obj, dict) and \
+            all(isinstance(o, la.LArray) for o in obj.values()):
+        obj = la.Session(obj)
+
     if not title:
-        title = get_title(array, depth=2)
-    dlg = ArrayEditor()
-    if dlg.setup_and_check(array, title=title,
+        title = get_title(obj, depth=1)
+
+    if isinstance(obj, la.Session):
+        dlg = SessionEditor()
+    else:
+        dlg = ArrayEditor()
+    if dlg.setup_and_check(obj, title=title,
                            minvalue=minvalue, maxvalue=maxvalue):
         dlg.exec_()
 
 
-def view(obj, title=''):
+def view(obj=None, title=''):
     _app = qapplication()
+    if obj is None:
+        obj = la.local_arrays(depth=1)
+    elif isinstance(obj, dict) and \
+            all(isinstance(o, la.LArray) for o in obj.values()):
+        obj = la.Session(obj)
+
     if not title:
-        title = get_title(obj, depth=2)
+        title = get_title(obj, depth=1)
 
     if isinstance(obj, la.Session):
         dlg = SessionEditor()
@@ -1834,10 +2240,22 @@ def view(obj, title=''):
         dlg.exec_()
 
 
-def compare(obj1, obj2, title=''):
+def compare(*args, **kwargs):
+    title = kwargs.pop('title', '')
     _app = qapplication()
-    dlg = ArrayComparator()
-    if dlg.setup_and_check(obj1, obj2, title=title):
+    if any(isinstance(a, la.Session) for a in args):
+        dlg = SessionComparator()
+        default_name = 'session'
+    else:
+        dlg = ArrayComparator()
+        default_name = 'array'
+
+    def get_name(i, obj, depth=0):
+        obj_names = find_names(obj, depth=depth + 1)
+        return obj_names[0] if obj_names else '%s %d' % (default_name, i)
+
+    names = [get_name(i, a, depth=1) for i, a in enumerate(args)]
+    if dlg.setup_and_check(args, names=names, title=title):
         dlg.exec_()
 
 
@@ -1871,6 +2289,7 @@ if __name__ == "__main__":
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
     data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
     arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    # arr2 = la.ndrange([100, 100, 100, 100, 5])
     # arr2 = arr2['F', 'A11', 1]
 
     # view(arr2[0, 'A11', 'F', 'P01'])
@@ -1897,13 +2316,28 @@ if __name__ == "__main__":
     # view(np.arange(12).reshape(2, 3, 2))
     # view([])
 
-    # data3 = np.random.normal(0, 1, size=(2, 15))
-    # arr3 = la.LArray(data3, axes=(sex, lipro))
+    data3 = np.random.normal(0, 1, size=(2, 15))
+    arr3 = la.ndrange((30, sex))
     # data4 = np.random.normal(0, 1, size=(2, 15))
     # arr4 = la.LArray(data4, axes=(sex, lipro))
+
     # arr4 = arr3.copy()
-    # arr4['F', 'P01':] = arr3['F', 'P01':] / 2
-    # compare(arr3, arr4)
+    # arr4['F'] /= 2
+    arr4 = arr3.min(la.x.sex)
+    arr5 = arr3.max(la.x.sex)
+    arr6 = arr3.mean(la.x.sex)
+
+    # compare(arr3, arr4, arr5, arr6)
+
+    # view(la.stack((arr3, arr4), la.Axis('arrays', 'arr3,arr4')))
+    edit()
+
+    # s = la.local_arrays()
+    # edit(s)
+    # s.dump('x.h5')
+    # view(la.Session('x.h5'))
+
+    # compare(arr3, arr4, arr5, arr6)
 
     # arr3 = la.ndrange((1000, 1000, 500))
     # print(arr3.nbytes * 1e-9 + 'Gb')
