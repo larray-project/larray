@@ -11,11 +11,6 @@
 
 * added setup.py to install the module.
 
-* added another feature (see the :ref:`miscellaneous section <misc>` for
-  details).
-
-.. _misc:
-
 Miscellaneous improvements
 --------------------------
 
@@ -32,5 +27,3 @@ Fixes
 -----
 
 * column titles are no longer converted to lowercase.
-
-* fixed something (closes :issue:`1`).

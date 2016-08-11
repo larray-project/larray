@@ -67,6 +67,8 @@ arctanh = wrapper(np.arctanh)
 
 # Rounding
 
+# all 3 are equivalent, I am unsure I should support around and round_
+round = wrapper(np.round)
 around = wrapper(np.around)
 round_ = wrapper(np.round_)
 rint = wrapper(np.rint)
@@ -82,6 +84,9 @@ trunc = wrapper(np.trunc)
 # nansum = wrapper(np.nansum)
 # cumprod = wrapper(np.cumprod)
 # cumsum = wrapper(np.cumsum)
+
+# cannot use a simple wrapped ufunc because those ufuncs do not preserve
+# shape or dimensions so labels are wrong
 # diff = wrapper(np.diff)
 # ediff1d = wrapper(np.ediff1d)
 # gradient = wrapper(np.gradient)
@@ -154,3 +159,5 @@ interp = wrapper(np.interp)
 where = wrapper(np.where)
 isnan = wrapper(np.isnan)
 isinf = wrapper(np.isinf)
+
+inverse = wrapper(np.linalg.inv)
