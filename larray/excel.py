@@ -3,10 +3,8 @@ import os
 import numpy as np
 try:
     import xlwings as xw
-    from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 except ImportError:
     xw = None
-    PandasDataFrameConverter = object
 
 from .core import LArray, df_aslarray, Axis
 from .utils import unique, basestring
@@ -15,6 +13,9 @@ string_types = (str,)
 
 
 if xw is not None:
+    from xlwings.conversion.pandas_conv import PandasDataFrameConverter
+
+
     class LArrayConverter(PandasDataFrameConverter):
         writes_types = LArray
 
