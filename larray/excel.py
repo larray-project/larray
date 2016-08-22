@@ -3,10 +3,8 @@ import os
 import numpy as np
 try:
     import xlwings as xw
-    from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 except ImportError:
     xw = None
-    PandasDataFrameConverter = object
 
 from .core import LArray, df_aslarray, Axis
 from .utils import unique, basestring
@@ -15,6 +13,9 @@ string_types = (str,)
 
 
 if xw is not None:
+    from xlwings.conversion.pandas_conv import PandasDataFrameConverter
+
+
     class LArrayConverter(PandasDataFrameConverter):
         writes_types = LArray
 
@@ -380,6 +381,8 @@ if xw is not None:
                 return LArray([])
             if index_col is None and nb_index > 0:
                 index_col = list(range(nb_index))
+            elif isinstance(index_col, int):
+                index_col = [index_col]
 
             list_data = self._converted_value(convert_float=convert_float)
 
@@ -396,18 +399,31 @@ if xw is not None:
                 except StopIteration:
                     # if there isn't any, assume 1d array, unless
                     # "liam2 dialect"
-                    pos_last = 0
-                axes_names = header_line[:pos_last + 1]
-                # TODO: factor this with df_aslarray
-                if isinstance(axes_names[-1], basestring) and \
-                        '\\' in axes_names[-1]:
-                    last_axes = [name.strip()
-                                 for name in axes_names[-1].split('\\')]
-                    axes_names = axes_names[:-1] + last_axes
+                    pos_last = -1
+
+                # '\' found => we have several axes names
+                if pos_last >= 0:
+                    axes_names = header_line[:pos_last + 1]
+                    # TODO: factor this with df_aslarray
+                    if isinstance(axes_names[-1], basestring) and \
+                            '\\' in axes_names[-1]:
+                        last_axes = [name.strip()
+                                     for name in axes_names[-1].split('\\')]
+                        axes_names = axes_names[:-1] + last_axes
+                # no axes names but index_col provided
+                elif index_col is not None:
+                    # TODO: use header_line in this case too to support
+                    # manually specifying nb_index when there are axes names
+                    # (whether the array is 1d or not)
+                    nb_axes = len(index_col) + 1
+                    axes_names = [None] * nb_axes
+                # assume 1d array
+                else:
+                    axes_names = header_line[0]
 
                 # this can only happen if both nb_index=0 and index_col is None
-                # XXX: we might want to have nb_index default to None instead of
-                #      0 so that we can force "no index at all"
+                # TODO: nb_index should default to None instead of
+                #      0 so that we can force "no index at all" (ie 1d array)
                 if index_col is None:
                     nb_index = len(axes_names) - 1
                     index_col = list(range(nb_index))
