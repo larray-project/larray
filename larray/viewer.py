@@ -1186,7 +1186,13 @@ class ArrayEditorWidget(QWidget):
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
+
+        self.axes_info = QLabel("")
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(self.axes_info)
+
         layout = QVBoxLayout()
+        layout.addLayout(info_layout)
         layout.addLayout(self.filters_layout)
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
@@ -1202,6 +1208,11 @@ class ArrayEditorWidget(QWidget):
         self.current_filter = current_filter
         self.global_changes = {}
         if isinstance(data, la.LArray):
+            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
+                                       for display_name, axis
+                                       in zip(data.axes.display_names, data.axes))
+            self.axes_info.setText(axes_info)
+
             self.la_data = data
             filters_layout = self.filters_layout
             clear_layout(filters_layout)
