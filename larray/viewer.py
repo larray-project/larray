@@ -75,7 +75,7 @@ import re
 import sys
 
 from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
-                         QItemDelegate, QListWidget, QSplitter,
+                         QItemDelegate, QListWidget, QSplitter, QListWidgetItem,
                          QLineEdit, QCheckBox, QGridLayout,
                          QDoubleValidator, QIntValidator,
                          QDialog, QDialogButtonBox, QPushButton,
@@ -1186,7 +1186,6 @@ class ArrayEditorWidget(QWidget):
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
-
         self.axes_info = QLabel("")
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.axes_info)
@@ -1745,7 +1744,11 @@ class SessionEditor(QDialog):
         self.setLayout(layout)
 
         self._listwidget = QListWidget(self)
-        self._listwidget.addItems(self.data.names)
+        #self._listwidget.addItems(self.data.names)
+        for name in self.data.names:
+            item = QListWidgetItem(self._listwidget)
+            item.setText(name)
+            item.setToolTip("%s: %s" % (name,self.data[name].info))
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
