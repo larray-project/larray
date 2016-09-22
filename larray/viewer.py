@@ -496,6 +496,16 @@ class ArrayModel(QAbstractTableModel):
         self.bgcolor_enabled = state > 0
         self.reset()
 
+    def get_labels(self, index):
+        if (index.row() < len(self.xlabels) - 1) or \
+                (index.column() < len(self.ylabels) - 1):
+            return ""
+        i = index.row() - len(self.xlabels) + 1
+        j = index.column() - len(self.ylabels) + 1
+
+        labels=["%s=%s" %(self.xlabels[0][k], self.ylabels[k+1][i]) for k in range(len(self.ylabels) - 1)]  + ["%s=%s" % (self.xlabels[0][-1], self.xlabels[1][j])]
+        return ", ". join(labels)
+
     def get_value(self, index):
         i = index.row() - len(self.xlabels) + 1
         j = index.column() - len(self.ylabels) + 1
@@ -566,7 +576,7 @@ class ArrayModel(QAbstractTableModel):
                     value = bg_value.data.flat[idx]
                     return self.bg_gradient[value]
         elif role == Qt.ToolTipRole:
-            return to_qvariant(repr(value))
+            return to_qvariant("%s\n%s" %(repr(value),self.get_labels(index)))
         return to_qvariant()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
@@ -1186,12 +1196,7 @@ class ArrayEditorWidget(QWidget):
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
-        self.axes_info = QLabel("")
-        info_layout = QHBoxLayout()
-        info_layout.addWidget(self.axes_info)
-
         layout = QVBoxLayout()
-        layout.addLayout(info_layout)
         layout.addLayout(self.filters_layout)
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
@@ -1207,11 +1212,6 @@ class ArrayEditorWidget(QWidget):
         self.current_filter = current_filter
         self.global_changes = {}
         if isinstance(data, la.LArray):
-            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
-                                       for display_name, axis
-                                       in zip(data.axes.display_names, data.axes))
-            self.axes_info.setText(axes_info)
-
             self.la_data = data
             filters_layout = self.filters_layout
             clear_layout(filters_layout)
@@ -1900,6 +1900,14 @@ class SessionEditor(QDialog):
 
     def on_item_changed(self, curr, prev):
         name = str(curr.text())
+        title = name
+        if isinstance(self.data[name], la.LArray):
+            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
+                                       for display_name, axis
+                                       in zip(self.data[name].axes.display_names, self.data[name].axes))
+            title = (title + ': ' + axes_info) if title else axes_info
+        self.setWindowTitle(title)
+
         self.arraywidget.set_data(self.data[name])
         expr = self.expressions.get(name, name)
         if qtconsole_available:
