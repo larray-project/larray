@@ -1722,8 +1722,11 @@ class SessionEditor(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
 
         self.data = None
+        self._listwidget = None
         self.arraywidget = None
+        self.eval_box = None
         self.expressions = {}
+        self.kernel = None
 
     def setup_and_check(self, data, title='', readonly=False,
                         minvalue=None, maxvalue=None):
@@ -1748,11 +1751,10 @@ class SessionEditor(QDialog):
         self.setLayout(layout)
 
         self._listwidget = QListWidget(self)
-        #self._listwidget.addItems(self.data.names)
         for name in self.data.names:
             item = QListWidgetItem(self._listwidget)
             item.setText(name)
-            item.setToolTip("%s: %s" % (name,self.data[name].info))
+            item.setToolTip("%s: %s" % (name, self.data[name].info))
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
