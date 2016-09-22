@@ -3304,6 +3304,9 @@ class LArray(object):
                 assert all(isinstance(g, Group) for g in item)
                 groups = item
                 axis = groups[0].axis
+                # they should all have the same axis (this is already checked
+                # in _prepare_aggregate though)
+                assert all(g.axis.equals(axis) for g in groups[1:])
                 killaxis = False
             else:
                 # item is in fact a single group
@@ -3314,6 +3317,8 @@ class LArray(object):
                 killaxis = True
 
             axis, axis_idx = res.axes[axis], res.axes.index(axis)
+            # potentially translate axis reference to real axes
+            groups = tuple(g.with_axis(axis) for g in groups)
             res_shape[axis_idx] = len(groups)
             res_dtype = res.dtype if op not in (np.mean, np.nanmean) else float
             res_data = np.empty(res_shape, dtype=res_dtype)

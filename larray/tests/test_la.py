@@ -1707,9 +1707,161 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
         self.assertEqual(reg.shape, (4, 15))
 
+    def test_group_agg_label_group(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        vla, wal, bru = geo[self.vla_str], geo[self.wal_str], geo[self.bru_str]
+        belgium = geo[self.belgium]
+
+        # a) group aggregate on a fresh array
+
+        # a.1) one group => collapse dimension
+        # not sure I should support groups with a single item in an aggregate
+        men = sex.i[[0]]
+        self.assertEqual(la.sum(men).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H,']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+
+        self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo.group('A11,A21,A25')).shape,
+                         (116, 2, 15))
+
+        self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
+
+        # Include everything between two labels. Since A11 is the first label
+        # and A21 is the last one, this should be equivalent to the previous
+        # tests.
+        self.assertEqual(la.sum(geo['A11:A21']).shape, (116, 2, 15))
+        assert_array_equal(la.sum(geo['A11:A21']), la.sum(geo))
+        assert_array_equal(la.sum(geo['A11':'A21']), la.sum(geo))
+
+        # a.2) a tuple of one group => do not collapse dimension
+        self.assertEqual(la.sum((geo[:],)).shape, (116, 1, 2, 15))
+
+        # a.3) several groups
+        # string groups
+        self.assertEqual(la.sum((vla, wal, bru)).shape, (116, 3, 2, 15))
+
+        # XXX: do we also want to support this? I do not really like it because
+        # it gets tricky when we have some other axes into play. For now the
+        # error message is unclear because it first aggregates on "vla", then
+        # tries to aggregate on "wal", but there is no "geo" dimension anymore.
+        # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+
+        # with one label in several groups
+        self.assertEqual(la.sum((sex['H'], sex[['H', 'F']])).shape,
+                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['H'], sex['H', 'F'])).shape,
+                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['H'], sex['H,F'])).shape, (116, 44, 2, 15))
+        # XXX: do we want to support this?
+        # self.assertEqual(la.sum(sex['H;H,F']).shape, (116, 44, 2, 15))
+
+        aggregated = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+
+        # a.4) several dimensions at the same time
+        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'],
+        #                         (vla, wal, bru, belgium)).shape,
+        #                  (116, 4, 2, 3))
+        self.assertEqual(la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]),
+                                (vla, wal, bru, belgium)).shape,
+                         (116, 4, 2, 3))
+
+        # b) both axis aggregate and group aggregate at the same time
+        # Note that you must list "full axes" aggregates first (Python does
+        # not allow non-kwargs after kwargs.
+        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
+                         (4, 15))
+
+        # c) chain group aggregate after axis aggregate
+        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(reg.shape, (4, 15))
+
+    def test_group_agg_axis_ref_label_group(self):
+        la = self.larray
+        age, geo, sex, lipro = x.age, x.geo, x.sex, x.lipro
+        vla, wal, bru = geo[self.vla_str], geo[self.wal_str], geo[self.bru_str]
+        belgium = geo[self.belgium]
+
+        # a) group aggregate on a fresh array
+
+        # a.1) one group => collapse dimension
+        # not sure I should support groups with a single item in an aggregate
+        men = sex.i[[0]]
+        self.assertEqual(la.sum(men).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H,']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+
+        self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo.group('A11,A21,A25')).shape,
+                         (116, 2, 15))
+
+        self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
+
+        # Include everything between two labels. Since A11 is the first label
+        # and A21 is the last one, this should be equivalent to the previous
+        # tests.
+        self.assertEqual(la.sum(geo['A11:A21']).shape, (116, 2, 15))
+        assert_array_equal(la.sum(geo['A11:A21']), la.sum(geo))
+        assert_array_equal(la.sum(geo['A11':'A21']), la.sum(geo))
+
+        # a.2) a tuple of one group => do not collapse dimension
+        self.assertEqual(la.sum((geo[:],)).shape, (116, 1, 2, 15))
+
+        # a.3) several groups
+        # string groups
+        self.assertEqual(la.sum((vla, wal, bru)).shape, (116, 3, 2, 15))
+
+        # XXX: do we also want to support this? I do not really like it because
+        # it gets tricky when we have some other axes into play. For now the
+        # error message is unclear because it first aggregates on "vla", then
+        # tries to aggregate on "wal", but there is no "geo" dimension anymore.
+        # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+
+        # with one label in several groups
+        self.assertEqual(la.sum((sex['H'], sex[['H', 'F']])).shape,
+                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['H'], sex['H', 'F'])).shape,
+                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['H'], sex['H,F'])).shape, (116, 44, 2, 15))
+        # XXX: do we want to support this?
+        # self.assertEqual(la.sum(sex['H;H,F']).shape, (116, 44, 2, 15))
+
+        aggregated = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+
+        # a.4) several dimensions at the same time
+        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'],
+        #                         (vla, wal, bru, belgium)).shape,
+        #                  (116, 4, 2, 3))
+        self.assertEqual(la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]),
+                                (vla, wal, bru, belgium)).shape,
+                         (116, 4, 2, 3))
+
+        # b) both axis aggregate and group aggregate at the same time
+        # Note that you must list "full axes" aggregates first (Python does
+        # not allow non-kwargs after kwargs.
+        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
+                         (4, 15))
+
+        # c) chain group aggregate after axis aggregate
+        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(reg.shape, (4, 15))
+
     def test_group_agg_one_axis(self):
         a = Axis('a', range(3))
-        la = ndrange([a])
+        la = ndrange(a)
         raw = np.asarray(la)
 
         assert_array_equal(la.sum(a[0, 2]), raw[[0, 2]].sum())
