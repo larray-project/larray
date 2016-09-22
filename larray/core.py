@@ -3338,7 +3338,7 @@ class LArray(object):
                     # we do not care about the name at this point
                     group = LGroup(key, axis=group.axis)
 
-                arr = res.__getitem__({axis.name: group}, collapse_slices=True)
+                arr = res.__getitem__(group, collapse_slices=True)
                 if res_data.ndim == 1:
                     assert len(idx) == 1 and idx[0] == i
 
