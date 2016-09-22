@@ -1714,6 +1714,20 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         assert_array_equal(la.sum(a[0, 2]), raw[[0, 2]].sum())
 
+    def test_group_agg_anonymous_axis(self):
+        la = ndrange((2, 3))
+        a1, a2 = la.axes
+        raw = np.asarray(la)
+        assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
+
+    # TODO: fix this (and add other tests for references (x.) to anonymous axes
+    # def test_group_agg_anonymous_axis_ref(self):
+    #     la = ndrange((2, 3))
+    #     raw = np.asarray(la)
+    #     # this does not work because x[1] refers to an axis with name 1,
+    #     # which does not exist. We might want to change this.
+    #     assert_array_equal(la.sum(x[1][0, 2]), raw[:, [0, 2]].sum(1))
+
     # group aggregates on a group-aggregated array
     def test_group_agg_on_group_agg(self):
         la = self.larray
@@ -1995,7 +2009,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         lipro2 = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.assertEqual(small.sum(lipro=lipro2['P01,P03']).shape, (2,))
 
-        # use group from another *incompatible* axis
+        # use (compatible) group from another *incompatible* axis
         # XXX: I am unsure whether or not this should be allowed. Maybe we
         # should simply check that the group is valid in axis, but that
         # will trigger a pretty meaningful error anyway
@@ -2005,7 +2019,9 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # use a group (from another axis) which is incompatible with the axis of
         # the same name in the array
         lipro4 = Axis('lipro', 'P01,P03,P16')
-        with self.assertRaises(KeyError):
+        with self.assertRaisesRegexp(ValueError,
+                                     "\['P01' 'P16'\] is not a valid label for "
+                                     "any axis"):
             small.sum(lipro4['P01,P16'])
 
     def test_ratio(self):
