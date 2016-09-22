@@ -349,6 +349,10 @@ import csv
 import os
 from itertools import product, chain, groupby, islice
 import sys
+import re
+
+from larray.oset import *
+
 try:
     import builtins
 except ImportError:
@@ -853,6 +857,36 @@ class Axis(object):
                (len(self) == len(other) if self.iswildcard else
                     np.array_equal(self.labels, other.labels))
 
+    def matches(self, pattern):
+        '''
+        returns a LGroup with all the labels matching (regex) the specified pattern
+
+        xm.axes.sutcode.matches('^..$') = labels 2 characters long
+        '''
+        return LGroup(self._axisregex(pattern))
+
+    def startswith(self, pattern):
+        '''
+        returns a LGroup with the lables starting with the specified string
+
+        xm.axes.sutcode.startswith('25A')
+        '''
+        res = self._axisregex('^%s.*' % pattern)
+        return LGroup(res)
+
+    def endswith(self, pattern):
+        '''
+        returns a LGroup with the lables ending with the specified string
+
+        xm.axes.sutcode.endswith('01')
+        '''
+        res = self._axisregex('.*%s$' % pattern)
+        return LGroup(res)
+
+    def _axisregex(self, pattern):
+        rx = re.compile(pattern)
+        return [v for v in self if rx.match(v)]
+
     def __len__(self):
         return self._length
 
@@ -1123,8 +1157,10 @@ class Group(object):
             # the only interest is to expand slices
             pos = self.axis.translate(self)
             return iter(self.axis.labels[pos])
-        else:
+        elif isinstance(self.key, (slice, str)):
             raise Exception('not iterable')
+        else:
+            return iter(self.key)
 
     def named(self, name):
         """Returns group with a different name.
@@ -1203,6 +1239,9 @@ class LGroup(Group):
         return '%r (%s)' % (self.name, str_key) if self.name is not None \
             else str_key
 
+    # def __iter__(self):
+    #     return iter(self.key)
+
     def __lt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__lt__(other_key)
@@ -1213,6 +1252,34 @@ class LGroup(Group):
 
     def __getitem__(self, key):
         return self.key[key]
+
+    def __add__(self, other):
+        return self.union(other)
+
+    def __sub__(self, other):
+        return self.difference(other)
+
+    def union(self, other):
+        if isinstance(other, str):
+            other = [other]
+        other_key = other.key if isinstance(other, LGroup) else other
+        return LGroup(list(OrderedSet(self.key).union(OrderedSet(other_key))))
+
+    __or__ = union
+
+    def intersection(self, other):
+        if isinstance(other, str):
+            other = [other]
+        other_key = other.key if isinstance(other, LGroup) else other
+        return LGroup(list(OrderedSet(self.key).intersection(OrderedSet(other_key))))
+
+    __and__ = intersection
+
+    def difference(self, other):
+        if isinstance(other, str):
+            other = [other]
+        other_key = other.key if isinstance(other, LGroup) else other
+        return LGroup(list(OrderedSet(self.key).difference(OrderedSet(other_key))))
 
 
 class PGroup(Group):

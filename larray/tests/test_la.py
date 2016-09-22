@@ -168,6 +168,12 @@ class TestAxis(TestCase):
         # arr3x = geo.seq('A31', 'A38') # not equivalent to geo['A31:A38'] !
         #                               # (if A22 is between A31 and A38)
 
+    def test_match(self):
+        sutcode = Axis('sutcode', ['A23', 'A2301', 'A25', 'A2501'])
+        self.assertEqual(sutcode.matches('^...$'), LGroup(['A23', 'A25']))
+        self.assertEqual(sutcode.startswith('A23'), LGroup(['A23', 'A2301']))
+        self.assertEqual(sutcode.endswith('01'), LGroup(['A2301', 'A2501']))
+
     def test_getitem(self):
         age = Axis('age', ':115')
         vg = age.group(':17')
@@ -344,6 +350,25 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list, ' P01 , P03 , P07 ')
         self.assertEqual(self.list, ['P01', 'P03', 'P07'])
         self.assertEqual(self.list, ('P01', 'P03', 'P07'))
+
+    def test_otherops(self):
+        self.assertEqual(LGroup(['A23', 'A2301']) | LGroup(['A25', 'A2501']),
+                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
+        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) | LGroup(['A25', 'A2501']),
+                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
+
+        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) & LGroup(['A25', 'A2501']),
+                         LGroup(['A25']))
+
+        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - LGroup(['A25', 'A2501']),
+                         LGroup(['A23', 'A2301']))
+        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - ['A25', 'A2501'],
+                         LGroup(['A23', 'A2301']))
+        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - 'A2301',
+                         LGroup(['A23', 'A25']))
+
+        self.assertEqual(sorted(LGroup(['A25', 'A2501', 'A23', 'A2301'])),
+                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
 
     def test_hash(self):
         d = {self.slice_both: 1,
