@@ -352,23 +352,23 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list, ('P01', 'P03', 'P07'))
 
     def test_otherops(self):
-        self.assertEqual(LGroup(['A23', 'A2301']) | LGroup(['A25', 'A2501']),
-                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
-        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) | LGroup(['A25', 'A2501']),
-                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
+        self.assertEqual(LGroup(['a', 'b']) | LGroup(['c', 'd']),
+                         LGroup(['a', 'b', 'c', 'd']))
+        self.assertEqual(LGroup(['a', 'b', 'c']) | LGroup(['c', 'd']),
+                         LGroup(['a', 'b', 'c', 'd']))
 
-        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) & LGroup(['A25', 'A2501']),
-                         LGroup(['A25']))
+        self.assertEqual(LGroup(['a', 'b', 'c']) & LGroup(['c', 'd']),
+                         LGroup(['c']))
 
-        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - LGroup(['A25', 'A2501']),
-                         LGroup(['A23', 'A2301']))
-        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - ['A25', 'A2501'],
-                         LGroup(['A23', 'A2301']))
-        self.assertEqual(LGroup(['A23', 'A2301', 'A25']) - 'A2301',
-                         LGroup(['A23', 'A25']))
+        self.assertEqual(LGroup(['a', 'b', 'c']) - LGroup(['c', 'd']),
+                         LGroup(['a', 'b']))
+        self.assertEqual(LGroup(['a', 'b', 'c']) - ['c', 'd'],
+                         LGroup(['a', 'b']))
+        self.assertEqual(LGroup(['a', 'b', 'c']) - 'b',
+                         LGroup(['a', 'c']))
 
-        self.assertEqual(sorted(LGroup(['A25', 'A2501', 'A23', 'A2301'])),
-                         LGroup(['A23', 'A2301', 'A25', 'A2501']))
+        self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
+                         LGroup(['a', 'b', 'c', 'd']))
 
     def test_hash(self):
         d = {self.slice_both: 1,
