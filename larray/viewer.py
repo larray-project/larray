@@ -497,14 +497,18 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def get_labels(self, index):
-        if (index.row() < len(self.xlabels) - 1) or \
-                (index.column() < len(self.ylabels) - 1):
-            return ""
         i = index.row() - len(self.xlabels) + 1
         j = index.column() - len(self.ylabels) + 1
-
-        labels=["%s=%s" %(self.xlabels[0][k], self.ylabels[k+1][i]) for k in range(len(self.ylabels) - 1)]  + ["%s=%s" % (self.xlabels[0][-1], self.xlabels[1][j])]
-        return ", ". join(labels)
+        if i < 0 or j < 0:
+            return ""
+        dim_names = self.xlabels[0]
+        ndim = len(dim_names)
+        last_dim_labels = self.xlabels[1]
+        # ylabels[0] are empty
+        labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
+                 [last_dim_labels[j]]
+        return ", ".join("%s=%s" % (dim_name, label)
+                         for dim_name, label in zip(dim_names, labels))
 
     def get_value(self, index):
         i = index.row() - len(self.xlabels) + 1
