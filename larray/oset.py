@@ -8,6 +8,7 @@
 
 from larray.utils import unique_list
 
+
 class OrderedSet(set):
     def __init__(self, d=None):
         set.__init__(self)
@@ -46,9 +47,6 @@ class OrderedSet(set):
     def __iter__(self):
         return iter(self._list)
 
-    def __add__(self, other):
-        return self.union(other)
-
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self._list)
 
@@ -60,20 +58,18 @@ class OrderedSet(set):
                 self._list.append(e)
                 set.add(self, e)
         return self
-
     __ior__ = update
 
     def union(self, other):
         result = self.__class__(self)
         result.update(other)
         return result
-
     __or__ = union
+    __add__ = union
 
     def intersection(self, other):
         other = set(other)
         return self.__class__(a for a in self if a in other)
-
     __and__ = intersection
 
     def symmetric_difference(self, other):
@@ -81,13 +77,11 @@ class OrderedSet(set):
         result = self.__class__(a for a in self if a not in other)
         result.update(a for a in other if a not in self)
         return result
-
     __xor__ = symmetric_difference
 
     def difference(self, other):
         other = set(other)
         return self.__class__(a for a in self if a not in other)
-
     __sub__ = difference
 
     def intersection_update(self, other):
@@ -95,7 +89,6 @@ class OrderedSet(set):
         set.intersection_update(self, other)
         self._list = [a for a in self._list if a in other]
         return self
-
     __iand__ = intersection_update
 
     def symmetric_difference_update(self, other):
@@ -103,12 +96,10 @@ class OrderedSet(set):
         self._list = [a for a in self._list if a in self]
         self._list += [a for a in other._list if a in self]
         return self
-
     __ixor__ = symmetric_difference_update
 
     def difference_update(self, other):
         set.difference_update(self, other)
         self._list = [a for a in self._list if a in self]
         return self
-
     __isub__ = difference_update
