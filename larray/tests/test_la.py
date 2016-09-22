@@ -1588,7 +1588,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # using axes names
         assert_array_equal(la.cumsum('sex'), self.array.cumsum(2))
 
-    def test_group_agg(self):
+    def test_group_agg_kwargs(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
         vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
@@ -1597,24 +1597,24 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         # a) group aggregate on a fresh array
 
         # a.1) one group => collapse dimension
-        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
         self.assertEqual(la.sum(sex='H').shape, (116, 44, 15))
         self.assertEqual(la.sum(sex='H,F').shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex=sex['H']).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(geo='A11,A21,A25').shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=['A11', 'A21', 'A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=geo.group('A11,A21,A25')).shape,
                          (116, 2, 15))
 
-        self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=':').shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=geo[':']).shape, (116, 2, 15))
         # Include everything between two labels. Since A11 is the first label
         # and A21 is the last one, this should be equivalent to the previous
         # tests.
         self.assertEqual(la.sum(geo='A11:A21').shape, (116, 2, 15))
         assert_array_equal(la.sum(geo='A11:A21'), la.sum(geo=':'))
-        assert_array_equal(la.sum(geo['A11:A21']), la.sum(geo=':'))
+        assert_array_equal(la.sum(geo=geo['A11:A21']), la.sum(geo=':'))
 
         # a.2) a tuple of one group => do not collapse dimension
         self.assertEqual(la.sum(geo=(geo.all(),)).shape, (116, 1, 2, 15))
@@ -1646,7 +1646,7 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(reg.shape, (4, 15))
 
-    def test_group_agg_no_kwarg(self):
+    def test_group_agg_guess_axis(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
         vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
@@ -1656,26 +1656,19 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
 
         # a.1) one group => collapse dimension
         # not sure I should support groups with a single item in an aggregate
-        men = sex.i[[0]]
-        self.assertEqual(la.sum(men).shape, (116, 44, 15))
         self.assertEqual(la.sum('H').shape, (116, 44, 15))
         self.assertEqual(la.sum('H,').shape, (116, 44, 15))
         self.assertEqual(la.sum('H,F').shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
 
         self.assertEqual(la.sum('A11,A21,A25').shape, (116, 2, 15))
         self.assertEqual(la.sum(['A11', 'A21', 'A25']).shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo.group('A11,A21,A25')).shape,
-                         (116, 2, 15))
 
-        self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
         # Include everything between two labels. Since A11 is the first label
-        # and A21 is the last one, this should be equivalent to the previous
-        # tests.
+        # and A21 is the last one, this should be equivalent to taking the
+        # full axis.
         self.assertEqual(la.sum('A11:A21').shape, (116, 2, 15))
         assert_array_equal(la.sum('A11:A21'), la.sum(geo=':'))
-        assert_array_equal(la.sum(geo['A11:A21']), la.sum(geo=':'))
+        assert_array_equal(la.sum('A11:A21'), la.sum(geo))
 
         # a.2) a tuple of one group => do not collapse dimension
         self.assertEqual(la.sum((geo.all(),)).shape, (116, 1, 2, 15))
@@ -1700,8 +1693,6 @@ age | geo | sex\lipro |      P01 |      P02 | ... |      P14 |      P15
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        # : is ambiguous
-        # self.assertEqual(la.sum('P01,P03;P02,P05;:',
         self.assertEqual(la.sum('P01,P03;P02,P05;P01:',
                                 (vla, wal, bru, belgium)).shape,
                          (116, 4, 2, 3))
