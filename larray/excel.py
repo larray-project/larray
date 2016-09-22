@@ -92,6 +92,8 @@ if xw is not None:
                 else:
                     # this is ugly but this is the only way I found to
                     # create a new workbook and set its filepath
+                    # XXX: this is confusing for the user if he tries to
+                    # open the file before it is saved.
                     xw_wkb = xw.Workbook(*args, **kwargs)
                     xw_wkb.save(filepath)
             self.xw_wkb = xw_wkb
@@ -159,6 +161,7 @@ if xw is not None:
             >>> # wb.save("c:/path/to/new_file_name.xlsx")
             >>> wb.close()
             """
+            #XXX: this might not be needed anymore with xlwings 0.9.3+
             if path is not None:
                 path = os.path.abspath(path)
             self.xw_wkb.save(path)
