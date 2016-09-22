@@ -97,11 +97,11 @@ in general:
 
 # => NDGroup((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
 # => Group((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
-# => (x.axis1[5:10] | x.axis2.i[2.5]).named('exports')
+# => (x.axis1[5:10] & x.axis2.i[2.5]).named('exports')
 
 # generalizing "named" and suppressing .group seems like a good idea!
 # => x.axis1.group([5, 7, 10], name='brussels')
-# => x.axis1[[5, 7, 10]].named('brussels')
+# => x.axis1[5, 7, 10].named('brussels')
 
 # http://xarray.pydata.org/en/stable/indexing.html#pointwise-indexing
 # http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.lookup.html#pandas.DataFrame.lookup
@@ -2613,6 +2613,9 @@ class LArray(object):
         """
         # TODO: do it for Group without axis too
         # TODO: do it for LArray key too (but using .i[] instead)
+        # TODO: we should skip this chunk stuff for keys where the axis is known
+        #       otherwise we do translate(key[:1]) without any reason
+        #       (in addition to translate(key))
         if isinstance(axis_key, (tuple, list, np.ndarray)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is
@@ -2630,6 +2633,9 @@ class LArray(object):
             # the (start of the) key match a single axis
             if axis is not None:
                 # make sure we have an Axis object
+                # TODO: we should make sure the tkey returned from
+                # _translate_axis_key_chunk always contains a real Axis (and
+                # thus kill this line)
                 axis = self.axes[axis]
                 # wrap key in LGroup
                 axis_key = axis[axis_key]
