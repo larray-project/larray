@@ -422,7 +422,7 @@ if xw is not None:
                     axes_names = [None] * nb_axes
                 # assume 1d array
                 else:
-                    axes_names = header_line[0]
+                    axes_names = [header_line[0]]
 
                 # this can only happen if both nb_index=0 and index_col is None
                 # TODO: nb_index should default to None instead of
