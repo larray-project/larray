@@ -1839,7 +1839,7 @@ class SessionEditor(QDialog):
         self.setWindowFlags(Qt.Window)
         return True
 
-    def update_session(self, value):
+    def update_session(self, value, s=None):
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
         new_keys = list(keys_after - keys_before)
@@ -1859,7 +1859,7 @@ class SessionEditor(QDialog):
 
             to_display = changed_keys[0]
 
-            if not qtconsole_available:
+            if not qtconsole_available and s is not None:
                 self.expressions[to_display] = s
 
             changed_items = self._listwidget.findItems(to_display,
@@ -1879,7 +1879,7 @@ class SessionEditor(QDialog):
         if statement_pattern.match(s):
             context = self.data._objects.copy()
             exec(s, la.__dict__, context)
-            self.update_session(context)
+            self.update_session(context, s)
         else:
             self.view_expr(eval(s, la.__dict__, self.data))
 
