@@ -366,6 +366,8 @@ class TestLGroup(TestCase):
                          LGroup(['a', 'b']))
         self.assertEqual(LGroup(['a', 'b', 'c']) - 'b',
                          LGroup(['a', 'c']))
+        self.assertEqual(LGroup([1, 2, 3]) - 4, LGroup([1, 2, 3]))
+        self.assertEqual(LGroup([1, 2, 3]) - 2, LGroup([1, 3]))
 
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
                          LGroup(['a', 'b', 'c', 'd']))
