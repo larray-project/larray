@@ -1239,9 +1239,6 @@ class LGroup(Group):
         return '%r (%s)' % (self.name, str_key) if self.name is not None \
             else str_key
 
-    # def __iter__(self):
-    #     return iter(self.key)
-
     def __lt__(self, other):
         other_key = other.key if isinstance(other, LGroup) else other
         return self.key.__lt__(other_key)
@@ -1253,33 +1250,33 @@ class LGroup(Group):
     def __getitem__(self, key):
         return self.key[key]
 
-    def __add__(self, other):
-        return self.union(other)
-
-    def __sub__(self, other):
-        return self.difference(other)
-
     def union(self, other):
-        if isinstance(other, str):
+        if np.isscalar(other):
             other = [other]
         other_key = other.key if isinstance(other, LGroup) else other
-        return LGroup(list(OrderedSet(self.key).union(OrderedSet(other_key))))
-
+        # FIXME: keep axis
+        # XXX: what about name?
+        return LGroup(list(OrderedSet(self.key) | OrderedSet(other_key)))
     __or__ = union
+    __add__ = union
 
     def intersection(self, other):
-        if isinstance(other, str):
+        if np.isscalar(other):
             other = [other]
         other_key = other.key if isinstance(other, LGroup) else other
-        return LGroup(list(OrderedSet(self.key).intersection(OrderedSet(other_key))))
-
+        # FIXME: keep axis
+        # XXX: what about name?
+        return LGroup(list(OrderedSet(self.key) & OrderedSet(other_key)))
     __and__ = intersection
 
     def difference(self, other):
-        if isinstance(other, str):
+        if np.isscalar(other):
             other = [other]
         other_key = other.key if isinstance(other, LGroup) else other
-        return LGroup(list(OrderedSet(self.key).difference(OrderedSet(other_key))))
+        # FIXME: keep axis
+        # XXX: what about name?
+        return LGroup(list(OrderedSet(self.key) - OrderedSet(other_key)))
+    __sub__ = difference
 
 
 class PGroup(Group):
