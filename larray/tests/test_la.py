@@ -351,15 +351,17 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list, ['P01', 'P03', 'P07'])
         self.assertEqual(self.list, ('P01', 'P03', 'P07'))
 
-    def test_otherops(self):
+    def test_or(self):
         self.assertEqual(LGroup(['a', 'b']) | LGroup(['c', 'd']),
                          LGroup(['a', 'b', 'c', 'd']))
         self.assertEqual(LGroup(['a', 'b', 'c']) | LGroup(['c', 'd']),
                          LGroup(['a', 'b', 'c', 'd']))
 
+    def test_and(self):
         self.assertEqual(LGroup(['a', 'b', 'c']) & LGroup(['c', 'd']),
                          LGroup(['c']))
 
+    def test_sub(self):
         self.assertEqual(LGroup(['a', 'b', 'c']) - LGroup(['c', 'd']),
                          LGroup(['a', 'b']))
         self.assertEqual(LGroup(['a', 'b', 'c']) - ['c', 'd'],
@@ -369,6 +371,7 @@ class TestLGroup(TestCase):
         self.assertEqual(LGroup([1, 2, 3]) - 4, LGroup([1, 2, 3]))
         self.assertEqual(LGroup([1, 2, 3]) - 2, LGroup([1, 3]))
 
+    def test_sorted(self):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
                          LGroup(['a', 'b', 'c', 'd']))
 
