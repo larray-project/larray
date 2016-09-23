@@ -352,14 +352,48 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list, ('P01', 'P03', 'P07'))
 
     def test_or(self):
+        # without axis
         self.assertEqual(LGroup(['a', 'b']) | LGroup(['c', 'd']),
                          LGroup(['a', 'b', 'c', 'd']))
         self.assertEqual(LGroup(['a', 'b', 'c']) | LGroup(['c', 'd']),
                          LGroup(['a', 'b', 'c', 'd']))
+        # with axis
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b'] | alpha['c', 'd']
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res, alpha['a', 'b', 'c', 'd'])
+        self.assertEqual(alpha['a', 'b', 'c'] | alpha['c', 'd'],
+                         alpha['a', 'b', 'c', 'd'])
+
+        # with axis & name
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b'].named('ab') | alpha['c', 'd'].named('cd')
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res.name, 'ab | cd')
+        self.assertEqual(res, alpha['a', 'b', 'c', 'd'])
+        self.assertEqual(alpha['a', 'b', 'c'] | alpha['c', 'd'],
+                         alpha['a', 'b', 'c', 'd'])
+
+        # numeric axis
+        num = Axis('num', range(10))
+        # single int
+        self.assertEqual(num[1, 5, 3] | 4, num[1, 5, 3, 4])
+        self.assertEqual(num[1, 5, 3] | num[4], num[1, 5, 3, 4])
+        self.assertEqual(num[4] | num[1, 5, 3], num[4, 1, 5, 3])
+        # slices
+        self.assertEqual(num[:2] | num[8:], num[0, 1, 2, 8, 9])
+        self.assertEqual(num[:2] | num[5], num[0, 1, 2, 5])
 
     def test_and(self):
+        # without axis
         self.assertEqual(LGroup(['a', 'b', 'c']) & LGroup(['c', 'd']),
                          LGroup(['c']))
+        # with axis & name
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b', 'c'].named('abc') & alpha['c', 'd'].named('cd')
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res.name, 'abc & cd')
+        self.assertEqual(res, alpha[['c']])
 
     def test_sub(self):
         self.assertEqual(LGroup(['a', 'b', 'c']) - LGroup(['c', 'd']),
