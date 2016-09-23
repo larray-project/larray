@@ -1152,15 +1152,20 @@ class Group(object):
     def __len__(self):
         return len(self.key)
 
-    def __iter__(self):
-        if isinstance(self.axis, Axis):
-            # the only interest is to expand slices
-            pos = self.axis.translate(self)
-            return iter(self.axis.labels[pos])
-        elif isinstance(self.key, (slice, str)):
-            raise Exception('not iterable')
+    def eval(self):
+        if isinstance(self.key, slice):
+            if isinstance(self.axis, Axis):
+                # expand slices
+                pos = self.axis.translate(self)
+                return self.axis.labels[pos]
+            else:
+                raise ValueError("Cannot evaluate a slice group without axis")
         else:
-            return iter(self.key)
+            # we do not check the group labels are actually valid on Axis
+            return self.key
+
+    def __iter__(self):
+        return iter(self.eval())
 
     def named(self, name):
         """Returns group with a different name.
@@ -1250,32 +1255,42 @@ class LGroup(Group):
     def __getitem__(self, key):
         return self.key[key]
 
-    def union(self, other):
-        if np.isscalar(other):
-            other = [other]
-        other_key = other.key if isinstance(other, LGroup) else other
-        # FIXME: keep axis
-        # XXX: what about name?
-        return LGroup(list(OrderedSet(self.key) | OrderedSet(other_key)))
+    def _to_oset(self):
+        lkey = self.eval()
+        if np.isscalar(lkey):
+            lkey = [lkey]
+        return OrderedSet(lkey)
+
+    # method factory
+    def _binop(opname, c):
+        op_fullname = '__%s__' % opname
+
+        # TODO: implement this in a delayed fashion for reference axes
+        def opmethod(self, other):
+            if not isinstance(other, LGroup):
+                other = LGroup(other)
+            axis = self.axis if self.axis is not None else other.axis
+
+            # setting a meaningful name is hard when either one has no name
+            if self.name is not None and other.name is not None:
+                name = '%s %s %s' % (self.name, c, other.name)
+            else:
+                name = None
+            # TODO: implement this in a more efficient way for ndarray keys
+            #       which can be large
+            result_set = getattr(self._to_oset(), op_fullname)(other._to_oset())
+            return LGroup(list(result_set), name=name, axis=axis)
+        opmethod.__name__ = op_fullname
+        return opmethod
+
+    union = _binop('or', '|')
     __or__ = union
     __add__ = union
 
-    def intersection(self, other):
-        if np.isscalar(other):
-            other = [other]
-        other_key = other.key if isinstance(other, LGroup) else other
-        # FIXME: keep axis
-        # XXX: what about name?
-        return LGroup(list(OrderedSet(self.key) & OrderedSet(other_key)))
+    intersection = _binop('and', '&')
     __and__ = intersection
 
-    def difference(self, other):
-        if np.isscalar(other):
-            other = [other]
-        other_key = other.key if isinstance(other, LGroup) else other
-        # FIXME: keep axis
-        # XXX: what about name?
-        return LGroup(list(OrderedSet(self.key) - OrderedSet(other_key)))
+    difference = _binop('sub', '-')
     __sub__ = difference
 
 
