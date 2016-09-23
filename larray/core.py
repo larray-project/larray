@@ -858,28 +858,28 @@ class Axis(object):
                     np.array_equal(self.labels, other.labels))
 
     def matches(self, pattern):
-        '''
+        """
         returns a LGroup with all the labels matching (regex) the specified pattern
 
         xm.axes.sutcode.matches('^..$') = labels 2 characters long
-        '''
+        """
         return LGroup(self._axisregex(pattern))
 
     def startswith(self, pattern):
-        '''
-        returns a LGroup with the lables starting with the specified string
+        """
+        returns a LGroup with the labels starting with the specified string
 
         xm.axes.sutcode.startswith('25A')
-        '''
+        """
         res = self._axisregex('^%s.*' % pattern)
         return LGroup(res)
 
     def endswith(self, pattern):
-        '''
-        returns a LGroup with the lables ending with the specified string
+        """
+        returns a LGroup with the labels ending with the specified string
 
         xm.axes.sutcode.endswith('01')
-        '''
+        """
         res = self._axisregex('.*%s$' % pattern)
         return LGroup(res)
 
