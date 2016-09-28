@@ -88,28 +88,30 @@ class TestSession(TestCase):
         s.add(h='h')
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
 
-    def test_dump(self):
+    def test_h5_io(self):
         self.session.dump('test_session.h5')
+        s = Session()
+        s.load('test_session.h5')
+        self.assertEqual(s.names, ['e', 'f', 'g'])
+
+        s = Session()
+        s.load('test_session.h5', ['e', 'f'])
+        self.assertEqual(s.names, ['e', 'f'])
+
+    def test_xlsx_io(self):
         self.session.dump('test_session.xlsx', engine='pandas_excel')
         self.session.dump('test_session_ef.xlsx', ['e', 'f'],
                           engine='pandas_excel')
         # dump_excel uses default engine (xlwings) which is not available on
         # travis
         # self.session.dump_excel('test_session2.xlsx')
-        self.session.dump_csv('test_session_csv')
-
-    def test_load(self):
-        s = Session()
-        s.load('test_session.h5', ['e', 'f'])
-        self.assertEqual(s.names, ['e', 'f'])
-
-        s = Session()
-        s.load('test_session.h5')
-        self.assertEqual(s.names, ['e', 'f', 'g'])
 
         s = Session()
         s.load('test_session_ef.xlsx', engine='pandas_excel')
         self.assertEqual(s.names, ['e', 'f'])
+
+    def test_csv_io(self):
+        self.session.dump_csv('test_session_csv')
 
         s = Session()
         s.load('test_session_csv', engine='pandas_csv')
