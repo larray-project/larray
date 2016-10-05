@@ -33,13 +33,8 @@ if xw is not None:
     LArrayConverter.register(LArray)
 
 
-    class ClosedBook(object):
-        def __getattribute__(self, key):
-            raise AttributeError("workbook is closed")
-
-
     class Workbook(object):
-        def __init__(self, filepath, *args, **kwargs):
+        def __init__(self, filepath, visible=None, app=None, silent=None):
             """
             Parameters
             ----------
@@ -49,21 +44,41 @@ if xw is not None:
             args
             kwargs
             """
-            # in many cases, it would be better to open a new Excel instance but
-            # xlwings does not support that currently (it uses Dispatch instead
-            # of DispatchEx).
-            # See: https://github.com/ZoomerAnalytics/xlwings/issues/335
+            # active workbook use active app by default
+            if filepath == -1 and app is None:
+                app = -1
+
+            # unless explicitly set, app is only visible for "active book"
+            if visible is None:
+                visible = filepath == -1
+
+            if app is None:
+                app = xw.App(visible=visible, add_book=False)
+            elif app == -1:
+                app = xw.apps.active
+
+            if visible:
+                app.visible = visible
+
+            if silent is None:
+                silent = not visible
+
+            update_links_backup = app.api.AskToUpdateLinks
+            display_alerts_backup = app.display_alerts
+            if silent:
+                # try to update links silently instead of asking:
+                # "Update", "Don't Update", "Help"
+                app.api.AskToUpdateLinks = False
+
+                # in case some links cannot be updated, continue instead of
+                # asking: "Continue" or "Edit Links..."
+                app.display_alerts = False
+
             if filepath is None:
                 # creates a new/blank Book
-                self.was_open = False
-                # new App is visible by default
-                app = xw.App()
-                xw_wkb = app.books[0]
+                xw_wkb = app.books.add()
             elif filepath == -1:
-                # not really True, but in this case close() should really close
-                self.was_open = False
-                # active book in active app/instance
-                xw_wkb = xw.books.active
+                xw_wkb = app.books.active
             else:
                 basename, ext = os.path.splitext(filepath)
                 if ext:
@@ -73,22 +88,14 @@ if xw is not None:
                     if not ext.startswith('.xl'):
                         raise ValueError("'%s' is not a supported file "
                                          "extension" % ext)
-
-                    # This is necessary because otherwise we cannot open/save to
-                    # a workbook in the current directory without giving the
-                    # full/absolute path. By doing this, we basically loose the
-                    # ability to target an already open workbook *of a saved
-                    # file* not in the current directory without using its
-                    # path. I can live with that restriction though because you
-                    # usually either work with relative paths or with the
-                    # currently active workbook.
-                    filepath = os.path.abspath(filepath)
-                # if 'visible' not in kwargs:
-                #     kwargs['visible'] = None
-                self.was_open = False  #xw.xlplatform.is_file_open(filepath)
-                xw_wkb = xw.Book(filepath, *args, **kwargs)
+                xw_wkb = app.books.open(filepath)
                 # if os.path.isfile(filepath) and overwrite_file:
                 #     os.remove(filepath)
+
+            if silent:
+                app.api.AskToUpdateLinks = update_links_backup
+                app.display_alerts = display_alerts_backup
+
             self.xw_wkb = xw_wkb
 
         def _concrete_key(self, key):
@@ -133,56 +140,15 @@ if xw is not None:
         def sheet_names(self):
             return [s.name for s in self]
 
-        def save(self, path=None):
+        def close(self):
             """
-            Saves the Book. If a path is being provided, this works like
-            SaveAs() in Excel. If no path is specified and if the file has
-            not been saved previously, it's being saved in the current working
-            directory with the current filename. Existing files are overwritten
-            without prompting.
-
-            Arguments
-            ---------
-            path : str, default None
-                path to the workbook
-
-            Example
-            -------
-            >>> wb = open_excel()
-            >>> wb.save()
-            >>> # wb.save("c:/path/to/new_file_name.xlsx")
-            >>> wb.close()
+            Close the workbook in Excel. If this was the last workbook of
+            that Excel instance, it also close the Excel instance.
             """
-            #XXX: this might not be needed anymore with xlwings 0.9.3+
-            if path is not None:
-                path = os.path.abspath(path)
-            self.xw_wkb.save(path)
-
-        def close(self, force=False):
-            """
-            Close the current connection to the Book. If the workbook was
-            not already open in Excel when this connection was created, it is
-            closed in Excel, otherwise it is left open in Excel unless `force`
-            is used. In the case the workbook is left open in Excel, the
-            connection to it becomes non functional.
-
-            Parameters
-            ----------
-            force : bool, optional
-                whether or not to force closing the workbook in Excel,
-                in addition to our connection to it. If not provided,
-                the workbook is closed in excel only if it was not open before
-                this python connection to it was created.
-            """
-            if not self.was_open or force:
-                self.xw_wkb.close()
-
-            # not using None, because that is the default value for xlwings,
-            # and means that this Book object would remain functional (but
-            # possibly pointing at another file!) if there is any Excel file
-            # left open.
-            self.xw_wkb = ClosedBook()
-            self.was_open = False
+            app = self.xw_wkb.app
+            self.xw_wkb.close()
+            if not app.books:
+                app.quit()
 
         def __iter__(self):
             return iter([Sheet(None, None, xw_sheet)
@@ -221,6 +187,8 @@ if xw is not None:
                 xw_sheet = workbook.xw_wkb.sheets[key]
             self.xw_sheet = xw_sheet
 
+        # TODO: we can probably scrap this for xlwings 0.9+. We need to have
+        #       a unit test for this though.
         def __getitem__(self, key):
             if isinstance(key, string_types):
                 return Range(self, key)
@@ -316,6 +284,8 @@ if xw is not None:
                 if isinstance(col, slice) else col + col_offset
             return row, col
 
+        # TODO: we can probably scrap this for xlwings 0.9+. We need to have
+        #       a unit test for this though.
         def __getitem__(self, key):
             return self.sheet[self._range_key_to_sheet_key(key)]
 
