@@ -17,12 +17,13 @@ Array Editor Dialog based on Qt
 # pylint: disable=R0201
 
 # Note that the canonical way to implement filters in a TableView would
-# be to use a QSortFilterProxyModel. I would need to reimplement its
-# filterAcceptsColumn and filterAcceptsRow methods, but that seems pretty
-# doable, however I think it would be too slow on large arrays (because it
-# suppose you have the whole array in your model) and would probably not play
-# well with the partial/progressive load we have currently implemented. I have
-# also read quite a few people complaining about speed issues with those.
+# be to use a QSortFilterProxyModel. In this case, we would need to reimplement
+# its filterAcceptsColumn and filterAcceptsRow methods. The problem is that
+# it does seem to be really designed for very large arrays and it would
+# probably be too slow on those (I have read quite a few people complaining
+# about speed issues with those) possibly because it suppose you have the whole
+# array in your model. It would also probably not play well with the
+# partial/progressive load we have currently implemented.
 
 # TODO:
 # * drag & drop to reorder axes

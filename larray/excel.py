@@ -221,7 +221,8 @@ if xw is not None:
             return 2
 
         def __array__(self, dtype=None):
-            # FIXME: convert value like in Range
+            # FIXME: convert value like in Range, something like:
+            # return np.array(self[:]._converted_value(), dtype=dtype)
             return np.array(self[:].value, dtype=dtype)
 
         def __dir__(self):
@@ -252,6 +253,7 @@ if xw is not None:
             -------
             LArray
             """
+            # FIXME: use _convert_value
             if row_labels is not None:
                 row_labels = np.array(self[row_labels].value)
             if column_labels is not None:
@@ -320,6 +322,7 @@ if xw is not None:
             return np.array(self._converted_value(), dtype=dtype)
 
         def __larray__(self):
+            # FIXME: use converted_value
             return LArray(np.array(self.xw_range.value))
 
         def __dir__(self):
@@ -403,6 +406,9 @@ if xw is not None:
                 row_offset = 1
                 data_no_header = list_data[row_offset:]
                 data = np.array([line[col_offset:] for line in data_no_header])
+
+                # TODO: add support for sparse data (ie make it dense) like
+                #       in df_aslarray
                 axes_labels = [list(unique([line[i]
                                             for line in data_no_header]))
                                for i in index_col]
