@@ -4041,11 +4041,11 @@ class LArray(object):
     __ror__ = _binop('ror')
 
     def __matmul__(self, other):
-        # TODO: implement for matrices of any dimensions
         if not isinstance(other, (LArray, np.ndarray)):
             raise NotImplementedError("matrix multiplication not "
                                       "implemented for %s" % type(other))
 
+        # TODO: implement for matrices of any dimensions
         if self.ndim != 2 or other.ndim != 2:
             raise NotImplementedError("matrix multiplication not "
                                       "implemented for ndim != 2 (%d @ %d)"
