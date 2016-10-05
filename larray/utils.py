@@ -245,7 +245,6 @@ def array_lookup2(array, sorted_keys, sorted_values):
         return np.empty(0, dtype=sorted_values.dtype)
 
     array = np.asarray(array)
-    # TODO: this must be cached in the Axis
     # TODO: range axes should be optimized (reuse Pandas 0.18 indexes)
 
     # prevent an array of booleans from matching a integer axis (sorted_keys)
