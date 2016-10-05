@@ -3822,16 +3822,6 @@ class LArray(object):
              BE | 1.0 | 1.5
              FO | 1.0 | 4.0
         """
-        # >>> FIXME, this does not work, but it should
-        # >>> NotImplementedError: an AxisReference (x.) cannot translate labels
-        # >>> b = a.sum((x.age[[0, 1]], x.age[[1, 2]]))
-        # This works though
-        # >>> a.sum(([0, 1], [1, 2]))
-        # age\\sex | M | F
-        #   [0 1] | 2 | 4
-        #   [1 2] | 6 | 8
-        # >>> a.sum((age[[0, 1]], age[2]))
-        # >>> a.sum(([0, 1], 2))
         # # this does not work, but I am unsure it should
         # # >>> a.sum(age[[0, 1]], age[2]) / a.sum(age)
         # >>> a.sum(([0, 1], 2)) / a.sum(age)
