@@ -374,7 +374,8 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient,
+                       bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -385,11 +386,13 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None, changes=None, bg_gradient=None, bg_value=None):
+    def set_data(self, data, xlabels=None, ylabels=None, changes=None,
+                 bg_gradient=None, bg_value=None):
         self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
+    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None,
+                  bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
@@ -740,7 +743,8 @@ class ArrayModel(QAbstractTableModel):
         #     else:
         #         return to_qvariant("vert %d" % section)
         if role != Qt.DisplayRole:
-            # roles = {0: "display", 2: "edit", 8: "background", 9: "foreground",
+            # roles = {0: "display", 2: "edit",
+            #          8: "background", 9: "foreground",
             #          13: "sizehint", 4: "statustip", 11: "accessibletext",
             #          1: "decoration", 6: "font", 7: "textalign",
             #          10: "checkstate"}
@@ -1244,12 +1248,12 @@ class ArrayEditorWidget(QWidget):
             data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
 
             # if xlabels is not None and len(xlabels) != self.data.shape[1]:
-            #     self.error(_("The 'xlabels' argument length do no match array "
-            #                  "column number"))
+            #     self.error(_("The 'xlabels' argument length do no match "
+            #                  "array column number"))
             #     return False
             # if ylabels is not None and len(ylabels) != self.data.shape[0]:
-            #     self.error(_("The 'ylabels' argument length do no match array row "
-            #                  "number"))
+            #     self.error(_("The 'ylabels' argument length do no match "
+            #                  "array row number"))
             #     return False
         self._set_raw_data(data, xlabels, ylabels,
                            bg_gradient=bg_gradient, bg_value=bg_value)
@@ -1408,7 +1412,8 @@ class ArrayEditorWidget(QWidget):
                                     np.object_):
             return '%s'
         else:
-            return '%%.%d%s' % (self.digits, 'e' if self.use_scientific else 'f')
+            format_letter = 'e' if self.use_scientific else 'f'
+            return '%%.%d%s' % (self.digits, format_letter)
 
     def scientific_changed(self, value):
         self.use_scientific = value
