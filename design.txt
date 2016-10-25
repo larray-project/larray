@@ -859,3 +859,9 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 #    .intersection(*others)
 #    .difference(*others)
 #    .symmetric_difference(other)
+
+# references
+
+# https://docs.scipy.org/doc/numpy/reference/routines.set.html
+# https://docs.scipy.org/doc/numpy/reference/routines.logic.html#logical-operations
+# https://docs.python.org/3.7/library/stdtypes.html#set
