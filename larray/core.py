@@ -5858,20 +5858,33 @@ def eye(rows, columns=None, k=0, dtype=None):
     return LArray(data, axes)
 
 
+# XXX: we could change the syntax to use *args
+#      => less punctuation but forces kwarg
+#      => potentially longer
+#      => unsure for now. The most important point is that it should be
+#         consistent with other functions.
+# stack(a1, a2, axis=Axis('sex', 'H,F'))
+# stack(('H', a1), ('F', a2), axis='sex')
+# stack(a1, a2, axis='sex')
 def stack(arrays, axis=None):
     """
-    stack([numbirths * HMASC,
-           numbirths * (1 - HMASC)], Axis('sex', 'H,F'))
-    potential alternate syntaxes
-    stack(['H', numbirths * HMASC,
-           'F', numbirths * (1 - HMASC)], 'sex')
-    stack(('H', numbirths * HMASC),
-          ('F', numbirths * (1 - HMASC)), name='sex')
+    combine several arrays along an axis
 
-    Example
+    Parameters
+    ----------
+    arrays : tuple or list of values.
+        Arrays to stack. values can be scalars, arrays or (label, value) pairs.
+    axis : str or Axis, optional
+        Axis to create. If None, defaults to a range() axis.
+
+    Returns
     -------
+    LArray
+        a single array combining arrays.
+
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['H', 'F'])
     >>> arr1 = ones(nat)
     >>> arr1
     nat |  BE |  FO
@@ -5880,35 +5893,76 @@ def stack(arrays, axis=None):
     >>> arr2
     nat |  BE |  FO
         | 0.0 | 0.0
+    >>> stack([('H', arr1), ('F', arr2)], 'sex')
+    nat\\sex |   H |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
+
+    It also works when reusing an existing axis (though the first syntax
+    should be preferred because it is more obvious which label correspond to
+    what array):
+
+    >>> sex = Axis('sex', ['H', 'F'])
     >>> stack((arr1, arr2), sex)
     nat\\sex |   H |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
-    It also works for arrays with different axes:
+    or for arrays with different axes:
 
     >>> stack((arr1, 0), sex)
     nat\\sex |   H |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
-    or without axis:
+    or even with no axis at all:
 
     >>> stack((arr1, arr2))
     nat\\{1}* |   0 |   1
           BE | 1.0 | 0.0
           FO | 1.0 | 0.0
 
+    >>> # TODO: move this to unit test
+    >>> # not using the same length as nat, otherwise numpy gets confused :(
+    >>> nd = LArray([arr1, zeros(Axis('type', [1, 2, 3]))], sex)
+    >>> stack(nd, sex)
+    nat | type\sex |   H |   F
+     BE |        1 | 1.0 | 0.0
+     BE |        2 | 1.0 | 0.0
+     BE |        3 | 1.0 | 0.0
+     FO |        1 | 1.0 | 0.0
+     FO |        2 | 1.0 | 0.0
+     FO |        3 | 1.0 | 0.0
     """
-    if axis is None:
-        axis = Axis(None, len(arrays))
+    # LArray arrays could be interesting
+    if isinstance(arrays, LArray):
+        if axis is None:
+            axis = -1
+        axis = arrays.axes[axis]
+        values = [arrays[k] for k in axis]
     else:
-        assert len(axis) == len(arrays)
-    result_axes = AxisCollection.union(*[get_axes(v) for v in arrays])
+        assert isinstance(arrays, (tuple, list))
+        if all(isinstance(a, tuple) for a in arrays):
+            assert all(len(a) == 2 for a in arrays)
+            keys = [k for k, v in arrays]
+            assert all(np.isscalar(k) for k in keys)
+            if isinstance(axis, Axis):
+                assert np.array_equal(axis.labels, keys)
+            else:
+                # None or str
+                axis = Axis(axis, keys)
+            values = [v for k, v in arrays]
+        else:
+            values = arrays
+            if axis is None or isinstance(axis, basestring):
+                axis = Axis(axis, len(arrays))
+            else:
+                assert len(axis) == len(arrays)
+    result_axes = AxisCollection.union(*[get_axes(v) for v in values])
     result_axes.append(axis)
-    result = empty(result_axes, common_type(arrays))
-    for i, array in enumerate(arrays):
-        result[axis.i[i]] = array
+    result = empty(result_axes, common_type(values))
+    for k, v in zip(axis, values):
+        result[k] = v
     return result
 
 
