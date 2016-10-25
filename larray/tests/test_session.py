@@ -4,6 +4,7 @@ from unittest import TestCase
 import unittest
 
 import numpy as np
+
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
 from larray.tests.test_la import assert_array_nan_equal
 
@@ -23,9 +24,9 @@ class TestSession(TestCase):
         self.b = Axis('b', [])
         self.c = 'c'
         self.d = {}
-        self.e = ndrange((2, 3)).rename(0, 'a0').rename(1, 'a1')
-        self.f = ndrange((3, 2)).rename(0, 'a0').rename(1, 'a1')
-        self.g = ndrange((2, 4)).rename(0, 'a0').rename(1, 'a1')
+        self.e = ndrange([('a0', 2), ('a1', 3)])
+        self.f = ndrange([('a0', 3), ('a1', 2)])
+        self.g = ndrange([('a0', 2), ('a1', 4)])
         self.session = Session([('b', self.b), ('a', self.a),
                                 ('c', self.c), ('d', self.d),
                                 ('e', self.e), ('f', self.f),
