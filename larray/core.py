@@ -2436,6 +2436,8 @@ class LArray(object):
         # TODO: instead of checking all axes, we should have a big mapping
         # (in AxisCollection or LArray):
         # label -> (axis, index)
+        # or possibly (for ambiguous labels)
+        # label -> {axis: index}
         # but for Pandas, this wouldn't work, we'd need label -> axis
         valid_axes = []
         for axis in self.axes:
@@ -2812,7 +2814,7 @@ class LArray(object):
         #    4, 3, 2 -> 12, 2 is potentially ok (merging adjacent dimensions)
         #            -> 4, 6 is potentially ok (merging adjacent dimensions)
         #            -> 24 is potentially ok (merging adjacent dimensions)
-        #            -> 3, 8 WRONG (non adjacent dimentsions)
+        #            -> 3, 8 WRONG (non adjacent dimensions)
         #            -> 8, 3 WRONG
         #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
         data = np.asarray(self).reshape([len(axis) for axis in target_axes])
@@ -4752,6 +4754,9 @@ class LArray(object):
         else:
             return self[:]
 
+    # TODO: add support for groups as axis (like aggregates)
+    # eg a.diff(x.year[2018:]) instead of
+    #    a[2018:].diff(x.year)
     def diff(self, axis=-1, d=1, n=1, label='upper'):
         """
         Calculate the n-th order discrete difference along a given axis.
@@ -4818,6 +4823,9 @@ class LArray(object):
     # XXX: this is called pct_change in Pandas (but returns the same results,
     # not results * 100, which I find silly). Maybe change_rate would be
     # better (because growth is not always positive)?
+    # TODO: add support for groups as axis (like aggregates)
+    # eg a.growth_rate(x.year[2018:]) instead of
+    #    a[2018:].growth_rate(x.year)
     def growth_rate(self, axis=-1, d=1, label='upper'):
         """
         Calculate the growth along a given axis.
