@@ -1,0 +1,786 @@
+
+a(sex, age)
+age_limit(sex)
+
+step 1:
+
+a[age > age_limit]
+a[age + clength < age_limit]
+b = a * (age > age_limit)
+
+step 2:
+
+a[x.age > age_limit]
+# this is also possible ("x.age > age_limit" return an Expr, expr is evaluated
+# during the binop (axes ref replace by real axe)
+b = a * (x.age > age_limit)
+
+==============
+in general:
+1) match axes by Axis object => No axis.id because we need to be able to share
+   the same axis in several collections/arrays.
+   => this is slightly annoying for Group.__repr__ which uses axis.id
+   => we cannot have twice the same axis object in a collection
+      (we can have the same name twice though)
+2) match axes by name if any, by position otherwise
+3) match axes by position
+"""
+# TODO
+# * axes with no name should display as (or even have their name assigned to?)
+#   their position. Assigning does not work because after aggregating axis 0,
+#   we get the first axis named "1" which is a no-go.
+#   it would be much easier to have a .id attribute/property on axis with
+#   either the name or position in it, but this requires that axes know about
+#   their AxisCollection. id might not be defined when axis is not attached
+#   to a Collection
+
+# * add check there is no duplicate label in axes!
+
+# * for NDGroups, we have two options: cross product or intersection.
+#   Technically, this is easy, we just need to store a boolean and in getitem
+#   act accordingly (use ix_ or not), but what is the best API for users?
+#   a different class or a flag? In fact, the same question applies to
+#   positional vs label (in total, we got 4 different possibilities).
+
+# ? how do you combine a cross-product group with an intersection group?
+#   a[cpgroup, igroup]
+#   -> no problem if they are on different dimensions: the igroup
+#      dimension(s) are collapsed into one, pgroup dimension(s) stay.
+#      The index need to be constructed carefully, but it can be done. See
+#      np_indexing.py
+#   -> if they are on the same dimensions, we have two options:
+#      * apply one then the other (left to right)
+#      * fail <-- I think this is safer at least to implement. One after the
+#                 other can still be achieved by a[pgroup][igroup]
+
+# API for ND groups (my example is mixing label with positional):
+
+# union (bands): x.axis1[5:10] | x.axis2.i[3:4]
+# intersection/cross/default: x.axis1[5:10] & x.axis2.i[3:4]
+# points: x.axis1[5:10] ^ x.axis2.i[1:6]
+# ----> this prevents symetric difference. this is little used but...
+# ----> Points(x.axis[5:10], x.axis2.i[1:6])
+
+# this is very nice and would have orderedset-like semantics
+
+# it does not seem to conflict with the axis methods (even though that might be
+# confusing):
+
+# x.axis1 | x.axis2 would have a very different meaning than
+# x.axis1[:] | x.axis2[:]
+
+# Note that cross sections is the default and it is useless to introduce
+# another API **except to give a name**, so the & syntax is useless unless
+# we allow naming groups after the fact
+
+# => NDGroup((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
+# => Group((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
+# => (x.axis1[5:10] & x.axis2.i[2.5]).named('exports')
+
+# generalizing "named" and suppressing .group seems like a good idea!
+# => x.axis1.group([5, 7, 10], name='brussels')
+# => x.axis1[5, 7, 10].named('brussels')
+
+# http://xarray.pydata.org/en/stable/indexing.html#pointwise-indexing
+# http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.lookup.html#pandas.DataFrame.lookup
+
+# I think I would go for
+# ARRAY.points[dim0_labels, ..., dimX_labels]
+# and
+# ARRAY.ipoints[dim0_indices, ..., dimX_indices]
+# so that we can have a symmetrical API for get and set.
+
+# I wonder if, for axes subscripting, I could not allow tuples as sequences,
+# which would make it a bit nicer:
+# x.axis1[5, 7, 10].named('brussels')
+# instead of
+# x.axis1[[5, 7, 10]].named('brussels')
+# since axes are always 1D, this is not a direct problem. However the
+# question is whether this would lead to an inconsistent API/confuse users
+# because they would still have to write the brackets when no axis is present
+# a[[5, 7, 9]]
+# a[x.axis1[5, 7, 9]]
+# in practice, this syntax is little used anyway
+
+# options
+
+# 1) multiple range in same [] create multiple groups
+# =====================================================
+
+#    G.age[5, 7, 9] == G.age[5], G.age[7], G.age[9]
+#    G.age[:9, 10:14, 15:25] == G.age[:9], G.age[10:14], G.age[15:25]
+#    G[2:7, 'M', ['P01', 'P05']] == G[2:7], G['M'], G['P01', 'PO5']
+#    a[G[2:7, 'M', ['P01', 'P05']]] == a[2:7, 'M', ['P01', 'P05']]
+#    a[G[2:7, 'M', ['P01', 'P05']]] == a[2:7, 'M', ['P01', 'P05']]
+#    a[G[5, 7, 9]] == a[5, 7, 9] => key has several values for axis: age
+#    a[G[[5, 7, 9]]] == a[[5, 7, 9]]
+#    a[G.union[5, 7, 9]] == a[[5, 7, 9]]
+#    a[G.union[5, 7:10, 12]] == a[[5, 7, 8, 9, 10, 12]]
+
+#    a[G.age[2:7, 5:10], 'M', ['P01', 'P05']]]
+#    == a[2:7, 5:10, 'M', ['P01', 'P05']]
+#    OR rather
+#    == a[(G[2:7], G[5:10]), 'M', ['P01', 'P05']]
+#    == a[2:7, 'M', ['P01', 'P05']], a[5:10, 'M', ['P01', 'P05']]
+#    OR?
+#    == larray
+#       age                         2:7                         5:10
+#           a[2:7, 'M', ['P01', 'P05']] a[5:10, 'M', ['P01', 'P05']]
+#    OR?
+#    == larray with 4 dim (age_group, age, sex, lipro)
+#       this would currently only work if the slices have the same size,
+#       but with pandas/MI, this could work even when the slices are different
+
+#    a[G[2:7, 5:10, 'M', 'F']]  <---- should this be supported? (I think so
+#                                     for first step (split in individual
+#                                     groups) but fail in a[]
+#      == a[G[2:7], G[5:10], G['M'], G['F']]
+#      == a[2:7, 5:10, 'M', 'F']
+#      == a[2:7, 'M'], a[2:7, 'F'], a[5:10, 'M'], a[5:10, 'F']
+#
+#    or return an larray?
+
+#               2:7         5:10
+#     M a[2:7, 'M'] a[5:10, 'M']
+#     F a[2:7, 'F'] a[5:10, 'F']
+
+#    a[G[2:7, 5:10], G['M', 'F']]]
+#    == a[(G[2:7], G[5:10]), (G['M'], G['F'])]
+#    == [(a[2:7], a[5:10]), (a['M'], a['F'])]
+
+#    a[G[2:7, 5:10] & G['M', 'F']]]
+#    == a[G[2:7] & G['M'], G[5:10] & G['M'], G[2:7] & G['F'], G[5:10] & G['F']]
+#    OR
+#    == a[G[2:7] & G['M'], G[2:7] & G['F'], G[5:10] & G['M'], G[5:10] & G['F']]
+
+#    a[(G[2:7], 'M'), (G[2:7], 'F'), (G[5:10], 'M'), (G[5:10], 'F')] = \
+#     [            1,             2,              3,              4]
+
+#    a[G[2:7, 'M'], G[2:7, 'F'], G[5:10, 'M'], G[5:10, 'F']] = \
+#     [          1,           2,            3,            4]
+
+#    ==
+
+#    a[(G[2: 7], G['M']), (G[2: 7], G['F']),
+       (G[5:10], G['M']), (G[5:10], G['F'])] = \
+#     [                1,                 2,
+#                      3,                 4]
+
+#    ==
+
+#    a[[(G[2: 7], G['M']), (G[2: 7], G['F']),
+        (G[5:10], G['M']), (G[5:10], G['F'])]] = \
+#     [                1,                 2,
+#                      3,                 4]
+
+#    ==
+
+#    a[[(G[2: 7], G['M']), (G[2: 7], G['F']),
+        (G[5:10], G['M']), (G[5:10], G['F'])]] = \
+#     [                1,                 2,
+#                      3,                 4]
+
+indexing: le dernier niveau (inner-most) => &,
+les autres niveaux créent un larray de larrays
+
+#    a[[(G[2: 7], G['M']), (G[2: 7], G['F']),
+        (G[5:10], G['M']), (G[5:10], G['F'])]]
+     == LArray([a[2:7 & 'M'], a[2:7 & 'F'], a[5:10 & 'M'], a[5:10 & 'F']])
+
+# mais si scalaires au lieu de slices, on pourrait s'attendre à un larray au
+lieu de larray de larrays
+  a[(G[2], G['M']), (G[2], G['F']), (G[5], G['M']), (G[5], G['F'])]
+  == LArray([a[2, 'M'], a[2, 'F'], a[5, 'M'], a[5, 'F']])
+  mais si on veut ça, il suffit de faire:
+
+  a[G[[2, 5]], G[['M', 'F']]]
+
+reste à savoir si on veut que G splitte les tuples de scalaires:
+
+  a[G[2, 5:10], G['M', 'F']]
+  == a[G[(2, 5:10)], G[('M', 'F'])]
+  == a[G[(2, 5:10)], G[('M', 'F'])]
+
+  == a[G[[2, 5]], G[['M', 'F']]] (== a[[2, 5], ['M', 'F']])
+  OU
+  == a[(G[2], G[5]), (G['M'], G['F'])] (== [[a[2], a[5]], [a['M'], a['F']])
+  ce qui revient à dire que tuple split et pas list
+
+ou alors on utilise une méthode spécifique pour split (split ou groups ou
+multi):
+
+G.split[2, 5] == G[2], G[5]
+G.clength.split[2, 5:10, 20] == G.clength[2], G.clength[5:10], G.clength[5]
+G.clength.split[2, 5] == G.clength[2], G.clength[5]
+
+
+#    a[[(G[2: 7], G['M']), (G[2: 7], G['F']),
+        (G[5:10], G['M']), (G[5:10], G['F'])]] =
+
+
+#    a[2:7, 'M'] = 1
+#    a[2:7, 'F'] = 2
+#    a[5:10, 'M'] = 3
+#    a[5:10, 'F'] = 4
+
+#    a[2:7, 5:10, 'M', 'F'] = [1, 2, 3, 4]
+
+# multi assignment use case
+
+#    a[:] = {(G[2:7], 'M'): 1,
+#            (G[2:7], 'F'): 2,
+#            (G[5:10], 'M'): 3,
+#            (G[5:10], 'F'): 4}
+
+#    a.update({(G[2:7], 'M'): 1,
+#              (G[2:7], 'F'): 2,
+#              (G[5:10], 'M'): 3,
+#              (G[5:10], 'F'): 4})
+
+#    a.update({(G.age[2:7], 'M'): 1,
+#              (G.age[2:7], 'F'): 2,
+#              (G.age[5:10], 'M'): 3,
+#              (G.age[5:10], 'F'): 4})
+
+#    a[:] = [(G[2:7], 'M'), 1,
+#            (G[2:7], 'F'), 2,
+#            (G[5:10], 'M'), 3,
+#            (G[5:10], 'F'), 4]
+
+#    a[:] = {G[2:7, 'M']: 1,
+#            G[2:7, 'F']: 2,
+#            G[5:10, 'M']: 3,
+#            G[5:10, 'F']: 4}
+
+#    a.update({G[2:7, 'M']: 1,
+#              G[2:7, 'F']: 2,
+#              G[5:10, 'M']: 3,
+#              G[5:10, 'F']: 4})
+
+# >>>> the goals are to avoid repeating the axes names if ambiguous and the
+# array name but have the values as close to the labels as possible (assign by
+# position does not scale)
+
+# same problem for LArray contructor BTW
+# m = LArray([[1, 2],
+#             [3, 4]], axes=[Axis('age', R[2:7]), Axis('sex', 'M,F')])
+#
+# minr_replica = LArray([[0.20, 0.57], [0.46, 0.65]],
+#                       [Axis('sex', ['men', 'women']),
+#                        Axis('stat', ['benef_tot', 'prop_carr'])])
+#
+# minr_replica = [('men', 'benef_tot'), 0.20,
+#                 ('women', 'benef_tot'), 0.57,
+#                 ('men', 'prop_carr'), 0.46,
+#                 ('women', 'prop_carr'), 0.65],
+#                 ('sex', 'stat')
+#
+# benef_tot = [('men', 0.20), ('women', 0.57)]
+# prop_carr = [('men', 0.46), ('women', 0.65)]
+# minr_replica = ('benef_tot', benef_tot), ('prop_carr', prop_carr)
+
+# hierarchical ordered "dict" (compact & readable but hard to write because of
+#                              punctuation overload)
+# minr_replica = [('benef_tot', [('men', 0.20), ('women', 0.57)])
+#                 ('prop_carr', [('men', 0.46), ('women', 0.65)])]
+
+# 3.6+ (nice but only string labels)
+# minr_replica = od(benef_tot=od(men=0.20, women=0.57),
+#                   prop_carr=od(men=0.46, women=0.65))
+
+
+# benef_tot = [('men', 0.20), ('women', 0.57)]
+# prop_carr = [('men', 0.46), ('women', 0.65)]
+# minr_replica = ('benef_tot', benef_tot), ('prop_carr', prop_carr)
+#
+# minr_replica = ('benef_tot', benef_tot), ('prop_carr', prop_carr)
+
+#                  men   women
+# minr_replica= la([[0.20, 0.57], # benef_tot
+#                   [0.46, 0.65]], # prop_carr
+#                  [Axis('sex', 'men,women'),
+#                   Axis('stat', 'benef_tot,prop_carr')])
+
+# minr_replica= la(['stat', 'sex'], ['men', 'women'],
+#                  'benef_tot',     [ 0.20,    0.57],
+#                  'prop_carr',     [ 0.46,    0.65])
+
+# minr_replica = fromlists(['stat \ sex', 'men', 'women'],
+#                          ['benef_tot',   0.20,    0.57],
+#                          ['prop_carr',   0.46,    0.65])
+
+# minr_replica = fromlists([['stat', 'sex'], 'men', 'women'],
+#                          ['benef_tot',      0.20,    0.57],
+#                          ['prop_carr',      0.46,    0.65])
+
+# minr_replica = fromtuples([(     'stat',   'sex', 'value')
+#                            ('benef_tot',   'men',    0.20),
+#                            ('benef_tot', 'women',    0.57),
+#                            ('prop_carr',   'men',    0.46),
+#                            ('prop_carr', 'women',    0.65)])
+
+# benef_tot = fromlists(['sex', 'men', 'women'],
+#                       ['',     0.20,    0.57])
+
+# benef_tot = fromtuples([(  'sex', 'value')
+#                         (  'men',    0.20),
+#                         ('women',    0.57)])
+
+# benef_tot = fromlists(['sex', 'men', 'women'],
+#                       [None,   0.20,    0.57])
+
+# benef_tot = fromlists(['sex', 'men', 'women'],
+#                       [        0.20,    0.57])
+
+# benef_tot = fromtuples([('men', 0.20), ('women', 0.57)], header=False)
+
+# discourage this because we do not know order of ticks of sex
+# for zeros, full, ones, etc. it's fine (and encouraged) to reuse axes !
+# benef_tot = LArray([0.20, 0.57], [sex])
+
+# in xarray uses:
+
+# foo = xr.DataArray(data, coords=[times, locs], dims=['time', 'space'])
+
+# foo = xr.DataArray(data, [('x', ['a', 'b']),
+#                           ('y', [-2, 0, 2])])
+
+# m = {G[2:7, 'M']: 1, G[2:7, 'F']: 2, G[5:10, 'M']: 3, G[5:10, 'F']: 4}
+# breaks if combination of axes
+# a.set(x.age[m])
+
+2) multiple range in same [] means "and"
+=========================================
+   => set op if same axis, ND group otherwise
+
+   G.age[5, 7, 9] == G.age[5] & G.age[7] & G.age[9] => BREAKS !
+   => must use G.age[[5, 7, 9]]
+
+   G.age[:20, 10:30] == G.age[:20] & G.age[10:30] == G.age[20:30]
+   G[2:7, 'M', ['P01', 'P05']] == G[2:7] & G['M'] & G['P01', 'PO5']
+
+3) multiple range in same [] means "or"
+========================================
+   => set op if same axis, ND group otherwise
+
+   G.age[5, 7, 9] == G.age[5] | G.age[7] | G.age[9]
+   G.age[:20, 10:30] == G.age[:20] | G.age[10:30] == G.age[10:30]
+   G[2:7, 'M', ['P01', 'P05']] == G[2:7] | G['M'] | G['P01', 'PO5']
+   the ND variant is a bit silly (it is so rarely needed)
+
+4) multiple range in same [] creates multiple groups except when there are
+   only scalars
+===========================================================================
+   => set op if same axis, ND group otherwise
+
+   G.age[5, 7, 11] == G.age[[5, 7, 9]]
+   G.age[5, 7:9, 11] == G.age[5], G.age[7:9], G.age[11]
+   G.age[:20, 10:30] == G.age[:20], G.age[10:30]
+   G.age[5, 10, 15:20, 25:30] == G.age[5], G.age[10], G.age[15:20], G.age[25:30]
+   G.age[5, 10, :20, 10:30] == G.age[:20], G.age[10:30]
+   G[2:7, 'M', ['P01', 'P05']] == G[2:7], G['M'], G['P01', 'PO5']
+
+5) multiple range in same [] means "or" for same axis / "and" for other axis
+=============================================================================
+   => set op if same axis, ND group otherwise
+
+   G.age[5, 7, 11] == G.age[5] | G.age[7] | G.age[9]
+   G.age[5, 7:9, 11] == G.age[5] | G.age[7:9] | G.age[11]
+   G.age[:20, 10:30] == G.age[:20] | G.age[10:30] == G.age[:30]
+   G[5, 7:9, 'M', ['P01', 'P05']]
+   == (G.age[5] | G.age[7:9]) & G.sex['M'] & G.lipro[['P01', 'PO5']]
+
+6) some other combination: doing different stuff whether same axis or not,
+   or whether slice or scalar
+===========================================================================
+
+
+# use cases
+
+# 1) simple get/set
+
+a[2:7, 'M', ['P01', 'P02']]
+
+# 2) boolean selection
+
+a[(x.age < 10) | (x.clength > 5)]
+
+# 3) simple with ambiguous values
+
+a[G.age[2:7], G.clength[5, 7, 9], 'M', ['P01', 'P02']]
+
+# 4) point-selection
+
+a[G.age[2:4] ^ G.clength[5, 7, 9], 'M', ['P01', 'P02']]
+a[G[2, 9, 3] ^ G['M', 'F', 'M'], ['P01', 'P02']]
+
+# 4b) lookup (this is a form of point-selection), wh potentially repeated values
+person_age = [5, 1, 2, 1, 6, 5]
+person_gender = ['M', 'F', 'F', 'M', 'M', 'F']
+person_workstate = [1, 3, 1, 2, 1, 3]
+income = mean_income[person_age, person_gender]  # <-- no ! does cross product
+income = mean_income[G[person_age] ^ G[person_gender]]
+income = mean_income[G.points[person_age, person_gender]] # <-- disallow having
+                                                          # an axis named
+                                                          # "points"
+income = mean_income.points[person_age, person_gender]
+# if ambiguous
+income = mean_income.points[G.age[person_age], person_gender]
+
+# 4c) lookup with larger than axis keys
+
+# 4d) lookup with boolean keys
+
+TODO, especially versus set ops on group
+
+income = mean_income[G[person_age] ^ ~G[person_gender]]
+
+# this would fail because & does set-op, ie will most likely return "False, True"
+income = extra_income[G[person_gender] & (G[workstate] == 1)] # <-- fails
+# one potential solution might be to introduce yet another concept: G/LG
+# could be renamed to (or presented explicitly as) LabelSet. In that case, it
+# would make it obvious (for me ;-)) that using that for the "lookup" usecase
+# does not fly.
+
+# now, how would we name the "other concept" in here? LabelGroup? LabelKey?
+income = extra_income[LK[person_gender] & (LK[workstate] == 1)]
+
+# Q: maybe I don't need an extra concept anyway, just use 1D larray instead?
+# A: We do need it, because the values, even if given as larray can be
+#    ambiguous (valid on several axes)
+
+# Q: maybe we could introduce a different array class "LookupArray" whicb does
+#    .points by default.
+# A: yes, that's an option but would not solve the "set" problem.
+
+# => I NEED a way to set the axis on an LKey. maybe x.abc[LK] should not
+# return an LSet? but an LKey with an axis.
+
+
+# Q: maybe I could solve the boolop/set problem depending on what is inside the
+#    LGroup (v1):
+# 1) scalars, slices, list: set op
+# 2) larray: defer op to it (=> element-wise bool op)
+# A: set op on list of bools or scalar bools does not make much sense
+
+# Q: maybe I could solve the boolop/set problem depending on what is inside the
+#    LGroup (v2):
+# 1) non bool stuff (scalars, slices, list, larray, ...): set op
+# 2) bool stuff (scalar, list of bools, larray of bools: bool op
+# A:
+
+
+# 5) import-export, a single group on several dimensions
+dom = (ARRV[nutsbe] & ARRA[nutsbe]).named('dom')
+berow = (ARRV[nutsbe] & ARRA[nutsrow]).named('berow')
+rowbe = (ARRV[nutsrow] & ARRA[nutsbe]).named('rowbe')
+transit = (ARRV[nutsrow] & ARRA[nutsrow]).named('transit')
+# we could define act, like this (but that should not be required, as the
+# coupling is looser if we can do it manually):
+act = Axis('act', (dom, berow, rowbe, transit))
+act2 = (dom, berow, rowbe, transit)
+AGGTON = stack([TON2.sum(nutsbe, nutsbe), TON2.sum(nutsbe, nutsrow),
+                TON2.sum(nutsrow, nutsbe), TON2.sum(nutsrow, nutsrow)],
+               ["dom", "berow", "rowbe", "transit"], "act")
+AGGTON = TON2.sum((dom, berow, rowbe, transit)).rename('ARRV,ARRA', 'act')
+AGGTON = TON2.sum(act=(dom, berow, rowbe, transit))
+AGGTON = TON2.sum(act=act)
+AGGTON = TON2.sum(act) # <--- this is obviously the shortest but I am unsure
+# its a good idea. On one hand, I dislike the fact that in act2 above, we
+# cannot name the resulting axis, but on the other hand, summing on an axis
+# not present in the original array, and which is created rather than
+# aggregated seems weird at best. It's only after inspecting said axis that we
+# can tell that it contains groups on axes which
+# are present.
+# in the 1D case this is usually not a problem since it is usually fine to have
+# maybe doing:
+act3 = stack([('dom', dom), ('berow', berow), ('rowbe', rowbe),
+              ('transit', transit)], 'act')
+AGGTON = TON2.sum(act3) # <--- I think this makes a lot of sense, and could
+# potentially be useful with arrays > 1D: you could e.g. create 2 dimensions
+# out of 1: assuming an age axis
+act3 = fromlist(['sub \ 40+',    '-39',    '40+'],
+                [          0, G[  : 9], G[40:49]],
+                [          1, G[10:19], G[50:59]],
+                [          2, G[20:29], G[60:69]],
+                [          3, G[30:39], G[70:79]])
+
+act3 = table(['sub', '40+'], [  '-39',    '40+'],
+             [    0,         G[  : 9], G[40:49]],
+             [    1,         G[10:19], G[50:59]],
+             [    2,         G[20:29], G[60:69]],
+             [    3,         G[30:39], G[70:79]])
+
+act3 = table(['sub', '40+',   '-39',    '40+'],
+             [    0,        G[  : 9], G[40:49]],
+             [    1,        G[10:19], G[50:59]],
+             [    2,        G[20:29], G[60:69]],
+             [    3,        G[30:39], G[70:79]])
+.sum(act3)
+
+# 6) multi slices, aggregate (one group per slice)
+
+# groups = (x.clength[1:15], x.clength[16:25], x.clength[26:30],
+#           x.clength[31:35], x.clength[36:40], x.clength[41:50])
+# agg = arr.sum(groups)
+
+# groups = G.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# agg = arr.sum(groups)
+
+# agg = arr.sum(G[1:15, 16:25, 26:30, 31:35, 36:40, 41:50])
+
+# 7) multi slices, assign one value per slice
+
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.clength[1:15], x.year[first_year_p:2024]] = 7 / 7
+# multip_mat_min[x.clength[16:25], x.year[first_year_p:2024]] = 20 / 20
+# multip_mat_min[x.clength[26:30], x.year[first_year_p:2024]] = 27 / 27
+# multip_mat_min[x.clength[31:35], x.year[first_year_p:2024]] = 32 / 32
+# multip_mat_min[x.clength[36:40], x.year[first_year_p:2024]] = 37 / 37
+# multip_mat_min[x.clength[41:50], x.year[first_year_p:2024]] = 42 / 42
+# multip_mat_min[x.clength[1:15], x.year[2025:2029]] = 8 / 7
+# multip_mat_min[x.clength[16:25], x.year[2025:2029]] = 21 / 20
+# multip_mat_min[x.clength[26:30], x.year[2025:2029]] = 28 / 27
+# multip_mat_min[x.clength[31:35], x.year[2025:2029]] = 33 / 32
+# multip_mat_min[x.clength[36:40], x.year[2025:2029]] = 38 / 37
+# multip_mat_min[x.clength[41:50], x.year[2025:2029]] = 43 / 42
+# multip_mat_min[x.clength[1:15], x.year[2030:]] = 9 / 7
+# multip_mat_min[x.clength[16:25], x.year[2030:]] = 22 / 20
+# multip_mat_min[x.clength[26:30], x.year[2030:]] = 29 / 27
+# multip_mat_min[x.clength[31:35], x.year[2030:]] = 34 / 32
+# multip_mat_min[x.clength[36:40], x.year[2030:]] = 39 / 37
+# multip_mat_min[x.clength[41:50], x.year[2030:]] = 44 / 42
+#
+# # already possible
+# m = zeros(clength)
+# m[x.clength[1:15]] = 7
+# m[x.clength[16:25]] = 20
+# m[x.clength[26:30]] = 27
+# m[x.clength[31:35]] = 32
+# m[x.clength[36:40]] = 37
+# m[x.clength[41:50]] = 42
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.year[:2024]] = m / m
+# multip_mat_min[x.year[2025:2029]] = (m + 1) / m
+# multip_mat_min[x.year[2030:]] = (m + 2) / m
+
+# >>> very nice for this case but it does not scale very well with number of
+#     values to set. On the other hand, splitting it in case it does not fit
+#     on a line is not TOO horrible (just a bit horrible ;-))
+# m = zeros(clength)
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
+#            [   7,    20,    27,    32,    37,     42]
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.year[:2024,   2025:2029,       2030:]] = \
+#                      [m / m, (m + 1) / m, (m + 2) / m]
+
+# m = zeros(clength)
+# m[:] = {
+#     G[1:15]: 7, G[16:25]: 20, G[26:30]: 27, G[31:35]: 32, G[36:40]:37,
+#     G[41:50]: 42
+# }
+# VERDICT: FAIL ! (see below)
+# but m.set(map) could work
+
+# this seems powerful but there might be ambiguities? (do we want to expand
+# the groups or treat them as normal "scalars")
+# m = zeros(clength)
+# m[:] = fromlists(['clength', G[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]],
+#                  ['',             7,    20,    27,    32,    37,    42])
+
+# VERDICT: FAIL ! the problem is that it breaks two basic assumptions
+# * that m[:] will be entirely set
+# * that value will be broadcast to the result of array[key]
+
+# also think about G (for group) or L (for label):
+
+# a[G[5:10]]
+# a[G[5, 7, 9]]
+
+# a[G[5:10].named('brussels')]
+# a[G[5, 7, 9].named('brussels')]
+
+# this is ugly
+# a[G[5, 7, 9].axed('age')]
+# a[G[5, 7, 9].x('age')]
+# a[G[5, 7, 9].on('age')]
+# a[G[5, 7, 9].with(axis='age')]
+
+# nice for the simple cases, but cannot target anonymous axes G[0] or axes with
+# strange names G['strange axis']. would both try to find labels on axes, not
+# the axes themselves.
+
+# a[G.age[5, 7, 9]]
+# a[G.geo[5, 7, 9].named('brussels')]
+
+# a[x.age[G[5, 7, 9]]]
+# a[x.age[G[5, 7, 9].named('brussels')]]
+
+# a[G.get('strange axis')[5, 7, 9].named('Brussels')]
+
+# a[x.age[5, 7, 9]]
+
+# positional groups *without axis* (G.i, P[], or I[]) does not make much sense,
+# because it will matches all axes, but might be useful as an intermediate
+# construct:
+
+# g = G.i[2, 5, 7]
+# g2 = X.age[g]
+
+# positional groups *with axis* can be useful as a shorter alternative (but
+# not worth it IMO, unless the whole API is more consistent for users):
+
+# g = P.age[2, 5, 7]
+# instead of
+# g = X.age.i[2, 5, 7]
+
+# we might want to also consider multi-dimensional groups:
+# using K (for key) or I (for indexer) or G (without axis obviously):
+
+# g = G[2:7, 'M', ['P01', 'P05']]
+
+# it seems nifty, but that changes the semantic of a group (we would need
+# multiple names??? OR )
+
+# but it might be better to allow multiple slices from the same dimension in
+# the same group:
+
+# g = G.age[:9, 10:14, 15:25]
+# in that case, the above group would be written like:
+# g = G[2:7] & G['M'] & G['P01', 'P05']
+
+# ND group with single name vs ND group with name per dim vs multi-group.
+
+# g = G[2:7, 'M', ['P01', 'P05']].named('abc') would be a single ND group
+
+# vs
+
+# g = G[2:7].named('child'), G['M'], G['P01', 'P05'].named('plop')
+# g = G[2:7].named('child') & G['M'] & G['P01', 'P05'].named('plop')
+
+# behavior is the same when filtering but when aggregating the multi-name
+# version would produce "child & M & plop" while
+
+# vs
+
+# g = G[2:7, 9:13].named('abc') would be a single ND group
+
+
+# in that cases, having NDG to create N dimensional groups might be a good idea
+
+# g = NDG[2:7, 'M', ['P01', 'P05']]
+
+# we also need the best possible syntax to handle, "arbitrary" resampling
+
+# pure_min_w1_comp_agg = zeros(result_axes)
+# pure_min_w1_comp_agg[x.LBMosesXLS[1]] = pure_min_w1_comp.sum(x.clength[1:15])
+# pure_min_w1_comp_agg[x.LBMosesXLS[2]] = pure_min_w1_comp.sum(x.clength[16:25])
+# pure_min_w1_comp_agg[x.LBMosesXLS[3]] = pure_min_w1_comp.sum(x.clength[26:30])
+# pure_min_w1_comp_agg[x.LBMosesXLS[4]] = pure_min_w1_comp.sum(x.clength[31:35])
+# pure_min_w1_comp_agg[x.LBMosesXLS[5]] = pure_min_w1_comp.sum(x.clength[36:40])
+# pure_min_w1_comp_agg[x.LBMosesXLS[6]] = pure_min_w1_comp.sum(x.clength[41:50])
+#
+# clength_groups = (x.clength[1:15], x.clength[16:25], x.clength[26:30],
+#                   x.clength[31:35], x.clength[36:40], x.clength[41:50])
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups).rename(
+#     x.clength, x.LBMosesXLS)
+
+# clength_groups = (L[1:15], L[16:25], L[26:30],
+#                   L[31:35], L[36:40], L[41:50])
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups).rename(
+#     x.clength, x.LBMosesXLS)
+#
+# clength_groups = x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups)
+#
+# clength_groups = G[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups) \
+#                                         .replace(x.clength, LBMosesXLS)
+
+# XXX: what if I want to sum on all the slices (as if it was a single slice)
+# clength_groups = G[1:15] | G[16:25] | G[26:30] | G[31:35] | G[36:40] | G[41:50]
+# OR
+# G.clength.union[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+#
+# pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups) \
+
+# I would also like to have a nice syntax for assigning (multiple) values to
+# multiple slices (example courtesy of MOSES)
+
+# clength = Axis('clength', range(1, 51))
+# year = Axis('year', range(2010, 2050))
+# result_axes = AxisCollection([
+#     clength,
+#     year
+# ])
+#
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.clength[1:15], x.year[first_year_p:2024]] = 7 / 7
+# multip_mat_min[x.clength[16:25], x.year[first_year_p:2024]] = 20 / 20
+# multip_mat_min[x.clength[26:30], x.year[first_year_p:2024]] = 27 / 27
+# multip_mat_min[x.clength[31:35], x.year[first_year_p:2024]] = 32 / 32
+# multip_mat_min[x.clength[36:40], x.year[first_year_p:2024]] = 37 / 37
+# multip_mat_min[x.clength[41:50], x.year[first_year_p:2024]] = 42 / 42
+# multip_mat_min[x.clength[1:15], x.year[2025:2029]] = 8 / 7
+# multip_mat_min[x.clength[16:25], x.year[2025:2029]] = 21 / 20
+# multip_mat_min[x.clength[26:30], x.year[2025:2029]] = 28 / 27
+# multip_mat_min[x.clength[31:35], x.year[2025:2029]] = 33 / 32
+# multip_mat_min[x.clength[36:40], x.year[2025:2029]] = 38 / 37
+# multip_mat_min[x.clength[41:50], x.year[2025:2029]] = 43 / 42
+# multip_mat_min[x.clength[1:15], x.year[2030:]] = 9 / 7
+# multip_mat_min[x.clength[16:25], x.year[2030:]] = 22 / 20
+# multip_mat_min[x.clength[26:30], x.year[2030:]] = 29 / 27
+# multip_mat_min[x.clength[31:35], x.year[2030:]] = 34 / 32
+# multip_mat_min[x.clength[36:40], x.year[2030:]] = 39 / 37
+# multip_mat_min[x.clength[41:50], x.year[2030:]] = 44 / 42
+#
+# # already possible
+# m = zeros(clength)
+# m[x.clength[1:15]] = 7
+# m[x.clength[16:25]] = 20
+# m[x.clength[26:30]] = 27
+# m[x.clength[31:35]] = 32
+# m[x.clength[36:40]] = 37
+# m[x.clength[41:50]] = 42
+# multip_mat_min = zeros([clength, year])
+# multip_mat_min[x.year[:2024]] = m / m
+# multip_mat_min[x.year[2025:2029]] = (m + 1) / m
+# multip_mat_min[x.year[2030:]] = (m + 2) / m
+
+# TODO: it would be nice to be able to say:
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]
+# but I am unsure it is possible/unambiguous
+
+# this kind of pattern is not supported by numpy
+# in numpy, you can assign multiple slices to the SAME value (not one value per
+# slice, using m[np._r[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = 7, but
+# this actually construct a single array of indices, and ultimately,
+# it is much slower than repeatedly doing m[slice()] = value
+# %timeit j = np.r_[tuple(slice(i, i+5) for i in range(0, 1000, 10))]; a[j] = 9
+# 1000 loops, best of 3: 307 µs per loop
+# %timeit for i in range(0, 1000, 10): a[i:i+5] = i
+# 10000 loops, best of 3: 45.9 µs per loop
+
+# it is technically possibly to achieve in numpy (both in a vectorized manner
+# and using explicit loop as above). The trick to vectorize this is to create
+# an array of indices (with the slices expanded) and an array of values with
+# the same size than the indices array (using np.repeat)
+
+# http://stackoverflow.com/questions/38923763/assign-multiple-values-to-
+# multiple-slices-of-a-numpy-array-at-once
+
+# but the question is whether that syntax is unambiguous or not
+# (and if not, whether or not we can come up with a syntax that is both nice
+#  and not ambiguous)
+
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
+#            [7, 20, 27, 32, 37, 42]
+# multip_mat_min[x.year[:2024, 2025:2029, 2030:]] = [m / m, (m + 1) / m,
+#                                                   (m + 2) / m]
+
+# for the multi-value case to work I would probably have to make
+# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]]
+# return multiple arrays (as a tuple of arrays or an array of arrays)
+# with pandas/MI support, we could just return an array with
+# a (second) clength axis
+
