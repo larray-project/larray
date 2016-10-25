@@ -784,3 +784,78 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # with pandas/MI support, we could just return an array with
 # a (second) clength axis
 
+
+# ========================================
+# ================ SESSION ===============
+# ========================================
+
+# with my idea to dispatch aggregate operation to each element + make
+# __eq__ use _binop
+
+# (s1 == s2).all() would return a session with a list of bool scalars
+
+# which is probably not what people expect (+ don't know how to further
+# aggregate)
+
+# ideally s.sum() would first sum each array then sum those sums
+# and s.sum(x.age) would sum each array along age
+# and s.sum(x.arrays) would try to add arrays together (and fail in
+# some/most cases)
+# the problem is that one important use case is not covered:
+# aggregating along all dimensions of the arrays but NOT on x.arrays
+
+# Q: s.elements.sum() (or s.arrays.sum()) vs s.sum() solve this?
+# A1: s.arrays.sum() would dispatch to each array and return a new Session
+#     s.sum() would try to do s.arrays.sum().sum()
+#     seems doable...
+
+# A2: s.sum_by(x.arrays) (like Pandas default aggregate) would solve
+#     the issue even more nicely, but this is a bit more work (is it?) and
+#     can be safely added later.
+
+# Q: does s1.arrays (op) s2.arrays works too?
+# A: dispatch op to each array present in either s1 or s2
+#    so yes, but as we see below, no point
+
+# Q: what happens when you do s1.arrays + s2 ?
+# A:
+
+# Q: what happens when you do s1 + s2 ?
+# A: same than s1.arrays + s2.arrays
+#    if we view s1 as a big array with an extra dimension, it would give
+#    that result (modulo union of names until we are Pandas based)
+
+# Q: does that solve the == use case acceptably?
+# A: to test that two session are equal, you'd have to write:
+#    (s1.arrays == s2.arrays).arrays.all().all()
+#    which is way too convoluted for users.
+
+#    (s1.arrays == s2.arrays).all() would work too though
+#    and even
+#    (s1 == s2).all()
+
+# Q: what if I want to know which arrays are equal and which are not?
+# A: (s1 == s2).all_by(x.arrays)
+
+# boolean ops
+# ===========
+
+# Q: we could implement two(?) very different behavior:
+# set-like behavior: combination of two Session, if same name,
+# check that it is the same. a Session is more ordered-dict-like than
+# set-like, so this might not make a lot of sense. an "update" method
+# might make more sense. However most set-like operations do make sense.
+
+# intersection: check common are the same or take left?
+# union: check common are the same or take left?
+# difference
+
+# A: I think it's best that __bool_ops__ are element-wise, like other __ops__
+#    but we can/should define methods for the set-like operations
+#    .isdisjoint(other)
+#    .issubset(other)
+#    .issuperset(other)
+#    .union(*others)
+#    .intersection(*others)
+#    .difference(*others)
+#    .symmetric_difference(other)
