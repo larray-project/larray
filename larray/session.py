@@ -7,7 +7,8 @@ from collections import OrderedDict
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
-from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_equal
+from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, \
+    larray_equal, get_axes
 from .excel import open_excel
 
 
@@ -390,6 +391,15 @@ class Session(object):
 
     def __ne__(self, other):
         return ~(self == other)
+
+    def compact(self, display=False):
+        new_items = []
+        for k, v in self._objects.items():
+            compacted = v.compact()
+            if compacted is not v and display:
+                print(k, "was constant over", get_axes(v) - get_axes(compacted))
+            new_items.append((k, compacted))
+        return Session(new_items)
 
 
 def local_arrays(depth=0):
