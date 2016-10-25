@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+from collections import OrderedDict
 
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
@@ -176,28 +177,27 @@ ext_default_engine = {
 }
 
 
+# XXX: inherit from OrderedDict or LArray?
 class Session(object):
     def __init__(self, *args, **kwargs):
-        # self._objects = {}
-        object.__setattr__(self, '_objects', {})
+        object.__setattr__(self, '_objects', OrderedDict())
 
         if len(args) == 1:
             a0 = args[0]
-            if isinstance(a0, dict):
-                self.add(**a0)
-            elif isinstance(a0, str):
+            if isinstance(a0, str):
                 # assume a0 is a filename
                 self.load(a0)
             else:
+                items = a0.items() if isinstance(a0, dict) else a0
                 # assume we have an iterable of tuples
-                for k, v in a0:
+                for k, v in items:
                     self[k] = v
         else:
             self.add(*args, **kwargs)
 
-    # XXX: behave like a dict and return keys instead or return unsorted?
+    # XXX: behave like a dict and return keys instead?
     def __iter__(self):
-        return iter(self._objects[k] for k in self.names)
+        return iter(self.values())
 
     def add(self, *args, **kwargs):
         for arg in args:
@@ -207,16 +207,16 @@ class Session(object):
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self._objects[self.names[key]]
+            return self._objects[self.keys()[key]]
         elif isinstance(key, LArray):
             assert np.issubdtype(key.dtype, np.bool_)
             assert key.ndim == 1
             # only keep True values
             truenames = key[key].axes[0].labels
-            return Session({name: self[name] for name in truenames})
+            return Session([(name, self[name]) for name in truenames])
         elif isinstance(key, (tuple, list)):
             assert all(isinstance(k, str) for k in key)
-            return Session({k: self[k] for k in key})
+            return Session([(k, self[k]) for k in key])
         else:
             return self._objects[key]
 
@@ -328,8 +328,6 @@ class Session(object):
         else:
             return Session(items)
 
-    # XXX: would having an option/another function for returning this unsorted
-    # be any useful?
     @property
     def names(self):
         """Returns the list of names of the objects in the session
@@ -346,68 +344,56 @@ class Session(object):
     def keys(self):
         return self._objects.keys()
 
-    # XXX: sorted?
     def values(self):
         return self._objects.values()
 
-    # XXX: sorted?
     def items(self):
         return self._objects.items()
 
     def __repr__(self):
-        return 'Session({})'.format(', '.join(self.names))
+        return 'Session({})'.format(', '.join(self.keys()))
 
     def __len__(self):
         return len(self._objects)
 
+    # binary operations are dispatched element-wise to all arrays
+    # (we consider Session as an array-like)
+    def _binop(opname):
+        opfullname = '__%s__' % opname
+
+        def opmethod(self, other):
+            self_keys = set(self.keys())
+            all_keys = list(self.keys()) + [n for n in other.keys() if
+                                            n not in self_keys]
+            res = []
+            for name in all_keys:
+                self_array = self.get(name, np.nan)
+                other_array = other.get(name, np.nan)
+                res.append((name, getattr(self_array, opfullname)(other_array)))
+            return Session(res)
+        opmethod.__name__ = opfullname
+        return opmethod
+
+    __add__ = _binop('add')
+    __sub__ = _binop('sub')
+    __mul__ = _binop('mul')
+    __truediv__ = _binop('truediv')
+
+    # XXX: use _binop (ie elementwise comparison instead of aggregating
+    #      directly?)
     def __eq__(self, other):
-        self_names = set(self.names)
-        all_names = self.names + [n for n in other.names if n not in self_names]
-        res = [larray_equal(self.get(name), other.get(name))
-               for name in all_names]
-        return LArray(res, [Axis('name', all_names)])
+        self_keys = set(self.keys())
+        all_keys = list(self.keys()) + [n for n in other.keys()
+                                        if n not in self_keys]
+        res = [larray_equal(self.get(key), other.get(key)) for key in all_keys]
+        return LArray(res, [Axis('name', all_keys)])
 
     def __ne__(self, other):
         return ~(self == other)
-
-    # we could implement two(?) very different behavior:
-    # set-like behavior: combination of two Session, if same name,
-    # check that it is the same. a Session is more ordered-dict-like than
-    # set-like, so this might not make a lot of sense. an "update" method
-    # might make more sense. However most set-like operations do make sense.
-
-    # intersection: check common are the same or take left?
-    # union: check common are the same or take left?
-    # difference
-
-    # elementwise add: consider Session as an array-like and try to add the
-    # each array individually
-    def __add__(self, other):
-        self_names = set(self.names)
-        all_names = self.names + [n for n in other.names if n not in self_names]
-        return Session({name: self.get(name, np.nan) + other.get(name, np.nan)
-                       for name in all_names})
-
-    def __sub__(self, other):
-        self_names = set(self.names)
-        all_names = self.names + [n for n in other.names if n not in self_names]
-        return Session({name: self.get(name, np.nan) - other.get(name, np.nan)
-                       for name in all_names})
-
-    def __mul__(self, other):
-        self_names = set(self.names)
-        all_names = self.names + [n for n in other.names if n not in self_names]
-        return Session({name: self.get(name, np.nan) * other.get(name, np.nan)
-                       for name in all_names})
-
-    def __truediv__(self, other):
-        self_names = set(self.names)
-        all_names = self.names + [n for n in other.names if n not in self_names]
-        return Session({name: self.get(name, np.nan) / other.get(name, np.nan)
-                       for name in all_names})
 
 
 def local_arrays(depth=0):
     # noinspection PyProtectedMember
     d = sys._getframe(depth + 1).f_locals
-    return Session((k, v) for k, v in d.items() if isinstance(v, LArray))
+    return Session((k, d[k]) for k in sorted(d.keys())
+                   if isinstance(d[k], LArray))
