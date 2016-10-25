@@ -4849,6 +4849,12 @@ class LArray(object):
         axis_obj = self.axes[axis]
         return diff / self[axis_obj.i[:-d]].drop_labels(axis)
 
+    def compact(self):
+        res = self
+        for axis in res.axes:
+            if (res == res[axis.i[0]]).all():
+                res = res[axis.i[0]]
+        return res
 
 def parse(s):
     """
