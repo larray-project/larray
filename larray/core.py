@@ -767,6 +767,12 @@ class Axis(object):
         fullname = '__%s__' % opname
 
         def opmethod(self, other):
+            # give a chance to AxisCollection.__rXXX__ ops to trigger
+            if isinstance(other, AxisCollection):
+                # in this case it is indeed return NotImplemented, not raise
+                # NotImplementedError!
+                return NotImplemented
+
             self_array = labels_array(self)
             if isinstance(other, Axis):
                 other = labels_array(other)
@@ -1220,6 +1226,11 @@ class AxisCollection(object):
         return result
     __or__ = union
     __add__ = union
+
+    def __radd__(self, other):
+        result = AxisCollection(other)
+        result.extend(self)
+        return result
 
     def __and__(self, other):
         """
