@@ -2059,6 +2059,14 @@ class LArray(object):
         object.__setattr__(self, 'data', data)
         object.__setattr__(self, 'axes', axes)
 
+    def nonzero(self):
+        # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
+        #  can do a[a.nonzero()]
+        return self.data.nonzero()
+
+    def with_axes(self, axes):
+        return LArray(self.data, axes)
+
     def __getattr__(self, key):
         try:
             return self.__getitem__(key)
