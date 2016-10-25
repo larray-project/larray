@@ -3,6 +3,7 @@ Misc tools
 """
 from __future__ import absolute_import, division, print_function
 
+import math
 import itertools
 import sys
 import operator
@@ -23,6 +24,7 @@ if sys.version < '3':
     bytes = str
     unicode = unicode
     long = long
+    # FIXME: we should rather use PY2 = True (for py4 compat)
     PY3 = False
 else:
     basestring = str
@@ -327,3 +329,26 @@ def strip_rows(lines):
     for line in lines:
         rev_line = list(itertools.dropwhile(isblank, reversed(line)))
         yield list(reversed(rev_line))
+
+
+def size2str(value):
+    """
+    >>> size2str(0)
+    '0 bytes'
+    >>> size2str(100)
+    '100 bytes'
+    >>> size2str(1023)
+    '1023 bytes'
+    >>> size2str(1024)
+    '1.00 Kb'
+    >>> size2str(2000)
+    '1.95 Kb'
+    >>> size2str(10000000)
+    '9.54 Mb'
+    >>> size2str(1.27 * 1024 ** 3)
+    '1.27 Gb'
+    """
+    units = ["bytes", "Kb", "Mb", "Gb", "Tb", "Pb"]
+    scale = int(math.log(value, 1024)) if value else 0
+    fmt = "%.2f %s" if scale else "%d %s"
+    return fmt % (value / 1024.0 ** scale, units[scale])

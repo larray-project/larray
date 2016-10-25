@@ -116,7 +116,7 @@ try:
 except ImportError:
     np_nanprod = None
 
-from larray.utils import (table2str, unique, csv_open, unzip, long,
+from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           decode, basestring, bytes, izip, rproduct, ReprString,
                           duplicates, array_lookup2, skip_comment_cells,
                           strip_rows, PY3)
@@ -4582,7 +4582,7 @@ class LArray(object):
 
         Returns
         -------
-        integer
+        int
             returns the number of bytes in a LArray.
 
         Example
@@ -4594,6 +4594,26 @@ class LArray(object):
         48
         """
         return self.data.nbytes
+
+    @property
+    def memory_used(self):
+        """
+        returns the memory consumed by the array in human readable form.
+
+        Returns
+        -------
+        str
+            returns the number of bytes in a LArray.
+
+        Example
+        -------
+        >>> xsex = Axis('sex', ['H', 'F'])
+        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
+        >>> a = ndrange([xsex, xtype], dtype=float)
+        >>> a.memory_used
+        '48 bytes'
+        """
+        return size2str(self.data.nbytes)
 
     @property
     def dtype(self):
