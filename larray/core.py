@@ -1069,10 +1069,26 @@ class AxisCollection(object):
         """
         if axes is None:
             axes = []
-        elif isinstance(axes, (int, long, str, Axis)):
+        elif isinstance(axes, (int, long, Axis)):
             axes = [axes]
-        axes = [axis if isinstance(axis, Axis) else Axis(None, axis)
-                for axis in axes]
+        elif isinstance(axes, str):
+            axes = [axis.strip() for axis in axes.split(';')]
+
+        def make_axis(obj):
+            if isinstance(obj, Axis):
+                return obj
+            elif isinstance(obj, tuple):
+                assert len(obj) == 2
+                name, labels = obj
+                return Axis(name, labels)
+            else:
+                if isinstance(obj, str) and '=' in obj:
+                    name, labels = [o.strip() for o in obj.split('=')]
+                    return Axis(name, labels)
+                else:
+                    return Axis(None, obj)
+
+        axes = [make_axis(axis) for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
@@ -5156,11 +5172,20 @@ def zeros(axes, dtype=float, order='C'):
     -------
     LArray
 
-    Example
-    -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> zeros([xnat, xsex])
+    Examples
+    --------
+    >>> zeros([('nat', ['BE', 'FO']),
+    ...        ('sex', ['H', 'F'])])
+    nat\sex |   H |   F
+         BE | 0.0 | 0.0
+         FO | 0.0 | 0.0
+    >>> zeros('nat=BE,FO;sex=H,F')
+    nat\sex |   H |   F
+         BE | 0.0 | 0.0
+         FO | 0.0 | 0.0
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['H', 'F'])
+    >>> zeros([nat, sex])
     nat\sex |   H |   F
          BE | 0.0 | 0.0
          FO | 0.0 | 0.0
@@ -5617,8 +5642,15 @@ def ndrange(axes, start=0, dtype=int):
 
     Parameters
     ----------
-    axes : int, tuple of int or tuple/list/AxisCollection of Axis
-        a collection of axes or a shape.
+    axes : single axis or tuple/list/AxisCollection of axes
+        the axes of the array to create.
+        Each axis can be given as either:
+        * Axis object: actual axis object to use.
+        * single int: length of axis. will create a wildcard axis of that
+                      length.
+        * str: coma separated list of labels, with optional leading '=' to
+               set the name of the axis. eg. "a,b,c" or "sex=F,M"
+        * (name, labels) pair: name and labels of axis
     start : number, optional
     dtype : dtype, optional
         The type of the output array.  Defaults to int.
@@ -5627,11 +5659,29 @@ def ndrange(axes, start=0, dtype=int):
     -------
     LArray
 
-    Example
-    -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> ndrange([xnat, xsex])
+    Examples
+    --------
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['H', 'F'])
+    >>> ndrange([nat, sex])
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange([('nat', ['BE', 'FO']),
+    ...          ('sex', ['H', 'F'])])
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange([('nat', 'BE,FO'),
+    ...          ('sex', 'H,F')])
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange(['nat=BE,FO', 'sex=H,F'])
+    nat\\sex | H | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange('nat=BE,FO;sex=H,F')
     nat\\sex | H | F
          BE | 0 | 1
          FO | 2 | 3
@@ -5642,18 +5692,13 @@ def ndrange(axes, start=0, dtype=int):
     >>> ndrange(3, start=2)
     {0}* | 0 | 1 | 2
          | 2 | 3 | 4
-
-    potential alternate syntaxes:
-    ndrange((2, 3), names=('a', 'b'))
-    ndrange(2, 3, names=('a', 'b'))
-    ndrange([('a', 2), ('b', 3)])
-    ndrange(('a', 2), ('b', 3))
-    ndrange((2, 3)).rename([0, 1], ['a', 'b'])
-    ndrange((2, 3)).rename({0: 'a', 1: 'b'})
-    # current syntaxes
-    ndrange((2, 3)).rename(0, 'a').rename(1, 'b')
-    ndrange([Axis('a', 2), Axis('b', 3)])
+    >>> ndrange('a,b,c')
+    {0} | a | b | c
+        | 0 | 1 | 2
     """
+    # XXX: implement something like:
+    # >>> mat = ndrange([['BE', 'FO'], ['H', 'F']], axes=['nat', 'sex'])
+    # >>> mat = ndrange(['BE,FO', 'H,F'], axes=['nat', 'sex'])
     # XXX: try to come up with a syntax where start is before "end". For ndim
     #  > 1, I cannot think of anything nice.
     axes = AxisCollection(axes)
