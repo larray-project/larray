@@ -2921,7 +2921,8 @@ class LArray(object):
             return 'LArray([])'
         else:
             return table2str(list(self.as_table(maxlines=200, edgeitems=5)),
-                             'nan', True, keepcols=self.ndim - 1)
+                             'nan', fullinfo=True, maxwidth=200,
+                             keepcols=self.ndim - 1)
     __repr__ = __str__
 
     def __iter__(self):
