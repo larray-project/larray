@@ -393,6 +393,20 @@ class Session(object):
         return ~(self == other)
 
     def compact(self, display=False):
+        """
+        detect and remove "useless" axes (ie axes for which values are
+        constant over the whole axis) for all arrays in session
+
+        Parameters
+        ----------
+        display : bool, optional
+            whether or not to display a message for each array that is compacted
+
+        Returns
+        -------
+        Session
+            a new session containing all compacted arrays
+        """
         new_items = []
         for k, v in self._objects.items():
             compacted = v.compact()

@@ -4850,6 +4850,27 @@ class LArray(object):
         return diff / self[axis_obj.i[:-d]].drop_labels(axis)
 
     def compact(self):
+        """
+        detect and remove "useless" axes (ie axes for which values are
+        constant over the whole axis)
+
+        Returns
+        -------
+        LArray or scalar
+            array with constant axes removed
+
+        Example
+        -------
+        >>> a = LArray([[1, 2],
+        ...             [1, 2]], [Axis('sex', 'M,F'), Axis('nat', 'BE,FO')])
+        >>> a
+        sex\\nat | BE | FO
+              M |  1 |  2
+              F |  1 |  2
+        >>> a.compact()
+        nat | BE | FO
+            |  1 |  2
+        """
         res = self
         for axis in res.axes:
             if (res == res[axis.i[0]]).all():
