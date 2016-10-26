@@ -1629,13 +1629,13 @@ class AxisCollection(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> axes = AxisCollection([xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> axes = AxisCollection([nat, sex])
         >>> axes.info
         2 x 2
          nat [2]: 'BE' 'FO'
-         sex [2]: 'H' 'F'
+         sex [2]: 'M' 'F'
         """
         lines = [" %s [%d]: %s" % (name, len(axis), axis.labels_summary())
                  for name, axis in zip(self.display_names, self._list)]
@@ -1657,17 +1657,17 @@ def all(values, axis=None):
 
     Example
     -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> a = ndrange([xnat, xsex]) >= 1
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([nat, sex]) >= 1
     >>> a
-    nat\\sex |     H |    F
+    nat\\sex |     M |    F
          BE | False | True
          FO |  True | True
     >>> all(a)
     False
-    >>> all(a, xnat)
-    sex |     H |    F
+    >>> all(a, nat)
+    sex |     M |    F
         | False | True
     """
     if isinstance(values, LArray):
@@ -1690,17 +1690,17 @@ def any(values, axis=None):
 
     Example
     -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> a = ndrange([xnat, xsex]) >= 3
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([nat, sex]) >= 3
     >>> a
-    nat\\sex |     H |     F
+    nat\\sex |     M |     F
          BE | False | False
          FO | False |  True
     >>> any(a)
     True
-    >>> any(a, xnat)
-    sex |     H |    F
+    >>> any(a, nat)
+    sex |     M |    F
         | False | True
     """
     if isinstance(values, LArray):
@@ -2222,30 +2222,30 @@ class LArray(object):
 
         Example
         -------
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xnat = Axis('nat', ['EU', 'FO', 'BE'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
         >>> xtype = Axis('type', ['type1', 'type2'])
-        >>> a = LArray([[10, 2, 4], [3, 7, 1]], [xsex, xnat])
+        >>> a = LArray([[10, 2, 4], [3, 7, 1]], [sex, nat])
         >>> a
         sex\\nat | EU | FO | BE
-              H | 10 |  2 |  4
+              M | 10 |  2 |  4
               F |  3 |  7 |  1
         >>> a.sort_values('F')
         sex\\nat | BE | EU | FO
-              H |  4 | 10 |  2
+              M |  4 | 10 |  2
               F |  1 |  3 |  7
         >>> b = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
-        ...            [xsex, xtype, xnat])
+        ...            [sex, xtype, nat])
         >>> b
         sex | type\\nat | EU | FO | BE
-          H |    type1 | 10 |  2 |  4
-          H |    type2 |  3 |  7 |  1
+          M |    type1 | 10 |  2 |  4
+          M |    type2 |  3 |  7 |  1
           F |    type1 |  5 |  1 |  6
           F |    type2 |  2 |  8 |  9
-        >>> b.sort_values(('H', 'type2'))
+        >>> b.sort_values(('M', 'type2'))
         sex | type\\nat | BE | EU | FO
-          H |    type1 |  4 | 10 |  2
-          H |    type2 |  1 |  3 |  7
+          M |    type1 |  4 | 10 |  2
+          M |    type2 |  1 |  3 |  7
           F |    type1 |  6 |  5 |  1
           F |    type2 |  9 |  2 |  8
         """
@@ -2288,33 +2288,33 @@ class LArray(object):
         LArray
             LArray with sorted axes.
 
-        Example
-        -------
-        >>> xnat = Axis('nat', ['EU', 'FO', 'BE'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> a = ndrange([xnat, xsex])
+        Examples
+        --------
+        >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> a = ndrange([nat, sex])
         >>> a
-        nat\\sex | H | F
+        nat\\sex | M | F
              EU | 0 | 1
              FO | 2 | 3
              BE | 4 | 5
         >>> a.sort_axis(x.sex)
-        nat\\sex | F | H
+        nat\\sex | F | M
              EU | 1 | 0
              FO | 3 | 2
              BE | 5 | 4
         >>> a.sort_axis()
-        nat\\sex | F | H
+        nat\\sex | F | M
              BE | 5 | 4
              EU | 1 | 0
              FO | 3 | 2
         >>> a.sort_axis((x.sex, x.nat))
-        nat\\sex | F | H
+        nat\\sex | F | M
              BE | 5 | 4
              EU | 1 | 0
              FO | 3 | 2
         >>> a.sort_axis(reverse=True)
-        nat\\sex | H | F
+        nat\\sex | M | F
              FO | 2 | 3
              EU | 0 | 1
              BE | 4 | 5
@@ -3278,15 +3278,15 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = ndrange([xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = ndrange([nat, sex])
         >>> arr.with_total()
-        nat\\sex | H | F | total
+        nat\\sex | M | F | total
              BE | 0 | 1 |     1
              FO | 2 | 3 |     5
           total | 2 | 4 |     6
-        >>> arr = ndrange([Axis('a', 2), Axis('b', 3)])
+        >>> arr = ndrange([('a', 2), ('b', 3)])
         >>> arr.with_total()
           a\\b | 0 | 1 | 2 | total
             0 | 0 | 1 | 2 |     3
@@ -3349,17 +3349,17 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
         >>> arr.argmin(x.sex)
         nat | BE | FR | IT
-            |  H |  F |  H
+            |  M |  F |  M
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argmin(axis_idx)]
@@ -3380,11 +3380,11 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
@@ -3410,17 +3410,17 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
         >>> arr.argmax(x.sex)
         nat | BE | FR | IT
-            |  F |  H |  F
+            |  F |  M |  F
         """
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = axis.labels[self.data.argmax(axis_idx)]
@@ -3441,11 +3441,11 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
@@ -3477,19 +3477,19 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
         >>> arr.argsort(x.sex)
         nat\\sex | 0 | 1
-             BE | H | F
-             FR | F | H
-             IT | H | F
+             BE | M | F
+             FR | F | M
+             IT | M | F
         """
         if axis is None:
             if self.ndim > 1:
@@ -3523,16 +3523,16 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 3 | 2
              IT | 2 | 5
         >>> arr.posargsort(x.sex)
-        nat\\sex | H | F
+        nat\\sex | M | F
              BE | 0 | 1
              FR | 1 | 0
              IT | 0 | 1
@@ -3559,13 +3559,13 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat0 = ones([xnat, xsex])
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> mat0 = ones([nat, sex])
         >>> mat0.info
         2 x 2
          nat [2]: 'BE' 'FO'
-         sex [2]: 'H' 'F'
+         sex [2]: 'M' 'F'
         """
         return self.axes.info
 
@@ -4005,34 +4005,31 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2'])
-        >>> mat = ones([xnat, xsex])
-        >>> mat
-        nat\\sex |   H |   F
+        >>> a = ones('nat=BE,FO;sex=M,F')
+        >>> a
+        nat\\sex |   M |   F
              BE | 1.0 | 1.0
              FO | 1.0 | 1.0
-        >>> mat.append(x.sex, mat.sum(x.sex), 'H+F')
-        nat\\sex |   H |   F | H+F
+        >>> a.append(x.sex, a.sum(x.sex), 'M+F')
+        nat\\sex |   M |   F | M+F
              BE | 1.0 | 1.0 | 2.0
              FO | 1.0 | 1.0 | 2.0
-        >>> mat.append(x.nat, 2, 'Other')
-        nat\\sex |   H |   F
+        >>> a.append(x.nat, 2, 'Other')
+        nat\\sex |   M |   F
              BE | 1.0 | 1.0
              FO | 1.0 | 1.0
           Other | 2.0 | 2.0
-        >>> arr2 = zeros([xtype])
-        >>> arr2
+        >>> b = zeros('type=type1,type2')
+        >>> b
         type | type1 | type2
              |   0.0 |   0.0
-        >>> mat.append(x.nat, arr2, 'Other')
+        >>> a.append(x.nat, b, 'Other')
           nat | sex\\type | type1 | type2
-           BE |        H |   1.0 |   1.0
+           BE |        M |   1.0 |   1.0
            BE |        F |   1.0 |   1.0
-           FO |        H |   1.0 |   1.0
+           FO |        M |   1.0 |   1.0
            FO |        F |   1.0 |   1.0
-        Other |        H |   0.0 |   0.0
+        Other |        M |   0.0 |   0.0
         Other |        F |   0.0 |   0.0
         """
         axis = self.axes[axis]
@@ -4064,28 +4061,32 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> mat = ones([xnat, xsex, xtype])
-        >>> mat
-        nat | sex\\type | type1 | type2 | type3
-         BE |        H |   1.0 |   1.0 |   1.0
-         BE |        F |   1.0 |   1.0 |   1.0
-         FO |        H |   1.0 |   1.0 |   1.0
-         FO |        F |   1.0 |   1.0 |   1.0
-        >>> mat.prepend(x.type, mat.sum(x.type), 'type0')
-        nat | sex\\type | type0 | type1 | type2 | type3
-         BE |        H |   3.0 |   1.0 |   1.0 |   1.0
-         BE |        F |   3.0 |   1.0 |   1.0 |   1.0
-         FO |        H |   3.0 |   1.0 |   1.0 |   1.0
-         FO |        F |   3.0 |   1.0 |   1.0 |   1.0
-        >>> mat.prepend(x.type, 2, 'type0')
-        nat | sex\\type | type0 | type1 | type2 | type3
-         BE |        H |   2.0 |   1.0 |   1.0 |   1.0
-         BE |        F |   2.0 |   1.0 |   1.0 |   1.0
-         FO |        H |   2.0 |   1.0 |   1.0 |   1.0
-         FO |        F |   2.0 |   1.0 |   1.0 |   1.0
+        >>> a = ones('nat=BE,FO;sex=M,F')
+        >>> a
+        nat\sex |   M |   F
+             BE | 1.0 | 1.0
+             FO | 1.0 | 1.0
+        >>> a.prepend(x.sex, a.sum(x.sex), 'M+F')
+        nat\\sex | M+F |   M |   F
+             BE | 2.0 | 1.0 | 1.0
+             FO | 2.0 | 1.0 | 1.0
+        >>> a.prepend(x.nat, 2, 'Other')
+        nat\\sex |   M |   F
+          Other | 2.0 | 2.0
+             BE | 1.0 | 1.0
+             FO | 1.0 | 1.0
+        >>> b = zeros('type=type1,type2')
+        >>> b
+        type | type1 | type2
+             |   0.0 |   0.0
+        >>> a.prepend(x.nat, b, 'Other')
+         type | nat\sex |   M |   F
+        type1 |   Other | 0.0 | 0.0
+        type1 |      BE | 1.0 | 1.0
+        type1 |      FO | 1.0 | 1.0
+        type2 |   Other | 0.0 | 0.0
+        type2 |      BE | 1.0 | 1.0
+        type2 |      FO | 1.0 | 1.0
         """
         axis = self.axes[axis]
         if np.isscalar(value):
@@ -4114,32 +4115,32 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xsex2 = Axis('sex', ['U'])
+        >>> nat = Axis('nat', ['BE', 'FO'])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> sex2 = Axis('sex', ['U'])
         >>> xtype = Axis('type', ['type1', 'type2'])
-        >>> arr1 = ones([xsex, xtype])
+        >>> arr1 = ones([sex, xtype])
         >>> arr1
         sex\\type | type1 | type2
-               H |   1.0 |   1.0
+               M |   1.0 |   1.0
                F |   1.0 |   1.0
-        >>> arr2 = zeros([xsex2, xtype])
+        >>> arr2 = zeros([sex2, xtype])
         >>> arr2
         sex\\type | type1 | type2
                U |   0.0 |   0.0
         >>> arr1.extend(x.sex, arr2)
         sex\\type | type1 | type2
-               H |   1.0 |   1.0
+               M |   1.0 |   1.0
                F |   1.0 |   1.0
                U |   0.0 |   0.0
-        >>> arr3 = zeros([xsex2, xnat])
+        >>> arr3 = zeros([sex2, nat])
         >>> arr3
         sex\\nat |  BE |  FO
               U | 0.0 | 0.0
         >>> arr1.extend(x.sex, arr3)
         sex | type\\nat |  BE |  FO
-          H |    type1 | 1.0 | 1.0
-          H |    type2 | 1.0 | 1.0
+          M |    type1 | 1.0 | 1.0
+          M |    type2 | 1.0 | 1.0
           F |    type1 | 1.0 | 1.0
           F |    type2 | 1.0 | 1.0
           U |    type1 | 0.0 | 0.0
@@ -4169,23 +4170,22 @@ class LArray(object):
 
         Example
         -------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> alive = Axis('alive', [False, True])
-        >>> a = ndrange([nat, sex, alive])
+        >>> a = ndrange([('nat', 'BE,FO'),
+        ...              ('sex', 'M,F'),
+        ...              ('alive', [False, True])])
         >>> a
         nat | sex\\alive | False | True
          BE |         M |     0 |    1
          BE |         F |     2 |    3
          FO |         M |     4 |    5
          FO |         F |     6 |    7
-        >>> a.transpose(alive, sex, nat)
+        >>> a.transpose(x.alive, x.sex, x.nat)
         alive | sex\\nat | BE | FO
         False |       M |  0 |  4
         False |       F |  2 |  6
          True |       M |  1 |  5
          True |       F |  3 |  7
-        >>> a.transpose(alive)
+        >>> a.transpose(x.alive)
         alive | nat\\sex | M | F
         False |      BE | 0 | 2
         False |      FO | 4 | 6
@@ -4259,31 +4259,29 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat
-        nat\\sex | H | F
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a
+        nat\\sex | M | F
              BE | 0 | 1
              FO | 2 | 3
-        >>> mat.to_csv('test.csv')
+        >>> a.to_csv('test.csv')
         >>> with open('test.csv') as f:
         ...     print(f.read().strip())
-        nat\\sex,H,F
+        nat\\sex,M,F
         BE,0,1
         FO,2,3
-        >>> mat.to_csv('test.csv', sep=';', transpose=False)
+        >>> a.to_csv('test.csv', sep=';', transpose=False)
         >>> with open('test.csv') as f:
         ...     print(f.read().strip())
         nat;sex;0
-        BE;H;0
+        BE;M;0
         BE;F;1
-        FO;H;2
+        FO;M;2
         FO;F;3
-        >>> mat.to_csv('test.csv', dialect='classic')
+        >>> a.to_csv('test.csv', dialect='classic')
         >>> with open('test.csv') as f:
         ...     print(f.read().strip())
-        nat,H,F
+        nat,M,F
         BE,0,1
         FO,2,3
         """
@@ -4314,10 +4312,8 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat.to_hdf('test.h5', 'mat')
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a.to_hdf('test.h5', 'a')
         """
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
@@ -4364,9 +4360,7 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> a = ndrange([xnat, xsex])
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> # write to a new (unnamed) sheet
         >>> a.to_excel('test.xlsx')  # doctest: +SKIP
         >>> # write to top-left corner of an existing sheet
@@ -4479,10 +4473,8 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> mat = ndrange([xnat, xsex])
-        >>> mat.to_clipboard()  # doctest: +SKIP
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a.to_clipboard()  # doctest: +SKIP
         """
         self.to_frame().to_clipboard(*args, **kwargs)
 
@@ -4534,11 +4526,8 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.plot()  # doctest: +SKIP
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a.plot()  # doctest: +SKIP
         """
         return self.to_frame().plot
 
@@ -4553,11 +4542,8 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.shape  # doctest: +SKIP
+        >>> a = ndrange('nat=BE,FO;sex=M,F;type=type1,type2,type3')
+        >>> a.shape  # doctest: +SKIP
         (2, 2, 3)
         """
         return self.data.shape
@@ -4573,31 +4559,26 @@ class LArray(object):
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xnat, xsex, xtype])
-        >>> mat.ndim
-        3
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a.ndim
+        2
         """
         return self.data.ndim
 
     @property
     def size(self):
         """
-        returns the number of cells in a LArray.
+        returns the number of cells in array.
 
         Returns
         -------
-        integer
-            returns the number of cells in a LArray.
+        int
+            returns the number of cells in array.
 
         Example
         -------
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xsex, xtype])
-        >>> mat.size
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3')
+        >>> a.size
         6
         """
         return self.data.size
@@ -4605,19 +4586,17 @@ class LArray(object):
     @property
     def nbytes(self):
         """
-        returns the number of bytes in a LArray.
+        returns the number of bytes in a array.
 
         Returns
         -------
         int
-            returns the number of bytes in a LArray.
+            returns the number of bytes in array.
 
         Example
         -------
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> mat = ndrange([xsex, xtype], dtype=float)
-        >>> mat.nbytes
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
+        >>> a.nbytes
         48
         """
         return self.data.nbytes
@@ -4630,13 +4609,11 @@ class LArray(object):
         Returns
         -------
         str
-            returns the number of bytes in a LArray.
+            returns the memory used by the array.
 
         Example
         -------
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> a = ndrange([xsex, xtype], dtype=float)
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.memory_used
         '48 bytes'
         """
@@ -4649,16 +4626,13 @@ class LArray(object):
 
         Returns
         -------
-        string
+        dtype
             returns the type of the data in the cells of LArray.
 
         Example
         -------
-        >>> xnat = Axis('nat', ['BE', 'FO'])
-        >>> xsex = Axis('sex', ['H', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = zeros([xnat, xsex, xtype])
-        >>> mat.dtype
+        >>> a = zeros('sex=M,F;type=type1,type2,type3')
+        >>> a.dtype
         dtype('float64')
         """
         return self.data.dtype
@@ -4677,7 +4651,7 @@ class LArray(object):
 
     def set_labels(self, axis, labels, inplace=False):
         """
-        replaces the labels of axis of a LArray
+        replaces the labels of an axis of array
 
         Parameters
         ----------
@@ -4685,20 +4659,18 @@ class LArray(object):
             the axis for which we want to replace the labels.
         labels : list of axis labels
             the new labels.
-        inplace : boolean
+        inplace : bool
             whether or not to modify the original object or return a new
             LArray and leave the original intact.
 
         Returns
         -------
         LArray
-            LArray with modified labels.
+            array with modified labels.
 
         Example
         -------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> a = ndrange([nat, sex])
+        >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
              BE | 0 | 1
@@ -4738,18 +4710,16 @@ class LArray(object):
 
         Example
         -------
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> xtype = Axis('type',['type1', 'type2', 'type3'])
-        >>> mat = ndrange([sex, xtype])
-        >>> mat
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3')
+        >>> a
         sex\\type | type1 | type2 | type3
                M |     0 |     1 |     2
                F |     3 |     4 |     5
-        >>> mat.shift(x.type)
+        >>> a.shift(x.type)
         sex\\type | type2 | type3
                M |     0 |     1
                F |     3 |     4
-        >>> mat.shift(x.type, n=-1)
+        >>> a.shift(x.type, n=-1)
         sex\\type | type1 | type2
                M |     1 |     2
                F |     4 |     5
@@ -4795,11 +4765,9 @@ class LArray(object):
         LArray : The n-th order differences. The shape of the output is the same
         as `a` except for `axis` which is smaller by `n` * `d`.
 
-        Example
-        -------
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> xtype = Axis('type', ['type1', 'type2', 'type3'])
-        >>> a = ndrange([sex, xtype]).cumsum(x.type)
+        Examples
+        --------
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum(x.type)
         >>> a
         sex\\type | type1 | type2 | type3
                M |     0 |     1 |     3
@@ -4858,8 +4826,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> sex = Axis('sex', ['M', 'F'])
         >>> year = Axis('year', range(2016, 2020))
         >>> a = LArray([[1.0, 2.0, 3.0, 3.0], [2.0, 3.0, 1.5, 3.0]],
@@ -4887,6 +4855,7 @@ class LArray(object):
             if (res == res[axis.i[0]]).all():
                 res = res[axis.i[0]]
         return res
+
 
 def parse(s):
     """
@@ -5015,11 +4984,13 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
         Name of dialect. Defaults to 'larray'.
     **kwargs
 
-    Example
+    Returns
     -------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([nat, sex])
+    LArray
+
+    Examples
+    --------
+    >>> a = ndrange('nat=BE,FO;sex=M,F')
     >>> a.to_csv('test.csv')
     >>> read_csv('test.csv')
     nat\\sex | M | F
@@ -5191,18 +5162,18 @@ def zeros(axes, dtype=float, order='C'):
     Examples
     --------
     >>> zeros([('nat', ['BE', 'FO']),
-    ...        ('sex', ['H', 'F'])])
-    nat\sex |   H |   F
+    ...        ('sex', ['M', 'F'])])
+    nat\sex |   M |   F
          BE | 0.0 | 0.0
          FO | 0.0 | 0.0
-    >>> zeros('nat=BE,FO;sex=H,F')
-    nat\sex |   H |   F
+    >>> zeros('nat=BE,FO;sex=M,F')
+    nat\sex |   M |   F
          BE | 0.0 | 0.0
          FO | 0.0 | 0.0
     >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['H', 'F'])
+    >>> sex = Axis('sex', ['M', 'F'])
     >>> zeros([nat, sex])
-    nat\sex |   H |   F
+    nat\sex |   M |   F
          BE | 0.0 | 0.0
          FO | 0.0 | 0.0
     """
@@ -5261,10 +5232,10 @@ def ones(axes, dtype=float, order='C'):
 
     Example
     -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> ones([xnat, xsex])
-    nat\\sex |   H |   F
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> ones([nat, sex])
+    nat\\sex |   M |   F
          BE | 1.0 | 1.0
          FO | 1.0 | 1.0
     """
@@ -5324,10 +5295,10 @@ def empty(axes, dtype=float, order='C'):
 
     Example
     -------
-    >>> xnat = Axis('nat', ['BE', 'FO'])
-    >>> xsex = Axis('sex', ['H', 'F'])
-    >>> empty([xnat, xsex])  # doctest: +SKIP
-    nat\\sex |                  H |                  F
+    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> empty([nat, sex])  # doctest: +SKIP
+    nat\\sex |                  M |                  F
          BE | 2.47311483356e-315 | 2.47498446195e-315
          FO |                0.0 | 6.07684618082e-31
     """
@@ -5678,27 +5649,27 @@ def ndrange(axes, start=0, dtype=int):
     Examples
     --------
     >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['H', 'F'])
+    >>> sex = Axis('sex', ['M', 'F'])
     >>> ndrange([nat, sex])
-    nat\\sex | H | F
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     >>> ndrange([('nat', ['BE', 'FO']),
-    ...          ('sex', ['H', 'F'])])
-    nat\\sex | H | F
+    ...          ('sex', ['M', 'F'])])
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     >>> ndrange([('nat', 'BE,FO'),
-    ...          ('sex', 'H,F')])
-    nat\\sex | H | F
+    ...          ('sex', 'M,F')])
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
-    >>> ndrange(['nat=BE,FO', 'sex=H,F'])
-    nat\\sex | H | F
+    >>> ndrange(['nat=BE,FO', 'sex=M,F'])
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
-    >>> ndrange('nat=BE,FO;sex=H,F')
-    nat\\sex | H | F
+    >>> ndrange('nat=BE,FO;sex=M,F')
+    nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     >>> ndrange([2, 3], dtype=float)
@@ -5713,8 +5684,8 @@ def ndrange(axes, start=0, dtype=int):
         | 0 | 1 | 2
     """
     # XXX: implement something like:
-    # >>> mat = ndrange([['BE', 'FO'], ['H', 'F']], axes=['nat', 'sex'])
-    # >>> mat = ndrange(['BE,FO', 'H,F'], axes=['nat', 'sex'])
+    # >>> mat = ndrange([['BE', 'FO'], ['M', 'F']], axes=['nat', 'sex'])
+    # >>> mat = ndrange(['BE,FO', 'M,F'], axes=['nat', 'sex'])
     # XXX: try to come up with a syntax where start is before "end". For ndim
     #  > 1, I cannot think of anything nice.
     axes = AxisCollection(axes)
@@ -5925,7 +5896,7 @@ def eye(rows, columns=None, k=0, dtype=None):
 #      => unsure for now. The most important point is that it should be
 #         consistent with other functions.
 # stack(a1, a2, axis=Axis('sex', 'H,F'))
-# stack(('H', a1), ('F', a2), axis='sex')
+# stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
 def stack(arrays, axis=None):
     """
@@ -5954,8 +5925,8 @@ def stack(arrays, axis=None):
     >>> arr2
     nat |  BE |  FO
         | 0.0 | 0.0
-    >>> stack([('H', arr1), ('F', arr2)], 'sex')
-    nat\\sex |   H |   F
+    >>> stack([('M', arr1), ('F', arr2)], 'sex')
+    nat\\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
@@ -5963,16 +5934,16 @@ def stack(arrays, axis=None):
     should be preferred because it is more obvious which label correspond to
     what array):
 
-    >>> sex = Axis('sex', ['H', 'F'])
+    >>> sex = Axis('sex', ['M', 'F'])
     >>> stack((arr1, arr2), sex)
-    nat\\sex |   H |   F
+    nat\\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
     or for arrays with different axes:
 
     >>> stack((arr1, 0), sex)
-    nat\\sex |   H |   F
+    nat\\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
@@ -5987,7 +5958,7 @@ def stack(arrays, axis=None):
     >>> # not using the same length as nat, otherwise numpy gets confused :(
     >>> nd = LArray([arr1, zeros(Axis('type', [1, 2, 3]))], sex)
     >>> stack(nd, sex)
-    nat | type\sex |   H |   F
+    nat | type\sex |   M |   F
      BE |        1 | 1.0 | 0.0
      BE |        2 | 1.0 | 0.0
      BE |        3 | 1.0 | 0.0
