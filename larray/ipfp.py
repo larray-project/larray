@@ -154,7 +154,7 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
                     raise ValueError("{}:\n{}"
                                      .format(msg, badvalues(axis_sum, bad)))
                 else:
-                    print("WARNING: {}, setting them to zero: {}"
+                    print("WARNING: {}, setting them to zero:\n{}"
                           .format(msg, badvalues(axis_sum, bad)))
             a[bad] = 0
             # verify we did fix the problem
