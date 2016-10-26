@@ -72,7 +72,7 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     """
     assert nzvzs in {'fix', 'warn', 'raise'}
     assert no_convergence in {'ignore', 'warn', 'raise'}
-    target_sums = [la.aslarray(a) for a in target_sums]
+    target_sums = [la.aslarray(ts) for ts in target_sums]
 
     def rename_axis(axis, name):
         return axis if axis.name is not None else axis.rename(name)
