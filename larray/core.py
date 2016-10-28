@@ -2645,23 +2645,14 @@ class LArray(object):
         if any(isinstance(axis_key, LArray) for axis_key in translated_key):
             k2 = [k.data if isinstance(k, LArray) else k
                   for k in translated_key]
-            data = data[k2]
+            res_data = data[k2]
             axes = [axis.subaxis(axis_key)
                     for axis, axis_key in zip(self.axes, translated_key)
                     if not np.isscalar(axis_key)]
 
-            # subaxis can return tuple of axes and we want a single list of axes
-            # not a nested structure. We could do both in one step but it's
-            # awfully unreadable.
-            def flatten(l):
-                return [e for sublist in l for e in sublist]
-
-            def to2d(l):
-                return [mixed if isinstance(mixed, (tuple, list)) else [mixed]
-                        for mixed in l]
-
-            axes = flatten(to2d(axes))
-            return LArray(data, axes)
+            first_col = AxisCollection(axes[0])
+            res_axes = first_col.union(*axes[1:])
+            return LArray(res_data, res_axes)
 
         # TODO: if the original key was a list of labels,
         # subaxis(translated_key).labels == orig_key, so we should use
