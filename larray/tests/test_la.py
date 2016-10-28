@@ -1110,16 +1110,129 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res.shape, (2, 2, 2, 2))
         self.assertEqual(res.axes.names, ['c', 'd', 'a', 'b'])
 
-    def test_getitem_larray_key_guess(self):
+    def test_getitem_single_larray_key_guess(self):
         a = Axis('a', ['a1', 'a2'])
-        b = Axis('b', ['b1', 'b2'])
-        c = Axis('c', ['c1', 'c2'])
-        d = Axis('d', ['d1', 'd2'])
-        e = Axis('e', ['e1', 'e2', 'e3', 'e4'])
+        b = Axis('b', ['b1', 'b2', 'b3'])
+        c = Axis('c', ['c1', 'c2', 'c3', 'c4'])
 
-        arr = ndrange([c, d, e])
-        key = LArray([['e1', 'e2'], ['e3', 'e4']], [a, b])
-        self.assertEqual(arr[key].axes, [c, d, a, b])
+        # 1) key with extra axis
+        arr = ndrange([a, b])
+        # replace the values_axis by the extra axis
+        key = LArray(['a1', 'a2', 'a2', 'a1'], [c])
+        self.assertEqual(arr[key].axes, [c, b])
+
+        # 2) key with the values axis (the one being replaced)
+        arr = ndrange([a, b])
+        key = LArray(['b2', 'b1', 'b3'], [b])
+        # axis stays the same but data should be flipped/shuffled
+        self.assertEqual(arr[key].axes, [a, b])
+
+        # 2bis) key with part of the values axis (the one being replaced)
+        arr = ndrange([a, b])
+        b_bis = Axis('b', ['b1', 'b2'])
+        key = LArray(['b3', 'b2'], [b_bis])
+        self.assertEqual(arr[key].axes, [a, b_bis])
+
+        # 3) key with another existing axis (not the values axis)
+    #     arr = ndrange([a, b])
+    #     key = LArray(['a1', 'a2', 'a1'], [b])
+    #     # we need points indexing
+    #     # equivalent to
+    #     # tmp = arr[x.a['a1', 'a2', 'a1'] ^ x.b['b1', 'b2', 'b3']]
+    #     # res = tmp.set_axes([b])
+    #     # both the values axis and the other existing axis
+    #     self.assertEqual(arr[key].axes, [b])
+    #
+    #     # 3bis) key with part of another existing axis (not the values axis)
+    #     arr = ndrange([a, b])
+    #     b_bis = Axis('b', ['b1', 'b2'])
+    #     key = LArray(['a2', 'a1'], [b_bis])
+    #     # we need points indexing
+    #     # equivalent to
+    #     # tmp = arr[x.a['a2', 'a1'] ^ x.b['b1', 'b2']]
+    #     # res = tmp.set_axes([b_bis])
+    #     self.assertEqual(arr[key].axes, [b_bis])
+    #
+    #     # 4) key has both the values axis and another existing axis
+    #     # a\b b1 b2 b3
+    #     #  a1  0  1  2
+    #     #  a2  3  4  5
+    #     arr = ndrange([a, b])
+    #     # a\b b1 b2 b3
+    #     #  a1 a1 a2 a1
+    #     #  a2 a2 a1 a2
+    #     key = LArray([['a1', 'a2', 'a1'],
+    #                   ['a2', 'a1', 'a2']],
+    #                  [a, b])
+    #     # a\b b1 b2 b3
+    #     #  a1  0  4  2
+    #     #  a2  3  1  5
+    #     # we need to produce the following keys for numpy:
+    #     # k0:
+    #     # [[0, 1, 0],
+    #     #  [1, 0, 1]]
+    #     # TODO: [0, 1, 2] is enough in this case (thanks to broadcasting)
+    #     #       because in numpy missing dimensions are filled by adding
+    #     #       length 1 dimensions to the left. Ie it works because b is the
+    #     #       last dimension.
+    #     # k1:
+    #     # [[0, 1, 2],
+    #     #  [0, 1, 2]]
+    #
+    #     # we need points indexing
+    #     # equivalent to
+    #     # tmp = arr[x.a[['a1', 'a2', 'a1'],
+    #     #               ['a2', 'a1', 'a2']] ^ x.b['b1', 'b2', 'b3']]
+    #     # res = tmp.set_axes([a, b])
+    #     # this is kinda ugly because a ND x.a has implicit (positional dimension
+    #     res = arr[key]
+    #     self.assertEqual(res.axes, [a, b])
+    #     assert_array_equal(res, [[0, 4, 2],
+    #                              [3, 1, 5]])
+    #
+    #     # 5) key has both the values axis and an extra axis
+    #     arr = ndrange([a, b])
+    #     key = LArray([['a1', 'a2', 'a2', 'a1'], ['a2', 'a1', 'a1', 'a2']],
+    #                  [a, c])
+    #     self.assertEqual(arr[key].axes, [a, c])
+    #
+    #     # 6) key has both another existing axis (not values) and an extra axis
+    #     arr = ndrange([a, b])
+    #     key = LArray([['b1', 'b2', 'b1', 'b2'], ['b3', 'b4', 'b3', 'b4']],
+    #                  [a, c])
+    #     self.assertEqual(arr[key].axes, [a, c])
+    #
+    #     # 7) key has the values axis, another existing axis and an extra axis
+    #     arr = ndrange([a, b])
+    #     key = LArray([[['a1', 'a2', 'a1', 'a2'],
+    #                    ['a2', 'a1', 'a2', 'a1'],
+    #                    ['a1', 'a2', 'a1', 'a2']],
+    #
+    #                   [['a1', 'a2', 'a2', 'a1'],
+    #                    ['a2', 'a2', 'a2', 'a2'],
+    #                    ['a1', 'a2', 'a2', 'a1']]],
+    #                  [a, b, c])
+    #     self.assertEqual(arr[key].axes, [a, c])
+    #
+    # def test_getitem_multiple_larray_key_guess(self):
+    #     a = Axis('a', ['a1', 'a2'])
+    #     b = Axis('b', ['b1', 'b2', 'b3'])
+    #     c = Axis('c', ['c1', 'c2', 'c3', 'c4'])
+    #     d = Axis('d', ['d1', 'd2', 'd3', 'd4', 'd5'])
+    #     e = Axis('e', ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'])
+    #
+    #     # 1) key with extra disjoint axes
+    #     arr = ndrange([a, b])
+    #     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c])
+    #     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [d])
+    #     self.assertEqual(arr[k1, k2].axes, [c, d])
+    #
+    #     # 2) key with common extra axes
+    #     arr = ndrange([a, b])
+    #     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c, d])
+    #     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [c, e])
+    #     # TODO: not sure what *should* happen in this case!
+    #     self.assertEqual(arr[k1, k2].axes, [c, d, e])
 
     def test_getitem_ndarray_key_guess(self):
         raw = self.array
