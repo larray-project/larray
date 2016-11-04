@@ -96,8 +96,6 @@ from itertools import product, chain, groupby, islice
 import sys
 import re
 
-from larray.oset import *
-
 try:
     import builtins
 except ImportError:
@@ -116,6 +114,7 @@ try:
 except ImportError:
     np_nanprod = None
 
+from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           decode, basestring, bytes, izip, rproduct, ReprString,
                           duplicates, array_lookup2, skip_comment_cells,
