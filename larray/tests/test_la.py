@@ -2907,24 +2907,24 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         #large.plot()
         #large.hist()
 
-    def test_to_excel(self):
-        a = ndrange('a=a1,a2,a3')
-        b = ndrange('a=a1,a2,a3;b=b1,b2')
-
-        # Book1/Sheet1/A1
-        a.to_excel()
-        # Book2/Sheet1/A1
-        a.to_excel(transpose=True)
-        # Book1/Sheet2/A1
-        b.to_excel('Book1')
-        # Book1/Sheet1/A10
-        b.to_excel('Book1', 'Sheet1', 'A10')
-        # b.xlsx/Sheet1/A1
-        b.to_excel('c:/tmp/b.xlsx', overwrite_file=True)
-        # b.xlsx/YADA/A1
-        b.to_excel('c:/tmp/b.xlsx', 'YADA')
-        # b.xlsx/Sheet1/A10
-        b.to_excel('c:/tmp/b.xlsx', 'Sheet1', 'A10')
+    # def test_to_excel(self):
+    #     a = ndrange('a=a1,a2,a3')
+    #     b = ndrange('a=a1,a2,a3;b=b1,b2')
+    #
+    #     # Book1/Sheet1/A1
+    #     a.to_excel()
+    #     # Book2/Sheet1/A1
+    #     a.to_excel(transpose=True)
+    #     # Book1/Sheet2/A1
+    #     b.to_excel('Book1')
+    #     # Book1/Sheet1/A10
+    #     b.to_excel('Book1', 'Sheet1', 'A10')
+    #     # b.xlsx/Sheet1/A1
+    #     b.to_excel('c:/tmp/b.xlsx', overwrite_file=True)
+    #     # b.xlsx/YADA/A1
+    #     b.to_excel('c:/tmp/b.xlsx', 'YADA')
+    #     # b.xlsx/Sheet1/A10
+    #     b.to_excel('c:/tmp/b.xlsx', 'Sheet1', 'A10')
 
 
 if __name__ == "__main__":
