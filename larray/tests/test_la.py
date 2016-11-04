@@ -836,8 +836,15 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[lipro159], raw[..., [0, 4, 8]])
 
         # multiple LGroup key (in "incorrect" order)
-        assert_array_equal(la[lipro159, age159],
+        res = la[lipro159, age159]
+        self.assertEqual(res.axes.names, ['age', 'geo', 'sex', 'lipro'])
+        assert_array_equal(res,
                            raw[[1, 5, 9]][..., [0, 4, 8]])
+
+        # LGroup key and scalar
+        res = la[lipro159, 5]
+        self.assertEqual(res.axes.names, ['geo', 'sex', 'lipro'])
+        assert_array_equal(res, raw[..., [0, 4, 8]][5])
 
         # mixed LGroup/positional key
         assert_array_equal(la[[1, 5, 9], lipro159],
@@ -1343,14 +1350,26 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
         assert_array_equal(la, raw)
 
-        # 2) using a string key
+        # 2) using a LGroup and scalar key (triggers advanced indexing/cross)
+
+        # a) value has exactly the same shape as the target slice
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        # using 1, 5, 8 and not 9 so that the list is not collapsed to slice
+        value = la[age[1, 5, 8], sex['H']] + 25.0
+        la[age[1, 5, 8], sex['H']] = value
+        raw[[1, 5, 8], :, 0] = raw[[1, 5, 8], :, 0] + 25.0
+        assert_array_equal(la, raw)
+
+        # 3) using a string key
         la = self.larray.copy()
         raw = self.array.copy()
         la[[1, 5, 9]] = la[[2, 7, 3]] + 27.0
         raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
         assert_array_equal(la, raw)
 
-        # 3) using ellipsis keys
+        # 4) using ellipsis keys
         # only Ellipsis
         la = self.larray.copy()
         la[...] = 0
@@ -1363,7 +1382,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw[..., [0, 4, 8]] = 0
         assert_array_equal(la, raw)
 
-        # 4) using a single slice(None) key
+        # 5) using a single slice(None) key
         la = self.larray.copy()
         la[:] = 0
         assert_array_equal(la, np.zeros_like(raw))
