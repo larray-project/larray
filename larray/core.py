@@ -1981,7 +1981,7 @@ class LArrayPointsIndexer(object):
         # TODO: this should generate an "intersection"/points NDGroup and simply
         #       do return self.array[nd_group]
         data = np.asarray(self.array)
-        translated_key = self.array.translated_key(key, bool_stuff=True)
+        translated_key = self.array._translated_key(key, bool_stuff=True)
 
         axes = self.array._bool_key_new_axes(translated_key)
         data = data[translated_key]
@@ -2464,7 +2464,7 @@ class LArray(object):
         return valid_axes[0][axis_key]
 
     # TODO: move this to AxisCollection
-    def translated_key(self, key, bool_stuff=False):
+    def _translated_key(self, key, bool_stuff=False):
         """Complete and translate key
 
         Parameters
@@ -2570,31 +2570,17 @@ class LArray(object):
     # TODO: we only need axes length => move this to AxisCollection
     # (but this backend/numpy-specific so we'll probably need to create a
     #  subclass of it)
-    def cross_key(self, key, collapse_slices=False):
+    def _cross_key(self, key):
         """
         :param key: a complete (contains all dimensions) index-based key
         :param collapse_slices: convert contiguous ranges to slices
         :return: a key for indexing the cross product
         """
-        # isinstance(ndarray, collections.Sequence) is False but it
-        # behaves like one
-        sequence = (tuple, list, np.ndarray)
-        if collapse_slices:
-            key = [range_to_slice(axis_key, len(axis))
-                   if isinstance(axis_key, sequence)
-                   else axis_key
-                   for axis_key, axis in zip(key, self.axes)]
-
-        # count number of indexing arrays (ie non scalar/slices) in tuple
-        num_ix_arrays = sum(isinstance(axis_key, sequence) for axis_key in key)
-        num_scalars = sum(np.isscalar(axis_key) for axis_key in key)
-        num_slices = sum(isinstance(axis_key, slice) for axis_key in key)
-        assert len(key) == num_ix_arrays + num_scalars + num_slices
 
         # handle advanced indexing with more than one indexing array:
         # basic indexing (only integer and slices) and advanced indexing
         # with only one indexing array are handled fine by numpy
-        if num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars):
+        if self._needs_advanced_indexing(key):
             # np.ix_ wants only lists so:
 
             # 1) transform scalar-key to lists of 1 element. In that case,
@@ -2624,6 +2610,24 @@ class LArray(object):
         else:
             return tuple(key)
 
+    def _needs_advanced_indexing(self, key):
+        sequence = (tuple, list, np.ndarray)
+        # count number of indexing arrays (ie non scalar/slices) in tuple
+        num_ix_arrays = sum(isinstance(axis_key, sequence) for axis_key in key)
+        num_scalars = sum(np.isscalar(axis_key) for axis_key in key)
+        num_slices = sum(isinstance(axis_key, slice) for axis_key in key)
+        assert len(key) == num_ix_arrays + num_scalars + num_slices
+        return num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars)
+
+    def _collapse_slices(self, key):
+        # isinstance(ndarray, collections.Sequence) is False but it
+        # behaves like one
+        sequence = (tuple, list, np.ndarray)
+        return [range_to_slice(axis_key, len(axis))
+                if isinstance(axis_key, sequence)
+                else axis_key
+                for axis_key, axis in zip(key, self.axes)]
+
     def __getitem__(self, key, collapse_slices=False):
         # move this to getattr
         # if isinstance(key, str) and key in ('__array_struct__',
@@ -2633,7 +2637,10 @@ class LArray(object):
             key = key.evaluate(self.axes)
 
         data = np.asarray(self.data)
-        translated_key = self.translated_key(key)
+        # XXX: I think I should split this into complete_key and translate_key
+        # because for LArray keys I need a complete key with axes for subaxis
+        #
+        translated_key = self._translated_key(key)
 
         # FIXME: I have a huge problem with boolean labels + non points
         if isinstance(key, (LArray, np.ndarray)) and \
@@ -2660,15 +2667,18 @@ class LArray(object):
                 for axis, axis_key in zip(self.axes, translated_key)
                 if not np.isscalar(axis_key)]
 
-        cross_key = self.cross_key(translated_key, collapse_slices)
+        if collapse_slices:
+            translated_key = self._collapse_slices(translated_key)
+        cross_key = self._cross_key(translated_key)
         data = data[cross_key]
         if not axes:
             # scalars do not need to be wrapped in LArray
             return data
         else:
             # drop length 1 dimensions created by scalar keys
-            data = data.reshape(tuple(len(axis) for axis in axes))
-            return LArray(data, axes)
+            res_data = data.reshape(tuple(len(axis) for axis in axes))
+            assert _equal_modulo_len1(data.shape, res_data.shape)
+            return LArray(res_data, axes)
 
     def __setitem__(self, key, value, collapse_slices=True):
         # TODO: if key or value has more axes than self, we should use
@@ -2696,7 +2706,7 @@ class LArray(object):
             key = key.evaluate(self.axes)
 
         data = np.asarray(self.data)
-        translated_key = self.translated_key(key)
+        translated_key = self._translated_key(key)
 
         if isinstance(key, (LArray, np.ndarray)) and \
                 np.issubdtype(key.dtype, np.bool_):
@@ -2707,18 +2717,31 @@ class LArray(object):
             data[translated_key] = value
             return
 
-        # XXX: we might want to create fakes (or wildcard?) axes in this case,
-        # as we only use axes names and axes length, not the ticks, and those
-        # could theoretically take a significant time to compute
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
+        if collapse_slices:
+            translated_key = self._collapse_slices(translated_key)
+        cross_key = self._cross_key(translated_key)
 
-        cross_key = self.cross_key(translated_key, collapse_slices)
+        if isinstance(value, LArray):
+            # XXX: we might want to create fakes (or wildcard?) axes in this case,
+            # as we only use axes names and axes length, not the ticks, and those
+            # could theoretically take a significant time to compute
+            if self._needs_advanced_indexing(translated_key):
+                # when adv indexing is needed, cross_key converts scalars to lists
+                # of 1 element, which does not remove the dimension like scalars
+                # normally do
+                axes = [axis.subaxis(axis_key) if not np.isscalar(axis_key)
+                        else Axis(axis.name, 1)
+                        for axis, axis_key in zip(self.axes, translated_key)]
+            else:
+                axes = [axis.subaxis(axis_key)
+                        for axis, axis_key in zip(self.axes, translated_key)
+                        if not np.isscalar(axis_key)]
+            value = value.broadcast_with(axes)
+        else:
+            # if value is a "raw" ndarray we rely on numpy broadcasting
+            pass
 
-        # if value is a "raw" ndarray we rely on numpy broadcasting
-        data[cross_key] = value.broadcast_with(axes) \
-            if isinstance(value, LArray) else value
+        data[cross_key] = value
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
         """
@@ -6089,6 +6112,14 @@ x = AxisReferenceFactory()
 
 def get_axes(value):
     return value.axes if isinstance(value, LArray) else AxisCollection([])
+
+
+def _strip_shape(shape):
+    return tuple(s for s in shape if s != 1)
+
+
+def _equal_modulo_len1(shape1, shape2):
+    return _strip_shape(shape1) == _strip_shape(shape2)
 
 
 # assigning a temporary name to anonymous axes before broadcasting and
