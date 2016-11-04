@@ -1501,7 +1501,7 @@ class ArrayEditorWidget(QWidget):
 
         # transform local label key to local index key
         try:
-            index_key = filtered.translated_key(dkey)
+            index_key = filtered._translated_key(dkey)
         except ValueError:
             return None
 
