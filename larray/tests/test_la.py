@@ -2652,18 +2652,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = la.extend('sex', la.sum(sex=(sex.all(),)))
         self.assertEqual(la.shape, (3, 16))
 
-    # def test_excel_export(self):
-    #     la = self.larray
-    #     age, geo, sex, lipro = la.axes
-    #
-    #     reg = la.sum(age, sex, geo=(self.vla, self.wal, self.bru, self.belgium))
-    #     self.assertEqual(reg.shape, (4, 15))
-    #
-    #     print("excel export", end='')
-    #     reg.to_excel('c:\\tmp\\reg.xlsx', '_')
-    #     #ages.to_excel('c:/tmp/ages.xlsx')
-    #     print("done")
-
     def test_readcsv(self):
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
@@ -2918,6 +2906,25 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         #large = LArray(large_data, axes=[large_axis])
         #large.plot()
         #large.hist()
+
+    def test_to_excel(self):
+        a = ndrange('a=a1,a2,a3')
+        b = ndrange('a=a1,a2,a3;b=b1,b2')
+
+        # Book1/Sheet1/A1
+        a.to_excel()
+        # Book2/Sheet1/A1
+        a.to_excel(transpose=True)
+        # Book1/Sheet2/A1
+        b.to_excel('Book1')
+        # Book1/Sheet1/A10
+        b.to_excel('Book1', 'Sheet1', 'A10')
+        # b.xlsx/Sheet1/A1
+        b.to_excel('c:/tmp/b.xlsx', overwrite_file=True)
+        # b.xlsx/YADA/A1
+        b.to_excel('c:/tmp/b.xlsx', 'YADA')
+        # b.xlsx/Sheet1/A10
+        b.to_excel('c:/tmp/b.xlsx', 'Sheet1', 'A10')
 
 
 if __name__ == "__main__":
