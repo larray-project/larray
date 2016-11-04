@@ -1672,11 +1672,16 @@ class ArrayEditor(QDialog):
         # not using a QDialogButtonBox with standard Ok/Cancel buttons
         # because that makes it impossible to disable the AutoDefault on them
         # (Enter always "accepts"/close the dialog) which is annoying for edit()
-        ok_button = QPushButton("&OK")
-        ok_button.clicked.connect(self.accept)
-        ok_button.setAutoDefault(False)
-        btn_layout.addWidget(ok_button)
-        if not readonly:
+        if readonly:
+            close_button = QPushButton("Close")
+            close_button.clicked.connect(self.reject)
+            close_button.setAutoDefault(False)
+            btn_layout.addWidget(close_button)
+        else:
+            ok_button = QPushButton("&OK")
+            ok_button.clicked.connect(self.accept)
+            ok_button.setAutoDefault(False)
+            btn_layout.addWidget(ok_button)
             cancel_button = QPushButton("Cancel")
             cancel_button.clicked.connect(self.reject)
             cancel_button.setAutoDefault(False)
@@ -1793,8 +1798,33 @@ class SessionEditor(QDialog):
             self.eval_box = ipython_widget
             self.eval_box.setMinimumHeight(20)
 
+            arraywidget = self.arraywidget
+            if not readonly:
+                # Buttons configuration
+                btn_layout = QHBoxLayout()
+                btn_layout.addStretch()
+
+                bbox = QDialogButtonBox(QDialogButtonBox.Apply | QDialogButtonBox.Discard)
+
+                apply_btn = bbox.button(QDialogButtonBox.Apply)
+                apply_btn.clicked.connect(self.apply_changes)
+
+                discard_btn = bbox.button(QDialogButtonBox.Discard)
+                discard_btn.clicked.connect(self.discard_changes)
+
+                btn_layout.addWidget(bbox)
+
+                arraywidget_layout = QVBoxLayout()
+                arraywidget_layout.addWidget(self.arraywidget)
+                arraywidget_layout.addLayout(btn_layout)
+
+                # you cant add a layout directly in a splitter, so we have to wrap
+                # it in a widget
+                arraywidget = QWidget()
+                arraywidget.setLayout(arraywidget_layout)
+
             right_panel_widget = QSplitter(Qt.Vertical)
-            right_panel_widget.addWidget(self.arraywidget)
+            right_panel_widget.addWidget(arraywidget)
             right_panel_widget.addWidget(self.eval_box)
             right_panel_widget.setSizes([90, 10])
         else:
@@ -1828,13 +1858,9 @@ class SessionEditor(QDialog):
             btn_layout = QHBoxLayout()
             btn_layout.addStretch()
 
-            buttons = QDialogButtonBox.Ok
-            if not readonly:
-                buttons |= QDialogButtonBox.Cancel
+            buttons = QDialogButtonBox.Close
             bbox = QDialogButtonBox(buttons)
-            bbox.accepted.connect(self.accept)
-            if not readonly:
-                bbox.rejected.connect(self.reject)
+            bbox.rejected.connect(self.reject)
             btn_layout.addWidget(bbox)
             layout.addLayout(btn_layout)
 
@@ -1930,16 +1956,20 @@ class SessionEditor(QDialog):
         else:
             self.eval_box.setText(expr)
 
-    @Slot()
+    def apply_changes(self):
+        self.arraywidget.accept_changes()
+
+    def discard_changes(self):
+        self.arraywidget.reject_changes()
+
     def accept(self):
         """Reimplement Qt method"""
-        self.arraywidget.accept_changes()
+        self.apply_changes()
         QDialog.accept(self)
 
-    @Slot()
     def reject(self):
         """Reimplement Qt method"""
-        self.arraywidget.reject_changes()
+        self.discard_changes()
         QDialog.reject(self)
 
     def get_value(self):
