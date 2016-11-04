@@ -4363,90 +4363,39 @@ class LArray(object):
             engine = 'xlwings' if xw is not None else None
 
         if engine == 'xlwings':
-            save = False
+            from .excel import open_excel
+
+            wb = open_excel(filepath, overwrite_file=overwrite_file)
+
             close = False
             new_workbook = False
-            if filepath == -1:
-                wb = xw.Workbook.active()
-            elif filepath is None:
-                # creates a new/blank Workbook
-                wb = xw.Workbook(app_visible=True)
+            if filepath is None:
                 new_workbook = True
-            else:
+            elif isinstance(filepath, str):
                 basename, ext = os.path.splitext(filepath)
                 if ext:
-                    # XXX: we might want to be more precise than .xl* because
-                    #      I am unsure writing anything else than .xlsx will
-                    #      work as intended
-                    if not ext.startswith('.xl'):
-                        raise ValueError("'%s' is not a supported file "
-                                         "extension" % ext)
-
-                    # This is necessary because otherwise we cannot open/save to
-                    # a workbook in the current directory without giving the
-                    # full/absolute path. By doing this, we basically loose the
-                    # ability to target an already open workbook *of a saved
-                    # file* not in the current directory without using its
-                    # path. I can live with that restriction though because you
-                    # usually either work with relative paths or with the
-                    # currently active workbook.
-                    filepath = os.path.abspath(filepath)
-                    save = True
-                    close = not xw.xlplatform.is_file_open(filepath)
-                    if os.path.isfile(filepath) and overwrite_file:
-                        os.remove(filepath)
-
-                    # file already exists (and is a file)
-                    if os.path.isfile(filepath):
-                        # do not change Excel visibility
-                        wb = xw.Workbook(filepath, app_visible=None)
-                    else:
-                        # open new workbook, do not change Excel visibility
-                        wb = xw.Workbook(app_visible=None)
+                    if not os.path.isfile(filepath):
                         new_workbook = True
-                else:
-                    # try to open an existing unsaved workbook
-                    # XXX: I wonder if app_visible=None wouldn't be better in this case?
-                    wb = xw.Workbook(filepath, app_visible=True)
-
-            def sheet_exists(wb, sheet):
-                if isinstance(sheet, int):
-                    length = xw.Sheet.count(wb)
-                    return -length <= sheet < length
-                else:
-                    assert isinstance(sheet_name, str)
-                    sheet_names = [i.name.lower() for i in xw.Sheet.all(wkb=wb)]
-                    return sheet_name.lower() in sheet_names
+                    close = True
 
             if new_workbook:
-                sheet = xw.Sheet(1, wkb=wb)
+                sheet = wb.sheets[0]
                 if sheet_name is not None:
                     sheet.name = sheet_name
-            elif sheet_name is not None and sheet_exists(wb, sheet_name):
-                if isinstance(sheet_name, int):
-                    if sheet_name < 0:
-                        sheet_name += xw.Sheet.count(wb)
-                    sheet_name += 1
-                sheet = xw.Sheet(sheet_name, wkb=wb)
+            elif sheet_name is not None and sheet_name in wb:
+                sheet = wb.sheets[sheet_name]
                 if clear_sheet:
                     sheet.clear()
             else:
-                sheet = xw.Sheet.add(sheet_name, wkb=wb)
+                sheet = wb.sheets.add(sheet_name, after=wb.sheets[-1])
 
             options = dict(header=header, index=header, transpose=transpose)
-            xw.Range(sheet, position).options(**options).value = df
-            if save:
-                wb.save(filepath)
-                if close:
-                    wb.close()
-                # using app.quit() unconditionally is NOT a good idea because
-                # it quits excel even if there are other workbooks open.
-                # XXX: we might want to use:
-                # app = xw.Application(wb)
-                # wbs = xw.xlplatform.get_all_open_xl_workbooks(app.xl_app)
-                # if not wbs:
-                #    app.quit()
-                # but it is not cross-platform (get_all_open_xl...)
+            sheet[position].options(**options).value = df
+            # TODO: implement transpose via/in dump
+            # sheet[position] = self.dump(header=header, transpose=transpose)
+            if close:
+                wb.save()
+                wb.close()
         else:
             if sheet_name is None:
                 sheet_name = 'Sheet1'

@@ -34,23 +34,63 @@ if xw is not None:
 
 
     class Workbook(object):
-        def __init__(self, filepath, visible=None, app=None, silent=None):
+        def __init__(self, filepath=None, overwrite_file=False, visible=None,
+                     silent=None, app=None):
             """
+            open an Excel workbook
+
             Parameters
             ----------
-            filepath : None, int or str
+            filepath : None, int or str, optional
                 use None for a new blank workbook, -1 for the last active
-                workbook
-            args
-            kwargs
+                workbook. Defaults to None.
+            overwrite_file : bool, optional
+                whether or not to overwrite an existing file, if any.
+                Defaults to False.
+            visible : None or bool, optional
+                whether or not Excel should be visible. Defaults to False for
+                files, True for new/active workbooks and to None ("unchanged")
+                for existing unsaved workbooks.
+            silent : None or bool, optional
+                whether or not to show dialog boxes for updating links or
+                when some links cannot be updated. Defaults to False if
+                visible, True otherwise.
+            app : xlwings.App instance, optional
+                an existing app instance to reuse. Defaults to creating a new
+                Excel instance.
             """
+            xw_wkb = None
+            self.delayed_filepath = None
+            if isinstance(filepath, str):
+                basename, ext = os.path.splitext(filepath)
+                if ext:
+                    # XXX: we might want to be more precise than .xl* because
+                    #      I am unsure writing .xls (or anything other than
+                    #      .xlsx and .xlsm) would work
+                    if not ext.startswith('.xl'):
+                        raise ValueError("'%s' is not a supported file "
+                                         "extension" % ext)
+                    if os.path.isfile(filepath) and overwrite_file:
+                        os.remove(filepath)
+                else:
+                    # try to target an open but unsaved workbook
+                    # we cant use the same code path as for other option
+                    # because we don't know which Excel instance has that book
+                    xw_wkb = xw.Book(filepath)
+                    app = xw_wkb.app
+
             # active workbook use active app by default
             if filepath == -1 and app is None:
                 app = -1
 
-            # unless explicitly set, app is only visible for "active book"
+            # unless explicitly set, app is set to visible for brand new or
+            # active book. For unsaved_book it is left intact.
             if visible is None:
-                visible = filepath == -1
+                if filepath is None or filepath == -1:
+                    visible = True
+                elif xw_wkb is None:
+                    # filepath is not None but we don't target an unsaved book
+                    visible = False
 
             if app is None:
                 app = xw.App(visible=visible, add_book=False)
@@ -79,18 +119,14 @@ if xw is not None:
                 xw_wkb = app.books.add()
             elif filepath == -1:
                 xw_wkb = app.books.active
-            else:
-                basename, ext = os.path.splitext(filepath)
-                if ext:
-                    # XXX: we might want to be more precise than .xl* because
-                    #      I am unsure writing .xls (or anything other than
-                    #      .xlsx and .xlsm) would work
-                    if not ext.startswith('.xl'):
-                        raise ValueError("'%s' is not a supported file "
-                                         "extension" % ext)
-                xw_wkb = app.books.open(filepath)
-                # if os.path.isfile(filepath) and overwrite_file:
-                #     os.remove(filepath)
+            elif xw_wkb is None:
+                # file already exists (and is a file)
+                if os.path.isfile(filepath):
+                    xw_wkb = app.books.open(filepath)
+                else:
+                    # let us remember the path
+                    self.delayed_filepath = filepath
+                    xw_wkb = app.books.add()
 
             if silent:
                 app.api.AskToUpdateLinks = update_links_backup
@@ -110,6 +146,10 @@ if xw is not None:
                 length = len(self)
                 return -length <= key < length
             else:
+                # I would like to use:
+                # return key in wb.sheets
+                # but as of xlwings 0.10 wb.sheets.__contains__ does not work
+                # for sheet names (it works with Sheet objects I think)
                 return key in self.sheet_names()
 
         def __getitem__(self, key):
@@ -139,6 +179,13 @@ if xw is not None:
 
         def sheet_names(self):
             return [s.name for s in self]
+
+        def save(self, path=None):
+            # saved_path = self.xw_wkb.api.Path
+            # was_saved = saved_path != ''
+            if path is None and self.delayed_filepath is not None:
+                path = self.delayed_filepath
+            self.xw_wkb.save(path=path)
 
         def close(self):
             """
