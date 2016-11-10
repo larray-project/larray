@@ -17,7 +17,7 @@ def f2str(f, threshold=2):
     notation if f would have more than threshold decimal digits, otherwise
     use threshold as precision.
     """
-    kind = "e" if f and math.log10(1 / f) > threshold else "f"
+    kind = "e" if f and math.log10(1 / abs(f)) > threshold else "f"
     format_str = "%%.%d%s" % (threshold, kind)
     return format_str % f
 
