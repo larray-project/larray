@@ -169,16 +169,19 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
             factor = axis_target.divnot0(axis_sum)
             r *= factor
         stepcelldiff = abs(r - startr).max()
-        maxsumdiff = max(abs(r.sum(axis=dim) - axis_target).max()
+        max_sum_diff = max(abs(r.sum(axis=dim) - axis_target).max()
                          for dim, axis_target in enumerate(target_sums))
-        stepsumimprovement = lastdiffs[-1] - maxsumdiff
+        step_sum_improvement = lastdiffs[-1] - max_sum_diff
 
         if display_progress:
-            print("it %d cell diff %s sum diff to target %s (%s)" %
-                  (i, f2str(stepcelldiff), f2str(maxsumdiff),
-                   f2str(stepsumimprovement)))
+            print("""iteration %d
+ * max(abs(prev_cell - cell)): %s
+ * max(abs(sum - target_sum)): %s
+   \- change since last iteration: %s
+""" % (i, f2str(stepcelldiff), f2str(max_sum_diff),
+       f2str(step_sum_improvement)))
 
-        if np.all(np.array(lastdiffs) == maxsumdiff):
+        if np.all(np.array(lastdiffs) == max_sum_diff):
             if no_convergence in {'warn', 'raise'}:
                 warn_or_raise(no_convergence,
                               "does not seem to converge (no improvement "
@@ -186,12 +189,14 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
                               % stepstoabort)
             return r
 
-        if maxsumdiff < threshold:
+        if max_sum_diff < threshold:
             if display_progress:
-                print("acceptable threshold found at iteration:", i)
+                print("acceptable max(abs(sum - target_sum)) found at "
+                      "iteration {}: {} < threshold ({})"
+                      .format(i, f2str(max_sum_diff), threshold))
             return r
 
-        lastdiffs.append(maxsumdiff)
+        lastdiffs.append(max_sum_diff)
 
     if no_convergence in {'warn', 'raise'}:
         warn_or_raise(no_convergence,
