@@ -87,25 +87,10 @@ from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
                         QFont, QIcon, QFontMetrics, QCursor)
 
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
-                         QItemSelectionModel, QItemSelectionRange, QVariant)
-                         #pyqtSlot as Slot)
+                         QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
 
-from PyQt4.QtCore import pyqtSlot as Slot
+#from PyQt4.QtCore import pyqtSlot as Slot
 
-
-#from PyQt4.QtGui import (QApplication, QHBoxLayout, QColor, QTableView,
-#                         QItemDelegate, QListWidget, QSplitter, QListWidgetItem,
-#                         QLineEdit, QCheckBox, QGridLayout,
-#                         QDoubleValidator, QIntValidator,
-#                         QDialog, QDialogButtonBox, QPushButton,
-#                         QMessageBox, QMenu,
-#                         QKeySequence, QLabel,
-#                         QSpinBox, QWidget, QVBoxLayout,
-#                         QFont, QAction, QItemSelection,
-#                         QItemSelectionModel, QItemSelectionRange,
-#                         QIcon, QStyle, QFontMetrics, QToolTip, QCursor)
-#from PyQt4.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint,
-#                          QVariant, pyqtSlot as Slot)
 
 import numpy as np
 
