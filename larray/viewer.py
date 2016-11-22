@@ -89,9 +89,6 @@ from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
 
-#from PyQt4.QtCore import pyqtSlot as Slot
-
-
 import numpy as np
 
 try:
