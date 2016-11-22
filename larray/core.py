@@ -11,6 +11,7 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
+    'ndtest',
     'identity', 'diag', 'eye',
     'larray_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
@@ -5674,6 +5675,53 @@ def ndrange(axes, start=0, dtype=int):
     axes = AxisCollection(axes)
     data = np.arange(start, start + axes.size, dtype=dtype)
     return LArray(data.reshape(axes.shape), axes)
+
+
+def ndtest(shape, start=0, dtype=int, label_start=0):
+    """Return test array with given shape.
+    Axes are named by single letters starting from 'a'. Axes labels are
+    constructed using a '{axis_name}{label_pos}' pattern (e.g. 'a0'). Values
+    start from `start` increase by steps of 1.
+
+    Parameters
+    ----------
+    shape : int, tuple or list
+        shape of the array to create. An int can be used directly for one
+        dimensional arrays.
+    start : int or float, optional
+        start value
+    label_start : int, optional
+        label_pos for each axis is `label_start + position`. `label_start`
+        defaults to 0.
+    dtype : type or np.dtype, optional
+        type of resulting array.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> ndtest(6)
+    a | a0 | a1 | a2 | a3 | a4 | a5
+      |  0 |  1 |  2 |  3 |  4 |  5
+    >>> ndtest((2, 3))
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> ndtest((2, 3), label_start=1)
+    a\\b | b1 | b2 | b3
+     a1 |  0 |  1 |  2
+     a2 |  3 |  4 |  5
+    """
+    a = ndrange(shape, start=start, dtype=dtype)
+    assert a.ndim <= 26
+    axes_names = [chr(ord('a') + i) for i in range(a.ndim)]
+    label_ranges = [range(label_start, label_start + length)
+                    for length in a.shape]
+    new_axes = [Axis(name, [name + str(i) for i in label_range])
+                for name, label_range in zip(axes_names, label_ranges)]
+    return a.with_axes(new_axes)
 
 
 def kth_diag_indices(shape, k):
