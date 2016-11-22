@@ -8,7 +8,7 @@ from larray.excel import open_excel
 try:
     import sys
 
-    from PyQt4 import QtGui, QtCore
+    from qtpy import QtGui, QtCore, QtWidgets
 
     from larray.viewer import view, edit, compare
 
@@ -23,7 +23,7 @@ try:
     sys.displayhook = qt_display_hook
 
     # cleanup namespace
-    del QtGui, QtCore, sys
+    del QtGui, QtCore, QtWidgets, sys
 except ImportError:
     def view(*args, **kwargs):
         raise Exception('view() is not available because Qt is not installed')
