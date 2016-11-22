@@ -3481,7 +3481,8 @@ class LArray(object):
         Parameters
         ----------
         axis : int or str or Axis, optional
-            Axis along which to sort.
+            Axis along which to sort. This can be omitted if array has only
+            one axis.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
@@ -3527,7 +3528,8 @@ class LArray(object):
         Parameters
         ----------
         axis : int or str or Axis, optional
-            Axis along which to sort.
+            Axis along which to sort. This can be omitted if array has only
+            one axis.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
