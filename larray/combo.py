@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from qtpy import QtGui, QtCore, QtWidgets
 
 
 class StandardItemModelIterator(object):
@@ -58,14 +58,14 @@ class StandardItem(QtGui.QStandardItem):
     checked = property(get_checked, set_checked)
 
 
-class FilterMenu(QtGui.QMenu):
-    activate = QtCore.pyqtSignal(int)
-    checkedItemsChanged = QtCore.pyqtSignal(list)
+class FilterMenu(QtWidgets.QMenu):
+    activate = QtCore.Signal(int)
+    checkedItemsChanged = QtCore.Signal(list)
 
     def __init__(self, parent=None):
-        super(QtGui.QMenu, self).__init__(parent)
+        super(QtWidgets.QMenu, self).__init__(parent)
 
-        self._list_view = QtGui.QListView(parent)
+        self._list_view = QtWidgets.QListView(parent)
         self._list_view.setFrameStyle(0)
         model = SequenceStandardItemModel()
         self._list_view.setModel(model)
@@ -73,7 +73,7 @@ class FilterMenu(QtGui.QMenu):
         self.addItem("(select all)")
         model[0].setTristate(True)
 
-        action = QtGui.QWidgetAction(self)
+        action = QtWidgets.QWidgetAction(self)
         action.setDefaultWidget(self._list_view)
         self.addAction(action)
         self.installEventFilter(self)
@@ -150,8 +150,8 @@ class FilterMenu(QtGui.QMenu):
         return False
 
 
-class FilterComboBox(QtGui.QToolButton):
-    checkedItemsChanged = QtCore.pyqtSignal(list)
+class FilterComboBox(QtWidgets.QToolButton):
+    checkedItemsChanged = QtCore.Signal(list)
 
     def __init__(self, parent=None):
         super(FilterComboBox, self).__init__(parent)
@@ -159,7 +159,7 @@ class FilterComboBox(QtGui.QToolButton):
         # QtGui.QToolButton.InstantPopup would be slightly less work (the
         # whole button works by default, instead of only the arrow) but it is
         # uglier
-        self.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
+        self.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
 
         menu = FilterMenu(self)
         self.setMenu(menu)
@@ -226,10 +226,10 @@ class FilterComboBox(QtGui.QToolButton):
 if __name__ == '__main__':
     import sys
 
-    class TestDialog(QtGui.QDialog):
+    class TestDialog(QtWidgets.QDialog):
         def __init__(self):
-            super(QtGui.QDialog, self).__init__()
-            layout = QtGui.QVBoxLayout()
+            super(QtWidgets.QDialog, self).__init__()
+            layout = QtWidgets.QVBoxLayout()
             self.setLayout(layout)
 
             combo = FilterComboBox(self)
@@ -237,7 +237,7 @@ if __name__ == '__main__':
                 combo.addItem('Item %s' % i)
             layout.addWidget(combo)
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     dialog = TestDialog()
     dialog.resize(200, 200)
     dialog.show()
