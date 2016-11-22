@@ -3348,18 +3348,23 @@ class LArray(object):
     # and
     # arr[arr.argmin(x.sex)]
     # should both be equal to arr.min(x.sex)
-    def argmin(self, axis):
+    def argmin(self, axis=None):
         """
         Return labels of the minimum values along the given axis of `a`.
 
         Parameters
         ----------
-        axis : int or str or Axis
-            Axis along which to work.
+        axis : int or str or Axis, optional
+            Axis along which to work. If not specified, works on the full array.
 
         Returns
         -------
         LArray
+
+        Notes
+        -----
+        In case of multiple occurrences of the minimum values, the indices
+        corresponding to the first occurrence are returned.
 
         Example
         -------
@@ -3374,23 +3379,34 @@ class LArray(object):
         >>> arr.argmin(x.sex)
         nat | BE | FR | IT
             |  M |  F |  M
+        >>> arr.argmin()
+        ('BE', 'M')
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        data = axis.labels[self.data.argmin(axis_idx)]
-        return LArray(data, self.axes - axis)
+        if axis is not None:
+            axis, axis_idx = self.axes[axis], self.axes.index(axis)
+            data = axis.labels[self.data.argmin(axis_idx)]
+            return LArray(data, self.axes - axis)
+        else:
+            indices = np.unravel_index(self.data.argmin(), self.shape)
+            return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    def posargmin(self, axis):
+    def posargmin(self, axis=None):
         """
         Return indices of the minimum values along the given axis of `a`.
 
         Parameters
         ----------
-        axis : int or str or Axis
-            Axis along which to work.
+        axis : int or str or Axis, optional
+            Axis along which to work. If not specified, works on the full array.
 
         Returns
         -------
         LArray
+
+        Notes
+        -----
+        In case of multiple occurrences of the minimum values, the indices
+        corresponding to the first occurrence are returned.
 
         Example
         -------
@@ -3405,22 +3421,32 @@ class LArray(object):
         >>> arr.posargmin(x.sex)
         nat | BE | FR | IT
             |  0 |  1 |  0
+        >>> arr.posargmin()
+        (0, 0)
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        return LArray(self.data.argmin(axis_idx), self.axes - axis)
+        if axis is not None:
+            axis, axis_idx = self.axes[axis], self.axes.index(axis)
+            return LArray(self.data.argmin(axis_idx), self.axes - axis)
+        else:
+            return np.unravel_index(self.data.argmin(), self.shape)
 
-    def argmax(self, axis):
+    def argmax(self, axis=None):
         """
         Return labels of the maximum values along the given axis of `a`.
 
         Parameters
         ----------
-        axis : int or str or Axis
-            Axis along which to work.
+        axis : int or str or Axis, optional
+            Axis along which to work. If not specified, works on the full array.
 
         Returns
         -------
         LArray
+
+        Notes
+        -----
+        In case of multiple occurrences of the maximum values, the labels
+        corresponding to the first occurrence are returned.
 
         Example
         -------
@@ -3435,23 +3461,34 @@ class LArray(object):
         >>> arr.argmax(x.sex)
         nat | BE | FR | IT
             |  F |  M |  F
+        >>> arr.argmax()
+        ('IT', 'F')
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        data = axis.labels[self.data.argmax(axis_idx)]
-        return LArray(data, self.axes - axis)
+        if axis is not None:
+            axis, axis_idx = self.axes[axis], self.axes.index(axis)
+            data = axis.labels[self.data.argmax(axis_idx)]
+            return LArray(data, self.axes - axis)
+        else:
+            indices = np.unravel_index(self.data.argmax(), self.shape)
+            return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    def posargmax(self, axis):
+    def posargmax(self, axis=None):
         """
         Return indices of the maximum values along the given axis of `a`.
 
         Parameters
         ----------
-        axis : int or str or Axis
-            Axis along which to work.
+        axis : int or str or Axis, optional
+            Axis along which to work. If not specified, works on the full array.
 
         Returns
         -------
         LArray
+
+        Notes
+        -----
+        In case of multiple occurrences of the maximum values, the labels
+        corresponding to the first occurrence are returned.
 
         Example
         -------
@@ -3466,9 +3503,15 @@ class LArray(object):
         >>> arr.posargmax(x.sex)
         nat | BE | FR | IT
             |  1 |  0 |  1
+        >>> arr.posargmax()
+        (2, 1)
         """
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        return LArray(self.data.argmax(axis_idx), self.axes - axis)
+        if axis is not None:
+            axis, axis_idx = self.axes[axis], self.axes.index(axis)
+            return LArray(self.data.argmax(axis_idx), self.axes - axis)
+        else:
+            return np.unravel_index(self.data.argmax(), self.shape)
+
 
     def argsort(self, axis=None, kind='quicksort'):
         """
