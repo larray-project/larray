@@ -145,7 +145,7 @@ def _srange(*args):
     return list(map(str, range(*args)))
 
 
-def range_to_slice(seq, length=None):
+def _range_to_slice(seq, length=None):
     """
     returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
@@ -153,33 +153,35 @@ def range_to_slice(seq, length=None):
     Parameters
     ----------
     seq : sequence-like of int
-        List, tuple or ndarray of integers used to define a slice
+        List, tuple or ndarray of integers representing the range.
+        It should be something like [start, start+step, start+2*step, ...]
     length : int, optional
-        length of the returned slice
+        ???
 
     Returns
     -------
-    out : slice
+    result : slice or sequence-like
+        return the input sequence if a slice cannot be defined
 
     Examples
     --------
-    >>> range_to_slice([3, 4, 5])
+    >>> _range_to_slice([3, 4, 5])
     slice(3, 6, None)
-    >>> range_to_slice([3, 5, 7])
+    >>> _range_to_slice([3, 5, 7])
     slice(3, 9, 2)
-    >>> range_to_slice([-3, -2])
+    >>> _range_to_slice([-3, -2])
     slice(-3, -1, None)
-    >>> range_to_slice([-1, -2])
+    >>> _range_to_slice([-1, -2])
     slice(-1, -3, -1)
-    >>> range_to_slice([2, 1])
+    >>> _range_to_slice([2, 1])
     slice(2, 0, -1)
-    >>> range_to_slice([1, 0], 4)
+    >>> _range_to_slice([1, 0], 4)
     slice(-3, -5, -1)
-    >>> range_to_slice([1, 0])
+    >>> _range_to_slice([1, 0])
     [1, 0]
-    >>> range_to_slice([1])
+    >>> _range_to_slice([1])
     slice(1, 2, None)
-    >>> range_to_slice([])
+    >>> _range_to_slice([])
     []
     """
     if len(seq) < 1:
@@ -206,18 +208,21 @@ def range_to_slice(seq, length=None):
     return slice(start, stop, step)
 
 
-def slice_to_str(key, use_repr=False):
+def _slice_to_str(key, use_repr=False):
     """
     converts a slice to a string
-    >>> slice_to_str(slice(None))
+
+    Examples:
+    ---------
+    >>> _slice_to_str(slice(None))
     ':'
-    >>> slice_to_str(slice(24))
+    >>> _slice_to_str(slice(24))
     ':24'
-    >>> slice_to_str(slice(25, None))
+    >>> _slice_to_str(slice(25, None))
     '25:'
-    >>> slice_to_str(slice(5, 10))
+    >>> _slice_to_str(slice(5, 10))
     '5:10'
-    >>> slice_to_str(slice(None, 5, 2))
+    >>> _slice_to_str(slice(None, 5, 2))
     ':5:2'
     """
     # examples of result: ":24" "25:" ":" ":5:2"
@@ -228,15 +233,28 @@ def slice_to_str(key, use_repr=False):
     return '%s:%s%s' % (start, stop, step)
 
 
-def slice_str_to_range(s):
+def _slice_str_to_range(s):
     """
-    converts a slice string to a list of (string) values. The end point is
-    included.
-    >>> slice_str_to_range(':3')
+    converts a slice string to a list of (string) values.
+    The end point is included.
+
+    Parameters:
+    -----------
+    s : str
+        Sting representing a slice
+
+    Returns:
+    --------
+    result : list of str
+        Array of evenly spaced values.
+
+    Examples:
+    ---------
+    >>> _slice_str_to_range(':3')
     ['0', '1', '2', '3']
-    >>> slice_str_to_range('2:5')
+    >>> _slice_str_to_range('2:5')
     ['2', '3', '4', '5']
-    >>> slice_str_to_range('2:6:2')
+    >>> _slice_str_to_range('2:6:2')
     ['2', '4', '6']
     """
     numcolons = s.count(':')
@@ -251,12 +269,23 @@ def slice_str_to_range(s):
     return _srange(start, stop, step)
 
 
-def to_string(v):
+def _to_string(v):
     """
     converts a (group of) tick(s) to a string
+
+    Parameters:
+    -----------
+    v : any
+        (group of) tick(s).
+        slice objects are converted in string using `_slice_to_str` function.
+
+    Returns:
+    --------
+    result : str
+        string representing a (group of) tick(s)
     """
     if isinstance(v, slice):
-        return slice_to_str(v)
+        return _slice_to_str(v)
     elif isinstance(v, (tuple, list)):
         if len(v) == 1:
             return str(v) + ','
@@ -266,7 +295,7 @@ def to_string(v):
         return str(v)
 
 
-def to_tick(e):
+def _to_tick(e):
     """
     make it hashable, and acceptable as an ndarray element
     scalar & VG -> not modified
@@ -276,7 +305,7 @@ def to_tick(e):
     """
     # the fact that an "aggregated tick" is passed as a LGroup or as a
     # string should be as irrelevant as possible. The thing is that we cannot
-    # (currently) use the more elegant to_tick(e.key) that means the
+    # (currently) use the more elegant _to_tick(e.key) that means the
     # LGroup is not available in Axis.__init__ after to_ticks, and we
     # need it to update the mapping if it was named. Effectively,
     # this creates two entries in the mapping for a single tick. Besides,
@@ -285,24 +314,34 @@ def to_tick(e):
     if np.isscalar(e) or isinstance(e, LGroup):
         return e
     else:
-        return to_string(e)
+        return _to_string(e)
 
 
-def to_ticks(s):
+def _to_ticks(s):
     """
     Makes a (list of) value(s) usable as the collection of labels for an
     Axis (ie hashable). Strip strings, split them on ',' and translate
     "range strings" to list of values **including the end point** !
+
+    Parameters:
+    -----------
+    s : iterable
+        List of values usable as the collection of labels for an Axis.
+
+    Notes:
+    ------
     This function is only used in Axis.__init__ and union().
 
-    >>> to_ticks('H , F')
+    Examples:
+    ---------
+    >>> _to_ticks('H , F')
     ['H', 'F']
 
     # XXX: we might want to return real int instead, because if we ever
     # want to have more complex queries, such as:
     # arr.filter(age > 10 and age < 20)
     # this would break for string values (because '10' < '2')
-    >>> to_ticks(':3')
+    >>> _to_ticks(':3')
     ['0', '1', '2', '3']
     """
     if isinstance(s, Group):
@@ -315,12 +354,12 @@ def to_ticks(s):
         # XXX: Is it a safe assumption?
         return s
     elif isinstance(s, (list, tuple)):
-        return [to_tick(e) for e in s]
+        return [_to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     elif isinstance(s, basestring):
         if ':' in s:
-            return slice_str_to_range(s)
+            return _slice_str_to_range(s)
         else:
             return [v.strip() for v in s.split(',')]
     elif hasattr(s, '__array__'):
@@ -334,9 +373,15 @@ def to_ticks(s):
 
 def to_key(v):
     """
-    Converts a value to a key usable for indexing (slice object, list of values,
-    ...). Strings are split on ',' and stripped. Colons (:) are interpreted
-    as slices. "int strings" are not converted to int.
+    Converts a value to a key usable for indexing (slice object, list of values,...).
+    Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
+
+    Notes:
+    ------
+    "int strings" are not converted to int.
+
+    Examples:
+    ---------
     >>> to_key('a:c')
     slice('a', 'c', None)
     >>> to_key('a, b,c ,')
@@ -424,7 +469,7 @@ def union(*args):
     returns the union of several "value strings" as a list
     """
     if args:
-        return list(unique(chain(*(to_ticks(arg) for arg in args))))
+        return list(unique(chain(*(_to_ticks(arg) for arg in args))))
     else:
         return []
 
@@ -546,7 +591,7 @@ class Axis(object):
             # we convert to an ndarray to save memory for scalar ticks (for
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
-            ticks = to_ticks(labels)
+            ticks = _to_ticks(labels)
             object_array = isinstance(ticks, np.ndarray) and \
                            ticks.dtype.type == np.object_
             can_have_groups = object_array or isinstance(ticks, (tuple, list))
@@ -677,7 +722,7 @@ class Axis(object):
         return self.group(key)
 
     def __contains__(self, key):
-        return to_tick(key) in self._mapping
+        return _to_tick(key) in self._mapping
 
     def __hash__(self):
         return id(self)
@@ -1015,19 +1060,19 @@ class LGroup(Group):
         #      to_tick directly, instead of using to_key explicitly here
         # XXX: we probably want to include this normalization in __init__
         #      instead
-        return hash(to_tick(to_key(self.key)))
+        return hash(_to_tick(to_key(self.key)))
 
     def __eq__(self, other):
         # different name or axis compare equal !
         # XXX: we might want to compare "expanded" keys, so that slices
         # can match lists and vice-versa.
         other_key = other.key if isinstance(other, LGroup) else other
-        return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
+        return _to_tick(to_key(self.key)) == _to_tick(to_key(other_key))
 
     def __str__(self):
         key = to_key(self.key)
         if isinstance(key, slice):
-            str_key = slice_to_str(key, use_repr=True)
+            str_key = _slice_to_str(key, use_repr=True)
         elif isinstance(key, (tuple, list, np.ndarray)):
             str_key = '[%s]' % seq_summary(key, 1)
         else:
@@ -2686,7 +2731,7 @@ class LArray(object):
         # isinstance(ndarray, collections.Sequence) is False but it
         # behaves like one
         sequence = (tuple, list, np.ndarray)
-        return [range_to_slice(axis_key, len(axis))
+        return [_range_to_slice(axis_key, len(axis))
                 if isinstance(axis_key, sequence)
                 else axis_key
                 for axis_key, axis in zip(key, self.axes)]
