@@ -213,6 +213,14 @@ class TestSession(TestCase):
         assert_array_nan_equal(res['f'], flat_f.reshape(3, 2))
         self.assertTrue(isnan(res['g']).all())
 
+    def test_summary(self):
+        sess = self.session.filter(kind=LArray)
+        self.assertEqual(sess.summary(),
+                         "e: a0, a1\n    \n\n"
+                         "f: a0, a1\n    \n\n"
+                         "g: a0, a1\n    \n")
+
+
 if __name__ == "__main__":
     # import doctest
     # doctest.testmod(larray.core)
