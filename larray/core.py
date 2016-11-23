@@ -114,16 +114,55 @@ from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           strip_rows, PY3)
 
 # TODO: return a generator, not a list
-def srange(*args):
+def _srange(*args):
+    """
+    Return evenly spaced values within a given interval as list of strings
+
+    Parameters
+    ----------
+    start :  number, optional
+        Start of interval. The interval includes this value. The default start value is 0.
+    stop : number
+        End of interval. The interval does not include this value
+    step : number, optional
+        Spacing between values. For any output out, this is the distance between two adjacent values.
+        The default step size is 1. If step is specified, start must also be given.
+
+    Returns
+    -------
+    srange : list of str
+        Array of evenly spaced values.
+
+    Examples
+    --------
+    >>> _srange(8)
+    ['0', '1', '2', '3', '4', '5', '6', '7']
+    >>> _srange(5,8)
+    ['5', '6', '7']
+    >>> _srange(1,8,2)
+    ['1', '3', '5', '7']
+    """
     return list(map(str, range(*args)))
 
 
 def range_to_slice(seq, length=None):
     """
-    seq is a sequence-like (list, tuple or ndarray) of integers
     returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
 
+    Parameters
+    ----------
+    seq : sequence-like of int
+        List, tuple or ndarray of integers used to define a slice
+    length : int, optional
+        length of the returned slice
+
+    Returns
+    -------
+    out : slice
+
+    Examples
+    --------
     >>> range_to_slice([3, 4, 5])
     slice(3, 6, None)
     >>> range_to_slice([3, 5, 7])
@@ -209,7 +248,7 @@ def slice_str_to_range(s):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop += 1
-    return srange(start, stop, step)
+    return _srange(start, stop, step)
 
 
 def to_string(v):
