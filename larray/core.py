@@ -2037,10 +2037,18 @@ def aslarray(a):
 
 
 class LArray(object):
-    """
-    LArray class
-    """
-    def __init__(self, data, axes=None):
+    def __init__(self, data, axes=None, title: str = ''):
+        """
+        Parameters
+        ----------
+        data : scalar, tuple, list or np.ndarray
+            data
+        axes : collection (tuple, list or AxisCollection) of axes (int,
+        str or  Axis), optional
+            axes
+        title : str, optional
+            title of array
+        """
         data = np.asarray(data)
         ndim = data.ndim
         if axes is None:
@@ -2058,7 +2066,9 @@ class LArray(object):
 
         object.__setattr__(self, 'data', data)
         object.__setattr__(self, 'axes', axes)
+        object.__setattr__(self, 'title', title)
 
+    # XXX: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
         # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
         #  can do a[a.nonzero()]
