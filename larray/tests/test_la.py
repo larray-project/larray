@@ -11,7 +11,7 @@ import pandas as pd
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones, eye, diag,
                     clip, exp, where, x, mean, isnan, round)
-from larray.core import _to_ticks, to_key, _srange, df_aslarray
+from larray.core import _to_ticks, _to_key, _srange, df_aslarray
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -91,14 +91,14 @@ class TestValueStrings(TestCase):
 
 class TestKeyStrings(TestCase):
     def test_nonstring(self):
-        self.assertEqual(to_key(('H', 'F')), ['H', 'F'])
-        self.assertEqual(to_key(['H', 'F']), ['H', 'F'])
+        self.assertEqual(_to_key(('H', 'F')), ['H', 'F'])
+        self.assertEqual(_to_key(['H', 'F']), ['H', 'F'])
 
     def test_split(self):
-        self.assertEqual(to_key('H,F'), ['H', 'F'])
-        self.assertEqual(to_key('H, F'), ['H', 'F'])
-        self.assertEqual(to_key('H,'), ['H'])
-        self.assertEqual(to_key('H'), 'H')
+        self.assertEqual(_to_key('H,F'), ['H', 'F'])
+        self.assertEqual(_to_key('H, F'), ['H', 'F'])
+        self.assertEqual(_to_key('H,'), ['H'])
+        self.assertEqual(_to_key('H'), 'H')
 
     def test_slice_strings(self):
         # XXX: we might want to return real int instead, because if we ever
@@ -106,10 +106,10 @@ class TestKeyStrings(TestCase):
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
         # XXX: these two examples return different things, do we want that?
-        self.assertEqual(to_key('0:115'), slice('0', '115'))
-        self.assertEqual(to_key(':115'), slice('115'))
-        self.assertEqual(to_key('10:'), slice('10', None))
-        self.assertEqual(to_key(':'), slice(None))
+        self.assertEqual(_to_key('0:115'), slice('0', '115'))
+        self.assertEqual(_to_key(':115'), slice('115'))
+        self.assertEqual(_to_key('10:'), slice('10', None))
+        self.assertEqual(_to_key(':'), slice(None))
 
 
 class TestAxis(TestCase):
