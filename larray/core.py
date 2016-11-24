@@ -328,8 +328,12 @@ def _to_ticks(s):
     s : iterable
         List of values usable as the collection of labels for an Axis.
 
-    Notes:
-    ------
+    Returns
+    -------
+    result : collection of labels
+
+    Notes
+    -----
     This function is only used in Axis.__init__ and union().
 
     Examples:
@@ -429,6 +433,21 @@ def to_keys(value):
     converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
 
+    Parameters
+    ----------
+    value : int or basestring or tuple or list or slice or LArray or Group
+        (collection of) value(s) to convert into key(s) usable for indexing
+
+    Returns
+    -------
+    result : list of keys
+
+    See Also
+    --------
+    _to_key
+
+    Examples
+    --------
     It is only used for .sum(axis=xxx)
     >>> to_keys('P01,P02')  # <-- one group => collapse dimension
     ['P01', 'P02']
@@ -466,7 +485,22 @@ def to_keys(value):
 def union(*args):
     # TODO: add support for LGroup and lists
     """
-    returns the union of several "value strings" as a list
+    returns the union of several "value strings" as a list.
+
+    Parameters
+    ----------
+    *args
+        (collection of) values to be converted into keys.
+        Repeated values into taken into account once.
+
+    Returns
+    -------
+    result : list of keys
+
+    Examples
+    --------
+    >>> union('a', 'a,b,c,d', ['d','e','f'], ':2')
+    ['a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2']
     """
     if args:
         return list(unique(chain(*(_to_ticks(arg) for arg in args))))
@@ -475,6 +509,36 @@ def union(*args):
 
 
 def larray_equal(first, other):
+    """
+    Compares two LArrays and returns True if they have the same axes and elements, False otherwise.
+
+    Parameters
+    ----------
+    first, other : LArray
+        input arrays.
+
+    Returns
+    -------
+    b : bool
+        Returns True if the arrays are equal.
+
+    Examples
+    --------
+    >>> age = Axis('age',range(0,100,10))
+    >>> sex = Axis('sex',['M','W'])
+    >>> a = ndrange([age,sex])
+    >>> b = a.copy()
+    >>> larray_equal(a,b)
+    True
+    >>> b.
+    >>> b['W'] += 1
+    >>> larray_equal(a,b)
+    False
+    >>> c = a.copy()
+    >>> c = c.set_labels(x.sex, ['Men','Women'])
+    >>> larray_equal(a,c)
+    False
+    """
     if not isinstance(first, LArray) or not isinstance(other, LArray):
         return False
     return (first.axes == other.axes and
