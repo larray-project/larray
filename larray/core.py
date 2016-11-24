@@ -510,7 +510,7 @@ def union(*args):
 
 def larray_equal(first, other):
     """
-    Compares two LArrays and returns True if they have the same axes and elements, False otherwise.
+    compares two LArrays and returns True if they have the same axes and elements, False otherwise.
 
     Parameters
     ----------
@@ -530,13 +530,11 @@ def larray_equal(first, other):
     >>> b = a.copy()
     >>> larray_equal(a,b)
     True
-    >>> b.
     >>> b['W'] += 1
     >>> larray_equal(a,b)
     False
-    >>> c = a.copy()
-    >>> c = c.set_labels(x.sex, ['Men','Women'])
-    >>> larray_equal(a,c)
+    >>> b = a.set_labels(x.sex, ['Men','Women']).copy()
+    >>> larray_equal(a,b)
     False
     """
     if not isinstance(first, LArray) or not isinstance(other, LArray):
@@ -545,10 +543,21 @@ def larray_equal(first, other):
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
-def isnoneslice(v):
+def _isnoneslice(v):
+    """
+    checks if input is slice(None) object.
+    """
     return isinstance(v, slice) and v == slice(None)
 
-def seq_summary(seq, num=3, func=repr):
+def _seq_summary(seq, num=3, func=repr):
+    """
+    returns a string representing a sequence by showing only the n first and last elements.
+
+    Examples
+    --------
+    >>> _seq_summary(range(10),2)
+    '0 1 ... 8 9'
+    """
     def shorten(l):
         return l if len(l) <= 2 * num else l[:num] + ['...'] + list(l[-num:])
 
@@ -556,6 +565,7 @@ def seq_summary(seq, num=3, func=repr):
 
 
 class PGroupMaker(object):
+    
     def __init__(self, axis):
         assert isinstance(axis, Axis)
         self.axis = axis
@@ -910,7 +920,7 @@ class Axis(object):
                 return repr(v)
             else:
                 return str(v)
-        return seq_summary(self.labels, func=repr_on_strings)
+        return _seq_summary(self.labels, func=repr_on_strings)
 
     # method factory
     def _binop(opname):
@@ -1138,7 +1148,7 @@ class LGroup(Group):
         if isinstance(key, slice):
             str_key = _slice_to_str(key, use_repr=True)
         elif isinstance(key, (tuple, list, np.ndarray)):
-            str_key = '[%s]' % seq_summary(key, 1)
+            str_key = '[%s]' % _seq_summary(key, 1)
         else:
             str_key = repr(key)
 
@@ -2701,7 +2711,7 @@ class LArray(object):
             # or (most) slice(None) because except for a single slice(None)
             # a[:], I don't think there is any point.
             key = [axis_key for axis_key in key
-                   if not isnoneslice(axis_key) and axis_key is not Ellipsis]
+                   if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
             # translate all keys to PGroup
             key = [self._translate_axis_key(axis_key,
@@ -2929,11 +2939,11 @@ class LArray(object):
         AxisCollection
         """
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
-                         if not isnoneslice(axis_key) and
-                            not np.isscalar(axis_key)]
+                         if not _isnoneslice(axis_key) and
+                         not np.isscalar(axis_key)]
         # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
-                      if isnoneslice(axis_key)]
+                      if _isnoneslice(axis_key)]
         assert len(key) > 0
         axes_indices = [self.axes.index(axis) for axis in combined_axes]
         diff = np.diff(axes_indices)
@@ -2956,8 +2966,8 @@ class LArray(object):
         if combined_axis_pos is not None:
             if wildcard_allowed:
                 lengths = [len(axis_key) for axis_key in key
-                           if not isnoneslice(axis_key) and
-                              not np.isscalar(axis_key)]
+                           if not _isnoneslice(axis_key) and
+                           not np.isscalar(axis_key)]
                 combined_axis_len = lengths[0]
                 assert all(l == combined_axis_len for l in lengths)
                 combined_axis = Axis(combined_name, combined_axis_len)
@@ -2970,8 +2980,8 @@ class LArray(object):
                 #    separate axes. On the numpy backend we cannot.
                 axes_labels = [axis.labels[axis_key]
                                for axis_key, axis in zip(key, self.axes)
-                               if not isnoneslice(axis_key) and
-                                  not np.isscalar(axis_key)]
+                               if not _isnoneslice(axis_key) and
+                               not np.isscalar(axis_key)]
                 if len(combined_axes) == 1:
                     # Q: if axis is a wildcard axis, should the result be a
                     #    wildcard axis (and axes_labels discarded?)
