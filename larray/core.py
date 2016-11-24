@@ -525,7 +525,7 @@ def larray_equal(first, other):
     Examples
     --------
     >>> age = Axis('age',range(0,100,10))
-    >>> sex = Axis('sex',['M','W'])
+    >>> sex = Axis('sex',['M','F'])
     >>> a = ndrange([age,sex])
     >>> b = a.copy()
     >>> larray_equal(a,b)
@@ -565,7 +565,18 @@ def _seq_summary(seq, num=3, func=repr):
 
 
 class PGroupMaker(object):
-    
+    """
+    Generates a new instance of PGroup for a given axis and key.
+
+    Attributes
+    ----------
+    axis : Axis
+        an axis.
+
+    Notes:
+    ------
+    This class is used by the method `Axis.i`
+    """
     def __init__(self, axis):
         assert isinstance(axis, Axis)
         self.axis = axis
@@ -575,13 +586,41 @@ class PGroupMaker(object):
 
 
 class Axis(object):
+    """
+    represents an axis. It consists of a name and a list of labels.
+
+    Parameters
+    ----------
+    name : string or Axis
+        name of the axis or another instance of Axis.
+        In the second case, the name of the other axis is simply copied.
+    labels : array-like or int
+        collection of values usable as labels, i.e. scalars or strings or the size of the axis.
+        In the last case, the labels are given by the auto-generated list [0,1,...,size-1]
+
+    Attributes
+    ----------
+    name : string
+        name of the axis.
+    labels : array-like or int
+        collection of values usable as labels, i.e. scalars or strings
+
+    Examples
+    --------
+    >>> age = Axis('age',10)
+    >>> age
+    Axis('age', 10)
+    >>> age.name
+    'age'
+    >>> age.labels
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> sex = Axis('sex',['M','F'])
+    >>> sex
+    Axis('sex', ['M', 'F'])
+    """
     # ticks instead of labels?
     # XXX: make name and labels optional?
     def __init__(self, name, labels):
-        """
-        labels should be an array-like (convertible to an ndarray)
-        or a int (the size of the Axis)
-        """
         if isinstance(name, Axis):
             name = name.name
         # make sure we do not have np.str_ as it causes problems down the
@@ -600,6 +639,7 @@ class Axis(object):
 
     @property
     def _mapping(self):
+        # to map labels with their positions
         mapping = self.__mapping
         if mapping is None:
             labels = self._labels
@@ -639,6 +679,10 @@ class Axis(object):
 
     @property
     def _sorted_values(self):
+        # TODO: simplify this method
+        # if self.__sorted_values is None:
+        #   self._update_key_values()
+        # return self.__sorted_values
         values = self.__sorted_values
         if values is None:
             _, values = self._update_key_values()
@@ -661,14 +705,14 @@ class Axis(object):
             labels = np.arange(length)
             iswildcard = True
         else:
-            # TODO: move this to to_ticks????
+            # TODO: move this to _to_ticks????
             # we convert to an ndarray to save memory for scalar ticks (for
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
             ticks = _to_ticks(labels)
-            object_array = isinstance(ticks, np.ndarray) and \
-                           ticks.dtype.type == np.object_
-            can_have_groups = object_array or isinstance(ticks, (tuple, list))
+            is_object_array = isinstance(ticks, np.ndarray) and \
+                              ticks.dtype.type == np.object_
+            can_have_groups = is_object_array or isinstance(ticks, (tuple, list))
             if can_have_groups and any(
                     isinstance(tick, LGroup) for tick in ticks):
                 # avoid getting a 2d array if all LGroup have the same length
@@ -690,8 +734,27 @@ class Axis(object):
     # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
         """
+        returns a group (list or unique element) of label(s) usable in .sum or .filter
+
+        Parameters
+        ----------
+        *args
+            (collection of) selected label(s) to form a group.
+        **kwargs
+            name of the group. There is no other accepted keywords.
+
+        Returns
+        -------
+        result : LGroup
+            group containing selected label(s).
+
+        Notes
+        -----
         key is label-based (slice and fancy indexing are supported)
-        returns a LGroup usable in .sum or .filter
+
+        See Also
+        --------
+        LGroup
         """
         name = kwargs.pop('name', None)
         if kwargs:
@@ -704,11 +767,23 @@ class Axis(object):
         return LGroup(key, name, self)
 
     def all(self, name=None):
+        """
+        returns a group containing all labels.
+
+        Parameters
+        ----------
+        name : string, optional
+            name of the group. If not provided, name is set to 'all'.
+
+        See Also
+        --------
+        Axis.group
+        """
         return self.group(slice(None), name=name if name is not None else "all")
 
     def subaxis(self, key, name=None):
         """
-        returns an Axis for a sub-array
+        returns an axis for a sub-array
         key is index-based (slice and fancy indexing are supported)
 
         if key is a None slice and name is None, returns the original Axis
