@@ -161,11 +161,37 @@ class TestAxis(TestCase):
         self.assertEqual(group.name, 'teens')
         self.assertIs(group.axis, age)
 
-        # TODO: support more stuff in string groups
-        # arr3x = geo.group('A3*') # * match one or more chars
-        # arr3x = geo.group('A3?') # ? matches one char (equivalent in this case)
-        # arr3x = geo.seq('A31', 'A38') # not equivalent to geo['A31:A38'] !
-        #                               # (if A22 is between A31 and A38)
+    def test_group_using_lgroup(self):
+        def group_equal(g1, g2):
+            return (g1.key == g2.key and g1.name == g2.name and
+                    g1.axis is g2.axis)
+
+        age = Axis('age', range(100))
+        ages = [1, 5, 9]
+
+        val_only = LGroup(ages)
+        self.assertTrue(group_equal(age.group(val_only),
+                                    LGroup(ages, axis=age)))
+        self.assertTrue(group_equal(age.group(val_only, name='a_name'),
+                                    LGroup(ages, 'a_name', axis=age)))
+
+        val_name = LGroup(ages, 'val_name')
+        self.assertTrue(group_equal(age.group(val_name),
+                                    LGroup(ages, 'val_name', age)))
+        self.assertTrue(group_equal(age.group(val_name, name='a_name'),
+                                    LGroup(ages, 'a_name', age)))
+
+        val_axis = LGroup(ages, axis=age)
+        self.assertTrue(group_equal(age.group(val_axis),
+                                    LGroup(ages, axis=age)))
+        self.assertTrue(group_equal(age.group(val_axis, name='a_name'),
+                                    LGroup(ages, 'a_name', axis=age)))
+
+        val_axis_name = LGroup(ages, 'val_axis_name', age)
+        self.assertTrue(group_equal(age.group(val_axis_name),
+                                    LGroup(ages, 'val_axis_name', age)))
+        self.assertTrue(group_equal(age.group(val_axis_name, name='a_name'),
+                                    LGroup(ages, 'a_name', age)))
 
     def test_match(self):
         sutcode = Axis('sutcode', ['A23', 'A2301', 'A25', 'A2501'])
