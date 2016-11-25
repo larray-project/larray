@@ -1272,6 +1272,28 @@ class Axis(object):
 # ticks/labels of the LGroup need to correspond to its *Axis*
 # indices
 class Group(object):
+    """Generic Group.
+
+    Parameters
+    ----------
+    key : key
+        Anything usable for indexing.
+        A key should be either sequence of labels, a slice with label bounds or a string.
+    name : string, optional
+        name of the group.
+    axis : int, str, Axis, optional
+        axis for group.
+
+    Attributes
+    ----------
+    key : key
+        Anything usable for indexing.
+    name : string
+        name of the group
+    axis : Axis
+        axis of the group.
+
+    """
     def __init__(self, key, name=None, axis=None):
         if isinstance(key, tuple):
             key = list(key)
@@ -1353,10 +1375,20 @@ class Group(object):
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
 class LGroup(Group):
-    """
-    key should be either a sequence of labels, a slice with label bounds
-    or a string
-    axis can be an int, str or Axis
+    """Label group.
+
+    Represents a subset of labels of an axis.
+
+    See Also
+    --------
+    Group
+
+    Examples
+    --------
+    >>> age = Axis('age', range(100))
+    >>> teens = x.age[10:19].named('teens')
+    >>> teens
+    LGroup(slice(10, 19, None), name='teens', axis=AxisReference('age'))
     """
     # this makes range(LGroup(int)) possible
     def __index__(self):
@@ -1449,13 +1481,31 @@ class LGroup(Group):
 
 
 class PGroup(Group):
-    """
-    Positional Group
+    """Positional Group.
+
+    Represents a subset of indices of an axis.
+
+    See Also
+    --------
+    Group
     """
     pass
 
 
 def index_by_id(seq, value):
+    """
+    returns position of a value in a sequence.
+
+    Raises
+    ------
+    ValueError
+        If `value` is not contained in `seq`.
+
+    Examples
+    --------
+    >>> index_by_id(['A','B','C','D','E','F','G','H'], 'D')
+    3
+    """
     for i, item in enumerate(seq):
         if item is value:
             return i
