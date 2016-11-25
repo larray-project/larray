@@ -423,6 +423,7 @@ class Session(object):
                                          title=v.title)
                          for k, v in self.items())
 
+
 def local_arrays(depth=0):
     # noinspection PyProtectedMember
     d = sys._getframe(depth + 1).f_locals
