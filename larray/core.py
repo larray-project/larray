@@ -2037,7 +2037,11 @@ def aslarray(a):
 
 
 class LArray(object):
-    def __init__(self, data, axes=None, title: str = ''):
+    def __init__(self,
+                 data,
+                 axes=None,
+                 title=''   # type: str
+                 ):
         """
         Parameters
         ----------
