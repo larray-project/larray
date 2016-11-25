@@ -130,7 +130,7 @@ def _srange(*args):
 
     Returns
     -------
-    srange : list of str
+    list of str
         Array of evenly spaced values.
 
     Examples
@@ -143,6 +143,9 @@ def _srange(*args):
     ['1', '3', '5', '7']
     """
     return list(map(str, range(*args)))
+    # AD -- return (str(e) for e in range(*args))
+
+
 
 
 def _range_to_slice(seq, length=None):
@@ -160,7 +163,7 @@ def _range_to_slice(seq, length=None):
 
     Returns
     -------
-    result : slice or sequence-like
+    slice or sequence-like
         return the input sequence if a slice cannot be defined
 
     Examples
@@ -243,9 +246,9 @@ def _slice_str_to_range(s):
     s : str
         Sting representing a slice
 
-    Returns:
-    --------
-    result : list of str
+    Returns
+    -------
+    list of str
         Array of evenly spaced values.
 
     Examples:
@@ -279,9 +282,9 @@ def _to_string(v):
         (group of) tick(s).
         slice objects are converted in string using `_slice_to_str` function.
 
-    Returns:
-    --------
-    result : str
+    Returns
+    -------
+    str
         string representing a (group of) tick(s)
     """
     if isinstance(v, slice):
@@ -330,7 +333,7 @@ def _to_ticks(s):
 
     Returns
     -------
-    result : collection of labels
+    collection of labels
 
     Notes
     -----
@@ -380,8 +383,18 @@ def to_key(v):
     Converts a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
 
-    Notes:
-    ------
+    Parameters
+    ----------
+    v : int or basestring or tuple or list or slice or LArray or Group
+        value to convert into a key usable for indexing
+
+    Returns
+    -------
+    key
+        a key represents any object that can be used for indexing
+
+    Notes
+    -----
     "int strings" are not converted to int.
 
     Examples:
@@ -440,7 +453,7 @@ def to_keys(value):
 
     Returns
     -------
-    result : list of keys
+    list of keys
 
     See Also
     --------
@@ -490,12 +503,12 @@ def union(*args):
     Parameters
     ----------
     *args
-        (collection of) values to be converted into keys.
-        Repeated values into taken into account once.
+        (collection of) value(s) to be converted into label(s).
+        Repeated values are taken only once.
 
     Returns
     -------
-    result : list of keys
+    list of labels
 
     Examples
     --------
@@ -519,7 +532,7 @@ def larray_equal(first, other):
 
     Returns
     -------
-    b : bool
+    bool
         Returns True if the arrays are equal.
 
     Examples
@@ -596,7 +609,7 @@ class Axis(object):
         In the second case, the name of the other axis is simply copied.
     labels : array-like or int
         collection of values usable as labels, i.e. scalars or strings or the size of the axis.
-        In the last case, the labels are given by the auto-generated list [0,1,...,size-1]
+        In the last case, a wildcard axis is created.
 
     Attributes
     ----------
@@ -680,9 +693,9 @@ class Axis(object):
     @property
     def _sorted_values(self):
         # TODO: simplify this method
-        # if self.__sorted_values is None:
-        #   self._update_key_values()
-        # return self.__sorted_values
+        # AD -- if self.__sorted_values is None:
+        #          self._update_key_values()
+        #       return self.__sorted_values
         values = self.__sorted_values
         if values is None:
             _, values = self._update_key_values()
@@ -732,6 +745,7 @@ class Axis(object):
         return self._iswildcard
 
     # XXX: not sure I should offer an *args version
+    # AD -- def group(key, name=None):
     def group(self, *args, **kwargs):
         """
         returns a group (list or unique element) of label(s) usable in .sum or .filter
@@ -745,7 +759,7 @@ class Axis(object):
 
         Returns
         -------
-        result : LGroup
+        LGroup
             group containing selected label(s).
 
         Notes
@@ -755,6 +769,12 @@ class Axis(object):
         See Also
         --------
         LGroup
+
+        Examples
+        --------
+        >>> age = Axis('age',100)
+        >>> age.group(10,18,name='teenagers')
+        LGroup([10, 18], name='teenagers', axis=Axis('age', 100))
         """
         name = kwargs.pop('name', None)
         if kwargs:
@@ -784,9 +804,32 @@ class Axis(object):
     def subaxis(self, key, name=None):
         """
         returns an axis for a sub-array
+
+        Parameters
+        ----------
+        key : key
+            input key can be a LArray or a (collection of) label(s).
+
+        name : string, optional
+            name of the subaxis.
+            If input name is None, the name of the subaxis is the same as parent axis.
+
+        Returns
+        -------
+        Axis
+            subaxis.
+            If key is a None slice and name is None, the original Axis is returned.
+            If key is a LArray, the list of axes is returned.
+
+        Notes
+        -----
         key is index-based (slice and fancy indexing are supported)
 
-        if key is a None slice and name is None, returns the original Axis
+        Examples
+        --------
+        >>> age = Axis('age',100)
+        >>> age.subaxis(range(10,18),name='teenagers')
+        Axis('teenagers', 8)
         """
         if (name is None and isinstance(key, slice) and
                 key.start is None and key.stop is None and key.step is None):
@@ -803,6 +846,26 @@ class Axis(object):
         return Axis(name, labels)
 
     def iscompatible(self, other):
+        """
+        checks if current axis is compatible with another.
+        Two axes are compatible is they have the same name and length.
+
+        Parameters
+        ----------
+        other : Axis
+            axis to compare with.
+
+        Returns
+        -------
+        bool
+            True if input axis is compatible with current axis, False otherwise.
+
+        Examples
+        --------
+        >>> age = Axis('age',100)
+        >>> age.iscompatible(age.rename('age_bis'))
+        False
+        """
         if self is other:
             return True
         if not isinstance(other, Axis):
@@ -818,6 +881,23 @@ class Axis(object):
             return np.array_equal(self.labels, other.labels)
 
     def equals(self, other):
+        """
+        checks if current axis is equal to another.
+        Two axes are equal if the have the same name and label(s)
+
+        Parameters
+        ----------
+        other : Axis
+            axis to compare with.
+
+        Returns
+        -------
+        bool
+            True if input axis is equal to the current axis, False otherwise.
+
+        Examples
+        --------
+        """
         if self is other:
             return True
 
@@ -830,17 +910,50 @@ class Axis(object):
 
     def matches(self, pattern):
         """
-        returns a LGroup with all the labels matching (regex) the specified pattern
+        returns a group with all the labels matching (regex) the specified pattern
 
-        xm.axes.sutcode.matches('^..$') = labels 2 characters long
+        Parameters
+        ----------
+        pattern : string
+            regular expression (regex).
+
+        Returns
+        -------
+        LGroup
+            group containing all label(s) matching the pattern.
+
+        Notes
+        -----
+        See `Regular Expression <https://en.wikipedia.org/wiki/Regular_expression#Examples>`_
+        for more details about how to build a pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.matches('^W.*o$')
+        LGroup(['Waldo'])
         """
         return LGroup(self._axisregex(pattern))
 
     def startswith(self, pattern):
         """
-        returns a LGroup with the labels starting with the specified string
+        returns a group with the labels starting with the specified string
 
-        xm.axes.sutcode.startswith('25A')
+        Parameters
+        ----------
+        pattern : string
+            pattern describing the first part of labels you want to get.
+
+        Returns
+        -------
+        LGroup
+            group containing all label(s) matching the pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.startswith('Wa')
+        LGroup(['Waldo'])
         """
         res = self._axisregex('^%s.*' % pattern)
         return LGroup(res)
@@ -849,7 +962,21 @@ class Axis(object):
         """
         returns a LGroup with the labels ending with the specified string
 
-        xm.axes.sutcode.endswith('01')
+        Parameters
+        ----------
+        pattern : string
+            pattern describing the first part of labels you want to get.
+
+        Returns
+        -------
+        LGroup
+            group containing all label(s) matching the pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.startswith('do')
+        LGroup(['Waldo'])
         """
         res = self._axisregex('.*%s$' % pattern)
         return LGroup(res)
@@ -891,8 +1018,31 @@ class Axis(object):
 
     def translate(self, key, bool_passthrough=True):
         """
-        translates a label key to its numerical index counterpart
+        translates a label key to its numerical index counterpart.
+
+        Parameters
+        ----------
+        key : key
+            Everything usable as a key.
+        bool_passthrough : bool, optional
+            If set to True and key is a boolean vector, it is returned as it.
+
+        Results
+        -------
+        result: (array of) int
+            Numerical index(ices) of (all) label(s) represented by the key
+
+        Notes
+        -----
         fancy index with boolean vectors are passed through unmodified
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.translate('Waldo')
+        3
+        >>> people.translate(people.matches('Bruce'))
+        array([1, 2])
         """
         mapping = self._mapping
 
@@ -990,6 +1140,14 @@ class Axis(object):
         return 'Axis(%r, %r)' % (self.name, labels)
 
     def labels_summary(self):
+        """
+        returns a short representation of the labels.
+
+        Examples:
+        ---------
+        >>> Axis('age',100).labels_summary()
+        '0 1 2 ... 97 98 99'
+        """
         def repr_on_strings(v):
             if isinstance(v, str):
                 return repr(v)
@@ -999,6 +1157,10 @@ class Axis(object):
 
     # method factory
     def _binop(opname):
+        """
+        wrapper method that transforms current and other axis into LArray and
+        then applies binary operators of LArray.
+        """
         fullname = '__%s__' % opname
 
         def opmethod(self, other):
@@ -1053,9 +1215,15 @@ class Axis(object):
     __matmul__ = _binop('matmul')
 
     def __larray__(self):
+        """
+        returns current axis as LArray.
+        """
         return labels_array(self)
 
     def copy(self):
+        """
+        creates a copy of the current axis.
+        """
         new_axis = Axis(self.name, [])
         # XXX: I wonder if we should make a copy of the labels + mapping.
         # There should at least be an option.
@@ -1073,7 +1241,7 @@ class Axis(object):
 
         Parameters
         ----------
-        newname : str
+        name : str
             the new name for the axis.
 
         Returns
