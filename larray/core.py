@@ -543,13 +543,8 @@ class Axis(object):
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
         if isinstance(key, LGroup):
-            # XXX: I am not sure this test even makes sense. eg if we have two
-            # axes arr_from and arr_to, we might want to reuse groups
-            if key.axis != self.name:
-                raise ValueError("cannot subset an axis with a LGroup of "
-                                 "an incompatible axis")
-            # FIXME: we should respect the given name (overrides key.name)
-            return key
+            name = name if name is not None else key.name
+            key = key.key
         return LGroup(key, name, self)
 
     def all(self, name=None):
