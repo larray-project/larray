@@ -1885,7 +1885,7 @@ class SessionEditor(QDialog):
                 # XXX: Is having the name in the tooltip really useful?
                 listitem.setToolTip("%s: %s" % (name, value.info))
 
-    def update_session(self, value, s=None):
+    def update_session(self, value):
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
         new_keys = list(keys_after - keys_before)
@@ -1905,10 +1905,10 @@ class SessionEditor(QDialog):
             self.add_list_items(new_keys)
             to_display = changed_keys[0]
 
-            if not qtconsole_available and s is not None:
-                self.expressions[to_display] = s
-
             self.select_list_item(to_display)
+            return to_display
+        else:
+            return None
 
     def select_list_item(self, to_display):
         changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
@@ -1927,7 +1927,9 @@ class SessionEditor(QDialog):
         if statement_pattern.match(s):
             context = self.data._objects.copy()
             exec(s, la.__dict__, context)
-            self.update_session(context, s)
+            varname = self.update_session(context)
+            if varname is not None:
+                self.expressions[varname] = s
         else:
             self.view_expr(eval(s, la.__dict__, self.data))
 
