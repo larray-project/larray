@@ -2358,9 +2358,9 @@ class LArray(object):
 
         if isinstance(axis_key, Group):
             axis = axis_key.axis
-            # we have axis information but not necessarily an Axis object
-            # from self.axes
             if axis is not None:
+                # we have axis information but not necessarily an Axis object
+                # from self.axes
                 real_axis = self.axes[axis]
                 if axis is not real_axis:
                     axis_key = axis_key.with_axis(real_axis)
@@ -2449,12 +2449,13 @@ class LArray(object):
     def _guess_axis(self, axis_key):
         if isinstance(axis_key, Group):
             group_axis = axis_key.axis
-            # XXX: what if group_axis is an Axis not in self.axes (but
-            # compatible with them)? It should work, but might break now.
-            if isinstance(group_axis, Axis):
+            if group_axis is not None:
+                # we have axis information but not necessarily an Axis object
+                # from self.axes
+                real_axis = self.axes[group_axis]
+                if group_axis is not real_axis:
+                    axis_key = axis_key.with_axis(real_axis)
                 return axis_key
-            elif group_axis is not None:
-                return axis_key.with_axis(self.axes[group_axis])
 
         # TODO: instead of checking all axes, we should have a big mapping
         # (in AxisCollection or LArray):
