@@ -1722,8 +1722,12 @@ class ArrayEditor(QDialog):
         return self.data
 
 
-statement_pattern = re.compile('.*[^=]=[^=].*')
+statement_pattern = re.compile('[^\[\]]+[^=]=[^=].+')
+setitem_pattern = re.compile('(.+)\[.+\][^=]=[^=].+')
 history_vars_pattern = re.compile('_i?\d+')
+# TODO: add all numpy scalars (except strings)
+# (long) strings are not handled correctly so should NOT be in this list
+DISPLAY_IN_GRID = (tuple, list, la.LArray, np.ndarray, int, float)
 
 
 class SessionEditor(QDialog):
@@ -1784,7 +1788,12 @@ class SessionEditor(QDialog):
             kernel.shell.push(self.data._objects)
             text_formatter = \
                 kernel.shell.display_formatter.formatters['text/plain']
-            text_formatter.for_type(la.LArray, self.view_expr)
+
+            def void_formatter(array, *args, **kwargs):
+                return ''
+
+            for type_ in DISPLAY_IN_GRID:
+                text_formatter.for_type(type_, void_formatter)
 
             self.kernel = kernel
 
@@ -1888,8 +1897,13 @@ class SessionEditor(QDialog):
     def update_session(self, value):
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
-        new_keys = list(keys_after - keys_before)
         # TODO: add support for deleting keys
+        new_keys = keys_after - keys_before
+        # filter types we do not want in the session (because we cannot display
+        # them in the grid and we want to keep the list synchronised with the
+        # session)
+        new_keys = [k for k in new_keys
+                    if isinstance(value[k], DISPLAY_IN_GRID)]
 
         # display only first result if there are more than one
         changed_keys = [k for k in keys_before | keys_after
@@ -1945,12 +1959,41 @@ class SessionEditor(QDialog):
                        '__spec__', '_dh',
                        '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
                        'exit', 'get_ipython', 'quit'])
-        ns_keys = set([k for k, v in user_ns.items()
-                       if not history_vars_pattern.match(k) and
-                          (isinstance(v, (la.LArray, np.ndarray)) or
-                           np.isscalar(v))]) - ip_keys
-        clean_ns = {k: v for k, v in user_ns.items() if k in ns_keys}
-        self.update_session(clean_ns)
+
+        def allowed_in_session(v):
+            return isinstance(v, (tuple, list, la.LArray, np.ndarray)) or \
+                   np.isscalar(v)
+
+        clean_ns_keys = set([k for k, v in user_ns.items()
+                             if not history_vars_pattern.match(k) and
+                                isinstance(v, DISPLAY_IN_GRID)]) - ip_keys
+        clean_ns = {k: v for k, v in user_ns.items() if k in clean_ns_keys}
+
+        # user_ns['_i'] is not updated yet (refers to the -2 item)
+        # In and _ih point to the same object
+        last_input = user_ns['In'][-1]
+        if statement_pattern.match(last_input):
+            # updates the view if any new object is in the session or any
+            # existing name changed id()
+            self.update_session(clean_ns)
+        elif setitem_pattern.match(last_input):
+            m = setitem_pattern.match(last_input)
+            varname = m.group(1)
+            # otherwise it should have failed at this point, but let us be sure
+            if varname in clean_ns:
+                self.select_list_item(varname)
+        else:
+            # not a statement nor setitem => assume expr
+            if last_input in clean_ns:
+                # the name exists in the session => select and display it
+                self.select_list_item(last_input)
+            else:
+                # we want to get at the last output.
+                # Out and _oh point to the same object.
+                # Out is a simple dict, so user_ns['Out'][-1] does not work.
+                last_output = user_ns['_']
+                if isinstance(last_output, DISPLAY_IN_GRID):
+                    self.view_expr(last_output)
 
     def on_item_changed(self, curr, prev):
         name = str(curr.text())
