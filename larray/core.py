@@ -2448,7 +2448,13 @@ class LArray(object):
 
     def _guess_axis(self, axis_key):
         if isinstance(axis_key, Group):
-            return axis_key
+            group_axis = axis_key.axis
+            # XXX: what if group_axis is an Axis not in self.axes (but
+            # compatible with them)? It should work, but might break now.
+            if isinstance(group_axis, Axis):
+                return axis_key
+            elif group_axis is not None:
+                return axis_key.with_axis(self.axes[group_axis])
 
         # TODO: instead of checking all axes, we should have a big mapping
         # (in AxisCollection or LArray):
@@ -3250,9 +3256,7 @@ class LArray(object):
                     raise ValueError("group with different axes: %s"
                                      % str(key))
                 return groups
-            if isinstance(key, Group):
-                return key
-            elif isinstance(key, (int, basestring, list, slice)):
+            if isinstance(key, (Group, int, basestring, list, slice)):
                 return self._guess_axis(key)
             else:
                 raise NotImplementedError("%s has invalid type (%s) for a "
