@@ -1842,6 +1842,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_group_agg_guess_axis(self):
         la = self.larray
+        raw = self.array
         age, geo, sex, lipro = la.axes
         vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
         belgium = self.belgium
@@ -1855,6 +1856,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum('H,F').shape, (116, 44, 15))
 
         self.assertEqual(la.sum('A11,A21,A25').shape, (116, 2, 15))
+        # with a name
+        self.assertEqual(la.sum('g1=A11,A21,A25').shape, (116, 2, 15))
         self.assertEqual(la.sum(['A11', 'A21', 'A25']).shape, (116, 2, 15))
 
         # Include everything between two labels. Since A11 is the first label
@@ -1882,6 +1885,22 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                          (116, 44, 2, 15))
         self.assertEqual(la.sum(('H', 'H,F')).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum('H;H,F').shape, (116, 44, 2, 15))
+        # with group names
+        res = la.sum('men=H;all=H,F')
+        self.assertEqual(res.shape, (116, 44, 2, 15))
+        self.assertTrue('sex' in res.axes)
+        men = sex['H'].named('men')
+        all_ = sex['H,F'].named('all')
+        assert_array_equal(res.axes.sex.labels, [men, all_])
+        assert_array_equal(res['men'], raw[:, :, 0, :])
+        assert_array_equal(res['all'], raw.sum(2))
+
+        res = la.sum(('men=H', 'all=H,F'))
+        self.assertEqual(res.shape, (116, 44, 2, 15))
+        self.assertTrue('sex' in res.axes)
+        assert_array_equal(res.axes.sex.labels, [men, all_])
+        assert_array_equal(res['men'], raw[:, :, 0, :])
+        assert_array_equal(res['all'], raw.sum(2))
 
         aggregated = la.sum((vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
