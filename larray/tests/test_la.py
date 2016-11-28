@@ -978,6 +978,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[..., ['P01', 'P05', 'P09']],
                            raw[..., [0, 4, 8]])
 
+        # LGroup without axis (which also needs to be guessed)
+        g = LGroup(['P01', 'P05', 'P09'])
+        assert_array_equal(la[g], raw[..., [0, 4, 8]])
+
         # key with duplicate axes
         with self.assertRaisesRegexp(ValueError,
                                      "key has several values for axis: age"):
