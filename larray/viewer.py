@@ -1910,7 +1910,7 @@ class SessionEditor(QDialog):
             assert len(prev_selected) <= 1
             if prev_selected and prev_selected[0] == changed_items[0]:
                 # otherwise it's not updated in this case
-                self.arraywidget.set_data(self.data[to_display])
+                self.set_widget_array(self.data[to_display], to_display)
             else:
                 self._listwidget.setCurrentItem(changed_items[0])
 
@@ -1925,7 +1925,7 @@ class SessionEditor(QDialog):
 
     def view_expr(self, array, *args, **kwargs):
         self._listwidget.clearSelection()
-        self.arraywidget.set_data(array)
+        self.set_widget_array(array, '<expr>')
 
     def ipython_cell_executed(self):
         user_ns = self.kernel.shell.user_ns
@@ -1944,23 +1944,27 @@ class SessionEditor(QDialog):
 
     def on_item_changed(self, curr, prev):
         name = str(curr.text())
-        title = name
-        if isinstance(self.data[name], la.LArray):
-            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
-                                       for display_name, axis
-                                       in zip(self.data[name].axes.display_names, self.data[name].axes))
-            title = (title + ': ' + axes_info) if title else axes_info
-        self.setWindowTitle(title)
-
-        self.arraywidget.set_data(self.data[name])
+        array = self.data[name]
+        self.set_widget_array(array, name)
         expr = self.expressions.get(name, name)
         if qtconsole_available:
-            # # does not update
+            # this does not work because it updates the NEXT input, not the
+            # current one (it is supposed to be called from within the console)
             # self.kernel.shell.set_next_input(expr, replace=True)
             # self.kernel_client.input(expr)
             pass
         else:
             self.eval_box.setText(expr)
+
+    def set_widget_array(self, array, title):
+        if isinstance(array, la.LArray):
+            axes = array.axes
+            axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
+                                   for display_name, axis
+                                   in zip(axes.display_names, axes))
+            title = (title + ': ' + axes_info) if title else axes_info
+        self.setWindowTitle(title)
+        self.arraywidget.set_data(array)
 
     def apply_changes(self):
         self.arraywidget.accept_changes()
