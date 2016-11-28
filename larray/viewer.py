@@ -1908,17 +1908,19 @@ class SessionEditor(QDialog):
             if not qtconsole_available and s is not None:
                 self.expressions[to_display] = s
 
-            changed_items = self._listwidget.findItems(to_display,
-                                                       Qt.MatchExactly)
-            assert len(changed_items) == 1
+            self.select_list_item(to_display)
 
-            prev_selected = self._listwidget.selectedItems()
-            assert len(prev_selected) <= 1
-            if prev_selected and prev_selected[0] == changed_items[0]:
-                # otherwise it's not updated in this case
-                self.set_widget_array(self.data[to_display], to_display)
-            else:
-                self._listwidget.setCurrentItem(changed_items[0])
+    def select_list_item(self, to_display):
+        changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
+        assert len(changed_items) == 1
+        prev_selected = self._listwidget.selectedItems()
+        assert len(prev_selected) <= 1
+        # if the currently selected item (value) is modified
+        if prev_selected and prev_selected[0] == changed_items[0]:
+            # we need to update the array widget explicitly
+            self.set_widget_array(self.data[to_display], to_display)
+        else:
+            self._listwidget.setCurrentItem(changed_items[0])
 
     def line_edit_update(self):
         s = self.eval_box.text()
