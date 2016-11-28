@@ -82,8 +82,6 @@ Matrix class
 #   OR
 #   include utils only in larray project and make larray a dependency of liam2
 #   (and potentially rename it to reflect the broader scope)
-# ? move "excelcom" to its own project (so that it is not duplicated between
-#   potential projects using it)
 
 import csv
 import os
