@@ -1222,18 +1222,23 @@ class ArrayEditorWidget(QWidget):
         self.global_changes = {}
         if isinstance(data, la.LArray):
             self.la_data = data
-            filters_layout = self.filters_layout
-            clear_layout(filters_layout)
+            axes = data.axes
+            display_names = axes.display_names
+            data, xlabels, ylabels = larray_to_array_and_labels(data)
+        else:
+            self.la_data = None
+            axes = []
+            display_names = []
+            if not isinstance(data, np.ndarray):
+                data = np.asarray(data)
+        filters_layout = self.filters_layout
+        clear_layout(filters_layout)
+        if axes:
             filters_layout.addWidget(QLabel(_("Filters")))
-            for axis, display_name in zip(data.axes, data.axes.display_names):
+            for axis, display_name in zip(axes, display_names):
                 filters_layout.addWidget(QLabel(display_name))
                 filters_layout.addWidget(self.create_filter_combo(axis))
             filters_layout.addStretch()
-            data, xlabels, ylabels = larray_to_array_and_labels(data)
-        else:
-            if not isinstance(data, np.ndarray):
-                data = np.asarray(data)
-            self.la_data = None
         self.filtered_data = self.la_data
         if data.size == 0:
             QMessageBox.critical(self, _("Error"), _("Array is empty"))
