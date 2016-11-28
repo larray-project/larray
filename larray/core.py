@@ -116,7 +116,7 @@ from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
 # TODO: return a generator, not a list
 def _srange(*args):
     """
-    Return evenly spaced values within a given interval as list of strings
+    Returns evenly spaced values within a given interval as list of strings
 
     Parameters
     ----------
@@ -150,7 +150,7 @@ def _srange(*args):
 
 def _range_to_slice(seq, length=None):
     """
-    returns a slice if possible (including for sequences of 1 element)
+    Returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
 
     Parameters
@@ -213,7 +213,7 @@ def _range_to_slice(seq, length=None):
 
 def _slice_to_str(key, use_repr=False):
     """
-    converts a slice to a string
+    Converts a slice to a string
 
     Examples:
     ---------
@@ -238,7 +238,7 @@ def _slice_to_str(key, use_repr=False):
 
 def _slice_str_to_range(s):
     """
-    converts a slice string to a list of (string) values.
+    Converts a slice string to a list of (string) values.
     The end point is included.
 
     Parameters:
@@ -274,7 +274,7 @@ def _slice_str_to_range(s):
 
 def _to_string(v):
     """
-    converts a (group of) tick(s) to a string
+    Converts a (group of) tick(s) to a string
 
     Parameters:
     -----------
@@ -300,7 +300,7 @@ def _to_string(v):
 
 def _to_tick(e):
     """
-    make it hashable, and acceptable as an ndarray element
+    Makes it hashable, and acceptable as an ndarray element
     scalar & VG -> not modified
     slice -> 'start:stop'
     list|tuple -> 'v1,v2,v3'
@@ -443,7 +443,7 @@ def to_key(v):
 
 def to_keys(value):
     """
-    converts a (collection of) group(s) to a structure usable for indexing.
+    Converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
 
     Parameters
@@ -498,7 +498,7 @@ def to_keys(value):
 def union(*args):
     # TODO: add support for LGroup and lists
     """
-    returns the union of several "value strings" as a list.
+    Returns the union of several "value strings" as a list.
 
     Parameters
     ----------
@@ -523,7 +523,7 @@ def union(*args):
 
 def larray_equal(first, other):
     """
-    compares two LArrays and returns True if they have the same axes and elements, False otherwise.
+    Compares two LArrays and returns True if they have the same axes and elements, False otherwise.
 
     Parameters
     ----------
@@ -543,7 +543,7 @@ def larray_equal(first, other):
     >>> b = a.copy()
     >>> larray_equal(a,b)
     True
-    >>> b['W'] += 1
+    >>> b['F'] += 1
     >>> larray_equal(a,b)
     False
     >>> b = a.set_labels(x.sex, ['Men','Women']).copy()
@@ -558,13 +558,13 @@ def larray_equal(first, other):
 
 def _isnoneslice(v):
     """
-    checks if input is slice(None) object.
+    Checks if input is slice(None) object.
     """
     return isinstance(v, slice) and v == slice(None)
 
 def _seq_summary(seq, num=3, func=repr):
     """
-    returns a string representing a sequence by showing only the n first and last elements.
+    Returns a string representing a sequence by showing only the n first and last elements.
 
     Examples
     --------
@@ -600,7 +600,7 @@ class PGroupMaker(object):
 
 class Axis(object):
     """
-    represents an axis. It consists of a name and a list of labels.
+    Represents an axis. It consists of a name and a list of labels.
 
     Parameters
     ----------
@@ -652,7 +652,7 @@ class Axis(object):
 
     @property
     def _mapping(self):
-        # to map labels with their positions
+        # To map labels with their positions
         mapping = self.__mapping
         if mapping is None:
             labels = self._labels
@@ -703,10 +703,30 @@ class Axis(object):
 
     @property
     def i(self):
+        """
+        Allows to define a subset using positions of labels.
+
+        Examples
+        --------
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time', ['2007','2008','2009','2010'])
+        >>> arr = ndrange([sex,time])
+        >>> arr
+        sex\\time | 2007 | 2008 | 2009 | 2010
+               M |    0 |    1 |    2 |    3
+               F |    4 |    5 |    6 |    7
+        >>> arr[time.i[0,-1]]
+        sex\\time | 2007 | 2010
+               M |    0 |    3
+               F |    4 |    7
+        """
         return PGroupMaker(self)
 
     @property
     def labels(self):
+        """
+        List of labels.
+        """
         return self._labels
 
     @labels.setter
@@ -748,7 +768,7 @@ class Axis(object):
     # AD -- def group(key, name=None):
     def group(self, *args, **kwargs):
         """
-        returns a group (list or unique element) of label(s) usable in .sum or .filter
+        Returns a group (list or unique element) of label(s) usable in .sum or .filter
 
         Parameters
         ----------
@@ -788,7 +808,7 @@ class Axis(object):
 
     def all(self, name=None):
         """
-        returns a group containing all labels.
+        Returns a group containing all labels.
 
         Parameters
         ----------
@@ -803,13 +823,12 @@ class Axis(object):
 
     def subaxis(self, key, name=None):
         """
-        returns an axis for a sub-array
+        Returns an axis for a sub-array.
 
         Parameters
         ----------
         key : key
             input key can be a LArray or a (collection of) label(s).
-
         name : string, optional
             name of the subaxis.
             If input name is None, the name of the subaxis is the same as parent axis.
@@ -847,7 +866,7 @@ class Axis(object):
 
     def iscompatible(self, other):
         """
-        checks if current axis is compatible with another.
+        Checks if current axis is compatible with another.
         Two axes are compatible is they have the same name and length.
 
         Parameters
@@ -882,7 +901,7 @@ class Axis(object):
 
     def equals(self, other):
         """
-        checks if current axis is equal to another.
+        Checks if current axis is equal to another.
         Two axes are equal if the have the same name and label(s)
 
         Parameters
@@ -897,6 +916,16 @@ class Axis(object):
 
         Examples
         --------
+        >>> age = Axis('age',range(5))
+        >>> age_2 = Axis('age',5)
+        >>> age_3 = Axis('young children', range(5))
+        >>> age_4 = Axis('age',[0,1,2,3,4])
+        >>> age.equals(age_2)
+        False
+        >>> age.equals(age_3)
+        False
+        >>> age.equals(age_4)
+        True
         """
         if self is other:
             return True
@@ -910,7 +939,7 @@ class Axis(object):
 
     def matches(self, pattern):
         """
-        returns a group with all the labels matching (regex) the specified pattern
+        Returns a group with all the labels matching (regex) the specified pattern
 
         Parameters
         ----------
@@ -929,15 +958,17 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
         >>> people.matches('^W.*o$')
         LGroup(['Waldo'])
+        >>> people.matches('^[^a]*$')
+        LGroup(['Bruce Willis', 'Arthur Dent'])
         """
         return LGroup(self._axisregex(pattern))
 
     def startswith(self, pattern):
         """
-        returns a group with the labels starting with the specified string
+        Returns a group with the labels starting with the specified string
 
         Parameters
         ----------
@@ -951,16 +982,16 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.startswith('Wa')
-        LGroup(['Waldo'])
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.startswith('[^B]')
+        LGroup(['Waldo', 'Arthur Dent', 'Harvey Dent'])
         """
         res = self._axisregex('^%s.*' % pattern)
         return LGroup(res)
 
     def endswith(self, pattern):
         """
-        returns a LGroup with the labels ending with the specified string
+        Returns a LGroup with the labels ending with the specified string
 
         Parameters
         ----------
@@ -974,9 +1005,9 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.startswith('do')
-        LGroup(['Waldo'])
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.endswith('[o-z]')
+        LGroup(['Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
         """
         res = self._axisregex('.*%s$' % pattern)
         return LGroup(res)
@@ -1018,7 +1049,7 @@ class Axis(object):
 
     def translate(self, key, bool_passthrough=True):
         """
-        translates a label key to its numerical index counterpart.
+        Translates a label key to its numerical index counterpart.
 
         Parameters
         ----------
@@ -1027,9 +1058,9 @@ class Axis(object):
         bool_passthrough : bool, optional
             If set to True and key is a boolean vector, it is returned as it.
 
-        Results
+        Returns
         -------
-        result: (array of) int
+        (array of) int
             Numerical index(ices) of (all) label(s) represented by the key
 
         Notes
@@ -1038,7 +1069,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Jhon Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis('people', ['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
         >>> people.translate('Waldo')
         3
         >>> people.translate(people.matches('Bruce'))
@@ -1141,10 +1172,10 @@ class Axis(object):
 
     def labels_summary(self):
         """
-        returns a short representation of the labels.
+        Returns a short representation of the labels.
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> Axis('age',100).labels_summary()
         '0 1 2 ... 97 98 99'
         """
@@ -1158,7 +1189,7 @@ class Axis(object):
     # method factory
     def _binop(opname):
         """
-        wrapper method that transforms current and other axis into LArray and
+        Wrapper method that transforms current and other axis into LArray and
         then applies binary operators of LArray.
         """
         fullname = '__%s__' % opname
@@ -1216,13 +1247,13 @@ class Axis(object):
 
     def __larray__(self):
         """
-        returns current axis as LArray.
+        Returns current axis as LArray.
         """
         return labels_array(self)
 
     def copy(self):
         """
-        creates a copy of the current axis.
+        Returns a copy of the current axis.
         """
         new_axis = Axis(self.name, [])
         # XXX: I wonder if we should make a copy of the labels + mapping.
@@ -1237,7 +1268,8 @@ class Axis(object):
 
     # XXX: rename to named like Group?
     def rename(self, name):
-        """Renames the axis.
+        """
+        Renames the axis.
 
         Parameters
         ----------
@@ -1249,8 +1281,8 @@ class Axis(object):
         Axis
             a new Axis with the same labels but a different name.
 
-        Example
-        -------
+        Examples
+        --------
         >>> sex = Axis('sex', ['M', 'F'])
         >>> sex
         Axis('sex', ['M', 'F'])
@@ -1494,7 +1526,7 @@ class PGroup(Group):
 
 def index_by_id(seq, value):
     """
-    returns position of a value in a sequence.
+    Returns position of a value in a sequence.
 
     Raises
     ------
@@ -1516,10 +1548,40 @@ def index_by_id(seq, value):
 # not using namedtuple because we have to know the fields in advance (it is a
 # one-off class) and we need more functionality than just a named tuple
 class AxisCollection(object):
+    """
+    Represents a collection of axes.
+
+    Parameters:
+    -----------
+    axes : sequence of Axis or int or tuple or string objects, optional
+        an axis can be given as an Axis object, an int or a tuple (name,labels) or
+        a string of the kind 'name=label_1,label_2,label_3'.
+
+    Raises
+    ------
+    ValueError
+        Cannot have multiple occurrences of the same axis object in a collection.
+
+    Notes
+    -----
+    Multiple occurrences of the same axis is not allowed.
+    However, several axes with the same name but different labels are allowed
+    but it is not recommended.
+
+    Examples
+    --------
+    >>> age = Axis('age',range(20))
+    >>> sex = Axis('sex',['M','F'])
+    >>> AxisCollection([3,age,sex,('city',['London','Paris','Rome']),'time=2007,2008,2009,2010'])
+    AxisCollection([
+        Axis(None, 3),
+        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+        Axis('sex', ['M', 'F']),
+        Axis('city', ['London', 'Paris', 'Rome']),
+        Axis('time', ['2007', '2008', '2009', '2010'])
+    ])
+    """
     def __init__(self, axes=None):
-        """
-        :param axes: sequence of Axis (or int) objects
-        """
         if axes is None:
             axes = []
         elif isinstance(axes, (int, long, Axis)):
@@ -1543,6 +1605,7 @@ class AxisCollection(object):
 
         axes = [make_axis(axis) for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
+        # check for duplicate axes
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
@@ -1611,17 +1674,29 @@ class AxisCollection(object):
     # make_numpy_broadcastable or made non default
     def get_by_pos(self, key, i):
         """
-        returns axis corresponding to key, or to i if key has no name and
-        key object not found
+        Returns axis corresponding to a key, or to position i if the key
+        has no name and key object not found.
 
         Parameters
         ----------
-        key
-        i
+        key : key
+            key corresponding to an axis.
+        i : int
+            position of the axis (used only if search by key failed).
 
         Returns
         -------
+        Axis
+            axis corresponding to the key or the position i.
 
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col.get_by_pos('sex',1)
+        Axis('sex', ['M', 'F'])
         """
         if isinstance(key, Axis) and key.name is None:
             try:
@@ -1703,7 +1778,7 @@ class AxisCollection(object):
 
     def __and__(self, other):
         """
-        returns the intersection of this collection and other
+        Returns the intersection of this collection and other
         """
         if not isinstance(other, AxisCollection):
             other = AxisCollection(other)
@@ -1719,7 +1794,7 @@ class AxisCollection(object):
 
     def __eq__(self, other):
         """
-        other collection compares equal if all axes compare equal and in the
+        Other collection compares equal if all axes compare equal and in the
         same order. Works with a list.
         """
         if self is other:
@@ -1749,6 +1824,33 @@ class AxisCollection(object):
         return key in self._map
 
     def isaxis(self, value):
+        """
+        Tests if input is an Axis object or the name of an axis
+        contained in the current AxisCollection instance.
+
+        Parameters
+        ----------
+        value : Axis or string
+            input axis or string
+        Returns
+        -------
+        bool
+            True if input is an Axis object or the name of an axis contained in
+            the current AxisCollection instance, False otherwise.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col.isaxis(age)
+        True
+        >>> col.isaxis('time')
+        True
+        >>> col.isaxis('city')
+        False
+        """
         # this is tricky. 0 and 1 can be both axes indices and axes ticks.
         # not sure what's worse:
         # 1) disallow aggregates(axis_num)
@@ -1786,6 +1888,34 @@ class AxisCollection(object):
         return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
 
     def get(self, key, default=None, name=None):
+        """
+        Returns axis corresponding to key. If not found, the argument `name` is
+        used to create a new Axis. If `name` is None, the `default` axis is then returned.
+
+        Parameters
+        ----------
+        key : key
+            key corresponding to an axis of the current AxisCollection.
+        default : axis, optional
+            default axis to return if key doesn't correspond to any axis of the current
+            AxisCollection and argument `name` is None.
+        name : string, optional
+            if key doesn't correspond to any axis of the current AxisCollection,
+            a new Axis with this name is created and returned.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,time])
+        >>> col.get('time')
+        Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col.get('sex',sex)
+        Axis('sex', ['M', 'F'])
+        >>> col.get('nb_children',None,'nb_children')
+        Axis('nb_children', 1)
+        """
         # XXX: use if key in self?
         try:
             return self[key]
@@ -1797,8 +1927,8 @@ class AxisCollection(object):
 
     def get_all(self, key):
         """
-        returns all axes from key if present and length 1 wildcard axes
-        otherwise
+        Returns all axes from key if present and length 1 wildcard axes
+        otherwise.
 
         Parameters
         ----------
@@ -1807,6 +1937,26 @@ class AxisCollection(object):
         Returns
         -------
         AxisCollection
+
+        Raises
+        ------
+        AssertionError
+            raised if the input key is not an AxisCollection object.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> city = Axis('city',['London','Paris','Rome'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col2 = AxisCollection([age,city,time])
+        >>> col2
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('city', ['London', 'Paris', 'Rome']),
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
         """
         assert isinstance(key, AxisCollection)
         def get_pos_default(k, i):
@@ -1823,21 +1973,88 @@ class AxisCollection(object):
                                for i, k in enumerate(key)])
 
     def keys(self):
+        """
+        Returns list of all axis names.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).keys()
+        ['age', 'sex', 'time']
+        """
         # XXX: include id/num for anonymous axes? I think I should
         return [a.name for a in self._list]
 
     def pop(self, axis=-1):
+        """
+        Deletes and returns an axis.
+        If no argument provided, the last axis is deleted and returned.
+
+        Parameters
+        ----------
+        axis : key, optional
+            axis to delete and return (default value is -1).
+
+        Returns
+        -------
+        Axis
+            If no argument is provided, the last axis is deleted and returned.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col.pop('age')
+        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+        >>> col
+        AxisCollection([
+            Axis('sex', ['M', 'F']),
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
+        >>> col.pop()
+        Axis('time', ['2007', '2008', '2009', '2010'])
+        """
         axis = self[axis]
         del self[axis]
         return axis
 
     def append(self, axis):
         """
-        append axis at the end of the collection
+        Appends axis at the end of the collection.
+
+        Parameters
+        ----------
+        axis : Axis
+            axis to append.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex])
+        >>> col.append(time)
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
         """
         self[len(self):len(self)] = [axis]
 
     def check_compatible(self, axes):
+        """
+        Checks if axes are all compatible. Raises a ValueError if not.
+
+        See Also
+        --------
+        Axis.iscompatible
+        """
         for i, axis in enumerate(axes):
             local_axis = self.get_by_pos(axis, i)
             if not local_axis.iscompatible(axis):
@@ -1846,7 +2063,32 @@ class AxisCollection(object):
 
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
-        extend the collection by appending the axes from axes
+        Extends the collection by appending the axes from axes.
+
+        Parameters
+        ----------
+        axes : sequence of Axis (list, tuple, AxisCollection)
+        validate : bool, optional
+        replace_wildcards : bool, optional
+
+        Raises
+        ------
+        TypeError
+            raised if `axes` is not a sequence of Axis (list, tuple or AxisCollection)
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection(age)
+        >>> col.extend([sex,time])
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
         """
         # axes should be a sequence
         if not isinstance(axes, (tuple, list, AxisCollection)):
@@ -1882,14 +2124,39 @@ class AxisCollection(object):
 
     def index(self, axis):
         """
-        returns the index of axis.
+        Returns the index of axis.
 
-        axis can be a name or an Axis object (or an index)
-        if the Axis object itself exists in the list, index() will return it
-        otherwise, it will return the index of the local axis with the same
+        `axis` can be a name or an Axis object (or an index).
+        If the Axis object itself exists in the list, index() will return it.
+        Otherwise, it will return the index of the local axis with the same
         name than the key (whether it is compatible or not).
 
-        Raises ValueError if the axis is not present.
+        Parameters
+        ----------
+        axis : Axis or int or string
+            can be the axis itself or its position (returned if represents a valid index)
+            or its name.
+
+        Returns
+        -------
+        int
+            index of the axis.
+
+        Raises
+        ------
+        ValueError
+            raised if the axis is not present.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col.index(time)
+        2
+        >>> col.index('sex')
+        1
         """
         if isinstance(axis, int):
             if -len(self) <= axis < len(self):
@@ -1914,14 +2181,65 @@ class AxisCollection(object):
     # other inplace operations: append, extend, pop, __delitem__, __setitem__)
     def insert(self, index, axis):
         """
-        insert axis before index
+        Inserts axis before index.
+
+        Parameters
+        ----------
+        index : int
+            position of the inserted axis.
+        axis : Axis
+            axis to insert.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,time])
+        >>> col.insert(1,sex)
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
         """
         self[index:index] = [axis]
 
     def copy(self):
+        """
+        Returns a copy.
+        """
         return self[:]
 
     def replace(self, old, new):
+        """
+        Replaces an axis
+
+        Parameters
+        ----------
+        old : Axis
+            axis to be replaced
+        new : Axis
+            axis to be put in place of the `old` axis.
+
+        Returns
+        -------
+        AxisCollection
+            updated AxisCollection.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> age_new = Axis('age',range(10))
+        >>> sex = Axis('sex',['M','F'])
+        >>> col = AxisCollection([age,sex])
+        >>> col.replace(age, age_new)
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Axis('sex', ['M', 'F'])
+        ])
+        """
         res = self[:]
         res[old] = new
         return res
@@ -1929,17 +2247,46 @@ class AxisCollection(object):
     # XXX: kill this method?
     def without(self, axes):
         """
-        returns a new collection without some axes
-        you can use a comma separated list of names
+        Returns a new collection without some axes.
+
+        You can use a comma separated list of names.
+
+        Parameters
+        ----------
+        axes : sequence of Axis or string
+            axes to not include in the returned AxisCollection.
+
+        Returns
+        -------
+        AxisCollection
+            new collection without some axes.
+
+        Notes
+        -----
         set operations so axes can contain axes not present in self
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> col = AxisCollection([age,sex,time])
+        >>> col.without([age,sex])
+        AxisCollection([
+            Axis('time', ['2007', '2008', '2009', '2010'])
+        ])
+        >>> col.without('sex,time')
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+        ])
         """
         return self - axes
 
     def __sub__(self, axes):
         """
-        returns a new collection without some axes
-        you can use a comma separated list of names
-        set operations so axes can contain axes not present in self
+        See Also
+        --------
+        without
         """
         if isinstance(axes, basestring):
             axes = axes.split(',')
@@ -1953,16 +2300,30 @@ class AxisCollection(object):
 
     def translate_full_key(self, key):
         """
+        Translates a label-based key to a positional key.
+
         Parameters
         ----------
         key : tuple
-            a full label-based key. All dimensions must be present and in
-            the correct order.
+            a full label-based key.
+            All dimensions must be present and in the correct order.
 
         Returns
         -------
         tuple
             a full positional key
+
+        See Also
+        --------
+        Axis.translate
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).translate_full_key([':','F','2009'])
+        (slice(None, None, None), 1, 2)
         """
         assert len(key) == len(self)
         return tuple(axis.translate(axis_key)
@@ -1970,46 +2331,65 @@ class AxisCollection(object):
 
     @property
     def labels(self):
-        """Returns the list of labels of the axes"""
+        """
+        Returns the list of labels of the axes.
+
+        Returns
+        -------
+        list
+            list of labels of the axes.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(10))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).labels
+        [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), array(['M', 'F'],
+              dtype='<U1'), array(['2007', '2008', '2009', '2010'],
+              dtype='<U4')]
+        """
         return [axis.labels for axis in self._list]
 
     @property
     def names(self):
-        """Returns the list of (raw) names of the axes
+        """
+        Returns the list of (raw) names of the axes.
 
         Returns
         -------
-        List
-            List of names of the axes
+        list
+            list of names of the axes.
 
-        Example
-        -------
-        >>> a = Axis('a', ['a1', 'a2'])
-        >>> b = Axis('b', 2)
-        >>> c = Axis(None, ['c1', 'c2'])
-        >>> arr = zeros([a, b, c])
-        >>> arr.axes.names
-        ['a', 'b', None]
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).names
+        ['age', 'sex', 'time']
         """
         return [axis.name for axis in self._list]
 
     @property
     def display_names(self):
-        """Returns the list of (display) names of the axes
+        """
+        Returns the list of (display) names of the axes.
 
         Returns
         -------
-        List
-            List of names of the axes
+        list
+            list of names of the axes.
+            Wildcard axes are displayed with an attached *.
+            Anonymous axes (name = None) are replaced by their position in braces.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', ['a1', 'a2'])
         >>> b = Axis('b', 2)
         >>> c = Axis(None, ['c1', 'c2'])
         >>> d = Axis(None, 3)
-        >>> col = AxisCollection([a, b, c, d])
-        >>> col.display_names
+        >>> AxisCollection([a, b, c, d]).display_names
         ['a', 'b*', '{2}', '{3}*']
         """
         def display_name(i, axis):
@@ -2020,35 +2400,40 @@ class AxisCollection(object):
 
     @property
     def ids(self):
-        """Returns the list of ids of the axes
+        """
+        Returns the list of ids of the axes.
 
         Returns
         -------
         list
-            List of ids of the axes
+            list of ids of the axes.
 
-        Example
-        -------
+        See Also
+        --------
+        axis_id
+
+        Examples
+        --------
         >>> a = Axis('a', 2)
         >>> b = Axis(None, 2)
         >>> c = Axis('c', 2)
-        >>> col = AxisCollection([a, b, c])
-        >>> col.ids
+        >>> AxisCollection([a, b, c]).ids
         ['a', 1, 'c']
         """
         return [axis.name if axis.name is not None else i
                 for i, axis in enumerate(self._list)]
 
     def axis_id(self, axis):
-        """Returns the id of an axis
+        """
+        Returns the id of an axis.
 
         Returns
         -------
         str or int
-            id of axis, which is its name if defined and its position otherwise
+            id of axis, which is its name if defined and its position otherwise.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', 2)
         >>> b = Axis(None, 2)
         >>> c = Axis('c', 2)
@@ -2065,30 +2450,64 @@ class AxisCollection(object):
 
     @property
     def shape(self):
+        """
+        Returns the shape of the collection.
+
+        Returns
+        -------
+        tuple
+            tuple of lengths of axes.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).shape
+        (20, 2, 4)
+        """
         return tuple(len(axis) for axis in self._list)
 
     @property
     def size(self):
+        """
+        Returns the size of the collection, i.e. the product of lengths of axes.
+
+        Returns
+        -------
+        int
+            product of lengths of axes.
+
+        Examples
+        --------
+        >>> age = Axis('age',range(20))
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).size
+        160
+        """
         return np.prod(self.shape)
 
     @property
     def info(self):
-        """Describes an AxisCollection (shape and labels for each axis).
+        """
+        Describes an AxisCollection (shape and labels for each axis).
 
         Returns
         -------
-        String
-            Description of the AxisCollection (shape and labels for each axis).
+        string
+            description of the AxisCollection (shape and labels for each axis).
 
-        Example
-        -------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> axes = AxisCollection([nat, sex])
-        >>> axes.info
-        2 x 2
-         nat [2]: 'BE' 'FO'
+        Examples
+        --------
+        >>> age = Axis('age',20)
+        >>> sex = Axis('sex',['M','F'])
+        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> AxisCollection([age,sex,time]).info
+        20 x 2 x 4
+         age* [20]: 0 1 2 ... 17 18 19
          sex [2]: 'M' 'F'
+         time [4]: '2007' '2008' '2009' '2010'
         """
         lines = [" %s [%d]: %s" % (name, len(axis), axis.labels_summary())
                  for name, axis in zip(self.display_names, self._list)]
@@ -2108,8 +2527,8 @@ def all(values, axis=None):
     -------
     LArray or scalar
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> a = ndrange([nat, sex]) >= 1
@@ -2141,8 +2560,8 @@ def any(values, axis=None):
     -------
     LArray or scalar
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> a = ndrange([nat, sex]) >= 3
@@ -2637,8 +3056,8 @@ class LArray(object):
         LArray
             array with some axes renamed.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = ndrange([nat, sex])
@@ -2687,8 +3106,8 @@ class LArray(object):
         LArray
             LArray with sorted values.
 
-        Example
-        -------
+        Examples
+        --------
         >>> sex = Axis('sex', ['M', 'F'])
         >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
         >>> xtype = Axis('type', ['type1', 'type2'])
@@ -3762,8 +4181,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = ndrange([nat, sex])
@@ -3838,8 +4257,8 @@ class LArray(object):
         In case of multiple occurrences of the minimum values, the indices
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3880,8 +4299,8 @@ class LArray(object):
         In case of multiple occurrences of the minimum values, the indices
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3920,8 +4339,8 @@ class LArray(object):
         In case of multiple occurrences of the maximum values, the labels
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3962,8 +4381,8 @@ class LArray(object):
         In case of multiple occurrences of the maximum values, the labels
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -4005,8 +4424,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -4052,8 +4471,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -4088,8 +4507,8 @@ class LArray(object):
         str
             Description of the LArray (shape and labels for each axis).
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> mat0 = ones([nat, sex])
@@ -4112,8 +4531,8 @@ class LArray(object):
         LArray
             array / array.sum(axes)
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
@@ -4203,8 +4622,8 @@ class LArray(object):
         LArray
             array / array.sum(axes) * 100
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
@@ -4407,8 +4826,8 @@ class LArray(object):
         LArray
             array divided by other, 0.0 where other is 0
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = ndrange((nat, sex))
@@ -4464,8 +4883,8 @@ class LArray(object):
         LArray
             original array if possible (and out is None)
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', ['a1', 'a2'])
         >>> b = Axis('b', ['b1', 'b2'])
         >>> arr = ndrange([a, b])
@@ -4534,8 +4953,8 @@ class LArray(object):
         LArray
             array expanded with 'value' along 'axis'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex |   M |   F
@@ -4590,8 +5009,8 @@ class LArray(object):
         LArray
             array expanded with 'value' at the start of 'axis'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
         nat\sex |   M |   F
@@ -4644,8 +5063,8 @@ class LArray(object):
         LArray
             array expanded with 'other' along 'axis'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> sex2 = Axis('sex', ['U'])
@@ -4699,8 +5118,8 @@ class LArray(object):
         LArray
             LArray with reordered axes.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange([('nat', 'BE,FO'),
         ...              ('sex', 'M,F'),
         ...              ('alive', [False, True])])
@@ -4788,8 +5207,8 @@ class LArray(object):
             Drop lines if 'all' its values are NA, if 'any' value is NA or do
             not drop any line (default). True is equivalent to 'all'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
@@ -4841,8 +5260,8 @@ class LArray(object):
         *args
         **kargs
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.to_hdf('test.h5', 'a')
         """
@@ -4889,8 +5308,8 @@ class LArray(object):
         *args
         **kargs
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> # write to a new (unnamed) sheet
         >>> a.to_excel('test.xlsx')  # doctest: +SKIP
@@ -4951,8 +5370,8 @@ class LArray(object):
         using to_clipboard() makes it possible to paste the content of LArray
         into a file (Excel, ascii file,...)
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.to_clipboard()  # doctest: +SKIP
         """
@@ -5004,8 +5423,8 @@ class LArray(object):
         the graph can be tweaked to achieve the desired formatting and can be
         saved to a .png file
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.plot()  # doctest: +SKIP
         """
@@ -5020,8 +5439,8 @@ class LArray(object):
         -------
             returns string representation of current shape.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F;type=type1,type2,type3')
         >>> a.shape  # doctest: +SKIP
         (2, 2, 3)
@@ -5037,8 +5456,8 @@ class LArray(object):
         -------
             returns the number of dimensions of a LArray.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.ndim
         2
@@ -5055,8 +5474,8 @@ class LArray(object):
         int
             returns the number of cells in array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3')
         >>> a.size
         6
@@ -5073,8 +5492,8 @@ class LArray(object):
         int
             returns the number of bytes in array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.nbytes
         48
@@ -5091,8 +5510,8 @@ class LArray(object):
         str
             returns the memory used by the array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.memory_used
         '48 bytes'
@@ -5109,8 +5528,8 @@ class LArray(object):
         dtype
             returns the type of the data in the cells of LArray.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = zeros('sex=M,F;type=type1,type2,type3')
         >>> a.dtype
         dtype('float64')
@@ -5148,8 +5567,8 @@ class LArray(object):
         LArray
             array with modified labels.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
@@ -5188,8 +5607,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3')
         >>> a
         sex\\type | type1 | type2 | type3
@@ -5339,8 +5758,8 @@ class LArray(object):
         LArray or scalar
             array with constant axes removed
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = LArray([[1, 2],
         ...             [1, 2]], [Axis('sex', 'M,F'), Axis('nat', 'BE,FO')])
         >>> a
@@ -5701,8 +6120,8 @@ def zeros_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5731,8 +6150,8 @@ def ones(axes, dtype=float, order='C'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> ones([nat, sex])
@@ -5763,8 +6182,8 @@ def ones_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5794,8 +6213,8 @@ def empty(axes, dtype=float, order='C'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> empty([nat, sex])  # doctest: +SKIP
@@ -5827,8 +6246,8 @@ def empty_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((3, 2))
     >>> empty_like(a)   # doctest: +SKIP
     -\- |                  0 |                  1
@@ -5905,8 +6324,8 @@ def full_like(array, fill_value, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> full_like(a, 5)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5953,8 +6372,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
         axes of the result. Defaults to the union of axes present in other
         arguments.
 
-    Example
-    -------
+    Examples
+    --------
     >>> year = Axis('year', range(2016, 2020))
     >>> sex = Axis('sex', ['M', 'F'])
     >>> create_sequential(year)
@@ -6349,8 +6768,8 @@ def labels_array(axes):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> labels_array(sex)
@@ -6413,8 +6832,8 @@ def eye(rows, columns=None, k=0, dtype=None):
         An array where all elements are equal to zero, except for the k-th
         diagonal, whose values are equal to one.
 
-    Example
-    -------
+    Examples
+    --------
     >>> eye(2, dtype=int)
     {0}*\\{1}* | 0 | 1
             0 | 1 | 0
