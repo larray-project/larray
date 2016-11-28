@@ -26,9 +26,6 @@ Matrix class
 # * when trying to aggregate on an non existing Axis (using x.blabla),
 #   the error message is awful
 
-# ? implement named groups in strings
-#   eg "vla=A01,A02;bru=A21;wal=A55,A56"
-
 # ? implement multi group in one axis getitem:
 #   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
 #                        <=> (lipro['P01,P02'], lipro['P05'])
@@ -60,9 +57,6 @@ Matrix class
 #   ---> test pandas (one dimension horizontally)
 
 # * add labels in LGroups.__str__
-
-# ? allow naming "one-shot" groups? e.g:
-#   regsum = bel.sum(lipro='P01,P02 = P01P02; : = all')
 
 # * docstring for all methods
 
@@ -316,6 +310,8 @@ def to_key(v):
     'a'
     >>> to_key(10)
     10
+    >>> to_key('abc=a,b,c')
+    LGroup(['a', 'b', 'c'], name='abc')
     """
     if isinstance(v, tuple):
         return list(v)
@@ -324,19 +320,23 @@ def to_key(v):
     elif v is Ellipsis or isinstance(v, (int, list, slice, LArray)):
         return v
     elif isinstance(v, basestring):
-        numcolons = v.count(':')
-        if numcolons:
-            assert numcolons <= 2
-            # can be of len 2 or 3 (if step is provided)
-            bounds = [a if a else None for a in v.split(':')]
-            return slice(*bounds)
+        if '=' in v:
+            name, key = v.split('=')
+            return LGroup(to_key(key.strip()), name.strip())
         else:
-            if ',' in v:
-                # strip extremity commas to avoid empty string keys
-                v = v.strip(',')
-                return [v.strip() for v in v.split(',')]
+            numcolons = v.count(':')
+            if numcolons:
+                assert numcolons <= 2
+                # can be of len 2 or 3 (if step is provided)
+                bounds = [a if a else None for a in v.split(':')]
+                return slice(*bounds)
             else:
-                return v.strip()
+                if ',' in v:
+                    # strip extremity commas to avoid empty string keys
+                    v = v.strip(',')
+                    return [v.strip() for v in v.split(',')]
+                else:
+                    return v.strip()
     else:
         raise TypeError("%s has an invalid type (%s) for a key"
                         % (v, type(v).__name__))
@@ -687,6 +687,15 @@ class Axis(object):
             # transform "specially formatted strings" for slices and lists to
             # actual objects
             key = to_key(key)
+            # if key was a string of the form "name=value", it can be an
+            # LGroup now, so we have to take the key from it *again*.
+            # XXX: one way to not do that twice would be to apply to_key
+            # to LGroup keys *before* storing them. This way we could simply
+            # handle string keys before LGroup keys (since a string in an
+            # LGroup would not need further processing)
+            if isinstance(key, LGroup):
+                # at this point we do not care about the axis nor the name
+                key = key.key
 
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
