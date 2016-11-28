@@ -1804,7 +1804,8 @@ class SessionEditor(QDialog):
                 btn_layout = QHBoxLayout()
                 btn_layout.addStretch()
 
-                bbox = QDialogButtonBox(QDialogButtonBox.Apply | QDialogButtonBox.Discard)
+                bbox = QDialogButtonBox(QDialogButtonBox.Apply
+                                        | QDialogButtonBox.Discard)
 
                 apply_btn = bbox.button(QDialogButtonBox.Apply)
                 apply_btn.clicked.connect(self.apply_changes)
@@ -1818,8 +1819,8 @@ class SessionEditor(QDialog):
                 arraywidget_layout.addWidget(self.arraywidget)
                 arraywidget_layout.addLayout(btn_layout)
 
-                # you cant add a layout directly in a splitter, so we have to wrap
-                # it in a widget
+                # you cant add a layout directly in a splitter, so we have to
+                # wrap it in a widget
                 arraywidget = QWidget()
                 arraywidget.setLayout(arraywidget_layout)
 
