@@ -1767,10 +1767,7 @@ class SessionEditor(QDialog):
         self.setLayout(layout)
 
         self._listwidget = QListWidget(self)
-        for name in self.data.names:
-            item = QListWidgetItem(self._listwidget)
-            item.setText(name)
-            item.setToolTip("%s: %s" % (name, self.data[name].info))
+        self.add_list_items(self.data.names)
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
@@ -1879,11 +1876,19 @@ class SessionEditor(QDialog):
         self.setWindowFlags(Qt.Window)
         return True
 
+    def add_list_items(self, names):
+        for name in names:
+            listitem = QListWidgetItem(self._listwidget)
+            listitem.setText(name)
+            value = self.data[name]
+            if isinstance(value, la.LArray):
+                # XXX: Is having the name in the tooltip really useful?
+                listitem.setToolTip("%s: %s" % (name, value.info))
+
     def update_session(self, value, s=None):
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
         new_keys = list(keys_after - keys_before)
-        self._listwidget.addItems(new_keys)
         # TODO: add support for deleting keys
 
         # display only first result if there are more than one
@@ -1897,6 +1902,7 @@ class SessionEditor(QDialog):
             for k in changed_keys:
                 self.data[k] = value[k]
 
+            self.add_list_items(new_keys)
             to_display = changed_keys[0]
 
             if not qtconsole_available and s is not None:
