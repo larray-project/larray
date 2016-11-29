@@ -2516,6 +2516,7 @@ class AxisCollection(object):
         return ReprString('\n'.join([shape] + lines))
 
 
+# AD -- replace axis by key
 def all(values, axis=None):
     """
     Test whether all array elements along given axes evaluate to True.
@@ -2526,7 +2527,7 @@ def all(values, axis=None):
     ----------
     values : LArray or iterable
         LArray object or iterable to test.
-    axis : str or Axis, optional
+    axis : str or list or Axis, optional
         axis or label(s) over which to aggregate.
         If several labels provided, they must belong to the same axis.
         Defaults to None (all axes).
@@ -2542,24 +2543,25 @@ def all(values, axis=None):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([nat, sex]) >= 1
-    >>> a
-    nat\\sex |     M |    F
-         BE | False | True
-         FO |  True | True
-    >>> all(a)
+    >>> arr = ndtest((3,3))
+    >>> arr
+    a\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+     a2 |  6 |  7 |  8
+    >>> barr = arr % 2 == 0
+    a\b |    b0 |    b1 |    b2
+     a0 |  True | False |  True
+     a1 | False |  True | False
+     a2 |  True | False |  True
+    >>> all(barr)
     False
-    >>> all(a, nat)
-    sex |     M |    F
-        | False | True
-    >>> all(a, 'M, F')
-    nat |    BE |   FO
-        | False | True
-    >>> all(a, 'F')
-    nat |   BE |   FO
-        | True | True
+    >>> all(barr, 'a')
+    b |    b0 |    b1 |    b2
+      | False | False | False
+    >>> all(barr, 'a0, a2')
+    b |   b0 |    b1 |   b2
+      | True | False | True
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -2567,6 +2569,7 @@ def all(values, axis=None):
         return builtins.all(values)
 
 
+# AD -- replace axis by key
 def any(values, axis=None):
     """
     Test whether any array elements along given axes evaluate to True.
@@ -2577,7 +2580,7 @@ def any(values, axis=None):
     ----------
     values : LArray or iterable
         LArray object or iterable to test.
-    axis : str or Axis, optional
+    axis : str or list or Axis, optional
         axis or label(s) over which to aggregate.
         If several labels provided, they must belong to the same axis.
         Defaults to None (all axes).
@@ -2588,24 +2591,25 @@ def any(values, axis=None):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([nat, sex]) >= 3
-    >>> a
-    nat\\sex |     M |     F
-         BE | False | False
-         FO | False |  True
-    >>> any(a)
+    >>> arr = ndtest((3,3))
+    >>> arr
+    a\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+     a2 |  6 |  7 |  8
+    >>> barr = arr % 2 == 0
+    a\b |    b0 |    b1 |    b2
+     a0 |  True | False |  True
+     a1 | False |  True | False
+     a2 |  True | False |  True
+    >>> any(barr)
     True
-    >>> any(a, nat)
-    sex |     M |    F
-        | False | True
-    >>> any(a, 'M, F')
-    nat |    BE |   FO
-        | False | True
-    >>> any(a, 'F')
-    nat |    BE |   FO
-        | False | True
+    >>> any(barr, 'a')
+    b |   b0 |   b1 |   b2
+      | True | True | True
+    >>> any(barr, 'a0, a1')
+    b |   b0 |   b1 |   b2
+      | True | True | True
     """
     if isinstance(values, LArray):
         return values.any(axis)
