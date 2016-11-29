@@ -523,10 +523,10 @@ class Session(object):
     def summary(self, template=None):
         if template is None:
             template = "{name}: {axes_names}\n    {title}\n"
-        return '\n'.join(template.format(name=k,
-                                         axes_names=', '.join(v.axes.names),
-                                         title=v.title)
-                         for k, v in self.items())
+        templ_kwargs = [{'name': k,
+                         'axes_names': ', '.join(v.axes.display_names),
+                         'title': v.title} for k, v in self.items()]
+        return '\n'.join(template.format(**kwargs) for kwargs in templ_kwargs)
 
 
 def local_arrays(depth=0):

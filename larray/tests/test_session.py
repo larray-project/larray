@@ -216,9 +216,9 @@ class TestSession(TestCase):
     def test_summary(self):
         sess = self.session.filter(kind=LArray)
         self.assertEqual(sess.summary(),
-                         "e: a0, a1\n    \n\n"
-                         "f: a0, a1\n    \n\n"
-                         "g: a0, a1\n    \n")
+                         "e: a0*, a1*\n    \n\n"
+                         "f: a0*, a1*\n    \n\n"
+                         "g: a0*, a1*\n    \n")
 
 
 if __name__ == "__main__":
