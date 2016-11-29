@@ -84,10 +84,11 @@ Matrix class
 #   (and potentially rename it to reflect the broader scope)
 
 import csv
-import os
 from itertools import product, chain, groupby, islice
-import sys
+import os
 import re
+import sys
+import warnings
 
 try:
     import builtins
@@ -1646,6 +1647,30 @@ class AxisCollection(object):
                              % (axis.name, axis.labels_summary(), id(axis)))
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
+
+        # # check dupes on each axis
+        # for axis in axes:
+        #     axis_dupes = list(duplicates(axis.labels))
+        #     if axis_dupes:
+        #         dupe_labels = ', '.join(str(l) for l in axis_dupes)
+        #         warnings.warn("duplicate labels found for axis %s: %s"
+        #                       % (axis.name, dupe_labels),
+        #                       category=UserWarning, stacklevel=2)
+        #
+        # # check dupes between axes. Using unique to not spot the dupes
+        # # within the same axis that we just displayed.
+        # all_labels = chain(*[np.unique(axis.labels) for axis in axes])
+        # dupe_labels = list(duplicates(all_labels))
+        # if dupe_labels:
+        #     label_axes = [(label, ', '.join(display_name
+        #                                     for axis, display_name
+        #                                     in zip(axes, self.display_names)
+        #                                     if label in axis))
+        #                   for label in dupe_labels]
+        #     dupes = '\n'.join("{} is valid in {{{}}}".format(label, axes)
+        #                       for label, axes in label_axes)
+        #     warnings.warn("ambiguous labels found:\n%s" % dupes,
+        #                   category=UserWarning, stacklevel=5)
 
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt,
