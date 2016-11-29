@@ -2517,16 +2517,28 @@ class AxisCollection(object):
 
 
 def all(values, axis=None):
-    """Test whether all array elements along given axes evaluate to True.
+    """
+    Test whether all array elements along given axes evaluate to True.
+    If `values` is not a LArray object, the function calls the equivalent
+    Python builtins function.
 
     Parameters
     ----------
-    axis : None, int, str or Axis, tuple of int, str or Axis, optional
-        axes over which to aggregate. Defaults to None (all axes).
+    values : LArray or iterable
+        LArray object or iterable to test.
+    axis : str or Axis, optional
+        axis or label(s) over which to aggregate.
+        If several labels provided, they must belong to the same axis.
+        Defaults to None (all axes).
 
     Returns
     -------
-    LArray or scalar
+    LArray of bool or bool
+
+    See Also
+    --------
+    LArray.all
+    builtins.all
 
     Examples
     --------
@@ -2542,6 +2554,12 @@ def all(values, axis=None):
     >>> all(a, nat)
     sex |     M |    F
         | False | True
+    >>> all(a, 'M, F')
+    nat |    BE |   FO
+        | False | True
+    >>> all(a, 'F')
+    nat |   BE |   FO
+        | True | True
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -2550,16 +2568,23 @@ def all(values, axis=None):
 
 
 def any(values, axis=None):
-    """Test whether any array elements along given axes evaluate to True.
+    """
+    Test whether any array elements along given axes evaluate to True.
+    If `values` is not a LArray object, the function calls the equivalent
+    Python builtins function.
 
     Parameters
     ----------
-    axis : int, str or Axis, tuple of int, str or Axis, optional
-        axes over which to aggregate. Defaults to None (all axes).
+    values : LArray or iterable
+        LArray object or iterable to test.
+    axis : str or Axis, optional
+        axis or label(s) over which to aggregate.
+        If several labels provided, they must belong to the same axis.
+        Defaults to None (all axes).
 
     Returns
     -------
-    LArray or scalar
+    LArray of bool or bool
 
     Examples
     --------
@@ -2574,6 +2599,12 @@ def any(values, axis=None):
     True
     >>> any(a, nat)
     sex |     M |    F
+        | False | True
+    >>> any(a, 'M, F')
+    nat |    BE |   FO
+        | False | True
+    >>> any(a, 'F')
+    nat |    BE |   FO
         | False | True
     """
     if isinstance(values, LArray):
