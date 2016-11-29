@@ -137,9 +137,9 @@ def _srange(*args):
     --------
     >>> _srange(8)
     ['0', '1', '2', '3', '4', '5', '6', '7']
-    >>> _srange(5,8)
+    >>> _srange(5, 8)
     ['5', '6', '7']
-    >>> _srange(1,8,2)
+    >>> _srange(1, 8, 2)
     ['1', '3', '5', '7']
     """
     return list(map(str, range(*args)))
@@ -397,8 +397,8 @@ def to_key(v):
     -----
     "int strings" are not converted to int.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> to_key('a:c')
     slice('a', 'c', None)
     >>> to_key('a, b,c ,')
@@ -512,7 +512,7 @@ def union(*args):
 
     Examples
     --------
-    >>> union('a', 'a,b,c,d', ['d','e','f'], ':2')
+    >>> union('a', 'a, b, c, d', ['d', 'e', 'f'], ':2')
     ['a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2']
     """
     if args:
@@ -537,17 +537,17 @@ def larray_equal(first, other):
 
     Examples
     --------
-    >>> age = Axis('age',range(0,100,10))
-    >>> sex = Axis('sex',['M','F'])
-    >>> a = ndrange([age,sex])
+    >>> age = Axis('age', range(0, 100, 10))
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([age, sex])
     >>> b = a.copy()
-    >>> larray_equal(a,b)
+    >>> larray_equal(a, b)
     True
     >>> b['F'] += 1
-    >>> larray_equal(a,b)
+    >>> larray_equal(a, b)
     False
-    >>> b = a.set_labels(x.sex, ['Men','Women']).copy()
-    >>> larray_equal(a,b)
+    >>> b = a.set_labels(x.sex, ['Men', 'Women']).copy()
+    >>> larray_equal(a, b)
     False
     """
     if not isinstance(first, LArray) or not isinstance(other, LArray):
@@ -568,7 +568,7 @@ def _seq_summary(seq, num=3, func=repr):
 
     Examples
     --------
-    >>> _seq_summary(range(10),2)
+    >>> _seq_summary(range(10), 2)
     '0 1 ... 8 9'
     """
     def shorten(l):
@@ -620,14 +620,14 @@ class Axis(object):
 
     Examples
     --------
-    >>> age = Axis('age',10)
+    >>> age = Axis('age', 10)
     >>> age
     Axis('age', 10)
     >>> age.name
     'age'
     >>> age.labels
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> sex = Axis('sex',['M','F'])
+    >>> sex = Axis('sex', ['M', 'F'])
     >>> sex
     Axis('sex', ['M', 'F'])
     """
@@ -708,14 +708,14 @@ class Axis(object):
 
         Examples
         --------
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time', ['2007','2008','2009','2010'])
-        >>> arr = ndrange([sex,time])
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> arr = ndrange([sex, time])
         >>> arr
         sex\\time | 2007 | 2008 | 2009 | 2010
                M |    0 |    1 |    2 |    3
                F |    4 |    5 |    6 |    7
-        >>> arr[time.i[0,-1]]
+        >>> arr[time.i[0, -1]]
         sex\\time | 2007 | 2010
                M |    0 |    3
                F |    4 |    7
@@ -792,9 +792,9 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age',100)
-        >>> age.group(10,18,name='teenagers')
-        LGroup([10, 18], name='teenagers', axis=Axis('age', 100))
+        >>> age = Axis('age', 100)
+        >>> age.group('10:20', name='teenagers')
+        LGroup('10:20', name='teenagers', axis=Axis('age', 100))
         """
         name = kwargs.pop('name', None)
         if kwargs:
@@ -846,8 +846,8 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age',100)
-        >>> age.subaxis(range(10,18),name='teenagers')
+        >>> age = Axis('age', 100)
+        >>> age.subaxis(range(10, 18), name='teenagers')
         Axis('teenagers', 8)
         """
         if (name is None and isinstance(key, slice) and
@@ -881,7 +881,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age',100)
+        >>> age = Axis('age', 100)
         >>> age.iscompatible(age.rename('age_bis'))
         False
         """
@@ -916,10 +916,10 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(5))
-        >>> age_2 = Axis('age',5)
+        >>> age = Axis('age', range(5))
+        >>> age_2 = Axis('age', 5)
         >>> age_3 = Axis('young children', range(5))
-        >>> age_4 = Axis('age',[0,1,2,3,4])
+        >>> age_4 = Axis('age', [0, 1, 2, 3, 4])
         >>> age.equals(age_2)
         False
         >>> age.equals(age_3)
@@ -1176,7 +1176,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> Axis('age',100).labels_summary()
+        >>> Axis('age', 100).labels_summary()
         '0 1 2 ... 97 98 99'
         """
         def repr_on_strings(v):
@@ -1535,7 +1535,7 @@ def index_by_id(seq, value):
 
     Examples
     --------
-    >>> index_by_id(['A','B','C','D','E','F','G','H'], 'D')
+    >>> index_by_id(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], 'D')
     3
     """
     for i, item in enumerate(seq):
@@ -1570,9 +1570,9 @@ class AxisCollection(object):
 
     Examples
     --------
-    >>> age = Axis('age',range(20))
-    >>> sex = Axis('sex',['M','F'])
-    >>> AxisCollection([3,age,sex,('city',['London','Paris','Rome']),'time=2007,2008,2009,2010'])
+    >>> age = Axis('age', range(20))
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> AxisCollection([3, age, sex,('city', ['London', 'Paris', 'Rome']),'time = 2007, 2008, 2009, 2010'])
     AxisCollection([
         Axis(None, 3),
         Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
@@ -1691,11 +1691,11 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex,time])
-        >>> col.get_by_pos('sex',1)
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.get_by_pos('sex', 1)
         Axis('sex', ['M', 'F'])
         """
         if isinstance(key, Axis) and key.name is None:
@@ -1840,10 +1840,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex,time])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex, time])
         >>> col.isaxis(age)
         True
         >>> col.isaxis('time')
@@ -1905,15 +1905,15 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,time])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, time])
         >>> col.get('time')
         Axis('time', ['2007', '2008', '2009', '2010'])
-        >>> col.get('sex',sex)
+        >>> col.get('sex', sex)
         Axis('sex', ['M', 'F'])
-        >>> col.get('nb_children',None,'nb_children')
+        >>> col.get('nb_children', None, 'nb_children')
         Axis('nb_children', 1)
         """
         # XXX: use if key in self?
@@ -1945,12 +1945,12 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> city = Axis('city',['London','Paris','Rome'])
-        >>> col = AxisCollection([age,sex,time])
-        >>> col2 = AxisCollection([age,city,time])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> city = Axis('city', ['London', 'Paris', 'Rome'])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col2 = AxisCollection([age, city, time])
         >>> col2
         AxisCollection([
             Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
@@ -1978,10 +1978,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).keys()
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).keys()
         ['age', 'sex', 'time']
         """
         # XXX: include id/num for anonymous axes? I think I should
@@ -2004,10 +2004,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex,time])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex, time])
         >>> col.pop('age')
         Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
         >>> col
@@ -2033,10 +2033,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex])
         >>> col.append(time)
         >>> col
         AxisCollection([
@@ -2078,11 +2078,11 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
         >>> col = AxisCollection(age)
-        >>> col.extend([sex,time])
+        >>> col.extend([sex, time])
         >>> col
         AxisCollection([
             Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
@@ -2149,10 +2149,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex,time])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex, time])
         >>> col.index(time)
         2
         >>> col.index('sex')
@@ -2192,11 +2192,11 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,time])
-        >>> col.insert(1,sex)
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, time])
+        >>> col.insert(1, sex)
         >>> col
         AxisCollection([
             Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
@@ -2230,10 +2230,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> age_new = Axis('age',range(10))
-        >>> sex = Axis('sex',['M','F'])
-        >>> col = AxisCollection([age,sex])
+        >>> age = Axis('age', range(20))
+        >>> age_new = Axis('age', range(10))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> col = AxisCollection([age, sex])
         >>> col.replace(age, age_new)
         AxisCollection([
             Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
@@ -2255,6 +2255,7 @@ class AxisCollection(object):
         ----------
         axes : sequence of Axis or string
             axes to not include in the returned AxisCollection.
+            In case of string, axes are separated by a comma and no whitespace is accepted.
 
         Returns
         -------
@@ -2267,11 +2268,11 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> col = AxisCollection([age,sex,time])
-        >>> col.without([age,sex])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.without([age, sex])
         AxisCollection([
             Axis('time', ['2007', '2008', '2009', '2010'])
         ])
@@ -2319,10 +2320,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).translate_full_key([':','F','2009'])
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age,sex,time]).translate_full_key((':', 'F', '2009'))
         (slice(None, None, None), 1, 2)
         """
         assert len(key) == len(self)
@@ -2341,13 +2342,13 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(10))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).labels
+        >>> age = Axis('age', range(10))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).labels # doctest: +NORMALIZE_WHITESPACE
         [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), array(['M', 'F'],
-              dtype='<U1'), array(['2007', '2008', '2009', '2010'],
-              dtype='<U4')]
+        dtype='<U1'), array(['2007', '2008', '2009', '2010'],
+        dtype='<U4')]
         """
         return [axis.labels for axis in self._list]
 
@@ -2363,10 +2364,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).names
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).names
         ['age', 'sex', 'time']
         """
         return [axis.name for axis in self._list]
@@ -2460,10 +2461,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).shape
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).shape
         (20, 2, 4)
         """
         return tuple(len(axis) for axis in self._list)
@@ -2480,10 +2481,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',range(20))
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).size
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).size
         160
         """
         return np.prod(self.shape)
@@ -2500,10 +2501,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age',20)
-        >>> sex = Axis('sex',['M','F'])
-        >>> time = Axis('time',['2007','2008','2009','2010'])
-        >>> AxisCollection([age,sex,time]).info
+        >>> age = Axis('age', 20)
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> AxisCollection([age, sex, time]).info
         20 x 2 x 4
          age* [20]: 0 1 2 ... 17 18 19
          sex [2]: 'M' 'F'
