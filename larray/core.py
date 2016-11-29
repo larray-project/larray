@@ -2516,20 +2516,16 @@ class AxisCollection(object):
         return ReprString('\n'.join([shape] + lines))
 
 
-# AD -- replace axis by key
 def all(values, axis=None):
     """
-    Test whether all array elements along given axes evaluate to True.
-    If `values` is not a LArray object, the function calls the equivalent
-    Python builtins function.
+    Test whether all array elements along a given axis evaluate to True.
 
     Parameters
     ----------
     values : LArray or iterable
-        LArray object or iterable to test.
+        Input data.
     axis : str or list or Axis, optional
-        axis or label(s) over which to aggregate.
-        If several labels provided, they must belong to the same axis.
+        axis over which to aggregate.
         Defaults to None (all axes).
 
     Returns
@@ -2538,19 +2534,23 @@ def all(values, axis=None):
 
     See Also
     --------
-    LArray.all
-    builtins.all
+    LArray.all : Equivalent method.
+
+    Notes
+    -----
+    If `values` is not a LArray object, the equivalent builtins function is used.
 
     Examples
     --------
     >>> arr = ndtest((3,3))
     >>> arr
-    a\b | b0 | b1 | b2
+    a\\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
      a2 |  6 |  7 |  8
     >>> barr = arr % 2 == 0
-    a\b |    b0 |    b1 |    b2
+    >>> barr
+    a\\b |    b0 |    b1 |    b2
      a0 |  True | False |  True
      a1 | False |  True | False
      a2 |  True | False |  True
@@ -2559,9 +2559,9 @@ def all(values, axis=None):
     >>> all(barr, 'a')
     b |    b0 |    b1 |    b2
       | False | False | False
-    >>> all(barr, 'a0, a2')
-    b |   b0 |    b1 |   b2
-      | True | False | True
+    >>> all(barr, 'b')
+    a |    a0 |    a1 |    a2
+      | False | False | False
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -2569,36 +2569,41 @@ def all(values, axis=None):
         return builtins.all(values)
 
 
-# AD -- replace axis by key
 def any(values, axis=None):
     """
-    Test whether any array elements along given axes evaluate to True.
-    If `values` is not a LArray object, the function calls the equivalent
-    Python builtins function.
+    Test whether any array elements along a given axis evaluate to True.
 
     Parameters
     ----------
     values : LArray or iterable
-        LArray object or iterable to test.
+        Input data.
     axis : str or list or Axis, optional
-        axis or label(s) over which to aggregate.
-        If several labels provided, they must belong to the same axis.
+        axis over which to aggregate.
         Defaults to None (all axes).
 
     Returns
     -------
     LArray of bool or bool
 
+    See Also
+    --------
+    LArray.any : Equivalent method.
+
+    Notes
+    -----
+    If `values` is not a LArray object, the equivalent builtins function is used.
+
     Examples
     --------
     >>> arr = ndtest((3,3))
     >>> arr
-    a\b | b0 | b1 | b2
+    a\\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
      a2 |  6 |  7 |  8
     >>> barr = arr % 2 == 0
-    a\b |    b0 |    b1 |    b2
+    >>> barr
+    a\\b |    b0 |    b1 |    b2
      a0 |  True | False |  True
      a1 | False |  True | False
      a2 |  True | False |  True
@@ -2607,8 +2612,8 @@ def any(values, axis=None):
     >>> any(barr, 'a')
     b |   b0 |   b1 |   b2
       | True | True | True
-    >>> any(barr, 'a0, a1')
-    b |   b0 |   b1 |   b2
+    >>> any(barr, 'b')
+    a |   a0 |   a1 |   a2
       | True | True | True
     """
     if isinstance(values, LArray):
@@ -2624,8 +2629,8 @@ def sum(array, *args, **kwargs):
 
     Parameters
     ----------
-    array : iterable or array-like or LArray
-        Elements to sum.
+    array : LArray or iterable
+        Input data.
     axis : None or int or str or Axis or tuple of those, optional
         Axis or axes along which a sum is performed.
         The default (`axis` = `None`) is to perform a sum over all
@@ -2636,7 +2641,7 @@ def sum(array, *args, **kwargs):
 
     Returns
     -------
-    LArray
+    LArray or scalar
 
     See Also
     --------
@@ -2651,19 +2656,19 @@ def sum(array, *args, **kwargs):
 
     Examples
     --------
-    >>> a = ndrange((2, 3))
-    >>> a
-    {0}*\\{1}* | 0 | 1 | 2
-            0 | 0 | 1 | 2
-            1 | 3 | 4 | 5
-    >>> sum(a)
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> sum(arr)
     15
-    >>> sum(a, axis=0)
-    {0}* | 0 | 1 | 2
-         | 3 | 5 | 7
-    >>> sum(a, axis=1)
-    {0}* | 0 |  1
-         | 3 | 12
+    >>> sum(arr, axis=0)
+    b | b0 | b1 | b2
+      |  3 |  5 |  7
+    >>> sum(arr, axis='a')
+    b | b0 | b1 | b2
+      |  3 |  5 |  7
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -2676,18 +2681,190 @@ def sum(array, *args, **kwargs):
 
 
 def prod(array, *args, **kwargs):
+    """prod(array, axis=None)
+
+    Return the product of the array elements over a given axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        axis or axes along which a product is performed.
+        The default (`axis` = `None`) is to perform the product over all
+        axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the product is performed on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.prod : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> prod(arr)
+    0
+    >>> prod(arr, axis=0)
+    b | b0 | b1 | b2
+      |  0 |  4 | 10
+    >>> prod(arr, axis='a')
+    b | b0 | b1 | b2
+      |  0 |  4 | 10
+    """
     return array.prod(*args, **kwargs)
 
 
 def cumsum(array, *args, **kwargs):
+    """cumsum(array, axis=None)
+
+    Return the cumulative sum of the elements along a given axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        axis or axes along which a cumulative sum is performed.
+        The default (`axis` = `None`) is to perform the cumulative sum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the cumulative sum is performed on multiple axes.
+
+    Returns
+    -------
+    LArray
+
+    See Also:
+    ---------
+    LArray.cumsum : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> cumsum(arr)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  3
+     a1 |  3 |  7 | 12
+    >>> cumsum(arr, axis=0)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  5 |  7
+    >>> cumsum(arr, axis='a')
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  5 |  7
+    """
     return array.cumsum(*args, **kwargs)
 
 
 def cumprod(array, *args, **kwargs):
+    """cumprod(array, axis=None)
+
+    Return the cumulative product of the elements along a given axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        axis or axes along which a cumulative product is performed.
+        The default (`axis` = `None`) is to perform the cumulative product
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the cumulative product is performed on multiple axes.
+
+    Returns
+    -------
+    LArray
+
+    See Also:
+    ---------
+    LArray.cumprod : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> cumprod(arr)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  0 |  0
+     a1 |  3 | 12 | 60
+    >>> cumprod(arr, axis=0)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  0 |  4 | 10
+    >>> cumprod(arr, axis='a')
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  0 |  4 | 10
+    """
     return array.cumprod(*args, **kwargs)
 
 
 def min(array, *args, **kwargs):
+    """min(array, axis=None)
+
+    Return the minimum of an array or minimum along an axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        axis or axes along which a the minimum is searched.
+        The default (`axis` = `None`) is to search the minimum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the minimum is searched on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.min : Equivalent method.
+
+    Notes
+    -----
+    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> min(arr)
+    0
+    >>> min(arr, axis=0)
+    b | b0 | b1 | b2
+      |  0 |  1 |  2
+    >>> min(arr, axis='a')
+    b | b0 | b1 | b2
+      |  0 |  1 |  2
+    """
     if isinstance(array, LArray):
         return array.min(*args, **kwargs)
     else:
@@ -2695,6 +2872,50 @@ def min(array, *args, **kwargs):
 
 
 def max(array, *args, **kwargs):
+    """max(array, axis=None)
+
+    Return the minimum of an array or maximum along an axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        axis or axes along which a the maximum is searched.
+        The default (`axis` = `None`) is to search the maximum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the maximum is searched on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.max : Equivalent method.
+
+    Notes
+    -----
+    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> max(arr)
+    5
+    >>> max(arr, axis=0)
+    b | b0 | b1 | b2
+      |  3 |  4 |  5
+    >>> max(arr, axis='a')
+    b | b0 | b1 | b2
+      |  3 |  4 |  5
+    """
     if isinstance(array, LArray):
         return array.max(*args, **kwargs)
     else:
@@ -2702,78 +2923,272 @@ def max(array, *args, **kwargs):
 
 
 def mean(array, *args, **kwargs):
+    """mean(array, axis=None)
+
+    Compute the arithmetic mean along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the means are computed.
+        The default (`axis` = `None`) is to compute the mean
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the mean is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.mean : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> mean(arr)
+    2.5
+    >>> mean(arr, axis=0)
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    >>> mean(arr, axis='a')
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    """
     return array.mean(*args, **kwargs)
 
 
 def median(array, *args, **kwargs):
-    """
+    """median(array, axis=None)
+
+    Compute the median along the specified axis.
+
     Parameters
     ----------
-    array : iterable or array-like or LArray
+    array : LArray
+        Input data.
     axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the median are computed.
+        The default (`axis` = `None`) is to compute the median
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the median is calculated on multiple axes.
 
     Returns
     -------
-    LArray
+    LArray or scalar
 
-    See Also
-    --------
+    See Also:
+    ---------
     LArray.median : Equivalent method.
 
     Examples
     --------
-
-    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
-    >>> a
-    {0}*\\{1}* |  0 | 1 | 2
-            0 | 10 | 7 | 4
-            1 |  3 | 2 | 1
-    >>> median(a)
-    3.5
-    >>> median(a, axis=0)
-    {0}* |   0 |   1 |   2
-         | 6.5 | 4.5 | 2.5
-    >>> median(a, axis=1)
-    {0}* |   0 |   1
-         | 7.0 | 2.0
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> median(arr)
+    2.5
+    >>> median(arr, axis=0)
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    >>> median(arr, axis='a')
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
     """
     return array.median(*args, **kwargs)
 
 
 def percentile(array, *args, **kwargs):
-    """
+    """percentile(array, q, axis=None)
+
+    Compute the qth percentile of the data along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    q : float in range of [0,100] (or sequence of floats)
+        Percentile to compute, which must be between 0 and 100 inclusive.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the percentile are computed.
+        The default (`axis` = `None`) is to compute the percentile
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the percentile is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.percentile : Equivalent method.
+
     Examples
     --------
-
-    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
-    >>> a
-    {0}*\\{1}* |  0 | 1 | 2
-            0 | 10 | 7 | 4
-            1 |  3 | 2 | 1
-    >>> # this is a bug in numpy: np.nanpercentile(all axes) returns an ndarray,
-    >>> # instead of a scalar.
-    >>> percentile(a, 50)
-    array(3.5)
-    >>> percentile(a, 50, axis=0)
-    {0}* |   0 |   1 |   2
-         | 6.5 | 4.5 | 2.5
-    >>> percentile(a, 50, axis=1)
-    {0}* |   0 |   1
-         | 7.0 | 2.0
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> percentile(arr, 25)
+    array(1.25)
+    >>> percentile(arr, 25, axis=0)
+    b |   b0 |   b1 |   b2
+      | 0.75 | 1.75 | 2.75
+    >>> percentile(arr, 25, axis='a')
+    b |   b0 |   b1 |   b2
+      | 0.75 | 1.75 | 2.75
     """
     return array.percentile(*args, **kwargs)
 
 
 # not commutative
 def ptp(array, *args, **kwargs):
+    """ptp(array, axis=None)
+
+    Range of values (maximum - minimum) along an axis.
+
+    The name of the function comes from the acronym for ‘peak to peak’.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis along which to find the peaks.
+        The default (`axis` = `None`) is to find the peaks
+        over all axes of the input array (as if the array is flatten).
+        `axis` may be negative, in which case it counts from the last
+        to the first axis.
+
+        If this is a tuple, the peaks are computed on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.ptp : Equivalent method.
+
+    Examples
+    --------
+    #>>> arr = ndtest((2, 3))
+    #>>> arr
+    #a\\b | b0 | b1 | b2
+    # a0 |  0 |  1 |  2
+    # a1 |  3 |  4 |  5
+    #>>> ptp(arr)
+    #5
+    #>>> ptp(arr, axis=0)
+    #b |  b0 |  b1 |  b2
+    #  |   3 |   3 |   3
+    #>>> ptp(arr, axis='a')
+    #b |  b0 |  b1 |  b2
+    #  |   3 |   3 |   3
+    """
     return array.ptp(*args, **kwargs)
 
 
 def var(array, *args, **kwargs):
+    """var(array, axis=None)
+
+    Compute the variance along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the variance are computed.
+        The default (`axis` = `None`) is to compute the variance
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the variance is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.var : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> var(arr)
+    2.9166666666666665
+    >>> var(arr, axis=1)
+    a |                 a0 |                 a1
+      | 0.6666666666666666 | 0.6666666666666666
+    >>> var(arr, axis='b')
+    a |                 a0 |                 a1
+      | 0.6666666666666666 | 0.6666666666666666
+    """
     return array.var(*args, **kwargs)
 
 
 def std(array, *args, **kwargs):
+    """std(array, axis=None)
+
+    Compute the standard deviation along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the standard deviation are computed.
+        The default (`axis` = `None`) is to compute the standard deviation
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the standard deviation is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also:
+    ---------
+    LArray.std : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> std(arr)
+    1.707825127659933
+    >>> std(arr, axis=1)
+    a |                a0 |                a1
+      | 0.816496580927726 | 0.816496580927726
+    >>> std(arr, axis='b')
+    a |                a0 |                a1
+      | 0.816496580927726 | 0.816496580927726
+    """
     return array.std(*args, **kwargs)
 
 
