@@ -63,8 +63,10 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         'ignore': return values computed up to that point (silently)
         'warn': return values computed up to that point and print a warning
         'raise': raise an exception (default)
-    display_progress : bool, optional
+    display_progress : False, True or 'condensed', optional
         whether or not to display progress. Defaults to False.
+        if 'condensed' will display progress using a denser template (using one
+        line per iteration).
 
     Returns
     -------
@@ -72,6 +74,8 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     """
     assert nzvzs in {'fix', 'warn', 'raise'}
     assert no_convergence in {'ignore', 'warn', 'raise'}
+    assert isinstance(display_progress, bool) or display_progress == 'condensed'
+
     target_sums = [la.aslarray(ts) for ts in target_sums]
 
     def rename_axis(axis, name):
@@ -174,12 +178,16 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         step_sum_improvement = lastdiffs[-1] - max_sum_diff
 
         if display_progress:
-            print("""iteration %d
+            if display_progress == "condensed":
+                template = "it %d max cell diff %s max diff to target %s (%s)"
+            else:
+                template = """iteration %d
  * max(abs(prev_cell - cell)): %s
  * max(abs(sum - target_sum)): %s
    \- change since last iteration: %s
-""" % (i, f2str(stepcelldiff), f2str(max_sum_diff),
-       f2str(step_sum_improvement)))
+"""
+            print(template % (i, f2str(stepcelldiff), f2str(max_sum_diff),
+                              f2str(step_sum_improvement)))
 
         if np.all(np.array(lastdiffs) == max_sum_diff):
             if no_convergence in {'warn', 'raise'}:
