@@ -3192,13 +3192,23 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
-_numeric_kinds = 'buifc'
-_string_kinds = 'SU'
+_numeric_kinds = 'buifc'    #Boolean, Unsigned integer, Integer, Float, Complex
+_string_kinds = 'SU'        #String, Unicode
 _meta_kind = {k: 'str' for k in _string_kinds}
 _meta_kind.update({k: 'numeric' for k in _numeric_kinds})
 
 
 def common_type(arrays):
+    """
+    Similar to ``common_type`` NumPy function.
+    Return a type which is common to the input arrays.
+    All input arrays can be safely cast to the returned dtype without loss of information.
+
+    Notes
+    -----
+    If list of arrays mixes 'numeric' and 'string' types, the function returns 'object'
+    as common type.
+    """
     arrays = [np.asarray(a) for a in arrays]
     dtypes = [a.dtype for a in arrays]
     meta_kinds = [_meta_kind.get(dt.kind, 'other') for dt in dtypes]
@@ -3277,7 +3287,7 @@ class LArrayPositionalIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    def translate_key(self, key):
+    def _translate_key(self, key):
         if not isinstance(key, tuple):
             key = (key,)
         if len(key) > self.array.ndim:
@@ -3288,10 +3298,10 @@ class LArrayPositionalIndexer(object):
                      for axis_key, axis in zip(key, self.array.axes))
 
     def __getitem__(self, key):
-        return self.array[self.translate_key(key)]
+        return self.array[self._translate_key(key)]
 
     def __setitem__(self, key, value):
-        self.array[self.translate_key(key)] = value
+        self.array[self._translate_key(key)] = value
 
     def __len__(self):
         return len(self.array)
@@ -3345,10 +3355,73 @@ class LArrayPositionalPointsIndexer(object):
 
 
 def get_axis(obj, i):
+    """
+    Returns an axis according to its position.
+
+    Parameters
+    ----------
+    obj : LArray or other array
+        Input LArray or any array object on which a shape method can be applied
+        (NumPy or PandaS array).
+    i : int
+        Position of the axis.
+
+    Returns
+    -------
+    Axis
+        Axis corresponding to the given position if input `obj` is a LArray.
+        A new anonymous Axis with the same length of the ith dimension of
+        the input `obj` otherwise.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 2, 2))
+    >>> arr
+     a | b\c | c0 | c1
+    a0 |  b0 |  0 |  1
+    a0 |  b1 |  2 |  3
+    a1 |  b0 |  4 |  5
+    a1 |  b1 |  6 |  7
+    >>> get_axis(arr, 1)
+    Axis('b', ['b0', 'b1'])
+    >>> np_arr = np.zeros((2, 2, 2))
+    >>> get_axis(np_arr, 1)
+    Axis(None, 2)
+    """
     return obj.axes[i] if isinstance(obj, LArray) else Axis(None, obj.shape[i])
 
 
 def aslarray(a):
+    """
+    Converts input as LArray if possible.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array to convert into a LArray.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> # NumPy array
+    >>> np_arr = np.arange(6).reshape((2,3))
+    >>> aslarray(np_arr)
+    {0}*\{1}* | 0 | 1 | 2
+            0 | 0 | 1 | 2
+            1 | 3 | 4 | 5
+    >>> # PandaS dataframe
+    >>> data = {'normal'  : pd.Series([1., 2., 3.], index=['a', 'b', 'c']),
+    ...         'reverse' : pd.Series([3., 2., 1.], index=['a', 'b', 'c'])}
+    >>> df = pd.DataFrame(data)
+    >>> aslarray(df)
+    {0}\{1} | normal | reverse
+          a |    1.0 |     3.0
+          b |    2.0 |     2.0
+          c |    3.0 |     1.0
+    """
     if isinstance(a, LArray):
         return a
     elif hasattr(a, '__larray__'):
