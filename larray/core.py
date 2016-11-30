@@ -3087,19 +3087,19 @@ def ptp(array, *args, **kwargs):
 
     Examples
     --------
-    #>>> arr = ndtest((2, 3))
-    #>>> arr
-    #a\\b | b0 | b1 | b2
-    # a0 |  0 |  1 |  2
-    # a1 |  3 |  4 |  5
-    #>>> ptp(arr)
-    #5
-    #>>> ptp(arr, axis=0)
-    #b |  b0 |  b1 |  b2
-    #  |   3 |   3 |   3
-    #>>> ptp(arr, axis='a')
-    #b |  b0 |  b1 |  b2
-    #  |   3 |   3 |   3
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> ptp(arr)
+    5
+    >>> ptp(arr, axis=0)
+    b | b0 | b1 | b2
+      |  3 |  3 |  3
+    >>> ptp(arr, axis='a')
+    b | b0 | b1 | b2
+      |  3 |  3 |  3
     """
     return array.ptp(*args, **kwargs)
 
@@ -3219,6 +3219,7 @@ def common_type(arrays):
         return np.find_common_type(dtypes, [])
     elif meta_kinds[0] == 'str':
         need_unicode = any(dt.kind == 'U' for dt in dtypes)
+        # unicode are coded with 4 bytes
         max_size = max(dt.itemsize // 4 if dt.kind == 'U' else dt.itemsize
                        for dt in dtypes)
         return np.dtype(('U' if need_unicode else 'S', max_size))
@@ -3433,22 +3434,91 @@ def aslarray(a):
 
 
 class LArray(object):
+    """
+    A LArray object represents a multidimensional, homogeneous
+    array of fixed-size items with labeled axes.
+
+    The function :func:`aslarray` can be used to convert a
+    NumPy array or PandaS DataFrame into a LArray.
+
+    Parameters
+    ----------
+    data : scalar, tuple, list or NumPy ndarray
+        Input data.
+    axes : collection (tuple, list or AxisCollection) of axes \
+    (int, str or  Axis), optional
+        Axes.
+    title : str, optional
+        Title of array.
+
+    Attributes
+    ----------
+    data : NumPy ndarray
+        Data.
+    axes : AxisCollection
+        Axes.
+    title : str
+        Title.
+
+    See Also
+    --------
+    create_sequential : Create a LArray by sequentially
+                        applying modifications to the array
+                        along axis.
+    ndrange : Create a LArray with increasing elements.
+    zeros : Create a LArray, each element of which is zero.
+    ones : Create a LArray, each element of which is 1.
+    full : Create a LArray filled with a given value.
+    empty : Create a LArray, but leave its allocated memory
+            unchanged (i.e., it contains “garbage”).
+
+    Examples
+    --------
+    >>> age = Axis('age', [10, 11, 12])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> time = Axis('time', ['2007','2008','2009'])
+    >>> axes = [age, sex, time]
+    >>> ndrange(axes, 10)
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M |   10 |   11 |   12
+     10 |        F |   13 |   14 |   15
+     11 |        M |   16 |   17 |   18
+     11 |        F |   19 |   20 |   21
+     12 |        M |   22 |   23 |   24
+     12 |        F |   25 |   26 |   27
+    >>> full(axes, 10.0)
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M | 10.0 | 10.0 | 10.0
+     10 |        F | 10.0 | 10.0 | 10.0
+     11 |        M | 10.0 | 10.0 | 10.0
+     11 |        F | 10.0 | 10.0 | 10.0
+     12 |        M | 10.0 | 10.0 | 10.0
+     12 |        F | 10.0 | 10.0 | 10.0
+    >>> arr = empty(axes)
+    >>> arr['F'] = 1.0
+    >>> arr['M'] = -1.0
+    >>> arr
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M | -1.0 | -1.0 | -1.0
+     10 |        F |  1.0 |  1.0 |  1.0
+     11 |        M | -1.0 | -1.0 | -1.0
+     11 |        F |  1.0 |  1.0 |  1.0
+     12 |        M | -1.0 | -1.0 | -1.0
+     12 |        F |  1.0 |  1.0 |  1.0
+    >>> bysex = create_sequential(sex, initial=-1, inc=2)
+    >>> bysex
+    sex |  M | F
+        | -1 | 1
+    >>> create_sequential(age, initial=10, inc=bysex)
+    sex\\age | 10 | 11 | 12
+          M | 10 |  9 |  8
+          F | 10 | 11 | 12
+    """
     def __init__(self,
                  data,
                  axes=None,
                  title=''   # type: str
                  ):
-        """
-        Parameters
-        ----------
-        data : scalar, tuple, list or np.ndarray
-            data
-        axes : collection (tuple, list or AxisCollection) of axes (int,
-        str or  Axis), optional
-            axes
-        title : str, optional
-            title of array
-        """
         data = np.asarray(data)
         ndim = data.ndim
         if axes is None:
@@ -3470,11 +3540,62 @@ class LArray(object):
 
     # XXX: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
+        """
+        Return the indices of the elements that are non-zero.
+
+        Returns a tuple of arrays, one for each dimension of a,
+        containing the indices of the non-zero elements in that dimension.
+
+        Returns
+        -------
+        tuple_of_arrays : tuple
+            Indices of elements that are non-zero.
+
+        Examples
+        --------
+        >>> arr = ndtest((2,3)) % 2
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  0
+         a1 |  1 |  0 |  1
+        >>> arr.nonzero()
+        (array([0, 1, 1], dtype=int64), array([1, 0, 2], dtype=int64))
+        """
         # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
     def with_axes(self, axes):
+        """
+        Returns a LArray with same data but new axes.
+        The number and length of axes must match
+        dimensions and shape of data array.
+
+        Parameters
+        ----------
+        axes : collection (tuple, list or AxisCollection) of axes \
+        (int, str or  Axis), optional
+            New axes.
+
+        Returns
+        -------
+        LArray
+            Array with same data but new axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((2,3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        >>> line = Axis('line', ['l0', 'l1'])
+        >>> column = Axis('column', ['c0', 'c1', 'c2'])
+        >>> arr.with_axes([line, column])
+        line\\column | c0 | c1 | c2
+                 l0 |  0 |  1 |  2
+                 l1 |  3 |  4 |  5
+        """
         return LArray(self.data, axes)
 
     def __getattr__(self, key):
@@ -4483,7 +4604,15 @@ class LArray(object):
         if out is not None:
             assert isinstance(out, LArray)
             kwargs['out'] = out.data
-        res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
+        # FIXME:
+        if op.__name__ == 'ptp':
+            if keepdims or len(axes_indices) > 1:
+                raise NotImplemented
+            else:
+                axis, = axes_indices
+                res_data = np.ptp(src_data, axis=axis, **kwargs)
+        else:
+            res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
 
         if keepaxes:
             label = op.__name__.replace('nan', '') if keepaxes is True \
