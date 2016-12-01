@@ -3289,6 +3289,10 @@ class LArrayPositionalIndexer(object):
         self.array = array
 
     def _translate_key(self, key):
+        """
+        Translates key into tuple of PGroup, i.e.
+        tuple of collections of labels.
+        """
         if not isinstance(key, tuple):
             key = (key,)
         if len(key) > self.array.ndim:
@@ -3476,7 +3480,7 @@ class LArray(object):
     --------
     >>> age = Axis('age', [10, 11, 12])
     >>> sex = Axis('sex', ['M', 'F'])
-    >>> time = Axis('time', ['2007','2008','2009'])
+    >>> time = Axis('time', ['2007', '2008', '2009'])
     >>> axes = [age, sex, time]
     >>> ndrange(axes, 10)
     age | sex\\time | 2007 | 2008 | 2009
@@ -3553,7 +3557,7 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((2,3)) % 2
+        >>> arr = ndtest((2, 3)) % 2
         >>> arr
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  0
@@ -3584,7 +3588,7 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((2,3))
+        >>> arr = ndtest((2, 3))
         >>> arr
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  2
@@ -3611,14 +3615,90 @@ class LArray(object):
 
     @property
     def i(self):
+        """
+        Extracts a subset using positions of labels.
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3, 3))
+        >>> arr
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+        a2 |  b0 | 18 | 19 | 20
+        a2 |  b1 | 21 | 22 | 23
+        a2 |  b2 | 24 | 25 | 26
+        >>> arr.i[[0,2],:,0:2]
+         a | b\\c | c0 | c1
+        a0 |  b0 |  0 |  1
+        a0 |  b1 |  3 |  4
+        a0 |  b2 |  6 |  7
+        a2 |  b0 | 18 | 19
+        a2 |  b1 | 21 | 22
+        a2 |  b2 | 24 | 25
+        """
         return LArrayPositionalIndexer(self)
 
     @property
     def points(self):
+        """
+        Extracts an intersection subset using labels.
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3, 3))
+        >>> arr
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+        a2 |  b0 | 18 | 19 | 20
+        a2 |  b1 | 21 | 22 | 23
+        a2 |  b2 | 24 | 25 | 26
+        >>> arr.points['a0,a2',:,'c0,c2']
+        a,c\\b | b0 | b1 | b2
+        a0,c0 |  0 |  3 |  6
+        a2,c2 | 20 | 23 | 26
+        >>> arr.points['a0,a2','b0,b2','c0,c2']
+        a,b,c | a0,b0,c0 | a2,b2,c2
+              |        0 |       26
+        """
         return LArrayPointsIndexer(self)
 
     @property
     def ipoints(self):
+        """
+        Extracts an intersection subset using positions.
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3, 3))
+        >>> arr
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+        a2 |  b0 | 18 | 19 | 20
+        a2 |  b1 | 21 | 22 | 23
+        a2 |  b2 | 24 | 25 | 26
+        >>> arr.ipoints[[0,2],:,[0,2]]
+        a,c\\b | b0 | b1 | b2
+         a0,c0 |  0 |  3 |  6
+         a2,c2 | 20 | 23 | 26
+        >>> arr.ipoints[[0,2],[0,2],[0,2]]
+        a,b,c | a0,b0,c0 | a2,b2,c2
+              |        0 |       26
+        """
         return LArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
