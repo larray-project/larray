@@ -5602,6 +5602,49 @@ class LArray(object):
         #      FO | 0.6666666666 | 1.0
         return self / self.sum(*axes)
 
+    def rationot0(self, *axes):
+        """Returns a LArray with values array / array.sum(axes) where the sum
+        is not 0, 0 otherwise.
+
+        Parameters
+        ----------
+        *axes
+
+        Returns
+        -------
+        LArray
+            array / array.sum(axes)
+
+        Examples
+        --------
+        >>> a = Axis('a', 'a0,a1')
+        >>> b = Axis('b', 'b0,b1,b2')
+        >>> arr = LArray([[6, 0, 2],
+        ...               [4, 0, 8]], [a, b])
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  6 |  0 |  2
+         a1 |  4 |  0 |  8
+        >>> arr.sum()
+        20
+        >>> arr.rationot0()
+        a\\b |  b0 |  b1 |  b2
+         a0 | 0.3 | 0.0 | 0.1
+         a1 | 0.2 | 0.0 | 0.4
+        >>> arr.rationot0(x.a)
+        a\\b |  b0 |  b1 |  b2
+         a0 | 0.6 | 0.0 | 0.2
+         a1 | 0.4 | 0.0 | 0.8
+
+        for reference, the normal ratio method would return:
+
+        >>> arr.ratio(x.a)
+        a\\b |  b0 |  b1 |  b2
+         a0 | 0.6 | nan | 0.2
+         a1 | 0.4 | nan | 0.8
+        """
+        return self.divnot0(self.sum(*axes))
+
     def percent(self, *axes):
         """Returns an array with values given as
          percent of the total of all values along given axes.
