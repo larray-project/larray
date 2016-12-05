@@ -2343,8 +2343,8 @@ class AxisCollection(object):
         Examples
         --------
         >>> age = Axis('age', range(10))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', ['2007', '2008', '2009', '2010'])
+        >>> sex = Axis('sex', [u'M', u'F'])
+        >>> time = Axis('time', [u'2007', u'2008', u'2009', u'2010'])
         >>> AxisCollection([age, sex, time]).labels # doctest: +NORMALIZE_WHITESPACE
         [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), array(['M', 'F'],
         dtype='<U1'), array(['2007', '2008', '2009', '2010'],
@@ -3134,19 +3134,20 @@ def var(array, *args, **kwargs):
 
     Examples
     --------
-    >>> arr = ndtest((2, 3))
+    >>> arr = ndtest((2, 4))
+    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
     >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
+    a\\b | b0 | b1 | b2 | b3
+     a0 |  2 |  4 |  4 |  4
+     a1 |  5 |  5 |  7 |  9
     >>> var(arr)
-    2.9166666666666665
+    4.0
     >>> var(arr, axis=1)
-    a |                 a0 |                 a1
-      | 0.6666666666666666 | 0.6666666666666666
+    a |   a0 |   a1
+      | 0.75 | 2.75
     >>> var(arr, axis='b')
-    a |                 a0 |                 a1
-      | 0.6666666666666666 | 0.6666666666666666
+    a |   a0 |   a1
+      | 0.75 | 2.75
     """
     return array.var(*args, **kwargs)
 
@@ -3178,19 +3179,20 @@ def std(array, *args, **kwargs):
 
     Examples
     --------
-    >>> arr = ndtest((2, 3))
+    >>> arr = ndtest((2, 4))
+    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
     >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
+    a\\b | b0 | b1 | b2 | b3
+     a0 |  2 |  4 |  4 |  4
+     a1 |  5 |  5 |  7 |  9
     >>> std(arr)
-    1.707825127659933
-    >>> std(arr, axis=1)
-    a |                a0 |                a1
-      | 0.816496580927726 | 0.816496580927726
-    >>> std(arr, axis='b')
-    a |                a0 |                a1
-      | 0.816496580927726 | 0.816496580927726
+    2.0
+    >>> std(arr, axis=0)
+    b |  b0 |  b1 |  b2 |  b3
+      | 1.5 | 0.5 | 1.5 | 2.5
+    >>> std(arr, axis='a')
+    b |  b0 |  b1 |  b2 |  b3
+      | 1.5 | 0.5 | 1.5 | 2.5
     """
     return array.std(*args, **kwargs)
 
