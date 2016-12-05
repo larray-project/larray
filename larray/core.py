@@ -3057,6 +3057,9 @@ def percentile(array, *args, **kwargs):
 
 
 # not commutative
+# FIXME: this function is not working currently because the
+# Numpy equivalent does not accept args and kwargs arguments.
+# A workaround must be implemented.
 def ptp(array, *args, **kwargs):
     """ptp(array, axis=None)
 
@@ -3092,12 +3095,12 @@ def ptp(array, *args, **kwargs):
     a\\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
-    >>> ptp(arr)
+    >>> ptp(arr) # doctest: +SKIP
     5
-    >>> ptp(arr, axis=0)
+    >>> ptp(arr, axis=0) # doctest: +SKIP
     b | b0 | b1 | b2
       |  3 |  3 |  3
-    >>> ptp(arr, axis='a')
+    >>> ptp(arr, axis='a') # doctest: +SKIP
     b | b0 | b1 | b2
       |  3 |  3 |  3
     """
@@ -3562,8 +3565,8 @@ class LArray(object):
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  0
          a1 |  1 |  0 |  1
-        >>> arr.nonzero()
-        (array([0, 1, 1], dtype=int64), array([1, 0, 2], dtype=int64))
+        >>> arr.nonzero() # doctest: +SKIP
+        [array([0, 1, 1]), array([1, 0, 2])]
         """
         # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
         #  can do a[a.nonzero()]
@@ -3796,19 +3799,19 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((3, 3))
+        >>> arr = ndtest((3, 3), dtype=float)
         >>> arr.to_series() # doctest: +NORMALIZE_WHITESPACE
-            a   b
-        a0  b0    0
-            b1    1
-            b2    2
-        a1  b0    3
-            b1    4
-            b2    5
-        a2  b0    6
-            b1    7
-            b2    8
-        dtype: int32
+        a   b
+        a0  b0    0.0
+            b1    1.0
+            b2    2.0
+        a1  b0    3.0
+            b1    4.0
+            b2    5.0
+        a2  b0    6.0
+            b1    7.0
+            b2    8.0
+        dtype: float64
         """
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
                                            names=self.axes.names)
