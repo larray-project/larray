@@ -2343,12 +2343,12 @@ class AxisCollection(object):
         Examples
         --------
         >>> age = Axis('age', range(10))
-        >>> sex = Axis('sex', [u'M', u'F'])
-        >>> time = Axis('time', [u'2007', u'2008', u'2009', u'2010'])
-        >>> AxisCollection([age, sex, time]).labels # doctest: +NORMALIZE_WHITESPACE
-        [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), array(['M', 'F'],
-        dtype='<U1'), array(['2007', '2008', '2009', '2010'],
-        dtype='<U4')]
+        >>> children = Axis('number of children', range(8))
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, children, time]).labels # doctest: +NORMALIZE_WHITESPACE
+        [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+         array([0, 1, 2, 3, 4, 5, 6, 7]),
+         array([2007, 2008, 2009, 2010])]
         """
         return [axis.labels for axis in self._list]
 
