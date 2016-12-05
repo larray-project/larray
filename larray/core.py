@@ -378,7 +378,7 @@ def _to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
-def to_key(v):
+def _to_key(v):
     """
     Converts a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
@@ -399,29 +399,29 @@ def to_key(v):
 
     Examples
     --------
-    >>> to_key('a:c')
+    >>> _to_key('a:c')
     slice('a', 'c', None)
-    >>> to_key('a, b,c ,')
+    >>> _to_key('a, b,c ,')
     ['a', 'b', 'c']
-    >>> to_key('a,')
+    >>> _to_key('a,')
     ['a']
-    >>> to_key(' a ')
+    >>> _to_key(' a ')
     'a'
-    >>> to_key(10)
+    >>> _to_key(10)
     10
-    >>> to_key('abc=a,b,c')
+    >>> _to_key('abc=a,b,c')
     LGroup(['a', 'b', 'c'], name='abc')
     """
     if isinstance(v, tuple):
         return list(v)
     elif isinstance(v, Group):
-        return v.__class__(to_key(v.key), v.name, v.axis)
+        return v.__class__(_to_key(v.key), v.name, v.axis)
     elif v is Ellipsis or isinstance(v, (int, list, slice, LArray)):
         return v
     elif isinstance(v, basestring):
         if '=' in v:
             name, key = v.split('=')
-            return LGroup(to_key(key.strip()), name.strip())
+            return LGroup(_to_key(key.strip()), name.strip())
         else:
             numcolons = v.count(':')
             if numcolons:
@@ -486,13 +486,13 @@ def to_keys(value):
     """
     if isinstance(value, basestring):
         if ';' in value:
-            return tuple([to_key(group) for group in value.split(';')])
+            return tuple([_to_key(group) for group in value.split(';')])
         else:
-            return to_key(value)
+            return _to_key(value)
     elif isinstance(value, tuple):
-        return tuple([to_key(group) for group in value])
+        return tuple([_to_key(group) for group in value])
     else:
-        return to_key(value)
+        return _to_key(value)
 
 
 def union(*args):
@@ -1098,7 +1098,7 @@ class Axis(object):
         if isinstance(key, basestring):
             # transform "specially formatted strings" for slices and lists to
             # actual objects
-            key = to_key(key)
+            key = _to_key(key)
             # if key was a string of the form "name=value", it can be an
             # LGroup now, so we have to take the key from it *again*.
             # XXX: one way to not do that twice would be to apply to_key
@@ -1441,17 +1441,17 @@ class LGroup(Group):
         #      to_tick directly, instead of using to_key explicitly here
         # XXX: we probably want to include this normalization in __init__
         #      instead
-        return hash(_to_tick(to_key(self.key)))
+        return hash(_to_tick(_to_key(self.key)))
 
     def __eq__(self, other):
         # different name or axis compare equal !
         # XXX: we might want to compare "expanded" keys, so that slices
         # can match lists and vice-versa.
         other_key = other.key if isinstance(other, LGroup) else other
-        return _to_tick(to_key(self.key)) == _to_tick(to_key(other_key))
+        return _to_tick(_to_key(self.key)) == _to_tick(_to_key(other_key))
 
     def __str__(self):
-        key = to_key(self.key)
+        key = _to_key(self.key)
         if isinstance(key, slice):
             str_key = _slice_to_str(key, use_repr=True)
         elif isinstance(key, (tuple, list, np.ndarray)):
@@ -4996,7 +4996,7 @@ class LArray(object):
                 if isinstance(group, PGroup) and np.isscalar(group.key):
                     group = PGroup([group.key], axis=group.axis)
                 elif isinstance(group, LGroup):
-                    key = to_key(group.key)
+                    key = _to_key(group.key)
                     if np.isscalar(key):
                         key = [key]
                     # we do not care about the name at this point
