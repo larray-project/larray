@@ -8092,14 +8092,29 @@ def _equal_modulo_len1(shape1, shape2):
 # this wouldn't be a problem.
 def make_numpy_broadcastable(values):
     """
-    return values where LArrays are (numpy) broadcastable between them.
-    For that to be possible, all common axes must be compatible.
+    Returns values where LArrays are (NumPy) broadcastable between them.
+    For that to be possible, all common axes must be compatible
+    (same name and length).
     Extra axes (in any array) can have any length.
 
     * the resulting arrays will have the combination of all axes found in the
       input arrays, the earlier arrays defining the order of axes. Axes with
       labels take priority over wildcard axes.
     * length 1 wildcard axes will be added for axes not present in input
+
+    Parameters
+    ----------
+    values : iterable of arrays
+        Arrays that requires to be (NumPy) broadcastable between them.
+
+    Returns
+    -------
+    list of arrays
+        List of arrays broadcastable between them.
+        Arrays will have the combination of all axes found in the
+        input arrays, the earlier arrays defining the order of axes.
+    AxisCollection
+        Collection of axes of all input arrays.
     """
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
     return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
