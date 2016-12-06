@@ -284,6 +284,31 @@ def clear_layout(layout):
 
 
 class Product(object):
+    """
+    Represents the `cartesian product` of several arrays.
+
+    Parameters
+    ----------
+    arrays : iterable of array
+        List of arrays on which to apply the cartesian product.
+
+    Examples
+    --------
+    >>> age = [10, 11, 12]
+    >>> time = [2007, 2008, 2009]
+    >>> cart_prod = Product([age, time])
+    >>> for i in range(len(cart_prod)):
+    ...     print(cart_prod[i])
+    (10, 2007)
+    (10, 2008)
+    (10, 2009)
+    (11, 2007)
+    (11, 2008)
+    (11, 2009)
+    (12, 2007)
+    (12, 2008)
+    (12, 2009)
+    """
     def __init__(self, arrays):
         self.arrays = arrays
         assert len(arrays)
@@ -337,7 +362,34 @@ def get_idx_rect(index_list):
 
 
 class ArrayModel(QAbstractTableModel):
-    """Array Editor Table Model"""
+    """Array Editor Table Model.
+
+    Parameters
+    ----------
+    data : 2D NumPy array, optional
+        Input data (2D array).
+    format : str, optional
+        Indicates how data are represented in cells.
+        By default, they are represented as floats with 3 decimal points.
+    xlabels : array, optional
+        Row's labels.
+    ylables : array, optional
+        Column's labels.
+    readonly : bool, optional
+        If True, data cannot be changed. False by default.
+    font : QFont, optional
+        Font. Default is `Calibri` with size 11.
+    parent : QWidget, optional
+        Parent Widget.
+    bg_gradient : ???, optional
+        Background color gradient
+    bg_value : ???, optional
+        Background color value
+    minvalue : scalar
+        Minimum value that can be represented.
+    maxvalue : scalar
+        Maximum value that can be represented.
+    """
 
     ROWS_TO_LOAD = 500
     COLS_TO_LOAD = 40
@@ -470,11 +522,11 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def columnCount(self, qindex=QModelIndex()):
-        """Array column number"""
+        """Return array column number"""
         return len(self.ylabels) - 1 + self.cols_loaded
 
     def rowCount(self, qindex=QModelIndex()):
-        """Array row number"""
+        """Return array row number"""
         return len(self.xlabels) - 1 + self.rows_loaded
 
     def fetch_more_rows(self):
@@ -1547,6 +1599,23 @@ class ArrayEditorWidget(QWidget):
 
 
 def larray_to_array_and_labels(data):
+    """Converts an LArray into a 2D data array and x/y labels.
+
+    Parameters
+    ----------
+    data : LArray
+        Input LArray.
+
+    Returns
+    -------
+    data : 2D array
+        Content of input LArray is returned as 2D array.
+    xlabels : 1D array
+        Labels of rows (names of axes + labels of last axis).
+    ylabels : 2D array
+        Labels of columns (cartesian product of labels of all axes
+        except the last one).
+    """
     assert isinstance(data, la.LArray)
 
     xlabels = [data.axes.display_names, data.axes.labels[-1]]
