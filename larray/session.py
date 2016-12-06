@@ -17,6 +17,20 @@ def check_pattern(k, pattern):
 
 
 class FileHandler(object):
+    """
+    Abstract class defining the methods for
+    "file handler" subclasses.
+
+    Parameters
+    ----------
+    fname : str
+        Filename.
+
+    Attributes
+    ----------
+    fname : str
+        Filename.
+    """
     def __init__(self, fname):
         self.fname = fname
 
@@ -27,6 +41,9 @@ class FileHandler(object):
         raise NotImplementedError()
 
     def list(self):
+        """
+        Returns the list of arrays' names.
+        """
         raise NotImplementedError()
 
     def _read_array(self, key, *args, **kwargs):
@@ -36,12 +53,36 @@ class FileHandler(object):
         raise NotImplementedError()
 
     def save(self):
+        """
+        Saves arrays in file.
+        """
         pass
 
     def close(self):
+        """
+        Closes file.
+        """
         raise NotImplementedError()
 
     def read_arrays(self, keys, *args, **kwargs):
+        """
+        Reads file content (HDF, Excel, CSV, ...)
+        and returns a dictionary containing
+        loaded arrays.
+
+        Parameters
+        ----------
+        keys : list of str
+            List of arrays' names.
+        kwargs :
+            * display: a small message is displayed to tell when
+              an array is started to be read and when it's done.
+
+        Returns
+        -------
+        dict(str,LArray)
+            Dictionary containing names and arrays loaded from a file.
+        """
         display = kwargs.pop('display', False)
         self._open_for_read()
         res = {}
@@ -58,6 +99,18 @@ class FileHandler(object):
         return res
 
     def dump_arrays(self, key_values, *args, **kwargs):
+        """
+        Dumps arrays corresponds to keys in file
+        in HDF, Excel, CSV, ... format
+
+        Parameters
+        ----------
+        key_values : dict of paris (str, LArray)
+            Dictionary containing arrays to dump.
+        kwargs :
+            * display: a small message is displayed to tell when
+              an array is started to be dump and when it's done.
+        """
         display = kwargs.pop('display', False)
         self._open_for_write()
         for key, value in key_values:
@@ -71,6 +124,9 @@ class FileHandler(object):
 
 
 class PandasHDFHandler(FileHandler):
+    """
+    Handler for HDF5 files using PandaS.
+    """
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 
@@ -91,6 +147,9 @@ class PandasHDFHandler(FileHandler):
 
 
 class PandasExcelHandler(FileHandler):
+    """
+    Handler for Excel files using PandaS.
+    """
     def _open_for_read(self):
         self.handle = ExcelFile(self.fname)
 
@@ -113,6 +172,9 @@ class PandasExcelHandler(FileHandler):
 
 
 class XLWingsHandler(FileHandler):
+    """
+    Handler for Excel files using XLWings.
+    """
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
 
@@ -180,6 +242,16 @@ ext_default_engine = {
 
 # XXX: inherit from OrderedDict or LArray?
 class Session(object):
+    """
+    Groups several array objects together.
+
+    Parameters
+    ----------
+    args : str or dict of str, array or iterable of tuples (str, array)
+        Name of file to load or dictionary containing couples (name, array).
+    kwargs : dict of str, array
+        List of arrays to add written as 'name'=array, ...
+    """
     def __init__(self, *args, **kwargs):
         object.__setattr__(self, '_objects', OrderedDict())
 
@@ -201,6 +273,16 @@ class Session(object):
         return iter(self.values())
 
     def add(self, *args, **kwargs):
+        """
+        Adds array objects to the current session.
+
+        Parameters
+        ----------
+        args : array
+            List of arrays to add.
+        kwargs : dict of str, array
+            List of arrays to add written as 'name'=array, ...
+        """
         for arg in args:
             self[arg.name] = arg
         for k, v in kwargs.items():
@@ -222,6 +304,25 @@ class Session(object):
             return self._objects[key]
 
     def get(self, key, default=None):
+        """
+        Returns the array object corresponding to the key.
+        If the key doesn't correspond to any array object,
+        a default one can be returned.
+
+        Parameters
+        ----------
+        key : str
+            Name the array.
+        default : array, optional
+            Returned array if the key doesn't correspond
+            to any array of the current session.
+
+        Returns
+        -------
+        LArray
+            Array corresponding to the given key or
+            a default one if not found.
+        """
         try:
             return self[key]
         except KeyError:
@@ -237,7 +338,8 @@ class Session(object):
         self._objects[key] = value
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
-        """Load LArray objects from a file.
+        """
+        Loads array objects from a file.
 
         Parameters
         ----------
@@ -266,20 +368,21 @@ class Session(object):
             self[k] = v
 
     def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
-        """Dumps all arrays from session to a file.
+        """
+        Dumps all array objects from the current session to a file.
 
         Parameters
         ----------
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            list of names of objects to dump. Defaults to all objects
+            List of names of objects to dump. Defaults to all objects
             present in the Session.
         engine : str, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         display : bool, optional
-            whether or not to display which file is being worked on. Defaults
+            Whether or not to display which file is being worked on. Defaults
             to False.
         """
         if engine == 'auto':
@@ -305,14 +408,15 @@ class Session(object):
         self.dump(fname, names, ext_default_engine['csv'], *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):
-        """Return a new Session with objects which match some criteria.
+        """
+        Returns a new session with array objects which match some criteria.
 
         Parameters
         ----------
         pattern : str, optional
-            Only keep objects whose key match `pattern`.
+            Only keep arrays whose key match `pattern`.
         kind : type, optional
-            Only keep objects which are instances of type `kind`.
+            Only keep arrays which are instances of type `kind`.
 
         Returns
         -------
@@ -331,7 +435,8 @@ class Session(object):
 
     @property
     def names(self):
-        """Returns the list of names of the objects in the session
+        """
+        Returns the list of names of the array objects in the session
 
         Returns
         -------
@@ -394,18 +499,18 @@ class Session(object):
 
     def compact(self, display=False):
         """
-        detect and remove "useless" axes (ie axes for which values are
-        constant over the whole axis) for all arrays in session
+        Detects and removes "useless" axes (ie axes for which values are
+        constant over the whole axis) for all array objects in session
 
         Parameters
         ----------
         display : bool, optional
-            whether or not to display a message for each array that is compacted
+            Whether or not to display a message for each array that is compacted
 
         Returns
         -------
         Session
-            a new session containing all compacted arrays
+            A new session containing all compacted arrays
         """
         new_items = []
         for k, v in self._objects.items():
