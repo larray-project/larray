@@ -386,9 +386,9 @@ class ArrayModel(QAbstractTableModel):
     bg_value : ???, optional
         Background color value
     minvalue : scalar
-        Minimum value that can be represented.
+        Minimum value allowed.
     maxvalue : scalar
-        Maximum value that can be represented.
+        Maximum value allowed.
     """
 
     ROWS_TO_LOAD = 500
@@ -2398,6 +2398,23 @@ def get_title(obj, depth=0, maxnames=3):
 
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None):
+    """
+    Starts a new editor window. If no session object or
+    array dictionary is provided as argument, all local
+    arrays are loaded in the editor.
+
+    obj : Session or dict of LArray, optional
+        Session or a dictionary of arrays to
+        load in user interface. By default,
+        all existing local arrays are loaded.
+    title : str, optional
+        Title for the current session.
+        A default one is generated if not provided.
+    minvalue : scalar, optional
+        Minimum value allowed.
+    maxvalue : scalar, optional
+        Maximum value allowed.
+    """
     _app = qapplication()
     if obj is None:
         obj = la.local_arrays(depth=1)
@@ -2418,6 +2435,21 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None):
 
 
 def view(obj=None, title=''):
+    """
+    Starts a new viewer window. Arrays are loaded in
+    readonly mode and their content cannot be modified.
+
+    If no session object or array dictionary is provided
+    as argument, all local arrays are loaded in the editor.
+
+    obj : Session or dict of LArray, optional
+        Session or a dictionary of arrays to
+        load in user interface. By default,
+        all existing local arrays are loaded.
+    title : str, optional
+        Title for the current session.
+        A default one is generated if not provided.
+    """
     _app = qapplication()
     if obj is None:
         obj = la.local_arrays(depth=1)

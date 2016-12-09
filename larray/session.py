@@ -125,7 +125,7 @@ class FileHandler(object):
 
 class PandasHDFHandler(FileHandler):
     """
-    Handler for HDF5 files using PandaS.
+    Handler for HDF5 files using Pandas.
     """
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
@@ -148,7 +148,7 @@ class PandasHDFHandler(FileHandler):
 
 class PandasExcelHandler(FileHandler):
     """
-    Handler for Excel files using PandaS.
+    Handler for Excel files using Pandas.
     """
     def _open_for_read(self):
         self.handle = ExcelFile(self.fname)
