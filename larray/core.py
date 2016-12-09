@@ -544,7 +544,7 @@ def larray_equal(first, other):
     >>> b['F'] += 1
     >>> larray_equal(a, b)
     False
-    >>> b = a.set_labels(x.sex, ['Men', 'Women']).copy()
+    >>> b = a.set_labels(x.sex, ['Men', 'Women'])
     >>> larray_equal(a, b)
     False
     """
@@ -690,10 +690,6 @@ class Axis(object):
 
     @property
     def _sorted_values(self):
-        # TODO: simplify this method
-        # AD -- if self.__sorted_values is None:
-        #          self._update_key_values()
-        #       return self.__sorted_values
         values = self.__sorted_values
         if values is None:
             _, values = self._update_key_values()
@@ -3396,7 +3392,7 @@ def get_axis(obj, i):
     -------
     Axis
         Axis corresponding to the given position if input `obj` is a LArray.
-        A new anonymous Axis with the same length of the ith dimension of
+        A new anonymous Axis with the length of the ith dimension of
         the input `obj` otherwise.
 
     Examples
@@ -4498,7 +4494,7 @@ class LArray(object):
         """
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
                          if not _isnoneslice(axis_key) and
-                         not np.isscalar(axis_key)]
+                            not np.isscalar(axis_key)]
         # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
                       if _isnoneslice(axis_key)]
