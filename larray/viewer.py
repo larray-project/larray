@@ -412,7 +412,7 @@ class LabelsModel(AbstractTableModel):
     # ############################################ #
     def get_position(self):
         return self._label_position
-    
+
     def set_data(self, data):
         self._set_data(data)
         self.reset()
@@ -2642,7 +2642,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None):
     array dictionary is provided as argument, all local
     arrays are loaded in the editor.
 
-    obj : Session or dict of LArray, optional
+    obj : LArray or Session or dict of LArray, optional
         Session or a dictionary of arrays to
         load in user interface. By default,
         all existing local arrays are loaded.
@@ -2681,7 +2681,7 @@ def view(obj=None, title=''):
     If no session object or array dictionary is provided
     as argument, all local arrays are loaded in the editor.
 
-    obj : Session or dict of LArray, optional
+    obj : LArray or Session or dict of LArray, optional
         Session or a dictionary of arrays to
         load in user interface. By default,
         all existing local arrays are loaded.
@@ -2783,20 +2783,16 @@ if __name__ == "__main__":
     # view(np.arange(12).reshape(2, 3, 2))
     # view([])
 
-    # ==========================================================
     data3 = np.random.normal(0, 1, size=(2, 15))
     arr3 = la.ndrange((30, sex))
-    # ==========================================================
     # data4 = np.random.normal(0, 1, size=(2, 15))
     # arr4 = la.LArray(data4, axes=(sex, lipro))
 
     # arr4 = arr3.copy()
     # arr4['F'] /= 2
-    # ==========================================================
     arr4 = arr3.min(la.x.sex)
     arr5 = arr3.max(la.x.sex)
     arr6 = arr3.mean(la.x.sex)
-    # ==========================================================
 
     # compare(arr3, arr4, arr5, arr6)
 
