@@ -114,33 +114,79 @@ from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           strip_rows, PY3)
 
 # TODO: return a generator, not a list
-def srange(*args):
-    return list(map(str, range(*args)))
-
-
-def range_to_slice(seq, length=None):
+def _srange(*args):
     """
-    seq is a sequence-like (list, tuple or ndarray) of integers
-    returns a slice if possible (including for sequences of 1 element)
+    Returns evenly spaced values within a given interval as list of strings
+
+    Parameters
+    ----------
+    start :  number, optional
+        Start of interval. The interval includes this value. The default start value is 0.
+    stop : number
+        End of interval. The interval does not include this value
+    step : number, optional
+        Spacing between values. For any output out, this is the distance between two adjacent values.
+        The default step size is 1. If step is specified, start must also be given.
+
+    Returns
+    -------
+    list of str
+        Array of evenly spaced values.
+
+    Examples
+    --------
+    >>> _srange(8)
+    ['0', '1', '2', '3', '4', '5', '6', '7']
+    >>> _srange(5, 8)
+    ['5', '6', '7']
+    >>> _srange(1, 8, 2)
+    ['1', '3', '5', '7']
+    """
+    return list(map(str, range(*args)))
+    # AD -- return (str(e) for e in range(*args))
+
+
+
+
+def _range_to_slice(seq, length=None):
+    """
+    Returns a slice if possible (including for sequences of 1 element)
     otherwise returns the input sequence itself
 
-    >>> range_to_slice([3, 4, 5])
+    Parameters
+    ----------
+    seq : sequence-like of int
+        List, tuple or ndarray of integers representing the range.
+        It should be something like [start, start+step, start+2*step, ...]
+    length : int, optional
+        length of sequence of positions.
+        This is only useful when you must be able to transform decreasing
+        sequences which can stop at 0.
+
+    Returns
+    -------
+    slice or sequence-like
+        return the input sequence if a slice cannot be defined
+
+    Examples
+    --------
+    >>> _range_to_slice([3, 4, 5])
     slice(3, 6, None)
-    >>> range_to_slice([3, 5, 7])
+    >>> _range_to_slice([3, 5, 7])
     slice(3, 9, 2)
-    >>> range_to_slice([-3, -2])
+    >>> _range_to_slice([-3, -2])
     slice(-3, -1, None)
-    >>> range_to_slice([-1, -2])
+    >>> _range_to_slice([-1, -2])
     slice(-1, -3, -1)
-    >>> range_to_slice([2, 1])
+    >>> _range_to_slice([2, 1])
     slice(2, 0, -1)
-    >>> range_to_slice([1, 0], 4)
+    >>> _range_to_slice([1, 0], 4)
     slice(-3, -5, -1)
-    >>> range_to_slice([1, 0])
+    >>> _range_to_slice([1, 0])
     [1, 0]
-    >>> range_to_slice([1])
+    >>> _range_to_slice([1])
     slice(1, 2, None)
-    >>> range_to_slice([])
+    >>> _range_to_slice([])
     []
     """
     if len(seq) < 1:
@@ -167,18 +213,21 @@ def range_to_slice(seq, length=None):
     return slice(start, stop, step)
 
 
-def slice_to_str(key, use_repr=False):
+def _slice_to_str(key, use_repr=False):
     """
-    converts a slice to a string
-    >>> slice_to_str(slice(None))
+    Converts a slice to a string
+
+    Examples:
+    ---------
+    >>> _slice_to_str(slice(None))
     ':'
-    >>> slice_to_str(slice(24))
+    >>> _slice_to_str(slice(24))
     ':24'
-    >>> slice_to_str(slice(25, None))
+    >>> _slice_to_str(slice(25, None))
     '25:'
-    >>> slice_to_str(slice(5, 10))
+    >>> _slice_to_str(slice(5, 10))
     '5:10'
-    >>> slice_to_str(slice(None, 5, 2))
+    >>> _slice_to_str(slice(None, 5, 2))
     ':5:2'
     """
     # examples of result: ":24" "25:" ":" ":5:2"
@@ -189,15 +238,28 @@ def slice_to_str(key, use_repr=False):
     return '%s:%s%s' % (start, stop, step)
 
 
-def slice_str_to_range(s):
+def _slice_str_to_range(s):
     """
-    converts a slice string to a list of (string) values. The end point is
-    included.
-    >>> slice_str_to_range(':3')
+    Converts a slice string to a list of (string) values.
+    The end point is included.
+
+    Parameters:
+    -----------
+    s : str
+        Sting representing a slice
+
+    Returns
+    -------
+    list of str
+        Array of evenly spaced values.
+
+    Examples:
+    ---------
+    >>> _slice_str_to_range(':3')
     ['0', '1', '2', '3']
-    >>> slice_str_to_range('2:5')
+    >>> _slice_str_to_range('2:5')
     ['2', '3', '4', '5']
-    >>> slice_str_to_range('2:6:2')
+    >>> _slice_str_to_range('2:6:2')
     ['2', '4', '6']
     """
     numcolons = s.count(':')
@@ -209,15 +271,25 @@ def slice_str_to_range(s):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop += 1
-    return srange(start, stop, step)
+    return _srange(start, stop, step)
 
 
-def to_string(v):
+def _to_string(v):
     """
-    converts a (group of) tick(s) to a string
+    Converts a (group of) tick(s) to a string
+
+    Parameters:
+    -----------
+    v : any
+        (group of) tick(s).
+
+    Returns
+    -------
+    str
+        string representing a (group of) tick(s)
     """
     if isinstance(v, slice):
-        return slice_to_str(v)
+        return _slice_to_str(v)
     elif isinstance(v, (tuple, list)):
         if len(v) == 1:
             return str(v) + ','
@@ -227,9 +299,9 @@ def to_string(v):
         return str(v)
 
 
-def to_tick(e):
+def _to_tick(e):
     """
-    make it hashable, and acceptable as an ndarray element
+    Makes it hashable, and acceptable as an ndarray element
     scalar & VG -> not modified
     slice -> 'start:stop'
     list|tuple -> 'v1,v2,v3'
@@ -237,7 +309,7 @@ def to_tick(e):
     """
     # the fact that an "aggregated tick" is passed as a LGroup or as a
     # string should be as irrelevant as possible. The thing is that we cannot
-    # (currently) use the more elegant to_tick(e.key) that means the
+    # (currently) use the more elegant _to_tick(e.key) that means the
     # LGroup is not available in Axis.__init__ after to_ticks, and we
     # need it to update the mapping if it was named. Effectively,
     # this creates two entries in the mapping for a single tick. Besides,
@@ -246,24 +318,38 @@ def to_tick(e):
     if np.isscalar(e) or isinstance(e, LGroup):
         return e
     else:
-        return to_string(e)
+        return _to_string(e)
 
 
-def to_ticks(s):
+def _to_ticks(s):
     """
     Makes a (list of) value(s) usable as the collection of labels for an
     Axis (ie hashable). Strip strings, split them on ',' and translate
     "range strings" to list of values **including the end point** !
+
+    Parameters:
+    -----------
+    s : iterable
+        List of values usable as the collection of labels for an Axis.
+
+    Returns
+    -------
+    collection of labels
+
+    Notes
+    -----
     This function is only used in Axis.__init__ and union().
 
-    >>> to_ticks('H , F')
+    Examples:
+    ---------
+    >>> _to_ticks('H , F')
     ['H', 'F']
 
     # XXX: we might want to return real int instead, because if we ever
     # want to have more complex queries, such as:
     # arr.filter(age > 10 and age < 20)
     # this would break for string values (because '10' < '2')
-    >>> to_ticks(':3')
+    >>> _to_ticks(':3')
     ['0', '1', '2', '3']
     """
     if isinstance(s, Group):
@@ -276,12 +362,12 @@ def to_ticks(s):
         # XXX: Is it a safe assumption?
         return s
     elif isinstance(s, (list, tuple)):
-        return [to_tick(e) for e in s]
+        return [_to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     elif isinstance(s, basestring):
         if ':' in s:
-            return slice_str_to_range(s)
+            return _slice_str_to_range(s)
         else:
             return [v.strip() for v in s.split(',')]
     elif hasattr(s, '__array__'):
@@ -293,34 +379,50 @@ def to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
-def to_key(v):
+def _to_key(v):
     """
-    Converts a value to a key usable for indexing (slice object, list of values,
-    ...). Strings are split on ',' and stripped. Colons (:) are interpreted
-    as slices. "int strings" are not converted to int.
-    >>> to_key('a:c')
+    Converts a value to a key usable for indexing (slice object, list of values,...).
+    Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
+
+    Parameters
+    ----------
+    v : int or basestring or tuple or list or slice or LArray or Group
+        value to convert into a key usable for indexing
+
+    Returns
+    -------
+    key
+        a key represents any object that can be used for indexing
+
+    Notes
+    -----
+    "int strings" are not converted to int.
+
+    Examples
+    --------
+    >>> _to_key('a:c')
     slice('a', 'c', None)
-    >>> to_key('a, b,c ,')
+    >>> _to_key('a, b,c ,')
     ['a', 'b', 'c']
-    >>> to_key('a,')
+    >>> _to_key('a,')
     ['a']
-    >>> to_key(' a ')
+    >>> _to_key(' a ')
     'a'
-    >>> to_key(10)
+    >>> _to_key(10)
     10
-    >>> to_key('abc=a,b,c')
+    >>> _to_key('abc=a,b,c')
     LGroup(['a', 'b', 'c'], name='abc')
     """
     if isinstance(v, tuple):
         return list(v)
     elif isinstance(v, Group):
-        return v.__class__(to_key(v.key), v.name, v.axis)
+        return v.__class__(_to_key(v.key), v.name, v.axis)
     elif v is Ellipsis or isinstance(v, (int, list, slice, LArray)):
         return v
     elif isinstance(v, basestring):
         if '=' in v:
             name, key = v.split('=')
-            return LGroup(to_key(key.strip()), name.strip())
+            return LGroup(_to_key(key.strip()), name.strip())
         else:
             numcolons = v.count(':')
             if numcolons:
@@ -342,9 +444,20 @@ def to_key(v):
 
 def to_keys(value):
     """
-    converts a (collection of) group(s) to a structure usable for indexing.
+    Converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
 
+    Parameters
+    ----------
+    value : int or basestring or tuple or list or slice or LArray or Group
+        (collection of) value(s) to convert into key(s) usable for indexing
+
+    Returns
+    -------
+    list of keys
+
+    Examples
+    --------
     It is only used for .sum(axis=xxx)
     >>> to_keys('P01,P02')  # <-- one group => collapse dimension
     ['P01', 'P02']
@@ -370,37 +483,92 @@ def to_keys(value):
     """
     if isinstance(value, basestring):
         if ';' in value:
-            return tuple([to_key(group) for group in value.split(';')])
+            return tuple([_to_key(group) for group in value.split(';')])
         else:
-            return to_key(value)
+            return _to_key(value)
     elif isinstance(value, tuple):
-        return tuple([to_key(group) for group in value])
+        return tuple([_to_key(group) for group in value])
     else:
-        return to_key(value)
+        return _to_key(value)
 
 
 def union(*args):
     # TODO: add support for LGroup and lists
     """
-    returns the union of several "value strings" as a list
+    Returns the union of several "value strings" as a list.
+
+    Parameters
+    ----------
+    *args
+        (collection of) value(s) to be converted into label(s).
+        Repeated values are taken only once.
+
+    Returns
+    -------
+    list of labels
+
+    Examples
+    --------
+    >>> union('a', 'a, b, c, d', ['d', 'e', 'f'], ':2')
+    ['a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2']
     """
     if args:
-        return list(unique(chain(*(to_ticks(arg) for arg in args))))
+        return list(unique(chain(*(_to_ticks(arg) for arg in args))))
     else:
         return []
 
 
 def larray_equal(first, other):
+    """
+    Compares two arrays and returns True if they have the
+    same axes and elements, False otherwise.
+
+    Parameters
+    ----------
+    first, other : LArray
+        Input arrays.
+
+    Returns
+    -------
+    bool
+        Returns True if the arrays are equal.
+
+    Examples
+    --------
+    >>> age = Axis('age', range(0, 100, 10))
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> a = ndrange([age, sex])
+    >>> b = a.copy()
+    >>> larray_equal(a, b)
+    True
+    >>> b['F'] += 1
+    >>> larray_equal(a, b)
+    False
+    >>> b = a.set_labels(x.sex, ['Men', 'Women'])
+    >>> larray_equal(a, b)
+    False
+    """
     if not isinstance(first, LArray) or not isinstance(other, LArray):
         return False
     return (first.axes == other.axes and
             np.array_equal(np.asarray(first), np.asarray(other)))
 
 
-def isnoneslice(v):
+def _isnoneslice(v):
+    """
+    Checks if input is slice(None) object.
+    """
     return isinstance(v, slice) and v == slice(None)
 
-def seq_summary(seq, num=3, func=repr):
+def _seq_summary(seq, num=3, func=repr):
+    """
+    Returns a string representing a sequence by showing only the n first and last elements.
+
+    Examples
+    --------
+    >>> _seq_summary(range(10), 2)
+    '0 1 ... 8 9'
+    """
     def shorten(l):
         return l if len(l) <= 2 * num else l[:num] + ['...'] + list(l[-num:])
 
@@ -408,6 +576,18 @@ def seq_summary(seq, num=3, func=repr):
 
 
 class PGroupMaker(object):
+    """
+    Generates a new instance of PGroup for a given axis and key.
+
+    Attributes
+    ----------
+    axis : Axis
+        an axis.
+
+    Notes
+    -----
+    This class is used by the method `Axis.i`
+    """
     def __init__(self, axis):
         assert isinstance(axis, Axis)
         self.axis = axis
@@ -417,13 +597,41 @@ class PGroupMaker(object):
 
 
 class Axis(object):
+    """
+    Represents an axis. It consists of a name and a list of labels.
+
+    Parameters
+    ----------
+    name : str or Axis
+        name of the axis or another instance of Axis.
+        In the second case, the name of the other axis is simply copied.
+    labels : array-like or int
+        collection of values usable as labels, i.e. numbers or strings or the size of the axis.
+        In the last case, a wildcard axis is created.
+
+    Attributes
+    ----------
+    name : str
+        name of the axis.
+    labels : array-like or int
+        collection of values usable as labels, i.e. numbers or strings
+
+    Examples
+    --------
+    >>> age = Axis('age', 10)
+    >>> age
+    Axis('age', 10)
+    >>> age.name
+    'age'
+    >>> age.labels
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> sex
+    Axis('sex', ['M', 'F'])
+    """
     # ticks instead of labels?
     # XXX: make name and labels optional?
     def __init__(self, name, labels):
-        """
-        labels should be an array-like (convertible to an ndarray)
-        or a int (the size of the Axis)
-        """
         if isinstance(name, Axis):
             name = name.name
         # make sure we do not have np.str_ as it causes problems down the
@@ -442,6 +650,7 @@ class Axis(object):
 
     @property
     def _mapping(self):
+        # To map labels with their positions
         mapping = self.__mapping
         if mapping is None:
             labels = self._labels
@@ -488,10 +697,31 @@ class Axis(object):
 
     @property
     def i(self):
+        """
+        Allows to define a subset using positions along the axis
+        instead of labels.
+
+        Examples
+        --------
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> arr = ndrange([sex, time])
+        >>> arr
+        sex\\time | 2007 | 2008 | 2009 | 2010
+               M |    0 |    1 |    2 |    3
+               F |    4 |    5 |    6 |    7
+        >>> arr[time.i[0, -1]]
+        sex\\time | 2007 | 2010
+               M |    0 |    3
+               F |    4 |    7
+        """
         return PGroupMaker(self)
 
     @property
     def labels(self):
+        """
+        List of labels.
+        """
         return self._labels
 
     @labels.setter
@@ -503,14 +733,14 @@ class Axis(object):
             labels = np.arange(length)
             iswildcard = True
         else:
-            # TODO: move this to to_ticks????
+            # TODO: move this to _to_ticks????
             # we convert to an ndarray to save memory for scalar ticks (for
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
-            ticks = to_ticks(labels)
-            object_array = isinstance(ticks, np.ndarray) and \
-                           ticks.dtype.type == np.object_
-            can_have_groups = object_array or isinstance(ticks, (tuple, list))
+            ticks = _to_ticks(labels)
+            is_object_array = isinstance(ticks, np.ndarray) and \
+                              ticks.dtype.type == np.object_
+            can_have_groups = is_object_array or isinstance(ticks, (tuple, list))
             if can_have_groups and any(
                     isinstance(tick, LGroup) for tick in ticks):
                 # avoid getting a 2d array if all LGroup have the same length
@@ -532,8 +762,34 @@ class Axis(object):
     # XXX: not sure I should offer an *args version
     def group(self, *args, **kwargs):
         """
+        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+
+        Parameters
+        ----------
+        *args
+            (collection of) selected label(s) to form a group.
+        **kwargs
+            name of the group. There is no other accepted keywords.
+
+        Returns
+        -------
+        LGroup
+            group containing selected label(s).
+
+        Notes
+        -----
         key is label-based (slice and fancy indexing are supported)
-        returns a LGroup usable in .sum or .filter
+
+        See Also
+        --------
+        LGroup
+
+        Examples
+        --------
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> odd_years = time.group([2007, 2009], name='odd_years')
+        >>> odd_years
+        LGroup([2007, 2009], name='odd_years', axis=Axis('time', [2007, 2008, 2009, 2010]))
         """
         name = kwargs.pop('name', None)
         if kwargs:
@@ -546,14 +802,48 @@ class Axis(object):
         return LGroup(key, name, self)
 
     def all(self, name=None):
+        """
+        Returns a group containing all labels.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name of the group. If not provided, name is set to 'all'.
+
+        See Also
+        --------
+        Axis.group
+        """
         return self.group(slice(None), name=name if name is not None else "all")
 
     def subaxis(self, key, name=None):
         """
-        returns an Axis for a sub-array
+        Returns an axis for a sub-array.
+
+        Parameters
+        ----------
+        key : key
+            Input key can be a LArray or a (collection of) label(s).
+        name : str, optional
+            Name of the subaxis.
+            If input name is None, the name of the subaxis is the same as parent axis.
+
+        Returns
+        -------
+        Axis
+            Subaxis.
+            If key is a None slice and name is None, the original Axis is returned.
+            If key is a LArray, the list of axes is returned.
+
+        Notes
+        -----
         key is index-based (slice and fancy indexing are supported)
 
-        if key is a None slice and name is None, returns the original Axis
+        Examples
+        --------
+        >>> age = Axis('age', range(100))
+        >>> age.subaxis(range(10, 19), name='teenagers')
+        Axis('teenagers', [10, 11, 12, 13, 14, 15, 16, 17, 18])
         """
         if (name is None and isinstance(key, slice) and
                 key.start is None and key.stop is None and key.step is None):
@@ -570,6 +860,42 @@ class Axis(object):
         return Axis(name, labels)
 
     def iscompatible(self, other):
+        """
+        Checks if self is compatible with another axis.
+
+        * Two non-wildcard axes are compatible is they have
+          the same name and labels.
+        * A wildcard axis of length 1 is compatible with any
+          other axis sharing the same name.
+        * A wildcard axis of length > 1 is compatible with any
+          axis of the same length or length 1 and sharing the
+          same name.
+
+        Parameters
+        ----------
+        other : Axis
+            Axis to compare with.
+
+        Returns
+        -------
+        bool
+            True if input axis is compatible with self, False otherwise.
+
+        Examples
+        --------
+        >>> a10  = Axis('a', range(10))
+        >>> wa10 = Axis('a', 10)
+        >>> wa1  = Axis('a', 1)
+        >>> b10  = Axis('b', range(10))
+        >>> a10.iscompatible(b10)
+        False
+        >>> a10.iscompatible(wa10)
+        True
+        >>> a10.iscompatible(wa1)
+        True
+        >>> wa1.iscompatible(b10)
+        False
+        """
         if self is other:
             return True
         if not isinstance(other, Axis):
@@ -585,6 +911,33 @@ class Axis(object):
             return np.array_equal(self.labels, other.labels)
 
     def equals(self, other):
+        """
+        Checks if self is equal to another axis.
+        Two axes are equal if the have the same name and label(s).
+
+        Parameters
+        ----------
+        other : Axis
+            Axis to compare with.
+
+        Returns
+        -------
+        bool
+            True if input axis is equal to self, False otherwise.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(5))
+        >>> age_2 = Axis('age', 5)
+        >>> age_3 = Axis('young children', range(5))
+        >>> age_4 = Axis('age', [0, 1, 2, 3, 4])
+        >>> age.equals(age_2)
+        False
+        >>> age.equals(age_3)
+        False
+        >>> age.equals(age_4)
+        True
+        """
         if self is other:
             return True
 
@@ -597,26 +950,81 @@ class Axis(object):
 
     def matches(self, pattern):
         """
-        returns a LGroup with all the labels matching (regex) the specified pattern
+        Returns a group with all the labels matching (regex) the specified pattern.
 
-        xm.axes.sutcode.matches('^..$') = labels 2 characters long
+        Parameters
+        ----------
+        pattern : str
+            Regular expression (regex).
+
+        Returns
+        -------
+        LGroup
+            Group containing all label(s) matching the pattern.
+
+        Notes
+        -----
+        See `Regular Expression <https://docs.python.org/3/library/re.html>`_
+        for more details about how to build a pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+
+        All labels starting with "W" and ending with "o" are given by
+
+        >>> people.matches('W.*o')
+        LGroup(['Waldo'])
+
+        All labels not containing character "a"
+
+        >>> people.matches('[^a]*$')
+        LGroup(['Bruce Willis', 'Arthur Dent'])
         """
         return LGroup(self._axisregex(pattern))
 
     def startswith(self, pattern):
         """
-        returns a LGroup with the labels starting with the specified string
+        Returns a group with the labels starting with the specified string
 
-        xm.axes.sutcode.startswith('25A')
+        Parameters
+        ----------
+        pattern : str
+            Pattern describing the first part of labels you want to get.
+
+        Returns
+        -------
+        LGroup
+            Group containing all label(s) starting with the given pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.startswith('[^B]')
+        LGroup(['Waldo', 'Arthur Dent', 'Harvey Dent'])
         """
         res = self._axisregex('^%s.*' % pattern)
         return LGroup(res)
 
     def endswith(self, pattern):
         """
-        returns a LGroup with the labels ending with the specified string
+        Returns a LGroup with the labels ending with the specified string
 
-        xm.axes.sutcode.endswith('01')
+        Parameters
+        ----------
+        pattern : str
+            Pattern describing the last part of labels you want to get.
+
+        Returns
+        -------
+        LGroup
+            Group containing all label(s) ending with the given pattern.
+
+        Examples
+        --------
+        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.endswith('[o-z]')
+        LGroup(['Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
         """
         res = self._axisregex('.*%s$' % pattern)
         return LGroup(res)
@@ -638,7 +1046,7 @@ class Axis(object):
         return self.group(key)
 
     def __contains__(self, key):
-        return to_tick(key) in self._mapping
+        return _to_tick(key) in self._mapping
 
     def __hash__(self):
         return id(self)
@@ -658,8 +1066,31 @@ class Axis(object):
 
     def translate(self, key, bool_passthrough=True):
         """
-        translates a label key to its numerical index counterpart
-        fancy index with boolean vectors are passed through unmodified
+        Translates a label key to its numerical index counterpart.
+
+        Parameters
+        ----------
+        key : key
+            Everything usable as a key.
+        bool_passthrough : bool, optional
+            If set to True and key is a boolean vector, it is returned as it.
+
+        Returns
+        -------
+        (array of) int
+            Numerical index(ices) of (all) label(s) represented by the key
+
+        Notes
+        -----
+        Fancy index with boolean vectors are passed through unmodified
+
+        Examples
+        --------
+        >>> people = Axis('people', ['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.translate('Waldo')
+        3
+        >>> people.translate(people.matches('Bruce'))
+        array([1, 2])
         """
         mapping = self._mapping
 
@@ -684,7 +1115,7 @@ class Axis(object):
         if isinstance(key, basestring):
             # transform "specially formatted strings" for slices and lists to
             # actual objects
-            key = to_key(key)
+            key = _to_key(key)
             # if key was a string of the form "name=value", it can be an
             # LGroup now, so we have to take the key from it *again*.
             # XXX: one way to not do that twice would be to apply to_key
@@ -757,15 +1188,26 @@ class Axis(object):
         return 'Axis(%r, %r)' % (self.name, labels)
 
     def labels_summary(self):
+        """
+        Returns a short representation of the labels.
+
+        Examples
+        --------
+        >>> Axis('age', 100).labels_summary()
+        '0 1 2 ... 97 98 99'
+        """
         def repr_on_strings(v):
             if isinstance(v, str):
                 return repr(v)
             else:
                 return str(v)
-        return seq_summary(self.labels, func=repr_on_strings)
+        return _seq_summary(self.labels, func=repr_on_strings)
 
     # method factory
     def _binop(opname):
+        """
+        Method factory to create binary operators special methods.
+        """
         fullname = '__%s__' % opname
 
         def opmethod(self, other):
@@ -820,9 +1262,15 @@ class Axis(object):
     __matmul__ = _binop('matmul')
 
     def __larray__(self):
+        """
+        Returns axis as LArray.
+        """
         return labels_array(self)
 
     def copy(self):
+        """
+        Returns a copy of the axis.
+        """
         new_axis = Axis(self.name, [])
         # XXX: I wonder if we should make a copy of the labels + mapping.
         # There should at least be an option.
@@ -836,11 +1284,12 @@ class Axis(object):
 
     # XXX: rename to named like Group?
     def rename(self, name):
-        """Renames the axis.
+        """
+        Renames the axis.
 
         Parameters
         ----------
-        newname : str
+        name : str
             the new name for the axis.
 
         Returns
@@ -848,8 +1297,8 @@ class Axis(object):
         Axis
             a new Axis with the same labels but a different name.
 
-        Example
-        -------
+        Examples
+        --------
         >>> sex = Axis('sex', ['M', 'F'])
         >>> sex
         Axis('sex', ['M', 'F'])
@@ -871,6 +1320,8 @@ class Axis(object):
 # ticks/labels of the LGroup need to correspond to its *Axis*
 # indices
 class Group(object):
+    """Abstract Group.
+    """
     def __init__(self, key, name=None, axis=None):
         if isinstance(key, tuple):
             key = list(key)
@@ -952,10 +1403,26 @@ class Group(object):
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
 #       Group)
 class LGroup(Group):
-    """
-    key should be either a sequence of labels, a slice with label bounds
-    or a string
-    axis can be an int, str or Axis
+    """Label group.
+
+    Represents a subset of labels of an axis.
+
+    Parameters
+    ----------
+    key : key
+        Anything usable for indexing.
+        A key should be either sequence of labels, a slice with label bounds or a string.
+    name : str, optional
+        Name of the group.
+    axis : int, str, Axis, optional
+        Axis for group.
+
+    Examples
+    --------
+    >>> age = Axis('age', range(100))
+    >>> teens = x.age[10:19].named('teens')
+    >>> teens
+    LGroup(slice(10, 19, None), name='teens', axis=AxisReference('age'))
     """
     # this makes range(LGroup(int)) possible
     def __index__(self):
@@ -976,21 +1443,21 @@ class LGroup(Group):
         #      to_tick directly, instead of using to_key explicitly here
         # XXX: we probably want to include this normalization in __init__
         #      instead
-        return hash(to_tick(to_key(self.key)))
+        return hash(_to_tick(_to_key(self.key)))
 
     def __eq__(self, other):
         # different name or axis compare equal !
         # XXX: we might want to compare "expanded" keys, so that slices
         # can match lists and vice-versa.
         other_key = other.key if isinstance(other, LGroup) else other
-        return to_tick(to_key(self.key)) == to_tick(to_key(other_key))
+        return _to_tick(_to_key(self.key)) == _to_tick(_to_key(other_key))
 
     def __str__(self):
-        key = to_key(self.key)
+        key = _to_key(self.key)
         if isinstance(key, slice):
-            str_key = slice_to_str(key, use_repr=True)
+            str_key = _slice_to_str(key, use_repr=True)
         elif isinstance(key, (tuple, list, np.ndarray)):
-            str_key = '[%s]' % seq_summary(key, 1)
+            str_key = '[%s]' % _seq_summary(key, 1)
         else:
             str_key = repr(key)
 
@@ -1048,13 +1515,59 @@ class LGroup(Group):
 
 
 class PGroup(Group):
-    """
-    Positional Group
+    """Positional Group.
+
+    Represents a subset of indices of an axis.
+
+    Parameters
+    ----------
+    key : key
+        Anything usable for indexing.
+        A key should be either sequence of labels, a slice with
+        label bounds or a string.
+    name : str, optional
+        Name of the group.
+    axis : int, str, Axis, optional
+        Axis for group.
     """
     pass
 
 
 def index_by_id(seq, value):
+    """
+    Returns position of an object in a sequence.
+    Raises an error if the object is not in the list.
+
+    Parameters
+    ----------
+    seq : sequence
+        Any sequence (list, tuple, str, unicode).
+
+    value : object
+        Object for which you want to retrieve its position
+        in the sequence.
+
+    Raises
+    ------
+    ValueError
+        If `value` object is not contained in the sequence.
+
+    Examples
+    --------
+    >>> age = Axis('age', range(10))
+    >>> sex = Axis('sex', ['M','F'])
+    >>> time = Axis('time', ['2007','2008','2009','2010'])
+    >>> index_by_id([age, sex, time], sex)
+    1
+    >>> gender = Axis('sex', ['M', 'F'])
+    >>> index_by_id([age, sex, time], gender)
+    Traceback (most recent call last):
+        ...
+    ValueError: sex is not in list
+    >>> gender = sex
+    >>> index_by_id([age, sex, time], gender)
+    1
+    """
     for i, item in enumerate(seq):
         if item is value:
             return i
@@ -1065,10 +1578,39 @@ def index_by_id(seq, value):
 # not using namedtuple because we have to know the fields in advance (it is a
 # one-off class) and we need more functionality than just a named tuple
 class AxisCollection(object):
+    """
+    Represents a collection of axes.
+
+    Parameters:
+    -----------
+    axes : sequence of Axis or int or tuple or str, optional
+        An axis can be given as an Axis object, an int or a
+        tuple (name, labels) or a string of the kind
+        'name=label_1,label_2,label_3'.
+
+    Raises
+    ------
+    ValueError
+        Cannot have multiple occurrences of the same axis object in a collection.
+
+    Notes
+    -----
+    Multiple occurrences of the same axis is not allowed.
+    However, several axes with the same name but different labels are allowed
+    but it is not recommended.
+
+    Examples
+    --------
+    >>> age = Axis('age', range(10))
+    >>> AxisCollection([3, age, ('sex', ['M', 'F']), 'time = 2007, 2008, 2009, 2010'])
+    AxisCollection([
+        Axis(None, 3),
+        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        Axis('sex', ['M', 'F']),
+        Axis('time', ['2007', '2008', '2009', '2010'])
+    ])
+    """
     def __init__(self, axes=None):
-        """
-        :param axes: sequence of Axis (or int) objects
-        """
         if axes is None:
             axes = []
         elif isinstance(axes, (int, long, Axis)):
@@ -1092,6 +1634,7 @@ class AxisCollection(object):
 
         axes = [make_axis(axis) for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
+        # check for duplicate axes
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
@@ -1160,17 +1703,29 @@ class AxisCollection(object):
     # make_numpy_broadcastable or made non default
     def get_by_pos(self, key, i):
         """
-        returns axis corresponding to key, or to i if key has no name and
-        key object not found
+        Returns axis corresponding to a key, or to position i if the key
+        has no name and key object not found.
 
         Parameters
         ----------
-        key
-        i
+        key : key
+            Key corresponding to an axis.
+        i : int
+            Position of the axis (used only if search by key failed).
 
         Returns
         -------
+        Axis
+            Axis corresponding to the key or the position i.
 
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.get_by_pos('sex', 1)
+        Axis('sex', ['M', 'F'])
         """
         if isinstance(key, Axis) and key.name is None:
             try:
@@ -1252,7 +1807,7 @@ class AxisCollection(object):
 
     def __and__(self, other):
         """
-        returns the intersection of this collection and other
+        Returns the intersection of this collection and other.
         """
         if not isinstance(other, AxisCollection):
             other = AxisCollection(other)
@@ -1268,7 +1823,7 @@ class AxisCollection(object):
 
     def __eq__(self, other):
         """
-        other collection compares equal if all axes compare equal and in the
+        Other collection compares equal if all axes compare equal and in the
         same order. Works with a list.
         """
         if self is other:
@@ -1298,6 +1853,33 @@ class AxisCollection(object):
         return key in self._map
 
     def isaxis(self, value):
+        """
+        Tests if input is an Axis object or
+        the name of an axis contained in self.
+
+        Parameters
+        ----------
+        value : Axis or str
+            Input axis or string
+
+        Returns
+        -------
+        bool
+            True if input is an Axis object or the name of an axis contained in
+            the current AxisCollection instance, False otherwise.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> col = AxisCollection([age, sex])
+        >>> col.isaxis(age)
+        True
+        >>> col.isaxis('sex')
+        True
+        >>> col.isaxis('city')
+        False
+        """
         # this is tricky. 0 and 1 can be both axes indices and axes ticks.
         # not sure what's worse:
         # 1) disallow aggregates(axis_num)
@@ -1335,6 +1917,35 @@ class AxisCollection(object):
         return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
 
     def get(self, key, default=None, name=None):
+        """
+        Returns axis corresponding to key. If not found,
+        the argument `name` is used to create a new Axis.
+        If `name` is None, the `default` axis is then returned.
+
+        Parameters
+        ----------
+        key : key
+            Key corresponding to an axis of the current AxisCollection.
+        default : axis, optional
+            Default axis to return if key doesn't correspond to any axis of
+            the collection and argument `name` is None.
+        name : str, optional
+            If key doesn't correspond to any axis of the collection,
+            a new Axis with this name is created and returned.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, time])
+        >>> col.get('time')
+        Axis('time', [2007, 2008, 2009, 2010])
+        >>> col.get('sex', sex)
+        Axis('sex', ['M', 'F'])
+        >>> col.get('nb_children', None, 'nb_children')
+        Axis('nb_children', 1)
+        """
         # XXX: use if key in self?
         try:
             return self[key]
@@ -1346,8 +1957,8 @@ class AxisCollection(object):
 
     def get_all(self, key):
         """
-        returns all axes from key if present and length 1 wildcard axes
-        otherwise
+        Returns all axes from key if present and length 1 wildcard axes
+        otherwise.
 
         Parameters
         ----------
@@ -1356,6 +1967,26 @@ class AxisCollection(object):
         Returns
         -------
         AxisCollection
+
+        Raises
+        ------
+        AssertionError
+            Raised if the input key is not an AxisCollection object.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> city = Axis('city', ['London', 'Paris', 'Rome'])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col2 = AxisCollection([age, city, time])
+        >>> col.get_all(col2)
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('city', 1),
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
         """
         assert isinstance(key, AxisCollection)
         def get_pos_default(k, i):
@@ -1372,21 +2003,89 @@ class AxisCollection(object):
                                for i, k in enumerate(key)])
 
     def keys(self):
+        """
+        Returns list of all axis names.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, sex, time]).keys()
+        ['age', 'sex', 'time']
+        """
         # XXX: include id/num for anonymous axes? I think I should
         return [a.name for a in self._list]
 
     def pop(self, axis=-1):
+        """
+        Removes and returns an axis.
+
+        Parameters
+        ----------
+        axis : key, optional
+            Axis to remove and return.
+            Default value is -1 (last axis).
+
+        Returns
+        -------
+        Axis
+            If no argument is provided, the last axis is removed and returned.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.pop('age')
+        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+        >>> col
+        AxisCollection([
+            Axis('sex', ['M', 'F']),
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
+        >>> col.pop()
+        Axis('time', [2007, 2008, 2009, 2010])
+        """
         axis = self[axis]
         del self[axis]
         return axis
 
     def append(self, axis):
         """
-        append axis at the end of the collection
+        Appends axis at the end of the collection.
+
+        Parameters
+        ----------
+        axis : Axis
+            Axis to append.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, sex])
+        >>> col.append(time)
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
         """
         self[len(self):len(self)] = [axis]
 
     def check_compatible(self, axes):
+        """
+        Checks if axes passed as argument are compatible with those
+        contained in the collection. Raises a ValueError if not.
+
+        See Also
+        --------
+        Axis.iscompatible
+        """
         for i, axis in enumerate(axes):
             local_axis = self.get_by_pos(axis, i)
             if not local_axis.iscompatible(axis):
@@ -1395,7 +2094,32 @@ class AxisCollection(object):
 
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
-        extend the collection by appending the axes from axes
+        Extends the collection by appending the axes from `axes`.
+
+        Parameters
+        ----------
+        axes : sequence of Axis (list, tuple, AxisCollection)
+        validate : bool, optional
+        replace_wildcards : bool, optional
+
+        Raises
+        ------
+        TypeError
+            Raised if `axes` is not a sequence of Axis (list, tuple or AxisCollection)
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection(age)
+        >>> col.extend([sex, time])
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
         """
         # axes should be a sequence
         if not isinstance(axes, (tuple, list, AxisCollection)):
@@ -1431,14 +2155,39 @@ class AxisCollection(object):
 
     def index(self, axis):
         """
-        returns the index of axis.
+        Returns the index of axis.
 
-        axis can be a name or an Axis object (or an index)
-        if the Axis object itself exists in the list, index() will return it
-        otherwise, it will return the index of the local axis with the same
+        `axis` can be a name or an Axis object (or an index).
+        If the Axis object itself exists in the list, index() will return it.
+        Otherwise, it will return the index of the local axis with the same
         name than the key (whether it is compatible or not).
 
-        Raises ValueError if the axis is not present.
+        Parameters
+        ----------
+        axis : Axis or int or str
+            Can be the axis itself or its position (returned if represents a valid index)
+            or its name.
+
+        Returns
+        -------
+        int
+            Index of the axis.
+
+        Raises
+        ------
+        ValueError
+            Raised if the axis is not present.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.index(time)
+        2
+        >>> col.index('sex')
+        1
         """
         if isinstance(axis, int):
             if -len(self) <= axis < len(self):
@@ -1463,14 +2212,65 @@ class AxisCollection(object):
     # other inplace operations: append, extend, pop, __delitem__, __setitem__)
     def insert(self, index, axis):
         """
-        insert axis before index
+        Inserts axis before index.
+
+        Parameters
+        ----------
+        index : int
+            position of the inserted axis.
+        axis : Axis
+            axis to insert.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, time])
+        >>> col.insert(1, sex)
+        >>> col
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+            Axis('sex', ['M', 'F']),
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
         """
         self[index:index] = [axis]
 
     def copy(self):
+        """
+        Returns a copy.
+        """
         return self[:]
 
     def replace(self, old, new):
+        """
+        Replaces an axis.
+
+        Parameters
+        ----------
+        old : Axis
+            Axis to be replaced
+        new : Axis
+            Axis to be put in place of the `old` axis.
+
+        Returns
+        -------
+        AxisCollection
+            New collection with old axis replaced by the new one.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> age_new = Axis('age', range(10))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> col = AxisCollection([age, sex])
+        >>> col.replace(age, age_new)
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Axis('sex', ['M', 'F'])
+        ])
+        """
         res = self[:]
         res[old] = new
         return res
@@ -1478,17 +2278,47 @@ class AxisCollection(object):
     # XXX: kill this method?
     def without(self, axes):
         """
-        returns a new collection without some axes
-        you can use a comma separated list of names
-        set operations so axes can contain axes not present in self
+        Returns a new collection without some axes.
+
+        You can use a comma separated list of names.
+
+        Parameters
+        ----------
+        axes : sequence of Axis or str
+            Axes to not include in the returned AxisCollection.
+            In case of string, axes are separated by a comma and no whitespace is accepted.
+
+        Returns
+        -------
+        AxisCollection
+            New collection without some axes.
+
+        Notes
+        -----
+        Set operations so axes can contain axes not present in self
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> col = AxisCollection([age, sex, time])
+        >>> col.without([age, sex])
+        AxisCollection([
+            Axis('time', [2007, 2008, 2009, 2010])
+        ])
+        >>> col.without('sex,time')
+        AxisCollection([
+            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+        ])
         """
         return self - axes
 
     def __sub__(self, axes):
         """
-        returns a new collection without some axes
-        you can use a comma separated list of names
-        set operations so axes can contain axes not present in self
+        See Also
+        --------
+        without
         """
         if isinstance(axes, basestring):
             axes = axes.split(',')
@@ -1502,16 +2332,30 @@ class AxisCollection(object):
 
     def translate_full_key(self, key):
         """
+        Translates a label-based key to a positional key.
+
         Parameters
         ----------
         key : tuple
-            a full label-based key. All dimensions must be present and in
-            the correct order.
+            A full label-based key.
+            All dimensions must be present and in the correct order.
 
         Returns
         -------
         tuple
-            a full positional key
+            A full positional key.
+
+        See Also
+        --------
+        Axis.translate
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age,sex,time]).translate_full_key((':', 'F', 2009))
+        (slice(None, None, None), 1, 2)
         """
         assert len(key) == len(self)
         return tuple(axis.translate(axis_key)
@@ -1519,46 +2363,63 @@ class AxisCollection(object):
 
     @property
     def labels(self):
-        """Returns the list of labels of the axes"""
+        """
+        Returns the list of labels of the axes.
+
+        Returns
+        -------
+        list
+            List of labels of the axes.
+
+        Example
+        -------
+        >>> age = Axis('age', range(10))
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, time]).labels # doctest: +NORMALIZE_WHITESPACE
+        [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+         array([2007, 2008, 2009, 2010])]
+        """
         return [axis.labels for axis in self._list]
 
     @property
     def names(self):
-        """Returns the list of (raw) names of the axes
+        """
+        Returns the list of (raw) names of the axes.
 
         Returns
         -------
-        List
-            List of names of the axes
+        list
+            List of names of the axes.
 
-        Example
-        -------
-        >>> a = Axis('a', ['a1', 'a2'])
-        >>> b = Axis('b', 2)
-        >>> c = Axis(None, ['c1', 'c2'])
-        >>> arr = zeros([a, b, c])
-        >>> arr.axes.names
-        ['a', 'b', None]
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, sex, time]).names
+        ['age', 'sex', 'time']
         """
         return [axis.name for axis in self._list]
 
     @property
     def display_names(self):
-        """Returns the list of (display) names of the axes
+        """
+        Returns the list of (display) names of the axes.
 
         Returns
         -------
-        List
-            List of names of the axes
+        list
+            List of names of the axes.
+            Wildcard axes are displayed with an attached *.
+            Anonymous axes (name = None) are replaced by their position in braces.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', ['a1', 'a2'])
         >>> b = Axis('b', 2)
         >>> c = Axis(None, ['c1', 'c2'])
         >>> d = Axis(None, 3)
-        >>> col = AxisCollection([a, b, c, d])
-        >>> col.display_names
+        >>> AxisCollection([a, b, c, d]).display_names
         ['a', 'b*', '{2}', '{3}*']
         """
         def display_name(i, axis):
@@ -1569,35 +2430,40 @@ class AxisCollection(object):
 
     @property
     def ids(self):
-        """Returns the list of ids of the axes
+        """
+        Returns the list of ids of the axes.
 
         Returns
         -------
         list
-            List of ids of the axes
+            List of ids of the axes.
 
-        Example
-        -------
+        See Also
+        --------
+        axis_id
+
+        Examples
+        --------
         >>> a = Axis('a', 2)
         >>> b = Axis(None, 2)
         >>> c = Axis('c', 2)
-        >>> col = AxisCollection([a, b, c])
-        >>> col.ids
+        >>> AxisCollection([a, b, c]).ids
         ['a', 1, 'c']
         """
         return [axis.name if axis.name is not None else i
                 for i, axis in enumerate(self._list)]
 
     def axis_id(self, axis):
-        """Returns the id of an axis
+        """
+        Returns the id of an axis.
 
         Returns
         -------
         str or int
-            id of axis, which is its name if defined and its position otherwise
+            Id of axis, which is its name if defined and its position otherwise.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', 2)
         >>> b = Axis(None, 2)
         >>> c = Axis('c', 2)
@@ -1614,30 +2480,65 @@ class AxisCollection(object):
 
     @property
     def shape(self):
+        """
+        Returns the shape of the collection.
+
+        Returns
+        -------
+        tuple
+            Tuple of lengths of axes.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, sex, time]).shape
+        (20, 2, 4)
+        """
         return tuple(len(axis) for axis in self._list)
 
     @property
     def size(self):
+        """
+        Returns the size of the collection, i.e.
+        the number of elements of the array.
+
+        Returns
+        -------
+        int
+            Number of elements of the array.
+
+        Examples
+        --------
+        >>> age = Axis('age', range(20))
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, sex, time]).size
+        160
+        """
         return np.prod(self.shape)
 
     @property
     def info(self):
-        """Describes an AxisCollection (shape and labels for each axis).
+        """
+        Describes the collection (shape and labels for each axis).
 
         Returns
         -------
-        String
+        str
             Description of the AxisCollection (shape and labels for each axis).
 
-        Example
-        -------
-        >>> nat = Axis('nat', ['BE', 'FO'])
+        Examples
+        --------
+        >>> age = Axis('age', 20)
         >>> sex = Axis('sex', ['M', 'F'])
-        >>> axes = AxisCollection([nat, sex])
-        >>> axes.info
-        2 x 2
-         nat [2]: 'BE' 'FO'
+        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> AxisCollection([age, sex, time]).info
+        20 x 2 x 4
+         age* [20]: 0 1 2 ... 17 18 19
          sex [2]: 'M' 'F'
+         time [4]: 2007 2008 2009 2010
         """
         lines = [" %s [%d]: %s" % (name, len(axis), axis.labels_summary())
                  for name, axis in zip(self.display_names, self._list)]
@@ -1646,31 +2547,51 @@ class AxisCollection(object):
 
 
 def all(values, axis=None):
-    """Test whether all array elements along given axes evaluate to True.
+    """
+    Test whether all array elements along a given axis evaluate to True.
 
     Parameters
     ----------
-    axis : None, int, str or Axis, tuple of int, str or Axis, optional
-        axes over which to aggregate. Defaults to None (all axes).
+    values : LArray or iterable
+        Input data.
+    axis : str or list or Axis, optional
+        Axis over which to aggregate.
+        Defaults to None (all axes).
 
     Returns
     -------
-    LArray or scalar
+    LArray of bool or bool
 
-    Example
-    -------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([nat, sex]) >= 1
-    >>> a
-    nat\\sex |     M |    F
-         BE | False | True
-         FO |  True | True
-    >>> all(a)
+    See Also
+    --------
+    LArray.all : Equivalent method.
+
+    Notes
+    -----
+    If `values` is not a LArray object, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((3,3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+     a2 |  6 |  7 |  8
+    >>> barr = arr < 4
+    >>> barr
+    a\\b |    b0 |    b1 |    b2
+     a0 |  True |  True |  True
+     a1 |  True | False | False
+     a2 | False | False | False
+    >>> all(barr)
     False
-    >>> all(a, nat)
-    sex |     M |    F
-        | False | True
+    >>> all(barr, 'a')
+    b |    b0 |    b1 |    b2
+      | False | False | False
+    >>> all(barr, 'b')
+    a |   a0 |    a1 |    a2
+      | True | False | False
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -1679,31 +2600,51 @@ def all(values, axis=None):
 
 
 def any(values, axis=None):
-    """Test whether any array elements along given axes evaluate to True.
+    """
+    Test whether any array elements along a given axis evaluate to True.
 
     Parameters
     ----------
-    axis : int, str or Axis, tuple of int, str or Axis, optional
-        axes over which to aggregate. Defaults to None (all axes).
+    values : LArray or iterable
+        Input data.
+    axis : str or list or Axis, optional
+        Axis over which to aggregate.
+        Defaults to None (all axes).
 
     Returns
     -------
-    LArray or scalar
+    LArray of bool or bool
 
-    Example
-    -------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([nat, sex]) >= 3
-    >>> a
-    nat\\sex |     M |     F
-         BE | False | False
-         FO | False |  True
-    >>> any(a)
+    See Also
+    --------
+    LArray.any : Equivalent method.
+
+    Notes
+    -----
+    If `values` is not a LArray object, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((3,3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+     a2 |  6 |  7 |  8
+    >>> barr = arr < 4
+    >>> barr
+    a\\b |    b0 |    b1 |    b2
+     a0 |  True |  True |  True
+     a1 |  True | False | False
+     a2 | False | False | False
+    >>> any(barr)
     True
-    >>> any(a, nat)
-    sex |     M |    F
-        | False | True
+    >>> any(barr, 'a')
+    b |   b0 |   b1 |   b2
+      | True | True | True
+    >>> any(barr, 'b')
+    a |   a0 |   a1 |    a2
+      | True | True | False
     """
     if isinstance(values, LArray):
         return values.any(axis)
@@ -1718,8 +2659,8 @@ def sum(array, *args, **kwargs):
 
     Parameters
     ----------
-    array : iterable or array-like or LArray
-        Elements to sum.
+    array : LArray or iterable
+        Input data.
     axis : None or int or str or Axis or tuple of those, optional
         Axis or axes along which a sum is performed.
         The default (`axis` = `None`) is to perform a sum over all
@@ -1730,7 +2671,7 @@ def sum(array, *args, **kwargs):
 
     Returns
     -------
-    LArray
+    LArray or scalar
 
     See Also
     --------
@@ -1745,19 +2686,16 @@ def sum(array, *args, **kwargs):
 
     Examples
     --------
-    >>> a = ndrange((2, 3))
-    >>> a
-    {0}*\\{1}* | 0 | 1 | 2
-            0 | 0 | 1 | 2
-            1 | 3 | 4 | 5
-    >>> sum(a)
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> sum(arr)
     15
-    >>> sum(a, axis=0)
-    {0}* | 0 | 1 | 2
-         | 3 | 5 | 7
-    >>> sum(a, axis=1)
-    {0}* | 0 |  1
-         | 3 | 12
+    >>> sum(arr, axis='a')
+    b | b0 | b1 | b2
+      |  3 |  5 |  7
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -1770,41 +2708,62 @@ def sum(array, *args, **kwargs):
 
 
 def prod(array, *args, **kwargs):
+    """prod(array, axis=None)
+
+    Returns the product of the array elements over a given axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a product is performed.
+        The default (`axis` = `None`) is to perform the product over all
+        axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the product is performed on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.prod : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> prod(arr)
+    0
+    >>> prod(arr, axis='a')
+    b | b0 | b1 | b2
+      |  0 |  4 | 10
+    """
     return array.prod(*args, **kwargs)
 
 
 def cumsum(array, *args, **kwargs):
-    return array.cumsum(*args, **kwargs)
+    """cumsum(array, axis=None)
 
+    Returns the cumulative sum of the elements along a given axis.
 
-def cumprod(array, *args, **kwargs):
-    return array.cumprod(*args, **kwargs)
-
-
-def min(array, *args, **kwargs):
-    if isinstance(array, LArray):
-        return array.min(*args, **kwargs)
-    else:
-        return builtins.min(array, *args, **kwargs)
-
-
-def max(array, *args, **kwargs):
-    if isinstance(array, LArray):
-        return array.max(*args, **kwargs)
-    else:
-        return builtins.max(array, *args, **kwargs)
-
-
-def mean(array, *args, **kwargs):
-    return array.mean(*args, **kwargs)
-
-
-def median(array, *args, **kwargs):
-    """
     Parameters
     ----------
-    array : iterable or array-like or LArray
+    array : LArray
+        Input data.
     axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a cumulative sum is performed.
+        The default (`axis` = `None`) is to perform the cumulative sum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the cumulative sum is performed on multiple axes.
 
     Returns
     -------
@@ -1812,72 +2771,461 @@ def median(array, *args, **kwargs):
 
     See Also
     --------
+    LArray.cumsum : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> cumsum(arr)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  3
+     a1 |  3 |  7 | 12
+    >>> cumsum(arr, axis='a')
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  5 |  7
+    """
+    return array.cumsum(*args, **kwargs)
+
+
+def cumprod(array, *args, **kwargs):
+    """cumprod(array, axis=None)
+
+    Returns the cumulative product of the elements along a given axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a cumulative product is performed.
+        The default (`axis` = `None`) is to perform the cumulative product
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the cumulative product is performed on multiple axes.
+
+    Returns
+    -------
+    LArray
+
+    See Also
+    --------
+    LArray.cumprod : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> cumprod(arr)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  0 |  0
+     a1 |  3 | 12 | 60
+    >>> cumprod(arr, axis='a')
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  0 |  4 | 10
+    """
+    return array.cumprod(*args, **kwargs)
+
+
+def min(array, *args, **kwargs):
+    """min(array, axis=None)
+
+    Returns the minimum of an array or minimum along an axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a the minimum is searched.
+        The default (`axis` = `None`) is to search the minimum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the minimum is searched on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.min : Equivalent method.
+
+    Notes
+    -----
+    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> min(arr)
+    0
+    >>> min(arr, axis='a')
+    b | b0 | b1 | b2
+      |  0 |  1 |  2
+    """
+    if isinstance(array, LArray):
+        return array.min(*args, **kwargs)
+    else:
+        return builtins.min(array, *args, **kwargs)
+
+
+def max(array, *args, **kwargs):
+    """max(array, axis=None)
+
+    Returns the minimum of an array or maximum along an axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which a the maximum is searched.
+        The default (`axis` = `None`) is to search the maximum
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the maximum is searched on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.max : Equivalent method.
+
+    Notes
+    -----
+    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> max(arr)
+    5
+    >>> max(arr, axis=0)
+    b | b0 | b1 | b2
+      |  3 |  4 |  5
+    >>> max(arr, axis='a')
+    b | b0 | b1 | b2
+      |  3 |  4 |  5
+    """
+    if isinstance(array, LArray):
+        return array.max(*args, **kwargs)
+    else:
+        return builtins.max(array, *args, **kwargs)
+
+
+def mean(array, *args, **kwargs):
+    """mean(array, axis=None)
+
+    Computes the arithmetic mean along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the means are computed.
+        The default (`axis` = `None`) is to compute the mean
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the mean is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.mean : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> mean(arr)
+    2.5
+    >>> mean(arr, axis=0)
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    >>> mean(arr, axis='a')
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    """
+    return array.mean(*args, **kwargs)
+
+
+def median(array, *args, **kwargs):
+    """median(array, axis=None)
+
+    Computes the median along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the median are computed.
+        The default (`axis` = `None`) is to compute the median
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the median is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
     LArray.median : Equivalent method.
 
     Examples
     --------
-
-    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
-    >>> a
-    {0}*\\{1}* |  0 | 1 | 2
-            0 | 10 | 7 | 4
-            1 |  3 | 2 | 1
-    >>> median(a)
-    3.5
-    >>> median(a, axis=0)
-    {0}* |   0 |   1 |   2
-         | 6.5 | 4.5 | 2.5
-    >>> median(a, axis=1)
-    {0}* |   0 |   1
-         | 7.0 | 2.0
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> median(arr)
+    2.5
+    >>> median(arr, axis=0)
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
+    >>> median(arr, axis='a')
+    b |  b0 |  b1 |  b2
+      | 1.5 | 2.5 | 3.5
     """
     return array.median(*args, **kwargs)
 
 
 def percentile(array, *args, **kwargs):
-    """
+    """percentile(array, q, axis=None)
+
+    Computes the qth percentile of the data along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    q : float in range of [0,100] (or sequence of floats)
+        Percentile to compute, which must be between 0 and 100 inclusive.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the percentile are computed.
+        The default (`axis` = `None`) is to compute the percentile
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the percentile is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.percentile : Equivalent method.
+
     Examples
     --------
-
-    >>> a = LArray([[10, 7, 4], [3, 2, 1]])
-    >>> a
-    {0}*\\{1}* |  0 | 1 | 2
-            0 | 10 | 7 | 4
-            1 |  3 | 2 | 1
-    >>> # this is a bug in numpy: np.nanpercentile(all axes) returns an ndarray,
-    >>> # instead of a scalar.
-    >>> percentile(a, 50)
-    array(3.5)
-    >>> percentile(a, 50, axis=0)
-    {0}* |   0 |   1 |   2
-         | 6.5 | 4.5 | 2.5
-    >>> percentile(a, 50, axis=1)
-    {0}* |   0 |   1
-         | 7.0 | 2.0
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> percentile(arr, 25)
+    array(1.25)
+    >>> percentile(arr, 25, axis=0)
+    b |   b0 |   b1 |   b2
+      | 0.75 | 1.75 | 2.75
+    >>> percentile(arr, 25, axis='a')
+    b |   b0 |   b1 |   b2
+      | 0.75 | 1.75 | 2.75
     """
     return array.percentile(*args, **kwargs)
 
 
 # not commutative
+# FIXME: this function is not working currently because the
+# Numpy equivalent does not accept args and kwargs arguments.
+# A workaround must be implemented.
 def ptp(array, *args, **kwargs):
+    """ptp(array, axis=None)
+
+    Returns the range of values (maximum - minimum) along an axis.
+
+    The name of the function comes from the acronym for ‘peak to peak’.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis along which to find the peaks.
+        The default (`axis` = `None`) is to find the peaks
+        over all axes of the input array (as if the array is flatten).
+        `axis` may be negative, in which case it counts from the last
+        to the first axis.
+
+        If this is a tuple, the peaks are computed on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.ptp : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> ptp(arr) # doctest: +SKIP
+    5
+    >>> ptp(arr, axis=0) # doctest: +SKIP
+    b | b0 | b1 | b2
+      |  3 |  3 |  3
+    >>> ptp(arr, axis='a') # doctest: +SKIP
+    b | b0 | b1 | b2
+      |  3 |  3 |  3
+    """
     return array.ptp(*args, **kwargs)
 
 
 def var(array, *args, **kwargs):
+    """var(array, axis=None)
+
+    Computes the variance along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the variance are computed.
+        The default (`axis` = `None`) is to compute the variance
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the variance is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.var : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 4))
+    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
+    >>> arr
+    a\\b | b0 | b1 | b2 | b3
+     a0 |  2 |  4 |  4 |  4
+     a1 |  5 |  5 |  7 |  9
+    >>> var(arr)
+    4.0
+    >>> var(arr, axis=1)
+    a |   a0 |   a1
+      | 0.75 | 2.75
+    >>> var(arr, axis='b')
+    a |   a0 |   a1
+      | 0.75 | 2.75
+    """
     return array.var(*args, **kwargs)
 
 
 def std(array, *args, **kwargs):
+    """std(array, axis=None)
+
+    Computes the standard deviation along the specified axis.
+
+    Parameters
+    ----------
+    array : LArray
+        Input data.
+    axis : None or int or str or Axis or tuple of those, optional
+        Axis or axes along which the standard deviation are computed.
+        The default (`axis` = `None`) is to compute the standard deviation
+        over all axes of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        If this is a tuple, the standard deviation is calculated on multiple axes.
+
+    Returns
+    -------
+    LArray or scalar
+
+    See Also
+    --------
+    LArray.std : Equivalent method.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 4))
+    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
+    >>> arr
+    a\\b | b0 | b1 | b2 | b3
+     a0 |  2 |  4 |  4 |  4
+     a1 |  5 |  5 |  7 |  9
+    >>> std(arr)
+    2.0
+    >>> std(arr, axis=0)
+    b |  b0 |  b1 |  b2 |  b3
+      | 1.5 | 0.5 | 1.5 | 2.5
+    >>> std(arr, axis='a')
+    b |  b0 |  b1 |  b2 |  b3
+      | 1.5 | 0.5 | 1.5 | 2.5
+    """
     return array.std(*args, **kwargs)
 
 
-_numeric_kinds = 'buifc'
-_string_kinds = 'SU'
+_numeric_kinds = 'buifc'    # Boolean, Unsigned integer, Integer, Float, Complex
+_string_kinds = 'SU'        # String, Unicode
 _meta_kind = {k: 'str' for k in _string_kinds}
 _meta_kind.update({k: 'numeric' for k in _numeric_kinds})
 
 
 def common_type(arrays):
+    """
+    Returns a type which is common to the input arrays.
+    All input arrays can be safely cast to the returned dtype without loss of information.
+
+    Notes
+    -----
+    If list of arrays mixes 'numeric' and 'string' types, the function returns 'object'
+    as common type.
+    """
     arrays = [np.asarray(a) for a in arrays]
     dtypes = [a.dtype for a in arrays]
     meta_kinds = [_meta_kind.get(dt.kind, 'other') for dt in dtypes]
@@ -1888,6 +3236,7 @@ def common_type(arrays):
         return np.find_common_type(dtypes, [])
     elif meta_kinds[0] == 'str':
         need_unicode = any(dt.kind == 'U' for dt in dtypes)
+        # unicode are coded with 4 bytes
         max_size = max(dt.itemsize // 4 if dt.kind == 'U' else dt.itemsize
                        for dt in dtypes)
         return np.dtype(('U' if need_unicode else 'S', max_size))
@@ -1956,7 +3305,11 @@ class LArrayPositionalIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    def translate_key(self, key):
+    def _translate_key(self, key):
+        """
+        Translates key into tuple of PGroup, i.e.
+        tuple of collections of labels.
+        """
         if not isinstance(key, tuple):
             key = (key,)
         if len(key) > self.array.ndim:
@@ -1967,10 +3320,10 @@ class LArrayPositionalIndexer(object):
                      for axis_key, axis in zip(key, self.array.axes))
 
     def __getitem__(self, key):
-        return self.array[self.translate_key(key)]
+        return self.array[self._translate_key(key)]
 
     def __setitem__(self, key, value):
-        self.array[self.translate_key(key)] = value
+        self.array[self._translate_key(key)] = value
 
     def __len__(self):
         return len(self.array)
@@ -2024,10 +3377,73 @@ class LArrayPositionalPointsIndexer(object):
 
 
 def get_axis(obj, i):
+    """
+    Returns an axis according to its position.
+
+    Parameters
+    ----------
+    obj : LArray or other array
+        Input LArray or any array object which has a shape attribute
+        (NumPy or Pandas array).
+    i : int
+        Position of the axis.
+
+    Returns
+    -------
+    Axis
+        Axis corresponding to the given position if input `obj` is a LArray.
+        A new anonymous Axis with the length of the ith dimension of
+        the input `obj` otherwise.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 2, 2))
+    >>> arr
+     a | b\c | c0 | c1
+    a0 |  b0 |  0 |  1
+    a0 |  b1 |  2 |  3
+    a1 |  b0 |  4 |  5
+    a1 |  b1 |  6 |  7
+    >>> get_axis(arr, 1)
+    Axis('b', ['b0', 'b1'])
+    >>> np_arr = np.zeros((2, 2, 2))
+    >>> get_axis(np_arr, 1)
+    Axis(None, 2)
+    """
     return obj.axes[i] if isinstance(obj, LArray) else Axis(None, obj.shape[i])
 
 
 def aslarray(a):
+    """
+    Converts input as LArray if possible.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array to convert into a LArray.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> # NumPy array
+    >>> np_arr = np.arange(6).reshape((2,3))
+    >>> aslarray(np_arr)
+    {0}*\{1}* | 0 | 1 | 2
+            0 | 0 | 1 | 2
+            1 | 3 | 4 | 5
+    >>> # Pandas dataframe
+    >>> data = {'normal'  : pd.Series([1., 2., 3.], index=['a', 'b', 'c']),
+    ...         'reverse' : pd.Series([3., 2., 1.], index=['a', 'b', 'c'])}
+    >>> df = pd.DataFrame(data)
+    >>> aslarray(df)
+    {0}\{1} | normal | reverse
+          a |    1.0 |     3.0
+          b |    2.0 |     2.0
+          c |    3.0 |     1.0
+    """
     if isinstance(a, LArray):
         return a
     elif hasattr(a, '__larray__'):
@@ -2039,22 +3455,92 @@ def aslarray(a):
 
 
 class LArray(object):
+    """
+    A LArray object represents a multidimensional, homogeneous
+    array of fixed-size items with labeled axes.
+
+    The function :func:`aslarray` can be used to convert a
+    NumPy array or PandaS DataFrame into a LArray.
+
+    Parameters
+    ----------
+    data : scalar, tuple, list or NumPy ndarray
+        Input data.
+    axes : collection (tuple, list or AxisCollection) of axes \
+    (int, str or  Axis), optional
+        Axes.
+    title : str, optional
+        Title of array.
+
+    Attributes
+    ----------
+    data : NumPy ndarray
+        Data.
+    axes : AxisCollection
+        Axes.
+    title : str
+        Title.
+
+    See Also
+    --------
+    create_sequential : Create a LArray by sequentially
+                        applying modifications to the array
+                        along axis.
+    ndrange : Create a LArray with increasing elements.
+    zeros : Create a LArray, each element of which is zero.
+    ones : Create a LArray, each element of which is 1.
+    full : Create a LArray filled with a given value.
+    empty : Create a LArray, but leave its allocated memory
+            unchanged (i.e., it contains “garbage”).
+
+    Examples
+    --------
+    >>> age = Axis('age', [10, 11, 12])
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> time = Axis('time', [2007, 2008, 2009])
+    >>> axes = [age, sex, time]
+    >>> data = np.zeros((len(axes), len(sex), len(time)))
+    >>> LArray(data, axes)
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M |  0.0 |  0.0 |  0.0
+     10 |        F |  0.0 |  0.0 |  0.0
+     11 |        M |  0.0 |  0.0 |  0.0
+     11 |        F |  0.0 |  0.0 |  0.0
+     12 |        M |  0.0 |  0.0 |  0.0
+     12 |        F |  0.0 |  0.0 |  0.0
+    >>> full(axes, 10.0)
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M | 10.0 | 10.0 | 10.0
+     10 |        F | 10.0 | 10.0 | 10.0
+     11 |        M | 10.0 | 10.0 | 10.0
+     11 |        F | 10.0 | 10.0 | 10.0
+     12 |        M | 10.0 | 10.0 | 10.0
+     12 |        F | 10.0 | 10.0 | 10.0
+    >>> arr = empty(axes)
+    >>> arr['F'] = 1.0
+    >>> arr['M'] = -1.0
+    >>> arr
+    age | sex\\time | 2007 | 2008 | 2009
+     10 |        M | -1.0 | -1.0 | -1.0
+     10 |        F |  1.0 |  1.0 |  1.0
+     11 |        M | -1.0 | -1.0 | -1.0
+     11 |        F |  1.0 |  1.0 |  1.0
+     12 |        M | -1.0 | -1.0 | -1.0
+     12 |        F |  1.0 |  1.0 |  1.0
+    >>> bysex = create_sequential(sex, initial=-1, inc=2)
+    >>> bysex
+    sex |  M | F
+        | -1 | 1
+    >>> create_sequential(age, initial=10, inc=bysex)
+    sex\\age | 10 | 11 | 12
+          M | 10 |  9 |  8
+          F | 10 | 11 | 12
+    """
     def __init__(self,
                  data,
                  axes=None,
                  title=''   # type: str
                  ):
-        """
-        Parameters
-        ----------
-        data : scalar, tuple, list or np.ndarray
-            data
-        axes : collection (tuple, list or AxisCollection) of axes (int,
-        str or  Axis), optional
-            axes
-        title : str, optional
-            title of array
-        """
         data = np.asarray(data)
         ndim = data.ndim
         if axes is None:
@@ -2076,11 +3562,62 @@ class LArray(object):
 
     # XXX: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
+        """
+        Returns the indices of the elements that are non-zero.
+
+        Specifically, it returns a tuple of arrays (one for each dimension)
+        containing the indices of the non-zero elements in that dimension.
+
+        Returns
+        -------
+        tuple of arrays : tuple
+            Indices of elements that are non-zero.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3)) % 2
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  0
+         a1 |  1 |  0 |  1
+        >>> arr.nonzero() # doctest: +SKIP
+        [array([0, 1, 1]), array([1, 0, 2])]
+        """
         # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
     def with_axes(self, axes):
+        """
+        Returns a LArray with same data but new axes.
+        The number and length of axes must match
+        dimensions and shape of data array.
+
+        Parameters
+        ----------
+        axes : collection (tuple, list or AxisCollection) of axes \
+        (int, str or  Axis), optional
+            New axes.
+
+        Returns
+        -------
+        LArray
+            Array with same data but new axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        >>> row = Axis('row', ['r0', 'r1'])
+        >>> column = Axis('column', ['c0', 'c1', 'c2'])
+        >>> arr.with_axes([row, column])
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
+        """
         return LArray(self.data, axes)
 
     def __getattr__(self, key):
@@ -2096,17 +3633,143 @@ class LArray(object):
 
     @property
     def i(self):
+        """
+        Allows selection of a subset using positions of labels.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3, 4))
+        >>> arr
+         a | b\\c | c0 | c1 | c2 | c3
+        a0 |  b0 |  0 |  1 |  2 |  3
+        a0 |  b1 |  4 |  5 |  6 |  7
+        a0 |  b2 |  8 |  9 | 10 | 11
+        a1 |  b0 | 12 | 13 | 14 | 15
+        a1 |  b1 | 16 | 17 | 18 | 19
+        a1 |  b2 | 20 | 21 | 22 | 23
+
+        >>> arr.i[:, 0:2, [0,2]]
+         a | b\\c | c0 | c2
+        a0 |  b0 |  0 |  2
+        a0 |  b1 |  4 |  6
+        a1 |  b0 | 12 | 14
+        a1 |  b1 | 16 | 18
+        """
         return LArrayPositionalIndexer(self)
 
     @property
     def points(self):
+        """
+        Allows selection of arbitrary items in the array
+        based on their N-dimensional label index.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3, 4))
+        >>> arr
+         a | b\\c | c0 | c1 | c2 | c3
+        a0 |  b0 |  0 |  1 |  2 |  3
+        a0 |  b1 |  4 |  5 |  6 |  7
+        a0 |  b2 |  8 |  9 | 10 | 11
+        a1 |  b0 | 12 | 13 | 14 | 15
+        a1 |  b1 | 16 | 17 | 18 | 19
+        a1 |  b2 | 20 | 21 | 22 | 23
+
+        To select the two points with label coordinates
+        [a0, b0, c0] and [a1, b2, c2], you must do:
+
+        >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
+        a,b,c | a0,b0,c0 | a1,b2,c2
+              |        0 |       22
+
+        The number of label(s) on each dimension must be equal:
+
+        >>> arr.points['a0,a1', 'b0,b2', 'c0,c1,c2'] # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+            ...
+        IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
+        """
         return LArrayPointsIndexer(self)
 
     @property
     def ipoints(self):
+        """
+        Allows selection of arbitrary items in the array based on their
+        N-dimensional index.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3, 4))
+        >>> arr
+         a | b\\c | c0 | c1 | c2 | c3
+        a0 |  b0 |  0 |  1 |  2 |  3
+        a0 |  b1 |  4 |  5 |  6 |  7
+        a0 |  b2 |  8 |  9 | 10 | 11
+        a1 |  b0 | 12 | 13 | 14 | 15
+        a1 |  b1 | 16 | 17 | 18 | 19
+        a1 |  b2 | 20 | 21 | 22 | 23
+
+        To select the two points with index coordinates
+        [0, 0, 0] and [1, 2, 2], you must do:
+
+        >>> arr.ipoints[[0,1], [0,2], [0,2]]
+        a,b,c | a0,b0,c0 | a1,b2,c2
+              |        0 |       22
+
+        The number of index(es) on each dimension must be equal:
+
+        >>> arr.ipoints[[0,1], [0,2], [0,1,2]] # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+            ...
+        IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
+        """
         return LArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
+        """
+        Converts LArray into Pandas DataFrame.
+
+        Parameters
+        ----------
+        fold_last_axis_name : bool, optional.
+            False by default.
+        dropna : {'any', 'all', None}, optional.
+            * any : if any NA values are present, drop that label
+            * all : if all values are NA, drop that label
+            None by default.
+
+        Returns
+        -------
+        Pandas DataFrame
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3, 3))
+        >>> arr.to_frame() # doctest: +NORMALIZE_WHITESPACE
+        c      c0  c1  c2
+        a  b
+        a0 b0   0   1   2
+           b1   3   4   5
+           b2   6   7   8
+        a1 b0   9  10  11
+           b1  12  13  14
+           b2  15  16  17
+        a2 b0  18  19  20
+           b1  21  22  23
+           b2  24  25  26
+        >>> arr.to_frame(True) # doctest: +NORMALIZE_WHITESPACE
+                c0  c1  c2
+        a  b\\c
+        a0 b0    0   1   2
+           b1    3   4   5
+           b2    6   7   8
+        a1 b0    9  10  11
+           b1   12  13  14
+           b2   15  16  17
+        a2 b0   18  19  20
+           b1   21  22  23
+           b2   24  25  26
+        """
         columns = pd.Index(self.axes[-1].labels)
         if not fold_last_axis_name:
             columns.name = self.axes[-1].name
@@ -2132,6 +3795,34 @@ class LArray(object):
     df = property(to_frame)
 
     def to_series(self, dropna=False):
+        """
+        Converts LArray into Pandas Series.
+
+        Parameters
+        ----------
+        dropna : bool, optional.
+            False by default.
+
+        Returns
+        -------
+        Pandas Series
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3), dtype=float)
+        >>> arr.to_series() # doctest: +NORMALIZE_WHITESPACE
+        a   b
+        a0  b0    0.0
+            b1    1.0
+            b2    2.0
+        a1  b0    3.0
+            b1    4.0
+            b2    5.0
+        a2  b0    6.0
+            b1    7.0
+            b2    8.0
+        dtype: float64
+        """
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
                                            names=self.axes.names)
         series = pd.Series(np.asarray(self).reshape(self.size), index)
@@ -2174,39 +3865,39 @@ class LArray(object):
         ----------
         renames : axis ref or dict {axis ref: str} or
                   list of tuple (axis ref, str)
-            renames to apply. If a single axis reference is given, the "to"
+            Renames to apply. If a single axis reference is given, the "to"
             argument must be used.
         to : str or Axis
-            new name if renames contains a single axis reference
+            New name if renames contains a single axis reference
         **kwargs : str
-            new name for each axis given as a keyword argument.
+            New name for each axis given as a keyword argument.
 
         Returns
         -------
         LArray
-            array with some axes renamed.
+            Array with some axes renamed.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
-        >>> a = ndrange([nat, sex])
-        >>> a
+        >>> arr = ndrange([nat, sex])
+        >>> arr
         nat\\sex | M | F
              BE | 0 | 1
              FO | 2 | 3
-        >>> a.rename(x.nat, 'nat2')
+        >>> arr.rename(x.nat, 'nat2')
         nat2\\sex | M | F
               BE | 0 | 1
               FO | 2 | 3
-        >>> a.rename(nat='nat2')
-        nat2\\sex | M | F
-              BE | 0 | 1
-              FO | 2 | 3
-        >>> a.rename({'nat': 'nat2'})
-        nat2\\sex | M | F
-              BE | 0 | 1
-              FO | 2 | 3
+        >>> arr.rename(nat='nat2', sex='sex2')
+        nat2\\sex2 | M | F
+               BE | 0 | 1
+               FO | 2 | 3
+        >>> arr.rename({'nat': 'nat2', 'sex' : 'sex2'})
+        nat2\\sex2 | M | F
+               BE | 0 | 1
+               FO | 2 | 3
         """
         if isinstance(renames, dict):
             items = list(renames.items())
@@ -2223,21 +3914,21 @@ class LArray(object):
         return LArray(self.data, axes)
 
     def sort_values(self, key):
-        """Sorts values of the LArray.
+        """Sorts values of the array.
 
         Parameters
         ----------
         key : scalar or tuple or Group
-            key along which to sort. Must have exactly one dimension less than
-            ndim.
+            Key along which to sort.
+            Must have exactly one dimension less than ndim.
 
         Returns
         -------
         LArray
-            LArray with sorted values.
+            Array with sorted values.
 
-        Example
-        -------
+        Examples
+        --------
         >>> sex = Axis('sex', ['M', 'F'])
         >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
         >>> xtype = Axis('type', ['type1', 'type2'])
@@ -2290,19 +3981,19 @@ class LArray(object):
 
     # XXX: rename to sort_axes?
     def sort_axis(self, axes=None, reverse=False):
-        """Sorts axes of the LArray.
+        """Sorts axes of the array.
 
         Parameters
         ----------
-        axes : axis reference (Axis, string, int) or list of them
-            axis to sort. If None, sorts all axes.
+        axes : axis reference (Axis, str, int) or list of them
+            Axis to sort. If None, sorts all axes.
         reverse : bool
-            descending sort (default: False -- ascending)
+            Descending sort (default: False -- ascending)
 
         Returns
         -------
         LArray
-            LArray with sorted axes.
+            Array with sorted axes.
 
         Examples
         --------
@@ -2353,14 +4044,19 @@ class LArray(object):
 
     def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
         """
+        Translates axis(es) key into axis(es) position(s).
+
         Parameters
         ----------
         axis_key : any kind of key
-        bool_passthrough
+            Key to select axis(es).
+        bool_passthrough : bool, optional
+            True by default.
 
         Returns
         -------
-        PGroup with valid axis (from self.axes)
+        PGroup
+            Positional group with valid axes (from self.axes)
         """
 
         if isinstance(axis_key, Group):
@@ -2413,11 +4109,12 @@ class LArray(object):
         return valid_axes[0].i[axis_pos_key]
 
     def _translate_axis_key(self, axis_key, bool_passthrough=True):
-        """same as chunk
+        """Same as chunk.
 
         Returns
         -------
-        PGroup with valid axis (from self.axes)
+        PGroup
+            Positional group with valid axes (from self.axes)
         """
         # TODO: do it for Group without axis too
         # TODO: do it for LArray key too (but using .i[] instead)
@@ -2489,17 +4186,17 @@ class LArray(object):
 
     # TODO: move this to AxisCollection
     def _translated_key(self, key, bool_stuff=False):
-        """Complete and translate key
+        """Completes and translates key
 
         Parameters
         ----------
         key : single axis key or tuple of keys or dict {axis_name: axis_key}
-           each axis key can be either a scalar, a list of scalars or
-           an LKey
+           Each axis key can be either a scalar, a list of scalars or
+           an LKey.
 
         Returns
         -------
-        Returns a full N dimensional positional key
+        Returns a full N dimensional positional key.
         """
 
         if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, np.bool_) \
@@ -2553,7 +4250,7 @@ class LArray(object):
             # or (most) slice(None) because except for a single slice(None)
             # a[:], I don't think there is any point.
             key = [axis_key for axis_key in key
-                   if not isnoneslice(axis_key) and axis_key is not Ellipsis]
+                   if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
             # translate all keys to PGroup
             key = [self._translate_axis_key(axis_key,
@@ -2596,9 +4293,16 @@ class LArray(object):
     #  subclass of it)
     def _cross_key(self, key):
         """
-        :param key: a complete (contains all dimensions) index-based key
-        :param collapse_slices: convert contiguous ranges to slices
-        :return: a key for indexing the cross product
+        Returns a key indexing the cross product.
+
+        Parameters
+        ----------
+        key : complete (contains all dimensions) index-based key.
+
+        Returns
+        -------
+        key
+            A key for indexing the cross product.
         """
 
         # handle advanced indexing with more than one indexing array:
@@ -2647,7 +4351,7 @@ class LArray(object):
         # isinstance(ndarray, collections.Sequence) is False but it
         # behaves like one
         sequence = (tuple, list, np.ndarray)
-        return [range_to_slice(axis_key, len(axis))
+        return [_range_to_slice(axis_key, len(axis))
                 if isinstance(axis_key, sequence)
                 else axis_key
                 for axis_key, axis in zip(key, self.axes)]
@@ -2769,23 +4473,31 @@ class LArray(object):
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
         """
+        Returns an AxisCollection containing combined axes.
+        Axes corresponding to scalar key are dropped.
+
+        This method is used in case of boolean key.
 
         Parameters
         ----------
         key : tuple
-            position-based key
+            Position-based key
         wildcard_allowed : bool
 
         Returns
         -------
         AxisCollection
+
+        Notes
+        -----
+        See examples of properties `points` and `ipoints`.
         """
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
-                         if not isnoneslice(axis_key) and
+                         if not _isnoneslice(axis_key) and
                             not np.isscalar(axis_key)]
         # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
-                      if isnoneslice(axis_key)]
+                      if _isnoneslice(axis_key)]
         assert len(key) > 0
         axes_indices = [self.axes.index(axis) for axis in combined_axes]
         diff = np.diff(axes_indices)
@@ -2808,8 +4520,8 @@ class LArray(object):
         if combined_axis_pos is not None:
             if wildcard_allowed:
                 lengths = [len(axis_key) for axis_key in key
-                           if not isnoneslice(axis_key) and
-                              not np.isscalar(axis_key)]
+                           if not _isnoneslice(axis_key) and
+                           not np.isscalar(axis_key)]
                 combined_axis_len = lengths[0]
                 assert all(l == combined_axis_len for l in lengths)
                 combined_axis = Axis(combined_name, combined_axis_len)
@@ -2822,7 +4534,7 @@ class LArray(object):
                 #    separate axes. On the numpy backend we cannot.
                 axes_labels = [axis.labels[axis_key]
                                for axis_key, axis in zip(key, self.axes)
-                               if not isnoneslice(axis_key) and
+                               if not _isnoneslice(axis_key) and
                                   not np.isscalar(axis_key)]
                 if len(combined_axes) == 1:
                     # Q: if axis is a wildcard axis, should the result be a
@@ -2839,17 +4551,72 @@ class LArray(object):
 
     def set(self, value, **kwargs):
         """
-        sets a subset of LArray to value
+        Sets a subset of array to value.
 
-        * all common axes must be either 1 or the same length
+        * all common axes must be either of length 1 or the same length
         * extra axes in value must be of length 1
-        * extra axes in self can have any length
+        * extra axes in current array can have any length
+
+        Parameters
+        ----------
+        value : scalar or LArray
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+         a2 |  6 |  7 |  8
+        >>> arr['a1:', 'b1:'].set(10)
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 | 10 | 10
+         a2 |  6 | 10 | 10
+        >>> arr['a1:', 'b1:'].set(ndtest((2, 2)))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  0 |  1
+         a2 |  6 |  2 |  3
         """
         self.__setitem__(kwargs, value)
 
     def reshape(self, target_axes):
         """
-        self.size must be equal to prod([len(axis) for axis in target_axes])
+        Given a list of new axes, changes the shape of the array.
+        The size of the array (= number of elements) must be equal
+        to the product of length of target axes.
+
+        Parameters
+        ----------
+        target_axes : iterable of Axis
+            New axes. The size of the array (= number of stored data)
+            must be equal to the product of length of target axes.
+
+
+        Returns
+        -------
+        LArray
+            New array with new axes but same data.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2, 2))
+        >>> arr
+         a | b\\c | c0 | c1
+        a0 |  b0 |  0 |  1
+        a0 |  b1 |  2 |  3
+        a1 |  b0 |  4 |  5
+        a1 |  b1 |  6 |  7
+        >>> new_arr = arr.reshape([Axis('a', ['a0','a1']),
+        ... Axis('bc', ['b0c0', 'b0c1', 'b1c0', 'b1c1'])])
+        >>> new_arr
+        a\\bc | b0c0 | b0c1 | b1c0 | b1c1
+          a0 |    0 |    1 |    2 |    3
+          a1 |    4 |    5 |    6 |    7
         """
         # this is a dangerous operation, because except for adding
         # length 1 axes (which is safe), it potentially modifies data
@@ -2867,23 +4634,47 @@ class LArray(object):
 
     def reshape_like(self, target):
         """
-        target is an LArray, total size must be compatible
+        Same as reshape but with an array as input.
+        Total size (= number of stored data) of the two arrays must be equal.
+
+        See Also
+        --------
+        reshape : returns a LArray with a new shape given a list of axes.
+
+        Examples
+        --------
+        >>> arr = zeros((2, 2, 2), dtype=int)
+        >>> arr
+        {0}* | {1}*\\{2}* | 0 | 1
+           0 |         0 | 0 | 0
+           0 |         1 | 0 | 0
+           1 |         0 | 0 | 0
+           1 |         1 | 0 | 0
+        >>> new_arr = arr.reshape_like(ndtest((2, 4)))
+        >>> new_arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  0 |  0 |  0
+         a1 |  0 |  0 |  0 |  0
         """
         return self.reshape(target.axes)
 
     def broadcast_with(self, other):
         """
-        returns an LArray that is (numpy) broadcastable with target
-        target can be either an LArray or any collection of Axis
+        Returns an array that is (NumPy) broadcastable with target.
+        Target can be either a LArray or any collection of Axis.
 
-        * all common axes must be either 1 or the same length
+        * all common axes must be either of length 1 or the same length
         * extra axes in source can have any length and will be moved to the
           front
         * extra axes in target can have any length and the result will have axes
           of length 1 for those axes
 
-        this is different from reshape which ensures the result has exactly the
+        This is different from reshape which ensures the result has exactly the
         shape of the target.
+
+        Parameters
+        ----------
+        other : LArray or collection of Axis
         """
         if isinstance(other, LArray):
             other_axes = other.axes
@@ -2893,6 +4684,7 @@ class LArray(object):
                 other_axes = AxisCollection(other_axes)
         if self.axes == other_axes:
             return self
+
         target_axes = (self.axes - other_axes) | other_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
@@ -2915,15 +4707,24 @@ class LArray(object):
     # wonder if there would be a risk of wildcard axes inadvertently leaking.
     # plus it might be confusing if incompatible labels "work".
     def drop_labels(self, axes=None):
-        """drop the labels from axes (replace those axes by "wildcard" axes)
+        """Drops the labels from axes (replace those axes by "wildcard" axes).
+
+        Useful when you want to apply operations between two arrays
+        or subarrays with same shape but incompatible axes
+        (different labels).
 
         Parameters
         ----------
-        axes : Axis or list/tuple/AxisCollection of Axis
+        axes : Axis or list/tuple/AxisCollection of Axis, optional
+            Axis(es) on which you want to drop the labels.
 
         Returns
         -------
         LArray
+
+        Notes
+        -----
+        Use it at your own risk.
 
         Examples
         --------
@@ -2992,6 +4793,24 @@ class LArray(object):
         return LArrayIterator(self)
 
     def as_table(self, maxlines=None, edgeitems=5):
+        """
+        Generator. Returns next line of the table representing an array.
+
+        Parameters
+        ----------
+        maxlines : int, optional
+            Maximum number of lines to show.
+        edgeitems : int, optional
+            If number of lines to display is greater than `maxlines`,
+            only the first and last `edgeitems` lines are displayed.
+            Only active if `maxlines` is not None.
+            Equals to 5 by default.
+
+        Returns
+        -------
+        list
+            Next line of the table as a list.
+        """
         if not self.ndim:
             return
 
@@ -3002,20 +4821,27 @@ class LArray(object):
         height = int(np.prod(self.shape[:-1]))
         data = np.asarray(self).reshape(height, width)
 
+        # get list of names of axes
         axes_names = self.axes.display_names[:]
+        # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
         if len(axes_names) > 1:
             axes_names[-2] = '\\'.join(axes_names[-2:])
             axes_names.pop()
+        # get list of labels for each axis except the last one.
         labels = [axis.labels.tolist() for axis in self.axes[:-1]]
+        # creates vertical lines (ticks is a list of list)
         if self.ndim == 1:
             # There is no vertical axis, so the axis name should not have
             # any "tick" below it and we add an empty "tick".
             ticks = [['']]
         else:
             ticks = product(*labels)
+        # returns the first line (axes names + labels of last axis)
         yield axes_names + self.axes[-1].labels.tolist()
         # summary if needed
         if maxlines is not None and height > maxlines:
+            # replace middle lines of the table by '...'.
+            # We show only the first and last edgeitems lines.
             startticks = islice(ticks, edgeitems)
             midticks = [["..."] * (self.ndim - 1)]
             endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
@@ -3024,22 +4850,24 @@ class LArray(object):
                          [["..."] * width],
                          data[-edgeitems:].tolist())
             for tick, dataline in izip(ticks, data):
+                # returns next line (labels of N-1 first axes + data)
                 yield list(tick) + dataline
         else:
             for tick, dataline in izip(ticks, data):
+                # returns next line (labels of N-1 first axes + data)
                 yield list(tick) + dataline.tolist()
 
     def dump(self, header=True):
-        """dump array as a 2D nested list
+        """Dump array as a 2D nested list
 
         Parameters
         ----------
         header : bool
-            whether or not to output axes names and labels
+            Whether or not to output axes names and labels.
 
         Returns
         -------
-        list
+        2D nested list
         """
         if not header:
             # flatten all dimensions except the last one
@@ -3055,13 +4883,14 @@ class LArray(object):
     # defaults to 'auto' (ie collapse by default), can be set to False to
     # force a copy and to True to raise an exception if a view is not possible.
     def filter(self, collapse=False, **kwargs):
-        """
-        filters the array along the axes given as keyword arguments.
+        """Filters the array along the axes given as keyword arguments.
+
         The *collapse* argument determines whether consecutive ranges should
         be collapsed to slices, which is more efficient and returns a view
         (and not a copy) if possible (if all ranges are consecutive).
         Only use this argument if you do not intent to modify the resulting
         array, or if you know what you are doing.
+
         It is similar to np.take but works with several axes at once.
         """
         return self.__getitem__(kwargs, collapse)
@@ -3071,12 +4900,16 @@ class LArray(object):
         Parameters
         ----------
         op : function
-            a aggregate function with this signature:
+            An aggregate function with this signature:
             func(a, axis=None, dtype=None, out=None, keepdims=False)
         axes : tuple of axes, optional
-            each axis can be an Axis object, str or int
+            Each axis can be an Axis object, str or int
         out : LArray, optional
+            Alternative output array in which to place the result.
+            It must have the same shape as the expected output
         keepaxes : bool or scalar, optional
+            If this is set to True, the axes which are reduced are
+            left in the result as dimensions with size one.
 
         Returns
         -------
@@ -3107,7 +4940,7 @@ class LArray(object):
 
     def _cum_aggregate(self, op, axis):
         """
-        op is a numpy cumulative aggregate function: func(arr, axis=0)
+        op is a numpy cumulative aggregate function: func(arr, axis=0).
         axis is an Axis object, a str or an int. Contrary to other aggregate
         functions this only supports one axis at a time.
         """
@@ -3169,7 +5002,7 @@ class LArray(object):
                 if isinstance(group, PGroup) and np.isscalar(group.key):
                     group = PGroup([group.key], axis=group.axis)
                 elif isinstance(group, LGroup):
-                    key = to_key(group.key)
+                    key = _to_key(group.key)
                     if np.isscalar(key):
                         key = [key]
                     # we do not care about the name at this point
@@ -3298,6 +5131,9 @@ class LArray(object):
 
     def with_total(self, *args, **kwargs):
         """
+        Add aggregated values (sum by default) along each axis.
+        A user defined label can be given to specified the computed values.
+
         Parameters
         ----------
         args
@@ -3311,22 +5147,26 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> arr = ndrange([nat, sex])
+        Examples
+        --------
+        >>> arr = ndtest((3, 3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+         a2 |  6 |  7 |  8
         >>> arr.with_total()
-        nat\\sex | M | F | total
-             BE | 0 | 1 |     1
-             FO | 2 | 3 |     5
-          total | 2 | 4 |     6
-        >>> arr = ndrange([('a', 2), ('b', 3)])
-        >>> arr.with_total()
-          a\\b | 0 | 1 | 2 | total
-            0 | 0 | 1 | 2 |     3
-            1 | 3 | 4 | 5 |    12
-        total | 3 | 5 | 7 |    15
+          a\\b | b0 | b1 | b2 | total
+           a0 |  0 |  1 |  2 |     3
+           a1 |  3 |  4 |  5 |    12
+           a2 |  6 |  7 |  8 |    21
+        total |  9 | 12 | 15 |    36
+        >>> arr.with_total(op=prod, label='product')
+            a\\b | b0 | b1 | b2 | product
+             a0 |  0 |  1 |  2 |       0
+             a1 |  3 |  4 |  5 |      60
+             a2 |  6 |  7 |  8 |     336
+        product |  0 | 28 | 80 |       0
         """
         # TODO: default to op.__name__
         label = kwargs.pop('label', 'total')
@@ -3370,8 +5210,7 @@ class LArray(object):
     # arr[arr.argmin(x.sex)]
     # should both be equal to arr.min(x.sex)
     def argmin(self, axis=None):
-        """
-        Return labels of the minimum values along the given axis of `a`.
+        """Returns labels of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -3387,8 +5226,8 @@ class LArray(object):
         In case of multiple occurrences of the minimum values, the indices
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3412,8 +5251,7 @@ class LArray(object):
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
     def posargmin(self, axis=None):
-        """
-        Return indices of the minimum values along the given axis of `a`.
+        """Returns indices of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -3429,8 +5267,8 @@ class LArray(object):
         In case of multiple occurrences of the minimum values, the indices
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3452,8 +5290,7 @@ class LArray(object):
             return np.unravel_index(self.data.argmin(), self.shape)
 
     def argmax(self, axis=None):
-        """
-        Return labels of the maximum values along the given axis of `a`.
+        """Returns labels of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3469,8 +5306,8 @@ class LArray(object):
         In case of multiple occurrences of the maximum values, the labels
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3494,8 +5331,7 @@ class LArray(object):
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
     def posargmax(self, axis=None):
-        """
-        Return indices of the maximum values along the given axis of `a`.
+        """Returns indices of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3511,8 +5347,8 @@ class LArray(object):
         In case of multiple occurrences of the maximum values, the labels
         corresponding to the first occurrence are returned.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3535,8 +5371,7 @@ class LArray(object):
 
 
     def argsort(self, axis=None, kind='quicksort'):
-        """
-        Returns the labels that would sort this array.
+        """Returns the labels that would sort this array.
 
         Perform an indirect sort along the given axis using the algorithm
         specified by the `kind` keyword. It returns an array of labels of the
@@ -3554,8 +5389,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3581,10 +5416,9 @@ class LArray(object):
         return LArray(data, self.axes.replace(axis, new_axis))
 
     def posargsort(self, axis=None, kind='quicksort'):
-        """
-        Returns the indices that would sort this array.
+        """Returns the indices that would sort this array.
 
-        Perform an indirect sort along the given axis using the algorithm
+        Performs an indirect sort along the given axis using the algorithm
         specified by the `kind` keyword. It returns an array of indices
         with the same axes as `a` that index data along the given axis in
         sorted order.
@@ -3601,8 +5435,8 @@ class LArray(object):
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
@@ -3626,6 +5460,8 @@ class LArray(object):
         return LArray(self.data.argsort(axis_idx, kind=kind), self.axes)
 
     def copy(self):
+        """Returns a copy of the array.
+        """
         return LArray(self.data.copy(), axes=self.axes[:])
 
     @property
@@ -3635,10 +5471,10 @@ class LArray(object):
         Returns
         -------
         str
-            Description of the LArray (shape and labels for each axis).
+            Description of the array (shape and labels for each axis).
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> mat0 = ones([nat, sex])
@@ -3650,7 +5486,8 @@ class LArray(object):
         return self.axes.info
 
     def ratio(self, *axes):
-        """Returns a LArray with values array / array.sum(axes).
+        """Returns an array with all values divided by the
+         sum of values along given axes.
 
         Parameters
         ----------
@@ -3661,8 +5498,8 @@ class LArray(object):
         LArray
             array / array.sum(axes)
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
@@ -3741,7 +5578,8 @@ class LArray(object):
         return self / self.sum(*axes)
 
     def percent(self, *axes):
-        """Returns an array with values array / array.sum(axes) * 100.
+        """Returns an array with values given as
+         percent of the total of all values along given axes.
 
         Parameters
         ----------
@@ -3752,8 +5590,8 @@ class LArray(object):
         LArray
             array / array.sum(axes) * 100
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
@@ -3944,20 +5782,20 @@ class LArray(object):
         return np.round(self, decimals=n)
 
     def divnot0(self, other):
-        """divide array by other, but where other is 0 return 0.0
+        """Divides array by other, but returns 0.0 where other is 0.
 
         Parameters
         ----------
         other : scalar or LArray
-            what to divide by
+            What to divide by.
 
         Returns
         -------
         LArray
-            array divided by other, 0.0 where other is 0
+            Array divided by other, 0.0 where other is 0
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> a = ndrange((nat, sex))
@@ -3991,30 +5829,31 @@ class LArray(object):
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False):
-        """expands array to target_axes
+        """Expands array to target_axes.
 
-        target_axes will be added to array if not present. In most cases this
-        function is not needed because LArray can do operations with arrays
-        having different (compatible) axes.
+        Target axes will be added to array if not present.
+        In most cases this function is not needed because
+        LArray can do operations with arrays having different
+        (compatible) axes.
 
         Parameters
         ----------
         target_axes : list of Axis or AxisCollection, optional
-            self can contain axes not present in target_axes. The result axes will be:
-            [self.axes not in target_axes] + target_axes
+            Self can contain axes not present in `target_axes`.
+            The result axes will be: [self.axes not in target_axes] + target_axes
         out : LArray, optional
-            output array, must have the correct shape
+            Output array, must have the correct shape
         readonly : bool, optional
-            whether returning a readonly view is acceptable or not (this is
+            Whether returning a readonly view is acceptable or not (this is
             much faster)
 
         Returns
         -------
         LArray
-            original array if possible (and out is None)
+            Original array if possible (and out is None).
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = Axis('a', ['a1', 'a2'])
         >>> b = Axis('b', ['b1', 'b2'])
         >>> arr = ndrange([a, b])
@@ -4067,24 +5906,26 @@ class LArray(object):
         return out
 
     def append(self, axis, value, label=None):
-        """Adds a LArray to a LArray ('self') along an axis.
+        """Adds an array to self along an axis.
+
+        The two arrays must have compatible axes.
 
         Parameters
         ----------
         axis : axis reference
-            the axis
+            Axis along with to append input array (`value`).
         value : LArray
-            array with compatible axes
+            Array with compatible axes.
         label : str, optional
-            label for the new item in axis
+            Label for the new item in axis
 
         Returns
         -------
         LArray
-            array expanded with 'value' along 'axis'.
+            Array expanded with `value` along `axis`.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex |   M |   F
@@ -4123,24 +5964,26 @@ class LArray(object):
         return self.extend(axis, value)
 
     def prepend(self, axis, value, label=None):
-        """Adds a LArray before 'self' along an axis.
+        """Adds an array before self along an axis.
+
+        The two arrays must have compatible axes.
 
         Parameters
         ----------
         axis : axis reference
-            the axis
+            Axis along which to prepend input array (`value`)
         value : LArray
-            array with compatible axes
+            Array with compatible axes.
         label : str, optional
-            label for the new item in axis
+            Label for the new item in axis
 
         Returns
         -------
         LArray
-            array expanded with 'value' at the start of 'axis'.
+            Array expanded with 'value' at the start of 'axis'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
         nat\sex |   M |   F
@@ -4179,22 +6022,24 @@ class LArray(object):
         return value.extend(axis, self)
 
     def extend(self, axis, other):
-        """Adds a LArray to a LArray ('self') along an axis.
+        """Adds an to self along an axis.
+
+        The two arrays must have compatible axes.
 
         Parameters
         ----------
         axis : axis
-            the axis
+            Axis along which to extend with input array (`other`)
         other : LArray
-            array with compatible axes
+            Array with compatible axes
 
         Returns
         -------
         LArray
-            array expanded with 'other' along 'axis'.
+            Array expanded with 'other' along 'axis'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> nat = Axis('nat', ['BE', 'FO'])
         >>> sex = Axis('sex', ['M', 'F'])
         >>> sex2 = Axis('sex', ['U'])
@@ -4233,23 +6078,21 @@ class LArray(object):
         return result
 
     def transpose(self, *args):
-        """
-        reorder axes
-
-        accepts either a tuple of axes specs or axes specs as *args
+        """Reorder axes.
 
         Parameters
         ----------
-        *args
-            accepts either a tuple of axes specs or axes specs as *args
+        args
+            Accepts either a tuple of axes specs or
+            axes specs as `*args`.
 
         Returns
         -------
         LArray
             LArray with reordered axes.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange([('nat', 'BE,FO'),
         ...              ('sex', 'M,F'),
         ...              ('alive', [False, True])])
@@ -4312,21 +6155,48 @@ class LArray(object):
     T = property(transpose)
 
     def clip(self, a_min, a_max, out=None):
+        """Clip (limit) the values in an array.
+
+        Given an interval, values outside the interval are clipped to the interval edges.
+        For example, if an interval of [0, 1] is specified, values smaller than 0 become 0,
+        and values larger than 1 become 1.
+
+        Parameters
+        ----------
+        a_min : scalar or array-like
+            Minimum value.
+        a_max : scalar or array-like
+            Maximum value.
+        out : LArray, optional
+            The results will be placed in this array.
+
+        Returns
+        -------
+        LArray
+            An array with the elements of the current array, but where
+            values < `a_min` are replaced with `a_min`, and those > `a_max`
+            with `a_max`.
+
+        Notes
+        -----
+        If `a_min` and/or `a_max` are array_like, broadcast will occur between
+        self, `a_min` and `a_max`.
+        """
         from larray.ufuncs import clip
         return clip(self, a_min, a_max, out)
 
     def to_csv(self, filepath, sep=',', na_rep='', transpose=True,
                dropna=None, dialect='default', **kwargs):
         """
-        write LArray to a csv file.
+        Writes array to a csv file.
 
         Parameters
         ----------
-        filepath : string
+        filepath : str
             path where the csv file has to be written.
-        sep : string
+        sep : str
             seperator for the csv file.
-        na_rep : string
+        na_rep : str
             replace NA values with na_rep.
         transpose : boolean
             transpose = True  => transpose over last axis.
@@ -4337,8 +6207,8 @@ class LArray(object):
             Drop lines if 'all' its values are NA, if 'any' value is NA or do
             not drop any line (default). True is equivalent to 'all'.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
@@ -4376,22 +6246,22 @@ class LArray(object):
 
     def to_hdf(self, filepath, key, *args, **kwargs):
         """
-        write LArray to a HDF file
+        Writes array to a HDF file.
 
-        a HDF file can contain multiple LArray's. The 'key' parameter
-        is a unique identifier for the LArray.
+        A HDF file can contain multiple arrays.
+        The 'key' parameter is a unique identifier for the array.
 
         Parameters
         ----------
-        filepath : string
-            path where the hdf file has to be written.
-        key : string
-            name of the matrix within the HDF file.
+        filepath : str
+            Path where the hdf file has to be written.
+        key : str
+            Name of the array within the HDF file.
         *args
         **kargs
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.to_hdf('test.h5', 'a')
         """
@@ -4401,45 +6271,45 @@ class LArray(object):
                  overwrite_file=False, clear_sheet=False, header=True,
                  transpose=False, engine=None, *args, **kwargs):
         """
-        write LArray in the specified sheet of specified excel workbook
+        Writes array in the specified sheet of specified excel workbook.
 
         Parameters
         ----------
         filepath : str or int or None, optional
-            path where the excel file has to be written. If None (default),
+            Path where the excel file has to be written. If None (default),
             creates a new Excel Workbook in a live Excel instance
             (Windows only). Use -1 to use the currently active Excel
             Workbook. Use a name without extension (.xlsx) to use any
             *unsaved* workbook.
         sheet_name : str or int or None, optional
-            sheet where the data has to be written. Defaults to None,
+            Sheet where the data has to be written. Defaults to None,
             Excel standard name if adding a sheet to an existing file,
             "Sheet1" otherwise. sheet_name can also refer to the position of
             the sheet (e.g. 0 for the first sheet, -1 for the last one).
         position : str or tuple of integers, optional
             Integer position (row, column) must be 1-based. Defaults to 'A1'.
         overwrite_file : bool, optional
-            whether or not to overwrite the existing file (or just modify the
+            Whether or not to overwrite the existing file (or just modify the
             specified sheet). Defaults to False.
         clear_sheet : bool, optional
-            whether or not to clear the existing sheet (if any) before writing.
+            Whether or not to clear the existing sheet (if any) before writing.
             Defaults to False.
         header : bool, optional
-            whether or not to write a header (axes names and labels).
+            Whether or not to write a header (axes names and labels).
             Defaults to True.
         transpose : bool, optional
-            whether or not to transpose the resulting array. This can be used,
+            Whether or not to transpose the resulting array. This can be used,
             for example, for writing one dimensional arrays vertically.
             Defaults to False.
         engine : 'xlwings' | 'openpyxl' | 'xlsxwriter' | 'xlwt' | None, optional
-            engine to use to make the output. If None (default), it will use
+            Engine to use to make the output. If None (default), it will use
             'xlwings' by default if the module is installed and relies on
             Pandas default writer otherwise.
         *args
         **kargs
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> # write to a new (unnamed) sheet
         >>> a.to_excel('test.xlsx')  # doctest: +SKIP
@@ -4494,14 +6364,13 @@ class LArray(object):
             df.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
-        """
-        sends the content of a LArray to clipboard
+        """Sends the content of the array to clipboard.
 
-        using to_clipboard() makes it possible to paste the content of LArray
-        into a file (Excel, ascii file,...)
+        Using to_clipboard() makes it possible to paste the content
+        of the array into a file (Excel, ascii file,...).
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.to_clipboard()  # doctest: +SKIP
         """
@@ -4547,14 +6416,13 @@ class LArray(object):
 
     @property
     def plot(self):
-        """
-        plots the data of a LArray into a graph (window pop-up).
+        """Plots the data of the array into a graph (window pop-up).
 
-        the graph can be tweaked to achieve the desired formatting and can be
-        saved to a .png file
+        The graph can be tweaked to achieve the desired formatting and can be
+        saved to a .png file.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.plot()  # doctest: +SKIP
         """
@@ -4562,15 +6430,15 @@ class LArray(object):
 
     @property
     def shape(self):
-        """
-        returns string representation of current shape.
+        """Returns the shape of the array as a tuple.
 
         Returns
         -------
-            returns string representation of current shape.
+        tuple
+            Tuple representing the current shape.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F;type=type1,type2,type3')
         >>> a.shape  # doctest: +SKIP
         (2, 2, 3)
@@ -4579,15 +6447,15 @@ class LArray(object):
 
     @property
     def ndim(self):
-        """
-        returns the number of dimensions of a LArray.
+        """Returns the number of dimensions of the array.
 
         Returns
         -------
-            returns the number of dimensions of a LArray.
+        int
+            Number of dimensions of a LArray.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.ndim
         2
@@ -4596,16 +6464,15 @@ class LArray(object):
 
     @property
     def size(self):
-        """
-        returns the number of cells in array.
+        """Returns the number of elements in array.
 
         Returns
         -------
         int
-            returns the number of cells in array.
+            Number of elements in array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3')
         >>> a.size
         6
@@ -4614,16 +6481,15 @@ class LArray(object):
 
     @property
     def nbytes(self):
-        """
-        returns the number of bytes in a array.
+        """Returns the number of bytes used to store the array in memory.
 
         Returns
         -------
         int
-            returns the number of bytes in array.
+            Number of bytes in array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.nbytes
         48
@@ -4632,16 +6498,15 @@ class LArray(object):
 
     @property
     def memory_used(self):
-        """
-        returns the memory consumed by the array in human readable form.
+        """Returns the memory consumed by the array in human readable form.
 
         Returns
         -------
         str
-            returns the memory used by the array.
+            Memory used by the array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.memory_used
         '48 bytes'
@@ -4650,16 +6515,15 @@ class LArray(object):
 
     @property
     def dtype(self):
-        """
-        returns the type of the data in the cells of LArray.
+        """Returns the type of the data of the array.
 
         Returns
         -------
         dtype
-            returns the type of the data in the cells of LArray.
+            Type of the data of the array.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = zeros('sex=M,F;type=type1,type2,type3')
         >>> a.dtype
         dtype('float64')
@@ -4679,26 +6543,25 @@ class LArray(object):
     __array_priority__ = 100
 
     def set_labels(self, axis, labels, inplace=False):
-        """
-        replaces the labels of an axis of array
+        """Replaces the labels of an axis of array.
 
         Parameters
         ----------
         axis
-            the axis for which we want to replace the labels.
+            Axis for which we want to replace the labels.
         labels : list of axis labels
-            the new labels.
+            New labels.
         inplace : bool
-            whether or not to modify the original object or return a new
-            LArray and leave the original intact.
+            Whether or not to modify the original object or return a new
+            array and leave the original intact.
 
         Returns
         -------
         LArray
-            array with modified labels.
+            Array with modified labels.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
@@ -4723,22 +6586,21 @@ class LArray(object):
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1):
-        """
-        shifts the cells of a LArray n-times to the left along axis.
+        """Shifts the cells of the array n-times to the left along axis.
 
         Parameters
         ----------
         axis : int, str or Axis
-            the axis for which we want to perform the shift.
+            Axis for which we want to perform the shift.
         n : int
-            the number of cells to shift.
+            Number of cells to shift.
 
         Returns
         -------
         LArray
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3')
         >>> a
         sex\\type | type1 | type2 | type3
@@ -4765,8 +6627,7 @@ class LArray(object):
     # eg a.diff(x.year[2018:]) instead of
     #    a[2018:].diff(x.year)
     def diff(self, axis=-1, d=1, n=1, label='upper'):
-        """
-        Calculate the n-th order discrete difference along a given axis.
+        """Calculates the n-th order discrete difference along a given axis.
 
         The first order difference is given by out[n] = a[n + 1] - a[n] along the
         given axis, higher order differences are calculated by using diff
@@ -4775,8 +6636,8 @@ class LArray(object):
         Parameters
         ----------
         axis : int, str or Axis, optional
-            The axis along which the difference is taken. Defaults to the last
-            axis.
+            Axis along which the difference is taken.
+            Defaults to the last axis.
 
         d : int, optional
             Periods to shift for forming difference. Defaults to 1.
@@ -4784,15 +6645,16 @@ class LArray(object):
         n : int, optional
             The number of times values are differenced. Defaults to 1.
 
-        label : 'lower' or 'upper', optional
+        label : {'lower', 'upper'}, optional
             The new labels in `axis` will have the labels of either
             the array being subtracted ('lower') or the array it is
             subtracted from ('upper'). Defaults to 'upper'.
 
         Returns
         -------
-        LArray : The n-th order differences. The shape of the output is the same
-        as `a` except for `axis` which is smaller by `n` * `d`.
+        LArray :
+            The n-th order differences. The shape of the output is the same
+            as `a` except for `axis` which is smaller by `n` * `d`.
 
         Examples
         --------
@@ -4832,21 +6694,20 @@ class LArray(object):
     # eg a.growth_rate(x.year[2018:]) instead of
     #    a[2018:].growth_rate(x.year)
     def growth_rate(self, axis=-1, d=1, label='upper'):
-        """
-        Calculate the growth along a given axis.
+        """Calculates the growth along a given axis.
 
-        roughly equivalent to a.diff(axis, d, label) / a[axis.i[:-d]]
+        Roughly equivalent to a.diff(axis, d, label) / a[axis.i[:-d]]
 
         Parameters
         ----------
         axis : int, str or Axis, optional
-            The axis along which the difference is taken. Defaults to the last
-            axis.
+            Axis along which the difference is taken.
+            Defaults to the last axis.
 
         d : int, optional
             Periods to shift for forming difference. Defaults to 1.
 
-        label : 'lower' or 'upper', optional
+        label : {'lower', 'upper'}, optional
             The new labels in `axis` will have the labels of either
             the array being subtracted ('lower') or the array it is
             subtracted from ('upper'). Defaults to 'upper'.
@@ -4879,17 +6740,16 @@ class LArray(object):
         return diff / self[axis_obj.i[:-d]].drop_labels(axis)
 
     def compact(self):
-        """
-        detect and remove "useless" axes (ie axes for which values are
-        constant over the whole axis)
+        """Detects and removes "useless" axes
+        (ie axes for which values are constant over the whole axis)
 
         Returns
         -------
         LArray or scalar
-            array with constant axes removed
+            Array with constant axes removed.
 
-        Example
-        -------
+        Examples
+        --------
         >>> a = LArray([[1, 2],
         ...             [1, 2]], [Axis('sex', 'M,F'), Axis('nat', 'BE,FO')])
         >>> a
@@ -4909,7 +6769,7 @@ class LArray(object):
 
 def parse(s):
     """
-    used to parse the "folded" axis ticks (usually periods)
+    Used to parse the "folded" axis ticks (usually periods).
     """
     # parameters can be strings or numbers
     if isinstance(s, basestring):
@@ -4932,7 +6792,7 @@ def parse(s):
 
 def df_labels(df, sort=True):
     """
-    returns unique labels for each dimension
+    Returns unique labels for each dimension.
     """
     idx = df.index
     if isinstance(idx, pd.core.index.MultiIndex):
@@ -4998,7 +6858,7 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
              na=np.nan, sort_rows=False, sort_columns=False,
              dialect='larray', **kwargs):
     """
-    reads csv file and returns a Larray with the contents
+    Reads csv file and returns an array with the contents.
 
     Note
     ----
@@ -5013,17 +6873,16 @@ def read_csv(filepath, nb_index=0, index_col=[], sep=',', headersep=None,
     Parameters
     ----------
     filepath : str
-        path where the csv file has to be written.
+        Path where the csv file has to be written.
     nb_index : int, optional
-        number of leading index columns (ex. 4).
+        Number of leading index columns (ex. 4).
     index_col : list, optional
-        list of columns for the index (ex. [0, 1, 2, 3]).
+        List of columns for the index (ex. [0, 1, 2, 3]).
     sep : str, optional
-        separator.
+        Separator.
     headersep : str or None, optional
-        ???.
-    na : ???
-        ???.
+    na : scalar, optional
+        Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
         Whether or not to sort the row dimensions alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
@@ -5115,7 +6974,7 @@ def read_tsv(filepath, **kwargs):
 
 
 def read_eurostat(filepath, **kwargs):
-    """Read EUROSTAT TSV (tab-separated) file into an LArray
+    """Reads EUROSTAT TSV (tab-separated) file into an array.
 
     EUROSTAT TSV files are special because they use tabs as data
     separators but comas to separate headers.
@@ -5123,9 +6982,9 @@ def read_eurostat(filepath, **kwargs):
     Parameters
     ----------
     filepath : str
-        Path to the file
+        Path to the file.
     kwargs
-        Arbitrary keyword arguments are passed through to read_csv
+        Arbitrary keyword arguments are passed through to read_csv.
 
     Returns
     -------
@@ -5136,14 +6995,14 @@ def read_eurostat(filepath, **kwargs):
 
 def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
              **kwargs):
-    """Reads a LArray named key from a h5 file in filepath (path+name)
+    """Reads an array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
     filepath : str
-        the filepath and name where the h5 file is stored.
+        Filepath and name where the HDF5 file is stored.
     key : str
-        the name of the LArray
+        Name of the array.
 
     Returns
     -------
@@ -5158,7 +7017,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
                na=np.nan, sort_rows=False, sort_columns=False,
                engine='xlwings', **kwargs):
     """
-    reads excel file from sheet name and returns an LArray with the contents
+    Reads excel file from sheet name and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
@@ -5179,7 +7038,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
 def read_sas(filepath, nb_index=0, index_col=[],
              na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """
-    reads sas file and returns an LArray with the contents
+    Reads sas file and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
@@ -5192,15 +7051,15 @@ def read_sas(filepath, nb_index=0, index_col=[],
 
 
 def zeros(axes, dtype=float, order='C'):
-    """Returns a LArray with the specified axes and filled with zeros.
+    """Returns an array with the specified axes and filled with zeros.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
-        a collection of axes or a shape.
+        Collection of axes or a shape.
     dtype : data-type, optional
-        The desired data-type for the array, e.g., `numpy.int8`.  Default is
-        `numpy.float64`.
+        Desired data-type for the array, e.g., `numpy.int8`.
+        Default is `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or
         Fortran-contiguous (row- or column-wise) order in memory.
@@ -5232,12 +7091,12 @@ def zeros(axes, dtype=float, order='C'):
 
 
 def zeros_like(array, dtype=None, order='K'):
-    """Returns a LArray with the same axes as array and filled with zeros.
+    """Returns an array with the same axes as array and filled with zeros.
 
     Parameters
     ----------
     array : LArray
-         is an array object.
+         Input array.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -5250,8 +7109,8 @@ def zeros_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5263,14 +7122,14 @@ def zeros_like(array, dtype=None, order='K'):
 
 
 def ones(axes, dtype=float, order='C'):
-    """Returns a LArray with the specified axes and filled with ones.
+    """Returns an array with the specified axes and filled with ones.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
-        a collection of axes or a shape.
+        Collection of axes or a shape.
     dtype : data-type, optional
-        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        Desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or
@@ -5280,8 +7139,8 @@ def ones(axes, dtype=float, order='C'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> ones([nat, sex])
@@ -5294,12 +7153,12 @@ def ones(axes, dtype=float, order='C'):
 
 
 def ones_like(array, dtype=None, order='K'):
-    """Returns a LArray with the same axes as array and filled with ones.
+    """Returns an array with the same axes as array and filled with ones.
 
     Parameters
     ----------
     array : LArray
-        is an array object.
+        Input array.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -5312,8 +7171,8 @@ def ones_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5325,15 +7184,15 @@ def ones_like(array, dtype=None, order='K'):
 
 
 def empty(axes, dtype=float, order='C'):
-    """Returns a LArray with the specified axes and uninitialized (arbitrary)
-    data.
+    """Returns an array with the specified axes and uninitialized
+    (arbitrary) data.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
-        a collection of axes or a shape.
+        Collection of axes or a shape.
     dtype : data-type, optional
-        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        Desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or
@@ -5343,8 +7202,8 @@ def empty(axes, dtype=float, order='C'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> empty([nat, sex])  # doctest: +SKIP
@@ -5357,13 +7216,13 @@ def empty(axes, dtype=float, order='C'):
 
 
 def empty_like(array, dtype=None, order='K'):
-    """Returns a LArray with the same axes as array and uninitialized
-    (arbitrary) data.
+    """Returns an array with the same axes as array and
+    uninitialized (arbitrary) data.
 
     Parameters
     ----------
     array : LArray
-        is an array object.
+        Input array.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -5376,8 +7235,8 @@ def empty_like(array, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((3, 2))
     >>> empty_like(a)   # doctest: +SKIP
     -\- |                  0 |                  1
@@ -5390,16 +7249,16 @@ def empty_like(array, dtype=None, order='K'):
 
 
 def full(axes, fill_value, dtype=None, order='C'):
-    """Returns a LArray with the specified axes and filled with fill_value.
+    """Returns an array with the specified axes and filled with fill_value.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
-        a collection of axes or a shape.
+        Collection of axes or a shape.
     fill_value : scalar or LArray
-        value to fill the array
+        Value to fill the array
     dtype : data-type, optional
-        The desired data-type for the array. Default is the data type of
+        Desired data-type for the array. Default is the data type of
         fill_value.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or
@@ -5410,8 +7269,7 @@ def full(axes, fill_value, dtype=None, order='C'):
     LArray
 
     Examples
-    ========
-
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> full([nat, sex], 42.0)
@@ -5434,14 +7292,14 @@ def full(axes, fill_value, dtype=None, order='C'):
 
 
 def full_like(array, fill_value, dtype=None, order='K'):
-    """Returns a LArray with the same axes as array and filled with fill_value.
+    """Returns an array with the same axes as input array and filled with fill_value.
 
     Parameters
     ----------
     array : LArray
-        is an array object.
+        Input array.
     fill_value : scalar or LArray
-        value to fill the array
+        Value to fill the array
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -5454,8 +7312,8 @@ def full_like(array, fill_value, dtype=None, order='K'):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> a = ndrange((2, 3))
     >>> full_like(a, 5)
     {0}*\\{1}* | 0 | 1 | 2
@@ -5486,24 +7344,24 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
 
     Parameters
     ----------
-    axis : axis reference (Axis, string, int)
-        axis along which to apply mod.
+    axis : axis reference (Axis, str, int)
+        Axis along which to apply mod.
     initial : scalar or LArray, optional
-        value for the first label of axis. Defaults to 0.
+        Value for the first label of axis. Defaults to 0.
     inc : scalar, LArray, optional
-        value to increment the previous value by. Defaults to 0 if mult is
+        Value to increment the previous value by. Defaults to 0 if mult is
         provided, 1 otherwise.
     mult : scalar, LArray, optional
-        value to multiply the previous value by. Defaults to 1.
+        Value to multiply the previous value by. Defaults to 1.
     func : function/callable, optional
-        function to apply to the previous value. Defaults to None. Note that
+        Function to apply to the previous value. Defaults to None. Note that
         this is much slower than using inc and/or mult.
     axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
-        axes of the result. Defaults to the union of axes present in other
+        Axes of the result. Defaults to the union of axes present in other
         arguments.
 
-    Example
-    -------
+    Examples
+    --------
     >>> year = Axis('year', range(2016, 2020))
     >>> sex = Axis('sex', ['M', 'F'])
     >>> create_sequential(year)
@@ -5675,12 +7533,12 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
 
 
 def ndrange(axes, start=0, dtype=int):
-    """Returns a LArray with the specified axes and filled with increasing int.
+    """Returns an array with the specified axes and filled with increasing int.
 
     Parameters
     ----------
     axes : single axis or tuple/list/AxisCollection of axes
-        the axes of the array to create.
+        Axes of the array to create.
         Each axis can be given as either:
         * Axis object: actual axis object to use.
         * single int: length of axis. will create a wildcard axis of that
@@ -5744,7 +7602,8 @@ def ndrange(axes, start=0, dtype=int):
 
 
 def ndtest(shape, start=0, dtype=int, label_start=0):
-    """Return test array with given shape.
+    """Returns test array with given shape.
+
     Axes are named by single letters starting from 'a'. Axes labels are
     constructed using a '{axis_name}{label_pos}' pattern (e.g. 'a0'). Values
     start from `start` increase by steps of 1.
@@ -5752,15 +7611,15 @@ def ndtest(shape, start=0, dtype=int, label_start=0):
     Parameters
     ----------
     shape : int, tuple or list
-        shape of the array to create. An int can be used directly for one
+        Shape of the array to create. An int can be used directly for one
         dimensional arrays.
     start : int or float, optional
-        start value
+        Start value
     label_start : int, optional
-        label_pos for each axis is `label_start + position`. `label_start`
-        defaults to 0.
+        Label position for each axis is `label_start + position`.
+        `label_start` defaults to 0.
     dtype : type or np.dtype, optional
-        type of resulting array.
+        Type of resulting array.
 
     Returns
     -------
@@ -5806,7 +7665,7 @@ def kth_diag_indices(shape, k):
 
 def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     """
-    Extract a diagonal or construct a diagonal array.
+    Extracts a diagonal or construct a diagonal array.
 
     Parameters
     ----------
@@ -5898,8 +7757,8 @@ def labels_array(axes):
     -------
     LArray
 
-    Example
-    -------
+    Examples
+    --------
     >>> nat = Axis('nat', ['BE', 'FO'])
     >>> sex = Axis('sex', ['M', 'F'])
     >>> labels_array(sex)
@@ -5941,7 +7800,7 @@ def identity(axis):
 
 
 def eye(rows, columns=None, k=0, dtype=None):
-    """Return a 2-D array with ones on the diagonal and zeros elsewhere.
+    """Returns a 2-D array with ones on the diagonal and zeros elsewhere.
 
     Parameters
     ----------
@@ -5962,8 +7821,8 @@ def eye(rows, columns=None, k=0, dtype=None):
         An array where all elements are equal to zero, except for the k-th
         diagonal, whose values are equal to one.
 
-    Example
-    -------
+    Examples
+    --------
     >>> eye(2, dtype=int)
     {0}*\\{1}* | 0 | 1
             0 | 1 | 0
@@ -5997,7 +7856,7 @@ def eye(rows, columns=None, k=0, dtype=None):
 # stack(a1, a2, axis='sex')
 def stack(arrays, axis=None):
     """
-    combine several arrays along an axis
+    Combines several arrays along an axis.
 
     Parameters
     ----------
@@ -6009,7 +7868,7 @@ def stack(arrays, axis=None):
     Returns
     -------
     LArray
-        a single array combining arrays.
+        A single array combining arrays.
 
     Examples
     --------
@@ -6180,7 +8039,7 @@ class AxisReference(ExprNode, Axis):
         Parameters
         ----------
         context : AxisCollection
-            use axes from this collection
+            Use axes from this collection
         """
         return context[self]
 
@@ -6244,14 +8103,33 @@ def _equal_modulo_len1(shape1, shape2):
 # this wouldn't be a problem.
 def make_numpy_broadcastable(values):
     """
-    return values where LArrays are (numpy) broadcastable between them.
-    For that to be possible, all common axes must be compatible.
+    Returns values where LArrays are (NumPy) broadcastable between them.
+    For that to be possible, all common axes must be compatible
+    (see Axis class documentation).
     Extra axes (in any array) can have any length.
 
     * the resulting arrays will have the combination of all axes found in the
       input arrays, the earlier arrays defining the order of axes. Axes with
       labels take priority over wildcard axes.
     * length 1 wildcard axes will be added for axes not present in input
+
+    Parameters
+    ----------
+    values : iterable of arrays
+        Arrays that requires to be (NumPy) broadcastable between them.
+
+    Returns
+    -------
+    list of arrays
+        List of arrays broadcastable between them.
+        Arrays will have the combination of all axes found in the
+        input arrays, the earlier arrays defining the order of axes.
+    AxisCollection
+        Collection of axes of all input arrays.
+
+    See Also
+    --------
+    Axis.iscompatible : tests if axes are compatible between them.
     """
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
     return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
