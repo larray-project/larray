@@ -84,7 +84,7 @@ from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate
                             QAction, QStyle, QToolTip)
 
 from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
-                        QFont, QIcon, QFontMetrics, QCursor)
+                        QFont, QIcon, QFontMetrics, QCursor, QStandardItemModel)
 
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
@@ -836,7 +836,11 @@ class ArrayModel(QAbstractTableModel):
 
 
 class ArrayDelegate(QItemDelegate):
-    """Array Editor Item Delegate"""
+    """Array Editor Item Delegate.
+
+    Provides display and editing facilities for data items
+    from the ArrayModel.
+    """
     def __init__(self, dtype, parent=None, font=None,
                  minvalue=None, maxvalue=None):
         QItemDelegate.__init__(self, parent)
@@ -854,7 +858,11 @@ class ArrayDelegate(QItemDelegate):
         self.editor_count = 0
 
     def createEditor(self, parent, option, index):
-        """Create editor widget"""
+        """Creates editor widget.
+
+        Qt reimplemented method of QItemDelegate to
+        customize editing behavior.
+        """
         model = index.model()
         value = model.get_value(index)
         if self.dtype.name == "bool":
@@ -906,9 +914,22 @@ class ArrayDelegate(QItemDelegate):
         assert self.editor_count >= 0
 
     def setEditorData(self, editor, index):
-        """Set editor widget's data"""
+        """Set editor widget's data
+
+        Qt reimplemented method of QItemDelegate which
+        provides the widget with data to manipulate.
+        """
         text = from_qvariant(index.model().data(index, Qt.DisplayRole), str)
         editor.setText(text)
+
+
+class LabelsView(QTableView):
+    """Labels view class"""
+    def __init__(self, parent, model):
+        QTableView.__init__(self, parent)
+
+        self.setModel(model)
+
 
 
 class ArrayView(QTableView):
@@ -1231,10 +1252,24 @@ class ArrayEditorWidget(QWidget):
             readonly = True
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
-        self.model = ArrayModel(None, readonly=readonly, parent=self,
-                                bg_value=bg_value, bg_gradient=bg_gradient,
-                                minvalue=minvalue, maxvalue=maxvalue)
-        self.view = ArrayView(self, self.model, data.dtype, data.shape)
+
+        self.data_model = ArrayModel(None, readonly=readonly, parent=self,
+                                     bg_value=bg_value, bg_gradient=bg_gradient,
+                                     minvalue=minvalue, maxvalue=maxvalue)
+        self.data_view = ArrayView(self, self.data_model, data.dtype, data.shape)
+
+        self.xlabels_model = QStandardItemModel(None)
+        self.xlabels_view = QTableView(self)
+        self.xlabels_view.setModel(self.xlabels_model)
+
+        self.ylabels_model = QStandardItemModel(None)
+        self.ylabels_view = QTableView(self)
+        self.ylabels_view.setModel(self.ylabels_model)
+
+        array_layout = QGridLayout()
+        array_layout.addWidget(self.ylabels_view, 0, 0, 1, 2)
+        array_layout.addWidget(self.xlabels_view, 1, 0)
+        array_layout.addWidget(self.data_view, 1, 1)
 
         self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
@@ -1253,13 +1288,13 @@ class ArrayEditorWidget(QWidget):
         btn_layout.addWidget(scientific)
 
         bgcolor = QCheckBox(_('Background color'))
-        bgcolor.stateChanged.connect(self.model.bgcolor)
+        bgcolor.stateChanged.connect(self.data_model.bgcolor)
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
         layout = QVBoxLayout()
         layout.addLayout(self.filters_layout)
-        layout.addWidget(self.view)
+        layout.addLayout(array_layout)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
         self.set_data(data, xlabels, ylabels, bg_value=bg_value,
@@ -1331,11 +1366,11 @@ class ArrayEditorWidget(QWidget):
         self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
         self.data = data
-        self.model.set_format(self.cell_format)
+        self.data_model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes,
-                            bg_gradient=bg_gradient, bg_value=bg_value)
+        self.data_model.set_data(data, xlabels, ylabels, changes,
+                                 bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
@@ -1343,8 +1378,8 @@ class ArrayEditorWidget(QWidget):
         self.scientific_checkbox.setChecked(use_scientific)
         self.scientific_checkbox.setEnabled(is_number(data.dtype))
 
-        self.bgcolor_checkbox.setChecked(self.model.bgcolor_enabled)
-        self.bgcolor_checkbox.setEnabled(self.model.bgcolor_enabled)
+        self.bgcolor_checkbox.setChecked(self.data_model.bgcolor_enabled)
+        self.bgcolor_checkbox.setEnabled(self.data_model.bgcolor_enabled)
 
     def choose_scientific(self, data):
         # max_digits = self.get_max_digits()
@@ -1456,9 +1491,9 @@ class ArrayEditorWidget(QWidget):
         """Reject changes"""
         self.global_changes.clear()
         # trigger view update
-        self.model.changes.clear()
-        self.model.reset_minmax()
-        self.model.reset()
+        self.data_model.changes.clear()
+        self.data_model.reset_minmax()
+        self.data_model.reset()
         # XXX: shouldn't this be done only in the dialog? (if we continue
         # editing...)
         if self.old_data_shape is not None:
@@ -1477,11 +1512,11 @@ class ArrayEditorWidget(QWidget):
         self.use_scientific = value
         self.digits = self.choose_ndecimals(self.data, value)
         self.digits_spinbox.setValue(self.digits)
-        self.model.set_format(self.cell_format)
+        self.data_model.set_format(self.cell_format)
 
     def digits_changed(self, value):
         self.digits = value
-        self.model.set_format(self.cell_format)
+        self.data_model.set_format(self.cell_format)
 
     def create_filter_combo(self, axis):
         def filter_changed(checked_items):
@@ -1531,7 +1566,7 @@ class ArrayEditorWidget(QWidget):
     def update_global_changes(self):
         # TODO: it would be a better idea to handle the filter in the model,
         # and only store changes as "global changes".
-        for k, v in self.model.changes.items():
+        for k, v in self.data_model.changes.items():
             self.global_changes[self.map_filtered_to_global(k)] = v
 
     def map_global_to_filtered(self, k, filtered):
@@ -1574,7 +1609,7 @@ class ArrayEditorWidget(QWidget):
 
         # transform local index key to local label key
         # XXX: why can't we store the filter as index?
-        model = self.model
+        model = self.data_model
         ki, kj = k
         xlabels = model.xlabels
         ylabels = model.ylabels
