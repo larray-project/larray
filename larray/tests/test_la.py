@@ -11,7 +11,7 @@ import pandas as pd
 from larray import (LArray, Axis, AxisCollection, LGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ones, eye, diag,
                     clip, exp, where, x, mean, isnan, round)
-from larray.core import to_ticks, to_key, srange, df_aslarray
+from larray.core import _to_ticks, _to_key, _srange, df_aslarray
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -70,8 +70,8 @@ assert_array_nan_equal = assert_equal_factory(nan_equal)
 
 class TestValueStrings(TestCase):
     def test_split(self):
-        self.assertEqual(to_ticks('H,F'), ['H', 'F'])
-        self.assertEqual(to_ticks('H, F'), ['H', 'F'])
+        self.assertEqual(_to_ticks('H,F'), ['H', 'F'])
+        self.assertEqual(_to_ticks('H, F'), ['H', 'F'])
 
     def test_union(self):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
@@ -81,24 +81,24 @@ class TestValueStrings(TestCase):
         # want to have more complex queries, such as:
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
-        self.assertEqual(to_ticks('0:115'), srange(116))
-        self.assertEqual(to_ticks(':115'), srange(116))
+        self.assertEqual(_to_ticks('0:115'), _srange(116))
+        self.assertEqual(_to_ticks(':115'), _srange(116))
         with self.assertRaises(ValueError):
-            to_ticks('10:')
+            _to_ticks('10:')
         with self.assertRaises(ValueError):
-            to_ticks(':')
+            _to_ticks(':')
 
 
 class TestKeyStrings(TestCase):
     def test_nonstring(self):
-        self.assertEqual(to_key(('H', 'F')), ['H', 'F'])
-        self.assertEqual(to_key(['H', 'F']), ['H', 'F'])
+        self.assertEqual(_to_key(('H', 'F')), ['H', 'F'])
+        self.assertEqual(_to_key(['H', 'F']), ['H', 'F'])
 
     def test_split(self):
-        self.assertEqual(to_key('H,F'), ['H', 'F'])
-        self.assertEqual(to_key('H, F'), ['H', 'F'])
-        self.assertEqual(to_key('H,'), ['H'])
-        self.assertEqual(to_key('H'), 'H')
+        self.assertEqual(_to_key('H,F'), ['H', 'F'])
+        self.assertEqual(_to_key('H, F'), ['H', 'F'])
+        self.assertEqual(_to_key('H,'), ['H'])
+        self.assertEqual(_to_key('H'), 'H')
 
     def test_slice_strings(self):
         # XXX: we might want to return real int instead, because if we ever
@@ -106,10 +106,10 @@ class TestKeyStrings(TestCase):
         # arr.filter(age > 10 and age < 20)
         # this would break for string values (because '10' < '2')
         # XXX: these two examples return different things, do we want that?
-        self.assertEqual(to_key('0:115'), slice('0', '115'))
-        self.assertEqual(to_key(':115'), slice('115'))
-        self.assertEqual(to_key('10:'), slice('10', None))
-        self.assertEqual(to_key(':'), slice(None))
+        self.assertEqual(_to_key('0:115'), slice('0', '115'))
+        self.assertEqual(_to_key(':115'), slice('115'))
+        self.assertEqual(_to_key('10:'), slice('10', None))
+        self.assertEqual(_to_key(':'), slice(None))
 
 
 class TestAxis(TestCase):
@@ -135,7 +135,7 @@ class TestAxis(TestCase):
         # list of ints
         assert_array_equal((Axis('age', range(116))).labels, np.arange(116))
         # range-string
-        assert_array_equal((Axis('age', ':115')).labels, np.array(srange(116)))
+        assert_array_equal((Axis('age', ':115')).labels, np.array(_srange(116)))
 
     def test_equals(self):
         self.assertTrue(Axis('sex', 'H,F').equals(Axis('sex', 'H,F')))
@@ -156,8 +156,8 @@ class TestAxis(TestCase):
         self.assertEqual(age.group('10:20'), LGroup(slice('10', '20')))
 
         # with name
-        group = age.group(srange(10, 20), name='teens')
-        self.assertEqual(group.key, srange(10, 20))
+        group = age.group(_srange(10, 20), name='teens')
+        self.assertEqual(group.key, _srange(10, 20))
         self.assertEqual(group.name, 'teens')
         self.assertIs(group.axis, age)
 
