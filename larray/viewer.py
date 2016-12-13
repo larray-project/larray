@@ -416,17 +416,14 @@ class LabelsModel(AbstractTableModel):
         self.reset()
 
     def _set_data(self, data):
+        if not (isinstance(data, (list, tuple)) and len(data) >= 2):
+            data = [[''],['']]
+
         if self._label_position == 'x':
-            if data is not None and len(data) == 2:
-                self._axes = data[0]
-                self._data = data[1]
-            else:
-                self._axes = []
-                self._data = []
+            self._axes = data[0]
+            self._data = data[1]
         else:
             self._data = data
-        print(self._label_position + 'labels')
-        print(data)
 
     # ############################################ #
     # Methods to reimplement for a read-only model #
@@ -584,9 +581,9 @@ class ArrayModel(QAbstractTableModel):
     bg_value : ???, optional
         Background color value
     minvalue : scalar
-        Minimum value allowed.
+        Minimum value that can be represented.
     maxvalue : scalar
-        Maximum value allowed.
+        Maximum value that can be represented.
     """
 
     ROWS_TO_LOAD = 500
@@ -1121,6 +1118,24 @@ class ArrayDelegate(QItemDelegate):
         editor.setText(text)
 
 
+class LabelsView(QTableView):
+    """"Labels view class"""
+    def __init__(self,  parent, model):
+        QTableView.__init__(self, parent)
+
+        self.setModel(model)
+        self.setSelectionMode(QTableView.ContiguousSelection)
+
+        self.horizontalHeader().setDefaultSectionSize(64)
+        self.verticalHeader().setDefaultSectionSize(20)
+
+        self.horizontalScrollBar().hide()
+        self.verticalScrollBar().hide()
+
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+
 class ArrayView(QTableView):
     """Array view class"""
     def __init__(self, parent, model, dtype, shape):
@@ -1448,12 +1463,18 @@ class ArrayEditorWidget(QWidget):
         self.view_data = ArrayView(self, self.model_data, data.dtype, data.shape)
 
         self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
-        self.view_xlabels = QTableView(self)
+        self.view_xlabels = LabelsView(self, self.model_xlabels)
         self.view_xlabels.setModel(self.model_xlabels)
 
         self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
-        self.view_ylabels = QTableView(self)
+        self.view_ylabels = LabelsView(self, self.model_ylabels)
         self.view_ylabels.setModel(self.model_ylabels)
+
+        # connect the headers and scrollbars of both tableviews together
+        # self.view_xlabels.horizontalHeader().sectionResized.connect(self.view_data.updateSectionWidth)
+        # self.view_ylabels.verticalHeader().sectionResized.connect(self.view_data.updateSectionHeight)
+        self.view_data.horizontalScrollBar().valueChanged.connect(self.view_xlabels.horizontalScrollBar().setValue)
+        self.view_data.verticalScrollBar().valueChanged.connect(self.view_ylabels.verticalScrollBar().setValue)
 
         array_layout = QGridLayout()
         array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
