@@ -411,6 +411,9 @@ class LabelsModel(AbstractTableModel):
     # ############################################ #
     #              Not Qt methods                  #
     # ############################################ #
+    def get_position(self):
+        return self._label_position
+    
     def set_data(self, data):
         self._set_data(data)
         self.reset()
@@ -465,7 +468,7 @@ class LabelsModel(AbstractTableModel):
         i = index.row()
         j = index.column()
         if self._label_position == 'x':
-            if j < len(self._axes):
+            if j < len(self._axes) or j == len(self._axes) + len(self._data):
                 return ""
             else:
                 return str(self._data[j-len(self._axes)])
@@ -486,7 +489,7 @@ class LabelsModel(AbstractTableModel):
             return to_qvariant()
 
         if self._label_position == 'x':
-            if section < len(self._axes):
+            if orientation == Qt.Horizontal and section < len(self._axes):
                 return to_qvariant(self._axes[section])
             else:
                 return to_qvariant()
@@ -1128,6 +1131,10 @@ class LabelsView(QTableView):
 
         self.horizontalHeader().setDefaultSectionSize(64)
         self.verticalHeader().setDefaultSectionSize(20)
+        if model.get_position() == 'x':
+            self.verticalHeader().hide()
+        else:
+            self.horizontalHeader().hide()
 
         self.horizontalScrollBar().hide()
         self.verticalScrollBar().hide()
@@ -1464,11 +1471,9 @@ class ArrayEditorWidget(QWidget):
 
         self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
         self.view_xlabels = LabelsView(self, self.model_xlabels)
-        self.view_xlabels.setModel(self.model_xlabels)
 
         self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
         self.view_ylabels = LabelsView(self, self.model_ylabels)
-        self.view_ylabels.setModel(self.model_ylabels)
 
         # connect the headers and scrollbars of both tableviews together
         # self.view_xlabels.horizontalHeader().sectionResized.connect(self.view_data.updateSectionWidth)
@@ -1480,6 +1485,9 @@ class ArrayEditorWidget(QWidget):
         array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
         array_layout.addWidget(self.view_ylabels, 1, 0)
         array_layout.addWidget(self.view_data, 1, 1)
+        array_layout.setSpacing(0)
+        array_layout.setContentsMargins(0, 0, 0, 0)
+
 
         self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
