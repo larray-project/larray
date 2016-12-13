@@ -361,6 +361,204 @@ def get_idx_rect(index_list):
     return min(rows), max(rows), min(cols), max(cols)
 
 
+class AbstractTableModel(QAbstractTableModel):
+    """
+    Abstract class implementing common methods
+    for labels and array models
+    """
+    def __init__(self, data=None, readonly=False, font=None, parent=None):
+        QAbstractTableModel.__init__(self)
+
+        self.dialog = parent
+        self.readonly = readonly
+
+        if font is None:
+            font = get_font("arreditor")
+        self.font = font
+        bold_font = get_font("arreditor")
+        bold_font.setBold(True)
+        self.bold_font = bold_font
+
+        self._data = None
+
+    def get_data(self):
+        """Returns data"""
+        return self._data
+
+    def reset(self):
+        self.beginResetModel()
+        self.endResetModel()
+
+
+class LabelsModel(AbstractTableModel):
+    """Labels Table Model
+
+    Parameters
+    ----------
+    (...)
+    """
+    def __init__(self, label_position, data=None, readonly=False,
+                 font=None, parent=None):
+        AbstractTableModel.__init__(self, data, readonly, font, parent)
+
+        if not (label_position == 'x' or label_position == 'y'):
+            raise ValueError("label_postion must be either x or y character")
+        self._label_position = label_position
+
+        self._set_data(data)
+        print(self._data)
+
+    # ############################################ #
+    #              Not Qt methods                  #
+    # ############################################ #
+    def set_data(self, data):
+        self._set_data(data)
+        self.reset()
+
+    def _set_data(self, data):
+        if self._label_position == 'x':
+            if data is not None and len(data) == 2:
+                self._axes = data[0]
+                self._data = data[1]
+            else:
+                self._axes = []
+                self._data = []
+        else:
+            self._data = data
+        print(self._label_position + 'labels')
+        print(data)
+
+    # ############################################ #
+    # Methods to reimplement for a read-only model #
+    # ############################################ #
+    def flags(self, index):
+        """Qt reimplemented method.
+
+        Returns the item flags for the given index
+        (ItemIsSelectable, ItemIsEditable, ItemIsEnabled, ...).
+
+        See ItemFlags for available flags.
+        """
+        return Qt.ItemIsEnabled
+
+    def data(self, index, role=Qt.DisplayRole):
+        """Qt reimplemented method.
+
+        Returns the data stored under the given role for
+        the item referred to by the index.
+        """
+        if not index.isValid():
+            return to_qvariant()
+
+        if role == Qt.TextAlignmentRole:
+            return to_qvariant(int(Qt.AlignCenter | Qt.AlignVCenter))
+        elif role == Qt.FontRole:
+            return self.bold_font
+        elif role == Qt.BackgroundColorRole:
+            color = QColor(Qt.lightGray)
+            color.setAlphaF(.4)
+            return color
+        elif role == Qt.DisplayRole:
+            value = self.get_value(index)
+            return to_qvariant(value)
+        else:
+            return to_qvariant()
+
+    def get_value(self, index):
+        i = index.row()
+        j = index.column()
+        if self._label_position == 'x':
+            if j < len(self._axes):
+                return ""
+            else:
+                return str(self._data[j-len(self._axes)])
+        else:
+            return str(self._data[j+1][i])
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """Qt reimplemented method.
+
+        Returns the data for the given role and section in
+        the header with the specified orientation.
+
+        For horizontal headers, the section number corresponds
+        to the column number. Similarly, for vertical headers,
+        the section number corresponds to the row number.
+        """
+        if role != Qt.DisplayRole:
+            return to_qvariant()
+
+        if self._label_position == 'x':
+            if section < len(self._axes):
+                return to_qvariant(self._axes[section])
+            else:
+                return to_qvariant()
+        else:
+            return to_qvariant()
+        # if orientation == Qt.Horizontal:
+        #     return to_qvariant(self._data[0][section])
+        # else:
+        #     return to_qvariant(self._data[0][section])
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Returns the number of rows under the given parent.
+        When the parent is valid it means that rowCount is
+        returning the number of children of parent.
+        """
+        if self._label_position == 'x':
+            return 1
+        else:
+            return len(self._data[0]) - 1
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Returns the number of columns for the children
+        of the given parent.
+        """
+        if self._label_position == 'x':
+            return len(self._axes) + len(self._data)
+        else:
+            return len(self._data) - 1
+
+    # ############################################ #
+    # Methods to reimplement for a resizable model #
+    # ############################################ #
+    def insertRows(self, position, rows, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Adds new rows to the model.
+        """
+        self.beginInsertRows()
+        self.endInsertRows()
+
+    def removeRows(self, position, rows, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Removes rows from the model.
+        """
+        self.beginRemoveRows()
+        self.endRemoveRows()
+
+    def insertColumns(self, position, columns, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Adds new columns to the model.
+        """
+        self.beginInsertColumns()
+        self.endInsertColumns()
+
+    def removeColumns(self, position, columns, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Removes columns from the model.
+        """
+        self.beginRemoveColumns()
+        self.endRemoveColumns()
+
+
 class ArrayModel(QAbstractTableModel):
     """Array Editor Table Model.
 
@@ -923,15 +1121,6 @@ class ArrayDelegate(QItemDelegate):
         editor.setText(text)
 
 
-class LabelsView(QTableView):
-    """Labels view class"""
-    def __init__(self, parent, model):
-        QTableView.__init__(self, parent)
-
-        self.setModel(model)
-
-
-
 class ArrayView(QTableView):
     """Array view class"""
     def __init__(self, parent, model, dtype, shape):
@@ -1253,23 +1442,23 @@ class ArrayEditorWidget(QWidget):
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
 
-        self.data_model = ArrayModel(None, readonly=readonly, parent=self,
+        self.model_data = ArrayModel(None, readonly=readonly, parent=self,
                                      bg_value=bg_value, bg_gradient=bg_gradient,
                                      minvalue=minvalue, maxvalue=maxvalue)
-        self.data_view = ArrayView(self, self.data_model, data.dtype, data.shape)
+        self.view_data = ArrayView(self, self.model_data, data.dtype, data.shape)
 
-        self.xlabels_model = QStandardItemModel(None)
-        self.xlabels_view = QTableView(self)
-        self.xlabels_view.setModel(self.xlabels_model)
+        self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
+        self.view_xlabels = QTableView(self)
+        self.view_xlabels.setModel(self.model_xlabels)
 
-        self.ylabels_model = QStandardItemModel(None)
-        self.ylabels_view = QTableView(self)
-        self.ylabels_view.setModel(self.ylabels_model)
+        self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
+        self.view_ylabels = QTableView(self)
+        self.view_ylabels.setModel(self.model_ylabels)
 
         array_layout = QGridLayout()
-        array_layout.addWidget(self.ylabels_view, 0, 0, 1, 2)
-        array_layout.addWidget(self.xlabels_view, 1, 0)
-        array_layout.addWidget(self.data_view, 1, 1)
+        array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
+        array_layout.addWidget(self.view_ylabels, 1, 0)
+        array_layout.addWidget(self.view_data, 1, 1)
 
         self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
@@ -1288,7 +1477,7 @@ class ArrayEditorWidget(QWidget):
         btn_layout.addWidget(scientific)
 
         bgcolor = QCheckBox(_('Background color'))
-        bgcolor.stateChanged.connect(self.data_model.bgcolor)
+        bgcolor.stateChanged.connect(self.model_data.bgcolor)
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
@@ -1366,11 +1555,13 @@ class ArrayEditorWidget(QWidget):
         self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
         self.data = data
-        self.data_model.set_format(self.cell_format)
+        self.model_data.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.data_model.set_data(data, xlabels, ylabels, changes,
+        self.model_data.set_data(data, xlabels, ylabels, changes,
                                  bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model_xlabels.set_data(xlabels)
+        self.model_ylabels.set_data(ylabels)
 
         self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_float(data.dtype))
@@ -1378,8 +1569,8 @@ class ArrayEditorWidget(QWidget):
         self.scientific_checkbox.setChecked(use_scientific)
         self.scientific_checkbox.setEnabled(is_number(data.dtype))
 
-        self.bgcolor_checkbox.setChecked(self.data_model.bgcolor_enabled)
-        self.bgcolor_checkbox.setEnabled(self.data_model.bgcolor_enabled)
+        self.bgcolor_checkbox.setChecked(self.model_data.bgcolor_enabled)
+        self.bgcolor_checkbox.setEnabled(self.model_data.bgcolor_enabled)
 
     def choose_scientific(self, data):
         # max_digits = self.get_max_digits()
@@ -1491,9 +1682,9 @@ class ArrayEditorWidget(QWidget):
         """Reject changes"""
         self.global_changes.clear()
         # trigger view update
-        self.data_model.changes.clear()
-        self.data_model.reset_minmax()
-        self.data_model.reset()
+        self.model_data.changes.clear()
+        self.model_data.reset_minmax()
+        self.model_data.reset()
         # XXX: shouldn't this be done only in the dialog? (if we continue
         # editing...)
         if self.old_data_shape is not None:
@@ -1512,11 +1703,11 @@ class ArrayEditorWidget(QWidget):
         self.use_scientific = value
         self.digits = self.choose_ndecimals(self.data, value)
         self.digits_spinbox.setValue(self.digits)
-        self.data_model.set_format(self.cell_format)
+        self.model_data.set_format(self.cell_format)
 
     def digits_changed(self, value):
         self.digits = value
-        self.data_model.set_format(self.cell_format)
+        self.model_data.set_format(self.cell_format)
 
     def create_filter_combo(self, axis):
         def filter_changed(checked_items):
@@ -1566,7 +1757,7 @@ class ArrayEditorWidget(QWidget):
     def update_global_changes(self):
         # TODO: it would be a better idea to handle the filter in the model,
         # and only store changes as "global changes".
-        for k, v in self.data_model.changes.items():
+        for k, v in self.model_data.changes.items():
             self.global_changes[self.map_filtered_to_global(k)] = v
 
     def map_global_to_filtered(self, k, filtered):
@@ -1609,7 +1800,7 @@ class ArrayEditorWidget(QWidget):
 
         # transform local index key to local label key
         # XXX: why can't we store the filter as index?
-        model = self.data_model
+        model = self.model_data
         ki, kj = k
         xlabels = model.xlabels
         ylabels = model.ylabels
@@ -2579,16 +2770,20 @@ if __name__ == "__main__":
     # view(np.arange(12).reshape(2, 3, 2))
     # view([])
 
-    data3 = np.random.normal(0, 1, size=(2, 15))
-    arr3 = la.ndrange((30, sex))
+    # ==========================================================
+    #data3 = np.random.normal(0, 1, size=(2, 15))
+    #arr3 = la.ndrange((30, sex))
+    # ==========================================================
     # data4 = np.random.normal(0, 1, size=(2, 15))
     # arr4 = la.LArray(data4, axes=(sex, lipro))
 
     # arr4 = arr3.copy()
     # arr4['F'] /= 2
-    arr4 = arr3.min(la.x.sex)
-    arr5 = arr3.max(la.x.sex)
-    arr6 = arr3.mean(la.x.sex)
+    # ==========================================================
+    # arr4 = arr3.min(la.x.sex)
+    # arr5 = arr3.max(la.x.sex)
+    # arr6 = arr3.mean(la.x.sex)
+    # ==========================================================
 
     # compare(arr3, arr4, arr5, arr6)
 
