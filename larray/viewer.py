@@ -79,12 +79,12 @@ from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate
                             QListWidget, QSplitter, QListWidgetItem,
                             QLineEdit, QCheckBox, QGridLayout,
                             QDialog, QDialogButtonBox, QPushButton,
-                            QMessageBox, QMenu,
+                            QMessageBox, QMenu, QHeaderView,
                             QLabel, QSpinBox, QWidget, QVBoxLayout,
-                            QAction, QStyle, QToolTip)
+                            QAction, QStyle, QToolTip, QSizePolicy)
 
 from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
-                        QFont, QIcon, QFontMetrics, QCursor, QStandardItemModel)
+                        QFont, QIcon, QFontMetrics, QCursor)
 
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
@@ -406,7 +406,6 @@ class LabelsModel(AbstractTableModel):
         self._label_position = label_position
 
         self._set_data(data)
-        print(self._data)
 
     # ############################################ #
     #              Not Qt methods                  #
@@ -466,14 +465,15 @@ class LabelsModel(AbstractTableModel):
 
     def get_value(self, index):
         i = index.row()
-        j = index.column()
+        j = index.column() + 1
         if self._label_position == 'x':
-            if j < len(self._axes) or j == len(self._axes) + len(self._data):
+            j -= len(self._axes)
+            if j < 0:
                 return ""
             else:
-                return str(self._data[j-len(self._axes)])
+                return str(self._data[j])
         else:
-            return str(self._data[j+1][i])
+            return str(self._data[j][i])
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Qt reimplemented method.
@@ -519,7 +519,7 @@ class LabelsModel(AbstractTableModel):
         of the given parent.
         """
         if self._label_position == 'x':
-            return len(self._axes) + len(self._data)
+            return len(self._axes) + len(self._data) - 1
         else:
             return len(self._data) - 1
 
@@ -1129,18 +1129,29 @@ class LabelsView(QTableView):
         self.setModel(model)
         self.setSelectionMode(QTableView.ContiguousSelection)
 
+        # Set default size of cells
         self.horizontalHeader().setDefaultSectionSize(64)
+        self.verticalHeader().setResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(20)
-        if model.get_position() == 'x':
-            self.verticalHeader().hide()
-        else:
+
+        # Hide vertical/horizontal header
+        self.verticalHeader().hide()
+        if model.get_position() == 'y':
             self.horizontalHeader().hide()
 
+        # Hide scrollbars
         self.horizontalScrollBar().hide()
-        self.verticalScrollBar().hide()
-
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.verticalScrollBar().hide()
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.model().modelReset.connect(self.adjustSize)
+
+    def adjustSize(self):
+        if self.model().get_position() == 'x':
+            self.setMaximumHeight(self.horizontalHeader().height() * 2)
+        else:
+            self.setMaximumWidth(self.horizontalHeader().length())
 
 
 class ArrayView(QTableView):
@@ -1481,13 +1492,14 @@ class ArrayEditorWidget(QWidget):
         self.view_data.horizontalScrollBar().valueChanged.connect(self.view_xlabels.horizontalScrollBar().setValue)
         self.view_data.verticalScrollBar().valueChanged.connect(self.view_ylabels.verticalScrollBar().setValue)
 
+        self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         array_layout = QGridLayout()
         array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
         array_layout.addWidget(self.view_ylabels, 1, 0)
         array_layout.addWidget(self.view_data, 1, 1)
         array_layout.setSpacing(0)
         array_layout.setContentsMargins(0, 0, 0, 0)
-
 
         self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
