@@ -77,12 +77,8 @@ class TestValueStrings(TestCase):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
 
     def test_range(self):
-        # XXX: we might want to return real int instead, because if we ever
-        # want to have more complex queries, such as:
-        # arr.filter(age > 10 and age < 20)
-        # this would break for string values (because '10' < '2')
-        self.assertEqual(_to_ticks('0:115'), _srange(116))
-        self.assertEqual(_to_ticks(':115'), _srange(116))
+        self.assertEqual(_to_ticks('0:115'), range(116))
+        self.assertEqual(_to_ticks(':115'), range(116))
         with self.assertRaises(ValueError):
             _to_ticks('10:')
         with self.assertRaises(ValueError):
@@ -133,9 +129,9 @@ class TestAxis(TestCase):
         # single string
         assert_array_equal(Axis('sex', 'H,F').labels, sex_array)
         # list of ints
-        assert_array_equal((Axis('age', range(116))).labels, np.arange(116))
+        assert_array_equal(Axis('age', range(116)).labels, np.arange(116))
         # range-string
-        assert_array_equal((Axis('age', ':115')).labels, np.array(_srange(116)))
+        assert_array_equal(Axis('age', ':115').labels, np.arange(116))
 
     def test_equals(self):
         self.assertTrue(Axis('sex', 'H,F').equals(Axis('sex', 'H,F')))
@@ -250,10 +246,10 @@ class TestAxis(TestCase):
         age359 = age.group(['3', '5', '9'])
         age468 = age.group('4,6,8', name='even')
 
-        self.assertFalse(5 in age)
-        self.assertTrue('5' in age)
+        self.assertTrue(5 in age)
+        self.assertFalse('5' in age)
 
-        self.assertTrue(age2 in age)
+        self.assertFalse(age2 in age)
         # only single ticks are "contained" in the axis, not "collections"
         self.assertFalse(age2bis in age)
         self.assertFalse(age2ter in age)
@@ -711,7 +707,7 @@ class TestAxisCollection(TestCase):
         self.assertEqual(repr(self.collection), """AxisCollection([
     Axis('lipro', ['P01', 'P02', 'P03', 'P04']),
     Axis('sex', ['H', 'F']),
-    Axis('age', ['0', '1', '2', '3', '4', '5', '6', '7'])
+    Axis('age', [0, 1, 2, 3, 4, 5, 6, 7])
 ])""")
 
 

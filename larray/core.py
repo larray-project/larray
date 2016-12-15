@@ -241,27 +241,27 @@ def _slice_to_str(key, use_repr=False):
 
 def _slice_str_to_range(s):
     """
-    Converts a slice string to a list of (string) values.
+    Converts a slice string to a range (of values).
     The end point is included.
 
     Parameters:
     -----------
     s : str
-        Sting representing a slice
+        String representing a slice
 
     Returns
     -------
-    list of str
+    range
         Array of evenly spaced values.
 
     Examples:
     ---------
-    >>> _slice_str_to_range(':3')
-    ['0', '1', '2', '3']
-    >>> _slice_str_to_range('2:5')
-    ['2', '3', '4', '5']
-    >>> _slice_str_to_range('2:6:2')
-    ['2', '4', '6']
+    >>> list(_slice_str_to_range(':3'))
+    [0, 1, 2, 3]
+    >>> list(_slice_str_to_range('2:5'))
+    [2, 3, 4, 5]
+    >>> list(_slice_str_to_range('2:6:2'))
+    [2, 4, 6]
     """
     numcolons = s.count(':')
     assert 1 <= numcolons <= 2
@@ -272,7 +272,7 @@ def _slice_str_to_range(s):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop += 1
-    return _srange(start, stop, step)
+    return range(start, stop, step)
 
 
 def _to_string(v):
@@ -346,12 +346,8 @@ def _to_ticks(s):
     >>> _to_ticks('H , F')
     ['H', 'F']
 
-    # XXX: we might want to return real int instead, because if we ever
-    # want to have more complex queries, such as:
-    # arr.filter(age > 10 and age < 20)
-    # this would break for string values (because '10' < '2')
     >>> _to_ticks(':3')
-    ['0', '1', '2', '3']
+    range(0, 4)
     """
     if isinstance(s, Group):
         # a single LGroup used for all ticks of an Axis
@@ -511,7 +507,7 @@ def union(*args):
     Examples
     --------
     >>> union('a', 'a, b, c, d', ['d', 'e', 'f'], ':2')
-    ['a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2']
+    ['a', 'b', 'c', 'd', 'e', 'f', 0, 1, 2]
     """
     if args:
         return list(unique(chain(*(_to_ticks(arg) for arg in args))))
