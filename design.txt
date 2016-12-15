@@ -865,3 +865,65 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # https://docs.scipy.org/doc/numpy/reference/routines.set.html
 # https://docs.scipy.org/doc/numpy/reference/routines.logic.html#logical-operations
 # https://docs.python.org/3.7/library/stdtypes.html#set
+
+    >>> to_key('axis=a,b:d,e ! groupname')
+    >>> to_key('axis=a,b:d,e # groupname')
+    >>> to_key('axis=a,b:d,e & groupname')
+    >>> to_key('axis=a,b:d,e ~ groupname')
+    >>> to_key('axis=a,b:d,e @ groupname')
+    >>> to_key('groupname=a,b:d,e @ axis')
+    >>> to_key('groupname=#1:7a,b:d,e @ axis')
+    >>> to_key('teens=#1:7,b:d,e @ age')
+    >>> ext = la({'M': 55, 'F': 56})
+    # cannot use f-string (or string formatting) because that would be too
+    # limiting, ie. ext above wouldn't work
+    >>> a.sum('10_19=10:19 ; 20_29=20:29; #-1@year ; services=a,c:e,o@c_from ; {ext}@c_to')
+    >>> a.sum('age=10:19 > 10_19 ; 20:29 > 20_29 ; year=#-1 ; services=a,c:e ; c_from=o ; c_to={ext}')
+    # names only make sense when doing group aggregates, ie within parentheses
+    >>> a.sum('age=(10:19 > 10_19 ; 20:29 > 20_29); year=#-1 ; services=a, c:e ; c_from=o ; c_to={ext}')
+    # the parentheses are potentially superfluous since we separated groups
+    # using ; => means different LGroup
+    # several groups on same axis => multi group aggregate
+    >>> a['age=20:29|5 & year=#-1 & c_from=o & c_to={ext}']
+    >>> a['age=(10:19 >> 10_19 ; 20:29 >> 20_29) & c_from=o & c_to={ext}']
+    >>> a['age=10:19->10_19 ; age=20:29->20_29 & c_from=o & c_length={ext}']
+    >>> a['age=(10:19->10_19 ; #10:20) & c_from=o & c_length={ext}']
+
+
+    >>> a['age[20:29].by(5) & year.i[-1] & c_from[o] & c_to[{ext}]']
+
+    >>> a['age=(10:19 >> 10_19 ; 20:29 >> 20_29) & c_from=o & c_to={ext}']
+    >>> a['(age[10:19] >> 10_19, age[20:29] >> 20_29) & c_from[o] & c_to[{ext}]']
+    >>> a['age=(10:19 >> 10_19 ; 20:29 >> 20_29) & c_from=o & c_to={ext}']
+    >>> a['age=10:19->10_19 ; age=20:29->20_29 & c_from=o & c_length={ext}']
+    >>> a['age=(10:19->10_19 ; #10:20) & c_from=o & c_length={ext}']
+
+    is it:
+    * filter = expr | expr
+             = expr & expr
+             = expr ^ expr
+             = expr
+    * expr =
+    >>> a['10:60 by 5 & c_from=o & c_to={ext}']
+    >>> a.sum('10:19 > 10_19 ; 20:29 > 20_29 ; year=#-1')
+    >>> a.sum('(10:19 > 10_19 ; 20:29 > 20_29) & year=#-1')
+    >>> teens = G['age=10:19 >> teens']
+    >>> teens = x.age[10:19].named('teens')
+    >>> twenties = G['age=20:29']
+    >>> a.sum('({teens}, {twenties})')
+    >>> a.sum((teens, twenties))
+    # will we ever want to support this?
+    >>> a.sum('age > clength')
+    >>> a.sum('age > {ext}')
+    >>> a.sum(x.age > ext)
+    >>> a.sum('age > 10')
+    LGroup(['a', 'b', 'c'], name='abc')
+
+
+expend_flow[x.cat_from['married_women'], x.cat_to['retirement_survival_women'], y] = \
+        flow[x.cat_from['married_women'], x.cat_to['retirement_survival_women'], y] * \
+        pension_age_diff_lag['married_men', y] * 1.1 * (45 / average_clength_survival['married_men', y])
+
+expend_flow['cat_from[married_women], cat_to[retirement_survival_women]', y] = \
+        flow['cat_from[married_women], cat_to[retirement_survival_women]', y] * \
+        pension_age_diff_lag['married_men', y] * 1.1 * (45 / average_clength_survival['married_men', y])
