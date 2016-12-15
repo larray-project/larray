@@ -352,3 +352,84 @@ def size2str(value):
     scale = int(math.log(value, 1024)) if value else 0
     fmt = "%.2f %s" if scale else "%d %s"
     return fmt % (value / 1024.0 ** scale, units[scale])
+
+
+def find_closing_chr(s, start=0):
+    """
+
+    Parameters
+    ----------
+    s : str
+        string to search the characters. s[start] must be in '({['
+    start : int, optional
+        position in the string from which to start searching
+
+    Returns
+    -------
+    position of matching brace
+
+    Examples
+    --------
+    >>> find_closing_chr('(a) + (b)')
+    2
+    >>> find_closing_chr('(a) + (b)', 6)
+    8
+    >>> find_closing_chr('(a{b[c(d)e]f}g)')
+    14
+    >>> find_closing_chr('(a{b[c(d)e]f}g)', 2)
+    12
+    >>> find_closing_chr('(a{b[c(d)e]f}g)', 4)
+    10
+    >>> find_closing_chr('(a{b[c(d)e]f}g)', 6)
+    8
+    >>> find_closing_chr('((a) + (b))')
+    10
+    >>> find_closing_chr('((a) + (b))')
+    10
+    >>> find_closing_chr('((a) + (b))')
+    10
+    >>> find_closing_chr('({)}')
+    Traceback (most recent call last):
+      ...
+    ValueError: malformed expression: expected '}' but found ')'
+    >>> find_closing_chr('({}})')
+    Traceback (most recent call last):
+      ...
+    ValueError: malformed expression: expected ')' but found '}'
+    >>> find_closing_chr('}()')
+    Traceback (most recent call last):
+      ...
+    ValueError: malformed expression: found '}' before '{'
+    >>> find_closing_chr('(()')
+    ... # doctest: +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+      ...
+    ValueError: malformed expression: reached end of string without finding
+                the expected ')'
+    """
+    opening, closing = '({[', ')}]'
+    match = {o: c for o, c in zip(opening, closing)}
+    match.update({c: o for o, c in zip(opening, closing)})
+    opening_set, closing_set = set(opening), set(closing)
+
+    needle = s[start]
+    assert needle in match
+    last_open = []
+    for pos in range(start, len(s)):
+        c = s[pos]
+        if c in match:
+            if c in opening_set:
+                last_open.append(c)
+            if c in closing_set:
+                if not last_open:
+                    raise ValueError("malformed expression: found '{}' before "
+                                     "'{}'".format(c, match[c]))
+                expected = match[last_open.pop()]
+                if c != expected:
+                    raise ValueError("malformed expression: expected '{}' but "
+                                     "found '{}'".format(expected, c))
+                if not last_open:
+                    assert c == match[needle]
+                    return pos
+    raise ValueError("malformed expression: reached end of string without "
+                     "finding the expected '{}'".format(match[needle]))
