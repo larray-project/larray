@@ -1135,8 +1135,9 @@ class LabelsView(QTableView):
         self.verticalHeader().setDefaultSectionSize(20)
 
         # Hide vertical/horizontal header
-        self.verticalHeader().hide()
-        if model.get_position() == 'y':
+        if model.get_position() == 'x':
+            self.verticalHeader().hide()
+        else:
             self.horizontalHeader().hide()
 
         # Hide scrollbars
@@ -1214,6 +1215,11 @@ class ArrayView(QTableView):
     def selectNewColumn(self, column_index):
         self.setSelectionMode(QTableView.MultiSelection)
         self.selectColumn(column_index)
+        self.setSelectionMode(QTableView.ContiguousSelection)
+
+    def selectNewRow(self, row_index):
+        self.setSelectionMode(QTableView.MultiSelection)
+        self.selectRow(row_index)
         self.setSelectionMode(QTableView.ContiguousSelection)
 
     def setup_context_menu(self):
@@ -1525,6 +1531,11 @@ class ArrayEditorWidget(QWidget):
             self.view_data.selectColumn)
         self.view_xlabels.horizontalHeader().sectionEntered.connect(
             self.view_data.selectNewColumn)
+        # Synchronize selecting rows via ylabels horizontal header
+        self.view_ylabels.verticalHeader().sectionPressed.connect(
+            self.view_data.selectRow)
+        self.view_ylabels.verticalHeader().sectionEntered.connect(
+            self.view_data.selectNewRow)
 
         # Allow data view to take as much place as it can
         self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
