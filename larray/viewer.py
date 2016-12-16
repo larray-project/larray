@@ -1196,6 +1196,11 @@ class ArrayView(QTableView):
         if value == self.horizontalScrollBar().maximum():
             self.model().fetch_more_columns()
 
+    def selectNewColumn(self, column_index):
+        self.setSelectionMode(QTableView.MultiSelection)
+        self.selectColumn(column_index)
+        self.setSelectionMode(QTableView.ContiguousSelection)
+
     def setup_context_menu(self):
         """Setup context menu"""
         self.copy_action = create_action(self, _('Copy'),
@@ -1486,14 +1491,28 @@ class ArrayEditorWidget(QWidget):
         self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
         self.view_ylabels = LabelsView(self, self.model_ylabels)
 
-        # connect the headers and scrollbars of both tableviews together
-        # self.view_xlabels.horizontalHeader().sectionResized.connect(self.view_data.updateSectionWidth)
-        # self.view_ylabels.verticalHeader().sectionResized.connect(self.view_data.updateSectionHeight)
-        self.view_data.horizontalScrollBar().valueChanged.connect(self.view_xlabels.horizontalScrollBar().setValue)
-        self.view_data.verticalScrollBar().valueChanged.connect(self.view_ylabels.verticalScrollBar().setValue)
+        # Synchronize resizing
+        # self.view_xlabels.horizontalHeader().sectionResized.connect(
+        # self.view_data.updateSectionWidth)
+        # self.view_ylabels.verticalHeader().sectionResized.connect(
+        # self.view_data.updateSectionHeight)
 
+        # Synchronize scrolling
+        self.view_data.horizontalScrollBar().valueChanged.connect(
+            self.view_xlabels.horizontalScrollBar().setValue)
+        self.view_data.verticalScrollBar().valueChanged.connect(
+            self.view_ylabels.verticalScrollBar().setValue)
+
+        # Synchronize selecting columns via xlabels horizontal header
+        self.view_xlabels.horizontalHeader().sectionPressed.connect(
+            self.view_data.selectColumn)
+        self.view_xlabels.horizontalHeader().sectionEntered.connect(
+            self.view_data.selectNewColumn)
+
+        # Allow data view to take as much place as it can
         self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        # Set layout of array view (labels + data)
         array_layout = QGridLayout()
         array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
         array_layout.addWidget(self.view_ylabels, 1, 0)
@@ -1501,6 +1520,7 @@ class ArrayEditorWidget(QWidget):
         array_layout.setSpacing(0)
         array_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Set filters and buttons layout
         self.filters_layout = QHBoxLayout()
         btn_layout = QHBoxLayout()
         btn_layout.setAlignment(Qt.AlignLeft)
@@ -1522,6 +1542,7 @@ class ArrayEditorWidget(QWidget):
         self.bgcolor_checkbox = bgcolor
         btn_layout.addWidget(bgcolor)
 
+        # Set main layout
         layout = QVBoxLayout()
         layout.addLayout(self.filters_layout)
         layout.addLayout(array_layout)
