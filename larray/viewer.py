@@ -1153,6 +1153,14 @@ class LabelsView(QTableView):
         else:
             self.setMaximumWidth(self.horizontalHeader().length())
 
+    # def updateSectionHeight(self, logicalIndex, oldSize, newSize):
+    #     self.setRowHeight(logicalIndex, newSize)
+    #     self.adjustSize()
+
+    # def updateSectionWidth(self, logicalIndex, oldSize, newSize):
+    #     self.setColumnWidth(logicalIndex, newSize)
+    #     self.adjustSize()
+
 
 class ArrayView(QTableView):
     """Array view class"""
@@ -1196,6 +1204,12 @@ class ArrayView(QTableView):
     def on_horizontal_scroll_changed(self, value):
         if value == self.horizontalScrollBar().maximum():
             self.model().fetch_more_columns()
+
+    def updateSectionHeight(self, logicalIndex, oldSize, newSize):
+        self.setRowHeight(logicalIndex, newSize)
+
+    def updateSectionWidth(self, logicalIndex, oldSize, newSize):
+        self.setColumnWidth(logicalIndex, newSize)
 
     def selectNewColumn(self, column_index):
         self.setSelectionMode(QTableView.MultiSelection)
@@ -1494,9 +1508,11 @@ class ArrayEditorWidget(QWidget):
 
         # Synchronize resizing
         # self.view_xlabels.horizontalHeader().sectionResized.connect(
-        # self.view_data.updateSectionWidth)
-        # self.view_ylabels.verticalHeader().sectionResized.connect(
-        # self.view_data.updateSectionHeight)
+        #     self.view_ylabels.updateSectionWidth)
+        self.view_xlabels.horizontalHeader().sectionResized.connect(
+            self.view_data.updateSectionWidth)
+        self.view_ylabels.verticalHeader().sectionResized.connect(
+            self.view_data.updateSectionHeight)
 
         # Synchronize scrolling
         self.view_data.horizontalScrollBar().valueChanged.connect(
