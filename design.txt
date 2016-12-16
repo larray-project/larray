@@ -927,3 +927,28 @@ expend_flow[x.cat_from['married_women'], x.cat_to['retirement_survival_women'], 
 expend_flow['cat_from[married_women], cat_to[retirement_survival_women]', y] = \
         flow['cat_from[married_women], cat_to[retirement_survival_women]', y] * \
         pension_age_diff_lag['married_men', y] * 1.1 * (45 / average_clength_survival['married_men', y])
+
+# ===================================================
+# ================ Multi Index/Sparse ===============
+# ===================================================
+
+* for each label in an axis part of a CombinedAxis I need a list/array of
+  positions => the total size of those position arrays will be equal to N * L
+     where L is the length of the combined axis
+           N is the number of axes in the combined axis
+
+* the questions is whether:
+
+  arr['M', 10]
+  lines1 = sex.lines('M')
+  lines2 = age.lines(10)
+  total_lines = intersect(lines1, lines2)
+
+  is faster than pandas:
+
+  arr['M', 10]
+  filter1 = sex.filter('M')
+  filter2 = age.filter(10)
+  total_lines = (filter1 & filter2).nonzero()
+
+* does something like categorical (transforms label -> index) help?
