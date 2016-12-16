@@ -557,7 +557,8 @@ def _isnoneslice(v):
     """
     return isinstance(v, slice) and v == slice(None)
 
-def _seq_summary(seq, num=3, func=repr):
+
+def _seq_summary(seq, num=3, func=repr, sep=' '):
     """
     Returns a string representing a sequence by showing only the n first and last elements.
 
@@ -569,7 +570,7 @@ def _seq_summary(seq, num=3, func=repr):
     def shorten(l):
         return l if len(l) <= 2 * num else l[:num] + ['...'] + list(l[-num:])
 
-    return ' '.join(shorten([func(l) for l in seq]))
+    return sep.join(shorten([func(l) for l in seq]))
 
 
 class PGroupMaker(object):
