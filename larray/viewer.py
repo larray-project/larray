@@ -1165,6 +1165,7 @@ class ArrayView(QTableView):
                                  maxvalue=model.maxvalue)
         self.setItemDelegate(delegate)
         self.setSelectionMode(QTableView.ContiguousSelection)
+        self.setStyleSheet("QTableView{ selection-background-color: blue; selection-color: white; }")
 
         self.shape = shape
         self.context_menu = self.setup_context_menu()
