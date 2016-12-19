@@ -1421,8 +1421,13 @@ class ArrayEditorWidget(QWidget):
         # Synchronize scrolling
         self.view_data.horizontalScrollBar().valueChanged.connect(
             self.view_xlabels.horizontalScrollBar().setValue)
+        self.view_xlabels.horizontalScrollBar().valueChanged.connect(
+            self.view_data.horizontalScrollBar().setValue)
+
         self.view_data.verticalScrollBar().valueChanged.connect(
             self.view_ylabels.verticalScrollBar().setValue)
+        self.view_ylabels.verticalScrollBar().valueChanged.connect(
+            self.view_data.verticalScrollBar().setValue)
 
         # Synchronize selecting columns via xlabels horizontal header
         self.view_xlabels.horizontalHeader().sectionPressed.connect(
