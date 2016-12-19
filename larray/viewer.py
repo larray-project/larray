@@ -427,6 +427,27 @@ class LabelsModel(AbstractTableModel):
         else:
             self._data = data
 
+    def axisCount(self):
+        if self._label_position == 'x':
+            return len(self._axes[0])
+        else:
+            return 0
+
+    def get_labels(self, index):
+        # i = index.row() + 1
+        # j = index.column() + 1
+        # if i < 0 or j < 0:
+        #     return ""
+        # dim_names = self.xlabels[0]
+        # ndim = len(dim_names)
+        # last_dim_labels = self.xlabels[1]
+        # # ylabels[0] are empty
+        # labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
+        #          [last_dim_labels[j]]
+        # return ", ".join("%s=%s" % (dim_name, label)
+        #                  for dim_name, label in zip(dim_names, labels))
+        return ""
+
     # ############################################ #
     # Methods to reimplement for a read-only model #
     # ############################################ #
@@ -592,9 +613,9 @@ class ArrayModel(QAbstractTableModel):
     ROWS_TO_LOAD = 500
     COLS_TO_LOAD = 40
 
-    def __init__(self, data=None, format="%.3f", xlabels=None, ylabels=None,
-                 readonly=False, font=None, parent=None,
-                 bg_gradient=None, bg_value=None, minvalue=None, maxvalue=None):
+    def __init__(self, data=None, format="%.3f", readonly=False,
+                 font=None, parent=None, bg_gradient=None, bg_value=None,
+                 minvalue=None, maxvalue=None):
         QAbstractTableModel.__init__(self)
 
         self.dialog = parent
@@ -625,8 +646,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient,
-                       bg_value=bg_value)
+        self._set_data(data, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -637,13 +657,11 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None, changes=None,
-                 bg_gradient=None, bg_value=None):
-        self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
+    def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
+        self._set_data(data, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None,
-                  bg_value=None):
+    def _set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
@@ -671,12 +689,6 @@ class ArrayModel(QAbstractTableModel):
         assert isinstance(changes, dict)
         self.changes = changes
         self._data = data
-        if xlabels is None:
-            xlabels = [[]]
-        self.xlabels = xlabels
-        if ylabels is None:
-            ylabels = [[]]
-        self.ylabels = ylabels
         self.total_rows = self._data.shape[0]
         self.total_cols = self._data.shape[1]
         size = self.total_rows * self.total_cols
@@ -721,11 +733,11 @@ class ArrayModel(QAbstractTableModel):
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
-        return len(self.ylabels) - 1 + self.cols_loaded
+        return self.cols_loaded - 1
 
     def rowCount(self, qindex=QModelIndex()):
         """Return array row number"""
-        return len(self.xlabels) - 1 + self.rows_loaded
+        return self.rows_loaded - 1
 
     def fetch_more_rows(self):
         if self.total_rows > self.rows_loaded:
@@ -750,29 +762,9 @@ class ArrayModel(QAbstractTableModel):
         self.bgcolor_enabled = state > 0
         self.reset()
 
-    def get_labels(self, index):
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
-        if i < 0 or j < 0:
-            return ""
-        dim_names = self.xlabels[0]
-        ndim = len(dim_names)
-        last_dim_labels = self.xlabels[1]
-        # ylabels[0] are empty
-        labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
-                 [last_dim_labels[j]]
-        return ", ".join("%s=%s" % (dim_name, label)
-                         for dim_name, label in zip(dim_names, labels))
-
     def get_value(self, index):
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
-        if i < 0 and j < 0:
-            return ""
-        if i < 0:
-            return str(self.xlabels[i][j])
-        if j < 0:
-            return str(self.ylabels[j][i])
+        i = index.row() + 1
+        j = index.column() + 1
         return self.changes.get((i, j), self._data[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
@@ -785,18 +777,11 @@ class ArrayModel(QAbstractTableModel):
         #     return ""
 
         if role == Qt.TextAlignmentRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
-                return to_qvariant(int(Qt.AlignCenter | Qt.AlignVCenter))
-            else:
-                return to_qvariant(int(Qt.AlignRight | Qt.AlignVCenter))
+            return to_qvariant(int(Qt.AlignRight | Qt.AlignVCenter))
 
         elif role == Qt.FontRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
-                return self.bold_font
-            else:
-                return self.font
+            return self.font
+
         # row, column = index.row(), index.column()
         value = self.get_value(index)
         if role == Qt.DisplayRole:
@@ -811,12 +796,7 @@ class ArrayModel(QAbstractTableModel):
                 return to_qvariant(self._format % value)
 
         elif role == Qt.BackgroundColorRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
-                color = QColor(Qt.lightGray)
-                color.setAlphaF(.4)
-                return color
-            elif self.bgcolor_enabled and value is not np.ma.masked:
+            if self.bgcolor_enabled and value is not np.ma.masked:
                 if self.bg_gradient is None:
                     hue = self.hue0 + \
                           self.dhue * (self.vmax - self.color_func(value)) \
@@ -834,7 +814,7 @@ class ArrayModel(QAbstractTableModel):
                     value = bg_value.data.flat[idx]
                     return self.bg_gradient[value]
         elif role == Qt.ToolTipRole:
-            return to_qvariant("%s\n%s" %(repr(value),self.get_labels(index)))
+            return to_qvariant("%s" % repr(value))
         return to_qvariant()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
@@ -956,11 +936,9 @@ class ArrayModel(QAbstractTableModel):
             if np.any(colorval < self.vmin):
                 self.vmin = np.nanmin(colorval)
 
-        xoffset = len(self.xlabels) - 1
-        yoffset = len(self.ylabels) - 1
-        top_left = self.index(left + xoffset, top + yoffset)
+        top_left = self.index(left, top)
         # -1 because Qt index end bounds are inclusive
-        bottom_right = self.index(right + xoffset - 1, bottom + yoffset - 1)
+        bottom_right = self.index(right - 1, bottom - 1)
         self.dataChanged.emit(top_left, bottom_right)
         return top_left, bottom_right
 
@@ -968,8 +946,8 @@ class ArrayModel(QAbstractTableModel):
         """Cell content change"""
         if not index.isValid() or self.readonly:
             return False
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
+        i = index.row() + 1
+        j = index.column() + 1
         result = self.set_values(i, j, i + 1, j + 1, from_qvariant(value, str))
         return result is not None
 
@@ -977,9 +955,7 @@ class ArrayModel(QAbstractTableModel):
         """Set editable flag"""
         if not index.isValid():
             return Qt.ItemIsEnabled
-        if (index.row() < len(self.xlabels) - 1) or \
-                (index.column() < len(self.ylabels) - 1):
-            return Qt.ItemIsEnabled #QAbstractTableModel.flags(self, index)
+
         flags = QAbstractTableModel.flags(self, index)
         if not self.readonly:
             flags |= Qt.ItemIsEditable
@@ -987,46 +963,7 @@ class ArrayModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Set header data"""
-        horizontal = orientation == Qt.Horizontal
-        # if role == Qt.ToolTipRole:
-        #     if horizontal:
-        #         return to_qvariant("horiz %d" % section)
-        #     else:
-        #         return to_qvariant("vert %d" % section)
-        if role != Qt.DisplayRole:
-            # roles = {0: "display", 2: "edit",
-            #          8: "background", 9: "foreground",
-            #          13: "sizehint", 4: "statustip", 11: "accessibletext",
-            #          1: "decoration", 6: "font", 7: "textalign",
-            #          10: "checkstate"}
-            # print("section", section, "ori", orientation,
-            #       "role", roles.get(role, role), "result",
-            #       super(ArrayModel, self).headerData(section, orientation,
-            #                                          role))
-            return to_qvariant()
-
-        labels, other = self.xlabels, self.ylabels
-        if not horizontal:
-            labels, other = other, labels
-        if labels is None:
-            shape = self._data.shape
-            # prefer a blank cell to one cell named "0"
-            if not shape or shape[int(horizontal)] == 1:
-                return to_qvariant()
-            else:
-                return to_qvariant(int(section))
-        else:
-            if section < len(labels[0]):
-                return to_qvariant(labels[0][section])
-            #     #section = section - len(other) + 1
-            else:
-                return to_qvariant()
-
-            # return to_qvariant(labels[0][section])
-            # if len(other) - 1 <= section < len(labels[0]):
-            #     #section = section - len(other) + 1
-            # else:
-            #     return to_qvariant("a")
+        return to_qvariant()
 
     def reset(self):
         self.beginResetModel()
@@ -1146,11 +1083,16 @@ class LabelsView(QTableView):
         self.verticalScrollBar().hide()
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        self.model().modelReset.connect(self.adjustSize)
+        self.model().modelReset.connect(self.updateView)
 
-    def adjustSize(self):
-        if self.model().get_position() == 'x':
+    def updateView(self):
+        model = self.model()
+        if model.get_position() == 'x':
             self.setMaximumHeight(self.horizontalHeader().height() * 2)
+            self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
+            for logicalIndex in range(0, model.axisCount()):
+                self.horizontalHeader().setResizeMode(
+                    logicalIndex, QHeaderView.Fixed)
         else:
             self.setMaximumWidth(self.horizontalHeader().length())
 
@@ -1648,8 +1590,8 @@ class ArrayEditorWidget(QWidget):
         self.model_data.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model_data.set_data(data, xlabels, ylabels, changes,
-                                 bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model_data.set_data(data, changes, bg_gradient=bg_gradient,
+                                 bg_value=bg_value)
         self.model_xlabels.set_data(xlabels)
         self.model_ylabels.set_data(ylabels)
 
