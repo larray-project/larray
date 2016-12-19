@@ -544,43 +544,8 @@ class LabelsModel(AbstractTableModel):
         else:
             return len(self._data) - 1
 
-    # ############################################ #
-    # Methods to reimplement for a resizable model #
-    # ############################################ #
-    def insertRows(self, position, rows, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
 
-        Adds new rows to the model.
-        """
-        self.beginInsertRows()
-        self.endInsertRows()
-
-    def removeRows(self, position, rows, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
-
-        Removes rows from the model.
-        """
-        self.beginRemoveRows()
-        self.endRemoveRows()
-
-    def insertColumns(self, position, columns, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
-
-        Adds new columns to the model.
-        """
-        self.beginInsertColumns()
-        self.endInsertColumns()
-
-    def removeColumns(self, position, columns, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
-
-        Removes columns from the model.
-        """
-        self.beginRemoveColumns()
-        self.endRemoveColumns()
-
-
-class ArrayModel(QAbstractTableModel):
+class ArrayModel(AbstractTableModel):
     """Array Editor Table Model.
 
     Parameters
@@ -616,10 +581,8 @@ class ArrayModel(QAbstractTableModel):
     def __init__(self, data=None, format="%.3f", readonly=False,
                  font=None, parent=None, bg_gradient=None, bg_value=None,
                  minvalue=None, maxvalue=None):
-        QAbstractTableModel.__init__(self)
+        AbstractTableModel.__init__(self, data, readonly, font, parent)
 
-        self.dialog = parent
-        self.readonly = readonly
         self._format = format
 
         # Backgroundcolor settings
@@ -635,13 +598,6 @@ class ArrayModel(QAbstractTableModel):
         # hue = self.hue0
         # color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
         # self.color = to_qvariant(color)
-
-        if font is None:
-            font = get_font("arreditor")
-        self.font = font
-        bold_font = get_font("arreditor")
-        bold_font.setBold(True)
-        self.bold_font = bold_font
 
         self.minvalue = minvalue
         self.maxvalue = maxvalue
@@ -965,10 +921,6 @@ class ArrayModel(QAbstractTableModel):
         """Set header data"""
         return to_qvariant()
 
-    def reset(self):
-        self.beginResetModel()
-        self.endResetModel()
-
 
 class ArrayDelegate(QItemDelegate):
     """Array Editor Item Delegate.
@@ -1120,6 +1072,10 @@ class ArrayView(QTableView):
 
         self.shape = shape
         self.context_menu = self.setup_context_menu()
+
+        # Hide horizontal and vertical headers
+        self.horizontalHeader().hide()
+        self.verticalHeader().hide()
 
         # make the grid a bit more compact
         self.horizontalHeader().setDefaultSectionSize(64)
