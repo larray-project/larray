@@ -1980,9 +1980,8 @@ class AxisCollection(object):
 
     Notes
     -----
-    Multiple occurrences of the same axis is not allowed.
-    However, several axes with the same name but different labels are allowed
-    but it is not recommended.
+    Multiple occurrences of the same axis object is not allowed.
+    However, several axes with the same name are allowed but this is not recommended.
 
     Examples
     --------
@@ -2784,7 +2783,7 @@ class AxisCollection(object):
         -------
         >>> age = Axis('age', range(10))
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
-        >>> AxisCollection([age, time]).labels # doctest: +NORMALIZE_WHITESPACE
+        >>> AxisCollection([age, time]).labels  # doctest: +NORMALIZE_WHITESPACE
         [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
          array([2007, 2008, 2009, 2010])]
         """
@@ -2953,6 +2952,100 @@ class AxisCollection(object):
                  for name, axis in zip(self.display_names, self._list)]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
+
+    # XXX: instead of front_if_spread, we might want to require axes to be contiguous
+    #      (ie the caller would have to transpose axes before calling this)
+    def combine_axes(self, axes=None, wildcard=False, front_if_spread=False):
+        """Combine several axes into one.
+
+        Parameters
+        ----------
+        axes : tuple, list or AxisCollection of axes, optional
+            axes to combine. Defaults to all axes.
+        wildcard : bool, optional
+            whether or not to produce a wildcard axis even if the axes to
+            combine are not. This is much faster, but loose axes labels.
+        front_if_spread : bool, optional
+            whether or not to move the combined axis at the front (it will be
+            the first axis) if the combined axes are not next to each
+            other.
+
+        Returns
+        -------
+        AxisCollection
+        """
+        axes = self if axes is None else self[axes]
+        axes_indices = [self.index(axis) for axis in axes]
+        diff = np.diff(axes_indices)
+        # combined axes in front
+        if front_if_spread and np.any(diff > 1):
+            combined_axis_pos = 0
+        else:
+            combined_axis_pos = min(axes_indices)
+
+        # all anonymous axes => anonymous combined axis
+        if all(axis.name is None for axis in axes):
+            combined_name = None
+        else:
+            combined_name = '_'.join(str(id_) for id_ in axes.ids)
+
+        if wildcard:
+            combined_axis = Axis(combined_name, axes.size)
+        else:
+            # TODO: the combined keys should be objects which display as:
+            # (axis1_label, axis2_label, ...) but which should also store
+            # the axes names)
+            # Q: Should it be the same object as the NDLGroup?/NDKey?
+            # A: yes. On the Pandas backend, we could/should have
+            #    separate axes. On the numpy backend we cannot.
+            if len(axes) == 1:
+                # Q: if axis is a wildcard axis, should the result be a
+                #    wildcard axis (and axes_labels discarded?)
+                combined_labels = axes[0].labels
+            else:
+                combined_labels = ['_'.join(str(l) for l in p)
+                                   for p in product(*axes.labels)]
+
+            combined_axis = Axis(combined_name, combined_labels)
+        new_axes = self - axes
+        new_axes.insert(combined_axis_pos, combined_axis)
+        return new_axes
+
+    def split_axis(self, axis, sep='_', names=None):
+        """Split one axis and returns a new collection
+
+        Parameters
+        ----------
+        axis : int, str or Axis
+            axis to split. All its labels *must* contain the given delimiter
+            string.
+        sep : str, optional
+            delimiter to use for splitting. Defaults to '_'.
+        names : list of names, optional
+            names of resulting axes. Defaults to split the combined axis name
+            using the given delimiter string.
+
+        Returns
+        -------
+        AxisCollection
+        """
+        axis = self[axis]
+        axis_index = self.index(axis)
+        if names is None:
+            if sep not in axis.name:
+                raise ValueError('{} not found in axis name ({})'
+                                 .format(sep, axis.name))
+            else:
+                names = axis.name.split(sep)
+        else:
+            assert all(isinstance(name, str) for name in names)
+        # gives us an array of lists
+        split_labels = np.char.split(axis.labels, sep)
+        # not using np.unique because we want to keep the original order
+        axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
+        split_axes = [Axis(name, axis_labels)
+                      for name, axis_labels in zip(names, axes_labels)]
+        return self[:axis_index] + split_axes + self[axis_index + 1:]
 
 
 def all(values, axis=None):
@@ -4901,6 +4994,8 @@ class LArray(object):
         -----
         See examples of properties `points` and `ipoints`.
         """
+        # TODO: use AxisCollection.combine_axes. The problem is that combine_axes use product(*axes_labels)
+        #       while here we need zip(*axes_labels)
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
                          if not _isnoneslice(axis_key) and
                             not np.isscalar(axis_key)]
@@ -4918,13 +5013,11 @@ class LArray(object):
             combined_axis_pos = 0
         else:
             combined_axis_pos = axes_indices[0]
-        # XXX: I am not sure we should keep axis.id (when axis had no name),
-        #      especially if there was only one combined axis because that
-        #      transforms an anonymous axis into a "normal" name. On the other
-        #      hand, not keeping it loose information. The question is whether
-        #      that information is worth keeping :)
-        combined_name = ','.join(str(self.axes.axis_id(axis))
-                                 for axis in combined_axes)
+        # all anonymous axes => anonymous combined axis
+        if all(axis.name is None for axis in combined_axes):
+            combined_name = None
+        else:
+            combined_name = ','.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
         new_axes = other_axes
         if combined_axis_pos is not None:
             if wildcard_allowed:
@@ -7223,6 +7316,98 @@ class LArray(object):
             if (res == res[axis.i[0]]).all():
                 res = res[axis.i[0]]
         return res
+
+    def combine_axes(self, axes=None, wildcard=False):
+        """Combine several axes into one.
+
+        Parameters
+        ----------
+        axes : tuple, list or AxisCollection of axes, optional
+            axes to combine. Defaults to all axes.
+        wildcard : bool, optional
+            whether or not to produce a wildcard axis even if the axes to
+            combine are not. This is much faster, but loose axes labels.
+
+        Returns
+        -------
+        LArray
+            Array with combined axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        >>> arr.combine_axes()
+        a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
+            |     0 |     1 |     2 |     3 |     4 |     5
+        >>> arr = ndtest((2, 3, 4))
+        >>> arr
+         a | b\\c | c0 | c1 | c2 | c3
+        a0 |  b0 |  0 |  1 |  2 |  3
+        a0 |  b1 |  4 |  5 |  6 |  7
+        a0 |  b2 |  8 |  9 | 10 | 11
+        a1 |  b0 | 12 | 13 | 14 | 15
+        a1 |  b1 | 16 | 17 | 18 | 19
+        a1 |  b2 | 20 | 21 | 22 | 23
+        >>> arr.combine_axes((x.a, x.c))
+        a_c\\b | b0 | b1 | b2
+        a0_c0 |  0 |  4 |  8
+        a0_c1 |  1 |  5 |  9
+        a0_c2 |  2 |  6 | 10
+        a0_c3 |  3 |  7 | 11
+        a1_c0 | 12 | 16 | 20
+        a1_c1 | 13 | 17 | 21
+        a1_c2 | 14 | 18 | 22
+        a1_c3 | 15 | 19 | 23
+        """
+        axes = self.axes if axes is None else self.axes[axes]
+        # transpose all axes next to each other, using position of first axis
+        axes_indices = [self.axes.index(axis) for axis in axes]
+        min_axis_index = min(axes_indices)
+        transposed_axes = self.axes[:min_axis_index] + axes + self.axes
+        transposed = self.transpose(transposed_axes)
+
+        new_axes = transposed.axes.combine_axes(axes, wildcard=wildcard)
+        return transposed.reshape(new_axes)
+
+    def split_axis(self, axis, sep='_', names=None):
+        """Split one axis and returns a new array
+
+        Parameters
+        ----------
+        axis : int, str or Axis
+            axis to split. All its labels *must* contain the given delimiter
+            string.
+        sep : str, optional
+            delimiter to use for splitting. Defaults to '_'.
+        names : list of names, optional
+            names of resulting axes. Defaults to split the combined axis name
+            using the given delimiter string.
+
+        Returns
+        -------
+        LArray
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        >>> combined = arr.combine_axes()
+        >>> combined
+        a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
+            |     0 |     1 |     2 |     3 |     4 |     5
+        >>> combined.split_axis(x.a_b)
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        """
+        return self.reshape(self.axes.split_axis(axis, sep, names))
 
 
 def parse(s):

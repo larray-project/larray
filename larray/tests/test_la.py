@@ -701,6 +701,34 @@ class TestAxisCollection(TestCase):
         new = col + AxisCollection([geo, value])
         self.assertEqual(new, [lipro, sex, age, geo, value])
 
+    def test_combine(self):
+        col = self.collection.copy()
+        lipro, sex, age = self.lipro, self.sex, self.age
+        res = col.combine_axes((lipro, sex))
+        self.assertEqual(res.names, ['lipro_sex', 'age'])
+        self.assertEqual(res.size, col.size)
+        self.assertEqual(res.shape, (4 * 2, 8))
+        print(res.info)
+        assert_array_equal(res.lipro_sex.labels[0], 'P01_H')
+        res = col.combine_axes((lipro, age))
+        self.assertEqual(res.names, ['lipro_age', 'sex'])
+        self.assertEqual(res.size, col.size)
+        self.assertEqual(res.shape, (4 * 8, 2))
+        assert_array_equal(res.lipro_age.labels[0], 'P01_0')
+        res = col.combine_axes((sex, age))
+        self.assertEqual(res.names, ['lipro', 'sex_age'])
+        self.assertEqual(res.size, col.size)
+        self.assertEqual(res.shape, (4, 2 * 8))
+        assert_array_equal(res.sex_age.labels[0], 'H_0')
+
+    def test_info(self):
+        expected = """\
+4 x 2 x 8
+ lipro [4]: 'P01' 'P02' 'P03' 'P04'
+ sex [2]: 'H' 'F'
+ age [8]: 0 1 2 ... 5 6 7"""
+        self.assertEqual(self.collection.info, expected)
+
     def test_str(self):
         self.assertEqual(str(self.collection), "{lipro, sex, age}")
 
@@ -3054,6 +3082,39 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
     #     b.to_excel('c:/tmp/b.xlsx', 'YADA')
     #     # b.xlsx/Sheet1/A10
     #     b.to_excel('c:/tmp/b.xlsx', 'Sheet1', 'A10')
+
+    def test_combine_axes(self):
+        arr = ndtest((2, 3, 4, 5))
+        res = arr.combine_axes((x.a, x.b))
+        self.assertEqual(res.axes.names, ['a_b', 'c', 'd'])
+        self.assertEqual(res.size, arr.size)
+        self.assertEqual(res.shape, (2 * 3, 4, 5))
+        assert_array_equal(res.axes.a_b.labels[:2], ['a0_b0', 'a0_b1'])
+        assert_array_equal(res['a1_b0'], arr['a1', 'b0'])
+
+        res = arr.combine_axes((x.a, x.c))
+        self.assertEqual(res.axes.names, ['a_c', 'b', 'd'])
+        self.assertEqual(res.size, arr.size)
+        self.assertEqual(res.shape, (2 * 4, 3, 5))
+        assert_array_equal(res.axes.a_c.labels[:2], ['a0_c0', 'a0_c1'])
+        assert_array_equal(res['a1_c0'], arr['a1', 'c0'])
+
+        res = arr.combine_axes((x.b, x.d))
+        self.assertEqual(res.axes.names, ['a', 'b_d', 'c'])
+        self.assertEqual(res.size, arr.size)
+        self.assertEqual(res.shape, (2, 3 * 5, 4))
+        assert_array_equal(res.axes.b_d.labels[:2], ['b0_d0', 'b0_d1'])
+        assert_array_equal(res['b1_d0'], arr['b1', 'd0'])
+
+    def test_split_axis(self):
+        arr = ndtest((2, 3, 4, 5))
+        res = arr.combine_axes((x.b, x.d))
+        self.assertEqual(res.axes.names, ['a', 'b_d', 'c'])
+        res = res.split_axis('b_d')
+        self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
+        self.assertEqual(res.size, arr.size)
+        self.assertEqual(res.shape, (2, 3, 5, 4))
+        assert_array_equal(res.transpose(x.a, x.b, x.c, x.d), arr)
 
 
 if __name__ == "__main__":
