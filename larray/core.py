@@ -112,41 +112,7 @@ from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           decode, basestring, bytes, izip, rproduct, ReprString,
                           duplicates, array_lookup2, skip_comment_cells,
-                          strip_rows, PY3)
-
-# TODO: return a generator, not a list
-def _srange(*args):
-    """
-    Returns evenly spaced values within a given interval as list of strings
-
-    Parameters
-    ----------
-    start :  number, optional
-        Start of interval. The interval includes this value. The default start value is 0.
-    stop : number
-        End of interval. The interval does not include this value
-    step : number, optional
-        Spacing between values. For any output out, this is the distance between two adjacent values.
-        The default step size is 1. If step is specified, start must also be given.
-
-    Returns
-    -------
-    list of str
-        Array of evenly spaced values.
-
-    Examples
-    --------
-    >>> _srange(8)
-    ['0', '1', '2', '3', '4', '5', '6', '7']
-    >>> _srange(5, 8)
-    ['5', '6', '7']
-    >>> _srange(1, 8, 2)
-    ['1', '3', '5', '7']
-    """
-    return list(map(str, range(*args)))
-    # AD -- return (str(e) for e in range(*args))
-
-
+                          strip_rows, find_closing_chr, PY3)
 
 
 def _range_to_slice(seq, length=None):
@@ -239,40 +205,162 @@ def _slice_to_str(key, use_repr=False):
     return '%s:%s%s' % (start, stop, step)
 
 
-def _slice_str_to_range(s):
-    """
-    Converts a slice string to a range (of values).
-    The end point is included.
+def irange(start, stop, step=None):
+    """Create a range, with inclusive stop bound and automatic sign for step.
 
-    Parameters:
-    -----------
-    s : str
-        String representing a slice
+    Parameters
+    ----------
+    start : int
+        Start bound
+    stop : int
+        Inclusive stop bound
+    step : int, optional
+        Distance between two generated numbers. If provided this *must* be a positive integer.
 
     Returns
     -------
     range
-        Array of evenly spaced values.
 
-    Examples:
-    ---------
-    >>> list(_slice_str_to_range(':3'))
+    Examples
+    --------
+    >>> list(irange(1, 3))
+    [1, 2, 3]
+    >>> list(irange(2, 0))
+    [2, 1, 0]
+    >>> list(irange(1, 6, 2))
+    [1, 3, 5]
+    >>> list(irange(6, 1, 2))
+    [6, 4, 2]
+    """
+    if step is None:
+        step = 1
+    else:
+        assert step > 0
+    step = step if start <= stop else -step
+    stop = stop + 1 if start <= stop else stop - 1
+    return range(start, stop, step)
+
+
+_range_bound_pattern = re.compile('([0-9]+|[a-zA-Z]+)')
+
+def generalized_range(start, stop, step=1):
+    """Create a range, with inclusive stop bound and automatic sign for step. Bounds can be strings.
+
+    Parameters
+    ----------
+    start : int or str
+        Start bound
+    stop : int or str
+        Inclusive stop bound
+    step : int, optional
+        Distance between two generated numbers. If provided this *must* be a positive integer.
+
+    Returns
+    -------
+    range
+
+    Examples
+    --------
+    works with both number and letter bounds
+
+    >>> list(generalized_range(0, 3))
     [0, 1, 2, 3]
-    >>> list(_slice_str_to_range('2:5'))
-    [2, 3, 4, 5]
-    >>> list(_slice_str_to_range('2:6:2'))
+    >>> generalized_range('a', 'c')
+    ['a', 'b', 'c']
+
+    can generate in reverse
+
+    >>> list(generalized_range(2, 0))
+    [2, 1, 0]
+    >>> generalized_range('c', 'a')
+    ['c', 'b', 'a']
+
+    can combine letters and numbers
+
+    >>> generalized_range('a0', 'c1')
+    ['a0', 'a1', 'b0', 'b1', 'c0', 'c1']
+
+    any special character is left intact
+
+    >>> generalized_range('a_0', 'c_1')
+    ['a_0', 'a_1', 'b_0', 'b_1', 'c_0', 'c_1']
+
+    consecutive digits are treated like numbers
+
+    >>> generalized_range('P01', 'P12')
+    ['P01', 'P02', 'P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10', 'P11', 'P12']
+
+    consecutive letters create all combinations
+
+    >>> generalized_range('AA', 'CC')
+    ['AA', 'AB', 'AC', 'BA', 'BB', 'BC', 'CA', 'CB', 'CC']
+    """
+    if isinstance(start, str):
+        assert isinstance(stop, str)
+        start_parts = _range_bound_pattern.split(start)
+        stop_parts = _range_bound_pattern.split(stop)
+        assert len(start_parts) == len(stop_parts)
+        ranges = []
+        for start_part, stop_part in zip(start_parts, stop_parts):
+            if start_part.isdigit():
+                assert stop_part.isdigit()
+                numchr = max(len(start_part), len(stop_part))
+                r = ['%0*d' % (numchr, num) for num in irange(int(start_part), int(stop_part))]
+            elif start_part.isalpha():
+                assert stop_part.isalpha()
+                int_start = [ord(c) for c in start_part]
+                int_stop = [ord(c) for c in stop_part]
+                sranges = [[chr(c) for c in irange(r_start, r_stop) if chr(c).isalnum()]
+                           for r_start, r_stop in zip(int_start, int_stop)]
+                r = [''.join(p) for p in product(*sranges)]
+            else:
+                # special characters
+                assert start_part == stop_part
+                r = [start_part]
+            ranges.append(r)
+        res = [''.join(p) for p in product(*ranges)]
+        return res if step == 1 else res[::step]
+    else:
+        return irange(start, stop, step)
+
+
+_range_str_pattern = re.compile('(?P<start>\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step\s+(?P<step>\d+))?')
+
+
+def _range_str_to_range(s):
+    """
+    Converts a slice string to a range (of values).
+    The end point is included.
+
+    Parameters
+    ----------
+    s : str
+        String representing a range of values
+
+    Returns
+    -------
+    range
+        range of int or list of str.
+
+    Examples
+    --------
+    >>> list(_range_str_to_range('..3'))
+    [0, 1, 2, 3]
+    >>> _range_str_to_range('a..c')
+    ['a', 'b', 'c']
+    >>> list(_range_str_to_range('2..6 step 2'))
     [2, 4, 6]
     """
-    numcolons = s.count(':')
-    assert 1 <= numcolons <= 2
-    fullstr = s + ':1' if numcolons == 1 else s
-    start, stop, step = [int(a) if a else None for a in fullstr.split(':')]
-    if start is None:
-        start = 0
+    m = _range_str_pattern.match(s)
+
+    groups = m.groupdict()
+    start, stop, step = groups['start'], groups['stop'], groups['step']
+    start = _parse_bound(start) if start is not None else 0
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
-    stop += 1
-    return range(start, stop, step)
+    stop = _parse_bound(stop)
+    step = int(step) if step is not None else 1
+    return generalized_range(start, stop, step)
 
 
 def _to_string(v):
@@ -346,8 +434,8 @@ def _to_ticks(s):
     >>> _to_ticks('H , F')
     ['H', 'F']
 
-    >>> _to_ticks(':3')
-    range(0, 4)
+    >>> list(_to_ticks('..3'))
+    [0, 1, 2, 3]
     """
     if isinstance(s, Group):
         # a single LGroup used for all ticks of an Axis
@@ -364,7 +452,9 @@ def _to_ticks(s):
         return list(s)
     elif isinstance(s, basestring):
         if ':' in s:
-            return _slice_str_to_range(s)
+            raise ValueError("using : to define axes is deprecated, please use .. instead")
+        elif '..' in s:
+            return _range_str_to_range(s)
         else:
             return [v.strip() for v in s.split(',')]
     elif hasattr(s, '__array__'):
@@ -376,7 +466,51 @@ def _to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
-def _to_key(v):
+def _parse_bound(s, stack_depth=1):
+    """Parse a string representing a single value, converting int-like
+    strings to integers and evaluating expressions within {}.
+
+    Parameters
+    ----------
+    s : str
+        string to evaluate
+    stack_depth : int
+        how deep to go in the stack to get local variables for evaluating
+        {expressions}.
+
+    Returns
+    -------
+    any
+
+    Examples
+    --------
+
+    >>> _parse_bound(' a ')
+    'a'
+    >>> # returns None
+    >>> _parse_bound(' ')
+    >>> ext = 1
+    >>> _parse_bound(' {ext + 1} ')
+    2
+    >>> _parse_bound('42')
+    42
+    """
+    s = s.strip()
+    if s == '':
+        return None
+    elif s[0] == '{':
+        expr = s[1:find_closing_chr(s)]
+        return eval(expr, sys._getframe(stack_depth).f_locals)
+    elif s.isdigit() or (s[0] == '-' and s[1:].isdigit()):
+        return int(s)
+    else:
+        return s
+
+
+_axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
+
+
+def _to_key(v, stack_depth=1):
     """
     Converts a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
@@ -391,10 +525,6 @@ def _to_key(v):
     key
         a key represents any object that can be used for indexing
 
-    Notes
-    -----
-    "int strings" are not converted to int.
-
     Examples
     --------
     >>> _to_key('a:c')
@@ -407,39 +537,78 @@ def _to_key(v):
     'a'
     >>> _to_key(10)
     10
-    >>> _to_key('abc=a,b,c')
+    >>> _to_key('year.i[-1]')
+    PGroup(-1, axis='year')
+    >>> _to_key('age[10:19]>>teens')
+    LGroup(slice(10, 19, None), name='teens', axis='age')
+    >>> _to_key('a,b,c >> abc')
     LGroup(['a', 'b', 'c'], name='abc')
+
+    # evaluated variables do not work on Python 2, probably because the stackdepth is different
+    # >>> ext = [1, 2, 3]
+    # >>> _to_key('{ext} >> ext')
+    # LGroup([1, 2, 3], name='ext')
+    # >>> answer = 42
+    # >>> _to_key('{answer}')
+    # 42
+    # >>> _to_key('{answer} >> answer')
+    # LGroup(42, name='answer')
+    # >>> _to_key('10:{answer} >> answer')
+    # LGroup(slice(10, 42, None), name='answer')
+    # >>> _to_key('4,{answer},2 >> answer')
+    # LGroup([4, 42, 2], name='answer')
     """
     if isinstance(v, tuple):
         return list(v)
     elif isinstance(v, Group):
-        return v.__class__(_to_key(v.key), v.name, v.axis)
-    elif v is Ellipsis or isinstance(v, (int, list, slice, LArray)):
+        return v.__class__(_to_key(v.key, stack_depth + 1), v.name, v.axis)
+    elif v is Ellipsis or isinstance(v, (int, list, slice, np.ndarray, LArray)):
         return v
     elif isinstance(v, basestring):
-        if '=' in v:
-            name, key = v.split('=')
-            return LGroup(_to_key(key.strip()), name.strip())
+        # axis name
+        m = _axis_name_pattern.match(v)
+        _, axis, positional, key = m.groups()
+        # group name. using rfind in the unlikely case there is another >>
+        name_pos = key.rfind('>>')
+        name = None
+        if name_pos != -1:
+            key, name = key[:name_pos].strip(), key[name_pos + 2:].strip()
+        if axis is not None:
+            axis = axis.strip()
+            axis_bracket_open = m.end(1) - 1
+            # check that the string parentheses are correctly balanced
+            _ = find_closing_chr(v, axis_bracket_open)
+            # strip closing bracket (it should be at the end because we took
+            # care of the name earlier)
+            assert key[-1] == ']'
+            key = key[:-1]
+        cls = PGroup if positional else LGroup
+        if name is not None or axis is not None:
+            return cls(_to_key(key, stack_depth + 1), name=name, axis=axis)
         else:
             numcolons = v.count(':')
             if numcolons:
                 assert numcolons <= 2
-                # can be of len 2 or 3 (if step is provided)
-                bounds = [a if a else None for a in v.split(':')]
+                # bounds can be of len 2 or 3 (if step is provided)
+                # stack_depth + 2 because the list comp has its own stack
+                bounds = [_parse_bound(b, stack_depth + 2)
+                          for b in v.split(':')]
                 return slice(*bounds)
             else:
                 if ',' in v:
                     # strip extremity commas to avoid empty string keys
                     v = v.strip(',')
-                    return [v.strip() for v in v.split(',')]
+                    # stack_depth + 2 because the list comp has its own stack
+                    return [_parse_bound(b, stack_depth + 2)
+                            for b in v.split(',')]
                 else:
-                    return v.strip()
+                    return _parse_bound(v, stack_depth + 1)
     else:
         raise TypeError("%s has an invalid type (%s) for a key"
                         % (v, type(v).__name__))
 
 
-def to_keys(value):
+def to_keys(value, stack_depth=1):
     """
     Converts a (collection of) group(s) to a structure usable for indexing.
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
@@ -460,8 +629,20 @@ def to_keys(value):
     ['P01', 'P02']
     >>> to_keys(('P01,P02',))  # <-- do not collapse dimension
     (['P01', 'P02'],)
-    >>> to_keys('P01;P02;:')
-    ('P01', 'P02', slice(None, None, None))
+    >>> to_keys('P01;P02,P03;:')
+    ('P01', ['P02', 'P03'], slice(None, None, None))
+
+    # evaluated variables do not work on Python 2, probably because the stackdepth is different
+    # >>> ext = 'P03'
+    # >>> to_keys('P01,P02,{ext}')
+    # ['P01', 'P02', 'P03']
+    # >>> to_keys('P01;P02;{ext}')
+    # ('P01', 'P02', 'P03')
+
+    >>> to_keys('age[10:19] >> teens ; year.i[-1]')
+    ... # doctest: +NORMALIZE_WHITESPACE
+    (LGroup(slice(10, 19, None), name='teens', axis='age'),
+     PGroup(-1, axis='year'))
 
     # >>> to_keys('P01,P02,:') # <-- INVALID !
     # it should have an explicit failure
@@ -478,15 +659,14 @@ def to_keys(value):
     >>> to_keys((('P01',), ('P02',), ':'))
     (['P01'], ['P02'], slice(None, None, None))
     """
-    if isinstance(value, basestring):
-        if ';' in value:
-            return tuple([_to_key(group) for group in value.split(';')])
-        else:
-            return _to_key(value)
-    elif isinstance(value, tuple):
-        return tuple([_to_key(group) for group in value])
+    if isinstance(value, basestring) and ';' in value:
+        value = tuple(value.split(';'))
+
+    if isinstance(value, tuple):
+        # stack_depth + 2 because the list comp has its own stack
+        return tuple([_to_key(group, stack_depth + 2) for group in value])
     else:
-        return _to_key(value)
+        return _to_key(value, stack_depth + 1)
 
 
 def union(*args):
@@ -506,7 +686,7 @@ def union(*args):
 
     Examples
     --------
-    >>> union('a', 'a, b, c, d', ['d', 'e', 'f'], ':2')
+    >>> union('a', 'a, b, c, d', ['d', 'e', 'f'], '..2')
     ['a', 'b', 'c', 'd', 'e', 'f', 0, 1, 2]
     """
     if args:
@@ -743,7 +923,10 @@ class Axis(object):
                     isinstance(tick, LGroup) for tick in ticks):
                 # avoid getting a 2d array if all LGroup have the same length
                 labels = np.empty(len(ticks), dtype=object)
-                labels[:] = ticks
+                # this does not work if some values have a length (with a valid __len__) and others not
+                # labels[:] = ticks
+                for i, tick in enumerate(ticks):
+                    labels[i] = tick
             else:
                 labels = np.asarray(ticks)
             length = len(labels)
@@ -794,9 +977,17 @@ class Axis(object):
             raise ValueError("invalid keyword argument(s): %s"
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, LGroup):
+        if isinstance(key, list):
+            if any(isinstance(k, Group) for k in key):
+                assert all(isinstance(k, Group) for k in key)
+                k0 = key[0]
+                assert all(isinstance(k, k0.__class__) for k in key)
+                assert all(np.isscalar(k.key) for k in key)
+                return k0.__class__([k.key for k in key], axis=self)
+
+        if isinstance(key, Group):
             name = name if name is not None else key.name
-            key = key.key
+            return key.__class__(key.key, name, self)
         return LGroup(key, name, self)
 
     def all(self, name=None):
@@ -1037,7 +1228,7 @@ class Axis(object):
         return self._length
 
     def __iter__(self):
-        return iter(self.labels)
+        return iter([self.i[i] for i in range(self._length)])
 
     def __getitem__(self, key):
         """
@@ -1348,28 +1539,63 @@ class Group(object):
         # name. See test_la.py:test_...
         self.axis = axis
 
+    def __str__(self):
+        if self.name is not None:
+            return self.name
+        else:
+            key = self.eval()
+            if isinstance(key, slice):
+                str_key = _slice_to_str(key, use_repr=True)
+            elif isinstance(key, (tuple, list, np.ndarray)):
+                str_key = _seq_summary(key, 1)
+            else:
+                str_key = repr(key)
+            if self.axis is None:
+                if isinstance(key, (tuple, list, np.ndarray)):
+                    return '[{}]'.format(str_key)
+                else:
+                    return str_key
+            else:
+                return '{}[{}]'.format(str(self.axis), str_key)
+
     def __repr__(self):
         name = ", name=%r" % self.name if self.name is not None else ''
         axis = ", axis=%r" % self.axis if self.axis is not None else ''
         return "%s(%r%s%s)" % (self.__class__.__name__, self.key, name, axis)
 
-    def __len__(self):
-        return len(self.key)
+    def translate(self, bound=None, stop=False):
+        """
 
-    def eval(self):
-        if isinstance(self.key, slice):
-            if isinstance(self.axis, Axis):
-                # expand slices
-                pos = self.axis.translate(self)
-                return self.axis.labels[pos]
-            else:
-                raise ValueError("Cannot evaluate a slice group without axis")
+        Parameters
+        ----------
+        bound : any
+
+        Returns
+        -------
+        int
+        """
+        raise NotImplementedError()
+
+    def __len__(self):
+        value = self.eval()
+        # for some reason this breaks having LGroup ticks/labels on an axis
+        if hasattr(value, '__len__'):
+        # if isinstance(value, (tuple, list, LArray, np.ndarray, str)):
+            return len(value)
+        elif isinstance(value, slice):
+            start, stop, key_step = value.start, value.stop, value.step
+            # not using stop - start because that does not work for string
+            # bounds (and it is different for LGroup & PGroup)
+            start_pos = self.translate(start)
+            stop_pos = self.translate(stop)
+            return stop_pos - start_pos
         else:
-            # we do not check the group labels are actually valid on Axis
-            return self.key
+            raise TypeError('len() of unsized object ({})'.format(value))
 
     def __iter__(self):
-        return iter(self.eval())
+        # XXX: use translate/PGroup instead, so that it works even in the presence of duplicate labels
+        #      possibly, only if axis is set?
+        return iter([LGroup(v, axis=self.axis) for v in self.eval()])
 
     def named(self, name):
         """Returns group with a different name.
@@ -1384,6 +1610,7 @@ class Group(object):
         Group
         """
         return self.__class__(self.key, name, self.axis)
+    __rshift__ = named
 
     def with_axis(self, axis):
         """Returns group with a different axis.
@@ -1398,6 +1625,173 @@ class Group(object):
         Group
         """
         return self.__class__(self.key, self.name, axis)
+
+    def by(self, length, step=None):
+        """Split group into several groups of specified length.
+
+        Parameters
+        ----------
+        length : int
+            length of new groups
+        step : int, optional
+            step between groups. Defaults to length.
+
+        Note
+        ----
+        step can be smaller than length, in which case, this will produce
+        overlapping groups.
+
+        Returns
+        -------
+        list of Group
+
+        Examples
+        --------
+        >>> age = Axis('age', range(10))
+        >>> age[[1, 2, 3, 4, 5]].by(2)  # doctest: +NORMALIZE_WHITESPACE
+        (LGroup([1, 2], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         LGroup([3, 4], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         LGroup([5], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        >>> age[1:5].by(2)  # doctest: +NORMALIZE_WHITESPACE
+        (PGroup(slice(1, 3, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         PGroup(slice(3, 5, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        >>> age[1:5].by(2, 4)  # doctest: +NORMALIZE_WHITESPACE
+        (PGroup(slice(1, 3, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        >>> age[1:5].by(3, 2)  # doctest: +NORMALIZE_WHITESPACE
+        (PGroup(slice(1, 4, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         PGroup(slice(3, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
+        >>> x.age[[0, 1, 2, 3, 4]].by(2)  # doctest: +NORMALIZE_WHITESPACE
+        (LGroup([0, 1], axis=AxisReference('age')),
+         LGroup([2, 3], axis=AxisReference('age')),
+         LGroup([4], axis=AxisReference('age')))
+        """
+        if step is None:
+            step = length
+        return tuple(self[start:start + length]
+                     for start in range(0, len(self), step))
+
+    # TODO: __getitem__ should work by label and .i[] should work by
+    # position. I guess it would be more consistent this way even if the
+    # usefulness of subsetting a group with labels is dubious (but
+    # it is sometimes practical to treat the group as if it was an axis).
+    # >>> vla = geo['...']
+    # >>> # first 10 regions of flanders (this could have some use)
+    # >>> vla.i[:10]  # => PGroup on geo
+    # >>> vla["antwerp", "gent"]  # => LGroup on geo
+
+    # LGroup[] => LGroup
+    # PGroup[] => LGroup
+    # PGroup.i[] => PGroup
+    # LGroup.i[] => PGroup
+    def __getitem__(self, key):
+        """
+
+        Parameters
+        ----------
+        key : int, slice of int or list of int
+            position-based key (even for LGroup)
+
+        Returns
+        -------
+        Group
+        """
+        cls = self.__class__
+        orig_key = self.key
+        # XXX: unsure we should support tuple
+        if isinstance(orig_key, (tuple, list)):
+            return cls(orig_key[key], None, self.axis)
+        elif isinstance(orig_key, slice):
+            orig_start, orig_stop, orig_step = \
+                orig_key.start, orig_key.stop, orig_key.step
+            if orig_step is None:
+                orig_step = 1
+            orig_start_pos = self.translate(orig_start)
+            if isinstance(key, slice):
+                key_start, key_stop, key_step = key.start, key.stop, key.step
+                if key_step is None:
+                    key_step = 1
+
+                orig_stop_pos = self.translate(orig_stop, stop=True)
+                new_start = orig_start_pos + key_start * orig_step
+                new_stop = min(orig_start_pos + key_stop * orig_step,
+                               orig_stop_pos)
+                new_step = orig_step * key_step
+                if new_step == 1:
+                    new_step = None
+                return PGroup(slice(new_start, new_stop, new_step), None,
+                              self.axis)
+            elif isinstance(key, int):
+                return PGroup(orig_start_pos + key * orig_step, None, self.axis)
+            elif isinstance(key, (tuple, list)):
+                return PGroup([orig_start_pos + k * orig_step for k in key],
+                              None, self.axis)
+        elif isinstance(orig_key, LArray):
+            return cls(orig_key.i[key], None, self.axis)
+        elif isinstance(orig_key, int):
+            # give the opportunity to subset the label/key itself (for example for string keys)
+            value = self.eval()
+            return value[key]
+        else:
+            raise TypeError("cannot take a subset of {} because it has a "
+                            "'{}' key".format(self.key, type(self.key)))
+
+    def __eq__(self, other):
+        # different name or axis compare equal !
+        # XXX: we might want to compare "expanded" keys using self.eval(), so that slices
+        # can match lists and vice-versa. This might be too slow though.
+        other_key = other.key if isinstance(other, Group) else _to_key(other)
+        return _to_tick(self.key) == _to_tick(other_key)
+
+    def __lt__(self, other):
+        other_key = other.eval() if isinstance(other, Group) else other
+        return self.eval().__lt__(other_key)
+
+    def __le__(self, other):
+        other_key = other.eval() if isinstance(other, Group) else other
+        return self.eval().__le__(other_key)
+
+    def __gt__(self, other):
+        other_key = other.key if isinstance(other, Group) else other
+        return self.eval().__gt__(other_key)
+
+    def __ge__(self, other):
+        other_key = other.key if isinstance(other, Group) else other
+        return self.eval().__ge__(other_key)
+
+    def __contains__(self, item):
+        # XXX: ideally, we shouldn't need to test for Group (hash should hash to the same as item.eval())
+        if isinstance(item, Group):
+            item = item.eval()
+        return item in self.eval()
+
+    # this makes range(LGroup(int)) possible
+    def __index__(self):
+        return self.eval().__index__()
+
+    def __int__(self):
+        return self.eval().__int__()
+
+    def __float__(self):
+        return self.eval().__float__()
+
+    def __hash__(self):
+        # to_tick & to_key are partially opposite operations but this
+        # standardize on a single notation so that they can all target each
+        # other. eg, this removes spaces in "list strings", instead of
+        # hashing them directly
+        # XXX: but we might want to include that normalization feature in
+        #      to_tick directly, instead of using to_key explicitly here
+        # XXX: we might want to make hash use the position along the axis instead of the labels so that if an
+        #      axis has ambiguous labels, they do not hash to the same thing.
+        # XXX: for performance reasons, I think hash should not evaluate slices. It should only translate pos bounds to
+        #      labels or vice versa. We would loose equality between list Groups and equivalent slice groups but that
+        #      is a small price to pay if the performance impact is large.
+        # the problem with using self.translate() is that we cannot compare groups without axis
+        # return hash(_to_tick(self.translate()))
+        return hash(_to_tick(self.key))
 
 
 # TODO: factorize as much as possible between LGroup & PGroup (move stuff to
@@ -1419,61 +1813,14 @@ class LGroup(Group):
 
     Examples
     --------
-    >>> age = Axis('age', range(100))
+    >>> age = Axis('age', '0..100')
     >>> teens = x.age[10:19].named('teens')
     >>> teens
     LGroup(slice(10, 19, None), name='teens', axis=AxisReference('age'))
     """
-    # this makes range(LGroup(int)) possible
-    def __index__(self):
-        return self.key.__index__()
-
-    def __int__(self):
-        return self.key.__int__()
-
-    def __float__(self):
-        return self.key.__float__()
-
-    def __hash__(self):
-        # to_tick & to_key are partially opposite operations but this
-        # standardize on a single notation so that they can all target each
-        # other. eg, this removes spaces in "list strings", instead of
-        # hashing them directly
-        # XXX: but we might want to include that normalization feature in
-        #      to_tick directly, instead of using to_key explicitly here
-        # XXX: we probably want to include this normalization in __init__
-        #      instead
-        return hash(_to_tick(_to_key(self.key)))
-
-    def __eq__(self, other):
-        # different name or axis compare equal !
-        # XXX: we might want to compare "expanded" keys, so that slices
-        # can match lists and vice-versa.
-        other_key = other.key if isinstance(other, LGroup) else other
-        return _to_tick(_to_key(self.key)) == _to_tick(_to_key(other_key))
-
-    def __str__(self):
-        key = _to_key(self.key)
-        if isinstance(key, slice):
-            str_key = _slice_to_str(key, use_repr=True)
-        elif isinstance(key, (tuple, list, np.ndarray)):
-            str_key = '[%s]' % _seq_summary(key, 1)
-        else:
-            str_key = repr(key)
-
-        return '%r (%s)' % (self.name, str_key) if self.name is not None \
-            else str_key
-
-    def __lt__(self, other):
-        other_key = other.key if isinstance(other, LGroup) else other
-        return self.key.__lt__(other_key)
-
-    def __gt__(self, other):
-        other_key = other.key if isinstance(other, LGroup) else other
-        return self.key.__gt__(other_key)
-
-    def __getitem__(self, key):
-        return self.key[key]
+    def __init__(self, key, name=None, axis=None):
+        key = _to_key(key)
+        Group.__init__(self, key, name, axis)
 
     def _to_oset(self):
         lkey = self.eval()
@@ -1513,6 +1860,31 @@ class LGroup(Group):
     difference = _binop('sub', '-')
     __sub__ = difference
 
+    #XXX: return PGroup instead?
+    def translate(self, bound=None, stop=False):
+        """
+        compute position(s) of group
+        """
+        if bound is None:
+            bound = self.key
+        if isinstance(self.axis, Axis):
+            pos = self.axis.translate(bound)
+            return pos + int(stop) if np.isscalar(pos) else pos
+        else:
+            raise ValueError("Cannot translate an LGroup without axis")
+
+    def eval(self):
+        if isinstance(self.key, slice):
+            if isinstance(self.axis, Axis):
+                # expand slices
+                return self.axis.labels[self.translate()]
+            else:
+                return self.key
+                # raise ValueError("Cannot evaluate a slice group without axis")
+        else:
+            # we do not check the group labels are actually valid on Axis
+            return self.key
+
 
 class PGroup(Group):
     """Positional Group.
@@ -1523,14 +1895,27 @@ class PGroup(Group):
     ----------
     key : key
         Anything usable for indexing.
-        A key should be either sequence of labels, a slice with
-        label bounds or a string.
+        A key should be either a single position, a sequence of positions, or a slice with
+        integer bounds.
     name : str, optional
         Name of the group.
     axis : int, str, Axis, optional
         Axis for group.
     """
-    pass
+    def translate(self, bound=None, stop=False):
+        """
+        compute position(s) of group
+        """
+        if bound is not None:
+            return bound
+        else:
+            return self.key
+
+    def eval(self):
+        if isinstance(self.axis, Axis):
+            return self.axis.labels[self.key]
+        else:
+            raise ValueError("Cannot evaluate a positional group without axis")
 
 
 def index_by_id(seq, value):
@@ -5063,7 +5448,8 @@ class LArray(object):
                 res = res_data
         return res
 
-    def _prepare_aggregate(self, op, args, kwargs=None, commutative=False):
+    def _prepare_aggregate(self, op, args, kwargs=None, commutative=False,
+                           stack_depth=1):
         """converts args to keys & VG and kwargs to VG"""
 
         if kwargs is None:
@@ -5092,18 +5478,20 @@ class LArray(object):
 
         # convert kwargs to LGroup so that we can only use args afterwards
         # but still keep the axis information
-        def standardise_kw_arg(axis_name, key):
+        def standardise_kw_arg(axis_name, key, stack_depth=1):
             if isinstance(key, str):
-                key = to_keys(key)
+                key = to_keys(key, stack_depth + 1)
             if isinstance(key, tuple):
-                return tuple(standardise_kw_arg(axis_name, k) for k in key)
+                # XXX +2?
+                return tuple(standardise_kw_arg(axis_name, k, stack_depth + 1)
+                             for k in key)
             if isinstance(key, LGroup):
                 return key
             return self.axes[axis_name][key]
 
-        def to_labelgroup(key):
+        def to_labelgroup(key, stack_depth=1):
             if isinstance(key, str):
-                key = to_keys(key)
+                key = to_keys(key, stack_depth + 1)
             if isinstance(key, tuple):
                 # a tuple is supposed to be several groups on the same axis
                 # TODO: it would be better to use
@@ -5115,7 +5503,7 @@ class LArray(object):
                 # ideally it shouldn't be the same???)
                 # groups = tuple(self._translate_axis_key(k)
                 #                for k in key)
-                groups = tuple(self._guess_axis(k) for k in key)
+                groups = tuple(self._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
                 axis = groups[0].axis
                 if not all(g.axis.equals(axis) for g in groups[1:]):
                     raise ValueError("group with different axes: %s"
@@ -5128,14 +5516,16 @@ class LArray(object):
                                           "group aggregate key"
                                           % (key, type(key).__name__))
 
-        def standardise_arg(arg):
+        def standardise_arg(arg, stack_depth=1):
             if self.axes.isaxis(arg):
                 return self.axes[arg]
             else:
-                return to_labelgroup(to_keys(arg))
+                return to_labelgroup(arg, stack_depth + 1)
 
-        operations = [standardise_arg(a) for a in args if a is not None] + \
-                     [standardise_kw_arg(k, v) for k, v in sorted_kwargs]
+        operations = [standardise_arg(a, stack_depth=stack_depth + 2)
+                      for a in args if a is not None] + \
+                     [standardise_kw_arg(k, v, stack_depth=stack_depth + 2)
+                      for k, v in sorted_kwargs]
         if not operations:
             # op() without args is equal to op(all_axes)
             operations = self.axes
@@ -5143,7 +5533,8 @@ class LArray(object):
 
     def _aggregate(self, op, args, kwargs=None, keepaxes=False,
                    commutative=False, out=None, extra_kwargs={}):
-        operations = self._prepare_aggregate(op, args, kwargs, commutative)
+        operations = self._prepare_aggregate(op, args, kwargs, commutative,
+                                             stack_depth=3)
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
         # we do not change the order of operations since we only group
@@ -5208,7 +5599,8 @@ class LArray(object):
             percentile: np.percentile,
         }
         # TODO: commutative should be known for usual ops
-        operations = self._prepare_aggregate(op, args, kwargs, False)
+        operations = self._prepare_aggregate(op, args, kwargs, False,
+                                             stack_depth=2)
         res = self
         # TODO: we should allocate the final result directly and fill it
         #       progressively, so that the original array is only copied once
@@ -5392,7 +5784,6 @@ class LArray(object):
             return LArray(self.data.argmax(axis_idx), self.axes - axis)
         else:
             return np.unravel_index(self.data.argmax(), self.shape)
-
 
     def argsort(self, axis=None, kind='quicksort'):
         """Returns the labels that would sort this array.

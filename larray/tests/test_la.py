@@ -8,10 +8,10 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from larray import (LArray, Axis, AxisCollection, LGroup, union,
-                    read_csv, zeros, zeros_like, ndrange, ones, eye, diag,
-                    clip, exp, where, x, mean, isnan, round)
-from larray.core import _to_ticks, _to_key, _srange, df_aslarray
+from larray import (LArray, Axis, AxisCollection, LGroup, PGroup, union,
+                    read_csv, zeros, zeros_like, ndrange, ndtest,
+                    ones, eye, diag, clip, exp, where, x, mean, isnan, round)
+from larray.core import _to_ticks, _to_key, df_aslarray
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -77,12 +77,12 @@ class TestValueStrings(TestCase):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
 
     def test_range(self):
-        self.assertEqual(_to_ticks('0:115'), range(116))
-        self.assertEqual(_to_ticks(':115'), range(116))
+        self.assertEqual(_to_ticks('0..115'), range(116))
+        self.assertEqual(_to_ticks('..115'), range(116))
         with self.assertRaises(ValueError):
-            _to_ticks('10:')
+            _to_ticks('10..')
         with self.assertRaises(ValueError):
-            _to_ticks(':')
+            _to_ticks('..')
 
 
 class TestKeyStrings(TestCase):
@@ -97,14 +97,10 @@ class TestKeyStrings(TestCase):
         self.assertEqual(_to_key('H'), 'H')
 
     def test_slice_strings(self):
-        # XXX: we might want to return real int instead, because if we ever
-        # want to have more complex queries, such as:
-        # arr.filter(age > 10 and age < 20)
-        # this would break for string values (because '10' < '2')
         # XXX: these two examples return different things, do we want that?
-        self.assertEqual(_to_key('0:115'), slice('0', '115'))
-        self.assertEqual(_to_key(':115'), slice('115'))
-        self.assertEqual(_to_key('10:'), slice('10', None))
+        self.assertEqual(_to_key('0:115'), slice(0, 115))
+        self.assertEqual(_to_key(':115'), slice(115))
+        self.assertEqual(_to_key('10:'), slice(10, None))
         self.assertEqual(_to_key(':'), slice(None))
 
 
@@ -131,7 +127,7 @@ class TestAxis(TestCase):
         # list of ints
         assert_array_equal(Axis('age', range(116)).labels, np.arange(116))
         # range-string
-        assert_array_equal(Axis('age', ':115').labels, np.arange(116))
+        assert_array_equal(Axis('age', '..115').labels, np.arange(116))
 
     def test_equals(self):
         self.assertTrue(Axis('sex', 'H,F').equals(Axis('sex', 'H,F')))
@@ -141,19 +137,19 @@ class TestAxis(TestCase):
         self.assertFalse(Axis('sex1', 'M,F').equals(Axis('sex2', 'H,F')))
 
     def test_group(self):
-        age = Axis('age', ':115')
-        ages_list = ['1', '5', '9']
+        age = Axis('age', '..115')
+        ages_list = [1, 5, 9]
         self.assertEqual(age.group(ages_list), LGroup(ages_list, axis=age))
         self.assertEqual(age.group(ages_list), LGroup(ages_list))
         self.assertEqual(age.group('1,5,9'), LGroup(ages_list))
-        self.assertEqual(age.group('1', '5', '9'), LGroup(ages_list))
+        self.assertEqual(age.group(1, 5, 9), LGroup(ages_list))
 
         # with a slice string
-        self.assertEqual(age.group('10:20'), LGroup(slice('10', '20')))
+        self.assertEqual(age.group('10:20'), LGroup(slice(10, 20)))
 
         # with name
-        group = age.group(_srange(10, 20), name='teens')
-        self.assertEqual(group.key, _srange(10, 20))
+        group = age.group(ages_list, name='teens')
+        self.assertEqual(group.key, ages_list)
         self.assertEqual(group.name, 'teens')
         self.assertIs(group.axis, age)
 
@@ -196,21 +192,26 @@ class TestAxis(TestCase):
         self.assertEqual(sutcode.endswith('01'), LGroup(['A2301', 'A2501']))
 
     def test_getitem(self):
-        age = Axis('age', ':115')
-        vg = age.group(':17')
+        age = Axis('age', '0..10')
+        lg = age.group(':3')
         # these are equivalent
-        self.assertEqual(age[:'17'], vg)
-        self.assertEqual(age[':17'], vg)
+        # self.assertEqual(age[:'17'], lg)
+        group = age[':3']
+        self.assertEqual(group.key, slice(None, 3, None))
+        self.assertTrue(group.axis.equals(age))
+        self.assertEqual(group, lg, "%s != %s" % (group, lg))
+        # self.assertEqual(age[':7'], lg)
 
         group = age[:]
         self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
     def test_iter(self):
-        self.assertEqual(list(Axis('sex', 'H,F')), ['H', 'F'])
+        sex = Axis('sex', 'H,F')
+        self.assertEqual(list(sex), [PGroup(0, axis=sex), PGroup(1, axis=sex)])
 
     def test_positional(self):
-        age = Axis('age', ':115')
+        age = Axis('age', '..115')
 
         # these are NOT equivalent (not translated until used in an LArray
         # self.assertEqual(age.i[:17], age[':17'])
@@ -219,14 +220,14 @@ class TestAxis(TestCase):
         self.assertIs(key.axis, age)
 
     def test_all(self):
-        age = Axis('age', ':115')
+        age = Axis('age', '..115')
         group = age.all()
         self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
     def test_contains(self):
         # normal Axis
-        age = Axis('age', ':10')
+        age = Axis('age', '..10')
 
         age2 = age.group('2')
         age2bis = age.group('2,')
@@ -239,7 +240,7 @@ class TestAxis(TestCase):
         age20qua = '20,'
 
         # TODO: move assert to another test
-        self.assertEqual(age2bis, age2ter)
+        # self.assertEqual(age2bis, age2ter)
 
         age247 = age.group('2,4,7')
         age247bis = age.group(['2', '4', '7'])
@@ -247,9 +248,10 @@ class TestAxis(TestCase):
         age468 = age.group('4,6,8', name='even')
 
         self.assertTrue(5 in age)
+        # FIXME: sadly, to be consistent, we should make this True
         self.assertFalse('5' in age)
 
-        self.assertFalse(age2 in age)
+        self.assertTrue(age2 in age)
         # only single ticks are "contained" in the axis, not "collections"
         self.assertFalse(age2bis in age)
         self.assertFalse(age2ter in age)
@@ -318,7 +320,7 @@ class TestAxis(TestCase):
 
 class TestLGroup(TestCase):
     def setUp(self):
-        self.age = Axis('age', ':115')
+        self.age = Axis('age', '..115')
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 10)])
         self.anonymous = Axis(None, range(3))
 
@@ -337,21 +339,22 @@ class TestLGroup(TestCase):
 
     def test_init(self):
         self.assertEqual(self.slice_both_named_wh_named_axis.name, "full")
-        self.assertEqual(self.slice_both_named_wh_named_axis.key, '1:5')
+        self.assertEqual(self.slice_both_named_wh_named_axis.key, slice(1, 5, None))
         self.assertEqual(self.slice_both_named.name, "named")
-        self.assertEqual(self.slice_both_named.key, '1:5')
-        self.assertEqual(self.slice_both.key, '1:5')
-        self.assertEqual(self.slice_start.key, '1:')
-        self.assertEqual(self.slice_stop.key, ':5')
-        self.assertEqual(self.slice_none_no_axis.key, ':')
+        self.assertEqual(self.slice_both_named.key, slice(1, 5, None))
+        self.assertEqual(self.slice_both.key, slice(1, 5, None))
+        self.assertEqual(self.slice_start.key, slice(1, None, None))
+        self.assertEqual(self.slice_stop.key, slice(None, 5, None))
+        self.assertEqual(self.slice_none_no_axis.key, slice(None, None, None))
         self.assertIs(self.slice_none_wh_named_axis.axis, self.lipro)
         self.assertIs(self.slice_none_wh_anonymous_axis.axis, self.anonymous)
 
         self.assertEqual(self.single_value.key, 'P03')
-        self.assertEqual(self.list.key, 'P01,P03,P07')
+        self.assertEqual(self.list.key, ['P01', 'P03', 'P07'])
 
     def test_eq(self):
-        self.assertEqual(self.slice_both, self.slice_both_named_wh_named_axis)
+        # with axis vs no axis do not compare equal
+        # self.assertEqual(self.slice_both, self.slice_both_named_wh_named_axis)
         self.assertEqual(self.slice_both, self.slice_both_named)
         self.assertEqual(self.slice_both, LGroup(slice('1', '5')))
         self.assertEqual(self.slice_start, LGroup(slice('1', None)))
@@ -428,7 +431,7 @@ class TestLGroup(TestCase):
 
     def test_sorted(self):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
-                         LGroup(['a', 'b', 'c', 'd']))
+                         [LGroup('a'), LGroup('b'), LGroup('c'), LGroup('d')])
 
     def test_hash(self):
         d = {self.slice_both: 1,
@@ -469,30 +472,28 @@ class TestLGroup(TestCase):
         self.assertEqual(d.get(LGroup(('P01', 'P03', 'P07'))), 3)
 
     def test_str(self):
-        self.assertEqual(str(self.slice_both_named_wh_named_axis),
-                         "'full' ('1':'5')")
-        self.assertEqual(str(self.slice_both_named), "'named' ('1':'5')")
-        self.assertEqual(str(self.slice_both), "'1':'5'")
-        self.assertEqual(str(self.slice_start), "'1':")
-        self.assertEqual(str(self.slice_stop), ":'5'")
+        self.assertEqual(str(self.slice_both_named_wh_named_axis), "full")
+        self.assertEqual(str(self.slice_both_named), "named")
+        self.assertEqual(str(self.slice_both), "1:5")
+        self.assertEqual(str(self.slice_start), "1:")
+        self.assertEqual(str(self.slice_stop), ":5")
         self.assertEqual(str(self.slice_none_no_axis), ':')
         self.assertEqual(str(self.single_value), "'P03'")
         self.assertEqual(str(self.list), "['P01' ... 'P07']")
 
     def test_repr(self):
         self.assertEqual(repr(self.slice_both_named),
-                         "LGroup('1:5', name='named')")
-        self.assertEqual(repr(self.slice_both), "LGroup('1:5')")
-        self.assertEqual(repr(self.list), "LGroup('P01,P03,P07')")
-        self.assertEqual(repr(self.slice_none_no_axis), "LGroup(':')")
+                         "LGroup(slice(1, 5, None), name='named')")
+        self.assertEqual(repr(self.slice_both), "LGroup(slice(1, 5, None))")
+        self.assertEqual(repr(self.list), "LGroup(['P01', 'P03', 'P07'])")
+        self.assertEqual(repr(self.slice_none_no_axis), "LGroup(slice(None, None, None))")
         target = \
-            "LGroup(':', axis=Axis('lipro', ['P01', 'P02', 'P03', 'P04', " \
-                                            "'P05', 'P06', 'P07', 'P08', " \
-                                            "'P09']))"
-        self.assertEqual(repr(self.slice_none_wh_named_axis),
-                         target)
+            "LGroup(slice(None, None, None), axis=Axis('lipro', ['P01', 'P02', 'P03', 'P04', " \
+                                                                "'P05', 'P06', 'P07', 'P08', " \
+                                                                "'P09']))"
+        self.assertEqual(repr(self.slice_none_wh_named_axis), target)
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
-                         "LGroup(':', axis=Axis(None, [0, 1, 2]))")
+                         "LGroup(slice(None, None, None), axis=Axis(None, [0, 1, 2]))")
 
 
 class TestAxisCollection(TestCase):
@@ -500,9 +501,9 @@ class TestAxisCollection(TestCase):
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 5)])
         self.sex = Axis('sex', 'H,F')
         self.sex2 = Axis('sex', 'F,H')
-        self.age = Axis('age', ':7')
+        self.age = Axis('age', '..7')
         self.geo = Axis('geo', 'A11,A12,A13')
-        self.value = Axis('value', ':10')
+        self.value = Axis('value', '..10')
         self.collection = AxisCollection((self.lipro, self.sex, self.age))
 
     def test_eq(self):
@@ -687,14 +688,14 @@ class TestAxisCollection(TestCase):
 
         # b) with compatible dupe
         # the "new" age axis is ignored (because it is compatible)
-        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':7')]
+        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', '..7')]
         self.assertEqual(new, [lipro, sex, age, geo])
 
         # c) with incompatible dupe
         # XXX: the "new" age axis is ignored. We might want to ignore it if it
         #  is the same but raise an exception if it is different
         with self.assertRaises(ValueError):
-            col + [Axis('geo', 'A11,A12,A13'), Axis('age', ':6')]
+            col + [Axis('geo', 'A11,A12,A13'), Axis('age', '..6')]
 
         # 2) other AxisCollection
         new = col + AxisCollection([geo, value])
@@ -1853,7 +1854,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         self.assertEqual(la.sum('A11,A21,A25').shape, (116, 2, 15))
         # with a name
-        self.assertEqual(la.sum('g1=A11,A21,A25').shape, (116, 2, 15))
+        self.assertEqual(la.sum('A11,A21,A25 >> g1').shape, (116, 2, 15))
         self.assertEqual(la.sum(['A11', 'A21', 'A25']).shape, (116, 2, 15))
 
         # Include everything between two labels. Since A11 is the first label
@@ -1882,7 +1883,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(('H', 'H,F')).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum('H;H,F').shape, (116, 44, 2, 15))
         # with group names
-        res = la.sum('men=H;all=H,F')
+        res = la.sum('H >> men;H,F >> all')
         self.assertEqual(res.shape, (116, 44, 2, 15))
         self.assertTrue('sex' in res.axes)
         men = sex['H'].named('men')
@@ -1891,7 +1892,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(res['men'], raw[:, :, 0, :])
         assert_array_equal(res['all'], raw.sum(2))
 
-        res = la.sum(('men=H', 'all=H,F'))
+        res = la.sum(('H >> men', 'H,F >> all'))
         self.assertEqual(res.shape, (116, 44, 2, 15))
         self.assertTrue('sex' in res.axes)
         assert_array_equal(res.axes.sex.labels, [men, all_])
@@ -2445,8 +2446,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # the same name in the array
         lipro4 = Axis('lipro', 'P01,P03,P16')
         with self.assertRaisesRegexp(ValueError,
-                                     "\['P01' 'P16'\] is not a valid label for "
-                                     "any axis"):
+                                     "lipro\['P01' 'P16'\] is not a valid "
+                                     "label for any axis"):
             small.sum(lipro4['P01,P16'])
 
     def test_ratio(self):
