@@ -425,7 +425,11 @@ class LabelsModel(AbstractTableModel):
             self._axes = data[0]
             self._data = data[1]
         else:
+            self._axes = None
             self._data = data
+
+    def get_axes(self):
+        return  self._axes
 
     def axisCount(self):
         if self._label_position == 'x':
@@ -495,6 +499,15 @@ class LabelsModel(AbstractTableModel):
                 return str(self._data[j])
         else:
             return str(self._data[j][i])
+
+    def get_values(self, left=0, top=0, right=None, bottom=None):
+        if right is None:
+            right = self.columnCount() - self.axisCount()
+        if bottom is None:
+            bottom = self.rowCount()
+        values = self._data[left:right, top:bottom].copy()
+        print(values)
+        return values
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Qt reimplemented method.
@@ -609,10 +622,6 @@ class ArrayModel(AbstractTableModel):
         # Avoid accessing the private attribute _format from outside
         return self._format
 
-    def get_data(self):
-        """Return data"""
-        return self._data
-
     def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
         self._set_data(data, changes, bg_gradient, bg_value)
         self.reset()
@@ -689,11 +698,11 @@ class ArrayModel(AbstractTableModel):
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
-        return self.cols_loaded - 1
+        return self.cols_loaded
 
     def rowCount(self, qindex=QModelIndex()):
         """Return array row number"""
-        return self.rows_loaded - 1
+        return self.rows_loaded
 
     def fetch_more_rows(self):
         if self.total_rows > self.rows_loaded:
@@ -719,8 +728,8 @@ class ArrayModel(AbstractTableModel):
         self.reset()
 
     def get_value(self, index):
-        i = index.row() + 1
-        j = index.column() + 1
+        i = index.row()
+        j = index.column()
         return self.changes.get((i, j), self._data[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
@@ -1059,13 +1068,17 @@ class LabelsView(QTableView):
 
 class ArrayView(QTableView):
     """Array view class"""
-    def __init__(self, parent, model, dtype, shape):
+    def __init__(self, parent, model_data, model_xlabels, model_ylabels,
+                 dtype, shape):
         QTableView.__init__(self, parent)
 
-        self.setModel(model)
+        self.setModel(model_data)
+        self.model_xlabels = model_xlabels
+        self.model_ylabels = model_ylabels
+
         delegate = ArrayDelegate(dtype, self,
-                                 minvalue=model.minvalue,
-                                 maxvalue=model.maxvalue)
+                                 minvalue=model_data.minvalue,
+                                 maxvalue=model_data.maxvalue)
         self.setItemDelegate(delegate)
         self.setSelectionMode(QTableView.ContiguousSelection)
         self.setStyleSheet("QTableView{ selection-background-color: blue; selection-color: white; }")
@@ -1108,17 +1121,19 @@ class ArrayView(QTableView):
         self.setRowHeight(logicalIndex, newSize)
 
     def updateSectionWidth(self, logicalIndex, oldSize, newSize):
+        logicalIndex -= self.model_xlabels.axisCount()
         self.setColumnWidth(logicalIndex, newSize)
 
-    def selectNewColumn(self, column_index):
-        self.setSelectionMode(QTableView.MultiSelection)
-        self.selectColumn(column_index)
-        self.setSelectionMode(QTableView.ContiguousSelection)
+    def selectRow(self, row_index):
+        #self.setSelectionMode(QTableView.MultiSelection)
+        super().selectRow(row_index)
+        #self.setSelectionMode(QTableView.ContiguousSelection)
 
-    def selectNewRow(self, row_index):
-        self.setSelectionMode(QTableView.MultiSelection)
-        self.selectRow(row_index)
-        self.setSelectionMode(QTableView.ContiguousSelection)
+    def selectColumn(self, column_index):
+        #self.setSelectionMode(QTableView.MultiSelection)
+        column_index -= self.model_xlabels.axisCount()
+        super().selectColumn(column_index)
+        #self.setSelectionMode(QTableView.ContiguousSelection)
 
     def setup_context_menu(self):
         """Setup context menu"""
@@ -1202,12 +1217,10 @@ class ArrayView(QTableView):
         assert len(selection) == 1
         srange = selection[0]
         assert isinstance(srange, QItemSelectionRange)
-        xoffset = len(self.model().xlabels) - 1
-        yoffset = len(self.model().ylabels) - 1
-        row_min = max(srange.top() - xoffset, 0)
-        row_max = max(srange.bottom() - xoffset, 0)
-        col_min = max(srange.left() - yoffset, 0)
-        col_max = max(srange.right() - yoffset, 0)
+        row_min = srange.top()
+        row_max = srange.bottom()
+        col_min = srange.left()
+        col_max = srange.right()
         return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True, none_selects_all=True):
@@ -1217,21 +1230,20 @@ class ArrayView(QTableView):
         row_min, row_max, col_min, col_max = bounds
         raw_data = self.model().get_values(row_min, col_min, row_max, col_max)
         if headers:
-            xlabels = self.model().xlabels
-            ylabels = self.model().ylabels
+            xlabels = self.model_xlabels.get_data()
+            ylabels = self.model_ylabels.get_data()
             # FIXME: this is extremely ad-hoc. We should either use
             # model.data.ndim (orig_ndim?) or add a new concept (eg dim_names)
             # in addition to xlabels & ylabels,
             # TODO: in the future (pandas-based branch) we should use
             # to_string(data[self._selection_filter()])
-            dim_names = xlabels[0]
+            dim_names = self.model_xlabels.get_axes()
             if len(dim_names) > 1:
                 dim_headers = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
                                                 dim_names[-1]]
             else:
                 dim_headers = dim_names
-            topheaders = [dim_headers + list(xlabels[i][col_min:col_max])
-                          for i in range(1, len(xlabels))]
+            topheaders = [dim_headers + list(xlabels[col_min:col_max])]
             if not dim_names:
                 return raw_data
             elif len(dim_names) == 1:
@@ -1242,8 +1254,7 @@ class ArrayView(QTableView):
                 assert len(dim_names) > 1
                 return chain(topheaders,
                              [chain([ylabels[j][r + row_min]
-                                     for j in range(1, len(ylabels))],
-                                    row)
+                                     for j in range(1, len(ylabels))], row)
                               for r, row in enumerate(raw_data)])
         else:
             return raw_data
@@ -1399,16 +1410,17 @@ class ArrayEditorWidget(QWidget):
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
 
-        self.model_data = ArrayModel(None, readonly=readonly, parent=self,
-                                     bg_value=bg_value, bg_gradient=bg_gradient,
-                                     minvalue=minvalue, maxvalue=maxvalue)
-        self.view_data = ArrayView(self, self.model_data, data.dtype, data.shape)
-
         self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
         self.view_xlabels = LabelsView(self, self.model_xlabels)
 
         self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
         self.view_ylabels = LabelsView(self, self.model_ylabels)
+
+        self.model_data = ArrayModel(None, readonly=readonly, parent=self,
+                                     bg_value=bg_value, bg_gradient=bg_gradient,
+                                     minvalue=minvalue, maxvalue=maxvalue)
+        self.view_data = ArrayView(self, self.model_data, self.model_xlabels,
+                                   self.model_ylabels, data.dtype, data.shape)
 
         # Synchronize resizing
         # self.view_xlabels.horizontalHeader().sectionResized.connect(
@@ -1433,12 +1445,12 @@ class ArrayEditorWidget(QWidget):
         self.view_xlabels.horizontalHeader().sectionPressed.connect(
             self.view_data.selectColumn)
         self.view_xlabels.horizontalHeader().sectionEntered.connect(
-            self.view_data.selectNewColumn)
+            self.view_data.selectColumn)
         # Synchronize selecting rows via ylabels horizontal header
         self.view_ylabels.verticalHeader().sectionPressed.connect(
             self.view_data.selectRow)
         self.view_ylabels.verticalHeader().sectionEntered.connect(
-            self.view_data.selectNewRow)
+            self.view_data.selectRow)
 
         # Allow data view to take as much place as it can
         self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -2734,8 +2746,8 @@ if __name__ == "__main__":
     # data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
     # data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
-    data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
-    arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    ## data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
+    ## arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
     # arr2 = la.ndrange([100, 100, 100, 100, 5])
     # arr2 = arr2['F', 'A11', 1]
 
@@ -2764,8 +2776,8 @@ if __name__ == "__main__":
     # view([])
 
     # ==========================================================
-    #data3 = np.random.normal(0, 1, size=(2, 15))
-    #arr3 = la.ndrange((30, sex))
+    data3 = np.random.normal(0, 1, size=(2, 15))
+    arr3 = la.ndrange((30, sex))
     # ==========================================================
     # data4 = np.random.normal(0, 1, size=(2, 15))
     # arr4 = la.LArray(data4, axes=(sex, lipro))
@@ -2773,9 +2785,9 @@ if __name__ == "__main__":
     # arr4 = arr3.copy()
     # arr4['F'] /= 2
     # ==========================================================
-    # arr4 = arr3.min(la.x.sex)
-    # arr5 = arr3.max(la.x.sex)
-    # arr6 = arr3.mean(la.x.sex)
+    arr4 = arr3.min(la.x.sex)
+    arr5 = arr3.max(la.x.sex)
+    arr6 = arr3.mean(la.x.sex)
     # ==========================================================
 
     # compare(arr3, arr4, arr5, arr6)
