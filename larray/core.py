@@ -7827,8 +7827,7 @@ def ones_like(array, dtype=None, order='K'):
 
 
 def empty(axes, dtype=float, order='C'):
-    """Returns an array with the specified axes and uninitialized
-    (arbitrary) data.
+    """Returns an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
     ----------
@@ -7859,15 +7858,14 @@ def empty(axes, dtype=float, order='C'):
 
 
 def empty_like(array, dtype=None, order='K'):
-    """Returns an array with the same axes as array and
-    uninitialized (arbitrary) data.
+    """Returns an array with the same axes as array and uninitialized (arbitrary) data.
 
     Parameters
     ----------
     array : LArray
         Input array.
     dtype : data-type, optional
-        Overrides the data type of the result.
+        Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
@@ -7901,8 +7899,7 @@ def full(axes, fill_value, dtype=None, order='C'):
     fill_value : scalar or LArray
         Value to fill the array
     dtype : data-type, optional
-        Desired data-type for the array. Default is the data type of
-        fill_value.
+        Desired data-type for the array. Default is the data type of fill_value.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or
         Fortran-contiguous (row- or column-wise) order in memory.
@@ -7935,7 +7932,7 @@ def full(axes, fill_value, dtype=None, order='C'):
 
 
 def full_like(array, fill_value, dtype=None, order='K'):
-    """Returns an array with the same axes as input array and filled with fill_value.
+    """Returns an array with the same axes and type as input array and filled with fill_value.
 
     Parameters
     ----------
@@ -7944,7 +7941,7 @@ def full_like(array, fill_value, dtype=None, order='K'):
     fill_value : scalar or LArray
         Value to fill the array
     dtype : data-type, optional
-        Overrides the data type of the result.
+        Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
