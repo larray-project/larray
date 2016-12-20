@@ -558,7 +558,7 @@ def _isnoneslice(v):
     return isinstance(v, slice) and v == slice(None)
 
 
-def _seq_summary(seq, num=3, func=repr, sep=' '):
+def _seq_summary(seq, n=3, func=repr, sep=' '):
     """
     Returns a string representing a sequence by showing only the n first and last elements.
 
@@ -568,7 +568,7 @@ def _seq_summary(seq, num=3, func=repr, sep=' '):
     '0 1 ... 8 9'
     """
     def shorten(l):
-        return l if len(l) <= 2 * num else l[:num] + ['...'] + list(l[-num:])
+        return l if len(l) <= 2 * n else l[:n] + ['...'] + list(l[-n:])
 
     return sep.join(shorten([func(l) for l in seq]))
 
