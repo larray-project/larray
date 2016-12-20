@@ -5098,7 +5098,6 @@ class LArray(object):
             New axes. The size of the array (= number of stored data)
             must be equal to the product of length of target axes.
 
-
         Returns
         -------
         LArray
@@ -5505,6 +5504,7 @@ class LArray(object):
                     group = PGroup([group.key], axis=group.axis)
                 elif isinstance(group, LGroup):
                     key = _to_key(group.key)
+                    assert not isinstance(key, Group)
                     if np.isscalar(key):
                         key = [key]
                     # we do not care about the name at this point
@@ -5714,10 +5714,16 @@ class LArray(object):
         return res
 
     # TODO: make sure we can do
-    # arr[x.sex.i[arr.posargmin(x.sex)]]
+    # arr[x.sex.i[arr.posargmin(x.sex)]] <- fails
     # and
-    # arr[arr.argmin(x.sex)]
+    # arr[arr.argmin(x.sex)] <- fails
     # should both be equal to arr.min(x.sex)
+    # the versions where axis is None already work as expected in the simple
+    # case (no ambiguous labels):
+    # arr.i[arr.posargmin()]
+    # arr[arr.argmin()]
+    # for the case where axis is None, we should return an NDGroup
+    # so that arr[arr.argmin()] works even if the minimum is on ambiguous labels
     def argmin(self, axis=None):
         """Returns labels of the minimum values along a given axis.
 
@@ -7486,6 +7492,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     # would be much uglier and would not lower the peak memory usage which
     # happens during cartesian_product_df.reindex
 
+    # FIXME: this should only happen when reading "text"-like files, not binary files, like HDF.
     # pandas treats the "time" labels as column names (strings) so we need
     # to convert them to values
     axes_labels.append([parse(cell) for cell in df.columns.values])
@@ -8279,6 +8286,7 @@ def ndtest(shape, start=0, dtype=int, label_start=0):
      a2 |  3 |  4 |  5
     """
     a = ndrange(shape, start=start, dtype=dtype)
+    # TODO: move this to a class method on AxisCollection
     assert a.ndim <= 26
     axes_names = [chr(ord('a') + i) for i in range(a.ndim)]
     label_ranges = [range(label_start, label_start + length)
