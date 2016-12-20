@@ -948,7 +948,8 @@ class Axis(object):
 
     def matches(self, pattern):
         """
-        Returns a group with all the labels matching (regex) the specified pattern.
+        Returns a group with all the labels matching the specified pattern
+        (regular expression).
 
         Parameters
         ----------
@@ -971,17 +972,20 @@ class Axis(object):
 
         All labels starting with "W" and ending with "o" are given by
 
-        >>> people.matches('W.*o')
-        LGroup(['Waldo'])
+        >>> people.matches('W.*o')  # doctest: +NORMALIZE_WHITESPACE
+        LGroup(['Waldo'],
+               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
 
         All labels not containing character "a"
 
-        >>> people.matches('[^a]*$')
-        LGroup(['Bruce Willis', 'Arthur Dent'])
+        >>> people.matches('[^a]*$')  # doctest: +NORMALIZE_WHITESPACE
+        LGroup(['Bruce Willis', 'Arthur Dent'],
+               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
-        return LGroup(self._axisregex(pattern))
+        rx = re.compile(pattern)
+        return LGroup([v for v in self.labels if rx.match(v)], axis=self)
 
-    def startswith(self, pattern):
+    def startswith(self, prefix):
         """
         Returns a group with the labels starting with the specified string
 
@@ -998,13 +1002,14 @@ class Axis(object):
         Examples
         --------
         >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.startswith('[^B]')
-        LGroup(['Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.startswith('Bru')  # doctest: +NORMALIZE_WHITESPACE
+        LGroup(['Bruce Wayne', 'Bruce Willis'],
+               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
-        res = self._axisregex('^%s.*' % pattern)
-        return LGroup(res)
+        return LGroup([v for v in self.labels if v.startswith(prefix)],
+                      axis=self)
 
-    def endswith(self, pattern):
+    def endswith(self, suffix):
         """
         Returns a LGroup with the labels ending with the specified string
 
@@ -1021,15 +1026,12 @@ class Axis(object):
         Examples
         --------
         >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.endswith('[o-z]')
-        LGroup(['Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people.endswith('Dent')  # doctest: +NORMALIZE_WHITESPACE
+        LGroup(['Arthur Dent', 'Harvey Dent'],
+               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
-        res = self._axisregex('.*%s$' % pattern)
-        return LGroup(res)
-
-    def _axisregex(self, pattern):
-        rx = re.compile(pattern)
-        return [v for v in self if rx.match(v)]
+        return LGroup([v for v in self.labels if v.endswith(suffix)],
+                      axis=self)
 
     def __len__(self):
         return self._length
