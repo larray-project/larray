@@ -7760,8 +7760,7 @@ def zeros_like(array, dtype=None, order='K'):
             0 | 0 | 0 | 0
             1 | 0 | 0 | 0
     """
-    axes = array.axes
-    return LArray(np.zeros_like(array, dtype, order), axes)
+    return LArray(np.zeros_like(array, dtype, order), array.axes)
 
 
 def ones(axes, dtype=float, order='C'):
@@ -7925,7 +7924,8 @@ def full(axes, fill_value, dtype=None, order='C'):
          BE | 0 | 1
          FO | 0 | 1
     """
-    dtype = np.asarray(fill_value).dtype
+    if dtype is None:
+        dtype = np.asarray(fill_value).dtype
     res = empty(axes, dtype, order)
     res[:] = fill_value
     return res
@@ -7962,7 +7962,6 @@ def full_like(array, fill_value, dtype=None, order='K'):
     """
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
-    dtype = np.asarray(fill_value).dtype
     res = empty_like(array, dtype, order)
     res[:] = fill_value
     return res
