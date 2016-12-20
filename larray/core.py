@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 __version__ = "0.17"
 
 __all__ = [
-    'LArray', 'Axis', 'AxisCollection', 'LGroup',
+    'LArray', 'Axis', 'AxisCollection', 'LGroup', 'PGroup',
     'union', 'stack',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'read_sas',
