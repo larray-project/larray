@@ -418,12 +418,12 @@ class LabelsModel(AbstractTableModel):
         self.reset()
 
     def _set_data(self, data):
-        if not (isinstance(data, (list, tuple)) and len(data) >= 2):
-            data = [[''],['']]
+        if not isinstance(data, (list, tuple)):
+            data = [[]]
 
         if self._label_position == 'x':
             self._axes = data[0]
-            self._data = data[1]
+            self._data = data[1] if len(data) >= 2 else []
         else:
             self._axes = None
             self._data = data
@@ -433,24 +433,9 @@ class LabelsModel(AbstractTableModel):
 
     def axisCount(self):
         if self._label_position == 'x':
-            return len(self._axes[0])
+            return len(self._axes)
         else:
             return 0
-
-    def get_labels(self, index):
-        # i = index.row() + 1
-        # j = index.column() + 1
-        # if i < 0 or j < 0:
-        #     return ""
-        # dim_names = self.xlabels[0]
-        # ndim = len(dim_names)
-        # last_dim_labels = self.xlabels[1]
-        # # ylabels[0] are empty
-        # labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
-        #          [last_dim_labels[j]]
-        # return ", ".join("%s=%s" % (dim_name, label)
-        #                  for dim_name, label in zip(dim_names, labels))
-        return ""
 
     # ############################################ #
     # Methods to reimplement for a read-only model #
@@ -1033,29 +1018,49 @@ class LabelsView(QTableView):
         self.verticalHeader().setDefaultSectionSize(20)
 
         # Hide vertical/horizontal header
-        if model.get_position() == 'x':
-            self.verticalHeader().hide()
-        else:
+        if model.get_position() == 'y':
             self.horizontalHeader().hide()
 
         # Hide scrollbars
         self.horizontalScrollBar().hide()
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.verticalScrollBar().hide()
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.model().modelReset.connect(self.updateView)
 
-    def updateView(self):
+    def updateGeometry(self):
         model = self.model()
         if model.get_position() == 'x':
-            self.setMaximumHeight(self.horizontalHeader().height() * 2)
+            # Set maximum height
+            maximum_height = self.horizontalHeader().height()
+            for r in range(model.rowCount()):
+                maximum_height += self.rowHeight(r)
+            self.setFixedHeight(maximum_height)
+        else:
+            # Set maximum width
+            maximum_width = self.verticalHeader().width()
+            for c in range(model.columnCount()):
+                maximum_width += self.columnWidth(c)
+            self.setFixedWidth(maximum_width)
+
+        super().updateGeometry()
+
+    def updateView(self):
+        if self.model().get_position() == 'x':
+            nb_axes = self.model().axisCount()
+            # Hide vertical header if only one axis (no ylabels)
+            if nb_axes == 1:
+                self.verticalHeader().hide()
+            else:
+                self.verticalHeader().setVisible(True)
+            # Freeze the first (nb_axes - 1) columns
             self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
-            for logicalIndex in range(0, model.axisCount()):
+            for logicalIndex in range(0, nb_axes):
                 self.horizontalHeader().setResizeMode(
                     logicalIndex, QHeaderView.Fixed)
-        else:
-            self.setMaximumWidth(self.horizontalHeader().length())
+
+        self.updateGeometry()
 
     # def updateSectionHeight(self, logicalIndex, oldSize, newSize):
     #     self.setRowHeight(logicalIndex, newSize)
@@ -1068,13 +1073,13 @@ class LabelsView(QTableView):
 
 class ArrayView(QTableView):
     """Array view class"""
-    def __init__(self, parent, model_data, model_xlabels, model_ylabels,
+    def __init__(self, parent, model_data, view_xlabels, view_ylabels,
                  dtype, shape):
         QTableView.__init__(self, parent)
 
         self.setModel(model_data)
-        self.model_xlabels = model_xlabels
-        self.model_ylabels = model_ylabels
+        self.view_xlabels = view_xlabels
+        self.view_ylabels = view_ylabels
 
         delegate = ArrayDelegate(dtype, self,
                                  minvalue=model_data.minvalue,
@@ -1101,6 +1106,14 @@ class ArrayView(QTableView):
         # self.horizontalHeader().sectionClicked.connect(
         #     self.on_horizontal_header_clicked)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+
+        # To take into account the size of scroll bars if present
+        self.view_xlabels.setFixedWidth(self.view_ylabels.width() +
+                                          self.viewport().width())
+        self.view_ylabels.setFixedHeight(self.viewport().height())
+
     def on_horizontal_header_clicked(self, section_index):
         menu = FilterMenu(self)
         header = self.horizontalHeader()
@@ -1121,7 +1134,7 @@ class ArrayView(QTableView):
         self.setRowHeight(logicalIndex, newSize)
 
     def updateSectionWidth(self, logicalIndex, oldSize, newSize):
-        logicalIndex -= self.model_xlabels.axisCount()
+        logicalIndex -= (self.view_xlabels.model().axisCount() - 1)
         self.setColumnWidth(logicalIndex, newSize)
 
     def selectRow(self, row_index):
@@ -1131,7 +1144,7 @@ class ArrayView(QTableView):
 
     def selectColumn(self, column_index):
         #self.setSelectionMode(QTableView.MultiSelection)
-        column_index -= self.model_xlabels.axisCount()
+        column_index -= (self.view_xlabels.model().axisCount() - 1)
         super().selectColumn(column_index)
         #self.setSelectionMode(QTableView.ContiguousSelection)
 
@@ -1230,14 +1243,14 @@ class ArrayView(QTableView):
         row_min, row_max, col_min, col_max = bounds
         raw_data = self.model().get_values(row_min, col_min, row_max, col_max)
         if headers:
-            xlabels = self.model_xlabels.get_data()
-            ylabels = self.model_ylabels.get_data()
+            xlabels = self.view_xlabels.get_data()
+            ylabels = self.view_ylabels.get_data()
             # FIXME: this is extremely ad-hoc. We should either use
             # model.data.ndim (orig_ndim?) or add a new concept (eg dim_names)
             # in addition to xlabels & ylabels,
             # TODO: in the future (pandas-based branch) we should use
             # to_string(data[self._selection_filter()])
-            dim_names = self.model_xlabels.get_axes()
+            dim_names = self.view_xlabels.get_axes()
             if len(dim_names) > 1:
                 dim_headers = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
                                                 dim_names[-1]]
@@ -1419,8 +1432,8 @@ class ArrayEditorWidget(QWidget):
         self.model_data = ArrayModel(None, readonly=readonly, parent=self,
                                      bg_value=bg_value, bg_gradient=bg_gradient,
                                      minvalue=minvalue, maxvalue=maxvalue)
-        self.view_data = ArrayView(self, self.model_data, self.model_xlabels,
-                                   self.model_ylabels, data.dtype, data.shape)
+        self.view_data = ArrayView(self, self.model_data, self.view_xlabels,
+                                   self.view_ylabels, data.dtype, data.shape)
 
         # Synchronize resizing
         # self.view_xlabels.horizontalHeader().sectionResized.connect(
@@ -1452,16 +1465,14 @@ class ArrayEditorWidget(QWidget):
         self.view_ylabels.verticalHeader().sectionEntered.connect(
             self.view_data.selectRow)
 
-        # Allow data view to take as much place as it can
-        self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         # Set layout of array view (labels + data)
-        array_layout = QGridLayout()
-        array_layout.addWidget(self.view_xlabels, 0, 0, 1, 2)
-        array_layout.addWidget(self.view_ylabels, 1, 0)
-        array_layout.addWidget(self.view_data, 1, 1)
-        array_layout.setSpacing(0)
-        array_layout.setContentsMargins(0, 0, 0, 0)
+        larray_layout = QGridLayout()
+        larray_layout.addWidget(self.view_xlabels, 0, 0, 1, 2, Qt.AlignLeft)
+        larray_layout.addWidget(self.view_ylabels, 1, 0, Qt.AlignTop)
+        self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        larray_layout.addWidget(self.view_data, 1, 1)
+        larray_layout.setSpacing(0)
+        larray_layout.setContentsMargins(0, 0, 0, 0)
 
         # Set filters and buttons layout
         self.filters_layout = QHBoxLayout()
@@ -1488,7 +1499,7 @@ class ArrayEditorWidget(QWidget):
         # Set main layout
         layout = QVBoxLayout()
         layout.addLayout(self.filters_layout)
-        layout.addLayout(array_layout)
+        layout.addLayout(larray_layout)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
         self.set_data(data, xlabels, ylabels, bg_value=bg_value,
@@ -2746,8 +2757,8 @@ if __name__ == "__main__":
     # data2 = (np.random.randint(10, size=(116, 44, 2, 15)) - 5) / 17
     # data2 = np.random.randint(10, size=(116, 44, 2, 15)) / 100 + 1567
     # data2 = np.random.normal(51000000, 10000000, size=(116, 44, 2, 15))
-    ## data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
-    ## arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
+    data2 = np.random.normal(0, 1, size=(116, 44, 2, 15))
+    arr2 = la.LArray(data2, axes=(age, geo, sex, lipro))
     # arr2 = la.ndrange([100, 100, 100, 100, 5])
     # arr2 = arr2['F', 'A11', 1]
 
