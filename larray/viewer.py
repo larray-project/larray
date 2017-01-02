@@ -553,10 +553,6 @@ class ArrayModel(AbstractTableModel):
     format : str, optional
         Indicates how data are represented in cells.
         By default, they are represented as floats with 3 decimal points.
-    xlabels : array, optional
-        Row's labels.
-    ylables : array, optional
-        Column's labels.
     readonly : bool, optional
         If True, data cannot be changed. False by default.
     font : QFont, optional
@@ -756,8 +752,8 @@ class ArrayModel(AbstractTableModel):
                     return to_qvariant(color)
                 else:
                     bg_value = self.bg_value
-                    x = index.row() - len(self.xlabels) + 1
-                    y = index.column() - len(self.ylabels) + 1
+                    x = index.row()
+                    y = index.column()
                     # FIXME: this is buggy on filtered data. We should change
                     # bg_value when changing the filter.
                     idx = y + x * bg_value.shape[-1]
@@ -1820,7 +1816,7 @@ class ArrayEditorWidget(QWidget):
         ki, kj = k
         xlabels = self.model_xlabels.get_data()
         ylabels = self.model_ylabels.get_data()
-        xlabel = [xlabels[i][kj] for i in range(1, len(xlabels))]
+        xlabel = [xlabels[kj]]
         ylabel = [ylabels[j][ki] for j in range(1, len(ylabels))]
         label_key = tuple(ylabel + xlabel)
 
