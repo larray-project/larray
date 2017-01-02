@@ -896,8 +896,8 @@ class ArrayModel(AbstractTableModel):
         """Cell content change"""
         if not index.isValid() or self.readonly:
             return False
-        i = index.row() + 1
-        j = index.column() + 1
+        i = index.row()
+        j = index.column()
         result = self.set_values(i, j, i + 1, j + 1, from_qvariant(value, str))
         return result is not None
 
@@ -1243,14 +1243,14 @@ class ArrayView(QTableView):
         row_min, row_max, col_min, col_max = bounds
         raw_data = self.model().get_values(row_min, col_min, row_max, col_max)
         if headers:
-            xlabels = self.view_xlabels.get_data()
-            ylabels = self.view_ylabels.get_data()
+            xlabels = self.view_xlabels.model().get_data()
+            ylabels = self.view_ylabels.model().get_data()
             # FIXME: this is extremely ad-hoc. We should either use
             # model.data.ndim (orig_ndim?) or add a new concept (eg dim_names)
             # in addition to xlabels & ylabels,
             # TODO: in the future (pandas-based branch) we should use
             # to_string(data[self._selection_filter()])
-            dim_names = self.view_xlabels.get_axes()
+            dim_names = self.view_xlabels.model().get_axes()
             if len(dim_names) > 1:
                 dim_headers = dim_names[:-2] + [dim_names[-2] + ' \\ ' +
                                                 dim_names[-1]]
@@ -1818,8 +1818,8 @@ class ArrayEditorWidget(QWidget):
         # XXX: why can't we store the filter as index?
         model = self.model_data
         ki, kj = k
-        xlabels = model.xlabels
-        ylabels = model.ylabels
+        xlabels = self.model_xlabels.get_data()
+        ylabels = self.model_ylabels.get_data()
         xlabel = [xlabels[i][kj] for i in range(1, len(xlabels))]
         ylabel = [ylabels[j][ki] for j in range(1, len(ylabels))]
         label_key = tuple(ylabel + xlabel)
