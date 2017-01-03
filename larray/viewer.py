@@ -1010,7 +1010,8 @@ class LabelsView(QTableView):
 
         # Set default size of cells
         self.horizontalHeader().setDefaultSectionSize(64)
-        self.verticalHeader().setResizeMode(QHeaderView.Fixed)
+        if model.get_position() == 'x':
+            self.verticalHeader().setResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(20)
 
         # Hide vertical/horizontal header
@@ -1052,7 +1053,7 @@ class LabelsView(QTableView):
                 self.verticalHeader().setVisible(True)
             # Freeze the first (nb_axes - 1) columns
             self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
-            for logicalIndex in range(0, nb_axes):
+            for logicalIndex in range(0, nb_axes-1):
                 self.horizontalHeader().setResizeMode(
                     logicalIndex, QHeaderView.Fixed)
 
