@@ -936,6 +936,42 @@ class Axis(object):
         self._labels = labels
         self._iswildcard = iswildcard
 
+    def extend(self, labels):
+        """
+        Append new labels to an axis.
+        Note that extend does not occur in-place: a new Axis
+        is allocated, filled and returned.
+
+        Parameters
+        ----------
+        labels : iterable or Axis
+            New labels (as list or another axis) to append to
+            a copy of the axis.
+
+        Returns
+        -------
+        Axis
+            A copy of the axis with new labels appended to it.
+
+        Examples
+        --------
+        >>> time = Axis('time', [2007, 2008])
+        >>> time
+        Axis('time', [2007, 2008])
+        >>> previous_years = Axis('time', [2005, 2006])
+        >>> time = previous_years.extend(time)
+        >>> time
+        Axis('time', [2005, 2006, 2007, 2008])
+        >>> time = time.extend([2009, 2010])
+        >>> time
+        Axis('time', [2005, 2006, 2007, 2008, 2009, 2010])
+        """
+        if isinstance(labels, Axis):
+            other_axis = labels
+        else:
+            other_axis = Axis(self.name, labels)
+        return Axis(self.name, np.append(self.labels, other_axis.labels))
+    
     @property
     def iswildcard(self):
         return self._iswildcard
