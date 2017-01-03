@@ -971,7 +971,7 @@ class Axis(object):
         else:
             other_axis = Axis(self.name, labels)
         return Axis(self.name, np.append(self.labels, other_axis.labels))
-    
+
     @property
     def iswildcard(self):
         return self._iswildcard
@@ -4094,6 +4094,7 @@ class LArray(object):
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (axes.shape, data.shape))
 
+        # Because __getattr__ and __setattr__ have been rewritten
         object.__setattr__(self, 'data', data)
         object.__setattr__(self, 'axes', axes)
         object.__setattr__(self, 'title', title)
@@ -6012,16 +6013,16 @@ class LArray(object):
     def copy(self):
         """Returns a copy of the array.
         """
-        return LArray(self.data.copy(), axes=self.axes[:])
+        return LArray(self.data.copy(), axes=self.axes[:], title=self.title)
 
     @property
     def info(self):
-        """Describes a LArray (shape and labels for each axis).
+        """Describes a LArray (title + shape and labels for each axis).
 
         Returns
         -------
         str
-            Description of the array (shape and labels for each axis).
+            Description of the array (title + shape and labels for each axis).
 
         Examples
         --------
@@ -6032,8 +6033,17 @@ class LArray(object):
         2 x 2
          nat [2]: 'BE' 'FO'
          sex [2]: 'M' 'F'
+        >>> mat1 = LArray(np.ones((2, 2)), [nat, sex], 'test matrix')
+        >>> mat1.info
+        test matrix
+        2 x 2
+         nat [2]: 'BE' 'FO'
+         sex [2]: 'M' 'F'
         """
-        return self.axes.info
+        if self.title:
+            return ReprString(self.title + '\n' + self.axes.info)
+        else:
+            return self.axes.info
 
     def ratio(self, *axes):
         """Returns an array with all values divided by the
