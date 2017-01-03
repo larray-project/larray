@@ -938,39 +938,53 @@ class Axis(object):
 
     def extend(self, labels):
         """
-        Append new labels to an axis.
-        Note that extend does not occur in-place: a new Axis
-        is allocated, filled and returned.
+        Append new labels to an axis or increase its length
+        in case of wildcard axis.
+        Note that `extend` does not occur in-place: a new axis
+        object is allocated, filled and returned.
 
         Parameters
         ----------
-        labels : iterable or Axis
-            New labels (as list or another axis) to append to
-            a copy of the axis.
+        labels : int, iterable or Axis
+            * Number of new labels (only if wildcard axis).
+            * New labels to append to the axis.
+            * Axis to append. Must (not) be wildcard if self
+              is (not) wildcard.
 
         Returns
         -------
         Axis
-            A copy of the axis with new labels appended to it.
+            A copy of the axis with new labels appended to it or
+            with increased length (if wildcard).
 
         Examples
         --------
         >>> time = Axis('time', [2007, 2008])
         >>> time
         Axis('time', [2007, 2008])
-        >>> previous_years = Axis('time', [2005, 2006])
-        >>> time = previous_years.extend(time)
-        >>> time
-        Axis('time', [2005, 2006, 2007, 2008])
-        >>> time = time.extend([2009, 2010])
-        >>> time
-        Axis('time', [2005, 2006, 2007, 2008, 2009, 2010])
+        >>> time.extend([2009, 2010])
+        Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis('age', 10)
+        >>> age
+        Axis('age', 10)
+        >>> age.extend(5)
+        Axis('age', 15)
+        >>> age.extend([11, 12, 13, 14])
+        Traceback (most recent call last):
+        ...
+        NotImplementedError: Axis to append must (not) be wildcard if self is (not) wildcard
         """
         if isinstance(labels, Axis):
-            other_axis = labels
+            other = labels
         else:
-            other_axis = Axis(self.name, labels)
-        return Axis(self.name, np.append(self.labels, other_axis.labels))
+            other = Axis(self.name, labels)
+        if self.iswildcard != other.iswildcard:
+            raise NotImplementedError("Axis to append must (not) be wildcard if " +
+                                      "self is (not) wildcard")
+        if self.iswildcard:
+            return Axis(self.name, self._length + other._length)
+        else:
+            return Axis(self.name, np.append(self.labels, other.labels))
 
     @property
     def iswildcard(self):
