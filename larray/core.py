@@ -7754,13 +7754,15 @@ def read_sas(filepath, nb_index=0, index_col=[],
                        fill_value=na)
 
 
-def zeros(axes, dtype=float, order='C'):
+def zeros(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and filled with zeros.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`.
         Default is `numpy.float64`.
@@ -7791,7 +7793,7 @@ def zeros(axes, dtype=float, order='C'):
          FO | 0.0 | 0.0
     """
     axes = AxisCollection(axes)
-    return LArray(np.zeros(axes.shape, dtype, order), axes)
+    return LArray(np.zeros(axes.shape, dtype, order), axes, title)
 
 
 def zeros_like(array, dtype=None, order='K'):
@@ -7821,16 +7823,18 @@ def zeros_like(array, dtype=None, order='K'):
             0 | 0 | 0 | 0
             1 | 0 | 0 | 0
     """
-    return LArray(np.zeros_like(array, dtype, order), array.axes)
+    return LArray(np.zeros_like(array, dtype, order), array.axes, array.title)
 
 
-def ones(axes, dtype=float, order='C'):
+def ones(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and filled with ones.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
@@ -7852,7 +7856,7 @@ def ones(axes, dtype=float, order='C'):
          FO | 1.0 | 1.0
     """
     axes = AxisCollection(axes)
-    return LArray(np.ones(axes.shape, dtype, order), axes)
+    return LArray(np.ones(axes.shape, dtype, order), axes, title)
 
 
 def ones_like(array, dtype=None, order='K'):
@@ -7883,16 +7887,18 @@ def ones_like(array, dtype=None, order='K'):
             1 | 1 | 1 | 1
     """
     axes = array.axes
-    return LArray(np.ones_like(array, dtype, order), axes)
+    return LArray(np.ones_like(array, dtype, order), axes, array.title)
 
 
-def empty(axes, dtype=float, order='C'):
+def empty(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
     ----------
     axes : int, tuple of int or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
@@ -7914,7 +7920,7 @@ def empty(axes, dtype=float, order='C'):
          FO |                0.0 | 6.07684618082e-31
     """
     axes = AxisCollection(axes)
-    return LArray(np.empty(axes.shape, dtype, order), axes)
+    return LArray(np.empty(axes.shape, dtype, order), axes, title)
 
 
 def empty_like(array, dtype=None, order='K'):
@@ -7946,10 +7952,10 @@ def empty_like(array, dtype=None, order='K'):
       2 | 1.90979621226e-313 | 2.33419537056e-313
     """
     # cannot use empty() because order == 'K' is not understood
-    return LArray(np.empty_like(array.data, dtype, order), array.axes)
+    return LArray(np.empty_like(array.data, dtype, order), array.axes, array.title)
 
 
-def full(axes, fill_value, dtype=None, order='C'):
+def full(axes, fill_value, title='', dtype=None, order='C'):
     """Returns an array with the specified axes and filled with fill_value.
 
     Parameters
@@ -7958,6 +7964,8 @@ def full(axes, fill_value, dtype=None, order='C'):
         Collection of axes or a shape.
     fill_value : scalar or LArray
         Value to fill the array
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Desired data-type for the array. Default is the data type of fill_value.
     order : {'C', 'F'}, optional
@@ -7987,7 +7995,7 @@ def full(axes, fill_value, dtype=None, order='C'):
     """
     if dtype is None:
         dtype = np.asarray(fill_value).dtype
-    res = empty(axes, dtype, order)
+    res = empty(axes, title, dtype, order)
     res[:] = fill_value
     return res
 
@@ -8032,7 +8040,7 @@ def full_like(array, fill_value, dtype=None, order='K'):
 #      ndrange (or rename this one to ndrange)? ndrange is only ever used to
 #      create test data (except for 1d)
 # see https://github.com/pydata/pandas/issues/4567
-def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
+def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     """
     Creates an array by sequentially applying modifications to the array along
     axis.
@@ -8059,6 +8067,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
         Axes of the result. Defaults to the union of axes present in other
         arguments.
+    title : str, optional
+        Title.
 
     Examples
     --------
@@ -8139,7 +8149,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
         axes = AxisCollection(axes)
     axis = axes[axis]
     res_dtype = np.dtype(common_type((initial, inc, mult)))
-    res = empty(axes, dtype=res_dtype)
+    res = empty(axes, title=title, dtype=res_dtype)
     res[axis.i[0]] = initial
     def has_axis(a, axis):
         return isinstance(a, LArray) and axis in a.axes
@@ -8192,7 +8202,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
         #    wait until someone requests it.
         def array_or_full(a, axis, initial):
             dt = common_type((a, initial))
-            r = empty((get_axes(a) - axis) | axis, dtype=dt)
+            r = empty((get_axes(a) - axis) | axis, title=title, dtype=dt)
             r[axis.i[0]] = initial
             if isinstance(a, LArray) and axis in a.axes:
                 # not using axis.i[1:] because a could have less ticks
@@ -8232,7 +8242,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None):
     return res
 
 
-def ndrange(axes, start=0, dtype=int):
+def ndrange(axes, start=0, title='', dtype=int):
     """Returns an array with the specified axes and filled with increasing int.
 
     Parameters
@@ -8247,6 +8257,8 @@ def ndrange(axes, start=0, dtype=int):
                set the name of the axis. eg. "a,b,c" or "sex=F,M"
         * (name, labels) pair: name and labels of axis
     start : number, optional
+    title : str, optional
+        Title.
     dtype : dtype, optional
         The type of the output array.  Defaults to int.
 
@@ -8298,10 +8310,10 @@ def ndrange(axes, start=0, dtype=int):
     #  > 1, I cannot think of anything nice.
     axes = AxisCollection(axes)
     data = np.arange(start, start + axes.size, dtype=dtype)
-    return LArray(data.reshape(axes.shape), axes)
+    return LArray(data.reshape(axes.shape), axes, title)
 
 
-def ndtest(shape, start=0, dtype=int, label_start=0):
+def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     """Returns test array with given shape.
 
     Axes are named by single letters starting from 'a'. Axes labels are
@@ -8318,6 +8330,8 @@ def ndtest(shape, start=0, dtype=int, label_start=0):
     label_start : int, optional
         Label position for each axis is `label_start + position`.
         `label_start` defaults to 0.
+    title : str, optional
+        Title.
     dtype : type or np.dtype, optional
         Type of resulting array.
 
@@ -8339,7 +8353,7 @@ def ndtest(shape, start=0, dtype=int, label_start=0):
      a1 |  0 |  1 |  2
      a2 |  3 |  4 |  5
     """
-    a = ndrange(shape, start=start, dtype=dtype)
+    a = ndrange(shape, start=start, dtype=dtype, title=title)
     # TODO: move this to a class method on AxisCollection
     assert a.ndim <= 26
     axes_names = [chr(ord('a') + i) for i in range(a.ndim)]
@@ -8446,13 +8460,15 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
         return a.points[indexer]
 
 
-def labels_array(axes):
+def labels_array(axes, title=''):
     """Returns an array with specified axes and the combination of
-    corresponding labels as value.
+    corresponding labels as values.
 
     Parameters
     ----------
     axes : Axis or collection of Axis
+    title : str, optional
+        Title.
 
     Returns
     -------
@@ -8489,7 +8505,7 @@ def labels_array(axes):
     else:
         res_axes = axes
         res_data = axes[0].labels
-    return LArray(res_data, res_axes)
+    return LArray(res_data, res_axes, title)
 
 
 def identity(axis):
@@ -8500,7 +8516,7 @@ def identity(axis):
                               "labels_array(axis) instead.")
 
 
-def eye(rows, columns=None, k=0, dtype=None):
+def eye(rows, columns=None, k=0, title='', dtype=None):
     """Returns a 2-D array with ones on the diagonal and zeros elsewhere.
 
     Parameters
@@ -8513,6 +8529,8 @@ def eye(rows, columns=None, k=0, dtype=None):
         Index of the diagonal: 0 (the default) refers to the main diagonal, a
         positive value refers to an upper diagonal, and a negative value to a
         lower diagonal.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Data-type of the returned array. Defaults to float.
 
@@ -8544,7 +8562,7 @@ def eye(rows, columns=None, k=0, dtype=None):
     axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
-    return LArray(data, axes)
+    return LArray(data, axes, title)
 
 
 # XXX: we could change the syntax to use *args
@@ -8555,7 +8573,7 @@ def eye(rows, columns=None, k=0, dtype=None):
 # stack(a1, a2, axis=Axis('sex', 'H,F'))
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
-def stack(arrays, axis=None):
+def stack(arrays, axis=None, title=''):
     """
     Combines several arrays along an axis.
 
@@ -8565,6 +8583,8 @@ def stack(arrays, axis=None):
         Arrays to stack. values can be scalars, arrays or (label, value) pairs.
     axis : str or Axis, optional
         Axis to create. If None, defaults to a range() axis.
+    title : str, optional
+        Title.
 
     Returns
     -------
@@ -8649,7 +8669,7 @@ def stack(arrays, axis=None):
                 assert len(axis) == len(arrays)
     result_axes = AxisCollection.union(*[get_axes(v) for v in values])
     result_axes.append(axis)
-    result = empty(result_axes, common_type(values))
+    result = empty(result_axes, title=title, dtype=common_type(values))
     for k, v in zip(axis, values):
         result[k] = v
     return result
