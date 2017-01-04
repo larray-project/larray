@@ -7796,13 +7796,15 @@ def zeros(axes, title='', dtype=float, order='C'):
     return LArray(np.zeros(axes.shape, dtype, order), axes, title)
 
 
-def zeros_like(array, dtype=None, order='K'):
+def zeros_like(array, title='', dtype=None, order='K'):
     """Returns an array with the same axes as array and filled with zeros.
 
     Parameters
     ----------
     array : LArray
          Input array.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -7823,7 +7825,9 @@ def zeros_like(array, dtype=None, order='K'):
             0 | 0 | 0 | 0
             1 | 0 | 0 | 0
     """
-    return LArray(np.zeros_like(array, dtype, order), array.axes, array.title)
+    if not title:
+        title = array.title
+    return LArray(np.zeros_like(array, dtype, order), array.axes, title)
 
 
 def ones(axes, title='', dtype=float, order='C'):
@@ -7859,13 +7863,15 @@ def ones(axes, title='', dtype=float, order='C'):
     return LArray(np.ones(axes.shape, dtype, order), axes, title)
 
 
-def ones_like(array, dtype=None, order='K'):
+def ones_like(array, title='', dtype=None, order='K'):
     """Returns an array with the same axes as array and filled with ones.
 
     Parameters
     ----------
     array : LArray
         Input array.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -7887,7 +7893,9 @@ def ones_like(array, dtype=None, order='K'):
             1 | 1 | 1 | 1
     """
     axes = array.axes
-    return LArray(np.ones_like(array, dtype, order), axes, array.title)
+    if not title:
+        title = array.title
+    return LArray(np.ones_like(array, dtype, order), axes, title)
 
 
 def empty(axes, title='', dtype=float, order='C'):
@@ -7923,13 +7931,15 @@ def empty(axes, title='', dtype=float, order='C'):
     return LArray(np.empty(axes.shape, dtype, order), axes, title)
 
 
-def empty_like(array, dtype=None, order='K'):
+def empty_like(array, title='', dtype=None, order='K'):
     """Returns an array with the same axes as array and uninitialized (arbitrary) data.
 
     Parameters
     ----------
     array : LArray
         Input array.
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -7951,8 +7961,10 @@ def empty_like(array, dtype=None, order='K'):
       1 | 1.06099789568e-313 | 1.48539705397e-313
       2 | 1.90979621226e-313 | 2.33419537056e-313
     """
+    if not title:
+        title = array.title
     # cannot use empty() because order == 'K' is not understood
-    return LArray(np.empty_like(array.data, dtype, order), array.axes, array.title)
+    return LArray(np.empty_like(array.data, dtype, order), array.axes, title)
 
 
 def full(axes, fill_value, title='', dtype=None, order='C'):
@@ -8000,7 +8012,7 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
     return res
 
 
-def full_like(array, fill_value, dtype=None, order='K'):
+def full_like(array, fill_value, title='', dtype=None, order='K'):
     """Returns an array with the same axes and type as input array and filled with fill_value.
 
     Parameters
@@ -8009,6 +8021,8 @@ def full_like(array, fill_value, dtype=None, order='K'):
         Input array.
     fill_value : scalar or LArray
         Value to fill the array
+    title : str, optional
+        Title.
     dtype : data-type, optional
         Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
@@ -8029,9 +8043,11 @@ def full_like(array, fill_value, dtype=None, order='K'):
             0 | 5 | 5 | 5
             1 | 5 | 5 | 5
     """
+    if not title:
+        title = array.title
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
-    res = empty_like(array, dtype, order)
+    res = empty_like(array, title, dtype, order)
     res[:] = fill_value
     return res
 
