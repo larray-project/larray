@@ -8443,7 +8443,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
                     for name, labels in zip(axes_names, axes_labels)]
         else:
             axes = [axis] + [axis.copy() for _ in range(ndim - 1)]
-        res = zeros(axes, title=a.title, dtype=a.dtype)
+        res = zeros(axes, dtype=a.dtype)
         diag_indices = kth_diag_indices(res.shape, k)
         res.ipoints[diag_indices] = a
         return res
