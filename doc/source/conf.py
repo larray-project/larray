@@ -36,7 +36,9 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     'sphinx.ext.extlinks',
-    'numpydoc'
+    'numpydoc',
+    'nbsphinx',
+    'sphinx.ext.mathjax'
 ]
 
 extlinks = {'issue': ('https://github.com/liam2/larray/issues/%s',
@@ -84,7 +86,7 @@ release = '0.18'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
