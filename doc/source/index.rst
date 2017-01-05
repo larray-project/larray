@@ -8,6 +8,7 @@ Contents:
 
    intro
    api
+   notebook
 
 Indices and tables
 ==================
