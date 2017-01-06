@@ -6237,8 +6237,8 @@ class LArray(object):
             return self._aggregate(func, args, kwargs,
                                    keepaxes=keepaxes,
                                    commutative=commutative)
-        def method_by(self, axis, **kwargs):
-            return method(self, *(self.axes - axis), **kwargs)
+        def method_by(self, *args, **kwargs):
+            return method(self, *(self.axes - args), **kwargs)
         if name is None:
             name = npfunc.__name__
         method.__name__ = name
@@ -6267,8 +6267,8 @@ class LArray(object):
         return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
                                commutative=True, extra_kwargs={'q': q})
 
-    def percentile_by(self, q, axis, **kwargs):
-        return self.percentile(q, *(self.axes - axis), **kwargs)
+    def percentile_by(self, q, *args, **kwargs):
+        return self.percentile(q, *(self.axes - args), **kwargs)
 
     # not commutative
     ptp, ptp_by = _agg_method(np.ptp)
@@ -8900,4 +8900,3 @@ def make_numpy_broadcastable(values):
 # - xlwings: wraps win32com & equivalent on mac, so can potentially do
 #   everything (I guess) but this is SLOW and needs a running excel instance,
 #   etc.
-
