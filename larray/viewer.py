@@ -1103,6 +1103,32 @@ class ArrayView(QTableView):
         # self.horizontalHeader().sectionClicked.connect(
         #     self.on_horizontal_header_clicked)
 
+        # Synchronize resizing with labels views
+        # self.view_xlabels.horizontalHeader().sectionResized.connect(
+        #     self.view_ylabels.updateSectionWidth)
+        self.view_xlabels.horizontalHeader().sectionResized.connect(
+            self.updateSectionWidth)
+        self.view_ylabels.verticalHeader().sectionResized.connect(
+            self.updateSectionHeight)
+
+        # Synchronize scrolling
+        self.horizontalScrollBar().valueChanged.connect(
+            self.view_xlabels.horizontalScrollBar().setValue)
+        self.view_xlabels.horizontalScrollBar().valueChanged.connect(
+            self.horizontalScrollBar().setValue)
+
+        self.verticalScrollBar().valueChanged.connect(
+            self.view_ylabels.verticalScrollBar().setValue)
+        self.view_ylabels.verticalScrollBar().valueChanged.connect(
+            self.verticalScrollBar().setValue)
+
+        # Synchronize selecting columns via hor. header of xlabels view
+        self.view_xlabels.horizontalHeader().sectionPressed.connect(
+            self.selectColumn)
+        # Synchronize selecting rows via vert. header of ylabels view
+        self.view_ylabels.verticalHeader().sectionPressed.connect(
+            self.selectRow)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
@@ -1421,51 +1447,21 @@ class ArrayEditorWidget(QWidget):
             data = np.array(data)
 
         self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
-        self.view_xlabels = LabelsView(self, self.model_xlabels)
+        view_xlabels = LabelsView(self, self.model_xlabels)
 
         self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
-        self.view_ylabels = LabelsView(self, self.model_ylabels)
+        view_ylabels = LabelsView(self, self.model_ylabels)
 
         self.model_data = ArrayModel(None, readonly=readonly, parent=self,
                                      bg_value=bg_value, bg_gradient=bg_gradient,
                                      minvalue=minvalue, maxvalue=maxvalue)
-        self.view_data = ArrayView(self, self.model_data, self.view_xlabels,
-                                   self.view_ylabels, data.dtype, data.shape)
-
-        # Synchronize resizing
-        # self.view_xlabels.horizontalHeader().sectionResized.connect(
-        #     self.view_ylabels.updateSectionWidth)
-        self.view_xlabels.horizontalHeader().sectionResized.connect(
-            self.view_data.updateSectionWidth)
-        self.view_ylabels.verticalHeader().sectionResized.connect(
-            self.view_data.updateSectionHeight)
-
-        # Synchronize scrolling
-        self.view_data.horizontalScrollBar().valueChanged.connect(
-            self.view_xlabels.horizontalScrollBar().setValue)
-        self.view_xlabels.horizontalScrollBar().valueChanged.connect(
-            self.view_data.horizontalScrollBar().setValue)
-
-        self.view_data.verticalScrollBar().valueChanged.connect(
-            self.view_ylabels.verticalScrollBar().setValue)
-        self.view_ylabels.verticalScrollBar().valueChanged.connect(
-            self.view_data.verticalScrollBar().setValue)
-
-        # Synchronize selecting columns via xlabels horizontal header
-        self.view_xlabels.horizontalHeader().sectionPressed.connect(
-            self.view_data.selectColumn)
-        self.view_xlabels.horizontalHeader().sectionEntered.connect(
-            self.view_data.selectColumn)
-        # Synchronize selecting rows via ylabels horizontal header
-        self.view_ylabels.verticalHeader().sectionPressed.connect(
-            self.view_data.selectRow)
-        self.view_ylabels.verticalHeader().sectionEntered.connect(
-            self.view_data.selectRow)
+        self.view_data = ArrayView(self, self.model_data, view_xlabels,
+                                   view_ylabels, data.dtype, data.shape)
 
         # Set layout of array view (labels + data)
         larray_layout = QGridLayout()
-        larray_layout.addWidget(self.view_xlabels, 0, 0, 1, 2, Qt.AlignLeft)
-        larray_layout.addWidget(self.view_ylabels, 1, 0, Qt.AlignTop)
+        larray_layout.addWidget(view_xlabels, 0, 0, 1, 2, Qt.AlignLeft)
+        larray_layout.addWidget(view_ylabels, 1, 0, Qt.AlignTop)
         self.view_data.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         larray_layout.addWidget(self.view_data, 1, 1)
         larray_layout.setSpacing(0)
