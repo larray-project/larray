@@ -1048,14 +1048,22 @@ class LabelsView(QTableView):
             nb_axes = self.model().axisCount()
             # Hide vertical header if only one axis (no ylabels)
             if nb_axes == 1:
+                self.verticalHeader().setFixedWidth(0)
                 self.verticalHeader().hide()
             else:
+                self.verticalHeader().setFixedWidth(20)
                 self.verticalHeader().setVisible(True)
             # Freeze the first (nb_axes - 1) columns
             self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
             for logicalIndex in range(0, nb_axes-1):
                 self.horizontalHeader().setResizeMode(
                     logicalIndex, QHeaderView.Fixed)
+        else:
+            nb_axes = self.model().columnCount() + 1
+            if nb_axes == 1:
+                self.verticalHeader().setFixedWidth(0)
+            else:
+                self.verticalHeader().setFixedWidth(20)
 
         self.updateGeometry()
 
