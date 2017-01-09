@@ -361,7 +361,7 @@ def get_idx_rect(index_list):
     return min(rows), max(rows), min(cols), max(cols)
 
 
-class AbstractTableModel(QAbstractTableModel):
+class AbstractLabelModel(QAbstractTableModel):
     """
     Abstract class implementing common methods
     for labels and array models
@@ -379,67 +379,47 @@ class AbstractTableModel(QAbstractTableModel):
         bold_font.setBold(True)
         self.bold_font = bold_font
 
-        self._data = None
+        self._axes = []
+        self._data = []
+        self.set_data(data)
 
     def get_data(self):
-        """Returns data"""
         return self._data
-
-    def reset(self):
-        self.beginResetModel()
-        self.endResetModel()
-
-
-class LabelsModel(AbstractTableModel):
-    """Labels Table Model
-
-    Parameters
-    ----------
-    (...)
-    """
-    def __init__(self, label_position, data=None, readonly=False,
-                 font=None, parent=None):
-        AbstractTableModel.__init__(self, data, readonly, font, parent)
-
-        if not (label_position == 'x' or label_position == 'y'):
-            raise ValueError("label_postion must be either x or y character")
-        self._label_position = label_position
-
-        self._set_data(data)
-
-    # ############################################ #
-    #              Not Qt methods                  #
-    # ############################################ #
-    def get_position(self):
-        return self._label_position
 
     def set_data(self, data):
         self._set_data(data)
         self.reset()
 
     def _set_data(self, data):
-        if not isinstance(data, (list, tuple)):
-            data = [[]]
-
-        if self._label_position == 'x':
-            self._axes = data[0]
-            self._data = data[1] if len(data) >= 2 else []
-        else:
-            self._axes = None
-            self._data = data
+        raise NotImplementedError()
 
     def get_axes(self):
-        return  self._axes
+        return self._axes
 
     def axisCount(self):
-        if self._label_position == 'x':
-            return len(self._axes)
-        else:
-            return 0
+        return len(self._axes)
 
-    # ############################################ #
-    # Methods to reimplement for a read-only model #
-    # ############################################ #
+    def reset(self):
+        self.beginResetModel()
+        self.endResetModel()
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Returns the number of rows under the given parent.
+        When the parent is valid it means that rowCount is
+        returning the number of children of parent.
+        """
+        raise NotImplementedError()
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        """Qt reimplemented method.
+
+        Returns the number of columns for the children
+        of the given parent.
+        """
+        raise NotImplementedError()
+
     def flags(self, index):
         """Qt reimplemented method.
 
@@ -449,6 +429,18 @@ class LabelsModel(AbstractTableModel):
         See ItemFlags for available flags.
         """
         return Qt.ItemIsEnabled
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """Qt reimplemented method.
+
+        Returns the data for the given role and section in
+        the header with the specified orientation.
+
+        For horizontal headers, the section number corresponds
+        to the column number. Similarly, for vertical headers,
+        the section number corresponds to the row number.
+        """
+        raise NotImplementedError()
 
     def data(self, index, role=Qt.DisplayRole):
         """Qt reimplemented method.
@@ -474,16 +466,7 @@ class LabelsModel(AbstractTableModel):
             return to_qvariant()
 
     def get_value(self, index):
-        i = index.row()
-        j = index.column() + 1
-        if self._label_position == 'x':
-            j -= len(self._axes)
-            if j < 0:
-                return ""
-            else:
-                return str(self._data[j])
-        else:
-            return str(self._data[j][i])
+        raise NotImplementedError()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
         if right is None:
@@ -494,56 +477,83 @@ class LabelsModel(AbstractTableModel):
         print(values)
         return values
 
+
+class XLabelsModel(AbstractLabelModel):
+    """Labels Table Model
+
+    Parameters
+    ----------
+    (...)
+    """
+    def __init__(self, data=None, readonly=False, font=None, parent=None):
+        AbstractLabelModel.__init__(self, data, readonly, font, parent)
+        self._set_data(data)
+
+    def _set_data(self, data):
+        if not isinstance(data, (list, tuple)):
+            data = [[]]
+        self._axes = data[0]
+        self._data = data[1] if len(data) >= 2 else []
+
+    def get_value(self, index):
+        i = index.row()
+        j = index.column() - len(self._axes) + 1
+        if j < 0:
+            return ""
+        else:
+            return str(self._data[j])
+
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-        """Qt reimplemented method.
-
-        Returns the data for the given role and section in
-        the header with the specified orientation.
-
-        For horizontal headers, the section number corresponds
-        to the column number. Similarly, for vertical headers,
-        the section number corresponds to the row number.
-        """
         if role != Qt.DisplayRole:
             return to_qvariant()
 
-        if self._label_position == 'x':
-            if orientation == Qt.Horizontal and section < len(self._axes):
-                return to_qvariant(self._axes[section])
-            else:
-                return to_qvariant()
+        if orientation == Qt.Horizontal and section < len(self._axes):
+            return to_qvariant(self._axes[section])
         else:
             return to_qvariant()
-        # if orientation == Qt.Horizontal:
-        #     return to_qvariant(self._data[0][section])
-        # else:
-        #     return to_qvariant(self._data[0][section])
 
     def rowCount(self, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
-
-        Returns the number of rows under the given parent.
-        When the parent is valid it means that rowCount is
-        returning the number of children of parent.
-        """
-        if self._label_position == 'x':
-            return 1
-        else:
-            return len(self._data[0]) - 1
+        return 1
 
     def columnCount(self, parent=None, *args, **kwargs):
-        """Qt reimplemented method.
-
-        Returns the number of columns for the children
-        of the given parent.
-        """
-        if self._label_position == 'x':
-            return len(self._axes) + len(self._data) - 1
-        else:
-            return len(self._data) - 1
+        return len(self._axes) + len(self._data) - 1
 
 
-class ArrayModel(AbstractTableModel):
+class YLabelsModel(AbstractLabelModel):
+    """Labels Table Model
+
+    Parameters
+    ----------
+    (...)
+    """
+    def __init__(self, data=None, readonly=False, font=None, parent=None):
+        AbstractLabelModel.__init__(self, data, readonly, font, parent)
+        self._set_data(data)
+
+    def _set_data(self, data):
+        if not isinstance(data, (list, tuple)):
+            data = [[]]
+        self._axes = None
+        self._data = data
+
+    def get_value(self, index):
+        i = index.row()
+        j = index.column() + 1
+        return str(self._data[j][i])
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role != Qt.DisplayRole:
+            return to_qvariant()
+        return to_qvariant()
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self._data[0]) - 1
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self._data) - 1
+
+
+class ArrayModel(QAbstractTableModel):
     """Array Editor Table Model.
 
     Parameters
@@ -575,9 +585,18 @@ class ArrayModel(AbstractTableModel):
     def __init__(self, data=None, format="%.3f", readonly=False,
                  font=None, parent=None, bg_gradient=None, bg_value=None,
                  minvalue=None, maxvalue=None):
-        AbstractTableModel.__init__(self, data, readonly, font, parent)
+        QAbstractTableModel.__init__(self)
 
+        self.dialog = parent
+        self.readonly = readonly
         self._format = format
+
+        if font is None:
+            font = get_font("arreditor")
+        self.font = font
+        bold_font = get_font("arreditor")
+        bold_font.setBold(True)
+        self.bold_font = bold_font
 
         # Backgroundcolor settings
         # TODO: use LinearGradient
@@ -593,6 +612,7 @@ class ArrayModel(AbstractTableModel):
         # color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
         # self.color = to_qvariant(color)
 
+        self._data = None
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
@@ -602,6 +622,10 @@ class ArrayModel(AbstractTableModel):
         """Return current format"""
         # Avoid accessing the private attribute _format from outside
         return self._format
+
+    def get_data(self):
+        """Returns data"""
+        return self._data
 
     def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
         self._set_data(data, changes, bg_gradient, bg_value)
@@ -911,6 +935,10 @@ class ArrayModel(AbstractTableModel):
         """Set header data"""
         return to_qvariant()
 
+    def reset(self):
+        self.beginResetModel()
+        self.endResetModel()
+
 
 class ArrayDelegate(QItemDelegate):
     """Array Editor Item Delegate.
@@ -1010,12 +1038,12 @@ class LabelsView(QTableView):
 
         # Set default size of cells
         self.horizontalHeader().setDefaultSectionSize(64)
-        if model.get_position() == 'x':
+        if isinstance(model, XLabelsModel):
             self.verticalHeader().setResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(20)
 
         # Hide vertical/horizontal header
-        if model.get_position() == 'y':
+        if isinstance(model, YLabelsModel):
             self.horizontalHeader().hide()
 
         # Hide scrollbars
@@ -1028,7 +1056,7 @@ class LabelsView(QTableView):
 
     def updateGeometry(self):
         model = self.model()
-        if model.get_position() == 'x':
+        if isinstance(model, XLabelsModel):
             # Set maximum height
             maximum_height = self.horizontalHeader().height()
             for r in range(model.rowCount()):
@@ -1044,8 +1072,9 @@ class LabelsView(QTableView):
         super().updateGeometry()
 
     def updateView(self):
-        if self.model().get_position() == 'x':
-            nb_axes = self.model().axisCount()
+        model = self.model()
+        if isinstance(model, XLabelsModel):
+            nb_axes = model.axisCount()
             # Hide vertical header if only one axis (no ylabels)
             if nb_axes == 1:
                 self.verticalHeader().setFixedWidth(0)
@@ -1059,7 +1088,7 @@ class LabelsView(QTableView):
                 self.horizontalHeader().setResizeMode(
                     logicalIndex, QHeaderView.Fixed)
         else:
-            nb_axes = self.model().columnCount() + 1
+            nb_axes = model.columnCount() + 1
             if nb_axes == 1:
                 self.verticalHeader().setFixedWidth(0)
             else:
@@ -1454,10 +1483,10 @@ class ArrayEditorWidget(QWidget):
         if not isinstance(data, (np.ndarray, la.LArray)):
             data = np.array(data)
 
-        self.model_xlabels = LabelsModel('x', None, readonly=readonly, parent=self)
+        self.model_xlabels = XLabelsModel(None, readonly=readonly, parent=self)
         view_xlabels = LabelsView(self, self.model_xlabels)
 
-        self.model_ylabels = LabelsModel('y', None, readonly=readonly, parent=self)
+        self.model_ylabels = YLabelsModel(None, readonly=readonly, parent=self)
         view_ylabels = LabelsView(self, self.model_ylabels)
 
         self.model_data = ArrayModel(None, readonly=readonly, parent=self,
