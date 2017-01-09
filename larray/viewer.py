@@ -474,7 +474,6 @@ class AbstractLabelModel(QAbstractTableModel):
         if bottom is None:
             bottom = self.rowCount()
         values = self._data[left:right, top:bottom].copy()
-        print(values)
         return values
 
 
@@ -551,6 +550,94 @@ class YLabelsModel(AbstractLabelModel):
 
     def columnCount(self, parent=None, *args, **kwargs):
         return len(self._data) - 1
+
+
+class AbstractLabelView(QTableView):
+    """"Labels view class"""
+    def __init__(self,  parent, model):
+        QTableView.__init__(self, parent)
+
+        self.setModel(model)
+        self.setSelectionMode(QTableView.ContiguousSelection)
+
+        # Set default size of cells
+        self.horizontalHeader().setDefaultSectionSize(64)
+        self.verticalHeader().setDefaultSectionSize(20)
+
+        # Hide scrollbars
+        self.horizontalScrollBar().hide()
+        self.verticalScrollBar().hide()
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.model().modelReset.connect(self.updateView)
+
+    def updateView(self):
+        raise NotImplementedError()
+
+
+class XLabelsView(AbstractLabelView):
+    """"Labels view class"""
+    def __init__(self,  parent, model):
+        if not isinstance(model, XLabelsModel):
+            raise TypeError( "Expected model of type {}. Received {} instead".format(
+                XLabelsModel.__name__, type(model)) )
+        AbstractLabelView.__init__(self, parent, model)
+
+    def updateGeometry(self):
+        # Set maximum height
+        maximum_height = self.horizontalHeader().height()
+        for r in range(self.model().rowCount()):
+            maximum_height += self.rowHeight(r)
+        self.setFixedHeight(maximum_height)
+
+        super().updateGeometry()
+
+    def updateView(self):
+        nb_axes = self.model().axisCount()
+        # Hide vertical header if only one axis (no ylabels)
+        if nb_axes == 1:
+            self.verticalHeader().setFixedWidth(0)
+            self.verticalHeader().hide()
+        else:
+            self.verticalHeader().setFixedWidth(20)
+            self.verticalHeader().setVisible(True)
+        # Freeze the first (nb_axes - 1) columns --> ylabels
+        self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
+        for logicalIndex in range(0, nb_axes-1):
+            self.horizontalHeader().setResizeMode(
+                logicalIndex, QHeaderView.Fixed)
+
+        self.updateGeometry()
+
+
+class YLabelsView(AbstractLabelView):
+    """"Labels view class"""
+    def __init__(self,  parent, model):
+        if not isinstance(model, YLabelsModel):
+            raise TypeError("Expected model of type {}. Received {} instead".format(
+                YLabelsModel.__name__, type(model)))
+        AbstractLabelView.__init__(self, parent, model)
+
+        # Hide vertical/horizontal header
+        self.horizontalHeader().hide()
+
+    def updateGeometry(self):
+        # Set maximum width
+        maximum_width = self.verticalHeader().width()
+        for c in range(self.model().columnCount()):
+            maximum_width += self.columnWidth(c)
+        self.setFixedWidth(maximum_width)
+
+        super().updateGeometry()
+
+    def updateView(self):
+        if not self.model().columnCount():
+            self.verticalHeader().setFixedWidth(0)
+        else:
+            self.verticalHeader().setFixedWidth(20)
+
+        self.updateGeometry()
 
 
 class ArrayModel(QAbstractTableModel):
@@ -1028,83 +1115,6 @@ class ArrayDelegate(QItemDelegate):
         editor.setText(text)
 
 
-class LabelsView(QTableView):
-    """"Labels view class"""
-    def __init__(self,  parent, model):
-        QTableView.__init__(self, parent)
-
-        self.setModel(model)
-        self.setSelectionMode(QTableView.ContiguousSelection)
-
-        # Set default size of cells
-        self.horizontalHeader().setDefaultSectionSize(64)
-        if isinstance(model, XLabelsModel):
-            self.verticalHeader().setResizeMode(QHeaderView.Fixed)
-        self.verticalHeader().setDefaultSectionSize(20)
-
-        # Hide vertical/horizontal header
-        if isinstance(model, YLabelsModel):
-            self.horizontalHeader().hide()
-
-        # Hide scrollbars
-        self.horizontalScrollBar().hide()
-        self.verticalScrollBar().hide()
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        self.model().modelReset.connect(self.updateView)
-
-    def updateGeometry(self):
-        model = self.model()
-        if isinstance(model, XLabelsModel):
-            # Set maximum height
-            maximum_height = self.horizontalHeader().height()
-            for r in range(model.rowCount()):
-                maximum_height += self.rowHeight(r)
-            self.setFixedHeight(maximum_height)
-        else:
-            # Set maximum width
-            maximum_width = self.verticalHeader().width()
-            for c in range(model.columnCount()):
-                maximum_width += self.columnWidth(c)
-            self.setFixedWidth(maximum_width)
-
-        super().updateGeometry()
-
-    def updateView(self):
-        model = self.model()
-        if isinstance(model, XLabelsModel):
-            nb_axes = model.axisCount()
-            # Hide vertical header if only one axis (no ylabels)
-            if nb_axes == 1:
-                self.verticalHeader().setFixedWidth(0)
-                self.verticalHeader().hide()
-            else:
-                self.verticalHeader().setFixedWidth(20)
-                self.verticalHeader().setVisible(True)
-            # Freeze the first (nb_axes - 1) columns
-            self.horizontalHeader().setResizeMode(QHeaderView.Interactive)
-            for logicalIndex in range(0, nb_axes-1):
-                self.horizontalHeader().setResizeMode(
-                    logicalIndex, QHeaderView.Fixed)
-        else:
-            nb_axes = model.columnCount() + 1
-            if nb_axes == 1:
-                self.verticalHeader().setFixedWidth(0)
-            else:
-                self.verticalHeader().setFixedWidth(20)
-
-        self.updateGeometry()
-
-    # def updateSectionHeight(self, logicalIndex, oldSize, newSize):
-    #     self.setRowHeight(logicalIndex, newSize)
-    #     self.adjustSize()
-
-    # def updateSectionWidth(self, logicalIndex, oldSize, newSize):
-    #     self.setColumnWidth(logicalIndex, newSize)
-    #     self.adjustSize()
-
-
 class ArrayView(QTableView):
     """Array view class"""
     def __init__(self, parent, model_data, view_xlabels, view_ylabels,
@@ -1484,10 +1494,10 @@ class ArrayEditorWidget(QWidget):
             data = np.array(data)
 
         self.model_xlabels = XLabelsModel(None, readonly=readonly, parent=self)
-        view_xlabels = LabelsView(self, self.model_xlabels)
+        view_xlabels = XLabelsView(self, self.model_xlabels)
 
         self.model_ylabels = YLabelsModel(None, readonly=readonly, parent=self)
-        view_ylabels = LabelsView(self, self.model_ylabels)
+        view_ylabels = YLabelsView(self, self.model_ylabels)
 
         self.model_data = ArrayModel(None, readonly=readonly, parent=self,
                                      bg_value=bg_value, bg_gradient=bg_gradient,
