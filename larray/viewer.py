@@ -1791,15 +1791,15 @@ class ArrayEditor(QDialog):
         return self.data
 
 
-statement_pattern = re.compile('[^\[\]]+[^=]=[^=].+')
+assignment_pattern = re.compile('[^\[\]]+[^=]=[^=].+')
 setitem_pattern = re.compile('(.+)\[.+\][^=]=[^=].+')
 history_vars_pattern = re.compile('_i?\d+')
 # TODO: add all numpy scalars (except strings)
 # (long) strings are not handled correctly so should NOT be in this list
-DISPLAY_IN_GRID = (tuple, list, la.LArray, np.ndarray, int, float)
+DISPLAY_IN_GRID = (tuple, list, la.LArray, np.ndarray)
 
 
-class SessionEditor(QDialog):
+class MappingEditor(QDialog):
     """Session Editor Dialog"""
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
@@ -1820,10 +1820,9 @@ class SessionEditor(QDialog):
     def setup_and_check(self, data, title='', readonly=False,
                         minvalue=None, maxvalue=None):
         """
-        Setup SessionEditor:
+        Setup MappingEditor:
         return False if data is not supported, True otherwise
         """
-        assert isinstance(data, la.Session)
         self.data = data
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
@@ -1840,11 +1839,13 @@ class SessionEditor(QDialog):
         self.setLayout(layout)
 
         self._listwidget = QListWidget(self)
-        self.add_list_items(self.data.names)
+        arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
+        self.add_list_items(arrays)
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
-        self.arraywidget = ArrayEditorWidget(self, la.zeros(1), readonly)
+        start_array = la.zeros(1) if arrays else la.zeros(0)
+        self.arraywidget = ArrayEditorWidget(self, start_array, readonly)
 
         if qtconsole_available:
             # Create an in-process kernel
@@ -1853,9 +1854,8 @@ class SessionEditor(QDialog):
             kernel = kernel_manager.kernel
 
             kernel.shell.run_cell('from larray import *')
-            kernel.shell.push(self.data._objects)
-            text_formatter = \
-                kernel.shell.display_formatter.formatters['text/plain']
+            kernel.shell.push(dict(self.data.items()))
+            text_formatter = kernel.shell.display_formatter.formatters['text/plain']
 
             def void_formatter(array, *args, **kwargs):
                 return ''
@@ -1957,38 +1957,44 @@ class SessionEditor(QDialog):
             listitem.setText(name)
             value = self.data[name]
             if isinstance(value, la.LArray):
-                # XXX: Is having the name in the tooltip really useful?
-                listitem.setToolTip("%s: %s" % (name, value.info))
+                listitem.setToolTip(str(value.info))
 
-    def update_session(self, value):
+    def update_mapping(self, value):
+        # XXX: use ordered set so that the order is non-random if the underlying container is ordered?
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
-        # TODO: add support for deleting keys
-        new_keys = keys_after - keys_before
-        # filter types we do not want in the session (because we cannot display
-        # them in the grid and we want to keep the list synchronised with the
-        # session)
-        new_keys = [k for k in new_keys
-                    if isinstance(value[k], DISPLAY_IN_GRID)]
 
-        # display only first result if there are more than one
-        changed_keys = [k for k in keys_before | keys_after
-                        if value.get(k) is not self.data.get(k)]
-        if len(changed_keys) > 1:
-            raise NotImplementedError("modifying more than one variable at "
-                                      "once is not supported yet")
+        # deleted keys
+        for k in keys_before - keys_after:
+            if self._display_in_grid(k, self.data[k]):
+                self.delete_list_item(k)
+            del self.data[k]
+
+        # contains both new and updated keys (but not deleted keys)
+        changed_keys = [k for k in keys_after if value[k] is not self.data.get(k)]
         if changed_keys:
             # update session
             for k in changed_keys:
                 self.data[k] = value[k]
 
-            self.add_list_items(new_keys)
-            to_display = changed_keys[0]
+            # add new keys which can be displayed
+            self.add_list_items([k for k in keys_after - keys_before if self._display_in_grid(k, value[k])])
+
+            displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
+
+            # display only first result if there are more than one
+            to_display = displayable_changed_keys[0]
 
             self.select_list_item(to_display)
             return to_display
         else:
             return None
+
+    def delete_list_item(self, to_delete):
+        deleted_items = self._listwidget.findItems(to_delete, Qt.MatchExactly)
+        assert len(deleted_items) == 1
+        deleted_item_idx = self._listwidget.row(deleted_items[0])
+        self._listwidget.takeItem(deleted_item_idx)
 
     def select_list_item(self, to_display):
         changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
@@ -2007,10 +2013,10 @@ class SessionEditor(QDialog):
 
     def line_edit_update(self):
         s = self.eval_box.text()
-        if statement_pattern.match(s):
+        if assignment_pattern.match(s):
             context = self.data._objects.copy()
             exec(s, la.__dict__, context)
-            varname = self.update_session(context)
+            varname = self.update_mapping(context)
             if varname is not None:
                 self.expressions[varname] = s
         else:
@@ -2020,48 +2026,42 @@ class SessionEditor(QDialog):
         self._listwidget.clearSelection()
         self.set_widget_array(array, '<expr>')
 
+    def _display_in_grid(self, k, v):
+        return not k.startswith('__') and isinstance(v, DISPLAY_IN_GRID)
+
     def ipython_cell_executed(self):
         user_ns = self.kernel.shell.user_ns
         ip_keys = set(['In', 'Out', '_', '__', '___',
-                       '__builtin__', '__builtins__',
-                       '__doc__', '__loader__', '__name__', '__package__',
-                       '__spec__', '_dh',
-                       '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
+                       '__builtin__', 
+                       '_dh', '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
                        'exit', 'get_ipython', 'quit'])
-
-        def allowed_in_session(v):
-            return isinstance(v, (tuple, list, la.LArray, np.ndarray)) or \
-                   np.isscalar(v)
-
-        clean_ns_keys = set([k for k, v in user_ns.items()
-                             if not history_vars_pattern.match(k) and
-                                isinstance(v, DISPLAY_IN_GRID)]) - ip_keys
+        # '__builtins__', '__doc__', '__loader__', '__name__', '__package__', '__spec__',
+        clean_ns_keys = set([k for k, v in user_ns.items() if not history_vars_pattern.match(k)]) - ip_keys
         clean_ns = {k: v for k, v in user_ns.items() if k in clean_ns_keys}
 
         # user_ns['_i'] is not updated yet (refers to the -2 item)
         # In and _ih point to the same object
         last_input = user_ns['In'][-1]
-        if statement_pattern.match(last_input):
-            # updates the view if any new object is in the session or any
-            # existing name changed id()
-            self.update_session(clean_ns)
-        elif setitem_pattern.match(last_input):
+        if setitem_pattern.match(last_input):
             m = setitem_pattern.match(last_input)
             varname = m.group(1)
             # otherwise it should have failed at this point, but let us be sure
             if varname in clean_ns:
                 self.select_list_item(varname)
         else:
-            # not a statement nor setitem => assume expr
+            # not setitem => assume expr or normal assignment
             if last_input in clean_ns:
                 # the name exists in the session => select and display it
                 self.select_list_item(last_input)
             else:
+                # any statement can contain a call to a function which updates globals
+                self.update_mapping(clean_ns)
+
                 # we want to get at the last output.
                 # Out and _oh point to the same object.
                 # Out is a simple dict, so user_ns['Out'][-1] does not work.
                 last_output = user_ns['_']
-                if isinstance(last_output, DISPLAY_IN_GRID):
+                if self._display_in_grid('_', last_output):
                     self.view_expr(last_output)
 
     def on_item_changed(self, curr, prev):
@@ -2221,7 +2221,7 @@ class ArrayComparator(QDialog):
         return True
 
 
-# TODO: it should be possible to reuse both SessionEditor and ArrayComparator
+# TODO: it should be possible to reuse both MappingEditor and ArrayComparator
 class SessionComparator(QDialog):
     """Session Comparator Dialog"""
     def __init__(self, parent=None):
@@ -2421,7 +2421,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     if not title:
         title = get_title(obj, depth=depth + 1)
 
-    dlg = SessionEditor() if hasattr(obj, 'keys') else ArrayEditor()
+    dlg = MappingEditor() if hasattr(obj, 'keys') else ArrayEditor()
     if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
         dlg.exec_()
 
