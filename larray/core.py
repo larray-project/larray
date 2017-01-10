@@ -774,6 +774,15 @@ class PGroupMaker(object):
         return PGroup(key, None, self.axis)
 
 
+def _is_object_array(array):
+    return isinstance(array, np.ndarray) and array.dtype.type == np.object_
+
+
+def _contain_group_ticks(ticks):
+    can_have_groups = _is_object_array(ticks) or isinstance(ticks, (tuple, list))
+    return can_have_groups and any(isinstance(tick, Group) for tick in ticks)
+
+
 class Axis(object):
     """
     Represents an axis. It consists of a name and a list of labels.
@@ -916,11 +925,7 @@ class Axis(object):
             # LGroup ticks, it does not make a difference since a list of VG
             # and an ndarray of VG are both arrays of pointers)
             ticks = _to_ticks(labels)
-            is_object_array = isinstance(ticks, np.ndarray) and \
-                              ticks.dtype.type == np.object_
-            can_have_groups = is_object_array or isinstance(ticks, (tuple, list))
-            if can_have_groups and any(
-                    isinstance(tick, LGroup) for tick in ticks):
+            if _contain_group_ticks(ticks):
                 # avoid getting a 2d array if all LGroup have the same length
                 labels = np.empty(len(ticks), dtype=object)
                 # this does not work if some values have a length (with a valid __len__) and others not
