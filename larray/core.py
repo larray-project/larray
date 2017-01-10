@@ -1802,11 +1802,11 @@ class Group(object):
         return self.eval().__le__(other_key)
 
     def __gt__(self, other):
-        other_key = other.key if isinstance(other, Group) else other
+        other_key = other.eval() if isinstance(other, Group) else other
         return self.eval().__gt__(other_key)
 
     def __ge__(self, other):
-        other_key = other.key if isinstance(other, Group) else other
+        other_key = other.eval() if isinstance(other, Group) else other
         return self.eval().__ge__(other_key)
 
     def __contains__(self, item):
