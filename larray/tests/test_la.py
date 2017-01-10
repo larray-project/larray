@@ -185,6 +185,12 @@ class TestAxis(TestCase):
         self.assertTrue(group_equal(age.group(val_axis_name, name='a_name'),
                                     LGroup(ages, 'a_name', age)))
 
+    def test_init_from_group(self):
+        code = Axis('code', 'C01..C03')
+        code_group = code[:'C02']
+        subset_axis = Axis('code_subset', code_group)
+        assert_array_equal(subset_axis.labels, ['C01', 'C02'])
+
     def test_match(self):
         sutcode = Axis('sutcode', ['A23', 'A2301', 'A25', 'A2501'])
         self.assertEqual(sutcode.matches('^...$'), LGroup(['A23', 'A25']))
@@ -508,13 +514,20 @@ class TestLSet(TestCase):
 
 class TestAxisCollection(TestCase):
     def setUp(self):
-        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 5)])
+        self.lipro = Axis('lipro', 'P01..P04')
         self.sex = Axis('sex', 'H,F')
         self.sex2 = Axis('sex', 'F,H')
         self.age = Axis('age', '..7')
         self.geo = Axis('geo', 'A11,A12,A13')
         self.value = Axis('value', '..10')
         self.collection = AxisCollection((self.lipro, self.sex, self.age))
+
+    def test_init_from_group(self):
+        lipro_subset = self.lipro[:'P03']
+        col2 = AxisCollection((lipro_subset, self.sex))
+        self.assertEqual(col2.names, ['lipro', 'sex'])
+        assert_array_equal(col2.lipro.labels, ['P01', 'P02', 'P03'])
+        assert_array_equal(col2.sex.labels, ['H', 'F'])
 
     def test_eq(self):
         col = self.collection
