@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 __version__ = "0.18"
 
 __all__ = [
-    'LArray', 'Axis', 'AxisCollection', 'LGroup', 'PGroup',
+    'LArray', 'Axis', 'AxisCollection', 'LGroup', 'LSet', 'PGroup',
     'union', 'stack',
     'read_csv', 'read_eurostat', 'read_excel', 'read_hdf', 'read_tsv',
     'read_sas',
@@ -562,8 +562,6 @@ def _to_key(v, stack_depth=1):
         return list(v)
     elif isinstance(v, Group):
         return v.__class__(_to_key(v.key, stack_depth + 1), v.name, v.axis)
-    elif v is Ellipsis or isinstance(v, (int, list, slice, np.ndarray, LArray)):
-        return v
     elif isinstance(v, basestring):
         # axis name
         m = _axis_name_pattern.match(v)
@@ -603,6 +601,8 @@ def _to_key(v, stack_depth=1):
                             for b in v.split(',')]
                 else:
                     return _parse_bound(v, stack_depth + 1)
+    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (slice, list, np.ndarray, LArray, OrderedSet)):
+        return v
     else:
         raise TypeError("%s has an invalid type (%s) for a key"
                         % (v, type(v).__name__))
@@ -1373,7 +1373,7 @@ class Axis(object):
         elif isinstance(key, np.ndarray) and key.dtype.kind is 'b' and \
                 bool_passthrough:
             return key
-        elif isinstance(key, (tuple, list)):
+        elif isinstance(key, (tuple, list, OrderedSet)):
             # TODO: the result should be cached
             # Note that this is faster than array_lookup(np.array(key), mapping)
             res = np.empty(len(key), int)
@@ -1869,43 +1869,8 @@ class LGroup(Group):
         key = _to_key(key)
         Group.__init__(self, key, name, axis)
 
-    def _to_oset(self):
-        lkey = self.eval()
-        if np.isscalar(lkey):
-            lkey = [lkey]
-        return OrderedSet(lkey)
-
-    # method factory
-    def _binop(opname, c):
-        op_fullname = '__%s__' % opname
-
-        # TODO: implement this in a delayed fashion for reference axes
-        def opmethod(self, other):
-            if not isinstance(other, LGroup):
-                other = LGroup(other)
-            axis = self.axis if self.axis is not None else other.axis
-
-            # setting a meaningful name is hard when either one has no name
-            if self.name is not None and other.name is not None:
-                name = '%s %s %s' % (self.name, c, other.name)
-            else:
-                name = None
-            # TODO: implement this in a more efficient way for ndarray keys
-            #       which can be large
-            result_set = getattr(self._to_oset(), op_fullname)(other._to_oset())
-            return LGroup(list(result_set), name=name, axis=axis)
-        opmethod.__name__ = op_fullname
-        return opmethod
-
-    union = _binop('or', '|')
-    __or__ = union
-    __add__ = union
-
-    intersection = _binop('and', '&')
-    __and__ = intersection
-
-    difference = _binop('sub', '-')
-    __sub__ = difference
+    def set(self):
+        return LSet(self.eval(), self.name, self.axis)
 
     #XXX: return PGroup instead?
     def translate(self, bound=None, stop=False):
@@ -1931,6 +1896,53 @@ class LGroup(Group):
         else:
             # we do not check the group labels are actually valid on Axis
             return self.key
+
+
+class LSet(LGroup):
+    def __init__(self, key, name=None, axis=None):
+        key = _to_key(key)
+        if isinstance(key, LGroup):
+            if name is None:
+                name = key.name
+            if axis is None:
+                axis = key.axis
+            if not isinstance(key, LSet):
+                key = key.eval()
+        if np.isscalar(key):
+            key = [key]
+        key = OrderedSet(key)
+        LGroup.__init__(self, key, name, axis)
+
+    # method factory
+    def _binop(opname, c):
+        op_fullname = '__%s__' % opname
+
+        # TODO: implement this in a delayed fashion for reference axes
+        def opmethod(self, other):
+            if not isinstance(other, LSet):
+                other = LSet(other)
+            axis = self.axis if self.axis is not None else other.axis
+
+            # setting a meaningful name is hard when either one has no name
+            if self.name is not None and other.name is not None:
+                name = '%s %s %s' % (self.name, c, other.name)
+            else:
+                name = None
+            # TODO: implement this in a more efficient way for ndarray keys
+            #       which can be large
+            result_set = getattr(self.key, op_fullname)(other.key)
+            return LSet(result_set, name=name, axis=axis)
+        opmethod.__name__ = op_fullname
+        return opmethod
+
+    union = _binop('or', '|')
+    __or__ = union
+
+    intersection = _binop('and', '&')
+    __and__ = intersection
+
+    difference = _binop('sub', '-')
+    __sub__ = difference
 
 
 class PGroup(Group):

@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from larray import (LArray, Axis, AxisCollection, LGroup, PGroup, union,
+from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
                     read_csv, zeros, zeros_like, ndrange, ndtest,
                     ones, eye, diag, clip, exp, where, x, mean, isnan, round)
 from larray.core import _to_ticks, _to_key, df_aslarray
@@ -375,60 +375,6 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list, ['P01', 'P03', 'P07'])
         self.assertEqual(self.list, ('P01', 'P03', 'P07'))
 
-    def test_or(self):
-        # without axis
-        self.assertEqual(LGroup(['a', 'b']) | LGroup(['c', 'd']),
-                         LGroup(['a', 'b', 'c', 'd']))
-        self.assertEqual(LGroup(['a', 'b', 'c']) | LGroup(['c', 'd']),
-                         LGroup(['a', 'b', 'c', 'd']))
-        # with axis
-        alpha = Axis('alpha', 'a,b,c,d')
-        res = alpha['a', 'b'] | alpha['c', 'd']
-        self.assertIs(res.axis, alpha)
-        self.assertEqual(res, alpha['a', 'b', 'c', 'd'])
-        self.assertEqual(alpha['a', 'b', 'c'] | alpha['c', 'd'],
-                         alpha['a', 'b', 'c', 'd'])
-
-        # with axis & name
-        alpha = Axis('alpha', 'a,b,c,d')
-        res = alpha['a', 'b'].named('ab') | alpha['c', 'd'].named('cd')
-        self.assertIs(res.axis, alpha)
-        self.assertEqual(res.name, 'ab | cd')
-        self.assertEqual(res, alpha['a', 'b', 'c', 'd'])
-        self.assertEqual(alpha['a', 'b', 'c'] | alpha['c', 'd'],
-                         alpha['a', 'b', 'c', 'd'])
-
-        # numeric axis
-        num = Axis('num', range(10))
-        # single int
-        self.assertEqual(num[1, 5, 3] | 4, num[1, 5, 3, 4])
-        self.assertEqual(num[1, 5, 3] | num[4], num[1, 5, 3, 4])
-        self.assertEqual(num[4] | num[1, 5, 3], num[4, 1, 5, 3])
-        # slices
-        self.assertEqual(num[:2] | num[8:], num[0, 1, 2, 8, 9])
-        self.assertEqual(num[:2] | num[5], num[0, 1, 2, 5])
-
-    def test_and(self):
-        # without axis
-        self.assertEqual(LGroup(['a', 'b', 'c']) & LGroup(['c', 'd']),
-                         LGroup(['c']))
-        # with axis & name
-        alpha = Axis('alpha', 'a,b,c,d')
-        res = alpha['a', 'b', 'c'].named('abc') & alpha['c', 'd'].named('cd')
-        self.assertIs(res.axis, alpha)
-        self.assertEqual(res.name, 'abc & cd')
-        self.assertEqual(res, alpha[['c']])
-
-    def test_sub(self):
-        self.assertEqual(LGroup(['a', 'b', 'c']) - LGroup(['c', 'd']),
-                         LGroup(['a', 'b']))
-        self.assertEqual(LGroup(['a', 'b', 'c']) - ['c', 'd'],
-                         LGroup(['a', 'b']))
-        self.assertEqual(LGroup(['a', 'b', 'c']) - 'b',
-                         LGroup(['a', 'c']))
-        self.assertEqual(LGroup([1, 2, 3]) - 4, LGroup([1, 2, 3]))
-        self.assertEqual(LGroup([1, 2, 3]) - 2, LGroup([1, 3]))
-
     def test_sorted(self):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
                          [LGroup('a'), LGroup('b'), LGroup('c'), LGroup('d')])
@@ -494,6 +440,70 @@ class TestLGroup(TestCase):
         self.assertEqual(repr(self.slice_none_wh_named_axis), target)
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
                          "LGroup(slice(None, None, None), axis=Axis(None, [0, 1, 2]))")
+
+
+class TestLSet(TestCase):
+    def test_or(self):
+        # without axis
+        self.assertEqual(LSet(['a', 'b']) | LSet(['c', 'd']),
+                         LSet(['a', 'b', 'c', 'd']))
+        self.assertEqual(LSet(['a', 'b', 'c']) | LSet(['c', 'd']),
+                         LSet(['a', 'b', 'c', 'd']))
+        # with axis (pure)
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b'].set() | alpha['c', 'd'].set()
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res, alpha['a', 'b', 'c', 'd'].set())
+        self.assertEqual(alpha['a', 'b', 'c'].set() | alpha['c', 'd'].set(),
+                         alpha['a', 'b', 'c', 'd'].set())
+
+        # with axis (mixed)
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b'].set() | alpha['c', 'd']
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res, alpha['a', 'b', 'c', 'd'].set())
+        self.assertEqual(alpha['a', 'b', 'c'].set() | alpha['c', 'd'],
+                         alpha['a', 'b', 'c', 'd'].set())
+
+        # with axis & name
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b'].set().named('ab') | alpha['c', 'd'].set().named('cd')
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res.name, 'ab | cd')
+        self.assertEqual(res, alpha['a', 'b', 'c', 'd'].set())
+        self.assertEqual(alpha['a', 'b', 'c'].set() | alpha['c', 'd'],
+                         alpha['a', 'b', 'c', 'd'].set())
+
+        # numeric axis
+        num = Axis('num', range(10))
+        # single int
+        self.assertEqual(num[1, 5, 3].set() | 4, num[1, 5, 3, 4].set())
+        self.assertEqual(num[1, 5, 3].set() | num[4], num[1, 5, 3, 4].set())
+        self.assertEqual(num[4].set() | num[1, 5, 3], num[4, 1, 5, 3].set())
+        # slices
+        self.assertEqual(num[:2].set() | num[8:], num[0, 1, 2, 8, 9].set())
+        self.assertEqual(num[:2].set() | num[5], num[0, 1, 2, 5].set())
+
+    def test_and(self):
+        # without axis
+        self.assertEqual(LSet(['a', 'b', 'c']) & LSet(['c', 'd']),
+                         LSet(['c']))
+        # with axis & name
+        alpha = Axis('alpha', 'a,b,c,d')
+        res = alpha['a', 'b', 'c'].named('abc').set() & alpha['c', 'd'].named('cd')
+        self.assertIs(res.axis, alpha)
+        self.assertEqual(res.name, 'abc & cd')
+        self.assertEqual(res, alpha[['c']].set())
+
+    def test_sub(self):
+        self.assertEqual(LSet(['a', 'b', 'c']) - LSet(['c', 'd']),
+                         LSet(['a', 'b']))
+        self.assertEqual(LSet(['a', 'b', 'c']) - ['c', 'd'],
+                         LSet(['a', 'b']))
+        self.assertEqual(LSet(['a', 'b', 'c']) - 'b',
+                         LSet(['a', 'c']))
+        self.assertEqual(LSet([1, 2, 3]) - 4, LSet([1, 2, 3]))
+        self.assertEqual(LSet([1, 2, 3]) - 2, LSet([1, 3]))
 
 
 class TestAxisCollection(TestCase):
