@@ -1066,11 +1066,10 @@ class Axis(object):
 
         Parameters
         ----------
-        key : key
-            Input key can be a LArray or a (collection of) label(s).
+        key : int, or collection (list, slice, array, LArray) of them
+            Position(s) of labels to use for the new axis.
         name : str, optional
-            Name of the subaxis.
-            If input name is None, the name of the subaxis is the same as parent axis.
+            Name of the subaxis. Defaults to the name of the parent axis.
 
         Returns
         -------
@@ -1078,10 +1077,6 @@ class Axis(object):
             Subaxis.
             If key is a None slice and name is None, the original Axis is returned.
             If key is a LArray, the list of axes is returned.
-
-        Notes
-        -----
-        key is index-based (slice and fancy indexing are supported)
 
         Examples
         --------
