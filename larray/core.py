@@ -114,7 +114,6 @@ from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           duplicates, array_lookup2, skip_comment_cells,
                           strip_rows, find_closing_chr, PY3)
 
-
 def _range_to_slice(seq, length=None):
     """
     Returns a slice if possible (including for sequences of 1 element)
@@ -466,7 +465,7 @@ def _to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
-def _parse_bound(s, stack_depth=1):
+def _parse_bound(s, stack_depth=1, parse_int=True):
     """Parse a string representing a single value, converting int-like
     strings to integers and evaluating expressions within {}.
 
@@ -501,7 +500,7 @@ def _parse_bound(s, stack_depth=1):
     elif s[0] == '{':
         expr = s[1:find_closing_chr(s)]
         return eval(expr, sys._getframe(stack_depth).f_locals)
-    elif s.isdigit() or (s[0] == '-' and s[1:].isdigit()):
+    elif parse_int and (s.isdigit() or (s[0] == '-' and s[1:].isdigit())):
         return int(s)
     else:
         return s
@@ -510,7 +509,7 @@ def _parse_bound(s, stack_depth=1):
 _axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
 
 
-def _to_key(v, stack_depth=1):
+def _to_key(v, stack_depth=1, parse_single_int=False):
     """
     Converts a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
@@ -537,6 +536,12 @@ def _to_key(v, stack_depth=1):
     'a'
     >>> _to_key(10)
     10
+    >>> _to_key('10')
+    '10'
+    >>> _to_key('10:20')
+    slice(10, 20, None)
+    >>> _to_key(slice('10', '20'))
+    slice('10', '20', None)
     >>> _to_key('year.i[-1]')
     PGroup(-1, axis='year')
     >>> _to_key('age[10:19]>>teens')
@@ -582,7 +587,8 @@ def _to_key(v, stack_depth=1):
             key = key[:-1]
         cls = PGroup if positional else LGroup
         if name is not None or axis is not None:
-            return cls(_to_key(key, stack_depth + 1), name=name, axis=axis)
+            key = _to_key(key, stack_depth + 1, parse_single_int=positional)
+            return cls(key, name=name, axis=axis)
         else:
             numcolons = v.count(':')
             if numcolons:
@@ -600,7 +606,7 @@ def _to_key(v, stack_depth=1):
                     return [_parse_bound(b, stack_depth + 2)
                             for b in v.split(',')]
                 else:
-                    return _parse_bound(v, stack_depth + 1)
+                    return _parse_bound(v, stack_depth + 1, parse_int=parse_single_int)
     elif v is Ellipsis or np.isscalar(v) or isinstance(v, (slice, list, np.ndarray, LArray, OrderedSet)):
         return v
     else:

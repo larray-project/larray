@@ -229,9 +229,9 @@ class TestAxis(TestCase):
         # normal Axis
         age = Axis('age', '..10')
 
-        age2 = age.group('2')
-        age2bis = age.group('2,')
-        age2ter = age.group(['2'])
+        age2 = age.group(2)
+        age2bis = age.group((2,))
+        age2ter = age.group([2])
         age2qua = '2,'
 
         age20 = LGroup('20')
