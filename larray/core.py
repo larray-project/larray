@@ -1348,26 +1348,16 @@ class Axis(object):
         except (KeyError, TypeError, IndexError):
             pass
 
+        if isinstance(key, basestring):
+            # transform "specially formatted strings" for slices, lists, LGroup and PGroup to actual objects
+            key = _to_key(key)
+
         if isinstance(key, PGroup):
             return key.key
 
         if isinstance(key, LGroup):
             # at this point we do not care about the axis nor the name
             key = key.key
-
-        if isinstance(key, basestring):
-            # transform "specially formatted strings" for slices and lists to
-            # actual objects
-            key = _to_key(key)
-            # if key was a string of the form "name=value", it can be an
-            # LGroup now, so we have to take the key from it *again*.
-            # XXX: one way to not do that twice would be to apply to_key
-            # to LGroup keys *before* storing them. This way we could simply
-            # handle string keys before LGroup keys (since a string in an
-            # LGroup would not need further processing)
-            if isinstance(key, LGroup):
-                # at this point we do not care about the axis nor the name
-                key = key.key
 
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
