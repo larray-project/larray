@@ -2483,6 +2483,24 @@ def compare(*args, **kwargs):
         dlg.exec_()
 
 
+_orig_display_hook = sys.displayhook
+
+
+def _qt_display_hook(value):
+    if isinstance(value, la.LArray):
+        view(value)
+    else:
+        _orig_display_hook(value)
+
+
+def install_display_hook():
+    sys.displayhook = _qt_display_hook
+
+
+def restore_display_hook():
+    sys.displayhook = _orig_display_hook
+
+
 if __name__ == "__main__":
     """Array editor test"""
 

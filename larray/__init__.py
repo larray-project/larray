@@ -6,24 +6,7 @@ from larray.ufuncs import *
 from larray.excel import open_excel
 
 try:
-    import sys
-
-    from qtpy import QtGui, QtCore, QtWidgets
-
     from larray.viewer import view, edit, compare
-
-    orig_hook = sys.displayhook
-
-    def qt_display_hook(value):
-        if isinstance(value, LArray):
-            view(value)
-        else:
-            orig_hook(value)
-
-    sys.displayhook = qt_display_hook
-
-    # cleanup namespace
-    del QtGui, QtCore, QtWidgets, sys
 except ImportError:
     def view(*args, **kwargs):
         raise Exception('view() is not available because Qt is not installed')
@@ -32,5 +15,4 @@ except ImportError:
         raise Exception('edit() is not available because Qt is not installed')
 
     def compare(*args, **kwargs):
-        raise Exception('compare() is not available because Qt is not '
-                        'installed')
+        raise Exception('compare() is not available because Qt is not installed')
