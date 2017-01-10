@@ -1995,11 +1995,14 @@ class SessionEditor(QDialog):
         assert len(changed_items) == 1
         prev_selected = self._listwidget.selectedItems()
         assert len(prev_selected) <= 1
-        # if the currently selected item (value) is modified
+        # if the currently selected item (value) need to be refreshed (e.g it was modified)
         if prev_selected and prev_selected[0] == changed_items[0]:
             # we need to update the array widget explicitly
             self.set_widget_array(self.data[to_display], to_display)
         else:
+            # for some reason, on_item_changed is not triggered when no item was selected
+            if not prev_selected:
+                self.set_widget_array(self.data[to_display], to_display)
             self._listwidget.setCurrentItem(changed_items[0])
 
     def line_edit_update(self):
