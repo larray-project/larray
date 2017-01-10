@@ -6237,21 +6237,24 @@ class LArray(object):
             return self._aggregate(func, args, kwargs,
                                    keepaxes=keepaxes,
                                    commutative=commutative)
+        def method_by(self, *args, **kwargs):
+            return method(self, *(self.axes - args), **kwargs)
         if name is None:
             name = npfunc.__name__
         method.__name__ = name
-        return method
+        method_by.__name__ = name + "_by"
+        return method, method_by
 
-    all = _agg_method(np.all, commutative=True)
-    any = _agg_method(np.any, commutative=True)
+    all, all_by = _agg_method(np.all, commutative=True)
+    any, any_by = _agg_method(np.any, commutative=True)
     # commutative modulo float precision errors
-    sum = _agg_method(np.sum, np.nansum, commutative=True)
+    sum, sum_by = _agg_method(np.sum, np.nansum, commutative=True)
     # nanprod needs numpy 1.10
-    prod = _agg_method(np.prod, np_nanprod, commutative=True)
-    min = _agg_method(np.min, np.nanmin, commutative=True)
-    max = _agg_method(np.max, np.nanmax, commutative=True)
-    mean = _agg_method(np.mean, np.nanmean, commutative=True)
-    median = _agg_method(np.median, np.nanmedian, commutative=True)
+    prod, prod_by = _agg_method(np.prod, np_nanprod, commutative=True)
+    min, min_by = _agg_method(np.min, np.nanmin, commutative=True)
+    max, max_by = _agg_method(np.max, np.nanmax, commutative=True)
+    mean, mean_by = _agg_method(np.mean, np.nanmean, commutative=True)
+    median, median_by = _agg_method(np.median, np.nanmedian, commutative=True)
 
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
@@ -6264,10 +6267,13 @@ class LArray(object):
         return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
                                commutative=True, extra_kwargs={'q': q})
 
+    def percentile_by(self, q, *args, **kwargs):
+        return self.percentile(q, *(self.axes - args), **kwargs)
+
     # not commutative
-    ptp = _agg_method(np.ptp)
-    var = _agg_method(np.var, np.nanvar)
-    std = _agg_method(np.std, np.nanstd)
+    ptp, ptp_by = _agg_method(np.ptp)
+    var, var_by = _agg_method(np.var, np.nanvar)
+    std, std_by = _agg_method(np.std, np.nanstd)
 
     # cumulative aggregates
     def cumsum(self, axis=-1):
