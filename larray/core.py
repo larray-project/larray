@@ -329,7 +329,7 @@ _range_str_pattern = re.compile('(?P<start>\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step
 
 def _range_str_to_range(s):
     """
-    Converts a slice string to a range (of values).
+    Converts a range string to a range (of values).
     The end point is included.
 
     Parameters
