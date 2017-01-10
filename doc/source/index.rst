@@ -8,7 +8,7 @@ Contents:
 
    intro
    api
-   notebook
+   notebooks/LArray_intro.ipynb
 
 Indices and tables
 ==================
