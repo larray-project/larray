@@ -6439,7 +6439,9 @@ class LArray(object):
             else:
                 return self / other
         else:
+            old_settings = np.seterr(divide='ignore', invalid='ignore')
             res = self / other
+            np.seterr(**old_settings)
             res[other == 0] = 0
             return res
 
