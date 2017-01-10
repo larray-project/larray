@@ -38,7 +38,8 @@ extensions = [
     'sphinx.ext.extlinks',
     'numpydoc',
     'nbsphinx',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
+    'IPython.sphinxext.ipython_console_highlighting'
 ]
 
 extlinks = {'issue': ('https://github.com/liam2/larray/issues/%s',
