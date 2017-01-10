@@ -93,12 +93,14 @@ import numpy as np
 
 try:
     import matplotlib
-    matplotlib.use('Qt4Agg')
-    del matplotlib
-    import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_qt4agg import FigureCanvas as FigureCanvas
-    from matplotlib.backends.backend_qt4agg \
-        import NavigationToolbar2QT as NavigationToolbar
+    from matplotlib.figure import Figure
+    try:
+        from matplotlib.backends.backend_qt5agg import FigureCanvas
+        from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+    except Exception:
+        from matplotlib.backends.backend_qt4agg import FigureCanvas
+        from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
     matplotlib_present = True
 except ImportError:
     matplotlib_present = False
@@ -1166,7 +1168,7 @@ class ArrayView(QTableView):
         assert row or column
         data = data[0] if column else data[:, 0]
 
-        figure = plt.figure()
+        figure = Figure()
 
         # create an axis
         ax = figure.add_subplot(111)
@@ -1849,7 +1851,6 @@ class SessionEditor(QDialog):
             kernel_manager = QtInProcessKernelManager()
             kernel_manager.start_kernel(show_banner=False)
             kernel = kernel_manager.kernel
-            kernel.gui = 'qt4'
 
             kernel.shell.run_cell('from larray import *')
             kernel.shell.push(self.data._objects)
