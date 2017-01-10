@@ -438,7 +438,7 @@ def _to_ticks(s):
     """
     if isinstance(s, Group):
         # a single LGroup used for all ticks of an Axis
-        raise NotImplementedError("not sure what to do with it yet")
+        return _to_ticks(s.eval())
     elif isinstance(s, pd.Index):
         return s.values
     elif isinstance(s, np.ndarray):
@@ -2064,6 +2064,8 @@ class AxisCollection(object):
                 assert len(obj) == 2
                 name, labels = obj
                 return Axis(name, labels)
+            elif isinstance(obj, Group):
+                return Axis(obj.axis, obj.eval())
             else:
                 if isinstance(obj, str) and '=' in obj:
                     name, labels = [o.strip() for o in obj.split('=')]
