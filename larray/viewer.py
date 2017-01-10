@@ -2397,40 +2397,32 @@ def get_title(obj, depth=0, maxnames=3):
     return ', '.join(names)
 
 
-def edit(obj=None, title='', minvalue=None, maxvalue=None):
+def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
-    Starts a new editor window. If no session object or
-    array dictionary is provided as argument, all local
-    arrays are loaded in the editor.
+    Opens a new editor window. If no object is given, all local arrays are loaded in the editor.
 
-    obj : Session or dict of LArray, optional
-        Session or a dictionary of arrays to
-        load in user interface. By default,
-        all existing local arrays are loaded.
+    obj : np.ndarray, LArray, Session or dict, optional
+        Object to visualize. Defaults to the collection of all local variables where the function was called.
     title : str, optional
-        Title for the current session.
-        A default one is generated if not provided.
+        Title for the current object. A default one is generated if not provided.
     minvalue : scalar, optional
         Minimum value allowed.
     maxvalue : scalar, optional
         Maximum value allowed.
+    readonly : bool, optional
+        Whether or not editing array values is forbidden Defaults to False.
+    depth : int, optional
+        Stack depth where to look for variables.
     """
     _app = qapplication()
     if obj is None:
-        obj = la.local_arrays(depth=1)
-    elif isinstance(obj, dict) and \
-            all(isinstance(o, la.LArray) for o in obj.values()):
-        obj = la.Session(obj)
+        obj = sys._getframe(depth + 1).f_locals
 
     if not title:
-        title = get_title(obj, depth=1)
+        title = get_title(obj, depth=depth + 1)
 
-    if isinstance(obj, la.Session):
-        dlg = SessionEditor()
-    else:
-        dlg = ArrayEditor()
-    if dlg.setup_and_check(obj, title=title,
-                           minvalue=minvalue, maxvalue=maxvalue):
+    dlg = SessionEditor() if hasattr(obj, 'keys') else ArrayEditor()
+    if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
         dlg.exec_()
 
 
@@ -2450,22 +2442,7 @@ def view(obj=None, title=''):
         Title for the current session.
         A default one is generated if not provided.
     """
-    _app = qapplication()
-    if obj is None:
-        obj = la.local_arrays(depth=1)
-    elif isinstance(obj, dict) and \
-            all(isinstance(o, la.LArray) for o in obj.values()):
-        obj = la.Session(obj)
-
-    if not title:
-        title = get_title(obj, depth=1)
-
-    if isinstance(obj, la.Session):
-        dlg = SessionEditor()
-    else:
-        dlg = ArrayEditor()
-    if dlg.setup_and_check(obj, title=title, readonly=True):
-        dlg.exec_()
+    edit(obj, title=title, readonly=True, depth=1)
 
 
 def compare(*args, **kwargs):
