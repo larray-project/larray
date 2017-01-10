@@ -1183,18 +1183,17 @@ class Axis(object):
 
     def matches(self, pattern):
         """
-        Returns a group with all the labels matching the specified pattern
-        (regular expression).
+        Returns a group with all the labels matching the specified pattern (regular expression).
 
         Parameters
         ----------
-        pattern : str
+        pattern : str or Group
             Regular expression (regex).
 
         Returns
         -------
         LGroup
-            Group containing all label(s) matching the pattern.
+            Group containing all the labels matching the pattern.
 
         Notes
         -----
@@ -1217,22 +1216,24 @@ class Axis(object):
         LGroup(['Bruce Willis', 'Arthur Dent'],
                axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
+        if isinstance(pattern, Group):
+            pattern = pattern.eval()
         rx = re.compile(pattern)
         return LGroup([v for v in self.labels if rx.match(v)], axis=self)
 
     def startswith(self, prefix):
         """
-        Returns a group with the labels starting with the specified string
+        Returns a group with the labels starting with the specified string.
 
         Parameters
         ----------
-        pattern : str
-            Pattern describing the first part of labels you want to get.
+        prefix : str or Group
+            The prefix to search for.
 
         Returns
         -------
         LGroup
-            Group containing all label(s) starting with the given pattern.
+            Group containing all the labels starting with the given string.
 
         Examples
         --------
@@ -1241,8 +1242,9 @@ class Axis(object):
         LGroup(['Bruce Wayne', 'Bruce Willis'],
                axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
-        return LGroup([v for v in self.labels if v.startswith(prefix)],
-                      axis=self)
+        if isinstance(prefix, Group):
+            prefix = prefix.eval()
+        return LGroup([v for v in self.labels if v.startswith(prefix)], axis=self)
 
     def endswith(self, suffix):
         """
@@ -1250,13 +1252,13 @@ class Axis(object):
 
         Parameters
         ----------
-        pattern : str
-            Pattern describing the last part of labels you want to get.
+        suffix : str or Group
+            The suffix to search for.
 
         Returns
         -------
         LGroup
-            Group containing all label(s) ending with the given pattern.
+            Group containing all the labels ending with the given string.
 
         Examples
         --------
@@ -1265,8 +1267,9 @@ class Axis(object):
         LGroup(['Arthur Dent', 'Harvey Dent'],
                axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
         """
-        return LGroup([v for v in self.labels if v.endswith(suffix)],
-                      axis=self)
+        if isinstance(suffix, Group):
+            suffix = suffix.eval()
+        return LGroup([v for v in self.labels if v.endswith(suffix)], axis=self)
 
     def __len__(self):
         return self._length
