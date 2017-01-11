@@ -179,7 +179,7 @@ def _range_to_slice(seq, length=None):
     return slice(start, stop, step)
 
 
-def _slice_to_str(key, use_repr=False):
+def _slice_to_str(key, repr_func=str):
     """
     Converts a slice to a string
 
@@ -197,10 +197,9 @@ def _slice_to_str(key, use_repr=False):
     ':5:2'
     """
     # examples of result: ":24" "25:" ":" ":5:2"
-    func = repr if use_repr else str
-    start = func(key.start) if key.start is not None else ''
-    stop = func(key.stop) if key.stop is not None else ''
-    step = (":" + func(key.step)) if key.step is not None else ''
+    start = repr_func(key.start) if key.start is not None else ''
+    stop = repr_func(key.stop) if key.stop is not None else ''
+    step = (":" + repr_func(key.step)) if key.step is not None else ''
     return '%s:%s%s' % (start, stop, step)
 
 
@@ -543,11 +542,13 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     >>> _to_key(slice('10', '20'))
     slice('10', '20', None)
     >>> _to_key('year.i[-1]')
-    PGroup(-1, axis='year')
+    year.i[-1]
     >>> _to_key('age[10:19]>>teens')
-    LGroup(slice(10, 19, None), name='teens', axis='age')
+    age[10:19] >> 'teens'
     >>> _to_key('a,b,c >> abc')
-    LGroup(['a', 'b', 'c'], name='abc')
+    LGroup(['a', 'b', 'c']) >> 'abc'
+    >>> _to_key('a:c >> abc')
+    LGroup(slice('a', 'c', None)) >> 'abc'
 
     # evaluated variables do not work on Python 2, probably because the stackdepth is different
     # >>> ext = [1, 2, 3]
@@ -638,7 +639,7 @@ def to_keys(value, stack_depth=1):
     >>> to_keys('P01;P02,P03;:')
     ('P01', ['P02', 'P03'], slice(None, None, None))
 
-    # evaluated variables do not work on Python 2, probably because the stackdepth is different
+    # evaluated variables do not work on Python 2, probably because the stack depth is different
     # >>> ext = 'P03'
     # >>> to_keys('P01,P02,{ext}')
     # ['P01', 'P02', 'P03']
@@ -646,9 +647,7 @@ def to_keys(value, stack_depth=1):
     # ('P01', 'P02', 'P03')
 
     >>> to_keys('age[10:19] >> teens ; year.i[-1]')
-    ... # doctest: +NORMALIZE_WHITESPACE
-    (LGroup(slice(10, 19, None), name='teens', axis='age'),
-     PGroup(-1, axis='year'))
+    (age[10:19] >> 'teens', year.i[-1])
 
     # >>> to_keys('P01,P02,:') # <-- INVALID !
     # it should have an explicit failure
@@ -744,7 +743,7 @@ def _isnoneslice(v):
     return isinstance(v, slice) and v == slice(None)
 
 
-def _seq_summary(seq, n=3, func=repr, sep=' '):
+def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
     """
     Returns a string representing a sequence by showing only the n first and last elements.
 
@@ -756,7 +755,7 @@ def _seq_summary(seq, n=3, func=repr, sep=' '):
     def shorten(l):
         return l if len(l) <= 2 * n else l[:n] + ['...'] + list(l[-n:])
 
-    return sep.join(shorten([func(l) for l in seq]))
+    return sep.join(shorten([repr_func(l) for l in seq]))
 
 
 class PGroupMaker(object):
@@ -1025,7 +1024,7 @@ class Axis(object):
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
         >>> odd_years = time.group([2007, 2009], name='odd_years')
         >>> odd_years
-        LGroup([2007, 2009], name='odd_years', axis=Axis('time', [2007, 2008, 2009, 2010]))
+        time[2007, 2009] >> 'odd_years'
         """
         name = kwargs.pop('name', None)
         if kwargs:
@@ -1212,15 +1211,13 @@ class Axis(object):
 
         All labels starting with "W" and ending with "o" are given by
 
-        >>> people.matches('W.*o')  # doctest: +NORMALIZE_WHITESPACE
-        LGroup(['Waldo'],
-               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
+        >>> people.matches('W.*o')
+        people['Waldo']
 
         All labels not containing character "a"
 
-        >>> people.matches('[^a]*$')  # doctest: +NORMALIZE_WHITESPACE
-        LGroup(['Bruce Willis', 'Arthur Dent'],
-               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
+        >>> people.matches('[^a]*$')
+        people['Bruce Willis', 'Arthur Dent']
         """
         if isinstance(pattern, Group):
             pattern = pattern.eval()
@@ -1244,9 +1241,8 @@ class Axis(object):
         Examples
         --------
         >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.startswith('Bru')  # doctest: +NORMALIZE_WHITESPACE
-        LGroup(['Bruce Wayne', 'Bruce Willis'],
-               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
+        >>> people.startswith('Bru')
+        people['Bruce Wayne', 'Bruce Willis']
         """
         if isinstance(prefix, Group):
             prefix = prefix.eval()
@@ -1269,9 +1265,8 @@ class Axis(object):
         Examples
         --------
         >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
-        >>> people.endswith('Dent')  # doctest: +NORMALIZE_WHITESPACE
-        LGroup(['Arthur Dent', 'Harvey Dent'],
-               axis=Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent']))
+        >>> people.endswith('Dent')
+        people['Arthur Dent', 'Harvey Dent']
         """
         if isinstance(suffix, Group):
             suffix = suffix.eval()
@@ -1435,7 +1430,7 @@ class Axis(object):
                 return repr(v)
             else:
                 return str(v)
-        return _seq_summary(self.labels, func=repr_on_strings)
+        return _seq_summary(self.labels, repr_func=repr_on_strings)
 
     # method factory
     def _binop(opname):
@@ -1556,6 +1551,8 @@ class Axis(object):
 class Group(object):
     """Abstract Group.
     """
+    format_string = None
+
     def __init__(self, key, name=None, axis=None):
         if isinstance(key, tuple):
             key = list(key)
@@ -1582,29 +1579,34 @@ class Group(object):
         # name. See test_la.py:test_...
         self.axis = axis
 
-    def __str__(self):
-        if self.name is not None:
-            return self.name
-        else:
-            key = self.eval()
-            if isinstance(key, slice):
-                str_key = _slice_to_str(key, use_repr=True)
-            elif isinstance(key, (tuple, list, np.ndarray)):
-                str_key = _seq_summary(key, 1)
-            else:
-                str_key = repr(key)
-            if self.axis is None:
-                if isinstance(key, (tuple, list, np.ndarray)):
-                    return '[{}]'.format(str_key)
-                else:
-                    return str_key
-            else:
-                return '{}[{}]'.format(str(self.axis), str_key)
-
     def __repr__(self):
-        name = ", name=%r" % self.name if self.name is not None else ''
-        axis = ", axis=%r" % self.axis if self.axis is not None else ''
-        return "%s(%r%s%s)" % (self.__class__.__name__, self.key, name, axis)
+        key = self.key
+
+        # eval only returns a slice for groups without an Axis object
+        if isinstance(key, slice):
+            key_repr = _slice_to_str(key, repr_func=repr)
+        elif isinstance(key, (tuple, list, np.ndarray)):
+            key_repr = _seq_summary(key, n=1000, repr_func=repr, sep=', ')
+        else:
+            key_repr = repr(key)
+
+        axis_name = self.axis.name if isinstance(self.axis, Axis) else self.axis
+        if axis_name is not None:
+            axis_name = 'x.{}'.format(axis_name) if isinstance(self.axis, AxisReference) else axis_name
+            s = self.format_string.format(axis=axis_name, key=key_repr)
+        else:
+            if self.axis is not None:
+                # anonymous axis
+                axis_ref = ', axis={}'.format(repr(self.axis))
+            else:
+                axis_ref = ''
+            if isinstance(key, slice):
+                key_repr = repr(key)
+            elif isinstance(key, list):
+                key_repr = '[{}]'.format(key_repr)
+            s = '{}({}{})'.format(self.__class__.__name__, key_repr, axis_ref)
+        return "{} >> {}".format(s, repr(self.name)) if self.name is not None else s
+    __str__ = __repr__
 
     def translate(self, bound=None, stop=False):
         """
@@ -1691,25 +1693,16 @@ class Group(object):
         Examples
         --------
         >>> age = Axis('age', range(10))
-        >>> age[[1, 2, 3, 4, 5]].by(2)  # doctest: +NORMALIZE_WHITESPACE
-        (LGroup([1, 2], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         LGroup([3, 4], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         LGroup([5], axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        >>> age[1:5].by(2)  # doctest: +NORMALIZE_WHITESPACE
-        (PGroup(slice(1, 3, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         PGroup(slice(3, 5, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        >>> age[1:5].by(2, 4)  # doctest: +NORMALIZE_WHITESPACE
-        (PGroup(slice(1, 3, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        >>> age[1:5].by(3, 2)  # doctest: +NORMALIZE_WHITESPACE
-        (PGroup(slice(1, 4, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         PGroup(slice(3, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
-         PGroup(slice(5, 6, None), axis=Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
-        >>> x.age[[0, 1, 2, 3, 4]].by(2)  # doctest: +NORMALIZE_WHITESPACE
-        (LGroup([0, 1], axis=AxisReference('age')),
-         LGroup([2, 3], axis=AxisReference('age')),
-         LGroup([4], axis=AxisReference('age')))
+        >>> age[[1, 2, 3, 4, 5]].by(2)
+        (age[1, 2], age[3, 4], age[5])
+        >>> age[1:5].by(2)
+        (age.i[1:3], age.i[3:5], age.i[5:6])
+        >>> age[1:5].by(2, 4)
+        (age.i[1:3], age.i[5:6])
+        >>> age[1:5].by(3, 2)
+        (age.i[1:4], age.i[3:6], age.i[5:6])
+        >>> x.age[[0, 1, 2, 3, 4]].by(2)
+        (x.age[0, 1], x.age[2, 3], x.age[4])
         """
         if step is None:
             step = length
@@ -1859,8 +1852,10 @@ class LGroup(Group):
     >>> age = Axis('age', '0..100')
     >>> teens = x.age[10:19].named('teens')
     >>> teens
-    LGroup(slice(10, 19, None), name='teens', axis=AxisReference('age'))
+    x.age[10:19] >> 'teens'
     """
+    format_string = "{axis}[{key}]"
+
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
         Group.__init__(self, key, name, axis)
@@ -1895,6 +1890,8 @@ class LGroup(Group):
 
 
 class LSet(LGroup):
+    format_string = "{axis}.set[{key}]"
+
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
         if isinstance(key, LGroup):
@@ -1957,6 +1954,8 @@ class PGroup(Group):
     axis : int, str, Axis, optional
         Axis for group.
     """
+    format_string = "{axis}.i[{key}]"
+
     def translate(self, bound=None, stop=False):
         """
         compute position(s) of group
