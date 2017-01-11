@@ -361,38 +361,26 @@ def _range_str_to_range(s):
     return generalized_range(start, stop, step)
 
 
-def _to_string(v):
+def _to_tick(v):
     """
-    Converts a (group of) tick(s) to a string
+    Converts any value to a tick (ie makes it hashable, and acceptable as an ndarray element)
+
+    scalar -> not modified
+    slice -> 'start:stop'
+    list|tuple -> 'v1,v2,v3'
+    Group with name -> v.name
+    Group without name -> _to_tick(v.key)
+    other -> str(v)
 
     Parameters:
     -----------
     v : any
-        (group of) tick(s).
+        value to be converted.
 
     Returns
     -------
-    str
-        string representing a (group of) tick(s)
-    """
-    if isinstance(v, slice):
-        return _slice_to_str(v)
-    elif isinstance(v, (tuple, list)):
-        if len(v) == 1:
-            return str(v) + ','
-        else:
-            return ','.join(str(k) for k in v)
-    else:
-        return str(v)
-
-
-def _to_tick(e):
-    """
-    Makes it hashable, and acceptable as an ndarray element
-    scalar & VG -> not modified
-    slice -> 'start:stop'
-    list|tuple -> 'v1,v2,v3'
-    other -> str(v)
+    any scalar
+        scalar representing the tick
     """
     # the fact that an "aggregated tick" is passed as a LGroup or as a
     # string should be as irrelevant as possible. The thing is that we cannot
@@ -402,10 +390,19 @@ def _to_tick(e):
     # this creates two entries in the mapping for a single tick. Besides,
     # I like having the LGroup as the tick, as it provides extra info as
     # to where it comes from.
-    if np.isscalar(e) or isinstance(e, LGroup):
-        return e
+    if np.isscalar(v):
+        return v
+    elif isinstance(v, Group):
+        return v.name if v.name is not None else _to_tick(v.key)
+    elif isinstance(v, slice):
+        return _slice_to_str(v)
+    elif isinstance(v, (tuple, list)):
+        if len(v) == 1:
+            return str(v) + ','
+        else:
+            return _seq_summary(v, n=1000, repr_func=str, sep=',')
     else:
-        return _to_string(e)
+        return str(v)
 
 
 def _to_ticks(s):
@@ -783,9 +780,19 @@ def _is_object_array(array):
     return isinstance(array, np.ndarray) and array.dtype.type == np.object_
 
 
+def _can_have_groups(seq):
+    return _is_object_array(seq) or isinstance(seq, (tuple, list))
+
+
 def _contain_group_ticks(ticks):
-    can_have_groups = _is_object_array(ticks) or isinstance(ticks, (tuple, list))
-    return can_have_groups and any(isinstance(tick, Group) for tick in ticks)
+    return _can_have_groups(ticks) and any(isinstance(tick, Group) for tick in ticks)
+
+
+def _seq_group_to_name(seq):
+    if _can_have_groups(seq):
+        return [v.name if isinstance(v, Group) else v for v in seq]
+    else:
+        return seq
 
 
 class Axis(object):
@@ -1333,8 +1340,21 @@ class Axis(object):
         """
         mapping = self._mapping
 
-        # first, try the key as-is, so that we can target elements in aggregated
-        # arrays (those are either strings containing comas or LGroups)
+        # first, for Group instances, try their name
+        if isinstance(key, Group):
+            try:
+                # avoid matching 0 against False or 0.0
+                if self._is_key_type_compatible(key.name):
+                    return mapping[key.name]
+            # we must catch TypeError because key might not be hashable (eg slice)
+            # IndexError is for when mapping is an ndarray
+            except (KeyError, TypeError, IndexError):
+                pass
+
+        # then try the key as-is:
+        # * for strings, this is useful to allow ticks with special characters
+        # * for groups, it means trying if the string representation of the whole group is in the mapping
+        #   e.g. mapping['v1,v2,v3']
         try:
             # avoid matching 0 against False or 0.0
             if self._is_key_type_compatible(key):
@@ -1368,8 +1388,12 @@ class Axis(object):
             # TODO: the result should be cached
             # Note that this is faster than array_lookup(np.array(key), mapping)
             res = np.empty(len(key), int)
-            for i, label in enumerate(key):
-                res[i] = mapping[label]
+            try:
+                for i, label in enumerate(_seq_group_to_name(key)):
+                    res[i] = mapping[label]
+            except KeyError:
+                for i, label in enumerate(key):
+                    res[i] = mapping[label]
             return res
         elif isinstance(key, np.ndarray):
             # handle fancy indexing with a ndarray of labels
@@ -1385,10 +1409,12 @@ class Axis(object):
             # (~key).astype(int) are MUCH faster
             # see C:\Users\gdm\devel\lookup_methods.py and
             #     C:\Users\gdm\Desktop\lookup_methods.html
-            return array_lookup2(key, self._sorted_keys, self._sorted_values)
+            try:
+                return array_lookup2(_seq_group_to_name(key), self._sorted_keys, self._sorted_values)
+            except KeyError:
+                return array_lookup2(key, self._sorted_keys, self._sorted_values)
         elif isinstance(key, LArray):
-            pkey = array_lookup2(key.data, self._sorted_keys, self._sorted_values)
-            return LArray(pkey, key.axes)
+            return LArray(self.translate(key.data), key.axes)
         else:
             # the first mapping[key] above will cover most cases. This code
             # path is only used if the key was given in "non normalized form"
