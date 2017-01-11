@@ -205,7 +205,7 @@ class TestAxis(TestCase):
         group = age[':3']
         self.assertEqual(group.key, slice(None, 3, None))
         self.assertTrue(group.axis.equals(age))
-        self.assertEqual(group, lg, "%s != %s" % (group, lg))
+        self.assertEqual(group, lg, "%r != %r" % (group, lg))
         # self.assertEqual(age[':7'], lg)
 
         group = age[:]
@@ -423,27 +423,13 @@ class TestLGroup(TestCase):
         self.assertEqual(d.get(LGroup(' P01 , P03 , P07 ')), 3)
         self.assertEqual(d.get(LGroup(('P01', 'P03', 'P07'))), 3)
 
-    def test_str(self):
-        self.assertEqual(str(self.slice_both_named_wh_named_axis), "full")
-        self.assertEqual(str(self.slice_both_named), "named")
-        self.assertEqual(str(self.slice_both), "1:5")
-        self.assertEqual(str(self.slice_start), "1:")
-        self.assertEqual(str(self.slice_stop), ":5")
-        self.assertEqual(str(self.slice_none_no_axis), ':')
-        self.assertEqual(str(self.single_value), "'P03'")
-        self.assertEqual(str(self.list), "['P01' ... 'P07']")
-
     def test_repr(self):
         self.assertEqual(repr(self.slice_both_named),
-                         "LGroup(slice(1, 5, None), name='named')")
+                         "LGroup(slice(1, 5, None)) >> 'named'")
         self.assertEqual(repr(self.slice_both), "LGroup(slice(1, 5, None))")
         self.assertEqual(repr(self.list), "LGroup(['P01', 'P03', 'P07'])")
         self.assertEqual(repr(self.slice_none_no_axis), "LGroup(slice(None, None, None))")
-        target = \
-            "LGroup(slice(None, None, None), axis=Axis('lipro', ['P01', 'P02', 'P03', 'P04', " \
-                                                                "'P05', 'P06', 'P07', 'P08', " \
-                                                                "'P09']))"
-        self.assertEqual(repr(self.slice_none_wh_named_axis), target)
+        self.assertEqual(repr(self.slice_none_wh_named_axis), "lipro[:]")
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
                          "LGroup(slice(None, None, None), axis=Axis(None, [0, 1, 2]))")
 
@@ -1031,39 +1017,29 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[g], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
-        with self.assertRaisesRegexp(ValueError,
-                                     "key has several values for axis: age"):
+        with self.assertRaisesRegexp(ValueError, "key has several values for axis: age"):
             la[[1, 2], [3, 4]]
 
         # key with invalid label (ie label not found on any axis)
-        with self.assertRaisesRegexp(ValueError,
-                                     "999 is not a valid label for any axis"):
+        with self.assertRaisesRegexp(ValueError, "999 is not a valid label for any axis"):
             la[[1, 2], 999]
 
         # key with invalid label list (ie list of labels not found on any axis)
-        with self.assertRaisesRegexp(ValueError,
-                                     "\[998, 999\] is not a valid label for "
-                                     "any axis"):
+        with self.assertRaisesRegexp(ValueError, "\[998, 999\] is not a valid label for any axis"):
             la[[1, 2], [998, 999]]
 
         # key with partial invalid list (ie list containing a label not found
         # on any axis)
-        # FIXME: the message should be the same as for 999, 4. Not sure which
-        #        version we should use though !
-        with self.assertRaisesRegexp(ValueError,
-                                     "\[3 999\] is not a valid label for any "
-                                     "axis"):
+        # FIXME: the message should be the same as for 999, 4 (ie it should NOT mention age).
+        with self.assertRaisesRegexp(ValueError, "age\[3, 999\] is not a valid label for any axis"):
             la[[1, 2], [3, 999]]
 
-        with self.assertRaisesRegexp(ValueError,
-                                     "\[999, 4\] is not a valid label for any "
-                                     "axis"):
+        with self.assertRaisesRegexp(ValueError, "\[999, 4\] is not a valid label for any axis"):
             la[[1, 2], [999, 4]]
 
         # ambiguous key
         a = ndrange((sex, sex.rename('sex2')))
-        with self.assertRaisesRegexp(ValueError,
-                                     "F is ambiguous \(valid in sex, sex2\)"):
+        with self.assertRaisesRegexp(ValueError, "F is ambiguous \(valid in sex, sex2\)"):
             a['F']
 
     def test_getitem_positional_group(self):
@@ -2497,7 +2473,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # the same name in the array
         lipro4 = Axis('lipro', 'P01,P03,P16')
         with self.assertRaisesRegexp(ValueError,
-                                     "lipro\['P01' 'P16'\] is not a valid "
+                                     "lipro\['P01', 'P16'\] is not a valid "
                                      "label for any axis"):
             small.sum(lipro4['P01,P16'])
 
