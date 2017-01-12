@@ -400,6 +400,7 @@ def _to_tick(v):
         if len(v) == 1:
             return str(v) + ','
         else:
+            # TODO: it would be nicer/saner to use n=1, sep='' but this currently breaks at lot of tests
             return _seq_summary(v, n=1000, repr_func=str, sep=',')
     else:
         return str(v)
@@ -1343,6 +1344,8 @@ class Axis(object):
 
         # first, for Group instances, try their name
         if isinstance(key, Group):
+            # XXX: we should probably use _to_tick(key) instead of key.name and do it for all keys instead of only
+            # for groups
             try:
                 # avoid matching 0 against False or 0.0
                 if self._is_key_type_compatible(key.name):
