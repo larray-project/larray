@@ -1810,21 +1810,54 @@ class Group(object):
         other_key = other.key if isinstance(other, Group) else _to_key(other)
         return _to_tick(self.key) == _to_tick(other_key)
 
-    def __lt__(self, other):
-        other_key = other.eval() if isinstance(other, Group) else other
-        return self.eval().__lt__(other_key)
+    # method factory
+    def _binop(opname):
+        op_fullname = '__%s__' % opname
 
-    def __le__(self, other):
-        other_key = other.eval() if isinstance(other, Group) else other
-        return self.eval().__le__(other_key)
+        # TODO: implement this in a delayed fashion for reference axes
+        def opmethod(self, other):
+            other_value = other.eval() if isinstance(other, Group) else other
+            return getattr(self.eval(), op_fullname)(other_value)
+        opmethod.__name__ = op_fullname
+        return opmethod
 
-    def __gt__(self, other):
-        other_key = other.eval() if isinstance(other, Group) else other
-        return self.eval().__gt__(other_key)
+    __matmul__ = _binop('matmul')
+    __ror__ = _binop('ror')
+    __or__ = _binop('or')
+    __rxor__ = _binop('rxor')
+    __xor__ = _binop('xor')
+    __rand__ = _binop('rand')
+    __and__ = _binop('and')
+    __rrshift__ = _binop('rrshift')
+    __rshift__ = _binop('rshift')
+    __rlshift__ = _binop('rlshift')
+    __lshift__ = _binop('lshift')
+    __rpow__ = _binop('rpow')
+    __pow__ = _binop('pow')
+    __rdivmod__ = _binop('rdivmod')
+    __divmod__ = _binop('divmod')
+    __rmod__ = _binop('rmod')
+    __mod__ = _binop('mod')
+    __rfloordiv__ = _binop('rfloordiv')
+    __floordiv__ = _binop('floordiv')
+    __rtruediv__ = _binop('rtruediv')
+    __truediv__ = _binop('truediv')
+    if sys.version < '3':
+        __div__ = _binop('div')
+        __rdiv__ = _binop('rdiv')
+    __rmul__ = _binop('rmul')
+    __mul__ = _binop('mul')
+    __rsub__ = _binop('rsub')
+    __sub__ = _binop('sub')
+    __radd__ = _binop('radd')
+    __add__ = _binop('add')
 
-    def __ge__(self, other):
-        other_key = other.eval() if isinstance(other, Group) else other
-        return self.eval().__ge__(other_key)
+    __ge__ = _binop('ge')
+    __gt__ = _binop('gt')
+    __le__ = _binop('le')
+    __lt__ = _binop('lt')
+    # __ne__ = _binop('ne')
+    # __eq__ = _binop('eq')
 
     def __contains__(self, item):
         # XXX: ideally, we shouldn't need to test for Group (hash should hash to the same as item.eval())
