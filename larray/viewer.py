@@ -70,6 +70,7 @@ Array Editor Dialog based on Qt
 
 from __future__ import print_function
 
+from collections import OrderedDict
 from itertools import chain
 import math
 import re
@@ -2416,7 +2417,8 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     """
     _app = qapplication()
     if obj is None:
-        obj = sys._getframe(depth + 1).f_locals
+        local_vars = sys._getframe(depth + 1).f_locals
+        obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
 
     if not title:
         title = get_title(obj, depth=depth + 1)
