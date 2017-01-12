@@ -749,10 +749,11 @@ def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
     >>> _seq_summary(range(10), 2)
     '0 1 ... 8 9'
     """
-    def shorten(l):
-        return l if len(l) <= 2 * n else l[:n] + ['...'] + list(l[-n:])
-
-    return sep.join(shorten([repr_func(l) for l in seq]))
+    if len(seq) <= 2 * n:
+        short_seq = [repr_func(v) for v in seq]
+    else:
+        short_seq = [repr_func(v) for v in seq[:n]] + ['...'] + [repr_func(v) for v in seq[-n:]]
+    return sep.join(short_seq)
 
 
 class PGroupMaker(object):
