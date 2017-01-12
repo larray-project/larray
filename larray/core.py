@@ -1633,7 +1633,9 @@ class Group(object):
                 key_repr = '[{}]'.format(key_repr)
             s = '{}({}{})'.format(self.__class__.__name__, key_repr, axis_ref)
         return "{} >> {}".format(s, repr(self.name)) if self.name is not None else s
-    __str__ = __repr__
+
+    def __str__(self):
+        return str(self.eval())
 
     def translate(self, bound=None, stop=False):
         """
@@ -4667,7 +4669,7 @@ class LArray(object):
             try:
                 axis_pos_key = axis.translate(axis_key, bool_passthrough)
             except KeyError:
-                raise ValueError("%s is not a valid label for any axis"
+                raise ValueError("%r is not a valid label for any axis"
                                  % axis_key)
             return axis.i[axis_pos_key]
 
