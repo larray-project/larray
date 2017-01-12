@@ -1453,10 +1453,7 @@ class Axis(object):
         '0 1 2 ... 97 98 99'
         """
         def repr_on_strings(v):
-            if isinstance(v, str):
-                return repr(v)
-            else:
-                return str(v)
+            return repr(v) if isinstance(v, str) else str(v)
         return _seq_summary(self.labels, repr_func=repr_on_strings)
 
     # method factory
