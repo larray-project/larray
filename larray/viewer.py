@@ -2045,8 +2045,9 @@ class MappingEditor(QDialog):
         clean_ns = {k: v for k, v in user_ns.items() if k in clean_ns_keys}
 
         # user_ns['_i'] is not updated yet (refers to the -2 item)
-        # In and _ih point to the same object
-        last_input = user_ns['In'][-1]
+        # 'In' and '_ih' point to the same object (but '_ih' is supposed to be the non-overridden one)
+        cur_input_num = len(user_ns['_ih']) - 1
+        last_input = user_ns['_ih'][-1]
         if setitem_pattern.match(last_input):
             m = setitem_pattern.match(last_input)
             varname = m.group(1)
@@ -2064,12 +2065,15 @@ class MappingEditor(QDialog):
                 # any statement can contain a call to a function which updates globals
                 self.update_mapping(clean_ns)
 
-                # we want to get at the last output.
-                # Out and _oh point to the same object.
-                # Out is a simple dict, so user_ns['Out'][-1] does not work.
-                last_output = user_ns['_']
-                if self._display_in_grid('_', last_output):
-                    self.view_expr(last_output)
+                # if the statement produced any output (probably because it is a simple expression), display it.
+
+                # _oh and Out are supposed to be synonyms but "_ih" is supposed to be the non-overridden one.
+                # It would be easier to use '_' instead but that refers to the last output, not the output of the
+                # last command. Which means that if the last command did not produce any output, _ is not modified.
+                cur_output = user_ns['_oh'].get(cur_input_num)
+                if cur_output is not None:
+                    if self._display_in_grid('_', cur_output):
+                        self.view_expr(cur_output)
 
     def on_item_changed(self, curr, prev):
         name = str(curr.text())
