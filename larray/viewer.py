@@ -2056,8 +2056,10 @@ class MappingEditor(QDialog):
         else:
             # not setitem => assume expr or normal assignment
             if last_input in clean_ns:
-                # the name exists in the session => select and display it
-                self.select_list_item(last_input)
+                # the name exists in the session (variable)
+                if self._display_in_grid('', self.data[last_input]):
+                    # select and display it
+                    self.select_list_item(last_input)
             else:
                 # any statement can contain a call to a function which updates globals
                 self.update_mapping(clean_ns)
