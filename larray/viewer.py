@@ -1797,7 +1797,8 @@ setitem_pattern = re.compile('(.+)\[.+\][^=]=[^=].+')
 history_vars_pattern = re.compile('_i?\d+')
 # XXX: add all scalars except strings (from numpy or plain Python)?
 # (long) strings are not handled correctly so should NOT be in this list
-DISPLAY_IN_GRID = (tuple, list, la.LArray, np.ndarray)
+# tuple, list
+DISPLAY_IN_GRID = (la.LArray, np.ndarray)
 
 
 class MappingEditor(QDialog):
