@@ -1980,15 +1980,18 @@ class MappingEditor(QDialog):
                 self.data[k] = value[k]
 
             # add new keys which can be displayed
-            self.add_list_items([k for k in keys_after - keys_before if self._display_in_grid(k, value[k])])
+            displayable_new_keys = [k for k in keys_after - keys_before if self._display_in_grid(k, value[k])]
+            self.add_list_items(displayable_new_keys)
 
             displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
+            if displayable_changed_keys:
+                # display only first result if there are more than one
+                to_display = displayable_changed_keys[0]
 
-            # display only first result if there are more than one
-            to_display = displayable_changed_keys[0]
-
-            self.select_list_item(to_display)
-            return to_display
+                self.select_list_item(to_display)
+                return to_display
+            else:
+                return None
         else:
             return None
 
