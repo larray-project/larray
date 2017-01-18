@@ -3216,8 +3216,7 @@ def any(values, axis=None):
 
 # commutative modulo float precision errors
 def sum(array, *args, **kwargs):
-    """sum(array, axis=None, out=None)
-
+    """
     Sum of array elements over a given axis.
 
     Parameters
@@ -3272,8 +3271,7 @@ def sum(array, *args, **kwargs):
 
 
 def prod(array, *args, **kwargs):
-    """prod(array, axis=None, out=None)
-
+    """
     Returns the product of the array elements over a given axis.
 
     Parameters
@@ -3314,8 +3312,7 @@ def prod(array, *args, **kwargs):
 
 
 def cumsum(array, *args, **kwargs):
-    """cumsum(array, axis=None, out=None)
-
+    """
     Returns the cumulative sum of the elements along a given axis.
 
     Parameters
@@ -3359,8 +3356,7 @@ def cumsum(array, *args, **kwargs):
 
 
 def cumprod(array, *args, **kwargs):
-    """cumprod(array, axis=None, out=None)
-
+    """
     Returns the cumulative product of the elements along a given axis.
 
     Parameters
@@ -3404,8 +3400,7 @@ def cumprod(array, *args, **kwargs):
 
 
 def min(array, *args, **kwargs):
-    """min(array, axis=None, **kwargs)
-
+    """
     Returns the minimum of an array or minimum along an axis.
 
     Parameters
@@ -3451,8 +3446,7 @@ def min(array, *args, **kwargs):
 
 
 def max(array, *args, **kwargs):
-    """max(array, axis=None, **kwargs)
-
+    """
     Returns the minimum of an array or maximum along an axis.
 
     Parameters
@@ -3501,8 +3495,7 @@ def max(array, *args, **kwargs):
 
 
 def mean(array, *args, **kwargs):
-    """mean(array, axis=None, out=None, **kwargs)
-
+    """
     Computes the arithmetic mean along the specified axis.
 
     Parameters
@@ -3546,8 +3539,7 @@ def mean(array, *args, **kwargs):
 
 
 def median(array, *args, **kwargs):
-    """median(array, axis=None, out=None, **kwargs)
-
+    """
     Computes the median along the specified axis.
 
     Parameters
@@ -3592,8 +3584,7 @@ def median(array, *args, **kwargs):
 
 
 def percentile(array, *args, **kwargs):
-    """percentile(array, q, axis=None, out=None, **kwargs)
-
+    """
     Computes the qth percentile of the data along the specified axis.
 
     Parameters
@@ -3640,8 +3631,7 @@ def percentile(array, *args, **kwargs):
 
 # not commutative
 def ptp(array, *args, **kwargs):
-    """ptp(array, axis=None, out=None)
-
+    """
     Returns the range of values (maximum - minimum) along an axis.
 
     The name of the function comes from the acronym for ‘peak to peak’.
@@ -3687,8 +3677,7 @@ def ptp(array, *args, **kwargs):
 
 
 def var(array, *args, **kwargs):
-    """var(array, axis=None, out=None, **kwargs)
-
+    """
     Computes the variance along the specified axis.
 
     Parameters
@@ -3733,8 +3722,7 @@ def var(array, *args, **kwargs):
 
 
 def std(array, *args, **kwargs):
-    """std(array, axis=None, out=None, **kwargs)
-
+    """
     Computes the standard deviation along the specified axis.
 
     Parameters
