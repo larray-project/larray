@@ -3286,8 +3286,9 @@ def sum(array, *args, **kwargs):
         The default (`axis` = `None`) is to perform a sum over all
         axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, a sum is performed on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3328,8 +3329,7 @@ def sum(array, *args, **kwargs):
 
 
 def prod(array, *args, **kwargs):
-    """prod(array, axis=None)
-
+    """
     Returns the product of the array elements over a given axis.
 
     Parameters
@@ -3341,8 +3341,9 @@ def prod(array, *args, **kwargs):
         The default (`axis` = `None`) is to perform the product over all
         axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the product is performed on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3369,8 +3370,7 @@ def prod(array, *args, **kwargs):
 
 
 def cumsum(array, *args, **kwargs):
-    """cumsum(array, axis=None)
-
+    """
     Returns the cumulative sum of the elements along a given axis.
 
     Parameters
@@ -3382,8 +3382,9 @@ def cumsum(array, *args, **kwargs):
         The default (`axis` = `None`) is to perform the cumulative sum
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the cumulative sum is performed on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3413,8 +3414,7 @@ def cumsum(array, *args, **kwargs):
 
 
 def cumprod(array, *args, **kwargs):
-    """cumprod(array, axis=None)
-
+    """
     Returns the cumulative product of the elements along a given axis.
 
     Parameters
@@ -3426,8 +3426,9 @@ def cumprod(array, *args, **kwargs):
         The default (`axis` = `None`) is to perform the cumulative product
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the cumulative product is performed on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3457,8 +3458,7 @@ def cumprod(array, *args, **kwargs):
 
 
 def min(array, *args, **kwargs):
-    """min(array, axis=None)
-
+    """
     Returns the minimum of an array or minimum along an axis.
 
     Parameters
@@ -3470,7 +3470,6 @@ def min(array, *args, **kwargs):
         The default (`axis` = `None`) is to search the minimum
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the minimum is searched on multiple axes.
 
     Returns
@@ -3505,8 +3504,7 @@ def min(array, *args, **kwargs):
 
 
 def max(array, *args, **kwargs):
-    """max(array, axis=None)
-
+    """
     Returns the minimum of an array or maximum along an axis.
 
     Parameters
@@ -3518,7 +3516,6 @@ def max(array, *args, **kwargs):
         The default (`axis` = `None`) is to search the maximum
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the maximum is searched on multiple axes.
 
     Returns
@@ -3556,8 +3553,7 @@ def max(array, *args, **kwargs):
 
 
 def mean(array, *args, **kwargs):
-    """mean(array, axis=None)
-
+    """
     Computes the arithmetic mean along the specified axis.
 
     Parameters
@@ -3569,8 +3565,9 @@ def mean(array, *args, **kwargs):
         The default (`axis` = `None`) is to compute the mean
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the mean is calculated on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3600,8 +3597,7 @@ def mean(array, *args, **kwargs):
 
 
 def median(array, *args, **kwargs):
-    """median(array, axis=None)
-
+    """
     Computes the median along the specified axis.
 
     Parameters
@@ -3613,8 +3609,10 @@ def median(array, *args, **kwargs):
         The default (`axis` = `None`) is to compute the median
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the median is calculated on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
+
 
     Returns
     -------
@@ -3644,8 +3642,7 @@ def median(array, *args, **kwargs):
 
 
 def percentile(array, *args, **kwargs):
-    """percentile(array, q, axis=None)
-
+    """
     Computes the qth percentile of the data along the specified axis.
 
     Parameters
@@ -3659,8 +3656,9 @@ def percentile(array, *args, **kwargs):
         The default (`axis` = `None`) is to compute the percentile
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the percentile is calculated on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3690,12 +3688,8 @@ def percentile(array, *args, **kwargs):
 
 
 # not commutative
-# FIXME: this function is not working currently because the
-# Numpy equivalent does not accept args and kwargs arguments.
-# A workaround must be implemented.
 def ptp(array, *args, **kwargs):
-    """ptp(array, axis=None)
-
+    """
     Returns the range of values (maximum - minimum) along an axis.
 
     The name of the function comes from the acronym for ‘peak to peak’.
@@ -3704,14 +3698,14 @@ def ptp(array, *args, **kwargs):
     ----------
     array : LArray
         Input data.
-    axis : None or int or str or Axis or tuple of those, optional
+    axis : None or int or str or Axis, optional
         Axis along which to find the peaks.
         The default (`axis` = `None`) is to find the peaks
         over all axes of the input array (as if the array is flatten).
         `axis` may be negative, in which case it counts from the last
         to the first axis.
-
-        If this is a tuple, the peaks are computed on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3728,12 +3722,12 @@ def ptp(array, *args, **kwargs):
     a\\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
-    >>> ptp(arr) # doctest: +SKIP
+    >>> ptp(arr)
     5
-    >>> ptp(arr, axis=0) # doctest: +SKIP
+    >>> ptp(arr, axis=0)
     b | b0 | b1 | b2
       |  3 |  3 |  3
-    >>> ptp(arr, axis='a') # doctest: +SKIP
+    >>> ptp(arr, axis='a')
     b | b0 | b1 | b2
       |  3 |  3 |  3
     """
@@ -3741,8 +3735,7 @@ def ptp(array, *args, **kwargs):
 
 
 def var(array, *args, **kwargs):
-    """var(array, axis=None)
-
+    """
     Computes the variance along the specified axis.
 
     Parameters
@@ -3754,8 +3747,9 @@ def var(array, *args, **kwargs):
         The default (`axis` = `None`) is to compute the variance
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the variance is calculated on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -3786,8 +3780,7 @@ def var(array, *args, **kwargs):
 
 
 def std(array, *args, **kwargs):
-    """std(array, axis=None)
-
+    """
     Computes the standard deviation along the specified axis.
 
     Parameters
@@ -3799,8 +3792,9 @@ def std(array, *args, **kwargs):
         The default (`axis` = `None`) is to compute the standard deviation
         over all axes of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
-
         If this is a tuple, the standard deviation is calculated on multiple axes.
+    out : LArray
+        Alternative output array in which to place the result.
 
     Returns
     -------
@@ -4156,6 +4150,7 @@ class LArray(object):
           M | 10 |  9 |  8
           F | 10 | 11 | 12
     """
+
     def __init__(self,
                  data,
                  axes=None,
@@ -5537,26 +5532,38 @@ class LArray(object):
         """
         src_data = np.asarray(self)
         axes = list(axes) if axes else self.axes
-        axes_indices = tuple(self.axes.index(a) for a in axes)
-        keepdims = bool(keepaxes)
-        if out is not None:
-            assert isinstance(out, LArray)
-            kwargs['out'] = out.data
-        res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
 
-        if keepaxes:
-            label = op.__name__.replace('nan', '') if keepaxes is True \
-                else keepaxes
-            axes_to_kill = [self.axes[axis] for axis in axes]
-            new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
-            res_axes = self.axes.replace(axes_to_kill, new_axes)
+        if op.__name__ == 'ptp':
+            if AxisCollection(axes) == self.axes:
+                res_data = op(src_data, axis=None, out=out)
+                return res_data
+            elif len(axes) == 1:
+                axis = axes[0]
+                res_data = op(src_data, axis=self.axes.index(axis), out=out)
+                return LArray(res_data, self.axes - axis)
+            else:
+                raise ValueError('ptp can be applied along one axis or whole array')
         else:
-            res_axes = self.axes - axes_indices
-        if not res_axes:
-            # scalars don't need to be wrapped in LArray
-            return res_data
-        else:
-            return LArray(res_data, res_axes)
+            axes_indices = tuple(self.axes.index(a) for a in axes)
+            keepdims = bool(keepaxes)
+            if out is not None:
+                assert isinstance(out, LArray)
+                kwargs['out'] = out.data
+            res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
+
+            if keepaxes:
+                label = op.__name__.replace('nan', '') if keepaxes is True \
+                    else keepaxes
+                axes_to_kill = [self.axes[axis] for axis in axes]
+                new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
+                res_axes = self.axes.replace(axes_to_kill, new_axes)
+            else:
+                res_axes = self.axes - axes_indices
+            if not res_axes:
+                # scalars don't need to be wrapped in LArray
+                return res_data
+            else:
+                return LArray(res_data, res_axes)
 
     def _cum_aggregate(self, op, axis):
         """
@@ -6345,7 +6352,7 @@ class LArray(object):
         return self.percentile(q, *(self.axes - args), **kwargs)
 
     # not commutative
-    ptp, ptp_by = _agg_method(np.ptp)
+    ptp, _ = _agg_method(np.ptp)
     var, var_by = _agg_method(np.var, np.nanvar)
     std, std_by = _agg_method(np.std, np.nanstd)
 
