@@ -7729,7 +7729,7 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
         if dialect == 'liam2':
             nb_index -= 1
 
-    if isinstance(index_col, list) and len(index_col) > 0:
+    if isinstance(index_col, list):
         nb_index = len(index_col)
     else:
         index_col = list(range(nb_index))
