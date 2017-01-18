@@ -4234,7 +4234,7 @@ class LArray(object):
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         """
-        return LArray(self.data, axes)
+        return LArray(self.data, axes, self.title)
 
     def __getattr__(self, key):
         try:
