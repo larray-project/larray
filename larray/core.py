@@ -3168,50 +3168,18 @@ class AxisCollection(object):
 
 def all(values, axis=None):
     """
-    Test whether all array elements along a given axis evaluate to True.
+    Test whether all (array) elements (along a given axis) evaluate to True.
+
+    Calls :func:`~larray.LArray.all` method of LArray class if values is an
+    LArray object, uses builtin all function otherwise.
 
     Parameters
     ----------
     values : LArray or iterable
         Input data.
-    axis : str or list or Axis, optional
-        Axis over which to aggregate.
-        Defaults to None (all axes).
-
-    Returns
-    -------
-    LArray of bool or bool
-
-    See Also
-    --------
-    LArray.all : Equivalent method.
-
-    Notes
-    -----
-    If `values` is not a LArray object, the equivalent builtins function is used.
-
-    Examples
-    --------
-    >>> arr = ndtest((3,3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-     a2 |  6 |  7 |  8
-    >>> barr = arr < 4
-    >>> barr
-    a\\b |    b0 |    b1 |    b2
-     a0 |  True |  True |  True
-     a1 |  True | False | False
-     a2 | False | False | False
-    >>> all(barr)
-    False
-    >>> all(barr, 'a')
-    b |    b0 |    b1 |    b2
-      | False | False | False
-    >>> all(barr, 'b')
-    a |   a0 |    a1 |    a2
-      | True | False | False
+    axis :
+        See :func:`~larray.LArray.all`.
+        Only used if values is an LArray object.
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -6325,7 +6293,175 @@ class LArray(object):
         method_by.__name__ = name + "_by"
         return method, method_by
 
+    def _generate_doc_arg_agg_method(desc, out=True, skipna=True, keepaxes=True,
+                                     by=False):
+        str_doc = """
+
+            Parameters
+            ----------
+            \*args : None or int or str or Axis or Group or any combination of those
+            """
+        if by:
+            str_doc += "The {0} is performed along all axes " \
+                       "except the given one(s).".format(desc)
+        else:
+            str_doc += "Axis(es) or group(s) along which {0} " \
+                       "is performed.".format(desc)
+        str_doc += """
+            The default (no axis or group) is to perform
+            {0} over all the dimensions of the input array.
+
+            An axis can be referred by:
+
+            * its position (integer). Position can be a negative integer,
+              in which case it counts from the last to the first axis.
+            * its name (str or AxisReference). You can use either a simple
+              string ('axis_name') or the special variable x (x.axis_name).
+            * a variable (Axis). If the axis has been defined previously
+              and assigned to a variable, you can pass it as argument.
+
+            You may not want to perform the {0} over a whole axis but
+            over a selection of specific labels. To do so, you have several
+            possibilities:
+
+            * ('a1, a3, a5') : labels separated by commas in a string
+            * (a='a1, a3, a5') : in case of possible ambiguity, i.e. if labels
+              can belong to more than one axis, you must precise the axis.
+            * ('a1:a5:2') : select labels using a slice (syntax is 'start:end:step')
+            * ('a1:a3; a10:a12') : create several groups with semicolons.
+              Names are simply given by the concatenation of labels
+              (here: 'a1,a2,a3' and 'a10,a11,a12')
+            * ('a1:a3 >> a1_3; a10:a12 >> a12_12') : operator ' >> '
+              allows to rename groups.
+
+        \**kwargs :
+
+        """.format(desc)
+        if out:
+            str_doc += """
+                * out : LArray, optional
+
+                  Alternate output array in which to place the result.
+                  It must have the same shape as the expected output and
+                  its type is preserved (e.g., if dtype(out) is float, the
+                  result will consist of 0.0’s and 1.0’s).
+                  Axes and labels can be different, only the shape matters.
+
+                """
+        if skipna:
+            str_doc += """
+                * skipna : bool, optional
+
+                  'skip NaN': Ignore NaN/null values.
+                  If an entire row/column is NaN, the result will be NaN.
+
+                """
+        if keepaxes:
+            str_doc += """
+                * keepaxes : bool, optional
+
+                  If this is set to True, the axes which are reduced are
+                  left in the result as dimensions with size one.
+                  With this option, the result will broadcast correctly
+                  against the input array.
+
+                """
+        return str_doc
+
+
     all, all_by = _agg_method(np.all, commutative=True)
+    all.__doc__ = """
+        Test whether all selected elements evaluate to True.
+        """ + _generate_doc_arg_agg_method("AND reduction") + \
+                  """
+                  Returns
+                  -------
+                  LArray of bool or bool
+
+                  See Also
+                  --------
+                  all_by : same but AND reduction is performed along all other axes.
+
+                  Examples
+                  --------
+                  >>> arr = ndtest((4, 4))
+                  >>> arr
+                  a\\b | b0 | b1 | b2 | b3
+                  a0 |  0 |  1 |  2 |  3
+                  a1 |  4 |  5 |  6 |  7
+                  a2 |  8 |  9 | 10 | 11
+                  a3 | 12 | 13 | 14 | 15
+                  >>> barr = arr < 6
+                  >>> barr
+                  a\\b |    b0 |    b1 |    b2 |    b3
+                  a0 |  True |  True |  True |  True
+                  a1 |  True |  True | False | False
+                  a2 | False | False | False | False
+                  a3 | False | False | False | False
+                  >>> barr.all()
+                  False
+                  >>> # along axis 'a'
+                  >>> barr.all('a')
+                  b |    b0 |    b1 |    b2 |    b3
+                  | False | False | False | False
+                  >>> # along axis 'b'
+                  >>> barr.all('b')
+                  a |   a0 |    a1 |    a2 |    a3
+                  | True | False | False | False
+                  >>> # select rows a0 and a1 (ignore rows a2 and a3)
+                  >>> barr.all('a0,a1')
+                  b |   b0 |   b1 |    b2 |    b3
+                  | True | True | False | False
+                  >>> # split axis 'a' in two parts
+                  >>> barr.all('a0,a1;a2,a3')
+                  a\\b |    b0 |    b1 |    b2 |    b3
+                  a0,a1 |  True |  True | False | False
+                  a2,a3 | False | False | False | False
+                  >>> # same with renaming
+                  >>> barr.all('a0,a1>>a01;a2,a3>>a23')
+                  a\\b |    b0 |    b1 |    b2 |    b3
+                  a01 |  True |  True | False | False
+                  a23 | False | False | False | False
+                  """
+
+    all_by.__doc__ = """
+        Test whether all array elements along other axes evaluate to True.
+        The resulting array will have the axes given as arguments.
+
+        Parameters
+        ----------
+        \*args : None or int or str or Axis or any combination of those
+            AND reduction is performed along all other axes.
+            See :func:`~larray.LArray.all` for keywords arguments.
+
+        See Also
+        --------
+        all : same but AND reduction is performed along passed axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((3,3))
+        >>> arr
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+         a2 |  6 |  7 |  8
+        >>> barr = arr < 4
+        >>> barr
+        a\\b |    b0 |    b1 |    b2
+         a0 |  True |  True |  True
+         a1 |  True | False | False
+         a2 | False | False | False
+        >>> barr.all_by()
+        False
+        >>> barr.all_by('a')
+        a |   a0 |    a1 |    a2
+          | True | False | False
+        >>> barr.all_by('b')
+        b |    b0 |    b1 |    b2
+          | False | False | False
+        """
+
     any, any_by = _agg_method(np.any, commutative=True)
     # commutative modulo float precision errors
     sum, sum_by = _agg_method(np.sum, np.nansum, commutative=True)
