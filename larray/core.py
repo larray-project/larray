@@ -183,8 +183,8 @@ def _slice_to_str(key, repr_func=str):
     """
     Converts a slice to a string
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> _slice_to_str(slice(None))
     ':'
     >>> _slice_to_str(slice(24))
@@ -372,8 +372,8 @@ def _to_tick(v):
     Group without name -> _to_tick(v.key)
     other -> str(v)
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     v : any
         value to be converted.
 
@@ -412,8 +412,8 @@ def _to_ticks(s):
     Axis (ie hashable). Strip strings, split them on ',' and translate
     "range strings" to list of values **including the end point** !
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     s : iterable
         List of values usable as the collection of labels for an Axis.
 
@@ -425,8 +425,8 @@ def _to_ticks(s):
     -----
     This function is only used in Axis.__init__ and union().
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> _to_ticks('H , F')
     ['H', 'F']
 
@@ -1710,8 +1710,8 @@ class Group(object):
         step : int, optional
             step between groups. Defaults to length.
 
-        Note
-        ----
+        Notes
+        -----
         step can be smaller than length, in which case, this will produce
         overlapping groups.
 
@@ -2082,8 +2082,8 @@ class AxisCollection(object):
     """
     Represents a collection of axes.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     axes : sequence of Axis or int or tuple or str, optional
         An axis can be given as an Axis object, an int or a
         tuple (name, labels) or a string of the kind
@@ -2897,8 +2897,8 @@ class AxisCollection(object):
         list
             List of labels of the axes.
 
-        Example
-        -------
+        Examples
+        --------
         >>> age = Axis('age', range(10))
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
         >>> AxisCollection([age, time]).labels  # doctest: +NORMALIZE_WHITESPACE
@@ -3085,12 +3085,12 @@ class AxisCollection(object):
             combine are not. This is much faster, but loose axes labels.
         front_if_spread : bool, optional
             whether or not to move the combined axis at the front (it will be
-            the first axis) if the combined axes are not next to each
-            other.
+            the first axis) if the combined axes are not next to each other.
 
         Returns
         -------
         AxisCollection
+            New AxisCollection with combined axes.
         """
         axes = self if axes is None else self[axes]
         axes_indices = [self.index(axis) for axis in axes]
@@ -4097,15 +4097,14 @@ class LArray(object):
 
     See Also
     --------
-    create_sequential : Create a LArray by sequentially
-                        applying modifications to the array
-                        along axis.
-    ndrange : Create a LArray with increasing elements.
-    zeros : Create a LArray, each element of which is zero.
-    ones : Create a LArray, each element of which is 1.
-    full : Create a LArray filled with a given value.
-    empty : Create a LArray, but leave its allocated memory
-            unchanged (i.e., it contains “garbage”).
+    core.create_sequential : Create a LArray by sequentially
+                             applying modifications to the array along axis.
+    core.ndrange : Create a LArray with increasing elements.
+    core.zeros : Create a LArray, each element of which is zero.
+    core.ones : Create a LArray, each element of which is 1.
+    core.full : Create a LArray filled with a given value.
+    core.empty : Create a LArray, but leave its allocated memory
+                         unchanged (i.e., it contains “garbage”).
 
     Examples
     --------
@@ -7653,8 +7652,8 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
     """
     Reads csv file and returns an array with the contents.
 
-    Note
-    ----
+    Notes
+    -----
     csv file format:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0
@@ -8355,6 +8354,7 @@ def ndrange(axes, start=0, title='', dtype=int):
     axes : single axis or tuple/list/AxisCollection of axes
         Axes of the array to create.
         Each axis can be given as either:
+
         * Axis object: actual axis object to use.
         * single int: length of axis. will create a wildcard axis of that
                       length.
