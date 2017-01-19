@@ -754,6 +754,7 @@ class TestAxisCollection(TestCase):
 
 class TestLArray(TestCase):
     def setUp(self):
+        self.title = 'test array'
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.age = Axis('age', range(116))
         self.sex = Axis('sex', 'H,F')
@@ -779,10 +780,13 @@ class TestLArray(TestCase):
         self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
                                                  .astype(float)
         self.larray = LArray(self.array,
-                             axes=(self.age, self.geo, self.sex, self.lipro))
+                             axes=(self.age, self.geo, self.sex, self.lipro),
+                             title=self.title)
 
+        self.small_title = 'small test array'
         self.small_data = np.arange(30).reshape(2, 15)
-        self.small = LArray(self.small_data, axes=(self.sex, self.lipro))
+        self.small = LArray(self.small_data, axes=(self.sex, self.lipro),
+                            title=self.small_title)
 
     def test_zeros(self):
         la = zeros((self.geo, self.age))
@@ -832,6 +836,7 @@ class TestLArray(TestCase):
 
     def test_info(self):
         expected = """\
+test array
 116 x 44 x 2 x 15
  age [116]: 0 1 2 ... 113 114 115
  geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
@@ -2764,6 +2769,16 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         sex, lipro = la.axes
         assert_array_equal(la.mean(lipro), raw.mean(1))
+
+    def test_with_axes(self):
+        lipro2 = self.lipro.rename('lipro2').labels = \
+            [l.replace('P', 'Q') for l in self.lipro.labels]
+        sex2 = self.age.rename('sex2').labels = ['Man', 'Woman']
+
+        la = LArray(self.small_data, axes=(sex2, lipro2),
+                    title=self.small_title)
+        la2 = self.small.with_axes((sex2, lipro2))
+        assert_array_equal(la, la2)
 
     def test_append(self):
         la = self.small
