@@ -2779,6 +2779,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                     title=self.small_title)
         la2 = self.small.with_axes((sex2, lipro2))
         assert_array_equal(la, la2)
+        self.assertEqual(la.title, la2.title, "title of array returned by "
+                                              "with_axes should be the same as the original one. "
+                                              "We got '{}' instead of '{}'".format(la2.title, la.title))
 
     def test_append(self):
         la = self.small
