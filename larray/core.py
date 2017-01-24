@@ -229,6 +229,8 @@ def irange(start, stop, step=None):
     [1, 3, 5]
     >>> list(irange(6, 1, 2))
     [6, 4, 2]
+    >>> list(irange(-1, 1))
+    [-1, 0, 1]
     """
     if step is None:
         step = 1
@@ -261,8 +263,8 @@ def generalized_range(start, stop, step=1):
     --------
     works with both number and letter bounds
 
-    >>> list(generalized_range(0, 3))
-    [0, 1, 2, 3]
+    >>> list(generalized_range(-1, 2))
+    [-1, 0, 1, 2]
     >>> generalized_range('a', 'c')
     ['a', 'b', 'c']
 
@@ -300,6 +302,8 @@ def generalized_range(start, stop, step=1):
         assert len(start_parts) == len(stop_parts)
         ranges = []
         for start_part, stop_part in zip(start_parts, stop_parts):
+            # we only handle non-negative int-like strings on purpose. Int-only bounds should already be converted to
+            # real integers by now, and mixing negative int-like strings and letters yields some strange results.
             if start_part.isdigit():
                 assert stop_part.isdigit()
                 numchr = max(len(start_part), len(stop_part))
@@ -322,7 +326,7 @@ def generalized_range(start, stop, step=1):
         return irange(start, stop, step)
 
 
-_range_str_pattern = re.compile('(?P<start>\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step\s+(?P<step>\d+))?')
+_range_str_pattern = re.compile('(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)?(\s+step\s+(?P<step>\d+))?')
 
 
 def _range_str_to_range(s):
@@ -342,12 +346,16 @@ def _range_str_to_range(s):
 
     Examples
     --------
-    >>> list(_range_str_to_range('..3'))
-    [0, 1, 2, 3]
+    >>> list(_range_str_to_range('-1..2'))
+    [-1, 0, 1, 2]
     >>> _range_str_to_range('a..c')
     ['a', 'b', 'c']
     >>> list(_range_str_to_range('2..6 step 2'))
     [2, 4, 6]
+
+    any special character except . and spaces should work
+    >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
+    ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
     """
     m = _range_str_pattern.match(s)
 
@@ -462,6 +470,10 @@ def _to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
+def _isintstring(s):
+    return s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())
+
+
 def _parse_bound(s, stack_depth=1, parse_int=True):
     """Parse a string representing a single value, converting int-like
     strings to integers and evaluating expressions within {}.
@@ -497,7 +509,7 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
     elif s[0] == '{':
         expr = s[1:find_closing_chr(s)]
         return eval(expr, sys._getframe(stack_depth).f_locals)
-    elif parse_int and (s.isdigit() or (s[0] == '-' and s[1:].isdigit())):
+    elif parse_int and _isintstring(s):
         return int(s)
     else:
         return s
@@ -5250,39 +5262,30 @@ class LArray(object):
         LArray or scalar
         """
         src_data = np.asarray(self)
-        axes = list(axes) if axes else self.axes
-
+        axes = self.axes[list(axes)] if axes else self.axes
+        axes_indices = tuple(self.axes.index(a) for a in axes) if axes != self.axes else None
         if op.__name__ == 'ptp':
-            if AxisCollection(axes) == self.axes:
-                res_data = op(src_data, axis=None, out=out)
-                return res_data
-            elif len(axes) == 1:
-                axis = axes[0]
-                res_data = op(src_data, axis=self.axes.index(axis), out=out)
-                return LArray(res_data, self.axes - axis)
-            else:
-                raise ValueError('ptp can be applied along one axis or whole array')
+            if axes_indices is not None and len(axes) > 1:
+                raise ValueError('ptp can only be applied along a single axis or all axes, not multiple arbitrary axes')
+            elif axes_indices is not None:
+                axes_indices = axes_indices[0]
         else:
-            axes_indices = tuple(self.axes.index(a) for a in axes)
-            keepdims = bool(keepaxes)
-            if out is not None:
-                assert isinstance(out, LArray)
-                kwargs['out'] = out.data
-            res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
-
-            if keepaxes:
-                label = op.__name__.replace('nan', '') if keepaxes is True \
-                    else keepaxes
-                axes_to_kill = [self.axes[axis] for axis in axes]
-                new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
-                res_axes = self.axes.replace(axes_to_kill, new_axes)
-            else:
-                res_axes = self.axes - axes_indices
-            if not res_axes:
-                # scalars don't need to be wrapped in LArray
-                return res_data
-            else:
-                return LArray(res_data, res_axes)
+            kwargs['keepdims'] = bool(keepaxes)
+        if out is not None:
+            assert isinstance(out, LArray)
+            kwargs['out'] = out.data
+        res_data = op(src_data, axis=axes_indices, **kwargs)
+        if keepaxes:
+            label = op.__name__.replace('nan', '') if keepaxes is True else keepaxes
+            new_axes = [Axis(axis.name, [label]) for axis in axes]
+            res_axes = self.axes.replace(axes, new_axes)
+        else:
+            res_axes = self.axes - axes
+        if not res_axes:
+            # scalars don't need to be wrapped in LArray
+            return res_data
+        else:
+            return LArray(res_data, res_axes)
 
     def _cum_aggregate(self, op, axis):
         """
