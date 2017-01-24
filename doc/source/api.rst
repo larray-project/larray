@@ -49,8 +49,8 @@ Excel
 .. autoclass:: larray.excel.Range
 :members:
 
-Array Generator Functions
--------------------------
+Array Creation Functions
+------------------------
 
 .. autofunction:: larray.create_sequential
 
