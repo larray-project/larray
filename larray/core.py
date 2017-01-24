@@ -229,6 +229,8 @@ def irange(start, stop, step=None):
     [1, 3, 5]
     >>> list(irange(6, 1, 2))
     [6, 4, 2]
+    >>> list(irange(-1, 1))
+    [-1, 0, 1]
     """
     if step is None:
         step = 1
@@ -261,8 +263,8 @@ def generalized_range(start, stop, step=1):
     --------
     works with both number and letter bounds
 
-    >>> list(generalized_range(0, 3))
-    [0, 1, 2, 3]
+    >>> list(generalized_range(-1, 2))
+    [-1, 0, 1, 2]
     >>> generalized_range('a', 'c')
     ['a', 'b', 'c']
 
@@ -300,6 +302,8 @@ def generalized_range(start, stop, step=1):
         assert len(start_parts) == len(stop_parts)
         ranges = []
         for start_part, stop_part in zip(start_parts, stop_parts):
+            # we only handle non-negative int-like strings on purpose. Int-only bounds should already be converted to
+            # real integers by now, and mixing negative int-like strings and letters yields some strange results.
             if start_part.isdigit():
                 assert stop_part.isdigit()
                 numchr = max(len(start_part), len(stop_part))
@@ -322,7 +326,7 @@ def generalized_range(start, stop, step=1):
         return irange(start, stop, step)
 
 
-_range_str_pattern = re.compile('(?P<start>\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step\s+(?P<step>\d+))?')
+_range_str_pattern = re.compile('(?P<start>-?\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step\s+(?P<step>\d+))?')
 
 
 def _range_str_to_range(s):
@@ -342,8 +346,8 @@ def _range_str_to_range(s):
 
     Examples
     --------
-    >>> list(_range_str_to_range('..3'))
-    [0, 1, 2, 3]
+    >>> list(_range_str_to_range('-1..2'))
+    [-1, 0, 1, 2]
     >>> _range_str_to_range('a..c')
     ['a', 'b', 'c']
     >>> list(_range_str_to_range('2..6 step 2'))
