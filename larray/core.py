@@ -3688,7 +3688,7 @@ def percentile(array, *args, **kwargs):
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
     >>> percentile(arr, 25)
-    array(1.25)
+    1.25
     >>> percentile(arr, 25, axis=0)
     b |   b0 |   b1 |   b2
       | 0.75 | 1.75 | 2.75
@@ -3711,11 +3711,9 @@ def ptp(array, *args, **kwargs):
     array : LArray
         Input data.
     axis : None or int or str or Axis, optional
-        Axis along which to find the peaks.
-        The default (`axis` = `None`) is to find the peaks
-        over all axes of the input array (as if the array is flatten).
-        `axis` may be negative, in which case it counts from the last
-        to the first axis.
+        Axis along which to find the peaks. The default (`axis` = `None`) is to find the peaks over all axes of the
+        input array (as if the array was flattened).
+        `axis` may be negative, in which case it counts from the last to the first axis.
     out : LArray
         Alternative output array in which to place the result.
 
@@ -5543,39 +5541,30 @@ class LArray(object):
         LArray or scalar
         """
         src_data = np.asarray(self)
-        axes = list(axes) if axes else self.axes
-
+        axes = self.axes[list(axes)] if axes else self.axes
+        axes_indices = tuple(self.axes.index(a) for a in axes) if axes != self.axes else None
         if op.__name__ == 'ptp':
-            if AxisCollection(axes) == self.axes:
-                res_data = op(src_data, axis=None, out=out)
-                return res_data
-            elif len(axes) == 1:
-                axis = axes[0]
-                res_data = op(src_data, axis=self.axes.index(axis), out=out)
-                return LArray(res_data, self.axes - axis)
-            else:
-                raise ValueError('ptp can be applied along one axis or whole array')
+            if axes_indices is not None and len(axes) > 1:
+                raise ValueError('ptp can only be applied along a single axis or all axes, not multiple arbitrary axes')
+            elif axes_indices is not None:
+                axes_indices = axes_indices[0]
         else:
-            axes_indices = tuple(self.axes.index(a) for a in axes)
-            keepdims = bool(keepaxes)
-            if out is not None:
-                assert isinstance(out, LArray)
-                kwargs['out'] = out.data
-            res_data = op(src_data, axis=axes_indices, keepdims=keepdims, **kwargs)
-
-            if keepaxes:
-                label = op.__name__.replace('nan', '') if keepaxes is True \
-                    else keepaxes
-                axes_to_kill = [self.axes[axis] for axis in axes]
-                new_axes = [Axis(axis.name, [label]) for axis in axes_to_kill]
-                res_axes = self.axes.replace(axes_to_kill, new_axes)
-            else:
-                res_axes = self.axes - axes_indices
-            if not res_axes:
-                # scalars don't need to be wrapped in LArray
-                return res_data
-            else:
-                return LArray(res_data, res_axes)
+            kwargs['keepdims'] = bool(keepaxes)
+        if out is not None:
+            assert isinstance(out, LArray)
+            kwargs['out'] = out.data
+        res_data = op(src_data, axis=axes_indices, **kwargs)
+        if keepaxes:
+            label = op.__name__.replace('nan', '') if keepaxes is True else keepaxes
+            new_axes = [Axis(axis.name, [label]) for axis in axes]
+            res_axes = self.axes.replace(axes, new_axes)
+        else:
+            res_axes = self.axes - axes
+        if not res_axes:
+            # scalars don't need to be wrapped in LArray
+            return res_data
+        else:
+            return LArray(res_data, res_axes)
 
     def _cum_aggregate(self, op, axis):
         """
