@@ -6814,7 +6814,7 @@ class LArray(object):
          a2 |  8 |  9 | 10 | 11
          a3 | 12 | 13 | 14 | 15
         >>> arr.percentile(25)
-        array(3.75)
+        3.75
         >>> # along axis 'a'
         >>> arr.percentile(25, 'a')
         b |  b0 |  b1 |  b2 |  b3
@@ -6870,7 +6870,7 @@ class LArray(object):
          a2 |  8 |  9 | 10 | 11
          a3 | 12 | 13 | 14 | 15
         >>> arr.percentile_by(25)
-        array(3.75)
+        3.75
         >>> # along axis 'a'
         >>> arr.percentile_by(25, 'a')
         a |   a0 |   a1 |   a2 |    a3
