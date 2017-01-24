@@ -1840,10 +1840,6 @@ class Group(object):
     __xor__ = _binop('xor')
     __rand__ = _binop('rand')
     __and__ = _binop('and')
-    __rrshift__ = _binop('rrshift')
-    __rshift__ = _binop('rshift')
-    __rlshift__ = _binop('rlshift')
-    __lshift__ = _binop('lshift')
     __rpow__ = _binop('rpow')
     __pow__ = _binop('pow')
     __rdivmod__ = _binop('rdivmod')
@@ -1925,6 +1921,9 @@ class LGroup(Group):
     --------
     >>> age = Axis('age', '0..100')
     >>> teens = x.age[10:19].named('teens')
+    >>> teens
+    x.age[10:19] >> 'teens'
+    >>> teens = x.age[10:19] >> 'teens'
     >>> teens
     x.age[10:19] >> 'teens'
     """
