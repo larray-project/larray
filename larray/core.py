@@ -350,12 +350,12 @@ def _range_str_to_range(s):
     [-1, 0, 1, 2]
     >>> _range_str_to_range('a..c')
     ['a', 'b', 'c']
+    >>> list(_range_str_to_range('2..6 step 2'))
+    [2, 4, 6]
 
     any special character except . and spaces should work
     >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
     ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
-    >>> list(_range_str_to_range('2..6 step 2'))
-    [2, 4, 6]
     """
     m = _range_str_pattern.match(s)
 
