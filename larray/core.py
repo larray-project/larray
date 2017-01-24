@@ -1052,13 +1052,18 @@ class Axis(object):
             raise ValueError("invalid keyword argument(s): %s"
                              % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, list):
+        if isinstance(key, basestring):
+            key = to_keys(key)
+
+        if isinstance(key, (tuple, list)):
             if any(isinstance(k, Group) for k in key):
-                assert all(isinstance(k, Group) for k in key)
                 k0 = key[0]
-                assert all(isinstance(k, k0.__class__) for k in key)
-                assert all(np.isscalar(k.key) for k in key)
-                return k0.__class__([k.key for k in key], axis=self)
+                assert isinstance(k0, Group)
+                cls_ = k0.__class__
+                assert all(isinstance(k, cls_) for k in key[1:])
+                res = [k.with_axis(self) for k in key]
+                res = tuple(res) if isinstance(key, tuple) else res
+                return res
 
         if isinstance(key, Group):
             name = name if name is not None else key.name
