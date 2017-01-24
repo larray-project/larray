@@ -470,6 +470,10 @@ def _to_ticks(s):
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
 
 
+def _isintstring(s):
+    return s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())
+
+
 def _parse_bound(s, stack_depth=1, parse_int=True):
     """Parse a string representing a single value, converting int-like
     strings to integers and evaluating expressions within {}.
@@ -505,7 +509,7 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
     elif s[0] == '{':
         expr = s[1:find_closing_chr(s)]
         return eval(expr, sys._getframe(stack_depth).f_locals)
-    elif parse_int and (s.isdigit() or (s[0] == '-' and s[1:].isdigit())):
+    elif parse_int and _isintstring(s):
         return int(s)
     else:
         return s
