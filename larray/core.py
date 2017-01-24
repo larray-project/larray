@@ -3712,7 +3712,7 @@ def _doc_agg_method(desc, by=False, action="perform",
               create several groups with semicolons.
               Names are simply given by the concatenation of labels
               (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
-            * ('a1:a3 >> a1_3; a5:a7 >> a5_7') :
+            * ('a1:a3 >> a123', 'b[b0,b2] >> b12') :
               operator ' >> ' allows to rename groups.
 
         \**kwargs :
