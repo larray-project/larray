@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
-                    read_csv, zeros, zeros_like, ndrange, ndtest,
+                    read_csv, read_excel, zeros, zeros_like, ndrange, ndtest,
                     ones, eye, diag, clip, exp, where, x, mean, isnan, round)
 from larray.core import _to_ticks, _to_key, df_aslarray
 
@@ -2829,7 +2829,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = la.extend('sex', la.sum(sex=(sex.all(),)))
         self.assertEqual(la.shape, (3, 16))
 
-    def test_readcsv(self):
+    def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
@@ -2849,6 +2849,32 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
         la = read_csv(abspath('test5d.csv'))
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
+        assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
+                           [3722, 3395, 3347])
+
+    def test_read_excel(self):
+        la = read_excel(abspath('test.xlsx'), '1d')
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes.names, ['time'])
+        assert_array_equal(la, [3722, 3395, 3347])
+
+        la = read_excel(abspath('test.xlsx'), '2d')
+        self.assertEqual(la.ndim, 2)
+        self.assertEqual(la.shape, (5, 3))
+        self.assertEqual(la.axes.names, ['age', 'time'])
+        assert_array_equal(la[0, :], [3722, 3395, 3347])
+
+        la = read_excel(abspath('test.xlsx'), '3d')
+        self.assertEqual(la.ndim, 3)
+        self.assertEqual(la.shape, (5, 2, 3))
+        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
+        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+
+        la = read_excel(abspath('test.xlsx'), '5d')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
@@ -2905,6 +2931,19 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                   ',0,1,2\n']
         with open('test_out1d.csv') as f:
             self.assertEqual(f.readlines(), result)
+
+    def test_to_excel(self):
+        la = read_excel(abspath('test.xlsx'), '5d')
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
+        assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
+                           [3722, 3395, 3347])
+
+        la.to_excel('out.xlsx', '5d')
+        out = read_excel('out.xlsx', '5d').i[:2]
+        result = la.i[:2]
+        assert_array_equal(out, result)
 
     def test_ufuncs(self):
         la = self.small
