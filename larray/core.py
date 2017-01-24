@@ -326,7 +326,7 @@ def generalized_range(start, stop, step=1):
         return irange(start, stop, step)
 
 
-_range_str_pattern = re.compile('(?P<start>-?\w+)?\s*\.\.\s*(?P<stop>\w+)?(\s+step\s+(?P<step>\d+))?')
+_range_str_pattern = re.compile('(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)?(\s+step\s+(?P<step>\d+))?')
 
 
 def _range_str_to_range(s):
@@ -350,6 +350,10 @@ def _range_str_to_range(s):
     [-1, 0, 1, 2]
     >>> _range_str_to_range('a..c')
     ['a', 'b', 'c']
+
+    any special character except . and spaces should work
+    >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
+    ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
     >>> list(_range_str_to_range('2..6 step 2'))
     [2, 4, 6]
     """
