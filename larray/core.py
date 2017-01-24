@@ -3784,7 +3784,9 @@ def _doc_agg_method(desc, by=False, action="perform",
             * ('a1, a3, a5') : labels separated by commas in a string
             * (a='a1, a3, a5') : in case of possible ambiguity, i.e. if labels
               can belong to more than one axis, you must precise the axis.
-            * ('a1:a5:2') : select labels using a slice (syntax is 'start:end:step')
+            * ('a1:a5:2') : select labels using a slice
+              (general syntax is 'start:end:step' where is 'step' is optional
+               and 1 by default).
             * ('a1:a3; a10:a12') : create several groups with semicolons.
               Names are simply given by the concatenation of labels
               (here: 'a1,a2,a3' and 'a10,a11,a12')
