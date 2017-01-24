@@ -7062,10 +7062,6 @@ class LArray(object):
         >>> arr.std('a')
         b |  b0 |  b1 |  b2 |  b3
           | 2.5 | 1.5 | 2.0 | 1.5
-        >>> # along axis 'b'
-        >>> arr.std('b')
-        a |            a0 |            a1 |            a2 |            a3
-          | 2.69258240357 | 1.47901994577 | 2.17944947177 | 3.34477204006
         >>> # select rows a0 and a1 (ignore rows a2 and a3)
         >>> arr.std('a0,a1')
         b |  b0 |  b1 |  b2 |  b3
@@ -7114,10 +7110,6 @@ class LArray(object):
          a3 | 10.0 | 8.0 | 3.0 | 12.0
         >>> arr.std_by()
         2.7810744326608736
-        >>> # along axis 'a'
-        >>> arr.std_by('a')
-        a |            a0 |            a1 |            a2 |            a3
-          | 2.69258240357 | 1.47901994577 | 2.17944947177 | 3.34477204006
         >>> # along axis 'b'
         >>> arr.std_by('b')
         b |  b0 |  b1 |  b2 |  b3
