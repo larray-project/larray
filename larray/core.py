@@ -3180,18 +3180,11 @@ class AxisCollection(object):
 
 def all(values, axis=None):
     """
-    Test whether all (array) elements (along a given axis) evaluate to True.
+    Test whether all array elements along a given axis evaluate to True.
 
-    Calls :func:`~larray.LArray.all` method of LArray class if `values` is an
-    LArray object, uses builtin all function otherwise.
-
-    Parameters
-    ----------
-    values : LArray or iterable
-        Input data.
-    axis :
-        See :func:`~larray.LArray.all`.
-        Only used if `values` is an LArray object.
+    See Also
+    --------
+    LArray.all
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -3201,18 +3194,11 @@ def all(values, axis=None):
 
 def any(values, axis=None):
     """
-    Test whether any (array) elements (along a given axis) evaluate to True.
+    Test whether any array elements along a given axis evaluate to True.
 
-    Calls :func:`~larray.LArray.any` method of LArray class if `values` is an
-    LArray object, uses builtin any function otherwise.
-
-    Parameters
-    ----------
-    values : LArray or iterable
-        Input data.
-    axis :
-        See :func:`~larray.LArray.any`.
-        Only used if `values` is an LArray object.
+    See Also
+    --------
+    LArray.any
     """
     if isinstance(values, LArray):
         return values.any(axis)
@@ -3225,16 +3211,10 @@ def sum(array, *args, **kwargs):
     """
     Sum of array elements.
 
-    Calls :func:`~larray.LArray.sum` method of LArray class if `array`
-    is an LArray object, uses builtin sum function otherwise.
+    See Also
+    --------
 
-    Parameters
-    ----------
-    array : LArray or iterable
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.sum`.
-        Only used if `array` is an LArray object.
+    LArray.sum
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -3250,14 +3230,9 @@ def prod(array, *args, **kwargs):
     """
     Product of array elements.
 
-    Calls :func:`~larray.LArray.prod` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.prod`.
+    See Also
+    --------
+    LArray.prod
     """
     return array.prod(*args, **kwargs)
 
@@ -3266,14 +3241,9 @@ def cumsum(array, *args, **kwargs):
     """
     Returns the cumulative sum of array elements.
 
-    Calls :func:`~larray.LArray.cumsum` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.cumsum`.
+    See Also
+    --------
+    LArray.cumsum
     """
     return array.cumsum(*args, **kwargs)
 
@@ -3282,14 +3252,9 @@ def cumprod(array, *args, **kwargs):
     """
     Returns the cumulative product of array elements.
 
-    Calls :func:`~larray.LArray.cumprod` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.cumprod`.
+    See Also
+    --------
+    LArray.cumprod
     """
     return array.cumprod(*args, **kwargs)
 
@@ -3298,16 +3263,9 @@ def min(array, *args, **kwargs):
     """
     Minimum of array elements.
 
-    Calls :func:`~larray.LArray.min` method of LArray class if `array`
-    is an LArray object, uses builtin min function otherwise.
-
-    Parameters
-    ----------
-    array : LArray or iterable
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.min`.
-        Only used if `array` is an LArray object.
+    See Also
+    --------
+    LArray.min
     """
     if isinstance(array, LArray):
         return array.min(*args, **kwargs)
@@ -3319,16 +3277,9 @@ def max(array, *args, **kwargs):
     """
     Maximum of array elements.
 
-    Calls :func:`~larray.LArray.max` method of LArray class if `array`
-    is an LArray object, uses builtin min function otherwise.
-
-    Parameters
-    ----------
-    array : LArray or iterable
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.max`.
-        Only used if `array` is an LArray object.
+    See Also
+    --------
+    LArray.max
     """
     if isinstance(array, LArray):
         return array.max(*args, **kwargs)
@@ -3340,14 +3291,9 @@ def mean(array, *args, **kwargs):
     """
     Computes the arithmetic mean.
 
-    Calls :func:`~larray.LArray.mean` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.mean`.
+    See Also
+    --------
+    LArray.mean
     """
     return array.mean(*args, **kwargs)
 
@@ -3356,14 +3302,9 @@ def median(array, *args, **kwargs):
     """
     Computes the median.
 
-    Calls :func:`~larray.LArray.median` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.median`.
+    See Also
+    --------
+    LArray.median
     """
     return array.median(*args, **kwargs)
 
@@ -3372,14 +3313,9 @@ def percentile(array, *args, **kwargs):
     """
     Computes the qth percentile of the data along the specified axis.
 
-    Calls :func:`~larray.LArray.percentile` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.percentile`.
+    See Also
+    --------
+    LArray.percentile
     """
     return array.percentile(*args, **kwargs)
 
@@ -3389,16 +3325,9 @@ def ptp(array, *args, **kwargs):
     """
     Returns the range of values (maximum - minimum).
 
-    The name of the function comes from the acronym for ‘peak to peak’.
-
-    Calls :func:`~larray.LArray.ptp` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.ptp`.
+    See Also
+    --------
+    LArray.ptp
     """
     return array.ptp(*args, **kwargs)
 
@@ -3407,14 +3336,9 @@ def var(array, *args, **kwargs):
     """
     Computes the variance.
 
-    Calls :func:`~larray.LArray.var` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.var`.
+    See Also
+    --------
+    LArray.var
     """
     return array.var(*args, **kwargs)
 
@@ -3423,14 +3347,9 @@ def std(array, *args, **kwargs):
     """
     Computes the standard deviation.
 
-    Calls :func:`~larray.LArray.std` method of LArray class.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    \*args and \**kwargs :
-        See :func:`~larray.LArray.std`.
+    See Also
+    --------
+    LArray.std
     """
     return array.std(*args, **kwargs)
 
@@ -3785,8 +3704,8 @@ def _doc_agg_method(desc, by=False, action="perform",
             * (a='a1, a3, a5') : in case of possible ambiguity, i.e. if labels
               can belong to more than one axis, you must precise the axis.
             * ('a1:a5:2') : select labels using a slice
-              (general syntax is 'start:end:step' where is 'step' is optional
-               and 1 by default).
+              (general syntax is 'start:end:step' where is 'step' is
+              optional and 1 by default).
             * ('a1:a3; a10:a12') : create several groups with semicolons.
               Names are simply given by the concatenation of labels
               (here: 'a1,a2,a3' and 'a10,a11,a12')
