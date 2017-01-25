@@ -2860,32 +2860,32 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
                            [3722, 3395, 3347])
 
+    @unittest.skipIf(xw is None, "xlwings is not available")
     def test_read_excel_xlwings(self):
-        if xw is not None:
-            la = read_excel(abspath('test.xlsx'), '1d')
-            self.assertEqual(la.ndim, 1)
-            self.assertEqual(la.shape, (3,))
-            self.assertEqual(la.axes.names, ['time'])
-            assert_array_equal(la, [3722, 3395, 3347])
+        la = read_excel(abspath('test.xlsx'), '1d')
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes.names, ['time'])
+        assert_array_equal(la, [3722, 3395, 3347])
 
-            la = read_excel(abspath('test.xlsx'), '2d')
-            self.assertEqual(la.ndim, 2)
-            self.assertEqual(la.shape, (5, 3))
-            self.assertEqual(la.axes.names, ['age', 'time'])
-            assert_array_equal(la[0, :], [3722, 3395, 3347])
+        la = read_excel(abspath('test.xlsx'), '2d')
+        self.assertEqual(la.ndim, 2)
+        self.assertEqual(la.shape, (5, 3))
+        self.assertEqual(la.axes.names, ['age', 'time'])
+        assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-            la = read_excel(abspath('test.xlsx'), '3d')
-            self.assertEqual(la.ndim, 3)
-            self.assertEqual(la.shape, (5, 2, 3))
-            self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
-            assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+        la = read_excel(abspath('test.xlsx'), '3d')
+        self.assertEqual(la.ndim, 3)
+        self.assertEqual(la.shape, (5, 2, 3))
+        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
+        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-            la = read_excel(abspath('test.xlsx'), '5d')
-            self.assertEqual(la.ndim, 5)
-            self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-            self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-            assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
-                               [3722, 3395, 3347])
+        la = read_excel(abspath('test.xlsx'), '5d')
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
+        assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
+                           [3722, 3395, 3347])
 
     def test_read_excel_pandas(self):
         la = read_excel(abspath('test.xlsx'), '1d', index_col=[0], engine='xlrd')
@@ -2900,7 +2900,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.axes.names, ['age', 'time'])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '3d', index_col=[0, 1], engine=None)
+        la = read_excel(abspath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
