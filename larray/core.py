@@ -2821,7 +2821,7 @@ class AxisCollection(object):
 
         Parameters
         ----------
-        axes : sequence of Axis or str
+        axes : int, str, Axis or sequence of those
             Axes to not include in the returned AxisCollection.
             In case of string, axes are separated by a comma and no whitespace is accepted.
 
@@ -2832,21 +2832,26 @@ class AxisCollection(object):
 
         Notes
         -----
-        Set operations so axes can contain axes not present in self
+        Set operation so axes can contain axes not present in self
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis('age', '0..5')
+        >>> sex = Axis('sex', 'M,F')
+        >>> time = Axis('time', '2015..2017')
         >>> col = AxisCollection([age, sex, time])
         >>> col.without([age, sex])
         AxisCollection([
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis('time', [2015, 2016, 2017])
+        ])
+        >>> col.without(0)
+        AxisCollection([
+            Axis('sex', ['M', 'F']),
+            Axis('time', [2015, 2016, 2017])
         ])
         >>> col.without('sex,time')
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+            Axis('age', [0, 1, 2, 3, 4, 5])
         ])
         """
         return self - axes
@@ -2859,7 +2864,7 @@ class AxisCollection(object):
         """
         if isinstance(axes, basestring):
             axes = axes.split(',')
-        elif isinstance(axes, Axis):
+        elif isinstance(axes, (int, Axis)):
             axes = [axes]
 
         # only keep indices (as this works for unnamed axes too)
