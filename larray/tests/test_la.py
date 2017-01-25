@@ -2941,9 +2941,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                            [3722, 3395, 3347])
 
         la.to_excel('out.xlsx', '5d')
-        out = read_excel('out.xlsx', '5d').i[:2]
-        result = la.i[:2]
-        assert_array_equal(out, result)
+        out = read_excel('out.xlsx', '5d')
+        assert_array_equal(out, la)
 
     def test_ufuncs(self):
         la = self.small
