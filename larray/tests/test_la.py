@@ -2888,7 +2888,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                                [3722, 3395, 3347])
 
     def test_read_excel_pandas(self):
-        la = read_excel(abspath('test.xlsx'), '1d', engine=None)
+        la = read_excel(abspath('test.xlsx'), '1d', index_col=[0], engine='xlrd')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
@@ -2965,7 +2965,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             self.assertEqual(f.readlines(), result)
 
     def test_to_excel(self):
-        la = read_excel(abspath('test.xlsx'), '5d')
+        la = read_excel(abspath('test.xlsx'), '5d', nb_index=4, engine=None)
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
@@ -2973,7 +2973,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                            [3722, 3395, 3347])
 
         la.to_excel('out.xlsx', '5d')
-        out = read_excel('out.xlsx', '5d')
+        out = read_excel('out.xlsx', '5d', nb_index=4, engine=None)
         assert_array_equal(out, la)
 
     def test_ufuncs(self):
