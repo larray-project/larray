@@ -78,16 +78,13 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
 
     target_sums = [la.aslarray(ts) for ts in target_sums]
 
-    def rename_axis(axis, name):
-        return axis if axis.name is not None else axis.rename(name)
-
     n = len(target_sums)
     axes_names = ['axis%d' % i for i in range(n)]
     new_target_sums = []
     for i, ts in enumerate(target_sums):
         ts_axes_names = axes_names[:i] + axes_names[i+1:]
-        new_ts = ts.with_axes([rename_axis(axis, name)
-                               for axis, name in zip(ts.axes, ts_axes_names)])
+        new_ts = ts.rename({axis: axis.name if axis.name is not None else name
+                            for axis, name in zip(ts.axes, ts_axes_names)})
         new_target_sums.append(new_ts)
     target_sums = new_target_sums
 
@@ -104,10 +101,6 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         # so, to reconstruct a.axes from target_sum axes, we need to take the
         # first axis of the second target_sum and all axes from the first
         # target_sum:
-
-        # first_axis = rename_axis(0, target_sums[1].axes[0])
-        # other_axes = [rename_axis(i, a)
-        #               for i, a in enumerate(target_sums[0].axes, start=1)]
         first_axis = target_sums[1].axes[0]
         other_axes = target_sums[0].axes
         all_axes = first_axis + other_axes
@@ -119,11 +112,16 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         else:
             a = la.aslarray(a)
         # TODO: this should be a builtin op
-        # axes_names = [name if name is not None else 'axis%d' % i
-        #               for i, name in enumerate(a.axes.names)]
-        # a = a.rename({i: name for i, name in enumerate(axes_names)})
-        a = a.with_axes([rename_axis(axis, name)
-                         for axis, name in zip(a.axes, axes_names)])
+        a = a.rename({i: name if name is not None else 'axis%d' % i
+                      for i, name in enumerate(a.axes.names)})
+
+    # this test should only ever fail if the user passed larray for a and target sums
+    for i, axis_target in enumerate(target_sums):
+        expected_axes = a.axes - i
+        if axis_target.axes != expected_axes:
+            raise ValueError("axes of target sum along axis {} ({}) do not match corresponding array "
+                             "axes: got {} but expected {}. Are the target sums in the correct order?"
+                             .format(i, a.axes[i].name, axis_target.axes, expected_axes))
 
     axis0_total = target_sums[0].sum()
     for i, axis_target in enumerate(target_sums[1:], start=1):
