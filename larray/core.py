@@ -1840,10 +1840,6 @@ class Group(object):
     __xor__ = _binop('xor')
     __rand__ = _binop('rand')
     __and__ = _binop('and')
-    __rrshift__ = _binop('rrshift')
-    __rshift__ = _binop('rshift')
-    __rlshift__ = _binop('rlshift')
-    __lshift__ = _binop('lshift')
     __rpow__ = _binop('rpow')
     __pow__ = _binop('pow')
     __rdivmod__ = _binop('rdivmod')
@@ -6008,24 +6004,24 @@ class LArray(object):
         >>> barr.all()
         False
         >>> # along axis 'a'
-        >>> barr.all('a')
+        >>> barr.all(x.a)
         b |    b0 |    b1 |    b2 |    b3
           | False | False | False | False
         >>> # along axis 'b'
-        >>> barr.all('b')
+        >>> barr.all(x.b)
         a |   a0 |    a1 |    a2 |    a3
           | True | False | False | False
         >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> barr.all('a0,a1')
+        >>> barr.all(['a0','a1'])
         b |   b0 |   b1 |    b2 |    b3
           | True | True | False | False
         >>> # split axis 'a' in two parts
-        >>> barr.all('a0,a1;a2,a3')
+        >>> barr.all((['a0','a1'], ['a2','a3']))
           a\\b |    b0 |    b1 |    b2 |    b3
         a0,a1 |  True |  True | False | False
         a2,a3 | False | False | False | False
         >>> # same with renaming
-        >>> barr.all('a0,a1>>a01;a2,a3>>a23')
+        >>> barr.all((x.a['a0','a1'] >> 'a01', x.a['a2','a3'] >> 'a23'))
         a\\b |    b0 |    b1 |    b2 |    b3
         a01 |  True |  True | False | False
         a23 | False | False | False | False
