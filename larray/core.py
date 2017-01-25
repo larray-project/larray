@@ -7820,8 +7820,8 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
         with open_excel(filepath) as wb:
             return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
     else:
-        if index_col is None and nb_index > 0:
-            index_col = list(range(nb_index))
+        if not index_col:
+            index_col = list(range(nb_index)) if nb_index > 0 else [0]
         df = pd.read_excel(filepath, sheetname, index_col=index_col,
                            engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
