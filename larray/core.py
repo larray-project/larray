@@ -1122,12 +1122,9 @@ class Axis(object):
         """
         Checks if self is compatible with another axis.
 
-        * Two non-wildcard axes are compatible is they have
-          the same name and labels.
-        * A wildcard axis of length 1 is compatible with any
-          other axis sharing the same name.
-        * A wildcard axis of length > 1 is compatible with any
-          axis of the same length or length 1 and sharing the
+        * Two non-wildcard axes are compatible if they have the same name and labels.
+        * A wildcard axis of length 1 is compatible with any other axis sharing the same name.
+        * A wildcard axis of length > 1 is compatible with any axis of the same length or length 1 and sharing the
           same name.
 
         Parameters
@@ -1159,8 +1156,7 @@ class Axis(object):
             return True
         if not isinstance(other, Axis):
             return False
-        if self.name is not None and other.name is not None and \
-                self.name != other.name:
+        if self.name is not None and other.name is not None and self.name != other.name:
             return False
         if self.iswildcard or other.iswildcard:
             # wildcard axes of length 1 match with anything
