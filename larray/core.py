@@ -3108,13 +3108,15 @@ class AxisCollection(object):
 
     # XXX: instead of front_if_spread, we might want to require axes to be contiguous
     #      (ie the caller would have to transpose axes before calling this)
-    def combine_axes(self, axes=None, wildcard=False, front_if_spread=False):
+    def combine_axes(self, axes=None, sep='_', wildcard=False, front_if_spread=False):
         """Combine several axes into one.
 
         Parameters
         ----------
         axes : tuple, list or AxisCollection of axes, optional
             axes to combine. Defaults to all axes.
+        sep : str, optional
+            delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
             whether or not to produce a wildcard axis even if the axes to
             combine are not. This is much faster, but loose axes labels.
@@ -3140,7 +3142,7 @@ class AxisCollection(object):
         if all(axis.name is None for axis in axes):
             combined_name = None
         else:
-            combined_name = '_'.join(str(id_) for id_ in axes.ids)
+            combined_name = sep.join(str(id_) for id_ in axes.ids)
 
         if wildcard:
             combined_axis = Axis(combined_name, axes.size)
@@ -3156,7 +3158,7 @@ class AxisCollection(object):
                 #    wildcard axis (and axes_labels discarded?)
                 combined_labels = axes[0].labels
             else:
-                combined_labels = ['_'.join(str(l) for l in p)
+                combined_labels = [sep.join(str(l) for l in p)
                                    for p in product(*axes.labels)]
 
             combined_axis = Axis(combined_name, combined_labels)
@@ -7490,13 +7492,15 @@ class LArray(object):
                 res = res[axis.i[0]]
         return res
 
-    def combine_axes(self, axes=None, wildcard=False):
+    def combine_axes(self, axes=None, sep='_', wildcard=False):
         """Combine several axes into one.
 
         Parameters
         ----------
         axes : tuple, list or AxisCollection of axes, optional
             axes to combine. Defaults to all axes.
+        sep : str, optional
+            delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
             whether or not to produce a wildcard axis even if the axes to
             combine are not. This is much faster, but loose axes labels.
@@ -7515,6 +7519,9 @@ class LArray(object):
          a1 |  3 |  4 |  5
         >>> arr.combine_axes()
         a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
+            |     0 |     1 |     2 |     3 |     4 |     5
+        >>> arr.combine_axes(sep='/')
+        a/b | a0/b0 | a0/b1 | a0/b2 | a1/b0 | a1/b1 | a1/b2
             |     0 |     1 |     2 |     3 |     4 |     5
         >>> arr = ndtest((2, 3, 4))
         >>> arr
@@ -7543,7 +7550,7 @@ class LArray(object):
         transposed_axes = self.axes[:min_axis_index] + axes + self.axes
         transposed = self.transpose(transposed_axes)
 
-        new_axes = transposed.axes.combine_axes(axes, wildcard=wildcard)
+        new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
         return transposed.reshape(new_axes)
 
     def split_axis(self, axis, sep='_', names=None):
