@@ -1624,7 +1624,7 @@ class Group(object):
         # eval only returns a slice for groups without an Axis object
         if isinstance(key, slice):
             key_repr = _slice_to_str(key, repr_func=repr)
-        elif isinstance(key, (tuple, list, np.ndarray)):
+        elif isinstance(key, (tuple, list, np.ndarray, OrderedSet)):
             key_repr = _seq_summary(key, n=1000, repr_func=repr, sep=', ')
         else:
             key_repr = repr(key)
@@ -1963,7 +1963,30 @@ class LGroup(Group):
 
 
 class LSet(LGroup):
-    format_string = "{axis}.set[{key}]"
+    """Label set.
+
+    Represents a set of (unique) labels of an axis.
+
+    Parameters
+    ----------
+    key : key
+        Anything usable for indexing.
+        A key should be either sequence of labels, a slice with label bounds or a string.
+    name : str, optional
+        Name of the set.
+    axis : int, str, Axis, optional
+        Axis for set.
+
+    Examples
+    --------
+    >>> letters = Axis('letters', 'a..z')
+    >>> abc = letters[':c'].set() >> 'abc'
+    >>> abc
+    letters['a', 'b', 'c'].set() >> 'abc'
+    >>> abc & letters['b:d']
+    letters['b', 'c'].set()
+    """
+    format_string = "{axis}[{key}].set()"
 
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
