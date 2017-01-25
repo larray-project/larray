@@ -2888,7 +2888,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                            [3722, 3395, 3347])
 
     def test_read_excel_pandas(self):
-        la = read_excel(abspath('test.xlsx'), '1d', index_col=[0], engine='xlrd')
+        la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
