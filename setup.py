@@ -9,8 +9,8 @@ def readlocal(fname):
 
 
 DISTNAME = 'larray'
-VERSION = '0.19'
-AUTHOR = 'Gaetan de Menten, Geert Bryon'
+VERSION = '0.19.1'
+AUTHOR = 'Gaetan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
 AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
