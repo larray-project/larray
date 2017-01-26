@@ -6011,20 +6011,32 @@ class LArray(object):
         >>> barr.all(x.b)
         a |   a0 |    a1 |    a2 |    a3
           | True | False | False | False
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> barr.all(['a0','a1'])
+
+        Select some rows only
+
+        >>> barr.all(['a0', 'a1'])
         b |   b0 |   b1 |    b2 |    b3
           | True | True | False | False
-        >>> # split axis 'a' in two parts
-        >>> barr.all((['a0','a1'], ['a2','a3']))
+        >>> # or equivalently
+        >>> # barr.all('a0,a1')
+
+        Split an axis in several parts
+
+        >>> barr.all((['a0', 'a1'], ['a2', 'a3']))
           a\\b |    b0 |    b1 |    b2 |    b3
         a0,a1 |  True |  True | False | False
         a2,a3 | False | False | False | False
-        >>> # same with renaming
-        >>> barr.all((x.a['a0','a1'] >> 'a01', x.a['a2','a3'] >> 'a23'))
+        >>> # or equivalently
+        >>> # barr.all('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> barr.all((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b |    b0 |    b1 |    b2 |    b3
         a01 |  True |  True | False | False
         a23 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("AND reduction", kwargs="out,skipna,keepaxes"))
 
     all_by.__doc__ = """
