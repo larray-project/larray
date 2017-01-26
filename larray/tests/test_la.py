@@ -2965,7 +2965,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             self.assertEqual(f.readlines(), result)
 
     def test_to_excel(self):
-        la = read_excel(abspath('test.xlsx'), '5d', nb_index=4, engine=None)
+        la = read_excel(abspath('test.xlsx'), '5d', nb_index=4, engine='xlrd')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
