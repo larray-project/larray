@@ -7808,13 +7808,16 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
 
 def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
                na=np.nan, sort_rows=False, sort_columns=False,
-               engine='xlwings', **kwargs):
+               engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
     """
+    if engine is None:
+        engine = 'xlwings' if xw is not None else None
+    
     if engine == 'xlwings':
         from .excel import open_excel
         with open_excel(filepath) as wb:
