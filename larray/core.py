@@ -7881,12 +7881,34 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
         with open_excel(filepath) as wb:
             return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
     else:
-        if index_col is None:
-            index_col = list(range(nb_index)) if nb_index > 0 else [0]
-        df = pd.read_excel(filepath, sheetname, index_col=index_col,
-                           engine=engine, **kwargs)
-        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                           fill_value=na)
+        if index_col is not None or nb_index > 0:
+            if index_col is None:
+                index_col = list(range(nb_index))
+            df = pd.read_excel(filepath, sheetname, index_col=index_col,
+                               engine=engine, **kwargs)
+            return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                               fill_value=na)
+        else:
+            # read array as it (2D) and then build LArray from it
+            df = pd.read_excel(filepath, sheetname, **kwargs)
+            try:
+                # take the first column which contains '\'
+                pos_last = next(i for i, v in enumerate(df.columns.values) if '\\' in v)
+            except StopIteration:
+                # we assume first column will not contains data
+                pos_last = 0
+            if pos_last > 0:
+                axes_names = df.columns.values[:pos_last + 1].tolist()
+                axes_labels = [union(df[axis_name]) for axis_name in axes_names]
+                axes_names = axes_names[:-1] + axes_names[-1].split('\\')
+                axes_labels.append(df.columns.values[pos_last + 1:].tolist())
+            else:
+                axes_names = [df.columns.values[0]]
+                axes_labels = df.columns.values[1:].tolist()
+
+            axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+            data = df.values[:, pos_last + 1:].reshape([len(axis) for axis in axes])
+            return LArray(data, axes)
 
 
 def read_sas(filepath, nb_index=0, index_col=None,
