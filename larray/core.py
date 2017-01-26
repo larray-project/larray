@@ -7889,23 +7889,25 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
             return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
                                fill_value=na)
         else:
-            # read array as it (2D) and then build LArray from it
+            # read array as it (2D)
             df = pd.read_excel(filepath, sheetname, **kwargs)
+            # extract axes names and labels
+            columns = df.columns.values.tolist()
             try:
                 # take the first column which contains '\'
-                pos_last = next(i for i, v in enumerate(df.columns.values) if '\\' in v)
+                pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
             except StopIteration:
                 # we assume first column will not contains data
                 pos_last = 0
-            if pos_last > 0:
-                axes_names = df.columns.values[:pos_last + 1].tolist()
+            if pos_last > 0 or '\\' in str(columns[0]):
+                axes_names = columns[:pos_last + 1]
                 axes_labels = [union(df[axis_name]) for axis_name in axes_names]
                 axes_names = axes_names[:-1] + axes_names[-1].split('\\')
-                axes_labels.append(df.columns.values[pos_last + 1:].tolist())
+                axes_labels.append(columns[pos_last + 1:])
             else:
-                axes_names = [df.columns.values[0]]
-                axes_labels = df.columns.values[1:].tolist()
-
+                axes_names = [columns[0]]
+                axes_labels = [columns[1:]]
+            # build LArray object
             axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
             data = df.values[:, pos_last + 1:].reshape([len(axis) for axis in axes])
             return LArray(data, axes)
