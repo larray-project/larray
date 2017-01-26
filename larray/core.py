@@ -7811,13 +7811,37 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
                engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
-        nb_index: number of leading index columns (e.g. 4)
-    or
-        index_col: list of columns for the index (e.g. [0, 1, 3])
+
+    Parameters
+    ----------
+    filepath : str
+        Path where the csv file has to be written.
+    sheetname : str or int, optional
+        Name or index of the Excel sheet containing
+        the array to be read.
+        By default the array is read from the first sheet.
+    nb_index : int, optional
+        Number of leading index columns (ex. 4).
+    index_col : list, optional
+        List of columns for the index (ex. [0, 1, 2, 3]).
+    na : scalar, optional
+        Value for NaN (Not A Number). Defaults to NumPy NaN.
+    sort_rows : bool, optional
+        Whether or not to sort the row dimensions alphabetically
+        (sorting is more efficient than not sorting).
+        Defaults to False.
+    sort_columns : bool, optional
+        Whether or not to sort the column dimension alphabetically
+        (sorting is more efficient than not sorting).
+        Defaults to False.
+    engine : {'xlrd'}, optional
+        'xlwings' is used by default if installed.
+        Otherwise, 'pandas' is used.
+    **kwargs
     """
     if engine is None:
         engine = 'xlwings' if xw is not None else None
-    
+
     if engine == 'xlwings':
         from .excel import open_excel
         with open_excel(filepath) as wb:
