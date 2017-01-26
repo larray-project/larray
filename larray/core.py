@@ -7697,7 +7697,7 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
     Parameters
     ----------
     filepath : str
-        Path where the csv file has to be written.
+        Path where the csv file has to be read.
     nb_index : int, optional
         Number of leading index columns (ex. 4).
     index_col : list, optional
@@ -7846,7 +7846,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
     Parameters
     ----------
     filepath : str
-        Path where the Excel file has to be written.
+        Path where the Excel file has to be read.
     sheetname : str or int, optional
         Name or index of the Excel sheet containing
         the array to be read.
