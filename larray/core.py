@@ -7677,10 +7677,10 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
     na : scalar, optional
         Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
-        Whether or not to sort the row dimensions alphabetically (sorting is
+        Whether or not to sort the rows alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the column dimension alphabetically (sorting is
+        Whether or not to sort the columns alphabetically (sorting is
         more efficient than not sorting). Defaults to False.
     dialect : 'classic' | 'larray' | 'liam2', optional
         Name of dialect. Defaults to 'larray'.
@@ -7815,28 +7815,31 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
     Parameters
     ----------
     filepath : str
-        Path where the csv file has to be written.
+        Path where the Excel file has to be written.
     sheetname : str or int, optional
         Name or index of the Excel sheet containing
         the array to be read.
         By default the array is read from the first sheet.
     nb_index : int, optional
         Number of leading index columns (ex. 4).
+        Default to 0.
     index_col : list, optional
         List of columns for the index (ex. [0, 1, 2, 3]).
+        Default to [0].
     na : scalar, optional
         Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
-        Whether or not to sort the row dimensions alphabetically
+        Whether or not to sort the rows alphabetically
         (sorting is more efficient than not sorting).
         Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the column dimension alphabetically
+        Whether or not to sort the columns alphabetically
         (sorting is more efficient than not sorting).
         Defaults to False.
-    engine : {'xlrd'}, optional
-        'xlwings' is used by default if installed.
-        Otherwise, 'pandas' is used.
+    engine : {'xlrd', 'xlwings'}, optional
+        Engine to use to read the Excel file. If None (default),
+        it will use 'xlwings' by default if the module is installed
+        and relies on Pandas default reader otherwise.
     **kwargs
     """
     if engine is None:
@@ -7847,7 +7850,7 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
         with open_excel(filepath) as wb:
             return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
     else:
-        if not index_col:
+        if index_col is None:
             index_col = list(range(nb_index)) if nb_index > 0 else [0]
         df = pd.read_excel(filepath, sheetname, index_col=index_col,
                            engine=engine, **kwargs)
