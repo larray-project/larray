@@ -6072,11 +6072,11 @@ class LArray(object):
         >>> barr.all_by()
         False
         >>> # by axis 'a'
-        >>> barr.all_by('a')
+        >>> barr.all_by(x.a)
         a |   a0 |    a1 |    a2 |    a3
           | True | False | False | False
         >>> # by axis 'b'
-        >>> barr.all_by('b')
+        >>> barr.all_by(x.b)
         b |    b0 |    b1 |    b2 |    b3
           | False | False | False | False
         """.format(_doc_agg_method("AND reduction", by=True, kwargs="out,skipna,keepaxes"))
