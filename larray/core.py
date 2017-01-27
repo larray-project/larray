@@ -5030,7 +5030,7 @@ class LArray(object):
         a\\b | b2 | b3
          a1 |  0 |  1
          a2 |  4 |  9
-        >>> arr1.drop_labels('a') * arr2.drop_labels('b')
+        >>> arr1.drop_labels(x.a) * arr2.drop_labels(x.b)
         a\\b | b1 | b2
          a1 |  0 |  1
          a2 |  4 |  9
@@ -6114,27 +6114,39 @@ class LArray(object):
         >>> barr.any()
         True
         >>> # along axis 'a'
-        >>> barr.any('a')
+        >>> barr.any(x.a)
         b |   b0 |   b1 |   b2 |   b3
           | True | True | True | True
         >>> # along axis 'b'
-        >>> barr.any('b')
+        >>> barr.any(x.b)
         a |   a0 |   a1 |    a2 |    a3
           | True | True | False | False
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> barr.any('a0,a1')
+
+        Select some rows only
+
+        >>> barr.any(['a0', 'a1'])
         b |   b0 |   b1 |   b2 |   b3
           | True | True | True | True
-        >>> # split axis 'a' in two parts
-        >>> barr.any('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # barr.any('a0,a1')
+
+        Split an axis in several parts
+
+        >>> barr.any((['a0', 'a1'], ['a2', 'a3']))
           a\\b |    b0 |    b1 |    b2 |    b3
         a0,a1 |  True |  True |  True |  True
         a2,a3 | False | False | False | False
-        >>> # same with renaming
-        >>> barr.any('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # barr.any('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> barr.any((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b |    b0 |    b1 |    b2 |    b3
         a01 |  True |  True |  True |  True
         a23 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("OR reduction", kwargs="out,skipna,keepaxes"))
 
     any_by.__doc__ = """
@@ -6170,11 +6182,11 @@ class LArray(object):
         >>> barr.any_by()
         True
         >>> # by axis 'a'
-        >>> barr.any_by('a')
+        >>> barr.any_by(x.a)
         a |   a0 |   a1 |    a2 |    a3
           | True | True | False | False
         >>> # by axis 'b'
-        >>> barr.any_by('b')
+        >>> barr.any_by(x.b)
         b |   b0 |   b1 |   b2 |   b3
           | True | True | True | True
         """.format(_doc_agg_method("OR reduction", by=True, kwargs="out,skipna,keepaxes"))
@@ -6208,27 +6220,39 @@ class LArray(object):
         >>> arr.sum()
         120
         >>> # along axis 'a'
-        >>> arr.sum('a')
+        >>> arr.sum(x.a)
         b | b0 | b1 | b2 | b3
           | 24 | 28 | 32 | 36
         >>> # along axis 'b'
-        >>> arr.sum('b')
+        >>> arr.sum(x.b)
         a | a0 | a1 | a2 | a3
           |  6 | 22 | 38 | 54
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.sum('a0,a1')
+
+        Select some rows only
+
+        >>> arr.sum(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  4 |  6 |  8 | 10
-        >>> # split axis 'a' in two parts
-        >>> arr.sum('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.sum((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  4 |  6 |  8 | 10
         a2,a3 | 20 | 22 | 24 | 26
-        >>> # same with renaming
-        >>> arr.sum('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.sum((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  4 |  6 |  8 | 10
         a23 | 20 | 22 | 24 | 26
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("sum", kwargs="dtype,out,skipna,keepaxes"))
 
     sum_by.__doc__ = """
@@ -6258,11 +6282,11 @@ class LArray(object):
         >>> arr.sum_by()
         120
         >>> # along axis 'a'
-        >>> arr.sum_by('a')
+        >>> arr.sum_by(x.a)
         a | a0 | a1 | a2 | a3
           |  6 | 22 | 38 | 54
         >>> # along axis 'b'
-        >>> arr.sum_by('b')
+        >>> arr.sum_by(x.b)
         b | b0 | b1 | b2 | b3
           | 24 | 28 | 32 | 36
         """.format(_doc_agg_method("sum", by=True, kwargs="dtype,out,skipna,keepaxes"))
@@ -6295,27 +6319,39 @@ class LArray(object):
         >>> arr.prod()
         0
         >>> # along axis 'a'
-        >>> arr.prod('a')
+        >>> arr.prod(x.a)
         b | b0 |  b1 |   b2 |   b3
           |  0 | 585 | 1680 | 3465
         >>> # along axis 'b'
-        >>> arr.prod('b')
+        >>> arr.prod(x.b)
         a | a0 |  a1 |   a2 |    a3
           |  0 | 840 | 7920 | 32760
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.prod('a0,a1')
+
+        Select some rows only
+
+        >>> arr.prod(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  0 |  5 | 12 | 21
-        >>> # split axis 'a' in two parts
-        >>> arr.prod('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.prod((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 |  b1 |  b2 |  b3
         a0,a1 |  0 |   5 |  12 |  21
         a2,a3 | 96 | 117 | 140 | 165
-        >>> # same with renaming
-        >>> arr.prod('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.prod((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 |  b1 |  b2 |  b3
         a01 |  0 |   5 |  12 |  21
         a23 | 96 | 117 | 140 | 165
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("product", kwargs="dtype,out,skipna,keepaxes"))
 
     prod_by.__doc__ = """
@@ -6345,11 +6381,11 @@ class LArray(object):
         >>> arr.prod_by()
         0
         >>> # along axis 'a'
-        >>> arr.prod_by('a')
+        >>> arr.prod_by(x.a)
         a | a0 |  a1 |   a2 |    a3
           |  0 | 840 | 7920 | 32760
         >>> # along axis 'b'
-        >>> arr.prod_by('b')
+        >>> arr.prod_by(x.b)
         b | b0 |  b1 |   b2 |   b3
           |  0 | 585 | 1680 | 3465
         """.format(_doc_agg_method("product", by=True, kwargs="dtype,out,skipna,keepaxes"))
@@ -6380,27 +6416,39 @@ class LArray(object):
         >>> arr.min()
         0
         >>> # along axis 'a'
-        >>> arr.min('a')
+        >>> arr.min(x.a)
         b | b0 | b1 | b2 | b3
           |  0 |  1 |  2 |  3
         >>> # along axis 'b'
-        >>> arr.min('b')
+        >>> arr.min(x.b)
         a | a0 | a1 | a2 | a3
           |  0 |  4 |  8 | 12
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.min('a0,a1')
+
+        Select some rows only
+
+        >>> arr.min(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  0 |  1 |  2 |  3
-        >>> # split axis 'a' in two parts
-        >>> arr.min('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.min('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.min((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  0 |  1 |  2 |  3
         a2,a3 |  8 |  9 | 10 | 11
-        >>> # same with renaming
-        >>> arr.min('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.min('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.min((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  0 |  1 |  2 |  3
         a23 |  8 |  9 | 10 | 11
+        >>> # or equivalently
+        >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("minimum", action="search",
                                    kwargs="out,skipna,keepaxes"))
 
@@ -6430,11 +6478,11 @@ class LArray(object):
         >>> arr.min_by()
         0
         >>> # along axis 'a'
-        >>> arr.min_by('a')
+        >>> arr.min_by(x.a)
         a | a0 | a1 | a2 | a3
           |  0 |  4 |  8 | 12
         >>> # along axis 'b'
-        >>> arr.min_by('b')
+        >>> arr.min_by(x.b)
         b | b0 | b1 | b2 | b3
           |  0 |  1 |  2 |  3
         """.format(_doc_agg_method("minimum", by=True, action="search",
@@ -6466,27 +6514,39 @@ class LArray(object):
         >>> arr.max()
         15
         >>> # along axis 'a'
-        >>> arr.max('a')
+        >>> arr.max(x.a)
         b | b0 | b1 | b2 | b3
           | 12 | 13 | 14 | 15
         >>> # along axis 'b'
-        >>> arr.max('b')
+        >>> arr.max(x.b)
         a | a0 | a1 | a2 | a3
           |  3 |  7 | 11 | 15
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.max('a0,a1')
+
+        Select some rows only
+
+        >>> arr.max(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  4 |  5 |  6 |  7
-        >>> # split axis 'a' in two parts
-        >>> arr.max('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.max('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.max((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  4 |  5 |  6 |  7
         a2,a3 | 12 | 13 | 14 | 15
-        >>> # same with renaming
-        >>> arr.max('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.max('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.max((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  4 |  5 |  6 |  7
         a23 | 12 | 13 | 14 | 15
+        >>> # or equivalently
+        >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("maximum", action="search",
                                    kwargs="out,skipna,keepaxes"))
 
@@ -6516,11 +6576,11 @@ class LArray(object):
         >>> arr.max_by()
         15
         >>> # along axis 'a'
-        >>> arr.max_by('a')
+        >>> arr.max_by(x.a)
         a | a0 | a1 | a2 | a3
           |  3 |  7 | 11 | 15
         >>> # along axis 'b'
-        >>> arr.max_by('b')
+        >>> arr.max_by(x.b)
         b | b0 | b1 | b2 | b3
           | 12 | 13 | 14 | 15
         """.format(_doc_agg_method("maximum", by=True, action="search",
@@ -6554,27 +6614,39 @@ class LArray(object):
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
-        >>> arr.mean('a')
+        >>> arr.mean(x.a)
         b |  b0 |  b1 |  b2 |  b3
           | 6.0 | 7.0 | 8.0 | 9.0
         >>> # along axis 'b'
-        >>> arr.mean('b')
+        >>> arr.mean(x.b)
         a |  a0 |  a1 |  a2 |   a3
           | 1.5 | 5.5 | 9.5 | 13.5
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.mean('a0,a1')
+
+        Select some rows only
+
+        >>> arr.mean(['a0', 'a1'])
         b |  b0 |  b1 |  b2 |  b3
           | 2.0 | 3.0 | 4.0 | 5.0
-        >>> # split axis 'a' in two parts
-        >>> arr.mean('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.mean((['a0', 'a1'], ['a2', 'a3']))
           a\\b |   b0 |   b1 |   b2 |   b3
         a0,a1 |  2.0 |  3.0 |  4.0 |  5.0
         a2,a3 | 10.0 | 11.0 | 12.0 | 13.0
-        >>> # same with renaming
-        >>> arr.mean('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.mean((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b |   b0 |   b1 |   b2 |   b3
         a01 |  2.0 |  3.0 |  4.0 |  5.0
         a23 | 10.0 | 11.0 | 12.0 | 13.0
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("mean", kwargs="dtype,out,skipna,keepaxes"))
 
     mean_by.__doc__ = """
@@ -6605,11 +6677,11 @@ class LArray(object):
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
-        >>> arr.mean_by('a')
+        >>> arr.mean_by(x.a)
         a |  a0 |  a1 |  a2 |   a3
           | 1.5 | 5.5 | 9.5 | 13.5
         >>> # along axis 'b'
-        >>> arr.mean_by('b')
+        >>> arr.mean_by(x.b)
         b |  b0 |  b1 |  b2 |  b3
           | 6.0 | 7.0 | 8.0 | 9.0
         """.format(_doc_agg_method("mean", by=True, kwargs="dtype,out,skipna,keepaxes"))
@@ -6646,27 +6718,39 @@ class LArray(object):
         >>> arr.median()
         6.5
         >>> # along axis 'a'
-        >>> arr.median('a')
+        >>> arr.median(x.a)
         b |  b0 |  b1 |  b2 |  b3
           | 7.5 | 7.5 | 4.0 | 8.0
         >>> # along axis 'b'
-        >>> arr.median('b')
+        >>> arr.median(x.b)
         a |  a0 |  a1 |  a2 |  a3
           | 8.0 | 6.0 | 4.0 | 7.5
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.median('a0,a1')
+
+        Select some rows only
+
+        >>> arr.median(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  7 |  7 |  4 |  8
-        >>> # split axis 'a' in two parts
-        >>> arr.median('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.median('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.median((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  7 |  7 |  4 |  8
         a2,a3 |  7 |  6 |  2 |  7
-        >>> # same with renaming
-        >>> arr.median('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.median('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.median((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  7 |  7 |  4 |  8
         a23 |  7 |  6 |  2 |  7
+        >>> # or equivalently
+        >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
 
     median_by.__doc__ = """
@@ -6701,11 +6785,11 @@ class LArray(object):
         >>> arr.median_by()
         6.5
         >>> # along axis 'a'
-        >>> arr.median_by('a')
+        >>> arr.median_by(x.a)
         a |  a0 |  a1 |  a2 |  a3
           | 8.0 | 6.0 | 4.0 | 7.5
         >>> # along axis 'b'
-        >>> arr.median_by('b')
+        >>> arr.median_by(x.b)
         b |  b0 |  b1 |  b2 |  b3
           | 7.5 | 7.5 | 4.0 | 8.0
         """.format(_doc_agg_method("median", by=True, kwargs="out,skipna,keepaxes"))
@@ -6748,27 +6832,39 @@ class LArray(object):
         >>> arr.percentile(25)
         3.75
         >>> # along axis 'a'
-        >>> arr.percentile(25, 'a')
+        >>> arr.percentile(25, x.a)
         b |  b0 |  b1 |  b2 |  b3
           | 3.0 | 4.0 | 5.0 | 6.0
         >>> # along axis 'b'
-        >>> arr.percentile(25, 'b')
+        >>> arr.percentile(25, x.b)
         a |   a0 |   a1 |   a2 |    a3
           | 0.75 | 4.75 | 8.75 | 12.75
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.percentile(25, 'a0,a1')
+
+        Select some rows only
+
+        >>> arr.percentile(25, ['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  1 |  2 |  3 |  4
-        >>> # split axis 'a' in two parts
-        >>> arr.percentile(25, 'a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.percentile(25, (['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  1 |  2 |  3 |  4
         a2,a3 |  9 | 10 | 11 | 12
-        >>> # same with renaming
-        >>> arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.percentile(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  1 |  2 |  3 |  4
         a23 |  9 | 10 | 11 | 12
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("qth percentile", extra_args="q",
                                    kwargs="out,interpolation,skipna,keepaxes"))
 
@@ -6804,11 +6900,11 @@ class LArray(object):
         >>> arr.percentile_by(25)
         3.75
         >>> # along axis 'a'
-        >>> arr.percentile_by(25, 'a')
+        >>> arr.percentile_by(25, x.a)
         a |   a0 |   a1 |   a2 |    a3
           | 0.75 | 4.75 | 8.75 | 12.75
         >>> # along axis 'b'
-        >>> arr.percentile_by(25, 'b')
+        >>> arr.percentile_by(25, x.b)
         b |  b0 |  b1 |  b2 |  b3
           | 3.0 | 4.0 | 5.0 | 6.0
         """.format(_doc_agg_method("qth percentile", by=True, extra_args="q",
@@ -6839,27 +6935,39 @@ class LArray(object):
         >>> arr.ptp()
         15
         >>> # along axis 'a'
-        >>> arr.ptp('a')
+        >>> arr.ptp(x.a)
         b | b0 | b1 | b2 | b3
           | 12 | 12 | 12 | 12
         >>> # along axis 'b'
-        >>> arr.ptp('b')
+        >>> arr.ptp(x.b)
         a | a0 | a1 | a2 | a3
           |  3 |  3 |  3 |  3
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.ptp('a0,a1')
+
+        Select some rows only
+
+        >>> arr.ptp(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  4 |  4 |  4 |  4
-        >>> # split axis 'a' in two parts
-        >>> arr.ptp('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.ptp((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  4 |  4 |  4 |  4
         a2,a3 |  4 |  4 |  4 |  4
-        >>> # same with renaming
-        >>> arr.ptp('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.ptp((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  4 |  4 |  4 |  4
         a23 |  4 |  4 |  4 |  4
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("ptp", kwargs="out"))
 
     var, var_by = _agg_method(np.var, np.nanvar)
@@ -6894,27 +7002,39 @@ class LArray(object):
         >>> arr.var()
         7.96484375
         >>> # along axis 'a'
-        >>> arr.var('a')
+        >>> arr.var(x.a)
         b |   b0 |     b1 |     b2 |     b3
           | 4.25 | 8.6875 | 4.1875 | 1.6875
         >>> # along axis 'b'
-        >>> arr.var('b')
+        >>> arr.var(x.b)
         a |     a0 |     a1 |      a2 |   a3
           | 3.6875 | 3.6875 | 12.1875 | 4.25
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.var('a0,a1')
+
+        Select some rows only
+
+        >>> arr.var(['a0', 'a1'])
         b | b0 | b1 | b2 | b3
           |  6 |  0 |  1 |  1
-        >>> # split axis 'a' in two parts
-        >>> arr.var('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.var('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.var((['a0', 'a1'], ['a2', 'a3']))
           a\\b | b0 | b1 | b2 | b3
         a0,a1 |  6 |  0 |  1 |  1
         a2,a3 |  2 | 16 |  6 |  2
-        >>> # same with renaming
-        >>> arr.var('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.var('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.var((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b | b0 | b1 | b2 | b3
         a01 |  6 |  0 |  1 |  1
         a23 |  2 | 16 |  6 |  2
+        >>> # or equivalently
+        >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
 
     var_by.__doc__ = """
@@ -6949,11 +7069,11 @@ class LArray(object):
         >>> arr.var_by()
         7.96484375
         >>> # along axis 'a'
-        >>> arr.var_by('a')
+        >>> arr.var_by(x.a)
         a |     a0 |     a1 |      a2 |   a3
           | 3.6875 | 3.6875 | 12.1875 | 4.25
         >>> # along axis 'b'
-        >>> arr.var_by('b')
+        >>> arr.var_by(x.b)
         b |   b0 |     b1 |     b2 |     b3
           | 4.25 | 8.6875 | 4.1875 | 1.6875
         """.format(_doc_agg_method("variance", by=True,
@@ -6991,23 +7111,35 @@ class LArray(object):
         >>> arr.std()
         2.7810744326608736
         >>> # along axis 'a'
-        >>> arr.std('a')
+        >>> arr.std(x.a)
         b |  b0 |  b1 |  b2 |  b3
           | 2.5 | 1.5 | 2.0 | 1.5
-        >>> # select rows a0 and a1 (ignore rows a2 and a3)
-        >>> arr.std('a0,a1')
+
+        Select some rows only
+
+        >>> arr.std(['a0', 'a1'])
         b |  b0 |  b1 |  b2 |  b3
           | 2.5 | 1.5 | 0.0 | 1.5
-        >>> # split axis 'a' in two parts
-        >>> arr.std('a0,a1;a2,a3')
+        >>> # or equivalently
+        >>> # arr.std('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.std((['a0', 'a1'], ['a2', 'a3']))
           a\\b |  b0 |  b1 |  b2 |  b3
         a0,a1 | 2.5 | 1.5 | 0.0 | 1.5
         a2,a3 | 2.5 | 1.5 | 0.0 | 1.5
-        >>> # same with renaming
-        >>> arr.std('a0,a1>>a01;a2,a3>>a23')
+        >>> # or equivalently
+        >>> # arr.std('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.std((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
         a\\b |  b0 |  b1 |  b2 |  b3
         a01 | 2.5 | 1.5 | 0.0 | 1.5
         a23 | 2.5 | 1.5 | 0.0 | 1.5
+        >>> # or equivalently
+        >>> # arr.std('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("standard deviation",
                                    kwargs="dtype,out,ddof,skipna,keepaxes"))
 
@@ -7043,7 +7175,7 @@ class LArray(object):
         >>> arr.std_by()
         2.7810744326608736
         >>> # along axis 'b'
-        >>> arr.std_by('b')
+        >>> arr.std_by(x.b)
         b |  b0 |  b1 |  b2 |  b3
           | 2.5 | 1.5 | 2.0 | 1.5
         """.format(_doc_agg_method("standard deviation", by=True,
@@ -7091,7 +7223,7 @@ class LArray(object):
          a1 |  4 |  9 | 15 | 22
          a2 |  8 | 17 | 27 | 38
          a3 | 12 | 25 | 39 | 54
-        >>> arr.cumsum('a')
+        >>> arr.cumsum(x.a)
         a\\b | b0 | b1 | b2 | b3
          a0 |  0 |  1 |  2 |  3
          a1 |  4 |  6 |  8 | 10
@@ -7141,7 +7273,7 @@ class LArray(object):
          a1 |  4 |  20 |  120 |   840
          a2 |  8 |  72 |  720 |  7920
          a3 | 12 | 156 | 2184 | 32760
-        >>> arr.cumprod('a')
+        >>> arr.cumprod(x.a)
         a\\b | b0 |  b1 |   b2 |   b3
          a0 |  0 |   1 |    2 |    3
          a1 |  0 |   5 |   12 |   21
