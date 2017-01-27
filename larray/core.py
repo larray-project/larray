@@ -110,9 +110,9 @@ except ImportError:
 
 from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
-                          decode, basestring, bytes, izip, rproduct, ReprString,
-                          duplicates, array_lookup2, skip_comment_cells,
-                          strip_rows, find_closing_chr, PY3)
+                          decode, basestring, unicode, bytes, izip, rproduct,
+                          ReprString, duplicates, array_lookup2, strip_rows,
+                          skip_comment_cells, find_closing_chr, PY3)
 
 def _range_to_slice(seq, length=None):
     """
@@ -849,7 +849,7 @@ class Axis(object):
             name = name.name
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
-        is_python_str = type(name) is str or type(name) is bytes
+        is_python_str = type(name) is unicode or type(name) is bytes
         assert name is None or isinstance(name, int) or is_python_str, \
             type(name)
         self.name = name
