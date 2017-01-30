@@ -5421,10 +5421,25 @@ class LArray(object):
             operations = self.axes
         return operations
 
-    def _aggregate(self, op, args, kwargs=None, keepaxes=False,
+    def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False,
                    commutative=False, out=None, extra_kwargs={}):
         operations = self._prepare_aggregate(op, args, kwargs, commutative,
                                              stack_depth=3)
+        if by_agg:
+            # get axes to aggregate
+            flat_op = chain.from_iterable([(o,) if isinstance(o, (Group, Axis))
+                                           else o for o in operations])
+            axes = [o.axis if isinstance(o, Group) else o for o in flat_op]
+            to_agg = self.axes - axes
+
+            # add groups to axes to aggregate
+            def is_or_contains_group(o):
+                return isinstance(o, Group) or \
+                       (isinstance(o, tuple) and isinstance(o[0], Group))
+
+            operations = list(to_agg) + \
+                         [o for o in operations if is_or_contains_group(o)]
+
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
         # we do not change the order of operations since we only group
@@ -5976,7 +5991,7 @@ class LArray(object):
         return self * 100 / self.sum(*axes)
 
     # aggregate method factory
-    def _agg_method(npfunc, nanfunc=None, name=None, commutative=False):
+    def _agg_method(npfunc, nanfunc=None, name=None, commutative=False, by_agg=False):
         def method(self, *args, **kwargs):
             keepaxes = kwargs.pop('keepaxes', False)
             skipna = kwargs.pop('skipna', None)
@@ -5986,21 +6001,17 @@ class LArray(object):
                 raise ValueError("skipna is not available for %s" % name)
             # func = npfunc
             func = nanfunc if skipna else npfunc
-            return self._aggregate(func, args, kwargs,
+            return self._aggregate(func, args, kwargs, by_agg=by_agg,
                                    keepaxes=keepaxes,
                                    commutative=commutative)
-
-        # TODO : only works for axes, not groups currently
-        def method_by(self, *args, **kwargs):
-            return method(self, *(self.axes - args), **kwargs)
-
         if name is None:
             name = npfunc.__name__
+        if by_agg:
+            name += "_by"
         method.__name__ = name
-        method_by.__name__ = name + "_by"
-        return method, method_by
+        return method
 
-    all, all_by = _agg_method(np.all, commutative=True)
+    all = _agg_method(np.all, commutative=True)
     all.__doc__ = """
         Test whether all selected elements evaluate to True.
 
@@ -6068,6 +6079,7 @@ class LArray(object):
         >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("AND reduction", kwargs="out,skipna,keepaxes"))
 
+    all_by = _agg_method(np.all, commutative=True, by_agg=True)
     all_by.__doc__ = """
         Test whether all selected elements evaluate to True.
 
@@ -6110,7 +6122,7 @@ class LArray(object):
           | False | False | False | False
         """.format(_doc_agg_method("AND reduction", by=True, kwargs="out,skipna,keepaxes"))
 
-    any, any_by = _agg_method(np.any, commutative=True)
+    any = _agg_method(np.any, commutative=True)
     any.__doc__ = """
         Test whether any selected elements evaluate to True.
 
@@ -6178,6 +6190,7 @@ class LArray(object):
         >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("OR reduction", kwargs="out,skipna,keepaxes"))
 
+    any_by = _agg_method(np.any, commutative=True, by_agg=True)
     any_by.__doc__ = """
         Test whether any selected elements evaluate to True.
 
@@ -6222,7 +6235,7 @@ class LArray(object):
 
     # commutative modulo float precision errors
 
-    sum, sum_by = _agg_method(np.sum, np.nansum, commutative=True)
+    sum = _agg_method(np.sum, np.nansum, commutative=True)
     sum.__doc__ = """
         Computes the sum of array elements along given axes/groups.
 
@@ -6284,6 +6297,7 @@ class LArray(object):
         >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("sum", kwargs="dtype,out,skipna,keepaxes"))
 
+    sum_by = _agg_method(np.sum, np.nansum, commutative=True, by_agg=True)
     sum_by.__doc__ = """
         Computes the sum of array elements for the given axes/groups.
 
@@ -6321,7 +6335,7 @@ class LArray(object):
         """.format(_doc_agg_method("sum", by=True, kwargs="dtype,out,skipna,keepaxes"))
 
     # nanprod needs numpy 1.10
-    prod, prod_by = _agg_method(np.prod, np_nanprod, commutative=True)
+    prod = _agg_method(np.prod, np_nanprod, commutative=True)
     prod.__doc__ = """
         Computes the product of array elements along given axes/groups.
 
@@ -6383,6 +6397,7 @@ class LArray(object):
         >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("product", kwargs="dtype,out,skipna,keepaxes"))
 
+    prod_by = _agg_method(np.prod, np_nanprod, commutative=True, by_agg=True)
     prod_by.__doc__ = """
         Computes the product of array elements for the given axes/groups.
 
@@ -6419,7 +6434,7 @@ class LArray(object):
           |  0 | 585 | 1680 | 3465
         """.format(_doc_agg_method("product", by=True, kwargs="dtype,out,skipna,keepaxes"))
 
-    min, min_by = _agg_method(np.min, np.nanmin, commutative=True)
+    min = _agg_method(np.min, np.nanmin, commutative=True)
     min.__doc__ = """
         Get minimum of array elements along given axes/groups.
 
@@ -6481,6 +6496,7 @@ class LArray(object):
         """.format(_doc_agg_method("minimum", action="search",
                                    kwargs="out,skipna,keepaxes"))
 
+    min_by = _agg_method(np.min, np.nanmin, commutative=True, by_agg=True)
     min_by.__doc__ = """
         Get minimum of array elements for the given axes/groups.
 
@@ -6517,7 +6533,7 @@ class LArray(object):
         """.format(_doc_agg_method("minimum", by=True, action="search",
                                    kwargs="out,skipna,keepaxes"))
 
-    max, max_by = _agg_method(np.max, np.nanmax, commutative=True)
+    max = _agg_method(np.max, np.nanmax, commutative=True)
     max.__doc__ = """
         Get maximum of array elements along given axes/groups.
 
@@ -6579,6 +6595,7 @@ class LArray(object):
         """.format(_doc_agg_method("maximum", action="search",
                                    kwargs="out,skipna,keepaxes"))
 
+    max_by = _agg_method(np.max, np.nanmax, commutative=True, by_agg=True)
     max_by.__doc__ = """
         Get maximum of array elements for the given axes/groups.
 
@@ -6615,7 +6632,7 @@ class LArray(object):
         """.format(_doc_agg_method("maximum", by=True, action="search",
                                    kwargs="out,skipna,keepaxes"))
 
-    mean, mean_by = _agg_method(np.mean, np.nanmean, commutative=True)
+    mean = _agg_method(np.mean, np.nanmean, commutative=True)
     mean.__doc__ = """
         Computes the arithmetic mean.
 
@@ -6678,6 +6695,7 @@ class LArray(object):
         >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("mean", kwargs="dtype,out,skipna,keepaxes"))
 
+    mean_by = _agg_method(np.mean, np.nanmean, commutative=True, by_agg=True)
     mean_by.__doc__ = """
         Computes the arithmetic mean.
 
@@ -6715,7 +6733,7 @@ class LArray(object):
           | 6.0 | 7.0 | 8.0 | 9.0
         """.format(_doc_agg_method("mean", by=True, kwargs="dtype,out,skipna,keepaxes"))
 
-    median, median_by = _agg_method(np.median, np.nanmedian, commutative=True)
+    median = _agg_method(np.median, np.nanmedian, commutative=True)
     median.__doc__ = """
         Computes the arithmetic median.
 
@@ -6782,6 +6800,7 @@ class LArray(object):
         >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
 
+    median_by = _agg_method(np.median, np.nanmedian, commutative=True, by_agg=True)
     median_by.__doc__ = """
         Computes the arithmetic median.
 
@@ -6897,9 +6916,14 @@ class LArray(object):
         """.format(_doc_agg_method("qth percentile", extra_args="q",
                                    kwargs="out,interpolation,skipna,keepaxes"))
 
-    # TODO : only works with axes, not groups
     def percentile_by(self, q, *args, **kwargs):
-        return self.percentile(q, *(self.axes - args), **kwargs)
+        keepaxes = kwargs.pop('keepaxes', False)
+        skipna = kwargs.pop('skipna', None)
+        if skipna is None:
+            skipna = True
+        func = np.nanpercentile if skipna else np.percentile
+        return self._aggregate(func, args, kwargs, keepaxes=keepaxes, by_agg=True,
+                               commutative=True, extra_kwargs={'q': q})
 
     percentile_by.__doc__ = """
         Computes the qth percentile of the data for the specified axis.
@@ -6940,7 +6964,7 @@ class LArray(object):
                                    kwargs="out,interpolation,skipna,keepaxes"))
 
     # not commutative
-    ptp, _ = _agg_method(np.ptp)
+    ptp = _agg_method(np.ptp)
     ptp.__doc__ = """
         Returns the range of values (maximum - minimum).
 
@@ -6999,7 +7023,7 @@ class LArray(object):
         >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("ptp", kwargs="out"))
 
-    var, var_by = _agg_method(np.var, np.nanvar)
+    var = _agg_method(np.var, np.nanvar)
     var.__doc__ = """
         Computes the variance.
 
@@ -7066,6 +7090,7 @@ class LArray(object):
         >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
 
+    var_by = _agg_method(np.var, np.nanvar, by_agg=True)
     var_by.__doc__ = """
         Computes the variance.
 
@@ -7108,7 +7133,7 @@ class LArray(object):
         """.format(_doc_agg_method("variance", by=True,
                                    kwargs="dtype,out,ddof,skipna,keepaxes"))
 
-    std, std_by = _agg_method(np.std, np.nanstd)
+    std = _agg_method(np.std, np.nanstd)
     std.__doc__ = """
         Computes the standard deviation.
 
@@ -7172,6 +7197,7 @@ class LArray(object):
         """.format(_doc_agg_method("standard deviation",
                                    kwargs="dtype,out,ddof,skipna,keepaxes"))
 
+    std_by = _agg_method(np.std, np.nanstd, by_agg=True)
     std_by.__doc__ = """
         Computes the standard deviation.
 
