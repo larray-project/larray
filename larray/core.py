@@ -8841,11 +8841,14 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
     axes_names = [decode(name, 'utf8') for name in df.index.names]
+    # handle 2 or more dimensions with the last axis name given using \
     if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
         last_axes = [name.strip() for name in axes_names[-1].split('\\')]
         axes_names = axes_names[:-1] + last_axes
+    # handle 1D
     elif len(df) == 1 and axes_names == [None]:
         axes_names = [df.columns.name]
+    # handle 2 or more dimensions with the last axis name given as the columns index name
     elif len(df) > 1:
         axes_names += [df.columns.name]
 
@@ -10021,7 +10024,7 @@ def stack(arrays, axis=None, title=''):
     >>> # not using the same length as nat, otherwise numpy gets confused :(
     >>> nd = LArray([arr1, zeros(Axis('type', [1, 2, 3]))], sex)
     >>> stack(nd, sex)
-    nat | type\sex |   M |   F
+    nat | type\\sex |   M |   F
      BE |        1 | 1.0 | 0.0
      BE |        2 | 1.0 | 0.0
      BE |        3 | 1.0 | 0.0
