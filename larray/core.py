@@ -183,8 +183,8 @@ def _slice_to_str(key, repr_func=str):
     """
     Converts a slice to a string
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> _slice_to_str(slice(None))
     ':'
     >>> _slice_to_str(slice(24))
@@ -380,8 +380,8 @@ def _to_tick(v):
     Group without name -> _to_tick(v.key)
     other -> str(v)
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     v : any
         value to be converted.
 
@@ -420,8 +420,8 @@ def _to_ticks(s):
     Axis (ie hashable). Strip strings, split them on ',' and translate
     "range strings" to list of values **including the end point** !
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     s : iterable
         List of values usable as the collection of labels for an Axis.
 
@@ -433,8 +433,8 @@ def _to_ticks(s):
     -----
     This function is only used in Axis.__init__ and union().
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> _to_ticks('H , F')
     ['H', 'F']
 
@@ -1718,8 +1718,8 @@ class Group(object):
         step : int, optional
             step between groups. Defaults to length.
 
-        Note
-        ----
+        Notes
+        -----
         step can be smaller than length, in which case, this will produce
         overlapping groups.
 
@@ -2112,8 +2112,8 @@ class AxisCollection(object):
     """
     Represents a collection of axes.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     axes : sequence of Axis or int or tuple or str, optional
         An axis can be given as an Axis object, an int or a
         tuple (name, labels) or a string of the kind
@@ -2932,8 +2932,8 @@ class AxisCollection(object):
         list
             List of labels of the axes.
 
-        Example
-        -------
+        Examples
+        --------
         >>> age = Axis('age', range(10))
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
         >>> AxisCollection([age, time]).labels  # doctest: +NORMALIZE_WHITESPACE
@@ -3122,12 +3122,12 @@ class AxisCollection(object):
             combine are not. This is much faster, but loose axes labels.
         front_if_spread : bool, optional
             whether or not to move the combined axis at the front (it will be
-            the first axis) if the combined axes are not next to each
-            other.
+            the first axis) if the combined axes are not next to each other.
 
         Returns
         -------
         AxisCollection
+            New AxisCollection with combined axes.
         """
         axes = self if axes is None else self[axes]
         axes_indices = [self.index(axis) for axis in axes]
@@ -3207,48 +3207,9 @@ def all(values, axis=None):
     """
     Test whether all array elements along a given axis evaluate to True.
 
-    Parameters
-    ----------
-    values : LArray or iterable
-        Input data.
-    axis : str or list or Axis, optional
-        Axis over which to aggregate.
-        Defaults to None (all axes).
-
-    Returns
-    -------
-    LArray of bool or bool
-
     See Also
     --------
-    LArray.all : Equivalent method.
-
-    Notes
-    -----
-    If `values` is not a LArray object, the equivalent builtins function is used.
-
-    Examples
-    --------
-    >>> arr = ndtest((3,3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-     a2 |  6 |  7 |  8
-    >>> barr = arr < 4
-    >>> barr
-    a\\b |    b0 |    b1 |    b2
-     a0 |  True |  True |  True
-     a1 |  True | False | False
-     a2 | False | False | False
-    >>> all(barr)
-    False
-    >>> all(barr, 'a')
-    b |    b0 |    b1 |    b2
-      | False | False | False
-    >>> all(barr, 'b')
-    a |   a0 |    a1 |    a2
-      | True | False | False
+    LArray.all
     """
     if isinstance(values, LArray):
         return values.all(axis)
@@ -3260,48 +3221,9 @@ def any(values, axis=None):
     """
     Test whether any array elements along a given axis evaluate to True.
 
-    Parameters
-    ----------
-    values : LArray or iterable
-        Input data.
-    axis : str or list or Axis, optional
-        Axis over which to aggregate.
-        Defaults to None (all axes).
-
-    Returns
-    -------
-    LArray of bool or bool
-
     See Also
     --------
-    LArray.any : Equivalent method.
-
-    Notes
-    -----
-    If `values` is not a LArray object, the equivalent builtins function is used.
-
-    Examples
-    --------
-    >>> arr = ndtest((3,3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-     a2 |  6 |  7 |  8
-    >>> barr = arr < 4
-    >>> barr
-    a\\b |    b0 |    b1 |    b2
-     a0 |  True |  True |  True
-     a1 |  True | False | False
-     a2 | False | False | False
-    >>> any(barr)
-    True
-    >>> any(barr, 'a')
-    b |   b0 |   b1 |   b2
-      | True | True | True
-    >>> any(barr, 'b')
-    a |   a0 |   a1 |    a2
-      | True | True | False
+    LArray.any
     """
     if isinstance(values, LArray):
         return values.any(axis)
@@ -3312,48 +3234,12 @@ def any(values, axis=None):
 # commutative modulo float precision errors
 def sum(array, *args, **kwargs):
     """
-    Sum of array elements over a given axis.
-
-    Parameters
-    ----------
-    array : LArray or iterable
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a sum is performed.
-        The default (`axis` = `None`) is to perform a sum over all
-        axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, a sum is performed on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Sum of array elements.
 
     See Also
     --------
-    LArray.sum : Equivalent method.
 
-    Notes
-    -----
-    The sum of an empty array is the neutral element 0:
-
-    >>> sum([])
-    0.0
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> sum(arr)
-    15
-    >>> sum(arr, axis='a')
-    b | b0 | b1 | b2
-      |  3 |  5 |  7
+    LArray.sum
     """
     # XXX: we might want to be more aggressive here (more types to convert),
     #      however, generators should still be computed via the builtin.
@@ -3367,172 +3253,44 @@ def sum(array, *args, **kwargs):
 
 def prod(array, *args, **kwargs):
     """
-    Returns the product of the array elements over a given axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a product is performed.
-        The default (`axis` = `None`) is to perform the product over all
-        axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the product is performed on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Product of array elements.
 
     See Also
     --------
-    LArray.prod : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> prod(arr)
-    0
-    >>> prod(arr, axis='a')
-    b | b0 | b1 | b2
-      |  0 |  4 | 10
+    LArray.prod
     """
     return array.prod(*args, **kwargs)
 
 
 def cumsum(array, *args, **kwargs):
     """
-    Returns the cumulative sum of the elements along a given axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a cumulative sum is performed.
-        The default (`axis` = `None`) is to perform the cumulative sum
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the cumulative sum is performed on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray
+    Returns the cumulative sum of array elements.
 
     See Also
     --------
-    LArray.cumsum : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> cumsum(arr)
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  3
-     a1 |  3 |  7 | 12
-    >>> cumsum(arr, axis='a')
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  5 |  7
+    LArray.cumsum
     """
     return array.cumsum(*args, **kwargs)
 
 
 def cumprod(array, *args, **kwargs):
     """
-    Returns the cumulative product of the elements along a given axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a cumulative product is performed.
-        The default (`axis` = `None`) is to perform the cumulative product
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the cumulative product is performed on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray
+    Returns the cumulative product of array elements.
 
     See Also
     --------
-    LArray.cumprod : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> cumprod(arr)
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  0 |  0
-     a1 |  3 | 12 | 60
-    >>> cumprod(arr, axis='a')
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  0 |  4 | 10
+    LArray.cumprod
     """
     return array.cumprod(*args, **kwargs)
 
 
 def min(array, *args, **kwargs):
     """
-    Returns the minimum of an array or minimum along an axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a the minimum is searched.
-        The default (`axis` = `None`) is to search the minimum
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the minimum is searched on multiple axes.
-
-    Returns
-    -------
-    LArray or scalar
+    Minimum of array elements.
 
     See Also
     --------
-    LArray.min : Equivalent method.
-
-    Notes
-    -----
-    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> min(arr)
-    0
-    >>> min(arr, axis='a')
-    b | b0 | b1 | b2
-      |  0 |  1 |  2
+    LArray.min
     """
     if isinstance(array, LArray):
         return array.min(*args, **kwargs)
@@ -3542,46 +3300,11 @@ def min(array, *args, **kwargs):
 
 def max(array, *args, **kwargs):
     """
-    Returns the minimum of an array or maximum along an axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which a the maximum is searched.
-        The default (`axis` = `None`) is to search the maximum
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the maximum is searched on multiple axes.
-
-    Returns
-    -------
-    LArray or scalar
+    Maximum of array elements.
 
     See Also
     --------
-    LArray.max : Equivalent method.
-
-    Notes
-    -----
-    If `array` is not a LArray or a NumPy array, the equivalent builtins function is used.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> max(arr)
-    5
-    >>> max(arr, axis=0)
-    b | b0 | b1 | b2
-      |  3 |  4 |  5
-    >>> max(arr, axis='a')
-    b | b0 | b1 | b2
-      |  3 |  4 |  5
+    LArray.max
     """
     if isinstance(array, LArray):
         return array.max(*args, **kwargs)
@@ -3591,89 +3314,22 @@ def max(array, *args, **kwargs):
 
 def mean(array, *args, **kwargs):
     """
-    Computes the arithmetic mean along the specified axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which the means are computed.
-        The default (`axis` = `None`) is to compute the mean
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the mean is calculated on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Computes the arithmetic mean.
 
     See Also
     --------
-    LArray.mean : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> mean(arr)
-    2.5
-    >>> mean(arr, axis=0)
-    b |  b0 |  b1 |  b2
-      | 1.5 | 2.5 | 3.5
-    >>> mean(arr, axis='a')
-    b |  b0 |  b1 |  b2
-      | 1.5 | 2.5 | 3.5
+    LArray.mean
     """
     return array.mean(*args, **kwargs)
 
 
 def median(array, *args, **kwargs):
     """
-    Computes the median along the specified axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which the median are computed.
-        The default (`axis` = `None`) is to compute the median
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the median is calculated on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-
-    Returns
-    -------
-    LArray or scalar
+    Computes the median.
 
     See Also
     --------
-    LArray.median : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> median(arr)
-    2.5
-    >>> median(arr, axis=0)
-    b |  b0 |  b1 |  b2
-      | 1.5 | 2.5 | 3.5
-    >>> median(arr, axis='a')
-    b |  b0 |  b1 |  b2
-      | 1.5 | 2.5 | 3.5
+    LArray.median
     """
     return array.median(*args, **kwargs)
 
@@ -3682,44 +3338,9 @@ def percentile(array, *args, **kwargs):
     """
     Computes the qth percentile of the data along the specified axis.
 
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    q : float in range of [0,100] (or sequence of floats)
-        Percentile to compute, which must be between 0 and 100 inclusive.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which the percentile are computed.
-        The default (`axis` = `None`) is to compute the percentile
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the percentile is calculated on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
-
     See Also
     --------
-    LArray.percentile : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> percentile(arr, 25)
-    1.25
-    >>> percentile(arr, 25, axis=0)
-    b |   b0 |   b1 |   b2
-      | 0.75 | 1.75 | 2.75
-    >>> percentile(arr, 25, axis='a')
-    b |   b0 |   b1 |   b2
-      | 0.75 | 1.75 | 2.75
+    LArray.percentile
     """
     return array.percentile(*args, **kwargs)
 
@@ -3727,134 +3348,33 @@ def percentile(array, *args, **kwargs):
 # not commutative
 def ptp(array, *args, **kwargs):
     """
-    Returns the range of values (maximum - minimum) along an axis.
-
-    The name of the function comes from the acronym for ‘peak to peak’.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis, optional
-        Axis along which to find the peaks. The default (`axis` = `None`) is to find the peaks over all axes of the
-        input array (as if the array was flattened).
-        `axis` may be negative, in which case it counts from the last to the first axis.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Returns the range of values (maximum - minimum).
 
     See Also
     --------
-    LArray.ptp : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
-    >>> ptp(arr)
-    5
-    >>> ptp(arr, axis=0)
-    b | b0 | b1 | b2
-      |  3 |  3 |  3
-    >>> ptp(arr, axis='a')
-    b | b0 | b1 | b2
-      |  3 |  3 |  3
+    LArray.ptp
     """
     return array.ptp(*args, **kwargs)
 
 
 def var(array, *args, **kwargs):
     """
-    Computes the variance along the specified axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which the variance are computed.
-        The default (`axis` = `None`) is to compute the variance
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the variance is calculated on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Computes the variance.
 
     See Also
     --------
-    LArray.var : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 4))
-    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
-    >>> arr
-    a\\b | b0 | b1 | b2 | b3
-     a0 |  2 |  4 |  4 |  4
-     a1 |  5 |  5 |  7 |  9
-    >>> var(arr)
-    4.0
-    >>> var(arr, axis=1)
-    a |   a0 |   a1
-      | 0.75 | 2.75
-    >>> var(arr, axis='b')
-    a |   a0 |   a1
-      | 0.75 | 2.75
+    LArray.var
     """
     return array.var(*args, **kwargs)
 
 
 def std(array, *args, **kwargs):
     """
-    Computes the standard deviation along the specified axis.
-
-    Parameters
-    ----------
-    array : LArray
-        Input data.
-    axis : None or int or str or Axis or tuple of those, optional
-        Axis or axes along which the standard deviation are computed.
-        The default (`axis` = `None`) is to compute the standard deviation
-        over all axes of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-        If this is a tuple, the standard deviation is calculated on multiple axes.
-    out : LArray
-        Alternative output array in which to place the result.
-
-    Returns
-    -------
-    LArray or scalar
+    Computes the standard deviation.
 
     See Also
     --------
-    LArray.std : Equivalent method.
-
-    Examples
-    --------
-    >>> arr = ndtest((2, 4))
-    >>> arr[:, :] = [[2, 4, 4, 4], [5, 5, 7, 9]]
-    >>> arr
-    a\\b | b0 | b1 | b2 | b3
-     a0 |  2 |  4 |  4 |  4
-     a1 |  5 |  5 |  7 |  9
-    >>> std(arr)
-    2.0
-    >>> std(arr, axis=0)
-    b |  b0 |  b1 |  b2 |  b3
-      | 1.5 | 0.5 | 1.5 | 2.5
-    >>> std(arr, axis='a')
-    b |  b0 |  b1 |  b2 |  b3
-      | 1.5 | 0.5 | 1.5 | 2.5
+    LArray.std
     """
     return array.std(*args, **kwargs)
 
@@ -4103,6 +3623,132 @@ def aslarray(a):
         return LArray(a)
 
 
+_arg_agg = {
+    'q':
+        """
+        q : int in range of [0,100] (or sequence of floats)
+            Percentile to compute, which must be between 0 and 100 inclusive.
+        """
+}
+
+_kwarg_agg = {
+    'dtype':
+        """
+            * dtype : dtype, optional
+
+              The type of the returned array.
+              The dtype of the array is used by default.
+        """,
+    'out':
+        """
+            * out : LArray, optional
+
+              Alternate output array in which to place the result.
+              It must have the same shape as the expected output and
+              its type is preserved (e.g., if dtype(out) is float, the
+              result will consist of 0.0’s and 1.0’s).
+              Axes and labels can be different, only the shape matters.
+        """,
+    'ddof':
+        """
+            * ddof : int, optional
+
+              "Delta Degrees of Freedom": the divisor used in the
+              calculation is ``N - ddof``, where ``N`` represents
+              the number of elements. By default `ddof` is zero.
+        """,
+    'skipna':
+        """
+            * skipna : bool, optional
+
+              'skip NaN': Ignore NaN/null values.
+              If an entire row/column is NaN, the result will be NaN.
+        """,
+    'keepaxes':
+        """
+            * keepaxes : bool, optional
+
+              If this is set to True, the axes which are reduced are
+              left in the result as dimensions with size one.
+              With this option, the result will broadcast correctly
+              against the input array.
+        """,
+    'interpolation':
+        """
+            * interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+
+              This optional parameter specifies the interpolation method to
+              use when the desired quantile lies between two data points ``i < j``:
+                * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
+                  fractional part of the index surrounded by ``i`` and ``j``.
+                * lower: ``i``.
+                * higher: ``j``.
+                * nearest: ``i`` or ``j``, whichever is nearest.
+                * midpoint: ``(i + j) / 2``.
+        """
+}
+
+
+def _doc_agg_method(desc, by=False, action="perform",
+                    extra_args='', kwargs=''):
+    extra_args = extra_args.split(',') if extra_args else []
+    kwargs = kwargs.split(',') if kwargs else []
+
+    if by:
+        str_doc = "The {0} is {1}ed along all axes except the given one(s). " \
+                  "The default (no axis or group) is to {1} the {0} " \
+                  "over all the dimensions of the input array.".format(desc, action)
+    else:
+        str_doc = "Axis(es) or group(s) along the {0} is {1}ed. " \
+                  " The default (no axis or group) is to {1} the {0} " \
+                  "over all the dimensions of the input array.".format(desc, action)
+
+    args_doc = \
+        """
+        Parameters
+        ----------
+        {0}
+        \*args : None or int or str or Axis or Group or any combination of those
+
+            {1}
+
+            An axis can be referred by:
+
+            * its position (integer). Position can be a negative integer,
+              in which case it counts from the last to the first axis.
+            * its name (str or AxisReference). You can use either a simple
+              string ('axis_name') or the special variable x (x.axis_name).
+            * a variable (Axis). If the axis has been defined previously
+              and assigned to a variable, you can pass it as argument.
+
+            You may not want to {2} the {3} over a whole axis but
+            over a selection of specific labels. To do so, you have several
+            possibilities:
+
+            * (['a1', 'a3', 'a5'], 'b1, b3, b5') :
+              labels separated by commas in a list or a string
+            * ('a1:a5:2') : select labels using a slice
+              (general syntax is 'start:end:step' where is 'step' is
+              optional and 1 by default).
+            * (a='a1, a2, a3', x.b['b1, b2, b3']) :
+              in case of possible ambiguity, i.e. if labels
+              can belong to more than one axis, you must precise the axis.
+            * ('a1:a3; a5:a7', b='b0,b2; b1,b3') :
+              create several groups with semicolons.
+              Names are simply given by the concatenation of labels
+              (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
+            * ('a1:a3 >> a123', 'b[b0,b2] >> b12') :
+              operator ' >> ' allows to rename groups.
+
+        \**kwargs :
+        {4}
+        """.format("".join(_arg_agg[arg] for arg in extra_args),
+                   str_doc, action, desc,
+                   "".join(_kwarg_agg[kw] for kw in kwargs))
+
+    return args_doc
+
+
 class LArray(object):
     """
     A LArray object represents a multidimensional, homogeneous
@@ -4133,8 +3779,7 @@ class LArray(object):
     See Also
     --------
     create_sequential : Create a LArray by sequentially
-                        applying modifications to the array
-                        along axis.
+                        applying modifications to the array along axis.
     ndrange : Create a LArray with increasing elements.
     zeros : Create a LArray, each element of which is zero.
     ones : Create a LArray, each element of which is 1.
@@ -5414,7 +5059,7 @@ class LArray(object):
         a\\b | b2 | b3
          a1 |  0 |  1
          a2 |  4 |  9
-        >>> arr1.drop_labels('a') * arr2.drop_labels('b')
+        >>> arr1.drop_labels(x.a) * arr2.drop_labels(x.b)
         a\\b | b1 | b2
          a1 |  0 |  1
          a2 |  4 |  9
@@ -6344,8 +5989,11 @@ class LArray(object):
             return self._aggregate(func, args, kwargs,
                                    keepaxes=keepaxes,
                                    commutative=commutative)
+
+        # TODO : only works for axes, not groups currently
         def method_by(self, *args, **kwargs):
             return method(self, *(self.axes - args), **kwargs)
+
         if name is None:
             name = npfunc.__name__
         method.__name__ = name
@@ -6353,15 +6001,827 @@ class LArray(object):
         return method, method_by
 
     all, all_by = _agg_method(np.all, commutative=True)
+    all.__doc__ = """
+        Test whether all selected elements evaluate to True.
+
+        {}
+
+        Returns
+        -------
+        LArray of bool or bool
+
+        See Also
+        --------
+        LArray.all_by, LArray.any, LArray.any_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> barr = arr < 6
+        >>> barr
+        a\\b |    b0 |    b1 |    b2 |    b3
+         a0 |  True |  True |  True |  True
+         a1 |  True |  True | False | False
+         a2 | False | False | False | False
+         a3 | False | False | False | False
+        >>> barr.all()
+        False
+        >>> # along axis 'a'
+        >>> barr.all(x.a)
+        b |    b0 |    b1 |    b2 |    b3
+          | False | False | False | False
+        >>> # along axis 'b'
+        >>> barr.all(x.b)
+        a |   a0 |    a1 |    a2 |    a3
+          | True | False | False | False
+
+        Select some rows only
+
+        >>> barr.all(['a0', 'a1'])
+        b |   b0 |   b1 |    b2 |    b3
+          | True | True | False | False
+        >>> # or equivalently
+        >>> # barr.all('a0,a1')
+
+        Split an axis in several parts
+
+        >>> barr.all((['a0', 'a1'], ['a2', 'a3']))
+          a\\b |    b0 |    b1 |    b2 |    b3
+        a0,a1 |  True |  True | False | False
+        a2,a3 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.all('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> barr.all((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b |    b0 |    b1 |    b2 |    b3
+        a01 |  True |  True | False | False
+        a23 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("AND reduction", kwargs="out,skipna,keepaxes"))
+
+    all_by.__doc__ = """
+        Test whether all selected elements evaluate to True.
+
+        {}
+
+        Returns
+        -------
+        LArray of bool or bool
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.all, LArray.any, LArray.any_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> barr = arr < 6
+        >>> barr
+        a\\b |    b0 |    b1 |    b2 |    b3
+         a0 |  True |  True |  True |  True
+         a1 |  True |  True | False | False
+         a2 | False | False | False | False
+         a3 | False | False | False | False
+        >>> barr.all_by()
+        False
+        >>> # by axis 'a'
+        >>> barr.all_by(x.a)
+        a |   a0 |    a1 |    a2 |    a3
+          | True | False | False | False
+        >>> # by axis 'b'
+        >>> barr.all_by(x.b)
+        b |    b0 |    b1 |    b2 |    b3
+          | False | False | False | False
+        """.format(_doc_agg_method("AND reduction", by=True, kwargs="out,skipna,keepaxes"))
+
     any, any_by = _agg_method(np.any, commutative=True)
+    any.__doc__ = """
+        Test whether any selected elements evaluate to True.
+
+        {}
+
+        Returns
+        -------
+        LArray of bool or bool
+
+        See Also
+        --------
+        LArray.any_by, LArray.all, LArray.all_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> barr = arr < 6
+        >>> barr
+        a\\b |    b0 |    b1 |    b2 |    b3
+         a0 |  True |  True |  True |  True
+         a1 |  True |  True | False | False
+         a2 | False | False | False | False
+         a3 | False | False | False | False
+        >>> barr.any()
+        True
+        >>> # along axis 'a'
+        >>> barr.any(x.a)
+        b |   b0 |   b1 |   b2 |   b3
+          | True | True | True | True
+        >>> # along axis 'b'
+        >>> barr.any(x.b)
+        a |   a0 |   a1 |    a2 |    a3
+          | True | True | False | False
+
+        Select some rows only
+
+        >>> barr.any(['a0', 'a1'])
+        b |   b0 |   b1 |   b2 |   b3
+          | True | True | True | True
+        >>> # or equivalently
+        >>> # barr.any('a0,a1')
+
+        Split an axis in several parts
+
+        >>> barr.any((['a0', 'a1'], ['a2', 'a3']))
+          a\\b |    b0 |    b1 |    b2 |    b3
+        a0,a1 |  True |  True |  True |  True
+        a2,a3 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.any('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> barr.any((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b |    b0 |    b1 |    b2 |    b3
+        a01 |  True |  True |  True |  True
+        a23 | False | False | False | False
+        >>> # or equivalently
+        >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("OR reduction", kwargs="out,skipna,keepaxes"))
+
+    any_by.__doc__ = """
+        Test whether any selected elements evaluate to True.
+
+        {}
+
+        Returns
+        -------
+        LArray of bool or bool
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.any, LArray.all, LArray.all_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> barr = arr < 6
+        >>> barr
+        a\\b |    b0 |    b1 |    b2 |    b3
+         a0 |  True |  True |  True |  True
+         a1 |  True |  True | False | False
+         a2 | False | False | False | False
+         a3 | False | False | False | False
+        >>> barr.any_by()
+        True
+        >>> # by axis 'a'
+        >>> barr.any_by(x.a)
+        a |   a0 |   a1 |    a2 |    a3
+          | True | True | False | False
+        >>> # by axis 'b'
+        >>> barr.any_by(x.b)
+        b |   b0 |   b1 |   b2 |   b3
+          | True | True | True | True
+        """.format(_doc_agg_method("OR reduction", by=True, kwargs="out,skipna,keepaxes"))
+
     # commutative modulo float precision errors
+
     sum, sum_by = _agg_method(np.sum, np.nansum, commutative=True)
+    sum.__doc__ = """
+        Computes the sum of array elements along given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.sum_by, LArray.prod, LArray.prod_by,
+        LArray.cumsum, LArray.cumprod
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.sum()
+        120
+        >>> # along axis 'a'
+        >>> arr.sum(x.a)
+        b | b0 | b1 | b2 | b3
+          | 24 | 28 | 32 | 36
+        >>> # along axis 'b'
+        >>> arr.sum(x.b)
+        a | a0 | a1 | a2 | a3
+          |  6 | 22 | 38 | 54
+
+        Select some rows only
+
+        >>> arr.sum(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  4 |  6 |  8 | 10
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.sum((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  4 |  6 |  8 | 10
+        a2,a3 | 20 | 22 | 24 | 26
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.sum((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  4 |  6 |  8 | 10
+        a23 | 20 | 22 | 24 | 26
+        >>> # or equivalently
+        >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("sum", kwargs="dtype,out,skipna,keepaxes"))
+
+    sum_by.__doc__ = """
+        Computes the sum of array elements for the given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.sum, LArray.prod, LArray.prod_by,
+        LArray.cumsum, LArray.cumprod
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.sum_by()
+        120
+        >>> # along axis 'a'
+        >>> arr.sum_by(x.a)
+        a | a0 | a1 | a2 | a3
+          |  6 | 22 | 38 | 54
+        >>> # along axis 'b'
+        >>> arr.sum_by(x.b)
+        b | b0 | b1 | b2 | b3
+          | 24 | 28 | 32 | 36
+        """.format(_doc_agg_method("sum", by=True, kwargs="dtype,out,skipna,keepaxes"))
+
     # nanprod needs numpy 1.10
     prod, prod_by = _agg_method(np.prod, np_nanprod, commutative=True)
+    prod.__doc__ = """
+        Computes the product of array elements along given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.prod_by, LArray.sum, LArray.sum_by,
+        LArray.cumsum, LArray.cumprod
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.prod()
+        0
+        >>> # along axis 'a'
+        >>> arr.prod(x.a)
+        b | b0 |  b1 |   b2 |   b3
+          |  0 | 585 | 1680 | 3465
+        >>> # along axis 'b'
+        >>> arr.prod(x.b)
+        a | a0 |  a1 |   a2 |    a3
+          |  0 | 840 | 7920 | 32760
+
+        Select some rows only
+
+        >>> arr.prod(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  0 |  5 | 12 | 21
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.prod((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 |  b1 |  b2 |  b3
+        a0,a1 |  0 |   5 |  12 |  21
+        a2,a3 | 96 | 117 | 140 | 165
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.prod((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 |  b1 |  b2 |  b3
+        a01 |  0 |   5 |  12 |  21
+        a23 | 96 | 117 | 140 | 165
+        >>> # or equivalently
+        >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("product", kwargs="dtype,out,skipna,keepaxes"))
+
+    prod_by.__doc__ = """
+        Computes the product of array elements for the given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.prod, LArray.sum, LArray.sum_by,
+        LArray.cumsum, LArray.cumprod
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.prod_by()
+        0
+        >>> # along axis 'a'
+        >>> arr.prod_by(x.a)
+        a | a0 |  a1 |   a2 |    a3
+          |  0 | 840 | 7920 | 32760
+        >>> # along axis 'b'
+        >>> arr.prod_by(x.b)
+        b | b0 |  b1 |   b2 |   b3
+          |  0 | 585 | 1680 | 3465
+        """.format(_doc_agg_method("product", by=True, kwargs="dtype,out,skipna,keepaxes"))
+
     min, min_by = _agg_method(np.min, np.nanmin, commutative=True)
+    min.__doc__ = """
+        Get minimum of array elements along given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.min_by, LArray.max, LArray.max_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.min()
+        0
+        >>> # along axis 'a'
+        >>> arr.min(x.a)
+        b | b0 | b1 | b2 | b3
+          |  0 |  1 |  2 |  3
+        >>> # along axis 'b'
+        >>> arr.min(x.b)
+        a | a0 | a1 | a2 | a3
+          |  0 |  4 |  8 | 12
+
+        Select some rows only
+
+        >>> arr.min(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  0 |  1 |  2 |  3
+        >>> # or equivalently
+        >>> # arr.min('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.min((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  0 |  1 |  2 |  3
+        a2,a3 |  8 |  9 | 10 | 11
+        >>> # or equivalently
+        >>> # arr.min('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.min((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  0 |  1 |  2 |  3
+        a23 |  8 |  9 | 10 | 11
+        >>> # or equivalently
+        >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("minimum", action="search",
+                                   kwargs="out,skipna,keepaxes"))
+
+    min_by.__doc__ = """
+        Get minimum of array elements for the given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.min, LArray.max, LArray.max_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.min_by()
+        0
+        >>> # along axis 'a'
+        >>> arr.min_by(x.a)
+        a | a0 | a1 | a2 | a3
+          |  0 |  4 |  8 | 12
+        >>> # along axis 'b'
+        >>> arr.min_by(x.b)
+        b | b0 | b1 | b2 | b3
+          |  0 |  1 |  2 |  3
+        """.format(_doc_agg_method("minimum", by=True, action="search",
+                                   kwargs="out,skipna,keepaxes"))
+
     max, max_by = _agg_method(np.max, np.nanmax, commutative=True)
+    max.__doc__ = """
+        Get maximum of array elements along given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.max_by, LArray.min, LArray.min_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.max()
+        15
+        >>> # along axis 'a'
+        >>> arr.max(x.a)
+        b | b0 | b1 | b2 | b3
+          | 12 | 13 | 14 | 15
+        >>> # along axis 'b'
+        >>> arr.max(x.b)
+        a | a0 | a1 | a2 | a3
+          |  3 |  7 | 11 | 15
+
+        Select some rows only
+
+        >>> arr.max(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  4 |  5 |  6 |  7
+        >>> # or equivalently
+        >>> # arr.max('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.max((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  4 |  5 |  6 |  7
+        a2,a3 | 12 | 13 | 14 | 15
+        >>> # or equivalently
+        >>> # arr.max('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.max((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  4 |  5 |  6 |  7
+        a23 | 12 | 13 | 14 | 15
+        >>> # or equivalently
+        >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("maximum", action="search",
+                                   kwargs="out,skipna,keepaxes"))
+
+    max_by.__doc__ = """
+        Get maximum of array elements for the given axes/groups.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.max, LArray.min, LArray.min_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.max_by()
+        15
+        >>> # along axis 'a'
+        >>> arr.max_by(x.a)
+        a | a0 | a1 | a2 | a3
+          |  3 |  7 | 11 | 15
+        >>> # along axis 'b'
+        >>> arr.max_by(x.b)
+        b | b0 | b1 | b2 | b3
+          | 12 | 13 | 14 | 15
+        """.format(_doc_agg_method("maximum", by=True, action="search",
+                                   kwargs="out,skipna,keepaxes"))
+
     mean, mean_by = _agg_method(np.mean, np.nanmean, commutative=True)
+    mean.__doc__ = """
+        Computes the arithmetic mean.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.mean_by, LArray.median, LArray.median_by,
+        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.mean()
+        7.5
+        >>> # along axis 'a'
+        >>> arr.mean(x.a)
+        b |  b0 |  b1 |  b2 |  b3
+          | 6.0 | 7.0 | 8.0 | 9.0
+        >>> # along axis 'b'
+        >>> arr.mean(x.b)
+        a |  a0 |  a1 |  a2 |   a3
+          | 1.5 | 5.5 | 9.5 | 13.5
+
+        Select some rows only
+
+        >>> arr.mean(['a0', 'a1'])
+        b |  b0 |  b1 |  b2 |  b3
+          | 2.0 | 3.0 | 4.0 | 5.0
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.mean((['a0', 'a1'], ['a2', 'a3']))
+          a\\b |   b0 |   b1 |   b2 |   b3
+        a0,a1 |  2.0 |  3.0 |  4.0 |  5.0
+        a2,a3 | 10.0 | 11.0 | 12.0 | 13.0
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.mean((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b |   b0 |   b1 |   b2 |   b3
+        a01 |  2.0 |  3.0 |  4.0 |  5.0
+        a23 | 10.0 | 11.0 | 12.0 | 13.0
+        >>> # or equivalently
+        >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("mean", kwargs="dtype,out,skipna,keepaxes"))
+
+    mean_by.__doc__ = """
+        Computes the arithmetic mean.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.mean, LArray.median, LArray.median_by,
+        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.mean()
+        7.5
+        >>> # along axis 'a'
+        >>> arr.mean_by(x.a)
+        a |  a0 |  a1 |  a2 |   a3
+          | 1.5 | 5.5 | 9.5 | 13.5
+        >>> # along axis 'b'
+        >>> arr.mean_by(x.b)
+        b |  b0 |  b1 |  b2 |  b3
+          | 6.0 | 7.0 | 8.0 | 9.0
+        """.format(_doc_agg_method("mean", by=True, kwargs="dtype,out,skipna,keepaxes"))
+
     median, median_by = _agg_method(np.median, np.nanmedian, commutative=True)
+    median.__doc__ = """
+        Computes the arithmetic median.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.median_by, LArray.mean, LArray.mean_by,
+        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr[:,:] = [[10, 7, 5, 9], \
+                        [5, 8, 3, 7], \
+                        [6, 2, 0, 9], \
+                        [9, 10, 5, 6]]
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 | 10 |  7 |  5 |  9
+         a1 |  5 |  8 |  3 |  7
+         a2 |  6 |  2 |  0 |  9
+         a3 |  9 | 10 |  5 |  6
+        >>> arr.median()
+        6.5
+        >>> # along axis 'a'
+        >>> arr.median(x.a)
+        b |  b0 |  b1 |  b2 |  b3
+          | 7.5 | 7.5 | 4.0 | 8.0
+        >>> # along axis 'b'
+        >>> arr.median(x.b)
+        a |  a0 |  a1 |  a2 |  a3
+          | 8.0 | 6.0 | 4.0 | 7.5
+
+        Select some rows only
+
+        >>> arr.median(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  7 |  7 |  4 |  8
+        >>> # or equivalently
+        >>> # arr.median('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.median((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  7 |  7 |  4 |  8
+        a2,a3 |  7 |  6 |  2 |  7
+        >>> # or equivalently
+        >>> # arr.median('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.median((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  7 |  7 |  4 |  8
+        a23 |  7 |  6 |  2 |  7
+        >>> # or equivalently
+        >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
+
+    median_by.__doc__ = """
+        Computes the arithmetic median.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.median, LArray.mean, LArray.mean_by,
+        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr[:,:] = [[10, 7, 5, 9], \
+                        [5, 8, 3, 7], \
+                        [6, 2, 0, 9], \
+                        [9, 10, 5, 6]]
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 | 10 |  7 |  5 |  9
+         a1 |  5 |  8 |  3 |  7
+         a2 |  6 |  2 |  0 |  9
+         a3 |  9 | 10 |  5 |  6
+        >>> arr.median_by()
+        6.5
+        >>> # along axis 'a'
+        >>> arr.median_by(x.a)
+        a |  a0 |  a1 |  a2 |  a3
+          | 8.0 | 6.0 | 4.0 | 7.5
+        >>> # along axis 'b'
+        >>> arr.median_by(x.b)
+        b |  b0 |  b1 |  b2 |  b3
+          | 7.5 | 7.5 | 4.0 | 8.0
+        """.format(_doc_agg_method("median", by=True, kwargs="out,skipna,keepaxes"))
 
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
@@ -6374,19 +6834,481 @@ class LArray(object):
         return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
                                commutative=True, extra_kwargs={'q': q})
 
+    percentile.__doc__ = """
+        Computes the qth percentile of the data along the specified axis.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.percentile_by, LArray.mean, LArray.mean_by,
+        LArray.median, LArray.median_by, LArray.var, LArray.var_by,
+        LArray.std, LArray.std_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.percentile(25)
+        3.75
+        >>> # along axis 'a'
+        >>> arr.percentile(25, x.a)
+        b |  b0 |  b1 |  b2 |  b3
+          | 3.0 | 4.0 | 5.0 | 6.0
+        >>> # along axis 'b'
+        >>> arr.percentile(25, x.b)
+        a |   a0 |   a1 |   a2 |    a3
+          | 0.75 | 4.75 | 8.75 | 12.75
+
+        Select some rows only
+
+        >>> arr.percentile(25, ['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  1 |  2 |  3 |  4
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.percentile(25, (['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  1 |  2 |  3 |  4
+        a2,a3 |  9 | 10 | 11 | 12
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.percentile(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  1 |  2 |  3 |  4
+        a23 |  9 | 10 | 11 | 12
+        >>> # or equivalently
+        >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("qth percentile", extra_args="q",
+                                   kwargs="out,interpolation,skipna,keepaxes"))
+
+    # TODO : only works with axes, not groups
     def percentile_by(self, q, *args, **kwargs):
         return self.percentile(q, *(self.axes - args), **kwargs)
 
+    percentile_by.__doc__ = """
+        Computes the qth percentile of the data for the specified axis.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.percentile, LArray.mean, LArray.mean_by,
+        LArray.median, LArray.median_by, LArray.var, LArray.var_by,
+        LArray.std, LArray.std_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.percentile_by(25)
+        3.75
+        >>> # along axis 'a'
+        >>> arr.percentile_by(25, x.a)
+        a |   a0 |   a1 |   a2 |    a3
+          | 0.75 | 4.75 | 8.75 | 12.75
+        >>> # along axis 'b'
+        >>> arr.percentile_by(25, x.b)
+        b |  b0 |  b1 |  b2 |  b3
+          | 3.0 | 4.0 | 5.0 | 6.0
+        """.format(_doc_agg_method("qth percentile", by=True, extra_args="q",
+                                   kwargs="out,interpolation,skipna,keepaxes"))
+
     # not commutative
     ptp, _ = _agg_method(np.ptp)
+    ptp.__doc__ = """
+        Returns the range of values (maximum - minimum).
+
+        The name of the function comes from the acronym for ‘peak to peak’.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.ptp()
+        15
+        >>> # along axis 'a'
+        >>> arr.ptp(x.a)
+        b | b0 | b1 | b2 | b3
+          | 12 | 12 | 12 | 12
+        >>> # along axis 'b'
+        >>> arr.ptp(x.b)
+        a | a0 | a1 | a2 | a3
+          |  3 |  3 |  3 |  3
+
+        Select some rows only
+
+        >>> arr.ptp(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  4 |  4 |  4 |  4
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.ptp((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  4 |  4 |  4 |  4
+        a2,a3 |  4 |  4 |  4 |  4
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.ptp((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  4 |  4 |  4 |  4
+        a23 |  4 |  4 |  4 |  4
+        >>> # or equivalently
+        >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("ptp", kwargs="out"))
+
     var, var_by = _agg_method(np.var, np.nanvar)
+    var.__doc__ = """
+        Computes the variance.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.var_by, LArray.std, LArray.std_by,
+        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr[:,:] = [[10, 7, 5, 9], \
+                        [5, 8, 3, 7], \
+                        [6, 2, 0, 9], \
+                        [9, 10, 5, 6]]
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 | 10 |  7 |  5 |  9
+         a1 |  5 |  8 |  3 |  7
+         a2 |  6 |  2 |  0 |  9
+         a3 |  9 | 10 |  5 |  6
+        >>> arr.var()
+        7.96484375
+        >>> # along axis 'a'
+        >>> arr.var(x.a)
+        b |   b0 |     b1 |     b2 |     b3
+          | 4.25 | 8.6875 | 4.1875 | 1.6875
+        >>> # along axis 'b'
+        >>> arr.var(x.b)
+        a |     a0 |     a1 |      a2 |   a3
+          | 3.6875 | 3.6875 | 12.1875 | 4.25
+
+        Select some rows only
+
+        >>> arr.var(['a0', 'a1'])
+        b | b0 | b1 | b2 | b3
+          |  6 |  0 |  1 |  1
+        >>> # or equivalently
+        >>> # arr.var('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.var((['a0', 'a1'], ['a2', 'a3']))
+          a\\b | b0 | b1 | b2 | b3
+        a0,a1 |  6 |  0 |  1 |  1
+        a2,a3 |  2 | 16 |  6 |  2
+        >>> # or equivalently
+        >>> # arr.var('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.var((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b | b0 | b1 | b2 | b3
+        a01 |  6 |  0 |  1 |  1
+        a23 |  2 | 16 |  6 |  2
+        >>> # or equivalently
+        >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
+
+    var_by.__doc__ = """
+        Computes the variance.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.var, LArray.std, LArray.std_by,
+        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr[:,:] = [[10, 7, 5, 9], \
+                        [5, 8, 3, 7], \
+                        [6, 2, 0, 9], \
+                        [9, 10, 5, 6]]
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 | 10 |  7 |  5 |  9
+         a1 |  5 |  8 |  3 |  7
+         a2 |  6 |  2 |  0 |  9
+         a3 |  9 | 10 |  5 |  6
+        >>> arr.var_by()
+        7.96484375
+        >>> # along axis 'a'
+        >>> arr.var_by(x.a)
+        a |     a0 |     a1 |      a2 |   a3
+          | 3.6875 | 3.6875 | 12.1875 | 4.25
+        >>> # along axis 'b'
+        >>> arr.var_by(x.b)
+        b |   b0 |     b1 |     b2 |     b3
+          | 4.25 | 8.6875 | 4.1875 | 1.6875
+        """.format(_doc_agg_method("variance", by=True,
+                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
+
     std, std_by = _agg_method(np.std, np.nanstd)
+    std.__doc__ = """
+        Computes the standard deviation.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.std_by, LArray.var, LArray.var_by,
+        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4), dtype=float)
+        >>> arr[:,:] = [[10, 5, 7, 12], \
+                        [5, 8, 7, 9], \
+                        [5, 5, 3, 9], \
+                        [10, 8, 3, 12]]
+        >>> arr
+        a\\b |   b0 |  b1 |  b2 |   b3
+         a0 | 10.0 | 5.0 | 7.0 | 12.0
+         a1 |  5.0 | 8.0 | 7.0 |  9.0
+         a2 |  5.0 | 5.0 | 3.0 |  9.0
+         a3 | 10.0 | 8.0 | 3.0 | 12.0
+        >>> arr.std()
+        2.7810744326608736
+        >>> # along axis 'a'
+        >>> arr.std(x.a)
+        b |  b0 |  b1 |  b2 |  b3
+          | 2.5 | 1.5 | 2.0 | 1.5
+
+        Select some rows only
+
+        >>> arr.std(['a0', 'a1'])
+        b |  b0 |  b1 |  b2 |  b3
+          | 2.5 | 1.5 | 0.0 | 1.5
+        >>> # or equivalently
+        >>> # arr.std('a0,a1')
+
+        Split an axis in several parts
+
+        >>> arr.std((['a0', 'a1'], ['a2', 'a3']))
+          a\\b |  b0 |  b1 |  b2 |  b3
+        a0,a1 | 2.5 | 1.5 | 0.0 | 1.5
+        a2,a3 | 2.5 | 1.5 | 0.0 | 1.5
+        >>> # or equivalently
+        >>> # arr.std('a0,a1;a2,a3')
+
+        Same with renaming
+
+        >>> arr.std((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        a\\b |  b0 |  b1 |  b2 |  b3
+        a01 | 2.5 | 1.5 | 0.0 | 1.5
+        a23 | 2.5 | 1.5 | 0.0 | 1.5
+        >>> # or equivalently
+        >>> # arr.std('a0,a1>>a01;a2,a3>>a23')
+        """.format(_doc_agg_method("standard deviation",
+                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
+
+    std_by.__doc__ = """
+        Computes the standard deviation.
+
+        {}
+
+        Returns
+        -------
+        LArray or scalar
+            The resulting array will have the axes/groups given as arguments.
+
+        See Also
+        --------
+        LArray.std_by, LArray.var, LArray.var_by,
+        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
+        LArray.percentile, LArray.percentile_by
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4), dtype=float)
+        >>> arr[:,:] = [[10, 5, 7, 12], \
+                        [5, 8, 7, 9], \
+                        [5, 5, 3, 9], \
+                        [10, 8, 3, 12]]
+        >>> arr
+        a\\b |   b0 |  b1 |  b2 |   b3
+         a0 | 10.0 | 5.0 | 7.0 | 12.0
+         a1 |  5.0 | 8.0 | 7.0 |  9.0
+         a2 |  5.0 | 5.0 | 3.0 |  9.0
+         a3 | 10.0 | 8.0 | 3.0 | 12.0
+        >>> arr.std_by()
+        2.7810744326608736
+        >>> # along axis 'b'
+        >>> arr.std_by(x.b)
+        b |  b0 |  b1 |  b2 |  b3
+          | 2.5 | 1.5 | 2.0 | 1.5
+        """.format(_doc_agg_method("standard deviation", by=True,
+                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
 
     # cumulative aggregates
     def cumsum(self, axis=-1):
+        """
+        Returns the cumulative sum of array elements along an axis.
+
+        Parameters
+        ----------
+        axis : int or str or Axis, optional
+            Axis along which to perform the cumulative sum.
+            If given as position, it can be a negative integer,
+            in which case it counts from the last to the first axis.
+            By default, the cumulative sum is performed
+            along the last axis.
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.cumprod, LArray.sum, LArray.sum_by,
+        LArray.prod, LArray.prod_by
+
+        Notes
+        -----
+        Cumulative aggregation functions accept only one axis
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.cumsum()
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  3 |  6
+         a1 |  4 |  9 | 15 | 22
+         a2 |  8 | 17 | 27 | 38
+         a3 | 12 | 25 | 39 | 54
+        >>> arr.cumsum(x.a)
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  6 |  8 | 10
+         a2 | 12 | 15 | 18 | 21
+         a3 | 24 | 28 | 32 | 36
+        """
         return self._cum_aggregate(np.cumsum, axis)
 
     def cumprod(self, axis=-1):
+        """
+        Returns the cumulative product of array elements.
+
+        Parameters
+        ----------
+        axis : int or str or Axis, optional
+            Axis along which to perform the cumulative product.
+            If given as position, it can be a negative integer,
+            in which case it counts from the last to the first axis.
+            By default, the cumulative product is performed
+            along the last axis.
+
+        Returns
+        -------
+        LArray or scalar
+
+        See Also
+        --------
+        LArray.cumsum, LArray.sum, LArray.sum_by,
+        LArray.prod, LArray.prod_by
+
+        Notes
+        -----
+        Cumulative aggregation functions accept only one axis.
+
+        Examples
+        --------
+        >>> arr = ndtest((4, 4))
+        >>> arr
+        a\\b | b0 | b1 | b2 | b3
+         a0 |  0 |  1 |  2 |  3
+         a1 |  4 |  5 |  6 |  7
+         a2 |  8 |  9 | 10 | 11
+         a3 | 12 | 13 | 14 | 15
+        >>> arr.cumprod()
+        a\\b | b0 |  b1 |   b2 |    b3
+         a0 |  0 |   0 |    0 |     0
+         a1 |  4 |  20 |  120 |   840
+         a2 |  8 |  72 |  720 |  7920
+         a3 | 12 | 156 | 2184 | 32760
+        >>> arr.cumprod(x.a)
+        a\\b | b0 |  b1 |   b2 |   b3
+         a0 |  0 |   1 |    2 |    3
+         a1 |  0 |   5 |   12 |   21
+         a2 |  0 |  45 |  120 |  231
+         a3 |  0 | 585 | 1680 | 3465
+        """
         return self._cum_aggregate(np.cumprod, axis)
 
     # element-wise method factory
@@ -7684,8 +8606,8 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
     """
     Reads csv file and returns an array with the contents.
 
-    Note
-    ----
+    Notes
+    -----
     csv file format:
     arr,ages,sex,nat\time,1991,1992,1993
     A1,BI,H,BE,1,0,0
@@ -8440,6 +9362,7 @@ def ndrange(axes, start=0, title='', dtype=int):
     axes : single axis or tuple/list/AxisCollection of axes
         Axes of the array to create.
         Each axis can be given as either:
+
         * Axis object: actual axis object to use.
         * single int: length of axis. will create a wildcard axis of that
                       length.
