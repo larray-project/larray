@@ -110,9 +110,9 @@ except ImportError:
 
 from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
-                          decode, basestring, bytes, izip, rproduct, ReprString,
-                          duplicates, array_lookup2, skip_comment_cells,
-                          strip_rows, find_closing_chr, PY3)
+                          decode, basestring, unicode, bytes, izip, rproduct,
+                          ReprString, duplicates, array_lookup2, strip_rows,
+                          skip_comment_cells, find_closing_chr, PY3)
 
 def _range_to_slice(seq, length=None):
     """
@@ -849,7 +849,7 @@ class Axis(object):
             name = name.name
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
-        is_python_str = type(name) is str or type(name) is bytes
+        is_python_str = type(name) is unicode or type(name) is bytes
         assert name is None or isinstance(name, int) or is_python_str, \
             type(name)
         self.name = name
@@ -7881,12 +7881,36 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
         with open_excel(filepath) as wb:
             return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
     else:
-        if index_col is None:
-            index_col = list(range(nb_index)) if nb_index > 0 else [0]
-        df = pd.read_excel(filepath, sheetname, index_col=index_col,
-                           engine=engine, **kwargs)
-        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                           fill_value=na)
+        if index_col is not None or nb_index > 0:
+            if index_col is None:
+                index_col = list(range(nb_index))
+            df = pd.read_excel(filepath, sheetname, index_col=index_col,
+                               engine=engine, **kwargs)
+            return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                               fill_value=na)
+        else:
+            # read array as it (2D)
+            df = pd.read_excel(filepath, sheetname, **kwargs)
+            # extract axes names and labels
+            columns = df.columns.values.tolist()
+            try:
+                # take the first column which contains '\'
+                pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
+            except StopIteration:
+                # we assume first column will not contains data
+                pos_last = 0
+            if pos_last > 0 or '\\' in str(columns[0]):
+                axes_names = columns[:pos_last + 1]
+                axes_labels = [union(df[axis_name]) for axis_name in axes_names]
+                axes_names = axes_names[:-1] + axes_names[-1].split('\\')
+                axes_labels.append(columns[pos_last + 1:])
+            else:
+                axes_names = [columns[0]]
+                axes_labels = [columns[1:]]
+            # build LArray object
+            axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+            data = df.values[:, pos_last + 1:].reshape([len(axis) for axis in axes])
+            return LArray(data, axes)
 
 
 def read_sas(filepath, nb_index=0, index_col=None,
