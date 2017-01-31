@@ -2490,6 +2490,64 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                                      "label for any axis"):
             small.sum(lipro4['P01,P16'])
 
+    def test_agg_by(self):
+        la = self.larray
+        age, geo, sex, lipro = la.axes
+        vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
+        belgium = self.belgium
+
+        # no group or axis
+        self.assertEqual(la.sum_by().shape, ())
+        self.assertEqual(la.sum_by(), la.sum())
+
+        # a) group aggregate on a fresh array
+
+        # a.1) one group
+        res = la.sum_by(geo='A11,A21,A25')
+        self.assertEqual(res.shape, ())
+        self.assertEqual(res, la.sum(geo='A11,A21,A25').sum())
+
+        # a.2) a tuple of one group
+        res = la.sum_by(geo=(geo.all(),))
+        self.assertEqual(res.shape, (1,))
+        assert_array_equal(res, la.sum(age, sex, lipro, geo=(geo.all(),)))
+
+        # a.3) several groups
+        # string groups
+        res = la.sum_by(geo=(vla, wal, bru))
+        self.assertEqual(res.shape, (3,))
+        assert_array_equal(res, la.sum(age, sex, lipro, geo=(vla, wal, bru)))
+
+        # with one label in several groups
+        self.assertEqual(la.sum_by(sex=(['H'], ['H', 'F'])).shape, (2,))
+        self.assertEqual(la.sum_by(sex=('H', 'H,F')).shape, (2,))
+
+        res = la.sum_by(sex='H;H,F')
+        self.assertEqual(res.shape, (2,))
+        assert_array_equal(res, la.sum(age, geo, lipro, sex='H;H,F'))
+
+        # a.4) several dimensions at the same time
+        res = la.sum_by(geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:')
+        self.assertEqual(res.shape, (4, 3))
+        assert_array_equal(res, la.sum(age, sex, geo=(vla, wal, bru, belgium),
+                                       lipro='P01,P03;P02,P05;:'))
+
+        # b) both axis aggregate and group aggregate at the same time
+        # Note that you must list "full axes" aggregates first (Python does
+        # not allow non-kwargs after kwargs.
+        res = la.sum_by(sex, geo=(vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 2))
+        assert_array_equal(res, la.sum(age, lipro, geo=(vla, wal, bru, belgium)))
+
+        # c) chain group aggregate after axis aggregate
+        res = la.sum_by(geo, sex)
+        self.assertEqual(res.shape, (44, 2))
+        assert_array_equal(res, la.sum(age, lipro))
+
+        res2 = res.sum_by(geo=(vla, wal, bru, belgium))
+        self.assertEqual(res2.shape, (4,))
+        assert_array_equal(res2, res.sum(sex, geo=(vla, wal, bru, belgium)))
+
     def test_ratio(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
