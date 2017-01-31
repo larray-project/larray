@@ -2496,6 +2496,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         vla, wal, bru = self.vla_str, self.wal_str, self.bru_str
         belgium = self.belgium
 
+        # no group or axis
+        self.assertEqual(la.sum_by().shape, ())
+        self.assertEqual(la.sum_by(), la.sum())
+
         # a) group aggregate on a fresh array
 
         # a.1) one group

@@ -5425,7 +5425,7 @@ class LArray(object):
                    commutative=False, out=None, extra_kwargs={}):
         operations = self._prepare_aggregate(op, args, kwargs, commutative,
                                              stack_depth=3)
-        if by_agg:
+        if by_agg and operations != self.axes:
             # get axes to aggregate
             flat_op = chain.from_iterable([(o,) if isinstance(o, (Group, Axis))
                                            else o for o in operations])
