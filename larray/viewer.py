@@ -1044,6 +1044,11 @@ class ArrayView(QTableView):
         row_max = max(srange.bottom() - xoffset, 0)
         col_min = max(srange.left() - yoffset, 0)
         col_max = max(srange.right() - yoffset, 0)
+        # if not all rows/columns have been loaded
+        if row_min == 0 and row_max == self.model().rows_loaded - 1:
+            row_max = self.model().total_rows - 1
+        if col_min == 0 and col_max == self.model().cols_loaded - 1:
+            col_max = self.model().total_cols - 1
         return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True, none_selects_all=True):
