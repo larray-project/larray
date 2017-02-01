@@ -98,6 +98,8 @@ try:
     try:
         from matplotlib.backends.backend_qt5agg import FigureCanvas
         from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
+        canvas = FigureCanvas(Figure())
     except Exception:
         from matplotlib.backends.backend_qt4agg import FigureCanvas
         from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
