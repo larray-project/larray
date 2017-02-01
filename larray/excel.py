@@ -134,13 +134,6 @@ if xw is not None:
 
             self.xw_wkb = xw_wkb
 
-        def _concrete_key(self, key):
-            if isinstance(key, int):
-                if key < 0:
-                    key += len(self)
-                key += 1
-            return key
-
         def __contains__(self, key):
             if isinstance(key, int):
                 length = len(self)
@@ -153,7 +146,6 @@ if xw is not None:
                 return key in self.sheet_names()
 
         def __getitem__(self, key):
-            key = self._concrete_key(key)
             return Sheet(self, key)
 
         def __setitem__(self, key, value):
