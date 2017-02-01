@@ -1503,15 +1503,13 @@ class ArrayEditorWidget(QWidget):
         cur_filter = self.current_filter
         # if index == 0:
         if not indices or len(indices) == len(axis.labels):
-            # FIXME: anonymous...
-            if axis.name in cur_filter:
-                del cur_filter[axis.name]
+            if axis in cur_filter:
+                del cur_filter[axis]
         else:
-            # FIXME: anonymous...
             if len(indices) == 1:
-                cur_filter[axis.name] = axis.labels[indices[0]]
+                cur_filter[axis] = axis.labels[indices[0]]
             else:
-                cur_filter[axis.name] = axis.labels[indices]
+                cur_filter[axis] = axis.labels[indices]
         filtered = self.la_data[cur_filter]
         local_changes = self.get_local_changes(filtered)
         self.filtered_data = filtered
@@ -1552,10 +1550,10 @@ class ArrayEditorWidget(QWidget):
 
         # transform global dictionary key to "local" (filtered) key by removing
         # the parts of the key which are redundant with the filter
-        for axis_name, axis_filter in self.current_filter.items():
-            axis_key = dkey[axis_name]
+        for axis, axis_filter in self.current_filter.items():
+            axis_key = dkey[axis]
             if np.isscalar(axis_filter) and axis_key == axis_filter:
-                del dkey[axis_name]
+                del dkey[axis]
             elif not np.isscalar(axis_filter) and axis_key in axis_filter:
                 pass
             else:
@@ -1590,9 +1588,8 @@ class ArrayEditorWidget(QWidget):
 
         # compute dictionary key out of it
         data = self.filtered_data
-        # FIXME: anonymous...
-        axes_names = data.axes.names if isinstance(data, la.LArray) else []
-        dkey = dict(zip(axes_names, label_key))
+        axes = list(data.axes) if isinstance(data, la.LArray) else []
+        dkey = dict(zip(axes, label_key))
 
         # add the "scalar" parts of the filter to it (ie the parts of the
         # filter which removed dimensions)
@@ -1600,8 +1597,7 @@ class ArrayEditorWidget(QWidget):
                      if np.isscalar(v)})
 
         # re-transform it to tuple (to make it hashable/to store it in .changes)
-        # FIXME: anonymous...
-        return tuple(dkey[axis.name] for axis in self.la_data.axes)
+        return tuple(dkey[axis] for axis in self.la_data.axes)
 
 
 def larray_to_array_and_labels(data):
