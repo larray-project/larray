@@ -3919,7 +3919,7 @@ class LArray(object):
 
     def __getattr__(self, key):
         try:
-            return self.__getitem__(key)
+            return self.axes[key]
         # XXX: maybe I should only catch KeyError here and be more aggressive
         #  in __getitem__ to raise KeyError on any exception
         except Exception:
