@@ -90,16 +90,18 @@ from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
 
+from qtpy import QT_VERSION
+
 import numpy as np
 
 try:
     import matplotlib
     from matplotlib.figure import Figure
     try:
+        if QT_VERSION[0] == '4':
+            raise Exception
         from matplotlib.backends.backend_qt5agg import FigureCanvas
         from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-
-        canvas = FigureCanvas(Figure())
     except Exception:
         from matplotlib.backends.backend_qt4agg import FigureCanvas
         from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
