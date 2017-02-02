@@ -793,6 +793,12 @@ class TestLArray(TestCase):
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro),
                             title=self.small_title)
 
+    def test_getattr(self):
+        self.assertEqual(type(self.larray.geo), Axis)
+        self.assertIs(self.larray.geo, self.geo)
+        with self.assertRaises(AttributeError):
+            self.larray.geom
+
     def test_zeros(self):
         la = zeros((self.geo, self.age))
         self.assertEqual(la.shape, (44, 116))
