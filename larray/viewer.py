@@ -90,12 +90,16 @@ from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
 from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
                          QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
 
+from qtpy import QT_VERSION
+
 import numpy as np
 
 try:
     import matplotlib
     from matplotlib.figure import Figure
     try:
+        if QT_VERSION[0] != '5':
+            raise Exception
         from matplotlib.backends.backend_qt5agg import FigureCanvas
         from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
     except Exception:
@@ -1052,6 +1056,22 @@ class ArrayView(QTableView):
         return row_min, row_max + 1, col_min, col_max + 1
 
     def _selection_data(self, headers=True, none_selects_all=True):
+        """
+        Returns a Numpy ndarray containing selected data if headers=True.
+        Returns an iterator over labels and data if headers=False.
+
+        Parameters
+        ----------
+        headers : bool, optional
+            Labels are also returned if True.
+        none_selects_all : bool, optional
+            If True (default) and selection is empty, returns all data.
+
+        Returns
+        -------
+        numpy.ndarray or itertools.chain
+
+        """
         bounds = self._selection_bounds(none_selects_all=none_selects_all)
         if bounds is None:
             return None
@@ -1168,11 +1188,26 @@ class ArrayView(QTableView):
         # in LArray
         data = self._selection_data(headers=False)
 
+        row_min, row_max, col_min, col_max = self._selection_bounds()
+        dim_names = self.model().xlabels[0]
+        xlabels = self.model().xlabels
+        ylabels = self.model().ylabels
+
         assert data.ndim == 2
-        column = data.shape[0] == 1
-        row = data.shape[1] == 1
+        row = data.shape[0] == 1
+        column = data.shape[1] == 1
+        # We assume the selection to be one row or column
         assert row or column
-        data = data[0] if column else data[:, 0]
+        if row:
+            data = data[0]
+            xlabel = dim_names[-1]
+            xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
+        else:
+            data = data[:, 0]
+            xlabel = ','.join(dim_names[:-1])
+            xticklabels = ['\n'.join(
+                [str(ylabels[j][r]) for j in range(1, len(ylabels))])
+                           for r in range(row_min, row_max)]
 
         figure = Figure()
 
@@ -1182,9 +1217,14 @@ class ArrayView(QTableView):
         # discards the old graph
         ax.hold(False)
 
-        # FIXME: use labels instead
-        x = np.arange(data.shape[0])
-        ax.plot(x, data)
+        # build the graph
+        ax.plot(data)
+        ax.set_xlabel(xlabel)
+        ax.set_xlim(0, len(data) - 1)
+
+        xticks = [t for t in ax.get_xticks().astype(int) if t <= len(data) - 1]
+        xticklabels = [xticklabels[j] for j in xticks]
+        ax.set_xticklabels(xticklabels)
 
         main = PlotDialog(figure, self)
         main.show()
