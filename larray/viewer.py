@@ -1194,37 +1194,43 @@ class ArrayView(QTableView):
         ylabels = self.model().ylabels
 
         assert data.ndim == 2
-        row = data.shape[0] == 1
-        column = data.shape[1] == 1
-        # We assume the selection to be one row or column
-        assert row or column
-        if row:
-            data = data[0]
-            xlabel = dim_names[-1]
-            xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
-        else:
-            data = data[:, 0]
-            xlabel = ','.join(dim_names[:-1])
-            xticklabels = ['\n'.join(
-                [str(ylabels[j][r]) for j in range(1, len(ylabels))])
-                           for r in range(row_min, row_max)]
+
+        # XXX : Plotting according to several axes in the same time is meaningless
+        # if data.shape[1] == 1:
+        #     data = data[:, 0]
+        #     xlabel = ','.join(dim_names[:-1])
+        #     xticklabels = ['\n'.join(
+        #         [str(ylabels[j][r]) for j in range(1, len(ylabels))])
+        #         for r in range(row_min, row_max)]
 
         figure = Figure()
 
         # create an axis
         ax = figure.add_subplot(111)
 
-        # discards the old graph
-        ax.hold(False)
+        xlabel = dim_names[-1]
+        xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
 
-        # build the graph
-        ax.plot(data)
+        # plot each row as a line
+        for row in range(len(data)):
+            label = ','.join([str(ylabels[j][row])
+                              for j in range(1, len(ylabels))])
+            ax.plot(data[row], label=label)
+
+        # prepare x axis
         ax.set_xlabel(xlabel)
-        ax.set_xlim(0, len(data) - 1)
-
-        xticks = [t for t in ax.get_xticks().astype(int) if t <= len(data) - 1]
+        ax.set_xlim(0, len(xticklabels) - 1)
+        # we need to do that because matplotlib is smart enough to
+        # not show all ticks but a selection. However, that selection
+        # may include ticks outside the range of x axis
+        xticks = [t for t in ax.get_xticks().astype(int) if t <= len(xticklabels) - 1]
         xticklabels = [xticklabels[j] for j in xticks]
         ax.set_xticklabels(xticklabels)
+
+        # set legend
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         main = PlotDialog(figure, self)
         main.show()
