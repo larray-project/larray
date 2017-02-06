@@ -75,6 +75,7 @@ from itertools import chain
 import math
 import re
 import sys
+import os
 
 from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate,
                             QListWidget, QSplitter, QListWidgetItem,
@@ -2434,6 +2435,12 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     if obj is None:
         local_vars = sys._getframe(depth + 1).f_locals
         obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
+
+    if isinstance(obj, str):
+        if os.path.isfile(obj):
+            obj = la.Session(obj)
+        else:
+            raise ValueError("file {} not found".format(obj))
 
     if not title:
         title = get_title(obj, depth=depth + 1)
