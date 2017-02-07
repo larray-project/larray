@@ -98,12 +98,11 @@ import numpy as np
 try:
     import matplotlib
     from matplotlib.figure import Figure
-    try:
-        if QT_VERSION[0] != '5':
-            raise Exception
+
+    if QT_VERSION[0] == '5':
         from matplotlib.backends.backend_qt5agg import FigureCanvas
         from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-    except Exception:
+    else:
         from matplotlib.backends.backend_qt4agg import FigureCanvas
         from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
