@@ -2416,12 +2416,17 @@ def get_title(obj, depth=0, maxnames=3):
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
-    Opens a new editor window. If no object is given, all local arrays are loaded in the editor.
+    Opens a new editor window. If no object is given,
+    all local arrays are loaded in the editor.
 
-    obj : np.ndarray, LArray, Session or dict, optional
-        Object to visualize. Defaults to the collection of all local variables where the function was called.
+    obj : np.ndarray, LArray, Session, dict or str, optional
+        Object to visualize. If string, array(s) will be loaded
+        from the file given as argument.
+        Defaults to the collection of all local variables where
+        the function was called.
     title : str, optional
-        Title for the current object. A default one is generated if not provided.
+        Title for the current object.
+        A default one is generated if not provided.
     minvalue : scalar, optional
         Minimum value allowed.
     maxvalue : scalar, optional
@@ -2458,10 +2463,11 @@ def view(obj=None, title=''):
     If no session object or array dictionary is provided
     as argument, all local arrays are loaded in the editor.
 
-    obj : Session or dict of LArray, optional
+    obj : Session, dict of LArray or str, optional
         Session or a dictionary of arrays to
-        load in user interface. By default,
-        all existing local arrays are loaded.
+        load in user interface. If string, array(s)
+        will be loaded from the file given as argument.
+        By default, all existing local arrays are loaded.
     title : str, optional
         Title for the current session.
         A default one is generated if not provided.
