@@ -1056,8 +1056,9 @@ class ArrayView(QTableView):
 
     def _selection_data(self, headers=True, none_selects_all=True):
         """
-        Returns a Numpy ndarray containing selected data if headers=True.
-        Returns an iterator over labels and data if headers=False.
+        Returns an iterator over selected labels and data
+        if headers=True and a Numpy ndarray containing only
+        the data otherwise.
 
         Parameters
         ----------
@@ -1194,29 +1195,29 @@ class ArrayView(QTableView):
 
         assert data.ndim == 2
 
-        # XXX : Plotting according to several axes in the same time is meaningless
-        # if data.shape[1] == 1:
-        #     data = data[:, 0]
-        #     xlabel = ','.join(dim_names[:-1])
-        #     xticklabels = ['\n'.join(
-        #         [str(ylabels[j][r]) for j in range(1, len(ylabels))])
-        #         for r in range(row_min, row_max)]
-
         figure = Figure()
 
         # create an axis
         ax = figure.add_subplot(111)
 
-        xlabel = dim_names[-1]
-        xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
+        if data.shape[1] == 1:
+            # plot one column
+            xlabel = ','.join(dim_names[:-1])
+            xticklabels = ['\n'.join(
+                [str(ylabels[j][r]) for j in range(1, len(ylabels))])
+                           for r in range(row_min, row_max)]
+            ax.plot(data[:, 0])
+            ax.set_ylabel(xlabels[1][col_min])
+        else:
+            # plot each row as a line
+            xlabel = dim_names[-1]
+            xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
+            for row in range(len(data)):
+                label = ','.join([str(ylabels[j][row])
+                                  for j in range(1, len(ylabels))])
+                ax.plot(data[row], label=label)
 
-        # plot each row as a line
-        for row in range(len(data)):
-            label = ','.join([str(ylabels[j][row])
-                              for j in range(1, len(ylabels))])
-            ax.plot(data[row], label=label)
-
-        # prepare x axis
+        # set x axis
         ax.set_xlabel(xlabel)
         ax.set_xlim(0, len(xticklabels) - 1)
         # we need to do that because matplotlib is smart enough to
@@ -1226,10 +1227,11 @@ class ArrayView(QTableView):
         xticklabels = [xticklabels[j] for j in xticks]
         ax.set_xticklabels(xticklabels)
 
-        # set legend
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        if data.shape[1] != 1:
+            # set legend
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         main = PlotDialog(figure, self)
         main.show()
