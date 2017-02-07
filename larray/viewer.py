@@ -480,11 +480,12 @@ class ArrayModel(QAbstractTableModel):
         self.changes = changes
         self._data = data
         if xlabels is None:
-            xlabels = [[]]
+            xlabels = [[], []]
         self.xlabels = xlabels
         if ylabels is None:
             ylabels = [[]]
         self.ylabels = ylabels
+
         self.total_rows = self._data.shape[0]
         self.total_cols = self._data.shape[1]
         size = self.total_rows * self.total_cols
@@ -1192,6 +1193,8 @@ class ArrayView(QTableView):
         dim_names = self.model().xlabels[0]
         xlabels = self.model().xlabels
         ylabels = self.model().ylabels
+        print('xlabels', xlabels)
+        print('ylabels', ylabels)
 
         assert data.ndim == 2
 
@@ -1338,6 +1341,12 @@ class ArrayEditorWidget(QWidget):
             display_names = []
             if not isinstance(data, np.ndarray):
                 data = np.asarray(data)
+            if data.ndim == 0:
+                self.old_data_shape = data.shape
+            elif data.ndim == 1:
+                self.old_data_shape = data.shape
+            data, xlabels, ylabels = ndarray_to_array_and_labels(data)
+
         filters_layout = self.filters_layout
         clear_layout(filters_layout)
         if axes:
@@ -1349,16 +1358,6 @@ class ArrayEditorWidget(QWidget):
         self.filtered_data = self.la_data
         if data.size == 0:
             QMessageBox.critical(self, _("Error"), _("Array is empty"))
-        if data.ndim == 0:
-            self.old_data_shape = data.shape
-            data.shape = (1, 1)
-        elif data.ndim == 1:
-            self.old_data_shape = data.shape
-            data = data.reshape(1, data.shape[0])
-            ylabels = [[]]
-
-        if data.ndim > 2:
-            data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
 
             # if xlabels is not None and len(xlabels) != self.data.shape[1]:
             #     self.error(_("The 'xlabels' argument length do no match "
@@ -1651,6 +1650,103 @@ class ArrayEditorWidget(QWidget):
         return tuple(dkey[axis.name] for axis in self.la_data.axes)
 
 
+class _LazyLabels(object):
+    def __init__(self, arrays):
+        self.prod = Product(arrays)
+
+    def __getitem__(self, key):
+        return ' '.join(self.prod[key])
+
+    def __len__(self):
+        return len(self.prod)
+
+
+class _LazyDimLabels(object):
+    def __init__(self, prod, i):
+        self.prod = prod
+        self.i = i
+
+    def __iter__(self):
+        return iter(self.prod[:][self.i])
+
+    def __getitem__(self, key):
+        return self.prod[key][self.i]
+
+    def __len__(self):
+        return len(self.prod)
+
+
+class _LazyRange(object):
+    def __init__(self, length, offset):
+        self.length = length
+        self.offset = offset
+
+    def __getitem__(self, key):
+        if key >= self.offset:
+            return key - self.offset
+        else:
+            return ''
+
+    def __len__(self):
+        return self.length + self.offset
+
+
+class _LazyNone(object):
+    def __init__(self, length):
+        self.length = length
+
+    def __getitem__(self, key):
+        return ' '
+
+    def __len__(self):
+        return self.length
+
+
+def ndarray_to_array_and_labels(data):
+    """Converts an  Numpy ndarray into a 2D data array and x/y labels.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Input array.
+
+    Returns
+    -------
+    data : 2D array
+        Content of input array is returned as 2D array.
+    xlabels : 1D array
+        Labels of rows.
+    ylabels : 2D array
+        Labels of columns (cartesian product of of all axes
+        except the last one).
+    """
+    assert isinstance(data, np.ndarray)
+
+    if data.ndim == 0:
+        data.shape = (1, 1)
+        xlabels = [["{0}"], [0]]
+        ylabels = [[]]
+    elif data.ndim == 1:
+        data = data.reshape(1, data.shape[0])
+        xlabels = [["{0}"], list(range(data.size))]
+        ylabels = [[]]
+    elif data.ndim > 1:
+        xlabels = [["{{{}}}".format(i) for i in range(data.ndim)],
+                   range(data.shape[-1])]
+        coldims = 1
+        prod = Product([range(data.shape[i]) for i in range(data.ndim - 1)])
+        ylabels = [_LazyNone(len(prod) + coldims)] + [
+            _LazyDimLabels(prod, i) for i in range(data.ndim - 1)]
+    else:
+        xlabels = None
+        ylabels = None
+
+    if data.ndim > 2:
+        data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
+
+    return data, xlabels, ylabels
+
+
 def larray_to_array_and_labels(data):
     """Converts an LArray into a 2D data array and x/y labels.
 
@@ -1673,54 +1769,6 @@ def larray_to_array_and_labels(data):
 
     xlabels = [data.axes.display_names, data.axes.labels[-1]]
 
-    class LazyLabels(object):
-        def __init__(self, arrays):
-            self.prod = Product(arrays)
-
-        def __getitem__(self, key):
-            return ' '.join(self.prod[key])
-
-        def __len__(self):
-            return len(self.prod)
-
-    class LazyDimLabels(object):
-        def __init__(self, prod, i):
-            self.prod = prod
-            self.i = i
-
-        def __iter__(self):
-            return iter(self.prod[:][self.i])
-
-        def __getitem__(self, key):
-            return self.prod[key][self.i]
-
-        def __len__(self):
-            return len(self.prod)
-
-    class LazyRange(object):
-        def __init__(self, length, offset):
-            self.length = length
-            self.offset = offset
-
-        def __getitem__(self, key):
-            if key >= self.offset:
-                return key - self.offset
-            else:
-                return ''
-
-        def __len__(self):
-            return self.length + self.offset
-
-    class LazyNone(object):
-        def __init__(self, length):
-            self.length = length
-
-        def __getitem__(self, key):
-            return ' '
-
-        def __len__(self):
-            return self.length
-
     otherlabels = data.axes.labels[:-1]
     # ylabels = LazyLabels(otherlabels)
     coldims = 1
@@ -1731,13 +1779,14 @@ def larray_to_array_and_labels(data):
         ylabels = [[]]
     else:
         prod = Product(otherlabels)
-        ylabels = [LazyNone(len(prod) + coldims)] + [
-            LazyDimLabels(prod, i) for i in range(len(otherlabels))]
+        ylabels = [_LazyNone(len(prod) + coldims)] + [
+            _LazyDimLabels(prod, i) for i in range(len(otherlabels))]
         # ylabels = [LazyRange(len(prod), coldims)] + [
         #     LazyDimLabels(prod, i) for i in range(len(otherlabels))]
 
     if data.ndim > 2:
         data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
+
     return data, xlabels, ylabels
 
 
