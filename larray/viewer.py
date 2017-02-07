@@ -1501,15 +1501,16 @@ class ArrayEditorWidget(QWidget):
         # must be done before changing self.current_filter
         self.update_global_changes()
         cur_filter = self.current_filter
+        axis_id = self.la_data.axes.axis_id(axis)
         # if index == 0:
         if not indices or len(indices) == len(axis.labels):
-            if axis in cur_filter:
-                del cur_filter[axis]
+            if axis_id in cur_filter:
+                del cur_filter[axis_id]
         else:
             if len(indices) == 1:
-                cur_filter[axis] = axis.labels[indices[0]]
+                cur_filter[axis_id] = axis.labels[indices[0]]
             else:
-                cur_filter[axis] = axis.labels[indices]
+                cur_filter[axis_id] = axis.labels[indices]
         filtered = self.la_data[cur_filter]
         local_changes = self.get_local_changes(filtered)
         self.filtered_data = filtered
@@ -1544,16 +1545,15 @@ class ArrayEditorWidget(QWidget):
         """
         assert isinstance(k, tuple) and len(k) == self.la_data.ndim
 
-        # FIXME: not anonymous-friendly (use axis instead of axis.name)
-        dkey = {axis.name: axis_key
-                for axis_key, axis in zip(k, self.la_data.axes)}
+        dkey = {axis_id: axis_key
+                for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
 
         # transform global dictionary key to "local" (filtered) key by removing
         # the parts of the key which are redundant with the filter
-        for axis, axis_filter in self.current_filter.items():
-            axis_key = dkey[axis]
+        for axis_id, axis_filter in self.current_filter.items():
+            axis_key = dkey[axis_id]
             if np.isscalar(axis_filter) and axis_key == axis_filter:
-                del dkey[axis]
+                del dkey[axis_id]
             elif not np.isscalar(axis_filter) and axis_key in axis_filter:
                 pass
             else:
@@ -1588,8 +1588,8 @@ class ArrayEditorWidget(QWidget):
 
         # compute dictionary key out of it
         data = self.filtered_data
-        axes = list(data.axes) if isinstance(data, la.LArray) else []
-        dkey = dict(zip(axes, label_key))
+        axes_ids = list(data.axes.ids) if isinstance(data, la.LArray) else []
+        dkey = dict(zip(axes_ids, label_key))
 
         # add the "scalar" parts of the filter to it (ie the parts of the
         # filter which removed dimensions)
@@ -1597,7 +1597,7 @@ class ArrayEditorWidget(QWidget):
                      if np.isscalar(v)})
 
         # re-transform it to tuple (to make it hashable/to store it in .changes)
-        return tuple(dkey[axis] for axis in self.la_data.axes)
+        return tuple(dkey[axis_id] for axis_id in self.la_data.axes.ids)
 
 
 def larray_to_array_and_labels(data):
