@@ -211,7 +211,7 @@ class PandasCSVHandler(FileHandler):
     def list(self):
         # strip extension from files
         # FIXME: only take .csv files
-        # TODO: also support fname pattern, eg. "dump_*.csv"
+        # TODO: also support fname pattern, eg. "dump_*.csv" (using glob)
         return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname)]
 
     def _read_array(self, key, *args, **kwargs):

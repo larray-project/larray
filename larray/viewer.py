@@ -75,6 +75,7 @@ from itertools import chain
 import math
 import re
 import sys
+import os
 
 from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate,
                             QListWidget, QSplitter, QListWidgetItem,
@@ -2415,12 +2416,17 @@ def get_title(obj, depth=0, maxnames=3):
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
-    Opens a new editor window. If no object is given, all local arrays are loaded in the editor.
+    Opens a new editor window. If no object is given,
+    all local arrays are loaded in the editor.
 
-    obj : np.ndarray, LArray, Session or dict, optional
-        Object to visualize. Defaults to the collection of all local variables where the function was called.
+    obj : np.ndarray, LArray, Session, dict or str, optional
+        Object to visualize. If string, array(s) will be loaded
+        from the file given as argument.
+        Defaults to the collection of all local variables where
+        the function was called.
     title : str, optional
-        Title for the current object. A default one is generated if not provided.
+        Title for the current object.
+        A default one is generated if not provided.
     minvalue : scalar, optional
         Minimum value allowed.
     maxvalue : scalar, optional
@@ -2435,6 +2441,12 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
         local_vars = sys._getframe(depth + 1).f_locals
         obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
 
+    if isinstance(obj, str):
+        if os.path.isfile(obj):
+            obj = la.Session(obj)
+        else:
+            raise ValueError("file {} not found".format(obj))
+
     if not title:
         title = get_title(obj, depth=depth + 1)
 
@@ -2448,15 +2460,15 @@ def view(obj=None, title=''):
     Starts a new viewer window. Arrays are loaded in
     readonly mode and their content cannot be modified.
 
-    If no session object or array dictionary is provided
-    as argument, all local arrays are loaded in the editor.
+    If no object is given, all local arrays are loaded in the editor.
 
-    obj : Session or dict of LArray, optional
-        Session or a dictionary of arrays to
-        load in user interface. By default,
-        all existing local arrays are loaded.
+    obj : np.ndarray, LArray, Session, dict or str, optional
+        Object to visualize. If string, array(s) will be loaded
+        from the file given as argument.
+        Defaults to the collection of all local variables where
+        the function was called.
     title : str, optional
-        Title for the current session.
+        Title for the current object.
         A default one is generated if not provided.
     """
     edit(obj, title=title, readonly=True, depth=1)
