@@ -2460,16 +2460,15 @@ def view(obj=None, title=''):
     Starts a new viewer window. Arrays are loaded in
     readonly mode and their content cannot be modified.
 
-    If no session object or array dictionary is provided
-    as argument, all local arrays are loaded in the editor.
+    If no object is given, all local arrays are loaded in the editor.
 
-    obj : Session, dict of LArray or str, optional
-        Session or a dictionary of arrays to
-        load in user interface. If string, array(s)
-        will be loaded from the file given as argument.
-        By default, all existing local arrays are loaded.
+    obj : np.ndarray, LArray, Session, dict or str, optional
+        Object to visualize. If string, array(s) will be loaded
+        from the file given as argument.
+        Defaults to the collection of all local variables where
+        the function was called.
     title : str, optional
-        Title for the current session.
+        Title for the current object.
         A default one is generated if not provided.
     """
     edit(obj, title=title, readonly=True, depth=1)
