@@ -1193,8 +1193,6 @@ class ArrayView(QTableView):
         dim_names = self.model().xlabels[0]
         xlabels = self.model().xlabels
         ylabels = self.model().ylabels
-        print('xlabels', xlabels)
-        print('ylabels', ylabels)
 
         assert data.ndim == 2
 
