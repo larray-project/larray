@@ -3928,6 +3928,10 @@ class LArray(object):
     def __setattr__(self, key, value):
         return self.__setitem__(key, value)
 
+    def __dir__(self):
+        names = set(axis.name for axis in self.axes if axis.name is not None)
+        return list(set(dir(self.__class__)) | names)
+
     @property
     def i(self):
         """
