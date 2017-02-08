@@ -2924,6 +2924,19 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
                            [3722, 3395, 3347])
 
+        la = read_csv(abspath('test1d_liam2.csv'), dialect='liam2')
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes.names, ['time'])
+        assert_array_equal(la, [3722, 3395, 3347])
+
+        la = read_csv(abspath('test5d_liam2.csv'), dialect='liam2')
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
+        assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
+                           [3722, 3395, 3347])
+
     @unittest.skipIf(xw is None, "xlwings is not available")
     def test_read_excel_xlwings(self):
         la = read_excel(abspath('test.xlsx'), '1d')
