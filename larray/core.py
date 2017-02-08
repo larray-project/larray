@@ -8956,9 +8956,8 @@ def from_lists(data, nb_index=None, index_col=None):
     return df_aslarray(df, raw=index_col is None)
 
 
-def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
-             na=np.nan, sort_rows=False, sort_columns=False,
-             dialect='larray', **kwargs):
+def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
+             sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
 
@@ -8986,11 +8985,10 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
     na : scalar, optional
         Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is
-        more efficient than not sorting). Defaults to False.
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is
-        more efficient than not sorting). Defaults to False.
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Defaults to False.
     dialect : 'classic' | 'larray' | 'liam2', optional
         Name of dialect. Defaults to 'larray'.
     **kwargs
@@ -9017,58 +9015,50 @@ def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
          BE | 0 | 1
          FO | 2 | 3
     """
-    # read the first line to determine how many axes (time excluded) we have
-    with csv_open(filepath) as f:
-        reader = csv.reader(f, delimiter=sep)
-        line_stream = skip_comment_cells(strip_rows(reader))
-        header = next(line_stream)
-        if headersep is not None and headersep != sep:
-            combined_axes_names = header[0]
-            header = combined_axes_names.split(headersep)
-        try:
-            # take the first cell which contains '\'
-            pos_last = next(i for i, v in enumerate(header) if '\\' in v)
-        except StopIteration:
-            # if there isn't any, assume 1d array, unless "liam2 dialect"
-            pos_last = 0 if dialect != 'liam2' else len(header) - 1
-        axes_names = header[:pos_last + 1]
+    if dialect == 'liam2':
+        # read axes names. This needs to be done separately instead of reading the whole file with Pandas then
+        # manipulating the dataframe because the header line must be ignored for the column types to be inferred
+        # correctly. Note that to read one line, this is faster than using Pandas reader.
+        with csv_open(filepath) as f:
+            reader = csv.reader(f, delimiter=sep)
+            line_stream = skip_comment_cells(strip_rows(reader))
+            axes_names = next(line_stream)
 
-    if index_col is None and nb_index == 0:
-        nb_index = len(axes_names)
-        if dialect == 'liam2':
-            nb_index -= 1
+        if nb_index is not None or index_col is not None:
+            raise ValueError("nb_index and index_col are not compatible with dialect='liam2'")
+        if len(axes_names) > 1:
+            nb_index = len(axes_names) - 1
+        # use the second data line for column headers (excludes comments and blank lines before counting)
+        kwargs['header'] = 1
+        kwargs['comment'] = '#'
 
-    if isinstance(index_col, list):
-        nb_index = len(index_col)
-    else:
+    if nb_index is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_index and index_col")
+    elif nb_index is not None:
         index_col = list(range(nb_index))
+    elif isinstance(index_col, int):
+        index_col = [index_col]
 
     if headersep is not None:
-        # we will set the index after having split the tick values
-        index_col = None
+        if index_col is None:
+            index_col = [0]
 
-    if dialect == 'liam2':
-        if len(axes_names) < 2:
-            index_col = None
-        # FIXME: add number of lines skipped by comments (or not, pandas
-        # might skip them by default)
-        kwargs['skiprows'] = 1
-        kwargs['comment'] = '#'
     df = pd.read_csv(filepath, index_col=index_col, sep=sep, **kwargs)
     if dialect == 'liam2':
         if len(axes_names) > 1:
             df.index.names = axes_names[:-1]
         df.columns.name = axes_names[-1]
-    if headersep is not None:
-        labels_column = df[combined_axes_names]
-        label_columns = unzip(label.split(headersep) for label in labels_column)
-        for name, column in zip(axes_names, label_columns):
-            df[name] = column
-        del df[combined_axes_names]
-        df.set_index(axes_names, inplace=True)
+        raw = False
+    else:
+        raw = index_col is None
 
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    if headersep is not None:
+        combined_axes_names = df.index.name
+        df.index = df.index.str.split(headersep, expand=True)
+        df.index.names = combined_axes_names.split(headersep)
+        raw = False
+
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, raw=raw)
 
 
 def read_tsv(filepath, **kwargs):
