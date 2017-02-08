@@ -8905,7 +8905,13 @@ def from_lists(data, nb_index=None, index_col=None):
 
     Parameters
     ----------
-    data : iterable (tuple, list, ...)
+    data : sequence (tuple, list, ...)
+        Input data.
+    nb_index : int, optional
+        Number of leading index columns (ex. 4). Defaults to None, in which case it guesses the number of index columns
+        by using the position of the first '\' in the first line.
+    index_col : list, optional
+        List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
 
     Returns
     -------
