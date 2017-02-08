@@ -14,7 +14,8 @@ except ImportError:
     xw = None
 
 from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
-                    read_csv, read_excel, zeros, zeros_like, ndrange, ndtest,
+                    read_csv, read_excel, open_excel,
+                    zeros, zeros_like, ndrange, ndtest,
                     ones, eye, diag, clip, exp, where, x, mean, isnan, round)
 from larray.core import _to_ticks, _to_key, df_aslarray
 
@@ -3060,17 +3061,324 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         with open('test_out1d.csv') as f:
             self.assertEqual(f.readlines(), result)
 
-    def test_to_excel(self):
-        la = read_excel(abspath('test.xlsx'), '5d', nb_index=4, engine='xlrd')
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
-                           [3722, 3395, 3347])
+    def test_to_excel_xlsxwriter(self):
+        fname = 'test_to_excel_xlsxwriter.xlsx'
 
-        la.to_excel('out.xlsx', '5d')
-        out = read_excel('out.xlsx', '5d', nb_index=4, engine=None)
-        assert_array_equal(out, la)
+        # 1D
+        a1 = ndtest(3)
+
+        # fname/Sheet1/A1
+        a1.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # fname/Sheet1/A1(transposed)
+        a1.to_excel(fname, transpose=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # 2D
+        a2 = ndtest((2, 3))
+
+        # fname/Sheet1/A1
+        a2.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # fname/Sheet1/A10
+        # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
+        # a2.to_excel('fname', 'Sheet1', 'A10', engine='xlsxwriter')
+        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=9)
+        # assert_array_equal(res, a2)
+
+        # fname/other/A1
+        a2.to_excel(fname, 'other', engine='xlsxwriter')
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # 3D
+        a3 = ndtest((2, 3, 4))
+
+        # fname/Sheet1/A1
+        # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
+        a3.to_excel(fname, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+        # a3.to_excel('fname', overwrite_file=True, engine='openpyxl')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a3)
+
+        # fname/Sheet1/A20
+        # TODO: implement position (see above)
+        # a3.to_excel('fname', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=19)
+        # assert_array_equal(res, a3)
+
+        # fname/other/A1
+        a3.to_excel(fname, 'other', engine='xlsxwriter', merge_cells=False)
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a3)
+
+        # 1D
+        a1 = ndtest(3)
+
+        # fname/Sheet1/A1
+        a1.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # fname/Sheet1/A1(transposed)
+        a1.to_excel(fname, transpose=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # 2D
+        a2 = ndtest((2, 3))
+
+        # fname/Sheet1/A1
+        a2.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # fname/Sheet1/A10
+        # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
+        # a2.to_excel('fname', 'Sheet1', 'A10', engine='xlsxwriter')
+        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=9)
+        # assert_array_equal(res, a2)
+
+        # fname/other/A1
+        a2.to_excel(fname, 'other', engine='xlsxwriter')
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # 3D
+        a3 = ndtest((2, 3, 4))
+
+        # fname/Sheet1/A1
+        # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
+        a3.to_excel(fname, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+        # a3.to_excel('fname', overwrite_file=True, engine='openpyxl')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a3)
+
+        # fname/Sheet1/A20
+        # TODO: implement position (see above)
+        # a3.to_excel('fname', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=19)
+        # assert_array_equal(res, a3)
+
+        # fname/other/A1
+        a3.to_excel(fname, 'other', engine='xlsxwriter', merge_cells=False)
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a3)
+
+    @unittest.skipIf(xw is None, "xlwings is not available")
+    def test_to_excel_xlwings(self):
+        # TODO: we should implement an app= argument to to_excel to reuse the same Excel instance
+        fname = 'test_to_excel_xlwings.xlsx'
+
+        # 1D
+        a1 = ndtest(3)
+
+        # live book/Sheet1/A1
+        # a1.to_excel()
+
+        # fname/Sheet1/A1
+        a1.to_excel(fname, overwrite_file=True, engine='xlwings')
+        # we use xlrd to read back instead of xlwings even if that should work, to make the test faster
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # fname/Sheet1/A1(transposed)
+        a1.to_excel(fname, transpose=True, engine='xlwings')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # 2D
+        a2 = ndtest((2, 3))
+
+        # fname/Sheet1/A1
+        a2.to_excel(fname, overwrite_file=True, engine='xlwings')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # fname/Sheet1/A10
+        a2.to_excel(fname, 'Sheet1', 'A10', engine='xlwings')
+        res = read_excel(fname, 'Sheet1', engine='xlrd', skiprows=9)
+        assert_array_equal(res, a2)
+
+        # fname/other/A1
+        a2.to_excel(fname, 'other', engine='xlwings')
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a2)
+
+        # 3D
+        a3 = ndtest((2, 3, 4))
+
+        # fname/Sheet1/A1
+        a3.to_excel(fname, overwrite_file=True, engine='xlwings')
+        res = read_excel(fname, engine='xlrd')
+        assert_array_equal(res, a3)
+
+        # fname/Sheet1/A20
+        a3.to_excel(fname, 'Sheet1', 'A20', engine='xlwings')
+        res = read_excel(fname, 'Sheet1', engine='xlrd', skiprows=19)
+        assert_array_equal(res, a3)
+
+        # fname/other/A1
+        a3.to_excel(fname, 'other', engine='xlwings')
+        res = read_excel(fname, 'other', engine='xlrd')
+        assert_array_equal(res, a3)
+
+    @unittest.skipIf(xw is None, "xlwings is not available")
+    def test_open_excel(self):
+        # use a single Excel instance to speed up the test
+        app = xw.App(visible=False, add_book=False)
+
+        # 1) with headers
+        # ===============
+
+        with open_excel('test_open_excel.xlsx', app=app) as wb:
+            # 1D
+            a1 = ndtest(3)
+
+            # Sheet1/A1
+            wb['Sheet1'] = a1.dump()
+            res = wb['Sheet1'].load()
+            assert_array_equal(res, a1)
+
+            wb[0] = a1.dump()
+            res = wb[0].load()
+            assert_array_equal(res, a1)
+
+            # Sheet1/A1(transposed)
+            # TODO: implement .options on Sheet so that one can write:
+            # wb[0].options(transpose=True).value = a1.dump()
+            wb[0]['A1'].options(transpose=True).value = a1.dump()
+            # TODO: implement .options on Range so that you can write:
+            # res = wb[0]['A1:B4'].options(transpose=True).load()
+            # res = from_lists(wb[0]['A1:B4'].options(transpose=True).value)
+            # assert_array_equal(res, a1)
+
+            # 2D
+            a2 = ndtest((2, 3))
+
+            # Sheet1/A1
+            wb[0] = a2.dump()
+            res = wb[0].load()
+            assert_array_equal(res, a2)
+
+            # Sheet1/A10
+            wb[0]['A10'] = a2.dump()
+            res = wb[0]['A10:D12'].load()
+            assert_array_equal(res, a2)
+
+            # other/A1
+            wb['other'] = a2.dump()
+            res = wb['other'].load()
+            assert_array_equal(res, a2)
+
+            # new/A10
+            # we need to create the sheet first
+            wb['new'] = ''
+            wb['new']['A10'] = a2.dump()
+            res = wb['new']['A10:D12'].load()
+            assert_array_equal(res, a2)
+
+            # new2/A10
+            # cannot store the return value of "add" because that's a raw xlwings Sheet
+            wb.sheets.add('new2')
+            wb['new2']['A10'] = a2.dump()
+            res = wb['new2']['A10:D12'].load()
+            assert_array_equal(res, a2)
+
+            # 3D
+            a3 = ndtest((2, 3, 4))
+
+            # 3D/A1
+            wb['3D'] = a3.dump()
+            res = wb['3D'].load()
+            assert_array_equal(res, a3)
+
+            # 3D/A20
+            wb['3D']['A20'] = a3.dump()
+            res = wb['3D']['A20:F26'].load()
+            assert_array_equal(res, a3)
+
+            # 3D/A20 without name for columns
+            wb['3D']['A20'] = a3.dump()
+            # assume we have no name for the columns axis (ie change b\c to b)
+            wb['3D']['B20'] = 'b'
+            res = wb['3D']['A20:F26'].load(nb_index=2)
+            assert_array_equal(res, a3.data)
+            # the two first axes should be the same
+            self.assertEqual(res.axes[:2], a3.axes[:2])
+            # the third axis should have the same labels (but not the same name obviously)
+            assert_array_equal(res.axes[2].labels, a3.axes[2].labels)
+
+        # 2) without headers
+        # ==================
+        with open_excel('test_open_excel_no_headers.xlsx', app=app) as wb:
+            # 1D
+            a1 = ndtest(3)
+
+            # Sheet1/A1
+            wb['Sheet1'] = a1
+            res = wb['Sheet1'].load(header=False)
+            assert_array_equal(res, a1.data)
+
+            wb[0] = a1
+            res = wb[0].load(header=False)
+            assert_array_equal(res, a1.data)
+
+            # Sheet1/A1(transposed)
+            # FIXME: we need to .dump(header=False) explicitly because otherwise we go via LArrayConverter which
+            #        includes labels.
+            #        for consistency's sake we should either change LArrayConverter to not include labels, or
+            #        change wb[0] = a1 to include them (and use wb[0] = a1.data to avoid them?) but that would be
+            #        heavily backward incompatible and how would I load them back?
+            # wb[0]['A1'].options(transpose=True).value = a1
+            wb[0]['A1'].options(transpose=True).value = a1.dump(header=False)
+            res = wb[0]['A1:A3'].load(header=False)
+            assert_array_equal(res, a1.data)
+
+            # 2D
+            a2 = ndtest((2, 3))
+
+            # Sheet1/A1
+            wb[0] = a2
+            res = wb[0].load(header=False)
+            assert_array_equal(res, a2.data)
+
+            # Sheet1/A10
+            wb[0]['A10'] = a2
+            res = wb[0]['A10:C11'].load(header=False)
+            assert_array_equal(res, a2.data)
+
+            # other/A1
+            wb['other'] = a2
+            res = wb['other'].load(header=False)
+            assert_array_equal(res, a2.data)
+
+            # new/A10
+            # we need to create the sheet first
+            wb['new'] = ''
+            wb['new']['A10'] = a2
+            res = wb['new']['A10:C11'].load(header=False)
+            assert_array_equal(res, a2.data)
+
+            # 3D
+            a3 = ndtest((2, 3, 4))
+
+            # 3D/A1
+            wb['3D'] = a3
+            res = wb['3D'].load(header=False)
+            assert_array_equal(res, a3.data.reshape((6, 4)))
+
+            # 3D/A20
+            wb['3D']['A20'] = a3
+            res = wb['3D']['A20:D25'].load(header=False)
+            assert_array_equal(res, a3.data.reshape((6, 4)))
+
+        app.quit()
 
     def test_ufuncs(self):
         la = self.small
@@ -3249,25 +3557,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         #large = LArray(large_data, axes=[large_axis])
         #large.plot()
         #large.hist()
-
-    # def test_to_excel(self):
-    #     a = ndrange('a=a1,a2,a3')
-    #     b = ndrange('a=a1,a2,a3;b=b1,b2')
-    #
-    #     # Book1/Sheet1/A1
-    #     a.to_excel()
-    #     # Book2/Sheet1/A1
-    #     a.to_excel(transpose=True)
-    #     # Book1/Sheet2/A1
-    #     b.to_excel('Book1')
-    #     # Book1/Sheet1/A10
-    #     b.to_excel('Book1', 'Sheet1', 'A10')
-    #     # b.xlsx/Sheet1/A1
-    #     b.to_excel('c:/tmp/b.xlsx', overwrite_file=True)
-    #     # b.xlsx/YADA/A1
-    #     b.to_excel('c:/tmp/b.xlsx', 'YADA')
-    #     # b.xlsx/Sheet1/A10
-    #     b.to_excel('c:/tmp/b.xlsx', 'Sheet1', 'A10')
 
     def test_combine_axes(self):
         arr = ndtest((2, 3, 4, 5))
