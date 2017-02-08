@@ -8839,8 +8839,33 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
-    axes_names = [decode(name, 'utf8') for name in df.index.names]
+def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, **kwargs):
+    # the dataframe was read without index at all (ie 2D dataframe), irrespective of the actual data dimensionality
+    if raw:
+        columns = df.columns.values.tolist()
+        try:
+            # take the first column which contains '\'
+            # pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
+            pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
+            onedim = False
+        except StopIteration:
+            # we assume first column will not contain data
+            pos_last = 0
+            onedim = True
+
+        axes_names = columns[:pos_last + 1]
+        if onedim:
+            df = df.iloc[:, 1:]
+        else:
+            # This is required to handle int column names (otherwise we can simply use column positions in set_index).
+            # This is NOT the same as df.columns[list(range(...))] !
+            index_columns = [df.columns[i] for i in range(pos_last + 1)]
+            # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
+            # df.set_index(index_columns, inplace=True)
+            df = df.set_index(index_columns)
+    else:
+        axes_names = [decode(name, 'utf8') for name in df.index.names]
+
     # handle 2 or more dimensions with the last axis name given using \
     if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
         last_axes = [name.strip() for name in axes_names[-1].split('\\')]
@@ -8853,9 +8878,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, **kwargs):
         axes_names += [df.columns.name]
 
     if len(axes_names) > 1:
-        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows,
-                                               sort_columns=sort_columns,
-                                               **kwargs)
+        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns, **kwargs)
     else:
         axes_labels = []
 
