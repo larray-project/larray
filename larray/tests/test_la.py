@@ -14,8 +14,8 @@ except ImportError:
     xw = None
 
 from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
-                    read_csv, read_eurostat, read_excel, open_excel,
-                    zeros, zeros_like, ndrange, ndtest,
+                    read_hdf, read_csv, read_eurostat, read_excel, open_excel,
+                    zeros, zeros_like, ndrange, ndtest, from_lists,
                     ones, eye, diag, clip, exp, where, x, mean, isnan, round)
 from larray.core import _to_ticks, _to_key, df_aslarray
 
@@ -2898,6 +2898,26 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # test with a string axis
         la = la.extend('sex', la.sum(sex=(sex.all(),)))
         self.assertEqual(la.shape, (3, 16))
+
+    def test_hdf_roundtrip(self):
+        a = ndtest((2, 3))
+        a.to_hdf(abspath('test.h5'), 'a')
+        res = read_hdf(abspath('test.h5'), 'a')
+
+        self.assertEqual(a.ndim, 2)
+        self.assertEqual(a.shape, (2, 3))
+        self.assertEqual(a.axes.names, ['a', 'b'])
+        assert_array_equal(res, a)
+
+        # issue 72: int-like strings should not be parsed (should round-trip correctly)
+        a = from_lists([['axis', '10', '20'],
+                        ['',        0,    1]])
+        a.to_hdf(abspath('issue72.h5'), 'a')
+        res = read_hdf(abspath('issue72.h5'), 'a')
+        self.assertEqual(res.ndim, 1)
+        axis = res.axes[0]
+        self.assertEqual(axis.name, 'axis')
+        assert_array_equal(axis.labels, ['10', '20'])
 
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
