@@ -9154,19 +9154,22 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None, fill_value=na)
 
 
-def read_sas(filepath, nb_index=0, index_col=None,
-             na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+def read_sas(filepath, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """
     Reads sas file and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
     """
-    if index_col is None and nb_index > 0:
+    if nb_index is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_index and index_col")
+    elif nb_index is not None:
         index_col = list(range(nb_index))
+    elif isinstance(index_col, int):
+        index_col = [index_col]
+
     df = pd.read_sas(filepath, index=index_col, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
 
 
 def zeros(axes, title='', dtype=float, order='C'):
