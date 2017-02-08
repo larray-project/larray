@@ -11,7 +11,7 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
-    'ndtest', 'from_lists',
+    'ndtest', 'from_lists', 'from_string',
     'identity', 'diag', 'eye',
     'larray_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
