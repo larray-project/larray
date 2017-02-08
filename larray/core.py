@@ -750,7 +750,7 @@ def _isnoneslice(v):
     """
     Checks if input is slice(None) object.
     """
-    return isinstance(v, slice) and v == slice(None)
+    return isinstance(v, slice) and v.start is None and v.stop is None and v.step is None
 
 
 def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
