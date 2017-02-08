@@ -9068,8 +9068,7 @@ def read_tsv(filepath, **kwargs):
 def read_eurostat(filepath, **kwargs):
     """Reads EUROSTAT TSV (tab-separated) file into an array.
 
-    EUROSTAT TSV files are special because they use tabs as data
-    separators but comas to separate headers.
+    EUROSTAT TSV files are special because they use tabs as data separators but comas to separate headers.
 
     Parameters
     ----------
@@ -9101,8 +9100,7 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
     LArray
     """
     df = pd.read_hdf(filepath, key, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
 
 
 def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False,
