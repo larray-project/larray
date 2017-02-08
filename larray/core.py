@@ -8839,7 +8839,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, **kwargs):
+def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, **kwargs):
     # the dataframe was read without index at all (ie 2D dataframe), irrespective of the actual data dimensionality
     if raw:
         columns = df.columns.values.tolist()
@@ -8887,10 +8887,9 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, **kwargs):
     # would be much uglier and would not lower the peak memory usage which
     # happens during cartesian_product_df.reindex
 
-    # FIXME: this should only happen when reading "text"-like files, not binary files, like HDF.
-    # pandas treats the "time" labels as column names (strings) so we need
-    # to convert them to values
-    axes_labels.append([parse(cell) for cell in df.columns.values])
+    # Pandas treats column labels as column names (strings) so we need to convert them to values
+    last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
+    axes_labels.append(last_axis_labels)
     axes_names = [str(name) if name is not None else name
                   for name in axes_names]
 
@@ -8906,7 +8905,7 @@ def from_lists(data, nb_index=None, index_col=None):
     Parameters
     ----------
     data : sequence (tuple, list, ...)
-        Input data.
+        Input data. All data is supposed to already have the correct type (e.g. strings are not parsed).
     nb_index : int, optional
         Number of leading index columns (ex. 4). Defaults to None, in which case it guesses the number of index columns
         by using the position of the first '\' in the first line.
@@ -8959,7 +8958,7 @@ def from_lists(data, nb_index=None, index_col=None):
     if index_col is not None:
         df.set_index([df.columns[c] for c in index_col], inplace=True)
 
-    return df_aslarray(df, raw=index_col is None)
+    return df_aslarray(df, raw=index_col is None, parse_header=False)
 
 
 def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
@@ -8988,6 +8987,7 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
     sep : str, optional
         Separator.
     headersep : str or None, optional
+        Separator for headers.
     na : scalar, optional
         Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
@@ -9090,8 +9090,7 @@ def read_eurostat(filepath, **kwargs):
     return read_csv(filepath, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
-             **kwargs):
+def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """Reads an array named key from a HDF5 file in filepath (path+name)
 
     Parameters
@@ -9106,7 +9105,7 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
     LArray
     """
     df = pd.read_hdf(filepath, key, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, parse_header=False)
 
 
 def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False,
