@@ -1709,9 +1709,9 @@ def ndarray_to_array_and_labels(data):
     -------
     data : 2D array
         Content of input array is returned as 2D array.
-    xlabels : 1D array
+    xlabels : list of list
         Labels of rows.
-    ylabels : 2D array
+    ylabels : list of list
         Labels of columns (cartesian product of of all axes
         except the last one).
     """
@@ -1719,22 +1719,18 @@ def ndarray_to_array_and_labels(data):
 
     if data.ndim == 0:
         data.shape = (1, 1)
-        xlabels = [["{0}"], [0]]
+        xlabels = [[], []]
         ylabels = [[]]
-    elif data.ndim == 1:
-        data = data.reshape(1, data.shape[0])
-        xlabels = [["{0}"], list(range(data.size))]
-        ylabels = [[]]
-    elif data.ndim > 1:
+    else:
+        if data.ndim == 1:
+            data = data.reshape(1, data.shape[0])
+
         xlabels = [["{{{}}}".format(i) for i in range(data.ndim)],
                    range(data.shape[-1])]
         coldims = 1
-        prod = Product([range(data.shape[i]) for i in range(data.ndim - 1)])
+        prod = Product([range(size) for size in data.shape[:-1]])
         ylabels = [_LazyNone(len(prod) + coldims)] + [
             _LazyDimLabels(prod, i) for i in range(data.ndim - 1)]
-    else:
-        xlabels = None
-        ylabels = None
 
     if data.ndim > 2:
         data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
@@ -1754,9 +1750,9 @@ def larray_to_array_and_labels(data):
     -------
     data : 2D array
         Content of input LArray is returned as 2D array.
-    xlabels : 1D array
+    xlabels : list of list
         Labels of rows (names of axes + labels of last axis).
-    ylabels : 2D array
+    ylabels : list of list
         Labels of columns (cartesian product of labels of all axes
         except the last one).
     """
