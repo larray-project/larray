@@ -6,7 +6,7 @@ try:
 except ImportError:
     xw = None
 
-from .core import LArray, df_aslarray, Axis
+from .core import LArray, df_aslarray, Axis, from_lists
 from .utils import unique, basestring
 
 string_types = (str,)
@@ -270,9 +270,9 @@ if xw is not None:
         def __getattr__(self, key):
             return getattr(self.xw_sheet, key)
 
-        def load(self, header=True, nb_index=0, index_col=None):
-            return self[:].load(header=header, nb_index=nb_index,
-                                index_col=index_col)
+        # TODO: add convert_float argument
+        def load(self, header=True, nb_index=None, index_col=None):
+            return self[:].load(header=header, nb_index=nb_index, index_col=index_col)
 
         # TODO: generalize to more than 2 dimensions or scrap it
         def array(self, data, row_labels=None, column_labels=None, names=None):
@@ -384,79 +384,14 @@ if xw is not None:
             return str(self.__larray__())
         __repr__ = __str__
 
-        def load(self, header=True, convert_float=True, nb_index=0,
-                 index_col=None):
+        def load(self, header=True, convert_float=True, nb_index=None, index_col=None):
             if not self.ndim:
                 return LArray([])
-            if index_col is None and nb_index > 0:
-                index_col = list(range(nb_index))
-            elif isinstance(index_col, int):
-                index_col = [index_col]
 
             list_data = self._converted_value(convert_float=convert_float)
 
             if header:
-                # TODO: try getting values via self[1:] instead of via the
-                # list so that we do not produce copies of data. Not sure which
-                # would be faster
-                header_line = list_data[0]
-                # TODO: factor this with read_csv
-                try:
-                    # take the first cell which contains '\'
-                    pos_last = next(i for i, v in enumerate(header_line)
-                                    if isinstance(v, basestring) and '\\' in v)
-                except StopIteration:
-                    # if there isn't any, assume 1d array, unless
-                    # "liam2 dialect"
-                    pos_last = -1
-
-                # '\' found => we have several axes names
-                if pos_last >= 0:
-                    axes_names = header_line[:pos_last + 1]
-                    # TODO: factor this with df_aslarray
-                    if isinstance(axes_names[-1], basestring) and \
-                            '\\' in axes_names[-1]:
-                        last_axes = [name.strip()
-                                     for name in axes_names[-1].split('\\')]
-                        axes_names = axes_names[:-1] + last_axes
-                # no axes names but index_col provided
-                elif index_col is not None:
-                    # TODO: use header_line in this case too to support
-                    # manually specifying nb_index when there are axes names
-                    # (whether the array is 1d or not)
-                    nb_axes = len(index_col) + 1
-                    axes_names = [None] * nb_axes
-                # assume 1d array
-                else:
-                    axes_names = [header_line[0]]
-
-                # this can only happen if both nb_index=0 and index_col is None
-                # TODO: nb_index should default to None instead of
-                #      0 so that we can force "no index at all" (ie 1d array)
-                if index_col is None:
-                    nb_index = len(axes_names) - 1
-                    index_col = list(range(nb_index))
-                assert isinstance(index_col, list)
-                # at this point index_col should be a list but it could be empty
-                col_offset = (max(index_col) + 1) if index_col else 1
-                # number of header lines or comment lines at the start of the
-                # file
-                # TODO: we need to support comments & more
-                row_offset = 1
-                data_no_header = list_data[row_offset:]
-                data = np.array([line[col_offset:] for line in data_no_header])
-
-                # TODO: add support for sparse data (ie make it dense) like
-                #       in df_aslarray
-                axes_labels = [list(unique([line[i]
-                                            for line in data_no_header]))
-                               for i in index_col]
-                axes_labels.append(header_line[col_offset:])
-                # TODO: detect anonymous axes
-                axes = [Axis(name, labels)
-                        for name, labels in zip(axes_names, axes_labels)]
-                data = data.reshape([len(axis) for axis in axes])
-                return LArray(data, axes)
+                return from_lists(list_data, nb_index=nb_index, index_col=index_col)
             else:
                 return LArray(list_data)
 
