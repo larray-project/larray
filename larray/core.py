@@ -9105,8 +9105,7 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False,
                        fill_value=na)
 
 
-def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
-               na=np.nan, sort_rows=False, sort_columns=False,
+def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False,
                engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
@@ -9116,69 +9115,43 @@ def read_excel(filepath, sheetname=0, nb_index=0, index_col=None,
     filepath : str
         Path where the Excel file has to be read.
     sheetname : str or int, optional
-        Name or index of the Excel sheet containing
-        the array to be read.
+        Name or index of the Excel sheet containing the array to be read.
         By default the array is read from the first sheet.
     nb_index : int, optional
-        Number of leading index columns (ex. 4).
-        Default to 0.
+        Number of leading index columns (ex. 4). Defaults to 1.
     index_col : list, optional
         List of columns for the index (ex. [0, 1, 2, 3]).
         Default to [0].
     na : scalar, optional
         Value for NaN (Not A Number). Defaults to NumPy NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically
-        (sorting is more efficient than not sorting).
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically
-        (sorting is more efficient than not sorting).
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
     engine : {'xlrd', 'xlwings'}, optional
-        Engine to use to read the Excel file. If None (default),
-        it will use 'xlwings' by default if the module is installed
-        and relies on Pandas default reader otherwise.
+        Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
+        installed and relies on Pandas default reader otherwise.
     **kwargs
     """
     if engine is None:
         engine = 'xlwings' if xw is not None else None
 
+    if nb_index is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_index and index_col")
+    elif nb_index is not None:
+        index_col = list(range(nb_index))
+    elif isinstance(index_col, int):
+        index_col = [index_col]
+
     if engine == 'xlwings':
         from .excel import open_excel
         with open_excel(filepath) as wb:
-            return wb[sheetname].load(nb_index=nb_index, index_col=index_col)
+            return wb[sheetname].load(index_col=index_col)
     else:
-        if index_col is not None or nb_index > 0:
-            if index_col is None:
-                index_col = list(range(nb_index))
-            df = pd.read_excel(filepath, sheetname, index_col=index_col,
-                               engine=engine, **kwargs)
-            return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                               fill_value=na)
-        else:
-            # read array as it (2D)
-            df = pd.read_excel(filepath, sheetname, **kwargs)
-            # extract axes names and labels
-            columns = df.columns.values.tolist()
-            try:
-                # take the first column which contains '\'
-                pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
-            except StopIteration:
-                # we assume first column will not contains data
-                pos_last = 0
-            if pos_last > 0 or '\\' in str(columns[0]):
-                axes_names = columns[:pos_last + 1]
-                axes_labels = [union(df[axis_name]) for axis_name in axes_names]
-                axes_names = axes_names[:-1] + axes_names[-1].split('\\')
-                axes_labels.append(columns[pos_last + 1:])
-            else:
-                axes_names = [columns[0]]
-                axes_labels = [columns[1:]]
-            # build LArray object
-            axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
-            data = df.values[:, pos_last + 1:].reshape([len(axis) for axis in axes])
-            return LArray(data, axes)
+        df = pd.read_excel(filepath, sheetname, index_col=index_col, engine=engine, **kwargs)
+        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None, fill_value=na)
 
 
 def read_sas(filepath, nb_index=0, index_col=None,
