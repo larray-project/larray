@@ -14,7 +14,7 @@ except ImportError:
     xw = None
 
 from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
-                    read_csv, read_excel, open_excel,
+                    read_csv, read_eurostat, read_excel, open_excel,
                     zeros, zeros_like, ndrange, ndtest,
                     ones, eye, diag, clip, exp, where, x, mean, isnan, round)
 from larray.core import _to_ticks, _to_key, df_aslarray
@@ -2936,6 +2936,15 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
+                           [3722, 3395, 3347])
+
+    def test_read_eurostat(self):
+        la = read_eurostat(abspath('test5d_eurostat.csv'))
+        self.assertEqual(la.ndim, 5)
+        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
+        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
+        # FIXME: integer labels should be parsed as such
+        assert_array_equal(la[x.arr['1'], '0', 'F', x.nat['1'], :],
                            [3722, 3395, 3347])
 
     @unittest.skipIf(xw is None, "xlwings is not available")
