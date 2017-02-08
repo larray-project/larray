@@ -11,7 +11,7 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
-    'ndtest',
+    'ndtest', 'from_lists',
     'identity', 'diag', 'eye',
     'larray_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
@@ -8897,6 +8897,63 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, **kwargs):
     axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
     data = df.values.reshape([len(axis) for axis in axes])
     return LArray(data, axes)
+
+
+def from_lists(data, nb_index=None, index_col=None):
+    """
+    initialize array from a list of lists (lines)
+
+    Parameters
+    ----------
+    data : iterable (tuple, list, ...)
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> from_lists([['sex', 'M', 'F'],
+    ...             ['',      0,   1]])
+    sex | M | F
+        | 0 | 1
+    >>> from_lists([['sex\\year', 1991, 1992, 1993],
+    ...             [ 'M',           0,    1,    2],
+    ...             [ 'F',           3,    4,    5]])
+    sex\\year | 1991 | 1992 | 1993
+           M |    0 |    1 |    2
+           F |    3 |    4 |    5
+    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+    ...             [  'M', 'BE',           1,    0,    0],
+    ...             [  'M', 'FO',           2,    0,    0],
+    ...             [  'F', 'BE',           0,    0,    1]])
+    sex | nat\\year | 1991 | 1992 | 1993
+      M |       BE |  1.0 |  0.0 |  0.0
+      M |       FO |  2.0 |  0.0 |  0.0
+      F |       BE |  0.0 |  0.0 |  1.0
+      F |       FO |  nan |  nan |  nan
+    >>> from_lists([['sex', 'nat', 1991, 1992, 1993],
+    ...             [  'M', 'BE',     1,    0,    0],
+    ...             [  'M', 'FO',     2,    0,    0],
+    ...             [  'F', 'BE',     0,    0,    1]], nb_index=2)
+    sex | nat\\{2} | 1991 | 1992 | 1993
+      M |      BE |  1.0 |  0.0 |  0.0
+      M |      FO |  2.0 |  0.0 |  0.0
+      F |      BE |  0.0 |  0.0 |  1.0
+      F |      FO |  nan |  nan |  nan
+    """
+    if nb_index is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_index and index_col")
+    elif nb_index is not None:
+        index_col = list(range(nb_index))
+    elif isinstance(index_col, int):
+        index_col = [index_col]
+
+    df = pd.DataFrame(data[1:], columns=data[0])
+    if index_col is not None:
+        df.set_index([df.columns[c] for c in index_col], inplace=True)
+
+    return df_aslarray(df, raw=index_col is None)
 
 
 def read_csv(filepath, nb_index=0, index_col=None, sep=',', headersep=None,
