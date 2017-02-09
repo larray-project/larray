@@ -513,8 +513,8 @@ class ArrayModel(QAbstractTableModel):
         data = self.get_values()
         try:
             color_value = self.color_func(data)
-            self.vmin = np.nanmin(color_value)
-            self.vmax = np.nanmax(color_value)
+            self.vmin = float(np.nanmin(color_value))
+            self.vmax = float(np.nanmax(color_value))
             if self.vmax == self.vmin:
                 self.vmin -= 1
             self.bgcolor_enabled = True
@@ -628,10 +628,9 @@ class ArrayModel(QAbstractTableModel):
                 return color
             elif self.bgcolor_enabled and value is not np.ma.masked:
                 if self.bg_gradient is None:
-                    hue = self.hue0 + \
-                          self.dhue * (self.vmax - self.color_func(value)) \
-                                    / (self.vmax - self.vmin)
-                    hue = float(np.abs(hue))
+                    maxdiff = self.vmax - self.vmin
+                    color_val = float(self.color_func(value))
+                    hue = self.hue0 + self.dhue * (self.vmax - color_val) / maxdiff
                     color = QColor.fromHsvF(hue, self.sat, self.val, self.alp)
                     return to_qvariant(color)
                 else:
@@ -762,9 +761,9 @@ class ArrayModel(QAbstractTableModel):
                       ((old_colorval == self.vmin) & (colorval > self.vmin))):
                 self.reset_minmax()
             if np.any(colorval > self.vmax):
-                self.vmax = np.nanmax(colorval)
+                self.vmax = float(np.nanmax(colorval))
             if np.any(colorval < self.vmin):
-                self.vmin = np.nanmin(colorval)
+                self.vmin = float(np.nanmin(colorval))
 
         xoffset = len(self.xlabels) - 1
         yoffset = len(self.ylabels) - 1
@@ -2664,6 +2663,10 @@ if __name__ == "__main__":
     arr4 = arr3.min(la.x.sex)
     arr5 = arr3.max(la.x.sex)
     arr6 = arr3.mean(la.x.sex)
+
+    # test isssue #35
+    arr7 = la.from_lists([['a',                   1,                    2,                    3],
+                          [ '', 1664780726569649730, -9196963249083393206, -7664327348053294350]])
 
     # compare(arr3, arr4, arr5, arr6)
 
