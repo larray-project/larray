@@ -470,9 +470,15 @@ class ArrayModel(QAbstractTableModel):
 
         # for complex numbers, shading will be based on absolute value
         # but for all other types it will be the real part
+        # TODO: there are a lot more complex dtypes than this. Is there a way to get them all in one shot?
         if data.dtype in (np.complex64, np.complex128):
             self.color_func = np.abs
         else:
+            # XXX: this is a no-op (it returns the array itself) for most types (I think all non complex types)
+            #      => use an explicit nop?
+            # def nop(v):
+            #     return v
+            # self.color_func = nop
             self.color_func = np.real
         self.bg_gradient = bg_gradient
         self.bg_value = bg_value
