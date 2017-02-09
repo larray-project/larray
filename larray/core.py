@@ -9144,6 +9144,9 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         index_col = [index_col]
 
     if engine == 'xlwings':
+        if kwargs:
+            raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
+                            .format(list(kwargs.keys())[0]))
         from .excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheetname].load(index_col=index_col)

@@ -2965,6 +2965,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
                            [3722, 3395, 3347])
 
+        with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
+                                                "the xlwings backend"):
+            read_excel('test.xlsx', engine='xlwings', dtype=float)
+
     def test_read_excel_pandas(self):
         la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
         self.assertEqual(la.ndim, 1)
