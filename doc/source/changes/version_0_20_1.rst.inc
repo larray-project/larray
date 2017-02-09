@@ -15,4 +15,5 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* viewer: allow changing the number of displayed digits even for integer arrays as that makes sense when using
+  scientific notation (closes :issue:`100`).
