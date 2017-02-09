@@ -1077,7 +1077,6 @@ class ArrayView(QTableView):
         Returns
         -------
         numpy.ndarray or itertools.chain
-
         """
         bounds = self._selection_bounds(none_selects_all=none_selects_all)
         if bounds is None:
@@ -1118,7 +1117,7 @@ class ArrayView(QTableView):
 
     @Slot()
     def copy(self):
-        """Copy array as text to clipboard"""
+        """Copy selection as text to clipboard"""
         data = self._selection_data()
         if data is None:
             return
@@ -1136,7 +1135,7 @@ class ArrayView(QTableView):
 
     @Slot()
     def to_excel(self):
-        """Copy array as text to clipboard"""
+        """View selection in Excel"""
         if xw is None:
             raise Exception("to_excel() is not available because xlwings is "
                             "not installed")
@@ -1144,10 +1143,11 @@ class ArrayView(QTableView):
         if data is None:
             return
         # convert (row) generators to lists then array
-        # XXX: is the conversion to array necesarry? I think xlwings will
-        # translate back to a list anyway?!
-        a = np.array([list(r) for r in data])
-        xw.view(a)
+        # TODO: the conversion to array is currently necessary even though xlwings will translate it back to a list
+        #       anyway. The problem is that our lists contains numpy types and especially np.str_ crashes xlwings.
+        #       unsure how we should fix this properly: in xlwings, or change _selection_data to return only standard
+        #       Python types.
+        xw.view(np.array([list(r) for r in data]))
 
     @Slot()
     def paste(self):
@@ -1189,11 +1189,10 @@ class ArrayView(QTableView):
 
     def plot(self):
         if not matplotlib_present:
-            raise Exception("plot() is not available because matplotlib is not "
-                            "installed")
-        # we use np.asarray to work around missing "newaxis" implementation
-        # in LArray
+            raise Exception("plot() is not available because matplotlib is not installed")
         data = self._selection_data(headers=False)
+        if data is None:
+            return
 
         row_min, row_max, col_min, col_max = self._selection_bounds()
         dim_names = self.model().xlabels[0]
@@ -1210,8 +1209,7 @@ class ArrayView(QTableView):
         if data.shape[1] == 1:
             # plot one column
             xlabel = ','.join(dim_names[:-1])
-            xticklabels = ['\n'.join(
-                [str(ylabels[j][r]) for j in range(1, len(ylabels))])
+            xticklabels = ['\n'.join([str(ylabels[j][r]) for j in range(1, len(ylabels))])
                            for r in range(row_min, row_max)]
             ax.plot(data[:, 0])
             ax.set_ylabel(xlabels[1][col_min])
@@ -1714,9 +1712,9 @@ def ndarray_to_array_and_labels(data):
     -------
     data : 2D array
         Content of input array is returned as 2D array.
-    xlabels : list of list
+    xlabels : list of sequences
         Labels of rows.
-    ylabels : list of list
+    ylabels : list of sequences
         Labels of columns (cartesian product of of all axes
         except the last one).
     """
@@ -1755,9 +1753,9 @@ def larray_to_array_and_labels(data):
     -------
     data : 2D array
         Content of input LArray is returned as 2D array.
-    xlabels : list of list
+    xlabels : list of sequences
         Labels of rows (names of axes + labels of last axis).
-    ylabels : list of list
+    ylabels : list of sequences
         Labels of columns (cartesian product of labels of all axes
         except the last one).
     """
