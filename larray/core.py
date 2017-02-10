@@ -435,8 +435,8 @@ def _to_ticks(s):
 
     Examples
     --------
-    >>> _to_ticks('H , F')
-    ['H', 'F']
+    >>> _to_ticks('M , F')
+    ['M', 'F']
 
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
@@ -2449,7 +2449,7 @@ class AxisCollection(object):
                                            value in self)
         # 2) slightly inconsistent API: allow aggregate over single labels
         #    if they are string, but not int
-        #    arr.sum(0) would sum on the first axis, but arr.sum('H') would
+        #    arr.sum(0) would sum on the first axis, but arr.sum('M') would
         #    sum a single tick. I don't like this option.
         # 3) disallow single tick aggregates. Single labels make little
         #    sense in the context of an aggregate, but you don't always
@@ -5912,7 +5912,7 @@ class LArray(object):
         # # >>> a.ratio([0, 1], [2])
         # # >>> a.ratio(x.age[[0, 1]], x.age[2])
         # >>> a.ratio((x.age[[0, 1]], x.age[2]))
-        # nat\\sex |            H |   F
+        # nat\\sex |            M |   F
         #      BE |          0.0 | 1.0
         #      FO | 0.6666666666 | 1.0
         return self / self.sum(*axes)
@@ -10011,7 +10011,7 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 #      => potentially longer
 #      => unsure for now. The most important point is that it should be
 #         consistent with other functions.
-# stack(a1, a2, axis=Axis('sex', 'H,F'))
+# stack(a1, a2, axis=Axis('sex', 'M,F'))
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
 def stack(arrays, axis=None, title=''):

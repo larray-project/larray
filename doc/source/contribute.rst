@@ -187,8 +187,8 @@ For example: ::
           pass
 
       def test_split(self):
-          self.assertEqual(to_ticks('H,F'), ['H', 'F'])
-          self.assertEqual(to_ticks('H, F'), ['H', 'F'])
+          self.assertEqual(to_ticks('M,F'), ['M', 'F'])
+          self.assertEqual(to_ticks('M, F'), ['M', 'F'])
 
 To run all unit tests: ::
 
