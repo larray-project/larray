@@ -76,8 +76,8 @@ assert_array_nan_equal = assert_equal_factory(nan_equal)
 
 class TestValueStrings(TestCase):
     def test_split(self):
-        self.assertEqual(_to_ticks('H,F'), ['H', 'F'])
-        self.assertEqual(_to_ticks('H, F'), ['H', 'F'])
+        self.assertEqual(_to_ticks('M,F'), ['M', 'F'])
+        self.assertEqual(_to_ticks('M, F'), ['M', 'F'])
 
     def test_union(self):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
@@ -93,14 +93,14 @@ class TestValueStrings(TestCase):
 
 class TestKeyStrings(TestCase):
     def test_nonstring(self):
-        self.assertEqual(_to_key(('H', 'F')), ['H', 'F'])
-        self.assertEqual(_to_key(['H', 'F']), ['H', 'F'])
+        self.assertEqual(_to_key(('M', 'F')), ['M', 'F'])
+        self.assertEqual(_to_key(['M', 'F']), ['M', 'F'])
 
     def test_split(self):
-        self.assertEqual(_to_key('H,F'), ['H', 'F'])
-        self.assertEqual(_to_key('H, F'), ['H', 'F'])
-        self.assertEqual(_to_key('H,'), ['H'])
-        self.assertEqual(_to_key('H'), 'H')
+        self.assertEqual(_to_key('M,F'), ['M', 'F'])
+        self.assertEqual(_to_key('M, F'), ['M', 'F'])
+        self.assertEqual(_to_key('M,'), ['M'])
+        self.assertEqual(_to_key('M'), 'M')
 
     def test_slice_strings(self):
         # XXX: these two examples return different things, do we want that?
@@ -118,8 +118,8 @@ class TestAxis(TestCase):
         pass
 
     def test_init(self):
-        sex_tuple = ('H', 'F')
-        sex_list = ['H', 'F']
+        sex_tuple = ('M', 'F')
+        sex_list = ['M', 'F']
         sex_array = np.array(sex_list)
 
         # tuple of strings
@@ -129,18 +129,18 @@ class TestAxis(TestCase):
         # array of strings
         assert_array_equal(Axis('sex', sex_array).labels, sex_array)
         # single string
-        assert_array_equal(Axis('sex', 'H,F').labels, sex_array)
+        assert_array_equal(Axis('sex', 'M,F').labels, sex_array)
         # list of ints
         assert_array_equal(Axis('age', range(116)).labels, np.arange(116))
         # range-string
         assert_array_equal(Axis('age', '..115').labels, np.arange(116))
 
     def test_equals(self):
-        self.assertTrue(Axis('sex', 'H,F').equals(Axis('sex', 'H,F')))
-        self.assertTrue(Axis('sex', 'H,F').equals(Axis('sex', ['H', 'F'])))
-        self.assertFalse(Axis('sex', 'M,F').equals(Axis('sex', 'H,F')))
-        self.assertFalse(Axis('sex1', 'H,F').equals(Axis('sex2', 'H,F')))
-        self.assertFalse(Axis('sex1', 'M,F').equals(Axis('sex2', 'H,F')))
+        self.assertTrue(Axis('sex', 'M,F').equals(Axis('sex', 'M,F')))
+        self.assertTrue(Axis('sex', 'M,F').equals(Axis('sex', ['M', 'F'])))
+        self.assertFalse(Axis('sex', 'M,W').equals(Axis('sex', 'M,F')))
+        self.assertFalse(Axis('sex1', 'M,F').equals(Axis('sex2', 'M,F')))
+        self.assertFalse(Axis('sex1', 'M,W').equals(Axis('sex2', 'M,F')))
 
     def test_group(self):
         age = Axis('age', '..115')
@@ -219,7 +219,7 @@ class TestAxis(TestCase):
         self.assertIs(group.axis, age)
 
     def test_iter(self):
-        sex = Axis('sex', 'H,F')
+        sex = Axis('sex', 'M,F')
         self.assertEqual(list(sex), [PGroup(0, axis=sex), PGroup(1, axis=sex)])
 
     def test_positional(self):
@@ -510,8 +510,8 @@ class TestLSet(TestCase):
 class TestAxisCollection(TestCase):
     def setUp(self):
         self.lipro = Axis('lipro', 'P01..P04')
-        self.sex = Axis('sex', 'H,F')
-        self.sex2 = Axis('sex', 'F,H')
+        self.sex = Axis('sex', 'M,F')
+        self.sex2 = Axis('sex', 'F,M')
         self.age = Axis('age', '..7')
         self.geo = Axis('geo', 'A11,A12,A13')
         self.value = Axis('value', '..10')
@@ -522,7 +522,7 @@ class TestAxisCollection(TestCase):
         col2 = AxisCollection((lipro_subset, self.sex))
         self.assertEqual(col2.names, ['lipro', 'sex'])
         assert_array_equal(col2.lipro.labels, ['P01', 'P02', 'P03'])
-        assert_array_equal(col2.sex.labels, ['H', 'F'])
+        assert_array_equal(col2.sex.labels, ['M', 'F'])
 
     def test_eq(self):
         col = self.collection
@@ -727,7 +727,7 @@ class TestAxisCollection(TestCase):
         self.assertEqual(res.size, col.size)
         self.assertEqual(res.shape, (4 * 2, 8))
         print(res.info)
-        assert_array_equal(res.lipro_sex.labels[0], 'P01_H')
+        assert_array_equal(res.lipro_sex.labels[0], 'P01_M')
         res = col.combine_axes((lipro, age))
         self.assertEqual(res.names, ['lipro_age', 'sex'])
         self.assertEqual(res.size, col.size)
@@ -737,13 +737,13 @@ class TestAxisCollection(TestCase):
         self.assertEqual(res.names, ['lipro', 'sex_age'])
         self.assertEqual(res.size, col.size)
         self.assertEqual(res.shape, (4, 2 * 8))
-        assert_array_equal(res.sex_age.labels[0], 'H_0')
+        assert_array_equal(res.sex_age.labels[0], 'M_0')
 
     def test_info(self):
         expected = """\
 4 x 2 x 8
  lipro [4]: 'P01' 'P02' 'P03' 'P04'
- sex [2]: 'H' 'F'
+ sex [2]: 'M' 'F'
  age [8]: 0 1 2 ... 5 6 7"""
         self.assertEqual(self.collection.info, expected)
 
@@ -753,7 +753,7 @@ class TestAxisCollection(TestCase):
     def test_repr(self):
         self.assertEqual(repr(self.collection), """AxisCollection([
     Axis('lipro', ['P01', 'P02', 'P03', 'P04']),
-    Axis('sex', ['H', 'F']),
+    Axis('sex', ['M', 'F']),
     Axis('age', [0, 1, 2, 3, 4, 5, 6, 7])
 ])""")
 
@@ -763,7 +763,7 @@ class TestLArray(TestCase):
         self.title = 'test array'
         self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
         self.age = Axis('age', range(116))
-        self.sex = Axis('sex', 'H,F')
+        self.sex = Axis('sex', 'M,F')
 
         vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
               'A43,A44,A45,A46,A71,A72,A73'
@@ -831,7 +831,7 @@ class TestLArray(TestCase):
     def test_iter(self):
         array = self.small
         l = list(array)
-        assert_array_equal(l[0], array['H'])
+        assert_array_equal(l[0], array['M'])
         assert_array_equal(l[1], array['F'])
 
     def test_rename(self):
@@ -852,7 +852,7 @@ test array
 116 x 44 x 2 x 15
  age [116]: 0 1 2 ... 113 114 115
  geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
- sex [2]: 'H' 'F'
+ sex [2]: 'M' 'F'
  lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""
         self.assertEqual(self.larray.info, expected)
 
@@ -868,30 +868,30 @@ test array
         self.assertEqual(str(self.small[sex[[]]]), "LArray([])")
 
         # one dimension
-        self.assertEqual(str(self.small[lipro3, sex['H']]), """\
+        self.assertEqual(str(self.small[lipro3, sex['M']]), """\
 lipro | P01 | P02 | P03
       |   0 |   1 |   2""")
         # two dimensions
         self.assertEqual(str(self.small.filter(lipro=lipro3)), """\
 sex\lipro | P01 | P02 | P03
-        H |   0 |   1 |   2
+        M |   0 |   1 |   2
         F |  15 |  16 |  17""")
         # four dimensions (too many rows)
         self.assertEqual(str(self.larray.filter(lipro=lipro3)), """\
 age | geo | sex\lipro |      P01 |      P02 |      P03
-  0 | A11 |         H |      0.0 |      1.0 |      2.0
+  0 | A11 |         M |      0.0 |      1.0 |      2.0
   0 | A11 |         F |     15.0 |     16.0 |     17.0
-  0 | A12 |         H |     30.0 |     31.0 |     32.0
+  0 | A12 |         M |     30.0 |     31.0 |     32.0
   0 | A12 |         F |     45.0 |     46.0 |     47.0
-  0 | A13 |         H |     60.0 |     61.0 |     62.0
+  0 | A13 |         M |     60.0 |     61.0 |     62.0
 ... | ... |       ... |      ... |      ... |      ...
 115 | A92 |         F | 153045.0 | 153046.0 | 153047.0
-115 | A93 |         H | 153060.0 | 153061.0 | 153062.0
+115 | A93 |         M | 153060.0 | 153061.0 | 153062.0
 115 | A93 |         F | 153075.0 | 153076.0 | 153077.0
-115 | A21 |         H | 153090.0 | 153091.0 | 153092.0
+115 | A21 |         M | 153090.0 | 153091.0 | 153092.0
 115 | A21 |         F | 153105.0 | 153106.0 | 153107.0""")
         # too many columns
-        self.assertEqual(str(self.larray['P01', 'A11', 'H']), """\
+        self.assertEqual(str(self.larray['P01', 'A11', 'M']), """\
 age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 |      107 |      108 |      109 |      110 |      111 |      112 |      113 |\
       114 |      115
@@ -1149,7 +1149,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(res, raw[raw < 5])
 
         # missing dimension
-        res = la[la['H'] % 5 == 0]
+        res = la[la['M'] % 5 == 0]
         self.assertTrue(isinstance(res, LArray))
         self.assertEqual(res.ndim, 2)
         self.assertEqual(res.shape, (116 * 44 * 15 / 5, 2))
@@ -1431,8 +1431,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw = self.array.copy()
 
         # using 1, 5, 8 and not 9 so that the list is not collapsed to slice
-        value = la[age[1, 5, 8], sex['H']] + 25.0
-        la[age[1, 5, 8], sex['H']] = value
+        value = la[age[1, 5, 8], sex['M']] + 25.0
+        la[age[1, 5, 8], sex['M']] = value
         raw[[1, 5, 8], :, 0] = raw[[1, 5, 8], :, 0] + 25.0
         assert_array_equal(la, raw)
 
@@ -1497,7 +1497,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # b) full scalar key (ie set one cell)
         la = self.larray.copy()
         raw = self.array.copy()
-        la[0, 'P02', 'A12', 'H'] = 42
+        la[0, 'P02', 'A12', 'M'] = 42
         raw[0, 1, 0, 1] = 42
         assert_array_equal(la, raw)
 
@@ -1533,7 +1533,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # c) LArray-broadcastable shape (missing axis)
         la = self.larray.copy()
         raw = self.array.copy()
-        key = la[sex['H']] < 5
+        key = la[sex['M']] < 5
         self.assertEqual(key.ndim, 3)
         la[key] = 0
 
@@ -1649,12 +1649,12 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                          (3, 44, 2, 2))
 
         # a single value for one dimension => collapse the dimension
-        self.assertEqual(la.filter(sex='H').shape, (116, 44, 15))
+        self.assertEqual(la.filter(sex='M').shape, (116, 44, 15))
 
         # but a list with a single value for one dimension => do not collapse
-        self.assertEqual(la.filter(sex=['H']).shape, (116, 44, 1, 15))
+        self.assertEqual(la.filter(sex=['M']).shape, (116, 44, 1, 15))
 
-        self.assertEqual(la.filter(sex='H,').shape, (116, 44, 1, 15))
+        self.assertEqual(la.filter(sex='M,').shape, (116, 44, 1, 15))
 
         # with duplicate keys
         # XXX: do we want to support this? I don't see any value in that but
@@ -1686,11 +1686,11 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.filter(age=[1, 5, 9], lipro='P01,P02').shape,
                          (3, 44, 2, 2))
         # with a group of one value
-        self.assertEqual(la.filter(age=[1, 5, 9], sex='H,').shape,
+        self.assertEqual(la.filter(age=[1, 5, 9], sex='M,').shape,
                          (3, 44, 1, 15))
 
         # with a discarded axis (there is a scalar in the key)
-        self.assertEqual(la.filter(age=[1, 5, 9], sex='H').shape, (3, 44, 15))
+        self.assertEqual(la.filter(age=[1, 5, 9], sex='M').shape, (3, 44, 15))
 
         # with a discarded axis that is not adjacent to the ix_array axis
         # ie with a sliced axis between the scalar axis and the ix_array axis
@@ -1699,7 +1699,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # additionally, if the ix_array axis was first (ie ix_array on age),
         # it worked even before the issue was fixed, since the "indexing"
         # subspace is tacked-on to the beginning (as the first dimension)
-        self.assertEqual(la.filter(age=57, sex='H,F').shape,
+        self.assertEqual(la.filter(age=57, sex='M,F').shape,
                          (44, 2, 15))
         self.assertEqual(la.filter(age=57, lipro='P01,P05').shape,
                          (44, 2, 2))
@@ -1737,7 +1737,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_sum_full_axes_with_nan(self):
         la = self.larray.copy()
-        la['H', 'P02', 'A12', 0] = np.nan
+        la['M', 'P02', 'A12', 0] = np.nan
         raw = la.data
 
         # everything
@@ -1835,9 +1835,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # a) group aggregate on a fresh array
 
         # a.1) one group => collapse dimension
-        self.assertEqual(la.sum(sex='H').shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex='H,F').shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex=sex['H']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex='M').shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex='M,F').shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex=sex['M']).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(geo='A11,A21,A25').shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=['A11', 'A21', 'A25']).shape, (116, 2, 15))
@@ -1861,10 +1861,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # string groups
         self.assertEqual(la.sum(geo=(vla, wal, bru)).shape, (116, 3, 2, 15))
         # with one label in several groups
-        self.assertEqual(la.sum(sex=(['H'], ['H', 'F'])).shape,
+        self.assertEqual(la.sum(sex=(['M'], ['M', 'F'])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum(sex=('H', 'H,F')).shape, (116, 44, 2, 15))
-        self.assertEqual(la.sum(sex='H;H,F').shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum(sex=('M', 'M,F')).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum(sex='M;M,F').shape, (116, 44, 2, 15))
 
         aggregated = la.sum(geo=(vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
@@ -1895,9 +1895,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # a.1) one group => collapse dimension
         # not sure I should support groups with a single item in an aggregate
-        self.assertEqual(la.sum('H').shape, (116, 44, 15))
-        self.assertEqual(la.sum('H,').shape, (116, 44, 15))
-        self.assertEqual(la.sum('H,F').shape, (116, 44, 15))
+        self.assertEqual(la.sum('M').shape, (116, 44, 15))
+        self.assertEqual(la.sum('M,').shape, (116, 44, 15))
+        self.assertEqual(la.sum('M,F').shape, (116, 44, 15))
 
         self.assertEqual(la.sum('A11,A21,A25').shape, (116, 2, 15))
         # with a name
@@ -1925,21 +1925,21 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((['H'], ['H', 'F'])).shape,
+        self.assertEqual(la.sum((['M'], ['M', 'F'])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum(('H', 'H,F')).shape, (116, 44, 2, 15))
-        self.assertEqual(la.sum('H;H,F').shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum(('M', 'M,F')).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum('M;M,F').shape, (116, 44, 2, 15))
         # with group names
-        res = la.sum('H >> men;H,F >> all')
+        res = la.sum('M >> men;M,F >> all')
         self.assertEqual(res.shape, (116, 44, 2, 15))
         self.assertTrue('sex' in res.axes)
-        men = sex['H'].named('men')
-        all_ = sex['H,F'].named('all')
+        men = sex['M'].named('men')
+        all_ = sex['M,F'].named('all')
         assert_array_equal(res.axes.sex.labels, ['men', 'all'])
         assert_array_equal(res['men'], raw[:, :, 0, :])
         assert_array_equal(res['all'], raw.sum(2))
 
-        res = la.sum(('H >> men', 'H,F >> all'))
+        res = la.sum(('M >> men', 'M,F >> all'))
         self.assertEqual(res.shape, (116, 44, 2, 15))
         self.assertTrue('sex' in res.axes)
         assert_array_equal(res.axes.sex.labels, ['men', 'all'])
@@ -1976,9 +1976,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # not sure I should support groups with a single item in an aggregate
         men = sex.i[[0]]
         self.assertEqual(la.sum(men).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H,']).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M,']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M,F']).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
@@ -2011,13 +2011,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((sex['H'], sex[['H', 'F']])).shape,
+        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['H'], sex['H', 'F'])).shape,
+        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['H'], sex['H,F'])).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex['M,F'])).shape, (116, 44, 2, 15))
         # XXX: do we want to support this?
-        # self.assertEqual(la.sum(sex['H;H,F']).shape, (116, 44, 2, 15))
+        # self.assertEqual(la.sum(sex['M;H,F']).shape, (116, 44, 2, 15))
 
         aggregated = la.sum((vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
@@ -2051,9 +2051,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # a.1) one group => collapse dimension
         # not sure I should support groups with a single item in an aggregate
-        self.assertEqual(la.sum(LGroup('H')).shape, (116, 44, 15))
-        self.assertEqual(la.sum(LGroup('H,')).shape, (116, 44, 15))
-        self.assertEqual(la.sum(LGroup('H,F')).shape, (116, 44, 15))
+        self.assertEqual(la.sum(LGroup('M')).shape, (116, 44, 15))
+        self.assertEqual(la.sum(LGroup('M,')).shape, (116, 44, 15))
+        self.assertEqual(la.sum(LGroup('M,F')).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(LGroup('A11,A21,A25')).shape, (116, 2, 15))
         self.assertEqual(la.sum(LGroup(['A11', 'A21', 'A25'])).shape, 
@@ -2076,12 +2076,12 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((LGroup('H'), LGroup(['H', 'F']))).shape,
+        self.assertEqual(la.sum((LGroup('M'), LGroup(['M', 'F']))).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum((LGroup('H'), LGroup('H,F'))).shape,
+        self.assertEqual(la.sum((LGroup('M'), LGroup('M,F'))).shape,
                          (116, 44, 2, 15))
         # XXX: do we want to support this?
-        # self.assertEqual(la.sum(sex['H;H,F']).shape, (116, 44, 2, 15))
+        # self.assertEqual(la.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
 
         aggregated = la.sum((vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
@@ -2116,9 +2116,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # not sure I should support groups with a single item in an aggregate
         men = sex.i[[0]]
         self.assertEqual(la.sum(men).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H,']).shape, (116, 44, 15))
-        self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M,']).shape, (116, 44, 15))
+        self.assertEqual(la.sum(sex['M,F']).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
@@ -2151,13 +2151,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((sex['H'], sex[['H', 'F']])).shape,
+        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['H'], sex['H', 'F'])).shape,
+        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape,
                          (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['H'], sex['H,F'])).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex['M,F'])).shape, (116, 44, 2, 15))
         # XXX: do we want to support this?
-        # self.assertEqual(la.sum(sex['H;H,F']).shape, (116, 44, 2, 15))
+        # self.assertEqual(la.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
 
         aggregated = la.sum((vla, wal, bru, belgium))
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
@@ -2405,8 +2405,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
     #     # a) one group aggregate (on a fresh array)
     #
     #     # one group => collapse dimension
-    #     self.assertEqual(la.sum(sex['H']).shape, (116, 44, 15))
-    #     self.assertEqual(la.sum(sex['H,F']).shape, (116, 44, 15))
+    #     self.assertEqual(la.sum(sex['M']).shape, (116, 44, 15))
+    #     self.assertEqual(la.sum(sex['M,F']).shape, (116, 44, 15))
     #     self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
 
     #     # several groups
@@ -2526,12 +2526,12 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(res, la.sum(age, sex, lipro, geo=(vla, wal, bru)))
 
         # with one label in several groups
-        self.assertEqual(la.sum_by(sex=(['H'], ['H', 'F'])).shape, (2,))
-        self.assertEqual(la.sum_by(sex=('H', 'H,F')).shape, (2,))
+        self.assertEqual(la.sum_by(sex=(['M'], ['M', 'F'])).shape, (2,))
+        self.assertEqual(la.sum_by(sex=('M', 'M,F')).shape, (2,))
 
-        res = la.sum_by(sex='H;H,F')
+        res = la.sum_by(sex='M;M,F')
         self.assertEqual(res.shape, (2,))
-        assert_array_equal(res, la.sum(age, geo, lipro, sex='H;H,F'))
+        assert_array_equal(res, la.sum(age, geo, lipro, sex='M;M,F'))
 
         # a.4) several dimensions at the same time
         res = la.sum_by(geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:')
@@ -3048,13 +3048,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
               ('2007', int), ('2010', int), ('2013', int)]
         data = np.array([
             (0, 'F', 3722, 3395, 3347),
-            (0, 'H', 338, 316, 323),
+            (0, 'M', 338, 316, 323),
             (1, 'F', 2878, 2791, 2822),
-            (1, 'H', 1121, 1037, 976),
+            (1, 'M', 1121, 1037, 976),
             (2, 'F', 4073, 4161, 4429),
-            (2, 'H', 1561, 1463, 1467),
+            (2, 'M', 1561, 1463, 1467),
             (3, 'F', 3507, 3741, 3366),
-            (3, 'H', 2052, 2052, 2118),
+            (3, 'M', 2052, 2052, 2118),
         ], dtype=dt)
         df = pd.DataFrame(data)
         df.set_index(['age', 'sex'], inplace=True)
@@ -3578,7 +3578,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_plot(self):
         pass
-        #small_h = small['H']
+        # small_h = small['M']
         #small_h.plot(kind='bar')
         #small_h.plot()
         #small_h.hist()
