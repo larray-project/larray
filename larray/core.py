@@ -3909,7 +3909,6 @@ class LArray(object):
         See Also
         --------
         rename : rename one of several axes
-        with_axes : replace all axes
 
         Examples
         --------
@@ -3952,42 +3951,8 @@ class LArray(object):
         return LArray(self.data, axes)
 
     def with_axes(self, axes):
-        """
-        Returns an array with same data but new axes.
-        The number and length of axes must match
-        dimensions and shape of data array.
-
-        Parameters
-        ----------
-        axes : collection (tuple, list or AxisCollection) of axes \
-        (int, str or  Axis), optional
-            New axes.
-
-        Returns
-        -------
-        LArray
-            Array with same data but new axes.
-
-        See Also
-        --------
-        rename : rename one of several axes
-        replace_axes : replace one or several axes
-
-        Examples
-        --------
-        >>> arr = ndtest((2, 3))
-        >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-        >>> row = Axis('row', ['r0', 'r1'])
-        >>> column = Axis('column', ['c0', 'c1', 'c2'])
-        >>> arr.with_axes([row, column])
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
-        """
-        return LArray(self.data, axes, self.title)
+        raise NotImplementedError("LArray.with_axes is deprecated, "
+                                  "use LArray.replace_axes instead")
 
     def __getattr__(self, key):
         try:
@@ -4253,7 +4218,6 @@ class LArray(object):
         See Also
         --------
         replace_axes : replace one or several axes
-        with_axes : replace all axes
 
         Examples
         --------
