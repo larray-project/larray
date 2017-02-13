@@ -9847,7 +9847,7 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
                     for length in a.shape]
     new_axes = [Axis(name, [name + str(i) for i in label_range])
                 for name, label_range in zip(axes_names, label_ranges)]
-    return a.with_axes(new_axes)
+    return LArray(a.data, new_axes)
 
 
 def kth_diag_indices(shape, k):
