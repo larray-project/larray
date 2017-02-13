@@ -54,8 +54,8 @@ Required Dependencies
 ---------------------
 
 - Python 2.7, 3.4, 3.5, or 3.6
-- `numpy <http://www.numpy.org/>`__ (1.10 or later)
-- `pandas <http://pandas.pydata.org/>`__ (0.15.0 or later)
+- `numpy <http://www.numpy.org/>`__ (1.10.0 or later)
+- `pandas <http://pandas.pydata.org/>`__ (0.13.1 or later)
 
 
 Optional Dependencies
@@ -112,7 +112,4 @@ If larray has been installed through larrayenv,
 you simply must do ::
 
     conda update larrayenv
-
-# This will update larray and all of its dependencies
-# at the same time.
 
