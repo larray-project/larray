@@ -3924,6 +3924,10 @@ class LArray(object):
         row\\b | b0 | b1 | b2
            r0 |  0 |  1 |  2
            r1 |  3 |  4 |  5
+        >>> arr.replace_axes(a=row, b=column)
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
         >>> arr.replace_axes([(x.a, row), (x.b, column)])
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
@@ -3932,16 +3936,12 @@ class LArray(object):
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
-        >>> arr.replace_axes(a=row, b=column)
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
         """
         axes = self.axes.copy()
         if isinstance(axes_to_replace, dict):
             items = list(axes_to_replace.items())
         elif isinstance(axes_to_replace, list):
-            items = axes_to_replace.copy()
+            items = axes_to_replace[:]
         elif isinstance(axes_to_replace, (str, Axis, int)):
             items = [(axes_to_replace, new_axes)]
         else:
@@ -4272,7 +4272,11 @@ class LArray(object):
         nat2\\sex2 | M | F
                BE | 0 | 1
                FO | 2 | 3
-        >>> arr.rename({'nat': 'nat2', 'sex' : 'sex2'})
+        >>> arr.rename([('nat', 'nat2'), ('sex', 'sex2')])
+        nat2\\sex2 | M | F
+               BE | 0 | 1
+               FO | 2 | 3
+        >>> arr.rename({'nat': 'nat2', 'sex': 'sex2'})
         nat2\\sex2 | M | F
                BE | 0 | 1
                FO | 2 | 3
@@ -4280,7 +4284,7 @@ class LArray(object):
         if isinstance(renames, dict):
             items = list(renames.items())
         elif isinstance(renames, list):
-            items = renames.copy()
+            items = renames[:]
         elif isinstance(renames, (str, Axis, int)):
             items = [(renames, to)]
         else:
