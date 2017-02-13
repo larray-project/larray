@@ -17,22 +17,26 @@ Pre-built binaries
 
 The easiest route to installing larray is through
 `Conda <http://conda.pydata.org/miniconda.html>`_.
-For all platforms installing larray can be done with::
+First add the channel `gdementen`:
 
-    conda install -c gdementen larray
+    conda config --add channels gdementen
+
+Then installing larray can be done with::
+
+    conda install larray
 
 This will install a lightweight version of larray
-depending on Nympy and Pandas libraries only.
-This version does not allow you to use the included
-graphical user interface, to make plots or to use
-special I/O functions for easy dump/load from Excel
-or HDF files. Optional dependencies are described
-bellow.
+depending only on Numpy and Pandas libraries only.
+Additional libraries are required to use the included
+graphical user interface, make plots or use special
+I/O functions for easy dump/load from Excel or
+HDF files. Optional dependencies are described
+below.
 
 Installing larray with all optional dependencies
 can be done with ::
 
-    conda install -c gdementen larrayenv
+    conda install larrayenv
 
 
 Building from source
@@ -44,32 +48,6 @@ https://github.com/liam2/larray.git
 Once you have satisfied the requirements detailed below, simply run::
 
     python setup.py install
-
-For non-standard locations, additional build lib & include paths
-can be provided as per-usual at build_ext phase::
-
-    python setup.py build_ext -I/path/to/include -L/path/to/lib
-    python setup.py install
-
-
-Update
-------
-
-If larray has been installed through larray package,
-update is done via ::
-
-    conda update larray
-
-Be careful if you have installed optional dependencies.
-In that case, you may have to update some of them.
-
-If larray has been installed through larrayenv,
-you simply must do ::
-
-    conda update larrayenv
-
-This will update larray and all of its dependencies
-at the same time.
 
 
 Required Dependencies
@@ -117,4 +95,24 @@ For plotting
 
 - `matplotlib <http://matplotlib.org/>`__:
   required for plotting.
+
+
+Update
+======
+
+If larray has been installed through conda, update
+is done via ::
+
+    conda update larray
+
+Be careful if you have installed optional dependencies.
+In that case, you may have to update some of them.
+
+If larray has been installed through larrayenv,
+you simply must do ::
+
+    conda update larrayenv
+
+# This will update larray and all of its dependencies
+# at the same time.
 
