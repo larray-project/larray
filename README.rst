@@ -17,13 +17,9 @@ Pre-built binaries
 
 The easiest route to installing larray is through
 `Conda <http://conda.pydata.org/miniconda.html>`_.
-First add the channel `gdementen`:
+For all platforms installing larray can be done with::
 
-    conda config --add channels gdementen
-
-Then installing larray can be done with::
-
-    conda install larray
+    conda install -c gdementen larray
 
 This will install a lightweight version of larray
 depending only on Numpy and Pandas libraries only.
@@ -36,7 +32,16 @@ below.
 Installing larray with all optional dependencies
 can be done with ::
 
-    conda install larrayenv
+    conda install -c gdementen larrayenv
+
+You can also first add the channel `gdementen` to
+your channel list ::
+
+    conda config --add channels gdementen
+
+and then install larray (or larrayenv) as ::
+
+    conda install larray
 
 
 Building from source
