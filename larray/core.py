@@ -3948,7 +3948,7 @@ class LArray(object):
         items += kwargs.items()
         for old, new in items:
             axes = axes.replace(old, new)
-        return LArray(self.data, axes)
+        return LArray(self.data, axes, title=self.title)
 
     def with_axes(self, axes):
         raise NotImplementedError("LArray.with_axes is deprecated, "
