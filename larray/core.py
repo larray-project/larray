@@ -3965,8 +3965,10 @@ class LArray(object):
         return LArray(self.data, axes, title=self.title)
 
     def with_axes(self, axes):
-        raise NotImplementedError("LArray.with_axes is deprecated, "
-                                  "use LArray.replace_axes instead")
+        warnings.warn("LArray.with_axes is deprecated, "
+                      "use LArray.replace_axes instead",
+                      DeprecationWarning)
+        return self.replace_axes(axes)
 
     def __getattr__(self, key):
         try:
