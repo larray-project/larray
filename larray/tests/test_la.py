@@ -2855,6 +2855,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         la = LArray(self.small_data, axes=(sex2, lipro2),
                     title=self.small_title)
+        # all at once
+        la2 = self.small.replace_axes([sex2, lipro2])
+        assert_array_equal(la, la2)
         # using keywrods args
         la2 = self.small.replace_axes(sex=sex2, lipro=lipro2)
         assert_array_equal(la, la2)

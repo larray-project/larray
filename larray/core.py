@@ -3891,12 +3891,15 @@ class LArray(object):
         Parameters
         ----------
         axes_to_replace : axis ref or dict {axis ref: axis} or
-                  list of tuple (axis ref, axis)
+                  list of tuple (axis ref, axis) or list of Axis
             Axes to replace. If a single axis reference is given,
-            the `new_axes` argument must be used.
+            the `new_axes` argument must be used. If a list of
+            Axis is given, all axes will be replaced by the
+            new ones. In that case, the number of new axes must
+            match the number of the old ones.
         new_axes : Axis
             New axis if `axes_to_replace`
-            contains a single axis reference
+            contains a single axis reference.
         **kwargs : Axis
             New axis for each axis to replace given
             as a keyword argument.
@@ -3923,6 +3926,10 @@ class LArray(object):
         row\\b | b0 | b1 | b2
            r0 |  0 |  1 |  2
            r1 |  3 |  4 |  5
+        >>> arr.replace_axes([row, column])
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
         >>> arr.replace_axes(a=row, b=column)
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
@@ -3936,18 +3943,25 @@ class LArray(object):
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         """
-        axes = self.axes.copy()
-        if isinstance(axes_to_replace, dict):
-            items = list(axes_to_replace.items())
-        elif isinstance(axes_to_replace, list):
-            items = axes_to_replace[:]
-        elif isinstance(axes_to_replace, (str, Axis, int)):
-            items = [(axes_to_replace, new_axes)]
+        if isinstance(axes_to_replace, list) and \
+                all([isinstance(axis, Axis) for axis in axes_to_replace]):
+            if len(axes_to_replace) != len(self.axes):
+                raise ValueError('{} axes given as argument, expected '
+                                 '{}'.format(len(axes_to_replace), len(self.axes)))
+            axes = axes_to_replace
         else:
-            items = []
-        items += kwargs.items()
-        for old, new in items:
-            axes = axes.replace(old, new)
+            axes = self.axes.copy()
+            if isinstance(axes_to_replace, dict):
+                items = list(axes_to_replace.items())
+            elif isinstance(axes_to_replace, list):
+                items = axes_to_replace[:]
+            elif isinstance(axes_to_replace, (str, Axis, int)):
+                items = [(axes_to_replace, new_axes)]
+            else:
+                items = []
+            items += kwargs.items()
+            for old, new in items:
+                axes = axes.replace(old, new)
         return LArray(self.data, axes, title=self.title)
 
     def with_axes(self, axes):
