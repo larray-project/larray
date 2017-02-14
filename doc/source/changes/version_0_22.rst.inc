@@ -76,6 +76,8 @@
 
   even if this could suffer, to a lesser extent, the same problem as above when stacking many arrays.
 
+* updated AxisCollection.replace so as to replace one, several or all axes.
+
 * added another feature (see the :ref:`miscellaneous section <misc>` for details).
 
 .. _misc:
