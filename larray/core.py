@@ -3062,37 +3062,96 @@ class AxisCollection(object):
         """
         return self[:]
 
-    def replace(self, old, new):
-        """
-        Replaces an axis.
+    def replace(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
+        """Replace one, several or all axes of the collection.
 
         Parameters
         ----------
-        old : Axis or list of Axis
-            Axis or axes to be replaced.
-        new : Axis or list of Axis
-            Axis or axes to be put in place of the `old` axis.
+        axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
+                          or list of Axis or AxisCollection
+            Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
+            If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
+            In that case, the number of new axes must match the number of the old ones.
+        new_axis : Axis
+            New axis if `axes_to_replace` contains a single axis reference.
+        inplace : bool
+            Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
+        **kwargs : Axis
+            New axis for each axis to replace given as a keyword argument.
 
         Returns
         -------
         AxisCollection
-            New collection with old axes replaced by the new one(s).
+            AxisCollection with axes replaced.
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> age_new = Axis('age', range(10))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> col = AxisCollection([age, sex])
-        >>> col.replace(age, age_new)
+        >>> axes = ndtest((2, 3)).axes
+        >>> axes
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-            Axis('sex', ['M', 'F'])
+            Axis('a', ['a0', 'a1']),
+            Axis('b', ['b0', 'b1', 'b2'])
+        ])
+        >>> row = Axis('row', ['r0', 'r1'])
+        >>> column = Axis('column', ['c0', 'c1', 'c2'])
+
+        Replace one axis (second argument `new_axis` must be provided)
+
+        >>> axes.replace(x.a, row)
+        AxisCollection([
+            Axis('row', ['r0', 'r1']),
+            Axis('b', ['b0', 'b1', 'b2'])
+        ])
+
+        Replace several axes (keywords, list of tuple or dictionary)
+
+        >>> axes.replace(a=row, b=column) # doctest: +SKIP
+        >>> # or
+        >>> axes.replace([(x.a, row), (x.b, column)]) # doctest: +SKIP
+        >>> # or
+        >>> axes.replace({x.a: row, x.b: column})
+        AxisCollection([
+            Axis('row', ['r0', 'r1']),
+            Axis('column', ['c0', 'c1', 'c2'])
+        ])
+
+        Replace all axes (list of axes or AxisCollection)
+
+        >>> axes.replace([row, column])
+        AxisCollection([
+            Axis('row', ['r0', 'r1']),
+            Axis('column', ['c0', 'c1', 'c2'])
+        ])
+        >>> arr = ndrange([row, column])
+        >>> axes.replace(arr.axes)
+        AxisCollection([
+            Axis('row', ['r0', 'r1']),
+            Axis('column', ['c0', 'c1', 'c2'])
         ])
         """
-        res = self[:]
-        res[old] = new
-        return res
+        if isinstance(axes_to_replace, (list, AxisCollection)) and \
+                all([isinstance(axis, Axis) for axis in axes_to_replace]):
+            if len(axes_to_replace) != len(self):
+                raise ValueError('{} axes given as argument, expected '
+                                 '{}'.format(len(axes_to_replace), len(self)))
+            axes = axes_to_replace
+        else:
+            axes = self if inplace else self[:]
+            if isinstance(axes_to_replace, dict):
+                items = list(axes_to_replace.items())
+            elif isinstance(axes_to_replace, list):
+                items = axes_to_replace[:]
+            elif isinstance(axes_to_replace, (str, Axis, int)):
+                items = [(axes_to_replace, new_axis)]
+            else:
+                items = []
+            items += kwargs.items()
+            for old, new in items:
+                axes[old] = new
+        if inplace:
+            return self
+        else:
+            return AxisCollection(axes)
 
     # XXX: kill this method?
     def without(self, axes):
@@ -4180,9 +4239,9 @@ class LArray(object):
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : Axis
+        new_axis : , optional
             New axis if `axes_to_replace` contains a single axis reference.
-        inplace : bool
+        inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
         **kwargs : Axis
             New axis for each axis to replace given as a keyword argument.
@@ -4236,44 +4295,19 @@ class LArray(object):
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         """
-        # TODO: most of this logic should be moved to AxisCollection.replace and the code here should boil down to:
-        # new_axes = self.axes.replace(axes_to_replace=None, new_axis=None, inplace=False, **kwargs)
-        # if inplace:
-        #     self.axes = new_axes
-        #     return self
-        # else:
-        #     return LArray(self.data, new_axes, title=self.title)
-        if isinstance(axes_to_replace, (list, AxisCollection)) and \
-                all([isinstance(axis, Axis) for axis in axes_to_replace]):
-            if len(axes_to_replace) != len(self.axes):
-                raise ValueError('{} axes given as argument, expected '
-                                 '{}'.format(len(axes_to_replace), len(self.axes)))
-            axes = axes_to_replace
-        else:
-            axes = self.axes.copy()
-            if isinstance(axes_to_replace, dict):
-                items = list(axes_to_replace.items())
-            elif isinstance(axes_to_replace, list):
-                items = axes_to_replace[:]
-            elif isinstance(axes_to_replace, (str, Axis, int)):
-                items = [(axes_to_replace, new_axis)]
-            else:
-                items = []
-            items += kwargs.items()
-            for old, new in items:
-                axes = axes.replace(old, new)
+        new_axes = self.axes.replace(axes_to_replace, new_axis, **kwargs)
         if inplace:
-            if axes.ndim != self.ndim:
+            if new_axes.ndim != self.ndim:
                 raise ValueError("number of axes (%d) does not match "
                                  "number of dimensions of data (%d)"
-                                 % (axes.ndim, self.ndim))
-            if axes.shape != self.data.shape:
+                                 % (new_axes.ndim, self.ndim))
+            if new_axes.shape != self.data.shape:
                 raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (axes.shape, self.data.shape))
-            object.__setattr__(self, 'axes', axes)
+                                 "data shape %s" % (new_axes.shape, self.data.shape))
+            object.__setattr__(self, 'axes', new_axes)
             return self
         else:
-            return LArray(self.data, axes, title=self.title)
+            return LArray(self.data, new_axes, title=self.title)
 
     def with_axes(self, axes):
         warnings.warn("LArray.with_axes is deprecated, "
@@ -4691,6 +4725,93 @@ class LArray(object):
             return self
         else:
             return LArray(self.data, axes)
+
+    def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=np.nan, inplace=False, **kwargs):
+        """Reorder and/or add new labels in axes.
+
+        Place NaN or given `fill_value` in locations having no value previously.
+
+        Parameters
+        ----------
+        axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
+                          or list of Axis or AxisCollection
+            Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
+            If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
+            In that case, the number of new axes must match the number of the old ones.
+        new_axis : int, str, list/tuple of str or Axis, optional
+            List of new labels or new axis if `axes_to_replace` contains a single axis reference.
+        fill_value : scalar, optional
+            Value set to data corresponding to added labels.
+            Defaults to NaN.
+        inplace : bool, optional
+            Whether or not to modify the original object or return a new array and leave the original intact.
+            Defaults to False.
+        **kwargs : Axis
+            New axis for each axis to reindex given as a keyword argument.
+
+        Returns
+        -------
+        LArray
+            Array with reindexed axes.
+
+        Notes
+        -----
+        When introducing NAs into an array containing integers via reindex,
+        all data will be promoted to float in order to store the NAs.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\\b | b0 | b1
+         a0 |  0 |  1
+         a1 |  2 |  3
+
+        Reindex one axis
+
+        >>> arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
+        a\\b | b1 | b2 | b0
+         a0 |  1 | -1 |  0
+         a1 |  3 | -1 |  2
+        >>> arr.reindex(x.b, 'b0..b2', fill_value=-1)
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 | -1
+         a1 |  2 |  3 | -1
+
+        Reindex several axes
+
+        >>> arr2 = ndtest((2, 3))
+        >>> arr.reindex(arr2.axes)
+        a\\b |  b0 |  b1 |  b2
+         a0 | 0.0 | 1.0 | nan
+         a1 | 2.0 | 3.0 | nan
+        >>> a = Axis('a', ['a1', 'a2', 'a0'])
+        >>> b = Axis('b', ['b2', 'b1', 'b0'])
+        >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
+        a\\b | b2 | b1 | b0
+         a1 | -1 |  3 |  2
+         a2 | -1 | -1 | -1
+         a0 | -1 |  1 |  0
+        >>> arr.reindex({x.a: a, x.b: b})
+        a\\b |  b2 |  b1 |  b0
+         a1 | nan | 3.0 | 2.0
+         a2 | nan | nan | nan
+         a0 | nan | 1.0 | 0.0
+        """
+        if not np.isscalar(fill_value):
+            raise TypeError("fill_value must be a scalar")
+        if isinstance(new_axis, (int, basestring, list, tuple)):
+            new_axis = Axis(self.axes[axes_to_reindex].name, new_axis)
+        res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
+        res = full(res_axes, fill_value, dtype=common_type((self.data, fill_value)))
+        labels = tuple(axis[axis.labels] for axis in self.axes)
+        res[labels] = self
+        if inplace:
+            object.__setattr__(self, 'axes', res.axes)
+            object.__setattr__(self, 'data', res.data)
+            return self
+        else:
+            return res
 
     def sort_values(self, key, reverse=False):
         """Sorts values of the array.
@@ -5557,7 +5678,8 @@ class LArray(object):
             axes = [axes]
         old_axes = self.axes[axes]
         new_axes = [Axis(axis.name, len(axis)) for axis in old_axes]
-        res_axes = self.axes.replace(axes, new_axes)
+        res_axes = self.axes[:]
+        res_axes[axes] = new_axes
         return LArray(self.data, res_axes)
 
     def __str__(self):
@@ -5714,7 +5836,8 @@ class LArray(object):
         if keepaxes:
             label = op.__name__.replace('nan', '') if keepaxes is True else keepaxes
             new_axes = [Axis(axis.name, [label]) for axis in axes]
-            res_axes = self.axes.replace(axes, new_axes)
+            res_axes = self.axes[:]
+            res_axes[axes] = new_axes
         else:
             res_axes = self.axes - axes
         if not res_axes:
@@ -9229,8 +9352,8 @@ class LArray(object):
                 new_axis = real_axis.replace(axis_changes)
             else:
                 new_axis = Axis(real_axis.name, axis_changes)
-            new_axes.append(new_axis)
-        axes = self.axes.replace(list(changes.keys()), new_axes)
+            new_axes.append((old_axis, new_axis))
+        axes = self.axes.replace(new_axes)
 
         if inplace:
             object.__setattr__(self, 'axes', axes)

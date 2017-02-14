@@ -948,10 +948,6 @@ class TestAxisCollection(TestCase):
         self.assertEqual(len(newcol), 3)
         self.assertEqual(newcol.names, ['lipro', 'sex', 'age'])
 
-    def test_replace_multiple(self):
-        col = self.collection.replace(['lipro', 'age'], [self.geo, self.lipro])
-        self.assertEqual(col, [self.geo, self.sex, self.lipro])
-
     # TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
         col = self.collection
@@ -1655,8 +1651,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         key = np.array(keys)
         res = la[key]
         self.assertTrue(isinstance(res, LArray))
-        self.assertEqual(res.axes,
-                         la.axes.replace(x.lipro, Axis('lipro', keys)))
+        self.assertEqual(res.axes, la.axes.replace(x.lipro, Axis('lipro', keys)))
         assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
 
     def test_getitem_int_larray_key_guess(self):
@@ -3172,6 +3167,15 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la, la2)
         # using list of pairs (axis_to_replace, new_axis)
         la2 = self.small.set_axes([(x.sex, sex2), (x.lipro, lipro2)])
+        assert_array_equal(la, la2)
+
+    def test_reindex(self):
+        la = self.small.reindex(x.sex, ['F', 'M', 'U'], fill_value=0)
+        self.assertEqual(la.shape, (3, 15))
+        self.assertSequenceEqual(list(la.sex.labels), ['F', 'M', 'U'])
+
+        la2 = self.small.copy()
+        la2.reindex(x.sex, ['F', 'M', 'U'], fill_value=0, inplace=True)
         assert_array_equal(la, la2)
 
     def test_append(self):
