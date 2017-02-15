@@ -7668,65 +7668,93 @@ class LArray(object):
 
     def __matmul__(self, other):
         """
-        What doc of Numpy matmul says:
-        The behavior depends on the arguments in the following way:
-        * If both arguments are 2-D they are multiplied like conventional matrices.
-        * If either argument is N-D, N > 2, it is treated as a stack of matrices
-          residing in the last two indexes and broadcast accordingly.
-        * If the first argument is 1-D, it is promoted to a matrix by prepending a 1
-          to its dimensions. After matrix multiplication the prepended 1 is removed.
-        * If the second argument is 1-D, it is promoted to a matrix by appending a 1
-          to its dimensions. After matrix multiplication the appended 1 is removed.
+        Overrides operator @ for matrix multiplication.
 
-        For ND-matrices with N > 2:
-        a @ b[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+        Notes
+        -----
+        Only available with Python >= 3.5
 
         Examples
         --------
-        >>> arr1d = ndtest((3))
-        >>> arr1d
+        >>> if sys.version_info >= (3,5):
+        ...     arr1d = ndtest(3)
+        ...     arr1d
         a | a0 | a1 | a2
           |  0 |  1 |  2
-        >>> arr2d = ndtest((3, 3))
-        >>> arr2d
+        >>> if sys.version_info >= (3,5):
+        ...     arr2d = ndtest((3, 3))
+        ...     arr2d
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  2
          a1 |  3 |  4 |  5
          a2 |  6 |  7 |  8
-        >>> arr1d @ arr1d
+        >>> if sys.version_info >= (3,5):
+        ...     arr1d @ arr1d
         5
-        >>> arr1d @ arr2d
+        >>> if sys.version_info >= (3,5):
+        ...     arr1d @ arr2d
         b | b0 | b1 | b2
           | 15 | 18 | 21
-        >>> arr2d @ arr1d
+        >>> if sys.version_info >= (3,5):
+        ...     arr2d @ arr1d
         a | a0 | a1 | a2
           |  5 | 14 | 23
-        >>> arr3d = ndrange('c=c0..c2;d=d0..d2;e=e0..e2')
-        >>> arr1d @ arr3d
+        >>> if sys.version_info >= (3,5):
+        ...     arr3d = ndrange('c=c0..c2;d=d0..d2;e=e0..e2')
+        ...     arr1d @ arr3d
         c\\e | e0 | e1 | e2
          c0 | 15 | 18 | 21
          c1 | 42 | 45 | 48
          c2 | 69 | 72 | 75
-        >>> arr3d @ arr1d
+        >>> if sys.version_info >= (3,5):
+        ...     arr3d @ arr1d
         c\\d | d0 | d1 | d2
          c0 |  5 | 14 | 23
          c1 | 32 | 41 | 50
          c2 | 59 | 68 | 77
+        >>> if sys.version_info >= (3,5):
+        ...     arr3d @ arr3d
+         c | d\\e |   e0 |   e1 |   e2
+        c0 |  d0 |   15 |   18 |   21
+        c0 |  d1 |   42 |   54 |   66
+        c0 |  d2 |   69 |   90 |  111
+        c1 |  d0 |  366 |  396 |  426
+        c1 |  d1 |  474 |  513 |  552
+        c1 |  d2 |  582 |  630 |  678
+        c2 |  d0 | 1203 | 1260 | 1317
+        c2 |  d1 | 1392 | 1458 | 1524
+        c2 |  d2 | 1581 | 1656 | 1731
         """
+        current = self[:]
         if not isinstance(other, (LArray, np.ndarray)):
             raise NotImplementedError("matrix multiplication not "
                                       "implemented for %s" % type(other))
         if isinstance(other, np.ndarray):
             other = LArray(other)
-        other_axes = other.axes.copy()
-        # Numpy can handle matrices with any dimensions:
-        # a @ b[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
-        res_data = self.data.__matmul__(other.data)
-        res_axes = self.axes[:-2] + other_axes[:-2]
+
+        combined_axes = self.axes[:-2] + other.axes[:-2]
+        if self.ndim > 2 and other.ndim > 2:
+            current = current.expand(combined_axes).transpose(combined_axes)
+            other = other.expand(combined_axes).transpose(combined_axes)
+
+        # XXX : What doc of Numpy matmul says:
+        # The behavior depends on the arguments in the following way:
+        # * If both arguments are 2-D they are multiplied like conventional matrices.
+        # * If either argument is N-D, N > 2, it is treated as a stack of matrices
+        #   residing in the last two indexes and broadcast accordingly.
+        # * If the first argument is 1-D, it is promoted to a matrix by
+        #   prepending a 1 to its dimensions. After matrix multiplication
+        #   the prepended 1 is removed.
+        # * If the second argument is 1-D, it is promoted to a matrix by
+        #   appending a 1 to its dimensions. After matrix multiplication
+        #   the appended 1 is removed.
+        res_data = current.data.__matmul__(other.data)
+
+        res_axes = list(combined_axes)
         if self.ndim > 1:
-            res_axes += self.axes[-2]
+            res_axes += [self.axes[-2]]
         if other.ndim > 1:
-            res_axes += other_axes[-1]
+            res_axes += [other.axes[-1]]
         return LArray(res_data, res_axes)
 
     def __rmatmul__(self, other):
