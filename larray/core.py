@@ -3172,17 +3172,18 @@ class AxisCollection(object):
         Parameters
         ----------
         axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter
-            string.
+            axis to split. All its labels *must* contain
+            the given delimiter string.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
-        names : list of names, optional
-            names of resulting axes. Defaults to split the combined axis name
-            using the given delimiter string.
+        names : str or list of str, optional
+            names of resulting axes. If string, `names` is split
+            into list of axis names using the given delimiter string.
         regex : str, optional
-            use regex instead of simple delimiter to split the axis.
-            Names of new axes must be provided.
-            Delimiter `sep` is not used.
+            use regex instead of delimiter to split labels.
+            Delimiter `sep` is only used on `names`
+            if new axis names are provided as a string or
+            on the axis name if `names` is None.
 
         Returns
         -------
@@ -3191,15 +3192,11 @@ class AxisCollection(object):
         axis = self[axis]
         axis_index = self.index(axis)
         if names is None:
-            if regex is None:
-                if sep not in axis.name:
-                    raise ValueError('{} not found in axis name ({})'
-                                     .format(sep, axis.name))
-                else:
-                    names = axis.name.split(sep)
+            if sep not in axis.name:
+                raise ValueError('{} not found in axis name ({})'
+                                 .format(sep, axis.name))
             else:
-                raise ValueError("Names of new axes must be provided "
-                                 "when using regex")
+                names = axis.name.split(sep)
         else:
             assert all(isinstance(name, str) for name in names)
 
@@ -8767,17 +8764,18 @@ class LArray(object):
         Parameters
         ----------
         axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter
-            string.
+            axis to split. All its labels *must* contain
+            the given delimiter string.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
-        names : list of names, optional
-            names of resulting axes. Defaults to split the combined axis name
-            using the given delimiter string.
+        names : str or list of str, optional
+            names of resulting axes. If string, `names` is split
+            into list of axis names using the given delimiter string.
         regex : str, optional
-            use regex instead of simple delimiter to split the axis.
-            Names of new axes must be provided.
-            Delimiter `sep` is not used.
+            use regex instead of delimiter to split labels.
+            Delimiter `sep` is only used on `names`
+            if new axis names are provided as a string or
+            on the axis name if `names` is None.
 
         Returns
         -------
@@ -8800,6 +8798,11 @@ class LArray(object):
          a1 |  3 |  4 |  5
         >>> regex = '([a-z0-9]+).([a-z0-9]+)'
         >>> combined.split_axis(x.a_b, names=['a', 'b'], regex=regex)
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+        >>> regex = '([a-z0-9]+).([a-z0-9]+)'
+        >>> combined.split_axis(x.a_b, sep=',', names='a,b', regex=regex)
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  2
          a1 |  3 |  4 |  5
