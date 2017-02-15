@@ -3884,7 +3884,7 @@ class LArray(object):
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
-    def replace_axes(self, axes_to_replace=None, new_axes=None, **kwargs):
+    def replace_axes(self, axes_to_replace=None, new_axis=None, **kwargs):
         """
         Returns an array with one or several axes replaced.
 
@@ -3897,7 +3897,7 @@ class LArray(object):
             Axis is given, all axes will be replaced by the
             new ones. In that case, the number of new axes must
             match the number of the old ones.
-        new_axes : Axis
+        new_axis : Axis
             New axis if `axes_to_replace`
             contains a single axis reference.
         **kwargs : Axis
@@ -3956,7 +3956,7 @@ class LArray(object):
             elif isinstance(axes_to_replace, list):
                 items = axes_to_replace[:]
             elif isinstance(axes_to_replace, (str, Axis, int)):
-                items = [(axes_to_replace, new_axes)]
+                items = [(axes_to_replace, new_axis)]
             else:
                 items = []
             items += kwargs.items()
