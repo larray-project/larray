@@ -3616,9 +3616,18 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_split_axis(self):
         arr = ndtest((2, 3, 4, 5))
-        res = arr.combine_axes((x.b, x.d))
-        self.assertEqual(res.axes.names, ['a', 'b_d', 'c'])
-        res = res.split_axis('b_d')
+        comb = arr.combine_axes((x.b, x.d))
+        self.assertEqual(comb.axes.names, ['a', 'b_d', 'c'])
+        # default delimiter '_'
+        res = comb.split_axis('b_d')
+        self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
+        self.assertEqual(res.size, arr.size)
+        self.assertEqual(res.shape, (2, 3, 5, 4))
+        assert_array_equal(res.transpose(x.a, x.b, x.c, x.d), arr)
+        # regex
+        names = ['b', 'd']
+        regex = '(\w+)_(\w+)'
+        res = comb.split_axis('b_d', names=names, regex=regex)
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
         self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))

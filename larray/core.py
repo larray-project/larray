@@ -3166,19 +3166,24 @@ class AxisCollection(object):
         new_axes.insert(combined_axis_pos, combined_axis)
         return new_axes
 
-    def split_axis(self, axis, sep='_', names=None):
+    def split_axis(self, axis, sep='_', names=None, regex=None):
         """Split one axis and returns a new collection
 
         Parameters
         ----------
         axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter
-            string.
+            axis to split. All its labels *must* contain
+            the given delimiter string.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
-        names : list of names, optional
-            names of resulting axes. Defaults to split the combined axis name
-            using the given delimiter string.
+            When `regex` is provided, the delimiter is only used
+            on `names` if given as one string or on axis name if
+            `names` is None.
+        names : str or list of str, optional
+            names of resulting axes. Defaults to None.
+        regex : str, optional
+            use regex instead of delimiter to split labels.
+            Defaults to None.
 
         Returns
         -------
@@ -3192,10 +3197,21 @@ class AxisCollection(object):
                                  .format(sep, axis.name))
             else:
                 names = axis.name.split(sep)
+        elif isinstance(names, str):
+            if sep not in names:
+                raise ValueError('{} not found in names ({})'
+                                 .format(sep, names))
+            else:
+                names = names.split(sep)
         else:
             assert all(isinstance(name, str) for name in names)
-        # gives us an array of lists
-        split_labels = np.char.split(axis.labels, sep)
+
+        if not regex:
+            # gives us an array of lists
+            split_labels = np.char.split(axis.labels, sep)
+        else:
+            rx = re.compile(regex)
+            split_labels = [rx.match(l).groups() for l in axis.labels]
         # not using np.unique because we want to keep the original order
         axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
         split_axes = [Axis(name, axis_labels)
@@ -8748,19 +8764,24 @@ class LArray(object):
         new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
         return transposed.reshape(new_axes)
 
-    def split_axis(self, axis, sep='_', names=None):
+    def split_axis(self, axis, sep='_', names=None, regex=None):
         """Split one axis and returns a new array
 
         Parameters
         ----------
         axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter
-            string.
+            axis to split. All its labels *must* contain
+            the given delimiter string.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
-        names : list of names, optional
-            names of resulting axes. Defaults to split the combined axis name
-            using the given delimiter string.
+            When `regex` is provided, the delimiter is only used
+            on `names` if given as one string or on axis name if
+            `names` is None.
+        names : str or list of str, optional
+            names of resulting axes. Defaults to None.
+        regex : str, optional
+            use regex instead of delimiter to split labels.
+            Defaults to None.
 
         Returns
         -------
@@ -8781,8 +8802,19 @@ class LArray(object):
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  2
          a1 |  3 |  4 |  5
+
+        Split labels using regex
+
+        >>> combined = ndrange('a_b = a0b0..a1b2')
+        >>> combined
+        a_b | a0b0 | a0b1 | a0b2 | a1b0 | a1b1 | a1b2
+            |    0 |    1 |    2 |    3 |    4 |    5
+        >>> combined.split_axis(x.a_b, regex='(\w{2})(\w{2})')
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
         """
-        return self.reshape(self.axes.split_axis(axis, sep, names))
+        return self.reshape(self.axes.split_axis(axis, sep, names, regex))
 
 
 def parse(s):
