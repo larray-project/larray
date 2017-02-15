@@ -7667,26 +7667,67 @@ class LArray(object):
     __ror__ = _binop('ror')
 
     def __matmul__(self, other):
+        """
+        What doc of Numpy matmul says:
+        The behavior depends on the arguments in the following way:
+        * If both arguments are 2-D they are multiplied like conventional matrices.
+        * If either argument is N-D, N > 2, it is treated as a stack of matrices
+          residing in the last two indexes and broadcast accordingly.
+        * If the first argument is 1-D, it is promoted to a matrix by prepending a 1
+          to its dimensions. After matrix multiplication the prepended 1 is removed.
+        * If the second argument is 1-D, it is promoted to a matrix by appending a 1
+          to its dimensions. After matrix multiplication the appended 1 is removed.
+
+        For ND-matrices with N > 2:
+        a @ b[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+        Examples
+        --------
+        >>> arr1d = ndtest((3))
+        >>> arr1d
+        a | a0 | a1 | a2
+          |  0 |  1 |  2
+        >>> arr2d = ndtest((3, 3))
+        >>> arr2d
+        a\\b | b0 | b1 | b2
+         a0 |  0 |  1 |  2
+         a1 |  3 |  4 |  5
+         a2 |  6 |  7 |  8
+        >>> arr1d @ arr1d
+        5
+        >>> arr1d @ arr2d
+        b | b0 | b1 | b2
+          | 15 | 18 | 21
+        >>> arr2d @ arr1d
+        a | a0 | a1 | a2
+          |  5 | 14 | 23
+        >>> arr3d = ndrange('c=c0..c2;d=d0..d2;e=e0..e2')
+        >>> arr1d @ arr3d
+        c\\e | e0 | e1 | e2
+         c0 | 15 | 18 | 21
+         c1 | 42 | 45 | 48
+         c2 | 69 | 72 | 75
+        >>> arr3d @ arr1d
+        c\\d | d0 | d1 | d2
+         c0 |  5 | 14 | 23
+         c1 | 32 | 41 | 50
+         c2 | 59 | 68 | 77
+        """
         if not isinstance(other, (LArray, np.ndarray)):
             raise NotImplementedError("matrix multiplication not "
                                       "implemented for %s" % type(other))
-
-        # TODO: implement for matrices of any dimensions
-        if self.ndim != 2 or other.ndim != 2:
-            raise NotImplementedError("matrix multiplication not "
-                                      "implemented for ndim != 2 (%d @ %d)"
-                                      % (self.ndim, other.ndim))
-        # 4,2 @ 2,3 = 4,3
-        res_axes = [get_axis(self, 0), get_axis(other, 1)]
-        # TODO: implement AxisCollection.__init__(copy_duplicates=True)
-        if res_axes[1] is res_axes[0]:
-            res_axes[1] = res_axes[1].copy()
-        # XXX: check that other axes are compatible?
-        # other_axes = [get_axis(self, 1), get_axis(other, 0)]
-        # if not other_axes[0].iscompatible(other_axes[1]):
-        #     raise ValueError("%s is not compatible with %s"
-        #                      % (other_axes[0], other_axes[1]))
-        return LArray(self.data.__matmul__(other.data), res_axes)
+        if isinstance(other, np.ndarray):
+            other = LArray(other)
+        other_axes = other.axes.copy()
+        # Numpy can handle matrices with any dimensions:
+        # a @ b[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+        res_data = self.data.__matmul__(other.data)
+        res_axes = self.axes[:-2] + other_axes[:-2]
+        if self.ndim > 1:
+            res_axes += self.axes[-2]
+        if other.ndim > 1:
+            res_axes += other_axes[-1]
+        return LArray(res_data, res_axes)
 
     def __rmatmul__(self, other):
         if isinstance(other, np.ndarray):
