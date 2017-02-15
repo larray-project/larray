@@ -3197,6 +3197,12 @@ class AxisCollection(object):
                                  .format(sep, axis.name))
             else:
                 names = axis.name.split(sep)
+        elif isinstance(names, str):
+            if sep not in names:
+                raise ValueError('{} not found in names ({})'
+                                 .format(sep, names))
+            else:
+                names = names.split(sep)
         else:
             assert all(isinstance(name, str) for name in names)
 
@@ -8783,29 +8789,65 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((2, 3))
+        >>> arr = ndtest((2, 3, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-        >>> combined = arr.combine_axes()
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+        >>> combined = arr.combine_axes((x.a, x.b))
         >>> combined
-        a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
-            |     0 |     1 |     2 |     3 |     4 |     5
+        a_b\\c | c0 | c1 | c2
+        a0_b0 |  0 |  1 |  2
+        a0_b1 |  3 |  4 |  5
+        a0_b2 |  6 |  7 |  8
+        a1_b0 |  9 | 10 | 11
+        a1_b1 | 12 | 13 | 14
+        a1_b2 | 15 | 16 | 17
         >>> combined.split_axis(x.a_b)
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-        >>> regex = '([a-z0-9]+).([a-z0-9]+)'
-        >>> combined.split_axis(x.a_b, names=['a', 'b'], regex=regex)
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-        >>> regex = '([a-z0-9]+).([a-z0-9]+)'
-        >>> combined.split_axis(x.a_b, sep=',', names='a,b', regex=regex)
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+
+
+        Split labels using regex
+
+
+        >>> column = Axis('c', 'c0..c2')
+        >>> row = Axis('r', 'a0b0..a1b2')
+        >>> combined = ndrange([row, column])
+        >>> combined
+         r\\c | c0 | c1 | c2
+        a0b0 |  0 |  1 |  2
+        a0b1 |  3 |  4 |  5
+        a0b2 |  6 |  7 |  8
+        a1b0 |  9 | 10 | 11
+        a1b1 | 12 | 13 | 14
+        a1b2 | 15 | 16 | 17
+        >>> regex = '(\w{2})(\w{2})'
+        >>> combined.split_axis(x.r, names=['a', 'b'], regex=regex)
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
+        >>> combined.split_axis(x.r, sep=',', names='a,b', regex=regex)
+         a | b\\c | c0 | c1 | c2
+        a0 |  b0 |  0 |  1 |  2
+        a0 |  b1 |  3 |  4 |  5
+        a0 |  b2 |  6 |  7 |  8
+        a1 |  b0 |  9 | 10 | 11
+        a1 |  b1 | 12 | 13 | 14
+        a1 |  b2 | 15 | 16 | 17
         """
         return self.reshape(self.axes.split_axis(axis, sep, names, regex))
 
