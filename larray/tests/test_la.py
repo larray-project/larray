@@ -3558,8 +3558,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             # ndarray value
             assert_array_equal(arr1d.__matmul__(arr2d.data),
                                LArray([15, 18, 21]))
-            assert_array_equal(arr2d.data.__matmul__(arr1d),
-                               LArray([5, 14, 23]))
             assert_array_equal(arr2d.data.__matmul__(arr2d.data),
                                LArray(res.data))
 
