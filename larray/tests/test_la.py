@@ -3554,36 +3554,58 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(d.i[0], 1.0)
         self.assertEqual(d.i[1], 1.0)
 
-    # cannot use @ in the tests because that is an invalid syntax in Python 2
+    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
     def test_matmul(self):
+        # 2D / anonymous axes
+        a1 = eye(3) * 2
+        a2 = ndrange((3, 3))
+        # cannot use @ in the tests because that is an invalid syntax in Python 2
+        # LArray value
+        assert_array_equal(a1.__matmul__(a2), ndrange((3, 3)) * 2)
+
+        # ndarray value
+        assert_array_equal(a1.__matmul__(a2.data), ndrange((3, 3)) * 2)
+
+        # non anonymous axes
         arr1d = ndtest(3)
         arr2d = ndtest((3, 3))
 
-        if sys.version_info >= (3, 5):
-            # LArray value
-            self.assertEqual(arr1d.__matmul__(arr1d), 5)
-            assert_array_equal(arr1d.__matmul__(arr2d),
-                               LArray([15, 18, 21], 'b=b0..b2'))
-            assert_array_equal(arr2d.__matmul__(arr1d),
-                               LArray([5, 14, 23], 'a=a0..a2'))
-            res = LArray([[15, 18, 21], [42, 54, 66], [69, 90, 111]],
-                         'a=a0..a2;b=b0..b2')
-            assert_array_equal(arr2d.__matmul__(arr2d), res)
+        self.assertEqual(arr1d.__matmul__(arr1d), 5)
+        assert_array_equal(arr1d.__matmul__(arr2d),
+                           LArray([15, 18, 21], 'b=b0..b2'))
+        assert_array_equal(arr2d.__matmul__(arr1d),
+                           LArray([5, 14, 23], 'a=a0..a2'))
 
-            # ndarray value
-            assert_array_equal(arr1d.__matmul__(arr2d.data),
-                               LArray([15, 18, 21]))
-            assert_array_equal(arr2d.data.__matmul__(arr2d.data),
-                               LArray(res.data))
+        # TODO: we should test arr2.__matmul__(arr2.T) instead as it makes more sense
+        res = from_lists([['a\\b', 'b0', 'b1', 'b2'],
+                          ['a0',     15,   18,   21],
+                          ['a1',     42,   54,   66],
+                          ['a2',     69,   90,  111]])
+        assert_array_equal(arr2d.__matmul__(arr2d), res)
 
+        # ndarray value
+        assert_array_equal(arr1d.__matmul__(arr2d.data),
+                           LArray([15, 18, 21]))
+        assert_array_equal(arr2d.data.__matmul__(arr2d.data),
+                           res.data)
+
+        # different axes
+        a1 = ndtest('a=a0..a1;b=b0..b2')
+        a2 = ndrange('b=b0..b2;c=c0..c3')
+        res = from_lists([['a\c', 'c0', 'c1', 'c2', 'c3'],
+                          ['a0',    20,   23,   26,   29],
+                          ['a1',    56,   68,   80,   92]])
+        assert_array_equal(a1.__matmul__(a2), res)
+
+    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
     def test_rmatmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
-        if sys.version_info >= (3, 5):
-            # equivalent to a1.data @ a2
-            res = a2.__rmatmul__(a1.data)
-            self.assertIsInstance(res, LArray)
-            assert_array_equal(res, ndrange((3, 3)) * 2)
+
+        # equivalent to a1.data @ a2
+        res = a2.__rmatmul__(a1.data)
+        self.assertIsInstance(res, LArray)
+        assert_array_equal(res, ndrange((3, 3)) * 2)
 
     def test_broadcast_with(self):
         a1 = ndrange((3, 2))
