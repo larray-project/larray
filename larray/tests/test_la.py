@@ -2840,18 +2840,33 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         sex, lipro = la.axes
         assert_array_equal(la.mean(lipro), raw.mean(1))
 
-    def test_with_axes(self):
-        lipro2 = self.lipro.rename('lipro2').labels = \
-            [l.replace('P', 'Q') for l in self.lipro.labels]
-        sex2 = self.age.rename('sex2').labels = ['Man', 'Woman']
+    def test_replace_axes(self):
+        lipro2 = Axis('lipro2', [l.replace('P', 'Q') for l in self.lipro.labels])
+        sex2 = Axis('sex2', ['Man', 'Woman'])
+
+        la = LArray(self.small_data, axes=(self.sex, lipro2),
+                    title=self.small_title)
+        # replace one axis
+        la2 = self.small.replace_axes(x.lipro, lipro2)
+        assert_array_equal(la, la2)
+        self.assertEqual(la.title, la2.title, "title of array returned by "
+                                              "replace_axes should be the same as the original one. "
+                                              "We got '{}' instead of '{}'".format(la2.title, la.title))
 
         la = LArray(self.small_data, axes=(sex2, lipro2),
                     title=self.small_title)
-        la2 = self.small.with_axes((sex2, lipro2))
+        # all at once
+        la2 = self.small.replace_axes([sex2, lipro2])
         assert_array_equal(la, la2)
-        self.assertEqual(la.title, la2.title, "title of array returned by "
-                                              "with_axes should be the same as the original one. "
-                                              "We got '{}' instead of '{}'".format(la2.title, la.title))
+        # using keywrods args
+        la2 = self.small.replace_axes(sex=sex2, lipro=lipro2)
+        assert_array_equal(la, la2)
+        # using dict
+        la2 = self.small.replace_axes({x.sex: sex2, x.lipro: lipro2})
+        assert_array_equal(la, la2)
+        # using list of pairs (axis_to_replace, new_axis)
+        la2 = self.small.replace_axes([(x.sex, sex2), (x.lipro, lipro2)])
+        assert_array_equal(la, la2)
 
     def test_append(self):
         la = self.small
