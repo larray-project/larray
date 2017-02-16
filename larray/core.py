@@ -3907,7 +3907,7 @@ class LArray(object):
         Returns
         -------
         LArray
-            Array with some axes renamed.
+            Array with some axes replaced.
 
         See Also
         --------
