@@ -3900,22 +3900,34 @@ class LArray(object):
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
-    def with_axes(self, axes):
+    def replace_axes(self, axes_to_replace=None, new_axis=None, **kwargs):
         """
-        Returns a LArray with same data but new axes.
-        The number and length of axes must match
-        dimensions and shape of data array.
+        Returns an array with one or several axes replaced.
 
         Parameters
         ----------
-        axes : collection (tuple, list or AxisCollection) of axes \
-        (int, str or  Axis), optional
-            New axes.
+        axes_to_replace : axis ref or dict {axis ref: axis} or
+                  list of tuple (axis ref, axis) or list of Axis
+            Axes to replace. If a single axis reference is given,
+            the `new_axes` argument must be used. If a list of
+            Axis is given, all axes will be replaced by the
+            new ones. In that case, the number of new axes must
+            match the number of the old ones.
+        new_axis : Axis
+            New axis if `axes_to_replace`
+            contains a single axis reference.
+        **kwargs : Axis
+            New axis for each axis to replace given
+            as a keyword argument.
 
         Returns
         -------
         LArray
-            Array with same data but new axes.
+            Array with some axes replaced.
+
+        See Also
+        --------
+        rename : rename one of several axes
 
         Examples
         --------
@@ -3926,12 +3938,53 @@ class LArray(object):
          a1 |  3 |  4 |  5
         >>> row = Axis('row', ['r0', 'r1'])
         >>> column = Axis('column', ['c0', 'c1', 'c2'])
-        >>> arr.with_axes([row, column])
+        >>> arr.replace_axes(x.a, row)
+        row\\b | b0 | b1 | b2
+           r0 |  0 |  1 |  2
+           r1 |  3 |  4 |  5
+        >>> arr.replace_axes([row, column])
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
+        >>> arr.replace_axes(a=row, b=column)
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
+        >>> arr.replace_axes([(x.a, row), (x.b, column)])
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
+        >>> arr.replace_axes({x.a: row, x.b: column})
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         """
-        return LArray(self.data, axes, self.title)
+        if isinstance(axes_to_replace, list) and \
+                all([isinstance(axis, Axis) for axis in axes_to_replace]):
+            if len(axes_to_replace) != len(self.axes):
+                raise ValueError('{} axes given as argument, expected '
+                                 '{}'.format(len(axes_to_replace), len(self.axes)))
+            axes = axes_to_replace
+        else:
+            axes = self.axes.copy()
+            if isinstance(axes_to_replace, dict):
+                items = list(axes_to_replace.items())
+            elif isinstance(axes_to_replace, list):
+                items = axes_to_replace[:]
+            elif isinstance(axes_to_replace, (str, Axis, int)):
+                items = [(axes_to_replace, new_axis)]
+            else:
+                items = []
+            items += kwargs.items()
+            for old, new in items:
+                axes = axes.replace(old, new)
+        return LArray(self.data, axes, title=self.title)
+
+    def with_axes(self, axes):
+        warnings.warn("LArray.with_axes is deprecated, "
+                      "use LArray.replace_axes instead",
+                      DeprecationWarning)
+        return self.replace_axes(axes)
 
     def __getattr__(self, key):
         try:
@@ -4182,10 +4235,10 @@ class LArray(object):
         ----------
         renames : axis ref or dict {axis ref: str} or
                   list of tuple (axis ref, str)
-            Renames to apply. If a single axis reference is given, the "to"
-            argument must be used.
+            Renames to apply. If a single axis reference
+            is given, the `to` argument must be used.
         to : str or Axis
-            New name if renames contains a single axis reference
+            New name if `renames` contains a single axis reference
         **kwargs : str
             New name for each axis given as a keyword argument.
 
@@ -4193,6 +4246,10 @@ class LArray(object):
         -------
         LArray
             Array with some axes renamed.
+
+        See Also
+        --------
+        replace_axes : replace one or several axes
 
         Examples
         --------
@@ -4211,7 +4268,11 @@ class LArray(object):
         nat2\\sex2 | M | F
                BE | 0 | 1
                FO | 2 | 3
-        >>> arr.rename({'nat': 'nat2', 'sex' : 'sex2'})
+        >>> arr.rename([('nat', 'nat2'), ('sex', 'sex2')])
+        nat2\\sex2 | M | F
+               BE | 0 | 1
+               FO | 2 | 3
+        >>> arr.rename({'nat': 'nat2', 'sex': 'sex2'})
         nat2\\sex2 | M | F
                BE | 0 | 1
                FO | 2 | 3
@@ -4219,7 +4280,7 @@ class LArray(object):
         if isinstance(renames, dict):
             items = list(renames.items())
         elif isinstance(renames, list):
-            items = renames.copy()
+            items = renames[:]
         elif isinstance(renames, (str, Axis, int)):
             items = [(renames, to)]
         else:
@@ -9834,7 +9895,7 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
                     for length in a.shape]
     new_axes = [Axis(name, [name + str(i) for i in label_range])
                 for name, label_range in zip(axes_names, label_ranges)]
-    return a.with_axes(new_axes)
+    return LArray(a.data, new_axes)
 
 
 def kth_diag_indices(shape, k):
