@@ -3556,21 +3556,30 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     # cannot use @ in the tests because that is an invalid syntax in Python 2
     def test_matmul(self):
-        a1 = eye(3) * 2
-        a2 = ndrange((3, 3))
-        # FIXME: this will break for python 3.10 and later
-        if sys.version >= '3.5':
+        arr1d = ndtest(3)
+        arr2d = ndtest((3, 3))
+
+        if sys.version_info >= (3, 5):
             # LArray value
-            assert_array_equal(a1.__matmul__(a2), ndrange((3, 3)) * 2)
+            self.assertEqual(arr1d.__matmul__(arr1d), 5)
+            assert_array_equal(arr1d.__matmul__(arr2d),
+                               LArray([15, 18, 21], 'b=b0..b2'))
+            assert_array_equal(arr2d.__matmul__(arr1d),
+                               LArray([5, 14, 23], 'a=a0..a2'))
+            res = LArray([[15, 18, 21], [42, 54, 66], [69, 90, 111]],
+                         'a=a0..a2;b=b0..b2')
+            assert_array_equal(arr2d.__matmul__(arr2d), res)
 
             # ndarray value
-            assert_array_equal(a1.__matmul__(a2.data), ndrange((3, 3)) * 2)
+            assert_array_equal(arr1d.__matmul__(arr2d.data),
+                               LArray([15, 18, 21]))
+            assert_array_equal(arr2d.data.__matmul__(arr2d.data),
+                               LArray(res.data))
 
     def test_rmatmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
-        # FIXME: this will break for python 3.10 and later
-        if sys.version >= '3.5':
+        if sys.version_info >= (3, 5):
             # equivalent to a1.data @ a2
             res = a2.__rmatmul__(a1.data)
             self.assertIsInstance(res, LArray)
