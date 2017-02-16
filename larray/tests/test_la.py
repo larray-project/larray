@@ -3546,17 +3546,22 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         if sys.version_info >= (3, 5):
             # LArray value
-            self.assertEqual(arr1d @ arr1d, 5)
-            assert_array_equal(arr1d @ arr2d, LArray([15, 18, 21], 'b=b0..b2'))
-            assert_array_equal(arr2d @ arr1d, LArray([5, 14, 23], 'a=a0..a2'))
+            self.assertEqual(arr1d.__matmul__(arr1d), 5)
+            assert_array_equal(arr1d.__matmul__(arr2d),
+                               LArray([15, 18, 21], 'b=b0..b2'))
+            assert_array_equal(arr2d.__matmul__(arr1d),
+                               LArray([5, 14, 23], 'a=a0..a2'))
             res = LArray([[15, 18, 21], [42, 54, 66], [69, 90, 111]],
                          'a=a0..a2;b=b0..b2')
-            assert_array_equal(arr2d @ arr2d, res)
+            assert_array_equal(arr2d.__matmul__(arr2d), res)
 
             # ndarray value
-            assert_array_equal(arr1d @ arr2d.data, LArray([15, 18, 21]))
-            assert_array_equal(arr2d.data @ arr1d, LArray([5, 14, 23]))
-            assert_array_equal(arr2d.data @ arr2d.data, LArray(res.data))
+            assert_array_equal(arr1d.__matmul__(arr2d.data),
+                               LArray([15, 18, 21]))
+            assert_array_equal(arr2d.data.__matmul__(arr1d),
+                               LArray([5, 14, 23]))
+            assert_array_equal(arr2d.data.__matmul__(arr2d.data),
+                               LArray(res.data))
 
     def test_rmatmul(self):
         a1 = eye(3) * 2
