@@ -1394,7 +1394,7 @@ class ArrayEditorWidget(QWidget):
                             bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
-        self.digits_spinbox.setEnabled(is_float(data.dtype))
+        self.digits_spinbox.setEnabled(is_number(data.dtype))
 
         self.scientific_checkbox.setChecked(use_scientific)
         self.scientific_checkbox.setEnabled(is_number(data.dtype))
