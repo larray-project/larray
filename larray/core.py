@@ -7779,13 +7779,15 @@ class LArray(object):
         c2 |  d2 | 1581 | 1656 | 1731
         """
         current = self[:]
+        axes = self.axes
         if not isinstance(other, (LArray, np.ndarray)):
             raise NotImplementedError("matrix multiplication not "
                                       "implemented for %s" % type(other))
         if isinstance(other, np.ndarray):
             other = LArray(other)
+        other_axes = other.axes
 
-        combined_axes = self.axes[:-2] + other.axes[:-2]
+        combined_axes = axes[:-2] + other_axes[:-2]
         if self.ndim > 2 and other.ndim > 2:
             current = current.expand(combined_axes).transpose(combined_axes)
             other = other.expand(combined_axes).transpose(combined_axes)
@@ -7805,9 +7807,9 @@ class LArray(object):
 
         res_axes = list(combined_axes)
         if self.ndim > 1:
-            res_axes += [self.axes[-2]]
+            res_axes += [axes[-2]]
         if other.ndim > 1:
-            res_axes += [other.axes[-1]]
+            res_axes += [other_axes[-1].copy()]
         return LArray(res_data, res_axes)
 
     def __rmatmul__(self, other):
