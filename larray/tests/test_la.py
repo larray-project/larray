@@ -3554,36 +3554,170 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(d.i[0], 1.0)
         self.assertEqual(d.i[1], 1.0)
 
-    # cannot use @ in the tests because that is an invalid syntax in Python 2
+    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
     def test_matmul(self):
+        # 2D / anonymous axes
+        a1 = eye(3) * 2
+        a2 = ndrange((3, 3))
+        # cannot use @ in the tests because that is an invalid syntax in Python 2
+        # LArray value
+        assert_array_equal(a1.__matmul__(a2), ndrange((3, 3)) * 2)
+
+        # ndarray value
+        assert_array_equal(a1.__matmul__(a2.data), ndrange((3, 3)) * 2)
+
+        # non anonymous axes (N <= 2)
         arr1d = ndtest(3)
         arr2d = ndtest((3, 3))
 
-        if sys.version_info >= (3, 5):
-            # LArray value
-            self.assertEqual(arr1d.__matmul__(arr1d), 5)
-            assert_array_equal(arr1d.__matmul__(arr2d),
-                               LArray([15, 18, 21], 'b=b0..b2'))
-            assert_array_equal(arr2d.__matmul__(arr1d),
-                               LArray([5, 14, 23], 'a=a0..a2'))
-            res = LArray([[15, 18, 21], [42, 54, 66], [69, 90, 111]],
-                         'a=a0..a2;b=b0..b2')
-            assert_array_equal(arr2d.__matmul__(arr2d), res)
+        # 1D @ 1D
+        self.assertEqual(arr1d.__matmul__(arr1d), 5)
 
-            # ndarray value
-            assert_array_equal(arr1d.__matmul__(arr2d.data),
-                               LArray([15, 18, 21]))
-            assert_array_equal(arr2d.data.__matmul__(arr2d.data),
-                               LArray(res.data))
+        # 1D @ 2D
+        assert_array_equal(arr1d.__matmul__(arr2d),
+                           LArray([15, 18, 21], 'b=b0..b2'))
 
+        # 2D @ 1D
+        assert_array_equal(arr2d.__matmul__(arr1d),
+                           LArray([5, 14, 23], 'a=a0..a2'))
+
+        # 2D(a,b) @ 2D(a,b) -> 2D(a,b)
+        res = from_lists([['a\\b', 'b0', 'b1', 'b2'],
+                          ['a0', 15, 18, 21],
+                          ['a1', 42, 54, 66],
+                          ['a2', 69, 90, 111]])
+        assert_array_equal(arr2d.__matmul__(arr2d), res)
+
+        # 2D(a,b) @ 2D(b,a) -> 2D(a,a)
+        res = from_lists([['a\\a', 'a0', 'a1', 'a2'],
+                          ['a0', 5, 14, 23],
+                          ['a1', 14, 50, 86],
+                          ['a2', 23, 86, 149]])
+        assert_array_equal(arr2d.__matmul__(arr2d.T), res)
+
+        # ndarray value
+        assert_array_equal(arr1d.__matmul__(arr2d.data),
+                           LArray([15, 18, 21]))
+        assert_array_equal(arr2d.data.__matmul__(arr2d.T.data),
+                           res.data)
+
+        # different axes
+        a1 = ndtest('a=a0..a1;b=b0..b2')
+        a2 = ndrange('b=b0..b2;c=c0..c3')
+        res = from_lists([['a\c', 'c0', 'c1', 'c2', 'c3'],
+                          ['a0', 20, 23, 26, 29],
+                          ['a1', 56, 68, 80, 92]])
+        assert_array_equal(a1.__matmul__(a2), res)
+
+        # non anonymous axes (N >= 2)
+        arr2d = ndtest((2, 2))
+        arr3d = ndtest((2, 2, 2))
+        arr4d = ndtest((2, 2, 2, 2))
+        a, b, c, d = arr4d.axes
+        e = Axis('e', 'e0,e1')
+        f = Axis('f', 'f0,f1')
+
+        # 4D(a, b, c, d) @ 3D(e, d, f) -> 5D(a, b, e, c, f)
+        arr3d = arr3d.replace_axes([e, d, f])
+        res = from_lists([['a', 'b', 'e', 'c\\f', 'f0', 'f1'],
+                          ['a0', 'b0', 'e0', 'c0', 2, 3],
+                          ['a0', 'b0', 'e0', 'c1', 6, 11],
+                          ['a0', 'b0', 'e1', 'c0', 6, 7],
+                          ['a0', 'b0', 'e1', 'c1', 26, 31],
+                          ['a0', 'b1', 'e0', 'c0', 10, 19],
+                          ['a0', 'b1', 'e0', 'c1', 14, 27],
+                          ['a0', 'b1', 'e1', 'c0', 46, 55],
+                          ['a0', 'b1', 'e1', 'c1', 66, 79],
+                          ['a1', 'b0', 'e0', 'c0', 18, 35],
+                          ['a1', 'b0', 'e0', 'c1', 22, 43],
+                          ['a1', 'b0', 'e1', 'c0', 86, 103],
+                          ['a1', 'b0', 'e1', 'c1', 106, 127],
+                          ['a1', 'b1', 'e0', 'c0', 26, 51],
+                          ['a1', 'b1', 'e0', 'c1', 30, 59],
+                          ['a1', 'b1', 'e1', 'c0', 126, 151],
+                          ['a1', 'b1', 'e1', 'c1', 146, 175]])
+        assert_array_equal(arr4d.__matmul__(arr3d), res)
+
+        # 3D(e, d, f) @ 4D(a, b, c, d) -> 5D(e, a, b, d, d)
+        res = from_lists([['e', 'a', 'b', 'd\\d', 'd0', 'd1'],
+                          ['e0', 'a0', 'b0', 'd0', 2, 3],
+                          ['e0', 'a0', 'b0', 'd1', 6, 11],
+                          ['e0', 'a0', 'b1', 'd0', 6, 7],
+                          ['e0', 'a0', 'b1', 'd1', 26, 31],
+                          ['e0', 'a1', 'b0', 'd0', 10, 11],
+                          ['e0', 'a1', 'b0', 'd1', 46, 51],
+                          ['e0', 'a1', 'b1', 'd0', 14, 15],
+                          ['e0', 'a1', 'b1', 'd1', 66, 71],
+                          ['e1', 'a0', 'b0', 'd0', 10, 19],
+                          ['e1', 'a0', 'b0', 'd1', 14, 27],
+                          ['e1', 'a0', 'b1', 'd0', 46, 55],
+                          ['e1', 'a0', 'b1', 'd1', 66, 79],
+                          ['e1', 'a1', 'b0', 'd0', 82, 91],
+                          ['e1', 'a1', 'b0', 'd1', 118, 131],
+                          ['e1', 'a1', 'b1', 'd0', 118, 127],
+                          ['e1', 'a1', 'b1', 'd1', 170, 183]])
+        assert_array_equal(arr3d.__matmul__(arr4d), res)
+
+        # 4D(a, b, c, d) @ 3D(b, d, f) -> 4D(a, b, c, f)
+        arr3d = arr3d.replace_axes([b, d, f])
+        res = from_lists([['a', 'b', 'c\\f', 'f0', 'f1'],
+                          ['a0', 'b0', 'c0', 2, 3],
+                          ['a0', 'b0', 'c1', 6, 11],
+                          ['a0', 'b1', 'c0', 46, 55],
+                          ['a0', 'b1', 'c1', 66, 79],
+                          ['a1', 'b0', 'c0', 18, 35],
+                          ['a1', 'b0', 'c1', 22, 43],
+                          ['a1', 'b1', 'c0', 126, 151],
+                          ['a1', 'b1', 'c1', 146, 175]])
+        assert_array_equal(arr4d.__matmul__(arr3d), res)
+
+        # 3D(b, d, f) @ 4D(a, b, c, d) -> 4D(b, a, d, d)
+        res = from_lists([['b', 'a', 'd\\d', 'd0', 'd1'],
+                          ['b0', 'a0', 'd0', 2, 3],
+                          ['b0', 'a0', 'd1', 6, 11],
+                          ['b0', 'a1', 'd0', 10, 11],
+                          ['b0', 'a1', 'd1', 46, 51],
+                          ['b1', 'a0', 'd0', 46, 55],
+                          ['b1', 'a0', 'd1', 66, 79],
+                          ['b1', 'a1', 'd0', 118, 127],
+                          ['b1', 'a1', 'd1', 170, 183]])
+        assert_array_equal(arr3d.__matmul__(arr4d), res)
+
+        # 4D(a, b, c, d) @ 2D(d, f) -> 5D(a, b, c, f)
+        arr2d = arr2d.replace_axes([d, f])
+        res = from_lists([['a', 'b', 'c\\f', 'f0', 'f1'],
+                          ['a0', 'b0', 'c0', 2, 3],
+                          ['a0', 'b0', 'c1', 6, 11],
+                          ['a0', 'b1', 'c0', 10, 19],
+                          ['a0', 'b1', 'c1', 14, 27],
+                          ['a1', 'b0', 'c0', 18, 35],
+                          ['a1', 'b0', 'c1', 22, 43],
+                          ['a1', 'b1', 'c0', 26, 51],
+                          ['a1', 'b1', 'c1', 30, 59]])
+        assert_array_equal(arr4d.__matmul__(arr2d), res)
+
+        # 2D(d, f) @ 4D(a, b, c, d) -> 5D(a, b, d, d)
+        res = from_lists([['a', 'b', 'd\\d', 'd0', 'd1'],
+                          ['a0', 'b0', 'd0', 2, 3],
+                          ['a0', 'b0', 'd1', 6, 11],
+                          ['a0', 'b1', 'd0', 6, 7],
+                          ['a0', 'b1', 'd1', 26, 31],
+                          ['a1', 'b0', 'd0', 10, 11],
+                          ['a1', 'b0', 'd1', 46, 51],
+                          ['a1', 'b1', 'd0', 14, 15],
+                          ['a1', 'b1', 'd1', 66, 71]])
+        assert_array_equal(arr2d.__matmul__(arr4d), res)
+
+
+    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
     def test_rmatmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
-        if sys.version_info >= (3, 5):
-            # equivalent to a1.data @ a2
-            res = a2.__rmatmul__(a1.data)
-            self.assertIsInstance(res, LArray)
-            assert_array_equal(res, ndrange((3, 3)) * 2)
+
+        # equivalent to a1.data @ a2
+        res = a2.__rmatmul__(a1.data)
+        self.assertIsInstance(res, LArray)
+        assert_array_equal(res, ndrange((3, 3)) * 2)
 
     def test_broadcast_with(self):
         a1 = ndrange((3, 2))
