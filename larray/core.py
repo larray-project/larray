@@ -11,7 +11,7 @@ __all__ = [
     'x',
     'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
-    'ndtest', 'from_lists',
+    'ndtest', 'from_lists', 'from_string',
     'identity', 'diag', 'eye',
     'larray_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
@@ -9120,6 +9120,58 @@ def from_lists(data, nb_index=None, index_col=None):
         df.set_index([df.columns[c] for c in index_col], inplace=True)
 
     return df_aslarray(df, raw=index_col is None, parse_header=False)
+
+
+def from_string(s, nb_index=None, index_col=None, sep=','):
+    """Create an array from a multi-line string.
+
+    Parameters
+    ----------
+    s : str
+        input string.
+    nb_index : int, optional
+        Number of leading index columns (ex. 4). Defaults to None, in which case it guesses the number of index columns
+        by using the position of the first '\' in the first line.
+    index_col : list, optional
+        List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
+    sep : str
+        delimiter used to split each line into cells.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+
+    >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3")
+    nat\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+
+    Each label is stripped of leading and trailing whitespace, so this is valid too:
+
+    >>> from_string('''nat\\sex, M, F
+    ...                BE,       0, 1
+    ...                FO,       2, 3''')
+    nat\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+
+    Empty lines at the beginning or end are ignored, so one can also format the string like this:
+
+    >>> from_string('''
+    ... nat\\sex, M, F
+    ... BE,       0, 1
+    ... FO,       2, 3
+    ... ''')
+    nat\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+    """
+    data = [[cell.strip() for cell in line.split(sep)]
+            for line in s.strip().splitlines()]
+    return from_lists(data, nb_index=nb_index, index_col=index_col)
 
 
 def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
