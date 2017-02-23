@@ -8275,27 +8275,29 @@ class LArray(object):
 
         Examples
         --------
+        >>> from .tests.test_la import abspath
+        >>> fpath = abspath('test.csv')
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex | M | F
              BE | 0 | 1
              FO | 2 | 3
-        >>> a.to_csv('test.csv')
-        >>> with open('test.csv') as f:
+        >>> a.to_csv(fpath)
+        >>> with open(fpath) as f:
         ...     print(f.read().strip())
         nat\\sex,M,F
         BE,0,1
         FO,2,3
-        >>> a.to_csv('test.csv', sep=';', transpose=False)
-        >>> with open('test.csv') as f:
+        >>> a.to_csv(fpath, sep=';', transpose=False)
+        >>> with open(fpath) as f:
         ...     print(f.read().strip())
         nat;sex;0
         BE;M;0
         BE;F;1
         FO;M;2
         FO;F;3
-        >>> a.to_csv('test.csv', dialect='classic')
-        >>> with open('test.csv') as f:
+        >>> a.to_csv(fpath, dialect='classic')
+        >>> with open(fpath) as f:
         ...     print(f.read().strip())
         nat,M,F
         BE,0,1
@@ -8328,8 +8330,9 @@ class LArray(object):
 
         Examples
         --------
+        >>> from .tests.test_la import abspath
         >>> a = ndrange('nat=BE,FO;sex=M,F')
-        >>> a.to_hdf('test.h5', 'a')
+        >>> a.to_hdf(abspath('test.h5'), 'a')
         """
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
@@ -9218,18 +9221,22 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
 
     Examples
     --------
+    >>> from .tests.test_la import abspath
+    >>> fpath = abspath('test.csv')
     >>> a = ndrange('nat=BE,FO;sex=M,F')
-    >>> a.to_csv('test.csv')
-    >>> read_csv('test.csv')
+
+    >>> a.to_csv(fpath)
+    >>> read_csv(fpath)
     nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
-    >>> read_csv('test.csv', sort_columns=True)
+    >>> read_csv(fpath, sort_columns=True)
     nat\\sex | F | M
          BE | 1 | 0
          FO | 3 | 2
-    >>> a.to_csv('no_axis_name.csv', dialect='classic')
-    >>> read_csv('no_axis_name.csv', nb_index=1)
+    >>> fpath = abspath('no_axis_name.csv')
+    >>> a.to_csv(fpath, dialect='classic')
+    >>> read_csv(fpath, nb_index=1)
     nat\\{1} | M | F
          BE | 0 | 1
          FO | 2 | 3

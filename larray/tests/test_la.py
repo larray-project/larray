@@ -3011,7 +3011,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
                                                 "the xlwings backend"):
-            read_excel('test.xlsx', engine='xlwings', dtype=float)
+            read_excel(abspath('test.xlsx'), engine='xlwings', dtype=float)
 
     def test_read_excel_pandas(self):
         la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
@@ -3089,139 +3089,139 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[x.arr[1], 0, 'F', x.nat[1], :],
                            [3722, 3395, 3347])
 
-        la.to_csv('out.csv')
+        la.to_csv(abspath('out.csv'))
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
                   '1,0,F,1,3722,3395,3347\n',
                   '1,0,F,2,338,316,323\n']
-        with open('out.csv') as f:
+        with open(abspath('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la.to_csv('out.csv', transpose=False)
+        la.to_csv(abspath('out.csv'), transpose=False)
         result = ['arr,age,sex,nat,time,0\n', '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
-        with open('out.csv') as f:
+        with open(abspath('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
         la = ndrange([Axis('time', range(2015, 2018))])
-        la.to_csv('test_out1d.csv')
+        la.to_csv(abspath('test_out1d.csv'))
         result = ['time,2015,2016,2017\n',
                   ',0,1,2\n']
-        with open('test_out1d.csv') as f:
+        with open(abspath('test_out1d.csv')) as f:
             self.assertEqual(f.readlines(), result)
 
     def test_to_excel_xlsxwriter(self):
-        fname = 'test_to_excel_xlsxwriter.xlsx'
+        fpath = abspath('test_to_excel_xlsxwriter.xlsx')
 
         # 1D
         a1 = ndtest(3)
 
-        # fname/Sheet1/A1
-        a1.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
-        # fname/Sheet1/A1(transposed)
-        a1.to_excel(fname, transpose=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1(transposed)
+        a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
         # 2D
         a2 = ndtest((2, 3))
 
-        # fname/Sheet1/A1
-        a2.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a2)
 
-        # fname/Sheet1/A10
+        # fpath/Sheet1/A10
         # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
-        # a2.to_excel('fname', 'Sheet1', 'A10', engine='xlsxwriter')
-        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=9)
+        # a2.to_excel('fpath', 'Sheet1', 'A10', engine='xlsxwriter')
+        # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
         # assert_array_equal(res, a2)
 
-        # fname/other/A1
-        a2.to_excel(fname, 'other', engine='xlsxwriter')
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a2.to_excel(fpath, 'other', engine='xlsxwriter')
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a2)
 
         # 3D
         a3 = ndtest((2, 3, 4))
 
-        # fname/Sheet1/A1
+        # fpath/Sheet1/A1
         # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
-        a3.to_excel(fname, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
-        # a3.to_excel('fname', overwrite_file=True, engine='openpyxl')
-        res = read_excel(fname, engine='xlrd')
+        a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+        # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a3)
 
-        # fname/Sheet1/A20
+        # fpath/Sheet1/A20
         # TODO: implement position (see above)
-        # a3.to_excel('fname', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
-        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=19)
+        # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+        # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
         # assert_array_equal(res, a3)
 
-        # fname/other/A1
-        a3.to_excel(fname, 'other', engine='xlsxwriter', merge_cells=False)
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
         # 1D
         a1 = ndtest(3)
 
-        # fname/Sheet1/A1
-        a1.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
-        # fname/Sheet1/A1(transposed)
-        a1.to_excel(fname, transpose=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1(transposed)
+        a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
         # 2D
         a2 = ndtest((2, 3))
 
-        # fname/Sheet1/A1
-        a2.to_excel(fname, overwrite_file=True, engine='xlsxwriter')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a2)
 
-        # fname/Sheet1/A10
+        # fpath/Sheet1/A10
         # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
-        # a2.to_excel('fname', 'Sheet1', 'A10', engine='xlsxwriter')
-        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=9)
+        # a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlsxwriter')
+        # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
         # assert_array_equal(res, a2)
 
-        # fname/other/A1
-        a2.to_excel(fname, 'other', engine='xlsxwriter')
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a2.to_excel(fpath, 'other', engine='xlsxwriter')
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a2)
 
         # 3D
         a3 = ndtest((2, 3, 4))
 
-        # fname/Sheet1/A1
+        # fpath/Sheet1/A1
         # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
-        a3.to_excel(fname, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
-        # a3.to_excel('fname', overwrite_file=True, engine='openpyxl')
-        res = read_excel(fname, engine='xlrd')
+        a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+        # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a3)
 
-        # fname/Sheet1/A20
+        # fpath/Sheet1/A20
         # TODO: implement position (see above)
-        # a3.to_excel('fname', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
-        # res = read_excel('fname', 'Sheet1', engine='xlrd', skiprows=19)
+        # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+        # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
         # assert_array_equal(res, a3)
 
-        # fname/other/A1
-        a3.to_excel(fname, 'other', engine='xlsxwriter', merge_cells=False)
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
     @unittest.skipIf(xw is None, "xlwings is not available")
     def test_to_excel_xlwings(self):
         # TODO: we should implement an app= argument to to_excel to reuse the same Excel instance
-        fname = 'test_to_excel_xlwings.xlsx'
+        fpath = abspath('test_to_excel_xlwings.xlsx')
 
         # 1D
         a1 = ndtest(3)
@@ -3229,51 +3229,51 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # live book/Sheet1/A1
         # a1.to_excel()
 
-        # fname/Sheet1/A1
-        a1.to_excel(fname, overwrite_file=True, engine='xlwings')
+        # fpath/Sheet1/A1
+        a1.to_excel(fpath, overwrite_file=True, engine='xlwings')
         # we use xlrd to read back instead of xlwings even if that should work, to make the test faster
-        res = read_excel(fname, engine='xlrd')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
-        # fname/Sheet1/A1(transposed)
-        a1.to_excel(fname, transpose=True, engine='xlwings')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1(transposed)
+        a1.to_excel(fpath, transpose=True, engine='xlwings')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
         # 2D
         a2 = ndtest((2, 3))
 
-        # fname/Sheet1/A1
-        a2.to_excel(fname, overwrite_file=True, engine='xlwings')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a2.to_excel(fpath, overwrite_file=True, engine='xlwings')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a2)
 
-        # fname/Sheet1/A10
-        a2.to_excel(fname, 'Sheet1', 'A10', engine='xlwings')
-        res = read_excel(fname, 'Sheet1', engine='xlrd', skiprows=9)
+        # fpath/Sheet1/A10
+        a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlwings')
+        res = read_excel(fpath, 'Sheet1', engine='xlrd', skiprows=9)
         assert_array_equal(res, a2)
 
-        # fname/other/A1
-        a2.to_excel(fname, 'other', engine='xlwings')
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a2.to_excel(fpath, 'other', engine='xlwings')
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a2)
 
         # 3D
         a3 = ndtest((2, 3, 4))
 
-        # fname/Sheet1/A1
-        a3.to_excel(fname, overwrite_file=True, engine='xlwings')
-        res = read_excel(fname, engine='xlrd')
+        # fpath/Sheet1/A1
+        a3.to_excel(fpath, overwrite_file=True, engine='xlwings')
+        res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a3)
 
-        # fname/Sheet1/A20
-        a3.to_excel(fname, 'Sheet1', 'A20', engine='xlwings')
-        res = read_excel(fname, 'Sheet1', engine='xlrd', skiprows=19)
+        # fpath/Sheet1/A20
+        a3.to_excel(fpath, 'Sheet1', 'A20', engine='xlwings')
+        res = read_excel(fpath, 'Sheet1', engine='xlrd', skiprows=19)
         assert_array_equal(res, a3)
 
-        # fname/other/A1
-        a3.to_excel(fname, 'other', engine='xlwings')
-        res = read_excel(fname, 'other', engine='xlrd')
+        # fpath/other/A1
+        a3.to_excel(fpath, 'other', engine='xlwings')
+        res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
     @unittest.skipIf(xw is None, "xlwings is not available")
@@ -3284,7 +3284,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # 1) with headers
         # ===============
 
-        with open_excel('test_open_excel.xlsx', app=app) as wb:
+        with open_excel(abspath('test_open_excel.xlsx'), app=app) as wb:
             # 1D
             a1 = ndtest(3)
 
@@ -3364,7 +3364,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # 2) without headers
         # ==================
-        with open_excel('test_open_excel_no_headers.xlsx', app=app) as wb:
+        with open_excel(abspath('test_open_excel_no_headers.xlsx'), app=app) as wb:
             # 1D
             a1 = ndtest(3)
 

@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
-from larray.tests.test_la import assert_array_nan_equal
+from larray.tests.test_la import assert_array_nan_equal, abspath
 
 
 def equal(o1, o2):
@@ -42,7 +42,7 @@ class TestSession(TestCase):
                     e=self.e, f=self.f, g=self.g)
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g'])
 
-        s = Session('test_session.h5')
+        s = Session(abspath('test_session.h5'))
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
         # this needs xlwings installed
@@ -126,32 +126,33 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
 
     def test_h5_io(self):
-        self.session.dump('test_session.h5')
+        fpath = abspath('test_session.h5')
+
+        self.session.dump(fpath)
         s = Session()
-        s.load('test_session.h5')
+        s.load(fpath)
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
         s = Session()
-        s.load('test_session.h5', ['e', 'f'])
+        s.load(fpath, ['e', 'f'])
         self.assertEqual(s.names, ['e', 'f'])
 
     def test_xlsx_io(self):
-        self.session.dump('test_session.xlsx', engine='pandas_excel')
-        self.session.dump('test_session_ef.xlsx', ['e', 'f'],
-                          engine='pandas_excel')
+        self.session.dump(abspath('test_session.xlsx'), engine='pandas_excel')
+        self.session.dump(abspath('test_session_ef.xlsx'), ['e', 'f'], engine='pandas_excel')
         # dump_excel uses default engine (xlwings) which is not available on
         # travis
         # self.session.dump_excel('test_session2.xlsx')
 
         s = Session()
-        s.load('test_session_ef.xlsx', engine='pandas_excel')
+        s.load(abspath('test_session_ef.xlsx'), engine='pandas_excel')
         self.assertEqual(s.names, ['e', 'f'])
 
     def test_csv_io(self):
-        self.session.dump_csv('test_session_csv')
+        self.session.dump_csv(abspath('test_session_csv'))
 
         s = Session()
-        s.load('test_session_csv', engine='pandas_csv')
+        s.load(abspath('test_session_csv'), engine='pandas_csv')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
     def test_eq(self):
