@@ -1031,3 +1031,28 @@ for y in time[start_year + 1:]:
 for c in sutcode.matches('^...$') | sutcode.matches('^..$') - 'ND':
     g = sutcode.startswith(c) - c
 
+==========================================
+==========================================
+
+# other query style
+
+# we could have special aggregate functions
+subset = pop.q('M', sum[10:20])
+# works nicely to disambiguate axes
+subset = pop.q('M', age.sum[10:20, 20:30])
+# but we have a problem with naming the aggregated labels (this cannot work except using a full-string syntax)
+subset = pop.q('M', age.sum[10:20 >> 'yada1', 20:30 >> 'yada2'])
+# this, however could work, but would be error-prone:
+subset = pop.q('M', age.sum[10:20, 20:30] >> ('yada1', 'yada2'))
+# this could work though
+subset = pop.q('M', age.sum(S[10:20] >> 'yada1', S[20:30] >> 'yada2'))
+# which maps nicely to the string-only:
+subset = pop.q('M, age.sum(10:20 >> yada1, 20:30 >> yada2'))
+# without ambiguity, that would be
+subset = pop.q('M, sum(10:20 >> yada1, 20:30 >> yada2'))
+
+# if using a function (like .q) we could also "rename" axes on the fly. the above would create an aggregated axis
+# named "age" but the code below would create "toto" instead
+subset = pop.q('M', toto=age.sum[10:20, 20:30])
+
+
