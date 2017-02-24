@@ -3963,6 +3963,11 @@ class LArray(object):
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
+        >>> arr2 = ndrange([row, column])
+        >>> arr.replace_axes(arr2.axes)
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
         """
         if isinstance(axes_to_replace, list) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
@@ -3976,6 +3981,8 @@ class LArray(object):
                 items = list(axes_to_replace.items())
             elif isinstance(axes_to_replace, list):
                 items = axes_to_replace[:]
+            elif isinstance(axes_to_replace, AxisCollection):
+                items = list(zip(axes, axes_to_replace))
             elif isinstance(axes_to_replace, (str, Axis, int)):
                 items = [(axes_to_replace, new_axis)]
             else:
