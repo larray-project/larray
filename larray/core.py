@@ -9165,7 +9165,7 @@ def from_lists(data, nb_index=None, index_col=None):
     return df_aslarray(df, raw=index_col is None, parse_header=False)
 
 
-def from_string(s, nb_index=None, index_col=None, sep=','):
+def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
     """Create an array from a multi-line string.
 
     Parameters
@@ -9179,6 +9179,9 @@ def from_string(s, nb_index=None, index_col=None, sep=','):
         List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
     sep : str
         delimiter used to split each line into cells.
+    dtype : data-type, optional
+        Desired data-type for the array, e.g., `numpy.int8`.
+        Default is `numpy.float64`.
 
     Returns
     -------
@@ -9186,8 +9189,11 @@ def from_string(s, nb_index=None, index_col=None, sep=','):
 
     Examples
     --------
-
     >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3")
+    nat\\sex |   M |   F
+         BE | 0.0 | 1.0
+         FO | 2.0 | 3.0
+    >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3", dtype=int)
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
@@ -9196,7 +9202,7 @@ def from_string(s, nb_index=None, index_col=None, sep=','):
 
     >>> from_string('''nat\\sex, M, F
     ...                BE,       0, 1
-    ...                FO,       2, 3''')
+    ...                FO,       2, 3''', dtype=int)
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
@@ -9207,14 +9213,15 @@ def from_string(s, nb_index=None, index_col=None, sep=','):
     ... nat\\sex, M, F
     ... BE,       0, 1
     ... FO,       2, 3
-    ... ''')
+    ... ''', dtype=int)
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     """
     data = [[cell.strip() for cell in line.split(sep)]
             for line in s.strip().splitlines()]
-    return from_lists(data, nb_index=nb_index, index_col=index_col)
+    res = from_lists(data, nb_index=nb_index, index_col=index_col)
+    return res.astype(dtype)
 
 
 def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
