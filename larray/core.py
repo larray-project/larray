@@ -112,7 +112,8 @@ from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           decode, basestring, unicode, bytes, izip, rproduct,
                           ReprString, duplicates, array_lookup2, strip_rows,
-                          skip_comment_cells, find_closing_chr, PY3)
+                          skip_comment_cells, find_closing_chr, StringIO, PY3)
+
 
 def _range_to_slice(seq, length=None):
     """
@@ -9165,7 +9166,7 @@ def from_lists(data, nb_index=None, index_col=None):
     return df_aslarray(df, raw=index_col is None, parse_header=False)
 
 
-def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
+def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
     """Create an array from a multi-line string.
 
     Parameters
@@ -9179,9 +9180,8 @@ def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
         List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
     sep : str
         delimiter used to split each line into cells.
-    dtype : data-type, optional
-        Desired data-type for the array, e.g., `numpy.int8`.
-        Default is `numpy.float64`.
+    \**kwargs
+        See arguments of Pandas read_csv function.
 
     Returns
     -------
@@ -9189,11 +9189,10 @@ def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
 
     Examples
     --------
+    >>> from_string("sex,M,F\\n,0,1")
+    sex | M | F
+        | 0 | 1
     >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3")
-    nat\\sex |   M |   F
-         BE | 0.0 | 1.0
-         FO | 2.0 | 3.0
-    >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3", dtype=int)
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
@@ -9202,10 +9201,20 @@ def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
 
     >>> from_string('''nat\\sex, M, F
     ...                BE,       0, 1
-    ...                FO,       2, 3''', dtype=int)
+    ...                FO,       2, 3''')
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
+    >>> from_string('''age,nat\\sex, M, F
+    ...                0,  BE,       0, 1
+    ...                0,  FO,       2, 3
+    ...                1,  BE,       4, 5
+    ...                1,  FO,       6, 7''')
+    age | nat\sex | M | F
+      0 |      BE | 0 | 1
+      0 |      FO | 2 | 3
+      1 |      BE | 4 | 5
+      1 |      FO | 6 | 7
 
     Empty lines at the beginning or end are ignored, so one can also format the string like this:
 
@@ -9213,15 +9222,13 @@ def from_string(s, nb_index=None, index_col=None, sep=',', dtype=float):
     ... nat\\sex, M, F
     ... BE,       0, 1
     ... FO,       2, 3
-    ... ''', dtype=int)
+    ... ''')
     nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
     """
-    data = [[cell.strip() for cell in line.split(sep)]
-            for line in s.strip().splitlines()]
-    res = from_lists(data, nb_index=nb_index, index_col=index_col)
-    return res.astype(dtype)
+
+    return read_csv(StringIO(s), nb_index=nb_index, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)
 
 
 def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
