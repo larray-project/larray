@@ -83,7 +83,7 @@ from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate
                             QDialog, QDialogButtonBox, QPushButton,
                             QMessageBox, QMenu,
                             QLabel, QSpinBox, QWidget, QVBoxLayout,
-                            QAction, QStyle, QToolTip)
+                            QAction, QStyle, QToolTip, QShortcut)
 
 from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
                         QFont, QIcon, QFontMetrics, QCursor)
@@ -938,6 +938,21 @@ class ArrayView(QTableView):
 
         self.shape = shape
         self.context_menu = self.setup_context_menu()
+
+        # TODO: find a cleaner way to do this
+        # For some reason the shortcuts in the context menu are not available if the widget does not have the focus,
+        # EVEN when using action.setShortcutContext(Qt.ApplicationShortcut) (or Qt.WindowShortcut) so we redefine them
+        # here. I was also unable to get the function an action.triggered is connected to, so I couldn't do this via
+        # a loop on self.context_menu.actions.
+        shortcuts = [
+            (keybinding('Copy'), self.copy),
+            (QKeySequence("Ctrl+E"), self.to_excel),
+            (keybinding('Paste'), self.paste),
+            (keybinding('Print'), self.plot)
+        ]
+        for key_seq, target in shortcuts:
+            shortcut = QShortcut(key_seq, self)
+            shortcut.activated.connect(target)
 
         # make the grid a bit more compact
         self.horizontalHeader().setDefaultSectionSize(64)
