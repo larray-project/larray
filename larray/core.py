@@ -3912,12 +3912,13 @@ class LArray(object):
         Parameters
         ----------
         axes_to_replace : axis ref or dict {axis ref: axis} or
-                  list of tuple (axis ref, axis) or list of Axis
+                  list of tuple (axis ref, axis) or list of Axis or
+                  AxisCollection
             Axes to replace. If a single axis reference is given,
             the `new_axes` argument must be used. If a list of
-            Axis is given, all axes will be replaced by the
-            new ones. In that case, the number of new axes must
-            match the number of the old ones.
+            Axis or an AxisCollection is given, all axes will be
+            replaced by the new ones. In that case, the number of
+            new axes must match the number of the old ones.
         new_axis : Axis
             New axis if `axes_to_replace`
             contains a single axis reference.
@@ -3963,8 +3964,13 @@ class LArray(object):
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
+        >>> arr2 = ndrange([row, column])
+        >>> arr.replace_axes(arr2.axes)
+        row\\column | c0 | c1 | c2
+                r0 |  0 |  1 |  2
+                r1 |  3 |  4 |  5
         """
-        if isinstance(axes_to_replace, list) and \
+        if isinstance(axes_to_replace, (list, AxisCollection)) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
             if len(axes_to_replace) != len(self.axes):
                 raise ValueError('{} axes given as argument, expected '
