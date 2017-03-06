@@ -1218,7 +1218,7 @@ class ArrayView(QTableView):
             xlabel = dim_names[-1]
             xticklabels = [str(xlabels[1][c]) for c in range(col_min, col_max)]
             for row in range(len(data)):
-                label = ','.join([str(ylabels[j][row])
+                label = ','.join([str(ylabels[j][row_min + row])
                                   for j in range(1, len(ylabels))])
                 ax.plot(data[row], label=label)
 
@@ -1234,9 +1234,10 @@ class ArrayView(QTableView):
 
         if data.shape[1] != 1:
             # set legend
-            box = ax.get_position()
-            ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
-            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            # box = ax.get_position()
+            # ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+            # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            ax.legend()
 
         main = PlotDialog(figure, self)
         main.show()
