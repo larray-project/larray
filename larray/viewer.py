@@ -2553,7 +2553,13 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     depth : int, optional
         Stack depth where to look for variables.
     """
-    _app = qapplication()
+    _app = QApplication.instance()
+    if _app is None:
+        _app = qapplication()
+        parent = None
+    else:
+        parent = _app.activeWindow()
+
     if obj is None:
         local_vars = sys._getframe(depth + 1).f_locals
         obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
@@ -2567,9 +2573,12 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     if not title:
         title = get_title(obj, depth=depth + 1)
 
-    dlg = MappingEditor() if hasattr(obj, 'keys') else ArrayEditor()
+    dlg = MappingEditor(parent) if hasattr(obj, 'keys') else ArrayEditor(parent)
     if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
-        dlg.exec_()
+        if parent:
+            dlg.show()
+        else:
+            dlg.exec_()
 
 
 def view(obj=None, title=''):
@@ -2593,12 +2602,18 @@ def view(obj=None, title=''):
 
 def compare(*args, **kwargs):
     title = kwargs.pop('title', '')
-    _app = qapplication()
+    _app = QApplication.instance()
+    if _app is None:
+        _app = qapplication()
+        parent = None
+    else:
+        parent = _app.activeWindow()
+
     if any(isinstance(a, la.Session) for a in args):
-        dlg = SessionComparator()
+        dlg = SessionComparator(parent)
         default_name = 'session'
     else:
-        dlg = ArrayComparator()
+        dlg = ArrayComparator(parent)
         default_name = 'array'
 
     def get_name(i, obj, depth=0):
@@ -2607,7 +2622,10 @@ def compare(*args, **kwargs):
 
     names = [get_name(i, a, depth=1) for i, a in enumerate(args)]
     if dlg.setup_and_check(args, names=names, title=title):
-        dlg.exec_()
+        if parent:
+            dlg.show()
+        else:
+            dlg.exec_()
 
 
 _orig_display_hook = sys.displayhook
