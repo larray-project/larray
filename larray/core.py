@@ -967,6 +967,36 @@ class Axis(object):
         self._labels = labels
         self._iswildcard = iswildcard
 
+    def by(self, length, step=None):
+        """Split axis into several groups of specified length.
+
+        Parameters
+        ----------
+        length : int
+            length of groups
+        step : int, optional
+            step between groups. Defaults to length.
+
+        Notes
+        -----
+        step can be smaller than length, in which case, this will produce overlapping groups.
+
+        Returns
+        -------
+        list of Group
+
+        Examples
+        --------
+        >>> age = Axis('age', range(10))
+        >>> age.by(3)
+        (age.i[0:3], age.i[3:6], age.i[6:9], age.i[9:10])
+        >>> age.by(3, 4)
+        (age.i[0:3], age.i[4:7], age.i[8:10])
+        >>> age.by(5, 3)
+        (age.i[0:5], age.i[3:8], age.i[6:10], age.i[9:10])
+        """
+        return self[:].by(length, step)
+
     def extend(self, labels):
         """
         Append new labels to an axis or increase its length
@@ -1786,13 +1816,14 @@ class Group(object):
                 orig_key.start, orig_key.stop, orig_key.step
             if orig_step is None:
                 orig_step = 1
-            orig_start_pos = self.translate(orig_start)
+
+            orig_start_pos = self.translate(orig_start) if orig_start is not None else 0
             if isinstance(key, slice):
                 key_start, key_stop, key_step = key.start, key.stop, key.step
                 if key_step is None:
                     key_step = 1
 
-                orig_stop_pos = self.translate(orig_stop, stop=True)
+                orig_stop_pos = self.translate(orig_stop, stop=True) if orig_stop is not None else len(self)
                 new_start = orig_start_pos + key_start * orig_step
                 new_stop = min(orig_start_pos + key_stop * orig_step,
                                orig_stop_pos)
