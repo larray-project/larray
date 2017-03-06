@@ -2246,9 +2246,19 @@ class LinearGradient(object):
         stop_points = sorted(stop_points, key=lambda x: x[0])
         positions, colors = zip(*stop_points)
         self.positions = np.array(positions)
+        assert len(np.unique(self.positions)) == len(self.positions)
         self.colors = np.array(colors)
 
     def __getitem__(self, key):
+        """
+        Parameters
+        ----------
+        key : float
+
+        Returns
+        -------
+        QColor
+        """
         if key != key:
             key = self.positions[0]
         pos_idx = np.searchsorted(self.positions, key, side='right') - 1
@@ -2256,7 +2266,9 @@ class LinearGradient(object):
         if pos_idx > 0 and key in self.positions:
             pos_idx -= 1
         pos0, pos1 = self.positions[pos_idx:pos_idx + 2]
+        # col0 and col1 are ndarrays
         col0, col1 = self.colors[pos_idx:pos_idx + 2]
+        assert pos0 != pos1
         color = col0 + (col1 - col0) * (key - pos0) / (pos1 - pos0)
         return to_qvariant(QColor.fromHsvF(*color))
 
@@ -2314,9 +2326,9 @@ class ArrayComparator(QDialog):
             # all 0.5 (white)
             bg_value = la.full_like(diff, 0.5)
         gradient = LinearGradient([(0, [.66, .85, 1., .6]),
-                                   (0.5 - 1e-300, [.66, .15, 1., .6]),
+                                   (0.5 - 1e-16, [.66, .15, 1., .6]),
                                    (0.5, [1., 0., 1., 1.]),
-                                   (0.5 + 1e-300, [.99, .15, 1., .6]),
+                                   (0.5 + 1e-16, [.99, .15, 1., .6]),
                                    (1, [.99, .85, 1., .6])])
 
         self.arraywidget = ArrayEditorWidget(self, self.array, readonly=True,
@@ -2360,9 +2372,9 @@ class SessionComparator(QDialog):
         self.arraywidget = None
         self.maxdiff_label = None
         self.gradient = LinearGradient([(0, [.66, .85, 1., .6]),
-                                        (0.5 - 1e-300, [.66, .15, 1., .6]),
+                                        (0.5 - 1e-16, [.66, .15, 1., .6]),
                                         (0.5, [1., 0., 1., 1.]),
-                                        (0.5 + 1e-300, [.99, .15, 1., .6]),
+                                        (0.5 + 1e-16, [.99, .15, 1., .6]),
                                         (1, [.99, .85, 1., .6])])
 
     def setup_and_check(self, sessions, names, title=''):
