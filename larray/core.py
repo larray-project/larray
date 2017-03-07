@@ -5857,13 +5857,11 @@ class LArray(object):
         """
         if axis is None:
             if self.ndim > 1:
-                raise ValueError("array has ndim > 1 and no axis specified for "
-                                 "argsort")
+                raise ValueError("array has ndim > 1 and no axis specified for argsort")
             axis = self.axes[0]
-        axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        data = axis.labels[self.data.argsort(axis_idx, kind=kind)]
-        new_axis = Axis(axis.name, np.arange(len(axis)))
-        return LArray(data, self.axes.replace(axis, new_axis))
+        axis = self.axes[axis]
+        pos = self.posargsort(axis, kind=kind)
+        return LArray(axis.labels[pos.data], pos.axes)
 
     def posargsort(self, axis=None, kind='quicksort'):
         """Returns the indices that would sort this array.
@@ -5889,25 +5887,26 @@ class LArray(object):
         --------
         >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
         >>> sex = Axis('sex', ['M', 'F'])
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = LArray([[1, 5], [3, 2], [0, 4]], [nat, sex])
         >>> arr
         nat\\sex | M | F
-             BE | 0 | 1
+             BE | 1 | 5
              FR | 3 | 2
-             IT | 2 | 5
-        >>> arr.posargsort(x.sex)
+             IT | 0 | 4
+        >>> arr.posargsort(x.nat)
         nat\\sex | M | F
-             BE | 0 | 1
-             FR | 1 | 0
-             IT | 0 | 1
+              0 | 2 | 1
+              1 | 0 | 2
+              2 | 1 | 0
         """
         if axis is None:
             if self.ndim > 1:
-                raise ValueError("array has ndim > 1 and no axis specified for "
-                                 "posargsort")
+                raise ValueError("array has ndim > 1 and no axis specified for posargsort")
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
-        return LArray(self.data.argsort(axis_idx, kind=kind), self.axes)
+        data = self.data.argsort(axis_idx, kind=kind)
+        new_axis = Axis(axis.name, np.arange(len(axis)))
+        return LArray(data, self.axes.replace(axis, new_axis))
 
     def copy(self):
         """Returns a copy of the array.
