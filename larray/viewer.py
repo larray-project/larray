@@ -2580,7 +2580,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
             dlg.exec_()
 
 
-def view(obj=None, title=''):
+def view(obj=None, title='', depth=0):
     """
     Starts a new viewer window. Arrays are loaded in
     readonly mode and their content cannot be modified.
@@ -2596,7 +2596,7 @@ def view(obj=None, title=''):
         Title for the current object.
         A default one is generated if not provided.
     """
-    edit(obj, title=title, readonly=True, depth=1)
+    edit(obj, title=title, readonly=True, depth=depth + 1)
 
 
 def compare(*args, **kwargs):
