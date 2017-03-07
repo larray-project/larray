@@ -1254,15 +1254,15 @@ class ArrayView(QTableView):
             # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
             ax.legend()
 
-        main = PlotDialog(figure, self)
+        canvas = FigureCanvas(figure)
+        main = PlotDialog(canvas, self)
         main.show()
 
 
 class PlotDialog(QDialog):
-    def __init__(self, figure, parent=None):
+    def __init__(self, canvas, parent=None):
         super(PlotDialog, self).__init__(parent)
 
-        canvas = FigureCanvas(figure)
         toolbar = NavigationToolbar(canvas, self)
 
         # set the layout
@@ -1270,7 +1270,6 @@ class PlotDialog(QDialog):
         layout.addWidget(toolbar)
         layout.addWidget(canvas)
         self.setLayout(layout)
-
         canvas.draw()
 
 
