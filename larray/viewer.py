@@ -2185,6 +2185,11 @@ class MappingEditor(QDialog):
                     if self._display_in_grid('_', cur_output):
                         self.view_expr(cur_output)
 
+                    if isinstance(cur_output, matplotlib.axes.Subplot) and 'inline' not in matplotlib.get_backend():
+                        canvas = FigureCanvas(cur_output.figure)
+                        main = PlotDialog(canvas, self)
+                        main.show()
+
     def on_item_changed(self, curr, prev):
         name = str(curr.text())
         array = self.data[name]
