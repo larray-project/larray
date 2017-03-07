@@ -19,7 +19,7 @@ except ImportError:
 
 import numpy as np
 
-if sys.version < '3':
+if sys.version_info[0] < 3:
     basestring = basestring
     bytes = str
     unicode = unicode
@@ -32,6 +32,11 @@ else:
     unicode = str
     long = int
     PY3 = True
+
+if PY3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 
 def csv_open(filename, mode='r'):
