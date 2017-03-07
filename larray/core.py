@@ -8531,7 +8531,11 @@ class LArray(object):
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a.plot()  # doctest: +SKIP
         """
-        return self.to_frame().plot
+        combined = self.combine_axes(self.axes[:-1], sep=' ') if self.ndim > 2 else self
+        if combined.ndim == 1:
+            return combined.to_series().plot
+        else:
+            return combined.transpose().to_frame().plot
 
     @property
     def shape(self):
