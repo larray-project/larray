@@ -3905,7 +3905,7 @@ class LArray(object):
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (axes.shape, data.shape))
 
-        # Because __getattr__ and __setattr__ have been rewritten
+        # Because __getattr__ and __setattr__ have been overridden
         object.__setattr__(self, 'data', data)
         object.__setattr__(self, 'axes', axes)
         object.__setattr__(self, 'title', title)
@@ -3937,31 +3937,28 @@ class LArray(object):
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
-    def replace_axes(self, axes_to_replace=None, new_axis=None, **kwargs):
+    def set_axes(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
         """
-        Returns an array with one or several axes replaced.
+        Replace one, several or all axes of the array.
 
         Parameters
         ----------
-        axes_to_replace : axis ref or dict {axis ref: axis} or
-                  list of tuple (axis ref, axis) or list of Axis or
-                  AxisCollection
-            Axes to replace. If a single axis reference is given,
-            the `new_axes` argument must be used. If a list of
-            Axis or an AxisCollection is given, all axes will be
-            replaced by the new ones. In that case, the number of
-            new axes must match the number of the old ones.
+        axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
+                          or list of Axis or AxisCollection
+            Axes to replace. If a single axis reference is given, the `new_axiss` argument must be provided.
+            If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
+            In that case, the number of new axes must match the number of the old ones.
         new_axis : Axis
-            New axis if `axes_to_replace`
-            contains a single axis reference.
+            New axis if `axes_to_replace` contains a single axis reference.
+        inplace : bool
+            Whether or not to modify the original object or return a new array and leave the original intact.
         **kwargs : Axis
-            New axis for each axis to replace given
-            as a keyword argument.
+            New axis for each axis to replace given as a keyword argument.
 
         Returns
         -------
         LArray
-            Array with some axes replaced.
+            Array with axes replaced.
 
         See Also
         --------
@@ -3976,28 +3973,37 @@ class LArray(object):
          a1 |  3 |  4 |  5
         >>> row = Axis('row', ['r0', 'r1'])
         >>> column = Axis('column', ['c0', 'c1', 'c2'])
-        >>> arr.replace_axes(x.a, row)
+
+        Replace one axis (second argument `new_axis` must be provided)
+
+        >>> arr.set_axes(x.a, row)
         row\\b | b0 | b1 | b2
            r0 |  0 |  1 |  2
            r1 |  3 |  4 |  5
-        >>> arr.replace_axes([row, column])
+
+        Replace several axes (keywords, list of tuple or dictionary)
+
+        >>> arr.set_axes(a=row, b=column)
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
-        >>> arr.replace_axes(a=row, b=column)
+        >>> arr.set_axes([(x.a, row), (x.b, column)])
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
-        >>> arr.replace_axes([(x.a, row), (x.b, column)])
+        >>> arr.set_axes({x.a: row, x.b: column})
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
-        >>> arr.replace_axes({x.a: row, x.b: column})
+
+        Replace all axes (list of axes or AxisCollection)
+
+        >>> arr.set_axes([row, column])
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         >>> arr2 = ndrange([row, column])
-        >>> arr.replace_axes(arr2.axes)
+        >>> arr.set_axes(arr2.axes)
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
@@ -4021,13 +4027,17 @@ class LArray(object):
             items += kwargs.items()
             for old, new in items:
                 axes = axes.replace(old, new)
-        return LArray(self.data, axes, title=self.title)
+        if inplace:
+            object.__setattr__(self, 'axes', axes)
+            return self
+        else:
+            return LArray(self.data, axes, title=self.title)
 
     def with_axes(self, axes):
         warnings.warn("LArray.with_axes is deprecated, "
                       "use LArray.replace_axes instead",
                       DeprecationWarning)
-        return self.replace_axes(axes)
+        return self.set_axes(axes)
 
     def __getattr__(self, key):
         try:
@@ -4271,28 +4281,27 @@ class LArray(object):
     # Python 2
     __nonzero__= __bool__
 
-    def rename(self, renames=None, to=None, **kwargs):
-        """Renames some array axes.
+    def rename(self, renames=None, to=None, inplace=False, **kwargs):
+        """Renames axes of the array.
 
         Parameters
         ----------
         renames : axis ref or dict {axis ref: str} or
                   list of tuple (axis ref, str)
-            Renames to apply. If a single axis reference
-            is given, the `to` argument must be used.
-        to : str or Axis
-            New name if `renames` contains a single axis reference
-        **kwargs : str
+            Renames to apply. If a single axis reference is given, the `to` argument must be used.
+        to : string or Axis
+            New name if `renames` contains a single axis reference.
+        **kwargs :
             New name for each axis given as a keyword argument.
 
         Returns
         -------
         LArray
-            Array with some axes renamed.
+            Array with axes renamed.
 
         See Also
         --------
-        replace_axes : replace one or several axes
+        set_axes : replace one or several axes
 
         Examples
         --------
@@ -4332,7 +4341,11 @@ class LArray(object):
         renames = {self.axes[k]: v for k, v in items}
         axes = [a.rename(renames[a]) if a in renames else a
                 for a in self.axes]
-        return LArray(self.data, axes)
+        if inplace:
+            object.__setattr__(self, 'axes', AxisCollection(axes))
+            return self
+        else:
+            return LArray(self.data, axes)
 
     def sort_values(self, key):
         """Sorts values of the array.
@@ -8657,13 +8670,12 @@ class LArray(object):
 
         Parameters
         ----------
-        axis
+        axis : string or Axis
             Axis for which we want to replace the labels.
-        labels : list of axis labels
-            New labels.
+        labels : int or iterable
+            Integer or list of values usable as the collection of labels for an Axis.
         inplace : bool
-            Whether or not to modify the original object or return a new
-            array and leave the original intact.
+            Whether or not to modify the original object or return a new array and leave the original intact.
 
         Returns
         -------
@@ -8677,6 +8689,10 @@ class LArray(object):
         nat\\sex | M | F
              BE | 0 | 1
              FO | 2 | 3
+        >>> a.set_labels(x.sex, 'Men,Women')
+        nat\\sex | Men | Women
+             BE |   0 |     1
+             FO |   2 |     3
         >>> a.set_labels(x.sex, ['Men', 'Women'])
         nat\\sex | Men | Women
              BE |   0 |     1
@@ -8687,8 +8703,7 @@ class LArray(object):
             axis.labels = labels
             return self
         else:
-            return LArray(self.data,
-                          self.axes.replace(axis, Axis(axis.name, labels)))
+            return LArray(self.data, self.axes.replace(axis, Axis(axis.name, labels)))
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
         return LArray(self.data.astype(dtype, order, casting, subok, copy),
