@@ -3945,7 +3945,7 @@ class LArray(object):
         ----------
         axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
                           or list of Axis or AxisCollection
-            Axes to replace. If a single axis reference is given, the `new_axiss` argument must be provided.
+            Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
         new_axis : Axis
@@ -3983,14 +3983,10 @@ class LArray(object):
 
         Replace several axes (keywords, list of tuple or dictionary)
 
-        >>> arr.set_axes(a=row, b=column)
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
-        >>> arr.set_axes([(x.a, row), (x.b, column)])
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
+        >>> arr.set_axes(a=row, b=column) # doctest: +SKIP
+        >>> # or
+        >>> arr.set_axes([(x.a, row), (x.b, column)]) # doctest: +SKIP
+        >>> # or
         >>> arr.set_axes({x.a: row, x.b: column})
         row\\column | c0 | c1 | c2
                 r0 |  0 |  1 |  2
