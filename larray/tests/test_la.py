@@ -2847,7 +2847,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = LArray(self.small_data, axes=(self.sex, lipro2),
                     title=self.small_title)
         # replace one axis
-        la2 = self.small.replace_axes(x.lipro, lipro2)
+        la2 = self.small.set_axes(x.lipro, lipro2)
         assert_array_equal(la, la2)
         self.assertEqual(la.title, la2.title, "title of array returned by "
                                               "replace_axes should be the same as the original one. "
@@ -2856,16 +2856,16 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = LArray(self.small_data, axes=(sex2, lipro2),
                     title=self.small_title)
         # all at once
-        la2 = self.small.replace_axes([sex2, lipro2])
+        la2 = self.small.set_axes([sex2, lipro2])
         assert_array_equal(la, la2)
         # using keywrods args
-        la2 = self.small.replace_axes(sex=sex2, lipro=lipro2)
+        la2 = self.small.set_axes(sex=sex2, lipro=lipro2)
         assert_array_equal(la, la2)
         # using dict
-        la2 = self.small.replace_axes({x.sex: sex2, x.lipro: lipro2})
+        la2 = self.small.set_axes({x.sex: sex2, x.lipro: lipro2})
         assert_array_equal(la, la2)
         # using list of pairs (axis_to_replace, new_axis)
-        la2 = self.small.replace_axes([(x.sex, sex2), (x.lipro, lipro2)])
+        la2 = self.small.set_axes([(x.sex, sex2), (x.lipro, lipro2)])
         assert_array_equal(la, la2)
 
     def test_append(self):
@@ -3618,7 +3618,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         f = Axis('f', 'f0,f1')
 
         # 4D(a, b, c, d) @ 3D(e, d, f) -> 5D(a, b, e, c, f)
-        arr3d = arr3d.replace_axes([e, d, f])
+        arr3d = arr3d.set_axes([e, d, f])
         res = from_lists([['a', 'b', 'e', 'c\\f', 'f0', 'f1'],
                           ['a0', 'b0', 'e0', 'c0', 2, 3],
                           ['a0', 'b0', 'e0', 'c1', 6, 11],
@@ -3659,7 +3659,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(arr3d.__matmul__(arr4d), res)
 
         # 4D(a, b, c, d) @ 3D(b, d, f) -> 4D(a, b, c, f)
-        arr3d = arr3d.replace_axes([b, d, f])
+        arr3d = arr3d.set_axes([b, d, f])
         res = from_lists([['a', 'b', 'c\\f', 'f0', 'f1'],
                           ['a0', 'b0', 'c0', 2, 3],
                           ['a0', 'b0', 'c1', 6, 11],
@@ -3684,7 +3684,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(arr3d.__matmul__(arr4d), res)
 
         # 4D(a, b, c, d) @ 2D(d, f) -> 5D(a, b, c, f)
-        arr2d = arr2d.replace_axes([d, f])
+        arr2d = arr2d.set_axes([d, f])
         res = from_lists([['a', 'b', 'c\\f', 'f0', 'f1'],
                           ['a0', 'b0', 'c0', 2, 3],
                           ['a0', 'b0', 'c1', 6, 11],
