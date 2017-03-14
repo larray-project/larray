@@ -145,16 +145,16 @@ class TestAxis(TestCase):
     def test_group(self):
         age = Axis('age', '..115')
         ages_list = [1, 5, 9]
-        self.assertEqual(age._group(ages_list), LGroup(ages_list, axis=age))
-        self.assertEqual(age._group(ages_list), LGroup(ages_list))
-        self.assertEqual(age._group('1,5,9'), LGroup(ages_list))
-        self.assertEqual(age._group(1, 5, 9), LGroup(ages_list))
+        self.assertEqual(age[ages_list], LGroup(ages_list, axis=age))
+        self.assertEqual(age[ages_list], LGroup(ages_list))
+        self.assertEqual(age['1,5,9'], LGroup(ages_list))
+        self.assertEqual(age[1, 5, 9], LGroup(ages_list))
 
         # with a slice string
-        self.assertEqual(age._group('10:20'), LGroup(slice(10, 20)))
+        self.assertEqual(age['10:20'], LGroup(slice(10, 20)))
 
         # with name
-        group = age._group(ages_list, name='teens')
+        group = age[ages_list] >> 'teens'
         self.assertEqual(group.key, ages_list)
         self.assertEqual(group.name, 'teens')
         self.assertIs(group.axis, age)
@@ -168,28 +168,20 @@ class TestAxis(TestCase):
         ages = [1, 5, 9]
 
         val_only = LGroup(ages)
-        self.assertTrue(group_equal(age._group(val_only),
-                                    LGroup(ages, axis=age)))
-        self.assertTrue(group_equal(age._group(val_only, name='a_name'),
-                                    LGroup(ages, 'a_name', axis=age)))
+        self.assertTrue(group_equal(age[val_only], LGroup(ages, axis=age)))
+        self.assertTrue(group_equal(age[val_only] >> 'a_name', LGroup(ages, 'a_name', axis=age)))
 
         val_name = LGroup(ages, 'val_name')
-        self.assertTrue(group_equal(age._group(val_name),
-                                    LGroup(ages, 'val_name', age)))
-        self.assertTrue(group_equal(age._group(val_name, name='a_name'),
-                                    LGroup(ages, 'a_name', age)))
+        self.assertTrue(group_equal(age[val_name], LGroup(ages, 'val_name', age)))
+        self.assertTrue(group_equal(age[val_name] >> 'a_name', LGroup(ages, 'a_name', age)))
 
         val_axis = LGroup(ages, axis=age)
-        self.assertTrue(group_equal(age._group(val_axis),
-                                    LGroup(ages, axis=age)))
-        self.assertTrue(group_equal(age._group(val_axis, name='a_name'),
-                                    LGroup(ages, 'a_name', axis=age)))
+        self.assertTrue(group_equal(age[val_axis], LGroup(ages, axis=age)))
+        self.assertTrue(group_equal(age[val_axis] >> 'a_name', LGroup(ages, 'a_name', axis=age)))
 
         val_axis_name = LGroup(ages, 'val_axis_name', age)
-        self.assertTrue(group_equal(age._group(val_axis_name),
-                                    LGroup(ages, 'val_axis_name', age)))
-        self.assertTrue(group_equal(age._group(val_axis_name, name='a_name'),
-                                    LGroup(ages, 'a_name', age)))
+        self.assertTrue(group_equal(age[val_axis_name], LGroup(ages, 'val_axis_name', age)))
+        self.assertTrue(group_equal(age[val_axis_name] >> 'a_name', LGroup(ages, 'a_name', age)))
 
     def test_init_from_group(self):
         code = Axis('code', 'C01..C03')
@@ -205,14 +197,9 @@ class TestAxis(TestCase):
 
     def test_getitem(self):
         age = Axis('age', '0..10')
-        lg = age._group(':3')
-        # these are equivalent
-        # self.assertEqual(age[:'17'], lg)
         group = age[':3']
         self.assertEqual(group.key, slice(None, 3, None))
         self.assertTrue(group.axis.equals(age))
-        self.assertEqual(group, lg, "%r != %r" % (group, lg))
-        # self.assertEqual(age[':7'], lg)
 
         group = age[:]
         self.assertEqual(group.key, slice(None))
@@ -241,9 +228,9 @@ class TestAxis(TestCase):
         # normal Axis
         age = Axis('age', '..10')
 
-        age2 = age._group(2)
-        age2bis = age._group((2,))
-        age2ter = age._group([2])
+        age2 = age[2]
+        age2bis = age[(2,)]
+        age2ter = age[[2]]
         age2qua = '2,'
 
         age20 = LGroup('20')
@@ -254,10 +241,10 @@ class TestAxis(TestCase):
         # TODO: move assert to another test
         # self.assertEqual(age2bis, age2ter)
 
-        age247 = age._group('2,4,7')
-        age247bis = age._group(['2', '4', '7'])
-        age359 = age._group(['3', '5', '9'])
-        age468 = age._group('4,6,8', name='even')
+        age247 = age['2,4,7']
+        age247bis = age[['2', '4', '7']]
+        age359 = age[['3', '5', '9']]
+        age468 = age['4,6,8'] >> 'even'
 
         self.assertTrue(5 in age)
         self.assertFalse('5' in age)
@@ -283,8 +270,7 @@ class TestAxis(TestCase):
         # aggregated Axis
         # FIXME: _to_tick(age2) == 2, but then np.asarray([2, '2,4,7', ...]) returns np.array(['2', '2,4,7'])
         # instead of returning an object array
-        agg = Axis("agg", (age2, age247, age359, age468,
-                           '2,6', ['3', '5', '7'], ('6', '7', '9')))
+        agg = Axis("agg", (age2, age247, age359, age468, '2,6', ['3', '5', '7'], ('6', '7', '9')))
         # fails because of above FIXME
         # self.assertTrue(age2 in agg)
         self.assertFalse(age2bis in agg)
@@ -308,18 +294,18 @@ class TestAxis(TestCase):
 
         self.assertTrue('2,6' in agg)
         self.assertTrue(['2', '6'] in agg)
-        self.assertTrue(age._group('2,6') in agg)
-        self.assertTrue(age._group(['2', '6']) in agg)
+        self.assertTrue(age['2,6'] in agg)
+        self.assertTrue(age[['2', '6']] in agg)
 
         self.assertTrue('3,5,7' in agg)
         self.assertTrue(['3', '5', '7'] in agg)
-        self.assertTrue(age._group('3,5,7') in agg)
-        self.assertTrue(age._group(['3', '5', '7']) in agg)
+        self.assertTrue(age['3,5,7'] in agg)
+        self.assertTrue(age[['3', '5', '7']] in agg)
 
         self.assertTrue('6,7,9' in agg)
         self.assertTrue(['6', '7', '9'] in agg)
-        self.assertTrue(age._group('6,7,9') in agg)
-        self.assertTrue(age._group(['6', '7', '9']) in agg)
+        self.assertTrue(age['6,7,9'] in agg)
+        self.assertTrue(age[['6', '7', '9']] in agg)
 
         self.assertFalse(5 in agg)
         self.assertFalse('5' in agg)
@@ -329,8 +315,8 @@ class TestAxis(TestCase):
         self.assertFalse(age20qua in agg)
         self.assertFalse('2,7' in agg)
         self.assertFalse(['2', '7'] in agg)
-        self.assertFalse(age._group('2,7') in agg)
-        self.assertFalse(age._group(['2', '7']) in agg)
+        self.assertFalse(age['2,7'] in agg)
+        self.assertFalse(age[['2', '7']] in agg)
 
 
 class TestLGroup(TestCase):
@@ -1562,7 +1548,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         age, geo, sex, lipro = self.larray.axes
 
         # 1) using a LGroup key
-        ages1_5_9 = age._group([1, 5, 9])
+        ages1_5_9 = age[[1, 5, 9]]
 
         # a) value has exactly the same shape as the target slice
         la = self.larray.copy()
@@ -1610,8 +1596,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = self.larray
         age, geo, sex, lipro = la.axes
 
-        ages1_5_9 = age._group(1, 5, 9)
-        ages11 = age._group(11)
+        ages1_5_9 = age[(1, 5, 9)]
+        ages11 = age[11]
 
         # with LGroup
         self.assertEqual(la.filter(age=ages1_5_9).shape, (3, 44, 2, 15))
@@ -1623,11 +1609,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.filter(age=ages11).shape, (44, 2, 15))
 
         # VG with a list of 1 value => do not collapse
-        self.assertEqual(la.filter(age=age._group([11])).shape, (1, 44, 2, 15))
+        self.assertEqual(la.filter(age=age[[11]]).shape, (1, 44, 2, 15))
 
         # VG with a list of 1 value defined as a string => do not collapse
-        self.assertEqual(la.filter(lipro=lipro._group('P01,')).shape,
-                         (116, 44, 2, 1))
+        self.assertEqual(la.filter(lipro=lipro['P01,']).shape, (116, 44, 2, 1))
 
         # VG with 1 value
         # XXX: this does not work. Do we want to make this work?
@@ -1841,8 +1826,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         self.assertEqual(la.sum(geo='A11,A21,A25').shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=['A11', 'A21', 'A25']).shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo=geo._group('A11,A21,A25')).shape,
-                         (116, 2, 15))
+        self.assertEqual(la.sum(geo=geo['A11,A21,A25']).shape, (116, 2, 15))
 
         self.assertEqual(la.sum(geo=':').shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
@@ -1870,15 +1854,12 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(aggregated.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        self.assertEqual(la.sum(lipro='P01,P03;P02,P05;:',
-                                geo=(vla, wal, bru, belgium)).shape,
-                         (116, 4, 2, 3))
+        self.assertEqual(la.sum(lipro='P01,P03;P02,P05;:', geo=(vla, wal, bru, belgium)).shape, (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
         # Note that you must list "full axes" aggregates first (Python does
         # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, geo=(vla, wal, bru, belgium)).shape,
-                         (4, 15))
+        self.assertEqual(la.sum(age, sex, geo=(vla, wal, bru, belgium)).shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
         reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
@@ -1983,8 +1964,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo._group('A11,A21,A25')).shape,
-                         (116, 2, 15))
+        self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
 
         self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
@@ -2123,8 +2103,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[['A11', 'A21', 'A25']]).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo._group('A11,A21,A25')).shape,
-                         (116, 2, 15))
+        self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
 
         self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
@@ -2300,7 +2279,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(reg[vla]['P03'], 389049848.0)
 
         # using an anonymous LGroup
-        vla = self.geo._group(self.vla_str)
+        vla = self.geo[self.vla_str]
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -2309,7 +2288,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(reg[vla, :].shape, (15,))
 
         # using a named LGroup
-        vla = self.geo._group(self.vla_str, name='Vlaanderen')
+        vla = self.geo[self.vla_str] >> 'Vlaanderen'
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -2337,7 +2316,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(reg[vla]['P03'], 389049848.0)
 
         # using an anonymous LGroup
-        vla = self.geo._group(self.vla_str)
+        vla = self.geo[self.vla_str]
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -2346,7 +2325,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(reg[vla, :].shape, (15,))
 
         # using a named LGroup
-        vla = self.geo._group(self.vla_str, name='Vlaanderen')
+        vla = self.geo[self.vla_str] >> 'Vlaanderen'
         # the following are all equivalent
         self.assertEqual(reg[vla].shape, (15,))
         self.assertEqual(reg[(vla,)].shape, (15,))
@@ -2366,10 +2345,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         vla = self.vla_str
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
         # using an anonymous LGroup
-        vla = self.geo._group(self.vla_str)
+        vla = self.geo[self.vla_str]
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
         # using a named LGroup
-        vla = self.geo._group(self.vla_str, name='Vlaanderen')
+        vla = self.geo[self.vla_str] >> 'Vlaanderen'
         self.assertEqual(reg.filter(geo=vla).shape, (15,))
 
         # Note that reg.filter(geo=(vla,)) does NOT work. It might be a
@@ -2444,9 +2423,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_sum_several_vg_groups(self):
         la, geo = self.larray, self.geo
-        fla = geo._group(self.vla_str, name='Flanders')
-        wal = geo._group(self.wal_str, name='Wallonia')
-        bru = geo._group(self.bru_str, name='Brussels')
+        fla = geo[self.vla_str] >> 'Flanders'
+        wal = geo[self.wal_str] >> 'Wallonia'
+        bru = geo[self.bru_str] >> 'Brussels'
 
         reg = la.sum(geo=(fla, wal, bru))
         self.assertEqual(reg.shape, (116, 3, 2, 15))
@@ -2563,9 +2542,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         reg = la.sum(age, sex, regions)
         self.assertEqual(reg.shape, (4, 15))
 
-        fla = geo._group(self.vla_str, name='Flanders')
-        wal = geo._group(self.wal_str, name='Wallonia')
-        bru = geo._group(self.bru_str, name='Brussels')
+        fla = geo[self.vla_str] >> 'Flanders'
+        wal = geo[self.wal_str] >> 'Wallonia'
+        bru = geo[self.bru_str] >> 'Brussels'
         regions = (fla, wal, bru)
         reg = la.sum(age, sex, regions)
 
@@ -2590,9 +2569,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         reg = la.sum(age, sex, regions)
         self.assertEqual(reg.shape, (4, 15))
 
-        fla = geo._group(self.vla_str, name='Flanders')
-        wal = geo._group(self.wal_str, name='Wallonia')
-        bru = geo._group(self.bru_str, name='Brussels')
+        fla = geo[self.vla_str] >> 'Flanders'
+        wal = geo[self.wal_str] >> 'Wallonia'
+        bru = geo[self.bru_str] >> 'Brussels'
         regions = (fla, wal, bru)
         reg = la.sum(age, sex, regions)
 
@@ -2620,9 +2599,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.with_total(lipro).shape, (116, 44, 2, 16))
         self.assertEqual(la.with_total(sex, lipro).shape, (116, 44, 3, 16))
 
-        fla = geo._group(self.vla_str, name='Flanders')
-        wal = geo._group(self.wal_str, name='Wallonia')
-        bru = geo._group(self.bru_str, name='Brussels')
+        fla = geo[self.vla_str] >> 'Flanders'
+        wal = geo[self.wal_str] >> 'Wallonia'
+        bru = geo[self.bru_str] >> 'Brussels'
         bel = geo.all('Belgium')
 
         self.assertEqual(la.with_total(geo=(fla, wal, bru), op=mean).shape,
