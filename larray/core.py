@@ -1046,8 +1046,7 @@ class Axis(object):
     def iswildcard(self):
         return self._iswildcard
 
-    # XXX: not sure I should offer an *args version
-    def group(self, *args, **kwargs):
+    def _group(self, *args, **kwargs):
         """
         Returns a group (list or unique element) of label(s) usable in .sum or .filter
 
@@ -1074,7 +1073,7 @@ class Axis(object):
         Examples
         --------
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
-        >>> odd_years = time.group([2007, 2009], name='odd_years')
+        >>> odd_years = time._group([2007, 2009], name='odd_years')
         >>> odd_years
         time[2007, 2009] >> 'odd_years'
         """
@@ -1101,6 +1100,9 @@ class Axis(object):
             return key.__class__(key.key, name, self)
         return LGroup(key, name, self)
 
+    def group(self,  *args, **kwargs):
+        raise NotImplementedError("Axis.group is deprecated. Use the syntax \"age[10:19] >> 'teenagers'\" instead.")
+
     def all(self, name=None):
         """
         Returns a group containing all labels.
@@ -1114,7 +1116,7 @@ class Axis(object):
         --------
         Axis.group
         """
-        return self.group(slice(None), name=name if name is not None else "all")
+        return self._group(slice(None), name=name if name is not None else "all")
 
     def subaxis(self, key, name=None):
         """
@@ -1335,7 +1337,7 @@ class Axis(object):
         """
         key is a label-based key (slice and fancy indexing are supported)
         """
-        return self.group(key)
+        return self._group(key)
 
     def __contains__(self, key):
         return _to_tick(key) in self._mapping
