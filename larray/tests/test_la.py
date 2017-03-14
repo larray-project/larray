@@ -220,7 +220,7 @@ class TestAxis(TestCase):
 
     def test_all(self):
         age = Axis('age', '..115')
-        group = age.all()
+        group = age[:] >> 'all'
         self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
@@ -1829,7 +1829,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(geo=geo['A11,A21,A25']).shape, (116, 2, 15))
 
         self.assertEqual(la.sum(geo=':').shape, (116, 2, 15))
-        self.assertEqual(la.sum(geo=geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo=geo[:]).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo=geo[':']).shape, (116, 2, 15))
         # Include everything between two labels. Since A11 is the first label
         # and A21 is the last one, this should be equivalent to the previous
@@ -1839,7 +1839,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la.sum(geo=geo['A11:A21']), la.sum(geo=':'))
 
         # a.2) a tuple of one group => do not collapse dimension
-        self.assertEqual(la.sum(geo=(geo.all(),)).shape, (116, 1, 2, 15))
+        self.assertEqual(la.sum(geo=(geo[:],)).shape, (116, 1, 2, 15))
 
         # a.3) several groups
         # string groups
@@ -1893,7 +1893,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la.sum('A11:A21'), la.sum(geo))
 
         # a.2) a tuple of one group => do not collapse dimension
-        self.assertEqual(la.sum((geo.all(),)).shape, (116, 1, 2, 15))
+        self.assertEqual(la.sum((geo[:],)).shape, (116, 1, 2, 15))
 
         # a.3) several groups
         # string groups
@@ -1966,7 +1966,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
 
-        self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
 
@@ -2105,7 +2105,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(la.sum(geo['A11', 'A21', 'A25']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo['A11,A21,A25']).shape, (116, 2, 15))
 
-        self.assertEqual(la.sum(geo.all()).shape, (116, 2, 15))
+        self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
 
@@ -2205,7 +2205,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # this is currently allowed even though it can be confusing:
         # P01 and P02 are both groups with one element each.
         self.assertEqual(reg.sum(lipro=('P01', 'P02', ':')).shape, (4, 3))
-        self.assertEqual(reg.sum(lipro=('P01', 'P02', lipro.all())).shape,
+        self.assertEqual(reg.sum(lipro=('P01', 'P02', lipro[:])).shape,
                          (4, 3))
 
         # explicit groups are better
@@ -2246,7 +2246,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # this is currently allowed even though it can be confusing:
         # P01 and P02 are both groups with one element each.
         self.assertEqual(reg.sum(('P01', 'P02', 'P01:')).shape, (4, 3))
-        self.assertEqual(reg.sum(('P01', 'P02', lipro.all())).shape,
+        self.assertEqual(reg.sum(('P01', 'P02', lipro[:])).shape,
                          (4, 3))
 
         # explicit groups are better
@@ -2494,9 +2494,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res, la.sum(geo='A11,A21,A25').sum())
 
         # a.2) a tuple of one group
-        res = la.sum_by(geo=(geo.all(),))
+        res = la.sum_by(geo=(geo[:],))
         self.assertEqual(res.shape, (1,))
-        assert_array_equal(res, la.sum(age, sex, lipro, geo=(geo.all(),)))
+        assert_array_equal(res, la.sum(age, sex, lipro, geo=(geo[:],)))
 
         # a.3) several groups
         # string groups
@@ -2602,12 +2602,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         fla = geo[self.vla_str] >> 'Flanders'
         wal = geo[self.wal_str] >> 'Wallonia'
         bru = geo[self.bru_str] >> 'Brussels'
-        bel = geo.all('Belgium')
+        bel = geo[:] >> 'Belgium'
 
-        self.assertEqual(la.with_total(geo=(fla, wal, bru), op=mean).shape,
-                         (116, 47, 2, 15))
-        self.assertEqual(la.with_total((fla, wal, bru), op=mean).shape,
-                         (116, 47, 2, 15))
+        self.assertEqual(la.with_total(geo=(fla, wal, bru), op=mean).shape, (116, 47, 2, 15))
+        self.assertEqual(la.with_total((fla, wal, bru), op=mean).shape, (116, 47, 2, 15))
         # works but "wrong" for x.geo (double what is expected because it
         # includes fla wal & bru)
         # TODO: we probably want to display a warning (or even an error?) in
@@ -2890,7 +2888,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         la = la.extend(lipro, tail)
         self.assertEqual(la.shape, (2, 16))
         # test with a string axis
-        la = la.extend('sex', la.sum(sex=(sex.all(),)))
+        la = la.extend('sex', la.sum(sex=(sex[:],)))
         self.assertEqual(la.shape, (3, 16))
 
     def test_hdf_roundtrip(self):

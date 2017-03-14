@@ -1101,7 +1101,12 @@ class Axis(object):
         return LGroup(key, name, self)
 
     def group(self,  *args, **kwargs):
-        raise NotImplementedError("Axis.group is deprecated. Use the syntax \"age[10:19] >> 'teenagers'\" instead.")
+        group_name = kwargs.pop('name', None)
+        key = args[0] if len(args) == 1 else args
+        syntax = '{}[{}]'.format(self.name if self.name else 'axis', key)
+        if group_name is not None:
+            syntax += ' >> {}'.format(repr(group_name))
+        raise NotImplementedError('Axis.group is deprecated. Use {} instead.'.format(syntax))
 
     def all(self, name=None):
         """
@@ -1116,7 +1121,10 @@ class Axis(object):
         --------
         Axis.group
         """
-        return self._group(slice(None), name=name if name is not None else "all")
+        axis_name = self.name if self.name else 'axis'
+        group_name = name if name else 'all'
+        raise NotImplementedError('Axis.all is deprecated. '
+                                  'Use {}[:] >> {} instead.'.format(axis_name, repr(group_name)))
 
     def subaxis(self, key, name=None):
         """
