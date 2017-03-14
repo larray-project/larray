@@ -13,9 +13,10 @@ __all__ = [
     'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
     'ndtest', 'from_lists', 'from_string',
     'identity', 'diag', 'eye',
-    'larray_equal', 'aslarray',
+    'larray_equal', 'larray_nan_equal', 'aslarray',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std', 'median', 'percentile',
+    'nan',
     '__version__'
 ]
 
@@ -113,6 +114,9 @@ from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
                           decode, basestring, unicode, bytes, izip, rproduct,
                           ReprString, duplicates, array_lookup2, strip_rows,
                           skip_comment_cells, find_closing_chr, StringIO, PY3)
+
+
+nan = np.nan
 
 
 def _range_to_slice(seq, length=None):
@@ -713,8 +717,8 @@ def union(*args):
 
 def larray_equal(first, other):
     """
-    Compares two arrays and returns True if they have the
-    same axes and elements, False otherwise.
+    Compares two arrays and returns True if they have the same axes and elements (and do not contain nan values,
+    see note below), False otherwise.
 
     Parameters
     ----------
@@ -724,27 +728,84 @@ def larray_equal(first, other):
     Returns
     -------
     bool
-        Returns True if the arrays are equal.
+        Returns True if the arrays are equal (and do not contain nan values).
+
+    Note
+    ----
+
+    An array containing nan values is never equal to another array, even if that other array also contains nan values at
+    the same positions. The reason is that a nan value is different from *anything*, including itself. One might want
+    to use larray_nan_equal to avoid this behavior.
+
+    See Also
+    --------
+    larray_nan_equal
 
     Examples
     --------
-    >>> age = Axis('age', range(0, 100, 10))
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> a = ndrange([age, sex])
-    >>> b = a.copy()
-    >>> larray_equal(a, b)
+    >>> arr1 = ndtest((2, 3))
+    >>> arr1
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+    >>> arr2 = arr1.copy()
+    >>> larray_equal(arr1, arr2)
     True
-    >>> b['F'] += 1
-    >>> larray_equal(a, b)
+    >>> arr2['b1'] += 1
+    >>> larray_equal(arr1, arr2)
     False
-    >>> b = a.set_labels(x.sex, ['Men', 'Women'])
-    >>> larray_equal(a, b)
+    >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
+    >>> larray_equal(arr1, arr2)
     False
     """
     if not isinstance(first, LArray) or not isinstance(other, LArray):
         return False
     return (first.axes == other.axes and
             np.array_equal(np.asarray(first), np.asarray(other)))
+
+
+def larray_nan_equal(first, other):
+    """
+    Compares two arrays and returns True if they have the same axes and elements, False otherwise.
+
+    Parameters
+    ----------
+    first, other : LArray
+        Input arrays.
+
+    Returns
+    -------
+    bool
+        Returns True if the arrays are equal, even in the presence of nan values (if they are at the same positions).
+
+    See Also
+    --------
+    larray_equal
+
+    Examples
+    --------
+    >>> arr1 = ndtest((2, 3), dtype=float)
+    >>> arr1['a1', 'b1'] = nan
+    >>> arr1
+    a\\b |  b0 |  b1 |  b2
+     a0 | 0.0 | 1.0 | 2.0
+     a1 | 3.0 | nan | 5.0
+    >>> arr2 = arr1.copy()
+    >>> larray_equal(arr1, arr2)
+    False
+    >>> larray_nan_equal(arr1, arr2)
+    True
+    >>> arr2['b1'] += 1
+    >>> larray_nan_equal(arr1, arr2)
+    False
+    >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
+    >>> larray_nan_equal(arr1, arr2)
+    False
+    """
+    if not isinstance(first, LArray) or not isinstance(other, LArray):
+        return False
+    eq = (first == other) | (np.isnan(first) & np.isnan(other))
+    return first.axes == other.axes and all(eq)
 
 
 def _isnoneslice(v):

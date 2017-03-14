@@ -7,8 +7,7 @@ from collections import OrderedDict
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
-from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, \
-    larray_equal, get_axes
+from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_equal, larray_nan_equal, get_axes
 from .excel import open_excel
 
 
@@ -526,7 +525,7 @@ class Session(object):
         self_keys = set(self.keys())
         all_keys = list(self.keys()) + [n for n in other.keys()
                                         if n not in self_keys]
-        res = [larray_equal(self.get(key), other.get(key)) for key in all_keys]
+        res = [larray_nan_equal(self.get(key), other.get(key)) for key in all_keys]
         return LArray(res, [Axis('name', all_keys)])
 
     def __ne__(self, other):
