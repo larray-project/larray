@@ -11,3 +11,6 @@ except ImportError:
 
     def compare(*args, **kwargs):
         raise Exception('compare() is not available because Qt is not installed')
+
+    def animate(*args, **kwargs):
+        raise Exception('animate() is not available because Qt is not installed')
