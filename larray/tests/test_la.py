@@ -153,6 +153,12 @@ class TestAxis(TestCase):
         # with a slice string
         self.assertEqual(age['10:20'], LGroup(slice(10, 20)))
 
+        # all labels
+        age = Axis('age', '..115')
+        group = age[:] >> 'all'
+        self.assertEqual(group.key, slice(None))
+        self.assertIs(group.axis, age)
+
         # with name
         group = age[ages_list] >> 'teens'
         self.assertEqual(group.key, ages_list)
@@ -207,12 +213,6 @@ class TestAxis(TestCase):
         key = age.i[:-1]
         self.assertEqual(key.key, slice(None, -1))
         self.assertIs(key.axis, age)
-
-    def test_all(self):
-        age = Axis('age', '..115')
-        group = age[:] >> 'all'
-        self.assertEqual(group.key, slice(None))
-        self.assertIs(group.axis, age)
 
     def test_contains(self):
         # normal Axis
