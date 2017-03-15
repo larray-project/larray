@@ -1068,12 +1068,7 @@ class Axis(object):
         if kwargs:
             raise ValueError("invalid keyword argument(s): %s" % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, Group) and name is not None:
-            key.name = name
-        if name is not None:
-            return self[key] >> name
-        else:
-            return self[key]
+        return self[key] >> name if name else self[key]
 
     def group(self,  *args, **kwargs):
         group_name = kwargs.pop('name', None)

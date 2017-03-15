@@ -142,7 +142,7 @@ class TestAxis(TestCase):
         self.assertFalse(Axis('sex1', 'M,F').equals(Axis('sex2', 'M,F')))
         self.assertFalse(Axis('sex1', 'M,W').equals(Axis('sex2', 'M,F')))
 
-    def test_group(self):
+    def test_getitem(self):
         age = Axis('age', '..115')
         ages_list = [1, 5, 9]
         self.assertEqual(age[ages_list], LGroup(ages_list, axis=age))
@@ -194,16 +194,6 @@ class TestAxis(TestCase):
         self.assertEqual(sutcode.matches('^...$'), LGroup(['A23', 'A25']))
         self.assertEqual(sutcode.startswith('A23'), LGroup(['A23', 'A2301']))
         self.assertEqual(sutcode.endswith('01'), LGroup(['A2301', 'A2501']))
-
-    def test_getitem(self):
-        age = Axis('age', '0..10')
-        group = age[':3']
-        self.assertEqual(group.key, slice(None, 3, None))
-        self.assertTrue(group.axis.equals(age))
-
-        group = age[:]
-        self.assertEqual(group.key, slice(None))
-        self.assertIs(group.axis, age)
 
     def test_iter(self):
         sex = Axis('sex', 'M,F')
