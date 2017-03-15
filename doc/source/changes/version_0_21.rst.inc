@@ -97,7 +97,8 @@ Miscellaneous improvements
   The axes are transposed compared to what they used to, because the last axis is often used for time series.
   Also it considers a 1D array like a single series, not N series of 1 point.
 
-* Axis.group is now deprecated (Syntax "age[10:19] >> 'teens'" must be used instead)
+* Axis.group and Axis.all are now deprecated
+  (Syntax "age[10:19] >> 'teens'" or "age[:] >> 'all'" must be used instead)
   (closes :issue:`148`).
 
 Fixes
