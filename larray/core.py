@@ -1048,7 +1048,7 @@ class Axis(object):
 
     def _group(self, *args, **kwargs):
         """
-        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+        Deprecated.
 
         Parameters
         ----------
@@ -1056,19 +1056,6 @@ class Axis(object):
             (collection of) selected label(s) to form a group.
         **kwargs
             name of the group. There is no other accepted keywords.
-
-        Returns
-        -------
-        LGroup
-            group containing selected label(s).
-
-        Notes
-        -----
-        key is label-based (slice and fancy indexing are supported)
-
-        See Also
-        --------
-        LGroup
 
         Examples
         --------
@@ -1079,26 +1066,14 @@ class Axis(object):
         """
         name = kwargs.pop('name', None)
         if kwargs:
-            raise ValueError("invalid keyword argument(s): %s"
-                             % list(kwargs.keys()))
+            raise ValueError("invalid keyword argument(s): %s" % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, basestring):
-            key = to_keys(key)
-
-        if isinstance(key, (tuple, list)):
-            if any(isinstance(k, Group) for k in key):
-                k0 = key[0]
-                assert isinstance(k0, Group)
-                cls_ = k0.__class__
-                assert all(isinstance(k, cls_) for k in key[1:])
-                res = [k.with_axis(self) for k in key]
-                res = tuple(res) if isinstance(key, tuple) else res
-                return res
-
-        if isinstance(key, Group):
-            name = name if name is not None else key.name
-            return key.__class__(key.key, name, self)
-        return LGroup(key, name, self)
+        if isinstance(key, Group) and name is not None:
+            key.name = name
+        if name is not None:
+            return self[key] >> name
+        else:
+            return self[key]
 
     def group(self,  *args, **kwargs):
         group_name = kwargs.pop('name', None)
@@ -1343,9 +1318,35 @@ class Axis(object):
 
     def __getitem__(self, key):
         """
+        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+
         key is a label-based key (slice and fancy indexing are supported)
+
+        Returns
+        -------
+        Group
+            group containing selected label(s)/position(s).
+
+        Notes
+        -----
+        key is label-based (slice and fancy indexing are supported)
         """
-        return self._group(key)
+        if isinstance(key, basestring):
+            key = to_keys(key)
+
+        if isinstance(key, (tuple, list)):
+            if any(isinstance(k, Group) for k in key):
+                k0 = key[0]
+                assert isinstance(k0, Group)
+                cls_ = k0.__class__
+                assert all(isinstance(k, cls_) for k in key[1:])
+                res = [k.with_axis(self) for k in key]
+                res = tuple(res) if isinstance(key, tuple) else res
+                return res
+
+        if isinstance(key, Group):
+            return key.__class__(key.key, key.name, self)
+        return LGroup(key, axis=self)
 
     def __contains__(self, key):
         return _to_tick(key) in self._mapping
