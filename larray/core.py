@@ -1046,10 +1046,9 @@ class Axis(object):
     def iswildcard(self):
         return self._iswildcard
 
-    # XXX: not sure I should offer an *args version
-    def group(self, *args, **kwargs):
+    def _group(self, *args, **kwargs):
         """
-        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+        Deprecated.
 
         Parameters
         ----------
@@ -1058,48 +1057,26 @@ class Axis(object):
         **kwargs
             name of the group. There is no other accepted keywords.
 
-        Returns
-        -------
-        LGroup
-            group containing selected label(s).
-
-        Notes
-        -----
-        key is label-based (slice and fancy indexing are supported)
-
-        See Also
-        --------
-        LGroup
-
         Examples
         --------
         >>> time = Axis('time', [2007, 2008, 2009, 2010])
-        >>> odd_years = time.group([2007, 2009], name='odd_years')
+        >>> odd_years = time._group([2007, 2009], name='odd_years')
         >>> odd_years
         time[2007, 2009] >> 'odd_years'
         """
         name = kwargs.pop('name', None)
         if kwargs:
-            raise ValueError("invalid keyword argument(s): %s"
-                             % list(kwargs.keys()))
+            raise ValueError("invalid keyword argument(s): %s" % list(kwargs.keys()))
         key = args[0] if len(args) == 1 else args
-        if isinstance(key, basestring):
-            key = to_keys(key)
+        return self[key] >> name if name else self[key]
 
-        if isinstance(key, (tuple, list)):
-            if any(isinstance(k, Group) for k in key):
-                k0 = key[0]
-                assert isinstance(k0, Group)
-                cls_ = k0.__class__
-                assert all(isinstance(k, cls_) for k in key[1:])
-                res = [k.with_axis(self) for k in key]
-                res = tuple(res) if isinstance(key, tuple) else res
-                return res
-
-        if isinstance(key, Group):
-            name = name if name is not None else key.name
-            return key.__class__(key.key, name, self)
-        return LGroup(key, name, self)
+    def group(self,  *args, **kwargs):
+        group_name = kwargs.pop('name', None)
+        key = args[0] if len(args) == 1 else args
+        syntax = '{}[{}]'.format(self.name if self.name else 'axis', key)
+        if group_name is not None:
+            syntax += ' >> {}'.format(repr(group_name))
+        raise NotImplementedError('Axis.group is deprecated. Use {} instead.'.format(syntax))
 
     def all(self, name=None):
         """
@@ -1114,7 +1091,10 @@ class Axis(object):
         --------
         Axis.group
         """
-        return self.group(slice(None), name=name if name is not None else "all")
+        axis_name = self.name if self.name else 'axis'
+        group_name = name if name else 'all'
+        raise NotImplementedError('Axis.all is deprecated. '
+                                  'Use {}[:] >> {} instead.'.format(axis_name, repr(group_name)))
 
     def subaxis(self, key, name=None):
         """
@@ -1333,9 +1313,35 @@ class Axis(object):
 
     def __getitem__(self, key):
         """
+        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+
         key is a label-based key (slice and fancy indexing are supported)
+
+        Returns
+        -------
+        Group
+            group containing selected label(s)/position(s).
+
+        Notes
+        -----
+        key is label-based (slice and fancy indexing are supported)
         """
-        return self.group(key)
+        if isinstance(key, basestring):
+            key = to_keys(key)
+
+        if isinstance(key, (tuple, list)):
+            if any(isinstance(k, Group) for k in key):
+                k0 = key[0]
+                assert isinstance(k0, Group)
+                cls_ = k0.__class__
+                assert all(isinstance(k, cls_) for k in key[1:])
+                res = [k.with_axis(self) for k in key]
+                res = tuple(res) if isinstance(key, tuple) else res
+                return res
+
+        if isinstance(key, Group):
+            return key.__class__(key.key, key.name, self)
+        return LGroup(key, axis=self)
 
     def __contains__(self, key):
         return _to_tick(key) in self._mapping
