@@ -9248,7 +9248,7 @@ def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
     return read_csv(StringIO(s), nb_index=nb_index, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)
 
 
-def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
+def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
              sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
@@ -9265,8 +9265,8 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
 
     Parameters
     ----------
-    filepath : str
-        Path where the csv file has to be read.
+    filepath_or_buffer : str or any file-like object
+        Path where the csv file has to be read or a file handle.
     nb_index : int, optional
         Number of leading index columns (ex. 4).
     index_col : list, optional
@@ -9316,7 +9316,7 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
         # read axes names. This needs to be done separately instead of reading the whole file with Pandas then
         # manipulating the dataframe because the header line must be ignored for the column types to be inferred
         # correctly. Note that to read one line, this is faster than using Pandas reader.
-        with csv_open(filepath) as f:
+        with csv_open(filepath_or_buffer) as f:
             reader = csv.reader(f, delimiter=sep)
             line_stream = skip_comment_cells(strip_rows(reader))
             axes_names = next(line_stream)
@@ -9340,7 +9340,7 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
         if index_col is None:
             index_col = [0]
 
-    df = pd.read_csv(filepath, index_col=index_col, sep=sep, **kwargs)
+    df = pd.read_csv(filepath_or_buffer, index_col=index_col, sep=sep, **kwargs)
     if dialect == 'liam2':
         if len(axes_names) > 1:
             df.index.names = axes_names[:-1]
@@ -9358,19 +9358,19 @@ def read_csv(filepath, nb_index=None, index_col=None, sep=',', headersep=None, n
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, raw=raw)
 
 
-def read_tsv(filepath, **kwargs):
-    return read_csv(filepath, sep='\t', **kwargs)
+def read_tsv(filepath_or_buffer, **kwargs):
+    return read_csv(filepath_or_buffer, sep='\t', **kwargs)
 
 
-def read_eurostat(filepath, **kwargs):
+def read_eurostat(filepath_or_buffer, **kwargs):
     """Reads EUROSTAT TSV (tab-separated) file into an array.
 
     EUROSTAT TSV files are special because they use tabs as data separators but comas to separate headers.
 
     Parameters
     ----------
-    filepath : str
-        Path to the file.
+    filepath_or_buffer : str or any file-like object
+        Path where the tsv file has to be read or a file handle.
     kwargs
         Arbitrary keyword arguments are passed through to read_csv.
 
@@ -9378,16 +9378,16 @@ def read_eurostat(filepath, **kwargs):
     -------
     LArray
     """
-    return read_csv(filepath, sep='\t', headersep=',', **kwargs)
+    return read_csv(filepath_or_buffer, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+def read_hdf(filepath_or_buffer, key, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """Reads an array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
-    filepath : str
-        Filepath and name where the HDF5 file is stored.
+    filepath_or_buffer : str or pandas.HDFStore
+        Path and name where the HDF5 file is stored or a HDFStore object.
     key : str
         Name of the array.
 
@@ -9395,7 +9395,7 @@ def read_hdf(filepath, key, na=np.nan, sort_rows=False, sort_columns=False, **kw
     -------
     LArray
     """
-    df = pd.read_hdf(filepath, key, **kwargs)
+    df = pd.read_hdf(filepath_or_buffer, key, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, parse_header=False)
 
 
