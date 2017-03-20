@@ -80,6 +80,9 @@ For IO (HDF, Excel)
   alternative package for writing data, formatting
   information and, in particular, charts in the
   Excel 2010 format (ie: .xlsx)
+- `larray_eurostat <https://github.com/larray-project/larray_eurostat>`__:
+  provides functions to easily download EUROSTAT files as larray objects.
+  Currently limited to TSV files.
 
 For Graphical User Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
