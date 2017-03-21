@@ -1,0 +1,10 @@
+name: larray-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.5
+  - numpy
+  - pandas
+  - sphinx
+  - numpydoc
