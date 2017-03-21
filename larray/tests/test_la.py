@@ -409,6 +409,7 @@ class TestLGroup(TestCase):
         self.assertEqual(d.get(LGroup(('P01', 'P03', 'P07'))), 3)
 
     def test_repr(self):
+        self.assertEqual(repr(self.slice_both_named_wh_named_axis), "age[1:5] >> 'full'")
         self.assertEqual(repr(self.slice_both_named),
                          "LGroup(slice(1, 5, None)) >> 'named'")
         self.assertEqual(repr(self.slice_both), "LGroup(slice(1, 5, None))")
