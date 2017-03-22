@@ -1678,15 +1678,44 @@ class _LazyLabels(object):
 
 
 class _LazyDimLabels(object):
+    """
+    Examples
+    --------
+    >>> p = Product([['a', 'b', 'c'], [1, 2]])
+    >>> list(p)
+    [('a', 1), ('a', 2), ('b', 1), ('b', 2), ('c', 1), ('c', 2)]
+    >>> l0 = _LazyDimLabels(p, 0)
+    >>> l1 = _LazyDimLabels(p, 1)
+    >>> for i in range(len(p)):
+    ...     print(l0[i], l1[i])
+    a 1
+    a 2
+    b 1
+    b 2
+    c 1
+    c 2
+    >>> l0[1:4]
+    ['a', 'b', 'b']
+    >>> l1[1:4]
+    [2, 1, 2]
+    >>> list(l0)
+    ['a', 'a', 'b', 'b', 'c', 'c']
+    >>> list(l1)
+    [1, 2, 1, 2, 1, 2]
+    """
     def __init__(self, prod, i):
         self.prod = prod
         self.i = i
 
     def __iter__(self):
-        return iter(self.prod[:][self.i])
+        return iter(self.prod[i][self.i] for i in range(len(self.prod)))
 
     def __getitem__(self, key):
-        return self.prod[key][self.i]
+        key_prod = self.prod[key]
+        if isinstance(key, slice):
+            return [p[self.i] for p in key_prod]
+        else:
+            return key_prod[self.i]
 
     def __len__(self):
         return len(self.prod)
