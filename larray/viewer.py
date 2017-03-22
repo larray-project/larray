@@ -325,6 +325,8 @@ class Product(object):
         self.length = np.prod(shape)
 
     def to_tuple(self, key):
+        if key >= self.length:
+            raise IndexError("index %d out of range for Product of length %d" % (key, self.length))
         return tuple(key // div % mod for div, mod in self.div_mod)
 
     def __len__(self):
