@@ -301,20 +301,19 @@ class Product(object):
 
     Examples
     --------
-    >>> age = [10, 11, 12]
-    >>> time = [2007, 2008, 2009]
-    >>> cart_prod = Product([age, time])
-    >>> for i in range(len(cart_prod)):
-    ...     print(cart_prod[i])
-    (10, 2007)
-    (10, 2008)
-    (10, 2009)
-    (11, 2007)
-    (11, 2008)
-    (11, 2009)
-    (12, 2007)
-    (12, 2008)
-    (12, 2009)
+    >>> p = Product([['a', 'b', 'c'], [1, 2]])
+    >>> for i in range(len(p)):
+    ...     print(p[i])
+    ('a', 1)
+    ('a', 2)
+    ('b', 1)
+    ('b', 2)
+    ('c', 1)
+    ('c', 2)
+    >>> p[1:4]
+    [('a', 2), ('b', 1), ('b', 2)]
+    >>> list(p)
+    [('a', 1), ('a', 2), ('b', 1), ('b', 2), ('c', 1), ('c', 2)]
     """
     def __init__(self, arrays):
         self.arrays = arrays
