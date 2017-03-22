@@ -1212,8 +1212,13 @@ class ArrayView(QTableView):
 
         row_min, row_max, col_min, col_max = self._selection_bounds()
         dim_names = self.model().xlabels[0]
+        # label for each selected column
         xlabels = self.model().xlabels[1][col_min:col_max]
-        ylabels = self.model().ylabels[1:][row_min:row_max]
+        # list of selected labels for each index column
+        labels_per_index_column = [col_labels[row_min:row_max] for col_labels in self.model().ylabels[1:]]
+        # list of (str) label for each selected row
+        ylabels = [[str(label) for label in row_labels]
+                   for row_labels in zip(*labels_per_index_column)]
 
         assert data.ndim == 2
 
@@ -1225,19 +1230,17 @@ class ArrayView(QTableView):
         if data.shape[1] == 1:
             # plot one column
             xlabel = ','.join(dim_names[:-1])
-            xticklabels = ['\n'.join([str(ylabels[c][r]) for c in range(len(ylabels))])
-                           for r in range(row_max - row_min)]
-            xdata = np.arange(row_max - row_min, dtype=int)
+            xticklabels = ['\n'.join(ylabels[row]) for row in range(row_max - row_min)]
+            xdata = np.arange(row_max - row_min)
             ax.plot(xdata, data[:, 0])
             ax.set_ylabel(xlabels[0])
         else:
             # plot each row as a line
             xlabel = dim_names[-1]
             xticklabels = [str(label) for label in xlabels]
-            xdata = np.arange(col_max - col_min, dtype=int)
+            xdata = np.arange(col_max - col_min)
             for row in range(len(data)):
-                label = ','.join([str(label) for label in ylabels[row]])
-                ax.plot(xdata, data[row], label=label)
+                ax.plot(xdata, data[row], label=' '.join(ylabels[row]))
 
         # set x axis
         ax.set_xlabel(xlabel)
