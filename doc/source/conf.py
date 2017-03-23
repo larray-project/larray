@@ -42,6 +42,11 @@ extensions = [
 extlinks = {'issue': ('https://github.com/liam2/larray/issues/%s',
                       'issue ')}
 
+# scan all found documents for autosummary directives, and to generate stub pages for each.
+# The new files will be placed in the directories specified in the :toctree: options of the directives.
+autosummary_generate = True
+
+numpydoc_class_members_toctree = True
 # avoid pulling in base class (ndarray) methods
 numpydoc_show_class_members = False
 
