@@ -399,12 +399,45 @@ class Session(object):
         handler.dump_arrays(arrays, display=display, **kwargs)
 
     def dump_hdf(self, fname, names=None, *args, **kwargs):
+        """
+        Dumps all array objects from the current session to an HDF file.
+
+        Parameters
+        ----------
+        fname : str
+            Path for the dump.
+        names : list of str or None, optional
+            List of names of objects to dump. Defaults to all objects
+            present in the Session.
+        """
         self.dump(fname, names, ext_default_engine['hdf'], *args, **kwargs)
 
     def dump_excel(self, fname, names=None, *args, **kwargs):
+        """
+        Dumps all array objects from the current session to an Excel file.
+
+        Parameters
+        ----------
+        fname : str
+            Path for the dump.
+        names : list of str or None, optional
+            List of names of objects to dump. Defaults to all objects
+            present in the Session.
+        """
         self.dump(fname, names, ext_default_engine['xlsx'], *args, **kwargs)
 
     def dump_csv(self, fname, names=None, *args, **kwargs):
+        """
+        Dumps all array objects from the current session to a CSV file.
+
+        Parameters
+        ----------
+        fname : str
+            Path for the dump.
+        names : list of str or None, optional
+            List of names of objects to dump. Defaults to all objects
+            present in the Session.
+        """
         self.dump(fname, names, ext_default_engine['csv'], *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):
@@ -445,6 +478,8 @@ class Session(object):
         return sorted(self._objects.keys())
 
     def copy(self):
+        """Returns a copy of the session.
+        """
         return Session(self._objects)
 
     def keys(self):
