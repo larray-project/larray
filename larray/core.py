@@ -1080,16 +1080,12 @@ class Axis(object):
 
     def all(self, name=None):
         """
-        Returns a group containing all labels.
+        (Deprecated) Returns a group containing all labels.
 
         Parameters
         ----------
         name : str, optional
             Name of the group. If not provided, name is set to 'all'.
-
-        See Also
-        --------
-        Axis.group
         """
         axis_name = self.name if self.name else 'axis'
         group_name = name if name else 'all'
