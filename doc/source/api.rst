@@ -1,16 +1,19 @@
+#############
 API Reference
-*************
+#############
+
+.. currentmodule:: larray
 
 Axis
 ====
 
-.. autoclass:: larray.Axis
+.. autoclass:: Axis
    :members:
 
 AxisCollection
 --------------
 
-.. autoclass:: larray.AxisCollection
+.. autoclass:: AxisCollection
    :members:
 
 Group & Set
@@ -19,19 +22,19 @@ Group & Set
 PGroup
 ------
 
-.. autoclass:: larray.PGroup
+.. autoclass:: PGroup
    :members:
 
 LGroup
 ------
 
-.. autoclass:: larray.LGroup
+.. autoclass:: LGroup
    :members:
 
 LSet
 ----
 
-.. autoclass:: larray.LSet
+.. autoclass:: LSet
    :members:
 
 Array
@@ -40,75 +43,91 @@ Array
 LArray
 ------
 
-.. autoclass:: larray.LArray
+.. autoclass:: LArray
    :members:
 
 Array Creation Functions
 ------------------------
 
-.. autofunction:: larray.create_sequential
+.. autosummary::
+   :toctree: generated/
 
-.. autofunction:: larray.ndrange
+   create_sequential
+   ndrange
+   ndtest
+   zeros
+   zeros_like
+   ones
+   ones_like
+   empty
+   empty_like
+   full
+   full_like
 
-.. autofunction:: larray.ndtest
 
-.. autofunction:: larray.zeros
+.. autofunction:: create_sequential
 
-.. autofunction:: larray.zeros_like
+.. autofunction:: ndrange
 
-.. autofunction:: larray.ones
+.. autofunction:: ndtest
 
-.. autofunction:: larray.ones_like
+.. autofunction:: zeros
 
-.. autofunction:: larray.empty
+.. autofunction:: zeros_like
 
-.. autofunction:: larray.empty_like
+.. autofunction:: ones
 
-.. autofunction:: larray.full
+.. autofunction:: ones_like
 
-.. autofunction:: larray.full_like
+.. autofunction:: empty
+
+.. autofunction:: empty_like
+
+.. autofunction:: full
+
+.. autofunction:: full_like
 
 Aggregation Functions
 ---------------------
 
-.. autofunction:: larray.all
+.. autofunction:: all
 
-.. autofunction:: larray.any
+.. autofunction:: any
 
-.. autofunction:: larray.min
+.. autofunction:: min
 
-.. autofunction:: larray.max
+.. autofunction:: max
 
-.. autofunction:: larray.sum
+.. autofunction:: sum
 
-.. autofunction:: larray.prod
+.. autofunction:: prod
 
-.. autofunction:: larray.cumsum
+.. autofunction:: cumsum
 
-.. autofunction:: larray.cumprod
+.. autofunction:: cumprod
 
-.. autofunction:: larray.mean
+.. autofunction:: mean
 
-.. autofunction:: larray.median
+.. autofunction:: median
 
-.. autofunction:: larray.var
+.. autofunction:: var
 
-.. autofunction:: larray.std
+.. autofunction:: std
 
-.. autofunction:: larray.percentile
+.. autofunction:: percentile
 
-.. autofunction:: larray.ptp
+.. autofunction:: ptp
 
 Session
 =======
 
-.. autoclass:: larray.Session
+.. autoclass:: Session
    :members:
 
 Viewer
 ======
 
-.. automodule:: larray.viewer
+.. automodule:: viewer
    :members:
 
 Input/Output
@@ -117,54 +136,54 @@ Input/Output
 Excel
 -----
 
-.. automodule:: larray.excel
+.. automodule:: excel
    :members:
 
-.. autoclass:: larray.excel.Workbook
+.. autoclass:: excel.Workbook
    :members:
 
-.. autoclass:: larray.excel.Sheet
+.. autoclass:: excel.Sheet
    :members:
 
-.. autoclass:: larray.excel.Range
+.. autoclass:: excel.Range
    :members:
 
 Read Functions
 --------------
 
-.. autofunction:: larray.read_csv
+.. autofunction:: read_csv
 
-.. autofunction:: larray.read_eurostat
+.. autofunction:: read_eurostat
 
-.. autofunction:: larray.read_excel
+.. autofunction:: read_excel
 
-.. autofunction:: larray.read_hdf
+.. autofunction:: read_hdf
 
-.. autofunction:: larray.read_tsv
+.. autofunction:: read_tsv
 
-.. autofunction:: larray.read_sas
+.. autofunction:: read_sas
 
 Miscellaneous
 =============
 
-.. autofunction:: larray.aslarray
+.. autofunction:: aslarray
 
-.. autofunction:: larray.labels_array
+.. autofunction:: labels_array
 
-.. autofunction:: larray.larray_equal
+.. autofunction:: larray_equal
 
-.. autofunction:: larray.union
+.. autofunction:: union
 
-.. autofunction:: larray.stack
+.. autofunction:: stack
 
-.. autofunction:: larray.identity
+.. autofunction:: identity
 
-.. autofunction:: larray.diag
+.. autofunction:: diag
 
-.. autofunction:: larray.eye
+.. autofunction:: eye
 
 Apply Iterative Proportional Fitting Procedure
 ----------------------------------------------
 
-.. automodule:: larray.ipfp
+.. automodule:: ipfp
    :members:
