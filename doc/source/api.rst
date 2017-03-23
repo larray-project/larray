@@ -2,6 +2,7 @@
 API Reference
 #############
 
+.. see larray/__init__.py
 .. currentmodule:: larray
 
 Axis
@@ -50,7 +51,7 @@ Array Creation Functions
 ------------------------
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: _generated/
 
    create_sequential
    ndrange
@@ -64,59 +65,26 @@ Array Creation Functions
    full
    full_like
 
-
-.. autofunction:: create_sequential
-
-.. autofunction:: ndrange
-
-.. autofunction:: ndtest
-
-.. autofunction:: zeros
-
-.. autofunction:: zeros_like
-
-.. autofunction:: ones
-
-.. autofunction:: ones_like
-
-.. autofunction:: empty
-
-.. autofunction:: empty_like
-
-.. autofunction:: full
-
-.. autofunction:: full_like
-
 Aggregation Functions
 ---------------------
 
-.. autofunction:: all
+.. autosummary::
+   :toctree: _generated/
 
-.. autofunction:: any
-
-.. autofunction:: min
-
-.. autofunction:: max
-
-.. autofunction:: sum
-
-.. autofunction:: prod
-
-.. autofunction:: cumsum
-
-.. autofunction:: cumprod
-
-.. autofunction:: mean
-
-.. autofunction:: median
-
-.. autofunction:: var
-
-.. autofunction:: std
-
-.. autofunction:: percentile
-
-.. autofunction:: ptp
+   all
+   any
+   min
+   max
+   sum
+   prod
+   cumsum
+   cumprod
+   mean
+   median
+   var
+   std
+   percentile
+   ptp
 
 Session
 =======
@@ -124,66 +92,48 @@ Session
 .. autoclass:: Session
    :members:
 
-Viewer
-======
-
-.. automodule:: viewer
-   :members:
-
 Input/Output
 ============
 
-Excel
+Read
+----
+
+.. autosummary::
+   :toctree: _generated/
+
+   read_csv
+   read_tsv
+   read_excel
+   read_hdf
+   read_eurostat
+   read_sas
+
+Write
 -----
 
-.. automodule:: excel
-   :members:
 
-.. autoclass:: excel.Workbook
-   :members:
+Viewer
+======
 
-.. autoclass:: excel.Sheet
-   :members:
+.. autosummary::
+   :toctree: _generated/
 
-.. autoclass:: excel.Range
-   :members:
-
-Read Functions
---------------
-
-.. autofunction:: read_csv
-
-.. autofunction:: read_eurostat
-
-.. autofunction:: read_excel
-
-.. autofunction:: read_hdf
-
-.. autofunction:: read_tsv
-
-.. autofunction:: read_sas
+   view
+   edit
+   compare
 
 Miscellaneous
 =============
 
-.. autofunction:: aslarray
+.. autosummary::
+   :toctree: _generated/
 
-.. autofunction:: labels_array
-
-.. autofunction:: larray_equal
-
-.. autofunction:: union
-
-.. autofunction:: stack
-
-.. autofunction:: identity
-
-.. autofunction:: diag
-
-.. autofunction:: eye
-
-Apply Iterative Proportional Fitting Procedure
-----------------------------------------------
-
-.. automodule:: ipfp
-   :members:
+   aslarray
+   labels_array
+   larray_equal
+   union
+   stack
+   identity
+   diag
+   eye
+   ipfp
