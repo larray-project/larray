@@ -1219,6 +1219,9 @@ class ArrayView(QTableView):
         # list of (str) label for each selected row
         ylabels = [[str(label) for label in row_labels]
                    for row_labels in zip(*labels_per_index_column)]
+        # if there is only one dimension, ylabels is empty
+        if not ylabels:
+            ylabels = [[]]
 
         assert data.ndim == 2
 
@@ -1253,7 +1256,7 @@ class ArrayView(QTableView):
         ax.set_xticks(xticks)
         ax.set_xticklabels(xticklabels)
 
-        if data.shape[1] != 1:
+        if data.shape[1] != 1 and ylabels != [[]]:
             # set legend
             # box = ax.get_position()
             # ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
