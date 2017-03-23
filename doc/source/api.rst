@@ -139,15 +139,22 @@ Testing
    AxisCollection.isaxis
    AxisCollection.check_compatible
 
-
-Array
-=====
-
 LArray
-------
+======
 
-.. autoclass:: LArray
-   :members:
+.. autosummary::
+   :toctree: _generated/
+
+   LArray
+   LArray.info
+   LArray.shape
+   LArray.ndim
+   LArray.dtype
+   LArray.size
+   LArray.nbytes
+   LArray.memory_used
+   LArray.astype
+   LArray.copy
 
 Array Creation Functions
 ------------------------
@@ -167,26 +174,125 @@ Array Creation Functions
    full
    full_like
 
+Modifying/Selecting
+-------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.i
+   LArray.points
+   LArray.ipoints
+   LArray.set
+   LArray.drop_labels
+   LArray.filter
+
+Changing Axes or Labels
+-----------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.set_axes
+   LArray.rename
+   LArray.set_labels
+   LArray.combine_axes
+   LArray.split_axis
+
 Aggregation Functions
 ---------------------
 
 .. autosummary::
    :toctree: _generated/
 
-   all
-   any
-   min
-   max
-   sum
-   prod
-   cumsum
-   cumprod
-   mean
-   median
-   var
-   std
-   percentile
-   ptp
+   LArray.sum
+   LArray.prod
+   LArray.cumsum
+   LArray.cumprod
+   LArray.mean
+   LArray.median
+   LArray.var
+   LArray.std
+   LArray.percentile
+   LArray.ptp
+   LArray.with_total
+   LArray.percent
+   LArray.growth_rate
+
+Sorting
+-------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.sort_axis
+   LArray.sort_values
+   LArray.argsort
+   LArray.posargsort
+
+Reshaping/Extending/Reordering
+------------------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.reshape
+   LArray.reshape_like
+   LArray.compact
+   LArray.transpose
+   LArray.expand
+   LArray.prepend
+   LArray.append
+   LArray.extend
+   LArray.broadcast_with
+
+Testing/Searching
+-----------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.nonzero
+   LArray.all
+   LArray.any
+   LArray.min
+   LArray.max
+   LArray.argmin
+   LArray.posargmin
+   LArray.argmax
+   LArray.posargmax
+
+Miscellaneous
+-------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.ratio
+   LArray.rationot0
+   LArray.__matmul__
+   LArray.divnot0
+   LArray.clip
+   LArray.shift
+   LArray.diff
+   LArray.to_clipboard
+
+Converting to Pandas objects
+----------------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.to_series
+   LArray.to_frame
+
+Plotting
+--------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.plot
 
 Session
 =======
@@ -226,6 +332,12 @@ Read
 Write
 -----
 
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.to_csv
+   LArray.to_excel
+   LArray.to_hdf
 
 Viewer
 ======
