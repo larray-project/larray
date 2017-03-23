@@ -191,8 +191,21 @@ Aggregation Functions
 Session
 =======
 
-.. autoclass:: Session
-   :members:
+.. autosummary::
+   :toctree: _generated/
+
+   Session
+   Session.names
+   Session.add
+   Session.get
+   Session.load
+   Session.dump
+   Session.dump_csv
+   Session.dump_excel
+   Session.dump_hdf
+   Session.filter
+   Session.compact
+   Session.copy
 
 Input/Output
 ============
