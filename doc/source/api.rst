@@ -146,15 +146,6 @@ LArray
    :toctree: _generated/
 
    LArray
-   LArray.info
-   LArray.shape
-   LArray.ndim
-   LArray.dtype
-   LArray.size
-   LArray.nbytes
-   LArray.memory_used
-   LArray.astype
-   LArray.copy
 
 Array Creation Functions
 ------------------------
@@ -173,6 +164,29 @@ Array Creation Functions
    empty_like
    full
    full_like
+
+Copying
+-------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.copy
+
+Inspecting
+----------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.info
+   LArray.shape
+   LArray.ndim
+   LArray.dtype
+   LArray.size
+   LArray.nbytes
+   LArray.memory_used
+   LArray.astype
 
 Modifying/Selecting
 -------------------
@@ -305,25 +319,6 @@ Plotting
 
    LArray.plot
 
-Session
-=======
-
-.. autosummary::
-   :toctree: _generated/
-
-   Session
-   Session.names
-   Session.add
-   Session.get
-   Session.load
-   Session.dump
-   Session.dump_csv
-   Session.dump_excel
-   Session.dump_hdf
-   Session.filter
-   Session.compact
-   Session.copy
-
 Input/Output
 ============
 
@@ -350,16 +345,6 @@ Write
    LArray.to_excel
    LArray.to_hdf
 
-Viewer
-======
-
-.. autosummary::
-   :toctree: _generated/
-
-   view
-   edit
-   compare
-
 Miscellaneous
 =============
 
@@ -375,3 +360,32 @@ Miscellaneous
    diag
    eye
    ipfp
+
+Session
+=======
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session
+   Session.names
+   Session.add
+   Session.get
+   Session.load
+   Session.dump
+   Session.dump_csv
+   Session.dump_excel
+   Session.dump_hdf
+   Session.filter
+   Session.compact
+   Session.copy
+
+Viewer
+======
+
+.. autosummary::
+   :toctree: _generated/
+
+   view
+   edit
+   compare
