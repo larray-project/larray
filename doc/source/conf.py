@@ -222,7 +222,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'larray.tex', 'LArray Documentation',
-   'Gaëtan de Menten, Geert Bryon, Johan Duyck', 'manual'),
+   'Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -252,7 +252,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'larray', 'LArray Documentation',
-     ['Gaëtan de Menten, Geert Bryon, Johan Duyck'], 1)
+     ['Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -268,7 +268,7 @@ texinfo_documents = [
   ('index',
    'LArray',
    'LArray Documentation',
-   'Gaëtan de Menten, Geert Bryon, Johan Duyck',
+   'Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman',
    'LArray',
    'One line description of project.',
    'Miscellaneous'),
