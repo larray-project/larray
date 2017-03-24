@@ -6,5 +6,9 @@ dependencies:
   - python=3.5
   - numpy
   - pandas
+  - jupyter
+  - jupyter_client
   - sphinx
   - numpydoc
+  - nbsphinx
+  - pandoc
