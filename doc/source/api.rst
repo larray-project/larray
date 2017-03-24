@@ -206,14 +206,21 @@ Aggregation Functions
    :toctree: _generated/
 
    LArray.sum
+   LArray.sum_by
    LArray.prod
+   LArray.prod_by
    LArray.cumsum
    LArray.cumprod
    LArray.mean
+   LArray.mean_by
    LArray.median
+   LArray.median_by
    LArray.var
+   LArray.var_by
    LArray.std
+   LArray.std_by
    LArray.percentile
+   LArray.percentile_by
    LArray.ptp
    LArray.with_total
    LArray.percent
@@ -254,9 +261,13 @@ Testing/Searching
 
    LArray.nonzero
    LArray.all
+   LArray.all_by
    LArray.any
+   LArray.any_by
    LArray.min
+   LArray.min_by
    LArray.max
+   LArray.max_by
    LArray.argmin
    LArray.posargmin
    LArray.argmax
