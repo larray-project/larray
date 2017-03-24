@@ -52,7 +52,7 @@
     >>> sex.replace({'M': 'Male', 'F': 'Female'})
     Axis('sex', ['Male', 'Female'])
 
-* implemented from_string() method to create an array from a string:
+* implemented from_string() method to create an array from a string (closes :issue:`96`).
 
     >>> from_string('''age,nat\\sex, M, F
     ...                0,  BE,       0, 1
@@ -76,13 +76,33 @@
          a0 |  0 |  1 |  2
          a1 |  3 |  4 |
 
-* allowed the syntax axis[groups]:
+* one can assign a new axis to several groups at the same time by using axis[groups]:
 
-    >>> groups = year[2001:2004], year[2008,2009]
-    >>> groups
-    (year[2001:2004], year[2008, 2009])
-    >>> x.time[groups]
+    >>> group1 = year[2001:2004]
+    >>> group2 = year[2008,2009]
+    # let us change the year axis by time
+    >>> x.time[group1, group2]
     (x.time[2001:2004], x.time[2008, 2009])
+
+* implemented Axis.by() which is equivalent to axis[:].by() and divides the axis into several groups of specified length
+
+    >>> year = Axis('year', '2010..2016')
+    >>> year.by(3)
+    (year.i[0:3], year.i[3:6], year.i[6:7])
+    # which is equivalent to (year[2010:2012], year[2013:2015], year[2016])
+
+    like for groups, the optional second argument specifies the step between groups
+
+    >>> year.by(3, step=4)
+    (year.i[0:3], year.i[4:7])
+    # which is equivalent to (year[2010:2012], year[2014:2016])
+
+    and if step is smaller than length, we get overlapping groups, which can be useful for example for moving averages.
+
+    >>> year.by(3, 2)
+    (year.i[0:3], year.i[2:5], year.i[4:7], year.i[6:7])
+    # which is equivalent to (year[2010:2012], year[2012:2014], year[2014:2016], year[2016])
+
 
 Miscellaneous improvements
 --------------------------
@@ -91,11 +111,14 @@ Miscellaneous improvements
   for example, plotting an array (via Ctrl-P) or opening it in Excel (Ctrl-E) can be done directly even when
   interacting with the list of arrays or within the interactive console (closes :issue:`102`).
 
-* viewer: automatically display plots done in the viewer console (see example below) in a separate window (unless
-  "%matplotlib inline" is used).
+* viewer: automatically display plots done in the viewer console in a separate window (see example below), unless
+  "%matplotlib inline" is used.
 
     >>> arr = ndtest((3, 3))
     >>> arr.plot()
+
+* viewer: when calling view(an_array), the new window opened does not block the initial window, which means you can
+  have several windows open at the same time. view() without argument can still result in odd behavior though.
 
 * improved LArray.set_labels to make it possible to replace only some labels of an axis, instead of all of them
   and to replace labels from several axes at the same time.
