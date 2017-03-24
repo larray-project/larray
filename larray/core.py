@@ -1643,6 +1643,52 @@ class Axis(object):
         new_axis.__sorted_values = self.__sorted_values
         return new_axis
 
+    def replace(self, old, new=None):
+        """
+        Returns a new axis with some labels replaced.
+
+        Parameters
+        ----------
+        old : any scalar (bool, int, str, ...), tuple/list/array of scalars, or a mapping.
+            the label(s) to be replaced. Old can be a mapping {old1: new1, old2: new2, ...}
+        new : any scalar (bool, int, str, ...) or tuple/list/array of scalars, optional
+            the new label(s). This is argument must not be used if old is a mapping.
+
+        Returns
+        -------
+        Axis
+            a new Axis with the old labels replaced by new labels.
+
+        Examples
+        --------
+        >>> sex = Axis('sex', ['M', 'F'])
+        >>> sex
+        Axis('sex', ['M', 'F'])
+        >>> sex.replace('M', 'Male')
+        Axis('sex', ['Male', 'F'])
+        >>> sex.replace({'M': 'Male', 'F': 'Female'})
+        Axis('sex', ['Male', 'Female'])
+        >>> sex.replace(['M', 'F'], ['Male', 'Female'])
+        Axis('sex', ['Male', 'Female'])
+        """
+        if isinstance(old, dict):
+            new = list(old.values())
+            old = list(old.keys())
+        elif np.isscalar(old):
+            assert new is not None and np.isscalar(new)
+            old = [old]
+            new = [new]
+        else:
+            seq = (tuple, list, np.ndarray)
+            assert isinstance(old, seq)
+            assert isinstance(new, seq)
+            assert len(old) == len(new)
+        # using object dtype because new labels length can be larger than the fixed str length in the self.labels array
+        labels = self.labels.astype(object)
+        indices = self.translate(old)
+        labels[indices] = new
+        return Axis(self.name, labels)
+
     # XXX: rename to named like Group?
     def rename(self, name):
         """

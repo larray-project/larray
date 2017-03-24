@@ -42,6 +42,16 @@
             r0 |  0 |  1 |  2
             r1 |  3 |  4 |  5
 
+* implemented Axis.replace to replace some labels from an axis:
+
+    >>> sex = Axis('sex', ['M', 'F'])
+    >>> sex
+    Axis('sex', ['M', 'F'])
+    >>> sex.replace('M', 'Male')
+    Axis('sex', ['Male', 'F'])
+    >>> sex.replace({'M': 'Male', 'F': 'Female'})
+    Axis('sex', ['Male', 'Female'])
+
 * implemented from_string() method to create an array from a string:
 
     >>> from_string('''age,nat\\sex, M, F
