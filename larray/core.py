@@ -581,8 +581,6 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     """
     if isinstance(v, tuple):
         return list(v)
-    elif isinstance(v, Group):
-        return v.__class__(_to_key(v.key, stack_depth + 1), v.name, v.axis)
     elif isinstance(v, basestring):
         # axis name
         m = _axis_name_pattern.match(v)
@@ -623,7 +621,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
                             for b in v.split(',')]
                 else:
                     return _parse_bound(v, stack_depth + 1, parse_int=parse_single_int)
-    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (slice, list, np.ndarray, LArray, OrderedSet)):
+    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, LArray, OrderedSet)):
         return v
     else:
         raise TypeError("%s has an invalid type (%s) for a key"
