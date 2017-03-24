@@ -1675,13 +1675,13 @@ class Axis(object):
             new = list(old.values())
             old = list(old.keys())
         elif np.isscalar(old):
-            assert new is not None and np.isscalar(new)
+            assert new is not None and np.isscalar(new), "%s is not a scalar but a %s" % (new, type(new).__name__)
             old = [old]
             new = [new]
         else:
             seq = (tuple, list, np.ndarray)
-            assert isinstance(old, seq)
-            assert isinstance(new, seq)
+            assert isinstance(old, seq), "%s is not a sequence but a %s" % (old, type(old).__name__)
+            assert isinstance(new, seq), "%s is not a sequence but a %s" % (new, type(new).__name__)
             assert len(old) == len(new)
         # using object dtype because new labels length can be larger than the fixed str length in the self.labels array
         labels = self.labels.astype(object)
@@ -8787,15 +8787,17 @@ class LArray(object):
 
     __array_priority__ = 100
 
-    def set_labels(self, axis, labels, inplace=False):
+    def set_labels(self, axis, labels=None, inplace=False):
         """Replaces the labels of an axis of array.
 
         Parameters
         ----------
-        axis : string or Axis
-            Axis for which we want to replace the labels.
-        labels : int or iterable
-            Integer or list of values usable as the collection of labels for an Axis.
+        axis : string or Axis or dict
+            Axis for which we want to replace labels, or mapping {axis: changes} where changes can either be the
+            complete list of labels or a mapping {old_label: new_label}.
+        labels : int, str, iterable or mapping, optional
+            Integer or list of values usable as the collection of labels for an Axis. If this is mapping, it must be
+            {old_label: new_label}. This argument must not be used if axis is a mapping.
         inplace : bool
             Whether or not to modify the original object or return a new array and leave the original intact.
 
@@ -8811,21 +8813,61 @@ class LArray(object):
         nat\\sex | M | F
              BE | 0 | 1
              FO | 2 | 3
-        >>> a.set_labels(x.sex, 'Men,Women')
-        nat\\sex | Men | Women
-             BE |   0 |     1
-             FO |   2 |     3
         >>> a.set_labels(x.sex, ['Men', 'Women'])
         nat\\sex | Men | Women
              BE |   0 |     1
              FO |   2 |     3
+
+        when passing a single string as labels, it will be interpreted to create the list of labels, so that one can
+        use the same syntax than during axis creation.
+
+        >>> a.set_labels(x.sex, 'Men,Women')
+        nat\\sex | Men | Women
+             BE |   0 |     1
+             FO |   2 |     3
+
+        to replace only some labels, one must give a mapping giving the new label for each label to replace
+
+        >>> a.set_labels(x.sex, {'M': 'Men'})
+        nat\\sex | Men | F
+             BE |   0 | 1
+             FO |   2 | 3
+
+        to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
+        changed axis
+
+        >>> a.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
+          nat\\sex | Men | Women
+          Belgian |   0 |     1
+        Foreigner |   2 |     3
+
+        one can also replace some labels in several axes by giving a mapping of mappings
+
+        >>> a.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
+        nat\\sex | Men | F
+        Belgian |   0 | 1
+             FO |   2 | 3
         """
-        axis = self.axes[axis]
+        if isinstance(axis, dict):
+            changes = axis
+        else:
+            changes = {axis: labels}
+        # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
+        # new_axes = [self.axes[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
+        new_axes = []
+        for old_axis, axis_changes in changes.items():
+            real_axis = self.axes[old_axis]
+            if isinstance(axis_changes, dict):
+                new_axis = real_axis.replace(axis_changes)
+            else:
+                new_axis = Axis(real_axis.name, axis_changes)
+            new_axes.append(new_axis)
+
         if inplace:
-            axis.labels = labels
+            object.__setattr__(self, 'axes', new_axes)
             return self
         else:
-            return LArray(self.data, self.axes.replace(axis, Axis(axis.name, labels)))
+            return LArray(self.data, self.axes.replace(list(changes.keys()), new_axes))
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
         return LArray(self.data.astype(dtype, order, casting, subok, copy),
