@@ -6,7 +6,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   intro
    install
    notebooks/LArray_intro.ipynb
    api
