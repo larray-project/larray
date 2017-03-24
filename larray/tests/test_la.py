@@ -2525,6 +2525,11 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res2.shape, (4,))
         assert_array_equal(res2, res.sum(sex, geo=(vla, wal, bru, belgium)))
 
+    def test_agg_pgroup(self):
+        arr = ndtest(3)
+        res = arr.sum((x.a.i[:2], x.a.i[1:]))
+        assert_array_equal(res.a.labels, [':a1', 'a1:'])
+
     def test_ratio(self):
         la = self.larray
         age, geo, sex, lipro = la.axes

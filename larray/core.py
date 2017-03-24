@@ -406,7 +406,7 @@ def _to_tick(v):
     if np.isscalar(v):
         return v
     elif isinstance(v, Group):
-        return v.name if v.name is not None else _to_tick(v.key)
+        return v.name if v.name is not None else _to_tick(v.to_label())
     elif isinstance(v, slice):
         return _slice_to_str(v)
     elif isinstance(v, (tuple, list)):
@@ -2045,6 +2045,9 @@ class LGroup(Group):
         else:
             raise ValueError("Cannot translate an LGroup without axis")
 
+    def to_label(self):
+        return self.key
+
     def eval(self):
         if isinstance(self.key, slice):
             if isinstance(self.axis, Axis):
@@ -2156,6 +2159,22 @@ class PGroup(Group):
             return bound
         else:
             return self.key
+
+    def to_label(self):
+        if isinstance(self.axis, Axis):
+            labels = self.axis.labels
+            key = self.key
+            if isinstance(key, slice):
+                start = labels[key.start] if key.start is not None else None
+                # FIXME: this probably breaks for reverse slices
+                # - 1 because PGroup slice stop is excluded while LGroup slice stop is included
+                stop = labels[key.stop - 1] if key.stop is not None else None
+                return slice(start, stop, key.step)
+            else:
+                # key is a single int or tuple/list/array of them
+                return labels[key]
+        else:
+            raise ValueError("Cannot evaluate a positional group without axis")
 
     def eval(self):
         if isinstance(self.axis, Axis):
