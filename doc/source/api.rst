@@ -142,10 +142,32 @@ Testing
 LArray
 ======
 
+* :ref:`la_overview`
+* :ref:`la_creation_func`
+* :ref:`la_copying`
+* :ref:`la_inspecting`
+* :ref:`la_selecting`
+* :ref:`la_axes_labels`
+* :ref:`la_agg`
+* :ref:`la_sorting`
+* :ref:`la_reshaping`
+* :ref:`la_testing`
+* :ref:`la_misc`
+* :ref:`la_to_pandas`
+* :ref:`la_plotting`
+
+
+.. _la_overview:
+
+Overview
+--------
+
 .. autosummary::
    :toctree: _generated/
 
    LArray
+
+.. _la_creation_func:
 
 Array Creation Functions
 ------------------------
@@ -165,6 +187,8 @@ Array Creation Functions
    full
    full_like
 
+.. _la_copying:
+
 Copying
 -------
 
@@ -172,6 +196,8 @@ Copying
    :toctree: _generated/
 
    LArray.copy
+
+.. _la_inspecting:
 
 Inspecting
 ----------
@@ -188,6 +214,8 @@ Inspecting
    LArray.memory_used
    LArray.astype
 
+.. _la_selecting:
+
 Modifying/Selecting
 -------------------
 
@@ -201,6 +229,8 @@ Modifying/Selecting
    LArray.drop_labels
    LArray.filter
 
+.. _la_axes_labels:
+
 Changing Axes or Labels
 -----------------------
 
@@ -212,6 +242,8 @@ Changing Axes or Labels
    LArray.set_labels
    LArray.combine_axes
    LArray.split_axis
+
+.. _la_agg:
 
 Aggregation Functions
 ---------------------
@@ -240,6 +272,8 @@ Aggregation Functions
    LArray.percent
    LArray.growth_rate
 
+.. _la_sorting:
+
 Sorting
 -------
 
@@ -250,6 +284,8 @@ Sorting
    LArray.sort_values
    LArray.argsort
    LArray.posargsort
+
+.. _la_reshaping:
 
 Reshaping/Extending/Reordering
 ------------------------------
@@ -266,6 +302,8 @@ Reshaping/Extending/Reordering
    LArray.append
    LArray.extend
    LArray.broadcast_with
+
+.. _la_testing:
 
 Testing/Searching
 -----------------
@@ -287,6 +325,8 @@ Testing/Searching
    LArray.argmax
    LArray.posargmax
 
+.. _la_misc:
+
 Miscellaneous
 -------------
 
@@ -302,6 +342,8 @@ Miscellaneous
    LArray.diff
    LArray.to_clipboard
 
+.. _la_to_pandas:
+
 Converting to Pandas objects
 ----------------------------
 
@@ -310,6 +352,8 @@ Converting to Pandas objects
 
    LArray.to_series
    LArray.to_frame
+
+.. _la_plotting:
 
 Plotting
 --------
