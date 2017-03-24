@@ -77,29 +77,36 @@
 Miscellaneous improvements
 --------------------------
 
-* added installation instructions (closes :issue:`101`).
+* viewer: make keyboard shortcuts work even when the focus is not on the array editor widget. It means that,
+  for example, plotting an array (via Ctrl-P) or opening it in Excel (Ctrl-E) can be done directly even when
+  interacting with the list of arrays or within the interactive console (closes :issue:`102`).
 
-* viewer : make shortcuts work even when the focus is not on the array editor widget
-  (ie it is on the array list, or on the interactive console) (closes :issue:`102`).
-
-* allowed matrix multiplication (@ operator) between arrays with dimension != 2 (closes :issue:`122`).
-
-* viewer : automatically display plots done in the viewer console in a separate window
-  (unless "%matplotlib inline" is used). Plots can be done via the array widget
-  (using shortcut CTRL+P or right click) or from the console:
+* viewer: automatically display plots done in the viewer console (see example below) in a separate window (unless
+  "%matplotlib inline" is used).
 
     >>> arr = ndtest((3, 3))
     >>> arr.plot()
 
-  Now both methods generate a plot in separate window.
+* added installation instructions (closes :issue:`101`).
 
-* improved LArray.plot to get nicer plots by default.
-  The axes are transposed compared to what they used to, because the last axis is often used for time series.
-  Also it considers a 1D array like a single series, not N series of 1 point.
+* allowed matrix multiplication (@ operator) between arrays with dimension != 2 (closes :issue:`122`).
 
-* Axis.group and Axis.all are now deprecated
-  (Syntax "age[10:19] >> 'teens'" or "age[:] >> 'all'" must be used instead)
-  (closes :issue:`148`).
+* improved LArray.plot to get nicer plots by default. The axes are transposed compared to what they used to, because
+  the last axis is often used for time series. Also it considers a 1D array like a single series, not N series of 1
+  point.
+
+* Axis.group and Axis.all are now deprecated (closes :issue:`148`).
+
+    >>> city.group(['London', 'Brussels'], name='capitals')
+    # should be written as:
+    >>> city[['London', 'Brussels']] >> 'capitals'
+
+    and
+
+    >>> city.all()
+    # should be written as:
+    >>> city[:] >> 'all'
+
 
 Fixes
 -----
@@ -107,17 +114,18 @@ Fixes
 * viewer: allow changing the number of displayed digits even for integer arrays as that makes sense when using
   scientific notation (closes :issue:`100`).
 
-* viewer : fixed opening a viewer via view() edit() or compare() from within the viewer
+* viewer: fixed opening a viewer via view() edit() or compare() from within the viewer
   (closes :issue:`109`)
 
-* viewer : fixed compare() colors when arrays have values which are very close but not exactly equal
+* viewer: fixed compare() colors when arrays have values which are very close but not exactly equal
   (closes :issue:`123`)
 
-* viewer : fixed legend when plotting arbitrary rows (it always displayed the labels of the first rows)
+* viewer: fixed legend when plotting arbitrary rows (it always displayed the labels of the first rows)
   (closes :issue:`136`).
+
+* viewer: fixed labels on the x axis when zooming on a plot (closes :issue:`143`)
 
 * fixed posargsort labels (closes :issue:`137`).
 
-* viewer : fixed xticklabels when zooming on a plot (closes :issue:`143`)
-
 * fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels.
+
