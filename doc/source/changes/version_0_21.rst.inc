@@ -97,13 +97,44 @@ Miscellaneous improvements
     >>> arr = ndtest((3, 3))
     >>> arr.plot()
 
-* added installation instructions (closes :issue:`101`).
+* improved LArray.set_labels to make it possible to replace only some labels of an axis, instead of all of them
+  and to replace labels from several axes at the same time.
+
+    >>> a = ndrange('nat=BE,FO;sex=M,F')
+    >>> a
+    nat\\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+
+    to replace only some labels, one must give a mapping giving the new label for each label to replace
+
+    >>> a.set_labels(x.sex, {'M': 'Men'})
+    nat\\sex | Men | F
+         BE |   0 | 1
+         FO |   2 | 3
+
+    to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
+    changed axis
+
+    >>> a.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
+      nat\\sex | Men | Women
+      Belgian |   0 |     1
+    Foreigner |   2 |     3
+
+    one can also replace some labels in several axes by giving a mapping of mappings
+
+    >>> a.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
+    nat\\sex | Men | F
+    Belgian |   0 | 1
+         FO |   2 | 3
 
 * allowed matrix multiplication (@ operator) between arrays with dimension != 2 (closes :issue:`122`).
 
 * improved LArray.plot to get nicer plots by default. The axes are transposed compared to what they used to, because
   the last axis is often used for time series. Also it considers a 1D array like a single series, not N series of 1
   point.
+
+* added installation instructions (closes :issue:`101`).
 
 * Axis.group and Axis.all are now deprecated (closes :issue:`148`).
 
