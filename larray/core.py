@@ -2968,15 +2968,15 @@ class AxisCollection(object):
 
         Parameters
         ----------
-        old : Axis
-            Axis to be replaced
-        new : Axis
-            Axis to be put in place of the `old` axis.
+        old : Axis or list of Axis
+            Axis or axes to be replaced.
+        new : Axis or list of Axis
+            Axis or axes to be put in place of the `old` axis.
 
         Returns
         -------
         AxisCollection
-            New collection with old axis replaced by the new one.
+            New collection with old axes replaced by the new one(s).
 
         Examples
         --------
