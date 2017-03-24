@@ -119,3 +119,5 @@ Fixes
 * fixed posargsort labels (closes :issue:`137`).
 
 * viewer : fixed xticklabels when zooming on a plot (closes :issue:`143`)
+
+* fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels.
