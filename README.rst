@@ -106,7 +106,7 @@ For plotting
 
 
 Update
-======
+------
 
 If larray has been installed through conda, update
 is done via ::
