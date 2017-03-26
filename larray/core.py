@@ -2023,6 +2023,9 @@ class Group(object):
     def __float__(self):
         return self.eval().__float__()
 
+    def __array__(self, dtype=None):
+        return np.asarray(self.eval(), dtype=dtype)
+
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this
         # standardize on a single notation so that they can all target each
