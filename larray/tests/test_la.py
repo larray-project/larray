@@ -143,26 +143,38 @@ class TestAxis(TestCase):
         self.assertFalse(Axis('sex1', 'M,W').equals(Axis('sex2', 'M,F')))
 
     def test_getitem(self):
-        age = Axis('age', '..115')
-        ages_list = [1, 5, 9]
-        self.assertEqual(age[ages_list], LGroup(ages_list, axis=age))
-        self.assertEqual(age[ages_list], LGroup(ages_list))
-        self.assertEqual(age['1,5,9'], LGroup(ages_list))
-        self.assertEqual(age[1, 5, 9], LGroup(ages_list))
+        age = Axis('age', '0..10')
+        # a normal list
+        a159 = age[[1, 5, 9]]
+        self.assertEqual(a159.key, [1, 5, 9])
+        self.assertIs(a159.name, None)
+        self.assertIs(a159.axis, age)
 
-        # with a slice string
-        self.assertEqual(age['10:20'], LGroup(slice(10, 20)))
+        # a string list
+        a159 = age['1,5,9']
+        self.assertEqual(a159.key, [1, 5, 9])
+        self.assertIs(a159.name, None)
+        self.assertIs(a159.axis, age)
 
-        # all labels
-        age = Axis('age', '..115')
-        group = age[:] >> 'all'
-        self.assertEqual(group.key, slice(None))
-        self.assertIs(group.axis, age)
+        # a normal slice
+        a10to20 = age[5:9]
+        self.assertEqual(a10to20.key, slice(5, 9))
+        self.assertIs(a10to20.axis, age)
+
+        # a string slice
+        a10to20 = age['5:9']
+        self.assertEqual(a10to20.key, slice(5, 9))
+        self.assertIs(a10to20.axis, age)
 
         # with name
-        group = age[ages_list] >> 'teens'
-        self.assertEqual(group.key, ages_list)
-        self.assertEqual(group.name, 'teens')
+        group = age[[1, 5, 9]] >> 'test'
+        self.assertEqual(group.key, [1, 5, 9])
+        self.assertEqual(group.name, 'test')
+        self.assertIs(group.axis, age)
+
+        # all
+        group = age[:] >> 'all'
+        self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
     def test_group_using_lgroup(self):
