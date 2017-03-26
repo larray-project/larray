@@ -370,6 +370,11 @@ class TestLGroup(TestCase):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
                          [LGroup('a'), LGroup('b'), LGroup('c'), LGroup('d')])
 
+    def test_asarray(self):
+        assert_array_equal(np.asarray(self.slice_both_named_wh_named_axis), np.array([1, 2, 3, 4, 5]))
+        assert_array_equal(np.asarray(self.slice_none_wh_named_axis), np.array(['P01', 'P02', 'P03', 'P04', 'P05',
+                                                                                'P06', 'P07', 'P08', 'P09']))
+
     def test_hash(self):
         d = {self.slice_both: 1,
              self.single_value: 2,
