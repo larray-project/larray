@@ -103,6 +103,30 @@
     (year.i[0:3], year.i[2:5], year.i[4:7], year.i[6:7])
     # which is equivalent to (year[2010:2012], year[2012:2014], year[2014:2016], year[2016])
 
+* implemented larray_nan_equal to test whether two arrays are identical even in the presence of nan values.
+  Two arrays are considered identical by larray_equal if they have exactly the same axes and data. However, since a nan
+  value has the odd property of not being equal to itself, larray_equal returns False if either array contains a nan
+  value. larray_nan_equal returns True if all not-nan data is equal and both arrays have nans at the same place.
+
+    >>> arr1 = ndtest((2, 3), dtype=float)
+    >>> arr1['a1', 'b1'] = nan
+    >>> arr1
+    a\\b |  b0 |  b1 |  b2
+     a0 | 0.0 | 1.0 | 2.0
+     a1 | 3.0 | nan | 5.0
+    >>> arr2 = arr1.copy()
+    >>> arr2
+    a\\b |  b0 |  b1 |  b2
+     a0 | 0.0 | 1.0 | 2.0
+     a1 | 3.0 | nan | 5.0
+    >>> larray_equal(arr1, arr2)
+    False
+    >>> larray_nan_equal(arr1, arr2)
+    True
+    >>> arr2['b1'] = 0.0
+    >>> larray_nan_equal(arr1, arr2)
+    False
+
 
 Miscellaneous improvements
 --------------------------
