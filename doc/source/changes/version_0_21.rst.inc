@@ -224,7 +224,30 @@ Fixes
     >>> years.i[0] == 1995
     True
 
+* fixed using positional groups for their value in many cases (slice bounds, within list of values, within other
+  groups, etc.). For example, this used to fail:
+
+    >>> arr = ndtest((2, 4))
+    >>> arr
+    a\b | b0 | b1 | b2 | b3
+     a0 |  0 |  1 |  2 |  3
+     a1 |  4 |  5 |  6 |  7
+    >>> b = arr.b
+    >>> start = b.i[0]  # equivalent to start = 'b0'
+    >>> stop = b.i[2]   # equivalent to stop = 'b2'
+    >>> arr[start:stop]
+    a\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  4 |  5 |  6
+    >>> arr[[b.i[0], b.i[2]]]
+    a\b | b0 | b2
+     a0 |  0 |  2
+     a1 |  4 |  6
+
 * fixed posargsort labels (closes :issue:`137`).
 
 * fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels. This
   was most visible when using the Group.by() method (which creates positional groups).
+
+* fixed a speed regression in version 0.18 and later versions compared to 0.17. In some cases, it was up to 40% slower
+  than it should (closes :issue:`165`).

@@ -207,6 +207,267 @@ class TestAxis(TestCase):
         self.assertTrue(group_equal(age[val_axis_name], LGroup(ages, 'val_axis_name', age)))
         self.assertTrue(group_equal(age[val_axis_name] >> 'a_name', LGroup(ages, 'a_name', age)))
 
+    def test_getitem_group_keys(self):
+        a = Axis('a', 'a0..a2')
+        alt_a = Axis('a', 'a1..a3')
+
+        # a) key is a single LGroup
+        # -------------------------
+
+        # a.1) containing a scalar
+        key = a['a1']
+        # use it on the same axis
+        g = a[key]
+        self.assertEqual(g.key, 'a1')
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertEqual(g.key, 'a1')
+        self.assertIs(g.axis, alt_a)
+
+        # a.2) containing a slice
+        key = a['a1':'a2']
+        # use it on the same axis
+        g = a[key]
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, alt_a)
+
+        # a.3) containing a list
+        key = a[['a1', 'a2']]
+        # use it on the same axis
+        g = a[key]
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # b) key is a single PGroup
+        # -------------------------
+
+        # b.1) containing a scalar
+        key = a.i[1]
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, 'a1')
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, 'a1')
+        self.assertIs(g.axis, alt_a)
+
+        # b.2) containing a slice
+        key = a.i[1:3]
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, alt_a)
+
+        # b.3) containing a list
+        key = a.i[[1, 2]]
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(list(g.key), ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(list(g.key), ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # c) key is a slice
+        # -----------------
+
+        # c.1) with LGroup bounds
+        lg_a1 = a['a1']
+        lg_a2 = a['a2']
+        # use it on the same axis
+        g = a[lg_a1:lg_a2]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[lg_a1:lg_a2]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, alt_a)
+
+        # c.2) with PGroup bounds
+        pg_a1 = a.i[1]
+        pg_a2 = a.i[2]
+        # use it on the same axis
+        g = a[pg_a1:pg_a2]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[pg_a1:pg_a2]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, slice('a1', 'a2'))
+        self.assertIs(g.axis, alt_a)
+
+        # d) key is a list of scalar groups => create a single LGroup
+        # ---------------------------------
+
+        # d.1) with LGroup
+        key = [a['a1'], a['a2']]
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # d.2) with PGroup
+        key = [a.i[1], a.i[2]]
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # e) key is a list of non-scalar groups => retarget multiple groups to axis
+        # -------------------------------------
+
+        # e.1) with LGroup
+        key = [a['a1', 'a2'], a['a2', 'a1']]
+        # use it on the same axis => nothing happens
+        g = a[key]
+        self.assertIsInstance(g, list)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(g[0].key, ['a1', 'a2'])
+        self.assertEqual(g[1].key, ['a2', 'a1'])
+        self.assertIs(g[0].axis, a)
+        self.assertIs(g[1].axis, a)
+        # use it on a different axis => change axis
+        g = alt_a[key]
+        self.assertIsInstance(g, list)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(g[0].key, ['a1', 'a2'])
+        self.assertEqual(g[1].key, ['a2', 'a1'])
+        self.assertIs(g[0].axis, alt_a)
+        self.assertIs(g[1].axis, alt_a)
+
+        # e.2) with PGroup
+        key = (a.i[1, 2], a.i[2, 1])
+        # use it on the same axis => change to LGroup
+        g = a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(list(g[0].key), ['a1', 'a2'])
+        self.assertEqual(list(g[1].key), ['a2', 'a1'])
+        self.assertIs(g[0].axis, a)
+        self.assertIs(g[1].axis, a)
+        # use it on a different axis => retarget to axis
+        g = alt_a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(list(g[0].key), ['a1', 'a2'])
+        self.assertEqual(list(g[1].key), ['a2', 'a1'])
+        self.assertIs(g[0].axis, alt_a)
+        self.assertIs(g[1].axis, alt_a)
+
+        # f) key is a tuple of scalar groups => create a single LGroup
+        # ----------------------------------
+
+        # f.1) with LGroups
+        key = (a['a1'], a['a2'])
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # f.2) with PGroup
+        key = (a.i[1], a.i[2])
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, LGroup)
+        self.assertEqual(g.key, ['a1', 'a2'])
+        self.assertIs(g.axis, alt_a)
+
+        # g) key is a tuple of non-scalar groups => retarget multiple groups to axis
+        # --------------------------------------
+
+        # g.1) with LGroups
+        key = (a['a1', 'a2'], a['a2', 'a1'])
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(g[0].key, ['a1', 'a2'])
+        self.assertEqual(g[1].key, ['a2', 'a1'])
+        self.assertIs(g[0].axis, a)
+        self.assertIs(g[1].axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(g[0].key, ['a1', 'a2'])
+        self.assertEqual(g[1].key, ['a2', 'a1'])
+        self.assertIs(g[0].axis, alt_a)
+        self.assertIs(g[1].axis, alt_a)
+
+        # g.2) with PGroup
+        key = (a.i[1, 2], a.i[2, 1])
+        # use it on the same axis
+        g = a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(list(g[0].key), ['a1', 'a2'])
+        self.assertEqual(list(g[1].key), ['a2', 'a1'])
+        self.assertIs(g[0].axis, a)
+        self.assertIs(g[1].axis, a)
+        # use it on a different axis
+        g = alt_a[key]
+        self.assertIsInstance(g, tuple)
+        self.assertIsInstance(g[0], LGroup)
+        self.assertIsInstance(g[1], LGroup)
+        self.assertEqual(list(g[0].key), ['a1', 'a2'])
+        self.assertEqual(list(g[1].key), ['a2', 'a1'])
+        self.assertIs(g[0].axis, alt_a)
+        self.assertIs(g[1].axis, alt_a)
+
     def test_init_from_group(self):
         code = Axis('code', 'C01..C03')
         code_group = code[:'C02']
@@ -1176,6 +1437,41 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         res = arr[x.e[key]]
         self.assertEqual(res.shape, (2, 2, 2, 2))
         self.assertEqual(res.axes.names, ['c', 'd', 'a', 'b'])
+
+    def test_getitem_structured_key_with_groups(self):
+        arr = ndtest((3, 2))
+        expected = arr['a1':]
+
+        a, b = arr.axes
+        alt_a = Axis('a', 'a1..a3')
+
+        # a) slice with lgroup
+        # a.1) LGroup.axis from array.axes
+        assert_array_equal(arr[a['a1']:a['a2']], expected)
+
+        # a.2) LGroup.axis not from array.axes
+        assert_array_equal((arr[alt_a['a1']:alt_a['a2']]), expected)
+
+        # b) slice with pgroup
+        # b.1) PGroup.axis from array.axes
+        assert_array_equal((arr[a.i[1]:a.i[2]]), expected)
+
+        # b.2) PGroup.axis not from array.axes
+        assert_array_equal((arr[alt_a.i[0]:alt_a.i[1]]), expected)
+
+        # c) list with LGroup
+        # c.1) LGroup.axis from array.axes
+        assert_array_equal((arr[[a['a1'], a['a2']]]), expected)
+
+        # c.2) LGroup.axis not from array.axes
+        assert_array_equal((arr[[alt_a['a1'], alt_a['a2']]]), expected)
+
+        # d) list with PGroup
+        # d.1) PGroup.axis from array.axes
+        assert_array_equal((arr[[a.i[1], a.i[2]]]), expected)
+
+        # d.2) PGroup.axis not from array.axes
+        assert_array_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
 
     def test_getitem_single_larray_key_guess(self):
         a = Axis('a', ['a1', 'a2'])

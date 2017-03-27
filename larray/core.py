@@ -793,7 +793,7 @@ def larray_nan_equal(first, other):
     False
     >>> larray_nan_equal(arr1, arr2)
     True
-    >>> arr2['b1'] += 1
+    >>> arr2['b1'] = 0.0
     >>> larray_nan_equal(arr1, arr2)
     False
     >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
@@ -1384,19 +1384,17 @@ class Axis(object):
         if isinstance(key, basestring):
             key = to_keys(key)
 
-        if isinstance(key, (tuple, list)):
-            if any(isinstance(k, Group) for k in key):
-                k0 = key[0]
-                assert isinstance(k0, Group)
-                cls_ = k0.__class__
-                assert all(isinstance(k, cls_) for k in key[1:])
-                res = [k.with_axis(self) for k in key]
-                res = tuple(res) if isinstance(key, tuple) else res
-                return res
+        def isscalar(k):
+            return np.isscalar(k) or (isinstance(k, Group) and np.isscalar(k.key))
 
-        if isinstance(key, Group):
-            return key.__class__(key.key, key.name, self)
-        return LGroup(key, axis=self)
+        # the not all(np.isscalar) part is necessary to support axis[a, b, c] and axis[[a, b, c]]
+        if isinstance(key, (tuple, list)) and not all(isscalar(k) for k in key):
+            # this creates a group for each key if it wasn't and retargets PGroup
+            list_res = [self[k] for k in key]
+            return list_res if isinstance(key, list) else tuple(list_res)
+
+        name = key.name if isinstance(key, Group) else None
+        return LGroup(key, name, self)
 
     def __contains__(self, key):
         return _to_tick(key) in self._mapping
@@ -1476,6 +1474,7 @@ class Axis(object):
             key = _to_key(key)
 
         if isinstance(key, PGroup):
+            assert key.axis is self
             return key.key
 
         if isinstance(key, LGroup):
@@ -1732,7 +1731,9 @@ class Group(object):
     def __init__(self, key, name=None, axis=None):
         if isinstance(key, tuple):
             key = list(key)
-        self.key = key
+        if isinstance(key, Group):
+            key = key.to_label()
+        self.key = remove_nested_groups(key)
 
         # we do NOT assign a name automatically when missing because that
         # makes it impossible to know whether a name was explicitly given or
@@ -2051,8 +2052,22 @@ class Group(object):
         return hash(_to_tick(self.key))
 
 
-# TODO: factorize as much as possible between LGroup & PGroup (move stuff to
-#       Group)
+def remove_nested_groups(key):
+    # "struct" key with Group elements -> key without Group
+    # TODO: ideally if all key elements are groups on the same Axis, we should make a group on that axis
+    #       for slice bounds, watch out for None
+    if isinstance(key, slice):
+        key_start, key_stop = key.start, key.stop
+        start = key_start.to_label() if isinstance(key_start, Group) else key_start
+        stop = key_stop.to_label() if isinstance(key_stop, Group) else key_stop
+        return slice(start, stop, key.step)
+    elif isinstance(key, (tuple, list)):
+        res = [k.to_label() if isinstance(k, Group) else k for k in key]
+        return tuple(res) if isinstance(key, tuple) else res
+    else:
+        return key
+
+
 class LGroup(Group):
     """Label group.
 
@@ -2114,6 +2129,11 @@ class LGroup(Group):
         else:
             # we do not check the group labels are actually valid on Axis
             return self.key
+
+    def retarget_to(self, target_axis):
+        # TODO: it would be nice to check the labels actually exist on the new axis (if it is a real Axis)
+        #       however, I am unsure we can afford to do this by default (for performance reasons)
+        return LGroup(self.key, self.name, target_axis)
 
 
 class LSet(LGroup):
@@ -2237,6 +2257,36 @@ class PGroup(Group):
         else:
             raise ValueError("Cannot evaluate a positional group without axis")
 
+    def retarget_to(self, target_axis):
+        """Make sure a group has axis
+
+        Parameters
+        ----------
+        axis : Axis
+            axis to conform to
+
+        Returns
+        -------
+        Group with axis, raise ValueError otherwise
+        """
+        if self.axis is target_axis:
+            return self
+        elif isinstance(self.axis, basestring) or isinstance(self.axis, AxisReference):
+            axis_name = self.axis.name if isinstance(self.axis, AxisReference) else self.axis
+            if axis_name != target_axis.name:
+                raise ValueError('cannot retarget a PGroup defined without a real axis object (e.g. using '
+                                 'an AxisReference (x.)) to an axis with a different name')
+            return PGroup(self.key, self.name, target_axis)
+        elif self.axis.equals(target_axis) or isinstance(self.axis, int):
+            # in the case of isinstance(self.axis, int), we can only hope the axis corresponds. This is the
+            # case if we come from _translate_axis_key_chunk, but if the users calls this manually, we cannot know.
+            # XXX: maybe changing this to retarget_to_axes would be a good idea after all?
+
+            # just change the axis object
+            return PGroup(self.key, self.name, target_axis)
+        else:
+            # to retarget to another Axis, we need to translate to labels
+            return LGroup(self.to_label(), self.name, target_axis)
 
     def __hash__(self):
         return hash(('PGroup', _to_tick(self.key)))
@@ -4630,20 +4680,19 @@ class LArray(object):
             Positional group with valid axes (from self.axes)
         """
 
-        if isinstance(axis_key, Group):
-            axis = axis_key.axis
-            if axis is not None:
-                # we have axis information but not necessarily an Axis object
-                # from self.axes
-                real_axis = self.axes[axis]
-                if axis is not real_axis and isinstance(axis, AxisReference):
-                    axis_key = axis_key.with_axis(real_axis)
+        if isinstance(axis_key, Group) and axis_key.axis is not None:
+            # retarget to real axis, if needed
+            # only retarget PGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
+            # version of the group ONLY if key.axis is not real_axis (for performance reasons)
+            if isinstance(axis_key, PGroup):
+                axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
+
+        axis_key = remove_nested_groups(axis_key)
 
         # already positional
         if isinstance(axis_key, PGroup):
-            if axis is None:
-                raise ValueError("positional groups without axis are not "
-                                 "supported")
+            if axis_key.axis is None:
+                raise ValueError("positional groups without axis are not supported")
             return axis_key
 
         # labels but known axis
