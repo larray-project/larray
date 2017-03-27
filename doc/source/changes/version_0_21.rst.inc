@@ -213,7 +213,17 @@ Fixes
 
 * viewer: fixed labels on the x axis when zooming on a plot (closes :issue:`143`)
 
-* fixed indexing an array using a positional group with a position which corresponds to a label on that axis.
+* fixed indexing an array using a positional group with a position which corresponds to a label on that axis. This
+  used to return the wrong data (the data corresponding to the position as if it was the key).
+
+    >>> a = Axis('a', '1..3')
+    >>> arr = ndrange(a)
+    >>> arr
+    a | 1 | 2 | 3
+      | 0 | 1 | 2
+    >>> # this used to return 0 !
+    >>> arr[a.i[1]]
+    1
 
 * fixed == for positional groups (closes :issue:`93`)
 
@@ -248,6 +258,23 @@ Fixes
 
 * fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels. This
   was most visible when using the Group.by() method (which creates positional groups).
+
+    >>> years = Axis('years', '2010..2015')
+    >>> arr = ndrange(years)
+    >>> arr
+    years | 2010 | 2011 | 2012 | 2013 | 2014 | 2015
+          |    0 |    1 |    2 |    3 |    4 |    5
+    >>> arr.sum(years.by(3))
+    years | 2010:2012 | 2013:2015
+          |         3 |        12
+
+    While this used to return:
+
+    years | 0:3 | 3:6
+          |   3 |  12
+
+* fixed Group.by() when the group was a slice with either bound unspecified. For example,
+  `years[2010:2015].by(3)` worked but `years[:].by(3)`, `years[2010:].by(3)` and `years[:2015].by(3)` did not.
 
 * fixed a speed regression in version 0.18 and later versions compared to 0.17. In some cases, it was up to 40% slower
   than it should (closes :issue:`165`).
