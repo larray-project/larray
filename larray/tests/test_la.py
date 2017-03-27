@@ -749,6 +749,57 @@ class TestLSet(TestCase):
         self.assertEqual(LSet([1, 2, 3]) - 2, LSet([1, 3]))
 
 
+class TestPGroup(TestCase):
+    def _assert_array_equal_is_true_array(self, a, b):
+        res = a == b
+        self.assertIsInstance(res, np.ndarray)
+        self.assertEqual(res.shape, np.asarray(b).shape)
+        self.assertTrue(res.all())
+
+    def setUp(self):
+        self.code_axis = Axis('code', 'a0..a4')
+
+        self.slice_both_named = self.code_axis.i[1:4] >> 'a123'
+        self.slice_both = self.code_axis.i[1:4]
+        self.slice_start = self.code_axis.i[1:]
+        self.slice_stop = self.code_axis.i[:4]
+        self.slice_none = self.code_axis.i[:]
+
+        self.first_value = self.code_axis.i[0]
+        self.last_value = self.code_axis.i[-1]
+        self.list = self.code_axis.i[[0, 1, -2, -1]]
+        self.tuple = self.code_axis.i[0, 1, -2, -1]
+
+    def test_asarray(self):
+        assert_array_equal(np.asarray(self.slice_both), np.array(['a1', 'a2', 'a3']))
+
+    def test_eq(self):
+        self._assert_array_equal_is_true_array(self.slice_both, ['a1', 'a2', 'a3'])
+        self._assert_array_equal_is_true_array(self.slice_both_named, ['a1', 'a2', 'a3'])
+        self._assert_array_equal_is_true_array(self.slice_both, self.slice_both_named)
+        self._assert_array_equal_is_true_array(self.slice_both_named, self.slice_both)
+        self._assert_array_equal_is_true_array(self.slice_start, ['a1', 'a2', 'a3', 'a4'])
+        self._assert_array_equal_is_true_array(self.slice_stop, ['a0', 'a1', 'a2', 'a3'])
+        self._assert_array_equal_is_true_array(self.slice_none, ['a0', 'a1', 'a2', 'a3', 'a4'])
+
+        self.assertEqual(self.first_value, 'a0')
+        self.assertEqual(self.last_value, 'a4')
+
+        self._assert_array_equal_is_true_array(self.list, ['a0', 'a1', 'a3', 'a4'])
+        self._assert_array_equal_is_true_array(self.tuple, ['a0', 'a1', 'a3', 'a4'])
+
+    def test_repr(self):
+        self.assertEqual(repr(self.slice_both_named), "code.i[1:4] >> 'a123'")
+        self.assertEqual(repr(self.slice_both), "code.i[1:4]")
+        self.assertEqual(repr(self.slice_start), "code.i[1:]")
+        self.assertEqual(repr(self.slice_stop), "code.i[:4]")
+        self.assertEqual(repr(self.slice_none), "code.i[:]")
+        self.assertEqual(repr(self.first_value), "code.i[0]")
+        self.assertEqual(repr(self.last_value), "code.i[-1]")
+        self.assertEqual(repr(self.list), "code.i[0, 1, -2, -1]")
+        self.assertEqual(repr(self.tuple), "code.i[0, 1, -2, -1]")
+
+
 class TestAxisCollection(TestCase):
     def setUp(self):
         self.lipro = Axis('lipro', 'P01..P04')
