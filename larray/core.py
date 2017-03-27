@@ -2230,6 +2230,10 @@ class PGroup(Group):
             raise ValueError("Cannot evaluate a positional group without axis")
 
 
+    def __hash__(self):
+        return hash(('PGroup', _to_tick(self.key)))
+
+
 def index_by_id(seq, value):
     """
     Returns position of an object in a sequence.

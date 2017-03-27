@@ -189,6 +189,8 @@ Fixes
 
 * viewer: fixed labels on the x axis when zooming on a plot (closes :issue:`143`)
 
+* fixed indexing an array using a positional group with a position which corresponds to a label on that axis.
+
 * fixed posargsort labels (closes :issue:`137`).
 
 * fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels.

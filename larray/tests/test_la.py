@@ -1181,6 +1181,11 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res.ndim, 3)
         self.assertEqual(res.shape, (2, 12, 5))
 
+    def test_getitem_pgroup_on_int_axis(self):
+        a = Axis('a', '1..3')
+        arr = ndrange(a)
+        self.assertEqual(arr[a.i[1]], 1)
+
     def test_getitem_int_larray_lgroup_key(self):
         # e axis go from 0 to 3
         arr = ndrange((2, 2, 4)).rename(0, 'c').rename(1, 'd').rename(2, 'e')
