@@ -1445,35 +1445,33 @@ class Axis(object):
         >>> people.translate(people.matches('Bruce'))
         array([1, 2])
         """
+
         mapping = self._mapping
 
-        # first, for Group instances, try their name
-        if isinstance(key, Group):
-            # XXX: we should probably use _to_tick(key) instead of key.name and do it for all keys instead of only
-            # for groups
+        if isinstance(key, Group) and key.axis is not self and key.axis is not None:
             try:
-                # avoid matching 0 against False or 0.0
-                if self._is_key_type_compatible(key.name):
-                    return mapping[key.name]
+                # XXX: this is potentially very expensive if key.key is an array or list and should be tried as a last
+                # resort
+                potential_tick = _to_tick(key)
+                # avoid matching 0 against False or 0.0, note that None has object dtype and so always pass this test
+                if self._is_key_type_compatible(potential_tick):
+                    return mapping[potential_tick]
             # we must catch TypeError because key might not be hashable (eg slice)
             # IndexError is for when mapping is an ndarray
             except (KeyError, TypeError, IndexError):
                 pass
 
-        # then try the key as-is:
-        # * for strings, this is useful to allow ticks with special characters
-        # * for groups, it means trying if the string representation of the whole group is in the mapping
-        #   e.g. mapping['v1,v2,v3']
-        try:
-            # avoid matching 0 against False or 0.0
-            if self._is_key_type_compatible(key):
-                return mapping[key]
-        # we must catch TypeError because key might not be hashable (eg slice)
-        # IndexError is for when mapping is an ndarray
-        except (KeyError, TypeError, IndexError):
-            pass
-
         if isinstance(key, basestring):
+            # try the key as-is to allow getting at ticks with special characters (",", ":", ...)
+            try:
+                # avoid matching 0 against False or 0.0, note that Group keys have object dtype and so always pass this test
+                if self._is_key_type_compatible(key):
+                    return mapping[key]
+            # we must catch TypeError because key might not be hashable (eg slice)
+            # IndexError is for when mapping is an ndarray
+            except (KeyError, TypeError, IndexError):
+                pass
+
             # transform "specially formatted strings" for slices, lists, LGroup and PGroup to actual objects
             key = _to_key(key)
 
@@ -1955,21 +1953,28 @@ class Group(object):
             raise TypeError("cannot take a subset of {} because it has a "
                             "'{}' key".format(self.key, type(self.key)))
 
-    def __eq__(self, other):
-        # different name or axis compare equal !
-        # XXX: we might want to compare "expanded" keys using self.eval(), so that slices
-        # can match lists and vice-versa. This might be too slow though.
-        other_key = other.key if isinstance(other, Group) else _to_key(other)
-        return _to_tick(self.key) == _to_tick(other_key)
-
     # method factory
     def _binop(opname):
         op_fullname = '__%s__' % opname
 
         # TODO: implement this in a delayed fashion for reference axes
-        def opmethod(self, other):
-            other_value = other.eval() if isinstance(other, Group) else other
-            return getattr(self.eval(), op_fullname)(other_value)
+        if PY3:
+            def opmethod(self, other):
+                other_value = other.eval() if isinstance(other, Group) else other
+                return getattr(self.eval(), op_fullname)(other_value)
+        else:
+            # workaround the fact slice objects do not have any __binop__ methods defined on Python2 (even though
+            # the actual operations work on them).
+            def opmethod(self, other):
+                self_value = self.eval()
+                other_value = other.eval() if isinstance(other, Group) else other
+                if isinstance(self_value, slice):
+                    if not isinstance(other_value, slice):
+                        return False
+                    self_value = (self_value.start, self_value.stop, self_value.step)
+                    other_value = (other_value.start, other_value.stop, other_value.step)
+                return getattr(self_value, op_fullname)(other_value)
+
         opmethod.__name__ = op_fullname
         return opmethod
 
@@ -2004,11 +2009,14 @@ class Group(object):
     __gt__ = _binop('gt')
     __le__ = _binop('le')
     __lt__ = _binop('lt')
-    # __ne__ = _binop('ne')
-    # __eq__ = _binop('eq')
+
+    # having ne and eq use .eval on a slice group creates an ndarray, for which __eq__ does not return a single value,
+    # which means, it cannot be in a mapping/Axis, but this is no longer a problem, since we do not create axes with
+    # LGroup labels anymore anyway
+    __ne__ = _binop('ne')
+    __eq__ = _binop('eq')
 
     def __contains__(self, item):
-        # XXX: ideally, we shouldn't need to test for Group (hash should hash to the same as item.eval())
         if isinstance(item, Group):
             item = item.eval()
         return item in self.eval()
@@ -4628,7 +4636,7 @@ class LArray(object):
                 # we have axis information but not necessarily an Axis object
                 # from self.axes
                 real_axis = self.axes[axis]
-                if axis is not real_axis:
+                if axis is not real_axis and isinstance(axis, AxisReference):
                     axis_key = axis_key.with_axis(real_axis)
 
         # already positional
@@ -4640,13 +4648,13 @@ class LArray(object):
 
         # labels but known axis
         if isinstance(axis_key, LGroup) and axis_key.axis is not None:
-            axis = axis_key.axis
+            real_axis = self.axes[axis_key.axis]
             try:
-                axis_pos_key = axis.translate(axis_key, bool_passthrough)
+                axis_pos_key = real_axis.translate(axis_key, bool_passthrough)
             except KeyError:
                 raise ValueError("%r is not a valid label for any axis"
                                  % axis_key)
-            return axis.i[axis_pos_key]
+            return real_axis.i[axis_pos_key]
 
         # otherwise we need to guess the axis
         # TODO: instead of checking all axes, we should have a big mapping
