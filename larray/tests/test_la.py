@@ -144,6 +144,12 @@ class TestAxis(TestCase):
 
     def test_getitem(self):
         age = Axis('age', '0..10')
+        # a tuple
+        a159 = age[1, 5, 9]
+        self.assertEqual(a159.key, [1, 5, 9])
+        self.assertIs(a159.name, None)
+        self.assertIs(a159.axis, age)
+
         # a normal list
         a159 = age[[1, 5, 9]]
         self.assertEqual(a159.key, [1, 5, 9])
@@ -177,7 +183,7 @@ class TestAxis(TestCase):
         self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
-    def test_group_using_lgroup(self):
+    def test_getitem_lgroup_keys(self):
         def group_equal(g1, g2):
             return (g1.key == g2.key and g1.name == g2.name and
                     g1.axis is g2.axis)
