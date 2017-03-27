@@ -329,8 +329,8 @@ class TestAxis(TestCase):
 
 class TestLGroup(TestCase):
     def setUp(self):
-        self.age = Axis('age', '..115')
-        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 10)])
+        self.age = Axis('age', '0..10')
+        self.lipro = Axis('lipro', 'P01..P05')
         self.anonymous = Axis(None, range(3))
 
         self.slice_both_named_wh_named_axis = LGroup('1:5', "full", self.age)
@@ -343,8 +343,8 @@ class TestLGroup(TestCase):
         self.slice_none_wh_anonymous_axis = LGroup(':', axis=self.anonymous)
 
         self.single_value = LGroup('P03')
-        self.list = LGroup('P01,P03,P07')
-        self.list_named = LGroup('P01,P03,P07', "P137")
+        self.list = LGroup('P01,P03,P04')
+        self.list_named = LGroup('P01,P03,P04', "P134")
 
     def test_init(self):
         self.assertEqual(self.slice_both_named_wh_named_axis.name, "full")
@@ -359,7 +359,7 @@ class TestLGroup(TestCase):
         self.assertIs(self.slice_none_wh_anonymous_axis.axis, self.anonymous)
 
         self.assertEqual(self.single_value.key, 'P03')
-        self.assertEqual(self.list.key, ['P01', 'P03', 'P07'])
+        self.assertEqual(self.list.key, ['P01', 'P03', 'P04'])
 
     def test_eq(self):
         # with axis vs no axis do not compare equal
@@ -369,7 +369,7 @@ class TestLGroup(TestCase):
         self.assertEqual(self.slice_start, LGroup(slice('1', None)))
         self.assertEqual(self.slice_stop, LGroup(slice('5')))
         self.assertEqual(self.slice_none_no_axis, LGroup(slice(None)))
-        self.assertEqual(self.list, LGroup(['P01', 'P03', 'P07']))
+        self.assertEqual(self.list, LGroup(['P01', 'P03', 'P04']))
         # test with raw objects
         self.assertEqual(self.slice_both, '1:5')
         self.assertEqual(self.slice_start, '1:')
@@ -379,10 +379,10 @@ class TestLGroup(TestCase):
         self.assertEqual(self.slice_start, slice('1', None))
         self.assertEqual(self.slice_stop, slice('5'))
         self.assertEqual(self.slice_none_no_axis, slice(None))
-        self.assertEqual(self.list, 'P01,P03,P07')
-        self.assertEqual(self.list, ' P01 , P03 , P07 ')
-        self.assertEqual(self.list, ['P01', 'P03', 'P07'])
-        self.assertEqual(self.list, ('P01', 'P03', 'P07'))
+        self.assertEqual(self.list, 'P01,P03,P04')
+        self.assertEqual(self.list, ' P01 , P03 , P04 ')
+        self.assertEqual(self.list, ['P01', 'P03', 'P04'])
+        self.assertEqual(self.list, ('P01', 'P03', 'P04'))
 
     def test_sorted(self):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
@@ -390,8 +390,7 @@ class TestLGroup(TestCase):
 
     def test_asarray(self):
         assert_array_equal(np.asarray(self.slice_both_named_wh_named_axis), np.array([1, 2, 3, 4, 5]))
-        assert_array_equal(np.asarray(self.slice_none_wh_named_axis), np.array(['P01', 'P02', 'P03', 'P04', 'P05',
-                                                                                'P06', 'P07', 'P08', 'P09']))
+        assert_array_equal(np.asarray(self.slice_none_wh_named_axis), np.array(['P01', 'P02', 'P03', 'P04', 'P05']))
 
     def test_hash(self):
         d = {self.slice_both: 1,
@@ -412,7 +411,7 @@ class TestLGroup(TestCase):
         # target a LGroup with an equivalent key
         self.assertEqual(d.get('1:5'), 1)
         self.assertEqual(d.get('P03'), 2)
-        self.assertEqual(d.get('P01,P03,P07'), 3)
+        self.assertEqual(d.get('P01,P03,P04'), 3)
 
         # this cannot and will never work!
         # hash(str) and hash(tuple) are not special, so ' P01 ,...' and
@@ -424,19 +423,19 @@ class TestLGroup(TestCase):
         # target a simple key with an equivalent LGroup
         d = {'1:5': 1,
              'P03': 2,
-             'P01,P03,P07': 3}
+             'P01,P03,P04': 3}
         self.assertEqual(d.get(self.slice_both), 1)
         self.assertEqual(d.get(self.single_value), 2)
         self.assertEqual(d.get(self.list), 3)
-        self.assertEqual(d.get(LGroup(' P01 , P03 , P07 ')), 3)
-        self.assertEqual(d.get(LGroup(('P01', 'P03', 'P07'))), 3)
+        self.assertEqual(d.get(LGroup(' P01 , P03 , P04 ')), 3)
+        self.assertEqual(d.get(LGroup(('P01', 'P03', 'P04'))), 3)
 
     def test_repr(self):
         self.assertEqual(repr(self.slice_both_named_wh_named_axis), "age[1:5] >> 'full'")
         self.assertEqual(repr(self.slice_both_named),
                          "LGroup(slice(1, 5, None)) >> 'named'")
         self.assertEqual(repr(self.slice_both), "LGroup(slice(1, 5, None))")
-        self.assertEqual(repr(self.list), "LGroup(['P01', 'P03', 'P07'])")
+        self.assertEqual(repr(self.list), "LGroup(['P01', 'P03', 'P04'])")
         self.assertEqual(repr(self.slice_none_no_axis), "LGroup(slice(None, None, None))")
         self.assertEqual(repr(self.slice_none_wh_named_axis), "lipro[:]")
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
