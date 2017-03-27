@@ -215,6 +215,15 @@ Fixes
 
 * fixed indexing an array using a positional group with a position which corresponds to a label on that axis.
 
+* fixed == for positional groups (closes :issue:`93`)
+
+    >>> years = Axis('years', '1995..1997')
+    >>> years
+    Axis('years', [1995, 1996, 1997])
+    >>> # this used to return False
+    >>> years.i[0] == 1995
+    True
+
 * fixed posargsort labels (closes :issue:`137`).
 
 * fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels. This
