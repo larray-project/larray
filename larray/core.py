@@ -1787,20 +1787,54 @@ class Group(object):
     def __str__(self):
         return str(self.eval())
 
+    # TODO: rename to "to_positional"
     def translate(self, bound=None, stop=False):
         """
+        Translate key to a position if it is not already
 
         Parameters
         ----------
-        bound : any
+        bound : any, optional
+        stop : bool, optional
 
         Returns
         -------
-        int
+        int-based key (single int, slice of int or tuple/list/array of them)
+        """
+        raise NotImplementedError()
+
+    def eval(self):
+        """
+        Translate key to labels, if it is not already, expanding slices in the process.
+
+        Returns
+        -------
+        label-based key (single scalar or tuple/list/array of them)
+        """
+        raise NotImplementedError()
+
+    def to_label(self):
+        """
+        Translate key to labels, if it is not already
+
+        Returns
+        -------
+        label-based key (single scalar, slice of scalars or tuple/list/array of them)
+        """
+        raise NotImplementedError()
+
+    def retarget_to(self, target_axis):
+        """
+        Retarget group to another axis. Potentially translating it to label using its former axis.
+
+        Returns
+        -------
+        Group
         """
         raise NotImplementedError()
 
     def __len__(self):
+        # XXX: we probably want to_label instead of .eval (so that we do not expand slices)
         value = self.eval()
         # for some reason this breaks having LGroup ticks/labels on an axis
         if hasattr(value, '__len__'):
