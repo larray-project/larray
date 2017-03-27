@@ -217,5 +217,5 @@ Fixes
 
 * fixed posargsort labels (closes :issue:`137`).
 
-* fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels.
-
+* fixed labels when doing group aggregates using positional groups. Previously, it used the positions as labels. This
+  was most visible when using the Group.by() method (which creates positional groups).
