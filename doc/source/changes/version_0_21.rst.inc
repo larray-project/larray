@@ -6,39 +6,39 @@
 
     >>> arr = ndtest((2, 3))
     >>> arr
-    a\\b | b0 | b1 | b2
+    a\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
     >>> row = Axis('row', ['r0', 'r1'])
     >>> column = Axis('column', ['c0', 'c1', 'c2'])
 
-    Replace one axis (second argument `new_axis` must be provided)
+  Replace one axis (second argument `new_axis` must be provided)
 
     >>> arr.set_axes(x.a, row)
-    row\\b | b0 | b1 | b2
+    row\b | b0 | b1 | b2
        r0 |  0 |  1 |  2
        r1 |  3 |  4 |  5
 
-    Replace several axes (keywords, list of tuple or dictionary)
+  Replace several axes (keywords, list of tuple or dictionary)
 
     >>> arr.set_axes(a=row, b=column)
     or
     >>> arr.set_axes([(x.a, row), (x.b, column)])
     or
     >>> arr.set_axes({x.a: row, x.b: column})
-    row\\column | c0 | c1 | c2
+    row\column | c0 | c1 | c2
             r0 |  0 |  1 |  2
             r1 |  3 |  4 |  5
 
-    Replace all axes (list of axes or AxisCollection)
+  Replace all axes (list of axes or AxisCollection)
 
     >>> arr.set_axes([row, column])
-    row\\column | c0 | c1 | c2
+    row\column | c0 | c1 | c2
             r0 |  0 |  1 |  2
             r1 |  3 |  4 |  5
     >>> arr2 = ndrange([row, column])
     >>> arr.set_axes(arr2.axes)
-    row\\column | c0 | c1 | c2
+    row\column | c0 | c1 | c2
             r0 |  0 |  1 |  2
             r1 |  3 |  4 |  5
 
@@ -69,18 +69,18 @@
 
     >>> combined = ndrange('a_b = a0b0..a1b2')
     >>> combined
-        a_b | a0b0 | a0b1 | a0b2 | a1b0 | a1b1 | a1b2
-            |    0 |    1 |    2 |    3 |    4 |    5
+    a_b | a0b0 | a0b1 | a0b2 | a1b0 | a1b1 | a1b2
+        |    0 |    1 |    2 |    3 |    4 |    5
     >>> combined.split_axis(x.a_b, regex='(\w{2})(\w{2})')
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |
+    a\b | b0 | b1 | b2
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
 
 * one can assign a new axis to several groups at the same time by using axis[groups]:
 
     >>> group1 = year[2001:2004]
     >>> group2 = year[2008,2009]
-    # let us change the year axis by time
+    >>> # let us change the year axis by time
     >>> x.time[group1, group2]
     (x.time[2001:2004], x.time[2008, 2009])
 
@@ -90,19 +90,20 @@
     >>> year = Axis('year', '2010..2016')
     >>> year.by(3)
     (year.i[0:3], year.i[3:6], year.i[6:7])
-    # which is equivalent to (year[2010:2012], year[2013:2015], year[2016])
 
-    like for groups, the optional second argument specifies the step between groups
+  which is equivalent to (year[2010:2012], year[2013:2015], year[2016]). Like for groups, the optional second argument
+  specifies the step between groups
 
     >>> year.by(3, step=4)
     (year.i[0:3], year.i[4:7])
-    # which is equivalent to (year[2010:2012], year[2014:2016])
 
-    and if step is smaller than length, we get overlapping groups, which can be useful for example for moving averages.
+  which is equivalent to (year[2010:2012], year[2014:2016]). And if step is smaller than length, we get overlapping
+  groups, which can be useful for example for moving averages.
 
     >>> year.by(3, 2)
     (year.i[0:3], year.i[2:5], year.i[4:7], year.i[6:7])
-    # which is equivalent to (year[2010:2012], year[2012:2014], year[2014:2016], year[2016])
+
+  which is equivalent to (year[2010:2012], year[2012:2014], year[2014:2016], year[2016])
 
 * implemented larray_nan_equal to test whether two arrays are identical even in the presence of nan values.
   Two arrays are considered identical by larray_equal if they have exactly the same axes and data. However, since a nan
@@ -112,12 +113,12 @@
     >>> arr1 = ndtest((2, 3), dtype=float)
     >>> arr1['a1', 'b1'] = nan
     >>> arr1
-    a\\b |  b0 |  b1 |  b2
+    a\b |  b0 |  b1 |  b2
      a0 | 0.0 | 1.0 | 2.0
      a1 | 3.0 | nan | 5.0
     >>> arr2 = arr1.copy()
     >>> arr2
-    a\\b |  b0 |  b1 |  b2
+    a\b |  b0 |  b1 |  b2
      a0 | 0.0 | 1.0 | 2.0
      a1 | 3.0 | nan | 5.0
     >>> larray_equal(arr1, arr2)
@@ -150,29 +151,29 @@ Miscellaneous improvements
 
     >>> a = ndrange('nat=BE,FO;sex=M,F')
     >>> a
-    nat\\sex | M | F
+    nat\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
 
-    to replace only some labels, one must give a mapping giving the new label for each label to replace
+  to replace only some labels, one must give a mapping giving the new label for each label to replace
 
     >>> a.set_labels(x.sex, {'M': 'Men'})
-    nat\\sex | Men | F
+    nat\sex | Men | F
          BE |   0 | 1
          FO |   2 | 3
 
-    to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
-    changed axis
+  to replace labels for several axes at the same time, one should give a mapping giving the new labels for each changed
+  axis
 
     >>> a.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
-      nat\\sex | Men | Women
+      nat\sex | Men | Women
       Belgian |   0 |     1
     Foreigner |   2 |     3
 
-    one can also replace some labels in several axes by giving a mapping of mappings
+  one can also replace some labels in several axes by giving a mapping of mappings
 
     >>> a.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
-    nat\\sex | Men | F
+    nat\sex | Men | F
     Belgian |   0 | 1
          FO |   2 | 3
 
@@ -190,7 +191,7 @@ Miscellaneous improvements
     # should be written as:
     >>> city[['London', 'Brussels']] >> 'capitals'
 
-    and
+  and
 
     >>> city.all()
     # should be written as:
@@ -276,13 +277,14 @@ Fixes
     years | 2010:2012 | 2013:2015
           |         3 |        12
 
-    While this used to return:
+  While this used to return:
 
+    >>> arr.sum(years.by(3))
     years | 0:3 | 3:6
           |   3 |  12
 
-* fixed Group.by() when the group was a slice with either bound unspecified. For example,
-  `years[2010:2015].by(3)` worked but `years[:].by(3)`, `years[2010:].by(3)` and `years[:2015].by(3)` did not.
+* fixed Group.by() when the group was a slice with either bound unspecified. For example, `years[2010:2015].by(3)`
+  worked but `years[:].by(3)`, `years[2010:].by(3)` and `years[:2015].by(3)` did not.
 
 * fixed a speed regression in version 0.18 and later versions compared to 0.17. In some cases, it was up to 40% slower
   than it should (closes :issue:`165`).

@@ -28,12 +28,14 @@ New features
 
 * added support for loading sparse arrays via open_excel().
 
-  For example, assuming you have a sheet like this:
+  For example, assuming you have a sheet like this: ::
 
     age | sex\year | 2015 | 2016
      10 |        F |  0.0 |  1.0
      10 |        M |  2.0 |  3.0
      20 |        M |  4.0 |  5.0
+
+  loading it will yield:
 
     >>> wb = open_excel('test_sparse.xlsx')
     >>> arr = wb['Sheet1'].load()

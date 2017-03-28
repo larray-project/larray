@@ -1381,8 +1381,8 @@ class Axis(object):
         -----
         key is label-based (slice and fancy indexing are supported)
         """
-        if isinstance(key, basestring):
-            key = to_keys(key)
+        # if isinstance(key, basestring):
+        #     key = to_keys(key)
 
         def isscalar(k):
             return np.isscalar(k) or (isinstance(k, Group) and np.isscalar(k.key))
@@ -4000,6 +4000,7 @@ def _doc_agg_method(desc, by=False, action="perform",
             * a variable (Axis). If the axis has been defined previously
               and assigned to a variable, you can pass it as argument.
 
+
             You may not want to {2} the {3} over a whole axis but
             over a selection of specific labels. To do so, you have several
             possibilities:
@@ -4021,6 +4022,7 @@ def _doc_agg_method(desc, by=False, action="perform",
 
         \**kwargs :
         {4}
+
         """.format("".join(_arg_agg[arg] for arg in extra_args),
                    str_doc, action, desc,
                    "".join(_kwarg_agg[kw] for kw in kwargs))
@@ -4229,6 +4231,13 @@ class LArray(object):
                 r0 |  0 |  1 |  2
                 r1 |  3 |  4 |  5
         """
+        # TODO: most of this logic should be moved to AxisCollection.replace and the code here should boil down to:
+        # new_axes = self.axes.replace(axes_to_replace=None, new_axis=None, inplace=False, **kwargs)
+        # if inplace:
+        #     self.axes = new_axes
+        #     return self
+        # else:
+        #     return LArray(self.data, new_axes, title=self.title)
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
             if len(axes_to_replace) != len(self.axes):
@@ -4568,7 +4577,7 @@ class LArray(object):
         else:
             return LArray(self.data, axes)
 
-    def sort_values(self, key):
+    def sort_values(self, key, reverse=False):
         """Sorts values of the array.
 
         Parameters
@@ -4596,6 +4605,10 @@ class LArray(object):
         sex\\nat | BE | EU | FO
               M |  4 | 10 |  2
               F |  1 |  3 |  7
+        >>> a.sort_values('F', reverse=True)
+        sex\\nat | FO | EU | BE
+              M |  2 | 10 |  4
+              F |  7 |  3 |  1
         >>> b = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
         ...            [sex, xtype, nat])
         >>> b
@@ -4632,7 +4645,8 @@ class LArray(object):
         # "not reordering labels" behavior that I have now?
         # FWIW, using .data, I get PGroup([1, 2, 0], axis='nat'), which works.
         sorter = axis.i[posargsort.data]
-        return self[sorter]
+        res = self[sorter]
+        return res[axis[::-1]] if reverse else res
 
     # XXX: rename to sort_axes?
     def sort_axis(self, axes=None, reverse=False):
@@ -8885,6 +8899,28 @@ class LArray(object):
 
     __array_priority__ = 100
 
+    # XXX: implement guess axis?
+    """
+    # guessing each axis
+    >>> a.set_labels({'M': 'Men', 'BE': 'Belgian'})
+    nat\\sex | Men | Women
+    BE | 0 | 1
+    FO | 2 | 3
+
+    # we have to choose which one to support because it is probably not a good idea to simultaneously support the
+    # following syntax (even though we *could* support both if we split values on , before we determine if
+    # the key is an axis or a label by looking if the value is a list or a single string.
+    >>> a.set_labels({'sex': 'Men,Women', 'BE': 'Belgian'})
+    nat\\sex | Men | Women
+    BE | 0 | 1
+    FO | 2 | 3
+    # this is shorter but I do not like it because string are both quoted and not quoted and you cannot have int
+    # labels
+    >>> a.set_labels(M='Men', BE='Belgian')
+    nat\\sex | Men | Women
+    BE | 0 | 1
+    FO | 2 | 3
+    """
     def set_labels(self, axis, labels=None, inplace=False):
         """Replaces the labels of an axis of array.
 
@@ -10565,6 +10601,76 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 # stack(a1, a2, axis=Axis('sex', 'M,F'))
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
+
+# XXX: sloppy syntax (BEURK) -- in that case, users would be *required* to provide labels.
+# stack('M', 1, 'F', 2, axis='sex')
+# stack('M', a1, 'F', a2, axis='sex')
+
+# on Python 3.6, we could do something like (it would make from_lists obsolete for 1D arrays):
+# stack('sex', M=1, F=2)
+
+# which is almost equivalent to:
+
+# stack(M=1, F=2, axis='sex')
+# stack([('M', 1), ('F', 2)], axis='sex')
+# stack({'M': 1, 'F': 2}, sex)  # only support this when a real axis object is given (until keeping dict order is
+#                               # mandatory and not an implementation detail)
+
+# but we cannot support the current syntax unmodified AND the first version, but second version we could.
+
+# we would only have to explain that they cannot do:
+# stack(0=1, 1=2, axis='age')
+# stack(0A=1, 1B=2, axis='code')
+
+# but should use this instead:
+
+# stack([(0, 1), (1, 2)], axis='age')
+# stack([('0A', 1), ('1B', 2)], axis='code')
+
+# or
+
+# stack({0: 1, 1: 2}, 'age=0,1')
+# stack({'0A': 1, '1B': 2}, 'code=0A,1B')
+
+# stack({0: 1, 1: 2}, age)
+# stack({'0A': 1, '1B': 2}, code)
+
+# or this, if we decide to support *args instead:
+
+# stack((0, 1), (1, 2), axis='age')
+# stack(('0A', 1), ('1B', 2), axis='code')
+
+# stack(M=1, F=2, axis='sex')
+
+# is much nicer than:
+
+# from_lists(['sex', 'M', 'F'],
+#            [   '',   1,   2])
+
+# for 2D arrays, from_lists and stack would be mostly as ugly and for 3D+ from_lists stays nicer even though I still do
+# not like it much.
+
+# stack('nationality',
+#       BE=stack('sex', M=0, F=1),
+#       FR=stack('sex', M=2, F=3),
+#       DE=stack('sex', M=4, F=5))
+#
+# from_lists([['nationality\\sex', 'M', 'F'],
+#             [              'BE',   0,   1],
+#             [              'FR',   2,   3],
+#             [              'DE',   4,   5]])
+
+# SUPER SLOPPY (I hate this, but I bet users would like it):
+
+# stack(BE_M=0, BE_F=1,
+#       FR_M=2, FR_F=3,
+#       DE_M=4, DE_F=5, axis='nationality_sex')
+
+# stack(('nationality', 'sex'), {
+#       ('BE', 'M'): 0, ('BE', 'F'): 1,
+#       ('FR', 'M'): 2, ('FR', 'F'): 3,
+#       ('DE', 'M'): 4, ('DE', 'F'): 5})
+
 def stack(arrays, axis=None, title=''):
     """
     Combines several arrays along an axis.
