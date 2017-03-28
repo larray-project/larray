@@ -11,6 +11,7 @@ in the future, to update from one version to the next, it should always be enoug
 
   conda update larrayenv
 
+
 New features
 ------------
 
@@ -101,7 +102,7 @@ Miscellaneous improvements
         Axis('b', ['b0', 'b1', 'b2'])
     ])
 
-* nicer display (repr) for LSet (closes :issue:`44).
+* nicer display (repr) for LSet (closes :issue:`44`).
 
     >>> x.b['b0,b2'].set()
     x.b['b0', 'b2'].set()
