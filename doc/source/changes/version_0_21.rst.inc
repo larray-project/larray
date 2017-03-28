@@ -84,7 +84,8 @@
     >>> x.time[group1, group2]
     (x.time[2001:2004], x.time[2008, 2009])
 
-* implemented Axis.by() which is equivalent to axis[:].by() and divides the axis into several groups of specified length
+* implemented Axis.by() which is equivalent to axis[:].by() and divides the axis into several groups of specified
+  length:
 
     >>> year = Axis('year', '2010..2016')
     >>> year.by(3)
