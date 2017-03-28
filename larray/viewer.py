@@ -2113,35 +2113,35 @@ class MappingEditor(QDialog):
         # XXX: use ordered set so that the order is non-random if the underlying container is ordered?
         keys_before = set(self.data.keys())
         keys_after = set(value.keys())
-
-        # deleted keys
-        for k in keys_before - keys_after:
-            if self._display_in_grid(k, self.data[k]):
-                self.delete_list_item(k)
-            del self.data[k]
-
         # contains both new and updated keys (but not deleted keys)
         changed_keys = [k for k in keys_after if value[k] is not self.data.get(k)]
-        if changed_keys:
-            # update session
-            for k in changed_keys:
-                self.data[k] = value[k]
 
-            # add new keys which can be displayed
-            displayable_new_keys = [k for k in keys_after - keys_before if self._display_in_grid(k, value[k])]
-            self.add_list_items(displayable_new_keys)
+        # when a key is re-assigned, it can switch from being displayable to non-displayable or vice versa
+        displayed_keys_before = set(k for k in keys_before if self._display_in_grid(k, self.data[k]))
+        displayed_keys_after = set(k for k in keys_after if self._display_in_grid(k, value[k]))
 
-            displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
-            if displayable_changed_keys:
-                # display only first result if there are more than one
-                to_display = displayable_changed_keys[0]
+        # 1) update session/mapping
+        # a) deleted old keys
+        for k in keys_before - keys_after:
+            del self.data[k]
+        # b) add new/modify existing keys
+        for k in changed_keys:
+            self.data[k] = value[k]
 
-                self.select_list_item(to_display)
-                return to_display
-            else:
-                return None
-        else:
-            return None
+        # 2) update list widget
+        for k in displayed_keys_before - displayed_keys_after:
+            self.delete_list_item(k)
+
+        self.add_list_items(displayed_keys_after - displayed_keys_before)
+
+        # this can contain more keys than displayed_keys_after - displayed_keys_before (because of existing keys
+        # which changed value)
+        displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
+        # display only first result if there are more than one
+        to_display = displayable_changed_keys[0] if displayable_changed_keys else None
+        if to_display is not None:
+            self.select_list_item(to_display)
+        return to_display
 
     def delete_list_item(self, to_delete):
         deleted_items = self._listwidget.findItems(to_delete, Qt.MatchExactly)

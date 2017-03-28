@@ -213,6 +213,13 @@ Fixes
 
 * viewer: fixed labels on the x axis when zooming on a plot (closes :issue:`143`)
 
+* viewer: fixed storing an array in a variable with a name which existed previously but which was not displayable in
+  the viewer, such as the name of any function or special object. In some cases, this error lead to a crash of the
+  viewer. For example, this code failed when run in the viewer console, because x is already defined (for the x.
+  syntax):
+
+    >>> x = ndtest(3)
+
 * fixed indexing an array using a positional group with a position which corresponds to a label on that axis. This
   used to return the wrong data (the data corresponding to the position as if it was the key).
 
