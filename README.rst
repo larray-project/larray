@@ -3,8 +3,7 @@ LArray
 
 larray provides a Labelled Array class
 
-.. image:: https://travis-ci.org/liam2/larray.svg?branch=master
-    :target: https://travis-ci.org/liam2/larray
+|build-status| |docs|
 
 
 .. start-install
@@ -121,3 +120,13 @@ you simply must do ::
 
     conda update larrayenv
 
+
+.. |build-status| image:: https://travis-ci.org/liam2/larray.svg?branch=master
+    :alt: build status
+    :scale: 100%
+    :target: https://travis-ci.org/liam2/larray
+
+.. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://larray.readthedocs.io/en/latest/?badge=latest
