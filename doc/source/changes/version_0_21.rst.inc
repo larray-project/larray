@@ -143,8 +143,9 @@ Miscellaneous improvements
     >>> arr = ndtest((3, 3))
     >>> arr.plot()
 
-* viewer: when calling view(an_array), the new window opened does not block the initial window, which means you can
-  have several windows open at the same time. view() without argument can still result in odd behavior though.
+* viewer: when calling view(an_array) from within the viewer, the new window opened does not block the initial window,
+  which means you can have several windows open at the same time. view() without argument can still result in odd
+  behavior though.
 
 * improved LArray.set_labels to make it possible to replace only some labels of an axis, instead of all of them
   and to replace labels from several axes at the same time.
