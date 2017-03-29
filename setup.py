@@ -23,8 +23,8 @@ PACKAGE_DATA = {'larray': ['tests/data/*']}
 URL = 'https://github.com/liam2/larray'
 
 CLASSIFIERS = [
-    'Development Status :: 4 - Beta'
-    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
+    'Development Status :: 4 - Beta',
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     'Operating System :: OS Independent',
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
