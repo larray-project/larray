@@ -16,7 +16,7 @@ except ImportError:
 from larray import (LArray, Axis, AxisCollection, LGroup, LSet, PGroup, union,
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     zeros, zeros_like, ndrange, ndtest, from_lists,
-                    ones, eye, diag, clip, exp, where, x, mean, isnan, round)
+                    ones, eye, diag, clip, exp, where, x, mean, isnan, round, stack, from_string)
 from larray.core import _to_ticks, _to_key, df_aslarray
 
 
@@ -4074,6 +4074,21 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res.shape, (2, 3, 5, 4))
         assert_array_equal(res.transpose(x.a, x.b, x.c, x.d), arr)
 
+    def test_stack(self):
+        sex = Axis('sex', 'M, F')
+        arr1 = ones('nat=BE, FO')
+        # not using the same length as nat, otherwise numpy gets confused :(
+        arr2 = zeros('type=1..3')
+        nd = LArray([arr1, arr2], sex)
+        res = stack(nd, sex)
+        expected = from_string("""nat, type\\sex,   M,   F
+                                   BE,        1, 1.0, 0.0
+                                   BE,        2, 1.0, 0.0
+                                   BE,        3, 1.0, 0.0
+                                   FO,        1, 1.0, 0.0
+                                   FO,        2, 1.0, 0.0
+                                   FO,        3, 1.0, 0.0""")
+        assert_array_equal(res, expected)
 
 if __name__ == "__main__":
     import doctest

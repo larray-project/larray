@@ -85,6 +85,7 @@ Matrix class
 #   (and potentially rename it to reflect the broader scope)
 
 import csv
+from collections import Iterable, Sequence
 from itertools import product, chain, groupby, islice
 import os
 import re
@@ -10602,32 +10603,21 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
 
-# XXX: sloppy syntax (BEURK) -- in that case, users would be *required* to provide labels.
-# stack('M', 1, 'F', 2, axis='sex')
-# stack('M', a1, 'F', a2, axis='sex')
-
 # on Python 3.6, we could do something like (it would make from_lists obsolete for 1D arrays):
 # stack('sex', M=1, F=2)
 
 # which is almost equivalent to:
 
 # stack(M=1, F=2, axis='sex')
-# stack([('M', 1), ('F', 2)], axis='sex')
-# stack({'M': 1, 'F': 2}, sex)  # only support this when a real axis object is given (until keeping dict order is
-#                               # mandatory and not an implementation detail)
 
 # but we cannot support the current syntax unmodified AND the first version, but second version we could.
 
 # we would only have to explain that they cannot do:
+
 # stack(0=1, 1=2, axis='age')
 # stack(0A=1, 1B=2, axis='code')
 
 # but should use this instead:
-
-# stack([(0, 1), (1, 2)], axis='age')
-# stack([('0A', 1), ('1B', 2)], axis='code')
-
-# or
 
 # stack({0: 1, 1: 2}, 'age=0,1')
 # stack({'0A': 1, '1B': 2}, 'code=0A,1B')
@@ -10677,8 +10667,10 @@ def stack(arrays, axis=None, title=''):
 
     Parameters
     ----------
-    arrays : tuple or list of values.
-        Arrays to stack. values can be scalars, arrays or (label, value) pairs.
+    arrays : tuple, list or dict.
+        Arrays to stack. values can be scalars, arrays, (label, value) pairs or a {label: value} mapping. In the
+        later case, axis must be defined and cannot be a name only, because we need to have labels order,
+        which the mapping does not provide.
     axis : str or Axis, optional
         Axis to create. If None, defaults to a range() axis.
     title : str, optional
@@ -10691,7 +10683,8 @@ def stack(arrays, axis=None, title=''):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
+    >>> nat = Axis('nat', 'BE, FO')
+    >>> sex = Axis('sex', 'M, F')
     >>> arr1 = ones(nat)
     >>> arr1
     nat |  BE |  FO
@@ -10700,55 +10693,58 @@ def stack(arrays, axis=None, title=''):
     >>> arr2
     nat |  BE |  FO
         | 0.0 | 0.0
+
+    In the case the axis to create has already been defined in a variable
+
+    >>> stack({'M': arr1, 'F': arr2}, sex)
+    nat\\sex |   M |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
+
+    Otherwise (when one wants to create an axis from scratch), any of these syntaxes works:
+
+    >>> stack([arr1, arr2], 'sex=M,F')
+    nat\\sex |   M |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
+    >>> stack({'M': arr1, 'F': arr2}, 'sex=M,F')
+    nat\\sex |   M |   F
+         BE | 1.0 | 0.0
+         FO | 1.0 | 0.0
     >>> stack([('M', arr1), ('F', arr2)], 'sex')
     nat\\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
-    It also works when reusing an existing axis (though the first syntax
-    should be preferred because it is more obvious which label correspond to
-    what array):
+    When stacking arrays with different axes, the result has the union of all axes present:
 
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> stack((arr1, arr2), sex)
+    >>> stack({'M': arr1, 'F': 0}, sex)
     nat\\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
-    or for arrays with different axes:
-
-    >>> stack((arr1, 0), sex)
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
-
-    or even with no axis at all:
+    Creating an axis without name nor labels can be done using:
 
     >>> stack((arr1, arr2))
     nat\\{1}* |   0 |   1
           BE | 1.0 | 0.0
           FO | 1.0 | 0.0
-
-    >>> # TODO: move this to unit test
-    >>> # not using the same length as nat, otherwise numpy gets confused :(
-    >>> nd = LArray([arr1, zeros(Axis('type', [1, 2, 3]))], sex)
-    >>> stack(nd, sex)
-    nat | type\\sex |   M |   F
-     BE |        1 | 1.0 | 0.0
-     BE |        2 | 1.0 | 0.0
-     BE |        3 | 1.0 | 0.0
-     FO |        1 | 1.0 | 0.0
-     FO |        2 | 1.0 | 0.0
-     FO |        3 | 1.0 | 0.0
     """
+    if isinstance(axis, str) and '=' in axis:
+        axis = Axis(*axis.split('='))
     # LArray arrays could be interesting
     if isinstance(arrays, LArray):
         if axis is None:
             axis = -1
         axis = arrays.axes[axis]
         values = [arrays[k] for k in axis]
-    else:
-        assert isinstance(arrays, (tuple, list))
+    elif isinstance(arrays, dict):
+        assert isinstance(axis, Axis)
+        values = [arrays[v] for v in axis.labels]
+    elif isinstance(arrays, Iterable):
+        if not isinstance(arrays, Sequence):
+            arrays = list(arrays)
+
         if all(isinstance(a, tuple) for a in arrays):
             assert all(len(a) == 2 for a in arrays)
             keys = [k for k, v in arrays]
@@ -10765,6 +10761,9 @@ def stack(arrays, axis=None, title=''):
                 axis = Axis(axis, len(arrays))
             else:
                 assert len(axis) == len(arrays)
+    else:
+        raise TypeError('unsupported type for arrays: %s' % type(arrays).__name__)
+
     result_axes = AxisCollection.union(*[get_axes(v) for v in values])
     result_axes.append(axis)
     result = empty(result_axes, title=title, dtype=common_type(values))
