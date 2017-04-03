@@ -171,8 +171,8 @@ class Axis(ABCAxis):
         else:
             # TODO: move this to _to_ticks????
             # we convert to an ndarray to save memory for scalar ticks (for
-            # LGroup ticks, it does not make a difference since a list of VG
-            # and an ndarray of VG are both arrays of pointers)
+            # LGroup ticks, it does not make a difference since a list of LGroup
+            # and an ndarray of LGroup are both arrays of pointers)
             ticks = _to_ticks(labels)
             if _contain_group_ticks(ticks):
                 # avoid getting a 2d array if all LGroup have the same length
