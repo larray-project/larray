@@ -20,9 +20,9 @@ Matrix class
 #   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
 #                        <=> (lipro['P01,P02'], lipro['P05'])
 
-# discuss VG with Geert:
+# discuss LGroup with Geert:
 # I do not "expand" key (eg :) upon group creation for perf reason
-# VG[:] is much faster than [A01,A02,...,A99]
+# LGroup[:] is much faster than [A01,A02,...,A99]
 # I could make that all "contiguous" ranges are conv to slices (return views)
 # but that might introduce confusing differences if they update/setitem their
 # arrays
@@ -2521,7 +2521,7 @@ class LArray(ABCLArray):
     # TODO: experiment implementing this using ufunc.reduceat
     # http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.ufunc.reduceat.html
     # XXX: rename keepaxes to label=value? For group_aggregates we might
-    # want to keep the VG label if any
+    # want to keep the LGroup label if any
     def _group_aggregate(self, op, items, keepaxes=False, out=None, **kwargs):
         assert out is None
         res = self
@@ -2614,7 +2614,7 @@ class LArray(ABCLArray):
         return res
 
     def _prepare_aggregate(self, op, args, kwargs=None, commutative=False, stack_depth=1):
-        """converts args to keys & VG and kwargs to VG"""
+        """converts args to keys & LGroup and kwargs to LGroup"""
 
         if kwargs is None:
             kwargs_items = []
@@ -2794,9 +2794,9 @@ class LArray(ABCLArray):
                 if not isinstance(axis, tuple):
                     # assume a single group
                     axis = (axis,)
-                vgkey = axis
-                axis = vgkey[0].axis
-                value = res._aggregate(npop[op], (vgkey,))
+                lgkey = axis
+                axis = lgkey[0].axis
+                value = res._aggregate(npop[op], (lgkey,))
             res = res.extend(axis, value)
         return res
 
