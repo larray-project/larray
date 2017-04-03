@@ -2519,6 +2519,16 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw = np.asarray(la)
         assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
 
+    def test_group_agg_on_int_array(self):
+        # issue 193
+        arr = ndrange('year=2014..2016')
+        group = arr.year[:2015]
+        self.assertEqual(arr.mean(group), 0.5)
+        self.assertEqual(arr.median(group), 0.5)
+        self.assertEqual(arr.percentile(90, group), 0.9)
+        self.assertEqual(arr.std(group), 0.5)
+        self.assertEqual(arr.var(group), 0.25)
+
     # TODO: fix this (and add other tests for references (x.) to anonymous axes
     # def test_group_agg_anonymous_axis_ref(self):
     #     la = ndrange((2, 3))
