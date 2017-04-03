@@ -231,7 +231,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # only Ellipsis
         assert_array_equal(la[...], raw)
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
@@ -271,7 +271,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # only Ellipsis
         assert_array_equal(la[...], raw)
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
@@ -320,7 +320,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # only Ellipsis
         assert_array_equal(la[...], raw)
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         assert_array_equal(la[..., 'P01,P05,P09'], raw[..., [0, 4, 8]])
         assert_array_equal(la[..., ['P01', 'P05', 'P09']],
                            raw[..., [0, 4, 8]])
@@ -385,7 +385,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # only Ellipsis
         assert_array_equal(la[...], raw)
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
@@ -423,7 +423,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # only Ellipsis
         assert_array_equal(la[...], raw)
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
@@ -724,7 +724,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
         assert_array_equal(la, raw)
 
-        # b) value has exactly the same shape but VG at a "wrong" positions
+        # b) value has exactly the same shape but LGroup at a "wrong" positions
         la = self.larray.copy()
         la[geo[:], ages1_5_9] = la[ages1_5_9] + 25.0
         # same raw as previous test
@@ -782,7 +782,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la[...] = 0
         assert_array_equal(la, np.zeros_like(raw))
 
-        # Ellipsis and VG
+        # Ellipsis and LGroup
         la = self.larray.copy()
         raw = self.array.copy()
         la[..., lipro['P01,P05,P09']] = 0
@@ -952,16 +952,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # FIXME: this should raise a comprehensible error!
         # self.assertEqual(la.filter(age=[ages1_5_9]).shape, (3, 44, 2, 15))
 
-        # VG with 1 value => collapse
+        # LGroup with 1 value => collapse
         self.assertEqual(la.filter(age=ages11).shape, (44, 2, 15))
 
-        # VG with a list of 1 value => do not collapse
+        # LGroup with a list of 1 value => do not collapse
         self.assertEqual(la.filter(age=age[[11]]).shape, (1, 44, 2, 15))
 
-        # VG with a list of 1 value defined as a string => do not collapse
+        # LGroup with a list of 1 value defined as a string => do not collapse
         self.assertEqual(la.filter(lipro=lipro['P01,']).shape, (116, 44, 2, 1))
 
-        # VG with 1 value
+        # LGroup with 1 value
         # XXX: this does not work. Do we want to make this work?
         # filtered = la.filter(age=(ages11,))
         # self.assertEqual(filtered.shape, (1, 44, 2, 15))
@@ -1000,7 +1000,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # slices
         # ------
 
-        # VG slice
+        # LGroup slice
         self.assertEqual(la.filter(age=age[:17]).shape, (18, 44, 2, 15))
         # string slice
         self.assertEqual(la.filter(lipro=':P03').shape, (116, 44, 2, 3))
@@ -1721,7 +1721,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # normal because reg.filter(geo=(vla,)) is equivalent to:
         # reg[((vla,),)] or reg[(vla,), :]
 
-        # mixed VG/string slices
+        # mixed LGroup/string slices
         child = age[:17]
         child_named = age[:17] >> 'child'
         working = age[18:64]
@@ -1739,7 +1739,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         byage = la.sum(age=(child_named, 5, working, retired))
         self.assertEqual(byage.filter(age=child_named).shape, (44, 2, 15))
 
-    def test_sum_several_vg_groups(self):
+    def test_sum_several_lg_groups(self):
         la, geo = self.larray, self.geo
         fla = geo[self.vla_str] >> 'Flanders'
         wal = geo[self.wal_str] >> 'Wallonia'
@@ -1749,7 +1749,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(reg.shape, (116, 3, 2, 15))
 
         # the result is indexable
-        # a) by VG
+        # a) by LGroup
         self.assertEqual(reg.filter(geo=fla).shape, (116, 2, 15))
         self.assertEqual(reg.filter(geo=(fla, wal)).shape, (116, 2, 2, 15))
 
@@ -1767,7 +1767,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape,
                          (116, 2, 2, 15))
 
-        # b) by VG
+        # b) by LGroup
         self.assertEqual(reg.filter(geo=self.vla_str).shape, (116, 2, 15))
         self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape,
                          (116, 2, 2, 15))
