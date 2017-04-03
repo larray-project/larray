@@ -4031,6 +4031,10 @@ def _doc_agg_method(desc, by=False, action="perform",
     return args_doc
 
 
+_always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
+                        np.std, np.nanstd, np.var, np.nanvar}
+
+
 class LArray(object):
     """
     A LArray object represents a multidimensional, homogeneous
@@ -5656,7 +5660,11 @@ class LArray(object):
             # potentially translate axis reference to real axes
             groups = tuple(g.with_axis(axis) for g in groups)
             res_shape[axis_idx] = len(groups)
-            res_dtype = res.dtype if op not in (np.mean, np.nanmean) else float
+
+            # XXX: this code is fragile. I wonder if there isn't a way to ask the function what kind of dtype/shape it
+            #      will return given the input we are going to give it. My first search for this found nothing. One
+            #      way to do this would be to create one big mapping: {(op, input dtype): res dtype}
+            res_dtype = float if op in _always_return_float else res.dtype
             res_data = np.empty(res_shape, dtype=res_dtype)
 
             group_idx = [slice(None) for _ in res_shape]
@@ -5728,6 +5736,7 @@ class LArray(object):
                     args += tuple(explicit_axis)
             kwargs_items = kwargs.items()
         if not commutative and len(kwargs_items) > 1:
+            # TODO: lift this restriction for python3.6+
             raise ValueError("grouping aggregates on multiple axes at the same "
                              "time using keyword arguments is not supported "
                              "for '%s' (because it is not a commutative"
@@ -7302,26 +7311,26 @@ class LArray(object):
         Select some rows only
 
         >>> arr.median(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  7 |  7 |  4 |  8
+        b |  b0 |  b1 |  b2 |  b3
+          | 7.5 | 7.5 | 4.0 | 8.0
         >>> # or equivalently
         >>> # arr.median('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.median((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  7 |  7 |  4 |  8
-        a2,a3 |  7 |  6 |  2 |  7
+          a\\b |  b0 |  b1 |  b2 |  b3
+        a0,a1 | 7.5 | 7.5 | 4.0 | 8.0
+        a2,a3 | 7.5 | 6.0 | 2.5 | 7.5
         >>> # or equivalently
         >>> # arr.median('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.median((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  7 |  7 |  4 |  8
-        a23 |  7 |  6 |  2 |  7
+        a\\b |  b0 |  b1 |  b2 |  b3
+        a01 | 7.5 | 7.5 | 4.0 | 8.0
+        a23 | 7.5 | 6.0 | 2.5 | 7.5
         >>> # or equivalently
         >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
@@ -7439,26 +7448,26 @@ class LArray(object):
         Select some rows only
 
         >>> arr.percentile(25, ['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  1 |  2 |  3 |  4
+        b |  b0 |  b1 |  b2 |  b3
+          | 1.0 | 2.0 | 3.0 | 4.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1')
 
         Split an axis in several parts
 
         >>> arr.percentile(25, (['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  1 |  2 |  3 |  4
-        a2,a3 |  9 | 10 | 11 | 12
+          a\\b |  b0 |   b1 |   b2 |   b3
+        a0,a1 | 1.0 |  2.0 |  3.0 |  4.0
+        a2,a3 | 9.0 | 10.0 | 11.0 | 12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.percentile(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  1 |  2 |  3 |  4
-        a23 |  9 | 10 | 11 | 12
+        a\\b |  b0 |   b1 |   b2 |   b3
+        a01 | 1.0 |  2.0 |  3.0 |  4.0
+        a23 | 9.0 | 10.0 | 11.0 | 12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("qth percentile", extra_args="q",
@@ -7636,26 +7645,26 @@ class LArray(object):
         Select some rows only
 
         >>> arr.var(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  6 |  0 |  1 |  1
+        b |   b0 |   b1 |  b2 |  b3
+          | 6.25 | 0.25 | 1.0 | 1.0
         >>> # or equivalently
         >>> # arr.var('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.var((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  6 |  0 |  1 |  1
-        a2,a3 |  2 | 16 |  6 |  2
+          a\\b |   b0 |   b1 |   b2 |   b3
+        a0,a1 | 6.25 | 0.25 |  1.0 |  1.0
+        a2,a3 | 2.25 | 16.0 | 6.25 | 2.25
         >>> # or equivalently
         >>> # arr.var('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.var((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  6 |  0 |  1 |  1
-        a23 |  2 | 16 |  6 |  2
+        a\\b |   b0 |   b1 |   b2 |   b3
+        a01 | 6.25 | 0.25 |  1.0 |  1.0
+        a23 | 2.25 | 16.0 | 6.25 | 2.25
         >>> # or equivalently
         >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
