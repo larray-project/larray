@@ -341,6 +341,17 @@ Miscellaneous
    LArray.shift
    LArray.diff
    LArray.to_clipboard
+   round
+   floor
+   ceil
+   trunc
+   sqrt
+   absolute
+   fabs
+   where
+   isnan
+   isinf
+   nan_to_num
 
 .. _la_to_pandas:
 
