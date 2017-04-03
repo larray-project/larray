@@ -2529,6 +2529,14 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(arr.std(group), 0.5)
         self.assertEqual(arr.var(group), 0.25)
 
+    def test_group_agg_on_bool_array(self):
+        # issue 194
+        a = ndtest((2, 3))
+        b = a > 1
+        expected = from_string("""a, a0, a1
+                                   ,  1,  2""")
+        assert_array_equal(b.sum('b1:'), expected)
+
     # TODO: fix this (and add other tests for references (x.) to anonymous axes
     # def test_group_agg_anonymous_axis_ref(self):
     #     la = ndrange((2, 3))
