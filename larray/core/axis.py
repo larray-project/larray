@@ -10,7 +10,7 @@ import numpy as np
 
 from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
+from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _contain_group_ticks, _seq_group_to_name)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
@@ -166,7 +166,7 @@ class Axis(ABCAxis):
                M     0     3
                F     4     7
         """
-        return PGroupMaker(self)
+        return IGroupMaker(self)
 
     @property
     def labels(self):
@@ -589,7 +589,7 @@ class Axis(ABCAxis):
 
         # the not all(np.isscalar) part is necessary to support axis[a, b, c] and axis[[a, b, c]]
         if isinstance(key, (tuple, list)) and not all(isscalar(k) for k in key):
-            # this creates a group for each key if it wasn't and retargets PGroup
+            # this creates a group for each key if it wasn't and retargets IGroup
             list_res = [self[k] for k in key]
             return list_res if isinstance(key, list) else tuple(list_res)
 
@@ -672,13 +672,13 @@ class Axis(ABCAxis):
             except (KeyError, TypeError, IndexError):
                 pass
 
-            # transform "specially formatted strings" for slices, lists, LGroup and PGroup to actual objects
+            # transform "specially formatted strings" for slices, lists, LGroup and IGroup to actual objects
             key = _to_key(key)
 
         if not PY2 and isinstance(key, range):
             key = list(key)
 
-        if isinstance(key, PGroup):
+        if isinstance(key, IGroup):
             assert key.axis is self
             return key.key
 

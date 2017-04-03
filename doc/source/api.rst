@@ -80,28 +80,28 @@ Testing
 Group
 =====
 
-PGroup
+IGroup
 ------
 
 .. autosummary::
    :toctree: _generated/
 
-   PGroup
+   IGroup
 
 .. autosummary::
    :toctree: _generated/
 
-   PGroup.named
-   PGroup.with_axis
-   PGroup.by
-   PGroup.translate
-   PGroup.union
-   PGroup.intersection
-   PGroup.difference
-   PGroup.containing
-   PGroup.startingwith
-   PGroup.endingwith
-   PGroup.matching
+   IGroup.named
+   IGroup.with_axis
+   IGroup.by
+   IGroup.translate
+   IGroup.union
+   IGroup.intersection
+   IGroup.difference
+   IGroup.containing
+   IGroup.startingwith
+   IGroup.endingwith
+   IGroup.matching
 
 LGroup
 ------

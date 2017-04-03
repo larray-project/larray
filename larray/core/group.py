@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import re
 import sys
+import warnings
 from itertools import product, chain
 
 import numpy as np
@@ -10,9 +11,9 @@ import pandas as pd
 
 from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
-from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary
+from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, renamed_to
 
-__all__ = ['Group', 'LGroup', 'LSet', 'PGroup', 'union']
+__all__ = ['Group', 'LGroup', 'LSet', 'IGroup', 'union']
 
 
 def _slice_to_str(key, repr_func=str):
@@ -558,7 +559,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
             assert key[-1] == ']'
             key = key[:-1]
         if name is not None or axis is not None:
-            cls = PGroup if positional else LGroup
+            cls = IGroup if positional else LGroup
             key = _to_key(key, stack_depth + 1, parse_single_int=positional)
             return cls(key, name=name, axis=axis)
         else:
@@ -676,9 +677,9 @@ def union(*args):
         return []
 
 
-class PGroupMaker(object):
+class IGroupMaker(object):
     """
-    Generates a new instance of PGroup for a given axis and key.
+    Generates a new instance of IGroup for a given axis and key.
 
     Attributes
     ----------
@@ -694,7 +695,7 @@ class PGroupMaker(object):
         self.axis = axis
 
     def __getitem__(self, key):
-        return PGroup(key, None, self.axis)
+        return IGroup(key, None, self.axis)
 
 
 # We need a separate class for LGroup and cannot simply create a new Axis with a subset of values/ticks/labels:
@@ -837,7 +838,7 @@ class Group(object):
         elif isinstance(value, slice):
             start, stop, key_step = value.start, value.stop, value.step
             # not using stop - start because that does not work for string bounds
-            # (and it is different for LGroup & PGroup)
+            # (and it is different for LGroup & IGroup)
             start_pos = self.translate(start)
             stop_pos = self.translate(stop)
             return stop_pos - start_pos
@@ -845,7 +846,7 @@ class Group(object):
             raise TypeError('len() of unsized object ({})'.format(value))
 
     def __iter__(self):
-        # XXX: use translate/PGroup instead, so that it works even in the presence of duplicate labels
+        # XXX: use translate/IGroup instead, so that it works even in the presence of duplicate labels
         #      possibly, only if axis is set?
         return iter([LGroup(v, axis=self.axis) for v in self.eval()])
 
@@ -921,13 +922,13 @@ class Group(object):
     # the group as if it was an axis).
     # >>> vla = geo['...']
     # >>> # first 10 regions of flanders (this could have some use)
-    # >>> vla.i[:10]  # => PGroup on geo
+    # >>> vla.i[:10]  # => IGroup on geo
     # >>> vla["antwerp", "gent"]  # => LGroup on geo
 
     # LGroup[] => LGroup
-    # PGroup[] => LGroup
-    # PGroup.i[] => PGroup
-    # LGroup.i[] => PGroup
+    # IGroup[] => LGroup
+    # IGroup.i[] => IGroup
+    # LGroup.i[] => IGroup
     def __getitem__(self, key):
         """
 
@@ -962,11 +963,11 @@ class Group(object):
                 new_step = orig_step * key_step
                 if new_step == 1:
                     new_step = None
-                return PGroup(slice(new_start, new_stop, new_step), None, self.axis)
+                return IGroup(slice(new_start, new_stop, new_step), None, self.axis)
             elif isinstance(key, int):
-                return PGroup(orig_start_pos + key * orig_step, None, self.axis)
+                return IGroup(orig_start_pos + key * orig_step, None, self.axis)
             elif isinstance(key, (tuple, list)):
-                return PGroup([orig_start_pos + k * orig_step for k in key], None, self.axis)
+                return IGroup([orig_start_pos + k * orig_step for k in key], None, self.axis)
         elif isinstance(orig_key, ABCLArray):
             # XXX: why .i ?
             return cls(orig_key.i[key], None, self.axis)
@@ -1350,7 +1351,7 @@ class LGroup(Group):
         key = _to_key(key)
         Group.__init__(self, key, name, axis)
 
-    # XXX: return PGroup instead?
+    # XXX: return IGroup instead?
     def translate(self, bound=None, stop=False):
         """
         compute position(s) of group
@@ -1450,8 +1451,8 @@ class LSet(LGroup):
     __sub__ = difference
 
 
-class PGroup(Group):
-    """Positional Group.
+class IGroup(Group):
+    """Index Group.
 
     Represents a subset of indices of an axis.
 
@@ -1483,7 +1484,7 @@ class PGroup(Group):
             if isinstance(key, slice):
                 start = labels[key.start] if key.start is not None else None
                 # FIXME: this probably breaks for reverse slices
-                # - 1 because PGroup slice stop is excluded while LGroup slice stop is included
+                # - 1 because IGroup slice stop is excluded while LGroup slice stop is included
                 stop = labels[key.stop - 1] if key.stop is not None else None
                 return slice(start, stop, key.step)
             else:
@@ -1499,5 +1500,6 @@ class PGroup(Group):
             raise ValueError("Cannot evaluate a positional group without axis")
 
     def __hash__(self):
-        return hash(('PGroup', _to_tick(self.key)))
+        return hash(('IGroup', _to_tick(self.key)))
 
+PGroup = renamed_to(IGroup, 'PGroup')
