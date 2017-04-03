@@ -3141,6 +3141,11 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         sex, lipro = la.axes
         assert_array_equal(la.mean(lipro), raw.mean(1))
 
+    def test_set_labels(self):
+        la = self.small.copy()
+        la.set_labels(x.sex, ['Man', 'Woman'], inplace=True)
+        assert_array_equal(la, self.small.set_labels(x.sex, ['Man', 'Woman']))
+
     def test_replace_axes(self):
         lipro2 = Axis('lipro2', [l.replace('P', 'Q') for l in self.lipro.labels])
         sex2 = Axis('sex2', ['Man', 'Woman'])
