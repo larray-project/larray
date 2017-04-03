@@ -9112,12 +9112,13 @@ class LArray(object):
             else:
                 new_axis = Axis(real_axis.name, axis_changes)
             new_axes.append(new_axis)
+        axes = self.axes.replace(list(changes.keys()), new_axes)
 
         if inplace:
-            object.__setattr__(self, 'axes', new_axes)
+            object.__setattr__(self, 'axes', axes)
             return self
         else:
-            return LArray(self.data, self.axes.replace(list(changes.keys()), new_axes))
+            return LArray(self.data, axes)
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
         return LArray(self.data.astype(dtype, order, casting, subok, copy),

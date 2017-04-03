@@ -91,3 +91,5 @@ Fixes
 * fixed group aggregates on integer arrays for median, percentile, var and std (closes :issue:`193`).
 
 * fixed group sum over boolean arrays (closes :issue:`194`).
+
+* fixed set_labels when inplace=True
