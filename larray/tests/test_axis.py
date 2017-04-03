@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
-from larray import Axis, AxisCollection, LGroup, PGroup
+from larray import Axis, AxisCollection, LGroup, IGroup
 
 
 class TestAxis(TestCase):
@@ -173,7 +173,7 @@ class TestAxis(TestCase):
         self.assertEqual(g.key, ['a1', 'a2'])
         self.assertIs(g.axis, alt_a)
 
-        # b) key is a single PGroup
+        # b) key is a single IGroup
         # -------------------------
 
         # b.1) containing a scalar
@@ -232,7 +232,7 @@ class TestAxis(TestCase):
         self.assertEqual(g.key, slice('a1', 'a2'))
         self.assertIs(g.axis, alt_a)
 
-        # c.2) with PGroup bounds
+        # c.2) with IGroup bounds
         pg_a1 = a.i[1]
         pg_a2 = a.i[2]
         # use it on the same axis
@@ -262,7 +262,7 @@ class TestAxis(TestCase):
         self.assertEqual(g.key, ['a1', 'a2'])
         self.assertIs(g.axis, alt_a)
 
-        # d.2) with PGroup
+        # d.2) with IGroup
         key = [a.i[1], a.i[2]]
         # use it on the same axis
         g = a[key]
@@ -299,7 +299,7 @@ class TestAxis(TestCase):
         self.assertIs(g[0].axis, alt_a)
         self.assertIs(g[1].axis, alt_a)
 
-        # e.2) with PGroup
+        # e.2) with IGroup
         key = (a.i[1, 2], a.i[2, 1])
         # use it on the same axis => change to LGroup
         g = a[key]
@@ -336,7 +336,7 @@ class TestAxis(TestCase):
         self.assertEqual(g.key, ['a1', 'a2'])
         self.assertIs(g.axis, alt_a)
 
-        # f.2) with PGroup
+        # f.2) with IGroup
         key = (a.i[1], a.i[2])
         # use it on the same axis
         g = a[key]
@@ -373,7 +373,7 @@ class TestAxis(TestCase):
         self.assertIs(g[0].axis, alt_a)
         self.assertIs(g[1].axis, alt_a)
 
-        # g.2) with PGroup
+        # g.2) with IGroup
         key = (a.i[1, 2], a.i[2, 1])
         # use it on the same axis
         g = a[key]
@@ -408,7 +408,7 @@ class TestAxis(TestCase):
 
     def test_iter(self):
         sex = Axis('sex=M,F')
-        self.assertEqual(list(sex), [PGroup(0, axis=sex), PGroup(1, axis=sex)])
+        self.assertEqual(list(sex), [IGroup(0, axis=sex), IGroup(1, axis=sex)])
 
     def test_positional(self):
         age = Axis('age=0..115')
