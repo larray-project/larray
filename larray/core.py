@@ -4489,7 +4489,7 @@ class LArray(object):
         return series
     series = property(to_series)
 
-    def describe(self, *args, percentiles=None):
+    def describe(self, *args, **kwargs):
         """
         Descriptive summary statistics, excluding NaN values.
 
@@ -4517,6 +4517,10 @@ class LArray(object):
         statistic | count | mean | std | min | 50% | 90% | max
                   |   7.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.4 | 6.0
         """
+        # retrieve kw-only arguments
+        percentiles = kwargs.pop('percentiles', None)
+        if kwargs:
+            raise TypeError("describe() got an unexpected keyword argument '{}'".format(list(kwargs.keys())[0]))
         if percentiles is None:
             percentiles = [25, 50, 75]
         plabels = ['{}%'.format(p) for p in percentiles]
@@ -4529,7 +4533,7 @@ class LArray(object):
         return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)] +
                      [self.percentile(p, *args) for p in percentiles], Axis('statistic', labels))
 
-    def describe_by(self, *args, percentiles=None):
+    def describe_by(self, *args, **kwargs):
         """
         Descriptive summary statistics, excluding NaN values, along axes or for groups.
 
@@ -4566,6 +4570,10 @@ class LArray(object):
                     Male |   7.0 |  3.0 | 2.0 | 0.0 |  3.0 |  5.4 |  6.0
                   Female |   7.0 | 10.0 | 2.0 | 7.0 | 10.0 | 12.4 | 13.0
         """
+        # retrieve kw-only arguments
+        percentiles = kwargs.pop('percentiles', None)
+        if kwargs:
+            raise TypeError("describe() got an unexpected keyword argument '{}'".format(list(kwargs.keys())[0]))
         args = self._prepare_aggregate(None, args)
         args = self._by_args_to_normal_agg_args(args)
         return self.describe(*args, percentiles=percentiles)
