@@ -63,7 +63,7 @@ except ImportError:
 
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
+from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
@@ -306,8 +306,8 @@ def concat_empty(axis, arrays_axes, dtype):
     cumlen = np.cumsum(lengths)
     start_bounds = np.concatenate(([0], cumlen[:-1]))
     stop_bounds = cumlen
-    # XXX: wouldn't it be nice to be able to say that? ie translation from position to label on the original axis then
-    # translation to position on the actual result axis?
+    # XXX: wouldn't it be nice to be able to say that? ie translation from index to label on the original axis then
+    # translation to index on the actual result axis?
     # result[:axis.i[-1]]
     return result, [result[combined_axis.i[start:stop]]
                     for start, stop in zip(start_bounds, stop_bounds)]
@@ -316,18 +316,18 @@ def concat_empty(axis, arrays_axes, dtype):
 class LArrayIterator(object):
     def __init__(self, array):
         self.array = array
-        self.position = 0
+        self.index = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
         array = self.array
-        if self.position == len(self.array):
+        if self.index == len(self.array):
             raise StopIteration
-        # result = array.i[array.axes[0].i[self.position]]
-        result = array.i[self.position]
-        self.position += 1
+        # result = array.i[array.axes[0].i[self.index]]
+        result = array.i[self.index]
+        self.index += 1
         return result
     # Python 2
     next = __next__
@@ -339,7 +339,7 @@ class LArrayPositionalIndexer(object):
 
     def _translate_key(self, key):
         """
-        Translates key into tuple of PGroup, i.e.
+        Translates key into tuple of IGroup, i.e.
         tuple of collections of labels.
         """
         if not isinstance(key, tuple):
@@ -419,12 +419,12 @@ def get_axis(obj, i):
     obj : LArray or other array
         Input LArray or any array object which has a shape attribute (NumPy or Pandas array).
     i : int
-        Position of the axis.
+        index of the axis.
 
     Returns
     -------
     Axis
-        Axis corresponding to the given position if input `obj` is a LArray. A new anonymous Axis with the length of
+        Axis corresponding to the given index if input `obj` is a LArray. A new anonymous Axis with the length of
         the ith dimension of the input `obj` otherwise.
 
     Examples
@@ -514,7 +514,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 
             An axis can be referred by:
 
-            * its position (integer). Position can be a negative integer, in which case it counts from the last to the
+            * its index (integer). Index can be a negative integer, in which case it counts from the last to the
               first axis.
             * its name (str or AxisReference). You can use either a simple string ('axis_name') or the special
               variable x (x.axis_name).
@@ -806,7 +806,7 @@ class LArray(ABCLArray):
         >>> arr.nonzero() # doctest: +SKIP
         [array([0, 1, 1]), array([1, 0, 2])]
         """
-        # FIXME: return tuple of PGroup instead (or even NDGroup) so that you
+        # FIXME: return tuple of IGroup instead (or even NDGroup) so that you
         #  can do a[a.nonzero()]
         return self.data.nonzero()
 
@@ -916,7 +916,7 @@ class LArray(ABCLArray):
     @property
     def i(self):
         """
-        Allows selection of a subset using positions of labels.
+        Allows selection of a subset using indices of labels.
 
         Examples
         --------
@@ -1647,14 +1647,14 @@ class LArray(ABCLArray):
         posargsort = subset.posargsort()
 
         # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
-        # PGroup(nat  EU  FO  BE
+        # IGroup(nat  EU  FO  BE
         #              1   2   0, axis='nat')
         # which sorts the *data* correctly, but the labels on the nat axis are not sorted (because the __getitem__ in
         # that case reuse the key axis as-is -- like it should).
         # Both use cases have value, but I think reordering the ticks should be the default. Now, I am unsure where to
-        # change this. Probably in PGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
+        # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
         # that I have now?
-        # FWIW, using .data, I get PGroup([1, 2, 0], axis='nat'), which works.
+        # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
         sorter = axis.i[posargsort.data]
         res = self[sorter]
         return res[axis[::-1]] if reverse else res
@@ -1735,21 +1735,21 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        PGroup
+        IGroup
             Positional group with valid axes (from self.axes)
         """
 
         if isinstance(axis_key, Group) and axis_key.axis is not None:
             # retarget to real axis, if needed
-            # only retarget PGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
+            # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
-            if isinstance(axis_key, PGroup):
+            if isinstance(axis_key, IGroup):
                 axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
 
         axis_key = remove_nested_groups(axis_key)
 
         # already positional
-        if isinstance(axis_key, PGroup):
+        if isinstance(axis_key, IGroup):
             if axis_key.axis is None:
                 raise ValueError("positional groups without axis are not supported")
             return axis_key
@@ -1791,7 +1791,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        PGroup
+        IGroup
             Positional group with valid axes (from self.axes)
         """
         if isinstance(axis_key, ExprNode):
@@ -1801,7 +1801,7 @@ class LArray(ABCLArray):
             if len(axis_key.axes) > 1:
                 raise ValueError("mixing ND boolean filters with other filters in getitem is not currently supported")
             else:
-                return PGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
+                return IGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
 
         # translate Axis keys to LGroup keys
         # FIXME: this should be simply:
@@ -1913,7 +1913,7 @@ class LArray(ABCLArray):
                 return tuple(map_key.get(axis, slice(None)) for axis in self.axes)
             else:
                 # correct shape
-                # FIXME: if the key has both missing and extra axes (at the position of the missing axes), the shape
+                # FIXME: if the key has both missing and extra axes (at the index of the missing axes), the shape
                 # could be the same while the result should not
                 return np.asarray(key).nonzero()
 
@@ -1928,18 +1928,18 @@ class LArray(ABCLArray):
             key = [axis_key for axis_key in key
                    if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
-            # translate all keys to PGroup
+            # translate all keys to IGroup
             key = [self._translate_axis_key(axis_key, bool_passthrough=not bool_stuff)
                    for axis_key in key]
 
-            assert all(isinstance(axis_key, PGroup) for axis_key in key)
+            assert all(isinstance(axis_key, IGroup) for axis_key in key)
 
             # extract axis from Group keys
             key_items = [(k.axis, k) for k in key]
         else:
             # key axes could be strings or axis references and we want real axes
             key_items = [(self.axes[k], v) for k, v in key.items()]
-            # TODO: use _translate_axis_key (to translate to PGroup here too)
+            # TODO: use _translate_axis_key (to translate to IGroup here too)
             # key_items = [axis.translate(axis_key, bool_passthrough=not bool_stuff)
             #              for axis, axis_key in key_items]
 
@@ -1957,7 +1957,7 @@ class LArray(ABCLArray):
         key = [key[axis] if axis in key else slice(None)
                for axis in self.axes]
 
-        # pgroup -> raw positional
+        # IGroup -> raw positional
         return tuple(axis.translate(axis_key, bool_passthrough=not bool_stuff)
                      for axis, axis_key in zip(self.axes, key))
 
@@ -2085,7 +2085,7 @@ class LArray(ABCLArray):
         # axis, we get combined dimensions out of it.
 
         # int LArray keys
-        # the int value represent a position along ONE particular axis, even if the key has more than one axis.
+        # the int value represent an index along ONE particular axis, even if the key has more than one axis.
         if isinstance(key, ExprNode):
             key = key.evaluate(self.axes)
 
@@ -2679,8 +2679,8 @@ class LArray(ABCLArray):
 
                 # we need only lists of ticks, not single ticks, otherwise the dimension is discarded too early
                 # (in __getitem__ instead of in the aggregate func)
-                if isinstance(group, PGroup) and np.isscalar(group.key):
-                    group = PGroup([group.key], axis=group.axis)
+                if isinstance(group, IGroup) and np.isscalar(group.key):
+                    group = IGroup([group.key], axis=group.axis)
                 elif isinstance(group, LGroup):
                     key = _to_key(group.key)
                     assert not isinstance(key, Group)
@@ -2761,7 +2761,7 @@ class LArray(ABCLArray):
                 # a tuple is supposed to be several groups on the same axis
                 # TODO: it would be better to use self._translate_axis_key directly (so that we do not need to do the
                 # label -> position translation twice) but this fails because the groups are also used as ticks on the
-                # new axis, and pgroups are not the same that LGroups in this regard (I wonder if ideally it shouldn't
+                # new axis, and igroups are not the same that LGroups in this regard (I wonder if ideally it shouldn't
                 # be the same???)
                 # groups = tuple(self._translate_axis_key(k) for k in key)
                 groups = tuple(self._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
@@ -6420,7 +6420,7 @@ class LArray(ABCLArray):
 
         transposed_axes = self.axes[:]
         for axes_to_combine, name in axes.items():
-            # transpose all axes next to each other, using position of first axis
+            # transpose all axes next to each other, using index of first axis
             axes_to_combine = self.axes[axes_to_combine]
             axes_indices = [transposed_axes.index(axis) for axis in axes_to_combine]
             min_axis_index = min(axes_indices)
@@ -7169,7 +7169,7 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     start : int or float, optional
         Start value
     label_start : int, optional
-        Label position for each axis is `label_start + position`. `label_start` defaults to 0.
+        Label index for each axis is `label_start + position`. `label_start` defaults to 0.
     title : str, optional
         Title.
     dtype : type or np.dtype, optional
@@ -7659,7 +7659,7 @@ def _equal_modulo_len1(shape1, shape2):
 
 
 # assigning a temporary name to anonymous axes before broadcasting and removing it afterwards is not a good idea after
-# all because it copies the axes/change the object, and thus "flatten" wouldn't work with position axes:
+# all because it copies the axes/change the object, and thus "flatten" wouldn't work with index axes:
 # a[ones(a.axes[axes], dtype=bool)]
 # but if we had assigned axes names from the start (without dropping them) this wouldn't be a problem.
 def make_numpy_broadcastable(values):

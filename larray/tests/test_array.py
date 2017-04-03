@@ -514,7 +514,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res.ndim, 3)
         self.assertEqual(res.shape, (2, 12, 5))
 
-    def test_getitem_pgroup_on_int_axis(self):
+    def test_getitem_igroup_on_int_axis(self):
         a = Axis('a=1..3')
         arr = ndrange(a)
         self.assertEqual(arr[a.i[1]], 1)
@@ -543,11 +543,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # a.2) LGroup.axis not from array.axes
         assert_array_equal((arr[alt_a['a1']:alt_a['a2']]), expected)
 
-        # b) slice with pgroup
-        # b.1) PGroup.axis from array.axes
+        # b) slice with igroup
+        # b.1) IGroup.axis from array.axes
         assert_array_equal((arr[a.i[1]:a.i[2]]), expected)
 
-        # b.2) PGroup.axis not from array.axes
+        # b.2) IGroup.axis not from array.axes
         assert_array_equal((arr[alt_a.i[0]:alt_a.i[1]]), expected)
 
         # c) list with LGroup
@@ -557,11 +557,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # c.2) LGroup.axis not from array.axes
         assert_array_equal((arr[[alt_a['a1'], alt_a['a2']]]), expected)
 
-        # d) list with PGroup
-        # d.1) PGroup.axis from array.axes
+        # d) list with IGroup
+        # d.1) IGroup.axis from array.axes
         assert_array_equal((arr[[a.i[1], a.i[2]]]), expected)
 
-        # d.2) PGroup.axis not from array.axes
+        # d.2) IGroup.axis not from array.axes
         assert_array_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
 
     def test_getitem_single_larray_key_guess(self):
@@ -1957,7 +1957,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res2.shape, (4,))
         assert_array_equal(res2, res.sum(sex, geo=(vla, wal, bru, belgium)))
 
-    def test_agg_pgroup(self):
+    def test_agg_igroup(self):
         arr = ndtest(3)
         res = arr.sum((X.a.i[:2], X.a.i[1:]))
         assert_array_equal(res.a.labels, [':a1', 'a1:'])

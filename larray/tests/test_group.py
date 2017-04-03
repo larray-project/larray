@@ -197,7 +197,7 @@ class TestLSet(TestCase):
         self.assertEqual(LSet([1, 2, 3]) - 2, LSet([1, 3]))
 
 
-class TestPGroup(TestCase):
+class TestIGroup(TestCase):
     def _assert_array_equal_is_true_array(self, a, b):
         res = a == b
         self.assertIsInstance(res, np.ndarray)
