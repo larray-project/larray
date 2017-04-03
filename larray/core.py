@@ -5665,6 +5665,8 @@ class LArray(object):
             #      will return given the input we are going to give it. My first search for this found nothing. One
             #      way to do this would be to create one big mapping: {(op, input dtype): res dtype}
             res_dtype = float if op in _always_return_float else res.dtype
+            if op in (np.sum, np.nansum) and res.dtype in (np.bool, np.bool_):
+                res_dtype = int
             res_data = np.empty(res_shape, dtype=res_dtype)
 
             group_idx = [slice(None) for _ in res_shape]
