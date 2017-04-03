@@ -4489,7 +4489,88 @@ class LArray(object):
         return series
     series = property(to_series)
 
-    #noinspection PyAttributeOutsideInit
+    def describe(self, *args, percentiles=None):
+        """
+        Descriptive summary statistics, excluding NaN values.
+
+        Parameters
+        ----------
+        *args : ...
+            axes or groups
+        percentiles : array-like, optional.
+            list of integer percentiles to include. Defaults to [25, 50, 75].
+
+        Returns
+        -------
+        LArray
+
+        Examples
+        --------
+        >>> arr = ndrange('year=2014..2020')
+        >>> arr
+        year | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
+             |    0 |    1 |    2 |    3 |    4 |    5 |    6
+        >>> arr.describe()
+        statistic | count | mean | std | min | 25% | 50% | 75% | max
+                  |   7.0 |  3.0 | 2.0 | 0.0 | 1.5 | 3.0 | 4.5 | 6.0
+        >>> arr.describe(percentiles=[50, 90])
+        statistic | count | mean | std | min | 50% | 90% | max
+                  |   7.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.4 | 6.0
+        """
+        if percentiles is None:
+            percentiles = [25, 50, 75]
+        plabels = ['{}%'.format(p) for p in percentiles]
+        labels = ['count', 'mean', 'std', 'min'] + plabels + ['max']
+        percentiles = [0] + list(percentiles) + [100]
+        # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
+        # when *args is not empty (see https://github.com/liam2/larray/issues/192)
+        # return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args),
+        #               *self.percentile(percentiles, *args)], Axis('stats', labels))
+        return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)] +
+                     [self.percentile(p, *args) for p in percentiles], Axis('statistic', labels))
+
+    def describe_by(self, *args, percentiles=None):
+        """
+        Descriptive summary statistics, excluding NaN values, along axes or for groups.
+
+        Parameters
+        ----------
+        *args : ...
+            axes or groups
+        percentiles : array-like, optional.
+            list of integer percentiles to include. Defaults to [25, 50, 75].
+
+        Returns
+        -------
+        LArray
+
+        Examples
+        --------
+        >>> arr = ndrange('gender=Male,Female;year=2014..2020').astype(float)
+        >>> arr
+        gender\year | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
+               Male |  0.0 |  1.0 |  2.0 |  3.0 |  4.0 |  5.0 |  6.0
+             Female |  7.0 |  8.0 |  9.0 | 10.0 | 11.0 | 12.0 | 13.0
+        >>> arr.describe_by('gender')
+        gender\statistic | count | mean | std | min | 25% |  50% |  75% |  max
+                    Male |   7.0 |  3.0 | 2.0 | 0.0 | 1.5 |  3.0 |  4.5 |  6.0
+                  Female |   7.0 | 10.0 | 2.0 | 7.0 | 8.5 | 10.0 | 11.5 | 13.0
+        >>> arr.describe_by('gender', (x.year[:2015], x.year[2019:]))
+        gender | year\statistic | count | mean | std |  min |   25% |  50% |   75% |  max
+          Male |          :2015 |   2.0 |  0.5 | 0.5 |  0.0 |  0.25 |  0.5 |  0.75 |  1.0
+          Male |          2019: |   2.0 |  5.5 | 0.5 |  5.0 |  5.25 |  5.5 |  5.75 |  6.0
+        Female |          :2015 |   2.0 |  7.5 | 0.5 |  7.0 |  7.25 |  7.5 |  7.75 |  8.0
+        Female |          2019: |   2.0 | 12.5 | 0.5 | 12.0 | 12.25 | 12.5 | 12.75 | 13.0
+        >>> arr.describe_by('gender', percentiles=[50, 90])
+        gender\statistic | count | mean | std | min |  50% |  90% |  max
+                    Male |   7.0 |  3.0 | 2.0 | 0.0 |  3.0 |  5.4 |  6.0
+                  Female |   7.0 | 10.0 | 2.0 | 7.0 | 10.0 | 12.4 | 13.0
+        """
+        args = self._prepare_aggregate(None, args)
+        args = self._by_args_to_normal_agg_args(args)
+        return self.describe(*args, percentiles=percentiles)
+
+    # noinspection PyAttributeOutsideInit
     # def __array_finalize__(self, obj):
     #     """
     #     used when arrays are allocated from subclasses of ndarrays
@@ -5805,24 +5886,25 @@ class LArray(object):
             operations = self.axes
         return operations
 
+    def _by_args_to_normal_agg_args(self, operations):
+        # get axes to aggregate
+        flat_op = chain.from_iterable([(o,) if isinstance(o, (Group, Axis)) else o
+                                       for o in operations])
+        axes = [o.axis if isinstance(o, Group) else o for o in flat_op]
+        to_agg = self.axes - axes
+
+        # add groups to axes to aggregate
+        def is_or_contains_group(o):
+            return isinstance(o, Group) or (isinstance(o, tuple) and isinstance(o[0], Group))
+
+        return list(to_agg) + [o for o in operations if is_or_contains_group(o)]
+
     def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False,
                    commutative=False, out=None, extra_kwargs={}):
         operations = self._prepare_aggregate(op, args, kwargs, commutative,
                                              stack_depth=3)
         if by_agg and operations != self.axes:
-            # get axes to aggregate
-            flat_op = chain.from_iterable([(o,) if isinstance(o, (Group, Axis))
-                                           else o for o in operations])
-            axes = [o.axis if isinstance(o, Group) else o for o in flat_op]
-            to_agg = self.axes - axes
-
-            # add groups to axes to aggregate
-            def is_or_contains_group(o):
-                return isinstance(o, Group) or \
-                       (isinstance(o, tuple) and isinstance(o[0], Group))
-
-            operations = list(to_agg) + \
-                         [o for o in operations if is_or_contains_group(o)]
+            operations = self._by_args_to_normal_agg_args(operations)
 
         res = self
         # group *consecutive* same-type (group vs axis aggregates) operations
