@@ -55,4 +55,4 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed group aggregates on integer arrays for median, percentile, var and std (closes :issue:`193`).
