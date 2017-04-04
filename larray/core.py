@@ -8890,10 +8890,121 @@ class LArray(object):
         The graph can be tweaked to achieve the desired formatting and can be
         saved to a .png file.
 
+        Parameters
+        ----------
+        kind : str
+            - 'line' : line plot (default)
+            - 'bar' : vertical bar plot
+            - 'barh' : horizontal bar plot
+            - 'hist' : histogram
+            - 'box' : boxplot
+            - 'kde' : Kernel Density Estimation plot
+            - 'density' : same as 'kde'
+            - 'area' : area plot
+            - 'pie' : pie plot
+            - 'scatter' : scatter plot (if array's dimensions >= 2)
+            - 'hexbin' : hexbin plot (if array's dimensions >= 2)
+        ax : matplotlib axes object, default None
+        subplots : boolean, default False
+            Make separate subplots for each column
+        sharex : boolean, default True if ax is None else False
+            In case subplots=True, share x axis and set some x axis labels to invisible;
+            defaults to True if ax is None otherwise False if an ax is passed in;
+            Be aware, that passing in both an ax and sharex=True will alter all x axis labels
+            for all axis in a figure!
+        sharey : boolean, default False
+            In case subplots=True, share y axis and set some y axis labels to invisible
+        layout : tuple (optional)
+            (rows, columns) for the layout of subplots
+        figsize : a tuple (width, height) in inches
+        use_index : boolean, default True
+            Use index as ticks for x axis
+        title : string
+            Title to use for the plot
+        grid : boolean, default None (matlab style default)
+            Axis grid lines
+        legend : False/True/'reverse'
+            Place legend on axis subplots
+        style : list or dict
+            matplotlib line style per column
+        logx : boolean, default False
+            Use log scaling on x axis
+        logy : boolean, default False
+            Use log scaling on y axis
+        loglog : boolean, default False
+            Use log scaling on both x and y axes
+        xticks : sequence
+            Values to use for the xticks
+        yticks : sequence
+            Values to use for the yticks
+        xlim : 2-tuple/list
+        ylim : 2-tuple/list
+        rot : int, default None
+            Rotation for ticks (xticks for vertical, yticks for horizontal plots)
+        fontsize : int, default None
+            Font size for xticks and yticks
+        colormap : str or matplotlib colormap object, default None
+            Colormap to select colors from. If string, load colormap with that name
+            from matplotlib.
+        colorbar : boolean, optional
+            If True, plot colorbar (only relevant for 'scatter' and 'hexbin' plots)
+        position : float
+            Specify relative alignments for bar plot layout.
+            From 0 (left/bottom-end) to 1 (right/top-end). Default is 0.5 (center)
+        layout : tuple (optional)
+            (rows, columns) for the layout of the plot
+        yerr : array-like
+            Error bars on y axis
+        xerr : array-like
+            Error bars on x axis
+        stacked : boolean, default False in line and bar plots, and True in area plot.
+            If True, create stacked plot.
+        \**kwargs : keywords
+            Options to pass to matplotlib plotting method
+
+        Returns
+        -------
+        axes : matplotlib.AxesSubplot or np.array of them
+
+        Notes
+        -----
+        See Pandas documentation of `plot` function for more details on this subject
+
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
-        >>> a.plot()  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt # doctest: +SKIP
+        >>> a = ndrange('sex=M,F;age=0..20')
+
+        Simple line plot
+
+        >>> a.plot() # doctest: +SKIP
+        >>> # shows figure (reset the current figure after showing it! Do not call it before savefig)
+        >>> plt.show() # doctest: +SKIP
+
+        Line plot with grid, title and both axes in logscale
+
+        >>> a.plot(grid=True, loglog=True, title='line plot') # doctest: +SKIP
+        >>> # saves figure in a file (see matplotlib.pyplot.savefig documentation for more details)
+        >>> plt.savefig('my_file.png') # doctest: +SKIP
+
+        2 bar plots sharing the same x axis (one for males and one for females)
+
+        >>> a.plot.bar(subplots=True, sharex=True) # doctest: +SKIP
+        >>> plt.show() # doctest: +SKIP
+
+        Create a figure containing 2 x 2 graphs
+
+        >>> # see matplotlib.pyplot.subplots documentation for more details
+        >>> fig, ax = plt.subplots(2, 2, figsize=(15, 15)) # doctest: +SKIP
+        >>> # 2 curves : Males and Females
+        >>> a.plot(ax=ax[0, 0], title='line plot') # doctest: +SKIP
+        >>> # bar plot with stacked values
+        >>> a.plot.bar(ax=ax[0, 1], stacked=True, title='stacked bar plot') # doctest: +SKIP
+        >>> # same as previously but with colored areas instead of bars
+        >>> a.plot.area(ax=ax[1, 0], title='area plot') # doctest: +SKIP
+        >>> # scatter plot
+        >>> a.plot.scatter(ax=ax[1, 1], x='M', y='F', title='scatter plot') # doctest: +SKIP
+        >>> plt.show() # doctest: +SKIP
         """
         combined = self.combine_axes(self.axes[:-1], sep=' ') if self.ndim > 2 else self
         if combined.ndim == 1:
