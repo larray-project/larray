@@ -3975,12 +3975,12 @@ def _doc_agg_method(desc, by=False, action="perform",
 
     if by:
         str_doc = "The {0} is {1}ed along all axes except the given one(s). " \
-                  "For groups, {0} is {1}ed along groups and non associated axes." \
+                  "For groups, {0} is {1}ed along groups and non associated axes. " \
                   "The default (no axis or group) is to {1} the {0} " \
                   "over all the dimensions of the input array.".format(desc, action)
     else:
         str_doc = "Axis(es) or group(s) along the {0} is {1}ed. " \
-                  " The default (no axis or group) is to {1} the {0} " \
+                  "The default (no axis or group) is to {1} the {0} " \
                   "over all the dimensions of the input array.".format(desc, action)
 
     args_doc = \
@@ -4493,16 +4493,23 @@ class LArray(object):
         """
         Descriptive summary statistics, excluding NaN values.
 
+        By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
+        the 25, 50 and 75 percentiles.
+
         Parameters
         ----------
-        *args : ...
-            axes or groups
+        *args : int or str or Axis or Group or any combination of those, optional
+            Axes or groups along which to compute the aggregates. Defaults to aggregate over the whole array.
         percentiles : array-like, optional.
-            list of integer percentiles to include. Defaults to [25, 50, 75].
+            List of integer percentiles to include. Defaults to [25, 50, 75].
 
         Returns
         -------
         LArray
+
+        See Also
+        --------
+        LArray.describe_by
 
         Examples
         --------
@@ -4537,16 +4544,23 @@ class LArray(object):
         """
         Descriptive summary statistics, excluding NaN values, along axes or for groups.
 
+        By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
+        the 25, 50 and 75 percentiles.
+
         Parameters
         ----------
-        *args : ...
-            axes or groups
+        *args : int or str or Axis or Group or any combination of those, optional
+            Axes or groups to include in the result after aggregating. Defaults to aggregate over the whole array.
         percentiles : array-like, optional.
             list of integer percentiles to include. Defaults to [25, 50, 75].
 
         Returns
         -------
         LArray
+
+        See Also
+        --------
+        LArray.describe
 
         Examples
         --------
