@@ -8546,6 +8546,9 @@ class LArray(object):
     def transpose(self, *args):
         """Reorder axes.
 
+        By default, reverse axes, otherwise permute
+        the axes according to the list given as argument.
+
         Parameters
         ----------
         args

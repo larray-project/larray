@@ -9,6 +9,7 @@ Contents:
    install
    notebooks/LArray_intro.ipynb
    api
+   notebooks/LArray_intro.ipynb
 
 Indices and tables
 ==================
