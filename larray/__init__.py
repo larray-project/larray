@@ -5,6 +5,7 @@ from larray.session import *
 from larray.ufuncs import *
 from larray.excel import open_excel
 from larray.ipfp import ipfp
+from larray.example import load_example_data
 
 try:
     from larray.viewer import view, edit, compare
