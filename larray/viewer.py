@@ -78,21 +78,18 @@ import sys
 import os
 import traceback
 
-from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate,
-                            QListWidget, QSplitter, QListWidgetItem,
-                            QLineEdit, QCheckBox, QGridLayout,
-                            QDialog, QDialogButtonBox, QPushButton,
-                            QMessageBox, QMenu,
-                            QLabel, QSpinBox, QWidget, QVBoxLayout,
-                            QAction, QStyle, QToolTip, QShortcut)
+from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate, QListWidget, QSplitter,
+                            QListWidgetItem, QLineEdit, QCheckBox, QGridLayout, QFileDialog, QDialog,
+                            QDialogButtonBox, QPushButton, QMessageBox, QMenu, QMenuBar, QMainWindow, QLabel,
+                            QSpinBox, QWidget, QVBoxLayout, QAction, QStyle, QToolTip, QShortcut)
 
-from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence,
+from qtpy.QtGui import (QColor, QDoubleValidator, QIntValidator, QKeySequence, QDesktopServices,
                         QFont, QIcon, QFontMetrics, QCursor)
 
-from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection,
-                         QItemSelectionModel, QItemSelectionRange, QVariant, Slot)
+from qtpy.QtCore import (Qt, QModelIndex, QAbstractTableModel, QPoint, QItemSelection, QItemSelectionModel,
+                         QItemSelectionRange, QVariant, QSettings, QUrl, Slot)
 
-from qtpy import QT_VERSION
+from qtpy import PYQT5
 
 import numpy as np
 
@@ -100,7 +97,7 @@ try:
     import matplotlib
     from matplotlib.figure import Figure
 
-    if QT_VERSION[0] == '5':
+    if PYQT5:
         from matplotlib.backends.backend_qt5agg import FigureCanvas
         from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
     else:
@@ -190,7 +187,7 @@ def keybinding(attr):
     return QKeySequence.keyBindings(ks)[0]
 
 
-def create_action(parent, text, icon=None, triggered=None, shortcut=None):
+def create_action(parent, text, icon=None, triggered=None, shortcut=None, statustip=None):
     """Create a QAction"""
     action = QAction(text, parent)
     if triggered is not None:
@@ -199,6 +196,8 @@ def create_action(parent, text, icon=None, triggered=None, shortcut=None):
         action.setIcon(icon)
     if shortcut is not None:
         action.setShortcut(shortcut)
+    if statustip is not None:
+        action.setStatusTip(statustip)
     action.setShortcutContext(Qt.WidgetShortcut)
     return action
 
@@ -436,8 +435,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient,
-                       bg_value=bg_value)
+        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -453,8 +451,7 @@ class ArrayModel(QAbstractTableModel):
         self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None,
-                  bg_value=None):
+    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
@@ -464,8 +461,7 @@ class ArrayModel(QAbstractTableModel):
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
                     and not dtn.startswith('unicode'):
                 msg = _("%s arrays are currently not supported")
-                QMessageBox.critical(self.dialog, "Error",
-                                     msg % data.dtype.name)
+                QMessageBox.critical(self.dialog, "Error", msg % data.dtype.name)
                 return
         assert data.ndim == 2
         self.test_array = np.array([0], dtype=data.dtype)
@@ -1383,8 +1379,6 @@ class ArrayEditorWidget(QWidget):
                 filters_layout.addWidget(self.create_filter_combo(axis))
             filters_layout.addStretch()
         self.filtered_data = self.la_data
-        if data.size == 0:
-            QMessageBox.critical(self, _("Error"), _("Array is empty"))
 
             # if xlabels is not None and len(xlabels) != self.data.shape[1]:
             #     self.error(_("The 'xlabels' argument length do no match "
@@ -1394,11 +1388,9 @@ class ArrayEditorWidget(QWidget):
             #     self.error(_("The 'ylabels' argument length do no match "
             #                  "array row number"))
             #     return False
-        self._set_raw_data(data, xlabels, ylabels,
-                           bg_gradient=bg_gradient, bg_value=bg_value)
+        self._set_raw_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None,
-                      bg_gradient=None, bg_value=None):
+    def _set_raw_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
         size = data.size
         # this will yield a data sample of max 199
         step = (size // 100) if size > 100 else 1
@@ -1415,8 +1407,7 @@ class ArrayEditorWidget(QWidget):
         self.model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes,
-                            bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model.set_data(data, xlabels, ylabels, changes, bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_number(data.dtype))
@@ -1883,10 +1874,8 @@ class ArrayEditor(QDialog):
         self.resize(800, 600)
         self.setMinimumSize(400, 300)
 
-        self.arraywidget = ArrayEditorWidget(self, data, readonly,
-                                             xlabels, ylabels,
-                                             minvalue=minvalue,
-                                             maxvalue=maxvalue)
+        self.arraywidget = ArrayEditorWidget(self, data, readonly, xlabels, ylabels,
+                                             minvalue=minvalue, maxvalue=maxvalue)
         layout.addWidget(self.arraywidget, 1, 0)
 
         # Buttons configuration
@@ -1950,10 +1939,20 @@ history_vars_pattern = re.compile('_i?\d+')
 DISPLAY_IN_GRID = (la.LArray, np.ndarray)
 
 
-class MappingEditor(QDialog):
+class MappingEditor(QMainWindow):
     """Session Editor Dialog"""
+
+    MAX_RECENT_FILES = 10
+
     def __init__(self, parent=None):
-        QDialog.__init__(self, parent)
+        QMainWindow.__init__(self, parent)
+
+        # to handle rencently opened files
+        settings = QSettings()
+        if settings.value("recentFileList") is None:
+            settings.setValue("recentFileList", [])
+        self.recentFileActs = [QAction(self) for _ in range(self.MAX_RECENT_FILES)]
+        self.currentFile = None
 
         # Destroying the C++ object right after closing the dialog box,
         # otherwise it may be garbage-collected in another QThread
@@ -1962,18 +1961,22 @@ class MappingEditor(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
 
         self.data = None
-        self._listwidget = None
         self.arraywidget = None
+        self._listwidget = None
         self.eval_box = None
         self.expressions = {}
         self.kernel = None
+        self._appliedchanges = False
 
-    def setup_and_check(self, data, title='', readonly=False,
-                        minvalue=None, maxvalue=None):
+        self.setup_menu_bar()
+
+    def setup_and_check(self, data, title='', readonly=False, minvalue=None, maxvalue=None):
         """
         Setup MappingEditor:
         return False if data is not supported, True otherwise
         """
+        if not isinstance(data, la.Session):
+            data = la.Session(data)
         self.data = data
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
@@ -1986,8 +1989,13 @@ class MappingEditor(QDialog):
             title += ' (' + _('read only') + ')'
         self.setWindowTitle(title)
 
+        self.statusBar().showMessage("Welcome to the LArray Viewer", 4000)
+
+        widget = QWidget()
+        self.setCentralWidget(widget)
+
         layout = QVBoxLayout()
-        self.setLayout(layout)
+        widget.setLayout(layout)
 
         self._listwidget = QListWidget(self)
         arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
@@ -2080,22 +2088,6 @@ class MappingEditor(QDialog):
 
         layout.addWidget(main_splitter)
 
-        # the problem is that the qlineedit (when ipython not present) does
-        # not eat the enter key, so it gets handled by the buttons below
-        # and this closes the window.
-        # FIXME: not having the buttons is a bit radical but I am out of time
-        #        for this.
-        if qtconsole_available:
-            # Buttons configuration
-            btn_layout = QHBoxLayout()
-            btn_layout.addStretch()
-
-            buttons = QDialogButtonBox.Close
-            bbox = QDialogButtonBox(buttons)
-            bbox.rejected.connect(self.reject)
-            btn_layout.addWidget(bbox)
-            layout.addLayout(btn_layout)
-
         self._listwidget.setCurrentRow(0)
 
         self.resize(800, 600)
@@ -2105,13 +2097,65 @@ class MappingEditor(QDialog):
         self.setWindowFlags(Qt.Window)
         return True
 
+    def setup_menu_bar(self):
+        """Setup menu bar"""
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu('File')
+
+        file_menu.addAction(create_action(self, _('New'), shortcut=QKeySequence("Ctrl+N"), triggered=self.new))
+        file_menu.addAction(create_action(self, _('Open'), shortcut=QKeySequence("Ctrl+O"), triggered=self.open,
+                                          statustip=_('Load session from file')))
+        file_menu.addAction(create_action(self, _('Save'), shortcut=QKeySequence("Ctrl+S"), triggered=self.save,
+                                          statustip=_('Save all arrays as a session in a file')))
+        file_menu.addAction(create_action(self, _('Save As'), triggered=self.saveAs,
+                                          statustip=_('Save all arrays as a session in a file')))
+
+        recentFilesMenu = file_menu.addMenu("Open Recent")
+        for action in self.recentFileActs:
+            action.setVisible(False)
+            action.triggered.connect(self.openRecentFile)
+            recentFilesMenu.addAction(action)
+        self.updateRecentFileActions()
+
+        file_menu.addSeparator()
+        file_menu.addAction(create_action(self, _('Quit'), shortcut=QKeySequence("Ctrl+Q"),
+                                          triggered=self.close))
+
+        help_menu = menu_bar.addMenu('Help')
+        help_menu.addAction(create_action(self, _('online documentation'), shortcut=QKeySequence("Ctrl+H"),
+                                          triggered=self.openDocumentation))
+
+    def add_list_item(self, name):
+        listitem = QListWidgetItem(self._listwidget)
+        listitem.setText(name)
+        value = self.data[name]
+        if isinstance(value, la.LArray):
+            listitem.setToolTip(str(value.info))
+
     def add_list_items(self, names):
         for name in names:
-            listitem = QListWidgetItem(self._listwidget)
-            listitem.setText(name)
-            value = self.data[name]
-            if isinstance(value, la.LArray):
-                listitem.setToolTip(str(value.info))
+            self.add_list_item(name)
+
+    def delete_list_item(self, to_delete):
+        deleted_items = self._listwidget.findItems(to_delete, Qt.MatchExactly)
+        assert len(deleted_items) == 1
+        deleted_item_idx = self._listwidget.row(deleted_items[0])
+        self._listwidget.takeItem(deleted_item_idx)
+
+    def select_list_item(self, to_display):
+        changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
+        assert len(changed_items) == 1
+        prev_selected = self._listwidget.selectedItems()
+        assert len(prev_selected) <= 1
+        # if the currently selected item (value) need to be refreshed (e.g it was modified)
+        if prev_selected and prev_selected[0] == changed_items[0]:
+            # we need to update the array widget explicitly
+            self.set_widget_array(self.data[to_display], to_display)
+        else:
+            # for some reason, on_item_changed is not triggered when no item was selected
+            if not prev_selected:
+                self.set_widget_array(self.data[to_display], to_display)
+            self._listwidget.setCurrentItem(changed_items[0])
 
     def update_mapping(self, value):
         # XXX: use ordered set so that the order is non-random if the underlying container is ordered?
@@ -2147,32 +2191,11 @@ class MappingEditor(QDialog):
             self.select_list_item(to_display)
         return to_display
 
-    def delete_list_item(self, to_delete):
-        deleted_items = self._listwidget.findItems(to_delete, Qt.MatchExactly)
-        assert len(deleted_items) == 1
-        deleted_item_idx = self._listwidget.row(deleted_items[0])
-        self._listwidget.takeItem(deleted_item_idx)
-
     @Slot()
     def _delete_current_item(self):
         current_item = self._listwidget.currentItem()
         del self.data[str(current_item.text())]
         self._listwidget.takeItem(self._listwidget.row(current_item))
-
-    def select_list_item(self, to_display):
-        changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
-        assert len(changed_items) == 1
-        prev_selected = self._listwidget.selectedItems()
-        assert len(prev_selected) <= 1
-        # if the currently selected item (value) need to be refreshed (e.g it was modified)
-        if prev_selected and prev_selected[0] == changed_items[0]:
-            # we need to update the array widget explicitly
-            self.set_widget_array(self.data[to_display], to_display)
-        else:
-            # for some reason, on_item_changed is not triggered when no item was selected
-            if not prev_selected:
-                self.set_widget_array(self.data[to_display], to_display)
-            self._listwidget.setCurrentItem(changed_items[0])
 
     def line_edit_update(self):
         s = self.eval_box.text()
@@ -2239,18 +2262,19 @@ class MappingEditor(QDialog):
                         main.show()
 
     def on_item_changed(self, curr, prev):
-        name = str(curr.text())
-        array = self.data[name]
-        self.set_widget_array(array, name)
-        expr = self.expressions.get(name, name)
-        if qtconsole_available:
-            # this does not work because it updates the NEXT input, not the
-            # current one (it is supposed to be called from within the console)
-            # self.kernel.shell.set_next_input(expr, replace=True)
-            # self.kernel_client.input(expr)
-            pass
-        else:
-            self.eval_box.setText(expr)
+        if curr is not None:
+            name = str(curr.text())
+            array = self.data[name]
+            self.set_widget_array(array, name)
+            expr = self.expressions.get(name, name)
+            if qtconsole_available:
+                # this does not work because it updates the NEXT input, not the
+                # current one (it is supposed to be called from within the console)
+                # self.kernel.shell.set_next_input(expr, replace=True)
+                # self.kernel_client.input(expr)
+                pass
+            else:
+                self.eval_box.setText(expr)
 
     def set_widget_array(self, array, title):
         if isinstance(array, la.LArray):
@@ -2262,21 +2286,145 @@ class MappingEditor(QDialog):
         self.setWindowTitle(title)
         self.arraywidget.set_data(array)
 
+    def _add_arrays(self, arrays):
+        for k, v in arrays.items():
+            self.data[k] = v
+            self.add_list_item(k)
+
+    def _clear_arrays(self):
+        arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
+        for name in arrays:
+            del self.data[name]
+            self.delete_list_item(name)
+
+    def _isDataModified(self):
+        if self.arraywidget.model.readonly:
+            return False
+        else:
+            return len(self.arraywidget.model.changes) > 0 or self._appliedchanges
+
+    def _askToSaveIfDataModified(self):
+        if self._isDataModified():
+            ret = QMessageBox.warning(self, "Warning", "The data has been modified.\nDo you want to save your changes?",
+                                      QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            if ret == QMessageBox.Save:
+                self.apply_changes()
+                return self.save()
+            elif ret == QMessageBox.Cancel:
+                return False
+            else:
+                return True
+        else:
+            return True
+
+    @Slot()
+    def new(self):
+        if self._askToSaveIfDataModified():
+            self._clear_arrays()
+            self.arraywidget.set_data(la.zeros(0))
+            self.setCurrentFile(None)
+            self.statusBar().showMessage("Viewer has been reset", 4000)
+
+    def _openFile(self, filepath):
+        # XXX : clear console history ?
+        self._clear_arrays()
+        session = la.Session(filepath)
+        self._add_arrays(session)
+        self._listwidget.setCurrentRow(0)
+        self.setCurrentFile(filepath)
+        self.statusBar().showMessage("File {} loaded".format(os.path.basename(filepath)), 4000)
+
+    @Slot()
+    def open(self):
+        if self._askToSaveIfDataModified():
+            # Qt5 returns a tuple (filepath, '') instead of a string
+            if PYQT5:
+                filepath, _ = QFileDialog.getOpenFileName(self)
+            else:
+                filepath = QFileDialog.getOpenFileName(self)
+            if isinstance(filepath, str):
+                self._openFile(filepath)
+            else:
+                QMessageBox.warning(self, "Warning", "No file selected")
+
+    @Slot()
+    def openRecentFile(self):
+        if self._askToSaveIfDataModified():
+            action = self.sender()
+            if action:
+                filepath = action.data()
+                self._openFile(filepath)
+
+    def _saveData(self, filepath):
+        session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
+        session.dump(filepath)
+        self.setCurrentFile(filepath)
+        self._appliedchanges = False
+        self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
+
+    @Slot()
+    def save(self):
+        if self.currentFile is not None:
+            self._saveData(self.currentFile)
+        else:
+            self.saveAs()
+        return True
+
+    @Slot()
+    def saveAs(self):
+        dialog = QFileDialog(self)
+        dialog.setWindowModality(Qt.WindowModal)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if dialog.exec_() != QDialog.Accepted:
+            QMessageBox.critical(self, "Error", "Current session could not be saved")
+            return False
+        else:
+            self._saveData(dialog.selectedFiles()[0])
+            return True
+
+    @Slot()
+    def openDocumentation(self):
+        QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
+
+    def setCurrentFile(self, filepath):
+        self.currentFile = filepath
+        if filepath is not None:
+            settings = QSettings()
+            files = settings.value("recentFileList")
+            if filepath in files:
+                files.remove(filepath)
+            files = [filepath] + files[:self.MAX_RECENT_FILES-1]
+            settings.setValue("recentFileList", files)
+        self.updateRecentFileActions()
+
+    def updateRecentFileActions(self):
+        settings = QSettings()
+        files = settings.value("recentFileList")
+        numRecentFiles = min(len(files), self.MAX_RECENT_FILES)
+
+        for i in range(numRecentFiles):
+            filepath = files[i]
+            text = os.path.basename(filepath)
+            self.recentFileActs[i].setText(text)
+            self.recentFileActs[i].setData(filepath)
+            self.recentFileActs[i].setVisible(True)
+        for i in range(numRecentFiles, self.MAX_RECENT_FILES):
+            self.recentFileActs[i].setVisible(False)
+
+    def closeEvent(self, event):
+        if self._askToSaveIfDataModified():
+            event.accept()
+        else:
+            event.ignore()
+
     def apply_changes(self):
+        # update _unsavedmodifications only if 1 or more changes have been applied
+        if len(self.arraywidget.model.changes) > 0:
+            self._appliedchanges = True
         self.arraywidget.accept_changes()
 
     def discard_changes(self):
         self.arraywidget.reject_changes()
-
-    def accept(self):
-        """Reimplement Qt method"""
-        self.apply_changes()
-        QDialog.accept(self)
-
-    def reject(self):
-        """Reimplement Qt method"""
-        self.discard_changes()
-        QDialog.reject(self)
 
     def get_value(self):
         """Return modified array -- this is *not* a copy"""
@@ -2609,6 +2757,8 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     if _app is None:
         install_except_hook()
         _app = qapplication()
+        _app.setOrganizationName("LArray")
+        _app.setApplicationName("Viewer")
         parent = None
     else:
         parent = _app.activeWindow()
@@ -2618,7 +2768,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
         obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
 
     if isinstance(obj, str):
-        if os.path.isfile(obj):
+        if os.path.exists(obj):
             obj = la.Session(obj)
         else:
             raise ValueError("file {} not found".format(obj))
@@ -2635,6 +2785,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     if parent is None:
         restore_except_hook()
 
+    _app.exec_()
 
 def view(obj=None, title='', depth=0):
     """
@@ -2798,9 +2949,19 @@ if __name__ == "__main__":
     edit()
 
     # s = la.local_arrays()
-    # edit(s)
+    # view(s)
+    # print('HDF')
     # s.dump('x.h5')
-    # view(la.Session('x.h5'))
+    # print('\nEXCEL')
+    # s.dump('x.xlsx')
+    # print('\nCSV')
+    # s.dump_csv('x_csv')
+    # print('\n open HDF')
+    # edit('x.h5')
+    # print('\n open EXCEL')
+    # edit('x.xlsx')
+    # print('\n open CSV')
+    # edit('x_csv')
 
     # compare(arr3, arr4, arr5, arr6)
 
