@@ -415,6 +415,7 @@ Miscellaneous
    diag
    eye
    ipfp
+   load_example_data
 
 Session
 =======
