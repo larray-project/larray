@@ -4263,6 +4263,13 @@ class LArray(object):
             for old, new in items:
                 axes = axes.replace(old, new)
         if inplace:
+            if axes.ndim != self.ndim:
+                raise ValueError("number of axes (%d) does not match "
+                                 "number of dimensions of data (%d)"
+                                 % (axes.ndim, self.ndim))
+            if axes.shape != self.data.shape:
+                raise ValueError("length of axes %s does not match "
+                                 "data shape %s" % (axes.shape, self.data.shape))
             object.__setattr__(self, 'axes', axes)
             return self
         else:
