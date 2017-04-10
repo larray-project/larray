@@ -2948,17 +2948,20 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(a4.shape, (116, 44, 2, 17))
 
     def test_transpose(self):
-        la = self.larray
-        age, geo, sex, lipro = la.axes
+        arr = ndtest((2, 3, 4))
+        a, b, c = arr.axes
+        res = arr.transpose()
+        self.assertEqual(res.axes, [c, b, a])
+        res = arr.transpose('b', 'c', 'a')
+        self.assertEqual(res.axes, [b, c, a])
+        res = arr.transpose('b')
+        self.assertEqual(res.axes, [b, a, c])
 
-        reordered = la.transpose(geo, age, lipro, sex)
-        self.assertEqual(reordered.shape, (44, 116, 15, 2))
-
-        reordered = la.transpose(lipro, age)
-        self.assertEqual(reordered.shape, (15, 116, 44, 2))
-
-        self.assertEqual(la.transpose().axes.names,
-                         ['lipro', 'sex', 'geo', 'age'])
+        # using Ellipsis instead of ... to avoid a syntax error on Python 2 (where ... is only available within [])
+        res = arr.transpose(Ellipsis, 'a')
+        self.assertEqual(res.axes, [b, c, a])
+        res = arr.transpose('c', Ellipsis, 'a')
+        self.assertEqual(res.axes, [c, b, a])
 
     def test_transpose_anonymous(self):
         a = ndrange((2, 3, 4))

@@ -2501,6 +2501,13 @@ class AxisCollection(object):
         if isinstance(key, int):
             return self._list[key]
         elif isinstance(key, (tuple, list)):
+            if any(axis is Ellipsis for axis in key):
+                ellipsis_idx = index_by_id(key, Ellipsis)
+                # going through lists (instead of doing self[key[:ellipsis_idx]] to avoid problems with anonymous axes
+                before_ellipsis = [self[k] for k in key[:ellipsis_idx]]
+                after_ellipsis = [self[k] for k in key[ellipsis_idx + 1:]]
+                ellipsis_axes = list(self - before_ellipsis - after_ellipsis)
+                return AxisCollection(before_ellipsis + ellipsis_axes + after_ellipsis)
             # XXX: also use get_by_pos if tuple/list of Axis?
             return AxisCollection([self[k] for k in key])
         elif isinstance(key, AxisCollection):
@@ -8676,9 +8683,9 @@ class LArray(object):
 
         Parameters
         ----------
-        args
-            Accepts either a tuple of axes specs or
-            axes specs as `*args`.
+        *args
+            Accepts either a tuple of axes specs or axes specs as `*args`. Omitted axes keep their order.
+            Use ... to avoid specifying intermediate axes.
 
         Returns
         -------
@@ -8687,30 +8694,39 @@ class LArray(object):
 
         Examples
         --------
-        >>> a = ndrange([('nat', 'BE,FO'),
-        ...              ('sex', 'M,F'),
-        ...              ('alive', [False, True])])
-        >>> a
-        nat | sex\\alive | False | True
-         BE |         M |     0 |    1
-         BE |         F |     2 |    3
-         FO |         M |     4 |    5
-         FO |         F |     6 |    7
-        >>> a.transpose(x.alive, x.sex, x.nat)
-        alive | sex\\nat | BE | FO
-        False |       M |  0 |  4
-        False |       F |  2 |  6
-         True |       M |  1 |  5
-         True |       F |  3 |  7
-        >>> a.transpose(x.alive)
-        alive | nat\\sex | M | F
-        False |      BE | 0 | 2
-        False |      FO | 4 | 6
-         True |      BE | 1 | 3
-         True |      FO | 5 | 7
+        >>> arr = ndtest((2, 2, 2))
+        >>> arr
+         a | b\\c | c0 | c1
+        a0 |  b0 |  0 |  1
+        a0 |  b1 |  2 |  3
+        a1 |  b0 |  4 |  5
+        a1 |  b1 |  6 |  7
+        >>> arr.transpose('b', 'c', 'a')
+         b | c\\a | a0 | a1
+        b0 |  c0 |  0 |  4
+        b0 |  c1 |  1 |  5
+        b1 |  c0 |  2 |  6
+        b1 |  c1 |  3 |  7
+        >>> arr.transpose('b')
+         b | a\\c | c0 | c1
+        b0 |  a0 |  0 |  1
+        b0 |  a1 |  4 |  5
+        b1 |  a0 |  2 |  3
+        b1 |  a1 |  6 |  7
+        >>> arr.transpose(..., 'a')  # doctest: +SKIP 
+         b | c\\a | a0 | a1
+        b0 |  c0 |  0 |  4
+        b0 |  c1 |  1 |  5
+        b1 |  c0 |  2 |  6
+        b1 |  c1 |  3 |  7
+        >>> arr.transpose('c', ..., 'a')  # doctest: +SKIP
+         c | b\\a | a0 | a1
+        c0 |  b0 |  0 |  4
+        c0 |  b1 |  2 |  6
+        c1 |  b0 |  1 |  5
+        c1 |  b1 |  3 |  7
         """
-        if len(args) == 1 and isinstance(args[0],
-                                         (tuple, list, AxisCollection)):
+        if len(args) == 1 and isinstance(args[0], (tuple, list, AxisCollection)):
             axes = args[0]
         elif len(args) == 0:
             axes = self.axes[::-1]
@@ -8719,33 +8735,12 @@ class LArray(object):
 
         axes = self.axes[axes]
         axes_indices = [self.axes.index(axis) for axis in axes]
+        # this whole mumbo jumbo is required (for now) for anonymous axes
         indices_present = set(axes_indices)
         missing_indices = [i for i in range(len(self.axes))
                            if i not in indices_present]
         axes_indices = axes_indices + missing_indices
-        src_data = np.asarray(self)
-        res_data = src_data.transpose(axes_indices)
-        return LArray(res_data, self.axes[axes_indices])
-
-        # if len(args) == 1 and isinstance(args[0],
-        #                                  (tuple, list, AxisCollection)):
-        #     axes = args[0]
-        # else:
-        #     axes = args
-        # # this SHOULD work but does not currently for positional axes
-        # # on anonymous axes. e.g. axes = (1, 2) because that ends up
-        # # trying to do:
-        # # self.axes[(1, 2)] | self.axes
-        # # self.axes[(1, 2)] | self.axes[0]
-        # # since self.axes[0] does not exist in self.axes[1, 2], BUT has
-        # # a position < len(self.axes[1, 2]), it tries to match
-        # # against self.axes[1, 2][0], (ie self.axes[1]) which breaks
-        # # the problem is that AxisCollection.union should not try to match
-        # # by position in this case.
-        # res_axes = (self.axes[axes] | self.axes) if axes else self.axes[::-1]
-        # axes_indices = [self.axes.index(axis) for axis in res_axes]
-        # res_data = np.asarray(self).transpose(axes_indices)
-        # return LArray(res_data, res_axes)
+        return LArray(self.data.transpose(axes_indices), self.axes[axes_indices])
     T = property(transpose)
 
     def clip(self, a_min, a_max, out=None):
