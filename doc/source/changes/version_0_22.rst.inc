@@ -112,7 +112,11 @@
 Miscellaneous improvements
 --------------------------
 
-* improved something.
+* handle ... in transpose method to avoid having to list all axes. This can be useful, for example, to change which
+  axis is in columns (closes :issue:`188`).
+
+    >>> arr.transpose(..., 'time')
+    >>> arr.transpose('gender', ..., 'time')
 
 Fixes
 -----
