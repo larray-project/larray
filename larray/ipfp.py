@@ -8,8 +8,7 @@ import numpy as np
 def badvalues(a, bad_filter):
     bad_values = a[bad_filter]
     assert bad_values.ndim == 1
-    return '\n'.join('%s: %s' % (k, v)
-                     for k, v in zip(bad_values.axes[0], bad_values))
+    return '\n'.join('%s: %s' % (k, v) for k, v in zip(bad_values.axes[0], bad_values))
 
 
 def f2str(f, threshold=2):
@@ -76,10 +75,9 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     --------
     >>> from larray import *
     >>> from larray.ipfp import ipfp
-    >>> a = Axis('a', 'a0,a1')
-    >>> b = Axis('b', 'b0,b1')
-    >>> initial = LArray([[2, 1],
-    ...                   [1, 2]], [a, b])
+    >>> a = Axis('a=a0,a1')
+    >>> b = Axis('b=b0,b1')
+    >>> initial = LArray([[2, 1], [1, 2]], [a, b])
     >>> initial
     a\\b | b0 | b1
      a0 |  2 |  1

@@ -2337,7 +2337,7 @@ class ArrayComparator(QDialog):
         """
         assert all(isinstance(a, la.LArray) for a in arrays)
         self.arrays = arrays
-        self.array = la.stack(arrays, la.Axis('arrays', names))
+        self.array = la.stack(arrays, la.Axis(names, 'arrays'))
 
         icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
         if icon is not None:
@@ -2505,7 +2505,7 @@ class SessionComparator(QDialog):
 
     def get_array(self, name):
         arrays = [s.get(name) for s in self.sessions]
-        array = la.stack(arrays, la.Axis('sessions', self.names))
+        array = la.stack(arrays, la.Axis(self.names, 'sessions'))
         diff = array - array[la.x.sessions.i[0]]
         absmax = abs(diff).max()
         # scale diff to 0-1
@@ -2691,9 +2691,9 @@ def restore_display_hook():
 if __name__ == "__main__":
     """Array editor test"""
 
-    lipro = la.Axis('lipro', ['P%02d' % i for i in range(1, 16)])
-    age = la.Axis('age', range(116))
-    sex = la.Axis('sex', 'M,F')
+    lipro = la.Axis(['P%02d' % i for i in range(1, 16)], 'lipro')
+    age = la.Axis('age=0..115')
+    sex = la.Axis('sex=M,F')
 
     vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
           'A43,A44,A45,A46,A71,A72,A73'
@@ -2703,7 +2703,7 @@ if __name__ == "__main__":
     # list of strings
     belgium = la.union(vla, wal, bru)
 
-    geo = la.Axis('geo', belgium)
+    geo = la.Axis(belgium, 'geo')
 
     # data1 = np.arange(30).reshape(2, 15)
     # arr1 = la.LArray(data1, axes=(sex, lipro))
@@ -2737,8 +2737,8 @@ if __name__ == "__main__":
 
     # data2 = np.random.normal(0, 10.0, size=(5000, 20))
     # arr2 = la.LArray(data2,
-    #                  axes=(la.Axis('d0', list(range(5000))),
-    #                        la.Axis('d1', list(range(20)))))
+    #                  axes=(la.Axis(list(range(5000)), 'd0'),
+    #                        la.Axis(list(range(20)), 'd1')))
     # edit(arr2)
 
     # view(['a', 'bb', 5599])
@@ -2762,7 +2762,7 @@ if __name__ == "__main__":
 
     # compare(arr3, arr4, arr5, arr6)
 
-    # view(la.stack((arr3, arr4), la.Axis('arrays', 'arr3,arr4')))
+    # view(la.stack((arr3, arr4), la.Axis('arrays=arr3,arr4')))
     edit()
 
     # s = la.local_arrays()
