@@ -526,7 +526,7 @@ class Session(object):
         all_keys = list(self.keys()) + [n for n in other.keys()
                                         if n not in self_keys]
         res = [larray_nan_equal(self.get(key), other.get(key)) for key in all_keys]
-        return LArray(res, [Axis('name', all_keys)])
+        return LArray(res, [Axis(all_keys, 'name')])
 
     def __ne__(self, other):
         return ~(self == other)

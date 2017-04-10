@@ -122,27 +122,27 @@ class TestAxis(TestCase):
         sex_array = np.array(sex_list)
 
         # tuple of strings
-        assert_array_equal(Axis('sex', sex_tuple).labels, sex_array)
+        assert_array_equal(Axis(sex_tuple, 'sex').labels, sex_array)
         # list of strings
-        assert_array_equal(Axis('sex', sex_list).labels, sex_array)
+        assert_array_equal(Axis(sex_list, 'sex').labels, sex_array)
         # array of strings
-        assert_array_equal(Axis('sex', sex_array).labels, sex_array)
+        assert_array_equal(Axis(sex_array, 'sex').labels, sex_array)
         # single string
-        assert_array_equal(Axis('sex', 'M,F').labels, sex_array)
+        assert_array_equal(Axis('sex=M,F').labels, sex_array)
         # list of ints
-        assert_array_equal(Axis('age', range(116)).labels, np.arange(116))
+        assert_array_equal(Axis(range(116), 'age').labels, np.arange(116))
         # range-string
-        assert_array_equal(Axis('age', '..115').labels, np.arange(116))
+        assert_array_equal(Axis('..115', 'age').labels, np.arange(116))
 
     def test_equals(self):
-        self.assertTrue(Axis('sex', 'M,F').equals(Axis('sex', 'M,F')))
-        self.assertTrue(Axis('sex', 'M,F').equals(Axis('sex', ['M', 'F'])))
-        self.assertFalse(Axis('sex', 'M,W').equals(Axis('sex', 'M,F')))
-        self.assertFalse(Axis('sex1', 'M,F').equals(Axis('sex2', 'M,F')))
-        self.assertFalse(Axis('sex1', 'M,W').equals(Axis('sex2', 'M,F')))
+        self.assertTrue(Axis('sex=M,F').equals(Axis('sex=M,F')))
+        self.assertTrue(Axis('sex=M,F').equals(Axis(['M', 'F'], 'sex')))
+        self.assertFalse(Axis('sex=M,W').equals(Axis('sex=M,F')))
+        self.assertFalse(Axis('sex1=M,F').equals(Axis('sex2=M,F')))
+        self.assertFalse(Axis('sex1=M,W').equals(Axis('sex2=M,F')))
 
     def test_getitem(self):
-        age = Axis('age', '0..10')
+        age = Axis('age=0..10')
         # a tuple
         a159 = age[1, 5, 9]
         self.assertEqual(a159.key, [1, 5, 9])
@@ -187,7 +187,7 @@ class TestAxis(TestCase):
             return (g1.key == g2.key and g1.name == g2.name and
                     g1.axis is g2.axis)
 
-        age = Axis('age', range(100))
+        age = Axis(range(100), 'age')
         ages = [1, 5, 9]
 
         val_only = LGroup(ages)
@@ -207,8 +207,8 @@ class TestAxis(TestCase):
         self.assertTrue(group_equal(age[val_axis_name] >> 'a_name', LGroup(ages, 'a_name', age)))
 
     def test_getitem_group_keys(self):
-        a = Axis('a', 'a0..a2')
-        alt_a = Axis('a', 'a1..a3')
+        a = Axis('a=a0..a2')
+        alt_a = Axis('a=a1..a3')
 
         # a) key is a single LGroup
         # -------------------------
@@ -468,23 +468,23 @@ class TestAxis(TestCase):
         self.assertIs(g[1].axis, alt_a)
 
     def test_init_from_group(self):
-        code = Axis('code', 'C01..C03')
+        code = Axis('code=C01..C03')
         code_group = code[:'C02']
-        subset_axis = Axis('code_subset', code_group)
+        subset_axis = Axis(code_group, 'code_subset')
         assert_array_equal(subset_axis.labels, ['C01', 'C02'])
 
     def test_match(self):
-        sutcode = Axis('sutcode', ['A23', 'A2301', 'A25', 'A2501'])
+        sutcode = Axis(['A23', 'A2301', 'A25', 'A2501'], 'sutcode')
         self.assertEqual(sutcode.matches('^...$'), LGroup(['A23', 'A25']))
         self.assertEqual(sutcode.startswith('A23'), LGroup(['A23', 'A2301']))
         self.assertEqual(sutcode.endswith('01'), LGroup(['A2301', 'A2501']))
 
     def test_iter(self):
-        sex = Axis('sex', 'M,F')
+        sex = Axis('sex=M,F')
         self.assertEqual(list(sex), [PGroup(0, axis=sex), PGroup(1, axis=sex)])
 
     def test_positional(self):
-        age = Axis('age', '..115')
+        age = Axis('age=0..115')
 
         # these are NOT equivalent (not translated until used in an LArray
         # self.assertEqual(age.i[:17], age[':17'])
@@ -494,7 +494,7 @@ class TestAxis(TestCase):
 
     def test_contains(self):
         # normal Axis
-        age = Axis('age', '..10')
+        age = Axis('age=0..10')
 
         age2 = age[2]
         age2bis = age[(2,)]
@@ -538,7 +538,7 @@ class TestAxis(TestCase):
         # aggregated Axis
         # FIXME: _to_tick(age2) == 2, but then np.asarray([2, '2,4,7', ...]) returns np.array(['2', '2,4,7'])
         # instead of returning an object array
-        agg = Axis("agg", (age2, age247, age359, age468, '2,6', ['3', '5', '7'], ('6', '7', '9')))
+        agg = Axis((age2, age247, age359, age468, '2,6', ['3', '5', '7'], ('6', '7', '9')), "agg")
         # fails because of above FIXME
         # self.assertTrue(age2 in agg)
         self.assertFalse(age2bis in agg)
@@ -589,9 +589,9 @@ class TestAxis(TestCase):
 
 class TestLGroup(TestCase):
     def setUp(self):
-        self.age = Axis('age', '0..10')
-        self.lipro = Axis('lipro', 'P01..P05')
-        self.anonymous = Axis(None, range(3))
+        self.age = Axis('age=0..10')
+        self.lipro = Axis('lipro=P01..P05')
+        self.anonymous = Axis(range(3))
 
         self.slice_both_named_wh_named_axis = LGroup('1:5', "full", self.age)
         self.slice_both_named = LGroup('1:5', "named")
@@ -681,7 +681,7 @@ class TestLGroup(TestCase):
         self.assertEqual(repr(self.slice_none_no_axis), "LGroup(slice(None, None, None))")
         self.assertEqual(repr(self.slice_none_wh_named_axis), "lipro[:]")
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
-                         "LGroup(slice(None, None, None), axis=Axis(None, [0, 1, 2]))")
+                         "LGroup(slice(None, None, None), axis=Axis([0, 1, 2], None))")
 
 
 class TestLSet(TestCase):
@@ -692,7 +692,7 @@ class TestLSet(TestCase):
         self.assertEqual(LSet(['a', 'b', 'c']) | LSet(['c', 'd']),
                          LSet(['a', 'b', 'c', 'd']))
         # with axis (pure)
-        alpha = Axis('alpha', 'a,b,c,d')
+        alpha = Axis('alpha=a,b,c,d')
         res = alpha['a', 'b'].set() | alpha['c', 'd'].set()
         self.assertIs(res.axis, alpha)
         self.assertEqual(res, alpha['a', 'b', 'c', 'd'].set())
@@ -700,7 +700,7 @@ class TestLSet(TestCase):
                          alpha['a', 'b', 'c', 'd'].set())
 
         # with axis (mixed)
-        alpha = Axis('alpha', 'a,b,c,d')
+        alpha = Axis('alpha=a,b,c,d')
         res = alpha['a', 'b'].set() | alpha['c', 'd']
         self.assertIs(res.axis, alpha)
         self.assertEqual(res, alpha['a', 'b', 'c', 'd'].set())
@@ -708,7 +708,7 @@ class TestLSet(TestCase):
                          alpha['a', 'b', 'c', 'd'].set())
 
         # with axis & name
-        alpha = Axis('alpha', 'a,b,c,d')
+        alpha = Axis('alpha=a,b,c,d')
         res = alpha['a', 'b'].set().named('ab') | alpha['c', 'd'].set().named('cd')
         self.assertIs(res.axis, alpha)
         self.assertEqual(res.name, 'ab | cd')
@@ -717,7 +717,7 @@ class TestLSet(TestCase):
                          alpha['a', 'b', 'c', 'd'].set())
 
         # numeric axis
-        num = Axis('num', range(10))
+        num = Axis(range(10), 'num')
         # single int
         self.assertEqual(num[1, 5, 3].set() | 4, num[1, 5, 3, 4].set())
         self.assertEqual(num[1, 5, 3].set() | num[4], num[1, 5, 3, 4].set())
@@ -731,7 +731,7 @@ class TestLSet(TestCase):
         self.assertEqual(LSet(['a', 'b', 'c']) & LSet(['c', 'd']),
                          LSet(['c']))
         # with axis & name
-        alpha = Axis('alpha', 'a,b,c,d')
+        alpha = Axis('alpha=a,b,c,d')
         res = alpha['a', 'b', 'c'].named('abc').set() & alpha['c', 'd'].named('cd')
         self.assertIs(res.axis, alpha)
         self.assertEqual(res.name, 'abc & cd')
@@ -756,7 +756,7 @@ class TestPGroup(TestCase):
         self.assertTrue(res.all())
 
     def setUp(self):
-        self.code_axis = Axis('code', 'a0..a4')
+        self.code_axis = Axis('code=a0..a4')
 
         self.slice_both_named = self.code_axis.i[1:4] >> 'a123'
         self.slice_both = self.code_axis.i[1:4]
@@ -813,12 +813,12 @@ class TestPGroup(TestCase):
 
 class TestAxisCollection(TestCase):
     def setUp(self):
-        self.lipro = Axis('lipro', 'P01..P04')
-        self.sex = Axis('sex', 'M,F')
-        self.sex2 = Axis('sex', 'F,M')
-        self.age = Axis('age', '..7')
-        self.geo = Axis('geo', 'A11,A12,A13')
-        self.value = Axis('value', '..10')
+        self.lipro = Axis('lipro=P01..P04')
+        self.sex = Axis('sex=M,F')
+        self.sex2 = Axis('sex=F,M')
+        self.age = Axis('age=0..7')
+        self.geo = Axis('geo=A11,A12,A13')
+        self.value = Axis('value=0..10')
         self.collection = AxisCollection((self.lipro, self.sex, self.age))
 
     def test_init_from_group(self):
@@ -977,7 +977,7 @@ class TestAxisCollection(TestCase):
 
     def test_append(self):
         col = self.collection
-        geo = Axis('geo', 'A11,A12,A13')
+        geo = Axis('geo=A11,A12,A13')
         col.append(geo)
         self.assertEqual(col, [self.lipro, self.sex, self.age, geo])
 
@@ -1006,14 +1006,14 @@ class TestAxisCollection(TestCase):
 
         # b) with compatible dupe
         # the "new" age axis is ignored (because it is compatible)
-        new = col + [Axis('geo', 'A11,A12,A13'), Axis('age', '..7')]
+        new = col + [Axis('geo=A11,A12,A13'), Axis('age=0..7')]
         self.assertEqual(new, [lipro, sex, age, geo])
 
         # c) with incompatible dupe
         # XXX: the "new" age axis is ignored. We might want to ignore it if it
         #  is the same but raise an exception if it is different
         with self.assertRaises(ValueError):
-            col + [Axis('geo', 'A11,A12,A13'), Axis('age', '..6')]
+            col + [Axis('geo=A11,A12,A13'), Axis('age=0..6')]
 
         # 2) other AxisCollection
         new = col + AxisCollection([geo, value])
@@ -1052,18 +1052,18 @@ class TestAxisCollection(TestCase):
 
     def test_repr(self):
         self.assertEqual(repr(self.collection), """AxisCollection([
-    Axis('lipro', ['P01', 'P02', 'P03', 'P04']),
-    Axis('sex', ['M', 'F']),
-    Axis('age', [0, 1, 2, 3, 4, 5, 6, 7])
+    Axis(['P01', 'P02', 'P03', 'P04'], 'lipro'),
+    Axis(['M', 'F'], 'sex'),
+    Axis([0, 1, 2, 3, 4, 5, 6, 7], 'age')
 ])""")
 
 
 class TestLArray(TestCase):
     def setUp(self):
         self.title = 'test array'
-        self.lipro = Axis('lipro', ['P%02d' % i for i in range(1, 16)])
-        self.age = Axis('age', range(116))
-        self.sex = Axis('sex', 'M,F')
+        self.lipro = Axis(['P%02d' % i for i in range(1, 16)], 'lipro')
+        self.age = Axis('age=0..115')
+        self.sex = Axis('sex=M,F')
 
         vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
               'A43,A44,A45,A46,A71,A72,A73'
@@ -1081,7 +1081,7 @@ class TestLArray(TestCase):
         # wal_bru = belgium - vla
         # wal_bru = wal + bru # equivalent
 
-        self.geo = Axis('geo', self.belgium)
+        self.geo = Axis(self.belgium, 'geo')
 
         self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
                                                  .astype(float)
@@ -1209,7 +1209,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # LGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
-        self.assertTrue(subset.axes[0].equals(Axis('age', [1, 5, 9])))
+        self.assertTrue(subset.axes[0].equals(Axis([1, 5, 9], 'age')))
         assert_array_equal(subset, raw[[1, 5, 9]])
 
         # LGroup at "incorrect" place
@@ -1218,8 +1218,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # multiple LGroup key (in "incorrect" order)
         res = la[lipro159, age159]
         self.assertEqual(res.axes.names, ['age', 'geo', 'sex', 'lipro'])
-        assert_array_equal(res,
-                           raw[[1, 5, 9]][..., [0, 4, 8]])
+        assert_array_equal(res, raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # LGroup key and scalar
         res = la[lipro159, 5]
@@ -1244,7 +1243,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             la[age[1, 2], age[3, 4]]
 
         # key with invalid axis
-        bad = Axis('bad', 3)
+        bad = Axis(3, 'bad')
         with self.assertRaises(KeyError):
             la[bad[1, 2], age[3, 4]]
 
@@ -1258,19 +1257,17 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # LGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
-        self.assertTrue(subset.axes[0].equals(Axis('age', [1, 5, 9])))
+        self.assertTrue(subset.axes[0].equals(Axis([1, 5, 9], 'age')))
         assert_array_equal(subset, raw[[1, 5, 9]])
 
         # LGroup at "incorrect" place
         assert_array_equal(la[lipro159], raw[..., [0, 4, 8]])
 
         # multiple LGroup key (in "incorrect" order)
-        assert_array_equal(la[lipro159, age159],
-                           raw[[1, 5, 9]][..., [0, 4, 8]])
+        assert_array_equal(la[lipro159, age159], raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # mixed LGroup/positional key
-        assert_array_equal(la[[1, 5, 9], lipro159],
-                           raw[[1, 5, 9]][..., [0, 4, 8]])
+        assert_array_equal(la[[1, 5, 9], lipro159], raw[[1, 5, 9]][..., [0, 4, 8]])
 
         # single None slice
         assert_array_equal(la[:], raw)
@@ -1306,7 +1303,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[[1, 5, 9]], raw[[1, 5, 9]])
         subset = la[[1, 5, 9]]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
-        self.assertTrue(subset.axes[0].equals(Axis('age', [1, 5, 9])))
+        self.assertTrue(subset.axes[0].equals(Axis([1, 5, 9], 'age')))
         assert_array_equal(subset, raw[[1, 5, 9]])
 
         # key at "incorrect" place
@@ -1372,7 +1369,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # LGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
-        self.assertTrue(subset.axes[0].equals(Axis('age', [1, 5, 9])))
+        self.assertTrue(subset.axes[0].equals(Axis([1, 5, 9], 'age')))
         assert_array_equal(subset, raw[[1, 5, 9]])
 
         # LGroup at "incorrect" place
@@ -1410,7 +1407,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # LGroup at "correct" place
         subset = la[age159]
         self.assertEqual(subset.axes[1:], (geo, sex, lipro))
-        self.assertTrue(subset.axes[0].equals(Axis('age', [1, 5, 9])))
+        self.assertTrue(subset.axes[0].equals(Axis([1, 5, 9], 'age')))
         assert_array_equal(subset, raw[[1, 5, 9]])
 
         # LGroup at "incorrect" place
@@ -1482,7 +1479,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(res.shape, (2, 12, 5))
 
     def test_getitem_pgroup_on_int_axis(self):
-        a = Axis('a', '1..3')
+        a = Axis('a=1..3')
         arr = ndrange(a)
         self.assertEqual(arr[a.i[1]], 1)
 
@@ -1501,7 +1498,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         expected = arr['a1':]
 
         a, b = arr.axes
-        alt_a = Axis('a', 'a1..a3')
+        alt_a = Axis('a=a1..a3')
 
         # a) slice with lgroup
         # a.1) LGroup.axis from array.axes
@@ -1532,9 +1529,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
 
     def test_getitem_single_larray_key_guess(self):
-        a = Axis('a', ['a1', 'a2'])
-        b = Axis('b', ['b1', 'b2', 'b3'])
-        c = Axis('c', ['c1', 'c2', 'c3', 'c4'])
+        a = Axis(['a1', 'a2'], 'a')
+        b = Axis(['b1', 'b2', 'b3'], 'b')
+        c = Axis(['c1', 'c2', 'c3', 'c4'], 'c')
 
         # 1) key with extra axis
         arr = ndrange([a, b])
@@ -1550,7 +1547,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # 2bis) key with part of the values axis (the one being replaced)
         arr = ndrange([a, b])
-        b_bis = Axis('b', ['b1', 'b2'])
+        b_bis = Axis(['b1', 'b2'], 'b')
         key = LArray(['b3', 'b2'], [b_bis])
         self.assertEqual(arr[key].axes, [a, b_bis])
 
@@ -1662,31 +1659,31 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         key = np.array(keys)
         res = la[key]
         self.assertTrue(isinstance(res, LArray))
-        self.assertEqual(res.axes, la.axes.replace(x.lipro, Axis('lipro', keys)))
+        self.assertEqual(res.axes, la.axes.replace(x.lipro, Axis(keys, 'lipro')))
         assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
 
     def test_getitem_int_larray_key_guess(self):
-        a = Axis('a', [0, 1])
-        b = Axis('b', [2, 3])
-        c = Axis('c', [4, 5])
-        d = Axis('d', [6, 7])
-        e = Axis('e', [8, 9, 10, 11])
+        a = Axis([0, 1], 'a')
+        b = Axis([2, 3], 'b')
+        c = Axis([4, 5], 'c')
+        d = Axis([6, 7], 'd')
+        e = Axis([8, 9, 10, 11], 'e')
 
         arr = ndrange([c, d, e])
         key = LArray([[8, 9], [10, 11]], [a, b])
         self.assertEqual(arr[key].axes, [c, d, a, b])
 
     def test_getitem_int_ndarray_key_guess(self):
-        c = Axis('c', [4, 5])
-        d = Axis('d', [6, 7])
-        e = Axis('e', [8, 9, 10, 11])
+        c = Axis([4, 5], 'c')
+        d = Axis([6, 7], 'd')
+        e = Axis([8, 9, 10, 11], 'e')
 
         arr = ndrange([c, d, e])
         # ND keys do not work yet
         # key = np.array([[8, 11], [10, 9]])
         key = np.array([8, 11, 10])
         res = arr[key]
-        self.assertEqual(res.axes, [c, d, Axis('e', [8, 11, 10])])
+        self.assertEqual(res.axes, [c, d, Axis([8, 11, 10], 'e')])
 
     def test_positional_indexer_getitem(self):
         raw = self.array
@@ -1741,7 +1738,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw = self.array.copy()
 
         raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
-        fake_axis = Axis('fake', ['label'])
+        fake_axis = Axis(['label'], 'fake')
         age_axis = la[ages1_5_9].axes.age
         value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
                                         self.lipro))
@@ -1891,7 +1888,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         # d) LArray with extra axes
         la = self.larray.copy()
         raw = self.array.copy()
-        key = (la < 5).expand([Axis('extra', 2)])
+        key = (la < 5).expand([Axis(2, 'extra')])
         self.assertEqual(key.ndim, 5)
         # TODO: make this work
         with self.assertRaises(ValueError):
@@ -1916,7 +1913,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         raw = self.array.copy()
 
         raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
-        fake_axis = Axis('fake', ['label'])
+        fake_axis = Axis(['label'], 'fake')
         age_axis = la[ages1_5_9].axes.age
         value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
                                         self.lipro))
@@ -2513,7 +2510,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(reg.shape, (4, 15))
 
     def test_group_agg_one_axis(self):
-        a = Axis('a', range(3))
+        a = Axis(range(3), 'a')
         la = ndrange(a)
         raw = np.asarray(la)
 
@@ -2783,19 +2780,19 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         small = self.small
 
         # use a group from another *compatible* axis
-        lipro2 = Axis('lipro', 'P01..P15')
+        lipro2 = Axis('lipro=P01..P15')
         self.assertEqual(small.sum(lipro=lipro2['P01,P03']).shape, (2,))
 
         # use (compatible) group from another *incompatible* axis
         # XXX: I am unsure whether or not this should be allowed. Maybe we
         # should simply check that the group is valid in axis, but that
         # will trigger a pretty meaningful error anyway
-        lipro3 = Axis('lipro', 'P01,P03,P05')
+        lipro3 = Axis('lipro=P01,P03,P05')
         self.assertEqual(small.sum(lipro3['P01,P03']).shape, (2,))
 
         # use a group (from another axis) which is incompatible with the axis of
         # the same name in the array
-        lipro4 = Axis('lipro', 'P01,P03,P16')
+        lipro4 = Axis('lipro=P01,P03,P16')
         with self.assertRaisesRegexp(ValueError,
                                      "lipro\['P01', 'P16'\] is not a valid "
                                      "label for any axis"):
@@ -3156,8 +3153,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la, self.small.set_labels(x.sex, ['Man', 'Woman']))
 
     def test_replace_axes(self):
-        lipro2 = Axis('lipro2', [l.replace('P', 'Q') for l in self.lipro.labels])
-        sex2 = Axis('sex2', ['Man', 'Woman'])
+        lipro2 = Axis([l.replace('P', 'Q') for l in self.lipro.labels], 'lipro2')
+        sex2 = Axis(['Man', 'Woman'], 'sex2')
 
         la = LArray(self.small_data, axes=(self.sex, lipro2),
                     title=self.small_title)
@@ -3218,7 +3215,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # TODO: check how awful the syntax is with an axis that is not last
         # or first
-        l2 = LArray(la[:, :'P14'], axes=[sex, Axis('lipro', lipro.labels[1:])])
+        l2 = LArray(la[:, :'P14'], axes=[sex, Axis(lipro.labels[1:], 'lipro')])
         l2 = LArray(la[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
 
         # We can also modify the axis in-place (dangerous!)
@@ -3426,7 +3423,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         with open(abspath('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la = ndrange([Axis('time', range(2015, 2018))])
+        la = ndrange([Axis('time=2015..2017')])
         la.to_csv(abspath('test_out1d.csv'))
         result = ['time,2015,2016,2017\n',
                   ',0,1,2\n']
@@ -3775,7 +3772,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # with out= and broadcasting
         # we need to put the 'a' axis first because raw numpy only supports that
-        la_out = zeros([Axis('a', [0, 1, 2])] + list(la.axes))
+        la_out = zeros([Axis([0, 1, 2], 'a')] + list(la.axes))
         raw_out = np.zeros((3,) + raw.shape)
 
         la_out2 = exp(la, la_out)
@@ -3869,7 +3866,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(a3.i[2, 2, 2], a.i[2, 2, 2])
 
         # using Axis object
-        sex = Axis('sex', 'M,F')
+        sex = Axis('sex=M,F')
         a = eye(sex)
         d = diag(a)
         self.assertEqual(d.ndim, 1)
@@ -3938,8 +3935,8 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         arr3d = ndtest((2, 2, 2))
         arr4d = ndtest((2, 2, 2, 2))
         a, b, c, d = arr4d.axes
-        e = Axis('e', 'e0,e1')
-        f = Axis('f', 'f0,f1')
+        e = Axis('e=e0,e1')
+        f = Axis('f=f0,f1')
 
         # 4D(a, b, c, d) @ 3D(e, d, f) -> 5D(a, b, e, c, f)
         arr3d = arr3d.set_axes([e, d, f])
@@ -4116,7 +4113,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(res.transpose(x.a, x.b, x.c, x.d), arr)
 
     def test_stack(self):
-        sex = Axis('sex', 'M, F')
+        sex = Axis('sex=M,F')
         arr1 = ones('nat=BE, FO')
         # not using the same length as nat, otherwise numpy gets confused :(
         arr2 = zeros('type=1..3')

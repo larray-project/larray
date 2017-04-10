@@ -20,13 +20,13 @@ def equal(o1, o2):
 
 class TestSession(TestCase):
     def setUp(self):
-        self.a = Axis('a', [])
-        self.b = Axis('b', [])
+        self.a = Axis([], 'a')
+        self.b = Axis([], 'b')
         self.c = 'c'
         self.d = {}
-        self.e = ndrange([('a0', 2), ('a1', 3)])
-        self.f = ndrange([('a0', 3), ('a1', 2)])
-        self.g = ndrange([('a0', 2), ('a1', 4)])
+        self.e = ndrange([(2, 'a0'), (3, 'a1')])
+        self.f = ndrange([(3, 'a0'), (2, 'a1')])
+        self.g = ndrange([(2, 'a0'), (4, 'a1')])
         self.session = Session([('b', self.b), ('a', self.a),
                                 ('c', self.c), ('d', self.d),
                                 ('e', self.e), ('f', self.f),
@@ -95,7 +95,7 @@ class TestSession(TestCase):
 
     def test_add(self):
         s = self.session
-        h = Axis('h', [])
+        h = Axis([], 'h')
         s.add(h, i='i')
         self.assertTrue(h.equals(s.h))
         self.assertEqual(s.i, 'i')

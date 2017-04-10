@@ -876,38 +876,44 @@ class Axis(object):
 
     Parameters
     ----------
-    name : str or Axis
-        name of the axis or another instance of Axis.
-        In the second case, the name of the other axis is simply copied.
     labels : array-like or int
         collection of values usable as labels, i.e. numbers or strings or the size of the axis.
         In the last case, a wildcard axis is created.
+    name : str or Axis, optional
+        name of the axis or another instance of Axis.
+        In the second case, the name of the other axis is simply copied.
+        By default None.
 
     Attributes
     ----------
-    name : str
-        name of the axis.
     labels : array-like or int
         collection of values usable as labels, i.e. numbers or strings
+    name : str
+        name of the axis. None in the case of an anonymous axis.
 
     Examples
     --------
-    >>> age = Axis('age', 10)
+    >>> age = Axis(10, 'age')
     >>> age
-    Axis('age', 10)
+    Axis(10, 'age')
     >>> age.name
     'age'
     >>> age.labels
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> sex
-    Axis('sex', ['M', 'F'])
+    >>> gender = Axis('gender=M,F')
+    >>> gender
+    Axis(['M', 'F'], 'gender')
+    >>> anonymous = Axis('0..4')
+    >>> anonymous
+    Axis([0, 1, 2, 3, 4], None)
     """
     # ticks instead of labels?
     # XXX: make name and labels optional?
-    def __init__(self, name, labels):
+    def __init__(self, labels, name=None):
         if isinstance(name, Axis):
             name = name.name
+        if isinstance(labels, basestring) and '=' in labels:
+                name, labels = [o.strip() for o in labels.split('=')]
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
         is_python_str = type(name) is unicode or type(name) is bytes
@@ -977,8 +983,8 @@ class Axis(object):
 
         Examples
         --------
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> arr = ndrange([sex, time])
         >>> arr
         sex\\time | 2007 | 2008 | 2009 | 2010
@@ -1048,7 +1054,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(10))
+        >>> age = Axis(range(10), 'age')
         >>> age.by(3)
         (age.i[0:3], age.i[3:6], age.i[6:9], age.i[9:10])
         >>> age.by(3, 4)
@@ -1080,27 +1086,26 @@ class Axis(object):
 
         Examples
         --------
-        >>> time = Axis('time', [2007, 2008])
+        >>> time = Axis([2007, 2008], 'time')
         >>> time
-        Axis('time', [2007, 2008])
+        Axis([2007, 2008], 'time')
         >>> time.extend([2009, 2010])
-        Axis('time', [2007, 2008, 2009, 2010])
-        >>> waxis = Axis('wildcard_axis', 10)
+        Axis([2007, 2008, 2009, 2010], 'time')
+        >>> waxis = Axis(10, 'wildcard_axis')
         >>> waxis
-        Axis('wildcard_axis', 10)
+        Axis(10, 'wildcard_axis')
         >>> waxis.extend(5)
-        Axis('wildcard_axis', 15)
+        Axis(15, 'wildcard_axis')
         >>> waxis.extend([11, 12, 13, 14])
         Traceback (most recent call last):
         ...
         ValueError: Axis to append must (not) be wildcard if self is (not) wildcard
         """
-        other = labels if isinstance(labels, Axis) else Axis(None, labels)
+        other = labels if isinstance(labels, Axis) else Axis(labels)
         if self.iswildcard != other.iswildcard:
-            raise ValueError ("Axis to append must (not) be wildcard if " +
-                              "self is (not) wildcard")
+            raise ValueError ("Axis to append must (not) be wildcard if self is (not) wildcard")
         labels = self._length + other._length if self.iswildcard else np.append(self.labels, other.labels)
-        return Axis(self.name, labels)
+        return Axis(labels, self.name)
 
     @property
     def iswildcard(self):
@@ -1119,7 +1124,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> odd_years = time._group([2007, 2009], name='odd_years')
         >>> odd_years
         time[2007, 2009] >> 'odd_years'
@@ -1172,9 +1177,9 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(100))
-        >>> age.subaxis(range(10, 19), name='teenagers')
-        Axis('teenagers', [10, 11, 12, 13, 14, 15, 16, 17, 18])
+        >>> age = Axis(range(100), 'age')
+        >>> age.subaxis(range(10, 19), 'teenagers')
+        Axis([10, 11, 12, 13, 14, 15, 16, 17, 18], 'teenagers')
         """
         if (name is None and isinstance(key, slice) and
                 key.start is None and key.stop is None and key.step is None):
@@ -1188,7 +1193,7 @@ class Axis(object):
             return tuple(key.axes)
         # TODO: compute length for wildcard axes more efficiently
         labels = len(self.labels[key]) if self.iswildcard else self.labels[key]
-        return Axis(name, labels)
+        return Axis(labels, name)
 
     def iscompatible(self, other):
         """
@@ -1211,10 +1216,10 @@ class Axis(object):
 
         Examples
         --------
-        >>> a10  = Axis('a', range(10))
-        >>> wa10 = Axis('a', 10)
-        >>> wa1  = Axis('a', 1)
-        >>> b10  = Axis('b', range(10))
+        >>> a10  = Axis(range(10), 'a')
+        >>> wa10 = Axis(10, 'a')
+        >>> wa1  = Axis(1, 'a')
+        >>> b10  = Axis(range(10), 'b')
         >>> a10.iscompatible(b10)
         False
         >>> a10.iscompatible(wa10)
@@ -1254,10 +1259,10 @@ class Axis(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(5))
-        >>> age_2 = Axis('age', 5)
-        >>> age_3 = Axis('young children', range(5))
-        >>> age_4 = Axis('age', [0, 1, 2, 3, 4])
+        >>> age = Axis(range(5), 'age')
+        >>> age_2 = Axis(5, 'age')
+        >>> age_3 = Axis(range(5), 'young children')
+        >>> age_4 = Axis([0, 1, 2, 3, 4], 'age')
         >>> age.equals(age_2)
         False
         >>> age.equals(age_3)
@@ -1296,7 +1301,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
 
         All labels starting with "W" and ending with "o" are given by
 
@@ -1329,7 +1334,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
         >>> people.startswith('Bru')
         people['Bruce Wayne', 'Bruce Willis']
         """
@@ -1353,7 +1358,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
         >>> people.endswith('Dent')
         people['Arthur Dent', 'Harvey Dent']
         """
@@ -1438,7 +1443,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> people = Axis('people', ['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'])
+        >>> people = Axis(['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
         >>> people.translate('Waldo')
         3
         >>> people.translate(people.matches('Bruce'))
@@ -1547,7 +1552,7 @@ class Axis(object):
 
     def __repr__(self):
         labels = len(self) if self.iswildcard else list(self.labels)
-        return 'Axis(%r, %r)' % (self.name, labels)
+        return 'Axis(%r, %r)' % (labels, self.name)
 
     def labels_summary(self):
         """
@@ -1555,7 +1560,7 @@ class Axis(object):
 
         Examples
         --------
-        >>> Axis('age', 100).labels_summary()
+        >>> Axis(100, 'age').labels_summary()
         '0 1 2 ... 97 98 99'
         """
         def repr_on_strings(v):
@@ -1630,7 +1635,7 @@ class Axis(object):
         """
         Returns a copy of the axis.
         """
-        new_axis = Axis(self.name, [])
+        new_axis = Axis([], self.name)
         # XXX: I wonder if we should make a copy of the labels + mapping.
         # There should at least be an option.
         new_axis._labels = self._labels
@@ -1659,15 +1664,15 @@ class Axis(object):
 
         Examples
         --------
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> sex = Axis('sex=M,F')
         >>> sex
-        Axis('sex', ['M', 'F'])
+        Axis(['M', 'F'], 'sex')
         >>> sex.replace('M', 'Male')
-        Axis('sex', ['Male', 'F'])
+        Axis(['Male', 'F'], 'sex')
         >>> sex.replace({'M': 'Male', 'F': 'Female'})
-        Axis('sex', ['Male', 'Female'])
+        Axis(['Male', 'Female'], 'sex')
         >>> sex.replace(['M', 'F'], ['Male', 'Female'])
-        Axis('sex', ['Male', 'Female'])
+        Axis(['Male', 'Female'], 'sex')
         """
         if isinstance(old, dict):
             new = list(old.values())
@@ -1685,7 +1690,7 @@ class Axis(object):
         labels = self.labels.astype(object)
         indices = self.translate(old)
         labels[indices] = new
-        return Axis(self.name, labels)
+        return Axis(labels, self.name)
 
     # XXX: rename to named like Group?
     def rename(self, name):
@@ -1704,11 +1709,11 @@ class Axis(object):
 
         Examples
         --------
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> sex = Axis('sex=M,F')
         >>> sex
-        Axis('sex', ['M', 'F'])
+        Axis(['M', 'F'], 'sex')
         >>> sex.rename('gender')
-        Axis('gender', ['M', 'F'])
+        Axis(['M', 'F'], 'gender')
         """
         res = self.copy()
         if isinstance(name, Axis):
@@ -1906,7 +1911,7 @@ class Group(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(10))
+        >>> age = Axis(range(10), 'age')
         >>> age[[1, 2, 3, 4, 5]].by(2)
         (age[1, 2], age[3, 4], age[5])
         >>> age[1:5].by(2)
@@ -2199,7 +2204,7 @@ class LSet(LGroup):
 
     Examples
     --------
-    >>> letters = Axis('letters', 'a..z')
+    >>> letters = Axis('letters=a..z')
     >>> abc = letters[':c'].set() >> 'abc'
     >>> abc
     letters['a', 'b', 'c'].set() >> 'abc'
@@ -2359,12 +2364,12 @@ def index_by_id(seq, value):
 
     Examples
     --------
-    >>> age = Axis('age', range(10))
-    >>> sex = Axis('sex', ['M','F'])
-    >>> time = Axis('time', ['2007','2008','2009','2010'])
+    >>> age = Axis('age=0..9')
+    >>> sex = Axis('sex=M,F')
+    >>> time = Axis('time=2007..2010')
     >>> index_by_id([age, sex, time], sex)
     1
-    >>> gender = Axis('sex', ['M', 'F'])
+    >>> gender = Axis('sex=M,F')
     >>> index_by_id([age, sex, time], gender)
     Traceback (most recent call last):
         ...
@@ -2385,15 +2390,15 @@ def _make_axis(obj):
     elif isinstance(obj, tuple):
         assert len(obj) == 2
         name, labels = obj
-        return Axis(name, labels)
+        return Axis(labels, name)
     elif isinstance(obj, Group):
-        return Axis(obj.axis, obj.eval())
+        return Axis(obj.eval(), obj.axis)
     elif isinstance(obj, str) and '=' in obj:
         name, labels = [o.strip() for o in obj.split('=')]
-        return Axis(name, labels)
+        return Axis(labels, name)
     else:
         # int, str, list, ndarray
-        return Axis(None, obj)
+        return Axis(obj)
 
 
 # not using OrderedDict because it does not support indices-based getitem
@@ -2407,7 +2412,7 @@ class AxisCollection(object):
     ----------
     axes : sequence of Axis or int or tuple or str, optional
         An axis can be given as an Axis object, an int or a
-        tuple (name, labels) or a string of the kind
+        tuple (labels, name) or a string of the kind
         'name=label_1,label_2,label_3'.
 
     Raises
@@ -2422,13 +2427,13 @@ class AxisCollection(object):
 
     Examples
     --------
-    >>> age = Axis('age', range(10))
-    >>> AxisCollection([3, age, ('sex', ['M', 'F']), 'time = 2007, 2008, 2009, 2010'])
+    >>> age = Axis(range(10), 'age')
+    >>> AxisCollection([3, age, (['M', 'F'], 'sex'), 'time = 2007, 2008, 2009, 2010'])
     AxisCollection([
-        Axis(None, 3),
-        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        Axis('sex', ['M', 'F']),
-        Axis('time', ['2007', '2008', '2009', '2010'])
+        Axis(3, None),
+        Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'age'),
+        Axis(['M', 'F'], 'sex'),
+        Axis(['2007', '2008', '2009', '2010'], 'time')
     ])
     """
     def __init__(self, axes=None):
@@ -2554,12 +2559,12 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, sex, time])
         >>> col.get_by_pos('sex', 1)
-        Axis('sex', ['M', 'F'])
+        Axis(['M', 'F'], 'sex')
         """
         if isinstance(key, Axis) and key.name is None:
             try:
@@ -2704,8 +2709,8 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
         >>> col = AxisCollection([age, sex])
         >>> col.isaxis(age)
         True
@@ -2769,16 +2774,16 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, time])
         >>> col.get('time')
-        Axis('time', [2007, 2008, 2009, 2010])
+        Axis([2007, 2008, 2009, 2010], 'time')
         >>> col.get('sex', sex)
-        Axis('sex', ['M', 'F'])
+        Axis(['M', 'F'], 'sex')
         >>> col.get('nb_children', None, 'nb_children')
-        Axis('nb_children', 1)
+        Axis(1, 'nb_children')
         """
         # XXX: use if key in self?
         try:
@@ -2787,7 +2792,7 @@ class AxisCollection(object):
             if name is None:
                 return default
             else:
-                return Axis(name, 1)
+                return Axis(1, name)
 
     def get_all(self, key):
         """
@@ -2809,17 +2814,17 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
-        >>> city = Axis('city', ['London', 'Paris', 'Rome'])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
+        >>> city = Axis(['London', 'Paris', 'Rome'], 'city')
         >>> col = AxisCollection([age, sex, time])
         >>> col2 = AxisCollection([age, city, time])
         >>> col.get_all(col2)
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-            Axis('city', 1),
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 'age'),
+            Axis(1, 'city'),
+            Axis([2007, 2008, 2009, 2010], 'time')
         ])
         """
         assert isinstance(key, AxisCollection)
@@ -2831,7 +2836,7 @@ class AxisCollection(object):
                 if len(k) == 1:
                     return k
                 else:
-                    return Axis(k.name if k.name is not None else i, 1)
+                    return Axis(1, k.name if k.name is not None else i)
 
         return AxisCollection([get_pos_default(k, i)
                                for i, k in enumerate(key)])
@@ -2842,9 +2847,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, sex, time]).keys()
         ['age', 'sex', 'time']
         """
@@ -2868,19 +2873,19 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, sex, time])
         >>> col.pop('age')
-        Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+        Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 'age')
         >>> col
         AxisCollection([
-            Axis('sex', ['M', 'F']),
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis(['M', 'F'], 'sex'),
+            Axis([2007, 2008, 2009, 2010], 'time')
         ])
         >>> col.pop()
-        Axis('time', [2007, 2008, 2009, 2010])
+        Axis([2007, 2008, 2009, 2010], 'time')
         """
         axis = self[axis]
         del self[axis]
@@ -2897,16 +2902,16 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, sex])
         >>> col.append(time)
         >>> col
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-            Axis('sex', ['M', 'F']),
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 'age'),
+            Axis(['M', 'F'], 'sex'),
+            Axis([2007, 2008, 2009, 2010], 'time')
         ])
         """
         self[len(self):len(self)] = [axis]
@@ -2943,16 +2948,16 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection(age)
         >>> col.extend([sex, time])
         >>> col
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-            Axis('sex', ['M', 'F']),
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 'age'),
+            Axis(['M', 'F'], 'sex'),
+            Axis([2007, 2008, 2009, 2010], 'time')
         ])
         """
         # axes should be a sequence
@@ -3014,9 +3019,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, sex, time])
         >>> col.index(time)
         2
@@ -3057,16 +3062,16 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> col = AxisCollection([age, time])
         >>> col.insert(1, sex)
         >>> col
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-            Axis('sex', ['M', 'F']),
-            Axis('time', [2007, 2008, 2009, 2010])
+            Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 'age'),
+            Axis(['M', 'F'], 'sex'),
+            Axis([2007, 2008, 2009, 2010], 'time')
         ])
         """
         self[index:index] = [axis]
@@ -3105,18 +3110,18 @@ class AxisCollection(object):
         >>> axes = ndtest((2, 3)).axes
         >>> axes
         AxisCollection([
-            Axis('a', ['a0', 'a1']),
-            Axis('b', ['b0', 'b1', 'b2'])
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
         ])
-        >>> row = Axis('row', ['r0', 'r1'])
-        >>> column = Axis('column', ['c0', 'c1', 'c2'])
+        >>> row = Axis(['r0', 'r1'], 'row')
+        >>> column = Axis(['c0', 'c1', 'c2'], 'column')
 
         Replace one axis (second argument `new_axis` must be provided)
 
         >>> axes.replace(x.a, row)
         AxisCollection([
-            Axis('row', ['r0', 'r1']),
-            Axis('b', ['b0', 'b1', 'b2'])
+            Axis(['r0', 'r1'], 'row'),
+            Axis(['b0', 'b1', 'b2'], 'b')
         ])
 
         Replace several axes (keywords, list of tuple or dictionary)
@@ -3127,22 +3132,22 @@ class AxisCollection(object):
         >>> # or
         >>> axes.replace({x.a: row, x.b: column})
         AxisCollection([
-            Axis('row', ['r0', 'r1']),
-            Axis('column', ['c0', 'c1', 'c2'])
+            Axis(['r0', 'r1'], 'row'),
+            Axis(['c0', 'c1', 'c2'], 'column')
         ])
 
         Replace all axes (list of axes or AxisCollection)
 
         >>> axes.replace([row, column])
         AxisCollection([
-            Axis('row', ['r0', 'r1']),
-            Axis('column', ['c0', 'c1', 'c2'])
+            Axis(['r0', 'r1'], 'row'),
+            Axis(['c0', 'c1', 'c2'], 'column')
         ])
         >>> arr = ndrange([row, column])
         >>> axes.replace(arr.axes)
         AxisCollection([
-            Axis('row', ['r0', 'r1']),
-            Axis('column', ['c0', 'c1', 'c2'])
+            Axis(['r0', 'r1'], 'row'),
+            Axis(['c0', 'c1', 'c2'], 'column')
         ])
         """
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
@@ -3193,22 +3198,22 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', '0..5')
-        >>> sex = Axis('sex', 'M,F')
-        >>> time = Axis('time', '2015..2017')
+        >>> age = Axis('age=0..5')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis('time=2015..2017')
         >>> col = AxisCollection([age, sex, time])
         >>> col.without([age, sex])
         AxisCollection([
-            Axis('time', [2015, 2016, 2017])
+            Axis([2015, 2016, 2017], 'time')
         ])
         >>> col.without(0)
         AxisCollection([
-            Axis('sex', ['M', 'F']),
-            Axis('time', [2015, 2016, 2017])
+            Axis(['M', 'F'], 'sex'),
+            Axis([2015, 2016, 2017], 'time')
         ])
         >>> col.without('sex,time')
         AxisCollection([
-            Axis('age', [0, 1, 2, 3, 4, 5])
+            Axis([0, 1, 2, 3, 4, 5], 'age')
         ])
         """
         return self - axes
@@ -3250,9 +3255,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age,sex,time]).translate_full_key((':', 'F', 2009))
         (slice(None, None, None), 1, 2)
         """
@@ -3272,8 +3277,8 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(10))
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(10), 'age')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, time]).labels  # doctest: +NORMALIZE_WHITESPACE
         [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
          array([2007, 2008, 2009, 2010])]
@@ -3292,9 +3297,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, sex, time]).names
         ['age', 'sex', 'time']
         """
@@ -3314,10 +3319,10 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> a = Axis('a', ['a1', 'a2'])
-        >>> b = Axis('b', 2)
-        >>> c = Axis(None, ['c1', 'c2'])
-        >>> d = Axis(None, 3)
+        >>> a = Axis(['a1', 'a2'], 'a')
+        >>> b = Axis(2, 'b')
+        >>> c = Axis(['c1', 'c2'])
+        >>> d = Axis(3)
         >>> AxisCollection([a, b, c, d]).display_names
         ['a', 'b*', '{2}', '{3}*']
         """
@@ -3343,9 +3348,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> a = Axis('a', 2)
-        >>> b = Axis(None, 2)
-        >>> c = Axis('c', 2)
+        >>> a = Axis(2, 'a')
+        >>> b = Axis(2)
+        >>> c = Axis(2, 'c')
         >>> AxisCollection([a, b, c]).ids
         ['a', 1, 'c']
         """
@@ -3363,9 +3368,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> a = Axis('a', 2)
-        >>> b = Axis(None, 2)
-        >>> c = Axis('c', 2)
+        >>> a = Axis(2, 'a')
+        >>> b = Axis(2)
+        >>> c = Axis(2, 'c')
         >>> col = AxisCollection([a, b, c])
         >>> col.axis_id(a)
         'a'
@@ -3389,9 +3394,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, sex, time]).shape
         (20, 2, 4)
         """
@@ -3410,9 +3415,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', range(20))
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(range(20), 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, sex, time]).size
         160
         """
@@ -3430,9 +3435,9 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis('age', 20)
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> time = Axis('time', [2007, 2008, 2009, 2010])
+        >>> age = Axis(20, 'age')
+        >>> sex = Axis('sex=M,F')
+        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> AxisCollection([age, sex, time]).info
         20 x 2 x 4
          age* [20]: 0 1 2 ... 17 18 19
@@ -3483,7 +3488,7 @@ class AxisCollection(object):
             combined_name = sep.join(str(id_) for id_ in axes.ids)
 
         if wildcard:
-            combined_axis = Axis(combined_name, axes.size)
+            combined_axis = Axis(axes.size, combined_name)
         else:
             # TODO: the combined keys should be objects which display as:
             # (axis1_label, axis2_label, ...) but which should also store
@@ -3499,7 +3504,7 @@ class AxisCollection(object):
                 combined_labels = [sep.join(str(l) for l in p)
                                    for p in product(*axes.labels)]
 
-            combined_axis = Axis(combined_name, combined_labels)
+            combined_axis = Axis(combined_labels, combined_name)
         new_axes = self - axes
         new_axes.insert(combined_axis_pos, combined_axis)
         return new_axes
@@ -3552,8 +3557,7 @@ class AxisCollection(object):
             split_labels = [rx.match(l).groups() for l in axis.labels]
         # not using np.unique because we want to keep the original order
         axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
-        split_axes = [Axis(name, axis_labels)
-                      for name, axis_labels in zip(names, axes_labels)]
+        split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, names)]
         return self[:axis_index] + split_axes + self[axis_index + 1:]
 
 
@@ -3783,7 +3787,7 @@ def concat_empty(axis, arrays_axes, dtype):
         arrays_labels = [np.asarray(labels, dtype=object)
                          for labels in arrays_labels]
     new_labels = np.concatenate(arrays_labels)
-    combined_axis = Axis(arrays_axis[0].name, new_labels)
+    combined_axis = Axis(new_labels, arrays_axis[0].name)
 
     new_axes = [axes.replace(axis, combined_axis)
                 for axes, axis in zip(arrays_axes, arrays_axis)]
@@ -3928,12 +3932,12 @@ def get_axis(obj, i):
     a1 |  b0 |  4 |  5
     a1 |  b1 |  6 |  7
     >>> get_axis(arr, 1)
-    Axis('b', ['b0', 'b1'])
+    Axis(['b0', 'b1'], 'b')
     >>> np_arr = np.zeros((2, 2, 2))
     >>> get_axis(np_arr, 1)
-    Axis(None, 2)
+    Axis(2, None)
     """
-    return obj.axes[i] if isinstance(obj, LArray) else Axis(None, obj.shape[i])
+    return obj.axes[i] if isinstance(obj, LArray) else Axis(obj.shape[i])
 
 
 def aslarray(a):
@@ -4150,9 +4154,9 @@ class LArray(object):
 
     Examples
     --------
-    >>> age = Axis('age', [10, 11, 12])
-    >>> sex = Axis('sex', ['M', 'F'])
-    >>> time = Axis('time', [2007, 2008, 2009])
+    >>> age = Axis([10, 11, 12], 'age')
+    >>> sex = Axis('sex=M,F')
+    >>> time = Axis([2007, 2008, 2009], 'time')
     >>> axes = [age, sex, time]
     >>> data = np.zeros((len(axes), len(sex), len(time)))
     >>> LArray(data, axes)
@@ -4278,8 +4282,8 @@ class LArray(object):
         a\\b | b0 | b1 | b2
          a0 |  0 |  1 |  2
          a1 |  3 |  4 |  5
-        >>> row = Axis('row', ['r0', 'r1'])
-        >>> column = Axis('column', ['c0', 'c1', 'c2'])
+        >>> row = Axis(['r0', 'r1'], 'row')
+        >>> column = Axis(['c0', 'c1', 'c2'], 'column')
 
         Replace one axis (second argument `new_axis` must be provided)
 
@@ -4590,9 +4594,9 @@ class LArray(object):
         # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
         # when *args is not empty (see https://github.com/liam2/larray/issues/192)
         # return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args),
-        #               *self.percentile(percentiles, *args)], Axis('stats', labels))
+        #               *self.percentile(percentiles, *args)], Axis(labels, 'stats'))
         return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)] +
-                     [self.percentile(p, *args) for p in percentiles], Axis('statistic', labels))
+                     [self.percentile(p, *args) for p in percentiles], Axis(labels, 'statistic'))
 
     def describe_by(self, *args, **kwargs):
         """
@@ -4697,8 +4701,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
         >>> arr = ndrange([nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -4798,8 +4802,8 @@ class LArray(object):
         a\\b |  b0 |  b1 |  b2
          a0 | 0.0 | 1.0 | nan
          a1 | 2.0 | 3.0 | nan
-        >>> a = Axis('a', ['a1', 'a2', 'a0'])
-        >>> b = Axis('b', ['b2', 'b1', 'b0'])
+        >>> a = Axis(['a1', 'a2', 'a0'], 'a')
+        >>> b = Axis(['b2', 'b1', 'b0'], 'b')
         >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
         a\\b | b2 | b1 | b0
          a1 | -1 |  3 |  2
@@ -4814,7 +4818,7 @@ class LArray(object):
         if not np.isscalar(fill_value):
             raise TypeError("fill_value must be a scalar")
         if isinstance(new_axis, (int, basestring, list, tuple)):
-            new_axis = Axis(self.axes[axes_to_reindex].name, new_axis)
+            new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
         res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
         res = full(res_axes, fill_value, dtype=common_type((self.data, fill_value)))
         labels = tuple(axis[axis.labels] for axis in self.axes)
@@ -4842,9 +4846,9 @@ class LArray(object):
 
         Examples
         --------
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
-        >>> xtype = Axis('type', ['type1', 'type2'])
+        >>> sex = Axis('sex=M,F')
+        >>> nat = Axis('nat=EU,FO,BE')
+        >>> xtype = Axis('type=type1,type2')
         >>> a = LArray([[10, 2, 4], [3, 7, 1]], [sex, nat])
         >>> a
         sex\\nat | EU | FO | BE
@@ -4915,8 +4919,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['EU', 'FO', 'BE'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=EU,FO,BE')
+        >>> sex = Axis('sex=M,F')
         >>> a = ndrange([nat, sex])
         >>> a
         nat\\sex | M | F
@@ -5140,7 +5144,7 @@ class LArray(object):
                 # >>> x1, x2 = a.axes
                 # >>> a[x2 > 2]
 
-                # the current solution with hash = (name, labels) works
+                # the current solution with hash = (labels, name) works
                 # but is slow for large axes and broken if axis labels are
                 # modified in-place, which I am unsure I want to support
                 # anyway
@@ -5371,7 +5375,7 @@ class LArray(object):
                 # of 1 element, which does not remove the dimension like scalars
                 # normally do
                 axes = [axis.subaxis(axis_key) if not np.isscalar(axis_key)
-                        else Axis(axis.name, 1)
+                        else Axis(1, axis.name)
                         for axis, axis_key in zip(self.axes, translated_key)]
             else:
                 axes = [axis.subaxis(axis_key)
@@ -5437,7 +5441,7 @@ class LArray(object):
                            not np.isscalar(axis_key)]
                 combined_axis_len = lengths[0]
                 assert all(l == combined_axis_len for l in lengths)
-                combined_axis = Axis(combined_name, combined_axis_len)
+                combined_axis = Axis(combined_axis_len, combined_name)
             else:
                 # TODO: the combined keys should be objects which display as:
                 # (axis1_label, axis2_label, ...) but which should also store
@@ -5456,9 +5460,8 @@ class LArray(object):
                 else:
                     combined_labels = list(zip(*axes_labels))
 
-                # CRAP, this can lead to duplicate labels (especially using
-                # .points)
-                combined_axis = Axis(combined_name, combined_labels)
+                # CRAP, this can lead to duplicate labels (especially using .points)
+                combined_axis = Axis(combined_labels, combined_name)
             new_axes.insert(combined_axis_pos, combined_axis)
         return AxisCollection(new_axes)
 
@@ -5523,8 +5526,8 @@ class LArray(object):
         a0 |  b1 |  2 |  3
         a1 |  b0 |  4 |  5
         a1 |  b1 |  6 |  7
-        >>> new_arr = arr.reshape([Axis('a', ['a0','a1']),
-        ... Axis('bc', ['b0c0', 'b0c1', 'b1c0', 'b1c1'])])
+        >>> new_arr = arr.reshape([Axis('a=a0,a1'),
+        ... Axis(['b0c0', 'b0c1', 'b1c0', 'b1c1'], 'bc')])
         >>> new_arr
         a\\bc | b0c0 | b0c1 | b1c0 | b1c1
           a0 |    0 |    1 |    2 |    3
@@ -5640,9 +5643,9 @@ class LArray(object):
 
         Examples
         --------
-        >>> a = Axis('a', ['a1', 'a2'])
-        >>> b = Axis('b', ['b1', 'b2'])
-        >>> b2 = Axis('b', ['b2', 'b3'])
+        >>> a = Axis('a=a1,a2')
+        >>> b = Axis('b=b1,b2')
+        >>> b2 = Axis('b=b2,b3')
         >>> arr1 = ndrange([a, b])
         >>> arr1
         a\\b | b1 | b2
@@ -5665,9 +5668,9 @@ class LArray(object):
         Traceback (most recent call last):
         ...
         ValueError: incompatible axes:
-        Axis('b', ['b2', 'b3'])
+        Axis(['b2', 'b3'], 'b')
         vs
-        Axis('b', ['b1', 'b2'])
+        Axis(['b1', 'b2'], 'b')
         >>> arr1 * arr2.drop_labels()
         a\\b | b1 | b2
          a1 |  0 |  1
@@ -5686,7 +5689,7 @@ class LArray(object):
         if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = [axes]
         old_axes = self.axes[axes]
-        new_axes = [Axis(axis.name, len(axis)) for axis in old_axes]
+        new_axes = [Axis(len(axis), axis.name) for axis in old_axes]
         res_axes = self.axes[:]
         res_axes[axes] = new_axes
         return LArray(self.data, res_axes)
@@ -5844,7 +5847,7 @@ class LArray(object):
         res_data = op(src_data, axis=axes_indices, **kwargs)
         if keepaxes:
             label = op.__name__.replace('nan', '') if keepaxes is True else keepaxes
-            new_axes = [Axis(axis.name, [label]) for axis in axes]
+            new_axes = [Axis([label], axis.name) for axis in axes]
             res_axes = self.axes[:]
             res_axes[axes] = new_axes
         else:
@@ -5955,7 +5958,7 @@ class LArray(object):
                 # though this creates a new axis that is independent from the
                 # original one because the original name is what users will
                 # want to use to access that axis (eg in .filter kwargs)
-                res_axes[axis_idx] = Axis(axis.name, groups)
+                res_axes[axis_idx] = Axis(groups, axis.name)
 
             if isinstance(res_data, np.ndarray):
                 res = LArray(res_data, res_axes)
@@ -5963,8 +5966,7 @@ class LArray(object):
                 res = res_data
         return res
 
-    def _prepare_aggregate(self, op, args, kwargs=None, commutative=False,
-                           stack_depth=1):
+    def _prepare_aggregate(self, op, args, kwargs=None, commutative=False, stack_depth=1):
         """converts args to keys & VG and kwargs to VG"""
 
         if kwargs is None:
@@ -6182,8 +6184,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6223,8 +6225,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6262,8 +6264,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6303,8 +6305,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6344,8 +6346,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6388,8 +6390,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FR', 'IT'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FR,IT')
+        >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[1, 5], [3, 2], [0, 4]], [nat, sex])
         >>> arr
         nat\\sex | M | F
@@ -6408,7 +6410,7 @@ class LArray(object):
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = self.data.argsort(axis_idx, kind=kind)
-        new_axis = Axis(axis.name, np.arange(len(axis)))
+        new_axis = Axis(np.arange(len(axis)), axis.name)
         return LArray(data, self.axes.replace(axis, new_axis))
 
     def copy(self):
@@ -6427,8 +6429,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
         >>> mat0 = ones([nat, sex])
         >>> mat0.info
         2 x 2
@@ -6461,8 +6463,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
         nat\\sex | M | F
@@ -6553,8 +6555,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> a = Axis('a', 'a0,a1')
-        >>> b = Axis('b', 'b0,b1,b2')
+        >>> a = Axis('a=a0,a1')
+        >>> b = Axis('b=b0,b1,b2')
         >>> arr = LArray([[6, 0, 2],
         ...               [4, 0, 8]], [a, b])
         >>> arr
@@ -6596,8 +6598,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
         nat\\sex | M | F
@@ -8399,8 +8401,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
         >>> a = ndrange((nat, sex))
         >>> a
         nat\\sex | M | F
@@ -8459,14 +8461,14 @@ class LArray(object):
 
         Examples
         --------
-        >>> a = Axis('a', ['a1', 'a2'])
-        >>> b = Axis('b', ['b1', 'b2'])
+        >>> a = Axis('a=a1,a2')
+        >>> b = Axis('b=b1,b2')
         >>> arr = ndrange([a, b])
         >>> arr
         a\\b | b1 | b2
          a1 |  0 |  1
          a2 |  2 |  3
-        >>> c = Axis('c', ['c1', 'c2'])
+        >>> c = Axis('c=c1,c2')
         >>> arr.expand([a, c, b])
          a | c\\b | b1 | b2
         a1 |  c1 |  0 |  1
@@ -8564,7 +8566,7 @@ class LArray(object):
         # This does not prevent value to have more axes than self.
         # We do not use .expand(..., readonly=True) so that the code is more
         # similar to .prepend().
-        target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
+        target_axes = self.axes.replace(axis, Axis([label], axis.name))
         value = value.broadcast_with(target_axes)
         return self.extend(axis, value)
 
@@ -8620,7 +8622,7 @@ class LArray(object):
         if np.isscalar(value):
             value = LArray(np.asarray(value, self.dtype))
         # This does not prevent value to have more axes than self
-        target_axes = self.axes.replace(axis, Axis(axis.name, [label]))
+        target_axes = self.axes.replace(axis, Axis([label], axis.name))
         # We cannot simply add the "new" axis to value (e.g. using expand)
         # because the resulting axes would not be in the correct order.
         value = value.broadcast_with(target_axes)
@@ -8645,10 +8647,10 @@ class LArray(object):
 
         Examples
         --------
-        >>> nat = Axis('nat', ['BE', 'FO'])
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> sex2 = Axis('sex', ['U'])
-        >>> xtype = Axis('type', ['type1', 'type2'])
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
+        >>> sex2 = Axis('sex=U')
+        >>> xtype = Axis('type=type1,type2')
         >>> arr1 = ones([sex, xtype])
         >>> arr1
         sex\\type | type1 | type2
@@ -8717,7 +8719,7 @@ class LArray(object):
         b0 |  a1 |  4 |  5
         b1 |  a0 |  2 |  3
         b1 |  a1 |  6 |  7
-        >>> arr.transpose(..., 'a')  # doctest: +SKIP 
+        >>> arr.transpose(..., 'a')  # doctest: +SKIP
          b | c\\a | a0 | a1
         b0 |  c0 |  0 |  4
         b0 |  c1 |  1 |  5
@@ -9349,7 +9351,7 @@ class LArray(object):
             if isinstance(axis_changes, dict):
                 new_axis = real_axis.replace(axis_changes)
             else:
-                new_axis = Axis(real_axis.name, axis_changes)
+                new_axis = Axis(axis_changes, real_axis.name)
             new_axes.append((old_axis, new_axis))
         axes = self.axes.replace(new_axes)
 
@@ -9497,8 +9499,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> sex = Axis('sex', ['M', 'F'])
-        >>> year = Axis('year', range(2016, 2020))
+        >>> sex = Axis('sex=M,F')
+        >>> year = Axis(range(2016, 2020), 'year')
         >>> a = LArray([[1.0, 2.0, 3.0, 3.0], [2.0, 3.0, 1.5, 3.0]],
         ...            [sex, year])
         >>> a
@@ -9530,7 +9532,7 @@ class LArray(object):
         Examples
         --------
         >>> a = LArray([[1, 2],
-        ...             [1, 2]], [Axis('sex', 'M,F'), Axis('nat', 'BE,FO')])
+        ...             [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
         >>> a
         sex\\nat | BE | FO
               M |  1 |  2
@@ -9767,7 +9769,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     axes_names = [str(name) if name is not None else name
                   for name in axes_names]
 
-    axes = [Axis(name, labels) for name, labels in zip(axes_names, axes_labels)]
+    axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
     data = df.values.reshape([len(axis) for axis in axes])
     return LArray(data, axes)
 
@@ -10143,17 +10145,17 @@ def zeros(axes, title='', dtype=float, order='C'):
 
     Examples
     --------
-    >>> zeros([('nat', ['BE', 'FO']),
-    ...        ('sex', ['M', 'F'])])
-    nat\sex |   M |   F
-         BE | 0.0 | 0.0
-         FO | 0.0 | 0.0
     >>> zeros('nat=BE,FO;sex=M,F')
     nat\sex |   M |   F
          BE | 0.0 | 0.0
          FO | 0.0 | 0.0
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> zeros([(['BE', 'FO'], 'nat'),
+    ...        (['M', 'F'], 'sex')])
+    nat\sex |   M |   F
+         BE | 0.0 | 0.0
+         FO | 0.0 | 0.0
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> zeros([nat, sex])
     nat\sex |   M |   F
          BE | 0.0 | 0.0
@@ -10219,8 +10221,8 @@ def ones(axes, title='', dtype=float, order='C'):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> ones([nat, sex])
     nat\\sex |   M |   F
          BE | 1.0 | 1.0
@@ -10287,8 +10289,8 @@ def empty(axes, title='', dtype=float, order='C'):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> empty([nat, sex])  # doctest: +SKIP
     nat\\sex |                  M |                  F
          BE | 2.47311483356e-315 | 2.47498446195e-315
@@ -10357,8 +10359,8 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> full([nat, sex], 42.0)
     nat\\sex |    M |    F
          BE | 42.0 | 42.0
@@ -10436,7 +10438,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     Parameters
     ----------
     axis : axis definition (Axis, str, int)
-        Axis along which to apply mod. An axis definition can be passed as a string. An int will be interpreted as the 
+        Axis along which to apply mod. An axis definition can be passed as a string. An int will be interpreted as the
         length for a new anonymous axis.
     initial : scalar or LArray, optional
         Value for the first label of axis. Defaults to 0.
@@ -10456,8 +10458,8 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
 
     Examples
     --------
-    >>> year = Axis('year', '2016..2019')
-    >>> sex = Axis('sex', 'M,F')
+    >>> year = Axis('year=2016..2019')
+    >>> sex = Axis('sex=M,F')
     >>> create_sequential(year)
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
@@ -10643,7 +10645,7 @@ def ndrange(axes, start=0, title='', dtype=int):
                       length.
         * str: coma separated list of labels, with optional leading '=' to
                set the name of the axis. eg. "a,b,c" or "sex=F,M"
-        * (name, labels) pair: name and labels of axis
+        * (labels, name) pair: name and labels of axis
     start : number, optional
     title : str, optional
         Title.
@@ -10656,23 +10658,23 @@ def ndrange(axes, start=0, title='', dtype=int):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> ndrange([nat, sex])
     nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
-    >>> ndrange([('nat', ['BE', 'FO']),
-    ...          ('sex', ['M', 'F'])])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
-    >>> ndrange([('nat', 'BE,FO'),
-    ...          ('sex', 'M,F')])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
     >>> ndrange(['nat=BE,FO', 'sex=M,F'])
+    nat\\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange([(['BE', 'FO'], 'nat'),
+    ...          (['M', 'F'], 'sex')])
+    nat\\sex | M | F
+         BE | 0 | 1
+         FO | 2 | 3
+    >>> ndrange([('BE,FO', 'nat'),
+    ...          ('M,F', 'sex')])
     nat\\sex | M | F
          BE | 0 | 1
          FO | 2 | 3
@@ -10747,7 +10749,7 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     axes_names = [chr(ord('a') + i) for i in range(a.ndim)]
     label_ranges = [range(label_start, label_start + length)
                     for length in a.shape]
-    new_axes = [Axis(name, [name + str(i) for i in label_range])
+    new_axes = [Axis([name + str(i) for i in label_range], name)
                 for name, label_range in zip(axes_names, label_ranges)]
     return LArray(a.data, new_axes)
 
@@ -10795,8 +10797,8 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> a = ndrange([nat, sex], start=1)
     >>> a
     nat\\sex | M | F
@@ -10827,8 +10829,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
         if split and isinstance(axis_name, str) and ',' in axis_name:
             axes_names = axis_name.split(',')
             axes_labels = list(zip(*np.char.split(axis.labels, ',')))
-            axes = [Axis(name, labels)
-                    for name, labels in zip(axes_names, axes_labels)]
+            axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
         else:
             axes = [axis] + [axis.copy() for _ in range(ndim - 1)]
         res = zeros(axes, dtype=a.dtype)
@@ -10864,8 +10865,8 @@ def labels_array(axes, title=''):
 
     Examples
     --------
-    >>> nat = Axis('nat', ['BE', 'FO'])
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> labels_array(sex)
     sex | M | F
         | M | F
@@ -10882,7 +10883,7 @@ def labels_array(axes, title=''):
     #      FO | FO,M | FO,F
     axes = AxisCollection(axes)
     if len(axes) > 1:
-        res_axes = axes + Axis('axis', axes.names)
+        res_axes = axes + Axis(axes.names, 'axis')
         res_data = np.empty(res_axes.shape, dtype=object)
         res_data.flat[:] = list(product(*axes.labels))
         # XXX: I wonder if it wouldn't be better to return LGroups or a
@@ -10934,7 +10935,7 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
     {0}*\\{1}* | 0 | 1
             0 | 1 | 0
             1 | 0 | 1
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> sex = Axis('sex=M,F')
     >>> eye(sex)
     sex\\sex |   M |   F
           M | 1.0 | 0.0
@@ -10958,7 +10959,7 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 #      => potentially longer
 #      => unsure for now. The most important point is that it should be
 #         consistent with other functions.
-# stack(a1, a2, axis=Axis('sex', 'M,F'))
+# stack(a1, a2, axis=Axis('M,F', 'sex'))
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
 
@@ -11042,8 +11043,8 @@ def stack(arrays, axis=None, title=''):
 
     Examples
     --------
-    >>> nat = Axis('nat', 'BE, FO')
-    >>> sex = Axis('sex', 'M, F')
+    >>> nat = Axis('nat=BE,FO')
+    >>> sex = Axis('sex=M,F')
     >>> arr1 = ones(nat)
     >>> arr1
     nat |  BE |  FO
@@ -11090,7 +11091,7 @@ def stack(arrays, axis=None, title=''):
           FO | 1.0 | 0.0
     """
     if isinstance(axis, str) and '=' in axis:
-        axis = Axis(*axis.split('='))
+        axis = Axis(axis)
     # LArray arrays could be interesting
     if isinstance(arrays, LArray):
         if axis is None:
@@ -11112,12 +11113,12 @@ def stack(arrays, axis=None, title=''):
                 assert np.array_equal(axis.labels, keys)
             else:
                 # None or str
-                axis = Axis(axis, keys)
+                axis = Axis(keys, axis)
             values = [v for k, v in arrays]
         else:
             values = arrays
             if axis is None or isinstance(axis, basestring):
-                axis = Axis(axis, len(arrays))
+                axis = Axis(len(arrays), axis)
             else:
                 assert len(axis) == len(arrays)
     else:

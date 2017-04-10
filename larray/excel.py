@@ -299,8 +299,7 @@ if xw is not None:
                 column_labels = np.array(self[column_labels].value)
             if names is not None:
                 labels = (row_labels, column_labels)
-                axes = [Axis(name, axis_labels)
-                        for name, axis_labels in zip(names, labels)]
+                axes = [Axis(axis_labels, name) for axis_labels, name in zip(labels, names)]
             else:
                 axes = (row_labels, column_labels)
             return LArray(self[data], axes)
