@@ -78,6 +78,27 @@
 
 * updated AxisCollection.replace so as to replace one, several or all axes.
 
+* implemented reindex allowing to change order of labels (and add new ones) of one or several axes:
+
+    >>> arr = ndtest((2, 2))
+    >>> arr
+    a\\b | b0 | b1
+     a0 |  0 |  1
+     a1 |  2 |  3
+    >>> arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
+    a\\b | b1 | b2 | b0
+     a0 |  1 | -1 |  0
+     a1 |  3 | -1 |  2
+    >>> a = Axis('a', ['a1', 'a2', 'a0'])
+    >>> b = Axis('b', ['b2', 'b1', 'b0'])
+    >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
+    a\\b | b2 | b1 | b0
+     a1 | -1 |  3 |  2
+     a2 | -1 | -1 | -1
+     a0 | -1 |  1 |  0
+
+    (closes :issue:`18`).
+
 * added another feature (see the :ref:`miscellaneous section <misc>` for details).
 
 .. _misc:
