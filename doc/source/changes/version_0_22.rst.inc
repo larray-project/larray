@@ -135,6 +135,15 @@ Miscellaneous improvements
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
 
+* inverted `name` and `labels` arguments when creating an Axis.
+  Argument `name` is optional (anonymous axis).
+  It is also possible to create an Axis by passing a single string of the kind 'name=labels':
+
+    >>> anonymous = Axis('0..100')
+    >>> age = Axis('age=0..100')
+    >>> gender = Axis('M,F', 'gender')
+
+(closes :issue:`152`)
 
 Fixes
 -----
