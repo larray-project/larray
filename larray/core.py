@@ -4197,10 +4197,9 @@ class LArray(object):
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (axes.shape, data.shape))
 
-        # Because __getattr__ and __setattr__ have been overridden
-        object.__setattr__(self, 'data', data)
-        object.__setattr__(self, 'axes', axes)
-        object.__setattr__(self, 'title', title)
+        self.data = data
+        self.axes = axes
+        self.title = title
 
     # XXX: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
@@ -4306,7 +4305,7 @@ class LArray(object):
             if new_axes.shape != self.data.shape:
                 raise ValueError("length of axes %s does not match "
                                  "data shape %s" % (new_axes.shape, self.data.shape))
-            object.__setattr__(self, 'axes', new_axes)
+            self.axes = new_axes
             return self
         else:
             return LArray(self.data, new_axes, title=self.title)
@@ -4324,9 +4323,6 @@ class LArray(object):
         #  in __getitem__ to raise KeyError on any exception
         except Exception:
             return self.__getattribute__(key)
-
-    def __setattr__(self, key, value):
-        return self.__setitem__(key, value)
 
     def __dir__(self):
         names = set(axis.name for axis in self.axes if axis.name is not None)
@@ -4723,7 +4719,7 @@ class LArray(object):
         axes = [a.rename(renames[a]) if a in renames else a
                 for a in self.axes]
         if inplace:
-            object.__setattr__(self, 'axes', AxisCollection(axes))
+            self.axes = AxisCollection(axes)
             return self
         else:
             return LArray(self.data, axes)
@@ -4809,8 +4805,8 @@ class LArray(object):
         labels = tuple(axis[axis.labels] for axis in self.axes)
         res[labels] = self
         if inplace:
-            object.__setattr__(self, 'axes', res.axes)
-            object.__setattr__(self, 'data', res.data)
+            self.axes = res.axes
+            self.data = res.data
             return self
         else:
             return res
@@ -9359,7 +9355,7 @@ class LArray(object):
         axes = self.axes.replace(new_axes)
 
         if inplace:
-            object.__setattr__(self, 'axes', axes)
+            self.axes = axes
             return self
         else:
             return LArray(self.data, axes)
