@@ -96,6 +96,12 @@
      a1 | -1 |  3 |  2
      a2 | -1 | -1 | -1
      a0 | -1 |  1 |  0
+    >>> arr2 = ndtest((3, 3))
+    >>> arr.reindex(arr2.axes, fill_value=-1)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 | -1
+     a1 |  2 |  3 | -1
+     a2 | -1 | -1 | -1
 
     (closes :issue:`18`).
 
