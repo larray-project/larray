@@ -2379,6 +2379,23 @@ def index_by_id(seq, value):
     raise ValueError("%s is not in list" % value)
 
 
+def _make_axis(obj):
+    if isinstance(obj, Axis):
+        return obj
+    elif isinstance(obj, tuple):
+        assert len(obj) == 2
+        name, labels = obj
+        return Axis(name, labels)
+    elif isinstance(obj, Group):
+        return Axis(obj.axis, obj.eval())
+    elif isinstance(obj, str) and '=' in obj:
+        name, labels = [o.strip() for o in obj.split('=')]
+        return Axis(name, labels)
+    else:
+        # int, str, list, ndarray
+        return Axis(None, obj)
+
+
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a
 # one-off class) and we need more functionality than just a named tuple
@@ -2422,23 +2439,7 @@ class AxisCollection(object):
         elif isinstance(axes, str):
             axes = [axis.strip() for axis in axes.split(';')]
 
-        def make_axis(obj):
-            if isinstance(obj, Axis):
-                return obj
-            elif isinstance(obj, tuple):
-                assert len(obj) == 2
-                name, labels = obj
-                return Axis(name, labels)
-            elif isinstance(obj, Group):
-                return Axis(obj.axis, obj.eval())
-            else:
-                if isinstance(obj, str) and '=' in obj:
-                    name, labels = [o.strip() for o in obj.split('=')]
-                    return Axis(name, labels)
-                else:
-                    return Axis(None, obj)
-
-        axes = [make_axis(axis) for axis in axes]
+        axes = [_make_axis(axis) for axis in axes]
         assert all(isinstance(a, Axis) for a in axes)
         # check for duplicate axes
         dupe_axes = list(duplicates(axes))
@@ -10434,8 +10435,9 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
 
     Parameters
     ----------
-    axis : axis reference (Axis, str, int)
-        Axis along which to apply mod.
+    axis : axis definition (Axis, str, int)
+        Axis along which to apply mod. An axis definition can be passed as a string. An int will be interpreted as the 
+        length for a new anonymous axis.
     initial : scalar or LArray, optional
         Value for the first label of axis. Defaults to 0.
     inc : scalar, LArray, optional
@@ -10454,9 +10456,12 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
 
     Examples
     --------
-    >>> year = Axis('year', range(2016, 2020))
-    >>> sex = Axis('sex', ['M', 'F'])
+    >>> year = Axis('year', '2016..2019')
+    >>> sex = Axis('sex', 'M,F')
     >>> create_sequential(year)
+    year | 2016 | 2017 | 2018 | 2019
+         |    0 |    1 |    2 |    3
+    >>> create_sequential('year=2016..2019')
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
     >>> create_sequential(year, 1.0, 0.5)
@@ -10512,24 +10517,24 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> g
     year | 2017 | 2018 | 2019
          |  2.0 |  1.5 |  1.0
-    >>> create_sequential(a.axes.year, a[2016], mult=g)
+    >>> create_sequential(year, a[2016], mult=g)
     year | 2016 | 2017 | 2018 | 2019
          |  1.0 |  2.0 |  3.0 |  3.0
     """
     if inc is None:
         inc = 1 if mult is 1 else 0
-    if isinstance(axis, int):
-        axis = Axis(None, axis)
-    elif isinstance(axis, Group):
-        axis = Axis(axis.axis.name, list(axis))
+
     if axes is None:
+        if not isinstance(axis, Axis):
+            axis = _make_axis(axis)
+
         def strip_axes(col):
             return get_axes(col) - axis
         # we need to remove axis if present, because it might be incompatible
         axes = strip_axes(initial) | strip_axes(inc) | strip_axes(mult) | axis
     else:
         axes = AxisCollection(axes)
-    axis = axes[axis]
+        axis = axes[axis]
     res_dtype = np.dtype(common_type((initial, inc, mult)))
     res = empty(axes, title=title, dtype=res_dtype)
     res[axis.i[0]] = initial

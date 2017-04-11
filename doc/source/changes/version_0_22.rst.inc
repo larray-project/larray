@@ -128,6 +128,13 @@ Miscellaneous improvements
     >>> test.i[1].split('-')
     ['a1', 'a2']
 
+* made create_sequential axis argument accept all the ways to create axes supported by other array creation functions
+  like, for example, using a string definition (closes :issue:`160`).
+
+    >>> create_sequential('year=2016..2019')
+    year | 2016 | 2017 | 2018 | 2019
+         |    0 |    1 |    2 |    3
+
 
 Fixes
 -----
