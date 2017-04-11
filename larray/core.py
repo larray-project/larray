@@ -3072,10 +3072,11 @@ class AxisCollection(object):
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : Axis
+        new_axis : Axis, optional
             New axis if `axes_to_replace` contains a single axis reference.
-        inplace : bool
+        inplace : bool, optional
             Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
+            Defaults to False.
         **kwargs : Axis
             New axis for each axis to replace given as a keyword argument.
 
@@ -4239,10 +4240,11 @@ class LArray(object):
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : , optional
+        new_axis : Axis, optional
             New axis if `axes_to_replace` contains a single axis reference.
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
+            Defaults to False.
         **kwargs : Axis
             New axis for each axis to replace given as a keyword argument.
 
@@ -9289,8 +9291,9 @@ class LArray(object):
         labels : int, str, iterable or mapping, optional
             Integer or list of values usable as the collection of labels for an Axis. If this is mapping, it must be
             {old_label: new_label}. This argument must not be used if axis is a mapping.
-        inplace : bool
+        inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
+            Defaults to False.
 
         Returns
         -------
