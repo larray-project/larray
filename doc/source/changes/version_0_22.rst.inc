@@ -109,6 +109,7 @@
 
 .. _misc:
 
+
 Miscellaneous improvements
 --------------------------
 
@@ -117,6 +118,16 @@ Miscellaneous improvements
 
     >>> arr.transpose(..., 'time')
     >>> arr.transpose('gender', ..., 'time')
+
+* made scalar Groups behave even more like their value: any method available on the value is available on the Group.
+  For example, if the Group has a string value, the string methods are available on it (closes :issue:`202`).
+
+    >>> test = Axis('test', ['abc', 'a1-a2'])
+    >>> test.i[0].upper()
+    'ABC'
+    >>> test.i[1].split('-')
+    ['a1', 'a2']
+
 
 Fixes
 -----

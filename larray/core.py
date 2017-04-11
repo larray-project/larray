@@ -2070,6 +2070,17 @@ class Group(object):
     def __array__(self, dtype=None):
         return np.asarray(self.eval(), dtype=dtype)
 
+    def __dir__(self):
+        # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
+        # dir() takes care of sorting but not uniqueness, so we must ensure that.
+        return list(set(dir(self.eval())) | set(dir(self.__class__)))
+
+    def __getattr__(self, key):
+        if key == '__array_struct__':
+            raise AttributeError("'Group' object has no attribute '__array_struct__'")
+        else:
+            return getattr(self.eval(), key)
+
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this
         # standardize on a single notation so that they can all target each
@@ -2467,12 +2478,8 @@ class AxisCollection(object):
         #                   category=UserWarning, stacklevel=5)
 
     def __dir__(self):
-        # called by dir() and tab-completion at the interactive prompt,
-        # should return a list of all valid attributes, ie all normal
-        # attributes plus anything valid in getattr (string keys only).
-        # make sure we return unique results because dir() does not ensure that
-        # (ipython tab-completion does though).
-        # order does not matter though (dir() sorts the results)
+        # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
+        # dir() takes care of sorting but not uniqueness, so we must ensure that.
         names = set(axis.name for axis in self._list if axis.name is not None)
         return list(set(dir(self.__class__)) | names)
 
@@ -5266,10 +5273,6 @@ class LArray(object):
                 for axis_key, axis in zip(key, self.axes)]
 
     def __getitem__(self, key, collapse_slices=False):
-        # move this to getattr
-        # if isinstance(key, str) and key in ('__array_struct__',
-        #                               '__array_interface__'):
-        #     raise KeyError("bla")
         if isinstance(key, ExprNode):
             key = key.evaluate(self.axes)
 
