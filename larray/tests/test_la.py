@@ -55,8 +55,7 @@ def assert_equal_factory(test_func, check_shape=True, check_axes=True):
             #      at least understand why this happens and fix this if
             #      possible.
             notequal = np.asarray(~equal)
-        assert equal.all(), "\ngot:\n\n%s\n\nexpected:\n\n%s" % (a[notequal],
-                                                                 b[notequal])
+            raise AssertionError("\ngot:\n\n%s\n\nexpected:\n\n%s" % (a[notequal], b[notequal]))
     return assert_equal
 
 
