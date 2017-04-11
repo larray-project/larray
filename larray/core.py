@@ -912,8 +912,15 @@ class Axis(object):
     def __init__(self, labels, name=None):
         if isinstance(name, Axis):
             name = name.name
-        if isinstance(labels, basestring) and '=' in labels:
+        if isinstance(labels, basestring):
+            if '=' in labels:
                 name, labels = [o.strip() for o in labels.split('=')]
+            elif '..' not in labels and ',' not in labels:
+                warnings.warn("Arguments 'name' and 'labels' of Axis constructor have been inverted in "
+                              "version 0.22 of larray. Please check you are passing labels first and name "
+                              "as second argument.", stacklevel=2)
+                name, labels = labels, name
+
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
         is_python_str = type(name) is unicode or type(name) is bytes
