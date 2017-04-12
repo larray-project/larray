@@ -8,6 +8,11 @@ import numpy as np
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
 from larray.tests.test_la import assert_array_nan_equal, abspath
 
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
+
 
 def equal(o1, o2):
     if isinstance(o1, LArray) or isinstance(o2, LArray):
@@ -137,22 +142,33 @@ class TestSession(TestCase):
         s.load(fpath, ['e', 'f'])
         self.assertEqual(s.names, ['e', 'f'])
 
-    def test_xlsx_io(self):
-        self.session.dump(abspath('test_session.xlsx'), engine='pandas_excel')
-        self.session.dump(abspath('test_session_ef.xlsx'), ['e', 'f'], engine='pandas_excel')
-        # dump_excel uses default engine (xlwings) which is not available on
-        # travis
-        # self.session.dump_excel('test_session2.xlsx')
+    def test_xlsx_pandas_io(self):
+        self.session.save(abspath('test_session.xlsx'), engine='pandas_excel')
+
+        fpath = abspath('test_session_ef.xlsx')
+        self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
 
         s = Session()
-        s.load(abspath('test_session_ef.xlsx'), engine='pandas_excel')
+        s.load(fpath, engine='pandas_excel')
+        self.assertEqual(s.names, ['e', 'f'])
+
+    @unittest.skipIf(xw is None, "xlwings is not available")
+    def test_xlsx_xlwings_io(self):
+        self.session.save(abspath('test_session_xw.xlsx'), engine='xlwings_excel')
+
+        fpath = abspath('test_session_ef_xw.xlsx')
+        self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
+
+        s = Session()
+        s.load(fpath, engine='xlwings_excel')
         self.assertEqual(s.names, ['e', 'f'])
 
     def test_csv_io(self):
-        self.session.dump_csv(abspath('test_session_csv'))
+        fpath = abspath('test_session_csv')
+        self.session.to_csv(fpath)
 
         s = Session()
-        s.load(abspath('test_session_csv'), engine='pandas_csv')
+        s.load(fpath, engine='pandas_csv')
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
     def test_eq(self):
