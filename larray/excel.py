@@ -34,8 +34,7 @@ if xw is not None:
 
 
     class Workbook(object):
-        def __init__(self, filepath=None, overwrite_file=False, visible=None,
-                     silent=None, app=None):
+        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
             """
             open an Excel workbook
 
@@ -61,6 +60,11 @@ if xw is not None:
             """
             xw_wkb = None
             self.delayed_filepath = None
+            self.new_workbook = False
+
+            if filepath is None:
+                self.new_workbook = True
+
             if isinstance(filepath, str):
                 basename, ext = os.path.splitext(filepath)
                 if ext:
@@ -72,6 +76,8 @@ if xw is not None:
                                          "extension" % ext)
                     if os.path.isfile(filepath) and overwrite_file:
                         os.remove(filepath)
+                    if not os.path.isfile(filepath):
+                        self.new_workbook = True
                 else:
                     # try to target an open but unsaved workbook
                     # we cant use the same code path as for other option
@@ -149,6 +155,9 @@ if xw is not None:
             return Sheet(self, key)
 
         def __setitem__(self, key, value):
+            if self.new_workbook:
+                self.xw_wkb.sheets[0].name = key
+                self.new_workbook = False
             if isinstance(value, Sheet):
                 if key in self:
                     xw_sheet = self[key].xw_sheet
@@ -158,14 +167,14 @@ if xw is not None:
                     value.xw_sheet.api.Copy(xw_sheet.api)
                     xw_sheet.delete()
                 else:
-                    xw_sheet = self[-1]
+                    xw_sheet = self[-1].xw_sheet
                     value.xw_sheet.api.Copy(xw_sheet.api)
                 return
             if key in self:
                 sheet = self[key]
                 sheet.clear()
             else:
-                xw_sheet = self.xw_wkb.sheets.add(key)
+                xw_sheet = self.xw_wkb.sheets.add(key, after=self[-1].xw_sheet)
                 sheet = Sheet(None, None, xw_sheet=xw_sheet)
             sheet["A1"] = value
 

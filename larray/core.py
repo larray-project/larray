@@ -8994,7 +8994,7 @@ class LArray(object):
             'xlwings' by default if the module is installed and relies on
             Pandas default writer otherwise.
         *args
-        **kargs
+        **kwargs
 
         Examples
         --------
