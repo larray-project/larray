@@ -1994,6 +1994,9 @@ class MappingEditor(QDialog):
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
+        del_item_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._listwidget)
+        del_item_shortcut.activated.connect(self._delete_current_item)
+
         start_array = la.zeros(1) if arrays else la.zeros(0)
         self.arraywidget = ArrayEditorWidget(self, start_array, readonly)
 
@@ -2148,6 +2151,12 @@ class MappingEditor(QDialog):
         assert len(deleted_items) == 1
         deleted_item_idx = self._listwidget.row(deleted_items[0])
         self._listwidget.takeItem(deleted_item_idx)
+
+    @Slot()
+    def _delete_current_item(self):
+        current_item = self._listwidget.currentItem()
+        del self.data[str(current_item.text())]
+        self._listwidget.takeItem(self._listwidget.row(current_item))
 
     def select_list_item(self, to_display):
         changed_items = self._listwidget.findItems(to_display, Qt.MatchExactly)
