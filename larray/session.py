@@ -84,7 +84,7 @@ class FileHandler(object):
         """
         display = kwargs.pop('display', False)
         self._open_for_read()
-        res = {}
+        res = OrderedDict()
         if keys is None:
             keys = self.list()
         for key in keys:
@@ -209,17 +209,15 @@ class PandasCSVHandler(FileHandler):
 
     def list(self):
         # strip extension from files
-        # FIXME: only take .csv files
         # TODO: also support fname pattern, eg. "dump_*.csv" (using glob)
-        return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname)]
+        return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname]
 
     def _read_array(self, key, *args, **kwargs):
         fpath = os.path.join(self.fname, '{}.csv'.format(key))
         return read_csv(fpath, *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
-        value.to_csv(os.path.join(self.fname, '{}.csv'.format(key)), *args,
-                     **kwargs)
+        value.to_csv(os.path.join(self.fname, '{}.csv'.format(key)), *args, **kwargs)
 
     def close(self):
         pass
@@ -333,6 +331,9 @@ class Session(object):
     def _ipython_key_completions_(self):
         return list(self.keys())
 
+    def __delitem__(self, key):
+        del self._objects[key]
+
     def __getattr__(self, key):
         if key in self._objects:
             return self._objects[key]
@@ -368,7 +369,8 @@ class Session(object):
         # TODO: support path + *.csv
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
-            engine = ext_default_engine[ext.strip('.')]
+            ext = ext.strip('.') if '.' in ext else 'csv'
+            engine = ext_default_engine[ext]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
         arrays = handler.read_arrays(names, display=display, **kwargs)
@@ -395,7 +397,8 @@ class Session(object):
         """
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
-            engine = ext_default_engine[ext.strip('.')]
+            ext = ext.strip('.') if '.' in ext else 'csv'
+            engine = ext_default_engine[ext]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
         filtered = self.filter(kind=LArray)
