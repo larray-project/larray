@@ -105,10 +105,29 @@
 
     (closes :issue:`18`).
 
-* added another feature (see the :ref:`miscellaneous section <misc>` for details).
+* added load_example_data function to load datasets used in tutorial and be able to reproduce examples.
+  The name of the dataset must be provided as argument (there is currently only one available dataset).
+  Datasets are returned as Session objects:
+
+    >>> demo = load_example_data('demography')
+    >>> demo.pop.info
+    26 x 3 x 121 x 2 x 2
+     time [26]: 1991 1992 1993 ... 2014 2015 2016
+     geo [3]: 'BruCap' 'Fla' 'Wal'
+     age [121]: 0 1 2 ... 118 119 120
+     sex [2]: 'M' 'F'
+     nat [2]: 'BE' 'FO'
+    >>> demo.qx.info
+    26 x 3 x 121 x 2 x 2
+     time [26]: 1991 1992 1993 ... 2014 2015 2016
+     geo [3]: 'BruCap' 'Fla' 'Wal'
+     age [121]: 0 1 2 ... 118 119 120
+     sex [2]: 'M' 'F'
+     nat [2]: 'BE' 'FO'
+
+  (closes :issue:`170`)
 
 .. _misc:
-
 
 Miscellaneous improvements
 --------------------------
@@ -144,6 +163,8 @@ Miscellaneous improvements
     >>> gender = Axis('M,F', 'gender')
 
 (closes :issue:`152`)
+
+* improved documentation of plot method (closes :issue:`169`)
 
 Fixes
 -----
