@@ -1644,7 +1644,7 @@ class LArray(ABCLArray):
             raise NotImplementedError("sort_values key must have one dimension less than array.ndim")
         assert subset.ndim == 1
         axis = subset.axes[0]
-        posargsort = subset.posargsort()
+        indexofsorted = subset.indicesofsorted()
 
         # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
         # IGroup(nat  EU  FO  BE
@@ -1655,12 +1655,11 @@ class LArray(ABCLArray):
         # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
         # that I have now?
         # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
-        sorter = axis.i[posargsort.data]
+        sorter = axis.i[indexofsorted.data]
         res = self[sorter]
         return res[axis[::-1]] if reverse else res
 
-    # XXX: rename to sort_axes?
-    def sort_axis(self, axes=None, reverse=False):
+    def sort_axes(self, axes=None, reverse=False):
         """Sorts axes of the array.
 
         Parameters
@@ -1685,22 +1684,22 @@ class LArray(ABCLArray):
              EU  0  1
              FO  2  3
              BE  4  5
-        >>> a.sort_axis(X.sex)
+        >>> a.sort_axes(X.sex)
         nat\\sex  F  M
              EU  1  0
              FO  3  2
              BE  5  4
-        >>> a.sort_axis()
+        >>> a.sort_axes()
         nat\\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axis((X.sex, X.nat))
+        >>> a.sort_axes((X.sex, X.nat))
         nat\\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axis(reverse=True)
+        >>> a.sort_axes(reverse=True)
         nat\\sex  M  F
              FO  2  3
              EU  0  1
@@ -1721,6 +1720,8 @@ class LArray(ABCLArray):
             return axis.i[key]
 
         return self[tuple(sort_key(axis) for axis in axes)]
+
+    sort_axis = renamed_to(sort_axes, 'sort_axis')
 
     def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
         """
@@ -2901,17 +2902,17 @@ class LArray(ABCLArray):
         return res
 
     # TODO: make sure we can do
-    # arr[x.sex.i[arr.posargmin(x.sex)]] <- fails
+    # arr[x.sex.i[arr.indexofmin(x.sex)]] <- fails
     # and
-    # arr[arr.argmin(x.sex)] <- fails
+    # arr[arr.labelofmin(x.sex)] <- fails
     # should both be equal to arr.min(x.sex)
     # the versions where axis is None already work as expected in the simple
     # case (no ambiguous labels):
-    # arr.i[arr.posargmin()]
-    # arr[arr.argmin()]
+    # arr.i[arr.indexofmin()]
+    # arr[arr.labelofmin()]
     # for the case where axis is None, we should return an NDGroup
-    # so that arr[arr.argmin()] works even if the minimum is on ambiguous labels
-    def argmin(self, axis=None):
+    # so that arr[arr.labelofmin()] works even if the minimum is on ambiguous labels
+    def labelofmin(self, axis=None):
         """Returns labels of the minimum values along a given axis.
 
         Parameters
@@ -2938,10 +2939,10 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argmin(X.sex)
+        >>> arr.labelofmin(X.sex)
         nat  BE  FR  IT
               M   F   M
-        >>> arr.argmin()
+        >>> arr.labelofmin()
         ('BE', 'M')
         """
         if axis is not None:
@@ -2952,7 +2953,9 @@ class LArray(ABCLArray):
             indices = np.unravel_index(self.data.argmin(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    def posargmin(self, axis=None):
+    argmin = renamed_to(labelofmin, 'argmin')
+
+    def indexofmin(self, axis=None):
         """Returns indices of the minimum values along a given axis.
 
         Parameters
@@ -2979,10 +2982,10 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.posargmin(X.sex)
+        >>> arr.indexofmin(X.sex)
         nat  BE  FR  IT
               0   1   0
-        >>> arr.posargmin()
+        >>> arr.indexofmin()
         (0, 0)
         """
         if axis is not None:
@@ -2991,7 +2994,9 @@ class LArray(ABCLArray):
         else:
             return np.unravel_index(self.data.argmin(), self.shape)
 
-    def argmax(self, axis=None):
+    posargmin = renamed_to(indexofmin, 'posargmin')
+
+    def labelofmax(self, axis=None):
         """Returns labels of the maximum values along a given axis.
 
         Parameters
@@ -3018,10 +3023,10 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argmax(X.sex)
+        >>> arr.labelofmax(X.sex)
         nat  BE  FR  IT
               F   M   F
-        >>> arr.argmax()
+        >>> arr.labelofmax()
         ('IT', 'F')
         """
         if axis is not None:
@@ -3032,7 +3037,9 @@ class LArray(ABCLArray):
             indices = np.unravel_index(self.data.argmax(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    def posargmax(self, axis=None):
+    argmax = renamed_to(labelofmax, 'argmax')
+
+    def indexofmax(self, axis=None):
         """Returns indices of the maximum values along a given axis.
 
         Parameters
@@ -3059,10 +3066,10 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.posargmax(X.sex)
+        >>> arr.indexofmax(X.sex)
         nat  BE  FR  IT
               1   0   1
-        >>> arr.posargmax()
+        >>> arr.indexofmax()
         (2, 1)
         """
         if axis is not None:
@@ -3071,7 +3078,9 @@ class LArray(ABCLArray):
         else:
             return np.unravel_index(self.data.argmax(), self.shape)
 
-    def argsort(self, axis=None, kind='quicksort'):
+    posargmax = renamed_to(indexofmax, 'posargmax')
+
+    def labelsofsorted(self, axis=None, kind='quicksort'):
         """Returns the labels that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3098,7 +3107,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argsort(X.sex)
+        >>> arr.labelsofsorted(X.sex)
         nat\\sex  0  1
              BE  M  F
              FR  F  M
@@ -3109,10 +3118,12 @@ class LArray(ABCLArray):
                 raise ValueError("array has ndim > 1 and no axis specified for argsort")
             axis = self.axes[0]
         axis = self.axes[axis]
-        pos = self.posargsort(axis, kind=kind)
+        pos = self.indicesofsorted(axis, kind=kind)
         return LArray(axis.labels[pos.data], pos.axes)
 
-    def posargsort(self, axis=None, kind='quicksort'):
+    argsort = renamed_to(labelsofsorted, 'argsort')
+
+    def indicesofsorted(self, axis=None, kind='quicksort'):
         """Returns the indices that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3139,7 +3150,7 @@ class LArray(ABCLArray):
              BE  1  5
              FR  3  2
              IT  0  4
-        >>> arr.posargsort(X.nat)
+        >>> arr.indicesofsorted(X.nat)
         nat\\sex  M  F
               0  2  1
               1  0  2
@@ -3153,6 +3164,8 @@ class LArray(ABCLArray):
         data = self.data.argsort(axis_idx, kind=kind)
         new_axis = Axis(np.arange(len(axis)), axis.name)
         return LArray(data, self.axes.replace(axis, new_axis))
+
+    posargsort = renamed_to(indicesofsorted, 'posargsort')
 
     def copy(self):
         """Returns a copy of the array.
