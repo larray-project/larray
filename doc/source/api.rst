@@ -351,10 +351,10 @@ Sorting
 .. autosummary::
    :toctree: _generated/
 
-   LArray.sort_axis
+   LArray.sort_axes
    LArray.sort_values
-   LArray.argsort
-   LArray.posargsort
+   LArray.labelsofsorted
+   LArray.indicesofsorted
 
 .. _la_reshaping:
 
@@ -393,10 +393,10 @@ Testing/Searching
    LArray.min_by
    LArray.max
    LArray.max_by
-   LArray.argmin
-   LArray.posargmin
-   LArray.argmax
-   LArray.posargmax
+   LArray.labelofmin
+   LArray.indexofmin
+   LArray.labelofmax
+   LArray.indexofmax
 
 .. _la_op:
 
