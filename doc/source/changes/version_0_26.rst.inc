@@ -12,6 +12,11 @@
 
 * renamed `split_axis` to `split_axes` to reflect the fact that it can now split several axes at once (see below).
 
+* renamed several methods (closes :issue:`50`):
+
+    - `sort_axis` to `sort_axes`
+    - `argmax`, `argmin`, `argsort` to `labelofmax`, `labelofmin`, `labelsofsorted`
+    - `posargmax`, `posargmin`, `posargsort` to `indexofmax`, `indexofmin`, `indicesofsorted`
 
 New features
 ------------

@@ -861,9 +861,9 @@ There are many other :ref:`aggregate functions built-in <la_agg>`:
 
 -  mean, min, max, median, percentile, var (variance), std (standard
    deviation)
--  argmin, argmax (label indirect minimum/maxium -- labels where the
+-  labelofmin, labelofmax (label indirect minimum/maxium -- labels where the
    value is minimum/maximum)
--  posargmin, posargmax (positional indirect minimum/maxium -- position
+-  indexofmin, indexofmax (positional indirect minimum/maxium -- position
    along axis where the value is minimum/maximum)
 -  cumsum, cumprod (cumulative sum, cumulative product)
 
@@ -1150,14 +1150,14 @@ Sort an axis (alphabetically if labels are strings)
 
 .. ipython:: python
 
-    pop_sorted = pop.sort_axis(x.nat)
+    pop_sorted = pop.sort_axes(x.nat)
     pop_sorted
 
 Give labels which would sort the axis
 
 .. ipython:: python
 
-    pop_sorted.argsort(x.sex)
+    pop_sorted.labelsofsorted(x.sex)
 
 Sort according to values
 
