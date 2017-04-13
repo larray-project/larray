@@ -91,6 +91,7 @@ import os
 import re
 import sys
 import warnings
+import functools
 
 try:
     import builtins
@@ -10130,12 +10131,23 @@ def read_sas(filepath, nb_index=None, index_col=None, na=np.nan, sort_rows=False
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
 
 
+def _check_axes_argument(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if len(args) > 1 and isinstance(args[1], (int, Axis)):
+            raise ValueError("If you want to pass several axes or dimension lengths to {}, "
+                             "you must pass them as a list (using []) or tuple (using()).".format(func.__name__))
+        return func(*args, **kwargs)
+    return wrapper
+
+
+@_check_axes_argument
 def zeros(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and filled with zeros.
 
     Parameters
     ----------
-    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+    axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
         Title.
@@ -10206,12 +10218,13 @@ def zeros_like(array, title='', dtype=None, order='K'):
     return LArray(np.zeros_like(array, dtype, order), array.axes, title)
 
 
+@_check_axes_argument
 def ones(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and filled with ones.
 
     Parameters
     ----------
-    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+    axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
         Title.
@@ -10274,12 +10287,13 @@ def ones_like(array, title='', dtype=None, order='K'):
     return LArray(np.ones_like(array, dtype, order), axes, title)
 
 
+@_check_axes_argument
 def empty(axes, title='', dtype=float, order='C'):
     """Returns an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
     ----------
-    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+    axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
         Title.
@@ -10343,12 +10357,13 @@ def empty_like(array, title='', dtype=None, order='K'):
     return LArray(np.empty_like(array.data, dtype, order), array.axes, title)
 
 
+# We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
 def full(axes, fill_value, title='', dtype=None, order='C'):
     """Returns an array with the specified axes and filled with fill_value.
 
     Parameters
     ----------
-    axes : int, tuple of int or tuple/list/AxisCollection of Axis
+    axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     fill_value : scalar or LArray
         Value to fill the array
@@ -10381,6 +10396,9 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
          BE | 0 | 1
          FO | 0 | 1
     """
+    if isinstance(fill_value, Axis):
+        raise ValueError("If you want to pass several axes or dimension lengths to full, "
+                         "you must pass them as a list (using []) or tuple (using()).")
     if dtype is None:
         dtype = np.asarray(fill_value).dtype
     res = empty(axes, title, dtype, order)
@@ -10638,6 +10656,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     return res
 
 
+@_check_axes_argument
 def ndrange(axes, start=0, title='', dtype=int):
     """Returns an array with the specified axes and filled with increasing int.
 
@@ -10710,6 +10729,7 @@ def ndrange(axes, start=0, title='', dtype=int):
     return LArray(data.reshape(axes.shape), axes, title)
 
 
+@_check_axes_argument
 def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     """Returns test array with given shape.
 
@@ -10719,7 +10739,7 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
 
     Parameters
     ----------
-    shape : int, tuple or list
+    shape : int, tuple/list of int
         Shape of the array to create. An int can be used directly for one
         dimensional arrays.
     start : int or float, optional
@@ -10856,6 +10876,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
         return a.points[indexer]
 
 
+@_check_axes_argument
 def labels_array(axes, title=''):
     """Returns an array with specified axes and the combination of
     corresponding labels as values.

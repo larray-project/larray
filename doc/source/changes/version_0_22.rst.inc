@@ -178,3 +178,6 @@ Fixes
 * fixed group sum over boolean arrays (closes :issue:`194`).
 
 * fixed set_labels when inplace=True
+
+* fixed array creation functions not raising an exception when called with wrong syntax func(axis1, axis2, ...)
+  instead of func([axis1, axis2, ...]). (closes :issue:`203`)
