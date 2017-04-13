@@ -168,6 +168,9 @@ Miscellaneous improvements
 
 (closes :issue:`152`)
 
+* replaced *args, **kwargs by explicit arguments in aggregation functions (sum, prod, mean, std, var, ...)
+  (closes :issue:`41`)
+
 * improved documentation of plot method (closes :issue:`169`)
 
 Fixes
