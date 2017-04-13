@@ -182,7 +182,11 @@ Fixes
 * fixed keyword arguments as `out`, `ddof`, ... for aggregation functions
   (closes : issue:`189`)
 
-* fixed group aggregates on integer arrays for median, percentile, var and std (closes :issue:`193`).
+* fixed percentile(_by) with multiple percentiles values (i.e. when argument `q` is a list/tuple).
+  (closes :issue:`192`)
+
+* fixed group aggregates on integer arrays for median, percentile, var and std
+  (closes :issue:`193`).
 
 * fixed group sum over boolean arrays (closes :issue:`194`).
 

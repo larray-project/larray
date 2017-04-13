@@ -7692,6 +7692,10 @@ class LArray(object):
         """
         pass
 
+    # XXX : for performance reasons, we should use the fact that the
+    #       underlying numpy function handles multiple percentiles in one call.
+    #       This is easy to implement in _axis_aggregate() but not in _group_aggregate()
+    #       since in this case np.percentile() may be called several times.
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
     def percentile(self, q, *args, **kwargs):
@@ -7729,6 +7733,12 @@ class LArray(object):
         >>> arr.percentile(25, x.b)
         a |   a0 |   a1 |   a2 |    a3
           | 0.75 | 4.75 | 8.75 | 12.75
+        >>> # several percentile values
+        >>> arr.percentile([25, 50, 75], x.b)
+        percentile\\a |   a0 |   a1 |    a2 |    a3
+                  25 | 0.75 | 4.75 |  8.75 | 12.75
+                  50 |  1.5 |  5.5 |   9.5 |  13.5
+                  75 | 2.25 | 6.25 | 10.25 | 14.25
 
         Select some rows only
 
@@ -7763,9 +7773,14 @@ class LArray(object):
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
-        _extra_kwargs = {'q': q, 'interpolation': interpolation}
-        return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes,
-                               commutative=True, out=out, extra_kwargs=_extra_kwargs)
+        if isinstance(q, (list, tuple)):
+            res = stack([(v, self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
+                          extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
+            return res.transpose()
+        else :
+            _extra_kwargs = {'q': q, 'interpolation': interpolation}
+            return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes, commutative=True,
+                                   out=out, extra_kwargs=_extra_kwargs)
 
     _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
@@ -7805,6 +7820,12 @@ class LArray(object):
         >>> arr.percentile_by(25, x.b)
         b |  b0 |  b1 |  b2 |  b3
           | 3.0 | 4.0 | 5.0 | 6.0
+        >>> # several percentile values
+        >>> arr.percentile_by([25, 50, 75], x.b)
+        percentile\\b |  b0 |   b1 |   b2 |   b3
+                  25 | 3.0 |  4.0 |  5.0 |  6.0
+                  50 | 6.0 |  7.0 |  8.0 |  9.0
+                  75 | 9.0 | 10.0 | 11.0 | 12.0
 
         Select some rows only
 
@@ -7836,9 +7857,14 @@ class LArray(object):
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
-        _extra_kwargs = {'q': q, 'interpolation': interpolation}
-        return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes,
-                               commutative=True, out=out, extra_kwargs=_extra_kwargs)
+        if isinstance(q, (list, tuple)):
+            res = stack([(v, self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
+                          extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
+            return res.transpose()
+        else:
+            _extra_kwargs = {'q': q, 'interpolation': interpolation}
+            return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
+                                    out=out, extra_kwargs=_extra_kwargs)
 
     _doc_agg_method(percentile_by, True, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
