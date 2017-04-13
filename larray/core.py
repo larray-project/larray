@@ -4075,7 +4075,7 @@ def _doc_agg_method(desc, by=False, action="perform",
         Parameters
         ----------
         {0}
-        \*args : None or int or str or Axis or Group or any combination of those
+        axes : None or int or str or Axis or Group or any combination of those
 
             {1}
 
@@ -4108,8 +4108,10 @@ def _doc_agg_method(desc, by=False, action="perform",
             * ('a1:a3 >> a123', 'b[b0,b2] >> b12') :
               operator ' >> ' allows to rename groups.
 
-        \**kwargs :
         {4}
+
+        \**kwargs :
+            See `axes`
 
         """.format("".join(_arg_agg[arg] for arg in extra_args),
                    str_doc, action, desc,
@@ -6070,10 +6072,9 @@ class LArray(object):
 
         return list(to_agg) + [o for o in operations if is_or_contains_group(o)]
 
-    def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False,
-                   commutative=False, out=None, extra_kwargs={}):
-        operations = self._prepare_aggregate(op, args, kwargs, commutative,
-                                             stack_depth=3)
+    def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False, commutative=False,
+                   out=None, extra_kwargs={}):
+        operations = self._prepare_aggregate(op, args, kwargs, commutative, stack_depth=3)
         if by_agg and operations != self.axes:
             operations = self._by_args_to_normal_agg_args(operations)
 
@@ -6626,29 +6627,24 @@ class LArray(object):
         # I suspect it loose more precision.
         return self * 100 / self.sum(*axes)
 
-    # aggregate method factory
-    def _agg_method(npfunc, nanfunc=None, name=None, commutative=False, by_agg=False):
-        def method(self, *args, **kwargs):
-            keepaxes = kwargs.pop('keepaxes', False)
-            skipna = kwargs.pop('skipna', None)
-            if skipna is None:
-                skipna = nanfunc is not None
-            if skipna and nanfunc is None:
-                raise ValueError("skipna is not available for %s" % name)
-            # func = npfunc
-            func = nanfunc if skipna else npfunc
-            return self._aggregate(func, args, kwargs, by_agg=by_agg,
-                                   keepaxes=keepaxes,
-                                   commutative=commutative)
-        if name is None:
-            name = npfunc.__name__
-        if by_agg:
-            name += "_by"
-        method.__name__ = name
-        return method
+    # aggregate method decorator
+    def _decorate_agg_method(npfunc, nanfunc=None, commutative=False, by_agg=False):
+        def decorated(func):
+            def wrapper(self, *args, **kwargs):
+                keepaxes = kwargs.pop('keepaxes', False)
+                skipna = kwargs.pop('skipna', None)
+                if skipna is None:
+                    skipna = nanfunc is not None
+                if skipna and nanfunc is None:
+                    raise ValueError("skipna is not available for {}".format(func.__name__))
+                _npfunc = nanfunc if skipna else npfunc
+                return self._aggregate(_npfunc, args, kwargs, by_agg=by_agg, keepaxes=keepaxes, commutative=commutative)
+            return wrapper
+        return decorated
 
-    all = _agg_method(np.all, commutative=True)
-    all.__doc__ = """
+    @_decorate_agg_method(np.all, commutative=True)
+    def all(self, *args, **kwargs):
+        """
         Test whether all selected elements evaluate to True.
 
         {}
@@ -6714,9 +6710,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("AND reduction", kwargs="out,skipna,keepaxes"))
+        pass
 
-    all_by = _agg_method(np.all, commutative=True, by_agg=True)
-    all_by.__doc__ = """
+    @_decorate_agg_method(np.all, commutative=True, by_agg=True)
+    def all_by(self, *args, **kwargs):
+        """
         Test whether all selected elements evaluate to True.
 
         {}
@@ -6779,9 +6777,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # barr.all_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("AND reduction", by=True, kwargs="out,skipna,keepaxes"))
+        pass
 
-    any = _agg_method(np.any, commutative=True)
-    any.__doc__ = """
+    @_decorate_agg_method(np.any, commutative=True)
+    def any(self, *args, **kwargs):
+        """
         Test whether any selected elements evaluate to True.
 
         {}
@@ -6847,9 +6847,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("OR reduction", kwargs="out,skipna,keepaxes"))
+        pass
 
-    any_by = _agg_method(np.any, commutative=True, by_agg=True)
-    any_by.__doc__ = """
+    @_decorate_agg_method(np.any, commutative=True, by_agg=True)
+    def any_by(self, *args, **kwargs):
+        """
         Test whether any selected elements evaluate to True.
 
         {}
@@ -6912,11 +6914,13 @@ class LArray(object):
         >>> # or equivalently
         >>> # barr.any_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("OR reduction", by=True, kwargs="out,skipna,keepaxes"))
+        pass
 
     # commutative modulo float precision errors
 
-    sum = _agg_method(np.sum, np.nansum, commutative=True)
-    sum.__doc__ = """
+    @_decorate_agg_method(np.sum, np.nansum, commutative=True)
+    def sum(self, *args, **kwargs):
+        """
         Computes the sum of array elements along given axes/groups.
 
         {}
@@ -6976,9 +6980,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("sum", kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
-    sum_by = _agg_method(np.sum, np.nansum, commutative=True, by_agg=True)
-    sum_by.__doc__ = """
+    @_decorate_agg_method(np.sum, np.nansum, commutative=True, by_agg=True)
+    def sum_by(self, *args, **kwargs):
+        """
         Computes the sum of array elements for the given axes/groups.
 
         {}
@@ -7035,10 +7041,12 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.sum_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("sum", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
     # nanprod needs numpy 1.10
-    prod = _agg_method(np.prod, np_nanprod, commutative=True)
-    prod.__doc__ = """
+    @_decorate_agg_method(np.prod, np_nanprod, commutative=True)
+    def prod(self, *args, **kwargs):
+        """
         Computes the product of array elements along given axes/groups.
 
         {}
@@ -7098,9 +7106,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("product", kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
-    prod_by = _agg_method(np.prod, np_nanprod, commutative=True, by_agg=True)
-    prod_by.__doc__ = """
+    @_decorate_agg_method(np.prod, np_nanprod, commutative=True, by_agg=True)
+    def prod_by(self, *args, **kwargs):
+        """
         Computes the product of array elements for the given axes/groups.
 
         {}
@@ -7157,9 +7167,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.prod_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("product", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
-    min = _agg_method(np.min, np.nanmin, commutative=True)
-    min.__doc__ = """
+    @_decorate_agg_method(np.min, np.nanmin, commutative=True)
+    def min(self, *args, **kwargs):
+        """
         Get minimum of array elements along given axes/groups.
 
         {}
@@ -7217,11 +7229,12 @@ class LArray(object):
         a23 |  8 |  9 | 10 | 11
         >>> # or equivalently
         >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("minimum", action="search",
-                                   kwargs="out,skipna,keepaxes"))
+        """.format(_doc_agg_method("minimum", action="search", kwargs="out,skipna,keepaxes"))
+        pass
 
-    min_by = _agg_method(np.min, np.nanmin, commutative=True, by_agg=True)
-    min_by.__doc__ = """
+    @_decorate_agg_method(np.min, np.nanmin, commutative=True, by_agg=True)
+    def min_by(self, *args, **kwargs):
+        """
         Get minimum of array elements for the given axes/groups.
 
         {}
@@ -7276,11 +7289,12 @@ class LArray(object):
           |   0 |   8
         >>> # or equivalently
         >>> # arr.min_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("minimum", by=True, action="search",
-                                   kwargs="out,skipna,keepaxes"))
+        """.format(_doc_agg_method("minimum", by=True, action="search", kwargs="out,skipna,keepaxes"))
+        pass
 
-    max = _agg_method(np.max, np.nanmax, commutative=True)
-    max.__doc__ = """
+    @_decorate_agg_method(np.max, np.nanmax, commutative=True)
+    def max(self, *args, **kwargs):
+        """
         Get maximum of array elements along given axes/groups.
 
         {}
@@ -7338,11 +7352,12 @@ class LArray(object):
         a23 | 12 | 13 | 14 | 15
         >>> # or equivalently
         >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("maximum", action="search",
-                                   kwargs="out,skipna,keepaxes"))
+        """.format(_doc_agg_method("maximum", action="search", kwargs="out,skipna,keepaxes"))
+        pass
 
-    max_by = _agg_method(np.max, np.nanmax, commutative=True, by_agg=True)
-    max_by.__doc__ = """
+    @_decorate_agg_method(np.max, np.nanmax, commutative=True, by_agg=True)
+    def max_by(self, *args, **kwargs):
+        """
         Get maximum of array elements for the given axes/groups.
 
         {}
@@ -7397,11 +7412,12 @@ class LArray(object):
           |   7 |  15
         >>> # or equivalently
         >>> # arr.max_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("maximum", by=True, action="search",
-                                   kwargs="out,skipna,keepaxes"))
+        """.format(_doc_agg_method("maximum", by=True, action="search", kwargs="out,skipna,keepaxes"))
+        pass
 
-    mean = _agg_method(np.mean, np.nanmean, commutative=True)
-    mean.__doc__ = """
+    @_decorate_agg_method(np.mean, np.nanmean, commutative=True)
+    def mean(self, *args, **kwargs):
+        """
         Computes the arithmetic mean.
 
         {}
@@ -7462,9 +7478,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("mean", kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
-    mean_by = _agg_method(np.mean, np.nanmean, commutative=True, by_agg=True)
-    mean_by.__doc__ = """
+    @_decorate_agg_method(np.mean, np.nanmean, commutative=True, by_agg=True)
+    def mean_by(self, *args, **kwargs):
+        """
         Computes the arithmetic mean.
 
         {}
@@ -7522,9 +7540,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.mean_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("mean", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        pass
 
-    median = _agg_method(np.median, np.nanmedian, commutative=True)
-    median.__doc__ = """
+    @_decorate_agg_method(np.median, np.nanmedian, commutative=True)
+    def median(self, *args, **kwargs):
+        """
         Computes the arithmetic median.
 
         {}
@@ -7589,9 +7609,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
+        pass
 
-    median_by = _agg_method(np.median, np.nanmedian, commutative=True, by_agg=True)
-    median_by.__doc__ = """
+    @_decorate_agg_method(np.median, np.nanmedian, commutative=True, by_agg=True)
+    def median_by(self, *args, **kwargs):
+        """
         Computes the arithmetic median.
 
         {}
@@ -7653,20 +7675,12 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.median_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("median", by=True, kwargs="out,skipna,keepaxes"))
+        pass
 
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
     def percentile(self, q, *args, **kwargs):
-        keepaxes = kwargs.pop('keepaxes', False)
-        skipna = kwargs.pop('skipna', None)
-        if skipna is None:
-            skipna = True
-        func = np.nanpercentile if skipna else np.percentile
-        return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
-                               commutative=True, extra_kwargs={'q': q})
-
-    percentile.__doc__ = """
-        Computes the qth percentile of the data along the specified axis.
+        """Computes the qth percentile of the data along the specified axis.
 
         {}
 
@@ -7725,19 +7739,17 @@ class LArray(object):
         a23 | 9.0 | 10.0 | 11.0 | 12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("qth percentile", extra_args="q",
-                                   kwargs="out,interpolation,skipna,keepaxes"))
-
-    def percentile_by(self, q, *args, **kwargs):
+        """.format(_doc_agg_method("qth percentile", extra_args="q", kwargs="out,interpolation,skipna,keepaxes"))
         keepaxes = kwargs.pop('keepaxes', False)
         skipna = kwargs.pop('skipna', None)
         if skipna is None:
             skipna = True
         func = np.nanpercentile if skipna else np.percentile
-        return self._aggregate(func, args, kwargs, keepaxes=keepaxes, by_agg=True,
+        return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
                                commutative=True, extra_kwargs={'q': q})
 
-    percentile_by.__doc__ = """
+    def percentile_by(self, q, *args, **kwargs):
+        """
         Computes the qth percentile of the data for the specified axis.
 
         {}
@@ -7796,10 +7808,18 @@ class LArray(object):
         >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("qth percentile", by=True, extra_args="q",
                                    kwargs="out,interpolation,skipna,keepaxes"))
+        keepaxes = kwargs.pop('keepaxes', False)
+        skipna = kwargs.pop('skipna', None)
+        if skipna is None:
+            skipna = True
+        func = np.nanpercentile if skipna else np.percentile
+        return self._aggregate(func, args, kwargs, keepaxes=keepaxes, by_agg=True, commutative=True,
+                               extra_kwargs={'q': q})
 
     # not commutative
-    ptp = _agg_method(np.ptp)
-    ptp.__doc__ = """
+    @_decorate_agg_method(np.ptp)
+    def ptp(self, *args, **kwargs):
+        """
         Returns the range of values (maximum - minimum).
 
         The name of the function comes from the acronym for ‘peak to peak’.
@@ -7856,9 +7876,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("ptp", kwargs="out"))
+        pass
 
-    var = _agg_method(np.var, np.nanvar)
-    var.__doc__ = """
+    @_decorate_agg_method(np.var, np.nanvar)
+    def var(self, *args, **kwargs):
+        """
         Computes the variance.
 
         {}
@@ -7923,9 +7945,11 @@ class LArray(object):
         >>> # or equivalently
         >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
         """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
+        pass
 
-    var_by = _agg_method(np.var, np.nanvar, by_agg=True)
-    var_by.__doc__ = """
+    @_decorate_agg_method(np.var, np.nanvar, by_agg=True)
+    def var_by(self, *args, **kwargs):
+        """
         Computes the variance.
 
         {}
@@ -7986,11 +8010,12 @@ class LArray(object):
           | 0.0 | 15.7509765625
         >>> # or equivalently
         >>> # arr.var_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("variance", by=True,
-                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
+        """.format(_doc_agg_method("variance", by=True, kwargs="dtype,out,ddof,skipna,keepaxes"))
+        pass
 
-    std = _agg_method(np.std, np.nanstd)
-    std.__doc__ = """
+    @_decorate_agg_method(np.std, np.nanstd)
+    def std(self, *args, **kwargs):
+        """
         Computes the standard deviation.
 
         {}
@@ -8050,11 +8075,12 @@ class LArray(object):
         a23 | 2.5 | 1.5 | 0.0 | 1.5
         >>> # or equivalently
         >>> # arr.std('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("standard deviation",
-                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
+        """.format(_doc_agg_method("standard deviation", kwargs="dtype,out,ddof,skipna,keepaxes"))
+        pass
 
-    std_by = _agg_method(np.std, np.nanstd, by_agg=True)
-    std_by.__doc__ = """
+    @_decorate_agg_method(np.std, np.nanstd, by_agg=True)
+    def std_by(self, *args, **kwargs):
+        """
         Computes the standard deviation.
 
         {}
@@ -8111,8 +8137,8 @@ class LArray(object):
           | 0.5 | 0.25
         >>> # or equivalently
         >>> # arr.std_by('b0,b1>>b01;b2,b3>>b23')
-        """.format(_doc_agg_method("standard deviation", by=True,
-                                   kwargs="dtype,out,ddof,skipna,keepaxes"))
+        """.format(_doc_agg_method("standard deviation", by=True, kwargs="dtype,out,ddof,skipna,keepaxes"))
+        pass
 
     # cumulative aggregates
     def cumsum(self, axis=-1):
