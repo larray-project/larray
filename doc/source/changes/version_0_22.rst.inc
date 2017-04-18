@@ -127,7 +127,11 @@
 
   (closes :issue:`170`)
 
+* viewer: added possibility to delete an array by pressing Delete on keyboard.
+  (closes :issue:`116`)
+
 .. _misc:
+
 
 Miscellaneous improvements
 --------------------------
