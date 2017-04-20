@@ -3998,86 +3998,96 @@ _arg_agg = {
 }
 
 _kwarg_agg = {
-    'dtype':
+    'dtype': {'value': None, 'doc':
         """
-            * dtype : dtype, optional
+        * dtype : dtype, optional
 
-              The type of the returned array.
-              The dtype of the array is used by default.
-        """,
-    'out':
+          The type of the returned array.
+          The dtype of the array is used by default.
+        """},
+    'out': {'value': None, 'doc':
         """
-            * out : LArray, optional
+        * out : LArray, optional
 
-              Alternate output array in which to place the result.
-              It must have the same shape as the expected output and
-              its type is preserved (e.g., if dtype(out) is float, the
-              result will consist of 0.0’s and 1.0’s).
-              Axes and labels can be different, only the shape matters.
-        """,
-    'ddof':
+          Alternate output array in which to place the result.
+          It must have the same shape as the expected output and
+          its type is preserved (e.g., if dtype(out) is float, the
+          result will consist of 0.0’s and 1.0’s).
+          Axes and labels can be different, only the shape matters.
+        """},
+    'ddof': {'value': 1, 'doc':
         """
-            * ddof : int, optional
+        * ddof : int, optional
 
-              "Delta Degrees of Freedom": the divisor used in the
-              calculation is ``N - ddof``, where ``N`` represents
-              the number of elements. By default `ddof` is zero.
-        """,
-    'skipna':
+          "Delta Degrees of Freedom": the divisor used in the
+          calculation is ``N - ddof``, where ``N`` represents
+          the number of elements. By default `ddof` is 1.
+        """},
+    'skipna': {'value': None, 'doc':
         """
-            * skipna : bool, optional
+        * skipna : bool, optional
 
-              'skip NaN': Ignore NaN/null values.
-              If an entire row/column is NaN, the result will be NaN.
-        """,
-    'keepaxes':
+          'skip NaN': Ignore NaN/null values.
+          If an entire row/column is NaN, the result will be NaN.
+        """},
+    'keepaxes': {'value': False, 'doc':
         """
-            * keepaxes : bool, optional
+        * keepaxes : bool, optional
 
-              If this is set to True, the axes which are reduced are
-              left in the result as dimensions with size one.
-              With this option, the result will broadcast correctly
-              against the input array.
-        """,
-    'interpolation':
+          If this is set to True, the axes which are reduced are
+          left in the result as dimensions with size one.
+          With this option, the result will broadcast correctly
+          against the input array.
+        """},
+    'interpolation': {'value': 'linear', 'doc':
         """
-            * interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        * interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
 
-              This optional parameter specifies the interpolation method to
-              use when the desired quantile lies between two data points ``i < j``:
-                * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
-                  fractional part of the index surrounded by ``i`` and ``j``.
-                * lower: ``i``.
-                * higher: ``j``.
-                * nearest: ``i`` or ``j``, whichever is nearest.
-                * midpoint: ``(i + j) / 2``.
-        """
+          This optional parameter specifies the interpolation method to
+          use when the desired quantile lies between two data points ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
+              fractional part of the index surrounded by ``i`` and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
+        """}
 }
 
 
-def _doc_agg_method(desc, by=False, action="perform",
-                    extra_args='', kwargs=''):
-    extra_args = extra_args.split(',') if extra_args else []
-    kwargs = kwargs.split(',') if kwargs else []
+def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[], kwargs=[]):
+
+    if not long_name:
+        long_name = func.__name__
+    if not action_verb:
+        action_verb = 'perform'
+
+    _args = ','.join(extra_args) + ', ' if len(extra_args) > 0 else ''
+    _kwargs = ', '.join(["{}={}".format(k, _kwarg_agg[k]['value']) for k in kwargs]) + ', ' if len(kwargs) > 0 else ''
+    signature = '{name}({args}*axes_and_groups, {kwargs}**explicit_axes)'.format(name=func.__name__,
+                                                                                args=_args, kwargs=_kwargs)
 
     if by:
-        str_doc = "The {0} is {1}ed along all axes except the given one(s). " \
-                  "For groups, {0} is {1}ed along groups and non associated axes. " \
-                  "The default (no axis or group) is to {1} the {0} " \
-                  "over all the dimensions of the input array.".format(desc, action)
+        doc_specific = "The {long_name} is {action_verb}ed along all axes except the given one(s). " \
+                  "For groups, {long_name} is {action_verb}ed along groups and non associated axes. " \
+                  "The default (no axis or group) is to {action_verb} the {long_name} " \
+                  "over all the dimensions of the input array.".format(long_name=long_name, action_verb=action_verb)
     else:
-        str_doc = "Axis(es) or group(s) along the {0} is {1}ed. " \
-                  "The default (no axis or group) is to {1} the {0} " \
-                  "over all the dimensions of the input array.".format(desc, action)
+        doc_specific = "Axis(es) or group(s) along the {long_name} is {action_verb}ed. " \
+                  "The default (no axis or group) is to {action_verb} the {long_name} " \
+                  "over all the dimensions of the input array.".format(long_name=long_name, action_verb=action_verb)
 
-    args_doc = \
+    doc_args = "".join(_arg_agg[arg] for arg in extra_args)
+    doc_kwargs = "".join(_kwarg_agg[kw]['doc'] for kw in kwargs)
+
+    parameters = \
         """
         Parameters
         ----------
-        {0}
-        axes : None or int or str or Axis or Group or any combination of those
+        {args}
+        \*axes_and_groups : None or int or str or Axis or Group or any combination of those
 
-            {1}
+            {specific}
 
             An axis can be referred by:
 
@@ -4089,7 +4099,7 @@ def _doc_agg_method(desc, by=False, action="perform",
               and assigned to a variable, you can pass it as argument.
 
 
-            You may not want to {2} the {3} over a whole axis but
+            You may not want to {action_verb} the {long_name} over a whole axis but
             over a selection of specific labels. To do so, you have several
             possibilities:
 
@@ -4108,16 +4118,13 @@ def _doc_agg_method(desc, by=False, action="perform",
             * ('a1:a3 >> a123', 'b[b0,b2] >> b12') :
               operator ' >> ' allows to rename groups.
 
-        {4}
-
         \**kwargs :
-            See `axes`
+        {kwargs}
 
-        """.format("".join(_arg_agg[arg] for arg in extra_args),
-                   str_doc, action, desc,
-                   "".join(_kwarg_agg[kw] for kw in kwargs))
+        """.format(args=doc_args, specific=doc_specific, action_verb=action_verb, long_name=long_name,
+                   kwargs=doc_kwargs)
 
-    return args_doc
+    func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters)
 
 
 _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
@@ -4581,16 +4588,16 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndrange('year=2014..2020')
+        >>> arr = LArray([0, 6, 2, 5, 4, 3, 1, 3], 'year=2013..2020')
         >>> arr
-        year | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
-             |    0 |    1 |    2 |    3 |    4 |    5 |    6
+        year | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
+             |    0 |    6 |    2 |    5 |    4 |    3 |    1 |    3
         >>> arr.describe()
-        statistic | count | mean | std | min | 25% | 50% | 75% | max
-                  |   7.0 |  3.0 | 2.0 | 0.0 | 1.5 | 3.0 | 4.5 | 6.0
+        statistic | count | mean | std | min |  25% | 50% |  75% | max
+                  |   8.0 |  3.0 | 2.0 | 0.0 | 1.75 | 3.0 | 4.25 | 6.0
         >>> arr.describe(percentiles=[50, 90])
         statistic | count | mean | std | min | 50% | 90% | max
-                  |   7.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.4 | 6.0
+                  |   8.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.3 | 6.0
         """
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
@@ -4632,25 +4639,26 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndrange('gender=Male,Female;year=2014..2020').astype(float)
+        >>> data = [[0, 6, 3, 5, 4, 2, 1, 3], [7, 5, 3, 2, 8, 5, 6, 4]]
+        >>> arr = LArray(data, 'gender=Male,Female;year=2013..2020').astype(float)
         >>> arr
-        gender\year | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
-               Male |  0.0 |  1.0 |  2.0 |  3.0 |  4.0 |  5.0 |  6.0
-             Female |  7.0 |  8.0 |  9.0 | 10.0 | 11.0 | 12.0 | 13.0
+        gender\year | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
+               Male |  0.0 |  6.0 |  3.0 |  5.0 |  4.0 |  2.0 |  1.0 |  3.0
+             Female |  7.0 |  5.0 |  3.0 |  2.0 |  8.0 |  5.0 |  6.0 |  4.0
         >>> arr.describe_by('gender')
-        gender\statistic | count | mean | std | min | 25% |  50% |  75% |  max
-                    Male |   7.0 |  3.0 | 2.0 | 0.0 | 1.5 |  3.0 |  4.5 |  6.0
-                  Female |   7.0 | 10.0 | 2.0 | 7.0 | 8.5 | 10.0 | 11.5 | 13.0
-        >>> arr.describe_by('gender', (x.year[:2015], x.year[2019:]))
-        gender | year\statistic | count | mean | std |  min |   25% |  50% |   75% |  max
-          Male |          :2015 |   2.0 |  0.5 | 0.5 |  0.0 |  0.25 |  0.5 |  0.75 |  1.0
-          Male |          2019: |   2.0 |  5.5 | 0.5 |  5.0 |  5.25 |  5.5 |  5.75 |  6.0
-        Female |          :2015 |   2.0 |  7.5 | 0.5 |  7.0 |  7.25 |  7.5 |  7.75 |  8.0
-        Female |          2019: |   2.0 | 12.5 | 0.5 | 12.0 | 12.25 | 12.5 | 12.75 | 13.0
+        gender\statistic | count | mean | std | min |  25% | 50% |  75% | max
+                    Male |   8.0 |  3.0 | 2.0 | 0.0 | 1.75 | 3.0 | 4.25 | 6.0
+                  Female |   8.0 |  5.0 | 2.0 | 2.0 | 3.75 | 5.0 | 6.25 | 8.0
+        >>> arr.describe_by('gender', (x.year[:2015], x.year[2018:]))
+        gender | year\statistic | count | mean | std | min | 25% | 50% | 75% | max
+          Male |          :2015 |   3.0 |  3.0 | 3.0 | 0.0 | 1.5 | 3.0 | 4.5 | 6.0
+          Male |          2018: |   3.0 |  2.0 | 1.0 | 1.0 | 1.5 | 2.0 | 2.5 | 3.0
+        Female |          :2015 |   3.0 |  5.0 | 2.0 | 3.0 | 4.0 | 5.0 | 6.0 | 7.0
+        Female |          2018: |   3.0 |  5.0 | 1.0 | 4.0 | 4.5 | 5.0 | 5.5 | 6.0
         >>> arr.describe_by('gender', percentiles=[50, 90])
-        gender\statistic | count | mean | std | min |  50% |  90% |  max
-                    Male |   7.0 |  3.0 | 2.0 | 0.0 |  3.0 |  5.4 |  6.0
-                  Female |   7.0 | 10.0 | 2.0 | 7.0 | 10.0 | 12.4 | 13.0
+        gender\statistic | count | mean | std | min | 50% | 90% | max
+                    Male |   8.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.3 | 6.0
+                  Female |   8.0 |  5.0 | 2.0 | 2.0 | 5.0 | 7.3 | 8.0
         """
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
@@ -6628,26 +6636,34 @@ class LArray(object):
         return self * 100 / self.sum(*axes)
 
     # aggregate method decorator
-    def _decorate_agg_method(npfunc, nanfunc=None, commutative=False, by_agg=False):
+    def _decorate_agg_method(npfunc, nanfunc=None, commutative=False, by_agg=False, extra_kwargs=[],
+                             long_name='', action_verb=''):
         def decorated(func):
+            _doc_agg_method(func, by_agg, long_name, action_verb, kwargs=extra_kwargs + ['out', 'skipna', 'keepaxes'])
+            @functools.wraps(func)
             def wrapper(self, *args, **kwargs):
-                keepaxes = kwargs.pop('keepaxes', False)
-                skipna = kwargs.pop('skipna', None)
+                keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
+                skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
+                out = kwargs.pop('out', _kwarg_agg['out']['value'])
                 if skipna is None:
                     skipna = nanfunc is not None
                 if skipna and nanfunc is None:
                     raise ValueError("skipna is not available for {}".format(func.__name__))
                 _npfunc = nanfunc if skipna else npfunc
-                return self._aggregate(_npfunc, args, kwargs, by_agg=by_agg, keepaxes=keepaxes, commutative=commutative)
+                _extra_kwargs = {}
+                for k in extra_kwargs:
+                    _extra_kwargs[k] = kwargs.pop(k, _kwarg_agg[k]['value'])
+                return self._aggregate(_npfunc, args, kwargs, by_agg=by_agg, keepaxes=keepaxes,
+                                       commutative=commutative, out=out, extra_kwargs=_extra_kwargs)
             return wrapper
         return decorated
 
-    @_decorate_agg_method(np.all, commutative=True)
+    @_decorate_agg_method(np.all, commutative=True, long_name="AND reduction")
     def all(self, *args, **kwargs):
-        """
+        """{signature}
         Test whether all selected elements evaluate to True.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -6709,15 +6725,15 @@ class LArray(object):
         a23 | False | False | False | False
         >>> # or equivalently
         >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("AND reduction", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.all, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.all, commutative=True, by_agg=True, long_name="AND reduction")
     def all_by(self, *args, **kwargs):
-        """
+        """{signature}
         Test whether all selected elements evaluate to True.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -6776,15 +6792,15 @@ class LArray(object):
           | False | False
         >>> # or equivalently
         >>> # barr.all_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("AND reduction", by=True, kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.any, commutative=True)
+    @_decorate_agg_method(np.any, commutative=True, long_name="OR reduction")
     def any(self, *args, **kwargs):
-        """
+        """{signature}
         Test whether any selected elements evaluate to True.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -6846,15 +6862,15 @@ class LArray(object):
         a23 | False | False | False | False
         >>> # or equivalently
         >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("OR reduction", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.any, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.any, commutative=True, by_agg=True, long_name="OR reduction")
     def any_by(self, *args, **kwargs):
-        """
+        """{signature}
         Test whether any selected elements evaluate to True.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -6913,17 +6929,17 @@ class LArray(object):
           | True | False
         >>> # or equivalently
         >>> # barr.any_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("OR reduction", by=True, kwargs="out,skipna,keepaxes"))
+        """
         pass
 
     # commutative modulo float precision errors
 
-    @_decorate_agg_method(np.sum, np.nansum, commutative=True)
+    @_decorate_agg_method(np.sum, np.nansum, commutative=True, extra_kwargs=['dtype'])
     def sum(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the sum of array elements along given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -6979,15 +6995,15 @@ class LArray(object):
         a23 | 20 | 22 | 24 | 26
         >>> # or equivalently
         >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("sum", kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.sum, np.nansum, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.sum, np.nansum, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="sum")
     def sum_by(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the sum of array elements for the given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7040,16 +7056,16 @@ class LArray(object):
           |  28 |  92
         >>> # or equivalently
         >>> # arr.sum_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("sum", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
     # nanprod needs numpy 1.10
-    @_decorate_agg_method(np.prod, np_nanprod, commutative=True)
+    @_decorate_agg_method(np.prod, np_nanprod, commutative=True, extra_kwargs=['dtype'], long_name="product")
     def prod(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the product of array elements along given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7105,15 +7121,16 @@ class LArray(object):
         a23 | 96 | 117 | 140 | 165
         >>> # or equivalently
         >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("product", kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.prod, np_nanprod, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.prod, np_nanprod, commutative=True, by_agg=True, extra_kwargs=['dtype'],
+                          long_name="product")
     def prod_by(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the product of array elements for the given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7166,15 +7183,15 @@ class LArray(object):
           |   0 | 259459200
         >>> # or equivalently
         >>> # arr.prod_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("product", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.min, np.nanmin, commutative=True)
+    @_decorate_agg_method(np.min, np.nanmin, commutative=True, long_name="minimum", action_verb="search")
     def min(self, *args, **kwargs):
-        """
+        """{signature}
         Get minimum of array elements along given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7229,15 +7246,15 @@ class LArray(object):
         a23 |  8 |  9 | 10 | 11
         >>> # or equivalently
         >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("minimum", action="search", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.min, np.nanmin, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.min, np.nanmin, commutative=True, by_agg=True, long_name="minimum", action_verb="search")
     def min_by(self, *args, **kwargs):
-        """
+        """{signature}
         Get minimum of array elements for the given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7289,15 +7306,15 @@ class LArray(object):
           |   0 |   8
         >>> # or equivalently
         >>> # arr.min_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("minimum", by=True, action="search", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.max, np.nanmax, commutative=True)
+    @_decorate_agg_method(np.max, np.nanmax, commutative=True, long_name="maximum", action_verb="search")
     def max(self, *args, **kwargs):
-        """
+        """{signature}
         Get maximum of array elements along given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7352,15 +7369,15 @@ class LArray(object):
         a23 | 12 | 13 | 14 | 15
         >>> # or equivalently
         >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("maximum", action="search", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.max, np.nanmax, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.max, np.nanmax, commutative=True, by_agg=True, long_name="maximum", action_verb="search")
     def max_by(self, *args, **kwargs):
-        """
+        """{signature}
         Get maximum of array elements for the given axes/groups.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7412,15 +7429,15 @@ class LArray(object):
           |   7 |  15
         >>> # or equivalently
         >>> # arr.max_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("maximum", by=True, action="search", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.mean, np.nanmean, commutative=True)
+    @_decorate_agg_method(np.mean, np.nanmean, commutative=True, extra_kwargs=['dtype'])
     def mean(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the arithmetic mean.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7477,15 +7494,15 @@ class LArray(object):
         a23 | 10.0 | 11.0 | 12.0 | 13.0
         >>> # or equivalently
         >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("mean", kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.mean, np.nanmean, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.mean, np.nanmean, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="mean")
     def mean_by(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the arithmetic mean.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7539,15 +7556,15 @@ class LArray(object):
           | 3.5 | 11.5
         >>> # or equivalently
         >>> # arr.mean_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("mean", by=True, kwargs="dtype,out,skipna,keepaxes"))
+        """
         pass
 
     @_decorate_agg_method(np.median, np.nanmedian, commutative=True)
     def median(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the arithmetic median.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7608,15 +7625,15 @@ class LArray(object):
         a23 | 7.5 | 6.0 | 2.5 | 7.5
         >>> # or equivalently
         >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("median", kwargs="out,skipna,keepaxes"))
+        """
         pass
 
-    @_decorate_agg_method(np.median, np.nanmedian, commutative=True, by_agg=True)
+    @_decorate_agg_method(np.median, np.nanmedian, commutative=True, by_agg=True, long_name="mediane")
     def median_by(self, *args, **kwargs):
-        """
+        """{signature}
         Computes the arithmetic median.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7674,15 +7691,16 @@ class LArray(object):
           | 7.0 | 5.75
         >>> # or equivalently
         >>> # arr.median_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("median", by=True, kwargs="out,skipna,keepaxes"))
+        """
         pass
 
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
     def percentile(self, q, *args, **kwargs):
-        """Computes the qth percentile of the data along the specified axis.
+        """{signature}
+        Computes the qth percentile of the data along the specified axis.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7739,20 +7757,26 @@ class LArray(object):
         a23 | 9.0 | 10.0 | 11.0 | 12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("qth percentile", extra_args="q", kwargs="out,interpolation,skipna,keepaxes"))
-        keepaxes = kwargs.pop('keepaxes', False)
-        skipna = kwargs.pop('skipna', None)
+        """
+        keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
+        skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
+        out = kwargs.pop('out', _kwarg_agg['out']['value'])
         if skipna is None:
             skipna = True
-        func = np.nanpercentile if skipna else np.percentile
-        return self._aggregate(func, args, kwargs, keepaxes=keepaxes,
-                               commutative=True, extra_kwargs={'q': q})
+        _npfunc = np.nanpercentile if skipna else np.percentile
+        interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
+        _extra_kwargs = {'q': q, 'interpolation': interpolation}
+        return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes,
+                               commutative=True, out=out, extra_kwargs=_extra_kwargs)
+
+    _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
+                    kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
 
     def percentile_by(self, q, *args, **kwargs):
-        """
+        """{signature}
         Computes the qth percentile of the data for the specified axis.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7806,25 +7830,30 @@ class LArray(object):
           | 1.75 | 9.75
         >>> # or equivalently
         >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("qth percentile", by=True, extra_args="q",
-                                   kwargs="out,interpolation,skipna,keepaxes"))
-        keepaxes = kwargs.pop('keepaxes', False)
-        skipna = kwargs.pop('skipna', None)
+        """
+        keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
+        skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
+        out = kwargs.pop('out', _kwarg_agg['out']['value'])
         if skipna is None:
             skipna = True
-        func = np.nanpercentile if skipna else np.percentile
-        return self._aggregate(func, args, kwargs, keepaxes=keepaxes, by_agg=True, commutative=True,
-                               extra_kwargs={'q': q})
+        _npfunc = np.nanpercentile if skipna else np.percentile
+        interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
+        _extra_kwargs = {'q': q, 'interpolation': interpolation}
+        return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes,
+                               commutative=True, out=out, extra_kwargs=_extra_kwargs)
+
+    _doc_agg_method(percentile_by, True, "qth percentile", extra_args=['q'],
+                    kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
 
     # not commutative
-    @_decorate_agg_method(np.ptp)
+
     def ptp(self, *args, **kwargs):
-        """
+        """{signature}
         Returns the range of values (maximum - minimum).
 
         The name of the function comes from the acronym for ‘peak to peak’.
 
-        {}
+        {parameters}
 
         Returns
         -------
@@ -7875,15 +7904,20 @@ class LArray(object):
         a23 |  4 |  4 |  4 |  4
         >>> # or equivalently
         >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("ptp", kwargs="out"))
-        pass
-
-    @_decorate_agg_method(np.var, np.nanvar)
-    def var(self, *args, **kwargs):
         """
-        Computes the variance.
+        out = kwargs.pop('out', _kwarg_agg['out']['value'])
+        return self._aggregate(np.ptp, args, kwargs, out=out)
 
-        {}
+    _doc_agg_method(ptp, False, kwargs=['out'])
+
+    @_decorate_agg_method(np.var, np.nanvar, extra_kwargs=['dtype', 'ddof'], long_name="variance")
+    def var(self, *args, **kwargs):
+        """{signature}
+        Computes the unbiased variance.
+
+        Normalized by N-1 by default. This can be changed using the ddof argument.
+
+        {parameters}
 
         Returns
         -------
@@ -7897,62 +7931,56 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((4, 4))
-        >>> arr[:,:] = [[10, 7, 5, 9], \
-                        [5, 8, 3, 7], \
-                        [6, 2, 0, 9], \
-                        [9, 10, 5, 6]]
+        >>> arr = ndtest((2, 8), dtype=float)
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
+                        [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 | 10 |  7 |  5 |  9
-         a1 |  5 |  8 |  3 |  7
-         a2 |  6 |  2 |  0 |  9
-         a3 |  9 | 10 |  5 |  6
+        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
+         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
+         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
         >>> arr.var()
-        7.96484375
-        >>> # along axis 'a'
-        >>> arr.var(x.a)
-        b |   b0 |     b1 |     b2 |     b3
-          | 4.25 | 8.6875 | 4.1875 | 1.6875
+        4.7999999999999998
         >>> # along axis 'b'
         >>> arr.var(x.b)
-        a |     a0 |     a1 |      a2 |   a3
-          | 3.6875 | 3.6875 | 12.1875 | 4.25
+        a |  a0 |  a1
+          | 4.0 | 4.0
 
-        Select some rows only
+        Select some columns only
 
-        >>> arr.var(['a0', 'a1'])
-        b |   b0 |   b1 |  b2 |  b3
-          | 6.25 | 0.25 | 1.0 | 1.0
+        >>> arr.var(['b0', 'b1', 'b3'])
+        a |  a0 |  a1
+          | 9.0 | 4.0
         >>> # or equivalently
-        >>> # arr.var('a0,a1')
+        >>> # arr.var('b0,b1,b3')
 
         Split an axis in several parts
 
-        >>> arr.var((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |   b0 |   b1 |   b2 |   b3
-        a0,a1 | 6.25 | 0.25 |  1.0 |  1.0
-        a2,a3 | 2.25 | 16.0 | 6.25 | 2.25
+        >>> arr.var((['b0', 'b1', 'b3'], 'b5:'))
+        a\\b | b0,b1,b3 | b5:
+         a0 |      9.0 | 1.0
+         a1 |      4.0 | 1.0
         >>> # or equivalently
-        >>> # arr.var('a0,a1;a2,a3')
+        >>> # arr.var('b0,b1,b3;b5:')
 
         Same with renaming
 
-        >>> arr.var((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |   b0 |   b1 |   b2 |   b3
-        a01 | 6.25 | 0.25 |  1.0 |  1.0
-        a23 | 2.25 | 16.0 | 6.25 | 2.25
+        >>> arr.var((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        a\\b | b013 | b567
+         a0 |  9.0 |  1.0
+         a1 |  4.0 |  1.0
         >>> # or equivalently
-        >>> # arr.var('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("variance", kwargs="dtype,out,ddof,skipna,keepaxes"))
+        >>> # arr.var('b0,b1,b3>>b013;b5:>>b567')
+        """
         pass
 
-    @_decorate_agg_method(np.var, np.nanvar, by_agg=True)
+    @_decorate_agg_method(np.var, np.nanvar, by_agg=True, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var_by(self, *args, **kwargs):
-        """
-        Computes the variance.
+        """{signature}
+        Computes the unbiased variance.
 
-        {}
+        Normalized by N-1 by default. This can be changed using the ddof argument.
+
+        {parameters}
 
         Returns
         -------
@@ -7966,59 +7994,56 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((4, 4))
-        >>> arr[:,:] = [[10, 7, 5, 9], \
-                        [5, 8, 3, 7], \
-                        [6, 2, 0, 9], \
-                        [9, 10, 5, 6]]
+        >>> arr = ndtest((2, 8), dtype=float)
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
+                        [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 | 10 |  7 |  5 |  9
-         a1 |  5 |  8 |  3 |  7
-         a2 |  6 |  2 |  0 |  9
-         a3 |  9 | 10 |  5 |  6
+        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
+         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
+         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
         >>> arr.var_by()
-        7.96484375
+        4.7999999999999998
         >>> # along axis 'a'
         >>> arr.var_by(x.a)
-        a |     a0 |     a1 |      a2 |   a3
-          | 3.6875 | 3.6875 | 12.1875 | 4.25
-        >>> # along axis 'b'
-        >>> arr.var_by(x.b)
-        b |   b0 |     b1 |     b2 |     b3
-          | 4.25 | 8.6875 | 4.1875 | 1.6875
+        a |  a0 |  a1
+          | 4.0 | 4.0
 
-        Select some rows only
+        Select some columns only
 
-        >>> arr.var_by(['a0', 'a1'])
-        0.0
+        >>> arr.var_by(x.a, ['b0','b1','b3'])
+        a |  a0 |  a1
+          | 9.0 | 4.0
         >>> # or equivalently
-        >>> # arr.var_by('a0,a1')
+        >>> # arr.var_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
-        >>> arr.var_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 |         a2,a3
-          |   0.0 | 15.7509765625
+        >>> arr.var_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
+        a\\b | b0,b1,b3 | b5:
+         a0 |      9.0 | 1.0
+         a1 |      4.0 | 1.0
         >>> # or equivalently
-        >>> # arr.var_by('a0,a1;a2,a3')
+        >>> # arr.var_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
-        >>> arr.var_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 |           a23
-          | 0.0 | 15.7509765625
+        >>> arr.var_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        a\\b | b013 | b567
+         a0 |  9.0 |  1.0
+         a1 |  4.0 |  1.0
         >>> # or equivalently
-        >>> # arr.var_by('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("variance", by=True, kwargs="dtype,out,ddof,skipna,keepaxes"))
+        >>> # arr.var_by('a','b0,b1,b3>>b013;b5:>>b567')
+        """
         pass
 
-    @_decorate_agg_method(np.std, np.nanstd)
+    @_decorate_agg_method(np.std, np.nanstd, extra_kwargs=['dtype', 'ddof'], long_name="standard deviation")
     def std(self, *args, **kwargs):
-        """
-        Computes the standard deviation.
+        """{signature}
+        Computes the sample standard deviation.
 
-        {}
+        Normalized by N-1 by default. This can be changed using the ddof argument.
+
+        {parameters}
 
         Returns
         -------
@@ -8032,58 +8057,57 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((4, 4), dtype=float)
-        >>> arr[:,:] = [[10, 5, 7, 12], \
-                        [5, 8, 7, 9], \
-                        [5, 5, 3, 9], \
-                        [10, 8, 3, 12]]
+        >>> arr = ndtest((2, 8), dtype=float)
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
+                        [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |   b0 |  b1 |  b2 |   b3
-         a0 | 10.0 | 5.0 | 7.0 | 12.0
-         a1 |  5.0 | 8.0 | 7.0 |  9.0
-         a2 |  5.0 | 5.0 | 3.0 |  9.0
-         a3 | 10.0 | 8.0 | 3.0 | 12.0
+        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
+         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
+         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
         >>> arr.std()
-        2.7810744326608736
-        >>> # along axis 'a'
-        >>> arr.std(x.a)
-        b |  b0 |  b1 |  b2 |  b3
-          | 2.5 | 1.5 | 2.0 | 1.5
+        2.1908902300206643
+        >>> # along axis 'b'
+        >>> arr.std(x.b)
+        a |  a0 |  a1
+          | 2.0 | 2.0
 
-        Select some rows only
+        Select some columns only
 
-        >>> arr.std(['a0', 'a1'])
-        b |  b0 |  b1 |  b2 |  b3
-          | 2.5 | 1.5 | 0.0 | 1.5
+        >>> arr.std(['b0', 'b1', 'b3'])
+        a |  a0 |  a1
+          | 3.0 | 2.0
         >>> # or equivalently
-        >>> # arr.std('a0,a1')
+        >>> # arr.std('b0,b1,b3')
 
         Split an axis in several parts
 
-        >>> arr.std((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |  b0 |  b1 |  b2 |  b3
-        a0,a1 | 2.5 | 1.5 | 0.0 | 1.5
-        a2,a3 | 2.5 | 1.5 | 0.0 | 1.5
+        >>> arr.std((['b0', 'b1', 'b3'], 'b5:'))
+        a\\b | b0,b1,b3 | b5:
+         a0 |      3.0 | 1.0
+         a1 |      2.0 | 1.0
         >>> # or equivalently
-        >>> # arr.std('a0,a1;a2,a3')
+        >>> # arr.std('b0,b1,b3;b5:')
 
         Same with renaming
 
-        >>> arr.std((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |  b0 |  b1 |  b2 |  b3
-        a01 | 2.5 | 1.5 | 0.0 | 1.5
-        a23 | 2.5 | 1.5 | 0.0 | 1.5
+        >>> arr.std((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        a\\b | b013 | b567
+         a0 |  3.0 |  1.0
+         a1 |  2.0 |  1.0
         >>> # or equivalently
-        >>> # arr.std('a0,a1>>a01;a2,a3>>a23')
-        """.format(_doc_agg_method("standard deviation", kwargs="dtype,out,ddof,skipna,keepaxes"))
+        >>> # arr.std('b0,b1,b3>>b013;b5:>>b567')
+        """
         pass
 
-    @_decorate_agg_method(np.std, np.nanstd, by_agg=True)
+    @_decorate_agg_method(np.std, np.nanstd, by_agg=True, extra_kwargs=['dtype', 'ddof'],
+                          long_name="standard deviation")
     def std_by(self, *args, **kwargs):
-        """
-        Computes the standard deviation.
+        """{signature}
+        Computes the sample standard deviation.
 
-        {}
+        Normalized by N-1 by default. This can be changed using the ddof argument.
+
+        {parameters}
 
         Returns
         -------
@@ -8097,47 +8121,46 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((4, 4), dtype=float)
-        >>> arr[:,:] = [[10, 5, 7, 12], \
-                        [5, 8, 7, 9], \
-                        [5, 5, 3, 9], \
-                        [10, 8, 3, 12]]
+        >>> arr = ndtest((2, 8), dtype=float)
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
+                        [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |   b0 |  b1 |  b2 |   b3
-         a0 | 10.0 | 5.0 | 7.0 | 12.0
-         a1 |  5.0 | 8.0 | 7.0 |  9.0
-         a2 |  5.0 | 5.0 | 3.0 |  9.0
-         a3 | 10.0 | 8.0 | 3.0 | 12.0
+        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
+         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
+         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
         >>> arr.std_by()
-        2.7810744326608736
-        >>> # along axis 'b'
-        >>> arr.std_by(x.b)
-        b |  b0 |  b1 |  b2 |  b3
-          | 2.5 | 1.5 | 2.0 | 1.5
+        2.1908902300206643
+        >>> # along axis 'a'
+        >>> arr.std_by(x.a)
+        a |  a0 |  a1
+          | 2.0 | 2.0
 
-        Select some rows only
+        Select some columns only
 
-        >>> arr.std_by(['b0', 'b1'])
-        0.5
+        >>> arr.std_by(x.a, ['b0','b1','b3'])
+        a |  a0 |  a1
+          | 3.0 | 2.0
         >>> # or equivalently
-        >>> # arr.std_by('b0,b1')
+        >>> # arr.std_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
-        >>> arr.std_by((['b0', 'b1'], ['b2', 'b3']))
-        b | b0,b1 | b2,b3
-          |   0.5 |  0.25
+        >>> arr.std_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
+        a\\b | b0,b1,b3 | b5:
+         a0 |      3.0 | 1.0
+         a1 |      2.0 | 1.0
         >>> # or equivalently
-        >>> # arr.std_by('b0,b1;b2,b3')
+        >>> # arr.std_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
-        >>> arr.std_by((x.b['b0', 'b1'] >> 'b01', x.b['b2', 'b3'] >> 'b23'))
-        b | b01 |  b23
-          | 0.5 | 0.25
+        >>> arr.std_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        a\\b | b013 | b567
+         a0 |  3.0 |  1.0
+         a1 |  2.0 |  1.0
         >>> # or equivalently
-        >>> # arr.std_by('b0,b1>>b01;b2,b3>>b23')
-        """.format(_doc_agg_method("standard deviation", by=True, kwargs="dtype,out,ddof,skipna,keepaxes"))
+        >>> # arr.std_by('a','b0,b1,b3>>b013;b5:>>b567')
+        """
         pass
 
     # cumulative aggregates

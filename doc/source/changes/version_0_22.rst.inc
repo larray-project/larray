@@ -168,13 +168,19 @@ Miscellaneous improvements
 
 (closes :issue:`152`)
 
-* replaced *args, **kwargs by explicit arguments in aggregation functions (sum, prod, mean, std, var, ...)
-  (closes :issue:`41`)
+* replaced *args, **kwargs by explicit arguments in documentation of aggregation functions
+  (sum, prod, mean, std, var, ...). (closes :issue:`41`)
 
 * improved documentation of plot method (closes :issue:`169`)
 
+* Default value of argument `ddof` for var and std functions set to 1 instead of 0.
+  (closes :issue:`190`)
+
 Fixes
 -----
+
+* fixed keyword arguments as `out`, `ddof`, ... for aggregation functions
+  (closes : issue:`189`)
 
 * fixed group aggregates on integer arrays for median, percentile, var and std (closes :issue:`193`).
 
