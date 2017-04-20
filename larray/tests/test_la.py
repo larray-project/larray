@@ -2524,13 +2524,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     def test_group_agg_on_int_array(self):
         # issue 193
-        arr = ndrange('year=2014..2016')
-        group = arr.year[:2015]
-        self.assertEqual(arr.mean(group), 0.5)
-        self.assertEqual(arr.median(group), 0.5)
-        self.assertEqual(arr.percentile(90, group), 0.9)
-        self.assertEqual(arr.std(group), 0.5)
-        self.assertEqual(arr.var(group), 0.25)
+        arr = ndrange('year=2014..2018')
+        group = arr.year[:2016]
+        self.assertEqual(arr.mean(group), 1.0)
+        self.assertEqual(arr.median(group), 1.0)
+        self.assertEqual(arr.percentile(90, group), 1.8)
+        self.assertEqual(arr.std(group), 1.0)
+        self.assertEqual(arr.var(group), 1.0)
 
     def test_group_agg_on_bool_array(self):
         # issue 194
