@@ -2798,6 +2798,22 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                                      "label for any axis"):
             small.sum(lipro4['P01,P16'])
 
+    def test_agg_kwargs(self):
+        la = self.larray
+        data = self.array
+
+        # dtype
+        self.assertEqual(la.sum(dtype=int), data.sum(dtype=int))
+
+        # ddof
+        self.assertEqual(la.std(ddof=0), data.std(ddof=0))
+
+        # out
+        res = la.std(x.sex)
+        out = zeros_like(res)
+        la.std(x.sex, out=out)
+        assert_array_equal(res, out)
+
     def test_agg_by(self):
         la = self.larray
         age, geo, sex, lipro = la.axes

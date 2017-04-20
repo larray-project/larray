@@ -4056,7 +4056,6 @@ _kwarg_agg = {
 
 
 def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[], kwargs=[]):
-
     if not long_name:
         long_name = func.__name__
     if not action_verb:
@@ -4120,7 +4119,6 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[],
 
         \**kwargs :
         {kwargs}
-
         """.format(args=doc_args, specific=doc_specific, action_verb=action_verb, long_name=long_name,
                    kwargs=doc_kwargs)
 
