@@ -4359,12 +4359,10 @@ class LArray(object):
         return self.set_axes(axes)
 
     def __getattr__(self, key):
-        try:
+        if key in self.axes:
             return self.axes[key]
-        # XXX: maybe I should only catch KeyError here and be more aggressive
-        #  in __getitem__ to raise KeyError on any exception
-        except Exception:
-            return self.__getattribute__(key)
+        else:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
 
     def __dir__(self):
         names = set(axis.name for axis in self.axes if axis.name is not None)

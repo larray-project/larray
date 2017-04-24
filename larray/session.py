@@ -331,7 +331,10 @@ class Session(object):
         self._objects[key] = value
 
     def __getattr__(self, key):
-        return self._objects[key]
+        if key in self._objects:
+            return self._objects[key]
+        else:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
 
     def __setattr__(self, key, value):
         self._objects[key] = value
