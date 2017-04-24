@@ -2506,6 +2506,14 @@ class AxisCollection(object):
         except KeyError:
             return self.__getattribute__(key)
 
+    # needed to make *un*pickling work (because otherwise, __getattr__ is called before _map exists, which leads to
+    # an infinite recursion)
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
     def __getitem__(self, key):
         if isinstance(key, Axis):
             try:
@@ -11353,6 +11361,13 @@ class UnaryOp(ExprNode):
 
 
 class AxisReferenceFactory(object):
+    # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__):
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
     def __getattr__(self, key):
         return AxisReference(key)
 

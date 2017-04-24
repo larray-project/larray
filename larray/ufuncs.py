@@ -5,9 +5,51 @@ import numpy as np
 
 from larray.core import LArray, make_numpy_broadcastable
 
+__all__ = [
+    # Trigonometric functions
+    'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'hypot', 'arctan2', 'degrees', 'radians', 'unwrap',
+    # 'deg2rad', 'rad2deg',
 
-def wrapper(func):
-    def wrapped(*args, **kwargs):
+    # Hyperbolic functions
+    'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+
+    # Rounding
+    'round', 'around', 'round_', 'rint', 'fix', 'floor', 'ceil', 'trunc',
+
+    # Sums, products, differences
+    # 'prod', 'sum', 'nansum', 'cumprod', 'cumsum',
+
+    # cannot use a simple wrapped ufunc because those ufuncs do not preserve shape or dimensions so labels are wrong
+    # 'diff', 'ediff1d', 'gradient', 'cross', 'trapz',
+
+    # Exponents and logarithms
+    'exp', 'expm1', 'exp2', 'log', 'log10', 'log2', 'log1p', 'logaddexp', 'logaddexp2',
+
+    # Other special functions
+    'i0', 'sinc',
+
+    # Floating point routines
+    'signbit', 'copysign', 'frexp', 'ldexp',
+
+    # Arithmetic operations
+    # 'add', 'reciprocal', 'negative', 'multiply', 'divide', 'power', 'subtract', 'true_divide', 'floor_divide',
+    # 'fmod', 'mod', 'modf', 'remainder',
+
+    # Handling complex numbers
+    'angle', 'real', 'imag', 'conj',
+
+    # Miscellaneous
+    'convolve', 'clip', 'sqrt',
+    # 'square',
+    'absolute', 'fabs', 'sign', 'maximum', 'minimum', 'fmax', 'fmin', 'nan_to_num', 'real_if_close',
+    'interp', 'where', 'isnan', 'isinf',
+    'inverse',
+]
+
+
+def broadcastify(func):
+    # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
+    def wrapper(*args, **kwargs):
         # TODO: normalize args/kwargs like in LIAM2 so that we can also
         # broadcast if args are given via kwargs (eg out=)
         args, combined_axes = make_numpy_broadcastable(args)
@@ -34,130 +76,133 @@ def wrapper(func):
             return LArray(res_data, combined_axes)
         else:
             return res_data
-        # return func(*args, **kwargs)
-    wrapped.__name__ = func.__name__
-    wrapped.__doc__ = func.__doc__
-    return wrapped
+    # copy meaningful attributes (numpy ufuncs do not have __annotations__ nor __qualname__)
+    wrapper.__name__ = func.__name__
+    wrapper.__doc__ = func.__doc__
+    # set __qualname__ explicitly (all these functions are supposed to be top-level function in the ufuncs module)
+    wrapper.__qualname__ = func.__name__
+    # we should not copy __module__
+    return wrapper
 
 
 # Trigonometric functions
 
-sin = wrapper(np.sin)
-cos = wrapper(np.cos)
-tan = wrapper(np.tan)
-arcsin = wrapper(np.arcsin)
-arccos = wrapper(np.arccos)
-arctan = wrapper(np.arctan)
-hypot = wrapper(np.hypot)
-arctan2 = wrapper(np.arctan2)
-degrees = wrapper(np.degrees)
-radians = wrapper(np.radians)
-unwrap = wrapper(np.unwrap)
-# deg2rad = wrapper(np.deg2rad)
-# rad2deg = wrapper(np.rad2deg)
+sin = broadcastify(np.sin)
+cos = broadcastify(np.cos)
+tan = broadcastify(np.tan)
+arcsin = broadcastify(np.arcsin)
+arccos = broadcastify(np.arccos)
+arctan = broadcastify(np.arctan)
+hypot = broadcastify(np.hypot)
+arctan2 = broadcastify(np.arctan2)
+degrees = broadcastify(np.degrees)
+radians = broadcastify(np.radians)
+unwrap = broadcastify(np.unwrap)
+# deg2rad = broadcastify(np.deg2rad)
+# rad2deg = broadcastify(np.rad2deg)
 
 # Hyperbolic functions
 
-sinh = wrapper(np.sinh)
-cosh = wrapper(np.cosh)
-tanh = wrapper(np.tanh)
-arcsinh = wrapper(np.arcsinh)
-arccosh = wrapper(np.arccosh)
-arctanh = wrapper(np.arctanh)
+sinh = broadcastify(np.sinh)
+cosh = broadcastify(np.cosh)
+tanh = broadcastify(np.tanh)
+arcsinh = broadcastify(np.arcsinh)
+arccosh = broadcastify(np.arccosh)
+arctanh = broadcastify(np.arctanh)
 
 # Rounding
 
 # all 3 are equivalent, I am unsure I should support around and round_
-round = wrapper(np.round)
-around = wrapper(np.around)
-round_ = wrapper(np.round_)
-rint = wrapper(np.rint)
-fix = wrapper(np.fix)
-floor = wrapper(np.floor)
-ceil = wrapper(np.ceil)
-trunc = wrapper(np.trunc)
+round = broadcastify(np.round)
+around = broadcastify(np.around)
+round_ = broadcastify(np.round_)
+rint = broadcastify(np.rint)
+fix = broadcastify(np.fix)
+floor = broadcastify(np.floor)
+ceil = broadcastify(np.ceil)
+trunc = broadcastify(np.trunc)
 
 # Sums, products, differences
 
-# prod = wrapper(np.prod)
-# sum = wrapper(np.sum)
-# nansum = wrapper(np.nansum)
-# cumprod = wrapper(np.cumprod)
-# cumsum = wrapper(np.cumsum)
+# prod = broadcastify(np.prod)
+# sum = broadcastify(np.sum)
+# nansum = broadcastify(np.nansum)
+# cumprod = broadcastify(np.cumprod)
+# cumsum = broadcastify(np.cumsum)
 
 # cannot use a simple wrapped ufunc because those ufuncs do not preserve
 # shape or dimensions so labels are wrong
-# diff = wrapper(np.diff)
-# ediff1d = wrapper(np.ediff1d)
-# gradient = wrapper(np.gradient)
-# cross = wrapper(np.cross)
-# trapz = wrapper(np.trapz)
+# diff = broadcastify(np.diff)
+# ediff1d = broadcastify(np.ediff1d)
+# gradient = broadcastify(np.gradient)
+# cross = broadcastify(np.cross)
+# trapz = broadcastify(np.trapz)
 
 # Exponents and logarithms
 
-exp = wrapper(np.exp)
-expm1 = wrapper(np.expm1)
-exp2 = wrapper(np.exp2)
-log = wrapper(np.log)
-log10 = wrapper(np.log10)
-log2 = wrapper(np.log2)
-log1p = wrapper(np.log1p)
-logaddexp = wrapper(np.logaddexp)
-logaddexp2 = wrapper(np.logaddexp2)
+exp = broadcastify(np.exp)
+expm1 = broadcastify(np.expm1)
+exp2 = broadcastify(np.exp2)
+log = broadcastify(np.log)
+log10 = broadcastify(np.log10)
+log2 = broadcastify(np.log2)
+log1p = broadcastify(np.log1p)
+logaddexp = broadcastify(np.logaddexp)
+logaddexp2 = broadcastify(np.logaddexp2)
 
 # Other special functions
 
-i0 = wrapper(np.i0)
-sinc = wrapper(np.sinc)
+i0 = broadcastify(np.i0)
+sinc = broadcastify(np.sinc)
 
 # Floating point routines
 
-signbit = wrapper(np.signbit)
-copysign = wrapper(np.copysign)
-frexp = wrapper(np.frexp)
-ldexp = wrapper(np.ldexp)
+signbit = broadcastify(np.signbit)
+copysign = broadcastify(np.copysign)
+frexp = broadcastify(np.frexp)
+ldexp = broadcastify(np.ldexp)
 
 # Arithmetic operations
 
-# add = wrapper(np.add)
-# reciprocal = wrapper(np.reciprocal)
-# negative = wrapper(np.negative)
-# multiply = wrapper(np.multiply)
-# divide = wrapper(np.divide)
-# power = wrapper(np.power)
-# subtract = wrapper(np.subtract)
-# true_divide = wrapper(np.true_divide)
-# floor_divide = wrapper(np.floor_divide)
-# fmod = wrapper(np.fmod)
-# mod = wrapper(np.mod)
-modf = wrapper(np.modf)
-# remainder = wrapper(np.remainder)
+# add = broadcastify(np.add)
+# reciprocal = broadcastify(np.reciprocal)
+# negative = broadcastify(np.negative)
+# multiply = broadcastify(np.multiply)
+# divide = broadcastify(np.divide)
+# power = broadcastify(np.power)
+# subtract = broadcastify(np.subtract)
+# true_divide = broadcastify(np.true_divide)
+# floor_divide = broadcastify(np.floor_divide)
+# fmod = broadcastify(np.fmod)
+# mod = broadcastify(np.mod)
+# modf = broadcastify(np.modf)
+# remainder = broadcastify(np.remainder)
 
 # Handling complex numbers
 
-angle = wrapper(np.angle)
-real = wrapper(np.real)
-imag = wrapper(np.imag)
-conj = wrapper(np.conj)
+angle = broadcastify(np.angle)
+real = broadcastify(np.real)
+imag = broadcastify(np.imag)
+conj = broadcastify(np.conj)
 
 # Miscellaneous
 
-convolve = wrapper(np.convolve)
-clip = wrapper(np.clip)
-sqrt = wrapper(np.sqrt)
-# square = wrapper(np.square)
-absolute = wrapper(np.absolute)
-fabs = wrapper(np.fabs)
-sign = wrapper(np.sign)
-maximum = wrapper(np.maximum)
-minimum = wrapper(np.minimum)
-fmax = wrapper(np.fmax)
-fmin = wrapper(np.fmin)
-nan_to_num = wrapper(np.nan_to_num)
-real_if_close = wrapper(np.real_if_close)
-interp = wrapper(np.interp)
-where = wrapper(np.where)
-isnan = wrapper(np.isnan)
-isinf = wrapper(np.isinf)
+convolve = broadcastify(np.convolve)
+clip = broadcastify(np.clip)
+sqrt = broadcastify(np.sqrt)
+# square = broadcastify(np.square)
+absolute = broadcastify(np.absolute)
+fabs = broadcastify(np.fabs)
+sign = broadcastify(np.sign)
+maximum = broadcastify(np.maximum)
+minimum = broadcastify(np.minimum)
+fmax = broadcastify(np.fmax)
+fmin = broadcastify(np.fmin)
+nan_to_num = broadcastify(np.nan_to_num)
+real_if_close = broadcastify(np.real_if_close)
+interp = broadcastify(np.interp)
+where = broadcastify(np.where)
+isnan = broadcastify(np.isnan)
+isinf = broadcastify(np.isinf)
 
-inverse = wrapper(np.linalg.inv)
+inverse = broadcastify(np.linalg.inv)
