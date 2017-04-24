@@ -76,8 +76,6 @@
 
   even if this could suffer, to a lesser extent, the same problem as above when stacking many arrays.
 
-* updated AxisCollection.replace so as to replace one, several or all axes.
-
 * implemented reindex allowing to change order of labels (and add new ones) of one or several axes:
 
     >>> arr = ndtest((2, 2))
@@ -103,11 +101,11 @@
      a1 |  2 |  3 | -1
      a2 | -1 | -1 | -1
 
-    (closes :issue:`18`).
+  This closes :issue:`18`.
 
-* added load_example_data function to load datasets used in tutorial and be able to reproduce examples.
-  The name of the dataset must be provided as argument (there is currently only one available dataset).
-  Datasets are returned as Session objects:
+* added load_example_data function to load datasets used in tutorial and be able to reproduce examples. The name of the
+  dataset must be provided as argument (there is currently only one available dataset). Datasets are returned as
+  Session objects:
 
     >>> demo = load_example_data('demography')
     >>> demo.pop.info
@@ -127,17 +125,27 @@
 
   (closes :issue:`170`)
 
-* viewer: added possibility to delete an array by pressing Delete on keyboard.
-  (closes :issue:`116`)
+* viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
+
 
 .. _misc:
-
 
 Miscellaneous improvements
 --------------------------
 
+* inverted `name` and `labels` arguments when creating an Axis and made `name` argument optional (to create anonymous
+  axes). Now, it is also possible to create an Axis by passing a single string of the kind 'name=labels':
+
+    >>> anonymous = Axis('0..100')
+    >>> age = Axis('age=0..100')
+    >>> gender = Axis('M,F', 'gender')
+
+  (closes :issue:`152`)
+
+* changed default value of `ddof` argument for var and std functions from 0 to 1 (closes :issue:`190`).
+
 * handle ... in transpose method to avoid having to list all axes. This can be useful, for example, to change which
-  axis is in columns (closes :issue:`188`).
+  axis is displayed in columns (closes :issue:`188`).
 
     >>> arr.transpose(..., 'time')
     >>> arr.transpose('gender', ..., 'time')
@@ -151,6 +159,8 @@ Miscellaneous improvements
     >>> test.i[1].split('-')
     ['a1', 'a2']
 
+* updated AxisCollection.replace so as to replace one, several or all axes.
+
 * made create_sequential axis argument accept all the ways to create axes supported by other array creation functions
   like, for example, using a string definition (closes :issue:`160`).
 
@@ -158,29 +168,16 @@ Miscellaneous improvements
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
 
-* inverted `name` and `labels` arguments when creating an Axis.
-  Argument `name` is optional (anonymous axis).
-  It is also possible to create an Axis by passing a single string of the kind 'name=labels':
+* replaced *args, **kwargs by explicit arguments in documentation of aggregation functions (sum, prod, mean, std,
+  var, ...). Closes :issue:`41`.
 
-    >>> anonymous = Axis('0..100')
-    >>> age = Axis('age=0..100')
-    >>> gender = Axis('M,F', 'gender')
+* improved documentation of plot method (closes :issue:`169`).
 
-(closes :issue:`152`)
-
-* replaced *args, **kwargs by explicit arguments in documentation of aggregation functions
-  (sum, prod, mean, std, var, ...). (closes :issue:`41`)
-
-* improved documentation of plot method (closes :issue:`169`)
-
-* Default value of argument `ddof` for var and std functions set to 1 instead of 0.
-  (closes :issue:`190`)
 
 Fixes
 -----
 
-* fixed keyword arguments as `out`, `ddof`, ... for aggregation functions
-  (closes : issue:`189`)
+* fixed keyword arguments such as `out`, `ddof`, ... for aggregation functions (closes :issue:`189`).
 
 * fixed percentile(_by) with multiple percentiles values (i.e. when argument `q` is a list/tuple).
   (closes :issue:`192`)
@@ -190,7 +187,7 @@ Fixes
 
 * fixed group sum over boolean arrays (closes :issue:`194`).
 
-* fixed set_labels when inplace=True
+* fixed set_labels when inplace=True.
 
 * fixed array creation functions not raising an exception when called with wrong syntax func(axis1, axis2, ...)
-  instead of func([axis1, axis2, ...]). (closes :issue:`203`)
+  instead of func([axis1, axis2, ...]) (closes :issue:`203`).
