@@ -76,6 +76,7 @@ import math
 import re
 import sys
 import os
+import traceback
 
 from qtpy.QtWidgets import (QApplication, QHBoxLayout, QTableView, QItemDelegate,
                             QListWidget, QSplitter, QListWidgetItem,
@@ -2606,6 +2607,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     """
     _app = QApplication.instance()
     if _app is None:
+        install_except_hook()
         _app = qapplication()
         parent = None
     else:
@@ -2630,6 +2632,8 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
             dlg.show()
         else:
             dlg.exec_()
+    if parent is None:
+        restore_except_hook()
 
 
 def view(obj=None, title='', depth=0):
@@ -2655,6 +2659,7 @@ def compare(*args, **kwargs):
     title = kwargs.pop('title', '')
     _app = QApplication.instance()
     if _app is None:
+        install_except_hook()
         _app = qapplication()
         parent = None
     else:
@@ -2677,6 +2682,24 @@ def compare(*args, **kwargs):
             dlg.show()
         else:
             dlg.exec_()
+    if parent is None:
+        restore_except_hook()
+
+
+_orig_except_hook = sys.excepthook
+
+
+def _qt_except_hook(type, value, tback):
+    # only print the exception and do *not* exit the program
+    traceback.print_exception(type, value, tback)
+
+
+def install_except_hook():
+    sys.excepthook = _qt_except_hook
+
+
+def restore_except_hook():
+    sys.excepthook = _orig_except_hook
 
 
 _orig_display_hook = sys.displayhook
