@@ -173,6 +173,23 @@ Miscellaneous improvements
 
 * improved documentation of plot method (closes :issue:`169`).
 
+* improved auto-completion in interactive consoles for both LArray and Session objects. LArray objects can now
+  complete keys within [].
+
+    >>> a = ndrange('sex=Male,Female')
+    >>> a
+    sex | Male | Female
+        |    0 |      1
+    >>> a['Fe<tab>`
+
+  will autocomplete to `a['Female`. Sessions will now auto-complete both attributes (using `session.`) and keys
+  (using `session[`).
+
+    >>> s = Session({'a_nice_test_array': ndtest(10)})
+    >>> s.a_<tab>
+
+  will autocomplete to `s.a_nice_test_array` and `s['a_<tab>` will be completed to `s['a_nice_test_array`
+
 
 Fixes
 -----

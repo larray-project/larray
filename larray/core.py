@@ -4368,6 +4368,9 @@ class LArray(object):
         names = set(axis.name for axis in self.axes if axis.name is not None)
         return list(set(dir(self.__class__)) | names)
 
+    def _ipython_key_completions_(self):
+        return list(chain(*[list(labels) for labels in self.axes.labels]))
+
     @property
     def i(self):
         """

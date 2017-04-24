@@ -330,6 +330,9 @@ class Session(object):
     def __setitem__(self, key, value):
         self._objects[key] = value
 
+    def _ipython_key_completions_(self):
+        return list(self.keys())
+
     def __getattr__(self, key):
         if key in self._objects:
             return self._objects[key]
@@ -338,6 +341,9 @@ class Session(object):
 
     def __setattr__(self, key, value):
         self._objects[key] = value
+
+    def __dir__(self):
+        return list(set(dir(self.__class__)) | set(self.keys()))
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
