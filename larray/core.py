@@ -4363,6 +4363,14 @@ class LArray(object):
         else:
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
 
+    # needed to make *un*pickling work (because otherwise, __getattr__ is called before .axes exists, which leads to
+    # an infinite recursion)
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
     def __dir__(self):
         names = set(axis.name for axis in self.axes if axis.name is not None)
         return list(set(dir(self.__class__)) | names)
