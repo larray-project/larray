@@ -1966,7 +1966,7 @@ class MappingEditor(QMainWindow):
         self.eval_box = None
         self.expressions = {}
         self.kernel = None
-        self._appliedchanges = False
+        self._unsaved_modifications = False
 
         self.setup_menu_bar()
 
@@ -2182,6 +2182,9 @@ class MappingEditor(QMainWindow):
 
         self.add_list_items(displayed_keys_after - displayed_keys_before)
 
+        if len(displayed_keys_after - displayed_keys_before) > 0:
+            self._unsaved_modifications = True
+
         # this can contain more keys than displayed_keys_after - displayed_keys_before (because of existing keys
         # which changed value)
         displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
@@ -2301,7 +2304,7 @@ class MappingEditor(QMainWindow):
         if self.arraywidget.model.readonly:
             return False
         else:
-            return len(self.arraywidget.model.changes) > 0 or self._appliedchanges
+            return len(self.arraywidget.model.changes) > 0 or self._unsaved_modifications
 
     def _askToSaveIfDataModified(self):
         if self._isDataModified():
@@ -2323,6 +2326,7 @@ class MappingEditor(QMainWindow):
             self._clear_arrays()
             self.arraywidget.set_data(la.zeros(0))
             self.setCurrentFile(None)
+            self._unsaved_modifications = False
             self.statusBar().showMessage("Viewer has been reset", 4000)
 
     def _openFile(self, filepath):
@@ -2332,6 +2336,7 @@ class MappingEditor(QMainWindow):
         self._add_arrays(session)
         self._listwidget.setCurrentRow(0)
         self.setCurrentFile(filepath)
+        self._unsaved_modifications = False
         self.statusBar().showMessage("File {} loaded".format(os.path.basename(filepath)), 4000)
 
     @Slot()
@@ -2362,7 +2367,7 @@ class MappingEditor(QMainWindow):
         session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
         session.save(filepath)
         self.setCurrentFile(filepath)
-        self._appliedchanges = False
+        self._unsaved_modifications = False
         self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
 
     @Slot()
@@ -2421,9 +2426,9 @@ class MappingEditor(QMainWindow):
             event.ignore()
 
     def apply_changes(self):
-        # update _unsavedmodifications only if 1 or more changes have been applied
+        # update _unsaved_modifications only if 1 or more changes have been applied
         if len(self.arraywidget.model.changes) > 0:
-            self._appliedchanges = True
+            self._unsaved_modifications = True
         self.arraywidget.accept_changes()
 
     def discard_changes(self):
