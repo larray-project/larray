@@ -2408,7 +2408,7 @@ def _make_axis(obj):
         return obj
     elif isinstance(obj, tuple):
         assert len(obj) == 2
-        name, labels = obj
+        labels, name = obj
         return Axis(labels, name)
     elif isinstance(obj, Group):
         return Axis(obj.eval(), obj.axis)
