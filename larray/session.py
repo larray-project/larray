@@ -351,6 +351,15 @@ class Session(object):
     def __dir__(self):
         return list(set(dir(self.__class__)) | set(self.keys()))
 
+    # needed to make *un*pickling work (because otherwise, __getattr__ is called before ._objects exists, which leads to
+    # an infinite recursion)
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        # equivalent to self.__dict__ = d (we need this form because __setattr__ is overridden)
+        object.__setattr__(self, '__dict__', d)
+
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
         Loads array objects from a file.
