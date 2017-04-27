@@ -2781,7 +2781,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
     dlg = MappingEditor(parent) if hasattr(obj, 'keys') else ArrayEditor(parent)
     if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
-        if parent:
+        if parent or isinstance(dlg, MappingEditor):
             dlg.show()
         else:
             dlg.exec_()
