@@ -239,4 +239,4 @@ Fixes
 
 * fixed loading session from CSV files in a directory. The directory may contain other non-csv files.
 
-
+* fixed with_axes warning to refer to set_axes instead of replace_axes.
