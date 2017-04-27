@@ -2353,7 +2353,10 @@ class MappingEditor(QMainWindow):
             action = self.sender()
             if action:
                 filepath = action.data()
-                self._openFile(filepath)
+                if os.path.isfile(filepath):
+                    self._openFile(filepath)
+                else:
+                    QMessageBox.warning(self, "Warning", "File not found")
 
     def _saveData(self, filepath):
         session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
