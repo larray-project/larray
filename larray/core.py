@@ -716,15 +716,15 @@ def union(*args):
         return []
 
 
-def larray_equal(first, other):
+def larray_equal(a1, a2):
     """
     Compares two arrays and returns True if they have the same axes and elements (and do not contain nan values,
     see note below), False otherwise.
 
     Parameters
     ----------
-    first, other : LArray
-        Input arrays.
+    a1, a2 : LArray-like
+        Input arrays. aslarray() is used on non-LArray inputs.
 
     Returns
     -------
@@ -756,23 +756,25 @@ def larray_equal(first, other):
     >>> larray_equal(arr1, arr2)
     False
     >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
-    >>> larray_equal(arr1, arr2)
+    >>> larray_equal(arr1, arr3)
     False
     """
-    if not isinstance(first, LArray) or not isinstance(other, LArray):
+    try:
+        a1, a2 = aslarray(a1), aslarray(a2)
+    except Exception:
         return False
-    return (first.axes == other.axes and
-            np.array_equal(np.asarray(first), np.asarray(other)))
+    return (a1.axes == a2.axes and
+            np.array_equal(np.asarray(a1), np.asarray(a2)))
 
 
-def larray_nan_equal(first, other):
+def larray_nan_equal(a1, a2):
     """
     Compares two arrays and returns True if they have the same axes and elements, False otherwise.
 
     Parameters
     ----------
-    first, other : LArray
-        Input arrays.
+    a1, a2 : LArray-like
+        Input arrays. aslarray() is used on non-LArray inputs.
 
     Returns
     -------
@@ -800,13 +802,21 @@ def larray_nan_equal(first, other):
     >>> larray_nan_equal(arr1, arr2)
     False
     >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
-    >>> larray_nan_equal(arr1, arr2)
+    >>> larray_nan_equal(arr1, arr3)
     False
+    >>> larray_nan_equal([0], [0])
+    True
     """
-    if not isinstance(first, LArray) or not isinstance(other, LArray):
+    def isnan(a):
+        assert isinstance(a, np.ndarray)
+        return np.isnan(a) if np.issubclass_(a.dtype.type, np.inexact) else False
+
+    try:
+        a1, a2 = aslarray(a1), aslarray(a2)
+    except Exception:
         return False
-    eq = (first == other) | (np.isnan(first) & np.isnan(other))
-    return first.axes == other.axes and all(eq)
+    npa1, npa2 = np.asarray(a1), np.asarray(a2)
+    return a1.axes == a2.axes and np.all((npa1 == npa2) | (isnan(npa1) & isnan(npa2)))
 
 
 def _isnoneslice(v):
