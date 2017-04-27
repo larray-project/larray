@@ -133,7 +133,7 @@ class TestSession(TestCase):
     def test_h5_io(self):
         fpath = abspath('test_session.h5')
 
-        self.session.dump(fpath)
+        self.session.save(fpath)
         s = Session()
         s.load(fpath)
         self.assertEqual(s.names, ['e', 'f', 'g'])

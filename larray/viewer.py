@@ -2360,7 +2360,7 @@ class MappingEditor(QMainWindow):
 
     def _saveData(self, filepath):
         session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
-        session.dump(filepath)
+        session.save(filepath)
         self.setCurrentFile(filepath)
         self._appliedchanges = False
         self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
