@@ -127,6 +127,11 @@
 
 * viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
 
+* viewer: added a menu bar 'File' with options 'New', 'Open', 'Save', 'SaveAs', 'Open Recent' and 'Quit'.
+  (closes :issue:`88`)
+
+* renamed dump, dump_hdf, dump_excel and dump_csv methods of class Session as save, to_hdf, to_excel and to_csv
+  (closes :issue:`217`)
 
 .. _misc:
 
@@ -191,6 +196,8 @@ Miscellaneous improvements
   will autocomplete to `s.a_nice_test_array` and `s['a_<tab>` will be completed to `s['a_nice_test_array`
 
 
+* implemented special method __delitem__ in class Session.
+
 Fixes
 -----
 
@@ -208,3 +215,16 @@ Fixes
 
 * fixed array creation functions not raising an exception when called with wrong syntax func(axis1, axis2, ...)
   instead of func([axis1, axis2, ...]) (closes :issue:`203`).
+
+* fixed adding new sheets in a workbook: a new sheet is appended instead of prepended (closes :issue:`229`).
+
+* fixed __setitem__ of Workbook when value is an instance of `Sheet` and key is new.
+
+* fixed Workbook behavior in case of new workbook: the first added sheet replaces the default sheet `Sheet1`
+  (closes :issue:`230`).
+
+* fixed load session: read arrays in the same order as they are stored.
+
+* fixed list() method of PandasCSVHandler: returns only files with extension '.csv'
+
+
