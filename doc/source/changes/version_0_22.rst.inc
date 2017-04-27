@@ -208,6 +208,10 @@ Miscellaneous improvements
     >>> s.names
     ['a']
 
+* made warning messages for division by 0 and invalid values (usually caused by 0 / 0) point to the user code line,
+  instead of the corresponding line in the larray module.
+
+
 Fixes
 -----
 

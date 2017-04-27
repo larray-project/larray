@@ -7,6 +7,7 @@ import math
 import itertools
 import sys
 import operator
+import warnings
 from textwrap import wrap
 from functools import reduce
 from itertools import product
@@ -438,3 +439,14 @@ def find_closing_chr(s, start=0):
                     return pos
     raise ValueError("malformed expression: reached end of string without "
                      "finding the expected '{}'".format(match[needle]))
+
+
+def float_error_handler_factory(stacklevel):
+    def error_handler(error, flag):
+        if error == 'invalid value':
+            error = 'invalid value (NaN)'
+            extra = ' (this is typically caused by a 0 / 0)'
+        else:
+            extra = ''
+        warnings.warn("{} encountered during operation{}".format(error, extra), RuntimeWarning, stacklevel=stacklevel)
+    return error_handler
