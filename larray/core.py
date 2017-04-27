@@ -112,10 +112,11 @@ except ImportError:
     np_nanprod = None
 
 from larray.oset import *
-from larray.utils import (table2str, size2str, unique, csv_open, unzip, long,
+from larray.utils import (table2str, size2str, unique, csv_open, long,
                           decode, basestring, unicode, bytes, izip, rproduct,
                           ReprString, duplicates, array_lookup2, strip_rows,
-                          skip_comment_cells, find_closing_chr, StringIO, PY3)
+                          skip_comment_cells, find_closing_chr, StringIO, PY3,
+                          float_error_handler_factory)
 
 
 nan = np.nan
@@ -8517,9 +8518,8 @@ class LArray(object):
             else:
                 return self / other
         else:
-            old_settings = np.seterr(divide='ignore', invalid='ignore')
-            res = self / other
-            np.seterr(**old_settings)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                res = self / other
             res[other == 0] = 0
             return res
 
@@ -11430,6 +11430,12 @@ def make_numpy_broadcastable(values):
     return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
             for v in values], all_axes
 
+
+_default_float_error_handler = float_error_handler_factory(3)
+
+
+original_float_error_settings = np.seterr(divide='call', invalid='call')
+original_float_error_handler = np.seterrcall(_default_float_error_handler)
 
 # excel IO tools in Python
 # - openpyxl, the slowest but most-complete package but still lags behind

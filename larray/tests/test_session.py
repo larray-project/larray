@@ -221,9 +221,13 @@ class TestSession(TestCase):
     def test_div(self):
         sess = self.session.filter(kind=LArray)
         other = Session({'e': self.e - 1, 'f': self.f + 1})
-        res = sess / other
 
-        flat_e = np.arange(6) / np.arange(-1, 5)
+        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+            res = sess / other
+        self.assertEqual(w.filename, __file__)
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            flat_e = np.arange(6) / np.arange(-1, 5)
         assert_array_nan_equal(res['e'], flat_e.reshape(2, 3))
 
         flat_f = np.arange(6) / np.arange(1, 7)
