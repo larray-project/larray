@@ -377,7 +377,7 @@ class Session(object):
         for k, v in arrays.items():
             self[k] = v
 
-    def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
+    def save(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
         Dumps all array objects from the current session to a file.
 
@@ -409,7 +409,7 @@ class Session(object):
             arrays = [(k, v) for k, v in arrays if k in names_set]
         handler.dump_arrays(arrays, display=display, **kwargs)
 
-    def dump_hdf(self, fname, names=None, *args, **kwargs):
+    def to_hdf(self, fname, names=None, *args, **kwargs):
         """
         Dumps all array objects from the current session to an HDF file.
 
@@ -421,9 +421,9 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         """
-        self.dump(fname, names, ext_default_engine['hdf'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['hdf'], *args, **kwargs)
 
-    def dump_excel(self, fname, names=None, *args, **kwargs):
+    def to_excel(self, fname, names=None, *args, **kwargs):
         """
         Dumps all array objects from the current session to an Excel file.
 
@@ -435,9 +435,9 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         """
-        self.dump(fname, names, ext_default_engine['xlsx'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['xlsx'], *args, **kwargs)
 
-    def dump_csv(self, fname, names=None, *args, **kwargs):
+    def to_csv(self, fname, names=None, *args, **kwargs):
         """
         Dumps all array objects from the current session to a CSV file.
 
@@ -449,7 +449,7 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         """
-        self.dump(fname, names, ext_default_engine['csv'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['csv'], *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):
         """
