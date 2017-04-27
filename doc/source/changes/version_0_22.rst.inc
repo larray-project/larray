@@ -128,6 +128,9 @@
 * viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
 
 * viewer: added a menu bar 'File' with options 'New', 'Open', 'Save', 'SaveAs', 'Open Recent' and 'Quit'.
+
+  WARNING: Only LArray objects are saved.
+
   (closes :issue:`88`)
 
 * renamed dump, dump_hdf, dump_excel and dump_csv methods of class Session as save, to_hdf, to_excel and to_csv
