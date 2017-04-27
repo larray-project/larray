@@ -4799,9 +4799,8 @@ class LArray(object):
             In that case, the number of new axes must match the number of the old ones.
         new_axis : int, str, list/tuple of str or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
-        fill_value : scalar, optional
-            Value set to data corresponding to added labels.
-            Defaults to NaN.
+        fill_value : scalar or LArray, optional
+            Value set to data corresponding to added labels. Defaults to NaN.
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
@@ -4857,8 +4856,7 @@ class LArray(object):
          a2 | nan | nan | nan
          a0 | nan | 1.0 | 0.0
         """
-        if not np.isscalar(fill_value):
-            raise TypeError("fill_value must be a scalar")
+        # XXX: can't we move this to AxisCollection.replace?
         if isinstance(new_axis, (int, basestring, list, tuple)):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
         res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
