@@ -3030,9 +3030,23 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la * 2, raw * 2)
         assert_array_equal(2 * la, 2 * raw)
 
-        assert_array_nan_equal(la / la, raw / raw)
+        with np.errstate(invalid='ignore'):
+            raw_res = raw / raw
+        warn_regexp = "invalid value \(NaN\) encountered during operation \(this is typically caused by a 0 / 0\)"
+        with self.assertWarnsRegex(RuntimeWarning, warn_regexp) as w:
+            res = la / la
+        assert_array_nan_equal(res, raw_res)
+        self.assertEqual(w.filename, __file__)
+
         assert_array_equal(la / 2, raw / 2)
-        assert_array_equal(30 / la, 30 / raw)
+
+        with np.errstate(divide='ignore'):
+            raw_res = 30 / raw
+        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+            res = 30 / la
+        assert_array_equal(res, raw_res)
+        self.assertEqual(w.filename, __file__)
+
         assert_array_equal(30 / (la + 1), 30 / (raw + 1))
 
         raw_int = raw.astype(int)
@@ -3080,7 +3094,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         assert_array_nan_equal(la / la2, raw / raw2)
         assert_array_equal(la / 2, raw / 2)
-        assert_array_equal(30 / la, 30 / raw)
+
+        with np.errstate(divide='ignore'):
+            raw_res = 30 / raw
+        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+            res = 30 / la
+        assert_array_equal(res, raw_res)
+        self.assertEqual(w.filename, __file__)
         assert_array_equal(30 / (la + 1), 30 / (raw + 1))
 
         raw_int = raw.astype(int)
@@ -4044,7 +4064,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
                           ['a1', 'b1', 'd0', 14, 15],
                           ['a1', 'b1', 'd1', 66, 71]])
         assert_array_equal(arr2d.__matmul__(arr4d), res)
-
 
     @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
     def test_rmatmul(self):

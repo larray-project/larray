@@ -10,6 +10,7 @@ from pandas import ExcelWriter, ExcelFile, HDFStore
 
 from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_equal, larray_nan_equal, get_axes
 from .excel import open_excel
+from .utils import float_error_handler_factory
 
 
 def check_pattern(k, pattern):
@@ -537,11 +538,12 @@ class Session(object):
             self_keys = set(self.keys())
             all_keys = list(self.keys()) + [n for n in other.keys() if
                                             n not in self_keys]
-            res = []
-            for name in all_keys:
-                self_array = self.get(name, np.nan)
-                other_array = other.get(name, np.nan)
-                res.append((name, getattr(self_array, opfullname)(other_array)))
+            with np.errstate(call=_session_float_error_handler):
+                res = []
+                for name in all_keys:
+                    self_array = self.get(name, np.nan)
+                    other_array = other.get(name, np.nan)
+                    res.append((name, getattr(self_array, opfullname)(other_array)))
             return Session(res)
         opmethod.__name__ = opfullname
         return opmethod
@@ -600,3 +602,6 @@ def local_arrays(depth=0):
     d = sys._getframe(depth + 1).f_locals
     return Session((k, d[k]) for k in sorted(d.keys())
                    if isinstance(d[k], LArray))
+
+
+_session_float_error_handler = float_error_handler_factory(4)
