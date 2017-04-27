@@ -788,13 +788,13 @@ class TestPGroup(TestCase):
         self._assert_array_equal_is_true_array(self.tuple, ['a0', 'a1', 'a3', 'a4'])
 
     def test_getattr(self):
-        agg = Axis('agg', ['a1:a2', ':a2', 'a1:'])
+        agg = Axis(['a1:a2', ':a2', 'a1:'], 'agg')
         self.assertEqual(agg.i[0].split(':'), ['a1', 'a2'])
         self.assertEqual(agg.i[1].split(':'), ['', 'a2'])
         self.assertEqual(agg.i[2].split(':'), ['a1', ''])
 
     def test_dir(self):
-        agg = Axis('agg', ['a', 1])
+        agg = Axis(['a', 1], 'agg')
         self.assertTrue('split' in dir(agg.i[0]))
         self.assertTrue('strip' in dir(agg.i[0]))
         self.assertTrue('strip' in dir(agg.i[0]))
