@@ -3217,13 +3217,24 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la, la2)
 
     def test_reindex(self):
-        la = self.small.reindex(x.sex, ['F', 'M', 'U'], fill_value=0)
-        self.assertEqual(la.shape, (3, 15))
-        self.assertSequenceEqual(list(la.sex.labels), ['F', 'M', 'U'])
+        arr = ndtest((2, 2))
+        res = arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
+        assert_array_equal(res, from_string("""a\\b, b1, b2, b0
+                                                 a0,  1, -1,  0
+                                                 a1,  3, -1,  2"""))
 
-        la2 = self.small.copy()
-        la2.reindex(x.sex, ['F', 'M', 'U'], fill_value=0, inplace=True)
-        assert_array_equal(la, la2)
+        arr2 = ndtest((2, 2))
+        arr2.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1, inplace=True)
+        assert_array_equal(arr2, from_string("""a\\b, b1, b2, b0
+                                                  a0,  1, -1,  0
+                                                  a1,  3, -1,  2"""))
+
+        # LArray fill value
+        filler = ndrange(arr.a)
+        res = arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=filler)
+        assert_array_equal(res, from_string("""a\\b, b1, b2, b0
+                                                 a0,  1,  0,  0
+                                                 a1,  3,  1,  2"""))
 
     def test_append(self):
         la = self.small
