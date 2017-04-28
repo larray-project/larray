@@ -199,7 +199,14 @@ Miscellaneous improvements
   will autocomplete to `s.a_nice_test_array` and `s['a_<tab>` will be completed to `s['a_nice_test_array`
 
 
-* implemented special method __delitem__ in class Session.
+* added possibility to delete an array from a session:
+    >>> s = Session({'a': ndtest((3, 3)), 'b': ndtest((2, 4)), 'c': ndtest((4, 2))})
+    >>> s.names
+    ['a', 'b', 'c']
+    >>> del s.b
+    >>> del s['c']
+    >>> s.names
+    ['a']
 
 Fixes
 -----
