@@ -2004,7 +2004,7 @@ class MappingEditor(QMainWindow):
         self._listwidget.setMinimumWidth(45)
 
         del_item_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._listwidget)
-        del_item_shortcut.activated.connect(self._delete_current_item)
+        del_item_shortcut.activated.connect(self.delete_current_item)
 
         start_array = la.zeros(1) if arrays else la.zeros(0)
         self.arraywidget = ArrayEditorWidget(self, start_array, readonly)
@@ -2107,15 +2107,15 @@ class MappingEditor(QMainWindow):
                                           statustip=_('Load session from file')))
         file_menu.addAction(create_action(self, _('Save'), shortcut=QKeySequence("Ctrl+S"), triggered=self.save,
                                           statustip=_('Save all arrays as a session in a file')))
-        file_menu.addAction(create_action(self, _('Save As'), triggered=self.saveAs,
+        file_menu.addAction(create_action(self, _('Save As'), triggered=self.save_as,
                                           statustip=_('Save all arrays as a session in a file')))
 
         recentFilesMenu = file_menu.addMenu("Open Recent")
         for action in self.recentFileActs:
             action.setVisible(False)
-            action.triggered.connect(self.openRecentFile)
+            action.triggered.connect(self.open_recent_file)
             recentFilesMenu.addAction(action)
-        self.updateRecentFileActions()
+        self.update_recent_file_actions()
 
         file_menu.addSeparator()
         file_menu.addAction(create_action(self, _('Quit'), shortcut=QKeySequence("Ctrl+Q"),
@@ -2123,7 +2123,7 @@ class MappingEditor(QMainWindow):
 
         help_menu = menu_bar.addMenu('Help')
         help_menu.addAction(create_action(self, _('online documentation'), shortcut=QKeySequence("Ctrl+H"),
-                                          triggered=self.openDocumentation))
+                                          triggered=self.open_documentation))
 
     def add_list_item(self, name):
         listitem = QListWidgetItem(self._listwidget)
@@ -2195,7 +2195,7 @@ class MappingEditor(QMainWindow):
         return to_display
 
     @Slot()
-    def _delete_current_item(self):
+    def delete_current_item(self):
         current_item = self._listwidget.currentItem()
         del self.data[str(current_item.text())]
         self._listwidget.takeItem(self._listwidget.row(current_item))
@@ -2300,14 +2300,14 @@ class MappingEditor(QMainWindow):
             del self.data[name]
             self.delete_list_item(name)
 
-    def _isDataModified(self):
+    def _is_unsaved_modifications(self):
         if self.arraywidget.model.readonly:
             return False
         else:
             return len(self.arraywidget.model.changes) > 0 or self._unsaved_modifications
 
-    def _askToSaveIfDataModified(self):
-        if self._isDataModified():
+    def _ask_to_save_if_unsaved_modifications(self):
+        if self._is_unsaved_modifications():
             ret = QMessageBox.warning(self, "Warning", "The data has been modified.\nDo you want to save your changes?",
                                       QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
             if ret == QMessageBox.Save:
@@ -2322,64 +2322,64 @@ class MappingEditor(QMainWindow):
 
     @Slot()
     def new(self):
-        if self._askToSaveIfDataModified():
+        if self._ask_to_save_if_unsaved_modifications():
             self._clear_arrays()
             self.arraywidget.set_data(la.zeros(0))
-            self.setCurrentFile(None)
+            self.set_current_file(None)
             self._unsaved_modifications = False
             self.statusBar().showMessage("Viewer has been reset", 4000)
 
-    def _openFile(self, filepath):
+    def _open_file(self, filepath):
         # XXX : clear console history ?
         self._clear_arrays()
         session = la.Session(filepath)
         self._add_arrays(session)
         self._listwidget.setCurrentRow(0)
-        self.setCurrentFile(filepath)
+        self.set_current_file(filepath)
         self._unsaved_modifications = False
         self.statusBar().showMessage("File {} loaded".format(os.path.basename(filepath)), 4000)
 
     @Slot()
     def open(self):
-        if self._askToSaveIfDataModified():
+        if self._ask_to_save_if_unsaved_modifications():
             # Qt5 returns a tuple (filepath, '') instead of a string
             if PYQT5:
                 filepath, _ = QFileDialog.getOpenFileName(self)
             else:
                 filepath = QFileDialog.getOpenFileName(self)
             if isinstance(filepath, str):
-                self._openFile(filepath)
+                self._open_file(filepath)
             else:
                 QMessageBox.warning(self, "Warning", "No file selected")
 
     @Slot()
-    def openRecentFile(self):
-        if self._askToSaveIfDataModified():
+    def open_recent_file(self):
+        if self._ask_to_save_if_unsaved_modifications():
             action = self.sender()
             if action:
                 filepath = action.data()
                 if os.path.isfile(filepath):
-                    self._openFile(filepath)
+                    self._open_file(filepath)
                 else:
                     QMessageBox.warning(self, "Warning", "File not found")
 
-    def _saveData(self, filepath):
+    def _save_data(self, filepath):
         session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
         session.save(filepath)
-        self.setCurrentFile(filepath)
+        self.set_current_file(filepath)
         self._unsaved_modifications = False
         self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
 
     @Slot()
     def save(self):
         if self.currentFile is not None:
-            self._saveData(self.currentFile)
+            self._save_data(self.currentFile)
         else:
-            self.saveAs()
+            self.save_as()
         return True
 
     @Slot()
-    def saveAs(self):
+    def save_as(self):
         dialog = QFileDialog(self)
         dialog.setWindowModality(Qt.WindowModal)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
@@ -2387,14 +2387,14 @@ class MappingEditor(QMainWindow):
             QMessageBox.critical(self, "Error", "Current session could not be saved")
             return False
         else:
-            self._saveData(dialog.selectedFiles()[0])
+            self._save_data(dialog.selectedFiles()[0])
             return True
 
     @Slot()
-    def openDocumentation(self):
+    def open_documentation(self):
         QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
 
-    def setCurrentFile(self, filepath):
+    def set_current_file(self, filepath):
         self.currentFile = filepath
         if filepath is not None:
             settings = QSettings()
@@ -2403,9 +2403,9 @@ class MappingEditor(QMainWindow):
                 files.remove(filepath)
             files = [filepath] + files[:self.MAX_RECENT_FILES-1]
             settings.setValue("recentFileList", files)
-        self.updateRecentFileActions()
+        self.update_recent_file_actions()
 
-    def updateRecentFileActions(self):
+    def update_recent_file_actions(self):
         settings = QSettings()
         files = settings.value("recentFileList")
         numRecentFiles = min(len(files), self.MAX_RECENT_FILES)
@@ -2420,7 +2420,7 @@ class MappingEditor(QMainWindow):
             self.recentFileActs[i].setVisible(False)
 
     def closeEvent(self, event):
-        if self._askToSaveIfDataModified():
+        if self._ask_to_save_if_unsaved_modifications():
             event.accept()
         else:
             event.ignore()
