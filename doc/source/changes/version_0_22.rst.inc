@@ -198,8 +198,8 @@ Miscellaneous improvements
 
   will autocomplete to `s.a_nice_test_array` and `s['a_<tab>` will be completed to `s['a_nice_test_array`
 
-
 * added possibility to delete an array from a session:
+
     >>> s = Session({'a': ndtest((3, 3)), 'b': ndtest((2, 4)), 'c': ndtest((4, 2))})
     >>> s.names
     ['a', 'b', 'c']
@@ -226,15 +226,13 @@ Fixes
 * fixed array creation functions not raising an exception when called with wrong syntax func(axis1, axis2, ...)
   instead of func([axis1, axis2, ...]) (closes :issue:`203`).
 
-* fixed adding new sheets in a workbook: a new sheet is appended instead of prepended (closes :issue:`229`).
-
-* fixed __setitem__ of Workbook when value is an instance of `Sheet` and key is new.
+* fixed position of added sheets in excel workbook: new sheets are appended instead of prepended (closes :issue:`229`).
 
 * fixed Workbook behavior in case of new workbook: the first added sheet replaces the default sheet `Sheet1`
   (closes :issue:`230`).
 
-* fixed load session: read arrays in the same order as they are stored.
+* fixed order of arrays in sessions loaded from files. The order is now the same as in the file.
 
-* fixed list() method of PandasCSVHandler: returns only files with extension '.csv'
+* fixed loading session from CSV files in a directory. The directory may contain other non-csv files.
 
 

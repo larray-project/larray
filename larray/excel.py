@@ -167,7 +167,7 @@ if xw is not None:
                     value.xw_sheet.api.Copy(xw_sheet.api)
                     xw_sheet.delete()
                 else:
-                    xw_sheet = self[-1].xw_sheet
+                    xw_sheet = self[-1]
                     value.xw_sheet.api.Copy(xw_sheet.api)
                 return
             if key in self:
