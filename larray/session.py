@@ -286,6 +286,9 @@ class Session(object):
         for k, v in kwargs.items():
             self[k] = v
 
+    def _ipython_key_completions_(self):
+        return list(self.keys())
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._objects[self.keys()[key]]
@@ -329,9 +332,6 @@ class Session(object):
     def __setitem__(self, key, value):
         self._objects[key] = value
 
-    def _ipython_key_completions_(self):
-        return list(self.keys())
-
     def __delitem__(self, key):
         del self._objects[key]
 
@@ -343,6 +343,9 @@ class Session(object):
 
     def __setattr__(self, key, value):
         self._objects[key] = value
+
+    def __delattr__(self, key):
+        del self._objects[key]
 
     def __dir__(self):
         return list(set(dir(self.__class__)) | set(self.keys()))
