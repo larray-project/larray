@@ -2349,8 +2349,6 @@ class MappingEditor(QMainWindow):
                 filepath = QFileDialog.getOpenFileName(self)
             if isinstance(filepath, str):
                 self._open_file(filepath)
-            else:
-                QMessageBox.warning(self, "Warning", "No file selected")
 
     @Slot()
     def open_recent_file(self):
