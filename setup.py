@@ -3,7 +3,6 @@ from __future__ import print_function
 import os
 from setuptools import setup, find_packages
 
-
 def readlocal(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -15,8 +14,8 @@ AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
 INSTALL_REQUIRES = ['numpy >= 1.10', 'pandas >= 0.13.1']
-TESTS_REQUIRE = ['nose >= 1.0']
-TEST_SUITE = 'nose.collector'
+TESTS_REQUIRE = ['pytest']
+SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
 PACKAGE_DATA = {'larray': ['tests/data/*']}
@@ -50,8 +49,8 @@ setup(
     long_description=LONG_DESCRIPTION,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
+    setup_requires=SETUP_REQUIRES,
     url=URL,
-    test_suite=TEST_SUITE,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
 )

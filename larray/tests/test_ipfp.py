@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 from unittest import TestCase
-import unittest
+import pytest
 
 from larray import Axis, LArray, ndrange
 from larray.tests.test_la import assert_array_equal
