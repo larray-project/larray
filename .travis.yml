@@ -47,13 +47,13 @@ install:
     # except scipy and install pandas with --no-deps
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
             numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl
-            xlsxwriter nose
+            xlsxwriter pytest
     - source activate travisci
 
 script:
     # exclude (doc)tests from ufuncs (because docstrings are copied from numpy
     # and many of those doctests are failing
-    - nosetests -v --with-doctest --exclude=larray.ufuncs
+    - pytest
 
 notifications:
     on_success: "change"
