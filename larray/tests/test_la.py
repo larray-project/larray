@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os.path
 import sys
 from unittest import TestCase
-import unittest
+import pytest
 
 import numpy as np
 import pandas as pd
@@ -3319,7 +3319,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(la[x.arr['1'], '0', 'F', x.nat['1'], :],
                            [3722, 3395, 3347])
 
-    @unittest.skipIf(xw is None, "xlwings is not available")
+    @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_read_excel_xlwings(self):
         la = read_excel(abspath('test.xlsx'), '1d')
         self.assertEqual(la.ndim, 1)
@@ -3555,7 +3555,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
-    @unittest.skipIf(xw is None, "xlwings is not available")
+    @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_to_excel_xlwings(self):
         # TODO: we should implement an app= argument to to_excel to reuse the same Excel instance
         fpath = abspath('test_to_excel_xlwings.xlsx')
@@ -3613,7 +3613,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
-    @unittest.skipIf(xw is None, "xlwings is not available")
+    @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
         # use a single Excel instance to speed up the test
         app = xw.App(visible=False, add_book=False)
@@ -3891,7 +3891,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         self.assertEqual(d.i[0], 1.0)
         self.assertEqual(d.i[1], 1.0)
 
-    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
+    @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
     def test_matmul(self):
         # 2D / anonymous axes
         a1 = eye(3) * 2
@@ -4046,7 +4046,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(arr2d.__matmul__(arr4d), res)
 
 
-    @unittest.skipIf(sys.version_info < (3, 5), "@ unavailable (Python < 3.5)")
+    @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
     def test_rmatmul(self):
         a1 = eye(3) * 2
         a2 = ndrange((3, 3))
