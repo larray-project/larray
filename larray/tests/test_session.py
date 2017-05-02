@@ -3,6 +3,12 @@ from __future__ import absolute_import, division, print_function
 from unittest import TestCase
 import pytest
 
+try:
+    import pickle
+except ImportError:
+    import cPickle as pickle
+
+
 import numpy as np
 
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
@@ -240,6 +246,12 @@ class TestSession(TestCase):
                          "e: a0*, a1*\n    \n\n"
                          "f: a0*, a1*\n    \n\n"
                          "g: a0*, a1*\n    \n")
+
+    def test_pickle_roundtrip(self):
+        original = self.session
+        s = pickle.dumps(original)
+        res = pickle.loads(s)
+        self.assertTrue(all(res == original))
 
 
 if __name__ == "__main__":
