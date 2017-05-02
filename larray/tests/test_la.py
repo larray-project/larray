@@ -3067,20 +3067,24 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         with np.errstate(invalid='ignore'):
             raw_res = raw / raw
-        warn_regexp = "invalid value \(NaN\) encountered during operation \(this is typically caused by a 0 / 0\)"
-        with self.assertWarnsRegex(RuntimeWarning, warn_regexp) as w:
+        with pytest.warns(RuntimeWarning) as caught_warnings:
             res = la / la
         assert_array_nan_equal(res, raw_res)
-        self.assertEqual(w.filename, __file__)
+        assert len(caught_warnings) == 1
+        warn_msg = "invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)"
+        assert caught_warnings[0].message.args[0] == warn_msg
+        assert caught_warnings[0].filename == __file__
 
         assert_array_equal(la / 2, raw / 2)
 
         with np.errstate(divide='ignore'):
             raw_res = 30 / raw
-        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+        with pytest.warns(RuntimeWarning) as caught_warnings:
             res = 30 / la
         assert_array_equal(res, raw_res)
-        self.assertEqual(w.filename, __file__)
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
+        assert caught_warnings[0].filename == __file__
 
         assert_array_equal(30 / (la + 1), 30 / (raw + 1))
 
@@ -3132,10 +3136,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         with np.errstate(divide='ignore'):
             raw_res = 30 / raw
-        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+        with pytest.warns(RuntimeWarning) as caught_warnings:
             res = 30 / la
         assert_array_equal(res, raw_res)
-        self.assertEqual(w.filename, __file__)
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
+        assert caught_warnings[0].filename == __file__
+
         assert_array_equal(30 / (la + 1), 30 / (raw + 1))
 
         raw_int = raw.astype(int)
