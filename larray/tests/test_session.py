@@ -152,7 +152,7 @@ class TestSession(TestCase):
         s.load(fpath, engine='pandas_excel')
         self.assertEqual(s.names, ['e', 'f'])
 
-    @unittest.skipIf(xw is None, "xlwings is not available")
+    @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
         self.session.save(abspath('test_session_xw.xlsx'), engine='xlwings_excel')
 
