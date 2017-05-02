@@ -2640,6 +2640,8 @@ class AxisCollection(object):
             for k, v in zip(key, value):
                 self[k] = v
         else:
+            if isinstance(value, (int, basestring, list, tuple)):
+                value = Axis(value)
             assert isinstance(value, Axis)
             idx = self.index(key)
             step = 1 if idx >= 0 else -1
@@ -3119,7 +3121,7 @@ class AxisCollection(object):
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : Axis, optional
+        new_axis : axis ref, optional
             New axis if `axes_to_replace` contains a single axis reference.
         inplace : bool, optional
             Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
@@ -3145,7 +3147,9 @@ class AxisCollection(object):
 
         Replace one axis (second argument `new_axis` must be provided)
 
-        >>> axes.replace(x.a, row)
+        >>> axes.replace(x.a, row)  # doctest: +SKIP
+        >>> # or
+        >>> axes.replace(x.a, "row=r0,r1")
         AxisCollection([
             Axis(['r0', 'r1'], 'row'),
             Axis(['b0', 'b1', 'b2'], 'b')
@@ -3153,9 +3157,11 @@ class AxisCollection(object):
 
         Replace several axes (keywords, list of tuple or dictionary)
 
-        >>> axes.replace(a=row, b=column) # doctest: +SKIP
+        >>> axes.replace(a=row, b=column)  # doctest: +SKIP
         >>> # or
-        >>> axes.replace([(x.a, row), (x.b, column)]) # doctest: +SKIP
+        >>> axes.replace(a="row=r0,r1", b="column=c0,c1,c2")  # doctest: +SKIP
+        >>> # or
+        >>> axes.replace([(x.a, row), (x.b, column)])  # doctest: +SKIP
         >>> # or
         >>> axes.replace({x.a: row, x.b: column})
         AxisCollection([
@@ -3188,8 +3194,9 @@ class AxisCollection(object):
             if isinstance(axes_to_replace, dict):
                 items = list(axes_to_replace.items())
             elif isinstance(axes_to_replace, list):
+                assert all([isinstance(item, tuple) and len(item) == 2 for item in axes_to_replace])
                 items = axes_to_replace[:]
-            elif isinstance(axes_to_replace, (str, Axis, int)):
+            elif isinstance(axes_to_replace, (basestring, Axis, int)):
                 items = [(axes_to_replace, new_axis)]
             else:
                 items = []

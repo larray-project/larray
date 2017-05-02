@@ -167,10 +167,34 @@ Miscellaneous improvements
     >>> test.i[1].split('-')
     ['a1', 'a2']
 
-* updated AxisCollection.replace so as to replace one, several or all axes.
+* updated AxisCollection.replace so as to replace one, several or all axes and to accept axis definitions as new axes.
 
-* made create_sequential axis argument accept all the ways to create axes supported by other array creation functions
-  like, for example, using a string definition (closes :issue:`160`).
+    >>> arr = ndtest((2, 3))
+    >>> axes = arr.axes
+    >>> axes
+    AxisCollection([
+        Axis(['a0', 'a1'], 'a'),
+        Axis(['b0', 'b1', 'b2'], 'b')
+    ])
+    >>> row = Axis(['r0', 'r1'], 'row')
+    >>> column = Axis(['c0', 'c1', 'c2'], 'column')
+
+    Replace several axes (keywords, list of tuple or dictionary)
+
+    >>> axes.replace(a=row, b=column)
+    >>> # or
+    >>> axes.replace(a="row=r0,r1", b="column=c0,c1,c2")
+    >>> # or
+    >>> axes.replace([(x.a, row), (x.b, column)])
+    >>> # or
+    >>> axes.replace({x.a: row, x.b: column})
+    AxisCollection([
+        Axis(['r0', 'r1'], 'row'),
+        Axis(['c0', 'c1', 'c2'], 'column')
+    ])
+
+* made create_sequential axis argument accept axis definitions in addition to Axis objects like, for example, using a
+  string definition (closes :issue:`160`).
 
     >>> create_sequential('year=2016..2019')
     year | 2016 | 2017 | 2018 | 2019
@@ -181,7 +205,7 @@ Miscellaneous improvements
 
 * improved documentation of plot method (closes :issue:`169`).
 
-* improved auto-completion in interactive consoles for both LArray and Session objects. LArray objects can now
+* improved auto-completion in ipython interactive consoles for both LArray and Session objects. LArray objects can now
   complete keys within [].
 
     >>> a = ndrange('sex=Male,Female')

@@ -873,6 +873,23 @@ class TestAxisCollection(TestCase):
         col['geo'] = self.age
         self.assertEqual(col, self.collection)
 
+    def test_setitem_name_axis_def(self):
+        col = self.collection[:]
+        # replace an axis with one with another name
+        col['lipro'] = 'geo=A11,A12,A13'
+        self.assertEqual(len(col), 3)
+        self.assertEqual(col, [self.geo, self.sex, self.age])
+        # replace an axis with one with the same name
+        col['sex'] = 'sex=F,M'
+        self.assertEqual(col, [self.geo, self.sex2, self.age])
+        col['geo'] = 'lipro=P01..P04'
+        self.assertEqual(col, [self.lipro, self.sex2, self.age])
+        col['age'] = 'geo=A11,A12,A13'
+        self.assertEqual(col, [self.lipro, self.sex2, self.geo])
+        col['sex'] = 'sex=M,F'
+        col['geo'] = 'age=0..7'
+        self.assertEqual(col, self.collection)
+
     def test_setitem_int(self):
         col = self.collection[:]
         col[1] = self.geo
@@ -955,9 +972,27 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col, self.collection)
         self.assertEqual(len(newcol), 3)
         self.assertEqual(newcol.names, ['lipro', 'geo', 'age'])
+        self.assertEqual(newcol.shape, (4, 3, 8))
         newcol = newcol.replace(self.geo, self.sex)
         self.assertEqual(len(newcol), 3)
         self.assertEqual(newcol.names, ['lipro', 'sex', 'age'])
+        self.assertEqual(newcol.shape, (4, 2, 8))
+
+        # from now on, reuse original collection
+        newcol = col.replace(self.sex, 3)
+        self.assertEqual(len(newcol), 3)
+        self.assertEqual(newcol.names, ['lipro', None, 'age'])
+        self.assertEqual(newcol.shape, (4, 3, 8))
+
+        newcol = col.replace(self.sex, ['a', 'b', 'c'])
+        self.assertEqual(len(newcol), 3)
+        self.assertEqual(newcol.names, ['lipro', None, 'age'])
+        self.assertEqual(newcol.shape, (4, 3, 8))
+
+        newcol = col.replace(self.sex, "letters=a,b,c")
+        self.assertEqual(len(newcol), 3)
+        self.assertEqual(newcol.names, ['lipro', 'letters', 'age'])
+        self.assertEqual(newcol.shape, (4, 3, 8))
 
     # TODO: add contains_test (using both axis name and axis objects)
     def test_get(self):
