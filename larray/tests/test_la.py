@@ -1471,23 +1471,24 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             la[x.age.i[2, 3], x.age.i[1, 5]]
 
     def test_getitem_bool_larray_key(self):
-        raw = self.array
-        la = self.larray
+        arr = ndtest((3, 2, 4))
+        raw = arr.data
 
         # all dimensions
-        res = la[la < 5]
+        res = arr[arr < 5]
         self.assertTrue(isinstance(res, LArray))
         self.assertEqual(res.ndim, 1)
         assert_array_equal(res, raw[raw < 5])
 
         # missing dimension
-        res = la[la['M'] % 5 == 0]
+        filt = arr['b1'] % 5 == 0
+        res = arr[filt]
         self.assertTrue(isinstance(res, LArray))
         self.assertEqual(res.ndim, 2)
-        self.assertEqual(res.shape, (116 * 44 * 15 / 5, 2))
-        raw_key = raw[:, :, 0, :] % 5 == 0
-        raw_d1, raw_d2, raw_d4 = raw_key.nonzero()
-        assert_array_equal(res, raw[raw_d1, raw_d2, :, raw_d4])
+        self.assertEqual(res.shape, (3, 2))
+        raw_key = raw[:, 1, :] % 5 == 0
+        raw_d1, raw_d3 = raw_key.nonzero()
+        assert_array_equal(res, raw[raw_d1, :, raw_d3])
 
     def test_getitem_bool_ndarray_key(self):
         raw = self.array
@@ -2166,21 +2167,20 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_nan_equal(res, np.median(raw[:, [0, 2, 4]], 1))
 
     def test_percentile_full_axes(self):
-        la = self.larray
-        raw = self.array
-
-        self.assertEqual(la.percentile(10),
+        arr = ndtest((2, 3, 4))
+        raw = arr.data
+        self.assertEqual(arr.percentile(10),
                          np.percentile(raw, 10))
-        assert_array_nan_equal(la.percentile(10, x.age),
+        assert_array_nan_equal(arr.percentile(10, x.a),
                                np.percentile(raw, 10, 0))
-        assert_array_nan_equal(la.percentile(10, x.age, x.sex),
-                               np.percentile(raw, 10, (0, 2)))
+        assert_array_nan_equal(arr.percentile(10, x.c, x.a),
+                               np.percentile(raw, 10, (2, 0)))
 
     def test_percentile_groups(self):
-        la = self.larray
-        raw = self.array
+        arr = ndtest((2, 5, 3))
+        raw = arr.data
 
-        res = la.percentile(10, x.geo['A11', 'A13', 'A24'])
+        res = arr.percentile(10, x.b['b0', 'b2', 'b4'])
         assert_array_nan_equal(res, np.percentile(raw[:, [0, 2, 4]], 10, 1))
 
     def test_cumsum(self):
@@ -3387,6 +3387,13 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_read_excel_xlwings(self):
+        # TODO: we should implement an app= argument for read_excel to reuse the same Excel instance
+        # we could also use a single instance for the whole class by using something like:
+
+        # @classmethod
+        # def setUpClass(cls):
+        #     cls._excel_app = ...
+
         la = read_excel(abspath('test.xlsx'), '1d')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
