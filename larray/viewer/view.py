@@ -131,13 +131,25 @@ try:
 except ImportError:
     qtconsole_available = False
 
-from larray.viewer.model import (ArrayModel, _, get_font, from_qvariant, to_qvariant, is_float, is_number,
-                                 larray_to_array_and_labels, ndarray_to_array_and_labels)
+from larray.viewer.model import ArrayModel, _, get_font, from_qvariant, to_qvariant, is_float, is_number
 
 from larray.viewer.combo import FilterComboBox, FilterMenu
 import larray as la
 
 PY2 = sys.version[0] == '2'
+
+
+# def _table_to_larray_indexes(self, row, column):
+#     # print('position ', row, column)
+#     if all(self._data.shape):
+#         indexes = [column]
+#         for dim in reversed(self._data.shape[:-1]):
+#             row, index = divmod(row, dim)
+#             indexes.append(index)
+#     else:
+#         indexes = [0, 0]
+#     # print('indexes ', tuple(indexes[::-1]))
+#     return tuple(indexes[::-1])
 
 # Spyder compat
 # -------------
@@ -652,8 +664,6 @@ class ArrayEditorWidget(QWidget):
         QWidget.__init__(self, parent)
         if np.isscalar(data):
             readonly = True
-        if not isinstance(data, (np.ndarray, la.LArray)):
-            data = np.array(data)
         self.model = ArrayModel(None, readonly=readonly, parent=self,
                                 bg_value=bg_value, bg_gradient=bg_gradient,
                                 minvalue=minvalue, maxvalue=maxvalue)
@@ -685,58 +695,34 @@ class ArrayEditorWidget(QWidget):
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        self.set_data(data, xlabels, ylabels, bg_value=bg_value,
-                      bg_gradient=bg_gradient)
+        self.set_data(data, bg_value=bg_value, bg_gradient=bg_gradient)
 
-    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None,
-                 bg_gradient=None, bg_value=None):
+    def set_data(self, data, current_filter=None, bg_gradient=None, bg_value=None):
         self.old_data_shape = None
         if current_filter is None:
             current_filter = {}
         self.current_filter = current_filter
         self.global_changes = {}
-        if isinstance(data, la.LArray):
-            self.la_data = data
-            axes = data.axes
-            display_names = axes.display_names
-            data, xlabels, ylabels = larray_to_array_and_labels(data)
-        else:
-            self.la_data = None
-            axes = []
-            display_names = []
-            if not isinstance(data, np.ndarray):
-                data = np.asarray(data)
-            if data.ndim == 0:
-                self.old_data_shape = data.shape
-            elif data.ndim == 1:
-                self.old_data_shape = data.shape
-            data, xlabels, ylabels = ndarray_to_array_and_labels(data)
+        self.la_data = la.aslarray(data)
+        axes = self.la_data.axes
+        display_names = axes.display_names
 
         filters_layout = self.filters_layout
         clear_layout(filters_layout)
-        if axes:
-            filters_layout.addWidget(QLabel(_("Filters")))
-            for axis, display_name in zip(axes, display_names):
-                filters_layout.addWidget(QLabel(display_name))
-                filters_layout.addWidget(self.create_filter_combo(axis))
-            filters_layout.addStretch()
+        filters_layout.addWidget(QLabel(_("Filters")))
+        for axis, display_name in zip(axes, display_names):
+            filters_layout.addWidget(QLabel(display_name))
+            filters_layout.addWidget(self.create_filter_combo(axis))
+        filters_layout.addStretch()
         self.filtered_data = self.la_data
 
-            # if xlabels is not None and len(xlabels) != self.data.shape[1]:
-            #     self.error(_("The 'xlabels' argument length do no match "
-            #                  "array column number"))
-            #     return False
-            # if ylabels is not None and len(ylabels) != self.data.shape[0]:
-            #     self.error(_("The 'ylabels' argument length do no match "
-            #                  "array row number"))
-            #     return False
-        self._set_raw_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._update(self.la_data, bg_gradient=bg_gradient, bg_value=bg_value)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
-        size = data.size
+    def _update(self, la_data, changes=None, bg_gradient=None, bg_value=None):
+        size = la_data.size
         # this will yield a data sample of max 199
         step = (size // 100) if size > 100 else 1
-        data_sample = data.flat[::step]
+        data_sample = la_data.data.flat[::step]
 
         # TODO: refactor so that the expensive format_helper is not called
         # twice (or the values are cached)
@@ -745,17 +731,17 @@ class ArrayEditorWidget(QWidget):
         # XXX: self.ndecimals vs self.digits
         self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
-        self.data = data
+        self.data = la_data.data
         self.model.set_format(self.cell_format)
         if changes is None:
             changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes, bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model.set_data(la_data, changes, bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
-        self.digits_spinbox.setEnabled(is_number(data.dtype))
+        self.digits_spinbox.setEnabled(is_number(la_data.dtype))
 
         self.scientific_checkbox.setChecked(use_scientific)
-        self.scientific_checkbox.setEnabled(is_number(data.dtype))
+        self.scientific_checkbox.setEnabled(is_number(la_data.dtype))
 
         self.bgcolor_checkbox.setChecked(self.model.bgcolor_enabled)
         self.bgcolor_checkbox.setEnabled(self.model.bgcolor_enabled)
@@ -920,14 +906,8 @@ class ArrayEditorWidget(QWidget):
         filtered = self.la_data[cur_filter]
         local_changes = self.get_local_changes(filtered)
         self.filtered_data = filtered
-        if np.isscalar(filtered):
-            # no need to make the editor readonly as we can still propagate the
-            # .changes back into the original array.
-            data, xlabels, ylabels = np.array([[filtered]]), None, None
-        else:
-            data, xlabels, ylabels = larray_to_array_and_labels(filtered)
 
-        self._set_raw_data(data, xlabels, ylabels, local_changes)
+        self._update(filtered, local_changes)
 
     def get_local_changes(self, filtered):
         # we cannot apply the changes directly to data because it might be a

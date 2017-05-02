@@ -323,8 +323,8 @@ if __name__ == "__main__":
     # compare(arr3, arr4, arr5, arr6)
 
     # view(la.stack((arr3, arr4), la.Axis('arrays=arr3,arr4')))
-    ses = la.Session(arr2=arr2, arr3=arr3, arr4=arr4, arr5=arr5, arr6=arr6, arr7=arr7,
-                     data2=data2, data3=data3)
+    ses = la.Session(arr2=arr2, arr3=arr3, arr4=arr4, arr5=arr5, arr6=arr6, arr7=arr7, data2=data2, data3=data3)
+    #ses = la.Session(arr2=arr2)
     edit(ses)
 
     # s = la.local_arrays()

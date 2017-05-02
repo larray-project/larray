@@ -118,8 +118,8 @@ class ArrayModel(QAbstractTableModel):
 
     Parameters
     ----------
-    data : 2D NumPy array, optional
-        Input data (2D array).
+    data : LArray or NumPy array, optional
+        Input data.
     format : str, optional
         Indicates how data are represented in cells.
         By default, they are represented as floats with 3 decimal points.
@@ -146,9 +146,8 @@ class ArrayModel(QAbstractTableModel):
     ROWS_TO_LOAD = 500
     COLS_TO_LOAD = 40
 
-    def __init__(self, data=None, format="%.3f", xlabels=None, ylabels=None,
-                 readonly=False, font=None, parent=None,
-                 bg_gradient=None, bg_value=None, minvalue=None, maxvalue=None):
+    def __init__(self, data=None, format="%.3f", readonly=False, font=None, parent=None, bg_gradient=None,
+                 bg_value=None, minvalue=None, maxvalue=None):
         QAbstractTableModel.__init__(self)
 
         self.dialog = parent
@@ -179,7 +178,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._set_data(data, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -190,16 +189,15 @@ class ArrayModel(QAbstractTableModel):
         """Return data"""
         return self._data
 
-    def set_data(self, data, xlabels=None, ylabels=None, changes=None,
-                 bg_gradient=None, bg_value=None):
-        self._set_data(data, xlabels, ylabels, changes, bg_gradient, bg_value)
+    def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
+        self._set_data(data, changes, bg_gradient, bg_value)
         self.reset()
 
-    def _set_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
+    def _set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
         if changes is None:
             changes = {}
         if data is None:
-            data = np.empty(0, dtype=np.int8).reshape(0, 0)
+            data = np.empty((0, 0), dtype=np.int8)
         if data.dtype.names is None:
             dtn = data.dtype.name
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
@@ -207,8 +205,6 @@ class ArrayModel(QAbstractTableModel):
                 msg = _("%s arrays are currently not supported")
                 QMessageBox.critical(self.dialog, "Error", msg % data.dtype.name)
                 return
-        assert data.ndim == 2
-        self.test_array = np.array([0], dtype=data.dtype)
 
         # for complex numbers, shading will be based on absolute value
         # but for all other types it will be the real part
@@ -227,13 +223,26 @@ class ArrayModel(QAbstractTableModel):
 
         assert isinstance(changes, dict)
         self.changes = changes
-        self._data = data
-        if xlabels is None:
-            xlabels = [[], []]
-        self.xlabels = xlabels
-        if ylabels is None:
-            ylabels = [[]]
+
+        # convert input data to LArray if not
+        # add extra dimension if 1D
+        la_data = la.aslarray(data)
+        if la_data.ndim == 1:
+            la_data = la_data.reshape([la.Axis(1), la_data.axes[0]])
+
+        # get xlabels
+        self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
+
+        # get ylabels
+        ylabels = la_data.axes.labels[:-1]
+        prod = Product(ylabels)
+        ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(ylabels))]
         self.ylabels = ylabels
+
+        # convert LArray data to a 2D Numpy array
+        self._data = la_data.data
+        if data.ndim > 2:
+            self._data = self._data.reshape(np.prod(self._data.shape[:-1]), self._data.shape[-1])
 
         self.total_rows = self._data.shape[0]
         self.total_cols = self._data.shape[1]
@@ -731,87 +740,3 @@ class _LazyNone(object):
 
     def __len__(self):
         return self.length
-
-
-def ndarray_to_array_and_labels(data):
-    """Converts an  Numpy ndarray into a 2D data array and x/y labels.
-
-    Parameters
-    ----------
-    data : numpy.ndarray
-        Input array.
-
-    Returns
-    -------
-    data : 2D array
-        Content of input array is returned as 2D array.
-    xlabels : list of sequences
-        Labels of rows.
-    ylabels : list of sequences
-        Labels of columns (cartesian product of of all axes
-        except the last one).
-    """
-    assert isinstance(data, np.ndarray)
-
-    if data.ndim == 0:
-        data.shape = (1, 1)
-        xlabels = [[], []]
-        ylabels = [[]]
-    else:
-        if data.ndim == 1:
-            data = data.reshape(1, data.shape[0])
-
-        xlabels = [["{{{}}}".format(i) for i in range(data.ndim)],
-                   range(data.shape[-1])]
-        coldims = 1
-        prod = Product([range(size) for size in data.shape[:-1]])
-        ylabels = [_LazyNone(len(prod) + coldims)] + [
-            _LazyDimLabels(prod, i) for i in range(data.ndim - 1)]
-
-    if data.ndim > 2:
-        data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
-
-    return data, xlabels, ylabels
-
-
-def larray_to_array_and_labels(data):
-    """Converts an LArray into a 2D data array and x/y labels.
-
-    Parameters
-    ----------
-    data : LArray
-        Input LArray.
-
-    Returns
-    -------
-    data : 2D array
-        Content of input LArray is returned as 2D array.
-    xlabels : list of sequences
-        Labels of rows (names of axes + labels of last axis).
-    ylabels : list of sequences
-        Labels of columns (cartesian product of labels of all axes
-        except the last one).
-    """
-    assert isinstance(data, la.LArray)
-
-    xlabels = [data.axes.display_names, data.axes.labels[-1]]
-
-    otherlabels = data.axes.labels[:-1]
-    # ylabels = LazyLabels(otherlabels)
-    coldims = 1
-    # ylabels = [str(i) for i in range(len(row_labels))]
-    data = data.data[:]
-    if data.ndim == 1:
-        data = data.reshape(1, data.shape[0])
-        ylabels = [[]]
-    else:
-        prod = Product(otherlabels)
-        ylabels = [_LazyNone(len(prod) + coldims)] + [
-            _LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-        # ylabels = [LazyRange(len(prod), coldims)] + [
-        #     LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-
-    if data.ndim > 2:
-        data = data.reshape(np.prod(data.shape[:-1]), data.shape[-1])
-
-    return data, xlabels, ylabels
