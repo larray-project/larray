@@ -228,9 +228,11 @@ class TestSession(TestCase):
         sess = self.session.filter(kind=LArray)
         other = Session({'e': self.e - 1, 'f': self.f + 1})
 
-        with self.assertWarnsRegex(RuntimeWarning, "divide by zero encountered during operation") as w:
+        with pytest.warns(RuntimeWarning) as caught_warnings:
             res = sess / other
-        self.assertEqual(w.filename, __file__)
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
+        assert caught_warnings[0].filename == __file__
 
         with np.errstate(divide='ignore', invalid='ignore'):
             flat_e = np.arange(6) / np.arange(-1, 5)
