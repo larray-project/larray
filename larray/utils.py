@@ -25,19 +25,23 @@ if sys.version_info[0] < 3:
     bytes = str
     unicode = unicode
     long = long
-    # FIXME: we should rather use PY2 = True (for py4 compat)
-    PY3 = False
+    PY2 = True
 else:
     basestring = str
     bytes = bytes
     unicode = str
     long = int
-    PY3 = True
+    PY2 = False
 
-if PY3:
-    from io import StringIO
-else:
+if PY2:
     from StringIO import StringIO
+else:
+    from io import StringIO
+
+if PY2:
+    import cPickle as pickle
+else:
+    import pickle
 
 
 def csv_open(filename, mode='r'):
