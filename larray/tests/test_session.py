@@ -1,18 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
 from unittest import TestCase
+
 import pytest
-
-try:
-    import pickle
-except ImportError:
-    import cPickle as pickle
-
-
 import numpy as np
 
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
 from larray.tests.test_la import assert_array_nan_equal, abspath
+from larray.utils import pickle
 
 try:
     import xlwings as xw
