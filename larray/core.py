@@ -115,7 +115,7 @@ from larray.oset import *
 from larray.utils import (table2str, size2str, unique, csv_open, long,
                           decode, basestring, unicode, bytes, izip, rproduct,
                           ReprString, duplicates, array_lookup2, strip_rows,
-                          skip_comment_cells, find_closing_chr, StringIO, PY3,
+                          skip_comment_cells, find_closing_chr, StringIO, PY2,
                           float_error_handler_factory)
 
 
@@ -1434,7 +1434,7 @@ class Axis(object):
         # vice versa), so we shouldn't be more picky here than dict hashing
         str_key = key_kind in ('S', 'U')
         str_label = label_kind in ('S', 'U')
-        py2_str_match = not PY3 and str_key and str_label
+        py2_str_match = PY2 and str_key and str_label
         # object kind can match anything
         return key_kind == label_kind or \
                key_kind == 'O' or label_kind == 'O' or \
@@ -2018,11 +2018,7 @@ class Group(object):
         op_fullname = '__%s__' % opname
 
         # TODO: implement this in a delayed fashion for reference axes
-        if PY3:
-            def opmethod(self, other):
-                other_value = other.eval() if isinstance(other, Group) else other
-                return getattr(self.eval(), op_fullname)(other_value)
-        else:
+        if PY2:
             # workaround the fact slice objects do not have any __binop__ methods defined on Python2 (even though
             # the actual operations work on them).
             def opmethod(self, other):
@@ -2034,6 +2030,10 @@ class Group(object):
                     self_value = (self_value.start, self_value.stop, self_value.step)
                     other_value = (other_value.start, other_value.stop, other_value.step)
                 return getattr(self_value, op_fullname)(other_value)
+        else:
+            def opmethod(self, other):
+                other_value = other.eval() if isinstance(other, Group) else other
+                return getattr(self.eval(), op_fullname)(other_value)
 
         opmethod.__name__ = op_fullname
         return opmethod
