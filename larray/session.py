@@ -494,15 +494,12 @@ class Session(object):
         Session
             The filtered session.
         """
+        items = self._objects.items()
         if pattern is not None:
-            items = [(k, self._objects[k]) for k in self._objects.keys()
-                     if check_pattern(k, pattern)]
-        else:
-            items = self._objects.items()
+            items = [(k, v) for k, v in items if check_pattern(k, pattern)]
         if kind is not None:
-            return Session([(k, v) for k, v in items if isinstance(v, kind)])
-        else:
-            return Session(items)
+            items = [(k, v) for k, v in items if isinstance(v, kind)]
+        return Session(items)
 
     @property
     def names(self):
