@@ -2194,7 +2194,6 @@ class MappingEditor(QMainWindow):
             self.select_list_item(to_display)
         return to_display
 
-    @Slot()
     def delete_current_item(self):
         current_item = self._listwidget.currentItem()
         name = str(current_item.text())
@@ -2328,7 +2327,6 @@ class MappingEditor(QMainWindow):
         else:
             return True
 
-    @Slot()
     def new(self):
         if self._ask_to_save_if_unsaved_modifications():
             self._clear_arrays()
@@ -2358,7 +2356,6 @@ class MappingEditor(QMainWindow):
         self._listwidget.setCurrentRow(0)
         self._unsaved_modifications = False
 
-    @Slot()
     def open(self):
         if self._ask_to_save_if_unsaved_modifications():
             filter = "All (*.xls *xlsx *.h5 *.csv);;Excel Files (*.xls *xlsx);;HDF Files (*.h5);;CSV Files (*.csv)"
@@ -2376,7 +2373,6 @@ class MappingEditor(QMainWindow):
                     QMessageBox.critical(self, "Error",
                                          "It possible to load several CSV files or one Excel or HDF file")
 
-    @Slot()
     def open_recent_file(self):
         if self._ask_to_save_if_unsaved_modifications():
             action = self.sender()
@@ -2394,7 +2390,6 @@ class MappingEditor(QMainWindow):
         self._unsaved_modifications = False
         self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
 
-    @Slot()
     def save(self):
         if self.currentFile is not None:
             self._save_data(self.currentFile)
@@ -2402,7 +2397,6 @@ class MappingEditor(QMainWindow):
             self.save_as()
         return True
 
-    @Slot()
     def save_as(self):
         dialog = QFileDialog(self)
         dialog.setWindowModality(Qt.WindowModal)
@@ -2414,7 +2408,6 @@ class MappingEditor(QMainWindow):
             self._save_data(dialog.selectedFiles()[0])
             return True
 
-    @Slot()
     def open_documentation(self):
         QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
 
