@@ -276,7 +276,3 @@ Fixes
   (closes :issue:`230`).
 
 * fixed with_axes warning to refer to set_axes instead of replace_axes.
-
-* fixed updating kernel context when opening a new or loading a session in viewer (closes :issue:`238`).
-
-* fixed filter extension in open method of MappingEditor (Excel + HDF) (closes :issue:`239`.
