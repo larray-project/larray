@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function
 import os.path
 import sys
 from unittest import TestCase
-import pytest
 
+import pytest
 import numpy as np
 import pandas as pd
 
@@ -4224,7 +4224,9 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
         assert_array_equal(res, expected)
 
 if __name__ == "__main__":
-    import doctest
-    from larray import core
-    doctest.testmod(core)
-    unittest.main()
+    # import doctest
+    # import unittest
+    # from larray import core
+    # doctest.testmod(core)
+    # unittest.main()
+    pytest.main()
