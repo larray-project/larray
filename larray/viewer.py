@@ -2350,12 +2350,13 @@ class MappingEditor(QMainWindow):
     @Slot()
     def open(self):
         if self._ask_to_save_if_unsaved_modifications():
+            filter = "All (*.xls *xlsx *.h5);;Excel Files (*.xls *xlsx);;HDF Files (*.h5)"
             # Qt5 returns a tuple (filepath, '') instead of a string
             if PYQT5:
-                filepath, _ = QFileDialog.getOpenFileName(self)
+                filepath, _ = QFileDialog.getOpenFileName(self, filter=filter)
             else:
-                filepath = QFileDialog.getOpenFileName(self)
-            if isinstance(filepath, str):
+                filepath = QFileDialog.getOpenFileName(self, filter=filter)
+            if isinstance(filepath, str) and os.path.exists(filepath):
                 self._open_file(filepath)
 
     @Slot()
