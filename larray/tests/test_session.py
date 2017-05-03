@@ -253,5 +253,7 @@ class TestSession(TestCase):
 
 if __name__ == "__main__":
     # import doctest
+    # import unittest
     # doctest.testmod(larray.core)
-    unittest.main()
+    # unittest.main()
+    pytest.main()
