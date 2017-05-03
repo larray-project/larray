@@ -81,8 +81,8 @@ class FileHandler(object):
 
         Returns
         -------
-        dict(str,LArray)
-            Dictionary containing names and arrays loaded from a file.
+        OrderedDict(str, LArray)
+            Dictionary containing the loaded arrays.
         """
         display = kwargs.pop('display', False)
         self._open_for_read()
@@ -106,11 +106,10 @@ class FileHandler(object):
 
         Parameters
         ----------
-        key_values : dict of paris (str, LArray)
-            Dictionary containing arrays to dump.
+        key_values : list of (str, LArray) pairs
+            Name and data of arrays to dump.
         kwargs :
-            * display: a small message is displayed to tell when
-              an array is started to be dump and when it's done.
+            * display: whether or not to display when the dump of each array is started/done.
         """
         display = kwargs.pop('display', False)
         self._open_for_write()
@@ -212,7 +211,7 @@ class PandasCSVHandler(FileHandler):
     def list(self):
         # strip extension from files
         # TODO: also support fname pattern, eg. "dump_*.csv" (using glob)
-        return [os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname]
+        return sorted([os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname])
 
     def _read_array(self, key, *args, **kwargs):
         fpath = os.path.join(self.fname, '{}.csv'.format(key))
@@ -415,13 +414,11 @@ class Session(object):
             engine = ext_default_engine[ext]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
-        filtered = self.filter(kind=LArray)
-        # not using .items() so that arrays are sorted
-        arrays = [(k, filtered[k]) for k in filtered.names]
+        items = self.filter(kind=LArray).items()
         if names is not None:
             names_set = set(names)
-            arrays = [(k, v) for k, v in arrays if k in names_set]
-        handler.dump_arrays(arrays, display=display, **kwargs)
+            items = [(k, v) for k, v in items if k in names_set]
+        handler.dump_arrays(items, display=display, **kwargs)
 
     def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
         warnings.warn("Method dump is deprecated. Use method save instead.", DeprecationWarning, stacklevel=2)

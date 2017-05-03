@@ -33,10 +33,11 @@ class TestSession(TestCase):
         self.e = ndrange([(2, 'a0'), (3, 'a1')])
         self.f = ndrange([(3, 'a0'), (2, 'a1')])
         self.g = ndrange([(2, 'a0'), (4, 'a1')])
-        self.session = Session([('b', self.b), ('a', self.a),
-                                ('c', self.c), ('d', self.d),
-                                ('e', self.e), ('f', self.f),
-                                ('g', self.g)])
+        self.session = Session([
+            ('b', self.b), ('a', self.a),
+            ('c', self.c), ('d', self.d),
+            ('e', self.e), ('g', self.g), ('f', self.f),
+        ])
 
     def assertObjListEqual(self, got, expected):
         self.assertEqual(len(got), len(expected))
@@ -107,20 +108,20 @@ class TestSession(TestCase):
         self.assertEqual(s.i, 'i')
 
     def test_iter(self):
-        expected = [self.b, self.a, self.c, self.d, self.e, self.f, self.g]
+        expected = [self.b, self.a, self.c, self.d, self.e, self.g, self.f]
         self.assertObjListEqual(self.session, expected)
 
     def test_filter(self):
         s = self.session
         s.ax = 'ax'
         self.assertObjListEqual(s.filter(), [self.b, self.a, 'c', {},
-                                             self.e, self.f, self.g, 'ax'])
+                                             self.e, self.g, self.f, 'ax'])
         self.assertEqual(list(s.filter('a')), [self.a, 'ax'])
         self.assertEqual(list(s.filter('a', dict)), [])
         self.assertEqual(list(s.filter('a', str)), ['ax'])
         self.assertEqual(list(s.filter('a', Axis)), [self.a])
         self.assertEqual(list(s.filter(kind=Axis)), [self.b, self.a])
-        self.assertObjListEqual(s.filter(kind=LArray), [self.e, self.f, self.g])
+        self.assertObjListEqual(s.filter(kind=LArray), [self.e, self.g, self.f])
         self.assertEqual(list(s.filter(kind=dict)), [{}])
 
     def test_names(self):
@@ -137,21 +138,21 @@ class TestSession(TestCase):
         self.session.save(fpath)
         s = Session()
         s.load(fpath)
-        self.assertEqual(s.names, ['e', 'f', 'g'])
+        # HDF does *not* keep ordering (ie, keys are always sorted)
+        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
 
         s = Session()
         s.load(fpath, ['e', 'f'])
-        self.assertEqual(s.names, ['e', 'f'])
+        self.assertEqual(list(s.keys()), ['e', 'f'])
 
     def test_xlsx_pandas_io(self):
         self.session.save(abspath('test_session.xlsx'), engine='pandas_excel')
 
         fpath = abspath('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
-
         s = Session()
         s.load(fpath, engine='pandas_excel')
-        self.assertEqual(s.names, ['e', 'f'])
+        self.assertEqual(list(s.keys()), ['e', 'f'])
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
@@ -159,10 +160,9 @@ class TestSession(TestCase):
 
         fpath = abspath('test_session_ef_xw.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
-
         s = Session()
         s.load(fpath, engine='xlwings_excel')
-        self.assertEqual(s.names, ['e', 'f'])
+        self.assertEqual(list(s.keys()), ['e', 'f'])
 
     def test_csv_io(self):
         fpath = abspath('test_session_csv')
@@ -170,7 +170,8 @@ class TestSession(TestCase):
 
         s = Session()
         s.load(fpath, engine='pandas_csv')
-        self.assertEqual(s.names, ['e', 'f', 'g'])
+        # CSV cannot keep ordering (so we always sort keys)
+        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
 
     def test_eq(self):
         sess = self.session.filter(kind=LArray)
@@ -181,16 +182,16 @@ class TestSession(TestCase):
         res = sess == other
         self.assertEqual(res.ndim, 1)
         self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
-        self.assertEqual(list(res), [True, True, False])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
+        self.assertEqual(list(res), [True, False, True])
 
         e2 = self.e.copy()
         e2.i[1, 1] = 42
         other = Session({'e': e2, 'f': self.f})
         res = sess == other
         self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
-        self.assertEqual(list(res), [False, True, False])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
+        self.assertEqual(list(res), [False, False, True])
 
     def test_ne(self):
         sess = self.session.filter(kind=LArray)
@@ -200,16 +201,16 @@ class TestSession(TestCase):
         other = Session({'e': self.e, 'f': self.f})
         res = sess != other
         self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
-        self.assertEqual(list(res), [False, False, True])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
+        self.assertEqual(list(res), [False, True, False])
 
         e2 = self.e.copy()
         e2.i[1, 1] = 42
         other = Session({'e': e2, 'f': self.f})
         res = sess != other
         self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'f', 'g']))
-        self.assertEqual(list(res), [True, False, True])
+        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
+        self.assertEqual(list(res), [True, True, False])
 
     def test_sub(self):
         sess = self.session.filter(kind=LArray)
@@ -241,8 +242,8 @@ class TestSession(TestCase):
         sess = self.session.filter(kind=LArray)
         self.assertEqual(sess.summary(),
                          "e: a0*, a1*\n    \n\n"
-                         "f: a0*, a1*\n    \n\n"
-                         "g: a0*, a1*\n    \n")
+                         "g: a0*, a1*\n    \n\n"
+                         "f: a0*, a1*\n    \n")
 
     def test_pickle_roundtrip(self):
         original = self.session
