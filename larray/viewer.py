@@ -2197,7 +2197,10 @@ class MappingEditor(QMainWindow):
     @Slot()
     def delete_current_item(self):
         current_item = self._listwidget.currentItem()
-        del self.data[str(current_item.text())]
+        name = str(current_item.text())
+        del self.data[name]
+        if qtconsole_available:
+            self.kernel.shell.del_var(name)
         self._listwidget.takeItem(self._listwidget.row(current_item))
 
     def line_edit_update(self):
@@ -2293,12 +2296,17 @@ class MappingEditor(QMainWindow):
         for k, v in arrays.items():
             self.data[k] = v
             self.add_list_item(k)
+        if qtconsole_available:
+            self.kernel.shell.push(dict(arrays))
 
     def _clear_arrays(self):
         arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
         for name in arrays:
             del self.data[name]
             self.delete_list_item(name)
+        if qtconsole_available:
+            for name in arrays:
+                self.kernel.shell.del_var(name)
 
     def _is_unsaved_modifications(self):
         if self.arraywidget.model.readonly:
@@ -2952,7 +2960,9 @@ if __name__ == "__main__":
     # compare(arr3, arr4, arr5, arr6)
 
     # view(la.stack((arr3, arr4), la.Axis('arrays=arr3,arr4')))
-    edit()
+    ses = la.Session(arr2=arr2, arr3=arr3, arr4=arr4, arr5=arr5, arr6=arr6, arr7=arr7,
+                     data2=data2, data3=data3)
+    edit(ses)
 
     # s = la.local_arrays()
     # view(s)
