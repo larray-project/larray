@@ -2340,24 +2340,41 @@ class MappingEditor(QMainWindow):
     def _open_file(self, filepath):
         # XXX : clear console history ?
         self._clear_arrays()
-        session = la.Session(filepath)
+        session = la.Session()
+        if '.csv' in filepath:
+            filepath = [filepath]
+        if isinstance(filepath, (list, tuple)):
+            directory = os.path.dirname(filepath[0])
+            names = [os.path.splitext(os.path.basename(fp))[0] for fp in filepath]
+            session.load(directory, names)
+            for name in names:
+                self.set_current_file('{}/{}.csv'.format(directory, name))
+            self.statusBar().showMessage("Arrays {} from CSV files loaded".format(' ,'.join(names)), 4000)
+        else:
+            session.load(filepath)
+            self.set_current_file(filepath)
+            self.statusBar().showMessage("File {} loaded".format(os.path.basename(filepath)), 4000)
         self._add_arrays(session)
         self._listwidget.setCurrentRow(0)
-        self.set_current_file(filepath)
         self._unsaved_modifications = False
-        self.statusBar().showMessage("File {} loaded".format(os.path.basename(filepath)), 4000)
 
     @Slot()
     def open(self):
         if self._ask_to_save_if_unsaved_modifications():
-            filter = "All (*.xls *xlsx *.h5);;Excel Files (*.xls *xlsx);;HDF Files (*.h5)"
-            # Qt5 returns a tuple (filepath, '') instead of a string
+            filter = "All (*.xls *xlsx *.h5 *.csv);;Excel Files (*.xls *xlsx);;HDF Files (*.h5);;CSV Files (*.csv)"
+            # Qt5 returns a tuple (filepaths, '') instead of a string
             if PYQT5:
-                filepath, _ = QFileDialog.getOpenFileName(self, filter=filter)
+                filepaths, _ = QFileDialog.getOpenFileNames(self, filter=filter)
             else:
-                filepath = QFileDialog.getOpenFileName(self, filter=filter)
-            if isinstance(filepath, str) and os.path.exists(filepath):
-                self._open_file(filepath)
+                filepaths = QFileDialog.getOpenFileNames(self, filter=filter)
+            if len(filepaths) >= 1:
+                if all(['.csv' in filepath for filepath in filepaths]):
+                    self._open_file(filepaths)
+                elif len(filepaths) == 1:
+                    self._open_file(filepaths[0])
+                else:
+                    QMessageBox.critical(self, "Error",
+                                         "It possible to load several CSV files or one Excel or HDF file")
 
     @Slot()
     def open_recent_file(self):
@@ -2365,10 +2382,10 @@ class MappingEditor(QMainWindow):
             action = self.sender()
             if action:
                 filepath = action.data()
-                if os.path.isfile(filepath):
+                if os.path.exists(filepath):
                     self._open_file(filepath)
                 else:
-                    QMessageBox.warning(self, "Warning", "File not found")
+                    QMessageBox.warning(self, "Warning", "File {} could not be found".format(filepath))
 
     def _save_data(self, filepath):
         session = la.Session({k: v for k, v in self.data.items() if self._display_in_grid(k, v)})
