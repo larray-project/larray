@@ -2097,6 +2097,16 @@ class MappingEditor(QMainWindow):
         self.setWindowFlags(Qt.Window)
         return True
 
+    def _reset(self):
+        self.data = la.Session()
+        if qtconsole_available:
+            self.kernel.shell.reset()
+            self.kernel.shell.run_cell('from larray import *')
+            self.ipython_cell_executed()
+        else:
+            self.eval_box.setText('')
+            self.line_edit_update()
+
     def setup_menu_bar(self):
         """Setup menu bar"""
         menu_bar = self.menuBar()
@@ -2329,15 +2339,14 @@ class MappingEditor(QMainWindow):
 
     def new(self):
         if self._ask_to_save_if_unsaved_modifications():
-            self._clear_arrays()
+            self._reset()
             self.arraywidget.set_data(la.zeros(0))
             self.set_current_file(None)
             self._unsaved_modifications = False
             self.statusBar().showMessage("Viewer has been reset", 4000)
 
     def _open_file(self, filepath):
-        # XXX : clear console history ?
-        self._clear_arrays()
+        self._reset()
         session = la.Session()
         if '.csv' in filepath:
             filepath = [filepath]
