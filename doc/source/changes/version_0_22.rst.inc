@@ -1,8 +1,14 @@
 ﻿New features
 ------------
 
-* implemented a new describe() method on arrays to give quick summary statistics (excluding NaN values). By default,
-  it includes the number of values, mean, standard deviation, minimum, 25, 50 and 75 percentiles and maximum.
+* viewer: added a menu bar with the ability to clear the current session, save all its arrays to a file (.h5, .xlsx,
+  .pkl or a directory containing multiple .csv files), and load arrays from such a file (closes :issue:`88`).
+
+  WARNING: Only array objects are currently saved. It means that scalars, functions or others non-LArray objects
+  defined in the console are *not* saved in the file.
+
+* implemented a new describe() method on arrays to give quick summary statistics. By default, it includes the number of
+  non-NaN values, the mean, standard deviation, minimum, 25, 50 and 75 percentiles and maximum.
 
     >>> arr = ndrange('gender=Male,Female;year=2014..2020').astype(float)
     >>> arr
@@ -13,7 +19,7 @@
     statistic | count | mean |               std | min |  25% | 50% |  75% |  max
               |  14.0 |  6.5 | 4.031128874149275 | 0.0 | 3.25 | 6.5 | 9.75 | 13.0
 
-  an optional keyword argument allow to specify different percentiles to include
+  an optional keyword argument allows to specify different percentiles to include
 
     >>> arr.describe(percentiles=[20, 40, 60, 80])
     statistic | count | mean |               std | min | 20% | 40% | 60% |  80% |  max
@@ -34,7 +40,7 @@
 
   This closes :issue:`184`.
 
-* implemented reindex allowing to change order of labels (and add new ones) of one or several axes:
+* implemented reindex allowing to change the order of labels and add/remove some of them to one or several axes:
 
     >>> arr = ndtest((2, 2))
     >>> arr
@@ -52,12 +58,26 @@
      a1 | -1 |  3 |  2
      a2 | -1 | -1 | -1
      a0 | -1 |  1 |  0
+
+  using reindex one can make an array compatible with another array which has more/less labels or with labels in a
+  different order:
+
     >>> arr2 = ndtest((3, 3))
-    >>> arr.reindex(arr2.axes, fill_value=-1)
+    >>> arr2
     a\\b | b0 | b1 | b2
-     a0 |  0 |  1 | -1
-     a1 |  2 |  3 | -1
-     a2 | -1 | -1 | -1
+     a0 |  0 |  1 |  2
+     a1 |  3 |  4 |  5
+     a2 |  6 |  7 |  8
+    >>> arr.reindex(arr2.axes, fill_value=0)
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  1 |  0
+     a1 |  2 |  3 |  0
+     a2 |  0 |  0 |  0
+    >>> arr.reindex(arr2.axes, fill_value=0) + arr2
+    a\\b | b0 | b1 | b2
+     a0 |  0 |  2 |  2
+     a1 |  5 |  7 |  5
+     a2 |  6 |  7 |  8
 
   This closes :issue:`18`.
 
@@ -85,14 +105,6 @@
 
 * viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
 
-* viewer: added a menu bar 'File' with options 'New', 'Open', 'Save', 'SaveAs', 'Open Recent' and 'Quit'.
-
-  WARNING: Only LArray objects are saved.
-
-  (closes :issue:`88`)
-
-* renamed dump, dump_hdf, dump_excel and dump_csv methods of class Session as save, to_hdf, to_excel and to_csv
-  (closes :issue:`217`)
 
 .. _misc:
 
@@ -107,6 +119,8 @@ Miscellaneous improvements
     >>> gender = Axis('M,F', 'gender')
 
   (closes :issue:`152`)
+
+* renamed Session.dump, dump_hdf, dump_excel and dump_csv to save, to_hdf, to_excel and to_csv (closes :issue:`217`).
 
 * changed default value of `ddof` argument for var and std functions from 0 to 1 (closes :issue:`190`).
 
@@ -193,6 +207,16 @@ Miscellaneous improvements
         Axis(['c0', 'c1', 'c2'], 'column')
     ])
 
+* added possibility to delete an array from a session:
+
+    >>> s = Session({'a': ndtest((3, 3)), 'b': ndtest((2, 4)), 'c': ndtest((4, 2))})
+    >>> s.names
+    ['a', 'b', 'c']
+    >>> del s.b
+    >>> del s['c']
+    >>> s.names
+    ['a']
+
 * made create_sequential axis argument accept axis definitions in addition to Axis objects like, for example, using a
   string definition (closes :issue:`160`).
 
@@ -222,18 +246,12 @@ Miscellaneous improvements
 
   will autocomplete to `s.a_nice_test_array` and `s['a_<tab>` will be completed to `s['a_nice_test_array`
 
-* added possibility to delete an array from a session:
-
-    >>> s = Session({'a': ndtest((3, 3)), 'b': ndtest((2, 4)), 'c': ndtest((4, 2))})
-    >>> s.names
-    ['a', 'b', 'c']
-    >>> del s.b
-    >>> del s['c']
-    >>> s.names
-    ['a']
-
 * made warning messages for division by 0 and invalid values (usually caused by 0 / 0) point to the user code line,
   instead of the corresponding line in the larray module.
+
+* preserve order of arrays in a session when saving to/loading from an .xlsx file.
+
+* when creating a session from a directory containing CSV files, the directory may now contain other (non-CSV) files.
 
 
 Fixes
@@ -241,11 +259,9 @@ Fixes
 
 * fixed keyword arguments such as `out`, `ddof`, ... for aggregation functions (closes :issue:`189`).
 
-* fixed percentile(_by) with multiple percentiles values (i.e. when argument `q` is a list/tuple).
-  (closes :issue:`192`)
+* fixed percentile(_by) with multiple percentiles values, i.e. when argument `q` is a list/tuple (closes :issue:`192`).
 
-* fixed group aggregates on integer arrays for median, percentile, var and std
-  (closes :issue:`193`).
+* fixed group aggregates on integer arrays for median, percentile, var and std (closes :issue:`193`).
 
 * fixed group sum over boolean arrays (closes :issue:`194`).
 
@@ -258,9 +274,5 @@ Fixes
 
 * fixed Workbook behavior in case of new workbook: the first added sheet replaces the default sheet `Sheet1`
   (closes :issue:`230`).
-
-* fixed order of arrays in sessions loaded from files. The order is now the same as in the file.
-
-* fixed loading session from CSV files in a directory. The directory may contain other non-csv files.
 
 * fixed with_axes warning to refer to set_axes instead of replace_axes.
