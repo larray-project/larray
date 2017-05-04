@@ -8,9 +8,9 @@ from collections import OrderedDict
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
-from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_equal, larray_nan_equal, get_axes
+from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_nan_equal, get_axes
 from .excel import open_excel
-from .utils import float_error_handler_factory
+from .utils import float_error_handler_factory, pickle
 
 
 def check_pattern(k, pattern):
@@ -224,17 +224,41 @@ class PandasCSVHandler(FileHandler):
         pass
 
 
+class PickleHandler(FileHandler):
+    def _open_for_read(self):
+        with open(self.fname, 'rb') as f:
+            self.data = pickle.load(f)
+
+    def _open_for_write(self):
+        self.data = OrderedDict()
+
+    def list(self):
+        return self.data.keys()
+
+    def _read_array(self, key):
+        return self.data[key]
+
+    def _dump(self, key, value):
+        self.data[key] = value
+
+    def close(self):
+        with open(self.fname, 'wb') as f:
+            pickle.dump(self.data, f)
+
+
 handler_classes = {
+    'pickle': PickleHandler,
+    'pandas_csv': PandasCSVHandler,
     'pandas_hdf': PandasHDFHandler,
     'pandas_excel': PandasExcelHandler,
     'xlwings_excel': XLWingsHandler,
-    'pandas_csv': PandasCSVHandler
 }
 
 ext_default_engine = {
+    'csv': 'pandas_csv',
     'h5': 'pandas_hdf', 'hdf': 'pandas_hdf',
+    'pkl': 'pickle', 'pickle': 'pickle',
     'xls': 'xlwings_excel', 'xlsx': 'xlwings_excel',
-    'csv': 'pandas_csv'
 }
 
 
@@ -363,6 +387,9 @@ class Session(object):
         """
         Loads array objects from a file.
 
+        WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
+        to arbitrary code execution.
+
         Parameters
         ----------
         fname : str
@@ -419,6 +446,23 @@ class Session(object):
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
         handler.dump_arrays(items, display=display, **kwargs)
+
+    def to_pickle(self, fname, names=None, *args, **kwargs):
+        """
+        Dumps all array objects from the current session to a file using pickle.
+
+        WARNING: never load a pickle file (.pkl or .pickle) from an untrusted source, as it can lead to arbitrary code
+        execution.
+
+        Parameters
+        ----------
+        fname : str
+            Path for the dump.
+        names : list of str or None, optional
+            List of names of objects to dump. Defaults to all objects
+            present in the Session.
+        """
+        self.save(fname, names, ext_default_engine['pkl'], *args, **kwargs)
 
     def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
         warnings.warn("Method dump is deprecated. Use method save instead.", DeprecationWarning, stacklevel=2)
@@ -515,6 +559,7 @@ class Session(object):
     def copy(self):
         """Returns a copy of the session.
         """
+        # this actually *does* a copy of the internal mapping (the mapping is not reused-as is)
         return Session(self._objects)
 
     def keys(self):
