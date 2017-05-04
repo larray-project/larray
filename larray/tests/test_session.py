@@ -146,7 +146,11 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'f'])
 
     def test_xlsx_pandas_io(self):
-        self.session.save(abspath('test_session.xlsx'), engine='pandas_excel')
+        fpath = abspath('test_session.xlsx')
+        self.session.save(fpath, engine='pandas_excel')
+        s = Session()
+        s.load(fpath, engine='pandas_excel')
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
         fpath = abspath('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
@@ -156,7 +160,12 @@ class TestSession(TestCase):
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
-        self.session.save(abspath('test_session_xw.xlsx'), engine='xlwings_excel')
+        fpath = abspath('test_session_xw.xlsx')
+        self.session.save(fpath, engine='xlwings_excel')
+        s = Session()
+        s.load(fpath, engine='xlwings_excel')
+        # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
         fpath = abspath('test_session_ef_xw.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
