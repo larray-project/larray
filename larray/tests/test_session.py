@@ -173,6 +173,14 @@ class TestSession(TestCase):
         # CSV cannot keep ordering (so we always sort keys)
         self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
 
+    def test_pickle_io(self):
+        fpath = abspath('test_session.pkl')
+
+        self.session.save(fpath)
+        s = Session()
+        s.load(fpath, engine='pickle')
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+
     def test_eq(self):
         sess = self.session.filter(kind=LArray)
         expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
