@@ -2343,9 +2343,8 @@ class MappingEditor(QMainWindow):
             filepath = [filepath]
         if isinstance(filepath, (list, tuple)):
             session.load(None, filepath)
-            for fpath in filepath:
-                self.set_current_file(fpath)
-                basenames = [os.path.basename(fpath) for fpath in filepath]
+            self.update_recent_files(filepath)
+            basenames = [os.path.basename(fpath) for fpath in filepath]
             self.statusBar().showMessage("CSV files {} loaded".format(' ,'.join(basenames)), 4000)
         else:
             session.load(filepath)
@@ -2370,7 +2369,7 @@ class MappingEditor(QMainWindow):
                     self._open_file(filepaths[0])
                 else:
                     QMessageBox.critical(self, "Error",
-                                         "It possible to load several CSV files or one Excel or HDF file")
+                                         "Only several CSV files can be loaded in the same time")
 
     def open_recent_file(self):
         if self._ask_to_save_if_unsaved_modifications():
@@ -2411,14 +2410,18 @@ class MappingEditor(QMainWindow):
         QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
 
     def set_current_file(self, filepath):
-        self.currentFile = filepath
-        if filepath is not None:
-            settings = QSettings()
-            files = settings.value("recentFileList")
-            if filepath in files:
-                files.remove(filepath)
-            files = [filepath] + files[:self.MAX_RECENT_FILES-1]
-            settings.setValue("recentFileList", files)
+        self.update_recent_files([filepath])
+
+    def update_recent_files(self, filepaths):
+        settings = QSettings()
+        files = settings.value("recentFileList")
+        for filepath in filepaths:
+            if filepath is not None:
+                self.currentFile = filepath
+                if filepath in files:
+                    files.remove(filepath)
+                files = [filepath] + files
+        settings.setValue("recentFileList", files[:self.MAX_RECENT_FILES])
         self.update_recent_file_actions()
 
     def update_recent_file_actions(self):
