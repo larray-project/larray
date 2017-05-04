@@ -198,7 +198,7 @@ def create_action(parent, text, icon=None, triggered=None, shortcut=None, status
         action.setShortcut(shortcut)
     if statustip is not None:
         action.setStatusTip(statustip)
-    action.setShortcutContext(Qt.WidgetShortcut)
+    # action.setShortcutContext(Qt.WidgetShortcut)
     return action
 
 
@@ -986,7 +986,7 @@ class ArrayView(QTableView):
                                          icon=ima.icon('edit-copy'),
                                          triggered=self.copy)
         self.excel_action = create_action(self, _('Copy to Excel'),
-                                          shortcut=QKeySequence("Ctrl+E"),
+                                          shortcut="Ctrl+E",
                                           # icon=ima.icon('edit-copy'),
                                           triggered=self.to_excel)
         self.paste_action = create_action(self, _('Paste'),
@@ -1031,7 +1031,7 @@ class ArrayView(QTableView):
             self.paste()
         elif keyseq == QKeySequence.Print:
             self.plot()
-        elif keyseq == QKeySequence("Ctrl+E"):
+        elif keyseq == "Ctrl+E":
             self.to_excel()
         # allow to start editing cells by pressing Enter
         elif event.key() == Qt.Key_Return and not self.model().readonly:
@@ -2100,17 +2100,17 @@ class MappingEditor(QMainWindow):
     def setup_menu_bar(self):
         """Setup menu bar"""
         menu_bar = self.menuBar()
-        file_menu = menu_bar.addMenu('File')
+        file_menu = menu_bar.addMenu('&File')
 
-        file_menu.addAction(create_action(self, _('New'), shortcut=QKeySequence("Ctrl+N"), triggered=self.new))
-        file_menu.addAction(create_action(self, _('Open'), shortcut=QKeySequence("Ctrl+O"), triggered=self.open,
+        file_menu.addAction(create_action(self, _('&New'), shortcut="Ctrl+N", triggered=self.new))
+        file_menu.addAction(create_action(self, _('&Open'), shortcut="Ctrl+O", triggered=self.open,
                                           statustip=_('Load session from file')))
-        file_menu.addAction(create_action(self, _('Save'), shortcut=QKeySequence("Ctrl+S"), triggered=self.save,
+        file_menu.addAction(create_action(self, _('&Save'), shortcut="Ctrl+S", triggered=self.save,
                                           statustip=_('Save all arrays as a session in a file')))
-        file_menu.addAction(create_action(self, _('Save As'), triggered=self.save_as,
+        file_menu.addAction(create_action(self, _('Save &As'), triggered=self.save_as,
                                           statustip=_('Save all arrays as a session in a file')))
 
-        recentFilesMenu = file_menu.addMenu("Open Recent")
+        recentFilesMenu = file_menu.addMenu("Open &Recent")
         for action in self.recentFileActs:
             action.setVisible(False)
             action.triggered.connect(self.open_recent_file)
@@ -2118,11 +2118,11 @@ class MappingEditor(QMainWindow):
         self.update_recent_file_actions()
 
         file_menu.addSeparator()
-        file_menu.addAction(create_action(self, _('Quit'), shortcut=QKeySequence("Ctrl+Q"),
+        file_menu.addAction(create_action(self, _('&Quit'), shortcut="Ctrl+Q",
                                           triggered=self.close))
 
-        help_menu = menu_bar.addMenu('Help')
-        help_menu.addAction(create_action(self, _('online documentation'), shortcut=QKeySequence("Ctrl+H"),
+        help_menu = menu_bar.addMenu('&Help')
+        help_menu.addAction(create_action(self, _('Online documentation'), shortcut="Ctrl+H",
                                           triggered=self.open_documentation))
 
     def add_list_item(self, name):
