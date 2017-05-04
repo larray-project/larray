@@ -92,7 +92,10 @@ class FileHandler(object):
         for key in keys:
             if display:
                 print("loading", key, "...", end=' ')
-            dest_key = key.strip('/')
+            if os.path.isfile(key):
+                dest_key = os.path.splitext(os.path.basename(key))[0]
+            else:
+                dest_key = key.strip('/')
             res[dest_key] = self._read_array(key, *args, **kwargs)
             if display:
                 print("done")
@@ -400,8 +403,8 @@ class Session(object):
         fname : str
             Path to the file.
         names : list of str, optional
-            List of arrays to load. Defaults to all valid objects present in
-            the file/directory.
+            List of arrays to load. If `fname` is None, list of paths to CSV files.
+            Defaults to all valid objects present in the file/directory.
         engine : str, optional
             Load using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
@@ -411,7 +414,11 @@ class Session(object):
         """
         if display:
             print("opening", fname)
-        # TODO: support path + *.csv
+        if fname is None:
+            if all([os.path.splitext(name)[1] == '.csv' for name in names]):
+                engine = ext_default_engine['csv']
+            else:
+                raise ValueError("List of paths to only CSV files expected. Got {}".format(names))
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
