@@ -2342,12 +2342,11 @@ class MappingEditor(QMainWindow):
         if '.csv' in filepath:
             filepath = [filepath]
         if isinstance(filepath, (list, tuple)):
-            directory = os.path.dirname(filepath[0])
-            names = [os.path.splitext(os.path.basename(fp))[0] for fp in filepath]
-            session.load(directory, names)
-            for name in names:
-                self.set_current_file('{}/{}.csv'.format(directory, name))
-            self.statusBar().showMessage("Arrays {} from CSV files loaded".format(' ,'.join(names)), 4000)
+            session.load(None, filepath)
+            for fpath in filepath:
+                self.set_current_file(fpath)
+                basenames = [os.path.basename(fpath) for fpath in filepath]
+            self.statusBar().showMessage("CSV files {} loaded".format(' ,'.join(basenames)), 4000)
         else:
             session.load(filepath)
             self.set_current_file(filepath)
