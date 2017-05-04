@@ -202,23 +202,28 @@ class PandasCSVHandler(FileHandler):
         pass
 
     def _open_for_write(self):
-        try:
-            os.makedirs(self.fname)
-        except OSError:
-            if not os.path.isdir(self.fname):
-                raise
+        if self.fname is not None:
+            try:
+                os.makedirs(self.fname)
+            except OSError:
+                if not os.path.isdir(self.fname):
+                    raise ValueError("Path {} must represent a directory".format(self.fname))
 
     def list(self):
         # strip extension from files
         # TODO: also support fname pattern, eg. "dump_*.csv" (using glob)
-        return sorted([os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname])
+        if self.fname is not None:
+            return sorted([os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname])
+        else:
+            return []
 
     def _read_array(self, key, *args, **kwargs):
-        fpath = os.path.join(self.fname, '{}.csv'.format(key))
+        fpath = os.path.join(self.fname, '{}.csv'.format(key)) if self.fname is not None else key
         return read_csv(fpath, *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
-        value.to_csv(os.path.join(self.fname, '{}.csv'.format(key)), *args, **kwargs)
+        fpath = os.path.join(self.fname, '{}.csv'.format(key)) if self.fname is not None else key
+        value.to_csv(fpath, *args, **kwargs)
 
     def close(self):
         pass
