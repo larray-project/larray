@@ -2353,6 +2353,7 @@ class MappingEditor(QMainWindow):
         if isinstance(filepath, (list, tuple)):
             session.load(None, filepath)
             self.update_recent_files(filepath)
+            self.currentFile = os.path.dirname(filepath[0])
             basenames = [os.path.basename(fpath) for fpath in filepath]
             self.statusBar().showMessage("CSV files {} loaded".format(' ,'.join(basenames)), 4000)
         else:
@@ -2420,13 +2421,13 @@ class MappingEditor(QMainWindow):
 
     def set_current_file(self, filepath):
         self.update_recent_files([filepath])
+        self.currentFile = filepath
 
     def update_recent_files(self, filepaths):
         settings = QSettings()
         files = settings.value("recentFileList")
         for filepath in filepaths:
             if filepath is not None:
-                self.currentFile = filepath
                 if filepath in files:
                     files.remove(filepath)
                 files = [filepath] + files
