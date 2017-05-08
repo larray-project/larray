@@ -263,6 +263,8 @@ Miscellaneous improvements
 
 * when creating a session from a directory containing CSV files, the directory may now contain other (non-CSV) files.
 
+* improved error message when trying to copy a sheet from one instance of Excel to another (closes :issue:`231`).
+
 
 Fixes
 -----
