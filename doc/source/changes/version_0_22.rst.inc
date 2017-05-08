@@ -2,7 +2,7 @@
 ------------
 
 * viewer: added a menu bar with the ability to clear the current session, save all its arrays to a file (.h5, .xlsx,
-  .pkl or a directory containing multiple .csv files), and load arrays from such a file (closes :issue:`88`).
+  or a directory containing multiple .csv files), and load arrays from such a file (closes :issue:`88`).
 
   WARNING: Only array objects are currently saved. It means that scalars, functions or others non-LArray objects
   defined in the console are *not* saved in the file.
