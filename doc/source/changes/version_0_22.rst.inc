@@ -263,6 +263,10 @@ Miscellaneous improvements
 
 * when creating a session from a directory containing CSV files, the directory may now contain other (non-CSV) files.
 
+* several calls to open_excel from within the same program/script will now reuses a single global Excel instance.
+  This makes Excel I/O much faster without having to create an instance manually using xlwings.App, and still without
+  risking interfering with other instances of Excel opened manually (closes :issue:`245`).
+
 * improved error message when trying to copy a sheet from one instance of Excel to another (closes :issue:`231`).
 
 
