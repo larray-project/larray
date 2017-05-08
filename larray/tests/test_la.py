@@ -3394,13 +3394,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_read_excel_xlwings(self):
-        # TODO: we should implement an app= argument for read_excel to reuse the same Excel instance
-        # we could also use a single instance for the whole class by using something like:
-
-        # @classmethod
-        # def setUpClass(cls):
-        #     cls._excel_app = ...
-
         la = read_excel(abspath('test.xlsx'), '1d')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
@@ -3637,7 +3630,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_to_excel_xlwings(self):
-        # TODO: we should implement an app= argument to to_excel to reuse the same Excel instance
         fpath = abspath('test_to_excel_xlwings.xlsx')
 
         # 1D
@@ -3695,13 +3687,10 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
-        # use a single Excel instance to speed up the test
-        app = xw.App(visible=False, add_book=False)
-
         # 1) with headers
         # ===============
 
-        with open_excel(abspath('test_open_excel.xlsx'), app=app) as wb:
+        with open_excel(abspath('test_open_excel.xlsx')) as wb:
             # 1D
             a1 = ndtest(3)
 
@@ -3781,7 +3770,7 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
 
         # 2) without headers
         # ==================
-        with open_excel(abspath('test_open_excel_no_headers.xlsx'), app=app) as wb:
+        with open_excel(abspath('test_open_excel_no_headers.xlsx')) as wb:
             # 1D
             a1 = ndtest(3)
 
@@ -3842,8 +3831,6 @@ age |   0 |      1 |      2 |      3 |      4 |      5 |      6 |      7 | ... \
             wb['3D']['A20'] = a3
             res = wb['3D']['A20:D25'].load(header=False)
             assert_array_equal(res, a3.data.reshape((6, 4)))
-
-        app.quit()
 
     def test_ufuncs(self):
         la = self.small
