@@ -285,4 +285,9 @@ Fixes
 * fixed Workbook behavior in case of new workbook: the first added sheet replaces the default sheet `Sheet1`
   (closes :issue:`230`).
 
+* fixed name of Workbook sheets created by copying another sheet (closes :issue:`244`).
+
+    >>> wb = open_excel()
+    >>> wb['name_of_new_sheet'] = wb['name_of_sheet_to_copy']
+
 * fixed with_axes warning to refer to set_axes instead of replace_axes.

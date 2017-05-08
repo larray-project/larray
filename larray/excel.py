@@ -155,19 +155,22 @@ if xw is not None:
             if self.new_workbook:
                 self.xw_wkb.sheets[0].name = key
                 self.new_workbook = False
+            key_in_self = key in self
             if isinstance(value, Sheet):
-                if key in self:
-                    xw_sheet = self[key].xw_sheet
-                    # avoid having the sheet name renamed to "name (1)"
-                    xw_sheet.name = '__tmp__'
-                    # add new sheet before sheet to overwrite
-                    value.xw_sheet.api.Copy(xw_sheet.api)
-                    xw_sheet.delete()
-                else:
-                    xw_sheet = self[-1]
-                    value.xw_sheet.api.Copy(xw_sheet.api)
+                # xlwings index is 1-based
+                # TODO: implement Workbook.index(key)
+                target_idx = self[key].xw_sheet.index - 1 if key_in_self else -1
+                target_sheet = self[target_idx].xw_sheet
+                # add new sheet after target sheet. The new sheet will be named something like "value.name (1)" but I
+                # do not think there is anything we can do about this, except rename it afterwards because Copy has no
+                # name argument. See https://msdn.microsoft.com/en-us/library/office/ff837784.aspx
+                value.xw_sheet.api.Copy(None, target_sheet.api)
+                if key_in_self:
+                    target_sheet.delete()
+                # rename the new sheet
+                self[target_idx].name = key
                 return
-            if key in self:
+            if key_in_self:
                 sheet = self[key]
                 sheet.clear()
             else:
