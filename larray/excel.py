@@ -7,7 +7,6 @@ except ImportError:
     xw = None
 
 from .core import LArray, df_aslarray, Axis, from_lists
-from .utils import unique, basestring
 
 string_types = (str,)
 
@@ -28,7 +27,6 @@ if xw is not None:
         def write_value(cls, value, options):
             df = value.to_frame(fold_last_axis_name=True)
             return PandasDataFrameConverter.write_value(df, options)
-
 
     LArrayConverter.register(LArray)
 
@@ -79,9 +77,8 @@ if xw is not None:
                     if not os.path.isfile(filepath):
                         self.new_workbook = True
                 else:
-                    # try to target an open but unsaved workbook
-                    # we cant use the same code path as for other option
-                    # because we don't know which Excel instance has that book
+                    # try to target an open but unsaved workbook. We cannot use the same code path as for other options
+                    # because we do not know which Excel instance has that book
                     xw_wkb = xw.Book(filepath)
                     app = xw_wkb.app
 
@@ -233,7 +230,7 @@ if xw is not None:
         def __init__(self, workbook, key, xw_sheet=None):
             if xw_sheet is None:
                 xw_sheet = workbook.xw_wkb.sheets[key]
-            self.xw_sheet = xw_sheet
+            object.__setattr__(self, 'xw_sheet', xw_sheet)
 
         # TODO: we can probably scrap this for xlwings 0.9+. We need to have
         #       a unit test for this though.
@@ -278,6 +275,9 @@ if xw is not None:
 
         def __getattr__(self, key):
             return getattr(self.xw_sheet, key)
+
+        def __setattr__(self, key, value):
+            setattr(self.xw_sheet, key, value)
 
         # TODO: add convert_float argument
         def load(self, header=True, nb_index=None, index_col=None):
@@ -382,7 +382,7 @@ if xw is not None:
                 return getattr(self.xw_range, key)
 
         def __setattr__(self, key, value):
-            return setattr(self.xw_range, key, value)
+            setattr(self.xw_range, key, value)
 
         # TODO: implement all binops
         # def __mul__(self, other):
