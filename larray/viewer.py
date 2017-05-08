@@ -2353,9 +2353,9 @@ class MappingEditor(QMainWindow):
             filepath = [filepath]
         if isinstance(filepath, (list, tuple)):
             session.load(None, filepath)
-            self.update_recent_files(filepath)
-            self.currentFile = os.path.dirname(filepath[0])
+            dirname = os.path.dirname(filepath[0])
             basenames = [os.path.basename(fpath) for fpath in filepath]
+            self.set_current_file(dirname)
             self.statusBar().showMessage("CSV files {} loaded".format(' ,'.join(basenames)), 4000)
         else:
             session.load(filepath)
