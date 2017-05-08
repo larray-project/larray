@@ -15,8 +15,25 @@ from larray import open_excel
 class TestExcel(TestCase):
     def test_setitem(self):
         with open_excel(visible=False) as wb:
-            wb['sheet_name'] = 'sheet content'
-            assert wb.sheet_names() == ['sheet_name']
+            # sheet did not exist, str value
+            wb['sheet1'] = 'sheet1 content'
+            wb['sheet2'] = 'sheet2 content'
+            assert wb.sheet_names() == ['sheet1', 'sheet2']
+
+            # sheet did exist, str value
+            wb['sheet2'] = 'sheet2 content v2'
+            assert wb.sheet_names() == ['sheet1', 'sheet2']
+            assert wb['sheet2']['A1'].value == 'sheet2 content v2'
+
+            # sheet did not exist, Sheet value
+            wb['sheet3'] = wb['sheet1']
+            assert wb.sheet_names() == ['sheet1', 'sheet2', 'sheet3']
+            assert wb['sheet3']['A1'].value == 'sheet1 content'
+
+            # sheet did exist, Sheet value
+            wb['sheet2'] = wb['sheet1']
+            assert wb.sheet_names() == ['sheet1', 'sheet2', 'sheet3']
+            assert wb['sheet2']['A1'].value == 'sheet1 content'
 
     def test_delitem(self):
         with open_excel(visible=False) as wb:
