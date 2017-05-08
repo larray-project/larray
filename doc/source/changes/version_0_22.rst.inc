@@ -105,10 +105,15 @@
 
 * viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
 
-* Excel sheets opened via open_excel can be renamed by changing their .name attribute:
+* Excel sheets in workbooks opened via open_excel can be renamed by changing their .name attribute:
 
     >>> wb = open_excel()
-    >>> wb['old_name'].name = 'new_name'
+    >>> wb['old_sheet_name'].name = 'new_sheet_name'
+
+* Excel sheets in workbooks opened via open_excel can be deleted using "del":
+
+    >>> wb = open_excel()
+    >>> del wb['sheet_name']
 
 
 .. _misc:

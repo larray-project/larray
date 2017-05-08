@@ -175,6 +175,9 @@ if xw is not None:
                 sheet = Sheet(None, None, xw_sheet=xw_sheet)
             sheet["A1"] = value
 
+        def __delitem__(self, key):
+            self[key].delete()
+
         def sheet_names(self):
             return [s.name for s in self]
 
