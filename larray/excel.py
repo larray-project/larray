@@ -157,6 +157,9 @@ if xw is not None:
                 self.new_workbook = False
             key_in_self = key in self
             if isinstance(value, Sheet):
+                if value.xw_sheet.book.app != self.xw_wkb.app:
+                    raise ValueError("cannot copy a sheet from one instance of Excel to another")
+
                 # xlwings index is 1-based
                 # TODO: implement Workbook.index(key)
                 target_idx = self[key].xw_sheet.index - 1 if key_in_self else -1

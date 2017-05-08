@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-from unittest import TestCase
-
 import pytest
 try:
     import xlwings as xw
@@ -12,7 +10,7 @@ from larray import open_excel
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
-class TestExcel(TestCase):
+class TestExcel(object):
     def test_setitem(self):
         with open_excel(visible=False) as wb:
             # sheet did not exist, str value
@@ -34,6 +32,11 @@ class TestExcel(TestCase):
             wb['sheet2'] = wb['sheet1']
             assert wb.sheet_names() == ['sheet1', 'sheet2', 'sheet3']
             assert wb['sheet2']['A1'].value == 'sheet1 content'
+
+            with open_excel(visible=False) as wb2:
+                with pytest.raises(ValueError) as e_info:
+                    wb2['sheet1'] = wb['sheet1']
+                assert e_info.value.args[0] == "cannot copy a sheet from one instance of Excel to another"
 
     def test_delitem(self):
         with open_excel(visible=False) as wb:
