@@ -2099,6 +2099,7 @@ class MappingEditor(QMainWindow):
 
     def _reset(self):
         self.data = la.Session()
+        self._listwidget.clear()
         if qtconsole_available:
             self.kernel.shell.reset()
             self.kernel.shell.run_cell('from larray import *')
