@@ -1,4 +1,5 @@
 import os
+import atexit
 
 import numpy as np
 try:
@@ -13,6 +14,29 @@ string_types = (str,)
 
 if xw is not None:
     from xlwings.conversion.pandas_conv import PandasDataFrameConverter
+
+    global_app = None
+
+
+    def is_app_alive(app):
+        try:
+            app.books
+            return True
+        except Exception:
+            return False
+
+
+    def kill_global_app():
+        global global_app
+
+        if global_app is not None:
+            if is_app_alive(global_app):
+                try:
+                    global_app.kill()
+                except Exception:
+                    pass
+            del global_app
+            global_app = None
 
 
     class LArrayConverter(PandasDataFrameConverter):
@@ -52,10 +76,17 @@ if xw is not None:
                 whether or not to show dialog boxes for updating links or
                 when some links cannot be updated. Defaults to False if
                 visible, True otherwise.
-            app : xlwings.App instance, optional
-                an existing app instance to reuse. Defaults to creating a new
-                Excel instance.
+            app : None, "new", "active", "global" or xlwings.App, optional
+                use "new" for opening a new Excel instance, "active" for the last active instance (including ones
+                opened by the user) and "global" to (re)use the same instance for all workbooks of a program. None is
+                equivalent to "active" if filepath is -1 and "global" otherwise. Defaults to None.
+
+                The "global" instance is a specific Excel instance for all input from/output to Excel from within a
+                single Python program (and should not interact with instances manually opened by the user or another
+                program).
             """
+            global global_app
+
             xw_wkb = None
             self.delayed_filepath = None
             self.new_workbook = False
@@ -82,9 +113,14 @@ if xw is not None:
                     xw_wkb = xw.Book(filepath)
                     app = xw_wkb.app
 
+            if app is None:
+                app = "active" if filepath == -1 else "global"
+
             # active workbook use active app by default
-            if filepath == -1 and app is None:
-                app = -1
+            if filepath == -1:
+                if app != "active":
+                    raise ValueError("to connect to the active workbook, one must use the 'active' Excel instance "
+                                     "(app='active' or app=None)")
 
             # unless explicitly set, app is set to visible for brand new or
             # active book. For unsaved_book it is left intact.
@@ -95,10 +131,17 @@ if xw is not None:
                     # filepath is not None but we don't target an unsaved book
                     visible = False
 
-            if app is None:
+            if app == "new":
                 app = xw.App(visible=visible, add_book=False)
-            elif app == -1:
+            elif app == "active":
                 app = xw.apps.active
+            elif app == "global":
+                if global_app is None:
+                    atexit.register(kill_global_app)
+                if global_app is None or not is_app_alive(global_app):
+                    global_app = xw.App(visible=visible, add_book=False)
+                app = global_app
+            assert isinstance(app, xw.App)
 
             if visible:
                 app.visible = visible
@@ -196,13 +239,10 @@ if xw is not None:
 
         def close(self):
             """
-            Close the workbook in Excel. If this was the last workbook of
-            that Excel instance, it also close the Excel instance.
+            Close the workbook in Excel. This will not quit the Excel instance, even if this was the last workbook of
+            that Excel instance.
             """
-            app = self.xw_wkb.app
             self.xw_wkb.close()
-            if not app.books:
-                app.quit()
 
         def __iter__(self):
             return iter([Sheet(None, None, xw_sheet)
