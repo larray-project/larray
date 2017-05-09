@@ -271,6 +271,8 @@ Aggregation Functions
    LArray.with_total
    LArray.percent
    LArray.growth_rate
+   LArray.describe
+   LArray.describe_by
 
 .. _la_sorting:
 
@@ -296,6 +298,7 @@ Reshaping/Extending/Reordering
    LArray.reshape
    LArray.reshape_like
    LArray.compact
+   LArray.reindex
    LArray.transpose
    LArray.expand
    LArray.prepend
@@ -428,10 +431,11 @@ Session
    Session.add
    Session.get
    Session.load
-   Session.dump
-   Session.dump_csv
-   Session.dump_excel
-   Session.dump_hdf
+   Session.save
+   Session.to_csv
+   Session.to_excel
+   Session.to_hdf
+   Session.to_pickle
    Session.filter
    Session.compact
    Session.copy
