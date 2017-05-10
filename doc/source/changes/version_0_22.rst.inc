@@ -128,6 +128,11 @@
     >>> wb = open_excel()
     >>> del wb['sheet_name']
 
+* implemented PGroup.set() to transform a positional group to an LSet.
+
+    >>> a = Axis('a=a0..a5')
+    >>> a.i[:2].set()
+    a['a0', 'a1'].set()
 
 .. _misc:
 
