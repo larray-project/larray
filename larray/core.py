@@ -4666,7 +4666,7 @@ class LArray(object):
 
         Examples
         --------
-        >>> arr = ndtest((3, 3), dtype=float)
+        >>> arr = ndtest((2, 3), dtype=float)
         >>> arr.to_series() # doctest: +NORMALIZE_WHITESPACE
         a   b
         a0  b0    0.0
@@ -4675,9 +4675,6 @@ class LArray(object):
         a1  b0    3.0
             b1    4.0
             b2    5.0
-        a2  b0    6.0
-            b1    7.0
-            b2    8.0
         dtype: float64
         """
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes],
@@ -9063,9 +9060,8 @@ class LArray(object):
 
         Examples
         --------
-        >>> from .tests.test_la import abspath
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
-        >>> a.to_hdf(abspath('test.h5'), 'a')
+        >>> a = ndtest((2, 3))
+        >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
