@@ -40,6 +40,10 @@ Modifying/Selecting/Searching
    Axis.rename
    Axis.subaxis
    Axis.extend
+   Axis.replace
+   Axis.union
+   Axis.intersection
+   Axis.difference
 
 Testing
 -------

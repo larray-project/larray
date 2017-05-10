@@ -1743,6 +1743,93 @@ class Axis(object):
     def _rename(self, name):
         raise TypeError("Axis._rename is deprecated, use Axis.rename instead")
 
+    def union(self, other):
+        """Returns axis with the union of this axis labels and other labels.
+
+        Labels relative order will be kept intact, but only unique labels will be returned. Labels from this axis will
+        be before labels from other.
+
+        Parameters
+        ----------
+        other : Axis or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        Axis
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a,b')
+        >>> letters.union(Axis('letters=b,c'))
+        Axis(['a', 'b', 'c'], 'letters')
+        >>> letters.union(['b', 'c'])
+        Axis(['a', 'b', 'c'], 'letters')
+        """
+        if isinstance(other, Axis):
+            other = other.labels
+        unique_labels = []
+        seen = set()
+        unique_list(self.labels, unique_labels, seen)
+        unique_list(other, unique_labels, seen)
+        return Axis(unique_labels, self.name)
+
+    def intersection(self, other):
+        """Returns axis with the (set) intersection of this axis labels and other labels.
+
+        In other words, this will use labels from this axis if they are also in other. Labels relative order will be
+        kept intact, but only unique labels will be returned.
+
+        Parameters
+        ----------
+        other : Group or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        LSet
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a,b')
+        >>> letters.intersection(Axis('letters=b,c'))
+        Axis(['b'], 'letters')
+        >>> letters.intersection(['b', 'c'])
+        Axis(['b'], 'letters')
+        """
+        if isinstance(other, Axis):
+            other = other.labels
+        seen = set(other)
+        return Axis([l for l in self.labels if l in seen], self.name)
+
+    def difference(self, other):
+        """Returns axis with the (set) difference of this axis labels and other labels.
+
+        In other words, this will use labels from this axis if they are not in other. Labels relative order will be
+        kept intact, but only unique labels will be returned.
+
+        Parameters
+        ----------
+        other : Axis or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        Axis
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a,b')
+        >>> letters.difference(Axis('letters=b,c'))
+        Axis(['a'], 'letters')
+        >>> letters.difference(['b', 'c'])
+        Axis(['a'], 'letters')
+        """
+        if isinstance(other, Axis):
+            other = other.labels
+        seen = set(other)
+        return Axis([l for l in self.labels if l not in seen], self.name)
+
 
 # We need a separate class for LGroup and cannot simply create a
 # new Axis with a subset of values/ticks/labels: the subset of
