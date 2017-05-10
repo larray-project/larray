@@ -116,6 +116,19 @@
     >>> letters.difference(['b', 'c'])
     Axis(['a'], 'letters')
 
+* implemented Group.union, intersection and difference which produce new groups by combining the labels of the axis
+  with the other labels.
+
+    >>> letters = Axis('letters=a..d')
+    >>> letters['a', 'b'].union(letters['b', 'c'])
+    letters['a', 'b', 'c'].set()
+    >>> letters['a', 'b'].union(['b', 'c'])
+    letters['a', 'b', 'c'].set()
+    >>> letters['a', 'b'].intersection(['b', 'c'])
+    letters['b'].set()
+    >>> letters['a', 'b'].difference(['b', 'c'])
+    letters['a'].set()
+
 * viewer: added possibility to delete an array by pressing Delete on keyboard (closes :issue:`116`).
 
 * Excel sheets in workbooks opened via open_excel can be renamed by changing their .name attribute:

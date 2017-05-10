@@ -64,10 +64,13 @@ PGroup
    :toctree: _generated/
 
    PGroup
-   Group.named
-   Group.with_axis
-   Group.by
+   PGroup.named
+   PGroup.with_axis
+   PGroup.by
    PGroup.translate
+   PGroup.union
+   PGroup.intersection
+   PGroup.difference
 
 LGroup
 ------
@@ -76,10 +79,13 @@ LGroup
    :toctree: _generated/
 
    LGroup
-   Group.named
-   Group.with_axis
-   Group.by
+   LGroup.named
+   LGroup.with_axis
+   LGroup.by
    LGroup.translate
+   LGroup.union
+   LGroup.intersection
+   LGroup.difference
 
 LSet
 ====
