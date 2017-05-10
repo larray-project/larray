@@ -2163,6 +2163,15 @@ class Group(object):
     __ne__ = _binop('ne')
     __eq__ = _binop('eq')
 
+    def set(self):
+        """Creates LSet from this group
+
+        Returns
+        -------
+        LSet
+        """
+        return LSet(self.eval(), self.name, self.axis)
+
     def __contains__(self, item):
         if isinstance(item, Group):
             item = item.eval()
@@ -2255,9 +2264,6 @@ class LGroup(Group):
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
         Group.__init__(self, key, name, axis)
-
-    def set(self):
-        return LSet(self.eval(), self.name, self.axis)
 
     #XXX: return PGroup instead?
     def translate(self, bound=None, stop=False):
