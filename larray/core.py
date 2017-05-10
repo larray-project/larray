@@ -2172,6 +2172,81 @@ class Group(object):
         """
         return LSet(self.eval(), self.name, self.axis)
 
+    def union(self, other):
+        """Returns (set) union of this label group and other.
+
+        Labels relative order will be kept intact, but only unique labels will be returned. Labels from this group will
+        be before labels from other.
+
+        Parameters
+        ----------
+        other : Group or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        LSet
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a..d')
+        >>> letters['a', 'b'].union(letters['b', 'c'])
+        letters['a', 'b', 'c'].set()
+        >>> letters['a', 'b'].union(['b', 'c'])
+        letters['a', 'b', 'c'].set()
+        """
+        return self.set().union(other)
+
+    def intersection(self, other):
+        """Returns (set) intersection of this label group and other.
+
+        In other words, this will return labels from this group which are also in other. Labels relative order will be
+        kept intact, but only unique labels will be returned.
+
+        Parameters
+        ----------
+        other : Group or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        LSet
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a..d')
+        >>> letters['a', 'b'].intersection(letters['b', 'c'])
+        letters['b'].set()
+        >>> letters['a', 'b'].intersection(['b', 'c'])
+        letters['b'].set()
+        """
+        return self.set().intersection(other)
+
+    def difference(self, other):
+        """Returns (set) difference of this label group and other.
+
+        In other words, this will return labels from this group without those in other. Labels relative order will be
+        kept intact, but only unique labels will be returned.
+
+        Parameters
+        ----------
+        other : Group or any sequence of labels
+            other labels
+
+        Returns
+        -------
+        LSet
+
+        Examples
+        --------
+        >>> letters = Axis('letters=a..d')
+        >>> letters['a', 'b'].difference(letters['b', 'c'])
+        letters['a'].set()
+        >>> letters['a', 'b'].difference(['b', 'c'])
+        letters['a'].set()
+        """
+        return self.set().difference(other)
+
     def __contains__(self, item):
         if isinstance(item, Group):
             item = item.eval()
