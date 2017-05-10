@@ -79,23 +79,23 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     >>> b = Axis('b=b0,b1')
     >>> initial = LArray([[2, 1], [1, 2]], [a, b])
     >>> initial
-    a\\b | b0 | b1
-     a0 |  2 |  1
-     a1 |  1 |  2
+    a\\b  b0  b1
+     a0   2   1
+     a1   1   2
     >>> target_sum_along_a = LArray([2, 1], b)
     >>> target_sum_along_a
-    b | b0 | b1
-      |  2 |  1
+    b  b0  b1
+        2   1
     >>> target_sum_along_b = LArray([1, 2], a)
     >>> target_sum_along_b
-    a | a0 | a1
-      |  1 |  2
+    a  a0  a1
+        1   2
     >>> result = ipfp([target_sum_along_a, target_sum_along_b], initial, threshold=0.01)
     >>> # round result so that its display is nicer
     ... round(result, 2)
-    a\\b |   b0 |   b1
-     a0 | 0.85 | 0.15
-     a1 | 1.15 | 0.85
+    a\\b    b0    b1
+     a0  0.85  0.15
+     a1  1.15  0.85
     """
     assert nzvzs in {'fix', 'warn', 'raise'}
     assert no_convergence in {'ignore', 'warn', 'raise'}
