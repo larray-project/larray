@@ -5010,11 +5010,6 @@ class LArray(object):
 
         Reindex several axes
 
-        >>> arr2 = ndtest((2, 3))
-        >>> arr.reindex(arr2.axes)
-        a\\b |  b0 |  b1 |  b2
-         a0 | 0.0 | 1.0 | nan
-         a1 | 2.0 | 3.0 | nan
         >>> a = Axis(['a1', 'a2', 'a0'], 'a')
         >>> b = Axis(['b2', 'b1', 'b0'], 'b')
         >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
@@ -5027,14 +5022,46 @@ class LArray(object):
          a1 | nan | 3.0 | 2.0
          a2 | nan | nan | nan
          a0 | nan | 1.0 | 0.0
+
+        Reindex using axes from another array
+
+        >>> arr2 = ndrange('a=a0..a1;c=c0..c0;b=b0..b2')
+        >>> arr2
+         a | c\\b | b0 | b1 | b2
+        a0 |  c0 |  0 |  1 |  2
+        a1 |  c0 |  3 |  4 |  5
+        >>> arr.reindex(arr2.axes)
+         a | b\\c |  c0
+        a0 |  b0 | 0.0
+        a0 |  b1 | 1.0
+        a0 |  b2 | nan
+        a1 |  b0 | 2.0
+        a1 |  b1 | 3.0
+        a1 |  b2 | nan
+        >>> arr2.reindex(arr.axes)
+         a | c\\b |  b0 |  b1
+        a0 |  c0 | 0.0 | 1.0
+        a1 |  c0 | 3.0 | 4.0
         """
         # XXX: can't we move this to AxisCollection.replace?
         if isinstance(new_axis, (int, basestring, list, tuple)):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
-        res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
+        if isinstance(axes_to_reindex, AxisCollection):
+            assert new_axis is None
+            # add extra axes if needed
+            res_axes = AxisCollection([axes_to_reindex.get(axis, axis) for axis in self.axes]) | axes_to_reindex
+        else:
+            res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
         res = full(res_axes, fill_value, dtype=common_type((self.data, fill_value)))
-        labels = tuple(axis[axis.labels] for axis in self.axes)
-        res[labels] = self
+        def get_labels(self_axis):
+            res_axis = res_axes[self_axis]
+            if res_axis.equals(self_axis):
+                return self_axis[:]
+            else:
+                return self_axis[self_axis.intersection(res_axis).labels]
+        self_labels = tuple(get_labels(axis) for axis in self.axes)
+        res_labels = tuple(res_axes[group.axis][group] for group in self_labels)
+        res[res_labels] = self[self_labels]
         if inplace:
             self.axes = res.axes
             self.data = res.data
