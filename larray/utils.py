@@ -91,7 +91,7 @@ def get_min_width(table, index):
 
 
 def table2str(table, missing, fullinfo=False, summarize=True,
-              maxwidth=80, numedges='auto', sep=' | ', cont='...', keepcols=0):
+              maxwidth=80, numedges='auto', sep='  ', cont='...', keepcols=0):
     """
     table is a list of lists
     :type table: list of list

@@ -746,9 +746,9 @@ def larray_equal(a1, a2):
     --------
     >>> arr1 = ndtest((2, 3))
     >>> arr1
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
+    a\\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
     >>> arr2 = arr1.copy()
     >>> larray_equal(arr1, arr2)
     True
@@ -790,9 +790,9 @@ def larray_nan_equal(a1, a2):
     >>> arr1 = ndtest((2, 3), dtype=float)
     >>> arr1['a1', 'b1'] = nan
     >>> arr1
-    a\\b |  b0 |  b1 |  b2
-     a0 | 0.0 | 1.0 | 2.0
-     a1 | 3.0 | nan | 5.0
+    a\\b   b0   b1   b2
+     a0  0.0  1.0  2.0
+     a1  3.0  nan  5.0
     >>> arr2 = arr1.copy()
     >>> larray_equal(arr1, arr2)
     False
@@ -1006,13 +1006,13 @@ class Axis(object):
         >>> time = Axis([2007, 2008, 2009, 2010], 'time')
         >>> arr = ndrange([sex, time])
         >>> arr
-        sex\\time | 2007 | 2008 | 2009 | 2010
-               M |    0 |    1 |    2 |    3
-               F |    4 |    5 |    6 |    7
+        sex\\time  2007  2008  2009  2010
+               M     0     1     2     3
+               F     4     5     6     7
         >>> arr[time.i[0, -1]]
-        sex\\time | 2007 | 2010
-               M |    0 |    3
-               F |    4 |    7
+        sex\\time  2007  2010
+               M     0     3
+               F     4     7
         """
         return PGroupMaker(self)
 
@@ -4128,11 +4128,11 @@ def get_axis(obj, i):
     --------
     >>> arr = ndtest((2, 2, 2))
     >>> arr
-     a | b\c | c0 | c1
-    a0 |  b0 |  0 |  1
-    a0 |  b1 |  2 |  3
-    a1 |  b0 |  4 |  5
-    a1 |  b1 |  6 |  7
+     a  b\c  c0  c1
+    a0   b0   0   1
+    a0   b1   2   3
+    a1   b0   4   5
+    a1   b1   6   7
     >>> get_axis(arr, 1)
     Axis(['b0', 'b1'], 'b')
     >>> np_arr = np.zeros((2, 2, 2))
@@ -4160,18 +4160,18 @@ def aslarray(a):
     >>> # NumPy array
     >>> np_arr = np.arange(6).reshape((2,3))
     >>> aslarray(np_arr)
-    {0}*\{1}* | 0 | 1 | 2
-            0 | 0 | 1 | 2
-            1 | 3 | 4 | 5
+    {0}*\{1}*  0  1  2
+            0  0  1  2
+            1  3  4  5
     >>> # Pandas dataframe
     >>> data = {'normal'  : pd.Series([1., 2., 3.], index=['a', 'b', 'c']),
     ...         'reverse' : pd.Series([3., 2., 1.], index=['a', 'b', 'c'])}
     >>> df = pd.DataFrame(data)
     >>> aslarray(df)
-    {0}\{1} | normal | reverse
-          a |    1.0 |     3.0
-          b |    2.0 |     2.0
-          c |    3.0 |     1.0
+    {0}\{1}  normal  reverse
+          a     1.0      3.0
+          b     2.0      2.0
+          c     3.0      1.0
     """
     if isinstance(a, LArray):
         return a
@@ -4369,40 +4369,40 @@ class LArray(object):
     >>> axes = [age, sex, time]
     >>> data = np.zeros((len(axes), len(sex), len(time)))
     >>> LArray(data, axes)
-    age | sex\\time | 2007 | 2008 | 2009
-     10 |        M |  0.0 |  0.0 |  0.0
-     10 |        F |  0.0 |  0.0 |  0.0
-     11 |        M |  0.0 |  0.0 |  0.0
-     11 |        F |  0.0 |  0.0 |  0.0
-     12 |        M |  0.0 |  0.0 |  0.0
-     12 |        F |  0.0 |  0.0 |  0.0
+    age  sex\\time  2007  2008  2009
+     10         M   0.0   0.0   0.0
+     10         F   0.0   0.0   0.0
+     11         M   0.0   0.0   0.0
+     11         F   0.0   0.0   0.0
+     12         M   0.0   0.0   0.0
+     12         F   0.0   0.0   0.0
     >>> full(axes, 10.0)
-    age | sex\\time | 2007 | 2008 | 2009
-     10 |        M | 10.0 | 10.0 | 10.0
-     10 |        F | 10.0 | 10.0 | 10.0
-     11 |        M | 10.0 | 10.0 | 10.0
-     11 |        F | 10.0 | 10.0 | 10.0
-     12 |        M | 10.0 | 10.0 | 10.0
-     12 |        F | 10.0 | 10.0 | 10.0
+    age  sex\\time  2007  2008  2009
+     10         M  10.0  10.0  10.0
+     10         F  10.0  10.0  10.0
+     11         M  10.0  10.0  10.0
+     11         F  10.0  10.0  10.0
+     12         M  10.0  10.0  10.0
+     12         F  10.0  10.0  10.0
     >>> arr = empty(axes)
     >>> arr['F'] = 1.0
     >>> arr['M'] = -1.0
     >>> arr
-    age | sex\\time | 2007 | 2008 | 2009
-     10 |        M | -1.0 | -1.0 | -1.0
-     10 |        F |  1.0 |  1.0 |  1.0
-     11 |        M | -1.0 | -1.0 | -1.0
-     11 |        F |  1.0 |  1.0 |  1.0
-     12 |        M | -1.0 | -1.0 | -1.0
-     12 |        F |  1.0 |  1.0 |  1.0
+    age  sex\\time  2007  2008  2009
+     10         M  -1.0  -1.0  -1.0
+     10         F   1.0   1.0   1.0
+     11         M  -1.0  -1.0  -1.0
+     11         F   1.0   1.0   1.0
+     12         M  -1.0  -1.0  -1.0
+     12         F   1.0   1.0   1.0
     >>> bysex = create_sequential(sex, initial=-1, inc=2)
     >>> bysex
-    sex |  M | F
-        | -1 | 1
+    sex   M  F
+         -1  1
     >>> create_sequential(age, initial=10, inc=bysex)
-    sex\\age | 10 | 11 | 12
-          M | 10 |  9 |  8
-          F | 10 | 11 | 12
+    sex\\age  10  11  12
+          M  10   9   8
+          F  10  11  12
     """
 
     def __init__(self,
@@ -4446,9 +4446,9 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3)) % 2
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  0
-         a1 |  1 |  0 |  1
+        a\\b  b0  b1  b2
+         a0   0   1   0
+         a1   1   0   1
         >>> arr.nonzero() # doctest: +SKIP
         [array([0, 1, 1]), array([1, 0, 2])]
         """
@@ -4488,18 +4488,18 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
         >>> row = Axis(['r0', 'r1'], 'row')
         >>> column = Axis(['c0', 'c1', 'c2'], 'column')
 
         Replace one axis (second argument `new_axis` must be provided)
 
         >>> arr.set_axes(x.a, row)
-        row\\b | b0 | b1 | b2
-           r0 |  0 |  1 |  2
-           r1 |  3 |  4 |  5
+        row\\b  b0  b1  b2
+           r0   0   1   2
+           r1   3   4   5
 
         Replace several axes (keywords, list of tuple or dictionary)
 
@@ -4508,21 +4508,21 @@ class LArray(object):
         >>> arr.set_axes([(x.a, row), (x.b, column)]) # doctest: +SKIP
         >>> # or
         >>> arr.set_axes({x.a: row, x.b: column})
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
+        row\\column  c0  c1  c2
+                r0   0   1   2
+                r1   3   4   5
 
         Replace all axes (list of axes or AxisCollection)
 
         >>> arr.set_axes([row, column])
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
+        row\\column  c0  c1  c2
+                r0   0   1   2
+                r1   3   4   5
         >>> arr2 = ndrange([row, column])
         >>> arr.set_axes(arr2.axes)
-        row\\column | c0 | c1 | c2
-                r0 |  0 |  1 |  2
-                r1 |  3 |  4 |  5
+        row\\column  c0  c1  c2
+                r0   0   1   2
+                r1   3   4   5
         """
         new_axes = self.axes.replace(axes_to_replace, new_axis, **kwargs)
         if inplace:
@@ -4572,20 +4572,20 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a | b\\c | c0 | c1 | c2 | c3
-        a0 |  b0 |  0 |  1 |  2 |  3
-        a0 |  b1 |  4 |  5 |  6 |  7
-        a0 |  b2 |  8 |  9 | 10 | 11
-        a1 |  b0 | 12 | 13 | 14 | 15
-        a1 |  b1 | 16 | 17 | 18 | 19
-        a1 |  b2 | 20 | 21 | 22 | 23
+         a  b\\c  c0  c1  c2  c3
+        a0   b0   0   1   2   3
+        a0   b1   4   5   6   7
+        a0   b2   8   9  10  11
+        a1   b0  12  13  14  15
+        a1   b1  16  17  18  19
+        a1   b2  20  21  22  23
 
         >>> arr.i[:, 0:2, [0,2]]
-         a | b\\c | c0 | c2
-        a0 |  b0 |  0 |  2
-        a0 |  b1 |  4 |  6
-        a1 |  b0 | 12 | 14
-        a1 |  b1 | 16 | 18
+         a  b\\c  c0  c2
+        a0   b0   0   2
+        a0   b1   4   6
+        a1   b0  12  14
+        a1   b1  16  18
         """
         return LArrayPositionalIndexer(self)
 
@@ -4599,20 +4599,20 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a | b\\c | c0 | c1 | c2 | c3
-        a0 |  b0 |  0 |  1 |  2 |  3
-        a0 |  b1 |  4 |  5 |  6 |  7
-        a0 |  b2 |  8 |  9 | 10 | 11
-        a1 |  b0 | 12 | 13 | 14 | 15
-        a1 |  b1 | 16 | 17 | 18 | 19
-        a1 |  b2 | 20 | 21 | 22 | 23
+         a  b\\c  c0  c1  c2  c3
+        a0   b0   0   1   2   3
+        a0   b1   4   5   6   7
+        a0   b2   8   9  10  11
+        a1   b0  12  13  14  15
+        a1   b1  16  17  18  19
+        a1   b2  20  21  22  23
 
         To select the two points with label coordinates
         [a0, b0, c0] and [a1, b2, c2], you must do:
 
         >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
-        a,b,c | a0,b0,c0 | a1,b2,c2
-              |        0 |       22
+        a,b,c  a0,b0,c0  a1,b2,c2
+                      0        22
 
         The number of label(s) on each dimension must be equal:
 
@@ -4633,20 +4633,20 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a | b\\c | c0 | c1 | c2 | c3
-        a0 |  b0 |  0 |  1 |  2 |  3
-        a0 |  b1 |  4 |  5 |  6 |  7
-        a0 |  b2 |  8 |  9 | 10 | 11
-        a1 |  b0 | 12 | 13 | 14 | 15
-        a1 |  b1 | 16 | 17 | 18 | 19
-        a1 |  b2 | 20 | 21 | 22 | 23
+         a  b\\c  c0  c1  c2  c3
+        a0   b0   0   1   2   3
+        a0   b1   4   5   6   7
+        a0   b2   8   9  10  11
+        a1   b0  12  13  14  15
+        a1   b1  16  17  18  19
+        a1   b2  20  21  22  23
 
         To select the two points with index coordinates
         [0, 0, 0] and [1, 2, 2], you must do:
 
         >>> arr.ipoints[[0,1], [0,2], [0,2]]
-        a,b,c | a0,b0,c0 | a1,b2,c2
-              |        0 |       22
+        a,b,c  a0,b0,c0  a1,b2,c2
+                      0        22
 
         The number of index(es) on each dimension must be equal:
 
@@ -4786,14 +4786,14 @@ class LArray(object):
         --------
         >>> arr = LArray([0, 6, 2, 5, 4, 3, 1, 3], 'year=2013..2020')
         >>> arr
-        year | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
-             |    0 |    6 |    2 |    5 |    4 |    3 |    1 |    3
+        year  2013  2014  2015  2016  2017  2018  2019  2020
+                 0     6     2     5     4     3     1     3
         >>> arr.describe()
-        statistic | count | mean | std | min |  25% | 50% |  75% | max
-                  |   8.0 |  3.0 | 2.0 | 0.0 | 1.75 | 3.0 | 4.25 | 6.0
+        statistic  count  mean  std  min   25%  50%   75%  max
+                     8.0   3.0  2.0  0.0  1.75  3.0  4.25  6.0
         >>> arr.describe(percentiles=[50, 90])
-        statistic | count | mean | std | min | 50% | 90% | max
-                  |   8.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.3 | 6.0
+        statistic  count  mean  std  min  50%  90%  max
+                     8.0   3.0  2.0  0.0  3.0  5.3  6.0
         """
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
@@ -4838,23 +4838,23 @@ class LArray(object):
         >>> data = [[0, 6, 3, 5, 4, 2, 1, 3], [7, 5, 3, 2, 8, 5, 6, 4]]
         >>> arr = LArray(data, 'gender=Male,Female;year=2013..2020').astype(float)
         >>> arr
-        gender\year | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020
-               Male |  0.0 |  6.0 |  3.0 |  5.0 |  4.0 |  2.0 |  1.0 |  3.0
-             Female |  7.0 |  5.0 |  3.0 |  2.0 |  8.0 |  5.0 |  6.0 |  4.0
+        gender\year  2013  2014  2015  2016  2017  2018  2019  2020
+               Male   0.0   6.0   3.0   5.0   4.0   2.0   1.0   3.0
+             Female   7.0   5.0   3.0   2.0   8.0   5.0   6.0   4.0
         >>> arr.describe_by('gender')
-        gender\statistic | count | mean | std | min |  25% | 50% |  75% | max
-                    Male |   8.0 |  3.0 | 2.0 | 0.0 | 1.75 | 3.0 | 4.25 | 6.0
-                  Female |   8.0 |  5.0 | 2.0 | 2.0 | 3.75 | 5.0 | 6.25 | 8.0
+        gender\statistic  count  mean  std  min   25%  50%   75%  max
+                    Male    8.0   3.0  2.0  0.0  1.75  3.0  4.25  6.0
+                  Female    8.0   5.0  2.0  2.0  3.75  5.0  6.25  8.0
         >>> arr.describe_by('gender', (x.year[:2015], x.year[2018:]))
-        gender | year\statistic | count | mean | std | min | 25% | 50% | 75% | max
-          Male |          :2015 |   3.0 |  3.0 | 3.0 | 0.0 | 1.5 | 3.0 | 4.5 | 6.0
-          Male |          2018: |   3.0 |  2.0 | 1.0 | 1.0 | 1.5 | 2.0 | 2.5 | 3.0
-        Female |          :2015 |   3.0 |  5.0 | 2.0 | 3.0 | 4.0 | 5.0 | 6.0 | 7.0
-        Female |          2018: |   3.0 |  5.0 | 1.0 | 4.0 | 4.5 | 5.0 | 5.5 | 6.0
+        gender  year\statistic  count  mean  std  min  25%  50%  75%  max
+          Male           :2015    3.0   3.0  3.0  0.0  1.5  3.0  4.5  6.0
+          Male           2018:    3.0   2.0  1.0  1.0  1.5  2.0  2.5  3.0
+        Female           :2015    3.0   5.0  2.0  3.0  4.0  5.0  6.0  7.0
+        Female           2018:    3.0   5.0  1.0  4.0  4.5  5.0  5.5  6.0
         >>> arr.describe_by('gender', percentiles=[50, 90])
-        gender\statistic | count | mean | std | min | 50% | 90% | max
-                    Male |   8.0 |  3.0 | 2.0 | 0.0 | 3.0 | 5.3 | 6.0
-                  Female |   8.0 |  5.0 | 2.0 | 2.0 | 5.0 | 7.3 | 8.0
+        gender\statistic  count  mean  std  min  50%  90%  max
+                    Male    8.0   3.0  2.0  0.0  3.0  5.3  6.0
+                  Female    8.0   5.0  2.0  2.0  5.0  7.3  8.0
         """
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
@@ -4919,25 +4919,25 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = ndrange([nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FO | 2 | 3
+        nat\\sex  M  F
+             BE  0  1
+             FO  2  3
         >>> arr.rename(x.nat, 'nat2')
-        nat2\\sex | M | F
-              BE | 0 | 1
-              FO | 2 | 3
+        nat2\\sex  M  F
+              BE  0  1
+              FO  2  3
         >>> arr.rename(nat='nat2', sex='sex2')
-        nat2\\sex2 | M | F
-               BE | 0 | 1
-               FO | 2 | 3
+        nat2\\sex2  M  F
+               BE  0  1
+               FO  2  3
         >>> arr.rename([('nat', 'nat2'), ('sex', 'sex2')])
-        nat2\\sex2 | M | F
-               BE | 0 | 1
-               FO | 2 | 3
+        nat2\\sex2  M  F
+               BE  0  1
+               FO  2  3
         >>> arr.rename({'nat': 'nat2', 'sex': 'sex2'})
-        nat2\\sex2 | M | F
-               BE | 0 | 1
-               FO | 2 | 3
+        nat2\\sex2  M  F
+               BE  0  1
+               FO  2  3
         """
         if isinstance(renames, dict):
             items = list(renames.items())
@@ -4993,55 +4993,55 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 2))
         >>> arr
-        a\\b | b0 | b1
-         a0 |  0 |  1
-         a1 |  2 |  3
+        a\\b  b0  b1
+         a0   0   1
+         a1   2   3
 
         Reindex one axis
 
         >>> arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
-        a\\b | b1 | b2 | b0
-         a0 |  1 | -1 |  0
-         a1 |  3 | -1 |  2
+        a\\b  b1  b2  b0
+         a0   1  -1   0
+         a1   3  -1   2
         >>> arr.reindex(x.b, 'b0..b2', fill_value=-1)
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 | -1
-         a1 |  2 |  3 | -1
+        a\\b  b0  b1  b2
+         a0   0   1  -1
+         a1   2   3  -1
 
         Reindex several axes
 
         >>> a = Axis(['a1', 'a2', 'a0'], 'a')
         >>> b = Axis(['b2', 'b1', 'b0'], 'b')
         >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
-        a\\b | b2 | b1 | b0
-         a1 | -1 |  3 |  2
-         a2 | -1 | -1 | -1
-         a0 | -1 |  1 |  0
+        a\\b  b2  b1  b0
+         a1  -1   3   2
+         a2  -1  -1  -1
+         a0  -1   1   0
         >>> arr.reindex({x.a: a, x.b: b})
-        a\\b |  b2 |  b1 |  b0
-         a1 | nan | 3.0 | 2.0
-         a2 | nan | nan | nan
-         a0 | nan | 1.0 | 0.0
+        a\\b   b2   b1   b0
+         a1  nan  3.0  2.0
+         a2  nan  nan  nan
+         a0  nan  1.0  0.0
 
         Reindex using axes from another array
 
         >>> arr2 = ndrange('a=a0..a1;c=c0..c0;b=b0..b2')
         >>> arr2
-         a | c\\b | b0 | b1 | b2
-        a0 |  c0 |  0 |  1 |  2
-        a1 |  c0 |  3 |  4 |  5
+         a  c\\b  b0  b1  b2
+        a0   c0   0   1   2
+        a1   c0   3   4   5
         >>> arr.reindex(arr2.axes)
-         a | b\\c |  c0
-        a0 |  b0 | 0.0
-        a0 |  b1 | 1.0
-        a0 |  b2 | nan
-        a1 |  b0 | 2.0
-        a1 |  b1 | 3.0
-        a1 |  b2 | nan
+         a  b\\c   c0
+        a0   b0  0.0
+        a0   b1  1.0
+        a0   b2  nan
+        a1   b0  2.0
+        a1   b1  3.0
+        a1   b2  nan
         >>> arr2.reindex(arr.axes)
-         a | c\\b |  b0 |  b1
-        a0 |  c0 | 0.0 | 1.0
-        a1 |  c0 | 3.0 | 4.0
+         a  c\\b   b0   b1
+        a0   c0  0.0  1.0
+        a1   c0  3.0  4.0
         """
         # XXX: can't we move this to AxisCollection.replace?
         if isinstance(new_axis, (int, basestring, list, tuple)):
@@ -5090,31 +5090,31 @@ class LArray(object):
         >>> xtype = Axis('type=type1,type2')
         >>> a = LArray([[10, 2, 4], [3, 7, 1]], [sex, nat])
         >>> a
-        sex\\nat | EU | FO | BE
-              M | 10 |  2 |  4
-              F |  3 |  7 |  1
+        sex\\nat  EU  FO  BE
+              M  10   2   4
+              F   3   7   1
         >>> a.sort_values('F')
-        sex\\nat | BE | EU | FO
-              M |  4 | 10 |  2
-              F |  1 |  3 |  7
+        sex\\nat  BE  EU  FO
+              M   4  10   2
+              F   1   3   7
         >>> a.sort_values('F', reverse=True)
-        sex\\nat | FO | EU | BE
-              M |  2 | 10 |  4
-              F |  7 |  3 |  1
+        sex\\nat  FO  EU  BE
+              M   2  10   4
+              F   7   3   1
         >>> b = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
         ...            [sex, xtype, nat])
         >>> b
-        sex | type\\nat | EU | FO | BE
-          M |    type1 | 10 |  2 |  4
-          M |    type2 |  3 |  7 |  1
-          F |    type1 |  5 |  1 |  6
-          F |    type2 |  2 |  8 |  9
+        sex  type\\nat  EU  FO  BE
+          M     type1  10   2   4
+          M     type2   3   7   1
+          F     type1   5   1   6
+          F     type2   2   8   9
         >>> b.sort_values(('M', 'type2'))
-        sex | type\\nat | BE | EU | FO
-          M |    type1 |  4 | 10 |  2
-          M |    type2 |  1 |  3 |  7
-          F |    type1 |  6 |  5 |  1
-          F |    type2 |  9 |  2 |  8
+        sex  type\\nat  BE  EU  FO
+          M     type1   4  10   2
+          M     type2   1   3   7
+          F     type1   6   5   1
+          F     type2   9   2   8
         """
         subset = self[key]
         if subset.ndim > 1:
@@ -5126,8 +5126,8 @@ class LArray(object):
 
         # FIXME: .data shouldn't be necessary, but currently, if we do not do
         #  it, we get
-        # PGroup(nat | EU | FO | BE
-        #            |  1 |  2 |  0, axis='nat')
+        # PGroup(nat  EU  FO  BE
+        #              1   2   0, axis='nat')
         # which sorts the *data* correctly, but the labels on the nat axis are
         # not sorted (because the __getitem__ in that case reuse the key
         # axis as-is -- like it should).
@@ -5162,30 +5162,30 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> a = ndrange([nat, sex])
         >>> a
-        nat\\sex | M | F
-             EU | 0 | 1
-             FO | 2 | 3
-             BE | 4 | 5
+        nat\\sex  M  F
+             EU  0  1
+             FO  2  3
+             BE  4  5
         >>> a.sort_axis(x.sex)
-        nat\\sex | F | M
-             EU | 1 | 0
-             FO | 3 | 2
-             BE | 5 | 4
+        nat\\sex  F  M
+             EU  1  0
+             FO  3  2
+             BE  5  4
         >>> a.sort_axis()
-        nat\\sex | F | M
-             BE | 5 | 4
-             EU | 1 | 0
-             FO | 3 | 2
+        nat\\sex  F  M
+             BE  5  4
+             EU  1  0
+             FO  3  2
         >>> a.sort_axis((x.sex, x.nat))
-        nat\\sex | F | M
-             BE | 5 | 4
-             EU | 1 | 0
-             FO | 3 | 2
+        nat\\sex  F  M
+             BE  5  4
+             EU  1  0
+             FO  3  2
         >>> a.sort_axis(reverse=True)
-        nat\\sex | M | F
-             FO | 2 | 3
-             EU | 0 | 1
-             BE | 4 | 5
+        nat\\sex  M  F
+             FO  2  3
+             EU  0  1
+             BE  4  5
         """
         if axes is None:
             axes = self.axes
@@ -5720,22 +5720,22 @@ class LArray(object):
         --------
         >>> arr = ndtest((3, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-         a2 |  6 |  7 |  8
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+         a2   6   7   8
         >>> arr['a1:', 'b1:'].set(10)
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 | 10 | 10
-         a2 |  6 | 10 | 10
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3  10  10
+         a2   6  10  10
         >>> arr['a1:', 'b1:'].set(ndtest((2, 2)))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  0 |  1
-         a2 |  6 |  2 |  3
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   0   1
+         a2   6   2   3
         """
         self.__setitem__(kwargs, value)
 
@@ -5760,17 +5760,17 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 2, 2))
         >>> arr
-         a | b\\c | c0 | c1
-        a0 |  b0 |  0 |  1
-        a0 |  b1 |  2 |  3
-        a1 |  b0 |  4 |  5
-        a1 |  b1 |  6 |  7
+         a  b\\c  c0  c1
+        a0   b0   0   1
+        a0   b1   2   3
+        a1   b0   4   5
+        a1   b1   6   7
         >>> new_arr = arr.reshape([Axis('a=a0,a1'),
         ... Axis(['b0c0', 'b0c1', 'b1c0', 'b1c1'], 'bc')])
         >>> new_arr
-        a\\bc | b0c0 | b0c1 | b1c0 | b1c1
-          a0 |    0 |    1 |    2 |    3
-          a1 |    4 |    5 |    6 |    7
+        a\\bc  b0c0  b0c1  b1c0  b1c1
+          a0     0     1     2     3
+          a1     4     5     6     7
         """
         # this is a dangerous operation, because except for adding
         # length 1 axes (which is safe), it potentially modifies data
@@ -5799,16 +5799,16 @@ class LArray(object):
         --------
         >>> arr = zeros((2, 2, 2), dtype=int)
         >>> arr
-        {0}* | {1}*\\{2}* | 0 | 1
-           0 |         0 | 0 | 0
-           0 |         1 | 0 | 0
-           1 |         0 | 0 | 0
-           1 |         1 | 0 | 0
+        {0}*  {1}*\\{2}*  0  1
+           0          0  0  0
+           0          1  0  0
+           1          0  0  0
+           1          1  0  0
         >>> new_arr = arr.reshape_like(ndtest((2, 4)))
         >>> new_arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  0 |  0 |  0
-         a1 |  0 |  0 |  0 |  0
+        a\\b  b0  b1  b2  b3
+         a0   0   0   0   0
+         a1   0   0   0   0
         """
         return self.reshape(target.axes)
 
@@ -5887,22 +5887,22 @@ class LArray(object):
         >>> b2 = Axis('b=b2,b3')
         >>> arr1 = ndrange([a, b])
         >>> arr1
-        a\\b | b1 | b2
-         a1 |  0 |  1
-         a2 |  2 |  3
+        a\\b  b1  b2
+         a1   0   1
+         a2   2   3
         >>> arr1.drop_labels(b)
-        a\\b* | 0 | 1
-          a1 | 0 | 1
-          a2 | 2 | 3
+        a\\b*  0  1
+          a1  0  1
+          a2  2  3
         >>> arr1.drop_labels([a, b])
-        a*\\b* | 0 | 1
-            0 | 0 | 1
-            1 | 2 | 3
+        a*\\b*  0  1
+            0  0  1
+            1  2  3
         >>> arr2 = ndrange([a, b2])
         >>> arr2
-        a\\b | b2 | b3
-         a1 |  0 |  1
-         a2 |  2 |  3
+        a\\b  b2  b3
+         a1   0   1
+         a2   2   3
         >>> arr1 * arr2
         Traceback (most recent call last):
         ...
@@ -5911,17 +5911,17 @@ class LArray(object):
         vs
         Axis(['b1', 'b2'], 'b')
         >>> arr1 * arr2.drop_labels()
-        a\\b | b1 | b2
-         a1 |  0 |  1
-         a2 |  4 |  9
+        a\\b  b1  b2
+         a1   0   1
+         a2   4   9
         >>> arr1.drop_labels() * arr2
-        a\\b | b2 | b3
-         a1 |  0 |  1
-         a2 |  4 |  9
+        a\\b  b2  b3
+         a1   0   1
+         a2   4   9
         >>> arr1.drop_labels(x.a) * arr2.drop_labels(x.b)
-        a\\b | b1 | b2
-         a1 |  0 |  1
-         a2 |  4 |  9
+        a\\b  b1  b2
+         a1   0   1
+         a2   4   9
         """
         if axes is None:
             axes = self.axes
@@ -5969,9 +5969,9 @@ class LArray(object):
         if not self.ndim:
             return
 
-        # ert    | unit | geo\time | 2012   | 2011   | 2010
-        # NEER27 | I05  | AT       | 101.41 | 101.63 | 101.63
-        # NEER27 | I05  | AU       | 134.86 | 125.29 | 117.08
+        # ert     unit  geo\time  2012    2011    2010
+        # NEER27  I05   AT        101.41  101.63  101.63
+        # NEER27  I05   AU        134.86  125.29  117.08
         width = self.shape[-1]
         height = int(np.prod(self.shape[:-1]))
         data = np.asarray(self).reshape(height, width)
@@ -6338,22 +6338,22 @@ class LArray(object):
         --------
         >>> arr = ndtest((3, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-         a2 |  6 |  7 |  8
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+         a2   6   7   8
         >>> arr.with_total()
-          a\\b | b0 | b1 | b2 | total
-           a0 |  0 |  1 |  2 |     3
-           a1 |  3 |  4 |  5 |    12
-           a2 |  6 |  7 |  8 |    21
-        total |  9 | 12 | 15 |    36
+          a\\b  b0  b1  b2  total
+           a0   0   1   2      3
+           a1   3   4   5     12
+           a2   6   7   8     21
+        total   9  12  15     36
         >>> arr.with_total(op=prod, label='product')
-            a\\b | b0 | b1 | b2 | product
-             a0 |  0 |  1 |  2 |       0
-             a1 |  3 |  4 |  5 |      60
-             a2 |  6 |  7 |  8 |     336
-        product |  0 | 28 | 80 |       0
+            a\\b  b0  b1  b2  product
+             a0   0   1   2        0
+             a1   3   4   5       60
+             a2   6   7   8      336
+        product   0  28  80        0
         """
         # TODO: default to op.__name__
         label = kwargs.pop('label', 'total')
@@ -6426,13 +6426,13 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FR | 3 | 2
-             IT | 2 | 5
+        nat\\sex  M  F
+             BE  0  1
+             FR  3  2
+             IT  2  5
         >>> arr.argmin(x.sex)
-        nat | BE | FR | IT
-            |  M |  F |  M
+        nat  BE  FR  IT
+              M   F   M
         >>> arr.argmin()
         ('BE', 'M')
         """
@@ -6467,13 +6467,13 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FR | 3 | 2
-             IT | 2 | 5
+        nat\\sex  M  F
+             BE  0  1
+             FR  3  2
+             IT  2  5
         >>> arr.posargmin(x.sex)
-        nat | BE | FR | IT
-            |  0 |  1 |  0
+        nat  BE  FR  IT
+              0   1   0
         >>> arr.posargmin()
         (0, 0)
         """
@@ -6506,13 +6506,13 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FR | 3 | 2
-             IT | 2 | 5
+        nat\\sex  M  F
+             BE  0  1
+             FR  3  2
+             IT  2  5
         >>> arr.argmax(x.sex)
-        nat | BE | FR | IT
-            |  F |  M |  F
+        nat  BE  FR  IT
+              F   M   F
         >>> arr.argmax()
         ('IT', 'F')
         """
@@ -6547,13 +6547,13 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FR | 3 | 2
-             IT | 2 | 5
+        nat\\sex  M  F
+             BE  0  1
+             FR  3  2
+             IT  2  5
         >>> arr.posargmax(x.sex)
-        nat | BE | FR | IT
-            |  1 |  0 |  1
+        nat  BE  FR  IT
+              1   0   1
         >>> arr.posargmax()
         (2, 1)
         """
@@ -6588,15 +6588,15 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 0 | 1
-             FR | 3 | 2
-             IT | 2 | 5
+        nat\\sex  M  F
+             BE  0  1
+             FR  3  2
+             IT  2  5
         >>> arr.argsort(x.sex)
-        nat\\sex | 0 | 1
-             BE | M | F
-             FR | F | M
-             IT | M | F
+        nat\\sex  0  1
+             BE  M  F
+             FR  F  M
+             IT  M  F
         """
         if axis is None:
             if self.ndim > 1:
@@ -6632,15 +6632,15 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[1, 5], [3, 2], [0, 4]], [nat, sex])
         >>> arr
-        nat\\sex | M | F
-             BE | 1 | 5
-             FR | 3 | 2
-             IT | 0 | 4
+        nat\\sex  M  F
+             BE  1  5
+             FR  3  2
+             IT  0  4
         >>> arr.posargsort(x.nat)
-        nat\\sex | M | F
-              0 | 2 | 1
-              1 | 0 | 2
-              2 | 1 | 0
+        nat\\sex  M  F
+              0  2  1
+              1  0  2
+              2  1  0
         """
         if axis is None:
             if self.ndim > 1:
@@ -6705,23 +6705,23 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
-        nat\\sex | M | F
-             BE | 4 | 6
-             FO | 2 | 8
+        nat\\sex  M  F
+             BE  4  6
+             FO  2  8
         >>> a.sum()
         20
         >>> a.ratio()
-        nat\\sex |   M |   F
-             BE | 0.2 | 0.3
-             FO | 0.1 | 0.4
+        nat\\sex    M    F
+             BE  0.2  0.3
+             FO  0.1  0.4
         >>> a.ratio(x.sex)
-        nat\\sex |   M |   F
-             BE | 0.4 | 0.6
-             FO | 0.2 | 0.8
+        nat\\sex    M    F
+             BE  0.4  0.6
+             FO  0.2  0.8
         >>> a.ratio('M')
-        nat\\sex |   M |   F
-             BE | 1.0 | 1.5
-             FO | 1.0 | 4.0
+        nat\\sex    M    F
+             BE  1.0  1.5
+             FO  1.0  4.0
         """
         # # this does not work, but I am unsure it should
         # # >>> a.sum(age[[0, 1]], age[2]) / a.sum(age)
@@ -6734,18 +6734,18 @@ class LArray(object):
         # could mean
         # >>> a.sum('F') / a.sum(a.get_axis('F'))
         # >>> a.sum('F') / a.sum(x.sex)
-        # age |   0 |   1 |              2
-        #     | 1.0 | 0.6 | 0.555555555556
+        # age    0    1               2
+        #      1.0  0.6  0.555555555556
         # OR (current meaning)
         # >>> a / a.sum('F')
-        # age\\sex |              M |   F
-        #       0 |            0.0 | 1.0
-        #       1 | 0.666666666667 | 1.0
-        #       2 |            0.8 | 1.0
+        # age\\sex               M    F
+        #       0             0.0  1.0
+        #       1  0.666666666667  1.0
+        #       2             0.8  1.0
         # One solution is to add an argument
         # >>> a.ratio(what='F', by=x.sex)
-        # age |   0 |   1 |              2
-        #     | 1.0 | 0.6 | 0.555555555556
+        # age    0    1               2
+        #      1.0  0.6  0.555555555556
         # >>> a.sum('F') / a.sum(x.sex)
 
         # >>> a.sum((age[[0, 1]], age[[1, 2]])) / a.sum(age)
@@ -6759,23 +6759,23 @@ class LArray(object):
 
         # >>> b = a.sum((age[[0, 1]], age[[1, 2]]))
         # >>> b
-        # age\sex | M | F
-        #   [0 1] | 2 | 4
-        #   [1 2] | 6 | 8
+        # age\sex  M  F
+        #   [0 1]  2  4
+        #   [1 2]  6  8
         # >>> b / b.sum(x.age)
-        # age\\sex |    M |              F
-        #   [0 1] | 0.25 | 0.333333333333
-        #   [1 2] | 0.75 | 0.666666666667
+        # age\\sex     M               F
+        #   [0 1]  0.25  0.333333333333
+        #   [1 2]  0.75  0.666666666667
         # >>> b / a.sum(x.age)
-        # age\\sex |              M |              F
-        #   [0 1] | 0.333333333333 | 0.444444444444
-        #   [1 2] |            1.0 | 0.888888888889
+        # age\\sex               M               F
+        #   [0 1]  0.333333333333  0.444444444444
+        #   [1 2]             1.0  0.888888888889
         # # >>> a.ratio([0, 1], [2])
         # # >>> a.ratio(x.age[[0, 1]], x.age[2])
         # >>> a.ratio((x.age[[0, 1]], x.age[2]))
-        # nat\\sex |            M |   F
-        #      BE |          0.0 | 1.0
-        #      FO | 0.6666666666 | 1.0
+        # nat\\sex             M    F
+        #      BE           0.0  1.0
+        #      FO  0.6666666666  1.0
         return self / self.sum(*axes)
 
     def rationot0(self, *axes):
@@ -6798,26 +6798,26 @@ class LArray(object):
         >>> arr = LArray([[6, 0, 2],
         ...               [4, 0, 8]], [a, b])
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  6 |  0 |  2
-         a1 |  4 |  0 |  8
+        a\\b  b0  b1  b2
+         a0   6   0   2
+         a1   4   0   8
         >>> arr.sum()
         20
         >>> arr.rationot0()
-        a\\b |  b0 |  b1 |  b2
-         a0 | 0.3 | 0.0 | 0.1
-         a1 | 0.2 | 0.0 | 0.4
+        a\\b   b0   b1   b2
+         a0  0.3  0.0  0.1
+         a1  0.2  0.0  0.4
         >>> arr.rationot0(x.a)
-        a\\b |  b0 |  b1 |  b2
-         a0 | 0.6 | 0.0 | 0.2
-         a1 | 0.4 | 0.0 | 0.8
+        a\\b   b0   b1   b2
+         a0  0.6  0.0  0.2
+         a1  0.4  0.0  0.8
 
         for reference, the normal ratio method would return:
 
         >>> arr.ratio(x.a)
-        a\\b |  b0 |  b1 |  b2
-         a0 | 0.6 | nan | 0.2
-         a1 | 0.4 | nan | 0.8
+        a\\b   b0   b1   b2
+         a0  0.6  nan  0.2
+         a1  0.4  nan  0.8
         """
         return self.divnot0(self.sum(*axes))
 
@@ -6840,17 +6840,17 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
-        nat\\sex | M | F
-             BE | 4 | 6
-             FO | 2 | 8
+        nat\\sex  M  F
+             BE  4  6
+             FO  2  8
         >>> a.percent()
-        nat\\sex |    M |    F
-             BE | 20.0 | 30.0
-             FO | 10.0 | 40.0
+        nat\\sex     M     F
+             BE  20.0  30.0
+             FO  10.0  40.0
         >>> a.percent(x.sex)
-        nat\\sex |    M |    F
-             BE | 40.0 | 60.0
-             FO | 20.0 | 80.0
+        nat\\sex     M     F
+             BE  40.0  60.0
+             FO  20.0  80.0
         """
         # dividing by self.sum(*axes) * 0.01 would be faster in many cases but
         # I suspect it loose more precision.
@@ -6898,52 +6898,52 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b |    b0 |    b1 |    b2 |    b3
-         a0 |  True |  True |  True |  True
-         a1 |  True |  True | False | False
-         a2 | False | False | False | False
-         a3 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+         a0   True   True   True   True
+         a1   True   True  False  False
+         a2  False  False  False  False
+         a3  False  False  False  False
         >>> barr.all()
         False
         >>> # along axis 'a'
         >>> barr.all(x.a)
-        b |    b0 |    b1 |    b2 |    b3
-          | False | False | False | False
+        b     b0     b1     b2     b3
+           False  False  False  False
         >>> # along axis 'b'
         >>> barr.all(x.b)
-        a |   a0 |    a1 |    a2 |    a3
-          | True | False | False | False
+        a    a0     a1     a2     a3
+           True  False  False  False
 
         Select some rows only
 
         >>> barr.all(['a0', 'a1'])
-        b |   b0 |   b1 |    b2 |    b3
-          | True | True | False | False
+        b    b0    b1     b2     b3
+           True  True  False  False
         >>> # or equivalently
         >>> # barr.all('a0,a1')
 
         Split an axis in several parts
 
         >>> barr.all((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |    b0 |    b1 |    b2 |    b3
-        a0,a1 |  True |  True | False | False
-        a2,a3 | False | False | False | False
+          a\\b     b0     b1     b2     b3
+        a0,a1   True   True  False  False
+        a2,a3  False  False  False  False
         >>> # or equivalently
         >>> # barr.all('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.all((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |    b0 |    b1 |    b2 |    b3
-        a01 |  True |  True | False | False
-        a23 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+        a01   True   True  False  False
+        a23  False  False  False  False
         >>> # or equivalently
         >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
         """
@@ -6968,28 +6968,28 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b |    b0 |    b1 |    b2 |    b3
-         a0 |  True |  True |  True |  True
-         a1 |  True |  True | False | False
-         a2 | False | False | False | False
-         a3 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+         a0   True   True   True   True
+         a1   True   True  False  False
+         a2  False  False  False  False
+         a3  False  False  False  False
         >>> barr.all_by()
         False
         >>> # by axis 'a'
         >>> barr.all_by(x.a)
-        a |   a0 |    a1 |    a2 |    a3
-          | True | False | False | False
+        a    a0     a1     a2     a3
+           True  False  False  False
         >>> # by axis 'b'
         >>> barr.all_by(x.b)
-        b |    b0 |    b1 |    b2 |    b3
-          | False | False | False | False
+        b     b0     b1     b2     b3
+           False  False  False  False
 
         Select some rows only
 
@@ -7001,16 +7001,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> barr.all_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          | False | False
+        a  a0,a1  a2,a3
+           False  False
         >>> # or equivalently
         >>> # barr.all_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.all_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a |   a01 |   a23
-          | False | False
+        a    a01    a23
+           False  False
         >>> # or equivalently
         >>> # barr.all_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7035,52 +7035,52 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b |    b0 |    b1 |    b2 |    b3
-         a0 |  True |  True |  True |  True
-         a1 |  True |  True | False | False
-         a2 | False | False | False | False
-         a3 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+         a0   True   True   True   True
+         a1   True   True  False  False
+         a2  False  False  False  False
+         a3  False  False  False  False
         >>> barr.any()
         True
         >>> # along axis 'a'
         >>> barr.any(x.a)
-        b |   b0 |   b1 |   b2 |   b3
-          | True | True | True | True
+        b    b0    b1    b2    b3
+           True  True  True  True
         >>> # along axis 'b'
         >>> barr.any(x.b)
-        a |   a0 |   a1 |    a2 |    a3
-          | True | True | False | False
+        a    a0    a1     a2     a3
+           True  True  False  False
 
         Select some rows only
 
         >>> barr.any(['a0', 'a1'])
-        b |   b0 |   b1 |   b2 |   b3
-          | True | True | True | True
+        b    b0    b1    b2    b3
+           True  True  True  True
         >>> # or equivalently
         >>> # barr.any('a0,a1')
 
         Split an axis in several parts
 
         >>> barr.any((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |    b0 |    b1 |    b2 |    b3
-        a0,a1 |  True |  True |  True |  True
-        a2,a3 | False | False | False | False
+          a\\b     b0     b1     b2     b3
+        a0,a1   True   True   True   True
+        a2,a3  False  False  False  False
         >>> # or equivalently
         >>> # barr.any('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.any((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |    b0 |    b1 |    b2 |    b3
-        a01 |  True |  True |  True |  True
-        a23 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+        a01   True   True   True   True
+        a23  False  False  False  False
         >>> # or equivalently
         >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7105,28 +7105,28 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b |    b0 |    b1 |    b2 |    b3
-         a0 |  True |  True |  True |  True
-         a1 |  True |  True | False | False
-         a2 | False | False | False | False
-         a3 | False | False | False | False
+        a\\b     b0     b1     b2     b3
+         a0   True   True   True   True
+         a1   True   True  False  False
+         a2  False  False  False  False
+         a3  False  False  False  False
         >>> barr.any_by()
         True
         >>> # by axis 'a'
         >>> barr.any_by(x.a)
-        a |   a0 |   a1 |    a2 |    a3
-          | True | True | False | False
+        a    a0    a1     a2     a3
+           True  True  False  False
         >>> # by axis 'b'
         >>> barr.any_by(x.b)
-        b |   b0 |   b1 |   b2 |   b3
-          | True | True | True | True
+        b    b0    b1    b2    b3
+           True  True  True  True
 
         Select some rows only
 
@@ -7138,16 +7138,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> barr.any_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |  True | False
+        a  a0,a1  a2,a3
+            True  False
         >>> # or equivalently
         >>> # barr.any_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.any_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a |  a01 |   a23
-          | True | False
+        a   a01    a23
+           True  False
         >>> # or equivalently
         >>> # barr.any_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7175,45 +7175,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.sum()
         120
         >>> # along axis 'a'
         >>> arr.sum(x.a)
-        b | b0 | b1 | b2 | b3
-          | 24 | 28 | 32 | 36
+        b  b0  b1  b2  b3
+           24  28  32  36
         >>> # along axis 'b'
         >>> arr.sum(x.b)
-        a | a0 | a1 | a2 | a3
-          |  6 | 22 | 38 | 54
+        a  a0  a1  a2  a3
+            6  22  38  54
 
         Select some rows only
 
         >>> arr.sum(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  4 |  6 |  8 | 10
+        b  b0  b1  b2  b3
+            4   6   8  10
         >>> # or equivalently
         >>> # arr.sum('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.sum((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  4 |  6 |  8 | 10
-        a2,a3 | 20 | 22 | 24 | 26
+          a\\b  b0  b1  b2  b3
+        a0,a1   4   6   8  10
+        a2,a3  20  22  24  26
         >>> # or equivalently
         >>> # arr.sum('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.sum((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  4 |  6 |  8 | 10
-        a23 | 20 | 22 | 24 | 26
+        a\\b  b0  b1  b2  b3
+        a01   4   6   8  10
+        a23  20  22  24  26
         >>> # or equivalently
         >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7239,21 +7239,21 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.sum_by()
         120
         >>> # along axis 'a'
         >>> arr.sum_by(x.a)
-        a | a0 | a1 | a2 | a3
-          |  6 | 22 | 38 | 54
+        a  a0  a1  a2  a3
+            6  22  38  54
         >>> # along axis 'b'
         >>> arr.sum_by(x.b)
-        b | b0 | b1 | b2 | b3
-          | 24 | 28 | 32 | 36
+        b  b0  b1  b2  b3
+           24  28  32  36
 
         Select some rows only
 
@@ -7265,16 +7265,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.sum_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |    28 |    92
+        a  a0,a1  a2,a3
+              28     92
         >>> # or equivalently
         >>> # arr.sum_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.sum_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 | a23
-          |  28 |  92
+        a  a01  a23
+            28   92
         >>> # or equivalently
         >>> # arr.sum_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7301,45 +7301,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.prod()
         0
         >>> # along axis 'a'
         >>> arr.prod(x.a)
-        b | b0 |  b1 |   b2 |   b3
-          |  0 | 585 | 1680 | 3465
+        b  b0   b1    b2    b3
+            0  585  1680  3465
         >>> # along axis 'b'
         >>> arr.prod(x.b)
-        a | a0 |  a1 |   a2 |    a3
-          |  0 | 840 | 7920 | 32760
+        a  a0   a1    a2     a3
+            0  840  7920  32760
 
         Select some rows only
 
         >>> arr.prod(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  0 |  5 | 12 | 21
+        b  b0  b1  b2  b3
+            0   5  12  21
         >>> # or equivalently
         >>> # arr.prod('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.prod((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 |  b1 |  b2 |  b3
-        a0,a1 |  0 |   5 |  12 |  21
-        a2,a3 | 96 | 117 | 140 | 165
+          a\\b  b0   b1   b2   b3
+        a0,a1   0    5   12   21
+        a2,a3  96  117  140  165
         >>> # or equivalently
         >>> # arr.prod('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.prod((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 |  b1 |  b2 |  b3
-        a01 |  0 |   5 |  12 |  21
-        a23 | 96 | 117 | 140 | 165
+        a\\b  b0   b1   b2   b3
+        a01   0    5   12   21
+        a23  96  117  140  165
         >>> # or equivalently
         >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7366,21 +7366,21 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.prod_by()
         0
         >>> # along axis 'a'
         >>> arr.prod_by(x.a)
-        a | a0 |  a1 |   a2 |    a3
-          |  0 | 840 | 7920 | 32760
+        a  a0   a1    a2     a3
+            0  840  7920  32760
         >>> # along axis 'b'
         >>> arr.prod_by(x.b)
-        b | b0 |  b1 |   b2 |   b3
-          |  0 | 585 | 1680 | 3465
+        b  b0   b1    b2    b3
+            0  585  1680  3465
 
         Select some rows only
 
@@ -7392,16 +7392,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.prod_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 |     a2,a3
-          |     0 | 259459200
+        a  a0,a1      a2,a3
+               0  259459200
         >>> # or equivalently
         >>> # arr.prod_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.prod_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 |       a23
-          |   0 | 259459200
+        a  a01        a23
+             0  259459200
         >>> # or equivalently
         >>> # arr.prod_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7426,45 +7426,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.min()
         0
         >>> # along axis 'a'
         >>> arr.min(x.a)
-        b | b0 | b1 | b2 | b3
-          |  0 |  1 |  2 |  3
+        b  b0  b1  b2  b3
+            0   1   2   3
         >>> # along axis 'b'
         >>> arr.min(x.b)
-        a | a0 | a1 | a2 | a3
-          |  0 |  4 |  8 | 12
+        a  a0  a1  a2  a3
+            0   4   8  12
 
         Select some rows only
 
         >>> arr.min(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  0 |  1 |  2 |  3
+        b  b0  b1  b2  b3
+            0   1   2   3
         >>> # or equivalently
         >>> # arr.min('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.min((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  0 |  1 |  2 |  3
-        a2,a3 |  8 |  9 | 10 | 11
+          a\\b  b0  b1  b2  b3
+        a0,a1   0   1   2   3
+        a2,a3   8   9  10  11
         >>> # or equivalently
         >>> # arr.min('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.min((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  0 |  1 |  2 |  3
-        a23 |  8 |  9 | 10 | 11
+        a\\b  b0  b1  b2  b3
+        a01   0   1   2   3
+        a23   8   9  10  11
         >>> # or equivalently
         >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7489,21 +7489,21 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.min_by()
         0
         >>> # along axis 'a'
         >>> arr.min_by(x.a)
-        a | a0 | a1 | a2 | a3
-          |  0 |  4 |  8 | 12
+        a  a0  a1  a2  a3
+            0   4   8  12
         >>> # along axis 'b'
         >>> arr.min_by(x.b)
-        b | b0 | b1 | b2 | b3
-          |  0 |  1 |  2 |  3
+        b  b0  b1  b2  b3
+            0   1   2   3
 
         Select some rows only
 
@@ -7515,16 +7515,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.min_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |     0 |     8
+        a  a0,a1  a2,a3
+               0      8
         >>> # or equivalently
         >>> # arr.min_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.min_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 | a23
-          |   0 |   8
+        a  a01  a23
+             0    8
         >>> # or equivalently
         >>> # arr.min_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7549,45 +7549,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.max()
         15
         >>> # along axis 'a'
         >>> arr.max(x.a)
-        b | b0 | b1 | b2 | b3
-          | 12 | 13 | 14 | 15
+        b  b0  b1  b2  b3
+           12  13  14  15
         >>> # along axis 'b'
         >>> arr.max(x.b)
-        a | a0 | a1 | a2 | a3
-          |  3 |  7 | 11 | 15
+        a  a0  a1  a2  a3
+            3   7  11  15
 
         Select some rows only
 
         >>> arr.max(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  4 |  5 |  6 |  7
+        b  b0  b1  b2  b3
+            4   5   6   7
         >>> # or equivalently
         >>> # arr.max('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.max((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  4 |  5 |  6 |  7
-        a2,a3 | 12 | 13 | 14 | 15
+          a\\b  b0  b1  b2  b3
+        a0,a1   4   5   6   7
+        a2,a3  12  13  14  15
         >>> # or equivalently
         >>> # arr.max('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.max((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  4 |  5 |  6 |  7
-        a23 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+        a01   4   5   6   7
+        a23  12  13  14  15
         >>> # or equivalently
         >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7612,21 +7612,21 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.max_by()
         15
         >>> # along axis 'a'
         >>> arr.max_by(x.a)
-        a | a0 | a1 | a2 | a3
-          |  3 |  7 | 11 | 15
+        a  a0  a1  a2  a3
+            3   7  11  15
         >>> # along axis 'b'
         >>> arr.max_by(x.b)
-        b | b0 | b1 | b2 | b3
-          | 12 | 13 | 14 | 15
+        b  b0  b1  b2  b3
+           12  13  14  15
 
         Select some rows only
 
@@ -7638,16 +7638,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.max_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |     7 |    15
+        a  a0,a1  a2,a3
+               7     15
         >>> # or equivalently
         >>> # arr.max_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.max_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 | a23
-          |   7 |  15
+        a  a01  a23
+             7   15
         >>> # or equivalently
         >>> # arr.max_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7674,45 +7674,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
         >>> arr.mean(x.a)
-        b |  b0 |  b1 |  b2 |  b3
-          | 6.0 | 7.0 | 8.0 | 9.0
+        b   b0   b1   b2   b3
+           6.0  7.0  8.0  9.0
         >>> # along axis 'b'
         >>> arr.mean(x.b)
-        a |  a0 |  a1 |  a2 |   a3
-          | 1.5 | 5.5 | 9.5 | 13.5
+        a   a0   a1   a2    a3
+           1.5  5.5  9.5  13.5
 
         Select some rows only
 
         >>> arr.mean(['a0', 'a1'])
-        b |  b0 |  b1 |  b2 |  b3
-          | 2.0 | 3.0 | 4.0 | 5.0
+        b   b0   b1   b2   b3
+           2.0  3.0  4.0  5.0
         >>> # or equivalently
         >>> # arr.mean('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.mean((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |   b0 |   b1 |   b2 |   b3
-        a0,a1 |  2.0 |  3.0 |  4.0 |  5.0
-        a2,a3 | 10.0 | 11.0 | 12.0 | 13.0
+          a\\b    b0    b1    b2    b3
+        a0,a1   2.0   3.0   4.0   5.0
+        a2,a3  10.0  11.0  12.0  13.0
         >>> # or equivalently
         >>> # arr.mean('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.mean((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |   b0 |   b1 |   b2 |   b3
-        a01 |  2.0 |  3.0 |  4.0 |  5.0
-        a23 | 10.0 | 11.0 | 12.0 | 13.0
+        a\\b    b0    b1    b2    b3
+        a01   2.0   3.0   4.0   5.0
+        a23  10.0  11.0  12.0  13.0
         >>> # or equivalently
         >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7739,21 +7739,21 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
         >>> arr.mean_by(x.a)
-        a |  a0 |  a1 |  a2 |   a3
-          | 1.5 | 5.5 | 9.5 | 13.5
+        a   a0   a1   a2    a3
+           1.5  5.5  9.5  13.5
         >>> # along axis 'b'
         >>> arr.mean_by(x.b)
-        b |  b0 |  b1 |  b2 |  b3
-          | 6.0 | 7.0 | 8.0 | 9.0
+        b   b0   b1   b2   b3
+           6.0  7.0  8.0  9.0
 
         Select some rows only
 
@@ -7765,16 +7765,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.mean_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |   3.5 |  11.5
+        a  a0,a1  a2,a3
+             3.5   11.5
         >>> # or equivalently
         >>> # arr.mean_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.mean_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 |  a23
-          | 3.5 | 11.5
+        a  a01   a23
+           3.5  11.5
         >>> # or equivalently
         >>> # arr.mean_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7805,45 +7805,45 @@ class LArray(object):
                         [6, 2, 0, 9], \
                         [9, 10, 5, 6]]
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 | 10 |  7 |  5 |  9
-         a1 |  5 |  8 |  3 |  7
-         a2 |  6 |  2 |  0 |  9
-         a3 |  9 | 10 |  5 |  6
+        a\\b  b0  b1  b2  b3
+         a0  10   7   5   9
+         a1   5   8   3   7
+         a2   6   2   0   9
+         a3   9  10   5   6
         >>> arr.median()
         6.5
         >>> # along axis 'a'
         >>> arr.median(x.a)
-        b |  b0 |  b1 |  b2 |  b3
-          | 7.5 | 7.5 | 4.0 | 8.0
+        b   b0   b1   b2   b3
+           7.5  7.5  4.0  8.0
         >>> # along axis 'b'
         >>> arr.median(x.b)
-        a |  a0 |  a1 |  a2 |  a3
-          | 8.0 | 6.0 | 4.0 | 7.5
+        a   a0   a1   a2   a3
+           8.0  6.0  4.0  7.5
 
         Select some rows only
 
         >>> arr.median(['a0', 'a1'])
-        b |  b0 |  b1 |  b2 |  b3
-          | 7.5 | 7.5 | 4.0 | 8.0
+        b   b0   b1   b2   b3
+           7.5  7.5  4.0  8.0
         >>> # or equivalently
         >>> # arr.median('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.median((['a0', 'a1'], ['a2', 'a3']))
-          a\\b |  b0 |  b1 |  b2 |  b3
-        a0,a1 | 7.5 | 7.5 | 4.0 | 8.0
-        a2,a3 | 7.5 | 6.0 | 2.5 | 7.5
+          a\\b   b0   b1   b2   b3
+        a0,a1  7.5  7.5  4.0  8.0
+        a2,a3  7.5  6.0  2.5  7.5
         >>> # or equivalently
         >>> # arr.median('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.median((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |  b0 |  b1 |  b2 |  b3
-        a01 | 7.5 | 7.5 | 4.0 | 8.0
-        a23 | 7.5 | 6.0 | 2.5 | 7.5
+        a\\b   b0   b1   b2   b3
+        a01  7.5  7.5  4.0  8.0
+        a23  7.5  6.0  2.5  7.5
         >>> # or equivalently
         >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7874,21 +7874,21 @@ class LArray(object):
                         [6, 2, 0, 9], \
                         [9, 10, 5, 6]]
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 | 10 |  7 |  5 |  9
-         a1 |  5 |  8 |  3 |  7
-         a2 |  6 |  2 |  0 |  9
-         a3 |  9 | 10 |  5 |  6
+        a\\b  b0  b1  b2  b3
+         a0  10   7   5   9
+         a1   5   8   3   7
+         a2   6   2   0   9
+         a3   9  10   5   6
         >>> arr.median_by()
         6.5
         >>> # along axis 'a'
         >>> arr.median_by(x.a)
-        a |  a0 |  a1 |  a2 |  a3
-          | 8.0 | 6.0 | 4.0 | 7.5
+        a   a0   a1   a2   a3
+           8.0  6.0  4.0  7.5
         >>> # along axis 'b'
         >>> arr.median_by(x.b)
-        b |  b0 |  b1 |  b2 |  b3
-          | 7.5 | 7.5 | 4.0 | 8.0
+        b   b0   b1   b2   b3
+           7.5  7.5  4.0  8.0
 
         Select some rows only
 
@@ -7900,16 +7900,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.median_by((['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |   7.0 |  5.75
+        a  a0,a1  a2,a3
+             7.0   5.75
         >>> # or equivalently
         >>> # arr.median_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.median_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a | a01 |  a23
-          | 7.0 | 5.75
+        a  a01   a23
+           7.0  5.75
         >>> # or equivalently
         >>> # arr.median_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -7941,51 +7941,51 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.percentile(25)
         3.75
         >>> # along axis 'a'
         >>> arr.percentile(25, x.a)
-        b |  b0 |  b1 |  b2 |  b3
-          | 3.0 | 4.0 | 5.0 | 6.0
+        b   b0   b1   b2   b3
+           3.0  4.0  5.0  6.0
         >>> # along axis 'b'
         >>> arr.percentile(25, x.b)
-        a |   a0 |   a1 |   a2 |    a3
-          | 0.75 | 4.75 | 8.75 | 12.75
+        a    a0    a1    a2     a3
+           0.75  4.75  8.75  12.75
         >>> # several percentile values
         >>> arr.percentile([25, 50, 75], x.b)
-        percentile\\a |   a0 |   a1 |    a2 |    a3
-                  25 | 0.75 | 4.75 |  8.75 | 12.75
-                  50 |  1.5 |  5.5 |   9.5 |  13.5
-                  75 | 2.25 | 6.25 | 10.25 | 14.25
+        percentile\\a    a0    a1     a2     a3
+                  25  0.75  4.75   8.75  12.75
+                  50   1.5   5.5    9.5   13.5
+                  75  2.25  6.25  10.25  14.25
 
         Select some rows only
 
         >>> arr.percentile(25, ['a0', 'a1'])
-        b |  b0 |  b1 |  b2 |  b3
-          | 1.0 | 2.0 | 3.0 | 4.0
+        b   b0   b1   b2   b3
+           1.0  2.0  3.0  4.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1')
 
         Split an axis in several parts
 
         >>> arr.percentile(25, (['a0', 'a1'], ['a2', 'a3']))
-          a\\b |  b0 |   b1 |   b2 |   b3
-        a0,a1 | 1.0 |  2.0 |  3.0 |  4.0
-        a2,a3 | 9.0 | 10.0 | 11.0 | 12.0
+          a\\b   b0    b1    b2    b3
+        a0,a1  1.0   2.0   3.0   4.0
+        a2,a3  9.0  10.0  11.0  12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.percentile(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b |  b0 |   b1 |   b2 |   b3
-        a01 | 1.0 |  2.0 |  3.0 |  4.0
-        a23 | 9.0 | 10.0 | 11.0 | 12.0
+        a\\b   b0    b1    b2    b3
+        a01  1.0   2.0   3.0   4.0
+        a23  9.0  10.0  11.0  12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
         """
@@ -8028,27 +8028,27 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.percentile_by(25)
         3.75
         >>> # along axis 'a'
         >>> arr.percentile_by(25, x.a)
-        a |   a0 |   a1 |   a2 |    a3
-          | 0.75 | 4.75 | 8.75 | 12.75
+        a    a0    a1    a2     a3
+           0.75  4.75  8.75  12.75
         >>> # along axis 'b'
         >>> arr.percentile_by(25, x.b)
-        b |  b0 |  b1 |  b2 |  b3
-          | 3.0 | 4.0 | 5.0 | 6.0
+        b   b0   b1   b2   b3
+           3.0  4.0  5.0  6.0
         >>> # several percentile values
         >>> arr.percentile_by([25, 50, 75], x.b)
-        percentile\\b |  b0 |   b1 |   b2 |   b3
-                  25 | 3.0 |  4.0 |  5.0 |  6.0
-                  50 | 6.0 |  7.0 |  8.0 |  9.0
-                  75 | 9.0 | 10.0 | 11.0 | 12.0
+        percentile\\b   b0    b1    b2    b3
+                  25  3.0   4.0   5.0   6.0
+                  50  6.0   7.0   8.0   9.0
+                  75  9.0  10.0  11.0  12.0
 
         Select some rows only
 
@@ -8060,16 +8060,16 @@ class LArray(object):
         Split an axis in several parts
 
         >>> arr.percentile_by(25, (['a0', 'a1'], ['a2', 'a3']))
-        a | a0,a1 | a2,a3
-          |  1.75 |  9.75
+        a  a0,a1  a2,a3
+            1.75   9.75
         >>> # or equivalently
         >>> # arr.percentile_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.percentile_by(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a |  a01 |  a23
-          | 1.75 | 9.75
+        a   a01   a23
+           1.75  9.75
         >>> # or equivalently
         >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
         """
@@ -8110,45 +8110,45 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.ptp()
         15
         >>> # along axis 'a'
         >>> arr.ptp(x.a)
-        b | b0 | b1 | b2 | b3
-          | 12 | 12 | 12 | 12
+        b  b0  b1  b2  b3
+           12  12  12  12
         >>> # along axis 'b'
         >>> arr.ptp(x.b)
-        a | a0 | a1 | a2 | a3
-          |  3 |  3 |  3 |  3
+        a  a0  a1  a2  a3
+            3   3   3   3
 
         Select some rows only
 
         >>> arr.ptp(['a0', 'a1'])
-        b | b0 | b1 | b2 | b3
-          |  4 |  4 |  4 |  4
+        b  b0  b1  b2  b3
+            4   4   4   4
         >>> # or equivalently
         >>> # arr.ptp('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.ptp((['a0', 'a1'], ['a2', 'a3']))
-          a\\b | b0 | b1 | b2 | b3
-        a0,a1 |  4 |  4 |  4 |  4
-        a2,a3 |  4 |  4 |  4 |  4
+          a\\b  b0  b1  b2  b3
+        a0,a1   4   4   4   4
+        a2,a3   4   4   4   4
         >>> # or equivalently
         >>> # arr.ptp('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.ptp((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
-        a\\b | b0 | b1 | b2 | b3
-        a01 |  4 |  4 |  4 |  4
-        a23 |  4 |  4 |  4 |  4
+        a\\b  b0  b1  b2  b3
+        a01   4   4   4   4
+        a23   4   4   4   4
         >>> # or equivalently
         >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """
@@ -8182,39 +8182,39 @@ class LArray(object):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
                         [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
-         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
-         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
+        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+         a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
+         a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.var()
         4.7999999999999998
         >>> # along axis 'b'
         >>> arr.var(x.b)
-        a |  a0 |  a1
-          | 4.0 | 4.0
+        a   a0   a1
+           4.0  4.0
 
         Select some columns only
 
         >>> arr.var(['b0', 'b1', 'b3'])
-        a |  a0 |  a1
-          | 9.0 | 4.0
+        a   a0   a1
+           9.0  4.0
         >>> # or equivalently
         >>> # arr.var('b0,b1,b3')
 
         Split an axis in several parts
 
         >>> arr.var((['b0', 'b1', 'b3'], 'b5:'))
-        a\\b | b0,b1,b3 | b5:
-         a0 |      9.0 | 1.0
-         a1 |      4.0 | 1.0
+        a\\b  b0,b1,b3  b5:
+         a0       9.0  1.0
+         a1       4.0  1.0
         >>> # or equivalently
         >>> # arr.var('b0,b1,b3;b5:')
 
         Same with renaming
 
         >>> arr.var((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
-        a\\b | b013 | b567
-         a0 |  9.0 |  1.0
-         a1 |  4.0 |  1.0
+        a\\b  b013  b567
+         a0   9.0   1.0
+         a1   4.0   1.0
         >>> # or equivalently
         >>> # arr.var('b0,b1,b3>>b013;b5:>>b567')
         """
@@ -8245,39 +8245,39 @@ class LArray(object):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
                         [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
-         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
-         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
+        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+         a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
+         a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.var_by()
         4.7999999999999998
         >>> # along axis 'a'
         >>> arr.var_by(x.a)
-        a |  a0 |  a1
-          | 4.0 | 4.0
+        a   a0   a1
+           4.0  4.0
 
         Select some columns only
 
         >>> arr.var_by(x.a, ['b0','b1','b3'])
-        a |  a0 |  a1
-          | 9.0 | 4.0
+        a   a0   a1
+           9.0  4.0
         >>> # or equivalently
         >>> # arr.var_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
         >>> arr.var_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
-        a\\b | b0,b1,b3 | b5:
-         a0 |      9.0 | 1.0
-         a1 |      4.0 | 1.0
+        a\\b  b0,b1,b3  b5:
+         a0       9.0  1.0
+         a1       4.0  1.0
         >>> # or equivalently
         >>> # arr.var_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
         >>> arr.var_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
-        a\\b | b013 | b567
-         a0 |  9.0 |  1.0
-         a1 |  4.0 |  1.0
+        a\\b  b013  b567
+         a0   9.0   1.0
+         a1   4.0   1.0
         >>> # or equivalently
         >>> # arr.var_by('a','b0,b1,b3>>b013;b5:>>b567')
         """
@@ -8308,39 +8308,39 @@ class LArray(object):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
                         [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
-         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
-         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
+        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+         a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
+         a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.std()
         2.1908902300206643
         >>> # along axis 'b'
         >>> arr.std(x.b)
-        a |  a0 |  a1
-          | 2.0 | 2.0
+        a   a0   a1
+           2.0  2.0
 
         Select some columns only
 
         >>> arr.std(['b0', 'b1', 'b3'])
-        a |  a0 |  a1
-          | 3.0 | 2.0
+        a   a0   a1
+           3.0  2.0
         >>> # or equivalently
         >>> # arr.std('b0,b1,b3')
 
         Split an axis in several parts
 
         >>> arr.std((['b0', 'b1', 'b3'], 'b5:'))
-        a\\b | b0,b1,b3 | b5:
-         a0 |      3.0 | 1.0
-         a1 |      2.0 | 1.0
+        a\\b  b0,b1,b3  b5:
+         a0       3.0  1.0
+         a1       2.0  1.0
         >>> # or equivalently
         >>> # arr.std('b0,b1,b3;b5:')
 
         Same with renaming
 
         >>> arr.std((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
-        a\\b | b013 | b567
-         a0 |  3.0 |  1.0
-         a1 |  2.0 |  1.0
+        a\\b  b013  b567
+         a0   3.0   1.0
+         a1   2.0   1.0
         >>> # or equivalently
         >>> # arr.std('b0,b1,b3>>b013;b5:>>b567')
         """
@@ -8372,39 +8372,39 @@ class LArray(object):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
                         [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b |  b0 |  b1 |  b2 |  b3 |  b4 |  b5 |  b6 |  b7
-         a0 | 0.0 | 3.0 | 5.0 | 6.0 | 4.0 | 2.0 | 1.0 | 3.0
-         a1 | 7.0 | 3.0 | 2.0 | 5.0 | 8.0 | 5.0 | 6.0 | 4.0
+        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+         a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
+         a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.std_by()
         2.1908902300206643
         >>> # along axis 'a'
         >>> arr.std_by(x.a)
-        a |  a0 |  a1
-          | 2.0 | 2.0
+        a   a0   a1
+           2.0  2.0
 
         Select some columns only
 
         >>> arr.std_by(x.a, ['b0','b1','b3'])
-        a |  a0 |  a1
-          | 3.0 | 2.0
+        a   a0   a1
+           3.0  2.0
         >>> # or equivalently
         >>> # arr.std_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
         >>> arr.std_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
-        a\\b | b0,b1,b3 | b5:
-         a0 |      3.0 | 1.0
-         a1 |      2.0 | 1.0
+        a\\b  b0,b1,b3  b5:
+         a0       3.0  1.0
+         a1       2.0  1.0
         >>> # or equivalently
         >>> # arr.std_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
         >>> arr.std_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
-        a\\b | b013 | b567
-         a0 |  3.0 |  1.0
-         a1 |  2.0 |  1.0
+        a\\b  b013  b567
+         a0   3.0   1.0
+         a1   2.0   1.0
         >>> # or equivalently
         >>> # arr.std_by('a','b0,b1,b3>>b013;b5:>>b567')
         """
@@ -8441,23 +8441,23 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.cumsum()
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  3 |  6
-         a1 |  4 |  9 | 15 | 22
-         a2 |  8 | 17 | 27 | 38
-         a3 | 12 | 25 | 39 | 54
+        a\\b  b0  b1  b2  b3
+         a0   0   1   3   6
+         a1   4   9  15  22
+         a2   8  17  27  38
+         a3  12  25  39  54
         >>> arr.cumsum(x.a)
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  6 |  8 | 10
-         a2 | 12 | 15 | 18 | 21
-         a3 | 24 | 28 | 32 | 36
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   6   8  10
+         a2  12  15  18  21
+         a3  24  28  32  36
         """
         return self._cum_aggregate(np.cumsum, axis)
 
@@ -8491,23 +8491,23 @@ class LArray(object):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b | b0 | b1 | b2 | b3
-         a0 |  0 |  1 |  2 |  3
-         a1 |  4 |  5 |  6 |  7
-         a2 |  8 |  9 | 10 | 11
-         a3 | 12 | 13 | 14 | 15
+        a\\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+         a3  12  13  14  15
         >>> arr.cumprod()
-        a\\b | b0 |  b1 |   b2 |    b3
-         a0 |  0 |   0 |    0 |     0
-         a1 |  4 |  20 |  120 |   840
-         a2 |  8 |  72 |  720 |  7920
-         a3 | 12 | 156 | 2184 | 32760
+        a\\b  b0   b1    b2     b3
+         a0   0    0     0      0
+         a1   4   20   120    840
+         a2   8   72   720   7920
+         a3  12  156  2184  32760
         >>> arr.cumprod(x.a)
-        a\\b | b0 |  b1 |   b2 |   b3
-         a0 |  0 |   1 |    2 |    3
-         a1 |  0 |   5 |   12 |   21
-         a2 |  0 |  45 |  120 |  231
-         a3 |  0 | 585 | 1680 | 3465
+        a\\b  b0   b1    b2    b3
+         a0   0    1     2     3
+         a1   0    5    12    21
+         a2   0   45   120   231
+         a3   0  585  1680  3465
         """
         return self._cum_aggregate(np.cumprod, axis)
 
@@ -8589,44 +8589,44 @@ class LArray(object):
         --------
         >>> arr1d = ndtest(3)
         >>> arr1d
-        a | a0 | a1 | a2
-          |  0 |  1 |  2
+        a  a0  a1  a2
+            0   1   2
         >>> arr2d = ndtest((3, 3))
         >>> arr2d
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
-         a2 |  6 |  7 |  8
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+         a2   6   7   8
         >>> arr1d @ arr1d # doctest: +SKIP
         5
         >>> arr1d @ arr2d # doctest: +SKIP
-        b | b0 | b1 | b2
-          | 15 | 18 | 21
+        b  b0  b1  b2
+           15  18  21
         >>> arr2d @ arr1d # doctest: +SKIP
-        a | a0 | a1 | a2
-          |  5 | 14 | 23
+        a  a0  a1  a2
+            5  14  23
         >>> arr3d = ndrange('c=c0..c2;d=d0..d2;e=e0..e2')
         >>> arr1d @ arr3d # doctest: +SKIP
-        c\\e | e0 | e1 | e2
-         c0 | 15 | 18 | 21
-         c1 | 42 | 45 | 48
-         c2 | 69 | 72 | 75
+        c\\e  e0  e1  e2
+         c0  15  18  21
+         c1  42  45  48
+         c2  69  72  75
         >>> arr3d @ arr1d # doctest: +SKIP
-        c\\d | d0 | d1 | d2
-         c0 |  5 | 14 | 23
-         c1 | 32 | 41 | 50
-         c2 | 59 | 68 | 77
+        c\\d  d0  d1  d2
+         c0   5  14  23
+         c1  32  41  50
+         c2  59  68  77
         >>> arr3d @ arr3d # doctest: +SKIP
-         c | d\\e |   e0 |   e1 |   e2
-        c0 |  d0 |   15 |   18 |   21
-        c0 |  d1 |   42 |   54 |   66
-        c0 |  d2 |   69 |   90 |  111
-        c1 |  d0 |  366 |  396 |  426
-        c1 |  d1 |  474 |  513 |  552
-        c1 |  d2 |  582 |  630 |  678
-        c2 |  d0 | 1203 | 1260 | 1317
-        c2 |  d1 | 1392 | 1458 | 1524
-        c2 |  d2 | 1581 | 1656 | 1731
+         c  d\\e    e0    e1    e2
+        c0   d0    15    18    21
+        c0   d1    42    54    66
+        c0   d2    69    90   111
+        c1   d0   366   396   426
+        c1   d1   474   513   552
+        c1   d2   582   630   678
+        c2   d0  1203  1260  1317
+        c2   d1  1392  1458  1524
+        c2   d2  1581  1656  1731
         """
         current = self[:]
         axes = self.axes
@@ -8709,21 +8709,21 @@ class LArray(object):
         >>> sex = Axis('sex=M,F')
         >>> a = ndrange((nat, sex))
         >>> a
-        nat\\sex | M | F
-             BE | 0 | 1
-             FO | 2 | 3
+        nat\\sex  M  F
+             BE  0  1
+             FO  2  3
         >>> b = ndrange(sex)
         >>> b
-        sex | M | F
-            | 0 | 1
+        sex  M  F
+             0  1
         >>> a / b
-        nat\\sex |   M |   F
-             BE | nan | 1.0
-             FO | inf | 3.0
+        nat\\sex    M    F
+             BE  nan  1.0
+             FO  inf  3.0
         >>> a.divnot0(b)
-        nat\\sex |   M |   F
-             BE | 0.0 | 1.0
-             FO | 0.0 | 3.0
+        nat\\sex    M    F
+             BE  0.0  1.0
+             FO  0.0  3.0
         """
         if np.isscalar(other):
             if other == 0:
@@ -8768,22 +8768,22 @@ class LArray(object):
         >>> b = Axis('b=b1,b2')
         >>> arr = ndrange([a, b])
         >>> arr
-        a\\b | b1 | b2
-         a1 |  0 |  1
-         a2 |  2 |  3
+        a\\b  b1  b2
+         a1   0   1
+         a2   2   3
         >>> c = Axis('c=c1,c2')
         >>> arr.expand([a, c, b])
-         a | c\\b | b1 | b2
-        a1 |  c1 |  0 |  1
-        a1 |  c2 |  0 |  1
-        a2 |  c1 |  2 |  3
-        a2 |  c2 |  2 |  3
+         a  c\\b  b1  b2
+        a1   c1   0   1
+        a1   c2   0   1
+        a2   c1   2   3
+        a2   c2   2   3
         >>> arr.expand([b, c])
-         a | b\\c | c1 | c2
-        a1 |  b1 |  0 |  0
-        a1 |  b2 |  1 |  1
-        a2 |  b1 |  2 |  2
-        a2 |  b2 |  3 |  3
+         a  b\\c  c1  c2
+        a1   b1   0   0
+        a1   b2   1   1
+        a2   b1   2   2
+        a2   b2   3   3
         """
         if (target_axes is None and out is None or
                 target_axes is not None and out is not None):
@@ -8838,30 +8838,30 @@ class LArray(object):
         --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex |   M |   F
-             BE | 1.0 | 1.0
-             FO | 1.0 | 1.0
+        nat\\sex    M    F
+             BE  1.0  1.0
+             FO  1.0  1.0
         >>> a.append(x.sex, a.sum(x.sex), 'M+F')
-        nat\\sex |   M |   F | M+F
-             BE | 1.0 | 1.0 | 2.0
-             FO | 1.0 | 1.0 | 2.0
+        nat\\sex    M    F  M+F
+             BE  1.0  1.0  2.0
+             FO  1.0  1.0  2.0
         >>> a.append(x.nat, 2, 'Other')
-        nat\\sex |   M |   F
-             BE | 1.0 | 1.0
-             FO | 1.0 | 1.0
-          Other | 2.0 | 2.0
+        nat\\sex    M    F
+             BE  1.0  1.0
+             FO  1.0  1.0
+          Other  2.0  2.0
         >>> b = zeros('type=type1,type2')
         >>> b
-        type | type1 | type2
-             |   0.0 |   0.0
+        type  type1  type2
+                0.0    0.0
         >>> a.append(x.nat, b, 'Other')
-          nat | sex\\type | type1 | type2
-           BE |        M |   1.0 |   1.0
-           BE |        F |   1.0 |   1.0
-           FO |        M |   1.0 |   1.0
-           FO |        F |   1.0 |   1.0
-        Other |        M |   0.0 |   0.0
-        Other |        F |   0.0 |   0.0
+          nat  sex\\type  type1  type2
+           BE         M    1.0    1.0
+           BE         F    1.0    1.0
+           FO         M    1.0    1.0
+           FO         F    1.0    1.0
+        Other         M    0.0    0.0
+        Other         F    0.0    0.0
         """
         axis = self.axes[axis]
         if np.isscalar(value):
@@ -8896,30 +8896,30 @@ class LArray(object):
         --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
-        nat\sex |   M |   F
-             BE | 1.0 | 1.0
-             FO | 1.0 | 1.0
+        nat\sex    M    F
+             BE  1.0  1.0
+             FO  1.0  1.0
         >>> a.prepend(x.sex, a.sum(x.sex), 'M+F')
-        nat\\sex | M+F |   M |   F
-             BE | 2.0 | 1.0 | 1.0
-             FO | 2.0 | 1.0 | 1.0
+        nat\\sex  M+F    M    F
+             BE  2.0  1.0  1.0
+             FO  2.0  1.0  1.0
         >>> a.prepend(x.nat, 2, 'Other')
-        nat\\sex |   M |   F
-          Other | 2.0 | 2.0
-             BE | 1.0 | 1.0
-             FO | 1.0 | 1.0
+        nat\\sex    M    F
+          Other  2.0  2.0
+             BE  1.0  1.0
+             FO  1.0  1.0
         >>> b = zeros('type=type1,type2')
         >>> b
-        type | type1 | type2
-             |   0.0 |   0.0
+        type  type1  type2
+                0.0    0.0
         >>> a.prepend(x.nat, b, 'Other')
-         type | nat\sex |   M |   F
-        type1 |   Other | 0.0 | 0.0
-        type1 |      BE | 1.0 | 1.0
-        type1 |      FO | 1.0 | 1.0
-        type2 |   Other | 0.0 | 0.0
-        type2 |      BE | 1.0 | 1.0
-        type2 |      FO | 1.0 | 1.0
+         type  nat\sex    M    F
+        type1    Other  0.0  0.0
+        type1       BE  1.0  1.0
+        type1       FO  1.0  1.0
+        type2    Other  0.0  0.0
+        type2       BE  1.0  1.0
+        type2       FO  1.0  1.0
         """
         axis = self.axes[axis]
         if np.isscalar(value):
@@ -8956,30 +8956,30 @@ class LArray(object):
         >>> xtype = Axis('type=type1,type2')
         >>> arr1 = ones([sex, xtype])
         >>> arr1
-        sex\\type | type1 | type2
-               M |   1.0 |   1.0
-               F |   1.0 |   1.0
+        sex\\type  type1  type2
+               M    1.0    1.0
+               F    1.0    1.0
         >>> arr2 = zeros([sex2, xtype])
         >>> arr2
-        sex\\type | type1 | type2
-               U |   0.0 |   0.0
+        sex\\type  type1  type2
+               U    0.0    0.0
         >>> arr1.extend(x.sex, arr2)
-        sex\\type | type1 | type2
-               M |   1.0 |   1.0
-               F |   1.0 |   1.0
-               U |   0.0 |   0.0
+        sex\\type  type1  type2
+               M    1.0    1.0
+               F    1.0    1.0
+               U    0.0    0.0
         >>> arr3 = zeros([sex2, nat])
         >>> arr3
-        sex\\nat |  BE |  FO
-              U | 0.0 | 0.0
+        sex\\nat   BE   FO
+              U  0.0  0.0
         >>> arr1.extend(x.sex, arr3)
-        sex | type\\nat |  BE |  FO
-          M |    type1 | 1.0 | 1.0
-          M |    type2 | 1.0 | 1.0
-          F |    type1 | 1.0 | 1.0
-          F |    type2 | 1.0 | 1.0
-          U |    type1 | 0.0 | 0.0
-          U |    type2 | 0.0 | 0.0
+        sex  type\\nat   BE   FO
+          M     type1  1.0  1.0
+          M     type2  1.0  1.0
+          F     type1  1.0  1.0
+          F     type2  1.0  1.0
+          U     type1  0.0  0.0
+          U     type2  0.0  0.0
         """
         result, (self_target, other_target) = \
             concat_empty(axis, (self.axes, other.axes), self.dtype)
@@ -9005,35 +9005,35 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 2, 2))
         >>> arr
-         a | b\\c | c0 | c1
-        a0 |  b0 |  0 |  1
-        a0 |  b1 |  2 |  3
-        a1 |  b0 |  4 |  5
-        a1 |  b1 |  6 |  7
+         a  b\\c  c0  c1
+        a0   b0   0   1
+        a0   b1   2   3
+        a1   b0   4   5
+        a1   b1   6   7
         >>> arr.transpose('b', 'c', 'a')
-         b | c\\a | a0 | a1
-        b0 |  c0 |  0 |  4
-        b0 |  c1 |  1 |  5
-        b1 |  c0 |  2 |  6
-        b1 |  c1 |  3 |  7
+         b  c\\a  a0  a1
+        b0   c0   0   4
+        b0   c1   1   5
+        b1   c0   2   6
+        b1   c1   3   7
         >>> arr.transpose('b')
-         b | a\\c | c0 | c1
-        b0 |  a0 |  0 |  1
-        b0 |  a1 |  4 |  5
-        b1 |  a0 |  2 |  3
-        b1 |  a1 |  6 |  7
+         b  a\\c  c0  c1
+        b0   a0   0   1
+        b0   a1   4   5
+        b1   a0   2   3
+        b1   a1   6   7
         >>> arr.transpose(..., 'a')  # doctest: +SKIP
-         b | c\\a | a0 | a1
-        b0 |  c0 |  0 |  4
-        b0 |  c1 |  1 |  5
-        b1 |  c0 |  2 |  6
-        b1 |  c1 |  3 |  7
+         b  c\\a  a0  a1
+        b0   c0   0   4
+        b0   c1   1   5
+        b1   c0   2   6
+        b1   c1   3   7
         >>> arr.transpose('c', ..., 'a')  # doctest: +SKIP
-         c | b\\a | a0 | a1
-        c0 |  b0 |  0 |  4
-        c0 |  b1 |  2 |  6
-        c1 |  b0 |  1 |  5
-        c1 |  b1 |  3 |  7
+         c  b\\a  a0  a1
+        c0   b0   0   4
+        c0   b1   2   6
+        c1   b0   1   5
+        c1   b1   3   7
         """
         if len(args) == 1 and isinstance(args[0], (tuple, list, AxisCollection)):
             axes = args[0]
@@ -9111,9 +9111,9 @@ class LArray(object):
         >>> fpath = abspath('test.csv')
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex | M | F
-             BE | 0 | 1
-             FO | 2 | 3
+        nat\\sex  M  F
+             BE  0  1
+             FO  2  3
         >>> a.to_csv(fpath)
         >>> with open(fpath) as f:
         ...     print(f.read().strip())
@@ -9561,23 +9561,23 @@ class LArray(object):
     """
     # guessing each axis
     >>> a.set_labels({'M': 'Men', 'BE': 'Belgian'})
-    nat\\sex | Men | Women
-    BE | 0 | 1
-    FO | 2 | 3
+    nat\\sex  Men  Women
+    BE  0  1
+    FO  2  3
 
     # we have to choose which one to support because it is probably not a good idea to simultaneously support the
     # following syntax (even though we *could* support both if we split values on , before we determine if
     # the key is an axis or a label by looking if the value is a list or a single string.
     >>> a.set_labels({'sex': 'Men,Women', 'BE': 'Belgian'})
-    nat\\sex | Men | Women
-    BE | 0 | 1
-    FO | 2 | 3
+    nat\\sex  Men  Women
+    BE  0  1
+    FO  2  3
     # this is shorter but I do not like it because string are both quoted and not quoted and you cannot have int
     # labels
     >>> a.set_labels(M='Men', BE='Belgian')
-    nat\\sex | Men | Women
-    BE | 0 | 1
-    FO | 2 | 3
+    nat\\sex  Men  Women
+    BE  0  1
+    FO  2  3
     """
     def set_labels(self, axis, labels=None, inplace=False):
         """Replaces the labels of an axis of array.
@@ -9603,43 +9603,43 @@ class LArray(object):
         --------
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex | M | F
-             BE | 0 | 1
-             FO | 2 | 3
+        nat\\sex  M  F
+             BE  0  1
+             FO  2  3
         >>> a.set_labels(x.sex, ['Men', 'Women'])
-        nat\\sex | Men | Women
-             BE |   0 |     1
-             FO |   2 |     3
+        nat\\sex  Men  Women
+             BE    0      1
+             FO    2      3
 
         when passing a single string as labels, it will be interpreted to create the list of labels, so that one can
         use the same syntax than during axis creation.
 
         >>> a.set_labels(x.sex, 'Men,Women')
-        nat\\sex | Men | Women
-             BE |   0 |     1
-             FO |   2 |     3
+        nat\\sex  Men  Women
+             BE    0      1
+             FO    2      3
 
         to replace only some labels, one must give a mapping giving the new label for each label to replace
 
         >>> a.set_labels(x.sex, {'M': 'Men'})
-        nat\\sex | Men | F
-             BE |   0 | 1
-             FO |   2 | 3
+        nat\\sex  Men  F
+             BE    0  1
+             FO    2  3
 
         to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
         changed axis
 
         >>> a.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
-          nat\\sex | Men | Women
-          Belgian |   0 |     1
-        Foreigner |   2 |     3
+          nat\\sex  Men  Women
+          Belgian    0      1
+        Foreigner    2      3
 
         one can also replace some labels in several axes by giving a mapping of mappings
 
         >>> a.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
-        nat\\sex | Men | F
-        Belgian |   0 | 1
-             FO |   2 | 3
+        nat\\sex  Men  F
+        Belgian    0  1
+             FO    2  3
         """
         if isinstance(axis, dict):
             changes = axis
@@ -9686,17 +9686,17 @@ class LArray(object):
         --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3')
         >>> a
-        sex\\type | type1 | type2 | type3
-               M |     0 |     1 |     2
-               F |     3 |     4 |     5
+        sex\\type  type1  type2  type3
+               M      0      1      2
+               F      3      4      5
         >>> a.shift(x.type)
-        sex\\type | type2 | type3
-               M |     0 |     1
-               F |     3 |     4
+        sex\\type  type2  type3
+               M      0      1
+               F      3      4
         >>> a.shift(x.type, n=-1)
-        sex\\type | type1 | type2
-               M |     1 |     2
-               F |     4 |     5
+        sex\\type  type1  type2
+               M      1      2
+               F      4      5
         """
         axis = self.axes[axis]
         if n > 0:
@@ -9743,20 +9743,20 @@ class LArray(object):
         --------
         >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum(x.type)
         >>> a
-        sex\\type | type1 | type2 | type3
-               M |     0 |     1 |     3
-               F |     3 |     7 |    12
+        sex\\type  type1  type2  type3
+               M      0      1      3
+               F      3      7     12
         >>> a.diff()
-        sex\\type | type2 | type3
-               M |     1 |     2
-               F |     4 |     5
+        sex\\type  type2  type3
+               M      1      2
+               F      4      5
         >>> a.diff(n=2)
-        sex\\type | type3
-               M |     1
-               F |     1
+        sex\\type  type3
+               M      1
+               F      1
         >>> a.diff(x.sex)
-        sex\\type | type1 | type2 | type3
-               F |     3 |     6 |     9
+        sex\\type  type1  type2  type3
+               F      3      6      9
         """
         array = self
         for _ in range(n):
@@ -9806,17 +9806,17 @@ class LArray(object):
         >>> a = LArray([[1.0, 2.0, 3.0, 3.0], [2.0, 3.0, 1.5, 3.0]],
         ...            [sex, year])
         >>> a
-        sex\\year | 2016 | 2017 | 2018 | 2019
-               M |  1.0 |  2.0 |  3.0 |  3.0
-               F |  2.0 |  3.0 |  1.5 |  3.0
+        sex\\year  2016  2017  2018  2019
+               M   1.0   2.0   3.0   3.0
+               F   2.0   3.0   1.5   3.0
         >>> a.growth_rate()
-        sex\\year | 2017 | 2018 | 2019
-               M |  1.0 |  0.5 |  0.0
-               F |  0.5 | -0.5 |  1.0
+        sex\\year  2017  2018  2019
+               M   1.0   0.5   0.0
+               F   0.5  -0.5   1.0
         >>> a.growth_rate(d=2)
-        sex\\year |  2018 | 2019
-               M |   2.0 |  0.5
-               F | -0.25 |  0.0
+        sex\\year   2018  2019
+               M    2.0   0.5
+               F  -0.25   0.0
         """
         diff = self.diff(axis=axis, d=d, label=label)
         axis_obj = self.axes[axis]
@@ -9836,12 +9836,12 @@ class LArray(object):
         >>> a = LArray([[1, 2],
         ...             [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
         >>> a
-        sex\\nat | BE | FO
-              M |  1 |  2
-              F |  1 |  2
+        sex\\nat  BE  FO
+              M   1   2
+              F   1   2
         >>> a.compact()
-        nat | BE | FO
-            |  1 |  2
+        nat  BE  FO
+              1   2
         """
         res = self
         for axis in res.axes:
@@ -9871,34 +9871,34 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
         >>> arr.combine_axes()
-        a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
-            |     0 |     1 |     2 |     3 |     4 |     5
+        a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
+                 0      1      2      3      4      5
         >>> arr.combine_axes(sep='/')
-        a/b | a0/b0 | a0/b1 | a0/b2 | a1/b0 | a1/b1 | a1/b2
-            |     0 |     1 |     2 |     3 |     4 |     5
+        a/b  a0/b0  a0/b1  a0/b2  a1/b0  a1/b1  a1/b2
+                 0      1      2      3      4      5
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a | b\\c | c0 | c1 | c2 | c3
-        a0 |  b0 |  0 |  1 |  2 |  3
-        a0 |  b1 |  4 |  5 |  6 |  7
-        a0 |  b2 |  8 |  9 | 10 | 11
-        a1 |  b0 | 12 | 13 | 14 | 15
-        a1 |  b1 | 16 | 17 | 18 | 19
-        a1 |  b2 | 20 | 21 | 22 | 23
+         a  b\\c  c0  c1  c2  c3
+        a0   b0   0   1   2   3
+        a0   b1   4   5   6   7
+        a0   b2   8   9  10  11
+        a1   b0  12  13  14  15
+        a1   b1  16  17  18  19
+        a1   b2  20  21  22  23
         >>> arr.combine_axes((x.a, x.c))
-        a_c\\b | b0 | b1 | b2
-        a0_c0 |  0 |  4 |  8
-        a0_c1 |  1 |  5 |  9
-        a0_c2 |  2 |  6 | 10
-        a0_c3 |  3 |  7 | 11
-        a1_c0 | 12 | 16 | 20
-        a1_c1 | 13 | 17 | 21
-        a1_c2 | 14 | 18 | 22
-        a1_c3 | 15 | 19 | 23
+        a_c\\b  b0  b1  b2
+        a0_c0   0   4   8
+        a0_c1   1   5   9
+        a0_c2   2   6  10
+        a0_c3   3   7  11
+        a1_c0  12  16  20
+        a1_c1  13  17  21
+        a1_c2  14  18  22
+        a1_c3  15  19  23
         """
         axes = self.axes if axes is None else self.axes[axes]
         # transpose all axes next to each other, using position of first axis
@@ -9937,28 +9937,28 @@ class LArray(object):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
         >>> combined = arr.combine_axes()
         >>> combined
-        a_b | a0_b0 | a0_b1 | a0_b2 | a1_b0 | a1_b1 | a1_b2
-            |     0 |     1 |     2 |     3 |     4 |     5
+        a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
+                 0      1      2      3      4      5
         >>> combined.split_axis(x.a_b)
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
 
         Split labels using regex
 
         >>> combined = ndrange('a_b = a0b0..a1b2')
         >>> combined
-        a_b | a0b0 | a0b1 | a0b2 | a1b0 | a1b1 | a1b2
-            |    0 |    1 |    2 |    3 |    4 |    5
+        a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
+                0     1     2     3     4     5
         >>> combined.split_axis(x.a_b, regex='(\w{2})(\w{2})')
-        a\\b | b0 | b1 | b2
-         a0 |  0 |  1 |  2
-         a1 |  3 |  4 |  5
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
         """
         return self.reshape(self.axes.split_axis(axis, sep, names, regex))
 
@@ -10098,32 +10098,32 @@ def from_lists(data, nb_index=None, index_col=None):
     --------
     >>> from_lists([['sex', 'M', 'F'],
     ...             ['',      0,   1]])
-    sex | M | F
-        | 0 | 1
+    sex  M  F
+         0  1
     >>> from_lists([['sex\\year', 1991, 1992, 1993],
     ...             [ 'M',           0,    1,    2],
     ...             [ 'F',           3,    4,    5]])
-    sex\\year | 1991 | 1992 | 1993
-           M |    0 |    1 |    2
-           F |    3 |    4 |    5
+    sex\\year  1991  1992  1993
+           M     0     1     2
+           F     3     4     5
     >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
     ...             [  'F', 'BE',           0,    0,    1]])
-    sex | nat\\year | 1991 | 1992 | 1993
-      M |       BE |  1.0 |  0.0 |  0.0
-      M |       FO |  2.0 |  0.0 |  0.0
-      F |       BE |  0.0 |  0.0 |  1.0
-      F |       FO |  nan |  nan |  nan
+    sex  nat\\year  1991  1992  1993
+      M        BE   1.0   0.0   0.0
+      M        FO   2.0   0.0   0.0
+      F        BE   0.0   0.0   1.0
+      F        FO   nan   nan   nan
     >>> from_lists([['sex', 'nat', 1991, 1992, 1993],
     ...             [  'M', 'BE',     1,    0,    0],
     ...             [  'M', 'FO',     2,    0,    0],
     ...             [  'F', 'BE',     0,    0,    1]], nb_index=2)
-    sex | nat\\{2} | 1991 | 1992 | 1993
-      M |      BE |  1.0 |  0.0 |  0.0
-      M |      FO |  2.0 |  0.0 |  0.0
-      F |      BE |  0.0 |  0.0 |  1.0
-      F |      FO |  nan |  nan |  nan
+    sex  nat\\{2}  1991  1992  1993
+      M       BE   1.0   0.0   0.0
+      M       FO   2.0   0.0   0.0
+      F       BE   0.0   0.0   1.0
+      F       FO   nan   nan   nan
     """
     if nb_index is not None and index_col is not None:
         raise ValueError("cannot specify both nb_index and index_col")
@@ -10163,31 +10163,31 @@ def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
     Examples
     --------
     >>> from_string("sex,M,F\\n,0,1")
-    sex | M | F
-        | 0 | 1
+    sex  M  F
+         0  1
     >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3")
-    nat\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
 
     Each label is stripped of leading and trailing whitespace, so this is valid too:
 
     >>> from_string('''nat\\sex, M, F
     ...                BE,       0, 1
     ...                FO,       2, 3''')
-    nat\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> from_string('''age,nat\\sex, M, F
     ...                0,  BE,       0, 1
     ...                0,  FO,       2, 3
     ...                1,  BE,       4, 5
     ...                1,  FO,       6, 7''')
-    age | nat\sex | M | F
-      0 |      BE | 0 | 1
-      0 |      FO | 2 | 3
-      1 |      BE | 4 | 5
-      1 |      FO | 6 | 7
+    age  nat\sex  M  F
+      0       BE  0  1
+      0       FO  2  3
+      1       BE  4  5
+      1       FO  6  7
 
     Empty lines at the beginning or end are ignored, so one can also format the string like this:
 
@@ -10196,9 +10196,9 @@ def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
     ... BE,       0, 1
     ... FO,       2, 3
     ... ''')
-    nat\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
     """
 
     return read_csv(StringIO(s), nb_index=nb_index, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)
@@ -10254,19 +10254,19 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
 
     >>> a.to_csv(fpath)
     >>> read_csv(fpath)
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> read_csv(fpath, sort_columns=True)
-    nat\\sex | F | M
-         BE | 1 | 0
-         FO | 3 | 2
+    nat\\sex  F  M
+         BE  1  0
+         FO  3  2
     >>> fpath = abspath('no_axis_name.csv')
     >>> a.to_csv(fpath, dialect='classic')
     >>> read_csv(fpath, nb_index=1)
-    nat\\{1} | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\{1}  M  F
+         BE  0  1
+         FO  2  3
     """
     if dialect == 'liam2':
         # read axes names. This needs to be done separately instead of reading the whole file with Pandas then
@@ -10459,20 +10459,20 @@ def zeros(axes, title='', dtype=float, order='C'):
     Examples
     --------
     >>> zeros('nat=BE,FO;sex=M,F')
-    nat\sex |   M |   F
-         BE | 0.0 | 0.0
-         FO | 0.0 | 0.0
+    nat\sex    M    F
+         BE  0.0  0.0
+         FO  0.0  0.0
     >>> zeros([(['BE', 'FO'], 'nat'),
     ...        (['M', 'F'], 'sex')])
-    nat\sex |   M |   F
-         BE | 0.0 | 0.0
-         FO | 0.0 | 0.0
+    nat\sex    M    F
+         BE  0.0  0.0
+         FO  0.0  0.0
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> zeros([nat, sex])
-    nat\sex |   M |   F
-         BE | 0.0 | 0.0
-         FO | 0.0 | 0.0
+    nat\sex    M    F
+         BE  0.0  0.0
+         FO  0.0  0.0
     """
     axes = AxisCollection(axes)
     return LArray(np.zeros(axes.shape, dtype, order), axes, title)
@@ -10503,9 +10503,9 @@ def zeros_like(array, title='', dtype=None, order='K'):
     --------
     >>> a = ndrange((2, 3))
     >>> zeros_like(a)
-    {0}*\\{1}* | 0 | 1 | 2
-            0 | 0 | 0 | 0
-            1 | 0 | 0 | 0
+    {0}*\\{1}*  0  1  2
+            0  0  0  0
+            1  0  0  0
     """
     if not title:
         title = array.title
@@ -10538,9 +10538,9 @@ def ones(axes, title='', dtype=float, order='C'):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> ones([nat, sex])
-    nat\\sex |   M |   F
-         BE | 1.0 | 1.0
-         FO | 1.0 | 1.0
+    nat\\sex    M    F
+         BE  1.0  1.0
+         FO  1.0  1.0
     """
     axes = AxisCollection(axes)
     return LArray(np.ones(axes.shape, dtype, order), axes, title)
@@ -10571,9 +10571,9 @@ def ones_like(array, title='', dtype=None, order='K'):
     --------
     >>> a = ndrange((2, 3))
     >>> ones_like(a)
-    {0}*\\{1}* | 0 | 1 | 2
-            0 | 1 | 1 | 1
-            1 | 1 | 1 | 1
+    {0}*\\{1}*  0  1  2
+            0  1  1  1
+            1  1  1  1
     """
     axes = array.axes
     if not title:
@@ -10607,9 +10607,9 @@ def empty(axes, title='', dtype=float, order='C'):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> empty([nat, sex])  # doctest: +SKIP
-    nat\\sex |                  M |                  F
-         BE | 2.47311483356e-315 | 2.47498446195e-315
-         FO |                0.0 | 6.07684618082e-31
+    nat\\sex                   M                   F
+         BE  2.47311483356e-315  2.47498446195e-315
+         FO                 0.0  6.07684618082e-31
     """
     axes = AxisCollection(axes)
     return LArray(np.empty(axes.shape, dtype, order), axes, title)
@@ -10640,10 +10640,10 @@ def empty_like(array, title='', dtype=None, order='K'):
     --------
     >>> a = ndrange((3, 2))
     >>> empty_like(a)   # doctest: +SKIP
-    -\- |                  0 |                  1
-      0 | 2.12199579097e-314 | 6.36598737388e-314
-      1 | 1.06099789568e-313 | 1.48539705397e-313
-      2 | 1.90979621226e-313 | 2.33419537056e-313
+    -\-                   0                   1
+      0  2.12199579097e-314  6.36598737388e-314
+      1  1.06099789568e-313  1.48539705397e-313
+      2  1.90979621226e-313  2.33419537056e-313
     """
     if not title:
         title = array.title
@@ -10678,17 +10678,17 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> full([nat, sex], 42.0)
-    nat\\sex |    M |    F
-         BE | 42.0 | 42.0
-         FO | 42.0 | 42.0
+    nat\\sex     M     F
+         BE  42.0  42.0
+         FO  42.0  42.0
     >>> initial_value = ndrange([sex])
     >>> initial_value
-    sex | M | F
-        | 0 | 1
+    sex  M  F
+         0  1
     >>> full([nat, sex], initial_value)
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 0 | 1
+    nat\\sex  M  F
+         BE  0  1
+         FO  0  1
     """
     if isinstance(fill_value, Axis):
         raise ValueError("If you want to pass several axes or dimension lengths to full, "
@@ -10727,9 +10727,9 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
     --------
     >>> a = ndrange((2, 3))
     >>> full_like(a, 5)
-    {0}*\\{1}* | 0 | 1 | 2
-            0 | 5 | 5 | 5
-            1 | 5 | 5 | 5
+    {0}*\\{1}*  0  1  2
+            0  5  5  5
+            1  5  5  5
     """
     if not title:
         title = array.title
@@ -10780,67 +10780,67 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> year = Axis('year=2016..2019')
     >>> sex = Axis('sex=M,F')
     >>> create_sequential(year)
-    year | 2016 | 2017 | 2018 | 2019
-         |    0 |    1 |    2 |    3
+    year  2016  2017  2018  2019
+             0     1     2     3
     >>> create_sequential('year=2016..2019')
-    year | 2016 | 2017 | 2018 | 2019
-         |    0 |    1 |    2 |    3
+    year  2016  2017  2018  2019
+             0     1     2     3
     >>> create_sequential(year, 1.0, 0.5)
-    year | 2016 | 2017 | 2018 | 2019
-         |  1.0 |  1.5 |  2.0 |  2.5
+    year  2016  2017  2018  2019
+           1.0   1.5   2.0   2.5
     >>> create_sequential(year, 1.0, mult=1.5)
-    year | 2016 | 2017 | 2018 |  2019
-         |  1.0 |  1.5 | 2.25 | 3.375
+    year  2016  2017  2018   2019
+           1.0   1.5  2.25  3.375
     >>> inc = LArray([1, 2], [sex])
     >>> inc
-    sex | M | F
-        | 1 | 2
+    sex  M  F
+         1  2
     >>> create_sequential(year, 1.0, inc)
-    sex\\year | 2016 | 2017 | 2018 | 2019
-           M |  1.0 |  2.0 |  3.0 |  4.0
-           F |  1.0 |  3.0 |  5.0 |  7.0
+    sex\\year  2016  2017  2018  2019
+           M   1.0   2.0   3.0   4.0
+           F   1.0   3.0   5.0   7.0
     >>> mult = LArray([2, 3], [sex])
     >>> mult
-    sex | M | F
-        | 2 | 3
+    sex  M  F
+         2  3
     >>> create_sequential(year, 1.0, mult=mult)
-    sex\\year | 2016 | 2017 | 2018 | 2019
-           M |  1.0 |  2.0 |  4.0 |  8.0
-           F |  1.0 |  3.0 |  9.0 | 27.0
+    sex\\year  2016  2017  2018  2019
+           M   1.0   2.0   4.0   8.0
+           F   1.0   3.0   9.0  27.0
     >>> initial = LArray([3, 4], [sex])
     >>> initial
-    sex | M | F
-        | 3 | 4
+    sex  M  F
+         3  4
     >>> create_sequential(year, initial, inc, mult)
-    sex\\year | 2016 | 2017 | 2018 | 2019
-           M |    3 |    7 |   15 |   31
-           F |    4 |   14 |   44 |  134
+    sex\\year  2016  2017  2018  2019
+           M     3     7    15    31
+           F     4    14    44   134
     >>> def modify(prev_value):
     ...     return prev_value / 2
     >>> create_sequential(year, 8, func=modify)
-    year | 2016 | 2017 | 2018 | 2019
-         |    8 |    4 |    2 |    1
+    year  2016  2017  2018  2019
+             8     4     2     1
     >>> create_sequential(3)
-    {0}* | 0 | 1 | 2
-         | 0 | 1 | 2
+    {0}*  0  1  2
+          0  1  2
     >>> create_sequential(x.year, axes=(sex, year))
-    sex\\year | 2016 | 2017 | 2018 | 2019
-           M |    0 |    1 |    2 |    3
-           F |    0 |    1 |    2 |    3
+    sex\\year  2016  2017  2018  2019
+           M     0     1     2     3
+           F     0     1     2     3
 
     create_sequential can be used as the inverse of growth_rate:
 
     >>> a = LArray([1.0, 2.0, 3.0, 3.0], year)
     >>> a
-    year | 2016 | 2017 | 2018 | 2019
-         |  1.0 |  2.0 |  3.0 |  3.0
+    year  2016  2017  2018  2019
+           1.0   2.0   3.0   3.0
     >>> g = a.growth_rate() + 1
     >>> g
-    year | 2017 | 2018 | 2019
-         |  2.0 |  1.5 |  1.0
+    year  2017  2018  2019
+           2.0   1.5   1.0
     >>> create_sequential(year, a[2016], mult=g)
-    year | 2016 | 2017 | 2018 | 2019
-         |  1.0 |  2.0 |  3.0 |  3.0
+    year  2016  2017  2018  2019
+           1.0   2.0   3.0   3.0
     """
     if inc is None:
         inc = 1 if mult is 1 else 0
@@ -10981,37 +10981,37 @@ def ndrange(axes, start=0, title='', dtype=int):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> ndrange([nat, sex])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> ndrange(['nat=BE,FO', 'sex=M,F'])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> ndrange([(['BE', 'FO'], 'nat'),
     ...          (['M', 'F'], 'sex')])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> ndrange([('BE,FO', 'nat'),
     ...          ('M,F', 'sex')])
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> ndrange('nat=BE,FO;sex=M,F')
-    nat\\sex | M | F
-         BE | 0 | 1
-         FO | 2 | 3
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> ndrange([2, 3], dtype=float)
-    {0}*\\{1}* |   0 |   1 |   2
-            0 | 0.0 | 1.0 | 2.0
-            1 | 3.0 | 4.0 | 5.0
+    {0}*\\{1}*    0    1    2
+            0  0.0  1.0  2.0
+            1  3.0  4.0  5.0
     >>> ndrange(3, start=2)
-    {0}* | 0 | 1 | 2
-         | 2 | 3 | 4
+    {0}*  0  1  2
+          2  3  4
     >>> ndrange('a,b,c')
-    {0} | a | b | c
-        | 0 | 1 | 2
+    {0}  a  b  c
+         0  1  2
     """
     # XXX: implement something like:
     # >>> mat = ndrange([['BE', 'FO'], ['M', 'F']], axes=['nat', 'sex'])
@@ -11053,16 +11053,16 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     Examples
     --------
     >>> ndtest(6)
-    a | a0 | a1 | a2 | a3 | a4 | a5
-      |  0 |  1 |  2 |  3 |  4 |  5
+    a  a0  a1  a2  a3  a4  a5
+        0   1   2   3   4   5
     >>> ndtest((2, 3))
-    a\\b | b0 | b1 | b2
-     a0 |  0 |  1 |  2
-     a1 |  3 |  4 |  5
+    a\\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
     >>> ndtest((2, 3), label_start=1)
-    a\\b | b1 | b2 | b3
-     a1 |  0 |  1 |  2
-     a2 |  3 |  4 |  5
+    a\\b  b1  b2  b3
+     a1   0   1   2
+     a2   3   4   5
     """
     a = ndrange(shape, start=start, dtype=dtype, title=title)
     # TODO: move this to a class method on AxisCollection
@@ -11122,25 +11122,25 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     >>> sex = Axis('sex=M,F')
     >>> a = ndrange([nat, sex], start=1)
     >>> a
-    nat\\sex | M | F
-         BE | 1 | 2
-         FO | 3 | 4
+    nat\\sex  M  F
+         BE  1  2
+         FO  3  4
     >>> d = diag(a)
     >>> d
-    nat,sex | BE,M | FO,F
-            |    1 |    4
+    nat,sex  BE,M  FO,F
+                1     4
     >>> diag(d)
-    nat\\sex | M | F
-         BE | 1 | 0
-         FO | 0 | 4
+    nat\\sex  M  F
+         BE  1  0
+         FO  0  4
     >>> a = ndrange(sex, start=1)
     >>> a
-    sex | M | F
-        | 1 | 2
+    sex  M  F
+         1  2
     >>> diag(a)
-    sex\\sex | M | F
-          M | 1 | 0
-          F | 0 | 2
+    sex\\sex  M  F
+          M  1  0
+          F  0  2
     """
     if a.ndim == 1:
         axis = a.axes[0]
@@ -11190,19 +11190,19 @@ def labels_array(axes, title=''):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> labels_array(sex)
-    sex | M | F
-        | M | F
+    sex  M  F
+         M  F
     >>> labels_array((nat, sex))
-    nat | sex\\axis | nat | sex
-     BE |        M |  BE |   M
-     BE |        F |  BE |   F
-     FO |        M |  FO |   M
-     FO |        F |  FO |   F
+    nat  sex\\axis  nat  sex
+     BE         M   BE    M
+     BE         F   BE    F
+     FO         M   FO    M
+     FO         F   FO    F
     """
     # >>> labels_array((nat, sex))
-    # nat\\sex |    M |    F
-    #      BE | BE,M | BE,F
-    #      FO | FO,M | FO,F
+    # nat\\sex     M     F
+    #      BE  BE,M  BE,F
+    #      FO  FO,M  FO,F
     axes = AxisCollection(axes)
     if len(axes) > 1:
         res_axes = axes + Axis(axes.names, 'axis')
@@ -11254,19 +11254,19 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
     Examples
     --------
     >>> eye(2, dtype=int)
-    {0}*\\{1}* | 0 | 1
-            0 | 1 | 0
-            1 | 0 | 1
+    {0}*\\{1}*  0  1
+            0  1  0
+            1  0  1
     >>> sex = Axis('sex=M,F')
     >>> eye(sex)
-    sex\\sex |   M |   F
-          M | 1.0 | 0.0
-          F | 0.0 | 1.0
+    sex\\sex    M    F
+          M  1.0  0.0
+          F  0.0  1.0
     >>> eye(3, k=1)
-    {0}*\\{1}* |   0 |   1 |   2
-            0 | 0.0 | 1.0 | 0.0
-            1 | 0.0 | 0.0 | 1.0
-            2 | 0.0 | 0.0 | 0.0
+    {0}*\\{1}*    0    1    2
+            0  0.0  1.0  0.0
+            1  0.0  0.0  1.0
+            2  0.0  0.0  0.0
     """
     if columns is None:
         columns = rows.copy() if isinstance(rows, Axis) else rows
@@ -11369,48 +11369,48 @@ def stack(arrays, axis=None, title=''):
     >>> sex = Axis('sex=M,F')
     >>> arr1 = ones(nat)
     >>> arr1
-    nat |  BE |  FO
-        | 1.0 | 1.0
+    nat   BE   FO
+         1.0  1.0
     >>> arr2 = zeros(nat)
     >>> arr2
-    nat |  BE |  FO
-        | 0.0 | 0.0
+    nat   BE   FO
+         0.0  0.0
 
     In the case the axis to create has already been defined in a variable
 
     >>> stack({'M': arr1, 'F': arr2}, sex)
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
 
     Otherwise (when one wants to create an axis from scratch), any of these syntaxes works:
 
     >>> stack([arr1, arr2], 'sex=M,F')
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
     >>> stack({'M': arr1, 'F': arr2}, 'sex=M,F')
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
     >>> stack([('M', arr1), ('F', arr2)], 'sex')
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
 
     When stacking arrays with different axes, the result has the union of all axes present:
 
     >>> stack({'M': arr1, 'F': 0}, sex)
-    nat\\sex |   M |   F
-         BE | 1.0 | 0.0
-         FO | 1.0 | 0.0
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
 
     Creating an axis without name nor labels can be done using:
 
     >>> stack((arr1, arr2))
-    nat\\{1}* |   0 |   1
-          BE | 1.0 | 0.0
-          FO | 1.0 | 0.0
+    nat\\{1}*    0    1
+          BE  1.0  0.0
+          FO  1.0  0.0
     """
     if isinstance(axis, str) and '=' in axis:
         axis = Axis(axis)
