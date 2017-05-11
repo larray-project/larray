@@ -328,3 +328,6 @@ Fixes
     >>> wb['name_of_new_sheet'] = wb['name_of_sheet_to_copy']
 
 * fixed with_axes warning to refer to set_axes instead of replace_axes.
+
+* fixed displayed title in viewer: shows path to file associated with current session + current array info +
+  extra info (closes :issue:`181`)
