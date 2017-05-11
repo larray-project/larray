@@ -19,15 +19,24 @@ requirements:
     - setuptools
     - numpy >=1.10
     - pandas
+    - pytest-runner
 
   run:
     - python
     - numpy >=1.10
     - pandas
+    - pytest-runner
 
 test:
+#  requires:
+#    - pytest
+#    - pytest-runner
+
   imports:
     - larray
+
+#  commands:
+#    - pytest
 
   # commands:
     # You can put test commands to be run here.  Use this to test that the
