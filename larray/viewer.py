@@ -2176,8 +2176,12 @@ class MappingEditor(QMainWindow):
         changed_keys = [k for k in keys_after if value[k] is not self.data.get(k)]
 
         # when a key is re-assigned, it can switch from being displayable to non-displayable or vice versa
-        displayed_keys_before = set(k for k in keys_before if self._display_in_grid(k, self.data[k]))
-        displayed_keys_after = set(k for k in keys_after if self._display_in_grid(k, value[k]))
+        displayable_keys_before = set(k for k in keys_before if self._display_in_grid(k, self.data[k]))
+        displayable_keys_after = set(k for k in keys_after if self._display_in_grid(k, value[k]))
+        deleted_displayable_keys = displayable_keys_before - displayable_keys_after
+        new_displayable_keys = displayable_keys_after - displayable_keys_before
+        # this can contain more keys than new_displayble_keys (because of existing keys which changed value)
+        changed_displayable_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
 
         # 1) update session/mapping
         # a) deleted old keys
@@ -2188,19 +2192,17 @@ class MappingEditor(QMainWindow):
             self.data[k] = value[k]
 
         # 2) update list widget
-        for k in displayed_keys_before - displayed_keys_after:
+        for k in deleted_displayable_keys:
             self.delete_list_item(k)
+        self.add_list_items(new_displayable_keys)
 
-        self.add_list_items(displayed_keys_after - displayed_keys_before)
-
-        if len(displayed_keys_after - displayed_keys_before) > 0:
+        # 3) mark session as dirty if needed
+        if len(changed_displayable_keys) > 0 or deleted_displayable_keys:
             self._unsaved_modifications = True
 
-        # this can contain more keys than displayed_keys_after - displayed_keys_before (because of existing keys
-        # which changed value)
-        displayable_changed_keys = [k for k in changed_keys if self._display_in_grid(k, value[k])]
-        # display only first result if there are more than one
-        to_display = displayable_changed_keys[0] if displayable_changed_keys else None
+        # 4) change displayed array in the array widget
+        # only display first result if there are more than one
+        to_display = changed_displayable_keys[0] if changed_displayable_keys else None
         if to_display is not None:
             self.select_list_item(to_display)
         return to_display
@@ -2234,7 +2236,7 @@ class MappingEditor(QMainWindow):
     def ipython_cell_executed(self):
         user_ns = self.kernel.shell.user_ns
         ip_keys = set(['In', 'Out', '_', '__', '___',
-                       '__builtin__', 
+                       '__builtin__',
                        '_dh', '_ih', '_oh', '_sh', '_i', '_ii', '_iii',
                        'exit', 'get_ipython', 'quit'])
         # '__builtins__', '__doc__', '__loader__', '__name__', '__package__', '__spec__',
