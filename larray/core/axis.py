@@ -998,6 +998,49 @@ class Axis(ABCAxis):
         seen = set(other)
         return Axis([l for l in self.labels if l not in seen], self.name)
 
+    def align(self, other, join='outer'):
+        """Align axis with other object using specified join method.
+
+        Parameters
+        ----------
+        other : Axis or label sequence
+        join : {'outer', 'inner', 'left', 'right'}, optional
+            Defaults to 'outer'.
+
+        Returns
+        -------
+        Axis
+            Aligned axis
+
+        See Also
+        --------
+        LArray.align
+
+        Examples
+        --------
+        >>> axis1 = Axis('a=a0..a2')
+        >>> axis2 = Axis('a=a1..a3')
+        >>> axis1.align(axis2)
+        Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+        >>> axis1.align(axis2, join='inner')
+        Axis(['a1', 'a2'], 'a')
+        >>> axis1.align(axis2, join='left')
+        Axis(['a0', 'a1', 'a2'], 'a')
+        >>> axis1.align(axis2, join='right')
+        Axis(['a1', 'a2', 'a3'], 'a')
+        """
+        assert join in {'outer', 'inner', 'left', 'right'}
+        if join == 'outer':
+            return self.union(other)
+        elif join == 'inner':
+            return self.intersection(other)
+        elif join == 'left':
+            return self
+        elif join == 'right':
+            if not isinstance(other, Axis):
+                other = Axis(other)
+            return other
+
 
 def _make_axis(obj):
     if isinstance(obj, Axis):
@@ -1789,6 +1832,9 @@ class AxisCollection(object):
             Axis(['c0', 'c1', 'c2'], 'column')
         ])
         """
+        if not PY2 and isinstance(axes_to_replace, zip):
+            axes_to_replace = list(axes_to_replace)
+
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
             if len(axes_to_replace) != len(self):
@@ -2199,6 +2245,111 @@ class AxisCollection(object):
         axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
         split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, names)]
         return self[:axis_index] + split_axes + self[axis_index + 1:]
+
+    def align(self, other, join='outer', axes=None):
+        """Align this axis collection with another.
+
+        This ensures all common axes are compatible.
+
+        Parameters
+        ----------
+        other : AxisCollection
+        join : {'outer', 'inner', 'left', 'right'}, optional
+            Defaults to 'outer'.
+        axes : AxisReference or sequence of them, optional
+            Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
+            when mixing anonymous and non-anonymous axes.
+
+        Returns
+        -------
+        (left, right) : (AxisCollection, AxisCollection)
+            Aligned collections
+
+        See Also
+        --------
+        LArray.align
+
+        Examples
+        --------
+        >>> col1 = AxisCollection("a=a0..a1;b=b0..b2")
+        >>> col1
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+        >>> col2 = AxisCollection("a=a0..a2;c=c0..c0;b=b0..b1")
+        >>> col2
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], 'a'),
+            Axis(['c0'], 'c'),
+            Axis(['b0', 'b1'], 'b')
+        ])
+        >>> aligned1, aligned2 = col1.align(col2)
+        >>> aligned1
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+        >>> aligned2
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], 'a'),
+            Axis(['c0'], 'c'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+
+        Using anonymous axes
+
+        >>> col1 = AxisCollection("a0..a1;b0..b2")
+        >>> col1
+        AxisCollection([
+            Axis(['a0', 'a1'], None),
+            Axis(['b0', 'b1', 'b2'], None)
+        ])
+        >>> col2 = AxisCollection("a0..a2;b0..b1;c0..c0")
+        >>> col2
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], None),
+            Axis(['b0', 'b1'], None),
+            Axis(['c0'], None)
+        ])
+        >>> aligned1, aligned2 = col1.align(col2)
+        >>> aligned1
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], None),
+            Axis(['b0', 'b1', 'b2'], None)
+        ])
+        >>> aligned2
+        AxisCollection([
+            Axis(['a0', 'a1', 'a2'], None),
+            Axis(['b0', 'b1', 'b2'], None),
+            Axis(['c0'], None)
+        ])
+        """
+        if join not in {'outer', 'inner', 'left', 'right'}:
+            raise ValueError("join should be one of 'outer', 'inner', 'left' or 'right'")
+        other = other if isinstance(other, AxisCollection) else AxisCollection(other)
+
+        # if axes not specified
+        if axes is None:
+            # and we have only anonymous axes on both sides
+            if all(name is None for name in self.names) and all(name is None for name in other.names):
+                # use N first axes by position
+                join_axes = list(range(min(len(self), len(other))))
+            elif any(name is None for name in self.names) or any(name is None for name in other.names):
+                raise ValueError("axes collections with mixed anonymous/non anonymous axes are not supported by align"
+                                 "without specifying axes explicitly")
+            else:
+                assert all(name is not None for name in self.names) and all(name is not None for name in other.names)
+                # use all common axes
+                join_axes = list(OrderedSet(self.names) & OrderedSet(other.names))
+        else:
+            if isinstance(axes, (int, str, Axis)):
+                axes = [axes]
+            join_axes = axes
+        new_axes = [self_axis.align(other_axis, join=join)
+                    for self_axis, other_axis in zip(self[join_axes], other[join_axes])]
+        axes_changes = list(zip(join_axes, new_axes))
+        return self.replace(axes_changes), other.replace(axes_changes)
 
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):
