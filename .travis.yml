@@ -51,8 +51,6 @@ install:
     - source activate travisci
 
 script:
-    # exclude (doc)tests from ufuncs (because docstrings are copied from numpy
-    # and many of those doctests are failing
     - pytest
 
 notifications:
