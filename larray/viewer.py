@@ -2309,15 +2309,6 @@ class MappingEditor(QMainWindow):
         if qtconsole_available:
             self.kernel.shell.push(dict(arrays))
 
-    def _clear_arrays(self):
-        arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
-        for name in arrays:
-            del self.data[name]
-            self.delete_list_item(name)
-        if qtconsole_available:
-            for name in arrays:
-                self.kernel.shell.del_var(name)
-
     def _is_unsaved_modifications(self):
         if self.arraywidget.model.readonly:
             return False
