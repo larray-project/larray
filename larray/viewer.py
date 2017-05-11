@@ -2163,11 +2163,11 @@ class MappingEditor(QMainWindow):
         # if the currently selected item (value) need to be refreshed (e.g it was modified)
         if prev_selected and prev_selected[0] == changed_items[0]:
             # we need to update the array widget explicitly
-            self.set_widget_array(self.data[to_display], to_display)
+            self.set_current_array(self.data[to_display], to_display)
         else:
             # for some reason, on_item_changed is not triggered when no item was selected
             if not prev_selected:
-                self.set_widget_array(self.data[to_display], to_display)
+                self.set_current_array(self.data[to_display], to_display)
             self._listwidget.setCurrentItem(changed_items[0])
 
     def update_mapping(self, value):
@@ -2230,7 +2230,7 @@ class MappingEditor(QMainWindow):
 
     def view_expr(self, array, *args, **kwargs):
         self._listwidget.clearSelection()
-        self.set_widget_array(array, '<expr>')
+        self.set_current_array(array, '<expr>')
 
     def _display_in_grid(self, k, v):
         return not k.startswith('__') and isinstance(v, DISPLAY_IN_GRID)
@@ -2285,7 +2285,7 @@ class MappingEditor(QMainWindow):
         if curr is not None:
             name = str(curr.text())
             array = self.data[name]
-            self.set_widget_array(array, name)
+            self.set_current_array(array, name)
             expr = self.expressions.get(name, name)
             if qtconsole_available:
                 # this does not work because it updates the NEXT input, not the
@@ -2321,8 +2321,7 @@ class MappingEditor(QMainWindow):
         title += [self.title]
         self.setWindowTitle(' - '.join(title))
 
-    # TODO: rename to set_current_array
-    def set_widget_array(self, array, name):
+    def set_current_array(self, array, name):
         self.arraywidget.set_data(array)
         self.update_title()
 
