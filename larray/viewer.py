@@ -1947,12 +1947,13 @@ class MappingEditor(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
 
-        # to handle rencently opened files
+        # to handle recently opened files
         settings = QSettings()
+        # XXX: use recent_file_list?
         if settings.value("recentFileList") is None:
             settings.setValue("recentFileList", [])
-        self.recentFileActs = [QAction(self) for _ in range(self.MAX_RECENT_FILES)]
-        self.currentFile = None
+        self.recent_file_actions = [QAction(self) for _ in range(self.MAX_RECENT_FILES)]
+        self.current_file = None
 
         # Destroying the C++ object right after closing the dialog box,
         # otherwise it may be garbage-collected in another QThread
@@ -2121,11 +2122,11 @@ class MappingEditor(QMainWindow):
         file_menu.addAction(create_action(self, _('Save &As'), triggered=self.save_as,
                                           statustip=_('Save all arrays as a session in a file')))
 
-        recentFilesMenu = file_menu.addMenu("Open &Recent")
-        for action in self.recentFileActs:
+        recent_files_menu = file_menu.addMenu("Open &Recent")
+        for action in self.recent_file_actions:
             action.setVisible(False)
             action.triggered.connect(self.open_recent_file)
-            recentFilesMenu.addAction(action)
+            recent_files_menu.addAction(action)
         self.update_recent_file_actions()
 
         file_menu.addSeparator()
@@ -2294,6 +2295,7 @@ class MappingEditor(QMainWindow):
             else:
                 self.eval_box.setText(expr)
 
+    # TODO: rename to set_current_array
     def set_widget_array(self, array, title):
         if isinstance(array, la.LArray):
             axes = array.axes
@@ -2397,11 +2399,17 @@ class MappingEditor(QMainWindow):
         self.statusBar().showMessage("Arrays saved in file {}".format(filepath), 4000)
 
     def save(self):
-        if self.currentFile is not None:
-            self._save_data(self.currentFile)
+        """
+        Returns
+        -------
+        bool
+            whether or not the data was actually saved
+        """
+        if self.current_file is not None:
+            self._save_data(self.current_file)
+            return True
         else:
-            self.save_as()
-        return True
+            return self.save_as()
 
     def save_as(self):
         # TODO: use filter
@@ -2418,7 +2426,8 @@ class MappingEditor(QMainWindow):
 
     def set_current_file(self, filepath):
         self.update_recent_files([filepath])
-        self.currentFile = filepath
+        self.current_file = filepath
+        # TODO: update window title
 
     def update_recent_files(self, filepaths):
         settings = QSettings()
@@ -2433,17 +2442,17 @@ class MappingEditor(QMainWindow):
 
     def update_recent_file_actions(self):
         settings = QSettings()
-        files = settings.value("recentFileList")
-        numRecentFiles = min(len(files), self.MAX_RECENT_FILES)
+        recent_files = settings.value("recentFileList")
 
-        for i in range(numRecentFiles):
-            filepath = files[i]
-            text = os.path.basename(filepath)
-            self.recentFileActs[i].setText(text)
-            self.recentFileActs[i].setData(filepath)
-            self.recentFileActs[i].setVisible(True)
-        for i in range(numRecentFiles, self.MAX_RECENT_FILES):
-            self.recentFileActs[i].setVisible(False)
+        # zip will iterate up to the shortest of the two
+        for filepath, action in zip(recent_files, self.recent_file_actions):
+            action.setText(os.path.basename(filepath))
+            action.setStatusTip(filepath)
+            action.setData(filepath)
+            action.setVisible(True)
+        # if we have less recent recent files than actions, hide the remaining actions
+        for action in self.recent_file_actions[len(recent_files):]:
+            action.setVisible(False)
 
     def closeEvent(self, event):
         if self._ask_to_save_if_unsaved_modifications():
