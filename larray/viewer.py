@@ -1988,7 +1988,8 @@ class MappingEditor(QMainWindow):
             title = _("Session viewer") if readonly else _("Session editor")
         if readonly:
             title += ' (' + _('read only') + ')'
-        self.setWindowTitle(title)
+        self.title = title
+        self.setWindowTitle(self.title)
 
         self.statusBar().showMessage("Welcome to the LArray Viewer", 4000)
 
@@ -2295,16 +2296,35 @@ class MappingEditor(QMainWindow):
             else:
                 self.eval_box.setText(expr)
 
-    # TODO: rename to set_current_array
-    def set_widget_array(self, array, title):
+    def update_title(self):
+        current_item = self._listwidget.currentItem()
+        name = str(current_item.text()) if current_item else ''
+        array = self.data[name] if name else None
+        title = []
         if isinstance(array, la.LArray):
+            # current file (if not None)
+            if self.current_file is not None:
+                if os.path.isdir(self.current_file):
+                    title = ['{}/{}.csv'.format(self.current_file, name)]
+                else:
+                    title = [self.current_file]
+            # array info
             axes = array.axes
             axes_info = ' x '.join("%s (%d)" % (display_name, len(axis))
                                    for display_name, axis
                                    in zip(axes.display_names, axes))
-            title = (title + ': ' + axes_info) if title else axes_info
-        self.setWindowTitle(title)
+            title += [(name + ': ' + axes_info) if name else axes_info]
+        # name of non-LArray displayed item (if not None)
+        elif name:
+            title = [name]
+        # extra info
+        title += [self.title]
+        self.setWindowTitle(' - '.join(title))
+
+    # TODO: rename to set_current_array
+    def set_widget_array(self, array, name):
         self.arraywidget.set_data(array)
+        self.update_title()
 
     def _add_arrays(self, arrays):
         for k, v in arrays.items():
@@ -2427,7 +2447,7 @@ class MappingEditor(QMainWindow):
     def set_current_file(self, filepath):
         self.update_recent_files([filepath])
         self.current_file = filepath
-        # TODO: update window title
+        self.update_title()
 
     def update_recent_files(self, filepaths):
         settings = QSettings()
