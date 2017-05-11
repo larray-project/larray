@@ -2398,15 +2398,14 @@ class MappingEditor(QMainWindow):
         return True
 
     def save_as(self):
+        # TODO: use filter
         dialog = QFileDialog(self)
         dialog.setWindowModality(Qt.WindowModal)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
-        if dialog.exec_() != QDialog.Accepted:
-            QMessageBox.critical(self, "Error", "Current session could not be saved")
-            return False
-        else:
+        accepted = dialog.exec_() == QDialog.Accepted
+        if accepted:
             self._save_data(dialog.selectedFiles()[0])
-            return True
+        return accepted
 
     def open_documentation(self):
         QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
