@@ -63,6 +63,7 @@ Modifying/Selecting/Searching
    Axis.union
    Axis.intersection
    Axis.difference
+   Axis.align
 
 Testing
 -------
@@ -176,6 +177,7 @@ Modifying/Selecting
    AxisCollection.without
    AxisCollection.combine_axes
    AxisCollection.split_axis
+   AxisCollection.align
 
 Testing
 -------
@@ -363,6 +365,7 @@ Reshaping/Extending/Reordering
    LArray.append
    LArray.extend
    LArray.broadcast_with
+   LArray.align
 
 .. _la_testing:
 
