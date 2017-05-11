@@ -2367,11 +2367,9 @@ class MappingEditor(QMainWindow):
     def open(self):
         if self._ask_to_save_if_unsaved_modifications():
             filter = "All (*.xls *xlsx *.h5 *.csv);;Excel Files (*.xls *xlsx);;HDF Files (*.h5);;CSV Files (*.csv)"
+            res = QFileDialog.getOpenFileNames(self, filter=filter)
             # Qt5 returns a tuple (filepaths, '') instead of a string
-            if PYQT5:
-                filepaths, _ = QFileDialog.getOpenFileNames(self, filter=filter)
-            else:
-                filepaths = QFileDialog.getOpenFileNames(self, filter=filter)
+            filepaths = res[0] if PYQT5 else res
             if len(filepaths) >= 1:
                 if all(['.csv' in filepath for filepath in filepaths]):
                     self._open_file(filepaths)
