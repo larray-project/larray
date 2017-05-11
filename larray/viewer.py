@@ -2315,9 +2315,15 @@ class MappingEditor(QMainWindow):
         if self.arraywidget.model.readonly:
             return False
         else:
-            return len(self.arraywidget.model.changes) > 0 or self._unsaved_modifications
+            return self.arraywidget.dirty or self._unsaved_modifications
 
     def _ask_to_save_if_unsaved_modifications(self):
+        """
+        Returns
+        -------
+        bool
+            whether or not the process should continue
+        """
         if self._is_unsaved_modifications():
             ret = QMessageBox.warning(self, "Warning", "The data has been modified.\nDo you want to save your changes?",
                                       QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
