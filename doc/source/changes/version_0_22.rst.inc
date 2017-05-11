@@ -116,7 +116,7 @@
     >>> letters.difference(['b', 'c'])
     Axis(['a'], 'letters')
 
-* implemented Group.union, intersection and difference which produce new groups by combining the labels of the axis
+* implemented Group.union, intersection and difference which produce new groups by combining the labels of the group
   with the other labels.
 
     >>> letters = Axis('letters=a..d')
