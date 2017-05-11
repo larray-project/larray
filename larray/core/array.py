@@ -1473,6 +1473,178 @@ class LArray(ABCLArray):
         else:
             return res
 
+    def align(self, other, join='outer', fill_value=nan, axes=None):
+        """Align two arrays on their axes with the specified join method.
+
+        In other words, it ensure all common axes are compatible. Those arrays can then be used in binary operations.
+
+        Parameters
+        ----------
+        other : LArray-like
+        join : {'outer', 'inner', 'left', 'right'}, optional
+            Join method. For each axis common to both arrays:
+              - outer: will use a label if it is in either arrays axis (ordered like the first array).
+                       This is the default as it results in no information loss.
+              - inner: will use a label if it is in both arrays axis (ordered like the first array)
+              - left: will use the first array axis labels
+              - right: will use the other array axis labels.
+        fill_value : scalar or LArray, optional
+            Value to use for missing values. Defaults to NaN.
+        axes : AxisReference or sequence of them, optional
+            Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
+            when mixing anonymous and non-anonymous axes.
+
+        Returns
+        -------
+        (left, right) : (LArray, LArray)
+            Aligned objects
+
+        Note
+        ----
+            Arrays with anonymous axes are currently not supported.
+
+        Examples
+        --------
+        >>> arr1 = ndtest((2, 3))
+        >>> arr1
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> arr2 = -ndtest((3, 2))
+        >>> # reorder array to make the test more interesting
+        >>> arr2 = arr2[['b1', 'b0']]
+        >>> arr2
+        a\\b  b1  b0
+         a0  -1   0
+         a1  -3  -2
+         a2  -5  -4
+
+        Align arr1 and arr2
+
+        >>> aligned1, aligned2 = arr1.align(arr2)
+        >>> aligned1
+        a\\b   b0   b1   b2
+         a0  0.0  1.0  2.0
+         a1  3.0  4.0  5.0
+         a2  nan  nan  nan
+        >>> aligned2
+        a\\b    b0    b1   b2
+         a0   0.0  -1.0  nan
+         a1  -2.0  -3.0  nan
+         a2  -4.0  -5.0  nan
+
+        After aligning all common axes, one can then do operations between the two arrays
+
+        >>> aligned1 + aligned2
+        a\\b   b0   b1   b2
+         a0  0.0  0.0  nan
+         a1  1.0  1.0  nan
+         a2  nan  nan  nan
+
+        Other kinds of joins are supported
+
+        >>> aligned1, aligned2 = arr1.align(arr2, join='inner')
+        >>> aligned1
+        a\\b   b0   b1
+         a0  0.0  1.0
+         a1  3.0  4.0
+        >>> aligned2
+        a\\b    b0    b1
+         a0   0.0  -1.0
+         a1  -2.0  -3.0
+        >>> aligned1, aligned2 = arr1.align(arr2, join='left')
+        >>> aligned1
+        a\\b   b0   b1   b2
+         a0  0.0  1.0  2.0
+         a1  3.0  4.0  5.0
+        >>> aligned2
+        a\\b    b0    b1   b2
+         a0   0.0  -1.0  nan
+         a1  -2.0  -3.0  nan
+        >>> aligned1, aligned2 = arr1.align(arr2, join='right')
+        >>> aligned1
+        a\\b   b1   b0
+         a0  1.0  0.0
+         a1  4.0  3.0
+         a2  nan  nan
+        >>> aligned2
+        a\\b    b1    b0
+         a0  -1.0   0.0
+         a1  -3.0  -2.0
+         a2  -5.0  -4.0
+
+        The fill value for missing labels defaults to nan but can be changed to any compatible value.
+
+        >>> aligned1, aligned2 = arr1.align(arr2, fill_value=0)
+        >>> aligned1
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+         a2   0   0   0
+        >>> aligned2
+        a\\b  b0  b1  b2
+         a0   0  -1   0
+         a1  -2  -3   0
+         a2  -4  -5   0
+        >>> aligned1 + aligned2
+        a\\b  b0  b1  b2
+         a0   0   0   2
+         a1   1   1   5
+         a2  -4  -5   0
+
+        It also works when either arrays (or both) have extra axes
+
+        >>> arr3 = ndtest((3, 2, 2))
+        >>> arr1
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> arr3
+         a  b\\c  c0  c1
+        a0   b0   0   1
+        a0   b1   2   3
+        a1   b0   4   5
+        a1   b1   6   7
+        a2   b0   8   9
+        a2   b1  10  11
+        >>> aligned1, aligned2 = arr1.align(arr3, join='inner')
+        >>> aligned1
+        a\\b   b0   b1
+         a0  0.0  1.0
+         a1  3.0  4.0
+        >>> aligned2
+         a  b\c   c0   c1
+        a0   b0  0.0  1.0
+        a0   b1  2.0  3.0
+        a1   b0  4.0  5.0
+        a1   b1  6.0  7.0
+        >>> aligned1 + aligned2
+         a  b\\c    c0    c1
+        a0   b0   0.0   1.0
+        a0   b1   3.0   4.0
+        a1   b0   7.0   8.0
+        a1   b1  10.0  11.0
+
+        One can also align only some specific axes (but in that case arrays might not be compatible)
+
+        >>> aligned1, aligned2 = arr1.align(arr2, axes='b')
+        >>> aligned1
+        a\\b   b0   b1   b2
+         a0  0.0  1.0  2.0
+         a1  3.0  4.0  5.0
+        >>> aligned2
+        a\\b    b0    b1   b2
+         a0   0.0  -1.0  nan
+         a1  -2.0  -3.0  nan
+         a2  -4.0  -5.0  nan
+        """
+        other = aslarray(other)
+        # reindex does not currently support anonymous axes
+        if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
+            raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
+        left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
+        return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
+
     def sort_values(self, key, reverse=False):
         """Sorts values of the array.
 
