@@ -1954,6 +1954,8 @@ class MappingEditor(QMainWindow):
             settings.setValue("recentFileList", [])
         self.recent_file_actions = [QAction(self) for _ in range(self.MAX_RECENT_FILES)]
         self.current_file = None
+        self.current_array = None
+        self.current_array_name = None
 
         # Destroying the C++ object right after closing the dialog box,
         # otherwise it may be garbage-collected in another QThread
@@ -2102,6 +2104,8 @@ class MappingEditor(QMainWindow):
     def _reset(self):
         self.data = la.Session()
         self._listwidget.clear()
+        self.current_array = None
+        self.current_array_name = None
         if qtconsole_available:
             self.kernel.shell.reset()
             self.kernel.shell.run_cell('from larray import *')
@@ -2228,7 +2232,7 @@ class MappingEditor(QMainWindow):
         else:
             self.view_expr(eval(s, la.__dict__, self.data))
 
-    def view_expr(self, array, *args, **kwargs):
+    def view_expr(self, array):
         self._listwidget.clearSelection()
         self.set_current_array(array, '<expr>')
 
@@ -2297,9 +2301,8 @@ class MappingEditor(QMainWindow):
                 self.eval_box.setText(expr)
 
     def update_title(self):
-        current_item = self._listwidget.currentItem()
-        name = str(current_item.text()) if current_item else ''
-        array = self.data[name] if name else None
+        array = self.current_array
+        name = self.current_array_name
         title = []
         if isinstance(array, la.LArray):
             # current file (if not None)
@@ -2322,6 +2325,8 @@ class MappingEditor(QMainWindow):
         self.setWindowTitle(' - '.join(title))
 
     def set_current_array(self, array, name):
+        self.current_array = array
+        self.current_array_name = name
         self.arraywidget.set_data(array)
         self.update_title()
 
