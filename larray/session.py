@@ -92,11 +92,7 @@ class FileHandler(object):
         for key in keys:
             if display:
                 print("loading", key, "...", end=' ')
-            if os.path.isfile(key):
-                dest_key = os.path.splitext(os.path.basename(key))[0]
-            else:
-                dest_key = key.strip('/')
-            res[dest_key] = self._read_array(key, *args, **kwargs)
+            res[key] = self._read_array(key, *args, **kwargs)
             if display:
                 print("done")
         self.close()
@@ -137,13 +133,16 @@ class PandasHDFHandler(FileHandler):
         self.handle = HDFStore(self.fname)
 
     def list(self):
-        return self.handle.keys()
+        return [key.strip('/') for key in self.handle.keys()]
+
+    def _to_hdf_key(self, key):
+        return '/' + key
 
     def _read_array(self, key, *args, **kwargs):
-        return read_hdf(self.handle, key, *args, **kwargs)
+        return read_hdf(self.handle, self._to_hdf_key(key), *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
-        value.to_hdf(self.handle, key, *args, **kwargs)
+        value.to_hdf(self.handle, self._to_hdf_key(key), *args, **kwargs)
 
     def close(self):
         self.handle.close()
@@ -220,13 +219,17 @@ class PandasCSVHandler(FileHandler):
         else:
             return []
 
+    def _to_filepath(self, key):
+        if self.fname is not None:
+            return os.path.join(self.fname, '{}.csv'.format(key))
+        else:
+            return key
+
     def _read_array(self, key, *args, **kwargs):
-        fpath = os.path.join(self.fname, '{}.csv'.format(key)) if self.fname is not None else key
-        return read_csv(fpath, *args, **kwargs)
+        return read_csv(self._to_filepath(key), *args, **kwargs)
 
     def _dump(self, key, value, *args, **kwargs):
-        fpath = os.path.join(self.fname, '{}.csv'.format(key)) if self.fname is not None else key
-        value.to_csv(fpath, *args, **kwargs)
+        value.to_csv(self._to_filepath(key), *args, **kwargs)
 
     def close(self):
         pass
@@ -438,8 +441,8 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects
-            present in the Session.
+            List of names of objects to dump. If `fname` is None, list of paths to CSV files.
+            Defaults to all objects present in the Session.
         engine : str, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
