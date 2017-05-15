@@ -7,8 +7,8 @@ from collections import OrderedDict
 import numpy as np
 import larray as la
 
-from qtpy.QtWidgets import (QApplication)
-from larray.viewer.view import (MappingEditor, ArrayEditor, SessionComparator, ArrayComparator)
+from qtpy.QtWidgets import QApplication
+from larray.viewer.view import MappingEditor, ArrayEditor, SessionComparator, ArrayComparator
 
 __all__ = ['view', 'edit', 'compare']
 
