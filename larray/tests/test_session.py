@@ -2,12 +2,12 @@ from __future__ import absolute_import, division, print_function
 
 from unittest import TestCase
 
-import pytest
 import numpy as np
+import pytest
 
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
-from larray.tests.test_la import assert_array_nan_equal, abspath
-from larray.utils import pickle
+from larray.tests.common import assert_array_nan_equal, abspath
+from larray.util.misc import pickle
 
 try:
     import xlwings as xw
@@ -270,8 +270,4 @@ class TestSession(TestCase):
 
 
 if __name__ == "__main__":
-    # import doctest
-    # import unittest
-    # doctest.testmod(larray.core)
-    # unittest.main()
     pytest.main()

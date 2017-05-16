@@ -1,7 +1,7 @@
 import math
 from collections import deque
 
-import larray as la
+from larray.core.array import LArray, aslarray, ones, any
 import numpy as np
 
 
@@ -74,7 +74,6 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     Examples
     --------
     >>> from larray import *
-    >>> from larray.ipfp import ipfp
     >>> a = Axis('a=a0,a1')
     >>> b = Axis('b=b0,b1')
     >>> initial = LArray([[2, 1], [1, 2]], [a, b])
@@ -101,7 +100,7 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     assert no_convergence in {'ignore', 'warn', 'raise'}
     assert isinstance(display_progress, bool) or display_progress == 'condensed'
 
-    target_sums = [la.aslarray(ts) for ts in target_sums]
+    target_sums = [aslarray(ts) for ts in target_sums]
 
     n = len(target_sums)
     axes_names = ['axis%d' % i for i in range(n)]
@@ -129,13 +128,13 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         first_axis = target_sums[1].axes[0]
         other_axes = target_sums[0].axes
         all_axes = first_axis + other_axes
-        a = la.ones(all_axes, dtype=np.float64)
+        a = ones(all_axes, dtype=np.float64)
     else:
         # TODO: this should be a builtin op
-        if isinstance(a, la.LArray):
+        if isinstance(a, LArray):
             a = a.copy()
         else:
-            a = la.aslarray(a)
+            a = aslarray(a)
         # TODO: this should be a builtin op
         a = a.rename({i: name if name is not None else 'axis%d' % i
                       for i, name in enumerate(a.axes.names)})
@@ -159,21 +158,21 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
                                 axis_total, axis0_total))
 
     negative = a < 0
-    if la.any(negative):
+    if any(negative):
         raise ValueError("negative value(s) found:\n%s"
                          % badvalues(a, negative))
 
     for dim, axis_target in enumerate(target_sums):
         axis_sum = a.sum(axis=dim)
         bad = (axis_sum == 0) & (axis_target != 0)
-        if la.any(bad):
+        if any(bad):
             raise ValueError("found all zero values sum along %s (%d) but non "
                              "zero target sum:\n%s"
                              % (a.axes[dim].name, dim,
                                 badvalues(axis_target, bad)))
 
         bad = (axis_sum != 0) & (axis_target == 0)
-        if la.any(bad):
+        if any(bad):
             if nzvzs in {'warn', 'raise'}:
                 msg = "found non zero values sum along {} ({}) but zero " \
                       "target sum".format(a.axes[dim].name, dim)

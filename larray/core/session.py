@@ -8,9 +8,15 @@ from collections import OrderedDict
 import numpy as np
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
-from .core import LArray, Axis, read_csv, read_hdf, df_aslarray, larray_nan_equal, get_axes
-from .excel import open_excel
-from .utils import float_error_handler_factory, pickle
+from larray.core.axis import Axis
+from larray.core.array import LArray, larray_nan_equal, get_axes, df_aslarray, read_csv, read_hdf
+from larray.util.misc import float_error_handler_factory, pickle
+from larray.io.excel import open_excel
+
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
 
 
 def check_pattern(k, pattern):

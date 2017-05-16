@@ -7,7 +7,9 @@ try:
 except ImportError:
     xw = None
 
-from .core import LArray, df_aslarray, Axis, from_lists
+from larray.core.axis import Axis
+from larray.core.array import LArray, df_aslarray, from_lists
+
 
 string_types = (str,)
 
