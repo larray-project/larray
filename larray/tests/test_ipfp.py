@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
 from unittest import TestCase
+
 import pytest
 
-from larray import Axis, LArray, ndrange
-from larray.tests.test_la import assert_array_equal
-from larray.ipfp import ipfp
+from larray import Axis, LArray, ndrange, ipfp
+from larray.tests.common import assert_array_equal
 
 
 class TestIPFP(TestCase):
@@ -87,5 +87,7 @@ class TestIPFP(TestCase):
         r = ipfp([[2, 1], [1, 2]], initial)
         assert_array_equal(r, [[0.8, 0.2], [1.0, 1.0]])
 
+
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main()
+

@@ -1,13 +1,14 @@
 from __future__ import absolute_import, division, print_function
 
 import pytest
+
 try:
     import xlwings as xw
 except ImportError:
     xw = None
 
 from larray import open_excel
-from larray import excel
+from larray.io import excel
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
@@ -73,3 +74,7 @@ class TestExcel(object):
             wb['sheet_name'] = 'sheet content'
             wb['sheet_name'].name = 'renamed'
             assert wb.sheet_names() == ['renamed']
+
+
+if __name__ == "__main__":
+    pytest.main()

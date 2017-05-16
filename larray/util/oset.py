@@ -6,7 +6,7 @@
 # This module is part of SQLAlchemy and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from larray.utils import unique_list
+from larray.util.misc import unique_list
 
 
 class OrderedSet(set):
