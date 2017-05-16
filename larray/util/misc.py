@@ -456,3 +456,113 @@ def float_error_handler_factory(stacklevel):
             extra = ''
         warnings.warn("{} encountered during operation{}".format(error, extra), RuntimeWarning, stacklevel=stacklevel)
     return error_handler
+
+
+def _isintstring(s):
+    return s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())
+
+
+def _parse_bound(s, stack_depth=1, parse_int=True):
+    """Parse a string representing a single value, converting int-like
+    strings to integers and evaluating expressions within {}.
+
+    Parameters
+    ----------
+    s : str
+        string to evaluate
+    stack_depth : int
+        how deep to go in the stack to get local variables for evaluating
+        {expressions}.
+
+    Returns
+    -------
+    any
+
+    Examples
+    --------
+
+    >>> _parse_bound(' a ')
+    'a'
+    >>> # returns None
+    >>> _parse_bound(' ')
+    >>> ext = 1
+    >>> _parse_bound(' {ext + 1} ')
+    2
+    >>> _parse_bound('42')
+    42
+    """
+    s = s.strip()
+    if s == '':
+        return None
+    elif s[0] == '{':
+        expr = s[1:find_closing_chr(s)]
+        return eval(expr, sys._getframe(stack_depth).f_locals)
+    elif parse_int and _isintstring(s):
+        return int(s)
+    else:
+        return s
+
+
+def _isnoneslice(v):
+    """
+    Checks if input is slice(None) object.
+    """
+    return isinstance(v, slice) and v.start is None and v.stop is None and v.step is None
+
+
+def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
+    """
+    Returns a string representing a sequence by showing only the n first and last elements.
+
+    Examples
+    --------
+    >>> _seq_summary(range(10), 2)
+    '0 1 ... 8 9'
+    """
+    if len(seq) <= 2 * n:
+        short_seq = [repr_func(v) for v in seq]
+    else:
+        short_seq = [repr_func(v) for v in seq[:n]] + ['...'] + [repr_func(v) for v in seq[-n:]]
+    return sep.join(short_seq)
+
+
+def index_by_id(seq, value):
+    """
+    Returns position of an object in a sequence.
+    Raises an error if the object is not in the list.
+
+    Parameters
+    ----------
+    seq : sequence
+        Any sequence (list, tuple, str, unicode).
+
+    value : object
+        Object for which you want to retrieve its position
+        in the sequence.
+
+    Raises
+    ------
+    ValueError
+        If `value` object is not contained in the sequence.
+
+    Examples
+    --------
+    >>> from larray import Axis
+    >>> age = Axis('age=0..9')
+    >>> sex = Axis('sex=M,F')
+    >>> time = Axis('time=2007..2010')
+    >>> index_by_id([age, sex, time], sex)
+    1
+    >>> gender = Axis('sex=M,F')
+    >>> index_by_id([age, sex, time], gender)
+    Traceback (most recent call last):
+        ...
+    ValueError: sex is not in list
+    >>> gender = sex
+    >>> index_by_id([age, sex, time], gender)
+    1
+    """
+    for i, item in enumerate(seq):
+        if item is value:
+            return i
+    raise ValueError("%s is not in list" % value)

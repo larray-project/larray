@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from larray.core import LArray, make_numpy_broadcastable
+from larray.core.array import LArray, make_numpy_broadcastable
 
 __all__ = [
     # Trigonometric functions
