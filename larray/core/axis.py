@@ -8,10 +8,10 @@ from itertools import product
 
 import numpy as np
 
+from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (ABCAxis, ABCAxisReference, ABCLArray, Group, LGroup, PGroup, PGroupMaker,
-                               _to_tick, _to_ticks, _to_key, _seq_summary, _contain_group_ticks,
-                               _seq_group_to_name)
+from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to_ticks, _to_key,
+                               _seq_summary, _contain_group_ticks, _seq_group_to_name)
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id
 

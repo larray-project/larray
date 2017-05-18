@@ -4,27 +4,15 @@ from __future__ import absolute_import, division, print_function
 import re
 import sys
 from itertools import product, chain
-from abc import ABCMeta
 
 import numpy as np
 import pandas as pd
 
+from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary
 
 __all__ = ['LGroup', 'LSet', 'PGroup', 'union']
-
-
-# define abstract base classes to enable isinstance type checking on our objects
-# idea taken from https://github.com/pandas-dev/pandas/blob/master/pandas/core/dtypes/generic.py
-class ABCAxis(object):
-    __metaclass__ = ABCMeta
-
-class ABCAxisReference(ABCAxis):
-    __metaclass__ = ABCMeta
-
-class ABCLArray(object):
-    __metaclass__ = ABCMeta
 
 
 def _slice_to_str(key, repr_func=str):
