@@ -6746,7 +6746,6 @@ def read_sas(filepath, nb_index=None, index_col=None, na=np.nan, sort_rows=False
         index_col = list(range(nb_index))
     elif isinstance(index_col, int):
         index_col = [index_col]
-    return index_col
 
     df = pd.read_sas(filepath, index=index_col, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
