@@ -102,9 +102,9 @@ try:
 except ImportError:
     np_nanprod = None
 
+from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (ABCLArray, Group, PGroup, LGroup, remove_nested_groups,
-                               _to_key, _to_keys, _range_to_slice)
+from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, unique, decode, basestring, izip, rproduct, ReprString, StringIO,
                               duplicates, float_error_handler_factory, csv_open, skip_comment_cells, strip_rows,
