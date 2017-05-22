@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from abc import ABCMeta
 
 # define abstract base classes to enable isinstance type checking on our objects
