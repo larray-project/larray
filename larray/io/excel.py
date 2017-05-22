@@ -8,8 +8,8 @@ except ImportError:
     xw = None
 
 from larray.core.axis import Axis
-from larray.core.array import LArray, df_aslarray, from_lists
-
+from larray.core.array import LArray
+from larray.io.array import df_aslarray, from_lists
 
 string_types = (str,)
 
