@@ -57,36 +57,10 @@ if xw is not None:
     LArrayConverter.register(LArray)
 
 
+    # TODO : replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
-            """
-            open an Excel workbook
-
-            Parameters
-            ----------
-            filepath : None, int or str, optional
-                use None for a new blank workbook, -1 for the last active
-                workbook. Defaults to None.
-            overwrite_file : bool, optional
-                whether or not to overwrite an existing file, if any.
-                Defaults to False.
-            visible : None or bool, optional
-                whether or not Excel should be visible. Defaults to False for
-                files, True for new/active workbooks and to None ("unchanged")
-                for existing unsaved workbooks.
-            silent : None or bool, optional
-                whether or not to show dialog boxes for updating links or
-                when some links cannot be updated. Defaults to False if
-                visible, True otherwise.
-            app : None, "new", "active", "global" or xlwings.App, optional
-                use "new" for opening a new Excel instance, "active" for the last active instance (including ones
-                opened by the user) and "global" to (re)use the same instance for all workbooks of a program. None is
-                equivalent to "active" if filepath is -1 and "global" otherwise. Defaults to None.
-
-                The "global" instance is a specific Excel instance for all input from/output to Excel from within a
-                single Python program (and should not interact with instances manually opened by the user or another
-                program).
-            """
+            """See open_excel doc for parameters"""
             global global_app
 
             xw_wkb = None
@@ -105,6 +79,9 @@ if xw is not None:
                     if not ext.startswith('.xl'):
                         raise ValueError("'%s' is not a supported file "
                                          "extension" % ext)
+                    if not os.path.isfile(filepath) and not overwrite_file:
+                        raise ValueError("File {} does not exist. Please give the path to an existing file "
+                                         "or set overwrite_file argument to True".format(filepath))
                     if os.path.isfile(filepath) and overwrite_file:
                         os.remove(filepath)
                     if not os.path.isfile(filepath):
@@ -455,9 +432,71 @@ if xw is not None:
                 return LArray(list_data)
 
     # XXX: remove this function?
-    def open_excel(filepath=None, **kwargs):
-        return Workbook(filepath, **kwargs)
+    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
+        return Workbook(filepath, overwrite_file, visible, silent, app)
 else:
-    def open_excel(filepath=None, **kwargs):
+    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
         raise Exception("open_excel() is not available because xlwings "
                         "is not installed")
+
+open_excel.__doc__ = \
+"""
+Open an Excel workbook
+
+Parameters
+----------
+filepath : None, int or str, optional
+    path to the Excel file. The file must exist if overwrite_file is False. 
+    Use None for a new blank workbook, -1 for the last active
+    workbook. Defaults to None.
+overwrite_file : bool, optional
+    whether or not to overwrite an existing file, if any.
+    Defaults to False.
+visible : None or bool, optional
+    whether or not Excel should be visible. Defaults to False for
+    files, True for new/active workbooks and to None ("unchanged")
+    for existing unsaved workbooks.
+silent : None or bool, optional
+    whether or not to show dialog boxes for updating links or
+    when some links cannot be updated. Defaults to False if
+    visible, True otherwise.
+app : None, "new", "active", "global" or xlwings.App, optional
+    use "new" for opening a new Excel instance, "active" for the last active instance (including ones
+    opened by the user) and "global" to (re)use the same instance for all workbooks of a program. None is
+    equivalent to "active" if filepath is -1 and "global" otherwise. Defaults to None.
+
+    The "global" instance is a specific Excel instance for all input from/output to Excel from within a
+    single Python program (and should not interact with instances manually opened by the user or another
+    program).
+    
+Returns
+-------
+Excel workbook.
+
+Examples
+--------
+>>> from larray import *
+>>> arr = ndtest((3, 3))
+>>> arr
+a\\b  b0  b1  b2
+ a0   0   1   2
+ a1   3   4   5
+ a2   6   7   8
+
+create a new Excel file and save an array
+
+>>> # to create a new Excel file, argument overwrite_file must be set to True
+>>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
+...     wb['arr'] = arr.dump()
+...     wb.save()
+
+read array from an Excel file
+
+>>> with open_excel('excel_file.xlsx') as wb:    # doctest: +SKIP
+...     arr2 = wb['arr'].load()
+>>> arr2    # doctest: +SKIP
+a\\b  b0  b1  b2
+ a0   0   1   2
+ a1   3   4   5
+ a2   6   7   8
+"""
