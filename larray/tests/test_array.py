@@ -2648,10 +2648,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
-        # 1) with headers
-        # ===============
+        # 1) Create new file
+        # ==================
+        # overwrite_file must be set to True to create a new file
+        with pytest.raises(ValueError):
+            open_excel(abspath('new_excel_file.xlsx'))
 
-        with open_excel(abspath('test_open_excel.xlsx')) as wb:
+        # 2) with headers
+        # ===============
+        with open_excel(abspath('test_open_excel.xlsx'), overwrite_file=True) as wb:
             # 1D
             a1 = ndtest(3)
 
@@ -2729,9 +2734,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
             # the third axis should have the same labels (but not the same name obviously)
             assert_array_equal(res.axes[2].labels, a3.axes[2].labels)
 
-        # 2) without headers
+        # 3) without headers
         # ==================
-        with open_excel(abspath('test_open_excel_no_headers.xlsx')) as wb:
+        with open_excel(abspath('test_open_excel_no_headers.xlsx'), overwrite_file=True) as wb:
             # 1D
             a1 = ndtest(3)
 
