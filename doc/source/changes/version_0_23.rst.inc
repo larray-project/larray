@@ -29,4 +29,6 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed using open_excel("inexisting file") yielding to ununderstandble error.
+  The function returns an error if passing a non existing Excel file and overwrite_file=False
+  (closes :issue:`265`).
