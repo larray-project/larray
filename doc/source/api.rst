@@ -413,6 +413,14 @@ Write
    LArray.to_excel
    LArray.to_hdf
 
+Excel
+=====
+
+.. autosummary::
+   :toctree: _generated/
+
+   open_excel
+
 Miscellaneous
 =============
 
