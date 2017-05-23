@@ -1021,6 +1021,12 @@ class AxisCollection(object):
         Axis(['M', 'F'], 'sex'),
         Axis(['2007', '2008', '2009', '2010'], 'time')
     ])
+    >>> AxisCollection('age=0..9; sex=M,F; time=2007..2010')
+    AxisCollection([
+        Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'age'),
+        Axis(['M', 'F'], 'sex'),
+        Axis([2007, 2008, 2009, 2010], 'time')
+    ])
     """
     def __init__(self, axes=None):
         if axes is None:
