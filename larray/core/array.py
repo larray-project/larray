@@ -2220,10 +2220,9 @@ class LArray(ABCLArray):
         """
         return self.reshape(target.axes)
 
-    def broadcast_with(self, other):
+    def broadcast_with(self, target):
         """
         Returns an array that is (NumPy) broadcastable with target.
-        Target can be either a LArray or any collection of Axis.
 
         * all common axes must be either of length 1 or the same length
         * extra axes in source can have any length and will be moved to the
@@ -2236,18 +2235,22 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        other : LArray or collection of Axis
+        target : LArray or collection of Axis
+
+        Returns
+        -------
+        LArray
         """
-        if isinstance(other, LArray):
-            other_axes = other.axes
+        if isinstance(target, LArray):
+            target_axes = target.axes
         else:
-            other_axes = other
-            if not isinstance(other, AxisCollection):
-                other_axes = AxisCollection(other_axes)
-        if self.axes == other_axes:
+            target_axes = target
+            if not isinstance(target, AxisCollection):
+                target_axes = AxisCollection(target_axes)
+        if self.axes == target_axes:
             return self
 
-        target_axes = (self.axes - other_axes) | other_axes
+        target_axes = (self.axes - target_axes) | target_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
         # but that use case should use drop_labels
