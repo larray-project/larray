@@ -1532,8 +1532,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # issue 194
         a = ndtest((2, 3))
         b = a > 1
-        expected = from_string("""a, a0, a1
-                                   ,  1,  2""")
+        expected = from_string("""a  a0  a1
+                                  -   1   2""")
         assert_array_equal(b.sum('b1:'), expected)
 
     # TODO: fix this (and add other tests for references (x.) to anonymous axes
@@ -2222,22 +2222,22 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_reindex(self):
         arr = ndtest((2, 2))
         res = arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
-        assert_array_equal(res, from_string("""a\\b, b1, b2, b0
-                                                 a0,  1, -1,  0
-                                                 a1,  3, -1,  2"""))
+        assert_array_equal(res, from_string("""a\\b  b1  b2  b0
+                                                 a0   1  -1   0
+                                                 a1   3  -1   2"""))
 
         arr2 = ndtest((2, 2))
         arr2.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1, inplace=True)
-        assert_array_equal(arr2, from_string("""a\\b, b1, b2, b0
-                                                  a0,  1, -1,  0
-                                                  a1,  3, -1,  2"""))
+        assert_array_equal(arr2, from_string("""a\\b  b1  b2  b0
+                                                  a0   1  -1   0
+                                                  a1   3  -1   2"""))
 
         # LArray fill value
         filler = ndrange(arr.a)
         res = arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=filler)
-        assert_array_equal(res, from_string("""a\\b, b1, b2, b0
-                                                 a0,  1,  0,  0
-                                                 a1,  3,  1,  2"""))
+        assert_array_equal(res, from_string("""a\\b  b1  b2  b0
+                                                 a0   1   0   0
+                                                 a1   3   1   2"""))
 
     def test_append(self):
         la = self.small
@@ -3162,13 +3162,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         arr2 = zeros('type=1..3')
         nd = LArray([arr1, arr2], sex)
         res = stack(nd, sex)
-        expected = from_string("""nat, type\\sex,   M,   F
-                                   BE,        1, 1.0, 0.0
-                                   BE,        2, 1.0, 0.0
-                                   BE,        3, 1.0, 0.0
-                                   FO,        1, 1.0, 0.0
-                                   FO,        2, 1.0, 0.0
-                                   FO,        3, 1.0, 0.0""")
+        expected = from_string("""nat  type\\sex   M    F
+                                   BE         1  1.0  0.0
+                                   BE         2  1.0  0.0
+                                   BE         3  1.0  0.0
+                                   FO         1  1.0  0.0
+                                   FO         2  1.0  0.0
+                                   FO         3  1.0  0.0""")
         assert_array_equal(res, expected)
 
 if __name__ == "__main__":

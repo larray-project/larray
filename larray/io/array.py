@@ -413,7 +413,7 @@ def from_lists(data, nb_index=None, index_col=None):
     return df_aslarray(df, raw=index_col is None, parse_header=False)
 
 
-def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
+def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
     """Create an array from a multi-line string.
 
     Parameters
@@ -436,27 +436,28 @@ def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
 
     Examples
     --------
-    >>> from_string("sex,M,F\\n,0,1")
+    >>> # if one dimension array and default separator ' ', a - must be added in front of the data line  
+    >>> from_string("sex  M  F\\n-  0  1")
     sex  M  F
          0  1
-    >>> from_string("nat\\sex,M,F\\nBE,0,1\\nFO,2,3")
+    >>> from_string("nat\\sex  M  F\\nBE  0  1\\nFO  2  3")
     nat\sex  M  F
          BE  0  1
          FO  2  3
 
     Each label is stripped of leading and trailing whitespace, so this is valid too:
 
-    >>> from_string('''nat\\sex, M, F
-    ...                BE,       0, 1
-    ...                FO,       2, 3''')
+    >>> from_string('''nat\\sex  M  F
+    ...                BE        0  1
+    ...                FO        2  3''')
     nat\sex  M  F
          BE  0  1
          FO  2  3
-    >>> from_string('''age,nat\\sex, M, F
-    ...                0,  BE,       0, 1
-    ...                0,  FO,       2, 3
-    ...                1,  BE,       4, 5
-    ...                1,  FO,       6, 7''')
+    >>> from_string('''age  nat\\sex  M  F
+    ...                0    BE        0  1
+    ...                0    FO        2  3
+    ...                1    BE        4  5
+    ...                1    FO        6  7''')
     age  nat\sex  M  F
       0       BE  0  1
       0       FO  2  3
@@ -466,9 +467,9 @@ def from_string(s, nb_index=None, index_col=None, sep=',', **kwargs):
     Empty lines at the beginning or end are ignored, so one can also format the string like this:
 
     >>> from_string('''
-    ... nat\\sex, M, F
-    ... BE,       0, 1
-    ... FO,       2, 3
+    ... nat\\sex  M  F
+    ... BE        0  1
+    ... FO        2  3
     ... ''')
     nat\sex  M  F
          BE  0  1
