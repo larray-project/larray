@@ -70,14 +70,15 @@ def irange(start, stop, step=None):
     """
     if step is None:
         step = 1
-    else:
-        assert step > 0
+    elif step <= 0:
+        raise ValueError("step must be a positive integer or None")
     step = step if start <= stop else -step
     stop = stop + 1 if start <= stop else stop - 1
     return range(start, stop, step)
 
 
 _range_bound_pattern = re.compile('([0-9]+|[a-zA-Z]+)')
+
 
 def generalized_range(start, stop, step=1):
     """Create a range, with inclusive stop bound and automatic sign for step. Bounds can be strings.
@@ -153,7 +154,8 @@ def generalized_range(start, stop, step=1):
                 r = [''.join(p) for p in product(*sranges)]
             else:
                 # special characters
-                assert start_part == stop_part
+                if start_part != stop_part:
+                    raise ValueError("Special characters must be the same for start and stop")
                 r = [start_part]
             ranges.append(r)
         res = [''.join(p) for p in product(*ranges)]
