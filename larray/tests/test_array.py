@@ -3206,7 +3206,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert float(float_arr) == 1.0
         with pytest.raises(TypeError) as e_info:
             float_arr.__index__()
-        assert e_info.value.args[0] == "only integer scalar arrays can be converted to a scalar index"
+
+        msg = e_info.value.args[0]
+        expected_np11 = "only integer arrays with one element can be converted to an index"
+        expected_np12 = "only integer scalar arrays can be converted to a scalar index"
+        assert msg == expected_np11 or expected_np12
 
 if __name__ == "__main__":
     # import doctest
