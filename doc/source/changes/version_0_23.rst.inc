@@ -86,6 +86,17 @@ Miscellaneous improvements
     >>> Axis(a[:'a1'])
     Axis(['a0', 'a1'], 'a')
 
+* allowed to create an array using a single group as if it was an Axis.
+
+    >>> a = Axis('a=a0..a2')
+    >>> ndrange(a)
+    a  a0  a1  a2
+        0   1   2
+    >>> # using a group as an axis
+    >>> ndrange(a[:'a1'])
+    a  a0  a1
+        0   1
+
 * improved string representation of Excel workbooks and sheets (they mention the actual file/sheet they correspond to).
   This is mostly useful in the interactive console to check what an object corresponds to.
 
