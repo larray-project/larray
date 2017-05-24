@@ -360,6 +360,10 @@ def _to_ticks(s):
     --------
     >>> _to_ticks('M , F')
     ['M', 'F']
+    >>> _to_ticks('A,C..E,F..G,Z')
+    ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
+    >>> _to_ticks('U')
+    ['U']
 
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
@@ -378,12 +382,13 @@ def _to_ticks(s):
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     elif isinstance(s, basestring):
-        if ':' in s:
+        seq = _seq_str_to_seq(s)
+        if isinstance(seq, slice):
             raise ValueError("using : to define axes is deprecated, please use .. instead")
-        elif '..' in s:
-            return _range_str_to_range(s)
+        elif isinstance(seq, basestring):
+            return [seq]
         else:
-            return [v.strip() for v in s.split(',')]
+            return seq
     elif hasattr(s, '__array__'):
         return s.__array__()
     else:
@@ -1145,7 +1150,7 @@ class LGroup(Group):
     Examples
     --------
     >>> from larray import Axis, x
-    >>> age = Axis('age', '0..100')
+    >>> age = Axis('0..100', 'age')
     >>> teens = x.age[10:19].named('teens')
     >>> teens
     x.age[10:19] >> 'teens'

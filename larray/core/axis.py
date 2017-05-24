@@ -56,7 +56,6 @@ class Axis(ABCAxis):
     Axis([0, 1, 2, 3, 4], None)
     """
     # ticks instead of labels?
-    # XXX: make name and labels optional?
     def __init__(self, labels, name=None):
         if isinstance(name, Axis):
             name = name.name
@@ -1019,7 +1018,7 @@ class AxisCollection(object):
         Axis(3, None),
         Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'age'),
         Axis(['M', 'F'], 'sex'),
-        Axis(['2007', '2008', '2009', '2010'], 'time')
+        Axis([2007, 2008, 2009, 2010], 'time')
     ])
     >>> AxisCollection('age=0..9; sex=M,F; time=2007..2010')
     AxisCollection([
