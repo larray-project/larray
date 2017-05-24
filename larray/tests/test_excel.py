@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import pytest
+import numpy as np
 
 try:
     import xlwings as xw
@@ -90,6 +91,62 @@ class TestWorkbook(object):
             wb['sheet_name'] = 'sheet content'
             wb['sheet_name'].name = 'renamed'
             assert wb.sheet_names() == ['renamed']
+
+
+@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+class TestSheet(object):
+    def test_get_and_set_item(self):
+        arr = ndtest((2, 3))
+
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+            # set a few values
+            sheet['A1'] = 1.5
+            sheet['A2'] = 2
+            sheet['A3'] = True
+            sheet['A4'] = 'toto'
+            # array without header
+            sheet['A5'] = arr
+            # array with header
+            sheet['A8'] = arr.dump()
+
+            # read them back
+            assert sheet['A1'].value == 1.5
+            assert sheet['A2'].value == 2
+            assert sheet['A3'].value == True
+            assert sheet['A4'].value == 'toto'
+            # array without header
+            assert np.array_equal(sheet['A5:C6'].value, arr.data)
+            # array with header
+            assert larray_equal(sheet['A8:D10'].load(), arr)
+
+
+@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+class TestRange(object):
+    def test_scalar_convert(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+            # set a few values
+            sheet['A1'] = 1
+            rng = sheet['A1']
+            assert int(rng) == 1
+            assert float(rng) == 1.0
+            assert rng.__index__() == 1
+
+            sheet['A2'] = 1.0
+            rng = sheet['A2']
+            assert int(rng) == 1
+            assert float(rng) == 1.0
+            # Excel stores everything as float so we cannot really make the difference between 1 and 1.0
+            assert rng.__index__() == 1
+
+            sheet['A3'] = 1.5
+            rng = sheet['A3']
+            assert int(rng) == 1
+            assert float(rng) == 1.5
+            with pytest.raises(TypeError) as e_info:
+                rng.__index__()
+            assert e_info.value.args[0] == "only integer scalars can be converted to a scalar index"
 
 
 if __name__ == "__main__":
