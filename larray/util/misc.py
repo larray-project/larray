@@ -212,6 +212,36 @@ def rproduct(*i):
     return product(*[x[::-1] for x in i])
 
 
+def light_product(*iterables, **kwargs):
+    """Cartesian product of input iterables, replacing repeated values by empty strings.
+
+    Parameters
+    ----------
+    *iterables : iterable
+        Input iterables
+    repeat : int, optional
+        Number of times to repeat (reuse) input iterables
+
+    Returns
+    -------
+    Generator
+
+    Examples
+    --------
+    >>> list(light_product('ab', range(3)))
+    [('a', 0), ('', 1), ('', 2), ('b', 0), ('', 1), ('', 2)]
+    >>> list(light_product('ab', repeat=2))
+    [('a', 'a'), ('', 'b'), ('b', 'a'), ('', 'b')]
+    """
+    repeat = kwargs.pop('repeat', 1)
+    p = product(*iterables, repeat=repeat)
+    prev_t = (None,) * len(iterables) * repeat
+    for t in p:
+        yield tuple(e if e != prev_e else ''
+                    for e, prev_e in zip(t, prev_t))
+        prev_t = t
+
+
 def array_nan_equal(a, b):
     if np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype, np.str):
         return np.array_equal(a, b)
