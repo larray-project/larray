@@ -307,9 +307,8 @@ if xw is not None:
         def __setattr__(self, key, value):
             setattr(self.xw_sheet, key, value)
 
-        # TODO: add convert_float argument
-        def load(self, header=True, nb_index=None, index_col=None):
-            return self[:].load(header=header, nb_index=nb_index, index_col=index_col)
+        def load(self, header=True, convert_float=True, nb_index=None, index_col=None):
+            return self[:].load(header=header, convert_float=convert_float, nb_index=nb_index, index_col=index_col)
 
         # TODO: generalize to more than 2 dimensions or scrap it
         def array(self, data, row_labels=None, column_labels=None, names=None):
