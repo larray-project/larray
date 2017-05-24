@@ -1435,7 +1435,8 @@ class MappingEditor(QMainWindow):
             varname = m.group(1)
             # otherwise it should have failed at this point, but let us be sure
             if varname in clean_ns:
-                self.select_list_item(varname)
+                if self._display_in_grid(varname, clean_ns[varname]):
+                    self.select_list_item(varname)
         else:
             # not setitem => assume expr or normal assignment
             if last_input in clean_ns:
