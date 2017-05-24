@@ -88,3 +88,5 @@ Fixes
 
 * integer-like strings in axis definition strings using `,` are converted to integers to be consistent with string
   definitions using `..`. In other words, ndrange('a=1,2,3') did not create the same array than ndrange('a=1..3').
+
+* fixed reading a single cell from an Excel sheet
