@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import re
+
 import pytest
 import numpy as np
 
@@ -35,6 +37,10 @@ class TestWorkbook(object):
         # in any case, this should work
         with open_excel(visible=False) as wb:
             wb['test'] = 'content'
+
+    def test_repr(self):
+        with open_excel(visible=False) as wb:
+            assert re.match('<larray.io.excel.Workbook \[Book\d+\]>', repr(wb))
 
     def test_getitem(self):
         with open_excel(visible=False) as wb:
@@ -119,6 +125,11 @@ class TestSheet(object):
             assert np.array_equal(sheet['A5:C6'].value, arr.data)
             # array with header
             assert larray_equal(sheet['A8:D10'].load(), arr)
+
+    def test_repr(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+            assert re.match('<larray.io.excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")

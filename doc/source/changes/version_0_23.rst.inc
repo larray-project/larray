@@ -78,7 +78,16 @@ Miscellaneous improvements
          BE  0  1
          FO  2  3
 
-* improved error message when trying to access nonexistent sheet in excel.Workbook (closes :issue:`266`).
+* improved error message when trying to access nonexistent sheet in an Excel workbook (closes :issue:`266`).
+
+* improved string representation of Excel workbooks and sheets (they mention the actual file/sheet they correspond to).
+  This is mostly useful in the interactive console to check what an object corresponds to.
+
+    >>> wb = open_excel()
+    >>> wb
+    <larray.io.excel.Workbook [Book1]>
+    >>> wb[0]
+    <larray.io.excel.Sheet [Book1]Sheet1>
 
 Fixes
 -----
@@ -89,4 +98,4 @@ Fixes
 * integer-like strings in axis definition strings using `,` are converted to integers to be consistent with string
   definitions using `..`. In other words, ndrange('a=1,2,3') did not create the same array than ndrange('a=1..3').
 
-* fixed reading a single cell from an Excel sheet
+* fixed reading a single cell from an Excel sheet.
