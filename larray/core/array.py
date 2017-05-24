@@ -104,7 +104,8 @@ from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, csv_open, skip_comment_cells, strip_rows, _isnoneslice)
+                              float_error_handler_factory, csv_open, skip_comment_cells, strip_rows, _isnoneslice,
+                              light_product)
 
 nan = np.nan
 
@@ -2358,7 +2359,7 @@ class LArray(ABCLArray):
     def __iter__(self):
         return LArrayIterator(self)
 
-    def as_table(self, maxlines=None, edgeitems=5):
+    def as_table(self, maxlines=None, edgeitems=5, light=False):
         """
         Generator. Returns next line of the table representing an array.
 
@@ -2376,6 +2377,22 @@ class LArray(ABCLArray):
         -------
         list
             Next line of the table as a list.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2, 3))
+        >>> list(arr.as_table())  # doctest: +NORMALIZE_WHITESPACE
+        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+         ['a0', 'b0', 0, 1, 2],
+         ['a0', 'b1', 3, 4, 5],
+         ['a1', 'b0', 6, 7, 8],
+         ['a1', 'b1', 9, 10, 11]]
+        >>> list(arr.as_table(light=True))  # doctest: +NORMALIZE_WHITESPACE
+        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+         ['a0', 'b0', 0, 1, 2],
+         ['', 'b1', 3, 4, 5],
+         ['a1', 'b0', 6, 7, 8],
+         ['', 'b1', 9, 10, 11]]
         """
         if not self.ndim:
             return
@@ -2400,6 +2417,8 @@ class LArray(ABCLArray):
             # There is no vertical axis, so the axis name should not have
             # any "tick" below it and we add an empty "tick".
             ticks = [['']]
+        elif light:
+            ticks = light_product(*labels)
         else:
             ticks = product(*labels)
         # returns the first line (axes names + labels of last axis)
