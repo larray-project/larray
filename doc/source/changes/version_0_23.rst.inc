@@ -116,3 +116,5 @@ Fixes
   definitions using `..`. In other words, ndrange('a=1,2,3') did not create the same array than ndrange('a=1..3').
 
 * fixed reading a single cell from an Excel sheet.
+
+* fixed script execution not resuming after quitting the viewer when it was called using view(a_single_array).
