@@ -7,7 +7,7 @@ from collections import OrderedDict
 import numpy as np
 import larray as la
 
-from qtpy.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication, QMainWindow
 from larray.viewer.view import MappingEditor, ArrayEditor, SessionComparator, ArrayComparator
 
 __all__ = ['view', 'edit', 'compare']
@@ -15,6 +15,7 @@ __all__ = ['view', 'edit', 'compare']
 
 def qapplication():
     return QApplication(sys.argv)
+
 
 def find_names(obj, depth=0):
     """Return all names an object is bound to.
@@ -60,6 +61,7 @@ def get_title(obj, depth=0, maxnames=3):
     if len(names) > maxnames:
         names = names[:maxnames] + ['...']
     return ', '.join(names)
+
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
@@ -108,14 +110,14 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
     dlg = MappingEditor(parent) if hasattr(obj, 'keys') else ArrayEditor(parent)
     if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
-        if parent or isinstance(dlg, MappingEditor):
+        if parent or isinstance(dlg, QMainWindow):
             dlg.show()
+            _app.exec_()
         else:
             dlg.exec_()
     if parent is None:
         restore_except_hook()
 
-    _app.exec_()
 
 def view(obj=None, title='', depth=0):
     """
