@@ -171,7 +171,10 @@ if xw is not None:
                 return key in self.sheet_names()
 
         def __getitem__(self, key):
-            return Sheet(self, key)
+            if key in self:
+                return Sheet(self, key)
+            else:
+                raise KeyError('Workbook has no sheet named {}'.format(key))
 
         def __setitem__(self, key, value):
             if self.new_workbook:
