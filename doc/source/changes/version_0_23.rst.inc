@@ -42,6 +42,16 @@ Miscellaneous improvements
     a  a1  a0  a2  a3
         0   1   2   3
 
+* in both axes definitions and keys (within []) `..` can now be mixed with `,` and other `..` :
+
+    >>> arr = ndrange('code=A,C..E,G,X..Z')
+    >>> arr
+    code  A  C  D  E  G  X  Y  Z
+          0  1  2  3  4  5  6  7
+    >>> arr['A,Z..X,G']
+    code  A  Z  Y  X  G
+          0  7  6  5  4
+
 * set `sep` argument of from_string function to ' ' by default (closes :issue:`271`).
   For 1D array, a "-" must be added in front of the data line.
 
@@ -62,3 +72,6 @@ Fixes
 * fixed using open_excel("inexisting file") yielding to ununderstandble error.
   The function returns an error if passing a non existing Excel file and overwrite_file=False
   (closes :issue:`265`).
+
+* integer-like strings in axis definition strings using `,` are converted to integers to be consistent with string
+  definitions using `..`. In other words, ndrange('a=1,2,3') did not create the same array than ndrange('a=1..3').
