@@ -5101,6 +5101,15 @@ class LArray(ABCLArray):
         # XXX: use the ufuncs.round instead?
         return np.round(self, decimals=n)
 
+    def __index__(self):
+        return self.data.__index__()
+
+    def __int__(self):
+        return self.data.__int__()
+
+    def __float__(self):
+        return self.data.__float__()
+
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
 
