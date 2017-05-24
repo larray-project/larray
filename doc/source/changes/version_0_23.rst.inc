@@ -26,6 +26,20 @@ Miscellaneous improvements
      a1 |  3 |  4 |  5
      a2 |  6 |  7 |  8
 
+* set `sep` argument of from_string function to ' ' by default (closes :issue:`271`).
+  For 1D array, a "-" must be added in front of the data line.
+
+    >>> from_string('''sex  M  F
+                       -    0  1''')
+    sex  M  F
+         0  1
+    >>> from_string('''nat\\sex  M  F
+                       BE        0  1
+                       FO        2  3''')
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
+
 Fixes
 -----
 
