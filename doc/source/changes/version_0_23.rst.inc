@@ -120,3 +120,8 @@ Fixes
 * fixed script execution not resuming after quitting the viewer when it was called using view(a_single_array).
 
 * fixed opening the viewer after showing a plot window.
+
+* do not display an error when setting the value of an element of a non LArray sequence in the viewer console
+
+    >>> l = [1, 2, 3]
+    >>> l[0] = 42
