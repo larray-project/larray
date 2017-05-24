@@ -78,12 +78,13 @@ Miscellaneous improvements
          BE  0  1
          FO  2  3
 
+* improved error message when trying to access nonexistent sheet in excel.Workbook (closes :issue:`266`).
+
 Fixes
 -----
 
-* fixed using open_excel("inexisting file") yielding to ununderstandble error.
-  The function returns an error if passing a non existing Excel file and overwrite_file=False
-  (closes :issue:`265`).
+* open_excel('non existent file') will raise an explicit error immediately when overwrite_file is False, instead of
+  failing at a seemingly random point later on (closes :issue:`265`).
 
 * integer-like strings in axis definition strings using `,` are converted to integers to be consistent with string
   definitions using `..`. In other words, ndrange('a=1,2,3') did not create the same array than ndrange('a=1..3').

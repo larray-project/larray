@@ -7,12 +7,12 @@ try:
 except ImportError:
     xw = None
 
-from larray import open_excel
+from larray import ndtest, larray_equal, open_excel
 from larray.io import excel
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
-class TestExcel(object):
+class TestWorkbook(object):
     def test_open_excel(self):
         # not using context manager because we call .quit manually
         wb1 = open_excel(visible=False)
@@ -34,6 +34,22 @@ class TestExcel(object):
         # in any case, this should work
         with open_excel(visible=False) as wb:
             wb['test'] = 'content'
+
+    def test_getitem(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+            assert isinstance(sheet, excel.Sheet)
+            # this might not be true on non-English locale
+            assert sheet.name == 'Sheet1'
+
+            # this might not work on non-English locale
+            sheet = wb['Sheet1']
+            assert isinstance(sheet, excel.Sheet)
+            assert sheet.name == 'Sheet1'
+
+            with pytest.raises(KeyError) as e_info:
+                wb['this_sheet_does_not_exist']
+            assert e_info.value.args[0] == "Workbook has no sheet named this_sheet_does_not_exist"
 
     def test_setitem(self):
         with open_excel(visible=False) as wb:
