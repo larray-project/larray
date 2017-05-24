@@ -167,7 +167,7 @@ def generalized_range(start, stop, step=1):
 _range_str_pattern = re.compile('(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)?(\s+step\s+(?P<step>\d+))?')
 
 
-def _range_str_to_range(s):
+def _range_str_to_range(s, stack_depth=1):
     """
     Converts a range string to a range (of values).
     The end point is included.
@@ -199,10 +199,11 @@ def _range_str_to_range(s):
 
     groups = m.groupdict()
     start, stop, step = groups['start'], groups['stop'], groups['step']
-    start = _parse_bound(start) if start is not None else 0
+    start = _parse_bound(start, stack_depth + 1) if start is not None else 0
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
-    stop = _parse_bound(stop)
+    stop = _parse_bound(stop, stack_depth + 1)
+    # TODO: use parse_bound
     step = int(step) if step is not None else 1
     return generalized_range(start, stop, step)
 
@@ -395,6 +396,50 @@ def _to_ticks(s):
 _axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
 
 
+def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
+    """
+    Converts a sequence string as its sequence
+
+    Parameters
+    ----------
+    s : basestring
+        string to parse
+
+    Returns
+    -------
+    scalar, slice, range or list
+        a key represents any object that can be used for indexing
+    """
+    numcolons = s.count(':')
+    if numcolons:
+        assert numcolons <= 2
+        # bounds can be of len 2 or 3 (if step is provided)
+        # stack_depth + 2 because the list comp has its own stack
+        bounds = [_parse_bound(b, stack_depth + 2) for b in s.split(':')]
+        return slice(*bounds)
+    elif ',' in s and '..' in s:
+        # strip extremity commas to avoid empty string keys
+        s = s.strip(',')
+
+        def to_seq(b, stack_depth=1):
+            if '..' in b:
+                return _range_str_to_range(b, stack_depth + 1)
+            else:
+                parsed = _parse_bound(b, stack_depth + 1)
+                return (parsed,)
+
+        # stack_depth + 2 because the list comp has its own stack
+        return list(chain(*[to_seq(b, stack_depth + 2) for b in s.split(',')]))
+    elif ',' in s:
+        # strip extremity commas to avoid empty string keys
+        s = s.strip(',')
+        return [_parse_bound(b, stack_depth + 2) for b in s.split(',')]
+    elif '..' in s:
+        return _range_str_to_range(s, stack_depth + 1)
+    else:
+        return _parse_bound(s, stack_depth + 1, parse_int=parse_single_int)
+
+
 def _to_key(v, stack_depth=1, parse_single_int=False):
     """
     Converts a value to a key usable for indexing (slice object, list of values,...).
@@ -416,6 +461,10 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     slice('a', 'c', None)
     >>> _to_key('a, b,c ,')
     ['a', 'b', 'c']
+    >>> _to_key('a..c')
+    ['a', 'b', 'c']
+    >>> _to_key('a,c..e,g..h,z')
+    ['a', 'c', 'd', 'e', 'g', 'h', 'z']
     >>> _to_key('a,')
     ['a']
     >>> _to_key(' a ')
@@ -440,16 +489,22 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     # evaluated variables do not work on Python 2, probably because the stackdepth is different
     # >>> ext = [1, 2, 3]
     # >>> _to_key('{ext} >> ext')
-    # LGroup([1, 2, 3], name='ext')
+    # LGroup([1, 2, 3]) >> 'ext'
     # >>> answer = 42
     # >>> _to_key('{answer}')
     # 42
     # >>> _to_key('{answer} >> answer')
-    # LGroup(42, name='answer')
+    # LGroup(42) >> 'answer'
     # >>> _to_key('10:{answer} >> answer')
-    # LGroup(slice(10, 42, None), name='answer')
+    # LGroup(slice(10, 42, None)) >> 'answer'
     # >>> _to_key('4,{answer},2 >> answer')
-    # LGroup([4, 42, 2], name='answer')
+    # LGroup([4, 42, 2]) >> 'answer'
+    # >>> list(_to_key('40..{answer}'))
+    # [40, 41, 42]
+    # >>> _to_key('4,40..{answer},2')
+    # [4, 40, 41, 42, 2]
+    # >>> _to_key('4,40..{answer},2 >> answer')
+    # LGroup([4, 40, 41, 42, 2]) >> 'answer'
     """
     if isinstance(v, tuple):
         return list(v)
@@ -471,28 +526,12 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
             # care of the name earlier)
             assert key[-1] == ']'
             key = key[:-1]
-        cls = PGroup if positional else LGroup
         if name is not None or axis is not None:
+            cls = PGroup if positional else LGroup
             key = _to_key(key, stack_depth + 1, parse_single_int=positional)
             return cls(key, name=name, axis=axis)
         else:
-            numcolons = v.count(':')
-            if numcolons:
-                assert numcolons <= 2
-                # bounds can be of len 2 or 3 (if step is provided)
-                # stack_depth + 2 because the list comp has its own stack
-                bounds = [_parse_bound(b, stack_depth + 2)
-                          for b in v.split(':')]
-                return slice(*bounds)
-            else:
-                if ',' in v:
-                    # strip extremity commas to avoid empty string keys
-                    v = v.strip(',')
-                    # stack_depth + 2 because the list comp has its own stack
-                    return [_parse_bound(b, stack_depth + 2)
-                            for b in v.split(',')]
-                else:
-                    return _parse_bound(v, stack_depth + 1, parse_int=parse_single_int)
+            return _seq_str_to_seq(v, stack_depth + 1, parse_single_int=parse_single_int)
     elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCLArray, OrderedSet)):
         return v
     else:
