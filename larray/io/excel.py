@@ -385,15 +385,28 @@ if xw is not None:
                         int_val = int(value)
                         if int_val == value:
                             return int_val
-                    return value
-                if self.ndim == 1:
-                    list_data = [convert(v) for v in list_data]
-                elif self.ndim == 2:
-                    list_data = [[convert(v) for v in line]
-                                 for line in list_data]
-                else:
-                    raise ValueError("invalid ndim: %d" % self.ndim)
+                        return value
+                    elif isinstance(value, list):
+                        return [convert(v) for v in value]
+                    else:
+                        return value
+                return convert(list_data)
             return list_data
+
+        def __float__(self):
+            # no need to use _converted_value because we will convert back to a float anyway
+            return float(self.xw_range.value)
+
+        def __int__(self):
+            # no need to use _converted_value because we will convert to an int anyway
+            return int(self.xw_range.value)
+
+        def __index__(self):
+            v = self._converted_value()
+            if hasattr(v, '__index__'):
+                return v.__index__()
+            else:
+                raise TypeError("only integer scalars can be converted to a scalar index")
 
         def __array__(self, dtype=None):
             return np.array(self._converted_value(), dtype=dtype)
