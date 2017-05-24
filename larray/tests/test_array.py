@@ -3176,6 +3176,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                    FO         3  1.0  0.0""")
         assert_array_equal(res, expected)
 
+    def test_0darray_convert(self):
+        int_arr = LArray(1)
+        assert int(int_arr) == 1
+        assert float(int_arr) == 1.0
+        assert int_arr.__index__() == 1
+
+        float_arr = LArray(1.0)
+        assert int(float_arr) == 1
+        assert float(float_arr) == 1.0
+        with pytest.raises(TypeError) as e_info:
+            float_arr.__index__()
+        assert e_info.value.args[0] == "only integer scalar arrays can be converted to a scalar index"
+
 if __name__ == "__main__":
     # import doctest
     # import unittest
