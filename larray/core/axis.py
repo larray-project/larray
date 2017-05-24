@@ -41,16 +41,36 @@ class Axis(ABCAxis):
 
     Examples
     --------
-    >>> age = Axis(10, 'age')
-    >>> age
-    Axis(10, 'age')
-    >>> age.name
-    'age'
-    >>> age.labels
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> gender = Axis(['M', 'F'], 'gender')
+    >>> gender
+    Axis(['M', 'F'], 'gender')
+    >>> gender.name
+    'gender'
+    >>> list(gender.labels)
+    ['M', 'F']
+
+    using a string definition
+
     >>> gender = Axis('gender=M,F')
     >>> gender
     Axis(['M', 'F'], 'gender')
+    >>> age = Axis('age=0..9')
+    >>> age
+    Axis([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'age')
+    >>> code = Axis('code=A,C..E,F..G,Z')
+    >>> code
+    Axis(['A', 'C', 'D', 'E', 'F', 'G', 'Z'], 'code')
+
+    a wildcard axis only needs a length
+
+    >>> row = Axis(10, 'row')
+    >>> row
+    Axis(10, 'row')
+    >>> row.labels
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    axes can also be defined without name
+
     >>> anonymous = Axis('0..4')
     >>> anonymous
     Axis([0, 1, 2, 3, 4], None)
