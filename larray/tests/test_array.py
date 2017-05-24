@@ -92,6 +92,25 @@ class TestLArray(TestCase):
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro),
                             title=self.small_title)
 
+    def test_ndrange(self):
+        arr = ndrange('a=a0..a2')
+        self.assertEqual(arr.shape, (3,))
+        self.assertEqual(arr.axes.names, ['a'])
+        assert_array_equal(arr.data, np.arange(3))
+
+        # using an explicit Axis object
+        a = Axis('a=a0..a2')
+        arr = ndrange(a)
+        self.assertEqual(arr.shape, (3,))
+        self.assertEqual(arr.axes.names, ['a'])
+        assert_array_equal(arr.data, np.arange(3))
+
+        # using a group as an axis
+        arr = ndrange(a[:'a1'])
+        self.assertEqual(arr.shape, (2,))
+        self.assertEqual(arr.axes.names, ['a'])
+        assert_array_equal(arr.data, np.arange(2))
+
     def test_getattr(self):
         self.assertEqual(type(self.larray.geo), Axis)
         self.assertIs(self.larray.geo, self.geo)

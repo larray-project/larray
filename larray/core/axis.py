@@ -1052,7 +1052,7 @@ class AxisCollection(object):
     def __init__(self, axes=None):
         if axes is None:
             axes = []
-        elif isinstance(axes, (int, long, Axis)):
+        elif isinstance(axes, (int, long, Group, Axis)):
             axes = [axes]
         elif isinstance(axes, str):
             axes = [axis.strip() for axis in axes.split(';')]
