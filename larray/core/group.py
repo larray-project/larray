@@ -124,13 +124,32 @@ def generalized_range(start, stop, step=1):
 
     consecutive digits are treated like numbers
 
-    >>> generalized_range('P01', 'P12')
-    ['P01', 'P02', 'P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10', 'P11', 'P12']
+    >>> generalized_range('A8', 'A10')
+    ['A8', 'A9', 'A10']
+
+    one may use zero padding on numbers
+
+    >>> generalized_range('A08', 'A10')
+    ['A08', 'A09', 'A10']
 
     consecutive letters create all combinations
 
     >>> generalized_range('AA', 'CC')
     ['AA', 'AB', 'AC', 'BA', 'BB', 'BC', 'CA', 'CB', 'CC']
+
+    one cannot go from a integer to a letter and vice versa
+
+    >>> generalized_range('1', 'F')
+    Traceback (most recent call last):
+    ...
+    ValueError: expected an integer for the stop bound (because the start bound is an integer) but got 'F' instead
+
+    when using special characters, they must be the same on both sides
+
+    >>> generalized_range('a|1', 'a/2')
+    Traceback (most recent call last):
+    ...
+    ValueError: Special characters must be the same for start and stop
     """
     if isinstance(start, str):
         assert isinstance(stop, str)
@@ -142,9 +161,21 @@ def generalized_range(start, stop, step=1):
             # we only handle non-negative int-like strings on purpose. Int-only bounds should already be converted to
             # real integers by now, and mixing negative int-like strings and letters yields some strange results.
             if start_part.isdigit():
-                assert stop_part.isdigit()
-                numchr = max(len(start_part), len(stop_part))
-                r = ['%0*d' % (numchr, num) for num in irange(int(start_part), int(stop_part))]
+                if not stop_part.isdigit():
+                    raise ValueError("expected an integer for the stop bound (because the start bound is an integer) "
+                                     "but got '%s' instead" % stop_part)
+                rng = irange(int(start_part), int(stop_part))
+                start_pad = len(start_part) if start_part.startswith('0') else None
+                stop_pad = len(stop_part) if stop_part.startswith('0') else None
+                if start_pad is not None and stop_pad is not None and start_pad != stop_pad:
+                    raise ValueError("Inconsistent zero padding for start and stop ({} vs {}) of the numerical part. "
+                                     "Must be either the same on both sides or no padding on either "
+                                     "side".format(start_pad, stop_pad))
+                elif start_pad is None and stop_pad is None:
+                    r = [str(num) for num in rng]
+                else:
+                    pad = start_pad if stop_pad is None else stop_pad
+                    r = ['%0*d' % (pad, num) for num in rng]
             elif start_part.isalpha():
                 assert stop_part.isalpha()
                 int_start = [ord(c) for c in start_part]

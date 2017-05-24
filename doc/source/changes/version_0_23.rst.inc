@@ -52,6 +52,18 @@ Miscellaneous improvements
     code  A  Z  Y  X  G
           0  7  6  5  4
 
+* within .. extra zeros are only padded to numbers if zeros are present in the pattern.
+
+    >>> ndrange('code=A1..A12')
+    code  A1  A2  A3  A4  A5  A6  A7  A8  A9  A10  A11  A12
+           0   1   2   3   4   5   6   7   8    9   10   11
+
+    >>> ndrange('code=A01..A12')
+    code  A01  A02  A03  A04  A05  A06  A07  A08  A09  A10  A11  A12
+            0    1    2    3    4    5    6    7    8    9   10   11
+
+  in previous larray versions, the two above definitions returned the second array.
+
 * set `sep` argument of from_string function to ' ' by default (closes :issue:`271`).
   For 1D array, a "-" must be added in front of the data line.
 
