@@ -32,7 +32,13 @@ class TestAxis(TestCase):
         # list of ints
         assert_array_equal(Axis(range(116), 'age').labels, np.arange(116))
         # range-string
-        assert_array_equal(Axis('..115', 'age').labels, np.arange(116))
+        axis = Axis('0..115', 'age')
+        assert_array_equal(axis.labels, np.arange(116))
+        # another axis group
+        group = axis[:10]
+        group_axis = Axis(group)
+        assert_array_equal(group_axis.labels, np.arange(11))
+        assert_array_equal(group_axis.name, 'age')
 
     def test_equals(self):
         self.assertTrue(Axis('sex=M,F').equals(Axis('sex=M,F')))
