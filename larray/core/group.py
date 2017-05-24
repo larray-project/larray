@@ -786,14 +786,37 @@ class Group(object):
         raise NotImplementedError()
 
     def retarget_to(self, target_axis):
-        """
-        Retarget group to another axis. Potentially translating it to label using its former axis.
+        """Retarget group to another axis.
+
+        It will be translated to an LGroup using its former axis, if necessary.
+
+        Parameters
+        ----------
+        target_axis : Axis
+            axis to conform to
 
         Returns
         -------
-        Group
+        Group with axis, raise ValueError if retargeting is not possible
         """
-        raise NotImplementedError()
+        if self.axis is target_axis:
+            return self
+        elif isinstance(self.axis, basestring) or isinstance(self.axis, ABCAxisReference):
+            axis_name = self.axis.name if isinstance(self.axis, ABCAxisReference) else self.axis
+            if axis_name != target_axis.name:
+                raise ValueError('cannot retarget a Group defined without a real axis object (e.g. using '
+                                 'an AxisReference (x.)) to an axis with a different name')
+            return self.__class__(self.key, self.name, target_axis)
+        elif self.axis.equals(target_axis) or isinstance(self.axis, int):
+            # in the case of isinstance(self.axis, int), we can only hope the axis corresponds. This is the
+            # case if we come from _translate_axis_key_chunk, but if the users calls this manually, we cannot know.
+            # XXX: maybe changing this to retarget_to_axes would be a good idea after all?
+
+            # just change the axis object
+            return self.__class__(self.key, self.name, target_axis)
+        else:
+            # to retarget to another (non-equal) Axis, we need to translate to labels and expand slices
+            return LGroup(self.eval(), self.name, target_axis)
 
     def __len__(self):
         # XXX: we probably want to_label instead of .eval (so that we do not expand slices)
@@ -1223,11 +1246,6 @@ class LGroup(Group):
             # we do not check the group labels are actually valid on Axis
             return self.key
 
-    def retarget_to(self, target_axis):
-        # TODO: it would be nice to check the labels actually exist on the new axis (if it is a real Axis)
-        #       however, I am unsure we can afford to do this by default (for performance reasons)
-        return LGroup(self.key, self.name, target_axis)
-
 
 class LSet(LGroup):
     """Label set.
@@ -1350,37 +1368,6 @@ class PGroup(Group):
             return self.axis.labels[self.key]
         else:
             raise ValueError("Cannot evaluate a positional group without axis")
-
-    def retarget_to(self, target_axis):
-        """Make sure a group has axis
-
-        Parameters
-        ----------
-        axis : Axis
-            axis to conform to
-
-        Returns
-        -------
-        Group with axis, raise ValueError otherwise
-        """
-        if self.axis is target_axis:
-            return self
-        elif isinstance(self.axis, basestring) or isinstance(self.axis, ABCAxisReference):
-            axis_name = self.axis.name if isinstance(self.axis, ABCAxisReference) else self.axis
-            if axis_name != target_axis.name:
-                raise ValueError('cannot retarget a PGroup defined without a real axis object (e.g. using '
-                                 'an AxisReference (x.)) to an axis with a different name')
-            return PGroup(self.key, self.name, target_axis)
-        elif self.axis.equals(target_axis) or isinstance(self.axis, int):
-            # in the case of isinstance(self.axis, int), we can only hope the axis corresponds. This is the
-            # case if we come from _translate_axis_key_chunk, but if the users calls this manually, we cannot know.
-            # XXX: maybe changing this to retarget_to_axes would be a good idea after all?
-
-            # just change the axis object
-            return PGroup(self.key, self.name, target_axis)
-        else:
-            # to retarget to another Axis, we need to translate to labels
-            return LGroup(self.to_label(), self.name, target_axis)
 
     def __hash__(self):
         return hash(('PGroup', _to_tick(self.key)))
