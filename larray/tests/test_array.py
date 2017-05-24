@@ -49,7 +49,7 @@ class TestKeyStrings(TestCase):
         self.assertEqual(_to_key('M'), 'M')
 
     def test_slice_strings(self):
-        # XXX: these two examples return different things, do we want that?
+        # these two examples have different results and this is fine because numeric axes do not necessarily start at 0
         self.assertEqual(_to_key('0:115'), slice(0, 115))
         self.assertEqual(_to_key(':115'), slice(115))
         self.assertEqual(_to_key('10:'), slice(10, None))
@@ -1382,7 +1382,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.sum(LGroup('M,F')).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(LGroup('A11,A21,A25')).shape, (116, 2, 15))
-        self.assertEqual(la.sum(LGroup(['A11', 'A21', 'A25'])).shape, 
+        self.assertEqual(la.sum(LGroup(['A11', 'A21', 'A25'])).shape,
                          (116, 2, 15))
 
         # Include everything between two labels. Since A11 is the first label
@@ -2656,7 +2656,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # 2) with headers
         # ===============
-        with open_excel(abspath('test_open_excel.xlsx'), overwrite_file=True) as wb:
+        with open_excel(visible=False) as wb:
             # 1D
             a1 = ndtest(3)
 
@@ -2736,7 +2736,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # 3) without headers
         # ==================
-        with open_excel(abspath('test_open_excel_no_headers.xlsx'), overwrite_file=True) as wb:
+        with open_excel(visible=False) as wb:
             # 1D
             a1 = ndtest(3)
 
