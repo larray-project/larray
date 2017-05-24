@@ -118,3 +118,5 @@ Fixes
 * fixed reading a single cell from an Excel sheet.
 
 * fixed script execution not resuming after quitting the viewer when it was called using view(a_single_array).
+
+* fixed opening the viewer after showing a plot window.
