@@ -245,6 +245,10 @@ if xw is not None:
         def __exit__(self, type_, value, traceback):
             self.close()
 
+        def __repr__(self):
+            cls = self.__class__
+            return '<{}.{} [{}]>'.format(cls.__module__, cls.__name__, self.name)
+
 
     def _concrete_key(key, shape):
         if not isinstance(key, tuple):
@@ -342,6 +346,11 @@ if xw is not None:
             else:
                 axes = (row_labels, column_labels)
             return LArray(self[data], axes)
+
+        def __repr__(self):
+            cls = self.__class__
+            xw_sheet = self.xw_sheet
+            return '<{}.{} [{}]{}>'.format(cls.__module__, cls.__name__, xw_sheet.book.name, xw_sheet.name)
 
 
     class Range(object):
