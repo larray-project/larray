@@ -1644,6 +1644,8 @@ class MappingEditor(QMainWindow):
     def update_recent_file_actions(self):
         settings = QSettings()
         recent_files = settings.value("recentFileList")
+        if recent_files is None:
+            recent_files = []
 
         # zip will iterate up to the shortest of the two
         for filepath, action in zip(recent_files, self.recent_file_actions):
