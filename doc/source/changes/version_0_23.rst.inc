@@ -80,6 +80,12 @@ Miscellaneous improvements
 
 * improved error message when trying to access nonexistent sheet in an Excel workbook (closes :issue:`266`).
 
+* when creating an Axis from a Group and no explicit name was given, reuse the name of the group axis.
+
+    >>> a = Axis('a=a0..a2')
+    >>> Axis(a[:'a1'])
+    Axis(['a0', 'a1'], 'a')
+
 * improved string representation of Excel workbooks and sheets (they mention the actual file/sheet they correspond to).
   This is mostly useful in the interactive console to check what an object corresponds to.
 

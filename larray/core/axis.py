@@ -77,6 +77,8 @@ class Axis(ABCAxis):
     """
     # ticks instead of labels?
     def __init__(self, labels, name=None):
+        if isinstance(labels, Group) and name is None:
+            name = labels.axis
         if isinstance(name, Axis):
             name = name.name
         if isinstance(labels, basestring):
