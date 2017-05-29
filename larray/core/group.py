@@ -434,7 +434,7 @@ _axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
 
 def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
     """
-    Converts a sequence string as its sequence
+    Converts a sequence string to its sequence (or scalar)
 
     Parameters
     ----------
@@ -444,7 +444,6 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
     Returns
     -------
     scalar, slice, range or list
-        a key represents any object that can be used for indexing
     """
     numcolons = s.count(':')
     if numcolons:
@@ -454,7 +453,7 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
         bounds = [_parse_bound(b, stack_depth + 2) for b in s.split(':')]
         return slice(*bounds)
     elif ',' in s and '..' in s:
-        # strip extremity commas to avoid empty string keys
+        # strip extremity commas to avoid empty string sequence elements
         s = s.strip(',')
 
         def to_seq(b, stack_depth=1):
@@ -467,7 +466,7 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
         # stack_depth + 2 because the list comp has its own stack
         return list(chain(*[to_seq(b, stack_depth + 2) for b in s.split(',')]))
     elif ',' in s:
-        # strip extremity commas to avoid empty string keys
+        # strip extremity commas to avoid empty string sequence elements
         s = s.strip(',')
         return [_parse_bound(b, stack_depth + 2) for b in s.split(',')]
     elif '..' in s:
