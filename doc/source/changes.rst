@@ -1,6 +1,14 @@
 ﻿Change log
 ##########
 
+Version 0.23
+============
+
+Released on 2017-05-29.
+
+.. include:: ./changes/version_0_23.rst.inc
+
+
 Version 0.22
 ============
 
