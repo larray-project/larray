@@ -277,6 +277,15 @@ class ArrayModel(QAbstractTableModel):
         self._format = format
         self.reset()
 
+    def _index_to_row_col(self, index):
+        i = index.row() - len(self.xlabels) + 1
+        j = index.column() - len(self.ylabels) + 1
+        return i, j
+
+    def _is_label(self, index):
+        i, j = self._index_to_row_col(index)
+        return i < 0 or j < 0
+
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
         return len(self.ylabels) - 1 + self.cols_loaded
@@ -309,22 +318,20 @@ class ArrayModel(QAbstractTableModel):
         self.reset()
 
     def get_labels(self, index):
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
-        if i < 0 or j < 0:
+        if self._is_label(index):
             return ""
         dim_names = self.xlabels[0]
         ndim = len(dim_names)
         last_dim_labels = self.xlabels[1]
         # ylabels[0] are empty
+        i, j = self._index_to_row_col(index)
         labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
                  [last_dim_labels[j]]
         return ", ".join("%s=%s" % (dim_name, label)
                          for dim_name, label in zip(dim_names, labels))
 
     def get_value(self, index):
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
+        i, j = self._index_to_row_col(index)
         if i < 0 and j < 0:
             return ""
         if i < 0:
@@ -343,15 +350,13 @@ class ArrayModel(QAbstractTableModel):
         #     return ""
 
         if role == Qt.TextAlignmentRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
+            if self._is_label(index):
                 return to_qvariant(int(Qt.AlignCenter | Qt.AlignVCenter))
             else:
                 return to_qvariant(int(Qt.AlignRight | Qt.AlignVCenter))
 
         elif role == Qt.FontRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
+            if self._is_label(index):
                 return self.bold_font
             else:
                 return self.font
@@ -369,8 +374,7 @@ class ArrayModel(QAbstractTableModel):
                 return to_qvariant(self._format % value)
 
         elif role == Qt.BackgroundColorRole:
-            if (index.row() < len(self.xlabels) - 1) or \
-                    (index.column() < len(self.ylabels) - 1):
+            if self._is_label(index):
                 color = QColor(Qt.lightGray)
                 color.setAlphaF(.4)
                 return color
@@ -383,8 +387,7 @@ class ArrayModel(QAbstractTableModel):
                     return to_qvariant(color)
                 else:
                     bg_value = self.bg_value
-                    x = index.row() - len(self.xlabels) + 1
-                    y = index.column() - len(self.ylabels) + 1
+                    x, y = self._index_to_row_col(index)
                     # FIXME: this is buggy on filtered data. We should change
                     # bg_value when changing the filter.
                     idx = y + x * bg_value.shape[-1]
@@ -525,8 +528,7 @@ class ArrayModel(QAbstractTableModel):
         """Cell content change"""
         if not index.isValid() or self.readonly:
             return False
-        i = index.row() - len(self.xlabels) + 1
-        j = index.column() - len(self.ylabels) + 1
+        i, j = self._index_to_row_col(index)
         result = self.set_values(i, j, i + 1, j + 1, from_qvariant(value, str))
         return result is not None
 
@@ -534,8 +536,7 @@ class ArrayModel(QAbstractTableModel):
         """Set editable flag"""
         if not index.isValid():
             return Qt.ItemIsEnabled
-        if (index.row() < len(self.xlabels) - 1) or \
-                (index.column() < len(self.ylabels) - 1):
+        if self._is_label(index):
             return Qt.ItemIsEnabled #QAbstractTableModel.flags(self, index)
         flags = QAbstractTableModel.flags(self, index)
         if not self.readonly:
