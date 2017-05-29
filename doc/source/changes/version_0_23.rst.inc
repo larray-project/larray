@@ -1,13 +1,4 @@
-﻿New features
-------------
-
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
-
-* added another feature.
-
-.. _misc:
-
-Miscellaneous improvements
+﻿Miscellaneous improvements
 --------------------------
 
 * changed display of arrays (closes :issue:`243`):
