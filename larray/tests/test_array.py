@@ -3210,7 +3210,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         msg = e_info.value.args[0]
         expected_np11 = "only integer arrays with one element can be converted to an index"
         expected_np12 = "only integer scalar arrays can be converted to a scalar index"
-        assert msg == expected_np11 or expected_np12
+        assert msg in {expected_np11, expected_np12}
 
 if __name__ == "__main__":
     # import doctest
