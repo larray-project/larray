@@ -7,4 +7,4 @@ from larray.example import load_example_data
 from larray.extra import *
 from larray.viewer import *
 
-__version__ = "0.22"
+__version__ = "0.23"
