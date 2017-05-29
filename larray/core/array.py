@@ -102,7 +102,7 @@ except ImportError:
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
-from larray.core.axis import Axis, AxisCollection, x, _make_axis
+from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, csv_open, skip_comment_cells, strip_rows, _isnoneslice,
                               light_product)
@@ -1685,11 +1685,20 @@ class LArray(ABCLArray):
         PGroup
             Positional group with valid axes (from self.axes)
         """
+        # translate Axis keys to LGroup keys
+        # FIXME: this should be simply:
+        # if isinstance(axis_key, Axis):
+        #     axis_key = axis_key[:]
+        # but it does not work for some reason (the retarget does not seem to happen)
+        if isinstance(axis_key, Axis):
+            real_axis = self.axes[axis_key]
+            if isinstance(axis_key, AxisReference) or axis_key.equals(real_axis):
+                axis_key = real_axis[:]
+            else:
+                axis_key = axis_key.labels
+
         # TODO: do it for Group without axis too
         # TODO: do it for LArray key too (but using .i[] instead)
-        # TODO: we should skip this chunk stuff for keys where the axis is known
-        #       otherwise we do translate(key[:1]) without any reason
-        #       (in addition to translate(key))
         if isinstance(axis_key, (tuple, list, np.ndarray)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is

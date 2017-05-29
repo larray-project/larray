@@ -97,6 +97,19 @@ Miscellaneous improvements
     a  a0  a1
         0   1
 
+* allowed to use axes (Axis objects) to subset arrays (part of :issue:`210`).
+
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+    >>> b2 = Axis('b=b0,b2')
+    >>> arr[b2]
+    a\b  b0  b2
+     a0   0   2
+     a1   3   5
+
 * improved string representation of Excel workbooks and sheets (they mention the actual file/sheet they correspond to).
   This is mostly useful in the interactive console to check what an object corresponds to.
 

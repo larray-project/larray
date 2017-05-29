@@ -701,6 +701,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = arr[key]
         self.assertEqual(res.axes, [c, d, Axis([8, 11, 10], 'e')])
 
+    def test_getitem_axis_object(self):
+        arr = ndtest((2, 3))
+        a, b = arr.axes
+
+        assert_array_equal(arr[a], arr)
+        assert_array_equal(arr[b], arr)
+
+        b2 = Axis('b=b0,b2')
+
+        assert_array_equal(arr[b2], from_string("""a\\b  b0  b2
+                                                     a0   0   2
+                                                     a1   3   5"""))
+
     def test_positional_indexer_getitem(self):
         raw = self.array
         la = self.larray
