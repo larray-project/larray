@@ -973,6 +973,9 @@ class Group(object):
             raise TypeError("cannot take a subset of {} because it has a "
                             "'{}' key".format(self.key, type(self.key)))
 
+    def _ipython_key_completions_(self):
+        return list(self.eval())
+
     # method factory
     def _binop(opname):
         op_fullname = '__%s__' % opname
