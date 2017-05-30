@@ -579,6 +579,9 @@ class Axis(ABCAxis):
         name = key.name if isinstance(key, Group) else None
         return LGroup(key, name, self)
 
+    def _ipython_key_completions_(self):
+        return list(self.labels)
+
     def __contains__(self, key):
         return _to_tick(key) in self._mapping
 
@@ -1157,6 +1160,9 @@ class AxisCollection(object):
                 return self._map[key]
             else:
                 raise KeyError("axis '%s' not found in %s" % (key, self))
+
+    def _ipython_key_completions_(self):
+        return list(self._map.keys())
 
     # XXX: I wonder if this whole positional crap should really be part of
     # AxisCollection or the default behavior. It could either be moved to
