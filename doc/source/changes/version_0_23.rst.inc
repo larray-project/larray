@@ -4,14 +4,14 @@
 * changed display of arrays (closes :issue:`243`):
 
     >>> ndtest((2, 3))
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   0   1   2
      a1   3   4   5
 
   instead of
 
     >>> ndtest((2, 3))
-    a\\b | b0 | b1 | b2
+    a\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
 

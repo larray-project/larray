@@ -44,17 +44,17 @@
 
     >>> arr = ndtest((2, 2))
     >>> arr
-    a\\b | b0 | b1
+    a\b | b0 | b1
      a0 |  0 |  1
      a1 |  2 |  3
     >>> arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
-    a\\b | b1 | b2 | b0
+    a\b | b1 | b2 | b0
      a0 |  1 | -1 |  0
      a1 |  3 | -1 |  2
     >>> a = Axis('a', ['a1', 'a2', 'a0'])
     >>> b = Axis('b', ['b2', 'b1', 'b0'])
     >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
-    a\\b | b2 | b1 | b0
+    a\b | b2 | b1 | b0
      a1 | -1 |  3 |  2
      a2 | -1 | -1 | -1
      a0 | -1 |  1 |  0
@@ -64,17 +64,17 @@
 
     >>> arr2 = ndtest((3, 3))
     >>> arr2
-    a\\b | b0 | b1 | b2
+    a\b | b0 | b1 | b2
      a0 |  0 |  1 |  2
      a1 |  3 |  4 |  5
      a2 |  6 |  7 |  8
     >>> arr.reindex(arr2.axes, fill_value=0)
-    a\\b | b0 | b1 | b2
+    a\b | b0 | b1 | b2
      a0 |  0 |  1 |  0
      a1 |  2 |  3 |  0
      a2 |  0 |  0 |  0
     >>> arr.reindex(arr2.axes, fill_value=0) + arr2
-    a\\b | b0 | b1 | b2
+    a\b | b0 | b1 | b2
      a0 |  0 |  2 |  2
      a1 |  5 |  7 |  5
      a2 |  6 |  7 |  8
@@ -181,7 +181,7 @@ Miscellaneous improvements
   In the case the axis has already been defined in a variable, this gives:
 
     >>> stack({'M': males, 'F': females}, sex)
-    nat\\sex |   M |   F
+    nat\sex |   M |   F
          BE | 1.0 | 0.0
          FO | 1.0 | 0.0
 
@@ -197,7 +197,7 @@ Miscellaneous improvements
   cannot spot it for you either:
 
     >>> stack([females, males), sex)
-    nat\\sex |   M |   F
+    nat\sex |   M |   F
          BE | 0.0 | 1.0
          FO | 0.0 | 1.0
 
