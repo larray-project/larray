@@ -170,6 +170,9 @@ if xw is not None:
                 # for sheet names (it works with Sheet objects I think)
                 return key in self.sheet_names()
 
+        def _ipython_key_completions_(self):
+            return list(self.sheet_names())
+
         def __getitem__(self, key):
             if key in self:
                 return Sheet(self, key)
