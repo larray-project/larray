@@ -1,6 +1,8 @@
 import os
 import larray as la
 
+__all__ = ['EXAMPLE_FILES_DIR', 'load_example_data']
+
 EXAMPLE_FILES_DIR = os.path.dirname(__file__) + '/tests/data/'
 AVAILABLE_EXAMPLE_DATA = {
     'demography' : EXAMPLE_FILES_DIR + 'data.h5'
@@ -13,7 +15,8 @@ def load_example_data(name):
     ----------
     example_data : str
         Example data to load. Available example datasets are:
-        -{}
+        
+        - demography
 
     Returns
     -------
@@ -37,8 +40,7 @@ def load_example_data(name):
      age [121]: 0 1 2 ... 118 119 120
      sex [2]: 'M' 'F'
      nat [2]: 'BE' 'FO'
-    """.format('\n- '.join(AVAILABLE_EXAMPLE_DATA.keys()))
-
+    """
     if name is None:
         name = 'demography'
     if not isinstance(name, str):
