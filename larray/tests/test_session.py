@@ -5,8 +5,8 @@ from unittest import TestCase
 import numpy as np
 import pytest
 
-from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
 from larray.tests.common import assert_array_nan_equal, abspath
+from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
 from larray.util.misc import pickle
 
 try:
