@@ -1,4 +1,4 @@
-﻿New features
+New features
 ------------
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details).
@@ -25,8 +25,10 @@ Miscellaneous improvements
     >>> wb = open_excel()
     >>> wb['Sh<tab>  # will be completed to `wb['Sheet1`
 
+* added documentation to methods of Session class (closes :issue:`277`)
 
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed title argument of `ndtest` creation function: title was not passed to the returned array.
+
