@@ -1,11 +1,22 @@
 New features
 ------------
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
+* implemented Session.to_globals which creates global variables from variables stored in the session (closes
+  :issue:`276`). Note that this should only ever be used in an interactive console and not in a script. Code editors
+  are confused by this kind of manipulation and will likely consider the code invalid. When using this method
+  auto-completion, "show definition", "go to declaration" and other similar code editor features will probably not work
+  for the variables created in this way and any variable derived from them.
 
-* added another feature.
+    >>> s = Session(arr1=ndtest(3), arr2=ndtest((2, 2)))
+    >>> s.to_globals()
+    >>> arr1
+    a  a0  a1  a2
+        0   1   2
+    >>> arr2
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
 
-.. _misc:
 
 Miscellaneous improvements
 --------------------------
