@@ -4,8 +4,8 @@ from unittest import TestCase
 
 import pytest
 
-from larray import Axis, LArray, ndrange, ipfp
 from larray.tests.common import assert_array_equal
+from larray import Axis, LArray, ndrange, ipfp
 
 
 class TestIPFP(TestCase):
