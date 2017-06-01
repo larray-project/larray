@@ -143,12 +143,21 @@ PY2 = sys.version[0] == '2'
 # -------------
 
 class IconManager(object):
+
+    _icons = {'larray': 'larray.ico'}
+    _icon_dir = os.path.join(os.path.dirname(os.path.realpath(la.__file__)), 'images')
+
     def icon(self, ref):
+        if ref in self._icons:
+            icon_path = os.path.join(self._icon_dir, self._icons[ref])
+            return QIcon(icon_path)
+        else:
         # By default, only X11 will support themed icons. In order to use
         # themed icons on Mac and Windows, you will have to bundle a compliant
         # theme in one of your PySide.QtGui.QIcon.themeSearchPaths() and set the
         # appropriate PySide.QtGui.QIcon.themeName() .
-        return QIcon.fromTheme(ref)
+            return QIcon.fromTheme(ref)
+
 ima = IconManager()
 
 
@@ -886,7 +895,7 @@ class ArrayEditor(QDialog):
         layout = QGridLayout()
         self.setLayout(layout)
 
-        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        icon = ima.icon('larray')
         if icon is not None:
             self.setWindowIcon(icon)
 
@@ -1006,7 +1015,7 @@ class MappingEditor(QMainWindow):
             data = la.Session(data)
         self.data = data
 
-        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        icon = ima.icon('larray')
         if icon is not None:
             self.setWindowIcon(icon)
 
@@ -1606,7 +1615,7 @@ class ArrayComparator(QDialog):
         self.arrays = arrays
         self.array = la.stack(arrays, la.Axis(names, 'arrays'))
 
-        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        icon = ima.icon('larray')
         if icon is not None:
             self.setWindowIcon(icon)
 
@@ -1695,7 +1704,7 @@ class SessionComparator(QDialog):
         self.sessions = sessions
         self.names = names
 
-        icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        icon = ima.icon('larray')
         if icon is not None:
             self.setWindowIcon(icon)
 
