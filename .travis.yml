@@ -47,7 +47,7 @@ install:
     # except scipy and install pandas with --no-deps
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
             numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl
-            xlsxwriter pytest
+            xlsxwriter pytest -c conda-forge pytest-qt
     - source activate travisci
 
 script:
