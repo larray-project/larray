@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import os
 import sys
 from unittest import TestCase
 
@@ -2630,8 +2631,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # live book/Sheet1/A1
         # a1.to_excel()
 
-        # fpath/Sheet1/A1
-        a1.to_excel(fpath, overwrite_file=True, engine='xlwings')
+        # fpath/Sheet1/A1 (create a new file if does not exist)
+        if os.path.isfile(fpath):
+            os.remove(fpath)
+        a1.to_excel(fpath, engine='xlwings')
         # we use xlrd to read back instead of xlwings even if that should work, to make the test faster
         res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)

@@ -5673,8 +5673,6 @@ class LArray(ABCLArray):
         if engine == 'xlwings':
             from larray.io.excel import open_excel
 
-            wb = open_excel(filepath, overwrite_file=overwrite_file)
-
             close = False
             new_workbook = False
             if filepath is None:
@@ -5685,6 +5683,10 @@ class LArray(ABCLArray):
                     if not os.path.isfile(filepath):
                         new_workbook = True
                     close = True
+            if new_workbook or overwrite_file:
+                new_workbook = overwrite_file = True
+
+            wb = open_excel(filepath, overwrite_file=overwrite_file)
 
             if new_workbook:
                 sheet = wb.sheets[0]
