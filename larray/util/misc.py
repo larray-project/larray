@@ -3,6 +3,7 @@ Misc tools
 """
 from __future__ import absolute_import, division, print_function
 
+import __main__
 import math
 import itertools
 import sys
@@ -42,6 +43,16 @@ if PY2:
     import cPickle as pickle
 else:
     import pickle
+
+
+def is_interactive_interpreter():
+    try:
+        # When running using IPython, sys.ps1 is always defined, so we cannot use the standard "hasattr(sys, 'ps1')"
+        # Additionally, an InProcessInteractiveShell can have a __main__ module with a file
+        main_lacks_file = not hasattr(__main__, '__file__')
+        return main_lacks_file or get_ipython().__class__.__name__ == 'InProcessInteractiveShell'
+    except NameError:
+        return hasattr(sys, 'ps1')
 
 
 def csv_open(filename, mode='r'):

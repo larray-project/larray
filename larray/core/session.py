@@ -10,7 +10,7 @@ import numpy as np
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, create_sequential
-from larray.util.misc import float_error_handler_factory
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter
 from larray.io.session import check_pattern, handler_classes, ext_default_engine
 
 
@@ -311,6 +311,9 @@ class Session(object):
          a1   2   3
         """
         # noinspection PyProtectedMember
+        if not is_interactive_interpreter():
+            warnings.warn("Session.to_globals should only ever be used in interactive consoles and not in scripts",
+                          RuntimeWarning, stacklevel=2)
         d = sys._getframe(depth + 1).f_globals
         items = self.items()
         if names is not None:
