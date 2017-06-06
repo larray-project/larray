@@ -190,6 +190,22 @@ class TestSession(TestCase):
         s.load(fpath, engine='pickle')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
+    def test_to_globals(self):
+        with pytest.warns(RuntimeWarning) as caught_warnings:
+            self.session.to_globals()
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "Session.to_globals should only ever be used in interactive " \
+                                                     "consoles and not in scripts"
+        assert caught_warnings[0].filename == __file__
+
+        self.assertIs(a, self.a)
+        self.assertIs(b, self.b)
+        self.assertIs(c, self.c)
+        self.assertIs(d, self.d)
+        self.assertIs(e, self.e)
+        self.assertIs(f, self.f)
+        self.assertIs(g, self.g)
+
     def test_eq(self):
         sess = self.session.filter(kind=LArray)
         expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
