@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 import numpy as np
+import pandas as pd
 import larray as la
 
 from qtpy.QtCore import (Qt, QVariant, QModelIndex, QAbstractTableModel)
@@ -123,10 +124,6 @@ class ArrayModel(QAbstractTableModel):
     format : str, optional
         Indicates how data are represented in cells.
         By default, they are represented as floats with 3 decimal points.
-    xlabels : array, optional
-        Row's labels.
-    ylables : array, optional
-        Column's labels.
     readonly : bool, optional
         If True, data cannot be changed. False by default.
     font : QFont, optional
@@ -198,18 +195,24 @@ class ArrayModel(QAbstractTableModel):
             changes = {}
         if data is None:
             data = np.empty((0, 0), dtype=np.int8)
-        if data.dtype.names is None:
-            dtn = data.dtype.name
+
+        # convert input data to LArray if not
+        if not isinstance(data, (np.ndarray, pd.DataFrame, la.LArray)):
+            raise TypeError("data must be a Numpy array or a LArray object.")
+        la_data = la.aslarray(data)
+
+        if la_data.dtype.names is None:
+            dtn = la_data.dtype.name
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
                     and not dtn.startswith('unicode'):
                 msg = _("%s arrays are currently not supported")
-                QMessageBox.critical(self.dialog, "Error", msg % data.dtype.name)
+                QMessageBox.critical(self.dialog, "Error", msg % self._data.dtype.name)
                 return
 
         # for complex numbers, shading will be based on absolute value
         # but for all other types it will be the real part
         # TODO: there are a lot more complex dtypes than this. Is there a way to get them all in one shot?
-        if data.dtype in (np.complex64, np.complex128):
+        if la_data.dtype in (np.complex64, np.complex128):
             self.color_func = np.abs
         else:
             # XXX: this is a no-op (it returns the array itself) for most types (I think all non complex types)
@@ -224,28 +227,27 @@ class ArrayModel(QAbstractTableModel):
         assert isinstance(changes, dict)
         self.changes = changes
 
-        # convert input data to LArray if not
-        # add extra dimension if 1D
-        la_data = la.aslarray(data)
-        if la_data.ndim == 1:
-            la_data = la_data.reshape([la.Axis(1), la_data.axes[0]])
+        if la_data.ndim == 0:
+            axes = la.AxisCollection((1, 1))
+            new_shape = (1, 1)
+        elif la_data.ndim == 1:
+            axes = la.AxisCollection((1, la_data.axes[0]))
+            new_shape = (1,) + la_data.shape
+        else:
+            axes = la_data.axes
+            new_shape = (np.prod(la_data.shape[:-1]), la_data.shape[-1])
 
-        # get xlabels
-        self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
+        # set xlabels
+        self.xlabels = [axes.display_names, axes.labels[-1]]
 
-        # get ylabels
-        ylabels = la_data.axes.labels[:-1]
-        prod = Product(ylabels)
-        ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(ylabels))]
-        self.ylabels = ylabels
+        # set ylabels
+        otherlabels = axes.labels[:-1]
+        prod = Product(otherlabels)
+        self.ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(otherlabels))]
 
-        # convert LArray data to a 2D Numpy array
-        self._data = la_data.data
-        if data.ndim > 2:
-            self._data = self._data.reshape(np.prod(self._data.shape[:-1]), self._data.shape[-1])
-
-        self.total_rows = self._data.shape[0]
-        self.total_cols = self._data.shape[1]
+        # set data (reshape to a 2D array if not)
+        self._data = la_data.data.reshape(new_shape)
+        self.total_rows, self.total_cols = new_shape
         size = self.total_rows * self.total_cols
         self.reset_minmax()
         # Use paging when the total size, number of rows or number of
@@ -286,13 +288,17 @@ class ArrayModel(QAbstractTableModel):
         self._format = format
         self.reset()
 
-    def _index_to_row_col(self, index):
+    def _index_to_position(self, index):
+        """
+        Cell at position (0, 0) contains the first data.
+        Negative position represents a label
+        """
         i = index.row() - len(self.xlabels) + 1
         j = index.column() - len(self.ylabels) + 1
         return i, j
 
     def _is_label(self, index):
-        i, j = self._index_to_row_col(index)
+        i, j = self._index_to_position(index)
         return i < 0 or j < 0
 
     def columnCount(self, qindex=QModelIndex()):
@@ -333,14 +339,14 @@ class ArrayModel(QAbstractTableModel):
         ndim = len(dim_names)
         last_dim_labels = self.xlabels[1]
         # ylabels[0] are empty
-        i, j = self._index_to_row_col(index)
+        i, j = self._index_to_position(index)
         labels = [self.ylabels[d + 1][i] for d in range(ndim - 1)] + \
                  [last_dim_labels[j]]
-        return ", ".join("%s=%s" % (dim_name, label)
+        return ", ".join("{}={}".format(dim_name, label)
                          for dim_name, label in zip(dim_names, labels))
 
     def get_value(self, index):
-        i, j = self._index_to_row_col(index)
+        i, j = self._index_to_position(index)
         if i < 0 and j < 0:
             return ""
         if i < 0:
@@ -396,14 +402,14 @@ class ArrayModel(QAbstractTableModel):
                     return to_qvariant(color)
                 else:
                     bg_value = self.bg_value
-                    x, y = self._index_to_row_col(index)
+                    x, y = self._index_to_position(index)
                     # FIXME: this is buggy on filtered data. We should change
                     # bg_value when changing the filter.
                     idx = y + x * bg_value.shape[-1]
                     value = bg_value.data.flat[idx]
                     return self.bg_gradient[value]
         elif role == Qt.ToolTipRole:
-            return to_qvariant("%s\n%s" %(repr(value),self.get_labels(index)))
+            return to_qvariant("{}\n{}".format(repr(value),self.get_labels(index)))
         return to_qvariant()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
@@ -537,7 +543,7 @@ class ArrayModel(QAbstractTableModel):
         """Cell content change"""
         if not index.isValid() or self.readonly:
             return False
-        i, j = self._index_to_row_col(index)
+        i, j = self._index_to_position(index)
         result = self.set_values(i, j, i + 1, j + 1, from_qvariant(value, str))
         return result is not None
 
