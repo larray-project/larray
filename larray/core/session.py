@@ -584,16 +584,13 @@ class Session(object):
         >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
         >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
         >>> for k, v in s.items():
-        ...    print(k, "\\n", v.info)
-        arr2
-         4
+        ...     print("{}: {}".format(k, v.info))
+        arr2: 4
          a [4]: 'a0' 'a1' 'a2' 'a3'
-        arr1
-         2 x 2
+        arr1: 2 x 2
          a [2]: 'a0' 'a1'
          b [2]: 'b0' 'b1'
-        arr3
-         3 x 2
+        arr3: 3 x 2
          a [3]: 'a0' 'a1' 'a2'
          b [2]: 'b0' 'b1'
         """
