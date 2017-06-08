@@ -1147,7 +1147,7 @@ class Group(object):
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
         # dir() takes care of sorting but not uniqueness, so we must ensure that.
-        return list(set(dir(self.eval())) | set(dir(self.__class__)))
+        return list(set(dir(self.eval())) | set(self.__dict__.keys()) | set(dir(self.__class__)))
 
     def __getattr__(self, key):
         if key == '__array_struct__':
