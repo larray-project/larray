@@ -32,3 +32,4 @@ Fixes
 
 * fixed title argument of `ndtest` creation function: title was not passed to the returned array.
 
+* fixed autocompletion of attributes of LArray and Group objects (closes issue:`302`)
