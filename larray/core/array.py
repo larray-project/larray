@@ -814,11 +814,7 @@ class LArray(ABCLArray):
           F  10  11  12
     """
 
-    def __init__(self,
-                 data,
-                 axes=None,
-                 title=''   # type: str
-                 ):
+    def __init__(self, data, axes=None, title=''):
         data = np.asarray(data)
         ndim = data.ndim
         if axes is None:
@@ -6841,6 +6837,14 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> initial
     sex  M  F
          3  4
+    >>> create_sequential(year, initial, 1)
+    sex\\year  2016  2017  2018  2019
+           M     3     4     5     6
+           F     4     5     6     7
+    >>> create_sequential(year, initial, mult=2)
+    sex\\year  2016  2017  2018  2019
+           M     3     6    12    24
+           F     4     8    16    32
     >>> create_sequential(year, initial, inc, mult)
     sex\\year  2016  2017  2018  2019
            M     3     7    15    31
@@ -6949,6 +6953,9 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
             else:
                 r[axis.i[1:]] = a
             return r
+
+        if isinstance(initial, LArray) and np.isscalar(inc):
+            inc = full_like(initial, inc)
 
         # inc only (integer scalar)
         if np.isscalar(mult) and mult == 1 and np.isscalar(inc) and \
