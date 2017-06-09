@@ -324,9 +324,7 @@ if xw is not None:
             return 2
 
         def __array__(self, dtype=None):
-            # FIXME: convert value like in Range, something like:
-            # return np.array(self[:]._converted_value(), dtype=dtype)
-            return np.array(self[:].value, dtype=dtype)
+            return np.asarray(self[:], dtype=dtype)
 
         def __dir__(self):
             return list(set(dir(self.__class__)) | set(dir(self.xw_sheet)))
@@ -442,10 +440,6 @@ if xw is not None:
 
         def __array__(self, dtype=None):
             return np.array(self._converted_value(), dtype=dtype)
-
-        def __larray__(self):
-            # FIXME: use converted_value
-            return LArray(np.array(self.xw_range.value))
 
         def __dir__(self):
             return list(set(dir(self.__class__)) | set(dir(self.xw_range)))
