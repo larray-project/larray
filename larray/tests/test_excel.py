@@ -10,7 +10,7 @@ try:
 except ImportError:
     xw = None
 
-from larray import ndtest, ndrange, larray_equal, open_excel
+from larray import ndtest, ndrange, larray_equal, open_excel, aslarray
 from larray.io import excel
 
 
@@ -126,6 +126,17 @@ class TestSheet(object):
             # array with header
             assert larray_equal(sheet['A8:D10'].load(), arr)
 
+    def test_asarray(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            arr1 = ndtest((2, 3))
+            # no header so that we have an uniform dtype for the whole sheet
+            sheet['A1'] = arr1
+            res1 = np.asarray(sheet)
+            assert np.array_equal(res1, arr1.data)
+            assert res1.dtype == arr1.dtype
+
     def test_array_method(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
@@ -178,6 +189,28 @@ class TestRange(object):
             with pytest.raises(TypeError) as e_info:
                 rng.__index__()
             assert e_info.value.args[0] == "only integer scalars can be converted to a scalar index"
+
+    def test_asarray(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            arr1 = ndtest((2, 3))
+            # no header so that we have an uniform dtype for the whole sheet
+            sheet['A1'] = arr1
+            res1 = np.asarray(sheet['A1:C2'])
+            assert np.array_equal(res1, arr1.data)
+            assert res1.dtype == arr1.dtype
+
+    def test_aslarray(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            arr1 = ndrange((2, 3))
+            # no header so that we have an uniform dtype for the whole sheet
+            sheet['A1'] = arr1
+            res1 = aslarray(sheet['A1:C2'])
+            assert larray_equal(res1, arr1)
+            assert res1.dtype == arr1.dtype
 
 
 if __name__ == "__main__":
