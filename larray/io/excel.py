@@ -259,7 +259,7 @@ if xw is not None:
 
         Parameters
         ----------
-        k : slice
+        s : slice
             slice to replace
         length : int
             length of sequence
