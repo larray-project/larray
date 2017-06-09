@@ -10,7 +10,7 @@ try:
 except ImportError:
     xw = None
 
-from larray import ndtest, larray_equal, open_excel
+from larray import ndtest, ndrange, larray_equal, open_excel
 from larray.io import excel
 
 
@@ -125,6 +125,26 @@ class TestSheet(object):
             assert np.array_equal(sheet['A5:C6'].value, arr.data)
             # array with header
             assert larray_equal(sheet['A8:D10'].load(), arr)
+
+    def test_array_method(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            # normal test array
+            arr1 = ndtest((2, 3))
+            sheet['A1'] = arr1.dump()
+            res1 = sheet.array('B2:D3', 'A2:A3', 'B1:D1', names=['a', 'b'])
+            assert larray_equal(res1, arr1)
+
+            # array with int labels
+            arr2 = ndrange('0..1;0..2')
+            sheet['A1'] = arr2.dump()
+            res2 = sheet.array('B2:D3', 'A2:A3', 'B1:D1')
+            # larray_equal passes even if the labels are floats...
+            assert larray_equal(res2, arr2)
+            # so we check the dtype explicitly
+            assert res2.axes[0].labels.dtype == arr2.axes[0].labels.dtype
+            assert res2.axes[1].labels.dtype == arr2.axes[1].labels.dtype
 
     def test_repr(self):
         with open_excel(visible=False) as wb:

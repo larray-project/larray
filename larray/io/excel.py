@@ -358,17 +358,17 @@ if xw is not None:
             -------
             LArray
             """
-            # FIXME: use _convert_value
             if row_labels is not None:
-                row_labels = np.array(self[row_labels].value)
+                row_labels = np.asarray(self[row_labels])
             if column_labels is not None:
-                column_labels = np.array(self[column_labels].value)
+                column_labels = np.asarray(self[column_labels])
             if names is not None:
                 labels = (row_labels, column_labels)
                 axes = [Axis(axis_labels, name) for axis_labels, name in zip(labels, names)]
             else:
                 axes = (row_labels, column_labels)
-            return LArray(self[data], axes)
+            # _converted_value is used implicitly via Range.__array__
+            return LArray(np.asarray(self[data]), axes)
 
         def __repr__(self):
             cls = self.__class__
