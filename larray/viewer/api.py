@@ -65,25 +65,33 @@ def get_title(obj, depth=0, maxnames=3):
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
-    Opens a new editor window. If no object is given,
-    all local arrays are loaded in the editor.
+    Opens a new editor window.
 
     obj : np.ndarray, LArray, Session, dict or str, optional
-        Object to visualize. If string, array(s) will be loaded
-        from the file given as argument.
-        Defaults to the collection of all local variables where
-        the function was called.
+        Object to visualize. If string, array(s) will be loaded from the file given as argument.
+        Defaults to the collection of all local variables where the function was called.
     title : str, optional
-        Title for the current object.
-        A default one is generated if not provided.
+        Title for the current object. Defaults to the name of the first object found in the caller namespace which
+        corresponds to `obj` (it will use a combination of the 3 first names if several names correspond to the same
+        object).
     minvalue : scalar, optional
         Minimum value allowed.
     maxvalue : scalar, optional
         Maximum value allowed.
     readonly : bool, optional
-        Whether or not editing array values is forbidden Defaults to False.
+        Whether or not editing array values is forbidden. Defaults to False.
     depth : int, optional
-        Stack depth where to look for variables.
+        Stack depth where to look for variables. Defaults to 0 (where this function was called).
+
+    Examples
+    --------
+    >>> a1 = ndtest(3)                                                                                 # doctest: +SKIP
+    >>> a2 = ndtest(3) + 1                                                                             # doctest: +SKIP
+    >>> # will open an editor with all the arrays available at this point
+    >>> # (a1 and a2 in this case)
+    >>> edit()                                                                                         # doctest: +SKIP
+    >>> # will open an editor for a1 only
+    >>> edit(a1)                                                                                       # doctest: +SKIP
     """
     _app = QApplication.instance()
     if _app is None:
@@ -121,19 +129,27 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
 def view(obj=None, title='', depth=0):
     """
-    Starts a new viewer window. Arrays are loaded in
-    readonly mode and their content cannot be modified.
-
-    If no object is given, all local arrays are loaded in the editor.
+    Opens a new viewer window. Arrays are loaded in readonly mode and their content cannot be modified.
 
     obj : np.ndarray, LArray, Session, dict or str, optional
-        Object to visualize. If string, array(s) will be loaded
-        from the file given as argument.
-        Defaults to the collection of all local variables where
-        the function was called.
+        Object to visualize. If string, array(s) will be loaded from the file given as argument.
+        Defaults to the collection of all local variables where the function was called.
     title : str, optional
-        Title for the current object.
-        A default one is generated if not provided.
+        Title for the current object. Defaults to the name of the first object found in the caller namespace which
+        corresponds to `obj` (it will use a combination of the 3 first names if several names correspond to the same
+        object).
+    depth : int, optional
+        Stack depth where to look for variables. Defaults to 0 (where this function was called).
+
+    Examples
+    --------
+    >>> a1 = ndtest(3)                                                                                 # doctest: +SKIP
+    >>> a2 = ndtest(3) + 1                                                                             # doctest: +SKIP
+    >>> # will open a viewer showing all the arrays available at this point
+    >>> # (a1 and a2 in this case)
+    >>> view()                                                                                         # doctest: +SKIP
+    >>> # will open a viewer showing only a1
+    >>> view(a1)                                                                                       # doctest: +SKIP
     """
     edit(obj, title=title, readonly=True, depth=depth + 1)
 
