@@ -55,3 +55,5 @@ Fixes
   used cells. Closes :issue:`273`.
 
 * fixed the array() method on excel.Sheet returning float labels when int labels are expected.
+
+* fixed getting float data instead of int when converting an Excel Sheet or Range to an larray or numpy array.
