@@ -1,4 +1,4 @@
-New features
+﻿New features
 ------------
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details).
@@ -27,6 +27,8 @@ Miscellaneous improvements
 
 * added documentation to methods of Session class (closes :issue:`277`)
 
+* allowed to provide explict names for arrays or sessions in compare(). Closes :issue:`307`.
+
 Fixes
 -----
 
@@ -35,3 +37,5 @@ Fixes
 * fixed create_sequential when arguments initial and inc are array and scalar respectively (closes issue:`288`)
 
 * fixed autocompletion of attributes of LArray and Group objects (closes issue:`302`)
+
+* fixed name of arrays/sessions in compare() not being inferred correctly (closes :issue:`306`).
