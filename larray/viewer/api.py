@@ -155,7 +155,26 @@ def view(obj=None, title='', depth=0):
 
 
 def compare(*args, **kwargs):
+    """
+    Opens a new comparator window, comparing arrays or sessions.
+
+    *args : LArrays or Sessions
+        Arrays or sessions to compare.
+    title : str, optional
+        Title for the window. Defaults to ''.
+    names : list of str, optional
+        Names for arrays or sessions being compared. Defaults to the name of the first objects found in the caller
+        namespace which correspond to the passed objects.
+
+    Examples
+    --------
+    >>> a1 = ndtest(3)                                                                                 # doctest: +SKIP
+    >>> a2 = ndtest(3) + 1                                                                             # doctest: +SKIP
+    >>> compare(a1, a2, title='first comparison')                                                      # doctest: +SKIP
+    >>> compare(a1 + 1, a2, title='second comparison', names=['a1+1', 'a2'])                           # doctest: +SKIP
+    """
     title = kwargs.pop('title', '')
+    names = kwargs.pop('names', None)
     _app = QApplication.instance()
     if _app is None:
         install_except_hook()
@@ -175,7 +194,12 @@ def compare(*args, **kwargs):
         obj_names = find_names(obj, depth=depth + 1)
         return obj_names[0] if obj_names else '%s %d' % (default_name, i)
 
-    names = [get_name(i, a, depth=1) for i, a in enumerate(args)]
+    if names is None:
+        # depth=2 because of the list comprehension
+        names = [get_name(i, a, depth=2) for i, a in enumerate(args)]
+    else:
+        assert isinstance(names, list) and len(names) == len(args)
+
     if dlg.setup_and_check(args, names=names, title=title):
         if parent:
             dlg.show()
