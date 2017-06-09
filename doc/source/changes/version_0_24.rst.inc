@@ -50,3 +50,6 @@ Fixes
 * fixed autocompletion of attributes of LArray and Group objects (closes issue:`302`)
 
 * fixed name of arrays/sessions in compare() not being inferred correctly (closes :issue:`306`).
+
+* fixed indexing Excel sheets by position to always yield the requested shape even when bounds are outside the range of
+  used cells. Closes :issue:`273`.

@@ -253,6 +253,24 @@ if xw is not None:
             return '<{}.{} [{}]>'.format(cls.__module__, cls.__name__, self.name)
 
 
+    def _fill_slice(s, length):
+        """
+        replaces a slice None bounds by actual bounds.
+
+        Parameters
+        ----------
+        k : slice
+            slice to replace
+        length : int
+            length of sequence
+
+        Returns
+        -------
+        slice
+        """
+        return slice(s.start if s.start is not None else 0, s.stop if s.stop is not None else length, s.step)
+
+
     def _concrete_key(key, shape):
         if not isinstance(key, tuple):
             key = (key,)
@@ -260,7 +278,9 @@ if xw is not None:
         if len(key) < len(shape):
             key = key + (slice(None),) * (len(shape) - len(key))
 
-        return [slice(*k.indices(length)) if isinstance(k, slice) else k
+        # We do not use slice(*k.indices(length)) because it also clips bounds which exceed the length, which we do not
+        # want in this case (see issue #273).
+        return [_fill_slice(k, length) if isinstance(k, slice) else k
                 for k, length in zip(key, shape)]
 
 
