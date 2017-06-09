@@ -53,3 +53,5 @@ Fixes
 
 * fixed indexing Excel sheets by position to always yield the requested shape even when bounds are outside the range of
   used cells. Closes :issue:`273`.
+
+* fixed the array() method on excel.Sheet returning float labels when int labels are expected.
