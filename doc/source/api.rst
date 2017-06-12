@@ -13,11 +13,23 @@ Axis
 
    Axis
 
+Exploring
+---------
+
+=========================== ==============================================================
+Axis.name                   Name of the axis. None in the case of an anonymous axis.
+--------------------------- --------------------------------------------------------------
+:attr:`Axis.labels`         Labels of the axis.
+--------------------------- --------------------------------------------------------------
+:attr:`Axis.labels_summary` Short representation of the labels.
+=========================== ==============================================================
+
+Copying
+-------
+
 .. autosummary::
    :toctree: _generated/
 
-   Axis.labels
-   Axis.labels_summary
    Axis.copy
 
 Searching
@@ -226,6 +238,14 @@ Copying
 
 Inspecting
 ----------
+
+=================== ==============================================================
+LArray.data         Data of the array (Numpy ndarray)
+------------------- --------------------------------------------------------------
+LArray.axes         Axes of the array (AxisCollection)
+------------------- --------------------------------------------------------------
+LArray.title        Title of the array (str)
+=================== ==============================================================
 
 .. autosummary::
    :toctree: _generated/
