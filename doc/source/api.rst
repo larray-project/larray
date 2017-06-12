@@ -12,7 +12,10 @@ Axis
    :toctree: _generated/
 
    Axis
-   Axis.name
+
+.. autosummary::
+   :toctree: _generated/
+
    Axis.labels
    Axis.labels_summary
    Axis.copy
@@ -64,6 +67,10 @@ PGroup
    :toctree: _generated/
 
    PGroup
+
+.. autosummary::
+   :toctree: _generated/
+
    PGroup.named
    PGroup.with_axis
    PGroup.by
@@ -79,6 +86,10 @@ LGroup
    :toctree: _generated/
 
    LGroup
+
+.. autosummary::
+   :toctree: _generated/
+
    LGroup.named
    LGroup.with_axis
    LGroup.by
@@ -102,6 +113,10 @@ AxisCollection
    :toctree: _generated/
 
    AxisCollection
+
+.. autosummary::
+   :toctree: _generated/
+
    AxisCollection.names
    AxisCollection.display_names
    AxisCollection.labels
