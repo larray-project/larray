@@ -437,6 +437,7 @@ Miscellaneous
    eye
    ipfp
    load_example_data
+   local_arrays
 
 Session
 =======
@@ -445,18 +446,66 @@ Session
    :toctree: _generated/
 
    Session
+
+Exploring
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
    Session.names
+   Session.keys
+   Session.values
+   Session.items
+   Session.summary
+
+Copying
+-------
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session.copy
+
+Selecting
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session.get
+
+Modifying
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
    Session.add
    Session.get
+
+Filtering/Cleaning
+------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session.filter
+   Session.compact
+
+Load/Save
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
    Session.load
    Session.save
    Session.to_csv
    Session.to_excel
    Session.to_hdf
    Session.to_pickle
-   Session.filter
-   Session.compact
-   Session.copy
+
 
 Viewer
 ======
