@@ -177,7 +177,7 @@ class Axis(ABCAxis):
     @property
     def labels(self):
         """
-        List of labels.
+        labels of the axis.
         """
         return self._labels
 
