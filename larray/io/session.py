@@ -4,6 +4,7 @@ import os
 from collections import OrderedDict
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
+from larray.core.abc import ABCLArray
 from larray.util.misc import pickle
 from larray.io.excel import open_excel
 from larray.io.array import df_aslarray, read_csv, read_hdf
@@ -114,6 +115,10 @@ class FileHandler(object):
         display = kwargs.pop('display', False)
         self._open_for_write()
         for key, value in key_values:
+            if isinstance(value, ABCLArray) and value.ndim == 0:
+                if display:
+                    print('Cannot dump {}. Dumping 0D arrays is not supported currently.'.format(key))
+                continue
             if display:
                 print("dumping", key, "...", end=' ')
             self._dump(key, value, *args, **kwargs)
