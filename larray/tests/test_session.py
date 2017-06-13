@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import os
 from unittest import TestCase
 
 import numpy as np
@@ -161,7 +162,13 @@ class TestSession(TestCase):
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
         fpath = abspath('test_session_xw.xlsx')
+        # test save when Excel does not exist
+        if os.path.isfile(fpath):
+            os.remove(fpath)
         self.session.save(fpath, engine='xlwings_excel')
+        # test save when Excel already exist
+        self.session.save(fpath, engine='xlwings_excel')
+
         s = Session()
         s.load(fpath, engine='xlwings_excel')
         # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
