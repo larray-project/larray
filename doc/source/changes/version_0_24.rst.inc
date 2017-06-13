@@ -18,6 +18,8 @@
      a0   0   1
      a1   2   3
 
+* added new boolean argument 'overwrite' to Session.save method. If True, overwrite existing file if any.
+  Otherwise, update the file. Defaults to True. Closes issue:`293`.
 
 Miscellaneous improvements
 --------------------------
@@ -63,3 +65,9 @@ Fixes
 * fixed getting float data instead of int when converting an Excel Sheet or Range to an larray or numpy array.
 
 * fixed some warning messages to point to the correct line in user code.
+
+* fixed crash of Session.save method when it contains a 0D array.
+  0D arrays are now skipped when saving a session (closes issue:`291`).
+
+* fixed Session.save and Session.to_excel failing to create new Excel file
+  (it only worked if the file already existed). Closes issue:`313`.
