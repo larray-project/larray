@@ -117,7 +117,7 @@ class FileHandler(object):
         for key, value in key_values:
             if isinstance(value, ABCLArray) and value.ndim == 0:
                 if display:
-                    print('Cannot dump {}. Dumping 0D arrays is not supported currently.'.format(key))
+                    print('Cannot dump {}. Dumping 0D arrays is currently not supported.'.format(key))
                 continue
             if display:
                 print("dumping", key, "...", end=' ')
@@ -187,7 +187,8 @@ class XLWingsHandler(FileHandler):
         self.handle = open_excel(self.fname)
 
     def _open_for_write(self):
-        self.handle = open_excel(self.fname)
+        overwrite_file = not os.path.isfile(self.fname)
+        self.handle = open_excel(self.fname, overwrite_file=overwrite_file)
 
     def list(self):
         return self.handle.sheet_names()
