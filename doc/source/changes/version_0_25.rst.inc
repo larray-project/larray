@@ -1,11 +1,9 @@
 ﻿New features
 ------------
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
-
-* added another feature.
-
-.. _misc:
+* installing larray-editor (or larrayenv) from conda environment creates a new menu 'LArray' in the Windows start menu.
+  It contains a link to open the documentation, a shortcut to launch the user interface in edition mode
+  and a shortcut to update larrayenv. Closes issue:`281`.
 
 Miscellaneous improvements
 --------------------------
