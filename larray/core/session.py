@@ -9,7 +9,7 @@ from collections import OrderedDict
 import numpy as np
 
 from larray.core.axis import Axis
-from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, create_sequential
+from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, sequence
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter
 from larray.io.session import check_pattern, handler_classes, ext_default_engine
 
@@ -655,7 +655,7 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1 = create_sequential('b=b0..b2', ndtest(3), zeros_like(ndtest(3)))
+        >>> arr1 = sequence('b=b0..b2', ndtest(3), zeros_like(ndtest(3)))
         >>> arr1
         a\\b  b0  b1  b2
          a0   0   0   0

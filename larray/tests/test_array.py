@@ -16,7 +16,7 @@ except ImportError:
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, x, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, df_aslarray, create_sequential)
+                    from_lists, from_string, open_excel, df_aslarray, sequence)
 from larray.core.axis import _to_ticks, _to_key
 
 
@@ -2218,8 +2218,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         sex, lipro = la.axes
         assert_array_equal(la.mean(lipro), raw.mean(1))
 
-    def test_create_sequential(self):
-        res = create_sequential('b=b0..b2', ndtest(3) * 3, 1.0)
+    def test_sequence(self):
+        res = sequence('b=b0..b2', ndtest(3) * 3, 1.0)
         assert_array_equal(ndtest((3, 3), dtype=float), res)
 
     def test_set_labels(self):

@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like',
-    'full', 'full_like', 'create_sequential', 'ndrange', 'labels_array',
+    'full', 'full_like', 'sequence', 'create_sequential', 'ndrange', 'labels_array',
     'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'larray_equal', 'larray_nan_equal',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean',
     'ptp', 'var', 'std', 'median', 'percentile', 'stack', 'nan'
@@ -761,7 +761,7 @@ class LArray(ABCLArray):
 
     See Also
     --------
-    create_sequential : Create a LArray by sequentially
+    sequence : Create a LArray by sequentially
                         applying modifications to the array along axis.
     ndrange : Create a LArray with increasing elements.
     zeros : Create a LArray, each element of which is zero.
@@ -804,11 +804,11 @@ class LArray(ABCLArray):
      11         F   1.0   1.0   1.0
      12         M  -1.0  -1.0  -1.0
      12         F   1.0   1.0   1.0
-    >>> bysex = create_sequential(sex, initial=-1, inc=2)
+    >>> bysex = sequence(sex, initial=-1, inc=2)
     >>> bysex
     sex   M  F
          -1  1
-    >>> create_sequential(age, initial=10, inc=bysex)
+    >>> sequence(age, initial=10, inc=bysex)
     sex\\age  10  11  12
           M  10   9   8
           F  10  11  12
@@ -6767,10 +6767,9 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
 
 
 # XXX: would it be possible to generalize to multiple axes and deprecate
-#      ndrange (or rename this one to ndrange)? ndrange is only ever used to
-#      create test data (except for 1d)
+#      ndrange? ndrange is only ever used to create test data (except for 1d)
 # see https://github.com/pydata/pandas/issues/4567
-def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
+def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     """
     Creates an array by sequentially applying modifications to the array along
     axis.
@@ -6805,23 +6804,23 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     --------
     >>> year = Axis('year=2016..2019')
     >>> sex = Axis('sex=M,F')
-    >>> create_sequential(year)
+    >>> sequence(year)
     year  2016  2017  2018  2019
              0     1     2     3
-    >>> create_sequential('year=2016..2019')
+    >>> sequence('year=2016..2019')
     year  2016  2017  2018  2019
              0     1     2     3
-    >>> create_sequential(year, 1.0, 0.5)
+    >>> sequence(year, 1.0, 0.5)
     year  2016  2017  2018  2019
            1.0   1.5   2.0   2.5
-    >>> create_sequential(year, 1.0, mult=1.5)
+    >>> sequence(year, 1.0, mult=1.5)
     year  2016  2017  2018   2019
            1.0   1.5  2.25  3.375
     >>> inc = LArray([1, 2], [sex])
     >>> inc
     sex  M  F
          1  2
-    >>> create_sequential(year, 1.0, inc)
+    >>> sequence(year, 1.0, inc)
     sex\\year  2016  2017  2018  2019
            M   1.0   2.0   3.0   4.0
            F   1.0   3.0   5.0   7.0
@@ -6829,7 +6828,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> mult
     sex  M  F
          2  3
-    >>> create_sequential(year, 1.0, mult=mult)
+    >>> sequence(year, 1.0, mult=mult)
     sex\\year  2016  2017  2018  2019
            M   1.0   2.0   4.0   8.0
            F   1.0   3.0   9.0  27.0
@@ -6837,32 +6836,32 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> initial
     sex  M  F
          3  4
-    >>> create_sequential(year, initial, 1)
+    >>> sequence(year, initial, 1)
     sex\\year  2016  2017  2018  2019
            M     3     4     5     6
            F     4     5     6     7
-    >>> create_sequential(year, initial, mult=2)
+    >>> sequence(year, initial, mult=2)
     sex\\year  2016  2017  2018  2019
            M     3     6    12    24
            F     4     8    16    32
-    >>> create_sequential(year, initial, inc, mult)
+    >>> sequence(year, initial, inc, mult)
     sex\\year  2016  2017  2018  2019
            M     3     7    15    31
            F     4    14    44   134
     >>> def modify(prev_value):
     ...     return prev_value / 2
-    >>> create_sequential(year, 8, func=modify)
+    >>> sequence(year, 8, func=modify)
     year  2016  2017  2018  2019
              8     4     2     1
-    >>> create_sequential(3)
+    >>> sequence(3)
     {0}*  0  1  2
           0  1  2
-    >>> create_sequential(x.year, axes=(sex, year))
+    >>> sequence(x.year, axes=(sex, year))
     sex\\year  2016  2017  2018  2019
            M     0     1     2     3
            F     0     1     2     3
 
-    create_sequential can be used as the inverse of growth_rate:
+    sequence can be used as the inverse of growth_rate:
 
     >>> a = LArray([1.0, 2.0, 3.0, 3.0], year)
     >>> a
@@ -6872,7 +6871,7 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
     >>> g
     year  2017  2018  2019
            2.0   1.5   1.0
-    >>> create_sequential(year, a[2016], mult=g)
+    >>> sequence(year, a[2016], mult=g)
     year  2016  2017  2018  2019
            1.0   2.0   3.0   3.0
     """
@@ -6985,6 +6984,11 @@ def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, t
             res[axis.i[1:]] = \
                 ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
+
+
+def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
+    warnings.warn("create_sequential() has been renamed to sequence()", DeprecationWarning, stacklevel=2)
+    return sequence(axis, initial=initial, inc=inc, mult=mult, func=func, axes=axes, title=title)
 
 
 @_check_axes_argument
