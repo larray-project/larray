@@ -21,6 +21,8 @@
 Miscellaneous improvements
 --------------------------
 
+* renamed create_sequential() to sequence() (closes :issue:`212`).
+
 * improved auto-completion in ipython interactive consoles (e.g. the viewer console) for Axis, AxisCollection, Group
   and Workbook objects. These objects can now complete keys within [].
 
@@ -39,6 +41,7 @@ Miscellaneous improvements
 * added documentation to methods of Session class (closes :issue:`277`)
 
 * allowed to provide explict names for arrays or sessions in compare(). Closes :issue:`307`.
+
 
 Fixes
 -----
