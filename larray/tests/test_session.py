@@ -167,7 +167,7 @@ class TestSession(TestCase):
         s.save(fpath, engine='pandas_excel', overwrite=False)
         s.load(fpath, engine='pandas_excel')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
-        #assert_array_nan_equal(s['e'], self.e2)
+        assert_array_nan_equal(s['e'], self.e2)
 
         fpath = abspath('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')

@@ -169,7 +169,7 @@ class PandasExcelHandler(FileHandler):
 
     def _read_array(self, key, *args, **kwargs):
         df = self.handle.parse(key, *args, **kwargs)
-        return df_aslarray(df)
+        return df_aslarray(df, raw=True)
 
     def _dump(self, key, value, *args, **kwargs):
         kwargs['engine'] = 'xlsxwriter'
