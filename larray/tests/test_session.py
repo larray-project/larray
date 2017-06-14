@@ -194,8 +194,9 @@ class TestSession(TestCase):
         with pytest.warns(RuntimeWarning) as caught_warnings:
             self.session.to_globals()
         assert len(caught_warnings) == 1
-        assert caught_warnings[0].message.args[0] == "Session.to_globals should only ever be used in interactive " \
-                                                     "consoles and not in scripts"
+        assert caught_warnings[0].message.args[0] == "Session.to_globals should usually only be used in interactive " \
+                                                     "consoles and not in scripts. Use warn=False to deactivate this " \
+                                                     "warning."
         assert caught_warnings[0].filename == __file__
 
         self.assertIs(a, self.a)
