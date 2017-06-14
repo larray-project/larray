@@ -194,7 +194,7 @@ class Session(object):
         names : list of str, optional
             List of arrays to load. If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
-        engine : str, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'xlwings_excel', 'pickle'}, optional
             Load using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         display : bool, optional
@@ -234,7 +234,7 @@ class Session(object):
         for k, v in arrays.items():
             self[k] = v
 
-    def save(self, fname, names=None, engine='auto', display=False, **kwargs):
+    def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         """
         Dumps all array objects from the current session to a file.
 
@@ -245,12 +245,14 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
-        engine : str, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
+        overwrite: bool, optional
+            Whether or not to overwrite an existing file, if any. Only for non CSV files. 
+            If False, file is updated. Defaults to True.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults
-            to False.
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -264,11 +266,18 @@ class Session(object):
         Save only some arrays
 
         >>> s.save('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
+        
+        Update one array
+        
+        >>> s['arr1'] = ndtest((3, 3))  # doctest: +SKIP
+        >>> s.save('output.h5', ['arr1'], overwrite=False)  # doctest: +SKIP
         """
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
             engine = ext_default_engine[ext]
+        if overwrite and engine != ext_default_engine['csv'] and os.path.isfile(fname):
+            os.remove(fname)
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
         items = self.filter(kind=LArray).items()
