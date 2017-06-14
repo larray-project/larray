@@ -943,7 +943,7 @@ class LArray(ABCLArray):
             return LArray(self.data, new_axes, title=self.title)
 
     def with_axes(self, axes):
-        warnings.warn("LArray.with_axes is deprecated, use LArray.set_axes instead", DeprecationWarning)
+        warnings.warn("LArray.with_axes is deprecated, use LArray.set_axes instead", DeprecationWarning, stacklevel=2)
         return self.set_axes(axes)
 
     def __getattr__(self, key):
