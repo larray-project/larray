@@ -194,7 +194,7 @@ class Session(object):
         names : list of str, optional
             List of arrays to load. If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
-        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'xlwings_excel', 'pickle'}, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Load using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         display : bool, optional
@@ -245,11 +245,11 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
-        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'xlwings_excel', 'pickle'}, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. Only for non CSV files. 
+            Whether or not to overwrite an existing file, if any. Ignored for CSV files. 
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -267,10 +267,12 @@ class Session(object):
 
         >>> s.save('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
         
-        Update one array
+        Update file
         
-        >>> s['arr1'] = ndtest((3, 3))  # doctest: +SKIP
-        >>> s.save('output.h5', ['arr1'], overwrite=False)  # doctest: +SKIP
+        >>> arr1, arr4 = ndtest((3, 3)), ndtest((2, 3))     # doctest: +SKIP
+        >>> s2 = Session([('arr1', arr1), ('arr4', arr4)])  # doctest: +SKIP
+        >>> # replace arr1 and add arr4 in file output.h5
+        >>> s2.save('output.h5', overwrite=False)           # doctest: +SKIP
         """
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
@@ -335,7 +337,7 @@ class Session(object):
         for k, v in items:
             d[k] = v
 
-    def to_pickle(self, fname, names=None, *args, **kwargs):
+    def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
         Dumps all array objects from the current session to a file using pickle.
 
@@ -349,6 +351,11 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. Defaults to all objects
             present in the Session.
+        overwrite: bool, optional
+            Whether or not to overwrite an existing file, if any. 
+            If False, file is updated. Defaults to True.
+        display : bool, optional
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -363,13 +370,13 @@ class Session(object):
 
         >>> s.to_pickle('output.pkl', ['arr1', 'arr3'])  # doctest: +SKIP
         """
-        self.save(fname, names, ext_default_engine['pkl'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
     def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
         warnings.warn("Method dump is deprecated. Use method save instead.", DeprecationWarning, stacklevel=2)
         self.save(fname, names, engine, display, **kwargs)
 
-    def to_hdf(self, fname, names=None, *args, **kwargs):
+    def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
         Dumps all array objects from the current session to an HDF file.
 
@@ -380,6 +387,11 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. Defaults to all objects
             present in the Session.
+        overwrite: bool, optional
+            Whether or not to overwrite an existing file, if any. 
+            If False, file is updated. Defaults to True.
+        display : bool, optional
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -394,13 +406,13 @@ class Session(object):
 
         >>> s.to_hdf('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
         """
-        self.save(fname, names, ext_default_engine['hdf'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
     def dump_hdf(self, fname, names=None, *args, **kwargs):
         warnings.warn("Method dump_hdf is deprecated. Use method to_hdf instead.", DeprecationWarning, stacklevel=2)
         self.to_hdf(fname, names, *args, **kwargs)
 
-    def to_excel(self, fname, names=None, *args, **kwargs):
+    def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
         Dumps all array objects from the current session to an Excel file.
 
@@ -411,6 +423,11 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. Defaults to all objects
             present in the Session.
+        overwrite: bool, optional
+            Whether or not to overwrite an existing file, if any. 
+            If False, file is updated. Defaults to True.
+        display : bool, optional
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -425,13 +442,13 @@ class Session(object):
 
         >>> s.to_excel('output.xlsx', ['arr1', 'arr3'])  # doctest: +SKIP
         """
-        self.save(fname, names, ext_default_engine['xlsx'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
     def dump_excel(self, fname, names=None, *args, **kwargs):
         warnings.warn("Method dump_excel is deprecated. Use method to_excel instead.", DeprecationWarning, stacklevel=2)
         self.to_excel(fname, names, *args, **kwargs)
 
-    def to_csv(self, fname, names=None, *args, **kwargs):
+    def to_csv(self, fname, names=None, display=False, **kwargs):
         """
         Dumps all array objects from the current session to CSV files.
 
@@ -442,6 +459,8 @@ class Session(object):
         names : list of str or None, optional
             List of names of objects to dump. Defaults to all objects
             present in the Session.
+        display : bool, optional
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -456,7 +475,7 @@ class Session(object):
 
         >>> s.to_csv('./Output', ['arr1', 'arr3'])  # doctest: +SKIP
         """
-        self.save(fname, names, ext_default_engine['csv'], *args, **kwargs)
+        self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
     def dump_csv(self, fname, names=None, *args, **kwargs):
         warnings.warn("Method dump_csv is deprecated. Use method to_csv instead.", DeprecationWarning, stacklevel=2)
