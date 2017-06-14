@@ -18,8 +18,26 @@
      a0   0   1
      a1   2   3
 
-* added new boolean argument 'overwrite' to Session.save method. If True, overwrite existing file if any.
-  Otherwise, update the file. Defaults to True. Closes issue:`293`.
+* added new boolean argument 'overwrite' to Session.save, Session.to_hdf, Session.to_excel and Session.to_pickle
+  methods (closes issue:`293`). If overwrite=True, the file is removed and replaced by a new one if it already existed.
+  This is the default behavior. If overwrite=False, its content is updated :
+
+    >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
+    >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+
+    >>> # save arr1, arr2 and arr3 in file output.h5
+    >>> s.save('output.h5')
+
+    >>> # replace arr1 and create arr4 + put them in an second session
+    >>> arr1, arr4 = ndtest((3, 3)), ndtest((2, 3))
+    >>> s2 = Session([('arr1', arr1), ('arr4', arr4)])
+
+    >>> # replace arr1 and add arr4 in file output.h5
+    >>> s2.save('output.h5', overwrite=False)
+
+    >>> # erase content of 'output.h5' and save only arrays contained in the second session
+    >>> s2.save('output.h5')
+
 
 Miscellaneous improvements
 --------------------------
