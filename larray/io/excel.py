@@ -441,12 +441,15 @@ if xw is not None:
         def __array__(self, dtype=None):
             return np.array(self._converted_value(), dtype=dtype)
 
+        def __larray__(self):
+            return LArray(self._converted_value())
+
         def __dir__(self):
             return list(set(dir(self.__class__)) | set(dir(self.xw_range)))
 
         def __getattr__(self, key):
             if hasattr(LArray, key):
-                return getattr(LArray(self.__array__()), key)
+                return getattr(self.__larray__(), key)
             else:
                 return getattr(self.xw_range, key)
 

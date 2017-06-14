@@ -223,6 +223,17 @@ class TestRange(object):
             res = sheet['A1:C2'].sum()
             assert res == 15
 
+    def test_repr(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            arr1 = ndrange((2, 3))
+            sheet['A1'] = arr1
+            res = repr(sheet['A1:C2'])
+            assert res == """\
+{0}*\{1}*  0  1  2
+        0  0  1  2
+        1  3  4  5"""
 
 if __name__ == "__main__":
     pytest.main()
