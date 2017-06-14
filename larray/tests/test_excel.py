@@ -212,6 +212,17 @@ class TestRange(object):
             assert larray_equal(res1, arr1)
             assert res1.dtype == arr1.dtype
 
+    # this tests Range.__getattr__ with an LArray attribute
+    def test_aggregate(self):
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+
+            arr1 = ndrange((2, 3))
+            # no header so that we have an uniform dtype for the whole sheet
+            sheet['A1'] = arr1
+            res = sheet['A1:C2'].sum()
+            assert res == 15
+
 
 if __name__ == "__main__":
     pytest.main()
