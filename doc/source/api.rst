@@ -212,7 +212,7 @@ Array Creation Functions
 .. autosummary::
    :toctree: _generated/
 
-   create_sequential
+   sequence
    ndrange
    ndtest
    zeros
