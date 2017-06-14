@@ -446,7 +446,7 @@ if xw is not None:
 
         def __getattr__(self, key):
             if hasattr(LArray, key):
-                return getattr(self.__larray__(), key)
+                return getattr(LArray(self.__array__()), key)
             else:
                 return getattr(self.xw_range, key)
 
