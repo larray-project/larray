@@ -277,7 +277,7 @@ class Session(object):
             items = [(k, v) for k, v in items if k in names_set]
         handler.dump_arrays(items, display=display, **kwargs)
 
-    def to_globals(self, names=None, depth=0):
+    def to_globals(self, names=None, depth=0, warn=True):
         """
         Create global variables out of objects in the session.
 
@@ -285,17 +285,20 @@ class Session(object):
         ----------
         names : list of str or None, optional
             List of names of objects to convert to globals. Defaults to all objects present in the Session.
-        depth : int
+        depth : int, optional
             depth of call stack where to create the variables. 0 is where to_globals was called, 1 the caller of
-            to_globals, etc.
+            to_globals, etc. Defaults to 0.
+        warn : bool, optional
+            Whether or not to warn the user that this method should only be used in an interactive console (see below).
 
         Notes
         -----
 
-        This should only ever be used in an interactive console and not in a script. Code editors are confused by this
-        kind of manipulation and will likely consider the code invalid. When using this method auto-completion,
-        "show definition", "go to declaration" and other similar code editor features will probably not work for
-        the variables created in this way and any variable derived from them.
+        This method should usually only be used in an interactive console and not in a script. Code editors are
+        confused by this kind of manipulation and will likely consider as invalid the code using variables created in
+        this way. Additionally, when using this method auto-completion, "show definition", "go to declaration" and
+        other similar code editor features will probably not work for the variables created in this way and any
+        variable derived from them.
 
         Examples
         --------
@@ -311,8 +314,9 @@ class Session(object):
          a1   2   3
         """
         # noinspection PyProtectedMember
-        if not is_interactive_interpreter():
-            warnings.warn("Session.to_globals should only ever be used in interactive consoles and not in scripts",
+        if warn and not is_interactive_interpreter():
+            warnings.warn("Session.to_globals should usually only be used in interactive consoles and not in scripts. "
+                          "Use warn=False to deactivate this warning.",
                           RuntimeWarning, stacklevel=2)
         d = sys._getframe(depth + 1).f_globals
         items = self.items()
