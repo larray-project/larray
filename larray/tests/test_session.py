@@ -144,8 +144,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
 
         # update an array (overwrite=False)
-        s['e'] = self.e2
-        s.save(fpath, overwrite=False)
+        Session(e=self.e2).save(fpath, overwrite=False)
         s.load(fpath)
         self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
         assert_array_nan_equal(s['e'], self.e2)
@@ -163,8 +162,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
         # update an array (overwrite=False)
-        s['e'] = self.e2
-        s.save(fpath, engine='pandas_excel', overwrite=False)
+        Session(e=self.e2).save(fpath, engine='pandas_excel', overwrite=False)
         s.load(fpath, engine='pandas_excel')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
         assert_array_nan_equal(s['e'], self.e2)
@@ -178,7 +176,7 @@ class TestSession(TestCase):
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
         fpath = abspath('test_session_xw.xlsx')
-        # test save when Excel does not exist
+        # test save when Excel file does not exist
         self.session.save(fpath, engine='xlwings_excel')
 
         s = Session()
@@ -187,8 +185,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
         # update an array (overwrite=False)
-        s['e'] = self.e2
-        s.save(fpath, engine='xlwings_excel', overwrite=False)
+        Session(e=self.e2).save(fpath, engine='xlwings_excel', overwrite=False)
         s.load(fpath, engine='xlwings_excel')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
         assert_array_nan_equal(s['e'], self.e2)
@@ -217,8 +214,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
 
         # update an array (overwrite=False)
-        s['e'] = self.e2
-        s.save(fpath, overwrite=False)
+        Session(e=self.e2).save(fpath, overwrite=False)
         s.load(fpath, engine='pickle')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
         assert_array_nan_equal(s['e'], self.e2)
