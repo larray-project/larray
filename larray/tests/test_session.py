@@ -32,6 +32,7 @@ class TestSession(TestCase):
         self.c = 'c'
         self.d = {}
         self.e = ndrange([(2, 'a0'), (3, 'a1')])
+        self.e2 = ndrange(('a=a0..a2', 'b=b0..b2'))
         self.f = ndrange([(3, 'a0'), (2, 'a1')])
         self.g = ndrange([(2, 'a0'), (4, 'a1')])
         self.session = Session([
@@ -135,12 +136,19 @@ class TestSession(TestCase):
 
     def test_h5_io(self):
         fpath = abspath('test_session.h5')
-
         self.session.save(fpath)
+
         s = Session()
         s.load(fpath)
         # HDF does *not* keep ordering (ie, keys are always sorted)
         self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+
+        # update an array (overwrite=False)
+        s['e'] = self.e2
+        s.save(fpath, overwrite=False)
+        s.load(fpath)
+        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+        assert_array_nan_equal(s['e'], self.e2)
 
         s = Session()
         s.load(fpath, ['e', 'f'])
@@ -149,9 +157,17 @@ class TestSession(TestCase):
     def test_xlsx_pandas_io(self):
         fpath = abspath('test_session.xlsx')
         self.session.save(fpath, engine='pandas_excel')
+
         s = Session()
         s.load(fpath, engine='pandas_excel')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+
+        # update an array (overwrite=False)
+        s['e'] = self.e2
+        s.save(fpath, engine='pandas_excel', overwrite=False)
+        s.load(fpath, engine='pandas_excel')
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        #assert_array_nan_equal(s['e'], self.e2)
 
         fpath = abspath('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
@@ -163,16 +179,19 @@ class TestSession(TestCase):
     def test_xlsx_xlwings_io(self):
         fpath = abspath('test_session_xw.xlsx')
         # test save when Excel does not exist
-        if os.path.isfile(fpath):
-            os.remove(fpath)
-        self.session.save(fpath, engine='xlwings_excel')
-        # test save when Excel already exist
         self.session.save(fpath, engine='xlwings_excel')
 
         s = Session()
         s.load(fpath, engine='xlwings_excel')
         # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+
+        # update an array (overwrite=False)
+        s['e'] = self.e2
+        s.save(fpath, engine='xlwings_excel', overwrite=False)
+        s.load(fpath, engine='xlwings_excel')
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert_array_nan_equal(s['e'], self.e2)
 
         fpath = abspath('test_session_ef_xw.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
@@ -191,11 +210,18 @@ class TestSession(TestCase):
 
     def test_pickle_io(self):
         fpath = abspath('test_session.pkl')
-
         self.session.save(fpath)
+
         s = Session()
         s.load(fpath, engine='pickle')
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+
+        # update an array (overwrite=False)
+        s['e'] = self.e2
+        s.save(fpath, overwrite=False)
+        s.load(fpath, engine='pickle')
+        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert_array_nan_equal(s['e'], self.e2)
 
     def test_to_globals(self):
         with pytest.warns(RuntimeWarning) as caught_warnings:
