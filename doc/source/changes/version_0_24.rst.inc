@@ -89,3 +89,5 @@ Fixes
 
 * fixed Session.save and Session.to_excel failing to create new Excel file
   (it only worked if the file already existed). Closes issue:`313`.
+
+* fixed Session.load(file, engine='pandas_excel') : axes were considered as anonymous.
