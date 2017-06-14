@@ -104,8 +104,7 @@ from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, csv_open, skip_comment_cells, strip_rows, _isnoneslice,
-                              light_product)
+                              float_error_handler_factory, _isnoneslice, light_product)
 
 nan = np.nan
 
