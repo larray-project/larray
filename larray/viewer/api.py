@@ -8,10 +8,9 @@ import numpy as np
 import larray as la
 
 from qtpy.QtWidgets import QApplication, QMainWindow
-from larray.viewer.view import MappingEditor, ArrayEditor, SessionComparator, ArrayComparator
+from larray.viewer.view import MappingEditor, ArrayEditor, SessionComparator, ArrayComparator, REOPEN_LAST_FILE
 
-__all__ = ['view', 'edit', 'compare']
-
+__all__ = ['view', 'edit', 'compare', 'REOPEN_LAST_FILE']
 
 def qapplication():
     return QApplication(sys.argv)
@@ -69,8 +68,9 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
     Parameters
     ----------
-    obj : np.ndarray, LArray, Session, dict or str, optional
+    obj : np.ndarray, LArray, Session, dict, str or REOPEN_LAST_FILE, optional
         Object to visualize. If string, array(s) will be loaded from the file given as argument.
+        Passing the constant REOPEN_LAST_FILE loads the last opened file. 
         Defaults to the collection of all local variables where the function was called.
     title : str, optional
         Title for the current object. Defaults to the name of the first object found in the caller namespace which
@@ -109,16 +109,13 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
         local_vars = sys._getframe(depth + 1).f_locals
         obj = OrderedDict([(k, local_vars[k]) for k in sorted(local_vars.keys())])
 
-    if isinstance(obj, str):
-        if os.path.exists(obj):
-            obj = la.Session(obj)
-        else:
-            raise ValueError("file {} not found".format(obj))
+    if not isinstance(obj, la.Session) and hasattr(obj, 'keys'):
+        obj = la.Session(obj)
 
-    if not title:
+    if not title and obj is not REOPEN_LAST_FILE:
         title = get_title(obj, depth=depth + 1)
 
-    dlg = MappingEditor(parent) if hasattr(obj, 'keys') else ArrayEditor(parent)
+    dlg = MappingEditor(parent) if obj is REOPEN_LAST_FILE or isinstance(obj, (str, la.Session)) else ArrayEditor(parent)
     if dlg.setup_and_check(obj, title=title, minvalue=minvalue, maxvalue=maxvalue, readonly=readonly):
         if parent or isinstance(dlg, QMainWindow):
             dlg.show()
@@ -323,9 +320,17 @@ if __name__ == "__main__":
     # compare(arr3, arr4, arr5, arr6)
 
     # view(la.stack((arr3, arr4), la.Axis('arrays=arr3,arr4')))
-    ses = la.Session(arr2=arr2, arr3=arr3, arr4=arr4, arr5=arr5, arr6=arr6, arr7=arr7, data2=data2, data3=data3)
-    #ses = la.Session(arr2=arr2)
+    ses = la.Session(arr2=arr2, arr3=arr3, arr4=arr4, arr5=arr5, arr6=arr6, arr7=arr7,
+                     data2=data2, data3=data3)
+
+    # from larray.tests.common import abspath
+    # file = abspath('test_session.xlsx')
+    # ses.save(file)
+
     edit(ses)
+    # edit(file)
+    # edit('fake_path')
+    # edit(REOPEN_LAST_FILE)
 
     # s = la.local_arrays()
     # view(s)

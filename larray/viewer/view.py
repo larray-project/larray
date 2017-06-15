@@ -137,6 +137,7 @@ from larray.viewer.combo import FilterComboBox, FilterMenu
 import larray as la
 
 PY2 = sys.version[0] == '2'
+REOPEN_LAST_FILE = object()
 
 
 # Spyder compat
@@ -1011,10 +1012,6 @@ class MappingEditor(QMainWindow):
         Setup MappingEditor:
         return False if data is not supported, True otherwise
         """
-        if not isinstance(data, la.Session):
-            data = la.Session(data)
-        self.data = data
-
         icon = ima.icon('larray')
         if icon is not None:
             self.setWindowIcon(icon)
@@ -1035,16 +1032,14 @@ class MappingEditor(QMainWindow):
         widget.setLayout(layout)
 
         self._listwidget = QListWidget(self)
-        arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
-        self.add_list_items(arrays)
         self._listwidget.currentItemChanged.connect(self.on_item_changed)
         self._listwidget.setMinimumWidth(45)
 
         del_item_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._listwidget)
         del_item_shortcut.activated.connect(self.delete_current_item)
 
-        start_array = la.zeros(1) if arrays else la.zeros(0)
-        self.arraywidget = ArrayEditorWidget(self, start_array, readonly)
+        self.data = la.Session()
+        self.arraywidget = ArrayEditorWidget(self, la.zeros(0), readonly)
 
         if qtconsole_available:
             # Create an in-process kernel
@@ -1132,6 +1127,27 @@ class MappingEditor(QMainWindow):
 
         # Make the dialog act as a window
         self.setWindowFlags(Qt.Window)
+
+        # check if reopen last opened file
+        if data is REOPEN_LAST_FILE:
+            if len(QSettings().value("recentFileList")) > 0:
+                data = self.recent_file_actions[0].data()
+            else:
+                data = la.Session()
+
+        # load file if any
+        if isinstance(data, str):
+            if os.path.isfile(data):
+                self._open_file(data)
+            else:
+                QMessageBox.critical(self, "Error", "File {} could not be found".format(data))
+                self.new()
+        # convert input data to Session if not
+        else:
+            self.data = data if isinstance(data, la.Session) else la.Session(data)
+            arrays = [k for k, v in self.data.items() if self._display_in_grid(k, v)]
+            self.add_list_items(arrays)
+
         return True
 
     def _reset(self):
