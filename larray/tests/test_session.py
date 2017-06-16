@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, abspath
-from larray import Session, Axis, LArray, ndrange, isnan, larray_equal
+from larray import Session, Axis, LArray, ndrange, isnan, larray_equal, zeros_like
 from larray.util.misc import pickle
 
 try:
@@ -235,6 +235,18 @@ class TestSession(TestCase):
         self.assertIs(e, self.e)
         self.assertIs(f, self.f)
         self.assertIs(g, self.g)
+
+        # test inplace
+        backup_dest = e
+        backup_value = self.session.e.copy()
+        self.session.e = zeros_like(e)
+        self.session.to_globals(inplace=True, warn=False)
+        # check the variable is correct (the same as before)
+        self.assertIs(e, backup_dest)
+        self.assertIsNot(e, self.session.e)
+        # check the content has changed
+        assert_array_nan_equal(e, self.session.e)
+        self.assertFalse(larray_equal(e, backup_value))
 
     def test_eq(self):
         sess = self.session.filter(kind=LArray)
