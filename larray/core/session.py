@@ -249,7 +249,7 @@ class Session(object):
             Dump using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. Ignored for CSV files. 
+            Whether or not to overwrite an existing file, if any. Ignored for CSV files.
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -266,9 +266,9 @@ class Session(object):
         Save only some arrays
 
         >>> s.save('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
-        
+
         Update file
-        
+
         >>> arr1, arr4 = ndtest((3, 3)), ndtest((2, 3))     # doctest: +SKIP
         >>> s2 = Session([('arr1', arr1), ('arr4', arr4)])  # doctest: +SKIP
         >>> # replace arr1 and add arr4 in file output.h5
@@ -288,7 +288,7 @@ class Session(object):
             items = [(k, v) for k, v in items if k in names_set]
         handler.dump_arrays(items, display=display, **kwargs)
 
-    def to_globals(self, names=None, depth=0, warn=True):
+    def to_globals(self, names=None, depth=0, warn=True, inplace=False):
         """
         Create global variables out of objects in the session.
 
@@ -301,6 +301,11 @@ class Session(object):
             to_globals, etc. Defaults to 0.
         warn : bool, optional
             Whether or not to warn the user that this method should only be used in an interactive console (see below).
+            Defaults to True.
+        inplace : bool, optional
+            If True, to_globals will assume all arrays already exist and have the same axes and will replace their
+            content instead of creating new variables. Non array variables in the session will be ignored.
+            Defaults to False.
 
         Notes
         -----
@@ -334,8 +339,21 @@ class Session(object):
         if names is not None:
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
-        for k, v in items:
-            d[k] = v
+        if inplace:
+            for k, v in items:
+                if k not in d:
+                    raise ValueError("'{}' not found in current namespace. Session.to_globals(inplace=True) requires "
+                                     "all arrays to already exist.".format(k))
+                if not isinstance(v, LArray):
+                    continue
+                if not d[k].axes == v.axes:
+                    raise ValueError("Session.to_globals(inplace=True) requires the existing (destination) arrays "
+                                     "to have the same axes than those stored in the session and this is not the case "
+                                     "for '{}'.\nexisting: {}\nsession: {}".format(k, d[k].info, v.info))
+                d[k][:] = v
+        else:
+            for k, v in items:
+                d[k] = v
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
@@ -352,7 +370,7 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. 
+            Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -388,7 +406,7 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. 
+            Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -424,7 +442,7 @@ class Session(object):
             List of names of objects to dump. Defaults to all objects
             present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. 
+            Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
