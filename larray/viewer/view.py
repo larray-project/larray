@@ -139,18 +139,6 @@ import larray as la
 PY2 = sys.version[0] == '2'
 
 
-# def _table_to_larray_indexes(self, row, column):
-#     # print('position ', row, column)
-#     if all(self._data.shape):
-#         indexes = [column]
-#         for dim in reversed(self._data.shape[:-1]):
-#             row, index = divmod(row, dim)
-#             indexes.append(index)
-#     else:
-#         indexes = [0, 0]
-#     # print('indexes ', tuple(indexes[::-1]))
-#     return tuple(indexes[::-1])
-
 # Spyder compat
 # -------------
 
@@ -1268,7 +1256,7 @@ class MappingEditor(QMainWindow):
             self.kernel.shell.run_cell('from larray import *')
             self.ipython_cell_executed()
         else:
-            self.eval_box.setText('')
+            self.eval_box.setText('None')
             self.line_edit_update()
 
     def setup_menu_bar(self):

@@ -119,8 +119,9 @@ class ArrayModel(QAbstractTableModel):
 
     Parameters
     ----------
-    data : LArray or NumPy array, optional
-        Input data.
+    data : array-like, optional
+        Input array that can be converted into a LArray 
+        (Numpy ndarray, Pandas Dataframe, list or tuple, ...).
     format : str, optional
         Indicates how data are represented in cells.
         By default, they are represented as floats with 3 decimal points.
@@ -130,9 +131,9 @@ class ArrayModel(QAbstractTableModel):
         Font. Default is `Calibri` with size 11.
     parent : QWidget, optional
         Parent Widget.
-    bg_gradient : ???, optional
+    bg_gradient : LinearGradient, optional
         Background color gradient
-    bg_value : ???, optional
+    bg_value : LArray, optional
         Background color value
     minvalue : scalar
         Minimum value allowed.
@@ -184,7 +185,7 @@ class ArrayModel(QAbstractTableModel):
 
     def get_data(self):
         """Return data"""
-        return self._data
+        return self._data2D
 
     def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
         self._set_data(data, changes, bg_gradient, bg_value)
@@ -195,10 +196,6 @@ class ArrayModel(QAbstractTableModel):
             changes = {}
         if data is None:
             data = np.empty((0, 0), dtype=np.int8)
-
-        # convert input data to LArray if not
-        if not isinstance(data, (np.ndarray, pd.DataFrame, la.LArray)):
-            raise TypeError("data must be a Numpy array or a LArray object.")
         la_data = la.aslarray(data)
 
         if la_data.dtype.names is None:
@@ -206,7 +203,7 @@ class ArrayModel(QAbstractTableModel):
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
                     and not dtn.startswith('unicode'):
                 msg = _("%s arrays are currently not supported")
-                QMessageBox.critical(self.dialog, "Error", msg % self._data.dtype.name)
+                QMessageBox.critical(self.dialog, "Error", msg % self._data2D.dtype.name)
                 return
 
         # for complex numbers, shading will be based on absolute value
@@ -227,26 +224,24 @@ class ArrayModel(QAbstractTableModel):
         assert isinstance(changes, dict)
         self.changes = changes
 
+        # get 2D shape + xlabels + ylabels
         if la_data.ndim == 0:
-            axes = la.AxisCollection((1, 1))
+            self.xlabels = [[], []]
+            self.ylabels = [[]]
             new_shape = (1, 1)
         elif la_data.ndim == 1:
-            axes = la.AxisCollection((1, la_data.axes[0]))
+            self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
+            self.ylabels = [[]]
             new_shape = (1,) + la_data.shape
         else:
-            axes = la_data.axes
+            self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
+            otherlabels = la_data.axes.labels[:-1]
+            prod = Product(otherlabels)
+            self.ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(otherlabels))]
             new_shape = (np.prod(la_data.shape[:-1]), la_data.shape[-1])
 
-        # set xlabels
-        self.xlabels = [axes.display_names, axes.labels[-1]]
-
-        # set ylabels
-        otherlabels = axes.labels[:-1]
-        prod = Product(otherlabels)
-        self.ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-
         # set data (reshape to a 2D array if not)
-        self._data = la_data.data.reshape(new_shape)
+        self._data2D = la_data.data.reshape(new_shape)
         self.total_rows, self.total_cols = new_shape
         size = self.total_rows * self.total_cols
         self.reset_minmax()
@@ -290,7 +285,7 @@ class ArrayModel(QAbstractTableModel):
 
     def _index_to_position(self, index):
         """
-        Cell at position (0, 0) contains the first data.
+        Cell at position (0, 0) contains the first data cell.
         Negative position represents a label
         """
         i = index.row() - len(self.xlabels) + 1
@@ -353,7 +348,7 @@ class ArrayModel(QAbstractTableModel):
             return str(self.xlabels[i][j])
         if j < 0:
             return str(self.ylabels[j][i])
-        return self.changes.get((i, j), self._data[i, j])
+        return self.changes.get((i, j), self._data2D[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
         """Cell content"""
@@ -419,7 +414,7 @@ class ArrayModel(QAbstractTableModel):
             right = width
         if bottom is None:
             bottom = height
-        values = self._data[left:right, top:bottom].copy()
+        values = self._data2D[left:right, top:bottom].copy()
         # both versions get the same result, but depending on inputs, the
         # speed difference can be large.
         if values.size < len(changes):
@@ -440,7 +435,7 @@ class ArrayModel(QAbstractTableModel):
         ----------
         value : str
         """
-        dtype = self._data.dtype
+        dtype = self._data2D.dtype
         if dtype.name == "bool":
             try:
                 return bool(float(value))
@@ -459,7 +454,7 @@ class ArrayModel(QAbstractTableModel):
 
     def convert_values(self, values):
         values = np.asarray(values)
-        res = np.empty_like(values, dtype=self._data.dtype)
+        res = np.empty_like(values, dtype=self._data2D.dtype)
         try:
             # TODO: use array/vectorized conversion functions (but watch out
             # for bool)
@@ -513,7 +508,7 @@ class ArrayModel(QAbstractTableModel):
         for i in range(width):
             for j in range(height):
                 pos = left + i, top + j
-                old_value = changes.get(pos, self._data[pos])
+                old_value = changes.get(pos, self._data2D[pos])
                 oldvalues[i, j] = old_value
                 val = newvalues[i, j]
                 if val != old_value:
@@ -582,7 +577,7 @@ class ArrayModel(QAbstractTableModel):
         if not horizontal:
             labels, other = other, labels
         if labels is None:
-            shape = self._data.shape
+            shape = self._data2D.shape
             # prefer a blank cell to one cell named "0"
             if not shape or shape[int(horizontal)] == 1:
                 return to_qvariant()
