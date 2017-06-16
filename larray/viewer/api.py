@@ -67,6 +67,8 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     """
     Opens a new editor window.
 
+    Parameters
+    ----------
     obj : np.ndarray, LArray, Session, dict or str, optional
         Object to visualize. If string, array(s) will be loaded from the file given as argument.
         Defaults to the collection of all local variables where the function was called.
@@ -131,6 +133,8 @@ def view(obj=None, title='', depth=0):
     """
     Opens a new viewer window. Arrays are loaded in readonly mode and their content cannot be modified.
 
+    Parameters
+    ----------
     obj : np.ndarray, LArray, Session, dict or str, optional
         Object to visualize. If string, array(s) will be loaded from the file given as argument.
         Defaults to the collection of all local variables where the function was called.
@@ -158,6 +162,8 @@ def compare(*args, **kwargs):
     """
     Opens a new comparator window, comparing arrays or sessions.
 
+    Parameters
+    ----------
     *args : LArrays or Sessions
         Arrays or sessions to compare.
     title : str, optional
