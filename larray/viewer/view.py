@@ -1310,10 +1310,11 @@ class MappingEditor(QMainWindow):
             action.triggered.connect(self.open_recent_file)
             recent_files_menu.addAction(action)
         self.update_recent_file_actions()
+        recent_files_menu.addSeparator()
+        recent_files_menu.addAction(create_action(self, _('&Clear List'), triggered=self._clear_recent_files))
 
         file_menu.addSeparator()
-        file_menu.addAction(create_action(self, _('&Quit'), shortcut="Ctrl+Q",
-                                          triggered=self.close))
+        file_menu.addAction(create_action(self, _('&Quit'), shortcut="Ctrl+Q", triggered=self.close))
 
         help_menu = menu_bar.addMenu('&Help')
         help_menu.addAction(create_action(self, _('Online documentation'), shortcut="Ctrl+H",
@@ -1640,6 +1641,11 @@ class MappingEditor(QMainWindow):
                     files.remove(filepath)
                 files = [filepath] + files
         settings.setValue("recentFileList", files[:self.MAX_RECENT_FILES])
+        self.update_recent_file_actions()
+
+    def _clear_recent_files(self):
+        settings = QSettings()
+        settings.setValue("recentFileList", [])
         self.update_recent_file_actions()
 
     def update_recent_file_actions(self):
