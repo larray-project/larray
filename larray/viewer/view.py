@@ -646,12 +646,9 @@ def ndigits(value):
 
 
 class ArrayEditorWidget(QWidget):
-    def __init__(self, parent, data, readonly=False,
-                 xlabels=None, ylabels=None, bg_value=None,
-                 bg_gradient=None, minvalue=None, maxvalue=None):
+    def __init__(self, parent, data, readonly=False, bg_value=None, bg_gradient=None, minvalue=None, maxvalue=None):
         QWidget.__init__(self, parent)
-        if np.isscalar(data):
-            readonly = True
+        readonly = np.isscalar(data)
         self.model = ArrayModel(None, readonly=readonly, parent=self,
                                 bg_value=bg_value, bg_gradient=bg_gradient,
                                 minvalue=minvalue, maxvalue=maxvalue)
@@ -686,7 +683,6 @@ class ArrayEditorWidget(QWidget):
         self.set_data(data, bg_value=bg_value, bg_gradient=bg_gradient)
 
     def set_data(self, data, current_filter=None, bg_gradient=None, bg_value=None):
-        self.old_data_shape = None
         if current_filter is None:
             current_filter = {}
         self.current_filter = current_filter
@@ -835,9 +831,6 @@ class ArrayEditorWidget(QWidget):
             la_data.i[la_data.axes.translate_full_key(k)] = v
         # update model data & reset global_changes
         self.set_data(self.la_data, current_filter=self.current_filter)
-        # XXX: shouldn't this be done only in the dialog? (if we continue editing...)
-        if self.old_data_shape is not None:
-            self.data.shape = self.old_data_shape
 
     def reject_changes(self):
         """Reject changes"""
@@ -846,9 +839,6 @@ class ArrayEditorWidget(QWidget):
         self.model.changes.clear()
         self.model.reset_minmax()
         self.model.reset()
-        # XXX: shouldn't this be done only in the dialog? (if we continue editing...)
-        if self.old_data_shape is not None:
-            self.data.shape = self.old_data_shape
 
     @property
     def cell_format(self):
