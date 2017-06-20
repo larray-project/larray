@@ -936,29 +936,25 @@ class ArrayEditorWidget(QWidget):
 
     def map_filtered_to_global(self, k):
         """
-        map local (filtered) 2D key to global ND key
+        map local (filtered) 2D key to global ND key.
+        
+        Parameters
+        ----------
+        k: tuple
+            Positional index (row, column) of the modified data cell.
+            
+        Returns
+        -------
+        tuple
+            Labels associated with the modified element of the non-filtered array.
         """
-        assert isinstance(k, tuple) and len(k) == 2
-
-        # transform local index key to local label key
-        # XXX: why can't we store the filter as index?
-        model = self.model
-        ki, kj = k
-        xlabels = model.xlabels
-        ylabels = model.ylabels
-        xlabel = [xlabels[i][kj] for i in range(1, len(xlabels))]
-        ylabel = [ylabels[j][ki] for j in range(1, len(ylabels))]
-        label_key = tuple(ylabel + xlabel)
-
-        # compute dictionary key out of it
-        data = self.filtered_data
-        axes_ids = list(data.axes.ids) if isinstance(data, la.LArray) else []
-        dkey = dict(zip(axes_ids, label_key))
+        # transform local positional index key to (axis_ids: label) dictionary key.
+        # Contains only displayed axes
+        dkey = self.model._position_to_dict_axes_ids_labels(k)
 
         # add the "scalar" parts of the filter to it (ie the parts of the
         # filter which removed dimensions)
-        dkey.update({k: v for k, v in self.current_filter.items()
-                     if np.isscalar(v)})
+        dkey.update({k: v for k, v in self.current_filter.items() if np.isscalar(v)})
 
         # re-transform it to tuple (to make it hashable/to store it in .changes)
         return tuple(dkey[axis_id] for axis_id in self.la_data.axes.ids)

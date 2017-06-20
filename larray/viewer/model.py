@@ -259,6 +259,8 @@ class ArrayModel(QAbstractTableModel):
                 self.cols_loaded = self.COLS_TO_LOAD
             else:
                 self.cols_loaded = self.total_cols
+        # set LArray data
+        self.la_data = la_data
 
     def reset_minmax(self):
         # this will be awful to get right, because ideally, we should
@@ -295,6 +297,21 @@ class ArrayModel(QAbstractTableModel):
     def _is_label(self, index):
         i, j = self._index_to_position(index)
         return i < 0 or j < 0
+
+    def _position_to_labels(self, position):
+        if isinstance(position, tuple) and len(position) == 2:
+            ki, kj = position
+            xlabel = [self.xlabels[i][kj] for i in range(1, len(self.xlabels))]
+            ylabel = [self.ylabels[j][ki] for j in range(1, len(self.ylabels))]
+            return tuple(ylabel + xlabel)
+        else:
+            QMessageBox.critical(self, "Error", "index must be a tuple of length 2")
+            return tuple()
+
+    def _position_to_dict_axes_ids_labels(self, position):
+        labels = self._position_to_labels(position)
+        axes_ids = list(self.la_data.axes.ids)
+        return dict(zip(axes_ids, labels))
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
