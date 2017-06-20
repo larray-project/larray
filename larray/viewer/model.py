@@ -176,6 +176,7 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
+        self._set_changes()
         self._set_data(data, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
@@ -188,12 +189,17 @@ class ArrayModel(QAbstractTableModel):
         return self._data2D
 
     def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
-        self._set_data(data, changes, bg_gradient, bg_value)
+        self._set_data(data, bg_gradient, bg_value)
+        self._set_changes(changes)
         self.reset()
 
-    def _set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
+    def _set_changes(self, changes=None):
         if changes is None:
             changes = {}
+        assert isinstance(changes, dict)
+        self.changes = changes
+
+    def _set_data(self, data, bg_gradient=None, bg_value=None):
         if data is None:
             data = np.empty((0, 0), dtype=np.int8)
         la_data = la.aslarray(data)
@@ -220,9 +226,6 @@ class ArrayModel(QAbstractTableModel):
             self.color_func = np.real
         self.bg_gradient = bg_gradient
         self.bg_value = bg_value
-
-        assert isinstance(changes, dict)
-        self.changes = changes
 
         # get 2D shape + xlabels + ylabels
         if la_data.ndim == 0:
@@ -312,6 +315,16 @@ class ArrayModel(QAbstractTableModel):
         labels = self._position_to_labels(position)
         axes_ids = list(self.la_data.axes.ids)
         return dict(zip(axes_ids, labels))
+
+    def _dict_axes_ids_labels_to_position(self, dkey):
+        # transform (axis:label) dict key to positional ND key
+        try:
+            index_key = self.la_data._translated_key(dkey)
+        except ValueError:
+            return None
+        # transform positional ND key to positional 2D key
+        strides = np.append(1, np.cumprod(self.la_data.shape[1:-1][::-1]))[::-1]
+        return (index_key[:-1] * strides).sum(), index_key[-1]
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""

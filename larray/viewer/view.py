@@ -698,7 +698,6 @@ class ArrayEditorWidget(QWidget):
             filters_layout.addWidget(QLabel(display_name))
             filters_layout.addWidget(self.create_filter_combo(axis))
         filters_layout.addStretch()
-        self.filtered_data = self.la_data
 
         self._update(self.la_data, bg_gradient=bg_gradient, bg_value=bg_value)
 
@@ -881,18 +880,14 @@ class ArrayEditorWidget(QWidget):
                 cur_filter[axis_id] = axis.labels[indices[0]]
             else:
                 cur_filter[axis_id] = axis.labels[indices]
-        filtered = self.la_data[cur_filter]
-        local_changes = self.get_local_changes(filtered)
-        self.filtered_data = filtered
+        self._update(self.la_data[cur_filter])
+        self.model._set_changes(self.get_local_changes())
 
-        self._update(filtered, local_changes)
-
-    def get_local_changes(self, filtered):
-        # we cannot apply the changes directly to data because it might be a
-        # view
+    def get_local_changes(self):
+        # we cannot apply the changes directly to data because it might be a view
         changes = {}
         for k, v in self.global_changes.items():
-            local_key = self.map_global_to_filtered(k, filtered)
+            local_key = self.map_global_to_filtered(k)
             if local_key is not None:
                 changes[local_key] = v
         return changes
@@ -903,14 +898,23 @@ class ArrayEditorWidget(QWidget):
         for k, v in self.model.changes.items():
             self.global_changes[self.map_filtered_to_global(k)] = v
 
-    def map_global_to_filtered(self, k, filtered):
+    def map_global_to_filtered(self, k):
         """
         map global ND key to local (filtered) 2D key
+        
+        Parameters
+        ----------
+        k: tuple
+            Labels associated with the modified element of the non-filtered array.
+            
+        Returns
+        -------
+        tuple
+            Positional index (row, column) of the modified data cell.
         """
         assert isinstance(k, tuple) and len(k) == self.la_data.ndim
 
-        dkey = {axis_id: axis_key
-                for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
+        dkey = {axis_id: axis_key for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
 
         # transform global dictionary key to "local" (filtered) key by removing
         # the parts of the key which are redundant with the filter
@@ -924,15 +928,8 @@ class ArrayEditorWidget(QWidget):
                 # that key is invalid for/outside the current filter
                 return None
 
-        # transform local label key to local index key
-        try:
-            index_key = filtered._translated_key(dkey)
-        except ValueError:
-            return None
-
-        # transform local index ND key to local index 2D key
-        mult = np.append(1, np.cumprod(filtered.shape[1:-1][::-1]))[::-1]
-        return (index_key[:-1] * mult).sum(), index_key[-1]
+        # transform local dictionary key to local positional 2D key
+        return self.model._dict_axes_ids_labels_to_position(dkey)
 
     def map_filtered_to_global(self, k):
         """
