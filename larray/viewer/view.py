@@ -838,7 +838,7 @@ class ArrayEditorWidget(QWidget):
         """Reject changes"""
         self.global_changes.clear()
         # trigger view update
-        self.model.changes.clear()
+        self.model.changes_displayed_data.clear()
         self.model.reset_minmax()
         self.model.reset()
 

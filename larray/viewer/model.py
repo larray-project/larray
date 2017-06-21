@@ -177,7 +177,7 @@ class ArrayModel(QAbstractTableModel):
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
         self._set_changes()
-        self._set_data(data, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._set_data_to_display(data, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
@@ -189,7 +189,7 @@ class ArrayModel(QAbstractTableModel):
         return self._data2D
 
     def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
-        self._set_data(data, bg_gradient, bg_value)
+        self._set_data_to_display(data, bg_gradient, bg_value)
         self._set_changes(changes)
         self.reset()
 
@@ -197,9 +197,9 @@ class ArrayModel(QAbstractTableModel):
         if changes is None:
             changes = {}
         assert isinstance(changes, dict)
-        self.changes = changes
+        self.changes_displayed_data = changes
 
-    def _set_data(self, data, bg_gradient=None, bg_value=None):
+    def _set_data_to_display(self, data, bg_gradient=None, bg_value=None):
         if data is None:
             data = np.empty((0, 0), dtype=np.int8)
         la_data = la.aslarray(data)
@@ -263,7 +263,7 @@ class ArrayModel(QAbstractTableModel):
             else:
                 self.cols_loaded = self.total_cols
         # set LArray data
-        self.la_data = la_data
+        self.displayed_data = la_data
 
     def reset_minmax(self):
         # this will be awful to get right, because ideally, we should
@@ -313,21 +313,21 @@ class ArrayModel(QAbstractTableModel):
 
     def _position_to_dict_axes_ids_labels(self, position):
         labels = self._position_to_labels(position)
-        axes_ids = list(self.la_data.axes.ids)
+        axes_ids = list(self.displayed_data.axes.ids)
         return dict(zip(axes_ids, labels))
 
     def _dict_axes_ids_labels_to_position(self, dkey):
         # transform (axis:label) dict key to positional ND key
         try:
-            index_key = self.la_data._translated_key(dkey)
+            index_key = self.displayed_data._translated_key(dkey)
         except ValueError:
             return None
         # transform positional ND key to positional 2D key
-        strides = np.append(1, np.cumprod(self.la_data.shape[1:-1][::-1]))[::-1]
+        strides = np.append(1, np.cumprod(self.displayed_data.shape[1:-1][::-1]))[::-1]
         return (index_key[:-1] * strides).sum(), index_key[-1]
 
     def update_global_changes(self, global_changes, global_data, current_filter):
-        for k, v in self.changes.items():
+        for k, v in self.changes_displayed_data.items():
             global_changes[self.map_filtered_to_global(k, global_data, current_filter)] = v
 
     def get_local_changes(self, global_changes, global_data, current_filter):
@@ -444,7 +444,7 @@ class ArrayModel(QAbstractTableModel):
             return str(self.xlabels[i][j])
         if j < 0:
             return str(self.ylabels[j][i])
-        return self.changes.get((i, j), self._data2D[i, j])
+        return self.changes_displayed_data.get((i, j), self._data2D[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
         """Cell content"""
@@ -504,7 +504,7 @@ class ArrayModel(QAbstractTableModel):
         return to_qvariant()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
-        changes = self.changes
+        changes = self.changes_displayed_data
         width, height = self.total_rows, self.total_cols
         if right is None:
             right = width
@@ -597,7 +597,7 @@ class ArrayModel(QAbstractTableModel):
         assert vheight == 1 or vheight == height
 
         # Add change to self.changes
-        changes = self.changes
+        changes = self.changes_displayed_data
         # requires numpy 1.10
         newvalues = np.broadcast_to(values, (width, height))
         oldvalues = np.empty_like(newvalues)
