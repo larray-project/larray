@@ -189,6 +189,7 @@ LArray
 * :ref:`la_sorting`
 * :ref:`la_reshaping`
 * :ref:`la_testing`
+* :ref:`_la_op:`
 * :ref:`la_misc`
 * :ref:`la_to_pandas`
 * :ref:`la_plotting`
@@ -373,6 +374,15 @@ Testing/Searching
    LArray.argmax
    LArray.posargmax
 
+.. _la_op:
+
+Operators
+---------
+
+=================================================== ==============================
+:py:meth:`@ <LArray.__matmul__>`                    Matrix multiplication
+=================================================== ==============================
+
 .. _la_misc:
 
 Miscellaneous
@@ -383,7 +393,6 @@ Miscellaneous
 
    LArray.ratio
    LArray.rationot0
-   LArray.__matmul__
    LArray.divnot0
    LArray.clip
    LArray.shift
