@@ -7275,7 +7275,7 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
     rows : int or Axis
         Rows of the output.
     columns : int or Axis, optional
-        Columns in the output. If None, defaults to rows.
+        Columns of the output. If None, defaults to rows.
     k : int, optional
         Index of the diagonal: 0 (the default) refers to the main diagonal, a
         positive value refers to an upper diagonal, and a negative value to a
@@ -7302,6 +7302,12 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
     sex\\sex    M    F
           M  1.0  0.0
           F  0.0  1.0
+    >>> age = Axis('age=0..2')
+    >>> eye(age, sex)
+    age\\sex    M    F
+          0  1.0  0.0
+          1  0.0  1.0
+          2  0.0  0.0
     >>> eye(3, k=1)
     {0}*\\{1}*    0    1    2
             0  0.0  1.0  0.0
