@@ -649,7 +649,7 @@ class ArrayEditorWidget(QWidget):
     def __init__(self, parent, data, readonly=False, bg_value=None, bg_gradient=None, minvalue=None, maxvalue=None):
         QWidget.__init__(self, parent)
         readonly = np.isscalar(data)
-        self.model = ArrayModel(None, readonly=readonly, parent=self,
+        self.model = ArrayModel(data, readonly=readonly, parent=self,
                                 bg_value=bg_value, bg_gradient=bg_gradient,
                                 minvalue=minvalue, maxvalue=maxvalue)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
@@ -682,13 +682,9 @@ class ArrayEditorWidget(QWidget):
         self.setLayout(layout)
         self.set_data(data, bg_value=bg_value, bg_gradient=bg_gradient)
 
-    def set_data(self, data, current_filter=None, bg_gradient=None, bg_value=None):
-        if current_filter is None:
-            current_filter = {}
-        self.current_filter = current_filter
-        self.global_changes = {}
-        self.la_data = la.aslarray(data)
-        axes = self.la_data.axes
+    def set_data(self, data, bg_gradient=None, bg_value=None):
+        la_data = la.aslarray(data)
+        axes = la_data.axes
         display_names = axes.display_names
 
         filters_layout = self.filters_layout
@@ -699,9 +695,10 @@ class ArrayEditorWidget(QWidget):
             filters_layout.addWidget(self.create_filter_combo(axis))
         filters_layout.addStretch()
 
-        self._update(self.la_data, bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model.set_data(la_data, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._update(la_data)
 
-    def _update(self, la_data, changes=None, bg_gradient=None, bg_value=None):
+    def _update(self, la_data):
         size = la_data.size
         # this will yield a data sample of max 199
         step = (size // 100) if size > 100 else 1
@@ -714,11 +711,7 @@ class ArrayEditorWidget(QWidget):
         # XXX: self.ndecimals vs self.digits
         self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
-        self.data = la_data.data
         self.model.set_format(self.cell_format)
-        if changes is None:
-            changes = {}
-        self.model.set_data(la_data, changes, bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
         self.digits_spinbox.setEnabled(is_number(la_data.dtype))
@@ -817,35 +810,24 @@ class ArrayEditorWidget(QWidget):
                 return ndigits
         return maxdigits
 
-    def update_global_changes(self):
-        self.model.update_global_changes(self.global_changes, self.la_data, self.current_filter)
-
     @property
     def dirty(self):
-        self.update_global_changes()
-        return len(self.global_changes) > 1
+        self.model.update_global_changes()
+        return len(self.model.changes) > 1
 
     def accept_changes(self):
         """Accept changes"""
-        self.update_global_changes()
-        la_data = self.la_data
-        for k, v in self.global_changes.items():
-            la_data.i[la_data.axes.translate_full_key(k)] = v
-        # update model data & reset global_changes
-        self.set_data(self.la_data, current_filter=self.current_filter)
+        la_data = self.model.accept_changes()
+        self._update(la_data)
 
     def reject_changes(self):
         """Reject changes"""
-        self.global_changes.clear()
-        # trigger view update
-        self.model.changes_displayed_data.clear()
-        self.model.reset_minmax()
-        self.model.reset()
+        self.model.reject_changes()
 
     @property
     def cell_format(self):
-        if self.data.dtype.type in (np.str, np.str_, np.bool_, np.bool,
-                                    np.object_):
+        type = self.model.get_data().dtype.type
+        if type in (np.str, np.str_, np.bool_, np.bool, np.object_):
             return '%s'
         else:
             format_letter = 'e' if self.use_scientific else 'f'
@@ -853,7 +835,7 @@ class ArrayEditorWidget(QWidget):
 
     def scientific_changed(self, value):
         self.use_scientific = value
-        self.digits = self.choose_ndecimals(self.data, value)
+        self.digits = self.choose_ndecimals(self.model.get_data(), value)
         self.digits_spinbox.setValue(self.digits)
         self.model.set_format(self.cell_format)
 
@@ -863,29 +845,12 @@ class ArrayEditorWidget(QWidget):
 
     def create_filter_combo(self, axis):
         def filter_changed(checked_items):
-            self.change_filter(axis, checked_items)
+            filtered = self.model.change_filter(axis, checked_items)
+            self._update(filtered)
         combo = FilterComboBox(self)
         combo.addItems([str(l) for l in axis.labels])
         combo.checkedItemsChanged.connect(filter_changed)
         return combo
-
-    def change_filter(self, axis, indices):
-        # must be done before changing self.current_filter
-        self.update_global_changes()
-        cur_filter = self.current_filter
-        axis_id = self.la_data.axes.axis_id(axis)
-        # if index == 0:
-        if not indices or len(indices) == len(axis.labels):
-            if axis_id in cur_filter:
-                del cur_filter[axis_id]
-        else:
-            if len(indices) == 1:
-                cur_filter[axis_id] = axis.labels[indices[0]]
-            else:
-                cur_filter[axis_id] = axis.labels[indices]
-        self._update(self.la_data[cur_filter])
-        local_changes = self.model.get_local_changes(self.global_changes, self.la_data, self.current_filter)
-        self.model._set_changes(local_changes)
 
 
 class ArrayEditor(QDialog):

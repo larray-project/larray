@@ -176,42 +176,37 @@ class ArrayModel(QAbstractTableModel):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
         # TODO: check that data respects minvalue/maxvalue
-        self._set_changes()
-        self._set_data_to_display(data, bg_gradient=bg_gradient, bg_value=bg_value)
+        self.set_data(data, bg_gradient=bg_gradient, bg_value=bg_value)
 
     def get_format(self):
         """Return current format"""
         # Avoid accessing the private attribute _format from outside
         return self._format
 
-    def get_data(self):
+    def get_data_2D(self):
         """Return data"""
         return self._data2D
 
-    def set_data(self, data, changes=None, bg_gradient=None, bg_value=None):
-        self._set_data_to_display(data, bg_gradient, bg_value)
-        self._set_changes(changes)
-        self.reset()
+    def get_data(self):
+        return self.la_data
 
-    def _set_changes(self, changes=None):
+    def set_data(self, data, changes=None, current_filter=None, bg_gradient=None, bg_value=None):
+        # ------------------- set changes -------------------
         if changes is None:
             changes = {}
         assert isinstance(changes, dict)
-        self.changes_displayed_data = changes
-
-    def _set_data_to_display(self, data, bg_gradient=None, bg_value=None):
+        self.changes = changes
+        self._changes2D = {}
+        # -------------------- set data ---------------------
         if data is None:
             data = np.empty((0, 0), dtype=np.int8)
         la_data = la.aslarray(data)
-
         if la_data.dtype.names is None:
             dtn = la_data.dtype.name
             if dtn not in SUPPORTED_FORMATS and not dtn.startswith('str') \
                     and not dtn.startswith('unicode'):
-                msg = _("%s arrays are currently not supported")
-                QMessageBox.critical(self.dialog, "Error", msg % self._data2D.dtype.name)
+                QMessageBox.critical(self.dialog, "Error", "{} arrays are currently not supported".format(dtn))
                 return
-
         # for complex numbers, shading will be based on absolute value
         # but for all other types it will be the real part
         # TODO: there are a lot more complex dtypes than this. Is there a way to get them all in one shot?
@@ -224,28 +219,47 @@ class ArrayModel(QAbstractTableModel):
             #     return v
             # self.color_func = nop
             self.color_func = np.real
+        self.la_data = la_data
+        # ------------ set bg gradient and value ------------
         self.bg_gradient = bg_gradient
         self.bg_value = bg_value
+        # ------ set current filter and data to display -----
+        if current_filter is None:
+            current_filter = {}
+        assert isinstance(current_filter, dict)
+        self.current_filter = current_filter
+        self._set_labels_and_data_to_display()
+        # ------------------- reset model -------------------
+        self.reset()
 
+    @property
+    def filtered_data(self):
+        return self.la_data[self.current_filter]
+
+    def _set_labels_and_data_to_display(self):
+        la_data = self.filtered_data
+        if np.isscalar(la_data):
+            la_data = la.aslarray(la_data)
+        ndim, shape, axes = la_data.ndim, la_data.shape, la_data.axes
         # get 2D shape + xlabels + ylabels
-        if la_data.ndim == 0:
+        if ndim == 0:
             self.xlabels = [[], []]
             self.ylabels = [[]]
-            new_shape = (1, 1)
-        elif la_data.ndim == 1:
-            self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
+            shape_2D = (1, 1)
+        elif ndim == 1:
+            self.xlabels = [axes.display_names, axes.labels[-1]]
             self.ylabels = [[]]
-            new_shape = (1,) + la_data.shape
+            shape_2D = (1,) + shape
         else:
-            self.xlabels = [la_data.axes.display_names, la_data.axes.labels[-1]]
-            otherlabels = la_data.axes.labels[:-1]
+            self.xlabels = [axes.display_names, axes.labels[-1]]
+            otherlabels = axes.labels[:-1]
             prod = Product(otherlabels)
             self.ylabels = [_LazyNone(len(prod) + 1)] + [_LazyDimLabels(prod, i) for i in range(len(otherlabels))]
-            new_shape = (np.prod(la_data.shape[:-1]), la_data.shape[-1])
+            shape_2D = (np.prod(shape[:-1]), shape[-1])
 
         # set data (reshape to a 2D array if not)
-        self._data2D = la_data.data.reshape(new_shape)
-        self.total_rows, self.total_cols = new_shape
+        self._data2D = la_data.data.reshape(shape_2D)
+        self.total_rows, self.total_cols = shape_2D
         size = self.total_rows * self.total_cols
         self.reset_minmax()
         # Use paging when the total size, number of rows or number of
@@ -262,8 +276,16 @@ class ArrayModel(QAbstractTableModel):
                 self.cols_loaded = self.COLS_TO_LOAD
             else:
                 self.cols_loaded = self.total_cols
-        # set LArray data
-        self.displayed_data = la_data
+        self._set_local_changes()
+
+    def _set_local_changes(self):
+        # we cannot apply the changes directly to data because it might be a view
+        local_changes = {}
+        for k, v in self.changes.items():
+            local_key = self.map_global_to_filtered(k)
+            if local_key is not None:
+                local_changes[local_key] = v
+        self._changes2D = local_changes
 
     def reset_minmax(self):
         # this will be awful to get right, because ideally, we should
@@ -313,33 +335,24 @@ class ArrayModel(QAbstractTableModel):
 
     def _position_to_dict_axes_ids_labels(self, position):
         labels = self._position_to_labels(position)
-        axes_ids = list(self.displayed_data.axes.ids)
+        axes_ids = list(self.filtered_data.axes.ids)
         return dict(zip(axes_ids, labels))
 
     def _dict_axes_ids_labels_to_position(self, dkey):
         # transform (axis:label) dict key to positional ND key
         try:
-            index_key = self.displayed_data._translated_key(dkey)
+            index_key = self.filtered_data._translated_key(dkey)
         except ValueError:
             return None
         # transform positional ND key to positional 2D key
-        strides = np.append(1, np.cumprod(self.displayed_data.shape[1:-1][::-1]))[::-1]
+        strides = np.append(1, np.cumprod(self.filtered_data.shape[1:-1][::-1]))[::-1]
         return (index_key[:-1] * strides).sum(), index_key[-1]
 
-    def update_global_changes(self, global_changes, global_data, current_filter):
-        for k, v in self.changes_displayed_data.items():
-            global_changes[self.map_filtered_to_global(k, global_data, current_filter)] = v
+    def update_global_changes(self):
+        for k, v in self._changes2D.items():
+            self.changes[self.map_filtered_to_global(k)] = v
 
-    def get_local_changes(self, global_changes, global_data, current_filter):
-        # we cannot apply the changes directly to data because it might be a view
-        changes = {}
-        for k, v in global_changes.items():
-            local_key = self.map_global_to_filtered(k, global_data, current_filter)
-            if local_key is not None:
-                changes[local_key] = v
-        return changes
-
-    def map_filtered_to_global(self, k, global_data, current_filter):
+    def map_filtered_to_global(self, k):
         """
         map local (filtered) 2D key to global ND key.
 
@@ -358,11 +371,11 @@ class ArrayModel(QAbstractTableModel):
         dkey = self._position_to_dict_axes_ids_labels(k)
         # add the "scalar" parts of the filter to it (ie the parts of the
         # filter which removed dimensions)
-        dkey.update({k: v for k, v in current_filter.items() if np.isscalar(v)})
+        dkey.update({k: v for k, v in self.current_filter.items() if np.isscalar(v)})
         # re-transform it to tuple (to make it hashable/to store it in .changes)
-        return tuple(dkey[axis_id] for axis_id in global_data.axes.ids)
+        return tuple(dkey[axis_id] for axis_id in self.la_data.axes.ids)
 
-    def map_global_to_filtered(self, k, global_data, current_filter):
+    def map_global_to_filtered(self, k):
         """
         map global ND key to local (filtered) 2D key
 
@@ -376,11 +389,11 @@ class ArrayModel(QAbstractTableModel):
         tuple
             Positional index (row, column) of the modified data cell.
         """
-        assert isinstance(k, tuple) and len(k) == global_data.ndim
-        dkey = {axis_id: axis_key for axis_key, axis_id in zip(k, global_data.axes.ids)}
+        assert isinstance(k, tuple) and len(k) == self.la_data.ndim
+        dkey = {axis_id: axis_key for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
         # transform global dictionary key to "local" (filtered) key by removing
         # the parts of the key which are redundant with the filter
-        for axis_id, axis_filter in current_filter.items():
+        for axis_id, axis_filter in self.current_filter.items():
             axis_key = dkey[axis_id]
             if np.isscalar(axis_filter) and axis_key == axis_filter:
                 del dkey[axis_id]
@@ -391,6 +404,38 @@ class ArrayModel(QAbstractTableModel):
                 return None
         # transform local dictionary key to local positional 2D key
         return self._dict_axes_ids_labels_to_position(dkey)
+
+    def change_filter(self, axis, indices):
+        # must be done before changing self.current_filter
+        self.update_global_changes()
+        cur_filter = self.current_filter
+        axis_id = self.la_data.axes.axis_id(axis)
+        if not indices or len(indices) == len(axis.labels):
+            if axis_id in cur_filter:
+                del cur_filter[axis_id]
+        else:
+            if len(indices) == 1:
+                cur_filter[axis_id] = axis.labels[indices[0]]
+            else:
+                cur_filter[axis_id] = axis.labels[indices]
+        self._set_labels_and_data_to_display()
+        return self.filtered_data
+
+    def accept_changes(self):
+        """Accept changes"""
+        self.update_global_changes()
+        axes = self.la_data.axes
+        for k, v in self.changes.items():
+            self.la_data.i[axes.translate_full_key(k)] = v
+        return self.la_data
+
+    def reject_changes(self):
+        """Reject changes"""
+        self.changes.clear()
+        # trigger view update
+        self._changes2D.clear()
+        self.reset_minmax()
+        self.reset()
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
@@ -444,7 +489,7 @@ class ArrayModel(QAbstractTableModel):
             return str(self.xlabels[i][j])
         if j < 0:
             return str(self.ylabels[j][i])
-        return self.changes_displayed_data.get((i, j), self._data2D[i, j])
+        return self._changes2D.get((i, j), self._data2D[i, j])
 
     def data(self, index, role=Qt.DisplayRole):
         """Cell content"""
@@ -504,7 +549,6 @@ class ArrayModel(QAbstractTableModel):
         return to_qvariant()
 
     def get_values(self, left=0, top=0, right=None, bottom=None):
-        changes = self.changes_displayed_data
         width, height = self.total_rows, self.total_cols
         if right is None:
             right = width
@@ -513,14 +557,15 @@ class ArrayModel(QAbstractTableModel):
         values = self._data2D[left:right, top:bottom].copy()
         # both versions get the same result, but depending on inputs, the
         # speed difference can be large.
-        if values.size < len(changes):
+        changes2D = self._changes2D
+        if values.size < len(changes2D):
             for i in range(left, right):
                 for j in range(top, bottom):
                     pos = i, j
-                    if pos in changes:
-                        values[i - left, j - top] = changes[pos]
+                    if pos in changes2D:
+                        values[i - left, j - top] = changes2D[pos]
         else:
-            for (i, j), value in changes.items():
+            for (i, j), value in changes2D.items():
                 if left <= i < right and top <= j < bottom:
                     values[i - left, j - top] = value
         return values
@@ -597,18 +642,17 @@ class ArrayModel(QAbstractTableModel):
         assert vheight == 1 or vheight == height
 
         # Add change to self.changes
-        changes = self.changes_displayed_data
         # requires numpy 1.10
         newvalues = np.broadcast_to(values, (width, height))
         oldvalues = np.empty_like(newvalues)
         for i in range(width):
             for j in range(height):
                 pos = left + i, top + j
-                old_value = changes.get(pos, self._data2D[pos])
+                old_value = self._changes2D.get(pos, self._data2D[pos])
                 oldvalues[i, j] = old_value
                 val = newvalues[i, j]
                 if val != old_value:
-                    changes[pos] = val
+                    self._changes2D[pos] = val
 
         # Update vmin/vmax if necessary
         if self.vmin is not None and self.vmax is not None:

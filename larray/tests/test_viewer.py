@@ -24,19 +24,19 @@ def model(data):
 def test_create_model():
     # data = None --> empty array with shape (0,0) is generated
     model = ArrayModel()
-    assert model.get_data().shape == (0, 0)
+    assert model.get_data_2D().shape == (0, 0)
 
     # data = scalar
     model = ArrayModel(LArray(5))
-    assert model.get_data().shape == (1, 1)
+    assert model.get_data_2D().shape == (1, 1)
 
     # data = 1D array --> reshaped to 2D array with dim (1, len(data))
     model = ArrayModel(ndtest(5))
-    assert model.get_data().shape == (1, 5)
+    assert model.get_data_2D().shape == (1, 5)
 
     # data = 3D array --> reshaped to 2D array with dim (axis1*axis2, axis3)
     model = ArrayModel(ndtest((5, 5, 5)))
-    assert model.get_data().shape == (5*5, 5)
+    assert model.get_data_2D().shape == (5 * 5, 5)
 
 def test_row_column_count(data, model):
     nb_labels_prod_axes = np.prod(data.shape[:-1])
