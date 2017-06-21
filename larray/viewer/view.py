@@ -817,6 +817,9 @@ class ArrayEditorWidget(QWidget):
                 return ndigits
         return maxdigits
 
+    def update_global_changes(self):
+        self.model.update_global_changes(self.global_changes, self.la_data, self.current_filter)
+
     @property
     def dirty(self):
         self.update_global_changes()
@@ -892,12 +895,6 @@ class ArrayEditorWidget(QWidget):
                 changes[local_key] = v
         return changes
 
-    def update_global_changes(self):
-        # TODO: it would be a better idea to handle the filter in the model,
-        # and only store changes as "global changes".
-        for k, v in self.model.changes.items():
-            self.global_changes[self.map_filtered_to_global(k)] = v
-
     def map_global_to_filtered(self, k):
         """
         map global ND key to local (filtered) 2D key
@@ -930,31 +927,6 @@ class ArrayEditorWidget(QWidget):
 
         # transform local dictionary key to local positional 2D key
         return self.model._dict_axes_ids_labels_to_position(dkey)
-
-    def map_filtered_to_global(self, k):
-        """
-        map local (filtered) 2D key to global ND key.
-        
-        Parameters
-        ----------
-        k: tuple
-            Positional index (row, column) of the modified data cell.
-            
-        Returns
-        -------
-        tuple
-            Labels associated with the modified element of the non-filtered array.
-        """
-        # transform local positional index key to (axis_ids: label) dictionary key.
-        # Contains only displayed axes
-        dkey = self.model._position_to_dict_axes_ids_labels(k)
-
-        # add the "scalar" parts of the filter to it (ie the parts of the
-        # filter which removed dimensions)
-        dkey.update({k: v for k, v in self.current_filter.items() if np.isscalar(v)})
-
-        # re-transform it to tuple (to make it hashable/to store it in .changes)
-        return tuple(dkey[axis_id] for axis_id in self.la_data.axes.ids)
 
 
 class ArrayEditor(QDialog):

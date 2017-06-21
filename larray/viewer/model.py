@@ -326,6 +326,33 @@ class ArrayModel(QAbstractTableModel):
         strides = np.append(1, np.cumprod(self.la_data.shape[1:-1][::-1]))[::-1]
         return (index_key[:-1] * strides).sum(), index_key[-1]
 
+    def update_global_changes(self, global_changes, global_data, current_filter):
+        for k, v in self.changes.items():
+            global_changes[self.map_filtered_to_global(k, global_data, current_filter)] = v
+
+    def map_filtered_to_global(self, k, global_data, current_filter):
+        """
+        map local (filtered) 2D key to global ND key.
+
+        Parameters
+        ----------
+        k: tuple
+            Positional index (row, column) of the modified data cell.
+
+        Returns
+        -------
+        tuple
+            Labels associated with the modified element of the non-filtered array.
+        """
+        # transform local positional index key to (axis_ids: label) dictionary key.
+        # Contains only displayed axes
+        dkey = self._position_to_dict_axes_ids_labels(k)
+        # add the "scalar" parts of the filter to it (ie the parts of the
+        # filter which removed dimensions)
+        dkey.update({k: v for k, v in current_filter.items() if np.isscalar(v)})
+        # re-transform it to tuple (to make it hashable/to store it in .changes)
+        return tuple(dkey[axis_id] for axis_id in global_data.axes.ids)
+
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""
         return len(self.ylabels) - 1 + self.cols_loaded
