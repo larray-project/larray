@@ -330,6 +330,15 @@ class ArrayModel(QAbstractTableModel):
         for k, v in self.changes.items():
             global_changes[self.map_filtered_to_global(k, global_data, current_filter)] = v
 
+    def get_local_changes(self, global_changes, global_data, current_filter):
+        # we cannot apply the changes directly to data because it might be a view
+        changes = {}
+        for k, v in global_changes.items():
+            local_key = self.map_global_to_filtered(k, global_data, current_filter)
+            if local_key is not None:
+                changes[local_key] = v
+        return changes
+
     def map_filtered_to_global(self, k, global_data, current_filter):
         """
         map local (filtered) 2D key to global ND key.
@@ -352,6 +361,36 @@ class ArrayModel(QAbstractTableModel):
         dkey.update({k: v for k, v in current_filter.items() if np.isscalar(v)})
         # re-transform it to tuple (to make it hashable/to store it in .changes)
         return tuple(dkey[axis_id] for axis_id in global_data.axes.ids)
+
+    def map_global_to_filtered(self, k, global_data, current_filter):
+        """
+        map global ND key to local (filtered) 2D key
+
+        Parameters
+        ----------
+        k: tuple
+            Labels associated with the modified element of the non-filtered array.
+
+        Returns
+        -------
+        tuple
+            Positional index (row, column) of the modified data cell.
+        """
+        assert isinstance(k, tuple) and len(k) == global_data.ndim
+        dkey = {axis_id: axis_key for axis_key, axis_id in zip(k, global_data.axes.ids)}
+        # transform global dictionary key to "local" (filtered) key by removing
+        # the parts of the key which are redundant with the filter
+        for axis_id, axis_filter in current_filter.items():
+            axis_key = dkey[axis_id]
+            if np.isscalar(axis_filter) and axis_key == axis_filter:
+                del dkey[axis_id]
+            elif not np.isscalar(axis_filter) and axis_key in axis_filter:
+                pass
+            else:
+                # that key is invalid for/outside the current filter
+                return None
+        # transform local dictionary key to local positional 2D key
+        return self._dict_axes_ids_labels_to_position(dkey)
 
     def columnCount(self, qindex=QModelIndex()):
         """Return array column number"""

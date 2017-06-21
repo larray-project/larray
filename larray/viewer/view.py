@@ -884,49 +884,8 @@ class ArrayEditorWidget(QWidget):
             else:
                 cur_filter[axis_id] = axis.labels[indices]
         self._update(self.la_data[cur_filter])
-        self.model._set_changes(self.get_local_changes())
-
-    def get_local_changes(self):
-        # we cannot apply the changes directly to data because it might be a view
-        changes = {}
-        for k, v in self.global_changes.items():
-            local_key = self.map_global_to_filtered(k)
-            if local_key is not None:
-                changes[local_key] = v
-        return changes
-
-    def map_global_to_filtered(self, k):
-        """
-        map global ND key to local (filtered) 2D key
-        
-        Parameters
-        ----------
-        k: tuple
-            Labels associated with the modified element of the non-filtered array.
-            
-        Returns
-        -------
-        tuple
-            Positional index (row, column) of the modified data cell.
-        """
-        assert isinstance(k, tuple) and len(k) == self.la_data.ndim
-
-        dkey = {axis_id: axis_key for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
-
-        # transform global dictionary key to "local" (filtered) key by removing
-        # the parts of the key which are redundant with the filter
-        for axis_id, axis_filter in self.current_filter.items():
-            axis_key = dkey[axis_id]
-            if np.isscalar(axis_filter) and axis_key == axis_filter:
-                del dkey[axis_id]
-            elif not np.isscalar(axis_filter) and axis_key in axis_filter:
-                pass
-            else:
-                # that key is invalid for/outside the current filter
-                return None
-
-        # transform local dictionary key to local positional 2D key
-        return self.model._dict_axes_ids_labels_to_position(dkey)
+        local_changes = self.model.get_local_changes(self.global_changes, self.la_data, self.current_filter)
+        self.model._set_changes(local_changes)
 
 
 class ArrayEditor(QDialog):
