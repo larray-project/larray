@@ -1317,8 +1317,11 @@ class MappingEditor(QMainWindow):
         file_menu.addAction(create_action(self, _('&Quit'), shortcut="Ctrl+Q", triggered=self.close))
 
         help_menu = menu_bar.addMenu('&Help')
-        help_menu.addAction(create_action(self, _('Online documentation'), shortcut="Ctrl+H",
+        help_menu.addAction(create_action(self, _('Online &Documentation'), shortcut="Ctrl+H",
                                           triggered=self.open_documentation))
+        help_menu.addAction(create_action(self, _('Online &Tutorial'), triggered=self.open_tutorial))
+        help_menu.addAction(create_action(self, _('Online Objects and Functions (API) &Reference'),
+                                          triggered=self.open_api_documentation))
 
     def add_list_item(self, name):
         listitem = QListWidgetItem(self._listwidget)
@@ -1626,6 +1629,12 @@ class MappingEditor(QMainWindow):
 
     def open_documentation(self):
         QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/"))
+
+    def open_tutorial(self):
+        QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/notebooks/LArray_intro.html"))
+
+    def open_api_documentation(self):
+        QDesktopServices.openUrl(QUrl("http://larray.readthedocs.io/en/stable/api.html"))
 
     def set_current_file(self, filepath):
         self.update_recent_files([filepath])
