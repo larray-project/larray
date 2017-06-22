@@ -1,5 +1,19 @@
-Welcome to LArray's documentation!
-==================================
+.. image:: _static/larray-logo.png
+    :align: center
+
+|
+
+N-dimensional labelled arrays
+=============================
+
+.. include:: intro.rst
+
+Documentation
+=============
+
+For answer you don't find in the documentation, use the `mailing list`_.
+
+.. _mailing list: https://groups.google.com/forum/#!forum/larray
 
 Contents:
 

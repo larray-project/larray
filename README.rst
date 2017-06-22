@@ -1,12 +1,28 @@
-LArray
-======
-
-larray provides a Labelled Array class
+LArray: N-dimensional labelled arrays
+=====================================
 
 |build-status| |docs|
 
+.. _start-intro:
 
-.. start-install
+LArray is open source Python library that aims to provide tools for easy exploration and manipulation of
+N-dimensional labelled data structures.
+
+Library Highlights
+------------------
+
+* N-dimensional labelled array objects to store and manipulate multi-dimensional data
+
+* I/O functions for reading and writing arrays in different formats:
+  CSV, Microsoft Excel, HDF5, pickle
+
+* Arrays can be grouped into Session objects and loaded/dumped at once
+
+* User interface with an IPython console for rapid exploration of data
+
+* Compatible with the pandas library: LArray objects can be converted into pandas DataFrame and vice versa.
+
+.. _start-install:
 
 Installation
 ============
@@ -83,19 +99,24 @@ For IO (HDF, Excel)
   provides functions to easily download EUROSTAT files as larray objects.
   Currently limited to TSV files.
 
+.. _start-dependencies-gui:
+
 For Graphical User Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-LArray includes a graphical user interface to
-view and edit arrays.
+LArray includes a graphical user interface to view, edit and compare arrays.
 
 - `pyqt <https://riverbankcomputing.com/software/pyqt/intro>`__ (4 or 5):
-  for using the graphical user interface included in larray.
+  required by `larray-editor` (see below).
 - `pyside <https://wiki.qt.io/PySide>`__:
   alternative to PyQt.
 - `qtpy <https://github.com/spyder-ide/qtpy>`__:
-  required if you install pyqt or pyside.
-  Provides support for PyQt5, PyQt4 and PySide using the PyQt5 layout
+  required by `larray-editor`.
+  Provides support for PyQt5, PyQt4 and PySide using the PyQt5 layout.
+- `larray-editor <https://github.com/larray-project/larray-editor>`__:
+  required to use the graphical user interface associated with larray.
+  It assumes that `qtpy` and `pyqt` or `pyside` are installed.
+  On windows, creates also a menu ``LArray`` in the Windows Start Menu.
 
 For plotting
 ~~~~~~~~~~~~
@@ -103,30 +124,32 @@ For plotting
 - `matplotlib <http://matplotlib.org/>`__:
   required for plotting.
 
+.. _start-documentation:
 
-Update
-------
+Documentation
+=============
 
-If larray has been installed through conda, update
-is done via ::
+The official documentation is hosted on ReadTheDocs at http://larray.readthedocs.io/en/stable/
 
-    conda update larray
+.. _start-get-in-touch:
 
-Be careful if you have installed optional dependencies.
-In that case, you may have to update some of them.
+Get in touch
+============
 
-If larray has been installed through larrayenv,
-you simply must do ::
+- Report bugs, suggest features or view the source code `on GitHub`_.
+- For questions, ideas or general discussion, use the `mailing list`_.
 
-    conda update larrayenv
+.. _on GitHub: http://github.com/liam2/larray
+.. _mailing list: https://groups.google.com/forum/#!forum/larray
 
+.. end-readme-file
 
 .. |build-status| image:: https://travis-ci.org/liam2/larray.svg?branch=master
     :alt: build status
     :scale: 100%
     :target: https://travis-ci.org/liam2/larray
 
-.. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=stable
     :alt: Documentation Status
     :scale: 100%
-    :target: https://larray.readthedocs.io/en/latest/?badge=latest
+    :target: https://larray.readthedocs.io/en/latest/?badge=stable
