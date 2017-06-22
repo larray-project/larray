@@ -11,7 +11,7 @@ N-dimensional labelled arrays
 Documentation
 =============
 
-For answer you don't find in the documentation, use the `mailing list`_.
+For answers you do not find in the documentation, use the `mailing list`_.
 
 .. _mailing list: https://groups.google.com/forum/#!forum/larray
 
@@ -21,6 +21,7 @@ Contents:
    :maxdepth: 2
 
    install
+   getting_started
    tutorial/LArray_intro.rst
    api
 
