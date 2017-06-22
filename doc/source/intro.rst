@@ -1,4 +1,6 @@
-Introduction
-============
+.. include:: ../../README.rst
+   :start-after: start-intro:
+   :end-before: start-install:
 
-LArray provides a labeled array class.
+.. image:: _static/editor.png
+    :align: center
