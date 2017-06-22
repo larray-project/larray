@@ -1,9 +1,13 @@
+.. _start_api:
+
 #############
 API Reference
 #############
 
 .. see larray/__init__.py
 .. currentmodule:: larray
+
+.. _api-axis:
 
 Axis
 ====
@@ -69,6 +73,8 @@ Testing
    Axis.iscompatible
    Axis.equals
 
+.. _api-group:
+
 Group
 =====
 
@@ -110,6 +116,8 @@ LGroup
    LGroup.intersection
    LGroup.difference
 
+.. _api-set:
+
 LSet
 ====
 
@@ -117,6 +125,8 @@ LSet
    :toctree: _generated/
 
    LSet
+
+.. _api-axiscollection:
 
 AxisCollection
 ==============
@@ -175,6 +185,8 @@ Testing
 
    AxisCollection.isaxis
    AxisCollection.check_compatible
+
+.. _api-larray:
 
 LArray
 ======
@@ -431,6 +443,8 @@ Plotting
 
    LArray.plot
 
+.. _api-IO:
+
 Input/Output
 ============
 
@@ -465,6 +479,8 @@ Excel
 
    open_excel
 
+.. _api-misc:
+
 Miscellaneous
 =============
 
@@ -482,6 +498,8 @@ Miscellaneous
    ipfp
    load_example_data
    local_arrays
+
+.. _api-session:
 
 Session
 =======
@@ -550,8 +568,9 @@ Load/Save
    Session.to_hdf
    Session.to_pickle
 
+.. _api-editor:
 
-Viewer
+Editor
 ======
 
 .. autosummary::

@@ -1,5 +1,7 @@
 .. currentmodule:: larray
 
+.. _start_tutorial:
+
 Tutorial
 ========
 
