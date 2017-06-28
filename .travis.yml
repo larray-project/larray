@@ -29,6 +29,7 @@ before_install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - hash -r
+    - conda config --add channels conda-forge
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
 
@@ -47,7 +48,7 @@ install:
     # except scipy and install pandas with --no-deps
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
             numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl
-            xlsxwriter pytest
+            xlsxwriter pytest pytest-qt
     - source activate travisci
 
 script:

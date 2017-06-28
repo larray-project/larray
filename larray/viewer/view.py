@@ -131,13 +131,13 @@ try:
 except ImportError:
     qtconsole_available = False
 
-from larray.viewer.model import (ArrayModel, _, get_font, from_qvariant, to_qvariant, is_float, is_number,
-                                 larray_to_array_and_labels, ndarray_to_array_and_labels)
+from larray.viewer.model import ArrayModel, _, get_font, from_qvariant, to_qvariant, is_float, is_number
 
 from larray.viewer.combo import FilterComboBox, FilterMenu
 import larray as la
 
 PY2 = sys.version[0] == '2'
+
 
 # Spyder compat
 # -------------
@@ -646,15 +646,10 @@ def ndigits(value):
 
 
 class ArrayEditorWidget(QWidget):
-    def __init__(self, parent, data, readonly=False,
-                 xlabels=None, ylabels=None, bg_value=None,
-                 bg_gradient=None, minvalue=None, maxvalue=None):
+    def __init__(self, parent, data, readonly=False, bg_value=None, bg_gradient=None, minvalue=None, maxvalue=None):
         QWidget.__init__(self, parent)
-        if np.isscalar(data):
-            readonly = True
-        if not isinstance(data, (np.ndarray, la.LArray)):
-            data = np.array(data)
-        self.model = ArrayModel(None, readonly=readonly, parent=self,
+        readonly = np.isscalar(data)
+        self.model = ArrayModel(data, readonly=readonly, parent=self,
                                 bg_value=bg_value, bg_gradient=bg_gradient,
                                 minvalue=minvalue, maxvalue=maxvalue)
         self.view = ArrayView(self, self.model, data.dtype, data.shape)
@@ -685,58 +680,29 @@ class ArrayEditorWidget(QWidget):
         layout.addWidget(self.view)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        self.set_data(data, xlabels, ylabels, bg_value=bg_value,
-                      bg_gradient=bg_gradient)
+        self.set_data(data, bg_value=bg_value, bg_gradient=bg_gradient)
 
-    def set_data(self, data, xlabels=None, ylabels=None, current_filter=None,
-                 bg_gradient=None, bg_value=None):
-        self.old_data_shape = None
-        if current_filter is None:
-            current_filter = {}
-        self.current_filter = current_filter
-        self.global_changes = {}
-        if isinstance(data, la.LArray):
-            self.la_data = data
-            axes = data.axes
-            display_names = axes.display_names
-            data, xlabels, ylabels = larray_to_array_and_labels(data)
-        else:
-            self.la_data = None
-            axes = []
-            display_names = []
-            if not isinstance(data, np.ndarray):
-                data = np.asarray(data)
-            if data.ndim == 0:
-                self.old_data_shape = data.shape
-            elif data.ndim == 1:
-                self.old_data_shape = data.shape
-            data, xlabels, ylabels = ndarray_to_array_and_labels(data)
+    def set_data(self, data, bg_gradient=None, bg_value=None):
+        la_data = la.aslarray(data)
+        axes = la_data.axes
+        display_names = axes.display_names
 
         filters_layout = self.filters_layout
         clear_layout(filters_layout)
-        if axes:
-            filters_layout.addWidget(QLabel(_("Filters")))
-            for axis, display_name in zip(axes, display_names):
-                filters_layout.addWidget(QLabel(display_name))
-                filters_layout.addWidget(self.create_filter_combo(axis))
-            filters_layout.addStretch()
-        self.filtered_data = self.la_data
+        filters_layout.addWidget(QLabel(_("Filters")))
+        for axis, display_name in zip(axes, display_names):
+            filters_layout.addWidget(QLabel(display_name))
+            filters_layout.addWidget(self.create_filter_combo(axis))
+        filters_layout.addStretch()
 
-            # if xlabels is not None and len(xlabels) != self.data.shape[1]:
-            #     self.error(_("The 'xlabels' argument length do no match "
-            #                  "array column number"))
-            #     return False
-            # if ylabels is not None and len(ylabels) != self.data.shape[0]:
-            #     self.error(_("The 'ylabels' argument length do no match "
-            #                  "array row number"))
-            #     return False
-        self._set_raw_data(data, xlabels, ylabels, bg_gradient=bg_gradient, bg_value=bg_value)
+        self.model.set_data(la_data, bg_gradient=bg_gradient, bg_value=bg_value)
+        self._update(la_data)
 
-    def _set_raw_data(self, data, xlabels, ylabels, changes=None, bg_gradient=None, bg_value=None):
-        size = data.size
+    def _update(self, la_data):
+        size = la_data.size
         # this will yield a data sample of max 199
         step = (size // 100) if size > 100 else 1
-        data_sample = data.flat[::step]
+        data_sample = la_data.data.flat[::step]
 
         # TODO: refactor so that the expensive format_helper is not called
         # twice (or the values are cached)
@@ -745,17 +711,13 @@ class ArrayEditorWidget(QWidget):
         # XXX: self.ndecimals vs self.digits
         self.digits = self.choose_ndecimals(data_sample, use_scientific)
         self.use_scientific = use_scientific
-        self.data = data
         self.model.set_format(self.cell_format)
-        if changes is None:
-            changes = {}
-        self.model.set_data(data, xlabels, ylabels, changes, bg_gradient=bg_gradient, bg_value=bg_value)
 
         self.digits_spinbox.setValue(self.digits)
-        self.digits_spinbox.setEnabled(is_number(data.dtype))
+        self.digits_spinbox.setEnabled(is_number(la_data.dtype))
 
         self.scientific_checkbox.setChecked(use_scientific)
-        self.scientific_checkbox.setEnabled(is_number(data.dtype))
+        self.scientific_checkbox.setEnabled(is_number(la_data.dtype))
 
         self.bgcolor_checkbox.setChecked(self.model.bgcolor_enabled)
         self.bgcolor_checkbox.setEnabled(self.model.bgcolor_enabled)
@@ -850,36 +812,22 @@ class ArrayEditorWidget(QWidget):
 
     @property
     def dirty(self):
-        self.update_global_changes()
-        return len(self.global_changes) > 1
+        self.model.update_global_changes()
+        return len(self.model.changes) > 1
 
     def accept_changes(self):
         """Accept changes"""
-        self.update_global_changes()
-        la_data = self.la_data
-        for k, v in self.global_changes.items():
-            la_data.i[la_data.axes.translate_full_key(k)] = v
-        # update model data & reset global_changes
-        self.set_data(self.la_data, current_filter=self.current_filter)
-        # XXX: shouldn't this be done only in the dialog? (if we continue editing...)
-        if self.old_data_shape is not None:
-            self.data.shape = self.old_data_shape
+        la_data = self.model.accept_changes()
+        self._update(la_data)
 
     def reject_changes(self):
         """Reject changes"""
-        self.global_changes.clear()
-        # trigger view update
-        self.model.changes.clear()
-        self.model.reset_minmax()
-        self.model.reset()
-        # XXX: shouldn't this be done only in the dialog? (if we continue editing...)
-        if self.old_data_shape is not None:
-            self.data.shape = self.old_data_shape
+        self.model.reject_changes()
 
     @property
     def cell_format(self):
-        if self.data.dtype.type in (np.str, np.str_, np.bool_, np.bool,
-                                    np.object_):
+        type = self.model.get_data().dtype.type
+        if type in (np.str, np.str_, np.bool_, np.bool, np.object_):
             return '%s'
         else:
             format_letter = 'e' if self.use_scientific else 'f'
@@ -887,7 +835,7 @@ class ArrayEditorWidget(QWidget):
 
     def scientific_changed(self, value):
         self.use_scientific = value
-        self.digits = self.choose_ndecimals(self.data, value)
+        self.digits = self.choose_ndecimals(self.model.get_data(), value)
         self.digits_spinbox.setValue(self.digits)
         self.model.set_format(self.cell_format)
 
@@ -897,113 +845,12 @@ class ArrayEditorWidget(QWidget):
 
     def create_filter_combo(self, axis):
         def filter_changed(checked_items):
-            self.change_filter(axis, checked_items)
+            filtered = self.model.change_filter(axis, checked_items)
+            self._update(filtered)
         combo = FilterComboBox(self)
         combo.addItems([str(l) for l in axis.labels])
         combo.checkedItemsChanged.connect(filter_changed)
         return combo
-
-    def change_filter(self, axis, indices):
-        # must be done before changing self.current_filter
-        self.update_global_changes()
-        cur_filter = self.current_filter
-        axis_id = self.la_data.axes.axis_id(axis)
-        # if index == 0:
-        if not indices or len(indices) == len(axis.labels):
-            if axis_id in cur_filter:
-                del cur_filter[axis_id]
-        else:
-            if len(indices) == 1:
-                cur_filter[axis_id] = axis.labels[indices[0]]
-            else:
-                cur_filter[axis_id] = axis.labels[indices]
-        filtered = self.la_data[cur_filter]
-        local_changes = self.get_local_changes(filtered)
-        self.filtered_data = filtered
-        if np.isscalar(filtered):
-            # no need to make the editor readonly as we can still propagate the
-            # .changes back into the original array.
-            data, xlabels, ylabels = np.array([[filtered]]), None, None
-        else:
-            data, xlabels, ylabels = larray_to_array_and_labels(filtered)
-
-        self._set_raw_data(data, xlabels, ylabels, local_changes)
-
-    def get_local_changes(self, filtered):
-        # we cannot apply the changes directly to data because it might be a
-        # view
-        changes = {}
-        for k, v in self.global_changes.items():
-            local_key = self.map_global_to_filtered(k, filtered)
-            if local_key is not None:
-                changes[local_key] = v
-        return changes
-
-    def update_global_changes(self):
-        # TODO: it would be a better idea to handle the filter in the model,
-        # and only store changes as "global changes".
-        for k, v in self.model.changes.items():
-            self.global_changes[self.map_filtered_to_global(k)] = v
-
-    def map_global_to_filtered(self, k, filtered):
-        """
-        map global ND key to local (filtered) 2D key
-        """
-        assert isinstance(k, tuple) and len(k) == self.la_data.ndim
-
-        dkey = {axis_id: axis_key
-                for axis_key, axis_id in zip(k, self.la_data.axes.ids)}
-
-        # transform global dictionary key to "local" (filtered) key by removing
-        # the parts of the key which are redundant with the filter
-        for axis_id, axis_filter in self.current_filter.items():
-            axis_key = dkey[axis_id]
-            if np.isscalar(axis_filter) and axis_key == axis_filter:
-                del dkey[axis_id]
-            elif not np.isscalar(axis_filter) and axis_key in axis_filter:
-                pass
-            else:
-                # that key is invalid for/outside the current filter
-                return None
-
-        # transform local label key to local index key
-        try:
-            index_key = filtered._translated_key(dkey)
-        except ValueError:
-            return None
-
-        # transform local index ND key to local index 2D key
-        mult = np.append(1, np.cumprod(filtered.shape[1:-1][::-1]))[::-1]
-        return (index_key[:-1] * mult).sum(), index_key[-1]
-
-    def map_filtered_to_global(self, k):
-        """
-        map local (filtered) 2D key to global ND key
-        """
-        assert isinstance(k, tuple) and len(k) == 2
-
-        # transform local index key to local label key
-        # XXX: why can't we store the filter as index?
-        model = self.model
-        ki, kj = k
-        xlabels = model.xlabels
-        ylabels = model.ylabels
-        xlabel = [xlabels[i][kj] for i in range(1, len(xlabels))]
-        ylabel = [ylabels[j][ki] for j in range(1, len(ylabels))]
-        label_key = tuple(ylabel + xlabel)
-
-        # compute dictionary key out of it
-        data = self.filtered_data
-        axes_ids = list(data.axes.ids) if isinstance(data, la.LArray) else []
-        dkey = dict(zip(axes_ids, label_key))
-
-        # add the "scalar" parts of the filter to it (ie the parts of the
-        # filter which removed dimensions)
-        dkey.update({k: v for k, v in self.current_filter.items()
-                     if np.isscalar(v)})
-
-        # re-transform it to tuple (to make it hashable/to store it in .changes)
-        return tuple(dkey[axis_id] for axis_id in self.la_data.axes.ids)
 
 
 class ArrayEditor(QDialog):
@@ -1288,7 +1135,7 @@ class MappingEditor(QMainWindow):
             self.kernel.shell.run_cell('from larray import *')
             self.ipython_cell_executed()
         else:
-            self.eval_box.setText('')
+            self.eval_box.setText('None')
             self.line_edit_update()
 
     def setup_menu_bar(self):
