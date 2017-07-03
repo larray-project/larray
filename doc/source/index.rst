@@ -7,7 +7,7 @@ Contents:
    :maxdepth: 2
 
    install
-   notebooks/LArray_intro.ipynb
+   tutorial/LArray_intro.rst
    api
 
 Indices and tables
