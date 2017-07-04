@@ -13,6 +13,8 @@ Miscellaneous improvements
 
 * added icon to display in Windows start menu and editor windows.
 
+* added 'Getting Started' section in documentation.
+
 Fixes
 -----
 
