@@ -253,6 +253,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # Ellipsis and LGroup
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
+        # ambiguous label
+        arr = ndrange("a=l0,l1;b=l1,l2")
+        res = arr[arr.b['l1']]
+        assert_array_equal(res, arr.data[:, 0])
+
         # key with duplicate axes
         with self.assertRaises(ValueError):
             la[age[1, 2], age[3, 4]]
@@ -370,9 +375,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
             la[[1, 2], [999, 4]]
 
         # ambiguous key
-        a = ndrange((sex, sex.rename('sex2')))
-        with self.assertRaisesRegexp(ValueError, "F is ambiguous \(valid in sex, sex2\)"):
-            a['F']
+        arr = ndrange("a=l0,l1;b=l1,l2")
+        with self.assertRaisesRegexp(ValueError, "l1 is ambiguous \(valid in a, b\)"):
+            arr['l1']
+
+        # ambiguous key disambiguated via string
+        res = arr['b[l1]']
+        assert_array_equal(res, arr.data[:, 0])
 
     def test_getitem_positional_group(self):
         raw = self.array
