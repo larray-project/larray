@@ -18,4 +18,5 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed disambiguating an ambiguous key by adding the axis within the string, for example
+  arr['axis_name[ambiguouslabel]'] (closes :issue:`331`).

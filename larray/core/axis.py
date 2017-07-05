@@ -647,7 +647,8 @@ class Axis(ABCAxis):
         if isinstance(key, basestring):
             # try the key as-is to allow getting at ticks with special characters (",", ":", ...)
             try:
-                # avoid matching 0 against False or 0.0, note that Group keys have object dtype and so always pass this test
+                # avoid matching 0 against False or 0.0, note that Group keys have object dtype and so always pass this
+                # test
                 if self._is_key_type_compatible(key):
                     return mapping[key]
             # we must catch TypeError because key might not be hashable (eg slice)
@@ -663,6 +664,10 @@ class Axis(ABCAxis):
             return key.key
 
         if isinstance(key, LGroup):
+            # this can happen when key was passed as a string and converted to an LGroup via _to_key
+            if isinstance(key.axis, basestring) and key.axis != self.name:
+                raise KeyError(key)
+
             # at this point we do not care about the axis nor the name
             key = key.key
 
@@ -1214,6 +1219,7 @@ class AxisCollection(object):
     def __setitem__(self, key, value):
         if isinstance(key, slice):
             assert isinstance(value, (tuple, list, AxisCollection))
+
             def slice_bound(bound):
                 if bound is None or isinstance(bound, int):
                     # out of bounds integer bounds are allowed in slice setitem
@@ -1298,8 +1304,7 @@ class AxisCollection(object):
             return True
         if not isinstance(other, list):
             other = list(other)
-        return len(self._list) == len(other) and \
-               all(a.equals(b) for a, b in zip(self._list, other))
+        return len(self._list) == len(other) and all(a.equals(b) for a, b in zip(self._list, other))
 
     # for python2, we need to define it explicitly
     def __ne__(self, other):
