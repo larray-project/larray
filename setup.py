@@ -14,12 +14,12 @@ AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
 INSTALL_REQUIRES = ['numpy >= 1.10', 'pandas >= 0.13.1']
-TESTS_REQUIRE = ['pytest', 'pytest-qt']
+TESTS_REQUIRE = ['pytest']
 SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
 URL = 'https://github.com/liam2/larray'
-PACKAGE_DATA = {'larray': ['tests/data/*', 'images/*']}
+PACKAGE_DATA = {'larray': ['tests/data/*']}
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
