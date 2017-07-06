@@ -1479,8 +1479,9 @@ class LArray(ABCLArray):
         Parameters
         ----------
         key : scalar or tuple or Group
-            Key along which to sort.
-            Must have exactly one dimension less than ndim.
+            Key along which to sort. Must have exactly one dimension less than ndim.
+        reverse : bool, optional
+            Sort values in descending order. Defaults to False (ascending order).
 
         Returns
         -------
