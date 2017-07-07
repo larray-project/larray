@@ -3,7 +3,7 @@
 
 * installing larray-editor (or larrayenv) from conda environment creates a new menu 'LArray' in the Windows start menu.
   It contains a link to open the documentation, a shortcut to launch the user interface in edition mode
-  and a shortcut to update larrayenv. Closes issue:`281`.
+  and a shortcut to update larrayenv. Closes :issue:`281`.
 
 * implemented array.align(other_array) which makes two arrays compatible with each other (by making all common axes
   compatible). This is done by adding, removing or reordering labels for each common axis according to the join method
