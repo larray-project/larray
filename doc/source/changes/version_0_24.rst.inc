@@ -19,7 +19,7 @@
      a1   2   3
 
 * added new boolean argument 'overwrite' to Session.save, Session.to_hdf, Session.to_excel and Session.to_pickle
-  methods (closes issue:`293`). If overwrite=True and the target file already existed, it is deleted and replaced by a
+  methods (closes :issue:`293`). If overwrite=True and the target file already existed, it is deleted and replaced by a
   new one. This is the new default behavior. If overwrite=False, an existing file is updated (like it was in previous
   larray versions):
 
@@ -70,9 +70,9 @@ Fixes
 
 * fixed title argument of `ndtest` creation function: title was not passed to the returned array.
 
-* fixed create_sequential when arguments initial and inc are array and scalar respectively (closes issue:`288`).
+* fixed create_sequential when arguments initial and inc are array and scalar respectively (closes :issue:`288`).
 
-* fixed auto-completion of attributes of LArray and Group objects (closes issue:`302`).
+* fixed auto-completion of attributes of LArray and Group objects (closes :issue:`302`).
 
 * fixed name of arrays/sessions in compare() not being inferred correctly (closes :issue:`306`).
 
@@ -86,9 +86,9 @@ Fixes
 * fixed some warning messages to point to the correct line in user code.
 
 * fixed crash of Session.save method when it contained 0D arrays. They are now skipped when saving a session (closes
-  issue:`291`).
+  :issue:`291`).
 
 * fixed Session.save and Session.to_excel failing to create new Excel files (it only worked if the file already
-  existed). Closes issue:`313`.
+  existed). Closes :issue:`313`.
 
 * fixed Session.load(file, engine='pandas_excel') : axes were considered as anonymous.
