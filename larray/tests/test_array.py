@@ -2073,7 +2073,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
             res = la / la
         assert_array_nan_equal(res, raw_res)
         assert len(caught_warnings) == 1
-        warn_msg = "invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)"
+        warn_msg = "invalid value (nan) encountered during operation (this is typically caused by a 0 / 0)"
         assert caught_warnings[0].message.args[0] == warn_msg
         assert caught_warnings[0].filename == __file__
 

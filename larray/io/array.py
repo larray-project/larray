@@ -156,7 +156,7 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
     headersep : str or None, optional
         Separator for headers.
     na : scalar, optional
-        Value for NaN (Not A Number). Defaults to NumPy NaN.
+        Value for nan (Not A Number). Defaults to NumPy nan.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
@@ -298,7 +298,7 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         List of columns for the index (ex. [0, 1, 2, 3]).
         Default to [0].
     na : scalar, optional
-        Value for NaN (Not A Number). Defaults to NumPy NaN.
+        Value for nan (Not A Number). Defaults to NumPy nan.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
