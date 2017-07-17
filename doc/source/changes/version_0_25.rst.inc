@@ -84,9 +84,9 @@
     arr1 -> a, b, c
     arr2 -> a, b
 
-  Transpose axes of all arrays
+  Put 'b' axis in front of all arrays
 
-    >>> print_summary(sess.transpose('b', 'a'))
+    >>> print_summary(sess.transpose('b'))
     arr1 -> b, a, c
     arr2 -> b, a
 
