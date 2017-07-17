@@ -72,6 +72,36 @@
      a1   1   1   5
      a2  -4  -5   0
 
+* implemented Session.transpose(axes) to reorder axes of all arrays within a session, ignoring missing axes for each
+  array. Let us first create a test session and a small helper function to display sessions as a short summary.
+
+    >>> arr1 = ndtest((2, 2, 2))
+    >>> arr2 = ndtest((2, 2))
+    >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
+    >>> def print_summary(s):
+    ...     print(s.summary("{name} -> {axes_names}"))
+    >>> print_summary(sess)
+    arr1 -> a, b, c
+    arr2 -> a, b
+
+  Put 'b' axis in front of all arrays
+
+    >>> print_summary(sess.transpose('b'))
+    arr1 -> b, a, c
+    arr2 -> b, a
+
+  Axes missing on an array are ignored ('c' for arr2 in this case)
+
+    >>> print_summary(sess.transpose('c', 'b'))
+    arr1 -> c, b, a
+    arr2 -> b, a
+
+  Use ... to move axes to the end
+
+    >>> print_summary(sess.transpose(..., 'a'))
+    arr1 -> b, c, a
+    arr2 -> b, a
+
 * implemented Axis.align(other_axis) and AxisCollection.align(other_collection) which makes two axes / axis collections
   compatible with each other, see LArray.align above.
 
