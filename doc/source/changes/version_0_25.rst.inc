@@ -116,6 +116,32 @@ Miscellaneous improvements
 
 * added 'Getting Started' section in documentation.
 
+* stack can be used with keyword arguments when labels are "simple strings" (i.e. no integers, no punctuation,
+  no string starting with integers, etc.). This is an attractive alternative but as it only works in the usual case and
+  not in all cases, it is not recommended to use it except in the interactive console.
+
+    >>> arr1 = ones('nat=BE,FO')
+    >>> arr1
+    nat   BE   FO
+         1.0  1.0
+    >>> arr2 = zeros('nat=BE,FO')
+    >>> arr2
+    nat   BE   FO
+         0.0  0.0
+    >>> stack(M=arr1, F=arr2, axis='sex=M,F')
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
+
+  Without passing an explicit order for labels like above (or an axis object), it should only be used on Python 3.6 or
+  later because keyword arguments are NOT ordered on earlier Python versions.
+
+    # use this only on Python 3.6 and later
+    >>> stack(M=arr1, F=arr2, axis='sex')
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
+
 
 Fixes
 -----

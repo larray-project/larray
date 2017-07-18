@@ -7562,7 +7562,7 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
-def stack(arrays, axis=None, title=''):
+def stack(arrays=None, axis=None, title='', **kwargs):
     """
     Combines several arrays along an axis.
 
@@ -7630,10 +7630,37 @@ def stack(arrays, axis=None, title=''):
     nat\\{1}*    0    1
           BE  1.0  0.0
           FO  1.0  0.0
+
+    When labels are "simple" strings (ie no integers, no string starting with integers, etc.), using keyword
+    arguments can be an attractive alternative.
+
+    >>> stack(F=arr2, M=arr1, axis=sex)
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
+
+    Without passing an explicit order for labels (or an axis object like above), it should only be used on Python 3.6
+    or later because keyword arguments are NOT ordered on earlier Python versions.
+
+    >>> # use this only on Python 3.6 and later
+    >>> stack(M=arr1, F=arr2, axis='sex')   # doctest: +SKIP
+    nat\\sex    M    F
+         BE  1.0  0.0
+         FO  1.0  0.0
     """
     if isinstance(axis, str) and '=' in axis:
         axis = Axis(axis)
-    # LArray arrays could be interesting
+    if arrays is None:
+        if not isinstance(axis, Axis) and sys.version_info[:2] < (3, 6):
+            raise TypeError("axis argument should provide label order when using keyword arguments on Python < 3.6")
+        arrays = kwargs.items()
+    elif kwargs:
+        raise TypeError("stack() accept either keyword arguments OR a collection of arrays, not both")
+
+    if isinstance(axis, Axis) and all(isinstance(a, tuple) for a in arrays):
+        assert all(len(a) == 2 for a in arrays)
+        arrays = {k: v for k, v in arrays}
+
     if isinstance(arrays, LArray):
         if axis is None:
             axis = -1
@@ -7649,13 +7676,12 @@ def stack(arrays, axis=None, title=''):
         if all(isinstance(a, tuple) for a in arrays):
             assert all(len(a) == 2 for a in arrays)
             keys = [k for k, v in arrays]
-            assert all(np.isscalar(k) for k in keys)
-            if isinstance(axis, Axis):
-                assert np.array_equal(axis.labels, keys)
-            else:
-                # None or str
-                axis = Axis(keys, axis)
             values = [v for k, v in arrays]
+            assert all(np.isscalar(k) for k in keys)
+            # this case should already be handled
+            assert not isinstance(axis, Axis)
+            # axis should be None or str
+            axis = Axis(keys, axis)
         else:
             values = arrays
             if axis is None or isinstance(axis, basestring):
