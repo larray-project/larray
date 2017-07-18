@@ -102,6 +102,30 @@
     arr1 -> b, c, a
     arr2 -> b, a
 
+* implemented unary operations on Session, which means one can negate all arrays in a Session or take the absolute
+  value of all arrays in a Session without writing an explicit loop for that.
+
+    >>> arr1 = ndtest(2)
+    >>> arr1
+    a  a0  a1
+        0   1
+    >>> arr2 = ndtest(4) - 1
+    >>> arr2
+    a  a0  a1  a2  a3
+       -1   0   1   2
+    >>> sess1 = Session([('arr1', arr1), ('arr2', arr2)])
+    >>> sess2 = -sess1
+    >>> sess2.arr1
+    a  a0  a1
+        0  -1
+    >>> sess2.arr2
+    a  a0  a1  a2  a3
+        1   0  -1  -2
+    >>> sess3 = abs(sess1)
+    >>> sess3.arr2
+    a  a0  a1  a2  a3
+        1   0   1   2
+
 * implemented Axis.align(other_axis) and AxisCollection.align(other_collection) which makes two axes / axis collections
   compatible with each other, see LArray.align above.
 

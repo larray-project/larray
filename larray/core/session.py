@@ -676,6 +676,29 @@ class Session(object):
     __mul__ = _binop('mul')
     __truediv__ = _binop('truediv')
 
+    # element-wise method factory
+    # unary operations are (also) dispatched element-wise to all arrays
+    def _unaryop(opname):
+        opfullname = '__%s__' % opname
+
+        def opmethod(self):
+            with np.errstate(call=_session_float_error_handler):
+                res = []
+                for k, v in self.items():
+                    try:
+                        res_array = getattr(v, opfullname)()
+                    except TypeError:
+                        res_array = np.nan
+                    res.append((k, res_array))
+            return Session(res)
+        opmethod.__name__ = opfullname
+        return opmethod
+
+    __neg__ = _unaryop('neg')
+    __pos__ = _unaryop('pos')
+    __abs__ = _unaryop('abs')
+    __invert__ = _unaryop('invert')
+
     # XXX: use _binop (ie elementwise comparison instead of aggregating
     #      directly?)
     def __eq__(self, other):
