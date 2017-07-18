@@ -548,6 +548,7 @@ Modifying
 
    Session.add
    Session.get
+   Session.apply
    Session.transpose
 
 Filtering/Cleaning
