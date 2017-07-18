@@ -182,7 +182,7 @@ class Session(object):
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
-        Loads array objects from a file.
+        Loads array objects from a file, or several .csv files.
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
         to arbitrary code execution.
@@ -190,7 +190,8 @@ class Session(object):
         Parameters
         ----------
         fname : str
-            Path to the file.
+            This can be either the path to a single file, a path to a directory containing .csv files or a pattern
+            representing several .csv files.
         names : list of str, optional
             List of arrays to load. If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
@@ -198,16 +199,15 @@ class Session(object):
             Load using `engine`. Defaults to 'auto' (use default engine for
             the format guessed from the file extension).
         display : bool, optional
-            whether or not to display which file is being worked on. Defaults
-            to False.
+            Whether or not to display which file is being worked on. Defaults to False.
 
         Examples
         --------
         In one module
 
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))  # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)]) # doctest: +SKIP
-        >>> s.save('input.h5')  # doctest: +SKIP
+        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
+        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> s.save('input.h5')                                             # doctest: +SKIP
 
         In another module
 
@@ -216,6 +216,15 @@ class Session(object):
         >>> arr1, arr2, arr3 = s['arr1', 'arr2', 'arr3']  # doctest: +SKIP
         >>> # only if you know the order of arrays stored in session
         >>> arr1, arr2, arr3 = s.values()                 # doctest: +SKIP
+
+        Using .csv files (assuming the same session as above)
+
+        >>> s.save('data')                                # doctest: +SKIP
+        >>> s = Session()                                 # doctest: +SKIP
+        >>> # load all .csv files starting with "output" in the data directory
+        >>> s.load('data')                                # doctest: +SKIP
+        >>> # or equivalently in this case
+        >>> s.load('data/arr*.csv')                       # doctest: +SKIP
         """
         if display:
             print("opening", fname)
