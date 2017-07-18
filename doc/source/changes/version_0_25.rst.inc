@@ -132,6 +132,62 @@
     a  a0  a1  a2  a3
         1   0   1   2
 
+* implemented stacking sessions using stack().
+
+  Let us first create two test sessions. For example suppose we have a session storing the results of a baseline
+  simulation:
+
+    >>> arr1 = ndtest(2)
+    >>> arr1
+    a  a0  a1
+        0   1
+    >>> arr2 = ndtest(3)
+    >>> arr2
+    a  a0  a1  a2
+        0   1   2
+    >>> baseline = Session([('arr1', arr1), ('arr2', arr2)])
+
+  and another session with a variant (here we simply multiply by 2 each array)
+
+    >>> arr1variant = arr1 * 2
+    >>> arr2variant = 2 - arr2 / 2
+    >>> arr2variant
+    a   a0   a1   a2
+       2.0  1.5  1.0
+    >>> variant = Session([('arr1', arr1variant), ('arr2', arr2variant)])
+
+  then we stack them together
+
+    >>> stacked = stack([('baseline', baseline), ('variant', variant)], 'sessions')
+    >>> stacked
+    Session(arr1, arr2)
+    >>> stacked.arr1
+    a\sessions  baseline  variant
+            a0         0        0
+            a1         1        2
+    >>> stacked.arr2
+    a\sessions  baseline  variant
+            a0       0.0      2.0
+            a1       1.0      1.5
+            a2       2.0      1.0
+
+  Combined with the fact we can compute some very simple expressions on sessions, this can be extremely useful to
+  quickly compare all arrays of several sessions (e.g. simulation variants):
+
+    >>> diff = variant - baseline
+    >>> stacked = stack([('baseline', baseline),
+                         ('variant', variant),
+                         ('diff', diff),
+                         ('abs diff', abs(diff)),
+                         ('rel diff', diff / baseline)], 'sessions')
+    >>> stacked
+    Session(arr1, arr2)
+    >>> stacked.arr2
+    a\sessions  baseline  variant  diff  abs diff  rel diff
+            a0       0.0      2.0   2.0       2.0       inf
+            a1       1.0      1.5   0.5       0.5       0.5
+            a2       2.0      1.0  -1.0       1.0      -0.5
+
 * implemented Axis.align(other_axis) and AxisCollection.align(other_collection) which makes two axes / axis collections
   compatible with each other, see LArray.align above.
 
