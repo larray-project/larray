@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+from glob import glob
 from collections import OrderedDict
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
@@ -207,28 +208,43 @@ class XLWingsHandler(FileHandler):
 
 
 class PandasCSVHandler(FileHandler):
+    def __init__(self, fname):
+        super(PandasCSVHandler, self).__init__(fname)
+        if fname is None:
+            self.pattern = None
+            self.directory = None
+        elif '.csv' in fname or '*' in fname or '?' in fname:
+            self.pattern = fname
+            self.directory = os.path.dirname(fname)
+        else:
+            # assume fname is a directory.
+            # Not testing for os.path.isdir(fname) here because when writing, the directory might not exist.
+            self.pattern = os.path.join(fname, '*.csv')
+            self.directory = fname
+
     def _open_for_read(self):
-        pass
+        if self.directory and not os.path.isdir(self.directory):
+            raise ValueError("Directory '{}' does not exist".format(self.directory))
 
     def _open_for_write(self):
-        if self.fname is not None:
+        if self.directory is not None:
             try:
-                os.makedirs(self.fname)
+                os.makedirs(self.directory)
             except OSError:
-                if not os.path.isdir(self.fname):
-                    raise ValueError("Path {} must represent a directory".format(self.fname))
+                if not os.path.isdir(self.directory):
+                    raise ValueError("Path {} must represent a directory".format(self.directory))
 
     def list(self):
+        fnames = glob(self.pattern) if self.pattern is not None else []
+        # drop directory
+        fnames = [os.path.basename(fname) for fname in fnames]
         # strip extension from files
-        # TODO: also support fname pattern, eg. "dump_*.csv" (using glob)
-        if self.fname is not None:
-            return sorted([os.path.splitext(fname)[0] for fname in os.listdir(self.fname) if '.csv' in fname])
-        else:
-            return []
+        # XXX: unsure we should use sorted here
+        return sorted([os.path.splitext(fname)[0] for fname in fnames])
 
     def _to_filepath(self, key):
-        if self.fname is not None:
-            return os.path.join(self.fname, '{}.csv'.format(key))
+        if self.directory is not None:
+            return os.path.join(self.directory, '{}.csv'.format(key))
         else:
             return key
 

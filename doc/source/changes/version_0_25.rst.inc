@@ -303,6 +303,13 @@ Miscellaneous improvements
 * implemented Session.to_globals(inplace=True) which will update the content of existing arrays instead of creating new
   variables and overwriting them. This ensures the arrays have the same axes in the session than the existing variables.
 
+* added the ability to provide a pattern when loading several .csv files as a session. Among others, patterns can use *
+  to match any number of characters and ? to match any single character.
+
+  >>> s = Session()
+  >>> # load all .csv files starting with "output" in the data directory
+  >>> s.load('data/output*.csv')
+
 * stack can be used with keyword arguments when labels are "simple strings" (i.e. no integers, no punctuation,
   no string starting with integers, etc.). This is an attractive alternative but as it only works in the usual case and
   not in all cases, it is not recommended to use it except in the interactive console.
