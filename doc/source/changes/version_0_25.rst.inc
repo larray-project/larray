@@ -142,6 +142,10 @@ Miscellaneous improvements
          BE  1.0  0.0
          FO  1.0  0.0
 
+* binary operations between session now ignore type errors. For example, if you are comparing two sessions with many
+  arrays by computing the difference between them but a few arrays contain strings, the whole operation will not fail,
+  the concerned arrays will be assigned a nan instead.
+
 
 Fixes
 -----

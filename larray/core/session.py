@@ -666,7 +666,11 @@ class Session(object):
                 for name in all_keys:
                     self_array = self.get(name, np.nan)
                     other_array = other.get(name, np.nan)
-                    res.append((name, getattr(self_array, opfullname)(other_array)))
+                    try:
+                        res_array = getattr(self_array, opfullname)(other_array)
+                    except TypeError:
+                        res_array = np.nan
+                    res.append((name, res_array))
             return Session(res)
         opmethod.__name__ = opfullname
         return opmethod
