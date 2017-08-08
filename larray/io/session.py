@@ -78,9 +78,15 @@ class FileHandler(object):
         ----------
         keys : list of str
             List of arrays' names.
-        kwargs :
-            * display: a small message is displayed to tell when
-              an array is started to be read and when it's done.
+        *args : any
+            Any other argument is passed through to the underlying read function.
+        display : bool, optional
+            Whether or not the function should display a message when starting and ending to load each array.
+            Defaults to False.
+        ignore_exceptions : bool, optional
+            Whether or not an exception should stop the function or be ignored. Defaults to False.
+        **kwargs : any
+            Any other keyword argument is passed through to the underlying read function.
 
         Returns
         -------
@@ -88,6 +94,7 @@ class FileHandler(object):
             Dictionary containing the loaded arrays.
         """
         display = kwargs.pop('display', False)
+        ignore_exceptions = kwargs.pop('ignore_exceptions', False)
         self._open_for_read()
         res = OrderedDict()
         if keys is None:
@@ -95,7 +102,11 @@ class FileHandler(object):
         for key in keys:
             if display:
                 print("loading", key, "...", end=' ')
-            res[key] = self._read_array(key, *args, **kwargs)
+            try:
+                res[key] = self._read_array(key, *args, **kwargs)
+            except Exception:
+                if not ignore_exceptions:
+                    raise
             if display:
                 print("done")
         self.close()
