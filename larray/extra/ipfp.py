@@ -17,6 +17,23 @@ def f2str(f, threshold=2):
     """Return string representation of floating point number f. Use scientific
     notation if f would have more than threshold decimal digits, otherwise
     use threshold as precision.
+
+    Parameters
+    ----------
+    f : float
+        Number to represent.
+    threshold : int, optional
+        Precision (number of decimal digits displayed). If the number needs more digits, scientific notation will be
+        used.
+
+    Examples
+    --------
+    >>> f2str(55.1)
+    '55.10'
+    >>> f2str(1.234)
+    '1.23'
+    >>> f2str(0.002)
+    '2.00e-03'
     """
     kind = "e" if f and math.log10(1 / abs(f)) > threshold else "f"
     return "{:.{}{}}".format(f, threshold, kind)
