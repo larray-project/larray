@@ -1386,14 +1386,14 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> age = Axis(range(20), 'age')
-        >>> sex = Axis('sex=M,F')
-        >>> col = AxisCollection([age, sex])
-        >>> col.isaxis(age)
+        >>> a = Axis('a=a0,a1')
+        >>> b = Axis('b=b0,b1')
+        >>> col = AxisCollection([a, b])
+        >>> col.isaxis(a)
         True
-        >>> col.isaxis('sex')
+        >>> col.isaxis('b')
         True
-        >>> col.isaxis('city')
+        >>> col.isaxis('c')
         False
         """
         # this is tricky. 0 and 1 can be both axes indices and axes ticks.
