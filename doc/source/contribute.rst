@@ -77,8 +77,8 @@ We use Numpy conventions for docstrings. Here is a template: ::
           Description of arg2.
 
           * value1 -- description of value1 (default2)
-          * value1 -- description of value2
-          * value1 -- description of value3
+          * value2 -- description of value2
+          * value3 -- description of value3
       arg3 : type3 or type3bis, optional
           Description of arg3. Default is default3.
 
