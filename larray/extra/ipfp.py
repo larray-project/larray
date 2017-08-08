@@ -30,7 +30,7 @@ def warn_or_raise(what, msg):
         print("WARNING: {}".format(msg))
 
 
-def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
+def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10,
          nzvzs='raise', no_convergence='raise', display_progress=False):
     """Apply Iterative Proportional Fitting Procedure (also known as
     bi-proportional fitting in statistics, RAS algorithm in economics) to array
@@ -39,25 +39,27 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     Parameters
     ----------
     target_sums : tuple/list of array-like
-        target sums to achieve. First element must be the sum to achieve
+        Target sums to achieve. First element must be the sum to achieve
         along axis 0, the second the sum along axis 1, ...
     a : array-like, optional
-        starting values to fit, if not given starts with an array filled
+        Starting values to fit, if not given starts with an array filled
         with 1.
+    axes : list/tuple of axes, optional
+        Axes on which the fitting procedure should be applied. Defaults to all axes.
     maxiter : int, optional
-        maximum number of iteration, defaults to 1000.
+        Maximum number of iteration, defaults to 1000.
     threshold : float, optional
-        threshold below which the result is deemed acceptable, defaults to 0.5.
+        Threshold below which the result is deemed acceptable, defaults to 0.5.
     stepstoabort : int, optional
-        number of consecutive steps with no improvement after which to abort.
+        Number of consecutive steps with no improvement after which to abort.
         Defaults to 10.
     nzvzs : 'fix', 'warn' or 'raise', optional
-        behavior when detecting non zero values where the sum is zero
+        Behavior when detecting non zero values where the sum is zero
         'fix': set to zero (silently)
         'warn': set to zero and print a warning
         'raise': raise an exception (default)
     no_convergence : 'ignore', 'warn' or 'raise, optional
-        behavior when the algorithm does not seem to converge. This
+        Behavior when the algorithm does not seem to converge. This
         condition is triggered both when the maximum number of iteration is
         reached or when the maximum absolute difference between the target and
         the current sums does not improve for `stepstoabort` iterations.
@@ -65,8 +67,8 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         'warn': return values computed up to that point and print a warning
         'raise': raise an exception (default)
     display_progress : False, True or 'condensed', optional
-        whether or not to display progress. Defaults to False.
-        if 'condensed' will display progress using a denser template (using one
+        Whether or not to display progress. Defaults to False.
+        If 'condensed' will display progress using a denser template (using one
         line per iteration).
 
     Returns
@@ -105,14 +107,27 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
     target_sums = [aslarray(ts) for ts in target_sums]
 
     n = len(target_sums)
-    axes_names = ['axis%d' % i for i in range(n)]
-    new_target_sums = []
-    for i, ts in enumerate(target_sums):
-        ts_axes_names = axes_names[:i] + axes_names[i+1:]
-        new_ts = ts.rename({axis: axis.name if axis.name is not None else name
-                            for axis, name in zip(ts.axes, ts_axes_names)})
-        new_target_sums.append(new_ts)
-    target_sums = new_target_sums
+
+    if axes is None:
+        axes = list(range(n))
+
+    def has_anonymous_axes(a):
+        return any(axis.name is None for axis in a.axes)
+
+    if any(has_anonymous_axes(ts) for ts in target_sums):
+        if any(not isinstance(axis, int) for axis in axes):
+            raise ValueError("ipfp does not support target sums with anonymous axes when using the axes argument with"
+                             "non-integer (positional) axis references")
+
+        names_for_missing_axes = ['axis%d' % i for i in axes]
+        new_target_sums = []
+        for i, target_sum in zip(axes, target_sums):
+            ts_axes_names = names_for_missing_axes[:i] + names_for_missing_axes[i + 1:]
+            new_ts = target_sum.rename({axis: name
+                                        for axis, name in zip(target_sum.axes, ts_axes_names)
+                                        if axis.name is None})
+            new_target_sums.append(new_ts)
+        target_sums = new_target_sums
 
     if a is None:
         # reconstruct all axes from target_sums axes
@@ -132,8 +147,9 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         all_axes = first_axis + other_axes
         a = ones(all_axes, dtype=np.float64)
     else:
-        # TODO: this should be a builtin op
-        if isinstance(a, LArray):
+        # TODO: only make a copy if there are actually any bad values, but I am unsure we should make a copy at all.
+        # Either way, this should be documented.
+        if nzvzs in {'warn', 'fix'} and isinstance(a, LArray):
             a = a.copy()
         else:
             a = aslarray(a)
@@ -141,22 +157,23 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         a = a.rename({i: name if name is not None else 'axis%d' % i
                       for i, name in enumerate(a.axes.names)})
 
+    axes = a.axes[axes]
+
     # this test should only ever fail if the user passed larray for a and target sums
-    for i, axis_target in enumerate(target_sums):
-        expected_axes = a.axes - i
-        if axis_target.axes != expected_axes:
-            raise ValueError("axes of target sum along axis {} ({}) do not match corresponding array "
+    for axis, axis_target_sum in zip(axes, target_sums):
+        expected_axes = a.axes - axis
+        if axis_target_sum.axes != expected_axes:
+            raise ValueError("axes of target sum along {} (axis {}) do not match corresponding array "
                              "axes: got {} but expected {}. Are the target sums in the correct order?"
-                             .format(i, a.axes[i].name, axis_target.axes, expected_axes))
+                             .format(axis.name, a.axes.index(axis), axis_target_sum.axes, expected_axes))
 
     axis0_total = target_sums[0].sum()
-    for i, axis_target in enumerate(target_sums[1:], start=1):
-        axis_total = axis_target.sum()
+    for axis, axis_target_sum in zip(axes[1:], target_sums[1:]):
+        axis_total = axis_target_sum.sum()
         if str(axis_total) != str(axis0_total):
-            raise ValueError("target sum along %s (axis %d) is different "
-                             "than target sum along %s (axis %d): %s vs %s"
-                             % (a.axes[i], i,
-                                a.axes[0], 0,
+            raise ValueError("target sum along %s (axis %d) is different than target sum along %s (axis %d): %s vs %s"
+                             % (axis, a.axes.index(axis),
+                                axes[0], a.axes.index(axes[0]),
                                 axis_total, axis0_total))
 
     negative = a < 0
@@ -164,42 +181,59 @@ def ipfp(target_sums, a=None, maxiter=1000, threshold=0.5, stepstoabort=10,
         raise ValueError("negative value(s) found:\n%s"
                          % badvalues(a, negative))
 
-    for dim, axis_target in enumerate(target_sums):
-        axis_sum = a.sum(axis=dim)
-        bad = (axis_sum == 0) & (axis_target != 0)
+    for axis, axis_target_sum in zip(axes, target_sums):
+        axis_idx = a.axes.index(axis)
+        axis_sum = a.sum(axis)
+        bad = (axis_sum == 0) & (axis_target_sum != 0)
         if any(bad):
-            raise ValueError("found all zero values sum along %s (%d) but non "
+            raise ValueError("found all zero values sum along %s (axis %d) but non "
                              "zero target sum:\n%s"
-                             % (a.axes[dim].name, dim,
-                                badvalues(axis_target, bad)))
+                             % (axis.name, axis_idx, badvalues(axis_target_sum, bad)))
 
-        bad = (axis_sum != 0) & (axis_target == 0)
+        bad = (axis_sum != 0) & (axis_target_sum == 0)
         if any(bad):
             if nzvzs in {'warn', 'raise'}:
-                msg = "found non zero values sum along {} ({}) but zero " \
-                      "target sum".format(a.axes[dim].name, dim)
+                msg = "found Non Zero Values but Zero target Sum (nzvzs) along {} (axis {})".format(axis.name, axis_idx)
                 if nzvzs == 'raise':
-                    raise ValueError("{}:\n{}"
+                    raise ValueError("{}, use nzvzs='warn' or 'fix' to set them to zero automatically:\n{}"
                                      .format(msg, badvalues(axis_sum, bad)))
                 else:
                     print("WARNING: {}, setting them to zero:\n{}"
                           .format(msg, badvalues(axis_sum, bad)))
+
             a[bad] = 0
             # verify we did fix the problem
-            assert not np.any((a.sum(axis=dim) != 0) & (axis_target == 0))
+            assert not any((a.sum(axis) != 0) & (axis_target_sum == 0))
 
     r = a
     lastdiffs = deque([float('nan')], maxlen=stepstoabort)
+
+    # Here is the nice version of the algorithm
+
+    # for i in range(maxiter):
+    #     startr = r
+    #     for axis, axis_target in zip(axes, target_sums):
+    #         r = r * axis_target.divnot0(r.sum(axis))
+    #     max_sum_diff = max(abs(r.sum(axis) - axis_target).max()
+    #                        for axis, axis_target in zip(axes, target_sums))
+    #     step_sum_improvement = ...
+
+    # Here is the ugly optimized version which avoids computing the sum for the first axis twice per iteration
+    # (saves ~10-15% running time).
+    axis0_sum = r.sum(axes[0])
     for i in range(maxiter):
-        startr = r.copy()
-        for dim, axis_target in enumerate(target_sums):
-            axis_sum = r.sum(axis=dim)
-            factor = axis_target.divnot0(axis_sum)
-            r *= factor
-        stepcelldiff = abs(r - startr).max()
-        max_sum_diff = max(abs(r.sum(axis=dim) - axis_target).max()
-                         for dim, axis_target in enumerate(target_sums))
+        startr = r
+        r = r * target_sums[0].divnot0(axis0_sum)
+        for axis, axis_target in zip(axes[1:], target_sums[1:]):
+            r = r * axis_target.divnot0(r.sum(axis))
+
+        axes_sum = [r.sum(axis) for axis in axes]
+        max_sum_diff = max(abs(axis_sum - axis_target).max()
+                           for axis_sum, axis_target in zip(axes_sum, target_sums))
+        axis0_sum = axes_sum[0]
+
         step_sum_improvement = lastdiffs[-1] - max_sum_diff
+        stepcelldiff = abs(r - startr).max()
 
         if display_progress:
             if display_progress == "condensed":
