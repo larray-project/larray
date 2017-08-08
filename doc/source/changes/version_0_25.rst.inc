@@ -142,8 +142,8 @@ Miscellaneous improvements
 
 * added 'Getting Started' section in documentation.
 
-* implemented axes argument to ipfp to specify on which axes the fitting procedure should be applied. For
-  example, let us assume you have a 3D array, such as:
+* implemented axes argument to ipfp to specify on which axes the fitting procedure should be applied (closes
+  :issue:`185`). For example, let us assume you have a 3D array, such as:
 
     >>> initial = ndrange('a=a0..a9;b=b0..b9;year=2000..2016')
 
