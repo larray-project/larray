@@ -340,6 +340,10 @@ Miscellaneous improvements
   arrays by computing the difference between them but a few arrays contain strings, the whole operation will not fail,
   the concerned arrays will be assigned a nan instead.
 
+* added optional argument `ignore_exceptions` to Session.load to ignore exceptions during load. This is mostly useful
+  when trying to load many .csv files in a Session and some of them have an invalid format but you want to load the
+  others.
+
 
 Fixes
 -----
