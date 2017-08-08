@@ -77,7 +77,8 @@
      a2  -4  -5   0
 
 * implemented Session.transpose(axes) to reorder axes of all arrays within a session, ignoring missing axes for each
-  array. Let us first create a test session and a small helper function to display sessions as a short summary.
+  array. For example, let us first create a test session and a small helper function to display sessions as a short
+  summary.
 
     >>> arr1 = ndtest((2, 2, 2))
     >>> arr2 = ndtest((2, 2))
@@ -88,7 +89,7 @@
     arr1 -> a, b, c
     arr2 -> a, b
 
-  Put 'b' axis in front of all arrays
+  Put the 'b' axis in front of all arrays
 
     >>> print_summary(sess.transpose('b'))
     arr1 -> b, a, c
@@ -137,12 +138,35 @@
 Miscellaneous improvements
 --------------------------
 
-* implemented Session.to_globals(inplace=True) which will update the content of existing arrays instead of creating new
-  variables and overwriting them. This ensures the arrays have the same axes in the session than the existing variables.
-
 * added icon to display in Windows start menu and editor windows.
 
 * added 'Getting Started' section in documentation.
+
+* implemented axes argument to ipfp to specify on which axes the fitting procedure should be applied. For
+  example, let us assume you have a 3D array, such as:
+
+    >>> initial = ndrange('a=a0..a9;b=b0..b9;year=2000..2016')
+
+  and you want to apply a 2D fitting procedure for each value of the year axis. Previously, you had to loop on that
+  year axis explicitly and call ipfp within the loop, like:
+
+    >>> result = zeros(initial.axes)
+    >>> for year in initial.year:
+    ...     current = initial[year]
+    ...     # assume you have some targets for each year
+    ...     current_targets = [current.sum(x.a) + 1, current.sum(x.b) + 1]
+    ...     result[year] = ipfp(current_targets, current)
+
+  Now you can apply the procedure on all years at once, by telling you want to do the fitting procedure on the other
+  axes. This is a bit shorter to type, but this is also *much* faster.
+
+    >>> all_targets = [initial.sum(x.a) + 1, initial.sum(x.b) + 1]
+    >>> result = ipfp(all_targets, initial, axes=(x.a, x.b))
+
+* made ipfp 10 to 20% faster.
+
+* implemented Session.to_globals(inplace=True) which will update the content of existing arrays instead of creating new
+  variables and overwriting them. This ensures the arrays have the same axes in the session than the existing variables.
 
 * stack can be used with keyword arguments when labels are "simple strings" (i.e. no integers, no punctuation,
   no string starting with integers, etc.). This is an attractive alternative but as it only works in the usual case and
