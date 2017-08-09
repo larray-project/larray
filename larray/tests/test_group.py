@@ -8,6 +8,7 @@ import numpy as np
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
 from larray import Axis, LGroup, LSet
 
+
 class TestLGroup(TestCase):
     def setUp(self):
         self.age = Axis('age=0..10')
@@ -103,6 +104,14 @@ class TestLGroup(TestCase):
         self.assertEqual(repr(self.slice_none_wh_named_axis), "lipro[:]")
         self.assertEqual(repr(self.slice_none_wh_anonymous_axis),
                          "LGroup(slice(None, None, None), axis=Axis([0, 1, 2], None))")
+
+    def test_to_int(self):
+        a = Axis(['42'], 'a')
+        self.assertEqual(int(a['42']), 42)
+
+    def test_to_float(self):
+        a = Axis(['42'], 'a')
+        self.assertEqual(float(a['42']), 42.0)
 
 
 class TestLSet(TestCase):
@@ -230,6 +239,14 @@ class TestPGroup(TestCase):
         self.assertEqual(repr(self.last_value), "code.i[-1]")
         self.assertEqual(repr(self.list), "code.i[0, 1, -2, -1]")
         self.assertEqual(repr(self.tuple), "code.i[0, 1, -2, -1]")
+
+    def test_to_int(self):
+        a = Axis(['42'], 'a')
+        self.assertEqual(int(a.i[0]), 42)
+
+    def test_to_float(self):
+        a = Axis(['42'], 'a')
+        self.assertEqual(float(a.i[0]), 42.0)
 
 
 if __name__ == "__main__":

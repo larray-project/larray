@@ -1136,10 +1136,12 @@ class Group(object):
         return self.eval().__index__()
 
     def __int__(self):
-        return self.eval().__int__()
+        # 'str' objects have no '__int__' attribute, so this is better than calling __int__ explicitly
+        return int(self.eval())
 
     def __float__(self):
-        return self.eval().__float__()
+        # 'str' objects have no '__float__' attribute, so this is better than calling __float__ explicitly
+        return float(self.eval())
 
     def __array__(self, dtype=None):
         return np.asarray(self.eval(), dtype=dtype)
