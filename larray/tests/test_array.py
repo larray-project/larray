@@ -748,6 +748,64 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw[np.ix_([1, 0], [5, 4])] = 42
         assert_array_equal(la, raw)
 
+    def test_points_indexer_getitem(self):
+        arr = ndtest((2, 3, 3))
+        raw = arr.data
+
+        keys = [
+            ('a0',
+                0),
+            (('a0', 'c2'),
+                (0, slice(None), 2)),
+            (('a0', 'b1', 'c2'),
+                (0, 1, 2)),
+            # key in the "correct" order
+            ((['a1', 'a0', 'a1', 'a0'], 'b1', ['c1', 'c0', 'c1', 'c0']),
+                ([1, 0, 1, 0], 1, [1, 0, 1, 0])),
+            # key in the "wrong" order
+            ((['a1', 'a0', 'a1', 'a0'], ['c1', 'c0', 'c1', 'c0'], 'b1'),
+                ([1, 0, 1, 0], 1, [1, 0, 1, 0])),
+            # advanced key with a missing dimension
+            ((['a1', 'a0', 'a1', 'a0'], ['c1', 'c0', 'c1', 'c0']),
+                ([1, 0, 1, 0], slice(None), [1, 0, 1, 0])),
+        ]
+        for label_key, index_key in keys:
+            assert_array_equal(arr.points[label_key], raw[index_key])
+
+        # XXX: we might want to raise KeyError or IndexError instead?
+        with self.assertRaises(ValueError):
+            arr.points['a0', 'b1', 'c2', 'd0']
+
+    def test_points_indexer_setitem(self):
+        keys = [
+            ('a0',
+                0),
+            (('a0', 'c2'),
+                (0, slice(None), 2)),
+            (('a0', 'b1', 'c2'),
+                (0, 1, 2)),
+            # key in the "correct" order
+            ((['a1', 'a0', 'a1', 'a0'], 'b1', ['c1', 'c0', 'c1', 'c0']),
+                ([1, 0, 1, 0], 1, [1, 0, 1, 0])),
+            # key in the "wrong" order
+            ((['a1', 'a0', 'a1', 'a0'], ['c1', 'c0', 'c1', 'c0'], 'b1'),
+                ([1, 0, 1, 0], 1, [1, 0, 1, 0])),
+            # advanced key with a missing dimension
+            ((['a1', 'a0', 'a1', 'a0'], ['c1', 'c0', 'c1', 'c0']),
+                ([1, 0, 1, 0], slice(None), [1, 0, 1, 0])),
+        ]
+        for label_key, index_key in keys:
+            arr = ndtest((2, 3, 3))
+            raw = arr.data.copy()
+            arr.points[label_key] = 42
+            raw[index_key] = 42
+            assert_array_equal(arr, raw)
+
+        arr = ndtest(2)
+        # XXX: we might want to raise KeyError or IndexError instead?
+        with self.assertRaises(ValueError):
+            arr.points['a0', 'b1'] = 42
+
     def test_setitem_larray(self):
         """
         tests LArray.__setitem__(key, value) where value is an LArray
