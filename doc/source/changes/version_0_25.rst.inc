@@ -180,3 +180,15 @@ Fixes
 
 * fixed disambiguating an ambiguous key by adding the axis within the string, for example
   arr['axis_name[ambiguouslabel]'] (closes :issue:`331`).
+
+* fixed converting a string group to integer or float using int() and float() (when that makes sense).
+
+    >>> a = Axis('a=10,20,30,total')
+    >>> a
+    Axis(['10', '20', '30', 'total'], 'a')
+    >>> str(a.i[0])
+    '10'
+    >>> int(a.i[0])
+    10
+    >>> float(a.i[0])
+    10.0
