@@ -133,6 +133,45 @@
 * implemented Axis.align(other_axis) and AxisCollection.align(other_collection) which makes two axes / axis collections
   compatible with each other, see LArray.align above.
 
+* implemented setting the value of multiple points using array.points[labels] = value
+
+    >>> arr = ndtest((3, 4))
+    >>> arr
+    a\b  b0  b1  b2  b3
+     a0   0   1   2   3
+     a1   4   5   6   7
+     a2   8   9  10  11
+
+  Now, suppose you want to retrieve several specific combinations of labels, for example
+  (a0, b1), (a0, b3), (a1, b0) and (a2, b2). You could write a loop like this:
+
+    >>> values = []
+    >>> for a, b in [('a0', 'b1'), ('a0', 'b3'), ('a1', 'b0'), ('a2', 'b2')]:
+    ...     values.append(arr[a, b])
+    >>> values
+    [1, 3, 4, 10]
+
+  but you could also (this already worked in previous versions) use array.points like:
+
+    >>> arr.points[['a0', 'a0', 'a1', 'a2'], ['b1', 'b3', 'b0', 'b2']]
+    a,b  a0,b1  a0,b3  a1,b0  a2,b2
+             1      3      4     10
+
+  which has the advantages of being both much faster and keep more information. Now suppose you want to *set* the value
+  of those points, you could write:
+
+    >>> for a, b in [('a0', 'b1'), ('a0', 'b3'), ('a1', 'b0'), ('a2', 'b2')]:
+    ...     arr[a, b] = 42
+    >>> arr
+    a\b  b0  b1  b2  b3
+     a0   0  42   2  42
+     a1  42   5   6   7
+     a2   8   9  42  11
+
+  but now you can also use the faster alternative:
+
+    >>> arr.points[['a0', 'a0', 'a1', 'a2'], ['b1', 'b3', 'b0', 'b2']] = 42
+
 
 Miscellaneous improvements
 --------------------------

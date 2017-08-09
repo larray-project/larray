@@ -424,9 +424,10 @@ class LArrayPointsIndexer(object):
         else:
             return LArray(data, axes)
 
-    # FIXME
     def __setitem__(self, key, value):
-        raise NotImplementedError()
+        data = np.asarray(self.array)
+        translated_key = self.array._translated_key(key, bool_stuff=True)
+        data[translated_key] = value
 
 
 class LArrayPositionalPointsIndexer(object):
