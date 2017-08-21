@@ -7570,12 +7570,12 @@ def stack(elements=None, axis=None, title='', **kwargs):
     Parameters
     ----------
     elements : tuple, list or dict.
-        Arrays or sessions to stack. values can be scalars, arrays, (label, value) pairs or a {label: value} mapping.
+        Elements to stack. Elements can be scalars, arrays, sessions, (label, value) pairs or a {label: value} mapping.
         In the later case, axis must be defined and cannot be a name only, because we need to have labels order,
         which the mapping does not provide.
 
-        Stacking sessions will take all arrays with the same name between sessions, stack them and create a session out
-        of those stacked arrays.
+        Stacking sessions will return a new session containing the arrays of all sessions stacked together. An array
+        missing in a session will be replaced by NaN.
     axis : str or Axis, optional
         Axis to create. If None, defaults to a range() axis.
     title : str, optional

@@ -147,9 +147,12 @@
         0   1   2
     >>> baseline = Session([('arr1', arr1), ('arr2', arr2)])
 
-  and another session with a variant (here we simply multiply by 2 each array)
+  and another session with a variant
 
     >>> arr1variant = arr1 * 2
+    >>> arr1variant
+    a  a0  a1
+        0   2
     >>> arr2variant = 2 - arr2 / 2
     >>> arr2variant
     a   a0   a1   a2
@@ -171,10 +174,11 @@
             a1       1.0      1.5
             a2       2.0      1.0
 
-  Combined with the fact we can compute some very simple expressions on sessions, this can be extremely useful to
+  Combined with the fact that we can compute some very simple expressions on sessions, this can be extremely useful to
   quickly compare all arrays of several sessions (e.g. simulation variants):
 
     >>> diff = variant - baseline
+    >>> # compute the absolute difference and relative difference for each array of the sessions
     >>> stacked = stack([('baseline', baseline),
                          ('variant', variant),
                          ('diff', diff),
