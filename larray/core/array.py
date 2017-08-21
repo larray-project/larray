@@ -104,7 +104,7 @@ from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list)
 
 nan = np.nan
 
@@ -7563,16 +7563,19 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
-def stack(arrays=None, axis=None, title='', **kwargs):
+def stack(elements=None, axis=None, title='', **kwargs):
     """
-    Combines several arrays along an axis.
+    Combines several arrays or sessions along an axis.
 
     Parameters
     ----------
-    arrays : tuple, list or dict.
-        Arrays to stack. values can be scalars, arrays, (label, value) pairs or a {label: value} mapping. In the
-        later case, axis must be defined and cannot be a name only, because we need to have labels order,
+    elements : tuple, list or dict.
+        Elements to stack. Elements can be scalars, arrays, sessions, (label, value) pairs or a {label: value} mapping.
+        In the later case, axis must be defined and cannot be a name only, because we need to have labels order,
         which the mapping does not provide.
+
+        Stacking sessions will return a new session containing the arrays of all sessions stacked together. An array
+        missing in a session will be replaced by NaN.
     axis : str or Axis, optional
         Axis to create. If None, defaults to a range() axis.
     title : str, optional
@@ -7648,56 +7651,94 @@ def stack(arrays=None, axis=None, title='', **kwargs):
     nat\\sex    M    F
          BE  1.0  0.0
          FO  1.0  0.0
+
+    To stack sessions, let us first create two test sessions. For example suppose we have a session storing the results
+    of a baseline simulation:
+
+    >>> from larray import Session
+    >>> baseline = Session([('arr1', arr1), ('arr2', arr2)])
+
+    and another session with a variant (here we simply added 0.5 to each array)
+
+    >>> variant = Session([('arr1', arr1 + 0.5), ('arr2', arr2 + 0.5)])
+
+    then we stack them together
+
+    >>> stacked = stack([('baseline', baseline), ('variant', variant)], 'sessions')
+    >>> stacked
+    Session(arr1, arr2)
+    >>> stacked.arr1
+    nat\sessions  baseline  variant
+              BE       1.0      1.5
+              FO       1.0      1.5
+    >>> stacked.arr2
+    nat\sessions  baseline  variant
+              BE       0.0      0.5
+              FO       0.0      0.5
     """
+    from larray import Session
+
     if isinstance(axis, str) and '=' in axis:
         axis = Axis(axis)
-    if arrays is None:
+    if elements is None:
         if not isinstance(axis, Axis) and sys.version_info[:2] < (3, 6):
             raise TypeError("axis argument should provide label order when using keyword arguments on Python < 3.6")
-        arrays = kwargs.items()
+        elements = kwargs.items()
     elif kwargs:
-        raise TypeError("stack() accept either keyword arguments OR a collection of arrays, not both")
+        raise TypeError("stack() accept either keyword arguments OR a collection of elements, not both")
 
-    if isinstance(axis, Axis) and all(isinstance(a, tuple) for a in arrays):
-        assert all(len(a) == 2 for a in arrays)
-        arrays = {k: v for k, v in arrays}
+    if isinstance(axis, Axis) and all(isinstance(e, tuple) for e in elements):
+        assert all(len(e) == 2 for e in elements)
+        elements = {k: v for k, v in elements}
 
-    if isinstance(arrays, LArray):
+    if isinstance(elements, LArray):
         if axis is None:
             axis = -1
-        axis = arrays.axes[axis]
-        values = [arrays[k] for k in axis]
-    elif isinstance(arrays, dict):
+        axis = elements.axes[axis]
+        values = [elements[k] for k in axis]
+    elif isinstance(elements, dict):
         assert isinstance(axis, Axis)
-        values = [arrays[v] for v in axis.labels]
-    elif isinstance(arrays, Iterable):
-        if not isinstance(arrays, Sequence):
-            arrays = list(arrays)
+        values = [elements[v] for v in axis.labels]
+    elif isinstance(elements, Iterable):
+        if not isinstance(elements, Sequence):
+            elements = list(elements)
 
-        if all(isinstance(a, tuple) for a in arrays):
-            assert all(len(a) == 2 for a in arrays)
-            keys = [k for k, v in arrays]
-            values = [v for k, v in arrays]
+        if all(isinstance(e, tuple) for e in elements):
+            assert all(len(e) == 2 for e in elements)
+            keys = [k for k, v in elements]
+            values = [v for k, v in elements]
             assert all(np.isscalar(k) for k in keys)
             # this case should already be handled
             assert not isinstance(axis, Axis)
             # axis should be None or str
             axis = Axis(keys, axis)
         else:
-            values = arrays
+            values = elements
             if axis is None or isinstance(axis, basestring):
-                axis = Axis(len(arrays), axis)
+                axis = Axis(len(elements), axis)
             else:
-                assert len(axis) == len(arrays)
+                assert len(axis) == len(elements)
     else:
-        raise TypeError('unsupported type for arrays: %s' % type(arrays).__name__)
+        raise TypeError('unsupported type for arrays: %s' % type(elements).__name__)
 
-    result_axes = AxisCollection.union(*[get_axes(v) for v in values])
-    result_axes.append(axis)
-    result = empty(result_axes, title=title, dtype=common_type(values))
-    for k, v in zip(axis, values):
-        result[k] = v
-    return result
+    if any(isinstance(v, Session) for v in values):
+        sessions = values
+        if not all(isinstance(s, Session) for s in sessions):
+            raise TypeError("stack() only supports stacking Session with other Session objects")
+
+        seen = set()
+        all_keys = []
+        for s in sessions:
+            unique_list(s.keys(), all_keys, seen)
+        return Session([(k, stack([s.get(k, np.nan) for s in sessions], axis=axis))
+                        for k in all_keys])
+    else:
+        result_axes = AxisCollection.union(*[get_axes(v) for v in values])
+        result_axes.append(axis)
+        result = empty(result_axes, title=title, dtype=common_type(values))
+        for k, v in zip(axis, values):
+            result[k] = v
+        return result
 
 
 def get_axes(value):
