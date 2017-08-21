@@ -851,6 +851,19 @@ class Session(object):
         >>> sess2.arr2
         a  a0  a1  a2
             1   2   3
+
+        You may also pass extra arguments or keyword arguments to the function
+
+        >>> def change(array, increment=1, multiplier=1):
+        ...     return (array + increment) * multiplier
+        >>> sess2 = sess1.apply(change, 2, 2)
+        >>> sess2 = sess1.apply(change, 2, multiplier=2)
+        >>> sess2.arr1
+        a  a0  a1
+            4   6
+        >>> sess2.arr2
+        a  a0  a1  a2
+            4   6   8
         """
         kind = kwargs.pop('kind', LArray)
         return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
