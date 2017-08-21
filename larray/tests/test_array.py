@@ -2,6 +2,9 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import datetime as dt
+from collections import OrderedDict
+from unittest import TestCase
 
 import pytest
 import numpy as np
@@ -18,7 +21,8 @@ from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
-from larray.util.misc import StringIO
+from larray.util.misc import StringIO, LHDFStore, PY2
+from larray.core.metadata import Metadata
 
 
 def tmp_path(tmpdir, fname):
@@ -67,6 +71,69 @@ def test_key_string_slice_strings():
     assert _to_key(':') == slice(None)
 
 
+# =================== #
+#    Test Metadata    #
+# =================== #
+
+@pytest.fixture
+def meta():
+    title = 'test array'
+    description = 'Array used for testing'
+    author = 'John Cleese'
+    location = 'Ministry of Silly Walks'
+    date = dt.datetime(1970, 3, 21)
+    return Metadata([('title', title), ('description', description), ('author', author),
+                     ('location', location), ('date', date)])
+
+
+def test_array_metadata(meta, tmpdir):
+    # __eq__
+    meta2 = meta.copy()
+    assert meta2 == meta
+
+    # set/get metadata to/from an array
+    arr = ndtest((3, 3))
+    arr.meta = meta
+    assert arr.meta == meta
+
+    # access item
+    assert arr.meta.date == meta.date
+
+    # add new item
+    arr.meta.city = 'London'
+    assert arr.meta.city == 'London'
+
+    # update item
+    arr.meta.city = 'Berlin'
+    assert arr.meta.city == 'Berlin'
+
+    # __contains__
+    assert 'city' in arr.meta
+
+    # delete item
+    del arr.meta.city
+    assert arr.meta == meta
+
+    # __reduce__ and __reduce_ex__
+    import pickle
+    fname = os.path.join(tmpdir.strpath, 'test_metadata.pkl')
+    with open(fname, 'wb') as f:
+        pickle.dump(meta, f)
+    with open(fname, 'rb') as f:
+        meta2 = Metadata(pickle.load(f))
+    assert meta2 == meta
+
+
+def test_metadata_hdf(meta, tmpdir):
+    key = 'meta'
+    fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
+    with LHDFStore(fname) as store:
+        ndtest(3).to_hdf(store, key)
+        meta.to_hdf(store, key)
+        meta2 = Metadata.from_hdf(store, key)
+        assert meta2 == meta
+
+
 # ================= #
 #    Test LArray    #
 # ================= #
@@ -86,17 +153,15 @@ geo = Axis(belgium, 'geo')
 
 # ARRAYS
 @pytest.fixture()
-def array():
-    title = 'test array'
+def array(meta):
     data = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15).astype(float)
-    return LArray(data, axes=(age, geo, sex, lipro), title=title)
+    return LArray(data, axes=(age, geo, sex, lipro), meta=meta)
 
 
 @pytest.fixture()
-def small_array():
-    small_title = 'small test array'
+def small_array(meta):
     small_data = np.arange(30).reshape(2, 15)
-    return LArray(small_data, axes=(sex, lipro), title=small_title)
+    return LArray(small_data, axes=(sex, lipro), meta=meta)
 
 
 io_1d = ndtest(3)
@@ -183,7 +248,11 @@ def test_rename(array):
 
 def test_info(array):
     expected = """\
-test array
+title: test array
+description: Array used for testing
+author: John Cleese
+location: Ministry of Silly Walks
+date: 1970-03-21 00:00:00
 116 x 44 x 2 x 15
  age [116]: 0 1 2 ... 113 114 115
  geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
