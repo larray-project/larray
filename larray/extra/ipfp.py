@@ -115,6 +115,36 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     a\\b    b0    b1
      a0  0.85  0.15
      a1  1.15  0.85
+
+    Now let us assume you have a 3D array like this:
+
+    >>> year = Axis('year=2014..2016')
+    >>> initial = ndrange([a, b, year])
+    >>> initial
+     a  b\year  2014  2015  2016
+    a0      b0     0     1     2
+    a0      b1     3     4     5
+    a1      b0     6     7     8
+    a1      b1     9    10    11
+
+    and some targets for each year:
+
+    >>> btargets = initial.sum(x.a) + 1
+    >>> btargets
+    b\year  2014  2015  2016
+        b0     7     9    11
+        b1    13    15    17
+    >>> atargets = initial.sum(x.b) + 1
+    >>> atargets
+    a\year  2014  2015  2016
+        a0     4     6     8
+        a1    16    18    20
+
+    You want to apply a 2D fitting procedure for each value of that year axis. You could call ipfp within a loop on
+    the year axis, but you can also apply the procedure for all years at once by using the axes argument. This is
+    *much* faster than an explicit loop.
+
+    >>> result = ipfp([btargets, atargets], initial, axes=(x.a, x.b))
     """
     assert nzvzs in {'fix', 'warn', 'raise'}
     assert no_convergence in {'ignore', 'warn', 'raise'}
