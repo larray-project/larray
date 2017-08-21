@@ -765,11 +765,10 @@ class Session(object):
         arr1 -> b, c, a
         arr2 -> b, a
         """
-        def lenient_transpose(arr, axes):
+        def lenient_transpose(v, axes):
             # filter out axes not in arr.axes
-            return arr.transpose([a for a in axes if a in arr.axes or a is Ellipsis])
-        return Session([(k, lenient_transpose(v, args) if isinstance(v, LArray) else v)
-                        for k, v in self.items()])
+            return v.transpose([a for a in axes if a in v.axes or a is Ellipsis])
+        return self.apply(lenient_transpose, args)
 
     def compact(self, display=False):
         """
@@ -807,6 +806,67 @@ class Session(object):
                 print(k, "was constant over", get_axes(v) - get_axes(compacted))
             new_items.append((k, compacted))
         return Session(new_items)
+
+    def apply(self, func, *args, **kwargs):
+        """
+        Apply function `func` on elements of the session and return a new session.
+
+        Parameters
+        ----------
+        func : function
+            Function to apply to each element of the session. It should take a single `element` argument and return
+            a single value.
+        *args : any
+            Any extra arguments are passed to the function
+        kind : type or tuple of types, optional
+            Type(s) of elements `func` will be applied to. Other elements will be left intact. Use ´kind=object´ to
+            apply to all kinds of objects. Defaults to LArray.
+        **kwargs : any
+            Any extra keyword arguments are passed to the function
+
+        Returns
+        -------
+        Session
+            A new session containing all processed elements
+
+        Examples
+        --------
+        >>> arr1 = ndtest(2)
+        >>> arr1
+        a  a0  a1
+            0   1
+        >>> arr2 = ndtest(3)
+        >>> arr2
+        a  a0  a1  a2
+            0   1   2
+        >>> sess1 = Session([('arr1', arr1), ('arr2', arr2)])
+        >>> sess1
+        Session(arr1, arr2)
+        >>> def increment(array):
+        ...     return array + 1
+        >>> sess2 = sess1.apply(increment)
+        >>> sess2.arr1
+        a  a0  a1
+            1   2
+        >>> sess2.arr2
+        a  a0  a1  a2
+            1   2   3
+
+        You may also pass extra arguments or keyword arguments to the function
+
+        >>> def change(array, increment=1, multiplier=1):
+        ...     return (array + increment) * multiplier
+        >>> sess2 = sess1.apply(change, 2, 2)
+        >>> sess2 = sess1.apply(change, 2, multiplier=2)
+        >>> sess2.arr1
+        a  a0  a1
+            4   6
+        >>> sess2.arr2
+        a  a0  a1  a2
+            4   6   8
+        """
+        kind = kwargs.pop('kind', LArray)
+        return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
 
     def summary(self, template=None):
         """
