@@ -9,6 +9,8 @@
   It contains a link to open the documentation, a shortcut to launch the user interface in edition mode
   and a shortcut to update larrayenv. Closes :issue:`281`.
 
+* added possibility to transpose an array in the viewer by dragging and dropping axes' names in the filter bar.
+
 * implemented array.align(other_array) which makes two arrays compatible with each other (by making all common axes
   compatible). This is done by adding, removing or reordering labels for each common axis according to the join method
   used:
@@ -212,6 +214,8 @@ Miscellaneous improvements
   variables and overwriting them. This ensures the arrays have the same axes in the session than the existing variables.
 
 * added icon to display in Windows start menu and editor windows.
+
+* viewer keeps labels visible even when scrolling (label rows and columns are now frozen).
 
 * added 'Getting Started' section in documentation.
 
