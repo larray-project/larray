@@ -37,7 +37,7 @@ Matrix class
 #   include utils only in larray project and make larray a dependency of liam2
 #   (and potentially rename it to reflect the broader scope)
 
-from collections import Iterable, Sequence
+from collections import Iterable, Sequence, OrderedDict
 from itertools import product, chain, groupby, islice
 import os
 import sys
@@ -62,6 +62,7 @@ except ImportError:
     np_nanprod = None
 
 from larray.core.abstractbases import ABCLArray
+from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _range_to_slice, _translate_sheet_name, _translate_group_key_hdf)
@@ -655,7 +656,11 @@ class LArray(ABCLArray):
     axes : collection (tuple, list or AxisCollection) of axes (int, str or Axis), optional
         Axes.
     title : str, optional
-        Title of array.
+        Title of the array. It will be included in metadata but will be accessible via both syntax
+        '.title' or '.meta.title'.
+    meta : dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Attributes
     ----------
@@ -663,8 +668,8 @@ class LArray(ABCLArray):
         Data.
     axes : AxisCollection
         Axes.
-    title : str
-        Title.
+    meta : Metadata
+        Metadata (title, description, author, creation_date, ...) associated with the array.
 
     See Also
     --------
@@ -719,7 +724,7 @@ class LArray(ABCLArray):
           F  10  11  12
     """
 
-    def __init__(self, data, axes=None, title=''):
+    def __init__(self, data, axes=None, title=None, meta=None):
         data = np.asarray(data)
         ndim = data.ndim
         if axes is None:
@@ -737,7 +742,41 @@ class LArray(ABCLArray):
 
         self.data = data
         self.axes = axes
-        self.title = title
+
+        if meta is None:
+            meta = Metadata()
+        if title is not None:
+            if 'title' in meta:
+                import warnings
+                warnings.warn("title was already present in passed metadata but will be overridden.", stacklevel=2)
+            meta['title'] = title
+        self.meta = meta
+
+    @property
+    def title(self):
+        return self._meta.title if 'title' in self._meta else None
+
+    @title.setter
+    def title(self, title):
+        self._meta.title = title
+
+    @property
+    def meta(self):
+        """Returns metadata of the array.
+
+        Returns
+        -------
+        Metadata:
+            Metadata of the array.
+        """
+        return self._meta
+
+    @meta.setter
+    def meta(self, meta):
+        if not isinstance(meta, (dict, OrderedDict, Metadata)):
+            raise TypeError("Expected dict or OrderedDict or Metadata object "
+                            "instead of {}".format(type(meta).__name__))
+        self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
 
     # XXX: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
@@ -3269,14 +3308,16 @@ class LArray(ABCLArray):
         memory used: 32 bytes
         >>> mat1 = LArray([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M", 'test matrix')
         >>> mat1.info
-        test matrix
+        title: test matrix
         2 x 2
          nat [2]: 'BE' 'FO'
          sex [2]: 'F' 'M'
         dtype: float64
         memory used: 32 bytes
         """
-        str_info = '{}\n'.format(self.title) if self.title else ''
+        str_info = ''
+        if len(self.meta):
+            str_info += '{}\n'.format(self.meta)
         str_info += '{}\ndtype: {}\nmemory used: {}'.format(self.axes.info, self.dtype.name, self.memory_used)
         return ReprString(str_info)
 
