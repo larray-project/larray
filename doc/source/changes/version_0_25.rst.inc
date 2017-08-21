@@ -133,6 +133,38 @@
 * implemented Axis.align(other_axis) and AxisCollection.align(other_collection) which makes two axes / axis collections
   compatible with each other, see LArray.align above.
 
+* implemented Session.apply(function) to apply a function to all elements (arrays) of a Session and return a new
+  Session.
+
+  Let us first create a test session
+
+    >>> arr1 = ndtest(2)
+    >>> arr1
+    a  a0  a1
+        0   1
+    >>> arr2 = ndtest(3)
+    >>> arr2
+    a  a0  a1  a2
+        0   1   2
+    >>> sess1 = Session([('arr1', arr1), ('arr2', arr2)])
+    >>> sess1
+    Session(arr1, arr2)
+
+  Then define the function we want to apply to all arrays of our session
+
+    >>> def increment(element):
+    ...     return element + 1
+
+  Apply it
+
+    >>> sess2 = sess1.apply(increment)
+    >>> sess2.arr1
+    a  a0  a1
+        1   2
+    >>> sess2.arr2
+    a  a0  a1  a2
+        1   2   3
+
 * implemented setting the value of multiple points using array.points[labels] = value
 
     >>> arr = ndtest((3, 4))
