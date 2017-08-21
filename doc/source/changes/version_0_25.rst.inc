@@ -163,7 +163,7 @@ Miscellaneous improvements
     >>> all_targets = [initial.sum(x.a) + 1, initial.sum(x.b) + 1]
     >>> result = ipfp(all_targets, initial, axes=(x.a, x.b))
 
-* made ipfp 10 to 20% faster.
+* made ipfp 10 to 20% faster (even without using the axes argument).
 
 * implemented Session.to_globals(inplace=True) which will update the content of existing arrays instead of creating new
   variables and overwriting them. This ensures the arrays have the same axes in the session than the existing variables.
