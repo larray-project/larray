@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import shutil
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, abspath
@@ -197,13 +199,38 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'f'])
 
     def test_csv_io(self):
-        fpath = abspath('test_session_csv')
-        self.session.to_csv(fpath)
+        try:
+            fpath = abspath('test_session_csv')
+            self.session.to_csv(fpath)
 
-        s = Session()
-        s.load(fpath, engine='pandas_csv')
-        # CSV cannot keep ordering (so we always sort keys)
-        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+            # test loading a directory
+            s = Session()
+            s.load(fpath, engine='pandas_csv')
+            # CSV cannot keep ordering (so we always sort keys)
+            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+
+            # test loading with a pattern
+            pattern = os.path.join(fpath, '*.csv')
+            s = Session(pattern)
+            # s = Session()
+            # s.load(pattern)
+            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+
+            # create an invalid .csv file
+            invalid_fpath = os.path.join(fpath, 'invalid.csv')
+            with open(invalid_fpath, 'w') as f:
+                f.write(',",')
+
+            # try loading the directory with the invalid file
+            with pytest.raises(pd.errors.ParserError) as e_info:
+                s = Session(pattern)
+
+            # test loading a pattern, ignoring invalid/unsupported files
+            s = Session()
+            s.load(pattern, ignore_exceptions=True)
+            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+        finally:
+            shutil.rmtree(fpath)
 
     def test_pickle_io(self):
         fpath = abspath('test_session.pkl')
