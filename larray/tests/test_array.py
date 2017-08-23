@@ -836,8 +836,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
         fake_axis = Axis(['label'], 'fake')
         age_axis = la[ages1_5_9].axes.age
-        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
-                                        self.lipro))
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex, self.lipro))
         la[ages1_5_9] = value
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
         assert_array_equal(la, raw)
@@ -871,8 +870,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 3) using a string key
         la = self.larray.copy()
         raw = self.array.copy()
-        la[[1, 5, 9]] = la[[2, 7, 3]] + 27.0
-        raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
+        la['1, 5, 9'] = la['1, 5, 9'] + 27.0
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
         assert_array_equal(la, raw)
 
         # 4) using ellipsis keys
@@ -892,6 +891,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la = self.larray.copy()
         la[:] = 0
         assert_array_equal(la, np.zeros_like(raw))
+
+        # 6) check labels
+        la = self.larray.copy()
+        sla = self.small.copy()
+        with pytest.raises(ValueError):
+            la['M,F'] = la['F,M']
+        with pytest.raises(ValueError):
+            la[1, 'A11', 'M,F'] = sla['F,M']
 
     def test_setitem_ndarray(self):
         """
