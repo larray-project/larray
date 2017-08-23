@@ -1018,8 +1018,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
         fake_axis = Axis(['label'], 'fake')
         age_axis = la[ages1_5_9].axes.age
-        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex,
-                                        self.lipro))
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex, self.lipro))
         la.set(value, age=ages1_5_9)
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
         assert_array_equal(la, raw)
@@ -1041,8 +1040,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 2) using a raw key
         la = self.larray.copy()
         raw = self.array.copy()
-        la.set(la[[2, 7, 3]] + 27.0, age=[1, 5, 9])
-        raw[[1, 5, 9]] = raw[[2, 7, 3]] + 27.0
+        la.set(la[[1, 5, 9]] + 27.0, age=[1, 5, 9])
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
         assert_array_equal(la, raw)
 
     def test_filter(self):
