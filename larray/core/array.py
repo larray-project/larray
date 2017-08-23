@@ -2314,12 +2314,12 @@ class LArray(ABCLArray):
          a0   0   1   2
          a1   3  10  10
          a2   6  10  10
-        >>> arr['a1:', 'b1:'].set(ndtest((2, 2)))
+        >>> arr[':a1', ':b1'].set(ndtest((2, 2)))
         >>> arr
         a\\b  b0  b1  b2
          a0   0   1   2
-         a1   3   0   1
-         a2   6   2   3
+         a1   2   3  10
+         a2   6  10  10
         """
         self.__setitem__(kwargs, value)
 
