@@ -27,8 +27,7 @@ Miscellaneous improvements
   is not allowed and raises a ValueError (closes :issue:`269`).
 
 
-
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed error raised in viewer when switching between arrays.
