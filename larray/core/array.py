@@ -2179,11 +2179,9 @@ class LArray(ABCLArray):
         data = np.asarray(self.data)
         translated_key = self._translated_key(key)
 
-        if isinstance(key, (LArray, np.ndarray)) and \
-                np.issubdtype(key.dtype, np.bool_):
+        if isinstance(key, (LArray, np.ndarray)) and np.issubdtype(key.dtype, np.bool_):
             if isinstance(value, LArray):
-                new_axes = self._bool_key_new_axes(translated_key,
-                                                   wildcard_allowed=True)
+                new_axes = self._bool_key_new_axes(translated_key, wildcard_allowed=True)
                 value = value.broadcast_with(new_axes)
             data[translated_key] = value
             return
@@ -2200,14 +2198,13 @@ class LArray(ABCLArray):
                 # when adv indexing is needed, cross_key converts scalars to lists
                 # of 1 element, which does not remove the dimension like scalars
                 # normally do
-                axes = [axis.subaxis(axis_key) if not np.isscalar(axis_key)
-                        else Axis(1, axis.name)
+                axes = [axis.subaxis(axis_key) if not np.isscalar(axis_key) else Axis(1, axis.name)
                         for axis, axis_key in zip(self.axes, translated_key)]
             else:
-                axes = [axis.subaxis(axis_key)
-                        for axis, axis_key in zip(self.axes, translated_key)
+                axes = [axis.subaxis(axis_key) for axis, axis_key in zip(self.axes, translated_key)
                         if not np.isscalar(axis_key)]
             value = value.broadcast_with(axes)
+            value.axes.check_compatible(axes)
         else:
             # if value is a "raw" ndarray we rely on numpy broadcasting
             pass
