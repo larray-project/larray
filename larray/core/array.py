@@ -1857,6 +1857,12 @@ class LArray(ABCLArray):
         PGroup
             Positional group with valid axes (from self.axes)
         """
+        if isinstance(axis_key, ExprNode):
+            axis_key = axis_key.evaluate(self.axes)
+
+        if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_) and bool_passthrough:
+            return PGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
+
         # translate Axis keys to LGroup keys
         # FIXME: this should be simply:
         # if isinstance(axis_key, Axis):
@@ -2115,6 +2121,7 @@ class LArray(ABCLArray):
                     if not np.isscalar(axis_key)]
 
     def __getitem__(self, key, collapse_slices=False):
+
         if isinstance(key, ExprNode):
             key = key.evaluate(self.axes)
 
