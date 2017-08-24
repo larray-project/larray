@@ -1843,8 +1843,8 @@ class LArray(ABCLArray):
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
-            # FIXME: .id
-            valid_axes = ', '.join(str(a.id) for a in valid_axes)
+            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
+                                   for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
         return valid_axes[0].i[axis_pos_key]
@@ -1927,8 +1927,8 @@ class LArray(ABCLArray):
             raise ValueError("%s is not a valid label for any axis"
                              % axis_key)
         elif len(valid_axes) > 1:
-            # FIXME: .id
-            valid_axes = ', '.join(str(a.id) for a in valid_axes)
+            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
+                                   for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' %
                              (axis_key, valid_axes))
         return valid_axes[0][axis_key]
