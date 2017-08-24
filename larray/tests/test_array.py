@@ -483,7 +483,6 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, raw[raw_d1, :, raw_d3])
 
     def test_getitem_bool_larray_and_group_key(self):
-        # 1) 1D boolean filter
         arr = ndtest((3, 6, 4)).set_labels('b', '0..5')
 
         # using axis
@@ -497,21 +496,6 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert isinstance(res, LArray)
         assert res.ndim == 3
         assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
-
-        # 2) with ND boolean filter
-        arr = ndrange('a0=a0..a2;b=0..5;c=0..3')
-
-        # using axes
-        res = arr['a0,a2', arr.b < arr.c]
-        assert isinstance(res, LArray)
-        assert res.ndim == 2
-        assert_array_equal(res, arr['a0,a2'][arr.b < arr.c])
-
-        # using axis references
-        res = arr['a0,a2', x.b < x.c]
-        assert isinstance(res, LArray)
-        assert res.ndim == 2
-        assert_array_equal(res, arr['a0,a2'][arr.b < arr.c])
 
     def test_getitem_bool_ndarray_key(self):
         raw = self.array
