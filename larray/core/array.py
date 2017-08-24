@@ -2102,9 +2102,18 @@ class LArray(ABCLArray):
         # behaves like one
         sequence = (tuple, list, np.ndarray)
         return [_range_to_slice(axis_key, len(axis))
-                if isinstance(axis_key, sequence)
-                else axis_key
+                if isinstance(axis_key, sequence) else axis_key
                 for axis_key, axis in zip(key, self.axes)]
+
+    def _get_axes_from_translated_key(self, translated_key, include_scalar_axis_key=False):
+        if include_scalar_axis_key:
+            return [axis.subaxis(axis_key)
+                    if not np.isscalar(axis_key) else Axis(1, axis.name)
+                    for axis, axis_key in zip(self.axes, translated_key)]
+        else:
+            return [axis.subaxis(axis_key)
+                    for axis, axis_key in zip(self.axes, translated_key)
+                    if not np.isscalar(axis_key)]
 
     def __getitem__(self, key, collapse_slices=False):
         if isinstance(key, ExprNode):
@@ -2126,10 +2135,7 @@ class LArray(ABCLArray):
             k2 = [k.data if isinstance(k, LArray) else k
                   for k in translated_key]
             res_data = data[k2]
-            axes = [axis.subaxis(axis_key)
-                    for axis, axis_key in zip(self.axes, translated_key)
-                    if not np.isscalar(axis_key)]
-
+            axes = self._get_axes_from_translated_key(translated_key)
             first_col = AxisCollection(axes[0])
             res_axes = first_col.union(*axes[1:])
             return LArray(res_data, res_axes)
@@ -2137,9 +2143,7 @@ class LArray(ABCLArray):
         # TODO: if the original key was a list of labels,
         # subaxis(translated_key).labels == orig_key, so we should use
         # orig_axis_key.copy()
-        axes = [axis.subaxis(axis_key)
-                for axis, axis_key in zip(self.axes, translated_key)
-                if not np.isscalar(axis_key)]
+        axes = self._get_axes_from_translated_key(translated_key)
 
         if collapse_slices:
             translated_key = self._collapse_slices(translated_key)
@@ -2201,11 +2205,9 @@ class LArray(ABCLArray):
                 # when adv indexing is needed, cross_key converts scalars to lists
                 # of 1 element, which does not remove the dimension like scalars
                 # normally do
-                axes = [axis.subaxis(axis_key) if not np.isscalar(axis_key) else Axis(1, axis.name)
-                        for axis, axis_key in zip(self.axes, translated_key)]
+                axes = self._get_axes_from_translated_key(translated_key, True)
             else:
-                axes = [axis.subaxis(axis_key) for axis, axis_key in zip(self.axes, translated_key)
-                        if not np.isscalar(axis_key)]
+                axes = self._get_axes_from_translated_key(translated_key)
             value = value.broadcast_with(axes)
             value.axes.check_compatible(axes)
         else:
