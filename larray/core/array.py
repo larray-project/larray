@@ -1870,14 +1870,13 @@ class LArray(ABCLArray):
                 axis_key = axis_key.labels
 
         # TODO: do it for Group without axis too
-        # TODO: do it for LArray key too (but using .i[] instead)
-        if isinstance(axis_key, (tuple, list, np.ndarray)):
+        if isinstance(axis_key, (tuple, list, np.ndarray, LArray)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is
             #       useful, and estimate which numbers to use
             for size in (1, 10, 100, 1000):
                 # TODO: do not recheck already checked elements
-                key_chunk = axis_key[:size]
+                key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
                 try:
                     tkey = self._translate_axis_key_chunk(key_chunk,
                                                           bool_passthrough)
