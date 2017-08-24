@@ -482,6 +482,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw_d1, raw_d3 = raw_key.nonzero()
         assert_array_equal(res, raw[raw_d1, :, raw_d3])
 
+    def test_getitem_bool_larray_and_group_key(self):
+        arr = ndtest((3, 6, 4)).set_labels('b', '0..5')
+
+        # using axis
+        res = arr['a0,a2', arr.b < 3, 'c0:c3']
+        assert isinstance(res, LArray)
+        assert res.ndim == 3
+        assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
+
+        # using axis reference
+        res = arr['a0,a2', x.b < 3, 'c0:c3']
+        assert isinstance(res, LArray)
+        assert res.ndim == 3
+        assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
+
     def test_getitem_bool_ndarray_key(self):
         raw = self.array
         la = self.larray
