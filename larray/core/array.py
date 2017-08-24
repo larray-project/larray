@@ -1861,7 +1861,11 @@ class LArray(ABCLArray):
             axis_key = axis_key.evaluate(self.axes)
 
         if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_) and bool_passthrough:
-            return PGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
+            if len(axis_key.axes) > 1:
+                raise ValueError("mixing ND boolean filters with other filters "
+                                 "in getitem is not currently supported")
+            else:
+                return PGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
 
         # translate Axis keys to LGroup keys
         # FIXME: this should be simply:
