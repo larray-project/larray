@@ -43,3 +43,13 @@ Fixes
     >>> arr['a2:'] = arr[':a1'].drop_labels('a')
 
 * fixed setting an array values using `array.points[key] = value` when value is an LArray (closes :issue:`368`).
+
+* fixed using syntax 'int..int' in a selection (closes :issue:`350`):
+
+    >>> arr = ndrange('a=2017..2012')
+    >>> arr
+    a  2017  2016  2015  2014  2013  2012
+          0     1     2     3     4     5
+    >>> arr['2012..2015']
+    a  2012  2013  2014  2015
+          5     4     3     2
