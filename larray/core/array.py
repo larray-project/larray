@@ -427,6 +427,9 @@ class LArrayPointsIndexer(object):
     def __setitem__(self, key, value):
         data = np.asarray(self.array)
         translated_key = self.array._translated_key(key, bool_stuff=True)
+        if isinstance(value, LArray):
+            axes = self.array._bool_key_new_axes(translated_key, wildcard_allowed=True)
+            value = value.broadcast_with(axes)
         data[translated_key] = value
 
 
