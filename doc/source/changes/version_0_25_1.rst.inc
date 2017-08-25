@@ -19,6 +19,10 @@ Fixes
 
 * fixed displaying empty array when starting the viewer or a new session in it.
 
+* fixed the `view()`, `edit()` and `compare()` functions not being available in the viewer console.
+
+* fixed row and column resizing by double clicking on the edge of an header cell.
+
 * setting values of a subset using another LArray is allowed only if axes and labels are compatible
   (closes :issue:`269`). For example:
 
