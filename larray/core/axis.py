@@ -659,6 +659,9 @@ class Axis(ABCAxis):
             # transform "specially formatted strings" for slices, lists, LGroup and PGroup to actual objects
             key = _to_key(key)
 
+        if not PY2 and isinstance(key, range):
+            key = list(key)
+
         if isinstance(key, PGroup):
             assert key.axis is self
             return key.key
