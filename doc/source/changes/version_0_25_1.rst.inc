@@ -41,3 +41,5 @@ Fixes
 
     >>> arr['a2:'] = arr[':a1'].set_labels('a', 'a2,a3')
     >>> arr['a2:'] = arr[':a1'].drop_labels('a')
+
+* fixed setting an array values using `array.points[key] = value` when value is an LArray (closes :issue:`368`).
