@@ -806,6 +806,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         with self.assertRaises(ValueError):
             arr.points['a0', 'b1'] = 42
 
+        # test when broadcasting is involved
+        arr = ndtest((2, 3, 4))
+        data = arr.data.copy()
+        value = data[:, 0, 0].reshape(2, 1)
+        data[:, [0, 1, 2], [0, 1, 2]] = value
+        arr.points['b0,b1,b2', 'c0,c1,c2'] = arr['b0', 'c0']
+        assert_array_equal(arr, data)
+
     def test_setitem_larray(self):
         """
         tests LArray.__setitem__(key, value) where value is an LArray
