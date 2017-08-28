@@ -918,14 +918,6 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la[:] = 0
         assert_array_equal(la, np.zeros_like(raw))
 
-        # 6) check labels
-        la = self.larray.copy()
-        sla = self.small.copy()
-        with pytest.raises(ValueError):
-            la['M,F'] = la['F,M']
-        with pytest.raises(ValueError):
-            la[1, 'A11', 'M,F'] = sla['F,M']
-
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.

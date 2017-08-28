@@ -15,25 +15,6 @@ Fixes
 
 * fixed row and column resizing by double clicking on the edge of an header cell.
 
-* setting values of a subset using another LArray is allowed only if axes and labels are compatible
-  (closes :issue:`269`). For example:
-
-    >>> arr = ndtest(4)
-    >>> arr
-    a  a0  a1  a2  a3
-        0   1   2   3
-    >>> arr['a2:'] = arr[':a1']
-    ValueError: incompatible axes:
-    Axis(['a2', 'a3'], 'a')
-    vs
-    Axis(['a0', 'a1'], 'a')
-
-  is not allowed. To set values using a LArray with incompatible labels, use the method
-  `set_labels` or `drop_labels`:
-
-    >>> arr['a2:'] = arr[':a1'].set_labels('a', 'a2,a3')
-    >>> arr['a2:'] = arr[':a1'].drop_labels('a')
-
 * fixed getting a subset of an array by mixing boolean filters and other filters (closes :issue:`246`):
 
     >>> arr = ndrange('a=a0..a2;b=0..3')
