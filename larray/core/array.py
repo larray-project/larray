@@ -947,7 +947,7 @@ class LArray(ABCLArray):
             return LArray(self.data, new_axes, title=self.title)
 
     def with_axes(self, axes):
-        warnings.warn("LArray.with_axes is deprecated, use LArray.set_axes instead", DeprecationWarning, stacklevel=2)
+        warnings.warn("LArray.with_axes is deprecated, use LArray.set_axes instead", FutureWarning, stacklevel=2)
         return self.set_axes(axes)
 
     def __getattr__(self, key):
@@ -7172,7 +7172,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
 
 
 def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
-    warnings.warn("create_sequential() has been renamed to sequence()", DeprecationWarning, stacklevel=2)
+    warnings.warn("create_sequential() has been renamed to sequence()", FutureWarning, stacklevel=2)
     return sequence(axis, initial=initial, inc=inc, mult=mult, func=func, axes=axes, title=title)
 
 

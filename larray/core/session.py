@@ -400,7 +400,7 @@ class Session(object):
         self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
     def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
-        warnings.warn("Method dump is deprecated. Use method save instead.", DeprecationWarning, stacklevel=2)
+        warnings.warn("Method dump is deprecated. Use method save instead.", FutureWarning, stacklevel=2)
         self.save(fname, names, engine, display, **kwargs)
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
@@ -436,7 +436,7 @@ class Session(object):
         self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
     def dump_hdf(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_hdf is deprecated. Use method to_hdf instead.", DeprecationWarning, stacklevel=2)
+        warnings.warn("Method dump_hdf is deprecated. Use method to_hdf instead.", FutureWarning, stacklevel=2)
         self.to_hdf(fname, names, *args, **kwargs)
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
@@ -472,7 +472,7 @@ class Session(object):
         self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
     def dump_excel(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_excel is deprecated. Use method to_excel instead.", DeprecationWarning, stacklevel=2)
+        warnings.warn("Method dump_excel is deprecated. Use method to_excel instead.", FutureWarning, stacklevel=2)
         self.to_excel(fname, names, *args, **kwargs)
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
@@ -505,7 +505,7 @@ class Session(object):
         self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
     def dump_csv(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_csv is deprecated. Use method to_csv instead.", DeprecationWarning, stacklevel=2)
+        warnings.warn("Method dump_csv is deprecated. Use method to_csv instead.", FutureWarning, stacklevel=2)
         self.to_csv(fname, names, *args, **kwargs)
 
     def filter(self, pattern=None, kind=None):

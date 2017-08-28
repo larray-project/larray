@@ -87,7 +87,7 @@ class Axis(ABCAxis):
             elif '..' not in labels and ',' not in labels:
                 warnings.warn("Arguments 'name' and 'labels' of Axis constructor have been inverted in "
                               "version 0.22 of larray. Please check you are passing labels first and name "
-                              "as second argument.", stacklevel=2)
+                              "as second argument.", FutureWarning, stacklevel=2)
                 name, labels = labels, name
 
         # make sure we do not have np.str_ as it causes problems down the
