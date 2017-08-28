@@ -1,16 +1,8 @@
-New features
-------------
-
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
-
-* added another feature.
-
-.. _misc:
-
 Miscellaneous improvements
 --------------------------
 
-* some improvement.
+* Deprecated methods display a warning message when they are still used
+  (replaced DeprecationWarning by FutureWarning. Closes :issue:`310`)
 
 Fixes
 -----
