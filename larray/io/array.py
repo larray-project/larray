@@ -78,22 +78,17 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
             # take the first column which contains '\'
             # pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
             pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
-            onedim = False
         except StopIteration:
             # we assume first column will not contain data
             pos_last = 0
-            onedim = True
 
         axes_names = columns[:pos_last + 1]
-        if onedim:
-            df = df.iloc[:, 1:]
-        else:
-            # This is required to handle int column names (otherwise we can simply use column positions in set_index).
-            # This is NOT the same as df.columns[list(range(...))] !
-            index_columns = [df.columns[i] for i in range(pos_last + 1)]
-            # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
-            # df.set_index(index_columns, inplace=True)
-            df = df.set_index(index_columns)
+        # This is required to handle int column names (otherwise we can simply use column positions in set_index).
+        # This is NOT the same as df.columns[list(range(...))] !
+        index_columns = [df.columns[i] for i in range(pos_last + 1)]
+        # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
+        # df.set_index(index_columns, inplace=True)
+        df = df.set_index(index_columns)
     else:
         axes_names = [decode(name, 'utf8') for name in df.index.names]
 
@@ -497,6 +492,10 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
     nat\sex  M  F
          BE  0  1
          FO  2  3
+    >>> from_string("period  a  b\\n2010  0  1\\n2011  2  3")
+    period\{1}  a  b
+          2010  0  1
+          2011  2  3
 
     Each label is stripped of leading and trailing whitespace, so this is valid too:
 
