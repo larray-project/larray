@@ -273,8 +273,23 @@ Fixes
 
 * fixed array creation with axis(es) given as string containing only one label (axis name and label were inversed).
 
-* fixed original file being deleted when trying to overwrite a file via `Session.save` or `open_excel` failed
-  (closes :issue:`441`)
+* fixed reading an array from a CSV or Excel file when the columns axis is not explicitly named (via `\`).
+  For example, let's say we want to read a CSV file 'pop.csv' with the following content (indented for clarity) ::
 
-* fixed loading arrays from Excel sheets containing blank cells below or right of the array to read
+  sex, 2015, 2016
+    F,   11,   13
+    M,   12,   10
+
+  The result of function `read_csv` is:
+
+    >>> pop = read_csv('pop.csv')
+    >>> pop
+    sex\{1}  2015  2016
+          F    11    13
+          M    12    10
+
+  Closes :issue:`372`.
+
+* fixed original file being deleted when trying to overwrite a file via `Session.save` or `open_excel` failed
+  (closes :issue:`441`)* fixed loading arrays from Excel sheets containing blank cells below or right of the array to read
   (closes :issue:`443`)
