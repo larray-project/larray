@@ -15,6 +15,8 @@ Fixes
 
 * fixed row and column resizing by double clicking on the edge of an header cell.
 
+* fixed `New` and `Open` in the menu `File` of the viewer when IPython console is not available.
+
 * fixed getting a subset of an array by mixing boolean filters and other filters (closes :issue:`246`):
 
     >>> arr = ndrange('a=a0..a2;b=0..3')
