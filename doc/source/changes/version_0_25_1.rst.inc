@@ -4,6 +4,8 @@ Miscellaneous improvements
 * Deprecated methods display a warning message when they are still used
   (replaced DeprecationWarning by FutureWarning. Closes :issue:`310`)
 
+* updated documentation of method `with_total` (closes :issue:`89`)
+
 Fixes
 -----
 
