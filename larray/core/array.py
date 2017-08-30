@@ -2942,12 +2942,15 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        args
-        kwargs
-        op : aggregate function
+        *args : int or str or Axis or Group or any combination of those, optional
+            Axes or groups along which to compute the aggregates. Passed groups should be named. 
+            Defaults to aggregate over the whole array.
+        op : aggregate function, optional 
             Defaults to `sum()`.
-        label : scalar value
-            label to use for the total. Defaults to "total".
+        label : scalar value, optional 
+            label to use for the total. Applies only to aggregated axes, not groups. Defaults to "total".
+        **kwargs : int or str or Group or any combination of those, optional
+            Axes or groups along which to compute the aggregates. 
 
         Returns
         -------
@@ -2967,6 +2970,12 @@ class LArray(ABCLArray):
            a1   3   4   5     12
            a2   6   7   8     21
         total   9  12  15     36
+        >>> arr.with_total('a', 'b0,b1 >> total_01')
+          a\\b  b0  b1  b2  total_01
+           a0   0   1   2         1
+           a1   3   4   5         7
+           a2   6   7   8        13
+        total   9  12  15        21
         >>> arr.with_total(op=prod, label='product')
             a\\b  b0  b1  b2  product
              a0   0   1   2        0
