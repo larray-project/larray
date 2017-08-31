@@ -119,7 +119,7 @@ class Session(object):
         Parameters
         ----------
         key : str
-            Name the array.
+            Name of the array.
         default : array, optional
             Returned array if the key doesn't correspond
             to any array of the current session.
@@ -318,7 +318,6 @@ class Session(object):
 
         Notes
         -----
-
         This method should usually only be used in an interactive console and not in a script. Code editors are
         confused by this kind of manipulation and will likely consider as invalid the code using variables created in
         this way. Additionally, when using this method auto-completion, "show definition", "go to declaration" and
@@ -327,7 +326,6 @@ class Session(object):
 
         Examples
         --------
-
         >>> s = Session(arr1=ndtest(3), arr2=ndtest((2, 2)))
         >>> s.to_globals()
         >>> arr1
@@ -744,7 +742,6 @@ class Session(object):
 
         Examples
         --------
-
         Let us create a test session and a small helper function to display sessions as a short summary.
 
         >>> arr1 = ndtest((2, 2, 2))
