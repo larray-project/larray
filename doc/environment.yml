@@ -8,9 +8,7 @@ dependencies:
   - pandas
   - matplotlib
   - pytables
-  - jupyter
-  - jupyter_client
   - sphinx
   - numpydoc
-  - nbsphinx
   - pandoc
+  - ipython
