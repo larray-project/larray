@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import pandas as pd
 from itertools import product
+import warnings
 
 from larray.core.axis import Axis
 from larray.core.array import LArray
@@ -128,8 +129,8 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     return LArray(data, axes)
 
 
-def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headersep=None, na=np.nan,
-             sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
+def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
+             na=np.nan, sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
 
@@ -155,8 +156,9 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
         Separator.
     headersep : str or None, optional
         Separator for headers.
-    na : scalar, optional
-        Value for NaN (Not A Number). Defaults to NumPy NaN.
+    fill_value : scalar or LArray, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input.
+        Defaults to NaN.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
@@ -193,6 +195,11 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
          BE  0  1
          FO  2  3
     """
+    if not np.isnan(na):
+        fill_value = na
+        warnings.warn("read_csv `na` argument has been renamed to `fill_value`. Please use that instead.",
+                      FutureWarning, stacklevel=2)
+
     if dialect == 'liam2':
         # read axes names. This needs to be done separately instead of reading the whole file with Pandas then
         # manipulating the dataframe because the header line must be ignored for the column types to be inferred
@@ -236,7 +243,7 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
         df.index.names = combined_axes_names.split(headersep)
         raw = False
 
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, raw=raw)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw)
 
 
 def read_tsv(filepath_or_buffer, **kwargs):
@@ -262,7 +269,7 @@ def read_eurostat(filepath_or_buffer, **kwargs):
     return read_csv(filepath_or_buffer, sep='\t', headersep=',', **kwargs)
 
 
-def read_hdf(filepath_or_buffer, key, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
     """Reads an array named key from a HDF5 file in filepath (path+name)
 
     Parameters
@@ -271,17 +278,29 @@ def read_hdf(filepath_or_buffer, key, na=np.nan, sort_rows=False, sort_columns=F
         Path and name where the HDF5 file is stored or a HDFStore object.
     key : str
         Name of the array.
+    fill_value : scalar or LArray, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input.
+        Defaults to NaN.
+    sort_rows : bool, optional
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+    sort_columns : bool, optional
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Defaults to False.
 
     Returns
     -------
     LArray
     """
+    if not np.isnan(na):
+        fill_value = na
+        warnings.warn("read_hdf `na` argument has been renamed to `fill_value`. Please use that instead.",
+                      FutureWarning, stacklevel=2)
     df = pd.read_hdf(filepath_or_buffer, key, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na, parse_header=False)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, parse_header=False)
 
 
-def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False,
-               engine=None, **kwargs):
+def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan,
+               sort_rows=False, sort_columns=False, engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
 
@@ -297,8 +316,9 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
     index_col : list, optional
         List of columns for the index (ex. [0, 1, 2, 3]).
         Default to [0].
-    na : scalar, optional
-        Value for NaN (Not A Number). Defaults to NumPy NaN.
+    fill_value : scalar or LArray, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input.
+        Defaults to NaN.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
@@ -310,6 +330,11 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         installed and relies on Pandas default reader otherwise.
     **kwargs
     """
+    if not np.isnan(na):
+        fill_value = na
+        warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
+                      FutureWarning, stacklevel=2)
+
     if engine is None:
         engine = 'xlwings' if xw is not None else None
 
@@ -324,8 +349,8 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         if kwargs:
             raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
                             .format(list(kwargs.keys())[0]))
-        if not np.isnan(na):
-            raise NotImplementedError("na argument is not currently supported with the (default) "
+        if not np.isnan(fill_value):
+            raise NotImplementedError("fill_value argument is not currently supported with the (default) "
                                       "xlwings engine")
         if sort_rows:
             raise NotImplementedError("sort_rows argument is not currently supported with the (default) "
@@ -338,16 +363,23 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
             return wb[sheetname].load(index_col=index_col)
     else:
         df = pd.read_excel(filepath, sheetname, index_col=index_col, engine=engine, **kwargs)
-        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None, fill_value=na)
+        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
+                           fill_value=fill_value)
 
 
-def read_sas(filepath, nb_index=None, index_col=None, na=np.nan, sort_rows=False, sort_columns=False, **kwargs):
+def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan,
+             sort_rows=False, sort_columns=False, **kwargs):
     """
     Reads sas file and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
     or
         index_col: list of columns for the index (e.g. [0, 1, 3])
     """
+    if not np.isnan(na):
+        fill_value = na
+        warnings.warn("read_sas `na` argument has been renamed to `fill_value`. Please use that instead.",
+                      FutureWarning, stacklevel=2)
+        
     if nb_index is not None and index_col is not None:
         raise ValueError("cannot specify both nb_index and index_col")
     elif nb_index is not None:
@@ -356,7 +388,7 @@ def read_sas(filepath, nb_index=None, index_col=None, na=np.nan, sort_rows=False
         index_col = [index_col]
 
     df = pd.read_sas(filepath, index=index_col, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=na)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)
 
 
 def from_lists(data, nb_index=None, index_col=None):

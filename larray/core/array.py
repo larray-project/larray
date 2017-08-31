@@ -1345,7 +1345,8 @@ class LArray(ABCLArray):
         new_axis : int, str, list/tuple/array of str or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
-            Value set to data corresponding to added labels. Defaults to NaN.
+            Value used to fill cells corresponding to label combinations which were not present before reindexing.
+            Defaults to NaN.
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
@@ -1460,7 +1461,8 @@ class LArray(ABCLArray):
               - left: will use the first array axis labels
               - right: will use the other array axis labels.
         fill_value : scalar or LArray, optional
-            Value to use for missing values. Defaults to NaN.
+            Value used to fill cells corresponding to label combinations which are not common to both arrays.
+            Defaults to NaN.
         axes : AxisReference or sequence of them, optional
             Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
             when mixing anonymous and non-anonymous axes.
