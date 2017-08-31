@@ -104,7 +104,7 @@ from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list, PY2)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list)
 
 nan = np.nan
 
@@ -2222,8 +2222,10 @@ class LArray(ABCLArray):
             # replace incomprehensible error message
             # "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
-            extra_axes = value.axes - axes
+            extra_axes = [axis for axis in value.axes - axes if len(axis) > 1]
             if extra_axes:
+                extra_axes = AxisCollection(extra_axes)
+                axes = AxisCollection(axes)
                 text = 'axes are' if len(extra_axes) > 1 else 'axis is'
                 raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "\
                                  "or fewer axes than the subset being targeted".format(extra_axes, text, axes))

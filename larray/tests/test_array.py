@@ -855,6 +855,18 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # same raw as previous test
         assert_array_equal(la, raw)
 
+        # c) value has an extra length-1 axis
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
+        fake_axis = Axis(['label'], 'fake')
+        age_axis = la[ages1_5_9].axes.age
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex, self.lipro))
+        la[ages1_5_9] = value
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
+        assert_array_equal(la, raw)
+
         # d) value has the same axes than target but one has length 1
         # la = self.larray.copy()
         # raw = self.array.copy()
@@ -910,11 +922,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la = self.small.copy()
         la2 = la.copy()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
+                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "being targeted".format(la2.axes - la['P01'].axes, la['P01'].axes)):
            la['P01'] = la2
 
         la2 = la.rename('sex', 'gender')
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
+                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "being targeted".format(la2['P01'].axes - la['P01'].axes, la['P01'].axes)):
            la['P01'] = la2['P01']
 
     def test_setitem_ndarray(self):
@@ -1026,6 +1042,18 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         la.set(la[ages1_5_9] + 25.0, age=ages1_5_9)
         raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
+        assert_array_equal(la, raw)
+
+        # b) same size but a different shape (extra length-1 axis)
+        la = self.larray.copy()
+        raw = self.array.copy()
+
+        raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
+        fake_axis = Axis(['label'], 'fake')
+        age_axis = la[ages1_5_9].axes.age
+        value = LArray(raw_value, axes=(age_axis, fake_axis, self.geo, self.sex, self.lipro))
+        la.set(value, age=ages1_5_9)
+        raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
         assert_array_equal(la, raw)
 
         # dimension of length 1
