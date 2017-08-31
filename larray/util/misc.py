@@ -521,7 +521,6 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
 
     Examples
     --------
-
     >>> _parse_bound(' a ')
     'a'
     >>> # returns None

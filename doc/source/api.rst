@@ -203,7 +203,7 @@ LArray
 * :ref:`la_sorting`
 * :ref:`la_reshaping`
 * :ref:`la_testing`
-* :ref:`_la_op:`
+* :ref:`la_op`
 * :ref:`la_misc`
 * :ref:`la_to_pandas`
 * :ref:`la_plotting`

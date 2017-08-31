@@ -265,7 +265,7 @@ Miscellaneous improvements
     year | 2016 | 2017 | 2018 | 2019
          |    0 |    1 |    2 |    3
 
-* replaced *args, **kwargs by explicit arguments in documentation of aggregation functions (sum, prod, mean, std,
+* replaced \*args, \**kwargs by explicit arguments in documentation of aggregation functions (sum, prod, mean, std,
   var, ...). Closes :issue:`41`.
 
 * improved documentation of plot method (closes :issue:`169`).

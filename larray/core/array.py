@@ -144,7 +144,6 @@ def sum(array, *args, **kwargs):
 
     See Also
     --------
-
     LArray.sum
     """
     # XXX: we might want to be more aggressive here (more types to convert),
@@ -493,103 +492,74 @@ def get_axis(obj, i):
 
 
 _arg_agg = {
-    'q':
-        """
+    'q': """
         q : int in range of [0,100] (or sequence of floats)
-            Percentile to compute, which must be between 0 and 100 inclusive.
-        """
+            Percentile to compute, which must be between 0 and 100 inclusive."""
 }
 
 _kwarg_agg = {
-    'dtype': {'value': None, 'doc':
-        """
-        * dtype : dtype, optional
+    'dtype': {'value': None, 'doc': """
+        dtype : dtype, optional
+            The data type of the returned array. Defaults to None (the dtype of the input array)."""},
+    'out': {'value': None, 'doc': """
+        out : LArray, optional
+            Alternate output array in which to place the result.
+            It must have the same shape as the expected output and
+            its type is preserved (e.g., if dtype(out) is float, the
+            result will consist of 0.0’s and 1.0’s).
+            Axes and labels can be different, only the shape matters. Defaults to None (create a new array)."""},
+    'ddof': {'value': 1, 'doc': """
+        ddof : int, optional
+            "Delta Degrees of Freedom": the divisor used in the
+            calculation is ``N - ddof``, where ``N`` represents
+            the number of elements. Defaults to 1."""},
+    'skipna': {'value': None, 'doc': """
+        skipna : bool, optional
+            Whether or not to skip NaN (null) values. If False, resulting cells will be NaN if any of the
+            aggregated cells is NaN. Defaults to True."""},
+    'keepaxes': {'value': False, 'doc': """
+        keepaxes : bool, optional
+            Whether or not reduced axes are left in the result as dimensions with size one. Defaults to False."""
+    },
+    'interpolation': {'value': 'linear', 'doc': """
+        interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}, optional
+            Interpolation method to use when the desired quantile lies between two data points ``i < j``:
 
-          The type of the returned array.
-          The dtype of the array is used by default.
-        """},
-    'out': {'value': None, 'doc':
-        """
-        * out : LArray, optional
+              * linear: ``i + (j - i) * fraction``, where ``fraction`` is the fractional part of the index surrounded
+                by ``i`` and ``j``.
+              * lower: ``i``.
+              * higher: ``j``.
+              * nearest: ``i`` or ``j``, whichever is nearest.
+              * midpoint: ``(i + j) / 2``.
 
-          Alternate output array in which to place the result.
-          It must have the same shape as the expected output and
-          its type is preserved (e.g., if dtype(out) is float, the
-          result will consist of 0.0’s and 1.0’s).
-          Axes and labels can be different, only the shape matters.
-        """},
-    'ddof': {'value': 1, 'doc':
-        """
-        * ddof : int, optional
-
-          "Delta Degrees of Freedom": the divisor used in the
-          calculation is ``N - ddof``, where ``N`` represents
-          the number of elements. By default `ddof` is 1.
-        """},
-    'skipna': {'value': None, 'doc':
-        """
-        * skipna : bool, optional
-
-          'skip NaN': Ignore NaN/null values.
-          If an entire row/column is NaN, the result will be NaN.
-        """},
-    'keepaxes': {'value': False, 'doc':
-        """
-        * keepaxes : bool, optional
-
-          If this is set to True, the axes which are reduced are
-          left in the result as dimensions with size one.
-          With this option, the result will broadcast correctly
-          against the input array.
-        """},
-    'interpolation': {'value': 'linear', 'doc':
-        """
-        * interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-
-          This optional parameter specifies the interpolation method to
-          use when the desired quantile lies between two data points ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction`` is the
-              fractional part of the index surrounded by ``i`` and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
-        """}
+            Defaults to 'linear'."""
+    }
 }
 
 
-def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[], kwargs=[]):
+def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_args=[], kwargs=[]):
     if not long_name:
         long_name = func.__name__
-    if not action_verb:
-        action_verb = 'perform'
 
     _args = ','.join(extra_args) + ', ' if len(extra_args) > 0 else ''
-    _kwargs = ', '.join(["{}={}".format(k, _kwarg_agg[k]['value']) for k in kwargs]) + ', ' if len(kwargs) > 0 else ''
+    _kwargs = ', '.join(["{}={!r}".format(k, _kwarg_agg[k]['value']) for k in kwargs]) + ', ' if len(kwargs) > 0 else ''
     signature = '{name}({args}*axes_and_groups, {kwargs}**explicit_axes)'.format(name=func.__name__,
-                                                                                args=_args, kwargs=_kwargs)
+                                                                                 args=_args, kwargs=_kwargs)
 
     if by:
-        doc_specific = "The {long_name} is {action_verb}ed along all axes except the given one(s). " \
-                  "For groups, {long_name} is {action_verb}ed along groups and non associated axes. " \
-                  "The default (no axis or group) is to {action_verb} the {long_name} " \
-                  "over all the dimensions of the input array.".format(long_name=long_name, action_verb=action_verb)
+        specific_template = """The {long_name} is {action_verb}ed along all axes except the given one(s).
+            For groups, {long_name} is {action_verb}ed along groups and non associated axes."""
     else:
-        doc_specific = "Axis(es) or group(s) along the {long_name} is {action_verb}ed. " \
-                  "The default (no axis or group) is to {action_verb} the {long_name} " \
-                  "over all the dimensions of the input array.".format(long_name=long_name, action_verb=action_verb)
+        specific_template = "Axis(es) or group(s) along which the {long_name} is {action_verb}ed."
+    doc_specific = specific_template.format(long_name=long_name, action_verb=action_verb)
 
     doc_args = "".join(_arg_agg[arg] for arg in extra_args)
     doc_kwargs = "".join(_kwarg_agg[kw]['doc'] for kw in kwargs)
-
-    parameters = \
-        """
-        Parameters
-        ----------
-        {args}
+    doc_varargs = """
         \*axes_and_groups : None or int or str or Axis or Group or any combination of those
-
             {specific}
+            The default (no axis or group) is to {action_verb} the {long_name} over 
+            all the dimensions of the input array.
 
             An axis can be referred by:
 
@@ -599,7 +569,6 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[],
               string ('axis_name') or the special variable x (x.axis_name).
             * a variable (Axis). If the axis has been defined previously
               and assigned to a variable, you can pass it as argument.
-
 
             You may not want to {action_verb} the {long_name} over a whole axis but
             over a selection of specific labels. To do so, you have several
@@ -618,12 +587,10 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='', extra_args=[],
               Names are simply given by the concatenation of labels
               (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
             * ('a1:a3 >> a123', 'b[b0,b2] >> b12') :
-              operator ' >> ' allows to rename groups.
-
-        \**kwargs :
-        {kwargs}
-        """.format(args=doc_args, specific=doc_specific, action_verb=action_verb, long_name=long_name,
-                   kwargs=doc_kwargs)
+              operator ' >> ' allows to rename groups.""".format(specific=doc_specific, action_verb=action_verb,
+                                                                 long_name=long_name)
+    parameters = """Parameters
+        ----------{args}{varargs}{kwargs}""".format(args=doc_args, varargs=doc_varargs, kwargs=doc_kwargs)
 
     func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters)
 
@@ -647,9 +614,8 @@ def larray_equal(a1, a2):
     bool
         Returns True if the arrays are equal (and do not contain nan values).
 
-    Note
-    ----
-
+    Notes
+    -----
     An array containing nan values is never equal to another array, even if that other array also contains nan values at
     the same positions. The reason is that a nan value is different from *anything*, including itself. One might want
     to use larray_nan_equal to avoid this behavior.
@@ -870,7 +836,7 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
+        axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
                           or list of Axis or AxisCollection
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
@@ -1076,7 +1042,7 @@ class LArray(ABCLArray):
         dropna : {'any', 'all', None}, optional.
             * any : if any NA values are present, drop that label
             * all : if all values are NA, drop that label
-            None by default.
+            * None by default.
 
         Returns
         -------
@@ -1304,12 +1270,11 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        renames : axis ref or dict {axis ref: str} or
-                  list of tuple (axis ref, str)
+        renames : axis ref or dict {axis ref: str} or list of tuple (axis ref, str)
             Renames to apply. If a single axis reference is given, the `to` argument must be used.
-        to : string or Axis
+        to : str or Axis
             New name if `renames` contains a single axis reference.
-        **kwargs :
+        **kwargs : str or Axis
             New name for each axis given as a keyword argument.
 
         Returns
@@ -1372,7 +1337,7 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis)
+        axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
                           or list of Axis or AxisCollection
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
@@ -1503,8 +1468,8 @@ class LArray(ABCLArray):
         (left, right) : (LArray, LArray)
             Aligned objects
 
-        Note
-        ----
+        Notes
+        -----
             Arrays with anonymous axes are currently not supported.
 
         Examples
@@ -3496,9 +3461,10 @@ class LArray(ABCLArray):
 
     # aggregate method decorator
     def _decorate_agg_method(npfunc, nanfunc=None, commutative=False, by_agg=False, extra_kwargs=[],
-                             long_name='', action_verb=''):
+                             long_name='', action_verb='perform'):
         def decorated(func):
             _doc_agg_method(func, by_agg, long_name, action_verb, kwargs=extra_kwargs + ['out', 'skipna', 'keepaxes'])
+
             @functools.wraps(func)
             def wrapper(self, *args, **kwargs):
                 keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
@@ -7111,19 +7077,19 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
 
         # a[0] = initial
         # a[1] = initial * mult[1]
-        #      + inc[1]
+        #      +  inc[1]
         # a[2] = initial * mult[1] * mult[2]
-        #      + inc[1] * mult[2]
-        #      + inc[2]
+        #      +  inc[1] * mult[2]
+        #      +  inc[2]
         # a[3] = initial * mult[1] * mult[2] * mult[3]
-        #      + inc[1] * mult[2] * mult[3]
-        #      + inc[2]           * mult[3]
-        #      + inc[3]
+        #      +  inc[1] * mult[2] * mult[3]
+        #      +  inc[2]           * mult[3]
+        #      +  inc[3]
         # a[4] = initial * mult[1] * mult[2] * mult[3] * mult[4]
-        #      + inc[1] * mult[2] * mult[3] * mult[4]
-        #      + inc[2]           * mult[3] * mult[4]
-        #      + inc[3]                     * mult[4]
-        #      + inc[4]
+        #      +  inc[1] * mult[2] * mult[3] * mult[4]
+        #      +  inc[2]           * mult[3] * mult[4]
+        #      +  inc[3]                     * mult[4]
+        #      +  inc[4]
 
         # a[1:] = initial * cumprod(mult[1:]) + ...
         def index_if_exists(a, axis, i):
