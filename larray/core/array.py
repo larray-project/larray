@@ -2222,19 +2222,16 @@ class LArray(ABCLArray):
             # replace incomprehensible error message
             # "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
-            try:
-                data[cross_key] = value
-            except ValueError as err:
-                new_message = "Incompatible axes. Values from input array with axes\n" \
-                              "{!r}\ncannot be set to subset with axes\n{!r}".format(value.axes, self[key].axes)
-                if PY2:
-                    err.message = new_message
-                    raise
-                else:
-                    raise ValueError(new_message) from err
+            extra_axes = value.axes - axes
+            if extra_axes:
+                text = 'axes are' if len(extra_axes) > 1 else 'axis is'
+                raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "\
+                                 "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
         else:
             # if value is a "raw" ndarray we rely on numpy broadcasting
-            data[cross_key] = value
+            pass
+
+        data[cross_key] = value
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
         """
