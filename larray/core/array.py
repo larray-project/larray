@@ -104,7 +104,7 @@ from larray.core.expr import ExprNode
 from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list, PY2)
 
 nan = np.nan
 
@@ -2219,11 +2219,22 @@ class LArray(ABCLArray):
             else:
                 axes = self._get_axes_from_translated_key(translated_key)
             value = value.broadcast_with(axes)
+            # replace incomprehensible error message
+            # "could not broadcast input array from shape XX into shape YY"
+            # for users by "incompatible axes"
+            try:
+                data[cross_key] = value
+            except ValueError as err:
+                new_message = "Incompatible axes. Values from input array with axes\n" \
+                              "{!r}\ncannot be set to subset with axes\n{!r}".format(value.axes, self[key].axes)
+                if PY2:
+                    err.message = new_message
+                    raise
+                else:
+                    raise ValueError(new_message) from err
         else:
             # if value is a "raw" ndarray we rely on numpy broadcasting
-            pass
-
-        data[cross_key] = value
+            data[cross_key] = value
 
     def _bool_key_new_axes(self, key, wildcard_allowed=False):
         """
