@@ -1,13 +1,13 @@
 Miscellaneous improvements
 --------------------------
 
-* Deprecated methods display a warning message when they are still used
-  (replaced DeprecationWarning by FutureWarning. Closes :issue:`310`)
+* Deprecated methods display a warning message when they are still used (replaced DeprecationWarning by FutureWarning).
+  Closes :issue:`310`.
 
-* updated documentation of method `with_total` (closes :issue:`89`)
+* updated documentation of method `with_total` (closes :issue:`89`).
 
-* trying to set values of a subset by passing an array with incompatible axes
-  displays a better error message (closes :issue:`268`)
+* trying to set values of a subset by passing an array with incompatible axes displays a better error message
+  (closes :issue:`268`).
 
 Fixes
 -----
@@ -49,7 +49,8 @@ Fixes
     a  2012  2013  2014  2015
           5     4     3     2
 
-* fixed mixing 'int..int' and spaces in an indexing string (closes :issue:`389`):
+* fixed mixing '..' sequences and spaces in an indexing string (closes :issue:`389`):
+
     >>> arr = ndtest(7)
     >>> arr
     a  a0  a1  a2  a3  a4  a5  a6
@@ -57,3 +58,5 @@ Fixes
     >>> arr['a0, a2, a4..a6']
     a  a0  a2  a4  a5  a6
         0   2   4   5   6
+
+* fixed indexing/aggregating using groups with renaming (using >>) when the axis has mixed type labels (object dtype).
