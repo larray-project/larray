@@ -324,6 +324,15 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, na=np.nan, 
         if kwargs:
             raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
                             .format(list(kwargs.keys())[0]))
+        if not np.isnan(na):
+            raise NotImplementedError("na argument is not currently supported with the (default) "
+                                      "xlwings engine")
+        if sort_rows:
+            raise NotImplementedError("sort_rows argument is not currently supported with the (default) "
+                                      "xlwings engine")
+        if sort_columns:
+            raise NotImplementedError("sort_columns argument is not currently supported with the (default) "
+                                      "xlwings engine")
         from larray.io.excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheetname].load(index_col=index_col)
