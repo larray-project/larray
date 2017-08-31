@@ -89,6 +89,10 @@ We use Numpy conventions for docstrings. Here is a template: ::
       type
           Description of return value.
 
+      Notes
+      -----
+      Some interesting facts about this function.
+
       See Also
       --------
       LArray.otherfunc : How other function or method is related.

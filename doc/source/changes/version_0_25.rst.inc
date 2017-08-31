@@ -16,7 +16,7 @@
   used:
 
     - outer: will use a label if it is in either arrays axis (ordered like the first array). This is the default as it
-             results in no information loss.
+      results in no information loss.
     - inner: will use a label if it is in both arrays axis (ordered like the first array)
     - left: will use the first array axis labels
     - right: will use the other array axis labels
@@ -330,7 +330,7 @@ Miscellaneous improvements
   Without passing an explicit order for labels like above (or an axis object), it should only be used on Python 3.6 or
   later because keyword arguments are NOT ordered on earlier Python versions.
 
-    # use this only on Python 3.6 and later
+    >>> # use this only on Python 3.6 and later
     >>> stack(M=arr1, F=arr2, axis='sex')
     nat\\sex    M    F
          BE  1.0  0.0
