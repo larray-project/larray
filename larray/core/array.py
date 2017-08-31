@@ -2219,6 +2219,16 @@ class LArray(ABCLArray):
             else:
                 axes = self._get_axes_from_translated_key(translated_key)
             value = value.broadcast_with(axes)
+            # replace incomprehensible error message
+            # "could not broadcast input array from shape XX into shape YY"
+            # for users by "incompatible axes"
+            extra_axes = [axis for axis in value.axes - axes if len(axis) > 1]
+            if extra_axes:
+                extra_axes = AxisCollection(extra_axes)
+                axes = AxisCollection(axes)
+                text = 'axes are' if len(extra_axes) > 1 else 'axis is'
+                raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "\
+                                 "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
         else:
             # if value is a "raw" ndarray we rely on numpy broadcasting
             pass

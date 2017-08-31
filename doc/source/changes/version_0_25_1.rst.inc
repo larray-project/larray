@@ -6,6 +6,9 @@ Miscellaneous improvements
 
 * updated documentation of method `with_total` (closes :issue:`89`)
 
+* trying to set values of a subset by passing an array with incompatible axes
+  displays a better error message (closes :issue:`268`)
+
 Fixes
 -----
 
