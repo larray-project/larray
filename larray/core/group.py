@@ -226,6 +226,7 @@ def _range_str_to_range(s, stack_depth=1):
     >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
     ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
     """
+    s = s.strip()
     m = _range_str_pattern.match(s)
 
     groups = m.groupdict()

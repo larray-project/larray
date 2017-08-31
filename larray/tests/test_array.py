@@ -254,7 +254,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # string 'int..int'
-        assert_array_equal(la['10..15'], la['10,11,12,13,14,15'])
+        assert_array_equal(la['10..13'], la['10,11,12,13'])
+        assert_array_equal(la['8, 10..13, 15'], la['8,10,11,12,13,15'])
 
         # ambiguous label
         arr = ndrange("a=l0,l1;b=l1,l2")
