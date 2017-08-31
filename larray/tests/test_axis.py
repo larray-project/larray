@@ -88,6 +88,13 @@ class TestAxis(TestCase):
         self.assertEqual(group.key, slice(None))
         self.assertIs(group.axis, age)
 
+    def test_translate(self):
+        # an axis with labels having the object dtype
+        a = Axis(np.array(["a0", "a1"], dtype=object), 'a')
+
+        self.assertEqual(a.translate('a1'), 1)
+        self.assertEqual(a.translate('a1 >> A1'), 1)
+
     def test_getitem_lgroup_keys(self):
         def group_equal(g1, g2):
             return (g1.key == g2.key and g1.name == g2.name and

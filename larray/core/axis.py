@@ -720,7 +720,7 @@ class Axis(ABCAxis):
             # path is only used if the key was given in "non normalized form"
             assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
             # key is scalar (integer, float, string, ...)
-            if np.dtype(type(key)).kind == self.labels.dtype.kind:
+            if self._is_key_type_compatible(key):
                 return mapping[key]
             else:
                 # print("diff dtype", )
