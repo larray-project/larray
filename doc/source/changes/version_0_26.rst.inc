@@ -38,6 +38,12 @@ Miscellaneous improvements
      v1    3    4    5
      v2  nan  nan  nan
 
+* `read_excel` displays an error message when arguments `na`, `sort_rows` or `sort_columns` are used
+  with the default `xlwings` engine
+
+* replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
+  (closes :issue:`394`)
+
 Fixes
 -----
 
