@@ -9,9 +9,6 @@ Miscellaneous improvements
 * trying to set values of a subset by passing an array with incompatible axes displays a better error message
   (closes :issue:`268`).
 
-* `read_excel` displays an error message when arguments `na`, `sort_rows` or `sort_columns` are used
-  with `xlwings` engine
-
 Fixes
 -----
 
