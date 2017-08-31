@@ -919,6 +919,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la[:] = 0
         assert_array_equal(la, np.zeros_like(raw))
 
+        # 6) incompatible axes
+        la = self.small.copy()
+        la2 = la.copy()
+
+        with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
+                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "being targeted".format(la2.axes - la['P01'].axes, la['P01'].axes)):
+           la['P01'] = la2
+
+        la2 = la.rename('sex', 'gender')
+        with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
+                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "being targeted".format(la2['P01'].axes - la['P01'].axes, la['P01'].axes)):
+           la['P01'] = la2['P01']
+
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.
