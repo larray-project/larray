@@ -45,3 +45,12 @@ Fixes
     >>> arr['2012..2015']
     a  2012  2013  2014  2015
           5     4     3     2
+
+* fixed mixing 'int..int' and spaces in an indexing string (closes :issue:`389`):
+    >>> arr = ndtest(7)
+    >>> arr
+    a  a0  a1  a2  a3  a4  a5  a6
+        0   1   2   3   4   5   6
+    >>> arr['a0, a2, a4..a6']
+    a  a0  a2  a4  a5  a6
+        0   2   4   5   6
