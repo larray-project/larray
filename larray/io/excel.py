@@ -56,7 +56,6 @@ if xw is not None:
 
     LArrayConverter.register(LArray)
 
-
     # TODO : replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
@@ -93,7 +92,12 @@ if xw is not None:
                     app = xw_wkb.app
 
             if app is None:
-                app = "active" if filepath == -1 else "global"
+                if filepath is None:
+                    app = "new"
+                elif filepath == -1:
+                    app = "active"
+                else:
+                    app = "global"
 
             # active workbook use active app by default
             if filepath == -1:
