@@ -16,6 +16,9 @@ Fixes
 
 * fixed displaying empty array when starting the viewer or a new session in it.
 
+* fixed Excel instance created via to_excel() and open_excel() without any filename being closed at the end of the
+  Python program (closes :issue:`390`).
+
 * fixed the `view()`, `edit()` and `compare()` functions not being available in the viewer console.
 
 * fixed row and column resizing by double clicking on the edge of an header cell.
