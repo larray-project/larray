@@ -491,7 +491,7 @@ def find_closing_chr(s, start=0):
 def float_error_handler_factory(stacklevel):
     def error_handler(error, flag):
         if error == 'invalid value':
-            error = 'invalid value (NaN)'
+            error = 'invalid value (nan)'
             extra = ' (this is typically caused by a 0 / 0)'
         else:
             extra = ''

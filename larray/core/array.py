@@ -530,8 +530,8 @@ _kwarg_agg = {
         """
         * skipna : bool, optional
 
-          'skip NaN': Ignore NaN/null values.
-          If an entire row/column is NaN, the result will be NaN.
+          'skip nan': Ignore nan/null values.
+          If an entire row/column is nan, the result will be nan.
         """},
     'keepaxes': {'value': False, 'doc':
         """
@@ -1170,9 +1170,9 @@ class LArray(ABCLArray):
 
     def describe(self, *args, **kwargs):
         """
-        Descriptive summary statistics, excluding NaN values.
+        Descriptive summary statistics, excluding nan values.
 
-        By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
+        By default, it includes the number of non-nan values, the mean, standard deviation, minimum, maximum and
         the 25, 50 and 75 percentiles.
 
         Parameters
@@ -1221,9 +1221,9 @@ class LArray(ABCLArray):
 
     def describe_by(self, *args, **kwargs):
         """
-        Descriptive summary statistics, excluding NaN values, along axes or for groups.
+        Descriptive summary statistics, excluding nan values, along axes or for groups.
 
-        By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
+        By default, it includes the number of non-nan values, the mean, standard deviation, minimum, maximum and
         the 25, 50 and 75 percentiles.
 
         Parameters
@@ -1368,7 +1368,7 @@ class LArray(ABCLArray):
     def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=np.nan, inplace=False, **kwargs):
         """Reorder and/or add new labels in axes.
 
-        Place NaN or given `fill_value` in locations having no value previously.
+        Place nan or given `fill_value` in locations having no value previously.
 
         Parameters
         ----------
@@ -1380,7 +1380,7 @@ class LArray(ABCLArray):
         new_axis : int, str, list/tuple of str or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
-            Value set to data corresponding to added labels. Defaults to NaN.
+            Value set to data corresponding to added labels. Defaults to nan.
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
@@ -1493,7 +1493,7 @@ class LArray(ABCLArray):
               - left: will use the first array axis labels
               - right: will use the other array axis labels.
         fill_value : scalar or LArray, optional
-            Value to use for missing values. Defaults to NaN.
+            Value to use for missing values. Defaults to nan.
         axes : AxisReference or sequence of them, optional
             Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
             when mixing anonymous and non-anonymous axes.
