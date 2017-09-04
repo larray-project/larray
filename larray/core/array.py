@@ -1342,7 +1342,7 @@ class LArray(ABCLArray):
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : int, str, list/tuple of str or Axis, optional
+        new_axis : int, str, list/tuple/array of str or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
             Value set to data corresponding to added labels. Defaults to NaN.
@@ -1398,7 +1398,7 @@ class LArray(ABCLArray):
 
         Reindex using axes from another array
 
-        >>> arr2 = ndrange('a=a0..a1;c=c0..c0;b=b0..b2')
+        >>> arr2 = ndrange('a=a0,a1;c=c0..c0;b=b0..b2')
         >>> arr2
          a  c\\b  b0  b1  b2
         a0   c0   0   1   2
@@ -1417,8 +1417,10 @@ class LArray(ABCLArray):
         a1   c0  3.0  4.0
         """
         # XXX: can't we move this to AxisCollection.replace?
-        if isinstance(new_axis, (int, basestring, list, tuple)):
+        if isinstance(new_axis, (int, basestring, list, tuple, np.ndarray)):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
+        if isinstance(new_axis, Axis):
+            new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
         if isinstance(axes_to_reindex, AxisCollection):
             assert new_axis is None
             # add extra axes if needed
