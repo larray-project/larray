@@ -12,6 +12,31 @@ Miscellaneous improvements
 
 * view() and edit() without argument now display global arrays in addition to local ones (closes :editor_issue:`54`).
 
+* allowed to pass an array of labels as `new_axis` argument to `reindex` method (closes :issue:`384`):
+
+    >>> arr = ndrange('a=v0..v1;b=v0..v2')
+    >>> arr
+    a\b  v0  v1  v2
+     v0   0   1   2
+     v1   3   4   5
+    >>> arr.reindex('a', arr.b.labels)
+    a\b   v0   v1   v2
+     v0    0    1    2
+     v1    3    4    5
+     v2  nan  nan  nan
+
+* allowed to call the `reindex` method using a differently named axis for labels (closes :issue:`386`):
+
+    >>> arr = ndrange('a=v0..v1;b=v0..v2')
+    >>> arr
+    a\b  v0  v1  v2
+     v0   0   1   2
+     v1   3   4   5
+    >>> arr.reindex('a', arr.b)
+    a\b   v0   v1   v2
+     v0    0    1    2
+     v1    3    4    5
+     v2  nan  nan  nan
 
 Fixes
 -----

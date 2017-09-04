@@ -2382,6 +2382,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                                  a0   1   0   0
                                                  a1   3   1   2"""))
 
+        # using labels from another array
+        arr = ndrange('a=v0..v2;b=v0,v2,v1,v3')
+        res = arr.reindex('a', arr.b.labels, fill_value=-1)
+        assert_array_equal(res, from_string("""a\\b  v0  v2  v1  v3
+                                                 v0   0   1   2   3
+                                                 v2   8   9  10  11
+                                                 v1   4   5   6   7
+                                                 v3  -1  -1  -1  -1"""))
+        res = arr.reindex('a', arr.b, fill_value=-1)
+        assert_array_equal(res, from_string("""a\\b  v0  v2  v1  v3
+                                                 v0   0   1   2   3
+                                                 v2   8   9  10  11
+                                                 v1   4   5   6   7
+                                                 v3  -1  -1  -1  -1"""))
+
     def test_append(self):
         la = self.small
         sex, lipro = la.axes
