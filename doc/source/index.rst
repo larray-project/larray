@@ -22,7 +22,7 @@ Contents:
 
    install
    getting_started
-   tutorial/LArray_intro.rst
+   tutorial
    api
 
 Indices and tables
