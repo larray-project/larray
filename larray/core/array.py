@@ -3277,6 +3277,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.all, commutative=True, long_name="AND reduction")
     def all(self, *args, **kwargs):
         """{signature}
+
         Test whether all selected elements evaluate to True.
 
         {parameters}
@@ -3347,6 +3348,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.all, commutative=True, by_agg=True, long_name="AND reduction")
     def all_by(self, *args, **kwargs):
         """{signature}
+
         Test whether all selected elements evaluate to True.
 
         {parameters}
@@ -3414,6 +3416,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.any, commutative=True, long_name="OR reduction")
     def any(self, *args, **kwargs):
         """{signature}
+
         Test whether any selected elements evaluate to True.
 
         {parameters}
@@ -3484,6 +3487,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.any, commutative=True, by_agg=True, long_name="OR reduction")
     def any_by(self, *args, **kwargs):
         """{signature}
+
         Test whether any selected elements evaluate to True.
 
         {parameters}
@@ -3553,6 +3557,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.sum, np.nansum, commutative=True, extra_kwargs=['dtype'])
     def sum(self, *args, **kwargs):
         """{signature}
+
         Computes the sum of array elements along given axes/groups.
 
         {parameters}
@@ -3617,6 +3622,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.sum, np.nansum, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="sum")
     def sum_by(self, *args, **kwargs):
         """{signature}
+
         Computes the sum of array elements for the given axes/groups.
 
         {parameters}
@@ -3679,6 +3685,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.prod, np_nanprod, commutative=True, extra_kwargs=['dtype'], long_name="product")
     def prod(self, *args, **kwargs):
         """{signature}
+
         Computes the product of array elements along given axes/groups.
 
         {parameters}
@@ -3744,6 +3751,7 @@ class LArray(ABCLArray):
                           long_name="product")
     def prod_by(self, *args, **kwargs):
         """{signature}
+
         Computes the product of array elements for the given axes/groups.
 
         {parameters}
@@ -3805,6 +3813,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.min, np.nanmin, commutative=True, long_name="minimum", action_verb="search")
     def min(self, *args, **kwargs):
         """{signature}
+
         Get minimum of array elements along given axes/groups.
 
         {parameters}
@@ -3868,6 +3877,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.min, np.nanmin, commutative=True, by_agg=True, long_name="minimum", action_verb="search")
     def min_by(self, *args, **kwargs):
         """{signature}
+
         Get minimum of array elements for the given axes/groups.
 
         {parameters}
@@ -3928,6 +3938,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.max, np.nanmax, commutative=True, long_name="maximum", action_verb="search")
     def max(self, *args, **kwargs):
         """{signature}
+
         Get maximum of array elements along given axes/groups.
 
         {parameters}
@@ -3991,6 +4002,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.max, np.nanmax, commutative=True, by_agg=True, long_name="maximum", action_verb="search")
     def max_by(self, *args, **kwargs):
         """{signature}
+
         Get maximum of array elements for the given axes/groups.
 
         {parameters}
@@ -4051,6 +4063,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.mean, np.nanmean, commutative=True, extra_kwargs=['dtype'])
     def mean(self, *args, **kwargs):
         """{signature}
+
         Computes the arithmetic mean.
 
         {parameters}
@@ -4116,6 +4129,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.mean, np.nanmean, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="mean")
     def mean_by(self, *args, **kwargs):
         """{signature}
+
         Computes the arithmetic mean.
 
         {parameters}
@@ -4178,6 +4192,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.median, np.nanmedian, commutative=True)
     def median(self, *args, **kwargs):
         """{signature}
+
         Computes the arithmetic median.
 
         {parameters}
@@ -4247,6 +4262,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.median, np.nanmedian, commutative=True, by_agg=True, long_name="mediane")
     def median_by(self, *args, **kwargs):
         """{signature}
+
         Computes the arithmetic median.
 
         {parameters}
@@ -4317,6 +4333,7 @@ class LArray(ABCLArray):
     # signature as other aggregate functions (extra argument)
     def percentile(self, q, *args, **kwargs):
         """{signature}
+
         Computes the qth percentile of the data along the specified axis.
 
         {parameters}
@@ -4404,6 +4421,7 @@ class LArray(ABCLArray):
 
     def percentile_by(self, q, *args, **kwargs):
         """{signature}
+
         Computes the qth percentile of the data for the specified axis.
 
         {parameters}
@@ -4489,6 +4507,7 @@ class LArray(ABCLArray):
 
     def ptp(self, *args, **kwargs):
         """{signature}
+
         Returns the range of values (maximum - minimum).
 
         The name of the function comes from the acronym for ‘peak to peak’.
@@ -4553,6 +4572,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.var, np.nanvar, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var(self, *args, **kwargs):
         """{signature}
+
         Computes the unbiased variance.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
@@ -4616,6 +4636,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.var, np.nanvar, by_agg=True, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var_by(self, *args, **kwargs):
         """{signature}
+
         Computes the unbiased variance.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
@@ -4679,6 +4700,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.std, np.nanstd, extra_kwargs=['dtype', 'ddof'], long_name="standard deviation")
     def std(self, *args, **kwargs):
         """{signature}
+
         Computes the sample standard deviation.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
@@ -4743,6 +4765,7 @@ class LArray(ABCLArray):
                           long_name="standard deviation")
     def std_by(self, *args, **kwargs):
         """{signature}
+
         Computes the sample standard deviation.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
@@ -5472,10 +5495,10 @@ class LArray(ABCLArray):
         Parameters
         ----------
         axis : axis reference
-            Axis along which to append input array (`value`).
+            Axis along which to append `value`.
         value : scalar or LArray
             Scalar or array with compatible axes.
-        label : str, optional
+        label : scalar, optional
             Label for the new item in axis
 
         Returns
@@ -5905,6 +5928,8 @@ class LArray(ABCLArray):
 
     def transpose(self, *args):
         """Reorder axes.
+
+        By default, reverse axes, otherwise permute the axes according to the list given as argument.
 
         Parameters
         ----------
@@ -6688,7 +6713,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray :
+        LArray
             The n-th order differences. The shape of the output is the same as `a` except for `axis` which is smaller
             by `n` * `d`.
 

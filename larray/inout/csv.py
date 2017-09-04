@@ -34,12 +34,12 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     ----------
     filepath_or_buffer : str or any file-like object
         Path where the csv file has to be read or a file handle.
-    nb_axes : int, optional
+    nb_axes : int or None, optional
         Number of axes of output array. The first ``nb_axes`` - 1 columns and the header of the CSV file will be used
         to set the axes of the output array. If not specified, the number of axes is given by the position of the
         first column header including a ``\`` character plus one. If no column header includes a ``\`` character,
         the array is assumed to have one axis. Defaults to None.
-    index_col : list, optional
+    index_col : list or None, optional
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str, optional
         Separator.
@@ -57,9 +57,10 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         Whether or not to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
-    dialect : 'classic' | 'larray' | 'liam2', optional
+    dialect : {'classic', 'larray', 'liam2'}, optional
         Name of dialect. Defaults to 'larray'.
     **kwargs
+        Extra keyword arguments are passed on to pandas.read_csv
 
     Returns
     -------
