@@ -29,9 +29,10 @@ def view(obj=None, title='', depth=0):
     """
     try:
         from larray_editor import view
-        view(obj, title, depth)
+        view(obj, title, depth + 1)
     except ImportError:
         raise Exception('view() is not available because the larray_editor package is not installed')
+
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
     """
@@ -68,9 +69,11 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     """
     try:
         from larray_editor import edit
-        edit(obj, title, minvalue, maxvalue, readonly, depth)
+
+        edit(obj, title, minvalue, maxvalue, readonly, depth + 1)
     except ImportError:
         raise Exception('edit() is not available because the larray_editor package is not installed')
+
 
 def compare(*args, **kwargs):
     """
@@ -85,6 +88,8 @@ def compare(*args, **kwargs):
     names : list of str, optional
         Names for arrays or sessions being compared. Defaults to the name of the first objects found in the caller
         namespace which correspond to the passed objects.
+    depth : int, optional
+        Stack depth where to look for variables. Defaults to 0 (where this function was called).
 
     Examples
     --------
@@ -95,6 +100,8 @@ def compare(*args, **kwargs):
     """
     try:
         from larray_editor import compare
-        compare(*args, **kwargs)
+
+        depth = kwargs.pop('depth', 0)
+        compare(*args, depth=depth + 1, **kwargs)
     except ImportError:
         raise Exception('compare() is not available because the larray_editor package is not installed')

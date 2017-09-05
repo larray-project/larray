@@ -2910,22 +2910,24 @@ class LArray(ABCLArray):
             res = func(op, axes, keepaxes=keepaxes, out=out, **extra_kwargs)
         return res
 
+    # op=sum does not parse correctly
     def with_total(self, *args, **kwargs):
-        """
+        """with_total(*args, op='sum', label='total', **kwargs)
+
         Add aggregated values (sum by default) along each axis.
         A user defined label can be given to specified the computed values.
 
         Parameters
         ----------
         *args : int or str or Axis or Group or any combination of those, optional
-            Axes or groups along which to compute the aggregates. Passed groups should be named. 
+            Axes or groups along which to compute the aggregates. Passed groups should be named.
             Defaults to aggregate over the whole array.
-        op : aggregate function, optional 
-            Defaults to `sum()`.
-        label : scalar value, optional 
-            label to use for the total. Applies only to aggregated axes, not groups. Defaults to "total".
+        op : aggregate function, optional
+            Defaults to `sum`.
+        label : scalar value, optional
+            Label to use for the total. Applies only to aggregated axes, not groups. Defaults to "total".
         **kwargs : int or str or Group or any combination of those, optional
-            Axes or groups along which to compute the aggregates. 
+            Axes or groups along which to compute the aggregates.
 
         Returns
         -------
