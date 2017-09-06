@@ -46,8 +46,10 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting'
 ]
 
-extlinks = {'issue': ('https://github.com/liam2/larray/issues/%s',
-                      'issue ')}
+extlinks = {
+    'issue': ('https://github.com/liam2/larray/issues/%s', 'issue '),
+    'editor_issue': ('https://github.com/larray-project/larray-editor/issues/%s', 'issue ')
+}
 
 # scan all found documents for autosummary directives, and to generate stub pages for each.
 # The new files will be placed in the directories specified in the :toctree: options of the directives.
