@@ -91,19 +91,10 @@ if xw is not None:
                     xw_wkb = xw.Book(filepath)
                     app = xw_wkb.app
 
-            if app is None:
-                if filepath is None:
-                    app = "new"
-                elif filepath == -1:
-                    app = "active"
-                else:
-                    app = "global"
-
             # active workbook use active app by default
-            if filepath == -1:
-                if app != "active":
-                    raise ValueError("to connect to the active workbook, one must use the 'active' Excel instance "
-                                     "(app='active' or app=None)")
+            if filepath == -1 and app not in {None, "active"}:
+                raise ValueError("to connect to the active workbook, one must use the 'active' Excel instance "
+                                 "(app='active' or app=None)")
 
             # unless explicitly set, app is set to visible for brand new or
             # active book. For unsaved_book it is left intact.
@@ -113,6 +104,14 @@ if xw is not None:
                 elif xw_wkb is None:
                     # filepath is not None but we don't target an unsaved book
                     visible = False
+
+            if app is None:
+                if filepath == -1:
+                    app = "active"
+                elif visible:
+                    app = "new"
+                else:
+                    app = "global"
 
             if app == "new":
                 app = xw.App(visible=visible, add_book=False)
