@@ -20,4 +20,7 @@ Fixes
 * fixed array grid not being updated when selecting a variable when no variable was selected
   (closes :editor_issue:`56`).
 
+* fixed copying or plotting multiple rows in the editor when they were selected via drag and drop on headers
+  (closes :editor_issue:`59`).
+
 * fixed digits not being automatically updated when changing filters.
