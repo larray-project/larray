@@ -10,7 +10,7 @@
 Miscellaneous improvements
 --------------------------
 
-* improved something.
+* view() and edit() without argument now display global arrays in addition to local ones (closes :editor_issue:`54`).
 
 
 Fixes
