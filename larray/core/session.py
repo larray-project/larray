@@ -934,4 +934,23 @@ def local_arrays(depth=0):
     return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
 
 
+def global_arrays(depth=0):
+    """
+    Returns a session containing all global arrays (sorted in alphabetical order).
+
+    Parameters
+    ----------
+    depth: int
+        depth of call frame to inspect. 0 is where global_arrays was called,
+        1 the caller of global_arrays, etc.
+
+    Returns
+    -------
+    Session
+    """
+    # noinspection PyProtectedMember
+    d = sys._getframe(depth + 1).f_globals
+    return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
+
+
 _session_float_error_handler = float_error_handler_factory(4)
