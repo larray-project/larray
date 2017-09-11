@@ -169,8 +169,8 @@ def generalized_range(start, stop, step=1):
                 stop_pad = len(stop_part) if stop_part.startswith('0') else None
                 if start_pad is not None and stop_pad is not None and start_pad != stop_pad:
                     raise ValueError("Inconsistent zero padding for start and stop ({} vs {}) of the numerical part. "
-                                     "Must be either the same on both sides or no padding on either "
-                                     "side".format(start_pad, stop_pad))
+                                     "Must be either the same on both sides or no padding on either side"
+                                     .format(start_pad, stop_pad))
                 elif start_pad is None and stop_pad is None:
                     r = [str(num) for num in rng]
                 else:
@@ -242,8 +242,7 @@ def _range_str_to_range(s, stack_depth=1):
 
 def _range_to_slice(seq, length=None):
     """
-    Returns a slice if possible (including for sequences of 1 element)
-    otherwise returns the input sequence itself
+    Returns a slice if possible (including for sequences of 1 element) otherwise returns the input sequence itself
 
     Parameters
     ----------
@@ -251,9 +250,8 @@ def _range_to_slice(seq, length=None):
         List, tuple or ndarray of integers representing the range.
         It should be something like [start, start+step, start+2*step, ...]
     length : int, optional
-        length of sequence of positions.
-        This is only useful when you must be able to transform decreasing
-        sequences which can stop at 0.
+        length of sequence of positions. This is only useful when you must be able to transform decreasing sequences
+        which can stop at 0.
 
     Returns
     -------
@@ -345,14 +343,11 @@ def _to_tick(v):
     any scalar
         scalar representing the tick
     """
-    # the fact that an "aggregated tick" is passed as a LGroup or as a
-    # string should be as irrelevant as possible. The thing is that we cannot
-    # (currently) use the more elegant _to_tick(e.key) that means the
-    # LGroup is not available in Axis.__init__ after to_ticks, and we
-    # need it to update the mapping if it was named. Effectively,
-    # this creates two entries in the mapping for a single tick. Besides,
-    # I like having the LGroup as the tick, as it provides extra info as
-    # to where it comes from.
+    # the fact that an "aggregated tick" is passed as a LGroup or as a string should be as irrelevant as possible.
+    # The thing is that we cannot (currently) use the more elegant _to_tick(e.key) that means the LGroup is not
+    # available in Axis.__init__ after to_ticks, and we need it to update the mapping if it was named. Effectively,
+    # this creates two entries in the mapping for a single tick. Besides, I like having the LGroup as the tick, as it
+    # provides extra info as to where it comes from.
     if np.isscalar(v):
         return v
     elif isinstance(v, Group):
@@ -371,9 +366,9 @@ def _to_tick(v):
 
 def _to_ticks(s):
     """
-    Makes a (list of) value(s) usable as the collection of labels for an
-    Axis (ie hashable). Strip strings, split them on ',' and translate
-    "range strings" to list of values **including the end point** !
+    Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
+
+    Strip strings, split them on ',' and translate "range strings" to list of values **including the end point** !
 
     Parameters
     ----------
@@ -558,8 +553,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
             axis_bracket_open = m.end(1) - 1
             # check that the string parentheses are correctly balanced
             _ = find_closing_chr(v, axis_bracket_open)
-            # strip closing bracket (it should be at the end because we took
-            # care of the name earlier)
+            # strip closing bracket (it should be at the end because we took care of the name earlier)
             assert key[-1] == ']'
             key = key[:-1]
         if name is not None or axis is not None:
@@ -571,13 +565,13 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCLArray, OrderedSet)):
         return v
     else:
-        raise TypeError("%s has an invalid type (%s) for a key"
-                        % (v, type(v).__name__))
+        raise TypeError("%s has an invalid type (%s) for a key" % (v, type(v).__name__))
 
 
 def _to_keys(value, stack_depth=1):
     """
     Converts a (collection of) group(s) to a structure usable for indexing.
+
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
 
     Parameters
@@ -642,8 +636,7 @@ def union(*args):
     Parameters
     ----------
     *args
-        (collection of) value(s) to be converted into label(s).
-        Repeated values are taken only once.
+        (collection of) value(s) to be converted into label(s). Repeated values are taken only once.
 
     Returns
     -------
@@ -681,10 +674,8 @@ class PGroupMaker(object):
         return PGroup(key, None, self.axis)
 
 
-# We need a separate class for LGroup and cannot simply create a
-# new Axis with a subset of values/ticks/labels: the subset of
-# ticks/labels of the LGroup need to correspond to its *Axis*
-# indices
+# We need a separate class for LGroup and cannot simply create a new Axis with a subset of values/ticks/labels:
+# the subset of ticks/labels of the LGroup need to correspond to its *Axis* indices
 class Group(object):
     """Abstract Group.
     """
@@ -697,25 +688,20 @@ class Group(object):
             key = key.to_label()
         self.key = remove_nested_groups(key)
 
-        # we do NOT assign a name automatically when missing because that
-        # makes it impossible to know whether a name was explicitly given or
-        # not
+        # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
+        # was explicitly given or not
         self.name = name
         assert axis is None or isinstance(axis, (basestring, int, ABCAxis)), \
             "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
 
-        # we could check the key is valid but this can be slow and could be
-        # useless
-        # TODO: for performance reasons, we should cache the result. This will
-        # need to be invalidated correctly
+        # we could check the key is valid but this can be slow and could be useless
+        # TODO: for performance reasons, we should cache the result. This will need to be invalidated correctly
         # axis.translate(key)
 
-        # we store the Axis object and not its name like we did previously
-        # so that groups on anonymous axes are more meaningful and that we
-        # can iterate on a slice of an axis (an LGroup). The reason to store
-        # the name instead of the object was to make sure that a Group from an
-        # axis (or without axis) could be used on another axis with the same
-        # name. See test_array.py:test_...
+        # we store the Axis object and not its name like we did previously so that groups on anonymous axes are more
+        # meaningful and that we can iterate on a slice of an axis (an LGroup). The reason to store the name instead of
+        # the object was to make sure that a Group from an axis (or without axis) could be used on another axis with
+        # the same name. See test_array.py:test_...
         self.axis = axis
 
     def __repr__(self):
@@ -822,13 +808,13 @@ class Group(object):
         # XXX: we probably want to_label instead of .eval (so that we do not expand slices)
         value = self.eval()
         # for some reason this breaks having LGroup ticks/labels on an axis
-        if hasattr(value, '__len__'):
         # if isinstance(value, (tuple, list, LArray, np.ndarray, str)):
+        if hasattr(value, '__len__'):
             return len(value)
         elif isinstance(value, slice):
             start, stop, key_step = value.start, value.stop, value.step
-            # not using stop - start because that does not work for string
-            # bounds (and it is different for LGroup & PGroup)
+            # not using stop - start because that does not work for string bounds
+            # (and it is different for LGroup & PGroup)
             start_pos = self.translate(start)
             stop_pos = self.translate(stop)
             return stop_pos - start_pos
@@ -881,8 +867,7 @@ class Group(object):
 
         Notes
         -----
-        step can be smaller than length, in which case, this will produce
-        overlapping groups.
+        step can be smaller than length, in which case, this will produce overlapping groups.
 
         Returns
         -------
@@ -908,10 +893,9 @@ class Group(object):
         return tuple(self[start:start + length]
                      for start in range(0, len(self), step))
 
-    # TODO: __getitem__ should work by label and .i[] should work by
-    # position. I guess it would be more consistent this way even if the
-    # usefulness of subsetting a group with labels is dubious (but
-    # it is sometimes practical to treat the group as if it was an axis).
+    # TODO: __getitem__ should work by label and .i[] should work by position. I guess it would be more consistent this
+    # way even if the usefulness of subsetting a group with labels is dubious (but it is sometimes practical to treat
+    # the group as if it was an axis).
     # >>> vla = geo['...']
     # >>> # first 10 regions of flanders (this could have some use)
     # >>> vla.i[:10]  # => PGroup on geo
@@ -939,8 +923,7 @@ class Group(object):
         if isinstance(orig_key, (tuple, list)):
             return cls(orig_key[key], None, self.axis)
         elif isinstance(orig_key, slice):
-            orig_start, orig_stop, orig_step = \
-                orig_key.start, orig_key.stop, orig_key.step
+            orig_start, orig_stop, orig_step = orig_key.start, orig_key.stop, orig_key.step
             if orig_step is None:
                 orig_step = 1
 
@@ -952,18 +935,15 @@ class Group(object):
 
                 orig_stop_pos = self.translate(orig_stop, stop=True) if orig_stop is not None else len(self)
                 new_start = orig_start_pos + key_start * orig_step
-                new_stop = min(orig_start_pos + key_stop * orig_step,
-                               orig_stop_pos)
+                new_stop = min(orig_start_pos + key_stop * orig_step, orig_stop_pos)
                 new_step = orig_step * key_step
                 if new_step == 1:
                     new_step = None
-                return PGroup(slice(new_start, new_stop, new_step), None,
-                              self.axis)
+                return PGroup(slice(new_start, new_stop, new_step), None, self.axis)
             elif isinstance(key, int):
                 return PGroup(orig_start_pos + key * orig_step, None, self.axis)
             elif isinstance(key, (tuple, list)):
-                return PGroup([orig_start_pos + k * orig_step for k in key],
-                              None, self.axis)
+                return PGroup([orig_start_pos + k * orig_step for k in key], None, self.axis)
         elif isinstance(orig_key, ABCLArray):
             return cls(orig_key.i[key], None, self.axis)
         elif isinstance(orig_key, int):
@@ -971,8 +951,7 @@ class Group(object):
             value = self.eval()
             return value[key]
         else:
-            raise TypeError("cannot take a subset of {} because it has a "
-                            "'{}' key".format(self.key, type(self.key)))
+            raise TypeError("cannot take a subset of {} because it has a '{}' key".format(self.key, type(self.key)))
 
     def _ipython_key_completions_(self):
         return list(self.eval())
@@ -1159,14 +1138,12 @@ class Group(object):
             return getattr(self.eval(), key)
 
     def __hash__(self):
-        # to_tick & to_key are partially opposite operations but this
-        # standardize on a single notation so that they can all target each
-        # other. eg, this removes spaces in "list strings", instead of
-        # hashing them directly
-        # XXX: but we might want to include that normalization feature in
-        #      to_tick directly, instead of using to_key explicitly here
-        # XXX: we might want to make hash use the position along the axis instead of the labels so that if an
-        #      axis has ambiguous labels, they do not hash to the same thing.
+        # to_tick & to_key are partially opposite operations but this standardize on a single notation so that they can
+        # all target each other. eg, this removes spaces in "list strings", instead of hashing them directly
+        # XXX: but we might want to include that normalization feature in to_tick directly, instead of using to_key
+        #      explicitly here
+        # XXX: we might want to make hash use the position along the axis instead of the labels so that if an axis has
+        #      ambiguous labels, they do not hash to the same thing.
         # XXX: for performance reasons, I think hash should not evaluate slices. It should only translate pos bounds to
         #      labels or vice versa. We would loose equality between list Groups and equivalent slice groups but that
         #      is a small price to pay if the performance impact is large.
@@ -1199,8 +1176,7 @@ class LGroup(Group):
     Parameters
     ----------
     key : key
-        Anything usable for indexing.
-        A key should be either sequence of labels, a slice with label bounds or a string.
+        Anything usable for indexing. A key should be either sequence of labels, a slice with label bounds or a string.
     name : str, optional
         Name of the group.
     axis : int, str, Axis, optional
@@ -1223,7 +1199,7 @@ class LGroup(Group):
         key = _to_key(key)
         Group.__init__(self, key, name, axis)
 
-    #XXX: return PGroup instead?
+    # XXX: return PGroup instead?
     def translate(self, bound=None, stop=False):
         """
         compute position(s) of group
@@ -1260,8 +1236,7 @@ class LSet(LGroup):
     Parameters
     ----------
     key : key
-        Anything usable for indexing.
-        A key should be either sequence of labels, a slice with label bounds or a string.
+        Anything usable for indexing. A key should be either sequence of labels, a slice with label bounds or a string.
     name : str, optional
         Name of the set.
     axis : int, str, Axis, optional
@@ -1308,8 +1283,7 @@ class LSet(LGroup):
                 name = '%s %s %s' % (self.name, c, other.name)
             else:
                 name = None
-            # TODO: implement this in a more efficient way for ndarray keys
-            #       which can be large
+            # TODO: implement this in a more efficient way for ndarray keys which can be large
             result_set = getattr(self.key, op_fullname)(other.key)
             return LSet(result_set, name=name, axis=axis)
         opmethod.__name__ = op_fullname
@@ -1333,9 +1307,8 @@ class PGroup(Group):
     Parameters
     ----------
     key : key
-        Anything usable for indexing.
-        A key should be either a single position, a sequence of positions, or a slice with
-        integer bounds.
+        Anything usable for indexing. A key should be either a single position, a sequence of positions, or a slice
+        with integer bounds.
     name : str, optional
         Name of the group.
     axis : int, str, Axis, optional

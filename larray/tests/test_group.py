@@ -96,8 +96,7 @@ class TestLGroup(TestCase):
 
     def test_repr(self):
         self.assertEqual(repr(self.slice_both_named_wh_named_axis), "age[1:5] >> 'full'")
-        self.assertEqual(repr(self.slice_both_named),
-                         "LGroup(slice(1, 5, None)) >> 'named'")
+        self.assertEqual(repr(self.slice_both_named), "LGroup(slice(1, 5, None)) >> 'named'")
         self.assertEqual(repr(self.slice_both), "LGroup(slice(1, 5, None))")
         self.assertEqual(repr(self.list), "LGroup(['P01', 'P03', 'P04'])")
         self.assertEqual(repr(self.slice_none_no_axis), "LGroup(slice(None, None, None))")
@@ -158,8 +157,7 @@ class TestLSet(TestCase):
 
     def test_and(self):
         # without axis
-        self.assertEqual(LSet(['a', 'b', 'c']) & LSet(['c', 'd']),
-                         LSet(['c']))
+        self.assertEqual(LSet(['a', 'b', 'c']) & LSet(['c', 'd']), LSet(['c']))
         # with axis & name
         alpha = Axis('alpha=a,b,c,d')
         res = alpha['a', 'b', 'c'].named('abc').set() & alpha['c', 'd'].named('cd')
@@ -168,12 +166,9 @@ class TestLSet(TestCase):
         self.assertEqual(res, alpha[['c']].set())
 
     def test_sub(self):
-        self.assertEqual(LSet(['a', 'b', 'c']) - LSet(['c', 'd']),
-                         LSet(['a', 'b']))
-        self.assertEqual(LSet(['a', 'b', 'c']) - ['c', 'd'],
-                         LSet(['a', 'b']))
-        self.assertEqual(LSet(['a', 'b', 'c']) - 'b',
-                         LSet(['a', 'c']))
+        self.assertEqual(LSet(['a', 'b', 'c']) - LSet(['c', 'd']), LSet(['a', 'b']))
+        self.assertEqual(LSet(['a', 'b', 'c']) - ['c', 'd'], LSet(['a', 'b']))
+        self.assertEqual(LSet(['a', 'b', 'c']) - 'b', LSet(['a', 'c']))
         self.assertEqual(LSet([1, 2, 3]) - 4, LSet([1, 2, 3]))
         self.assertEqual(LSet([1, 2, 3]) - 2, LSet([1, 3]))
 

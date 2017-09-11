@@ -50,25 +50,22 @@ __all__ = [
 def broadcastify(func):
     # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
     def wrapper(*args, **kwargs):
-        # TODO: normalize args/kwargs like in LIAM2 so that we can also
-        # broadcast if args are given via kwargs (eg out=)
+        # TODO: normalize args/kwargs like in LIAM2 so that we can also broadcast if args are given via kwargs
+        #       (eg out=)
         args, combined_axes = make_numpy_broadcastable(args)
 
-        # We pass only raw numpy arrays to the ufuncs even though numpy is
-        # normally meant to handle those case itself via __array_wrap__
+        # We pass only raw numpy arrays to the ufuncs even though numpy is normally meant to handle those case itself
+        # via __array_wrap__
 
-        # There is a problem with np.clip though (and possibly other ufuncs)
-        # np.clip is roughly equivalent to
+        # There is a problem with np.clip though (and possibly other ufuncs): np.clip is roughly equivalent to
         # np.maximum(np.minimum(np.asarray(la), high), low)
         # the np.asarray(la) is problematic because it lose original labels
         # and then tries to get them back from high, where they are possibly
         # incomplete if broadcasting happened
 
-        # It fails on "np.minimum(ndarray, LArray)" because it calls
-        # __array_wrap__(high, result) which cannot work if there was
-        # broadcasting involved (high has potentially less labels than result).
-        # it does this because numpy calls __array_wrap__ on the argument with
-        # the highest __array_priority__
+        # It fails on "np.minimum(ndarray, LArray)" because it calls __array_wrap__(high, result) which cannot work if
+        # there was broadcasting involved (high has potentially less labels than result).
+        # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
         raw_args = [np.asarray(a) if isinstance(a, LArray) else a
                     for a in args]
         res_data = func(*raw_args, **kwargs)

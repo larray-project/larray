@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 from setuptools import setup, find_packages
 
+
 def readlocal(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 

@@ -14,9 +14,8 @@ def badvalues(a, bad_filter):
 
 
 def f2str(f, threshold=2):
-    """Return string representation of floating point number f. Use scientific
-    notation if f would have more than threshold decimal digits, otherwise
-    use threshold as precision.
+    """Return string representation of floating point number f.
+    Use scientific notation if f would have more than threshold decimal digits, otherwise use threshold as precision.
 
     Parameters
     ----------
@@ -46,20 +45,18 @@ def warn_or_raise(what, msg):
         print("WARNING: {}".format(msg))
 
 
-def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10,
-         nzvzs='raise', no_convergence='raise', display_progress=False):
-    """Apply Iterative Proportional Fitting Procedure (also known as
-    bi-proportional fitting in statistics, RAS algorithm in economics) to array
-    a, with target_sums as targets.
+def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10, nzvzs='raise',
+         no_convergence='raise', display_progress=False):
+    """Apply Iterative Proportional Fitting Procedure (also known as bi-proportional fitting in statistics,
+    RAS algorithm in economics) to array a, with target_sums as targets.
 
     Parameters
     ----------
     target_sums : tuple/list of array-like
-        Target sums to achieve. First element must be the sum to achieve
-        along axis 0, the second the sum along axis 1, ...
+        Target sums to achieve.
+        First element must be the sum to achieve along axis 0, the second the sum along axis 1, ...
     a : array-like, optional
-        Starting values to fit, if not given starts with an array filled
-        with 1.
+        Starting values to fit, if not given starts with an array filled with 1.
     axes : list/tuple of axes, optional
         Axes on which the fitting procedure should be applied. Defaults to all axes.
     maxiter : int, optional
@@ -67,25 +64,22 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     threshold : float, optional
         Threshold below which the result is deemed acceptable, defaults to 0.5.
     stepstoabort : int, optional
-        Number of consecutive steps with no improvement after which to abort.
-        Defaults to 10.
+        Number of consecutive steps with no improvement after which to abort. Defaults to 10.
     nzvzs : 'fix', 'warn' or 'raise', optional
         Behavior when detecting non zero values where the sum is zero
         'fix': set to zero (silently)
         'warn': set to zero and print a warning
         'raise': raise an exception (default)
     no_convergence : 'ignore', 'warn' or 'raise, optional
-        Behavior when the algorithm does not seem to converge. This
-        condition is triggered both when the maximum number of iteration is
-        reached or when the maximum absolute difference between the target and
-        the current sums does not improve for `stepstoabort` iterations.
+        Behavior when the algorithm does not seem to converge. This condition is triggered both when the maximum number
+        of iteration is reached or when the maximum absolute difference between the target and the current sums does
+        not improve for `stepstoabort` iterations.
         'ignore': return values computed up to that point (silently)
         'warn': return values computed up to that point and print a warning
         'raise': raise an exception (default)
     display_progress : False, True or 'condensed', optional
         Whether or not to display progress. Defaults to False.
-        If 'condensed' will display progress using a denser template (using one
-        line per iteration).
+        If 'condensed' will display progress using a denser template (using one line per iteration).
 
     Returns
     -------
@@ -185,9 +179,8 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         # [(4, 5), (3, 5), (3, 4)]
         # >>> (shapes[1][0],) + shapes[0]
         # (3, 4, 5)
-        # so, to reconstruct a.axes from target_sum axes, we need to take the
-        # first axis of the second target_sum and all axes from the first
-        # target_sum:
+        # so, to reconstruct a.axes from target_sum axes, we need to take the first axis of the second target_sum and
+        # all axes from the first target_sum:
         first_axis = target_sums[1].axes[0]
         other_axes = target_sums[0].axes
         all_axes = first_axis + other_axes
@@ -209,8 +202,8 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     for axis, axis_target_sum in zip(axes, target_sums):
         expected_axes = a.axes - axis
         if axis_target_sum.axes != expected_axes:
-            raise ValueError("axes of target sum along {} (axis {}) do not match corresponding array "
-                             "axes: got {} but expected {}. Are the target sums in the correct order?"
+            raise ValueError("axes of target sum along {} (axis {}) do not match corresponding array axes: "
+                             "got {} but expected {}. Are the target sums in the correct order?"
                              .format(axis.name, a.axes.index(axis), axis_target_sum.axes, expected_axes))
 
     axis0_total = target_sums[0].sum()
@@ -302,6 +295,5 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         lastdiffs.append(max_sum_diff)
 
     if no_convergence in {'warn', 'raise'}:
-        warn_or_raise(no_convergence,
-                      "maximum iteration reached ({})".format(maxiter))
+        warn_or_raise(no_convergence, "maximum iteration reached ({})".format(maxiter))
     return r
