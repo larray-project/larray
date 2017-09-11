@@ -63,10 +63,8 @@ class TestLArray(TestCase):
         self.age = Axis('age=0..115')
         self.sex = Axis('sex=M,F')
 
-        vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,' \
-              'A43,A44,A45,A46,A71,A72,A73'
-        wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,' \
-              'A83,A84,A85,A91,A92,A93'
+        vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,A43,A44,A45,A46,A71,A72,A73'
+        wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,A83,A84,A85,A91,A92,A93'
         bru = 'A21'
         self.vla_str = vla
         self.wal_str = wal
@@ -81,16 +79,12 @@ class TestLArray(TestCase):
 
         self.geo = Axis(self.belgium, 'geo')
 
-        self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15) \
-                                                 .astype(float)
-        self.larray = LArray(self.array,
-                             axes=(self.age, self.geo, self.sex, self.lipro),
-                             title=self.title)
+        self.array = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15).astype(float)
+        self.larray = LArray(self.array, axes=(self.age, self.geo, self.sex, self.lipro), title=self.title)
 
         self.small_title = 'small test array'
         self.small_data = np.arange(30).reshape(2, 15)
-        self.small = LArray(self.small_data, axes=(self.sex, self.lipro),
-                            title=self.small_title)
+        self.small = LArray(self.small_data, axes=(self.sex, self.lipro), title=self.small_title)
 
     def test_ndrange(self):
         arr = ndrange('a=a0..a2')
@@ -350,8 +344,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # Ellipsis and LGroup
         assert_array_equal(la[..., 'P01,P05,P09'], raw[..., [0, 4, 8]])
-        assert_array_equal(la[..., ['P01', 'P05', 'P09']],
-                           raw[..., [0, 4, 8]])
+        assert_array_equal(la[..., ['P01', 'P05', 'P09']], raw[..., [0, 4, 8]])
 
         # LGroup without axis (which also needs to be guessed)
         g = LGroup(['P01', 'P05', 'P09'])
@@ -459,8 +452,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[..., lipro159], raw[..., [0, 4, 8]])
 
         # key with duplicate axes
-        with self.assertRaisesRegexp(ValueError,
-                                     "key has several values for axis: age"):
+        with self.assertRaisesRegexp(ValueError, "key has several values for axis: age"):
             la[x.age.i[2, 3], x.age.i[1, 5]]
 
     def test_getitem_bool_larray_key(self):
@@ -514,8 +506,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res.ndim, 3)
         self.assertEqual(res.shape, (15, 2, 4))
 
-        # XXX: we might want to transpose the result to always move
-        # combined axes to the front
+        # XXX: we might want to transpose the result to always move combined axes to the front
         a = ndrange((2, 3, 4, 5))
         mask = ones(a.axes[1, 2], dtype=bool)
         res = a[mask]
@@ -633,10 +624,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
     #     # k0:
     #     # [[0, 1, 0],
     #     #  [1, 0, 1]]
-    #     # TODO: [0, 1, 2] is enough in this case (thanks to broadcasting)
-    #     #       because in numpy missing dimensions are filled by adding
-    #     #       length 1 dimensions to the left. Ie it works because b is the
-    #     #       last dimension.
+    #     # TODO: [0, 1, 2] is enough in this case (thanks to broadcasting) because in numpy missing dimensions are
+    #     #       filled by adding length 1 dimensions to the left. Ie it works because b is the last dimension.
     #     # k1:
     #     # [[0, 1, 2],
     #     #  [0, 1, 2]]
@@ -745,16 +734,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_positional_indexer_getitem(self):
         raw = self.array
         la = self.larray
-        for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0],
-                    ([1, 0], 5)]:
+        for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0], ([1, 0], 5)]:
             assert_array_equal(la.i[key], raw[key])
         assert_array_equal(la.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
         with self.assertRaises(IndexError):
             la.i[0, 0, 0, 0, 0]
 
     def test_positional_indexer_setitem(self):
-        for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0],
-                    ([1, 0], 2)]:
+        for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0], ([1, 0], 2)]:
             la = self.larray.copy()
             raw = self.array.copy()
             la.i[key] = 42
@@ -924,21 +911,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
         la2 = la.copy()
 
         with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
-                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "A value can only have the same axes or fewer axes than the subset "
                                              "being targeted".format(la2.axes - la['P01'].axes, la['P01'].axes)):
            la['P01'] = la2
 
         la2 = la.rename('sex', 'gender')
         with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
-                                             "A value can only have the same axes or fewer axes than the subset "\
+                                             "A value can only have the same axes or fewer axes than the subset "
                                              "being targeted".format(la2['P01'].axes - la['P01'].axes, la['P01'].axes)):
            la['P01'] = la2['P01']
 
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.
-        In that case, value.shape is more restricted as we rely on
-        numpy broadcasting.
+        In that case, value.shape is more restricted as we rely on numpy broadcasting.
         """
         # a) value has exactly the same shape as the target slice
         la = self.larray.copy()
@@ -1112,12 +1098,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(lipro='P01,P02').shape, (116, 44, 2, 2))
 
         # multiple axes at once
-        self.assertEqual(la.filter(age=[1, 5, 9], lipro='P01,P02').shape,
-                         (3, 44, 2, 2))
+        self.assertEqual(la.filter(age=[1, 5, 9], lipro='P01,P02').shape, (3, 44, 2, 2))
 
         # multiple axes one after the other
-        self.assertEqual(la.filter(age=[1, 5, 9]).filter(lipro='P01,P02').shape,
-                         (3, 44, 2, 2))
+        self.assertEqual(la.filter(age=[1, 5, 9]).filter(lipro='P01,P02').shape, (3, 44, 2, 2))
 
         # a single value for one dimension => collapse the dimension
         self.assertEqual(la.filter(sex='M').shape, (116, 44, 15))
@@ -1128,8 +1112,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(sex='M,').shape, (116, 44, 1, 15))
 
         # with duplicate keys
-        # XXX: do we want to support this? I don't see any value in that but
-        # I might be short-sighted.
+        # XXX: do we want to support this? I don't see any value in that but I might be short-sighted.
         # filtered = la.filter(lipro='P01,P02,P01')
 
         # XXX: we could abuse python to allow naming groups via Axis.__getitem__
@@ -1147,35 +1130,27 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(age=slice(17)).shape, (18, 44, 2, 15))
 
         # filter chain with a slice
-        self.assertEqual(la.filter(age=slice(17)).filter(geo='A12,A13').shape,
-                         (18, 2, 2, 15))
+        self.assertEqual(la.filter(age=slice(17)).filter(geo='A12,A13').shape, (18, 2, 2, 15))
 
     def test_filter_multiple_axes(self):
         la = self.larray
 
         # multiple values in each group
-        self.assertEqual(la.filter(age=[1, 5, 9], lipro='P01,P02').shape,
-                         (3, 44, 2, 2))
+        self.assertEqual(la.filter(age=[1, 5, 9], lipro='P01,P02').shape, (3, 44, 2, 2))
         # with a group of one value
-        self.assertEqual(la.filter(age=[1, 5, 9], sex='M,').shape,
-                         (3, 44, 1, 15))
+        self.assertEqual(la.filter(age=[1, 5, 9], sex='M,').shape, (3, 44, 1, 15))
 
         # with a discarded axis (there is a scalar in the key)
         self.assertEqual(la.filter(age=[1, 5, 9], sex='M').shape, (3, 44, 15))
 
-        # with a discarded axis that is not adjacent to the ix_array axis
-        # ie with a sliced axis between the scalar axis and the ix_array axis
-        # since our array has a axes: age, geo, sex, lipro, any of the
-        # following should be tested: age+sex / age+lipro / geo+lipro
-        # additionally, if the ix_array axis was first (ie ix_array on age),
-        # it worked even before the issue was fixed, since the "indexing"
-        # subspace is tacked-on to the beginning (as the first dimension)
-        self.assertEqual(la.filter(age=57, sex='M,F').shape,
-                         (44, 2, 15))
-        self.assertEqual(la.filter(age=57, lipro='P01,P05').shape,
-                         (44, 2, 2))
-        self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape,
-                         (116, 2, 2))
+        # with a discarded axis that is not adjacent to the ix_array axis ie with a sliced axis between the scalar axis
+        # and the ix_array axis since our array has a axes: age, geo, sex, lipro, any of the following should be tested:
+        # age+sex / age+lipro / geo+lipro
+        # additionally, if the ix_array axis was first (ie ix_array on age), it worked even before the issue was fixed,
+        # since the "indexing" subspace is tacked-on to the beginning (as the first dimension)
+        self.assertEqual(la.filter(age=57, sex='M,F').shape, (44, 2, 15))
+        self.assertEqual(la.filter(age=57, lipro='P01,P05').shape, (44, 2, 2))
+        self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape, (116, 2, 2))
 
     def test_sum_full_axes(self):
         la = self.larray
@@ -1220,8 +1195,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_nan_equal(la.sum(x.age, skipna=False), raw.sum(0))
 
         assert_array_nan_equal(la.sum(x.age, x.sex), np.nansum(raw, (0, 2)))
-        assert_array_nan_equal(la.sum(x.age, x.sex, skipna=False),
-                               raw.sum((0, 2)))
+        assert_array_nan_equal(la.sum(x.age, x.sex, skipna=False), raw.sum((0, 2)))
 
     def test_sum_full_axes_keep_axes(self):
         la = self.larray
@@ -1269,12 +1243,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_percentile_full_axes(self):
         arr = ndtest((2, 3, 4))
         raw = arr.data
-        self.assertEqual(arr.percentile(10),
-                         np.percentile(raw, 10))
-        assert_array_nan_equal(arr.percentile(10, x.a),
-                               np.percentile(raw, 10, 0))
-        assert_array_nan_equal(arr.percentile(10, x.c, x.a),
-                               np.percentile(raw, 10, (2, 0)))
+        self.assertEqual(arr.percentile(10), np.percentile(raw, 10))
+        assert_array_nan_equal(arr.percentile(10, x.a), np.percentile(raw, 10, 0))
+        assert_array_nan_equal(arr.percentile(10, x.c, x.a), np.percentile(raw, 10, (2, 0)))
 
     def test_percentile_groups(self):
         arr = ndtest((2, 5, 3))
@@ -1330,25 +1301,25 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # string groups
         self.assertEqual(la.sum(geo=(vla, wal, bru)).shape, (116, 3, 2, 15))
         # with one label in several groups
-        self.assertEqual(la.sum(sex=(['M'], ['M', 'F'])).shape,
-                         (116, 44, 2, 15))
+        self.assertEqual(la.sum(sex=(['M'], ['M', 'F'])).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum(sex=('M', 'M,F')).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum(sex='M;M,F').shape, (116, 44, 2, 15))
 
-        aggregated = la.sum(geo=(vla, wal, bru, belgium))
-        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        res = la.sum(geo=(vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        self.assertEqual(la.sum(lipro='P01,P03;P02,P05;:', geo=(vla, wal, bru, belgium)).shape, (116, 4, 2, 3))
+        res = la.sum(lipro='P01,P03;P02,P05;:', geo=(vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, geo=(vla, wal, bru, belgium)).shape, (4, 15))
+        # Note that you must list "full axes" aggregates first (Python does not allow non-kwargs after kwargs.
+        res = la.sum(age, sex, geo=(vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
-        reg = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-        self.assertEqual(reg.shape, (4, 15))
+        res = la.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
     def test_group_agg_guess_axis(self):
         la = self.larray
@@ -1384,10 +1355,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # string groups
         self.assertEqual(la.sum((vla, wal, bru)).shape, (116, 3, 2, 15))
 
-        # XXX: do we also want to support this? I do not really like it because
-        # it gets tricky when we have some other axes into play. For now the
-        # error message is unclear because it first aggregates on "vla", then
-        # tries to aggregate on "wal", but there is no "geo" dimension anymore.
+        # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
+        # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
+        # aggregate on "wal", but there is no "geo" dimension anymore.
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
@@ -1412,23 +1382,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res['men'], raw[:, :, 0, :])
         assert_array_equal(res['all'], raw.sum(2))
 
-        aggregated = la.sum((vla, wal, bru, belgium))
-        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        res = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        self.assertEqual(la.sum('P01,P03;P02,P05;P01:',
-                                (vla, wal, bru, belgium)).shape,
-                         (116, 4, 2, 3))
+        res = la.sum('P01,P03;P02,P05;P01:', (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
-                         (4, 15))
+        res = la.sum(age, sex, (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
-        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
-        self.assertEqual(reg.shape, (4, 15))
+        res = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
     def test_group_agg_label_group(self):
         la = self.larray
@@ -1455,9 +1422,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.sum(geo[':']).shape, (116, 2, 15))
         self.assertEqual(la.sum(geo[:]).shape, (116, 2, 15))
 
-        # Include everything between two labels. Since A11 is the first label
-        # and A21 is the last one, this should be equivalent to the previous
-        # tests.
+        # Include everything between two labels. Since A11 is the first label and A21 is the last one, this should be
+        # equivalent to the previous tests.
         self.assertEqual(la.sum(geo['A11:A21']).shape, (116, 2, 15))
         assert_array_equal(la.sum(geo['A11:A21']), la.sum(geo))
         assert_array_equal(la.sum(geo['A11':'A21']), la.sum(geo))
@@ -1469,47 +1435,39 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # string groups
         self.assertEqual(la.sum((vla, wal, bru)).shape, (116, 3, 2, 15))
 
-        # XXX: do we also want to support this? I do not really like it because
-        # it gets tricky when we have some other axes into play. For now the
-        # error message is unclear because it first aggregates on "vla", then
-        # tries to aggregate on "wal", but there is no "geo" dimension anymore.
+        # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
+        # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
+        # aggregate on "wal", but there is no "geo" dimension anymore.
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape,
-                         (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape,
-                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum((sex['M'], sex['M,F'])).shape, (116, 44, 2, 15))
         # XXX: do we want to support this?
         # self.assertEqual(la.sum(sex['M;H,F']).shape, (116, 44, 2, 15))
 
-        aggregated = la.sum((vla, wal, bru, belgium))
-        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        res = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'],
-        #                         (vla, wal, bru, belgium)).shape,
+        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'], (vla, wal, bru, belgium)).shape,
         #                  (116, 4, 2, 3))
-        self.assertEqual(la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]),
-                                (vla, wal, bru, belgium)).shape,
-                         (116, 4, 2, 3))
+        res = la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]), (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
-                         (4, 15))
+        res = la.sum(age, sex, (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
-        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
-        self.assertEqual(reg.shape, (4, 15))
+        res = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
     def test_group_agg_label_group_no_axis(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
-        vla, wal, bru = \
-            LGroup(self.vla_str), LGroup(self.wal_str), LGroup(self.bru_str)
+        vla, wal, bru = LGroup(self.vla_str), LGroup(self.wal_str), LGroup(self.bru_str)
         belgium = LGroup(self.belgium)
 
         # a) group aggregate on a fresh array
@@ -1521,8 +1479,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.sum(LGroup('M,F')).shape, (116, 44, 15))
 
         self.assertEqual(la.sum(LGroup('A11,A21,A25')).shape, (116, 2, 15))
-        self.assertEqual(la.sum(LGroup(['A11', 'A21', 'A25'])).shape,
-                         (116, 2, 15))
+        self.assertEqual(la.sum(LGroup(['A11', 'A21', 'A25'])).shape, (116, 2, 15))
 
         # Include everything between two labels. Since A11 is the first label
         # and A21 is the last one, this should be equivalent to the full axis.
@@ -1534,40 +1491,33 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # string groups
         self.assertEqual(la.sum((vla, wal, bru)).shape, (116, 3, 2, 15))
 
-        # XXX: do we also want to support this? I do not really like it because
-        # it gets tricky when we have some other axes into play. For now the
-        # error message is unclear because it first aggregates on "vla", then
-        # tries to aggregate on "wal", but there is no "geo" dimension anymore.
+        # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
+        # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
+        # aggregate on "wal", but there is no "geo" dimension anymore.
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((LGroup('M'), LGroup(['M', 'F']))).shape,
-                         (116, 44, 2, 15))
-        self.assertEqual(la.sum((LGroup('M'), LGroup('M,F'))).shape,
-                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((LGroup('M'), LGroup(['M', 'F']))).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum((LGroup('M'), LGroup('M,F'))).shape, (116, 44, 2, 15))
         # XXX: do we want to support this?
         # self.assertEqual(la.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
 
-        aggregated = la.sum((vla, wal, bru, belgium))
-        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        res = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
-        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'],
-        #                         (vla, wal, bru, belgium)).shape,
+        # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'], (vla, wal, bru, belgium)).shape,
         #                  (116, 4, 2, 3))
-        self.assertEqual(la.sum((LGroup('P01,P03'), LGroup('P02,P05')),
-                                (vla, wal, bru, belgium)).shape,
-                         (116, 4, 2, 2))
+        res = la.sum((LGroup('P01,P03'), LGroup('P02,P05')), (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 2))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
-                         (4, 15))
+        res = la.sum(age, sex, (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
-        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
-        self.assertEqual(reg.shape, (4, 15))
+        res = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
     def test_group_agg_axis_ref_label_group(self):
         la = self.larray
@@ -1615,34 +1565,29 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # self.assertEqual(la.sum(vla, wal, bru).shape, (116, 3, 2, 15))
 
         # with one label in several groups
-        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape,
-                         (116, 44, 2, 15))
-        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape,
-                         (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex[['M', 'F']])).shape, (116, 44, 2, 15))
+        self.assertEqual(la.sum((sex['M'], sex['M', 'F'])).shape, (116, 44, 2, 15))
         self.assertEqual(la.sum((sex['M'], sex['M,F'])).shape, (116, 44, 2, 15))
         # XXX: do we want to support this?
         # self.assertEqual(la.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
 
-        aggregated = la.sum((vla, wal, bru, belgium))
-        self.assertEqual(aggregated.shape, (116, 4, 2, 15))
+        res = la.sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 15))
 
         # a.4) several dimensions at the same time
         # self.assertEqual(la.sum(lipro['P01,P03;P02,P05;P01:'],
         #                         (vla, wal, bru, belgium)).shape,
         #                  (116, 4, 2, 3))
-        self.assertEqual(la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]),
-                                (vla, wal, bru, belgium)).shape,
-                         (116, 4, 2, 3))
+        res = la.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]), (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (116, 4, 2, 3))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
-        self.assertEqual(la.sum(age, sex, (vla, wal, bru, belgium)).shape,
-                         (4, 15))
+        res = la.sum(age, sex, (vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
         # c) chain group aggregate after axis aggregate
-        reg = la.sum(age, sex).sum((vla, wal, bru, belgium))
-        self.assertEqual(reg.shape, (4, 15))
+        res = la.sum(age, sex).sum((vla, wal, bru, belgium))
+        self.assertEqual(res.shape, (4, 15))
 
     def test_group_agg_one_axis(self):
         a = Axis(range(3), 'a')
@@ -1708,8 +1653,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # this is currently allowed even though it can be confusing:
         # P01 and P02 are both groups with one element each.
         self.assertEqual(reg.sum(lipro=('P01', 'P02', ':')).shape, (4, 3))
-        self.assertEqual(reg.sum(lipro=('P01', 'P02', lipro[:])).shape,
-                         (4, 3))
+        self.assertEqual(reg.sum(lipro=('P01', 'P02', lipro[:])).shape, (4, 3))
 
         # explicit groups are better
         self.assertEqual(reg.sum(lipro=('P01,', 'P02,', ':')).shape, (4, 3))
@@ -1749,8 +1693,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # this is currently allowed even though it can be confusing:
         # P01 and P02 are both groups with one element each.
         self.assertEqual(reg.sum(('P01', 'P02', 'P01:')).shape, (4, 3))
-        self.assertEqual(reg.sum(('P01', 'P02', lipro[:])).shape,
-                         (4, 3))
+        self.assertEqual(reg.sum(('P01', 'P02', lipro[:])).shape, (4, 3))
 
         # explicit groups are better
         self.assertEqual(reg.sum(('P01,', 'P02,', 'P01:')).shape, (4, 3))
@@ -1894,8 +1837,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # b) by string (name of groups)
         self.assertEqual(reg.filter(geo='Flanders').shape, (116, 2, 15))
-        self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape,
-                         (116, 2, 2, 15))
+        self.assertEqual(reg.filter(geo='Flanders,Wallonia').shape, (116, 2, 2, 15))
 
         # using string groups
         reg = la.sum(geo=(self.vla_str, self.wal_str, self.bru_str))
@@ -1903,13 +1845,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # the result is indexable
         # a) by string (def)
         self.assertEqual(reg.filter(geo=self.vla_str).shape, (116, 2, 15))
-        self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape,
-                         (116, 2, 2, 15))
+        self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape, (116, 2, 2, 15))
 
         # b) by LGroup
         self.assertEqual(reg.filter(geo=self.vla_str).shape, (116, 2, 15))
-        self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape,
-                         (116, 2, 2, 15))
+        self.assertEqual(reg.filter(geo=(self.vla_str, self.wal_str)).shape, (116, 2, 2, 15))
 
     def test_sum_with_groups_from_other_axis(self):
         small = self.small
@@ -1928,9 +1868,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # use a group (from another axis) which is incompatible with the axis of
         # the same name in the array
         lipro4 = Axis('lipro=P01,P03,P16')
-        with self.assertRaisesRegexp(ValueError,
-                                     "lipro\['P01', 'P16'\] is not a valid "
-                                     "label for any axis"):
+        with self.assertRaisesRegexp(ValueError, "lipro\['P01', 'P16'\] is not a valid label for any axis"):
             small.sum(lipro4['P01,P16'])
 
     def test_agg_kwargs(self):
@@ -1988,12 +1926,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # a.4) several dimensions at the same time
         res = la.sum_by(geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:')
         self.assertEqual(res.shape, (4, 3))
-        assert_array_equal(res, la.sum(age, sex, geo=(vla, wal, bru, belgium),
-                                       lipro='P01,P03;P02,P05;:'))
+        assert_array_equal(res, la.sum(age, sex, geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:'))
 
         # b) both axis aggregate and group aggregate at the same time
-        # Note that you must list "full axes" aggregates first (Python does
-        # not allow non-kwargs after kwargs.
+        # Note that you must list "full axes" aggregates first (Python does not allow non-kwargs after kwargs.
         res = la.sum_by(sex, geo=(vla, wal, bru, belgium))
         self.assertEqual(res.shape, (4, 2))
         assert_array_equal(res, la.sum(age, lipro, geo=(vla, wal, bru, belgium)))
@@ -2084,13 +2020,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         self.assertEqual(la.with_total(geo=(fla, wal, bru), op=mean).shape, (116, 47, 2, 15))
         self.assertEqual(la.with_total((fla, wal, bru), op=mean).shape, (116, 47, 2, 15))
-        # works but "wrong" for x.geo (double what is expected because it
-        # includes fla wal & bru)
-        # TODO: we probably want to display a warning (or even an error?) in
-        #       that case. If we really want that behavior, we can still split
-        #       the operation: .with_total((fla, wal, bru)).with_total(x.geo)
-        # OR we might want to only sum the axis as it was before the op (but
-        #    that does not play well when working with multiple axes).
+        # works but "wrong" for x.geo (double what is expected because it includes fla wal & bru)
+        # TODO: we probably want to display a warning (or even an error?) in that case.
+        # If we really want that behavior, we can still split the operation:
+        # .with_total((fla, wal, bru)).with_total(x.geo)
+        # OR we might want to only sum the axis as it was before the op (but that does not play well when working with
+        #    multiple axes).
         a1 = la.with_total(x.sex, (fla, wal, bru), x.geo, x.lipro)
         self.assertEqual(a1.shape, (116, 48, 3, 16))
 
@@ -2137,9 +2072,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # a real union should not care and should return
         # self[1, 2, 0] but will this break other stuff? My gut feeling is yes
 
-        # when doing a binop between anonymous axes, we use union too (that
-        # might be the problem) and we need *that* union to match axes by
-        # position
+        # when doing a binop between anonymous axes, we use union too (that might be the problem) and we need *that*
+        # union to match axes by position
         reordered = a.transpose(1, 2)
         self.assertEqual(reordered.shape, (3, 4, 2))
 
@@ -2250,8 +2184,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la_int / 2, raw_int / 2)
         assert_array_equal(la_int // 2, raw_int // 2)
 
-        # adding two larrays with different axes order cannot work with
-        # unnamed axes
+        # adding two larrays with different axes order cannot work with unnamed axes
         # assert_array_equal(la + la.transpose(), raw * 2)
 
         # mixed operations
@@ -2291,16 +2224,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertTrue(np.array_equal(d, [[0, 0, 0],
                                            [3, 4, 5]]))
 
-        # it is unfortunate that the behavior is different from numpy
-        # (even though I find our behavior more intuitive)
+        # it is unfortunate that the behavior is different from numpy (even though I find our behavior more intuitive)
         d = np.asarray(a) * np.asarray(b)
         self.assertEqual(d.shape, (2, 3))
         self.assertTrue(np.array_equal(d, [[0, 1,  4],
                                            [0, 4, 10]]))
 
         with self.assertRaises(ValueError):
-            # ValueError: operands could not be broadcast together with shapes
-            # (2,3) (2,)
+            # ValueError: operands could not be broadcast together with shapes (2,3) (2,)
             np.asarray(a) * np.asarray(c)
 
     def test_unary_ops(self):
@@ -2343,12 +2274,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # replace one axis
         la2 = self.small.set_axes(x.lipro, lipro2)
         assert_array_equal(la, la2)
-        self.assertEqual(la.title, la2.title, "title of array returned by "
-                                              "replace_axes should be the same as the original one. "
-                                              "We got '{}' instead of '{}'".format(la2.title, la.title))
+        self.assertEqual(la.title, la2.title, "title of array returned by replace_axes should be the same as the "
+                                              "original one. We got '{}' instead of '{}'".format(la2.title, la.title))
 
-        la = LArray(self.small_data, axes=(sex2, lipro2),
-                    title=self.small_title)
+        la = LArray(self.small_data, axes=(sex2, lipro2), title=self.small_title)
         # all at once
         la2 = self.small.set_axes([sex2, lipro2])
         assert_array_equal(la, la2)
@@ -2626,7 +2555,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
             self.assertEqual(f.readlines()[:3], result)
 
         la.to_csv(abspath('out.csv'), transpose=False)
-        result = ['arr,age,sex,nat,time,0\n', '1,0,F,1,2007,3722\n',
+        result = ['arr,age,sex,nat,time,0\n',
+                  '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
         with open(abspath('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
@@ -2911,10 +2841,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
             # Sheet1/A1(transposed)
             # FIXME: we need to .dump(header=False) explicitly because otherwise we go via LArrayConverter which
-            #        includes labels.
-            #        for consistency's sake we should either change LArrayConverter to not include labels, or
-            #        change wb[0] = a1 to include them (and use wb[0] = a1.data to avoid them?) but that would be
-            #        heavily backward incompatible and how would I load them back?
+            #        includes labels. for consistency's sake we should either change LArrayConverter to not include
+            #        labels, or change wb[0] = a1 to include them (and use wb[0] = a1.data to avoid them?) but that
+            #        would be heavily backward incompatible and how would I load them back?
             # wb[0]['A1'].options(transpose=True).value = a1
             wb[0]['A1'].options(transpose=True).value = a1.dump(header=False)
             res = wb[0]['A1:A3'].load(header=False)

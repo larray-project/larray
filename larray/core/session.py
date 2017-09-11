@@ -113,22 +113,19 @@ class Session(object):
     def get(self, key, default=None):
         """
         Returns the array object corresponding to the key.
-        If the key doesn't correspond to any array object,
-        a default one can be returned.
+        If the key doesn't correspond to any array object, a default one can be returned.
 
         Parameters
         ----------
         key : str
             Name of the array.
         default : array, optional
-            Returned array if the key doesn't correspond
-            to any array of the current session.
+            Returned array if the key doesn't correspond to any array of the current session.
 
         Returns
         -------
         LArray
-            Array corresponding to the given key or
-            a default one if not found.
+            Array corresponding to the given key or a default one if not found.
 
         Examples
         --------
@@ -196,8 +193,7 @@ class Session(object):
             List of arrays to load. If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
-            Load using `engine`. Defaults to 'auto' (use default engine for
-            the format guessed from the file extension).
+            Load using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
@@ -255,11 +251,10 @@ class Session(object):
             List of names of objects to dump. If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
-            Dump using `engine`. Defaults to 'auto' (use default engine for
-            the format guessed from the file extension).
+            Dump using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. Ignored for CSV files.
-            If False, file is updated. Defaults to True.
+            Whether or not to overwrite an existing file, if any. Ignored for CSV files. If False, file is updated.
+            Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
@@ -659,15 +654,13 @@ class Session(object):
     def __len__(self):
         return len(self._objects)
 
-    # binary operations are dispatched element-wise to all arrays
-    # (we consider Session as an array-like)
+    # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
     def _binop(opname):
         opfullname = '__%s__' % opname
 
         def opmethod(self, other):
             self_keys = set(self.keys())
-            all_keys = list(self.keys()) + [n for n in other.keys() if
-                                            n not in self_keys]
+            all_keys = list(self.keys()) + [n for n in other.keys() if n not in self_keys]
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for name in all_keys:
@@ -710,12 +703,10 @@ class Session(object):
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
-    # XXX: use _binop (ie elementwise comparison instead of aggregating
-    #      directly?)
+    # XXX: use _binop (ie elementwise comparison instead of aggregating directly?)
     def __eq__(self, other):
         self_keys = set(self.keys())
-        all_keys = list(self.keys()) + [n for n in other.keys()
-                                        if n not in self_keys]
+        all_keys = list(self.keys()) + [n for n in other.keys() if n not in self_keys]
         res = [larray_nan_equal(self.get(key), other.get(key)) for key in all_keys]
         return LArray(res, [Axis(all_keys, 'name')])
 
@@ -778,8 +769,8 @@ class Session(object):
 
     def compact(self, display=False):
         """
-        Detects and removes "useless" axes (ie axes for which values are
-        constant over the whole axis) for all array objects in session
+        Detects and removes "useless" axes (ie axes for which values are constant over the whole axis) for all array
+        objects in session
 
         Parameters
         ----------
@@ -922,8 +913,7 @@ def local_arrays(depth=0):
     Parameters
     ----------
     depth: int
-        depth of call frame to inspect. 0 is where local_arrays was called,
-        1 the caller of local_arrays, etc.
+        depth of call frame to inspect. 0 is where local_arrays was called, 1 the caller of local_arrays, etc.
 
     Returns
     -------

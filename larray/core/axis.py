@@ -10,8 +10,8 @@ import numpy as np
 
 from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to_ticks, _to_key,
-                               _seq_summary, _contain_group_ticks, _seq_group_to_name)
+from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
+                               _contain_group_ticks, _seq_group_to_name)
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id
 
@@ -28,8 +28,7 @@ class Axis(ABCAxis):
         collection of values usable as labels, i.e. numbers or strings or the size of the axis.
         In the last case, a wildcard axis is created.
     name : str or Axis, optional
-        name of the axis or another instance of Axis.
-        In the second case, the name of the other axis is simply copied.
+        name of the axis or another instance of Axis. In the second case, the name of the other axis is simply copied.
         By default None.
 
     Attributes
@@ -93,8 +92,7 @@ class Axis(ABCAxis):
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
         is_python_str = type(name) is unicode or type(name) is bytes
-        assert name is None or isinstance(name, int) or is_python_str, \
-            type(name)
+        assert name is None or isinstance(name, int) or is_python_str, type(name)
         self.name = name
         self._labels = None
         self.__mapping = None
@@ -110,20 +108,15 @@ class Axis(ABCAxis):
         mapping = self.__mapping
         if mapping is None:
             labels = self._labels
-            # TODO: this would be more efficient for wildcard axes but
-            # does not work in all cases
+            # TODO: this would be more efficient for wildcard axes but does not work in all cases
             # mapping = labels
             mapping = {label: i for i, label in enumerate(labels)}
             if not self._iswildcard:
-                # we have no choice but to do that!
-                # otherwise we could not make geo['Brussels'] work efficiently
-                # (we could have to traverse the whole mapping checking for each
-                # name, which is not an option)
-                # TODO: only do this if labels.dtype is object, or add
-                # "contains_lgroup" flag in above code (if any(...))
-                # 0.179
-                mapping.update({label.name: i for i, label in enumerate(labels)
-                                if isinstance(label, Group)})
+                # we have no choice but to do that, otherwise we could not make geo['Brussels'] work efficiently
+                # (we could have to traverse the whole mapping checking for each name, which is not an option)
+                # TODO: only do this if labels.dtype is object, or add "contains_lgroup" flag in above code
+                # (if any(...))
+                mapping.update({label.name: i for i, label in enumerate(labels) if isinstance(label, Group)})
             self.__mapping = mapping
         return mapping
 
@@ -243,23 +236,19 @@ class Axis(ABCAxis):
 
     def extend(self, labels):
         """
-        Append new labels to an axis or increase its length
-        in case of wildcard axis.
-        Note that `extend` does not occur in-place: a new axis
-        object is allocated, filled and returned.
+        Append new labels to an axis or increase its length in case of wildcard axis.
+        Note that `extend` does not occur in-place: a new axis object is allocated, filled and returned.
 
         Parameters
         ----------
         labels : int, iterable or Axis
-            New labels to append to the axis.
-            Passing directly another Axis is also possible.
+            New labels to append to the axis. Passing directly another Axis is also possible.
             If the current axis is a wildcard axis, passing a length is enough.
 
         Returns
         -------
         Axis
-            A copy of the axis with new labels appended to it or
-            with increased length (if wildcard).
+            A copy of the axis with new labels appended to it or with increased length (if wildcard).
 
         Examples
         --------
@@ -331,8 +320,8 @@ class Axis(ABCAxis):
         """
         axis_name = self.name if self.name else 'axis'
         group_name = name if name else 'all'
-        raise NotImplementedError('Axis.all is deprecated. '
-                                  'Use {}[:] >> {} instead.'.format(axis_name, repr(group_name)))
+        raise NotImplementedError('Axis.all is deprecated. Use {}[:] >> {} instead.'
+                                  .format(axis_name, repr(group_name)))
 
     def subaxis(self, key, name=None):
         """
@@ -348,8 +337,7 @@ class Axis(ABCAxis):
         Returns
         -------
         Axis
-            Subaxis.
-            If key is a None slice and name is None, the original Axis is returned.
+            Subaxis. If key is a None slice and name is None, the original Axis is returned.
             If key is a LArray, the list of axes is returned.
 
         Examples
@@ -358,12 +346,10 @@ class Axis(ABCAxis):
         >>> age.subaxis(range(10, 19), 'teenagers')
         Axis([10, 11, 12, 13, 14, 15, 16, 17, 18], 'teenagers')
         """
-        if (name is None and isinstance(key, slice) and
-                key.start is None and key.stop is None and key.step is None):
+        if name is None and isinstance(key, slice) and key.start is None and key.stop is None and key.step is None:
             return self
-        # we must NOT modify the axis name, even though this creates a new axis
-        # that is independent from the original one because the original
-        # name is probably what users will want to use to filter
+        # we must NOT modify the axis name, even though this creates a new axis that is independent from the original
+        # one because the original name is probably what users will want to use to filter
         if name is None:
             name = self.name
         if isinstance(key, ABCLArray):
@@ -422,7 +408,7 @@ class Axis(ABCAxis):
     def equals(self, other):
         """
         Checks if self is equal to another axis.
-        Two axes are equal if the have the same name and label(s).
+        Two axes are equal if they have the same name and label(s).
 
         Parameters
         ----------
@@ -450,12 +436,9 @@ class Axis(ABCAxis):
         if self is other:
             return True
 
-        # this might need to change if we ever support wildcard axes with
-        # real labels
-        return isinstance(other, Axis) and self.name == other.name and \
-               self.iswildcard == other.iswildcard and \
-               (len(self) == len(other) if self.iswildcard else
-                    np.array_equal(self.labels, other.labels))
+        # this might need to change if we ever support wildcard axes with real labels
+        return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
+               (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
 
     def matches(self, pattern):
         """
@@ -591,15 +574,13 @@ class Axis(ABCAxis):
     def _is_key_type_compatible(self, key):
         key_kind = np.dtype(type(key)).kind
         label_kind = self.labels.dtype.kind
-        # on Python2, ascii-only unicode string can match byte strings (and
-        # vice versa), so we shouldn't be more picky here than dict hashing
+        # on Python2, ascii-only unicode string can match byte strings (and vice versa), so we shouldn't be more picky
+        # here than dict hashing
         str_key = key_kind in ('S', 'U')
         str_label = label_kind in ('S', 'U')
         py2_str_match = PY2 and str_key and str_label
         # object kind can match anything
-        return key_kind == label_kind or \
-               key_kind == 'O' or label_kind == 'O' or \
-               py2_str_match
+        return key_kind == label_kind or key_kind == 'O' or label_kind == 'O' or py2_str_match
 
     def translate(self, key, bool_passthrough=True):
         """
@@ -680,8 +661,7 @@ class Axis(ABCAxis):
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
         # XXX: bool LArray do not pass through???
-        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b' and \
-                bool_passthrough:
+        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b' and bool_passthrough:
             return key
         elif isinstance(key, (tuple, list, OrderedSet)):
             # TODO: the result should be cached
@@ -697,17 +677,14 @@ class Axis(ABCAxis):
         elif isinstance(key, np.ndarray):
             # handle fancy indexing with a ndarray of labels
             # TODO: the result should be cached
-            # TODO: benchmark this against the tuple/list version above when
-            # mapping is large
+            # TODO: benchmark this against the tuple/list version above when mapping is large
             # array_lookup is O(len(key) * log(len(mapping)))
             # vs
             # tuple/list version is O(len(key)) (dict.getitem is O(1))
-            # XXX: we might want to special case dtype bool, because in that
-            # case the mapping will in most case be {False: 0, True: 1} or
-            # {False: 1, True: 0} and in those case key.astype(int) and
-            # (~key).astype(int) are MUCH faster
-            # see C:\Users\gdm\devel\lookup_methods.py and
-            #     C:\Users\gdm\Desktop\lookup_methods.html
+            # XXX: we might want to special case dtype bool, because in that case the mapping will in most case be
+            # {False: 0, True: 1} or {False: 1, True: 0} and in those case key.astype(int) and (~key).astype(int)
+            # are MUCH faster
+            # see C:\Users\gdm\devel\lookup_methods.py and C:\Users\gdm\Desktop\lookup_methods.html
             try:
                 return array_lookup2(_seq_group_to_name(key), self._sorted_keys, self._sorted_values)
             except KeyError:
@@ -716,8 +693,8 @@ class Axis(ABCAxis):
             from .array import LArray
             return LArray(self.translate(key.data), key.axes)
         else:
-            # the first mapping[key] above will cover most cases. This code
-            # path is only used if the key was given in "non normalized form"
+            # the first mapping[key] above will cover most cases.
+            # This code path is only used if the key was given in "non normalized form"
             assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
             # key is scalar (integer, float, string, ...)
             if self._is_key_type_compatible(key):
@@ -765,8 +742,7 @@ class Axis(ABCAxis):
         def opmethod(self, other):
             # give a chance to AxisCollection.__rXXX__ ops to trigger
             if isinstance(other, AxisCollection):
-                # in this case it is indeed return NotImplemented, not raise
-                # NotImplementedError!
+                # in this case it is indeed return NotImplemented, not raise NotImplementedError!
                 return NotImplemented
 
             from .array import labels_array
@@ -826,8 +802,7 @@ class Axis(ABCAxis):
         Returns a copy of the axis.
         """
         new_axis = Axis([], self.name)
-        # XXX: I wonder if we should make a copy of the labels + mapping.
-        # There should at least be an option.
+        # XXX: I wonder if we should make a copy of the labels + mapping. There should at least be an option.
         new_axis._labels = self._labels
         new_axis.__mapping = self.__mapping
         new_axis._length = self._length
@@ -1063,8 +1038,8 @@ def _make_axis(obj):
 
 
 # not using OrderedDict because it does not support indices-based getitem
-# not using namedtuple because we have to know the fields in advance (it is a
-# one-off class) and we need more functionality than just a named tuple
+# not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
+# functionality than just a named tuple
 class AxisCollection(object):
     """
     Represents a collection of axes.
@@ -1117,11 +1092,8 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
-            raise ValueError("Cannot have multiple occurrences of the same "
-                             "axis object in a collection "
-                             "('%s' -- %s with id %d). "
-                             "Several axes with the same name are allowed "
-                             "though (but not recommended)."
+            raise ValueError("Cannot have multiple occurrences of the same axis object in a collection ('%s' -- %s "\
+                             "with id %d). Several axes with the same name are allowed though (but not recommended)."
                              % (axis.name, axis.labels_summary(), id(axis)))
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
@@ -1131,24 +1103,18 @@ class AxisCollection(object):
         #     axis_dupes = list(duplicates(axis.labels))
         #     if axis_dupes:
         #         dupe_labels = ', '.join(str(l) for l in axis_dupes)
-        #         warnings.warn("duplicate labels found for axis %s: %s"
-        #                       % (axis.name, dupe_labels),
+        #         warnings.warn("duplicate labels found for axis %s: %s" % (axis.name, dupe_labels),
         #                       category=UserWarning, stacklevel=2)
         #
-        # # check dupes between axes. Using unique to not spot the dupes
-        # # within the same axis that we just displayed.
+        # # check dupes between axes. Using unique to not spot the dupes within the same axis that we just displayed.
         # all_labels = chain(*[np.unique(axis.labels) for axis in axes])
         # dupe_labels = list(duplicates(all_labels))
         # if dupe_labels:
-        #     label_axes = [(label, ', '.join(display_name
-        #                                     for axis, display_name
-        #                                     in zip(axes, self.display_names)
+        #     label_axes = [(label, ', '.join(display_name for axis, display_name in zip(axes, self.display_names)
         #                                     if label in axis))
         #                   for label in dupe_labels]
-        #     dupes = '\n'.join("{} is valid in {{{}}}".format(label, axes)
-        #                       for label, axes in label_axes)
-        #     warnings.warn("ambiguous labels found:\n%s" % dupes,
-        #                   category=UserWarning, stacklevel=5)
+        #     dupes = '\n'.join("{} is valid in {{{}}}".format(label, axes) for label, axes in label_axes)
+        #     warnings.warn("ambiguous labels found:\n%s" % dupes, category=UserWarning, stacklevel=5)
 
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
@@ -1182,8 +1148,8 @@ class AxisCollection(object):
                 if key.name is None:
                     raise KeyError("axis '%s' not found in %s" % (key, self))
                 else:
-                    # we should NOT check that the object is the same, so that we can
-                    # use AxisReference objects to target real axes
+                    # we should NOT check that the object is the same, so that we can use AxisReference objects to
+                    # target real axes
                     key = key.name
 
         if isinstance(key, int):
@@ -1215,13 +1181,11 @@ class AxisCollection(object):
     def _ipython_key_completions_(self):
         return list(self._map.keys())
 
-    # XXX: I wonder if this whole positional crap should really be part of
-    # AxisCollection or the default behavior. It could either be moved to
-    # make_numpy_broadcastable or made non default
+    # XXX: I wonder if this whole positional crap should really be part of AxisCollection or the default behavior.
+    # It could either be moved to make_numpy_broadcastable or made non default
     def get_by_pos(self, key, i):
         """
-        Returns axis corresponding to a key, or to position i if the key
-        has no name and key object not found.
+        Returns axis corresponding to a key, or to position i if the key has no name and key object not found.
 
         Parameters
         ----------
@@ -1254,11 +1218,9 @@ class AxisCollection(object):
                     if res.iscompatible(key):
                         return res
                     else:
-                        raise ValueError("axis %s is not compatible with %s"
-                                         % (res, key))
+                        raise ValueError("axis %s is not compatible with %s" % (res, key))
                 # XXX: KeyError instead?
-                raise ValueError("axis %s not found in %s"
-                                 % (key, self))
+                raise ValueError("axis %s not found in %s" % (key, self))
         else:
             return self[key]
 
@@ -1268,14 +1230,13 @@ class AxisCollection(object):
 
             def slice_bound(bound):
                 if bound is None or isinstance(bound, int):
-                    # out of bounds integer bounds are allowed in slice setitem
-                    # so we cannot use .index
+                    # out of bounds integer bounds are allowed in slice setitem so we cannot use .index
                     return bound
                 else:
                     return self.index(bound)
             start_idx = slice_bound(key.start)
-            # XXX: we might want to make the stop bound inclusive, which makes
-            # more sense for label bounds (but prevents inserts via setitem)
+            # XXX: we might want to make the stop bound inclusive, which makes more sense for label bounds (but
+            #      prevents inserts via setitem)
             stop_idx = slice_bound(key.stop)
             old = self._list[start_idx:stop_idx:key.step]
             for axis in old:
@@ -1333,18 +1294,15 @@ class AxisCollection(object):
             other = AxisCollection(other)
 
         # XXX: add iscompatible when matching by position?
-        # TODO: move this to a class method (possibly private) so that
-        # we make sure we use same heuristic than in .extend
+        # TODO: move this to a class method (possibly private) so that we are sure we use same heuristic than in .extend
         def contains(col, i, axis):
             return axis in col or (axis.name is None and i in col)
 
-        return AxisCollection([axis for i, axis in enumerate(self)
-                               if contains(other, i, axis)])
+        return AxisCollection([axis for i, axis in enumerate(self) if contains(other, i, axis)])
 
     def __eq__(self, other):
         """
-        Other collection compares equal if all axes compare equal and in the
-        same order. Works with a list.
+        Other collection compares equal if all axes compare equal and in the same order. Works with a list.
         """
         if self is other:
             return True
@@ -1373,8 +1331,7 @@ class AxisCollection(object):
 
     def isaxis(self, value):
         """
-        Tests if input is an Axis object or
-        the name of an axis contained in self.
+        Tests if input is an Axis object or the name of an axis contained in self.
 
         Parameters
         ----------
@@ -1384,8 +1341,8 @@ class AxisCollection(object):
         Returns
         -------
         bool
-            True if input is an Axis object or the name of an axis contained in
-            the current AxisCollection instance, False otherwise.
+            True if input is an Axis object or the name of an axis contained in the current AxisCollection instance,
+            False otherwise.
 
         Examples
         --------
@@ -1401,27 +1358,20 @@ class AxisCollection(object):
         """
         # this is tricky. 0 and 1 can be both axes indices and axes ticks.
         # not sure what's worse:
-        # 1) disallow aggregates(axis_num)
-        #    users could still use arr.sum(arr.axes[0])
-        #    we could also provide an explicit kwarg (ie this would
-        #    effectively forbid having an axis named "axis").
-        #    arr.sum(axis=0). I think this is the sanest option. The
-        #    error message in case we use it without the keyword needs to
-        #    be clearer though.
-        return isinstance(value, Axis) or (isinstance(value, basestring) and
-                                           value in self)
-        # 2) slightly inconsistent API: allow aggregate over single labels
-        #    if they are string, but not int
+        # 1) disallow aggregates(axis_num): users could still use arr.sum(arr.axes[0])
+        #    we could also provide an explicit kwarg (ie this would effectively forbid having an axis named "axis").
+        #    arr.sum(axis=0). I think this is the sanest option. The error message in case we use it without the
+        #    keyword needs to be clearer though.
+        return isinstance(value, Axis) or (isinstance(value, basestring) and value in self)
+        # 2) slightly inconsistent API: allow aggregate over single labels if they are string, but not int
         #    arr.sum(0) would sum on the first axis, but arr.sum('M') would
         #    sum a single tick. I don't like this option.
-        # 3) disallow single tick aggregates. Single labels make little
-        #    sense in the context of an aggregate, but you don't always
-        #    know/want to differenciate the code in that case anyway.
+        # 3) disallow single tick aggregates. Single labels make little sense in the context of an aggregate,
+        #    but you don't always know/want to differenciate the code in that case anyway.
         #    It would be annoying for e.g. Brussels
         # 4) give priority to axes,
         #    arr.sum(0) would sum on the first axis but arr.sum(5) would
-        #    sum a single tick (assuming there is a int axis and less than
-        #    six axes).
+        #    sum a single tick (assuming there is a int axis and less than six axes).
         # return value in self
 
     def __len__(self):
@@ -1437,8 +1387,7 @@ class AxisCollection(object):
 
     def get(self, key, default=None, name=None):
         """
-        Returns axis corresponding to key. If not found,
-        the argument `name` is used to create a new Axis.
+        Returns axis corresponding to key. If not found, the argument `name` is used to create a new Axis.
         If `name` is None, the `default` axis is then returned.
 
         Parameters
@@ -1446,11 +1395,9 @@ class AxisCollection(object):
         key : key
             Key corresponding to an axis of the current AxisCollection.
         default : axis, optional
-            Default axis to return if key doesn't correspond to any axis of
-            the collection and argument `name` is None.
+            Default axis to return if key doesn't correspond to any axis of the collection and argument `name` is None.
         name : str, optional
-            If key doesn't correspond to any axis of the collection,
-            a new Axis with this name is created and returned.
+            If key doesn't correspond to any axis of the collection, a new Axis with this name is created and returned.
 
         Examples
         --------
@@ -1476,8 +1423,7 @@ class AxisCollection(object):
 
     def get_all(self, key):
         """
-        Returns all axes from key if present and length 1 wildcard axes
-        otherwise.
+        Returns all axes from key if present and length 1 wildcard axes otherwise.
 
         Parameters
         ----------
@@ -1508,6 +1454,7 @@ class AxisCollection(object):
         ])
         """
         assert isinstance(key, AxisCollection)
+
         def get_pos_default(k, i):
             try:
                 return self.get_by_pos(k, i)
@@ -1518,8 +1465,7 @@ class AxisCollection(object):
                 else:
                     return Axis(1, k.name if k.name is not None else i)
 
-        return AxisCollection([get_pos_default(k, i)
-                               for i, k in enumerate(key)])
+        return AxisCollection([get_pos_default(k, i) for i, k in enumerate(key)])
 
     def keys(self):
         """
@@ -1543,8 +1489,7 @@ class AxisCollection(object):
         Parameters
         ----------
         axis : key, optional
-            Axis to remove and return.
-            Default value is -1 (last axis).
+            Axis to remove and return. Default value is -1 (last axis).
 
         Returns
         -------
@@ -1598,8 +1543,8 @@ class AxisCollection(object):
 
     def check_compatible(self, axes):
         """
-        Checks if axes passed as argument are compatible with those
-        contained in the collection. Raises a ValueError if not.
+        Checks if axes passed as argument are compatible with those contained in the collection.
+        Raises ValueError if not.
 
         See Also
         --------
@@ -1608,8 +1553,7 @@ class AxisCollection(object):
         for i, axis in enumerate(axes):
             local_axis = self.get_by_pos(axis, i)
             if not local_axis.iscompatible(axis):
-                raise ValueError("incompatible axes:\n%r\nvs\n%r"
-                                 % (axis, local_axis))
+                raise ValueError("incompatible axes:\n%r\nvs\n%r" % (axis, local_axis))
 
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
@@ -1642,8 +1586,7 @@ class AxisCollection(object):
         """
         # axes should be a sequence
         if not isinstance(axes, (tuple, list, AxisCollection)):
-            raise TypeError("AxisCollection can only be extended by a "
-                            "sequence of Axis, not %s" % type(axes).__name__)
+            raise TypeError("AxisCollection can only be extended by a sequence of Axis, not %s" % type(axes).__name__)
         # check that common axes are the same
         # if validate:
         #     self.check_compatible(axes)
@@ -1667,8 +1610,7 @@ class AxisCollection(object):
             else:
                 # check that common axes are the same
                 if validate and not old_axis.iscompatible(axis):
-                    raise ValueError("incompatible axes:\n%r\nvs\n%r"
-                                     % (axis, old_axis))
+                    raise ValueError("incompatible axes:\n%r\nvs\n%r" % (axis, old_axis))
                 if replace_wildcards and old_axis.iswildcard:
                     self[old_axis] = axis
 
@@ -1676,16 +1618,14 @@ class AxisCollection(object):
         """
         Returns the index of axis.
 
-        `axis` can be a name or an Axis object (or an index).
-        If the Axis object itself exists in the list, index() will return it.
-        Otherwise, it will return the index of the local axis with the same
-        name than the key (whether it is compatible or not).
+        `axis` can be a name or an Axis object (or an index). If the Axis object itself exists in the list, index()
+        will return it. Otherwise, it will return the index of the local axis with the same name than the key (whether
+        it is compatible or not).
 
         Parameters
         ----------
         axis : Axis or int or str
-            Can be the axis itself or its position (returned if represents a valid index)
-            or its name.
+            Can be the axis itself or its position (returned if represents a valid index) or its name.
 
         Returns
         -------
@@ -1715,9 +1655,8 @@ class AxisCollection(object):
                 raise ValueError("axis %d is not in collection" % axis)
         elif isinstance(axis, Axis):
             try:
-                # first look by id. This avoids testing labels of each axis
-                # and makes sure the result is correct even if there are
-                # several axes with no name and the same labels.
+                # first look by id. This avoids testing labels of each axis and makes sure the result is correct even
+                # if there are several axes with no name and the same labels.
                 return index_by_id(self._list, axis)
             except ValueError:
                 name = axis.name
@@ -1727,8 +1666,8 @@ class AxisCollection(object):
             raise ValueError("%r is not in collection" % axis)
         return self.names.index(name)
 
-    # XXX: we might want to return a new AxisCollection (same question for
-    # other inplace operations: append, extend, pop, __delitem__, __setitem__)
+    # XXX: we might want to return a new AxisCollection (same question for other inplace operations:
+    # append, extend, pop, __delitem__, __setitem__)
     def insert(self, index, axis):
         """
         Inserts axis before index.
@@ -1841,8 +1780,7 @@ class AxisCollection(object):
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
             if len(axes_to_replace) != len(self):
-                raise ValueError('{} axes given as argument, expected '
-                                 '{}'.format(len(axes_to_replace), len(self)))
+                raise ValueError('{} axes given as argument, expected {}'.format(len(axes_to_replace), len(self)))
             axes = axes_to_replace
         else:
             axes = self if inplace else self[:]
@@ -1920,8 +1858,7 @@ class AxisCollection(object):
 
         # only keep indices (as this works for unnamed axes too)
         to_remove = set(self.index(axis) for axis in axes if axis in self)
-        return AxisCollection([axis for i, axis in enumerate(self)
-                               if i not in to_remove])
+        return AxisCollection([axis for i, axis in enumerate(self) if i not in to_remove])
 
     def translate_full_key(self, key):
         """
@@ -1930,8 +1867,7 @@ class AxisCollection(object):
         Parameters
         ----------
         key : tuple
-            A full label-based key.
-            All dimensions must be present and in the correct order.
+            A full label-based key. All dimensions must be present and in the correct order.
 
         Returns
         -------
@@ -1951,8 +1887,7 @@ class AxisCollection(object):
         (slice(None, None, None), 1, 2)
         """
         assert len(key) == len(self)
-        return tuple(axis.translate(axis_key)
-                     for axis_key, axis in zip(key, self))
+        return tuple(axis.translate(axis_key) for axis_key, axis in zip(key, self))
 
     @property
     def labels(self):
@@ -2002,8 +1937,7 @@ class AxisCollection(object):
         Returns
         -------
         list
-            List of names of the axes.
-            Wildcard axes are displayed with an attached \*.
+            List of names of the axes. Wildcard axes are displayed with an attached \*.
             Anonymous axes (name = None) are replaced by their position wrapped in braces.
 
         Examples
@@ -2150,11 +2084,11 @@ class AxisCollection(object):
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
-            whether or not to produce a wildcard axis even if the axes to
-            combine are not. This is much faster, but loose axes labels.
+            whether or not to produce a wildcard axis even if the axes to combine are not.
+            This is much faster, but loose axes labels.
         front_if_spread : bool, optional
-            whether or not to move the combined axis at the front (it will be
-            the first axis) if the combined axes are not next to each other.
+            whether or not to move the combined axis at the front (it will be the first axis) if the combined axes are
+            not next to each other.
 
         Returns
         -------
@@ -2179,15 +2113,12 @@ class AxisCollection(object):
         if wildcard:
             combined_axis = Axis(axes.size, combined_name)
         else:
-            # TODO: the combined keys should be objects which display as:
-            # (axis1_label, axis2_label, ...) but which should also store
-            # the axes names)
+            # TODO: the combined keys should be objects which display as: (axis1_label, axis2_label, ...) but
+            # which should also store the axes names)
             # Q: Should it be the same object as the NDLGroup?/NDKey?
-            # A: yes. On the Pandas backend, we could/should have
-            #    separate axes. On the numpy backend we cannot.
+            # A: yes. On the Pandas backend, we could/should have separate axes. On the numpy backend we cannot.
             if len(axes) == 1:
-                # Q: if axis is a wildcard axis, should the result be a
-                #    wildcard axis (and axes_labels discarded?)
+                # Q: if axis is a wildcard axis, should the result be a wildcard axis (and axes_labels discarded?)
                 combined_labels = axes[0].labels
             else:
                 combined_labels = [sep.join(str(l) for l in p)
@@ -2204,18 +2135,14 @@ class AxisCollection(object):
         Parameters
         ----------
         axis : int, str or Axis
-            axis to split. All its labels *must* contain
-            the given delimiter string.
+            axis to split. All its labels *must* contain the given delimiter string.
         sep : str, optional
-            delimiter to use for splitting. Defaults to '_'.
-            When `regex` is provided, the delimiter is only used
-            on `names` if given as one string or on axis name if
-            `names` is None.
+            delimiter to use for splitting. Defaults to '_'. When `regex` is provided, the delimiter is only used on
+            `names` if given as one string or on axis name if `names` is None.
         names : str or list of str, optional
             names of resulting axes. Defaults to None.
         regex : str, optional
-            use regex instead of delimiter to split labels.
-            Defaults to None.
+            use regex instead of delimiter to split labels. Defaults to None.
 
         Returns
         -------
@@ -2225,14 +2152,12 @@ class AxisCollection(object):
         axis_index = self.index(axis)
         if names is None:
             if sep not in axis.name:
-                raise ValueError('{} not found in axis name ({})'
-                                 .format(sep, axis.name))
+                raise ValueError('{} not found in axis name ({})'.format(sep, axis.name))
             else:
                 names = axis.name.split(sep)
         elif isinstance(names, str):
             if sep not in names:
-                raise ValueError('{} not found in names ({})'
-                                 .format(sep, names))
+                raise ValueError('{} not found in names ({})'.format(sep, names))
             else:
                 names = names.split(sep)
         else:
@@ -2362,8 +2287,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         self._iswildcard = False
 
     def translate(self, key):
-        raise NotImplementedError("an AxisReference (x.) cannot translate "
-                                  "labels")
+        raise NotImplementedError("an AxisReference (x.) cannot translate labels")
 
     def __repr__(self):
         return 'AxisReference(%r)' % self.name
@@ -2377,14 +2301,13 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         """
         return context[self]
 
-    # needed because ExprNode.__hash__ (which is object.__hash__)
-    # takes precedence over Axis.__hash__
+    # needed because ExprNode.__hash__ (which is object.__hash__) takes precedence over Axis.__hash__
     def __hash__(self):
         return id(self)
 
 
 class AxisReferenceFactory(object):
-    # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__):
+    # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__)
     def __getstate__(self):
         return self.__dict__
 
@@ -2396,6 +2319,7 @@ class AxisReferenceFactory(object):
 
     def __getitem__(self, key):
         return AxisReference(key)
+
 
 x = AxisReferenceFactory()
 

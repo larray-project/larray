@@ -26,8 +26,7 @@ except NameError:
 
 if sys.version < '3':
     import io
-    # add support for encoding. Slow on Python2, but that is not a problem
-    # given what we do with it.
+    # add support for encoding. Slow on Python2, but that is not a problem given what we do with it.
     open = io.open
 
 
@@ -171,8 +170,7 @@ def isprerelease(release_name):
     >>> isprerelease('0.8.1rc1')
     True
     """
-    return any(tag in release_name
-               for tag in ('rc', 'c', 'beta', 'b', 'alpha', 'a'))
+    return any(tag in release_name for tag in ('rc', 'c', 'beta', 'b', 'alpha', 'a'))
 
 
 # -------------------- #
@@ -230,8 +228,7 @@ Released on {date}.
         print('\n'.join(f.read().splitlines()[:20]))
     if no('Does the full changelog look right?'):
         exit(1)
-    call('git commit -m "include release changes (%s) in changes.rst" %s'
-         % (fname, fpath))
+    call('git commit -m "include release changes (%s) in changes.rst" %s' % (fname, fpath))
 
 
 def run_tests():
@@ -244,8 +241,7 @@ def run_tests():
 def make_release(release_name=None, branch='master'):
     if release_name is not None:
         if 'pre' in release_name:
-            raise ValueError("'pre' is not supported anymore, use 'alpha' or "
-                             "'beta' instead")
+            raise ValueError("'pre' is not supported anymore, use 'alpha' or 'beta' instead")
         if '-' in release_name:
             raise ValueError("- is not supported anymore")
 
@@ -260,16 +256,14 @@ def make_release(release_name=None, branch='master'):
     if lines:
         uncommited = sum(1 for line in lines if line.startswith(' M'))
         untracked = sum(1 for line in lines if line.startswith('??'))
-        print('Warning: there are %d files with uncommitted changes '
-              'and %d untracked files:' % (uncommited, untracked))
+        print('Warning: there are %d files with uncommitted changes and %d untracked files:' % (uncommited, untracked))
         print(status)
         if no('Do you want to continue?'):
             exit(1)
 
     ahead = call('git log --format=format:%%H origin/%s..%s' % (branch, branch))
     num_ahead = len(ahead.splitlines())
-    print("Branch '%s' is %d commits ahead of 'origin/%s'"
-          % (branch, num_ahead, branch), end='')
+    print("Branch '%s' is %d commits ahead of 'origin/%s'" % (branch, num_ahead, branch), end='')
     if num_ahead:
         if yes(', do you want to push?'):
             do('Pushing changes', call, 'git push')
@@ -292,17 +286,14 @@ def make_release(release_name=None, branch='master'):
     makedirs('larray_new_release')
     chdir('larray_new_release')
 
-    # make a temporary clone in /tmp. The goal is to make sure we do not
-    # include extra/unversioned files. For the -src archive, I don't think
-    # there is a risk given that we do it via git, but the risk is there for
-    # the bundles (src/build is not always clean, examples, editor, ...)
+    # make a temporary clone in /tmp. The goal is to make sure we do not include extra/unversioned files. For the -src
+    # archive, I don't think there is a risk given that we do it via git, but the risk is there for the bundles
+    # (src/build is not always clean, examples, editor, ...)
 
-    # Since this script updates files (update_changelog), we
-    # need to get those changes propagated to GitHub. I do that by updating the
-    # temporary clone then push twice: first from the temporary clone to the
-    # "working copy clone" (eg ~/devel/project) then to GitHub from there. The
-    # alternative to modify the "working copy clone" directly is worse because
-    # it needs more complicated path handling that the 2 push approach.
+    # Since this script updates files (update_changelog), we need to get those changes propagated to GitHub. I do that
+    # by updating the temporary clone then push twice: first from the temporary clone to the "working copy clone" (eg
+    # ~/devel/project) then to GitHub from there. The alternative to modify the "working copy clone" directly is worse
+    # because it needs more complicated path handling that the 2 push approach.
     do('Cloning', call, 'git clone -b %s %s build' % (branch, repository))
 
     # ---------- #
@@ -324,8 +315,7 @@ def make_release(release_name=None, branch='master'):
     if public_release:
         test_release = True
     else:
-        test_release = yes('Do you want to test the executables after they are '
-                           'created?')
+        test_release = yes('Do you want to test the executables after they are created?')
 
     if test_release:
         do('Testing release', run_tests)
@@ -336,29 +326,24 @@ def make_release(release_name=None, branch='master'):
     do('Building doc', build_doc)
 
     do('Creating source archive', call,
-       r'git archive --format zip --output ..\LARRAY-%s-src.zip %s'
-       % (release_name, rev))
+       r'git archive --format zip --output ..\LARRAY-%s-src.zip %s' % (release_name, rev))
 
     # ------- #
     chdir('..')
     # ------- #
 
     if public_release:
-        if no('Is the release looking good? If so, the tag will be created and '
-              'pushed.'):
+        if no('Is the release looking good? If so, the tag will be created and pushed.'):
             exit(1)
 
         # ---------- #
         chdir('build')
         # ---------- #
 
-        do('Tagging release', call,
-           'git tag -a v%(name)s -m "tag release %(name)s"'
-           % {'name': release_name})
+        do('Tagging release', call, 'git tag -a v%(name)s -m "tag release %(name)s"' % {'name': release_name})
         # push the changelog commits to the branch (usually master)
         # and the release tag (which refers to the last commit)
-        do('Pushing to %s' % repository, call,
-           'git push origin %s --follow-tags' % branch)
+        do('Pushing to %s' % repository, call, 'git push origin %s --follow-tags' % branch)
 
         # ------- #
         chdir('..')
@@ -366,8 +351,8 @@ def make_release(release_name=None, branch='master'):
 
     if public_release:
         chdir(repository)
-        do('Pushing to GitHub', call,
-           'git push origin %s --follow-tags' % branch)
+        do('Pushing to GitHub', call, 'git push origin %s --follow-tags' % branch)
+
 
 if __name__ == '__main__':
     from sys import argv

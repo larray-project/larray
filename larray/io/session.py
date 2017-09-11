@@ -22,8 +22,7 @@ def check_pattern(k, pattern):
 
 class FileHandler(object):
     """
-    Abstract class defining the methods for
-    "file handler" subclasses.
+    Abstract class defining the methods for "file handler" subclasses.
 
     Parameters
     ----------
@@ -70,9 +69,7 @@ class FileHandler(object):
 
     def read_arrays(self, keys, *args, **kwargs):
         """
-        Reads file content (HDF, Excel, CSV, ...)
-        and returns a dictionary containing
-        loaded arrays.
+        Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded arrays.
 
         Parameters
         ----------
@@ -114,8 +111,7 @@ class FileHandler(object):
 
     def dump_arrays(self, key_values, *args, **kwargs):
         """
-        Dumps arrays corresponds to keys in file
-        in HDF, Excel, CSV, ... format
+        Dumps arrays corresponds to keys in file in HDF, Excel, CSV, ... format
 
         Parameters
         ----------

@@ -101,8 +101,8 @@ def get_min_width(table, index):
     return max(longest_word(row[index]) for row in table)
 
 
-def table2str(table, missing, fullinfo=False, summarize=True,
-              maxwidth=80, numedges='auto', sep='  ', cont='...', keepcols=0):
+def table2str(table, missing, fullinfo=False, summarize=True, maxwidth=80, numedges='auto', sep='  ', cont='...',
+              keepcols=0):
     """
     table is a list of lists
     :type table: list of list
@@ -158,8 +158,7 @@ def table2str(table, missing, fullinfo=False, summarize=True,
 
     lines = []
     for row in formatted:
-        wrapped_row = [wrap(value, width)
-                       for value, width in zip(row, colwidths)]
+        wrapped_row = [wrap(value, width) for value, width in zip(row, colwidths)]
         maxlines = max(len(value) for value in wrapped_row)
         newlines = [[] for _ in range(maxlines)]
         for value, width in zip(wrapped_row, colwidths):
@@ -173,8 +172,7 @@ def table2str(table, missing, fullinfo=False, summarize=True,
 # copied from itertools recipes
 def unique(iterable):
     """
-    Yields all elements once, preserving order. Remember all elements ever
-    seen.
+    Yields all elements once, preserving order. Remember all elements ever seen.
     >>> list(unique('AAAABBBCCDAABBB'))
     ['A', 'B', 'C', 'D']
     """
@@ -188,8 +186,7 @@ def unique(iterable):
 
 def unique_list(iterable, res=None, seen=None):
     """
-    Returns a list of all unique elements, preserving order. Remember all
-    elements ever seen.
+    Returns a list of all unique elements, preserving order. Remember all elements ever seen.
     >>> unique_list('AAAABBBCCDAABBB')
     ['A', 'B', 'C', 'D']
     """
@@ -208,8 +205,7 @@ def unique_list(iterable, res=None, seen=None):
 
 def duplicates(iterable):
     """
-    List duplicated elements once, preserving order. Remember all elements ever
-    seen.
+    List duplicated elements once, preserving order. Remember all elements ever seen.
     """
     # duplicates('AAAABBBCCDAABBB') --> A B C
     counts = defaultdict(int)
@@ -277,13 +273,11 @@ def array_lookup(array, mapping):
     sorted_keys, sorted_values = tuple(zip(*sorted(mapping.items())))
     sorted_keys = np.array(sorted_keys)
     # prevent an array of booleans from matching a integer axis (sorted_keys)
-    # XXX: we might want to allow signed and unsigned integers to match
-    #      against each other
+    # XXX: we might want to allow signed and unsigned integers to match against each other
     if array.dtype.kind != sorted_keys.dtype.kind:
         raise KeyError('key has not the same dtype than axis')
-    # TODO: it is very important to fail quickly, so guess_axis should try
-    # this in chunks (first test first element of key, if several axes match,
-    #  try [1:11] elements, [12:112], [113:1113], ...
+    # TODO: it is very important to fail quickly, so guess_axis should try this in chunks
+    # (first test first element of key, if several axes match, try [1:11] elements, [12:112], [113:1113], ...
     if not np.all(np.in1d(array, sorted_keys)):
         raise KeyError('all keys not in array')
 
@@ -303,13 +297,11 @@ def array_lookup2(array, sorted_keys, sorted_values):
     # TODO: range axes should be optimized (reuse Pandas 0.18 indexes)
 
     # prevent an array of booleans from matching a integer axis (sorted_keys)
-    # XXX: we might want to allow signed and unsigned integers to match
-    #      against each other
+    # XXX: we might want to allow signed and unsigned integers to match against each other
     if array.dtype.kind != sorted_keys.dtype.kind:
         raise KeyError('key has not the same dtype than axis')
-    # TODO: it is very important to fail quickly, so guess_axis should try
-    # this in chunks (first test first element of key, if several axes match,
-    #  try [1:11] elements, [12:112], [113:1113], ...
+    # TODO: it is very important to fail quickly, so guess_axis should try this in chunks
+    # (first test first element of key, if several axes match, try [1:11] elements, [12:112], [113:1113], ...
     if not np.all(np.in1d(array, sorted_keys)):
         raise KeyError('all keys not in array')
 
@@ -331,9 +323,8 @@ def split_on_condition(seq, condition):
 
     Notes
     -----
-    If the condition can be inlined into a list comprehension, a double list
-    comprehension is faster than this function. So if performance is crucial,
-    you should inline this function with the condition itself inlined.
+    If the condition can be inlined into a list comprehension, a double list comprehension is faster than this function.
+    So if performance is crucial, you should inline this function with the condition itself inlined.
     """
     a, b = [], []
     append_a, append_b = a.append, b.append
@@ -454,11 +445,9 @@ def find_closing_chr(s, start=0):
       ...
     ValueError: malformed expression: found '}' before '{'
     >>> find_closing_chr('(()')
-    ... # doctest: +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
       ...
-    ValueError: malformed expression: reached end of string without finding
-                the expected ')'
+    ValueError: malformed expression: reached end of string without finding the expected ')'
     """
     opening, closing = '({[', ')}]'
     match = {o: c for o, c in zip(opening, closing)}
@@ -475,17 +464,15 @@ def find_closing_chr(s, start=0):
                 last_open.append(c)
             if c in closing_set:
                 if not last_open:
-                    raise ValueError("malformed expression: found '{}' before "
-                                     "'{}'".format(c, match[c]))
+                    raise ValueError("malformed expression: found '{}' before '{}'".format(c, match[c]))
                 expected = match[last_open.pop()]
                 if c != expected:
-                    raise ValueError("malformed expression: expected '{}' but "
-                                     "found '{}'".format(expected, c))
+                    raise ValueError("malformed expression: expected '{}' but found '{}'".format(expected, c))
                 if not last_open:
                     assert c == match[needle]
                     return pos
-    raise ValueError("malformed expression: reached end of string without "
-                     "finding the expected '{}'".format(match[needle]))
+    raise ValueError("malformed expression: reached end of string without finding the expected '{}'"
+                     .format(match[needle]))
 
 
 def float_error_handler_factory(stacklevel):
@@ -504,16 +491,15 @@ def _isintstring(s):
 
 
 def _parse_bound(s, stack_depth=1, parse_int=True):
-    """Parse a string representing a single value, converting int-like
-    strings to integers and evaluating expressions within {}.
+    """Parse a string representing a single value, converting int-like strings to integers and evaluating expressions
+    within {}.
 
     Parameters
     ----------
     s : str
         string to evaluate
     stack_depth : int
-        how deep to go in the stack to get local variables for evaluating
-        {expressions}.
+        how deep to go in the stack to get local variables for evaluating {expressions}.
 
     Returns
     -------
@@ -569,6 +555,7 @@ def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
 def index_by_id(seq, value):
     """
     Returns position of an object in a sequence.
+
     Raises an error if the object is not in the list.
 
     Parameters
@@ -577,8 +564,7 @@ def index_by_id(seq, value):
         Any sequence (list, tuple, str, unicode).
 
     value : object
-        Object for which you want to retrieve its position
-        in the sequence.
+        Object for which you want to retrieve its position in the sequence.
 
     Raises
     ------

@@ -8,14 +8,15 @@ AVAILABLE_EXAMPLE_DATA = {
     'demography' : EXAMPLE_FILES_DIR + 'data.h5'
 }
 
+
 def load_example_data(name):
     """Load arrays used in the tutorial so that all examples in it can be reproduced.
 
     Parameters
     ----------
-    example_data : str
+    name : str
         Example data to load. Available example datasets are:
-        
+
         - demography
 
     Returns
@@ -46,6 +47,5 @@ def load_example_data(name):
     if not isinstance(name, str):
         raise TypeError("Expected string for argument example_data")
     if name not in AVAILABLE_EXAMPLE_DATA.keys():
-        raise ValueError("example_data must be chosen "
-                         "from list {}".format(list(AVAILABLE_EXAMPLE_DATA.keys())))
+        raise ValueError("example_data must be chosen from list {}".format(list(AVAILABLE_EXAMPLE_DATA.keys())))
     return la.Session(AVAILABLE_EXAMPLE_DATA[name])
