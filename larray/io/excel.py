@@ -56,7 +56,7 @@ if xw is not None:
 
     LArrayConverter.register(LArray)
 
-    # TODO : replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
+    # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
             """See open_excel doc for parameters"""
@@ -72,15 +72,13 @@ if xw is not None:
             if isinstance(filepath, str):
                 basename, ext = os.path.splitext(filepath)
                 if ext:
-                    # XXX: we might want to be more precise than .xl* because
-                    #      I am unsure writing .xls (or anything other than
-                    #      .xlsx and .xlsm) would work
+                    # XXX: we might want to be more precise than .xl* because I am unsure writing .xls
+                    #     (or anything other than .xlsx and .xlsm) would work
                     if not ext.startswith('.xl'):
-                        raise ValueError("'%s' is not a supported file "
-                                         "extension" % ext)
+                        raise ValueError("'%s' is not a supported file extension" % ext)
                     if not os.path.isfile(filepath) and not overwrite_file:
-                        raise ValueError("File {} does not exist. Please give the path to an existing file "
-                                         "or set overwrite_file argument to True".format(filepath))
+                        raise ValueError("File {} does not exist. Please give the path to an existing file or set "
+                                         "overwrite_file argument to True".format(filepath))
                     if os.path.isfile(filepath) and overwrite_file:
                         os.remove(filepath)
                     if not os.path.isfile(filepath):
@@ -96,8 +94,8 @@ if xw is not None:
                 raise ValueError("to connect to the active workbook, one must use the 'active' Excel instance "
                                  "(app='active' or app=None)")
 
-            # unless explicitly set, app is set to visible for brand new or
-            # active book. For unsaved_book it is left intact.
+            # unless explicitly set, app is set to visible for brand new or active book.
+            # For unsaved_book it is left intact.
             if visible is None:
                 if filepath is None or filepath == -1:
                     visible = True
@@ -134,12 +132,10 @@ if xw is not None:
             update_links_backup = app.api.AskToUpdateLinks
             display_alerts_backup = app.display_alerts
             if silent:
-                # try to update links silently instead of asking:
-                # "Update", "Don't Update", "Help"
+                # try to update links silently instead of asking: "Update", "Don't Update", "Help"
                 app.api.AskToUpdateLinks = False
 
-                # in case some links cannot be updated, continue instead of
-                # asking: "Continue" or "Edit Links..."
+                # in case some links cannot be updated, continue instead of asking: "Continue" or "Edit Links..."
                 app.display_alerts = False
 
             if filepath is None:
@@ -167,10 +163,8 @@ if xw is not None:
                 length = len(self)
                 return -length <= key < length
             else:
-                # I would like to use:
-                # return key in wb.sheets
-                # but as of xlwings 0.10 wb.sheets.__contains__ does not work
-                # for sheet names (it works with Sheet objects I think)
+                # I would like to use: "return key in wb.sheets" but as of xlwings 0.10 wb.sheets.__contains__ does not
+                # work for sheet names (it works with Sheet objects I think)
                 return key in self.sheet_names()
 
         def _ipython_key_completions_(self):
@@ -301,10 +295,8 @@ if xw is not None:
 
             row, col = _concrete_key(key, self.shape)
             if isinstance(row, slice) or isinstance(col, slice):
-                row1, row2 = (row.start, row.stop) \
-                    if isinstance(row, slice) else (row, row + 1)
-                col1, col2 = (col.start, col.stop) \
-                    if isinstance(col, slice) else (col, col + 1)
+                row1, row2 = (row.start, row.stop) if isinstance(row, slice) else (row, row + 1)
+                col1, col2 = (col.start, col.stop) if isinstance(col, slice) else (col, col + 1)
                 return Range(self, (row1 + 1, col1 + 1), (row2, col2))
             else:
                 return Range(self, (row + 1, col + 1))
@@ -390,10 +382,8 @@ if xw is not None:
             row_offset = self.xw_range.row1 - 1
             col_offset = self.xw_range.col1 - 1
             row, col = _concrete_key(key, self.xw_range.shape)
-            row = slice(row.start + row_offset, row.stop + row_offset) \
-                if isinstance(row, slice) else row + row_offset
-            col = slice(col.start + col_offset, col.stop + col_offset) \
-                if isinstance(col, slice) else col + col_offset
+            row = slice(row.start + row_offset, row.stop + row_offset) if isinstance(row, slice) else row + row_offset
+            col = slice(col.start + col_offset, col.stop + col_offset) if isinstance(col, slice) else col + col_offset
             return row, col
 
         # TODO: we can probably scrap this for xlwings 0.9+. We need to have
@@ -483,39 +473,32 @@ if xw is not None:
         return Workbook(filepath, overwrite_file, visible, silent, app)
 else:
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
-        raise Exception("open_excel() is not available because xlwings "
-                        "is not installed")
+        raise Exception("open_excel() is not available because xlwings is not installed")
 
-open_excel.__doc__ = \
-"""
+open_excel.__doc__ = """
 Open an Excel workbook
 
 Parameters
 ----------
 filepath : None, int or str, optional
-    path to the Excel file. The file must exist if overwrite_file is False. 
-    Use None for a new blank workbook, -1 for the last active
-    workbook. Defaults to None.
+    path to the Excel file. The file must exist if overwrite_file is False. Use None for a new blank workbook,
+    -1 for the last active workbook. Defaults to None.
 overwrite_file : bool, optional
-    whether or not to overwrite an existing file, if any.
-    Defaults to False.
+    whether or not to overwrite an existing file, if any. Defaults to False.
 visible : None or bool, optional
-    whether or not Excel should be visible. Defaults to False for
-    files, True for new/active workbooks and to None ("unchanged")
-    for existing unsaved workbooks.
+    whether or not Excel should be visible. Defaults to False for files, True for new/active workbooks and to None
+    ("unchanged") for existing unsaved workbooks.
 silent : None or bool, optional
-    whether or not to show dialog boxes for updating links or
-    when some links cannot be updated. Defaults to False if
-    visible, True otherwise.
+    whether or not to show dialog boxes for updating links or when some links cannot be updated.
+    Defaults to False if visible, True otherwise.
 app : None, "new", "active", "global" or xlwings.App, optional
-    use "new" for opening a new Excel instance, "active" for the last active instance (including ones
-    opened by the user) and "global" to (re)use the same instance for all workbooks of a program. None is
-    equivalent to "active" if filepath is -1 and "global" otherwise. Defaults to None.
+    use "new" for opening a new Excel instance, "active" for the last active instance (including ones opened by the
+    user) and "global" to (re)use the same instance for all workbooks of a program. None is equivalent to "active" if
+    filepath is -1 and "global" otherwise. Defaults to None.
 
-    The "global" instance is a specific Excel instance for all input from/output to Excel from within a
-    single Python program (and should not interact with instances manually opened by the user or another
-    program).
-    
+    The "global" instance is a specific Excel instance for all input from/output to Excel from within a single Python
+    program (and should not interact with instances manually opened by the user or another program).
+
 Returns
 -------
 Excel workbook.

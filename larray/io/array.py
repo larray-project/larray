@@ -64,8 +64,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     columns = sorted(df.columns) if sort_columns else list(df.columns)
     # the prodlen test is meant to avoid the more expensive array_equal test
     prodlen = np.prod([len(axis_labels) for axis_labels in labels])
-    if prodlen == len(df) and columns == list(df.columns) and \
-            np.array_equal(df.index.values, new_index.values):
+    if prodlen == len(df) and columns == list(df.columns) and np.array_equal(df.index.values, new_index.values):
         return df, labels
     return df.reindex(new_index, columns, **kwargs), labels
 
@@ -314,14 +313,12 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
     nb_index : int, optional
         Number of leading index columns (ex. 4). Defaults to 1.
     index_col : list, optional
-        List of columns for the index (ex. [0, 1, 2, 3]).
-        Default to [0].
+        List of columns for the index (ex. [0, 1, 2, 3]). Default to [0].
     fill_value : scalar or LArray, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
-        Defaults to False.
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
@@ -367,8 +364,8 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
                            fill_value=fill_value)
 
 
-def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan,
-             sort_rows=False, sort_columns=False, **kwargs):
+def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False,
+             **kwargs):
     """
     Reads sas file and returns an LArray with the contents
         nb_index: number of leading index columns (e.g. 4)
@@ -379,7 +376,7 @@ def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.n
         fill_value = na
         warnings.warn("read_sas `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
-        
+
     if nb_index is not None and index_col is not None:
         raise ValueError("cannot specify both nb_index and index_col")
     elif nb_index is not None:
@@ -477,7 +474,7 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
 
     Examples
     --------
-    >>> # if one dimension array and default separator ' ', a - must be added in front of the data line  
+    >>> # if one dimension array and default separator ' ', a - must be added in front of the data line
     >>> from_string("sex  M  F\\n-  0  1")
     sex  M  F
          0  1
