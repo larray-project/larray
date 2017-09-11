@@ -20,7 +20,15 @@ SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
 URL = 'https://github.com/liam2/larray'
-PACKAGE_DATA = {'larray': ['tests/data/*']}
+PACKAGE_DATA = {'larray': ['test/test.xlsx',
+                           'test/test1d.csv',
+                           'test/test1d_liam2.csv',
+                           'test/test2d.csv',
+                           'test/test3d.csv',
+                           'test/test5d.csv',
+                           'test/test5d_eurostat.csv',
+                           'test/test5d_liam2.csv',
+                           'test/data/*']}
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
