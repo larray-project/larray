@@ -44,6 +44,24 @@ Miscellaneous improvements
 * replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
   (closes :issue:`394`)
 
+* allowed to pass a label or a named group as `sheet_name` argument of the method `to_excel` and
+  `key` argument of the method `to_hdf` (closes :issue:`328`):
+
+    >>> arr = ndtest((4, 4, 4))
+    >>> # iterate over labels of a given axis
+    >>> for label in arr.a:
+    ...    arr[label].to_excel('my_file.xlsx', label)
+    ...    arr[label].to_hdf('my_file.h5', label)
+    >>> # create and use a named group
+    >>> even = arr.a['a0::2'] >> 'even'
+    >>> arr[even].to_excel('my_file.xlsx', even)
+    >>> arr[even].to_hdf('my_file.h5', even)
+    >>> # passing a group with no name is not allowed
+    >>> odd = arr.a['a1::2']
+    >>> arr[odd].to_excel('my_file.xlsx', odd)
+    ...
+    ValueError: Passed group for `sheet_name` argument must be of length 1 or have a name
+
 Fixes
 -----
 

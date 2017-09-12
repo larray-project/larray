@@ -5627,7 +5627,7 @@ class LArray(ABCLArray):
         ----------
         filepath : str
             Path where the hdf file has to be written.
-        key : str
+        key : str or Group
             Name of the array within the HDF file.
         *args
         **kargs
@@ -5637,6 +5637,15 @@ class LArray(ABCLArray):
         >>> a = ndtest((2, 3))
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
+        if isinstance(key, Group):
+            value = key.eval()
+            if isinstance(value, (basestring, int)):
+                key = str(value)
+            elif key.name is not None:
+                key = key.name
+            else:
+                raise ValueError("Passed group for `key` argument must be of length 1 or have a name")
+
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -5650,7 +5659,7 @@ class LArray(ABCLArray):
             Path where the excel file has to be written. If None (default), creates a new Excel Workbook in a live Excel
             instance (Windows only). Use -1 to use the currently active Excel Workbook. Use a name without extension
             (.xlsx) to use any unsaved* workbook.
-        sheet_name : str or int or None, optional
+        sheet_name : str or Group or int or None, optional
             Sheet where the data has to be written. Defaults to None, Excel standard name if adding a sheet to an
             existing file, "Sheet1" otherwise. sheet_name can also refer to the position of the sheet
             (e.g. 0 for the first sheet, -1 for the last one).
@@ -5681,6 +5690,15 @@ class LArray(ABCLArray):
         >>> # add to existing sheet starting at position A15
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
+        if isinstance(sheet_name, Group):
+            value = sheet_name.eval()
+            if isinstance(value, (basestring, int)):
+                sheet_name = str(value)
+            elif sheet_name.name is not None:
+                sheet_name = sheet_name.name
+            else:
+                raise ValueError("Passed group for `sheet_name` argument must be of length 1 or have a name")
+
         df = self.to_frame(fold_last_axis_name=True)
         if engine is None:
             engine = 'xlwings' if xw is not None else None

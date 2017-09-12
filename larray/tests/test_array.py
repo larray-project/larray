@@ -2392,6 +2392,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(axis.name, 'axis')
         assert_array_equal(axis.labels, ['10', '20'])
 
+        # passing group as sheet_name
+        a3 = ndtest((4, 3, 4))
+        fpath = abspath('test.h5')
+        # single element group
+        for label in a3.a:
+            a3[label].to_hdf(fpath, label)
+        # unnamed group
+        group = a3.c['c0,c2']
+        with pytest.raises(ValueError, match="Passed group for `key` argument must be of length 1 or "
+                                             "have a name"):
+            a3[group].to_hdf(fpath, group)
+        # named group
+        group = a3.c['c0,c2'] >> 'even'
+        a3[group].to_hdf(fpath, group)
+
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
@@ -2677,6 +2692,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
+        # passing group as sheet_name
+        # single element group
+        for label in a3.a:
+            a3[label].to_excel(fpath, label, engine='xlsxwriter')
+        # unnamed group
+        group = a3.c['c0,c2']
+        with pytest.raises(ValueError, match="Passed group for `sheet_name` argument must be of length 1 or "
+                                             "have a name"):
+            a3[group].to_excel(fpath, group, engine='xlsxwriter')
+        # named group
+        group = a3.c['c0,c2'] >> 'even'
+        a3[group].to_excel(fpath, group, engine='xlsxwriter')
+
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_to_excel_xlwings(self):
         fpath = abspath('test_to_excel_xlwings.xlsx')
@@ -2735,6 +2763,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a3.to_excel(fpath, 'other', engine='xlwings')
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
+
+        # passing group as sheet_name
+        # single element group
+        for label in a3.a:
+            a3[label].to_excel(fpath, label, engine='xlwings')
+        # unnamed group
+        group = a3.c['c0,c2']
+        with pytest.raises(ValueError, match="Passed group for `sheet_name` argument must be of length 1 or "
+                                             "have a name"):
+            a3[group].to_excel(fpath, group, engine='xlwings')
+        # named group
+        group = a3.c['c0,c2'] >> 'even'
+        a3[group].to_excel(fpath, group, engine='xlwings')
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
