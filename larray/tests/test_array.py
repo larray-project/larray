@@ -3416,7 +3416,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0_b1', 'c2', 'd3', 'e2_f1']
 
         # default to all axes with name containing the delimiter _
-        # assert_array_equal(arr.split_axes(), res)
+        assert_array_equal(arr.split_axes(), res)
 
         # using a dict (-> user defined axes names)
         res = arr.split_axes({'a_b': ('A', 'B'), 'e_f': ('E', 'F')})
