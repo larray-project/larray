@@ -176,7 +176,7 @@ Modifying/Selecting
    AxisCollection.replace
    AxisCollection.without
    AxisCollection.combine_axes
-   AxisCollection.split_axis
+   AxisCollection.split_axes
    AxisCollection.align
 
 Testing
@@ -301,7 +301,7 @@ Changing Axes or Labels
    LArray.rename
    LArray.set_labels
    LArray.combine_axes
-   LArray.split_axis
+   LArray.split_axes
 
 .. _la_agg:
 

@@ -6424,13 +6424,15 @@ class LArray(ABCLArray):
         new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
         return transposed.reshape(new_axes)
 
-    def split_axis(self, axis, sep='_', names=None, regex=None):
-        """Split one axis and returns a new array
+    def split_axes(self, axes, sep='_', names=None, regex=None):
+        """Split axes and returns a new array
 
         Parameters
         ----------
-        axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter string.
+        axes : int, str, Axis or any combination of those
+            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass 
+            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)} 
+            dictionary. Defaults to all axes whose name contains the `sep` delimiter.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
             When `regex` is provided, the delimiter is only used on `names` if given as one string or on axis name if
@@ -6455,7 +6457,7 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
                  0      1      2      3      4      5
-        >>> combined.split_axis(X.a_b)
+        >>> combined.split_axes('a_b')
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
@@ -6466,12 +6468,48 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
-        >>> combined.split_axis(X.a_b, regex='(\w{2})(\w{2})')
+        >>> combined.split_axes('a_b', regex='(\w{2})(\w{2})')
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
+         
+        Split several axes at once
+        
+        >>> combined = ndrange('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
+        >>> combined 
+        a_b\\c_d  c0_d0  c0_d1  c1_d0  c1_d1
+          a0_b0      0      1      2      3
+          a0_b1      4      5      6      7
+          a1_b0      8      9     10     11
+          a1_b1     12     13     14     15
+        >>> # equivalent to combined.split_axes() which split all axes 
+        >>> # whose name contains the `sep` delimiter. 
+        >>> combined.split_axes(['a_b', 'c_d'])
+         a   b  c\\d  d0  d1
+        a0  b0   c0   0   1
+        a0  b0   c1   2   3
+        a0  b1   c0   4   5
+        a0  b1   c1   6   7
+        a1  b0   c0   8   9
+        a1  b0   c1  10  11
+        a1  b1   c0  12  13
+        a1  b1   c1  14  15
+        >>> combined.split_axes({'a_b': ('A', 'B'), 'c_d': ('C', 'D')})
+         A   B  C\\D  d0  d1
+        a0  b0   c0   0   1
+        a0  b0   c1   2   3
+        a0  b1   c0   4   5
+        a0  b1   c1   6   7
+        a1  b0   c0   8   9
+        a1  b0   c1  10  11
+        a1  b1   c0  12  13
+        a1  b1   c1  14  15
         """
-        return self.reshape(self.axes.split_axis(axis, sep, names, regex))
+        return self.reshape(self.axes.split_axes(axes, sep, names, regex))
+
+    def split_axis(self, axis=None, sep='_', names=None, regex=None):
+        warnings.warn("split_axis() has been renamed to split_axes()", FutureWarning, stacklevel=2)
+        return self.split_axes(axis, sep, names, regex)
 
 
 def aslarray(a):
