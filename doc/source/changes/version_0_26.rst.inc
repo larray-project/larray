@@ -112,6 +112,36 @@ Miscellaneous improvements
     >>> group_even_year
     year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
 
+* renamed `split_axis` as `split_axes` which now allows to split several axes at once (closes :issue:`366`):
+
+    >>> combined = ndrange('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
+    >>> combined
+    a_b\c_d  c0_d0  c0_d1  c1_d0  c1_d1
+      a0_b0      0      1      2      3
+      a0_b1      4      5      6      7
+      a1_b0      8      9     10     11
+      a1_b1     12     13     14     15
+    >>> combined.split_axes(['a_b', 'c_d'])
+     a   b  c\d  d0  d1
+    a0  b0   c0   0   1
+    a0  b0   c1   2   3
+    a0  b1   c0   4   5
+    a0  b1   c1   6   7
+    a1  b0   c0   8   9
+    a1  b0   c1  10  11
+    a1  b1   c0  12  13
+    a1  b1   c1  14  15
+    >>> combined.split_axes({'a_b': ('A', 'B'), 'c_d': ('C', 'D')})
+     A   B  C\D  d0  d1
+    a0  b0   c0   0   1
+    a0  b0   c1   2   3
+    a0  b1   c0   4   5
+    a0  b1   c1   6   7
+    a1  b0   c0   8   9
+    a1  b0   c1  10  11
+    a1  b1   c0  12  13
+    a1  b1   c1  14  15
+
 * allowed to perform several axes combinations at once with the `combine_axes()` method (closes :issue:`382`):
 
     >>> arr = ndtest((2, 2, 2, 2))

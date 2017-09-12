@@ -3379,12 +3379,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res.size == arr.size
         assert res.shape == (2 * 4, 3 * 3 * 2, 4)
 
-    def test_split_axis(self):
+    def test_split_axes(self):
+        # split one axis
+        # ==============
         arr = ndtest((2, 3, 4, 5))
         comb = arr.combine_axes((X.b, X.d))
         self.assertEqual(comb.axes.names, ['a', 'b_d', 'c'])
         # default delimiter '_'
-        res = comb.split_axis('b_d')
+        res = comb.split_axes('b_d')
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
         self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
@@ -3392,11 +3394,65 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # regex
         names = ['b', 'd']
         regex = '(\w+)_(\w+)'
-        res = comb.split_axis('b_d', names=names, regex=regex)
+        res = comb.split_axes('b_d', names=names, regex=regex)
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
         self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
         assert_array_equal(res.transpose(X.a, X.b, X.c, X.d), arr)
+
+        # split several axes at once
+        # ==========================
+        arr = ndrange('a_b=a0_b0..a1_b2; c=c0..c3; d=d0..d3; e_f=e0_f0..e2_f1')
+
+        # using a list of tuples
+        res = arr.split_axes(['a_b', 'e_f'])
+        assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
+        assert res.size == arr.size
+        assert res.shape == (2, 3, 4, 4, 3, 2)
+        assert list(res.axes.a.labels) == ['a0', 'a1']
+        assert list(res.axes.b.labels) == ['b0', 'b1', 'b2']
+        assert list(res.axes.e.labels) == ['e0', 'e1', 'e2']
+        assert list(res.axes.f.labels) == ['f0', 'f1']
+        assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0_b1', 'c2', 'd3', 'e2_f1']
+
+        # default to all axes with name containing the delimiter _
+        # assert_array_equal(arr.split_axes(), res)
+
+        # using a dict (-> user defined axes names)
+        res = arr.split_axes({'a_b': ('A', 'B'), 'e_f': ('E', 'F')})
+        assert res.axes.names == ['A', 'B', 'c', 'd', 'E', 'F']
+        assert res.size == arr.size
+        assert res.shape == (2, 3, 4, 4, 3, 2)
+
+        # split an axis in more than 2 axes
+        arr = ndrange('a_b_c=a0_b0_c0..a1_b2_c3; d=d0..d3; e_f=e0_f0..e2_f1')
+        res = arr.split_axes(['a_b_c', 'e_f'])
+        assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
+        assert res.size == arr.size
+        assert res.shape == (2, 3, 4, 4, 3, 2)
+        assert list(res.axes.a.labels) == ['a0', 'a1']
+        assert list(res.axes.b.labels) == ['b0', 'b1', 'b2']
+        assert list(res.axes.e.labels) == ['e0', 'e1', 'e2']
+        assert list(res.axes.f.labels) == ['f0', 'f1']
+        assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0_b1_c2', 'd3', 'e2_f1']
+
+        # split an axis in more than 2 axes + passing a dict
+        res = arr.split_axes({'a_b_c': ('A', 'B', 'C'), 'e_f': ('E', 'F')})
+        assert res.axes.names == ['A', 'B', 'C', 'd', 'E', 'F']
+        assert res.size == arr.size
+        assert res.shape == (2, 3, 4, 4, 3, 2)
+
+        # using regex
+        arr = ndrange('ab=a0b0..a1b2; c=c0..c3; d=d0..d3; ef=e0f0..e2f1')
+        res = arr.split_axes({'ab': ('a', 'b'), 'ef': ('e', 'f')}, regex='(\w{2})(\w{2})')
+        assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
+        assert res.size == arr.size
+        assert res.shape == (2, 3, 4, 4, 3, 2)
+        assert list(res.axes.a.labels) == ['a0', 'a1']
+        assert list(res.axes.b.labels) == ['b0', 'b1', 'b2']
+        assert list(res.axes.e.labels) == ['e0', 'e1', 'e2']
+        assert list(res.axes.f.labels) == ['f0', 'f1']
+        assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0b1', 'c2', 'd3', 'e2f1']
 
     def test_stack(self):
         sex = Axis('sex=M,F')

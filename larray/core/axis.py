@@ -2191,13 +2191,15 @@ class AxisCollection(object):
             new_axes.insert(combined_axis_pos, combined_axis)
         return new_axes
 
-    def split_axis(self, axis, sep='_', names=None, regex=None):
-        """Split one axis and returns a new collection
+    def split_axes(self, axes, sep='_', names=None, regex=None):
+        """Split axes and returns a new collection
 
         Parameters
         ----------
-        axis : int, str or Axis
-            axis to split. All its labels *must* contain the given delimiter string.
+        axes : int, str, Axis or any combination of those, optional 
+            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass 
+            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)} 
+            dictionary. Defaults to all axes whose name contains the `sep` delimiter.     
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'. When `regex` is provided, the delimiter is only used on
             `names` if given as one string or on axis name if `names` is None.
@@ -2209,32 +2211,105 @@ class AxisCollection(object):
         Returns
         -------
         AxisCollection
-        """
-        axis = self[axis]
-        axis_index = self.index(axis)
-        if names is None:
-            if sep not in axis.name:
-                raise ValueError('{} not found in axis name ({})'.format(sep, axis.name))
-            else:
-                names = axis.name.split(sep)
-        elif isinstance(names, str):
-            if sep not in names:
-                raise ValueError('{} not found in names ({})'.format(sep, names))
-            else:
-                names = names.split(sep)
-        else:
-            assert all(isinstance(name, str) for name in names)
+        
+        Examples
+        --------
+        >>> col = AxisCollection('a=a0,a1;b=b0..b2')
+        >>> col
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+        >>> combined = col.combine_axes()
+        >>> combined
+        AxisCollection([
+            Axis(['a0_b0', 'a0_b1', 'a0_b2', 'a1_b0', 'a1_b1', 'a1_b2'], 'a_b')
+        ])
+        >>> combined.split_axes('a_b')
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
 
-        if not regex:
-            # gives us an array of lists
-            split_labels = np.char.split(axis.labels, sep)
-        else:
-            rx = re.compile(regex)
-            split_labels = [rx.match(l).groups() for l in axis.labels]
-        # not using np.unique because we want to keep the original order
-        axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
-        split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, names)]
-        return self[:axis_index] + split_axes + self[axis_index + 1:]
+        Split labels using regex
+
+        >>> combined = AxisCollection('a_b = a0b0..a1b2')
+        >>> combined
+        AxisCollection([
+            Axis(['a0b0', 'a0b1', 'a0b2', 'a1b0', 'a1b1', 'a1b2'], 'a_b')
+        ])
+        >>> combined.split_axes('a_b', regex='(\w{2})(\w{2})')
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+         
+        Split several axes at once
+        
+        >>> combined = AxisCollection('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
+        >>> combined 
+        AxisCollection([
+            Axis(['a0_b0', 'a0_b1', 'a1_b0', 'a1_b1'], 'a_b'),
+            Axis(['c0_d0', 'c0_d1', 'c1_d0', 'c1_d1'], 'c_d')
+        ])
+        >>> # equivalent to combined.split_axes() which split all axes 
+        >>> # containing the delimiter defined by the argument `sep` 
+        >>> combined.split_axes(['a_b', 'c_d'])
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1'], 'b'),
+            Axis(['c0', 'c1'], 'c'),
+            Axis(['d0', 'd1'], 'd')
+        ])
+        >>> combined.split_axes({'a_b': ('A', 'B'), 'c_d': ('C', 'D')})
+        AxisCollection([
+            Axis(['a0', 'a1'], 'A'),
+            Axis(['b0', 'b1'], 'B'),
+            Axis(['c0', 'c1'], 'C'),
+            Axis(['d0', 'd1'], 'D')
+        ])
+        """
+        if axes is None:
+            axes = {axis: None for axis in self if sep in axis.name}
+        elif isinstance(axes, (int, basestring, Axis)):
+            axes = {axes: None}
+        elif isinstance(axes, (list, tuple)):
+            if all(isinstance(axis, (int, basestring, Axis)) for axis in axes):
+                axes = {axis: None for axis in axes}
+            else:
+                raise ValueError("Expected tuple or list of int, string or Axis instances")
+        # axes should be a dict at this time
+        assert isinstance(axes, dict)
+
+        new_axes = self[:]
+        for axis, names in axes.items():
+            axis = new_axes[axis]
+            axis_index = new_axes.index(axis)
+            if names is None:
+                if sep not in axis.name:
+                    raise ValueError('{} not found in axis name ({})'.format(sep, axis.name))
+                else:
+                    _names = axis.name.split(sep)
+            elif isinstance(names, str):
+                if sep not in names:
+                    raise ValueError('{} not found in names ({})'.format(sep, names))
+                else:
+                    _names = names.split(sep)
+            else:
+                assert all(isinstance(name, str) for name in names)
+                _names = names
+
+            if not regex:
+                # gives us an array of lists
+                split_labels = np.char.split(axis.labels, sep)
+            else:
+                rx = re.compile(regex)
+                split_labels = [rx.match(l).groups() for l in axis.labels]
+            # not using np.unique because we want to keep the original order
+            axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
+            split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, _names)]
+            new_axes = new_axes[:axis_index] + split_axes + new_axes[axis_index + 1:]
+        return new_axes
 
     def align(self, other, join='outer', axes=None):
         """Align this axis collection with another.
