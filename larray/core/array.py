@@ -6424,7 +6424,7 @@ class LArray(ABCLArray):
         new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
         return transposed.reshape(new_axes)
 
-    def split_axes(self, axes, sep='_', names=None, regex=None):
+    def split_axes(self, axes=None, sep='_', names=None, regex=None):
         """Split axes and returns a new array
 
         Parameters
@@ -6457,7 +6457,7 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
                  0      1      2      3      4      5
-        >>> combined.split_axes('a_b')
+        >>> combined.split_axes()
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5

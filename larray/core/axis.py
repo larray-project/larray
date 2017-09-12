@@ -2191,7 +2191,7 @@ class AxisCollection(object):
             new_axes.insert(combined_axis_pos, combined_axis)
         return new_axes
 
-    def split_axes(self, axes, sep='_', names=None, regex=None):
+    def split_axes(self, axes=None, sep='_', names=None, regex=None):
         """Split axes and returns a new collection
 
         Parameters
@@ -2225,7 +2225,7 @@ class AxisCollection(object):
         AxisCollection([
             Axis(['a0_b0', 'a0_b1', 'a0_b2', 'a1_b0', 'a1_b1', 'a1_b2'], 'a_b')
         ])
-        >>> combined.split_axes('a_b')
+        >>> combined.split_axes()
         AxisCollection([
             Axis(['a0', 'a1'], 'a'),
             Axis(['b0', 'b1', 'b2'], 'b')
