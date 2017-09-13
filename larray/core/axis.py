@@ -2079,8 +2079,10 @@ class AxisCollection(object):
 
         Parameters
         ----------
-        axes : tuple, list or AxisCollection of axes, optional
-            axes to combine. Defaults to all axes.
+        axes : tuple, list, AxisCollection of axes or list of combination of those or dict, optional
+            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes 
+            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es), 
+            use a {(axes, to, combine): 'new_axis_name'} dictionary. Defaults to all axes.
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
@@ -2094,39 +2096,99 @@ class AxisCollection(object):
         -------
         AxisCollection
             New AxisCollection with combined axes.
+            
+        Examples
+        --------
+        >>> axes = AxisCollection('a=a0,a1;b=b0..b2')
+        >>> axes
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1', 'b2'], 'b')
+        ])
+        >>> axes.combine_axes()
+        AxisCollection([
+            Axis(['a0_b0', 'a0_b1', 'a0_b2', 'a1_b0', 'a1_b1', 'a1_b2'], 'a_b')
+        ])
+        >>> axes.combine_axes(sep='/')
+        AxisCollection([
+            Axis(['a0/b0', 'a0/b1', 'a0/b2', 'a1/b0', 'a1/b1', 'a1/b2'], 'a/b')
+        ])
+        >>> axes += AxisCollection('c=c0..c2;d=d0,d1')
+        >>> axes.combine_axes(('a', 'c'))
+        AxisCollection([
+            Axis(['a0_c0', 'a0_c1', 'a0_c2', 'a1_c0', 'a1_c1', 'a1_c2'], 'a_c'),
+            Axis(['b0', 'b1', 'b2'], 'b'),
+            Axis(['d0', 'd1'], 'd')
+        ])
+        >>> axes.combine_axes({('a', 'c'): 'ac'})
+        AxisCollection([
+            Axis(['a0_c0', 'a0_c1', 'a0_c2', 'a1_c0', 'a1_c1', 'a1_c2'], 'ac'),
+            Axis(['b0', 'b1', 'b2'], 'b'),
+            Axis(['d0', 'd1'], 'd')
+        ])
+        
+        # make several combinations at once
+        
+        >>> axes.combine_axes([('a', 'c'), ('b', 'd')])
+        AxisCollection([
+            Axis(['a0_c0', 'a0_c1', 'a0_c2', 'a1_c0', 'a1_c1', 'a1_c2'], 'a_c'),
+            Axis(['b0_d0', 'b0_d1', 'b1_d0', 'b1_d1', 'b2_d0', 'b2_d1'], 'b_d')
+        ])
+        >>> axes.combine_axes({('a', 'c'): 'ac', ('b', 'd'): 'bd'})
+        AxisCollection([
+            Axis(['a0_c0', 'a0_c1', 'a0_c2', 'a1_c0', 'a1_c1', 'a1_c2'], 'ac'),
+            Axis(['b0_d0', 'b0_d1', 'b1_d0', 'b1_d1', 'b2_d0', 'b2_d1'], 'bd')
+        ])
         """
-        axes = self if axes is None else self[axes]
-        axes_indices = [self.index(axis) for axis in axes]
-        diff = np.diff(axes_indices)
-        # combined axes in front
-        if front_if_spread and np.any(diff > 1):
-            combined_axis_pos = 0
-        else:
-            combined_axis_pos = min(axes_indices)
-
-        # all anonymous axes => anonymous combined axis
-        if all(axis.name is None for axis in axes):
-            combined_name = None
-        else:
-            combined_name = sep.join(str(id_) for id_ in axes.ids)
-
-        if wildcard:
-            combined_axis = Axis(axes.size, combined_name)
-        else:
-            # TODO: the combined keys should be objects which display as: (axis1_label, axis2_label, ...) but
-            # which should also store the axes names)
-            # Q: Should it be the same object as the NDLGroup?/NDKey?
-            # A: yes. On the Pandas backend, we could/should have separate axes. On the numpy backend we cannot.
-            if len(axes) == 1:
-                # Q: if axis is a wildcard axis, should the result be a wildcard axis (and axes_labels discarded?)
-                combined_labels = axes[0].labels
+        if axes is None:
+            axes = {tuple(self): None}
+        elif isinstance(axes, AxisCollection):
+            axes = {tuple(self[axes]): None}
+        elif isinstance(axes, (list, tuple)):
+            # checks for nested tuple/list
+            if all(isinstance(axis, (list, tuple, AxisCollection)) for axis in axes):
+                axes = {tuple(self[axes_to_combine]): None for axes_to_combine in axes}
             else:
-                combined_labels = [sep.join(str(l) for l in p)
-                                   for p in product(*axes.labels)]
+                axes = {tuple(self[axes]): None}
+        # axes should be a dict at this time
+        assert isinstance(axes, dict)
 
-            combined_axis = Axis(combined_labels, combined_name)
-        new_axes = self - axes
-        new_axes.insert(combined_axis_pos, combined_axis)
+        new_axes = self[:]
+        for _axes, name in axes.items():
+            _axes = new_axes[_axes]
+            axes_indices = [new_axes.index(axis) for axis in _axes]
+            diff = np.diff(axes_indices)
+            # combined axes in front
+            if front_if_spread and np.any(diff > 1):
+                combined_axis_pos = 0
+            else:
+                combined_axis_pos = min(axes_indices)
+
+            if name is not None:
+                combined_name = name
+            # all anonymous axes => anonymous combined axis
+            elif all(axis.name is None for axis in _axes):
+                combined_name = None
+            else:
+                combined_name = sep.join(str(id_) for id_ in _axes.ids)
+
+            if wildcard:
+                combined_axis = Axis(_axes.size, combined_name)
+            else:
+                # TODO: the combined keys should be objects which display as: (axis1_label, axis2_label, ...) but
+                # which should also store the axes names)
+                # Q: Should it be the same object as the NDLGroup?/NDKey?
+                # A: yes. On the Pandas backend, we could/should have separate axes. On the numpy backend we cannot.
+                if len(_axes) == 1:
+                    # Q: if axis is a wildcard axis, should the result be a wildcard axis (and axes_labels discarded?)
+                    combined_labels = _axes[0].labels
+                else:
+                    combined_labels = [sep.join(str(l) for l in p)
+                                       for p in product(*_axes.labels)]
+
+                combined_axis = Axis(combined_labels, combined_name)
+            new_axes = new_axes - _axes
+            new_axes.insert(combined_axis_pos, combined_axis)
         return new_axes
 
     def split_axis(self, axis, sep='_', names=None, regex=None):

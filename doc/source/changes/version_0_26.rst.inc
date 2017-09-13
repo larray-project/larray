@@ -112,6 +112,33 @@ Miscellaneous improvements
     >>> group_even_year
     year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
 
+* allowed to perform several axes combinations at once with the `combine_axes()` method (closes :issue:`382`):
+
+    >>> arr = ndtest((2, 2, 2, 2))
+    >>> arr
+     a   b  c\d  d0  d1
+    a0  b0   c0   0   1
+    a0  b0   c1   2   3
+    a0  b1   c0   4   5
+    a0  b1   c1   6   7
+    a1  b0   c0   8   9
+    a1  b0   c1  10  11
+    a1  b1   c0  12  13
+    a1  b1   c1  14  15
+    >>> arr.combine_axes([('a', 'c'), ('b', 'd')])
+    a_c\b_d  b0_d0  b0_d1  b1_d0  b1_d1
+      a0_c0      0      1      4      5
+      a0_c1      2      3      6      7
+      a1_c0      8      9     12     13
+      a1_c1     10     11     14     15
+    >>> # set output axes names by passing a dictionary
+    >>> arr.combine_axes({('a', 'c'): 'ac', ('b', 'd'): 'bd'})
+    ac\bd  b0_d0  b0_d1  b1_d0  b1_d1
+    a0_c0      0      1      4      5
+    a0_c1      2      3      6      7
+    a1_c0      8      9     12     13
+    a1_c1     10     11     14     15
+
 * allowed to use keyword arguments in `set_labels` (closes :issue:`383`):
 
     >>> a = ndrange('nat=BE,FO;sex=M,F')

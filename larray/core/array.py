@@ -6323,8 +6323,10 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axes : tuple, list or AxisCollection of axes, optional
-            axes to combine. Defaults to all axes.
+        axes : tuple, list, AxisCollection of axes or list of combination of those or dict, optional
+            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes 
+            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es), 
+            use a {(axes, to, combine): 'new_axis_name'} dictionary. Defaults to all axes.
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
@@ -6349,31 +6351,74 @@ class LArray(ABCLArray):
         >>> arr.combine_axes(sep='/')
         a/b  a0/b0  a0/b1  a0/b2  a1/b0  a1/b1  a1/b2
                  0      1      2      3      4      5
-        >>> arr = ndtest((2, 3, 4))
+        >>> arr = ndtest((2, 2, 2, 2))
         >>> arr
-         a  b\\c  c0  c1  c2  c3
-        a0   b0   0   1   2   3
-        a0   b1   4   5   6   7
-        a0   b2   8   9  10  11
-        a1   b0  12  13  14  15
-        a1   b1  16  17  18  19
-        a1   b2  20  21  22  23
-        >>> arr.combine_axes((X.a, X.c))
-        a_c\\b  b0  b1  b2
-        a0_c0   0   4   8
-        a0_c1   1   5   9
-        a0_c2   2   6  10
-        a0_c3   3   7  11
-        a1_c0  12  16  20
-        a1_c1  13  17  21
-        a1_c2  14  18  22
-        a1_c3  15  19  23
+         a   b  c\\d  d0  d1
+        a0  b0   c0   0   1
+        a0  b0   c1   2   3
+        a0  b1   c0   4   5
+        a0  b1   c1   6   7
+        a1  b0   c0   8   9
+        a1  b0   c1  10  11
+        a1  b1   c0  12  13
+        a1  b1   c1  14  15
+        >>> arr.combine_axes(('a', 'c'))
+          a_c  b\\d  d0  d1
+        a0_c0   b0   0   1
+        a0_c0   b1   4   5
+        a0_c1   b0   2   3
+        a0_c1   b1   6   7
+        a1_c0   b0   8   9
+        a1_c0   b1  12  13
+        a1_c1   b0  10  11
+        a1_c1   b1  14  15
+        >>> arr.combine_axes({('a', 'c'): 'ac'})
+           ac  b\\d  d0  d1
+        a0_c0   b0   0   1
+        a0_c0   b1   4   5
+        a0_c1   b0   2   3
+        a0_c1   b1   6   7
+        a1_c0   b0   8   9
+        a1_c0   b1  12  13
+        a1_c1   b0  10  11
+        a1_c1   b1  14  15
+        
+        # make several combinations at once
+        
+        >>> arr.combine_axes([('a', 'c'), ('b', 'd')])
+        a_c\\b_d  b0_d0  b0_d1  b1_d0  b1_d1
+          a0_c0      0      1      4      5
+          a0_c1      2      3      6      7
+          a1_c0      8      9     12     13
+          a1_c1     10     11     14     15
+        >>> arr.combine_axes({('a', 'c'): 'ac', ('b', 'd'): 'bd'})
+        ac\\bd  b0_d0  b0_d1  b1_d0  b1_d1
+        a0_c0      0      1      4      5
+        a0_c1      2      3      6      7
+        a1_c0      8      9     12     13
+        a1_c1     10     11     14     15
         """
-        axes = self.axes if axes is None else self.axes[axes]
-        # transpose all axes next to each other, using position of first axis
-        axes_indices = [self.axes.index(axis) for axis in axes]
-        min_axis_index = min(axes_indices)
-        transposed_axes = self.axes[:min_axis_index] + axes + self.axes
+        if axes is None:
+            axes = {tuple(self.axes): None}
+        elif isinstance(axes, AxisCollection):
+            axes = {tuple(axes): None}
+        elif isinstance(axes, (list, tuple)):
+            # checks for nested tuple/list
+            if all(isinstance(axis, (list, tuple, AxisCollection)) for axis in axes):
+                axes = {tuple(axes_to_combine): None for axes_to_combine in axes}
+            else:
+                axes = {tuple(axes): None}
+        # axes should be a dict at this time
+        assert isinstance(axes, dict)
+
+        transposed_axes = self.axes[:]
+        for axes_to_combine, name in axes.items():
+            # transpose all axes next to each other, using position of first axis
+            axes_to_combine = self.axes[axes_to_combine]
+            axes_indices = [transposed_axes.index(axis) for axis in axes_to_combine]
+            min_axis_index = min(axes_indices)
+            transposed_axes = transposed_axes - axes_to_combine
+            transposed_axes = transposed_axes[:min_axis_index] + axes_to_combine + transposed_axes[min_axis_index:]
         transposed = self.transpose(transposed_axes)
 
         new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
