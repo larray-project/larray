@@ -2400,9 +2400,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
             a3[label].to_hdf(fpath, label)
         # unnamed group
         group = a3.c['c0,c2']
-        with pytest.raises(ValueError, match="Passed group for `key` argument must be of length 1 or "
-                                             "have a name"):
-            a3[group].to_hdf(fpath, group)
+        a3[group].to_hdf(fpath, group)
+        # unnamed group + slice
+        group = a3.c['c0::2']
+        a3[group].to_hdf(fpath, group)
         # named group
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_hdf(fpath, group)
@@ -2698,8 +2699,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
             a3[label].to_excel(fpath, label, engine='xlsxwriter')
         # unnamed group
         group = a3.c['c0,c2']
-        with pytest.raises(ValueError, match="Passed group for `sheet_name` argument must be of length 1 or "
-                                             "have a name"):
+        a3[group].to_excel(fpath, group, engine='xlsxwriter')
+        # unnamed group + slice
+        with pytest.raises(Exception):
+            group = a3.c['c0::2']
             a3[group].to_excel(fpath, group, engine='xlsxwriter')
         # named group
         group = a3.c['c0,c2'] >> 'even'
@@ -2770,8 +2773,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
             a3[label].to_excel(fpath, label, engine='xlwings')
         # unnamed group
         group = a3.c['c0,c2']
-        with pytest.raises(ValueError, match="Passed group for `sheet_name` argument must be of length 1 or "
-                                             "have a name"):
+        a3[group].to_excel(fpath, group, engine='xlwings')
+        # unnamed group + slice
+        import pywintypes
+        with pytest.raises(pywintypes.com_error):
+            group = a3.c['c0::2']
             a3[group].to_excel(fpath, group, engine='xlwings')
         # named group
         group = a3.c['c0,c2'] >> 'even'

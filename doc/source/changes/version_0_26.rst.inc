@@ -50,17 +50,17 @@ Miscellaneous improvements
     >>> arr = ndtest((4, 4, 4))
     >>> # iterate over labels of a given axis
     >>> for label in arr.a:
-    ...    arr[label].to_excel('my_file.xlsx', label)
-    ...    arr[label].to_hdf('my_file.h5', label)
+    ...     arr[label].to_excel('my_file.xlsx', label)
+    ...     arr[label].to_hdf('my_file.h5', label)
     >>> # create and use a named group
     >>> even = arr.a['a0::2'] >> 'even'
     >>> arr[even].to_excel('my_file.xlsx', even)
     >>> arr[even].to_hdf('my_file.h5', even)
-    >>> # passing a group with no name is not allowed
+    >>> # passing a group with no name should be avoided
     >>> odd = arr.a['a1::2']
     >>> arr[odd].to_excel('my_file.xlsx', odd)
     ...
-    ValueError: Passed group for `sheet_name` argument must be of length 1 or have a name
+    pywintypes.com_error: ... 'Microsoft Excel', 'You typed an invalid name for a sheet or chart. ...'
 
 Fixes
 -----

@@ -98,7 +98,7 @@ except ImportError:
 
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
+from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys, _range_to_slice
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list)
@@ -5638,14 +5638,7 @@ class LArray(ABCLArray):
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
         if isinstance(key, Group):
-            value = key.eval()
-            if isinstance(value, (basestring, int)):
-                key = str(value)
-            elif key.name is not None:
-                key = key.name
-            else:
-                raise ValueError("Passed group for `key` argument must be of length 1 or have a name")
-
+            key = str(_to_tick(key))
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -5691,13 +5684,7 @@ class LArray(ABCLArray):
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
         if isinstance(sheet_name, Group):
-            value = sheet_name.eval()
-            if isinstance(value, (basestring, int)):
-                sheet_name = str(value)
-            elif sheet_name.name is not None:
-                sheet_name = sheet_name.name
-            else:
-                raise ValueError("Passed group for `sheet_name` argument must be of length 1 or have a name")
+            sheet_name = str(_to_tick(sheet_name))
 
         df = self.to_frame(fold_last_axis_name=True)
         if engine is None:
