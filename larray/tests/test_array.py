@@ -3323,6 +3323,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         #large.hist()
 
     def test_combine_axes(self):
+        # combine N axes into 1
+        # =====================
         arr = ndtest((2, 3, 4, 5))
         res = arr.combine_axes((X.a, X.b))
         self.assertEqual(res.axes.names, ['a_b', 'c', 'd'])
@@ -3344,6 +3346,38 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res.shape, (2, 3 * 5, 4))
         assert_array_equal(res.axes.b_d.labels[:2], ['b0_d0', 'b0_d1'])
         assert_array_equal(res['b1_d0'], arr['b1', 'd0'])
+
+        # combine M axes into N
+        # =====================
+        arr = ndtest((2, 3, 4, 4, 3, 2))
+
+        # using a list of tuples
+        res = arr.combine_axes([('a', 'c'), ('b', 'f'), ('d', 'e')])
+        assert res.axes.names == ['a_c', 'b_f', 'd_e']
+        assert res.size == arr.size
+        assert res.shape == (2 * 4, 3 * 2, 4 * 3)
+        assert list(res.axes.a_c.labels[:2]) == ['a0_c0', 'a0_c1']
+        assert list(res.axes.b_f.labels[:2]) == ['b0_f0', 'b0_f1']
+        assert list(res.axes.d_e.labels[:2]) == ['d0_e0', 'd0_e1']
+        assert res['a0_c2', 'b1_f1', 'd3_e2'] == arr['a0', 'b1', 'c2', 'd3', 'e2', 'f1']
+
+        res = arr.combine_axes([('a', 'c'), ('b', 'e', 'f')])
+        assert res.axes.names == ['a_c', 'b_e_f', 'd']
+        assert res.size == arr.size
+        assert res.shape == (2 * 4, 3 * 3 * 2, 4)
+        assert list(res.axes.b_e_f.labels[:4]) == ['b0_e0_f0', 'b0_e0_f1', 'b0_e1_f0', 'b0_e1_f1']
+        assert_array_equal(res['a0_c2', 'b1_e2_f1'], arr['a0', 'b1', 'c2', 'e2', 'f1'])
+
+        # using a dict (-> user defined axes names)
+        res = arr.combine_axes({('a', 'c'): 'AC', ('b', 'f'): 'BF', ('d', 'e'): 'DE'})
+        assert res.axes.names == ['AC', 'BF', 'DE']
+        assert res.size == arr.size
+        assert res.shape == (2 * 4, 3 * 2, 4 * 3)
+
+        res = arr.combine_axes({('a', 'c'): 'AC', ('b', 'e', 'f'): 'BEF'})
+        assert res.axes.names == ['AC', 'BEF', 'd']
+        assert res.size == arr.size
+        assert res.shape == (2 * 4, 3 * 3 * 2, 4)
 
     def test_split_axis(self):
         arr = ndtest((2, 3, 4, 5))
