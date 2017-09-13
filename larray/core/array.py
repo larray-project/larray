@@ -73,6 +73,7 @@ Matrix class
 import csv
 from collections import Iterable, Sequence
 from itertools import product, chain, groupby, islice
+import re
 import os
 import sys
 import warnings
@@ -5638,7 +5639,7 @@ class LArray(ABCLArray):
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
         if isinstance(key, Group):
-            key = str(_to_tick(key))
+            key = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(key)))
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -5684,7 +5685,7 @@ class LArray(ABCLArray):
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
         if isinstance(sheet_name, Group):
-            sheet_name = str(_to_tick(sheet_name))
+            sheet_name = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(sheet_name)))
 
         df = self.to_frame(fold_last_axis_name=True)
         if engine is None:

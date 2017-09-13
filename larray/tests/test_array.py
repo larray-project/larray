@@ -2395,6 +2395,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # passing group as sheet_name
         a3 = ndtest((4, 3, 4))
         fpath = abspath('test.h5')
+        os.remove(fpath)
         # single element group
         for label in a3.a:
             a3[label].to_hdf(fpath, label)
@@ -2407,6 +2408,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # named group
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_hdf(fpath, group)
+        # group with name containing special characters (replaced by _)
+        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
+        a3[group].to_hdf(fpath, group)
+
+        from  larray.core.session import Session
+        s = Session(fpath)
+        assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even', '_name_with_special_characters_'])
 
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
@@ -2694,6 +2702,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, a3)
 
         # passing group as sheet_name
+        a3 = ndtest((4, 3, 4))
+        os.remove(fpath)
         # single element group
         for label in a3.a:
             a3[label].to_excel(fpath, label, engine='xlsxwriter')
@@ -2701,11 +2711,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2']
         a3[group].to_excel(fpath, group, engine='xlsxwriter')
         # unnamed group + slice
-        with pytest.raises(Exception):
-            group = a3.c['c0::2']
-            a3[group].to_excel(fpath, group, engine='xlsxwriter')
+        group = a3.c['c0::2']
+        a3[group].to_excel(fpath, group, engine='xlsxwriter')
         # named group
         group = a3.c['c0,c2'] >> 'even'
+        a3[group].to_excel(fpath, group, engine='xlsxwriter')
+        # group with name containing special characters (replaced by _)
+        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
         a3[group].to_excel(fpath, group, engine='xlsxwriter')
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
@@ -2768,6 +2780,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, a3)
 
         # passing group as sheet_name
+        a3 = ndtest((4, 3, 4))
+        os.remove(fpath)
         # single element group
         for label in a3.a:
             a3[label].to_excel(fpath, label, engine='xlwings')
@@ -2775,13 +2789,18 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2']
         a3[group].to_excel(fpath, group, engine='xlwings')
         # unnamed group + slice
-        import pywintypes
-        with pytest.raises(pywintypes.com_error):
-            group = a3.c['c0::2']
-            a3[group].to_excel(fpath, group, engine='xlwings')
+        group = a3.c['c0::2']
+        a3[group].to_excel(fpath, group, engine='xlwings')
         # named group
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_excel(fpath, group, engine='xlwings')
+        # group with name containing special characters (replaced by _)
+        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
+        a3[group].to_excel(fpath, group, engine='xlwings')
+        # checks sheet names
+        sheet_names = sorted(open_excel(fpath).sheet_names())
+        assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
+                                      '_name_with_special_characters_'])
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
