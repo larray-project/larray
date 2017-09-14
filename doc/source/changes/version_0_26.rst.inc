@@ -52,7 +52,7 @@ Miscellaneous improvements
     >>> # iterate over labels of a given axis
     >>> with open_excel('my_file.xlsx') as wb:
     >>>     for label in arr.a:
-    ...         wb[label] = arr[label]
+    ...         wb[label] = arr[label].dump()
     ...     wb.save()
     >>> for label in arr.a:
     ...     arr[label].to_hdf('my_file.h5', label)
