@@ -2409,12 +2409,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_hdf(fpath, group)
         # group with name containing special characters (replaced by _)
-        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
+        group = a3.c['c0,c2'] >> ':name?with*special/\[characters]'
         a3[group].to_hdf(fpath, group)
 
         from  larray.core.session import Session
         s = Session(fpath)
-        assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special[characters]'])
+        assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
@@ -2717,7 +2717,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_excel(fpath, group, engine='xlsxwriter')
         # group with name containing special characters (replaced by _)
-        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
+        group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
         a3[group].to_excel(fpath, group, engine='xlsxwriter')
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
@@ -2795,12 +2795,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2'] >> 'even'
         a3[group].to_excel(fpath, group, engine='xlwings')
         # group with name containing special characters (replaced by _)
-        group = a3.c['c0,c2'] >> ':name?with*special[characters]'
+        group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
         a3[group].to_excel(fpath, group, engine='xlwings')
         # checks sheet names
         sheet_names = sorted(open_excel(fpath).sheet_names())
         assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
-                                      '_name_with_special_characters_'])
+                                      '_name_with_special___char_'])
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):

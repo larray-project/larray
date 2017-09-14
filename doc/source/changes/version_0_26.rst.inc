@@ -63,10 +63,12 @@ Miscellaneous improvements
     >>> arr[even].to_hdf('my_file.h5', even)
 
     >>> # special characters : \ / ? * [ or ] in labels or groups are replaced by an _ when exporting to excel
-    >>> g = arr.a['a1,a3,a4'] >> '?name:with*special[characters]'
+    >>> # sheet names cannot exceed 31 characters
+    >>> g = arr.a['a1,a3,a4'] >> '?name:with*special\/[char]'
     >>> arr[g].to_excel('my_file.xlsx', g)
     >>> print(open_excel('my_file.xlsx').sheet_names())
-    ['_name_with_special_characters_']
+    ['_name_with_special___char_']
+    >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
 
 Fixes
 -----

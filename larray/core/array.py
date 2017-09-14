@@ -100,7 +100,7 @@ except ImportError:
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys,
-                               _range_to_slice, _translate_sheet_name)
+                               _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list)
@@ -5639,7 +5639,7 @@ class LArray(ABCLArray):
         >>> a = ndtest((2, 3))
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
-        key = str(_to_tick(key))
+        key = _translate_key_hdf(key)
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,

@@ -1,6 +1,5 @@
 import os
 import atexit
-import re
 
 import numpy as np
 try:
