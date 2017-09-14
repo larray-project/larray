@@ -628,6 +628,28 @@ def _to_keys(value, stack_depth=1):
         return _to_key(value, stack_depth + 1)
 
 
+# forbidden characters in sheet names
+_sheet_name_pattern = re.compile('[\\\/?*\[\]:]')
+
+
+def _translate_sheet_name(sheet_name):
+    if isinstance(sheet_name, Group):
+        sheet_name = _sheet_name_pattern.sub('_', str(_to_tick(sheet_name)))
+    if isinstance(sheet_name, basestring) and len(sheet_name) > 30:
+        raise ValueError("Sheet names cannot exceed 31 characters")
+    return sheet_name
+
+
+# forbidden characters for dataset names in HDF files
+_key_hdf_pattern = re.compile('[\\\/]')
+
+
+def _translate_key_hdf(key):
+    if isinstance(key, Group):
+        key = _key_hdf_pattern.sub('_', str(_to_tick(key)))
+    return key
+
+
 def union(*args):
     # TODO: add support for LGroup and lists
     """

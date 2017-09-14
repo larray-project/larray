@@ -85,6 +85,12 @@ class TestWorkbook(object):
                     wb2['sheet1'] = wb['sheet1']
                 assert e_info.value.args[0] == "cannot copy a sheet from one instance of Excel to another"
 
+            # group key
+            arr = ndtest((3, 3))
+            for label in arr.b:
+                wb[label] = arr[label].dump()
+                assert larray_equal(wb[label].load(), arr[label])
+
     def test_delitem(self):
         with open_excel(visible=False) as wb:
             wb['sheet1'] = 'sheet1 content'

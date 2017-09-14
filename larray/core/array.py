@@ -73,6 +73,7 @@ Matrix class
 import csv
 from collections import Iterable, Sequence
 from itertools import product, chain, groupby, islice
+import re
 import os
 import sys
 import warnings
@@ -98,7 +99,8 @@ except ImportError:
 
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys, _range_to_slice
+from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys,
+                               _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list)
@@ -5627,7 +5629,7 @@ class LArray(ABCLArray):
         ----------
         filepath : str
             Path where the hdf file has to be written.
-        key : str
+        key : str or Group
             Name of the array within the HDF file.
         *args
         **kargs
@@ -5637,6 +5639,7 @@ class LArray(ABCLArray):
         >>> a = ndtest((2, 3))
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
+        key = _translate_key_hdf(key)
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -5650,7 +5653,7 @@ class LArray(ABCLArray):
             Path where the excel file has to be written. If None (default), creates a new Excel Workbook in a live Excel
             instance (Windows only). Use -1 to use the currently active Excel Workbook. Use a name without extension
             (.xlsx) to use any unsaved* workbook.
-        sheet_name : str or int or None, optional
+        sheet_name : str or Group or int or None, optional
             Sheet where the data has to be written. Defaults to None, Excel standard name if adding a sheet to an
             existing file, "Sheet1" otherwise. sheet_name can also refer to the position of the sheet
             (e.g. 0 for the first sheet, -1 for the last one).
@@ -5681,6 +5684,8 @@ class LArray(ABCLArray):
         >>> # add to existing sheet starting at position A15
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
+        sheet_name = _translate_sheet_name(sheet_name)
+
         df = self.to_frame(fold_last_axis_name=True)
         if engine is None:
             engine = 'xlwings' if xw is not None else None

@@ -44,6 +44,32 @@ Miscellaneous improvements
 * replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
   (closes :issue:`394`)
 
+* allowed to pass a label or group as `sheet_name` argument of the method `to_excel` or to a Workbook (`open_excel`).
+  Same for `key` argument of the method `to_hdf`. Closes :issue:`328`.
+
+    >>> arr = ndtest((4, 4, 4))
+
+    >>> # iterate over labels of a given axis
+    >>> with open_excel('my_file.xlsx') as wb:
+    >>>     for label in arr.a:
+    ...         wb[label] = arr[label].dump()
+    ...     wb.save()
+    >>> for label in arr.a:
+    ...     arr[label].to_hdf('my_file.h5', label)
+
+    >>> # create and use a group
+    >>> even = arr.a['a0,a2'] >> 'even'
+    >>> arr[even].to_excel('my_file.xlsx', even)
+    >>> arr[even].to_hdf('my_file.h5', even)
+
+    >>> # special characters : \ / ? * [ or ] in labels or groups are replaced by an _ when exporting to excel
+    >>> # sheet names cannot exceed 31 characters
+    >>> g = arr.a['a1,a3,a4'] >> '?name:with*special\/[char]'
+    >>> arr[g].to_excel('my_file.xlsx', g)
+    >>> print(open_excel('my_file.xlsx').sheet_names())
+    ['_name_with_special___char_']
+    >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
+
 Fixes
 -----
 

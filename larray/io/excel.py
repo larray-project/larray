@@ -7,6 +7,7 @@ try:
 except ImportError:
     xw = None
 
+from larray.core.group import _translate_sheet_name
 from larray.core.axis import Axis
 from larray.core.array import LArray
 from larray.io.array import df_aslarray, from_lists
@@ -18,7 +19,6 @@ if xw is not None:
     from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 
     global_app = None
-
 
     def is_app_alive(app):
         try:
@@ -171,12 +171,14 @@ if xw is not None:
             return list(self.sheet_names())
 
         def __getitem__(self, key):
+            key = _translate_sheet_name(key)
             if key in self:
                 return Sheet(self, key)
             else:
                 raise KeyError('Workbook has no sheet named {}'.format(key))
 
         def __setitem__(self, key, value):
+            key = _translate_sheet_name(key)
             if self.new_workbook:
                 self.xw_wkb.sheets[0].name = key
                 self.new_workbook = False
