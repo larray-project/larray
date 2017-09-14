@@ -99,7 +99,8 @@ except ImportError:
 
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys, _range_to_slice
+from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys,
+                               _range_to_slice, _translate_sheet_name)
 from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list)
@@ -5638,8 +5639,7 @@ class LArray(ABCLArray):
         >>> a = ndtest((2, 3))
         >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
         """
-        if isinstance(key, Group):
-            key = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(key)))
+        key = str(_to_tick(key))
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -5684,8 +5684,7 @@ class LArray(ABCLArray):
         >>> # add to existing sheet starting at position A15
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
-        if isinstance(sheet_name, Group):
-            sheet_name = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(sheet_name)))
+        sheet_name = _translate_sheet_name(sheet_name)
 
         df = self.to_frame(fold_last_axis_name=True)
         if engine is None:

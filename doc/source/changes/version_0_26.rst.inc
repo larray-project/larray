@@ -62,7 +62,7 @@ Miscellaneous improvements
     >>> arr[even].to_excel('my_file.xlsx', even)
     >>> arr[even].to_hdf('my_file.h5', even)
 
-    >>> # special characters : \ / ? * [ or ] in labels or groups are replaced by an _
+    >>> # special characters : \ / ? * [ or ] in labels or groups are replaced by an _ when exporting to excel
     >>> g = arr.a['a1,a3,a4'] >> '?name:with*special[characters]'
     >>> arr[g].to_excel('my_file.xlsx', g)
     >>> print(open_excel('my_file.xlsx').sheet_names())

@@ -628,6 +628,16 @@ def _to_keys(value, stack_depth=1):
         return _to_key(value, stack_depth + 1)
 
 
+# forbidden characters in sheet names
+_sheet_name_pattern = re.compile('[\\/?*\[\]:]')
+
+
+def _translate_sheet_name(sheet_name):
+    if isinstance(sheet_name, Group):
+        sheet_name = _sheet_name_pattern.sub('_', str(_to_tick(sheet_name)))
+    return sheet_name
+
+
 def union(*args):
     # TODO: add support for LGroup and lists
     """
