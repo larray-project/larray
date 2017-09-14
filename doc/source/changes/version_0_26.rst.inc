@@ -44,8 +44,8 @@ Miscellaneous improvements
 * replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
   (closes :issue:`394`)
 
-* allowed to pass a label or group as `sheet_name` argument of the method `to_excel` and as
-  `key` argument of the method `to_hdf` (closes :issue:`328`):
+* allowed to pass a label or group as `sheet_name` argument of the method `to_excel` or to a Workbook (`open_excel`).
+  Same for `key` argument of the method `to_hdf`. Closes :issue:`328`.
 
     >>> arr = ndtest((4, 4, 4))
 
