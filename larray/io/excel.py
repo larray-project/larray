@@ -20,6 +20,14 @@ if xw is not None:
     from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 
     global_app = None
+    # forbidden characters in sheet names
+    rx = re.compile('[\\/?*\[\]:]')
+
+
+    def translate_key(key):
+        if isinstance(key, Group):
+            key = rx.sub('_', str(_to_tick(key)))
+        return key
 
 
     def is_app_alive(app):
@@ -173,16 +181,14 @@ if xw is not None:
             return list(self.sheet_names())
 
         def __getitem__(self, key):
-            if isinstance(key, Group):
-                key = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(key)))
+            key = translate_key(key)
             if key in self:
                 return Sheet(self, key)
             else:
                 raise KeyError('Workbook has no sheet named {}'.format(key))
 
         def __setitem__(self, key, value):
-            if isinstance(key, Group):
-                key = re.sub('[\\/?*\[\]:]', '_', str(_to_tick(key)))
+            key = translate_key(key)
             if self.new_workbook:
                 self.xw_wkb.sheets[0].name = key
                 self.new_workbook = False
