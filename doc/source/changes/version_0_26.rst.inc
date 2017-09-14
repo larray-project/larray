@@ -44,23 +44,26 @@ Miscellaneous improvements
 * replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
   (closes :issue:`394`)
 
-* allowed to pass a label or a named group as `sheet_name` argument of the method `to_excel` and
+* allowed to pass a label or group as `sheet_name` argument of the method `to_excel` and as
   `key` argument of the method `to_hdf` (closes :issue:`328`):
 
     >>> arr = ndtest((4, 4, 4))
 
     >>> # iterate over labels of a given axis
+    >>> with open_excel('my_file.xlsx') as wb:
+    >>>     for label in arr.a:
+    ...         wb[label] = arr[label]
+    ...     wb.save()
     >>> for label in arr.a:
-    ...     arr[label].to_excel('my_file.xlsx', label)
     ...     arr[label].to_hdf('my_file.h5', label)
 
     >>> # create and use a group
-    >>> even = arr.a['a0::2'] >> 'even'
+    >>> even = arr.a['a0,a2'] >> 'even'
     >>> arr[even].to_excel('my_file.xlsx', even)
     >>> arr[even].to_hdf('my_file.h5', even)
 
     >>> # special characters : \ / ? * [ or ] in labels or groups are replaced by an _
-    >>> g = arr.a['a1,a3'] >> '?name:with*special[characters]'
+    >>> g = arr.a['a1,a3,a4'] >> '?name:with*special[characters]'
     >>> arr[g].to_excel('my_file.xlsx', g)
     >>> print(open_excel('my_file.xlsx').sheet_names())
     ['_name_with_special_characters_']
