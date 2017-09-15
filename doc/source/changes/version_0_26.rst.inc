@@ -81,4 +81,5 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed passing an axis to `set_labels` as 'labels' argument: returns an array with new labels which are no longer
+  positional groups (closes :issue:`408`).

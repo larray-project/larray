@@ -391,7 +391,6 @@ def _to_ticks(s):
     ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
     >>> _to_ticks('U')
     ['U']
-
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
     """
