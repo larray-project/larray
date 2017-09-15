@@ -43,9 +43,10 @@ Searching
    :toctree: _generated/
 
    Axis.translate
-   Axis.matches
-   Axis.startswith
-   Axis.endswith
+   Axis.containing
+   Axis.startingwith
+   Axis.endingwith
+   Axis.matching
 
 Modifying/Selecting/Searching
 -----------------------------
@@ -97,6 +98,10 @@ PGroup
    PGroup.union
    PGroup.intersection
    PGroup.difference
+   PGroup.containing
+   PGroup.startingwith
+   PGroup.endingwith
+   PGroup.matching
 
 LGroup
 ------
@@ -116,6 +121,10 @@ LGroup
    LGroup.union
    LGroup.intersection
    LGroup.difference
+   LGroup.containing
+   LGroup.startingwith
+   LGroup.endingwith
+   LGroup.matching
 
 .. _api-set:
 

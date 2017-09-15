@@ -12,7 +12,7 @@ from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary
 
-__all__ = ['LGroup', 'LSet', 'PGroup', 'union']
+__all__ = ['Group', 'LGroup', 'LSet', 'PGroup', 'union']
 
 
 def _slice_to_str(key, repr_func=str):
@@ -1138,6 +1138,129 @@ class Group(object):
         if isinstance(item, Group):
             item = item.eval()
         return item in self.eval()
+
+    def startingwith(self, prefix):
+        """
+        Returns a group with the labels starting with the specified string.
+
+        Parameters
+        ----------
+        prefix : str or Group
+            The prefix to search for.
+
+        Returns
+        -------
+        LGroup
+            Group containing all the labels starting with the given string.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> people = Axis(['Bruce Wayne', 'Arthur Dent', 'Harvey Dent'], 'people')
+        >>> group = people.endingwith('Dent')
+        >>> group
+        people['Arthur Dent', 'Harvey Dent']
+        >>> group.startingwith('Art')
+        people['Arthur Dent']
+        """
+        if isinstance(prefix, Group):
+            prefix = prefix.eval()
+        return LGroup([v for v in self.eval() if v.startswith(prefix)], axis=self.axis)
+
+    def endingwith(self, suffix):
+        """
+        Returns a group with the labels ending with the specified string.
+
+        Parameters
+        ----------
+        suffix : str or Group
+            The suffix to search for.
+
+        Returns
+        -------
+        LGroup
+            Group containing all the labels ending with the given string.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
+        >>> group = people.startingwith('Bru')
+        >>> group
+        people['Bruce Wayne', 'Bruce Willis']
+        >>> people.endingwith('yne')
+        people['Bruce Wayne']
+        """
+        if isinstance(suffix, Group):
+            suffix = suffix.eval()
+        return LGroup([v for v in self.eval() if v.endswith(suffix)], axis=self.axis)
+
+    def matching(self, pattern):
+        """
+        Returns a group with all the labels matching the specified pattern (regular expression).
+
+        Parameters
+        ----------
+        pattern : str or Group
+            Regular expression (regex).
+
+        Returns
+        -------
+        LGroup
+            Group containing all the labels matching the pattern.
+
+        Notes
+        -----
+        See `Regular Expression <https://docs.python.org/3/library/re.html>`_
+        for more details about how to build a pattern.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
+
+        All labels containing "B" and "e" with exactly 3 characters in between are given by
+
+        >>> group = people.matching('B...e')
+        >>> group
+        people['Bruce Wayne', 'Bruce Willis']
+
+        Within that group, all labels containing any characters then W then any characters then s are given by
+        >>> group.matching('.*W.*s')
+        people['Bruce Willis']
+        """
+        if isinstance(pattern, Group):
+            pattern = pattern.eval()
+        rx = re.compile(pattern)
+        return LGroup([v for v in self.eval() if rx.match(v)], axis=self.axis)
+
+    def containing(self, substring):
+        """
+        Returns a group with all the labels containing the specified substring.
+
+        Parameters
+        ----------
+        substring : str or Group
+            The substring to search for.
+
+        Returns
+        -------
+        LGroup
+            Group containing all the labels containing the substring.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
+        >>> group = people.startingwith('Bru')
+        >>> group
+        people['Bruce Wayne', 'Bruce Willis']
+        >>> group.containing('Will')
+        people['Bruce Willis']
+        """
+        if isinstance(substring, Group):
+            substring = substring.eval()
+        return LGroup([v for v in self.eval() if substring in v], axis=self.axis)
 
     # this makes range(LGroup(int)) possible
     def __index__(self):

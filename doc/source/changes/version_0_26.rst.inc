@@ -1,4 +1,17 @@
-﻿New features
+﻿Syntax changes
+--------------
+
+* renamed special variable `x` to `X` to let users define an `x` variable in their code without breaking all
+  subsequent code using that special variable (closes :issue:`167`).
+
+* renamed Axis.startswith, endswith and matches to startingwith, endingwith and matching to avoid a possible confusion
+  with str.startswith and endswith which return booleans (closes :issue:`432`).
+
+* renamed `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions to `fill_value` to avoid
+  confusion as to what the argument does and to be consistent with `reindex` and `align` (closes :issue:`394`).
+
+
+New features
 ------------
 
 * added global_arrays() function which returns a Session containing all arrays defined in global variables. This
@@ -6,13 +19,27 @@
   results, but inside a function local_arrays will return only arrays local to the function, while global_arrays will
   return only arrays defined globally.
 
+* implemented Axis.containing to create a Group with all labels of an axis containing some substring (closes
+  :issue:`402`).
+
+    >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
+    >>> people.containing('Will')
+    people['Bruce Willis']
+
+* implemented Group.containing, startingwith, endingwith and matching to create a group with all labels of a group
+  matching some criterion (closes :issue:`108`).
+
+    >>> group = people.startingwith('Bru')
+    >>> group
+    people['Bruce Wayne', 'Bruce Willis']
+    >>> group.containing('Will')
+    people['Bruce Willis']
+
 
 Miscellaneous improvements
 --------------------------
 
 * view() and edit() without argument now display global arrays in addition to local ones (closes :editor_issue:`54`).
-
-* renamed special variable `x` as `X` (closes :issue:`167`).
 
 * allowed to pass an array of labels as `new_axis` argument to `reindex` method (closes :issue:`384`):
 
@@ -39,9 +66,6 @@ Miscellaneous improvements
      v0    0    1    2
      v1    3    4    5
      v2  nan  nan  nan
-
-* replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
-  (closes :issue:`394`).
 
 * arguments `fill_value`, `sort_rows` and `sort_columns` of `read_excel` function are also supported by the default
   `xlwings` engine (closes :issue:`393`).
@@ -223,6 +247,7 @@ Miscellaneous improvements
     Foreigner    2      3
 
 * allowed passing an axis to `set_labels` as 'labels' argument (closes :issue:`408`).
+
 
 Fixes
 -----

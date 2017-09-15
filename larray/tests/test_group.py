@@ -66,9 +66,9 @@ class TestLGroup(TestCase):
         assert group.name == group2.name
         # additional test
         axis = Axis('axis=a,a0..a3,b,b0..b3,c,c0..c3')
-        for code in axis.matches('^.$'):
-            group = axis.startswith(code) >> code
-            assert group == axis.startswith(code) >> str(code)
+        for code in axis.matching('^.$'):
+            group = axis.startingwith(code) >> code
+            assert group == axis.startingwith(code) >> str(code)
 
     def test_eq(self):
         # with axis vs no axis do not compare equal

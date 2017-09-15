@@ -369,8 +369,7 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects
-            present in the Session.
+            List of names of objects to dump. Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
@@ -405,8 +404,7 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects
-            present in the Session.
+            List of names of objects to dump. Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
@@ -441,11 +439,9 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects
-            present in the Session.
+            List of names of objects to dump. Defaults to all objects present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any.
-            If False, file is updated. Defaults to True.
+            Whether or not to overwrite an existing file, if any. If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
@@ -477,8 +473,7 @@ class Session(object):
         fname : str
             Path for the directory that will contain CSV files.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects
-            present in the Session.
+            List of names of objects to dump. Defaults to all objects present in the Session.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 

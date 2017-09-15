@@ -441,6 +441,10 @@ class Axis(ABCAxis):
                (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
 
     def matches(self, pattern):
+        warnings.warn("Axis.matches was renamed to Axis.matching, please use that instead", FutureWarning, stacklevel=2)
+        return self.matching(pattern)
+
+    def matching(self, pattern):
         """
         Returns a group with all the labels matching the specified pattern (regular expression).
 
@@ -465,12 +469,12 @@ class Axis(ABCAxis):
 
         All labels starting with "W" and ending with "o" are given by
 
-        >>> people.matches('W.*o')
+        >>> people.matching('W.*o')
         people['Waldo']
 
         All labels not containing character "a"
 
-        >>> people.matches('[^a]*$')
+        >>> people.matching('[^a]*$')
         people['Bruce Willis', 'Arthur Dent']
         """
         if isinstance(pattern, Group):
@@ -479,6 +483,11 @@ class Axis(ABCAxis):
         return LGroup([v for v in self.labels if rx.match(v)], axis=self)
 
     def startswith(self, prefix):
+        warnings.warn("Axis.startswith was renamed to Axis.startingwith, please use that instead", FutureWarning,
+                      stacklevel=2)
+        return self.startingwith(prefix)
+
+    def startingwith(self, prefix):
         """
         Returns a group with the labels starting with the specified string.
 
@@ -495,7 +504,7 @@ class Axis(ABCAxis):
         Examples
         --------
         >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
-        >>> people.startswith('Bru')
+        >>> people.startingwith('Bru')
         people['Bruce Wayne', 'Bruce Willis']
         """
         if isinstance(prefix, Group):
@@ -503,8 +512,13 @@ class Axis(ABCAxis):
         return LGroup([v for v in self.labels if v.startswith(prefix)], axis=self)
 
     def endswith(self, suffix):
+        warnings.warn("Axis.endswith was renamed to Axis.endingwith, please use that instead", FutureWarning,
+                      stacklevel=2)
+        return self.endingwith(suffix)
+
+    def endingwith(self, suffix):
         """
-        Returns a LGroup with the labels ending with the specified string
+        Returns a group with the labels ending with the specified string.
 
         Parameters
         ----------
@@ -519,12 +533,36 @@ class Axis(ABCAxis):
         Examples
         --------
         >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
-        >>> people.endswith('Dent')
+        >>> people.endingwith('Dent')
         people['Arthur Dent', 'Harvey Dent']
         """
         if isinstance(suffix, Group):
             suffix = suffix.eval()
         return LGroup([v for v in self.labels if v.endswith(suffix)], axis=self)
+
+    def containing(self, substring):
+        """
+        Returns a group with all the labels containing the specified substring.
+
+        Parameters
+        ----------
+        substring : str or Group
+            The substring to search for.
+
+        Returns
+        -------
+        LGroup
+            Group containing all the labels containing the substring.
+
+        Examples
+        --------
+        >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
+        >>> people.containing('Will')
+        people['Bruce Willis']
+        """
+        if isinstance(substring, Group):
+            substring = substring.eval()
+        return LGroup([v for v in self.labels if substring in v], axis=self)
 
     def __len__(self):
         return self._length
@@ -611,7 +649,7 @@ class Axis(ABCAxis):
         >>> people = Axis(['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
         >>> people.translate('Waldo')
         3
-        >>> people.translate(people.matches('Bruce'))
+        >>> people.translate(people.matching('Bruce'))
         array([1, 2])
         """
         mapping = self._mapping
