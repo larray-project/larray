@@ -78,6 +78,8 @@ Miscellaneous improvements
     >>> group_even_year
     year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
 
+* allowed passing an axis to `set_labels` as 'labels' argument (closes :issue:`408`).
+
 Fixes
 -----
 
