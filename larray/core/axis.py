@@ -536,7 +536,7 @@ class Axis(ABCAxis):
         """
         Returns a group (list or unique element) of label(s) usable in .sum or .filter
 
-        key is a label-based key (slice and fancy indexing are supported)
+        key is a label-based key (other axis, slice and fancy indexing are supported)
 
         Returns
         -------
@@ -552,6 +552,9 @@ class Axis(ABCAxis):
 
         def isscalar(k):
             return np.isscalar(k) or (isinstance(k, Group) and np.isscalar(k.key))
+
+        if isinstance(key, Axis):
+            key = key.labels
 
         # the not all(np.isscalar) part is necessary to support axis[a, b, c] and axis[[a, b, c]]
         if isinstance(key, (tuple, list)) and not all(isscalar(k) for k in key):

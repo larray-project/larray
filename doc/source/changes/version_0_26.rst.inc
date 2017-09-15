@@ -70,6 +70,8 @@ Miscellaneous improvements
     ['_name_with_special___char_']
     >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
 
+* allowed syntax `axis[other_axis]` (closes :issue:`362`).
+
 Fixes
 -----
 
