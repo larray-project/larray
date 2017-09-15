@@ -400,11 +400,11 @@ class TestAxis(TestCase):
         subset_axis = Axis(code_group, 'code_subset')
         assert_array_equal(subset_axis.labels, ['C01', 'C02'])
 
-    def test_match(self):
+    def test_matching(self):
         sutcode = Axis(['A23', 'A2301', 'A25', 'A2501'], 'sutcode')
-        self.assertEqual(sutcode.matches('^...$'), LGroup(['A23', 'A25']))
-        self.assertEqual(sutcode.startswith('A23'), LGroup(['A23', 'A2301']))
-        self.assertEqual(sutcode.endswith('01'), LGroup(['A2301', 'A2501']))
+        self.assertEqual(sutcode.matching('^...$'), LGroup(['A23', 'A25']))
+        self.assertEqual(sutcode.startingwith('A23'), LGroup(['A23', 'A2301']))
+        self.assertEqual(sutcode.endingwith('01'), LGroup(['A2301', 'A2501']))
 
     def test_iter(self):
         sex = Axis('sex=M,F')
