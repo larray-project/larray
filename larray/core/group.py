@@ -395,6 +395,8 @@ def _to_ticks(s):
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
     """
+    if isinstance(s, ABCAxis):
+        return s.labels
     if isinstance(s, Group):
         # a single LGroup used for all ticks of an Axis
         return _to_ticks(s.eval())
