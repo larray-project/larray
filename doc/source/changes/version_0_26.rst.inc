@@ -70,6 +70,14 @@ Miscellaneous improvements
     ['_name_with_special___char_']
     >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
 
+* allowed to create a group on an axis using labels of another axis (closes :issue:`362`):
+
+    >>> year = Axis('year=2000..2017')
+    >>> even_year = Axis(range(2000, 2017, 2), 'even_year')
+    >>> group_even_year = year[even_year]
+    >>> group_even_year
+    year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
+
 Fixes
 -----
 
