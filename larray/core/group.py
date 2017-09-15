@@ -727,6 +727,18 @@ class Group(object):
         # the same name. See test_array.py:test_...
         self.axis = axis
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        if isinstance(name, (Group, ABCAxis)):
+            name = name.name
+        if name is not None:
+            name = str(name)
+        self._name = name
+
     def __repr__(self):
         key = self.key
 

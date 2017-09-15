@@ -70,6 +70,21 @@ Miscellaneous improvements
     ['_name_with_special___char_']
     >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
 
+* allowed setting the name of a Group using another Group or Axis (closes :issue:`341`):
+
+    >>> arr = ndrange('axis=a,a0..a3,b,b0..b3,c,c0..c3')
+    >>> arr
+    axis  a  a0  a1  a2  a3  b  b0  b1  b2  b3   c  c0  c1  c2  c3
+          0   1   2   3   4  5   6   7   8   9  10  11  12  13  14
+    >>> groups = tuple(arr.axis.startswith(code) >> str(code) for code in arr.axis.matches('^.$'))
+    >>> groups
+    (axis['a', 'a0', 'a1', 'a2', 'a3'] >> 'a',
+     axis['b', 'b0', 'b1', 'b2', 'b3'] >> 'b',
+     axis['c', 'c0', 'c1', 'c2', 'c3'] >> 'c')
+    >>> arr.sum(groups)
+    axis   a   b   c
+          10  35  60
+
 * allowed to create a group on an axis using labels of another axis (closes :issue:`362`):
 
     >>> year = Axis('year=2000..2017')
