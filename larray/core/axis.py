@@ -1032,9 +1032,6 @@ def _make_axis(obj):
         return Axis(labels, name)
     elif isinstance(obj, Group):
         return Axis(obj.eval(), obj.axis)
-    elif isinstance(obj, str) and '=' in obj:
-        name, labels = [o.strip() for o in obj.split('=')]
-        return Axis(labels, name)
     else:
         # int, str, list, ndarray
         return Axis(obj)
