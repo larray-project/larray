@@ -86,6 +86,21 @@ Miscellaneous improvements
     axis   a   b   c
           10  35  60
 
+* allowed to test if an array contains a label using operator `in` (closes :issue:`343`):
+
+    >>> arr = ndrange('age=0..99;sex=M,F')
+    >>> 'M' in arr
+    True
+    >>> 'Male' in arr
+    False
+    >>> # useful in 'if' statement (with 'reindex', we extend 'age' axis to 102)
+    >>> if 102 not in arr:
+    ...     arr.reindex('age', Axis('age=0..102'), fill_value=0, inplace=True)
+    >>> arr.info
+    103 x 2
+     age [103]: 0 1 2 ... 100 101 102
+     sex [2]: 'M' 'F'
+
 * allowed to create a group on an axis using labels of another axis (closes :issue:`362`):
 
     >>> year = Axis('year=2000..2017')

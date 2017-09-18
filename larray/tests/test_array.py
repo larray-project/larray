@@ -1152,6 +1152,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(age=57, lipro='P01,P05').shape, (44, 2, 2))
         self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape, (116, 2, 2))
 
+    def test_contains(self):
+        assert 'M' in self.larray
+        assert not 'Male' in self.larray
+        assert 20 in self.larray
+        assert 120 not in self.larray
+
     def test_sum_full_axes(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
