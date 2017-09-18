@@ -76,7 +76,8 @@ Miscellaneous improvements
     >>> arr
     axis  a  a0  a1  a2  a3  b  b0  b1  b2  b3   c  c0  c1  c2  c3
           0   1   2   3   4  5   6   7   8   9  10  11  12  13  14
-    >>> groups = tuple(arr.axis.startswith(code) >> str(code) for code in arr.axis.matches('^.$'))
+    >>> # matches('^.$') will select labels with only one character: 'a', 'b' and 'c'
+    >>> groups = tuple(arr.axis.startswith(code) >> code for code in arr.axis.matches('^.$'))
     >>> groups
     (axis['a', 'a0', 'a1', 'a2', 'a3'] >> 'a',
      axis['b', 'b0', 'b1', 'b2', 'b3'] >> 'b',

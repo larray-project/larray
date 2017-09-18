@@ -48,15 +48,27 @@ class TestLGroup(TestCase):
         self.assertEqual(self.list.key, ['P01', 'P03', 'P04'])
 
         # passing an axis as name
-        group = Group('1:5', self.age, self.age)
+        group = LGroup('1:5', self.age, self.age)
         assert group.name == self.age.name
         group = self.age['1:5'] >> self.age
         assert group.name == self.age.name
-        # passing an group as name
-        group2 = Group('1:5', group, self.age)
-        assert group2.name == group.name
-        group2 = self.age['1:5'] >> group
-        assert group2.name == group.name
+        # passing an unnamed group as name
+        group2 = LGroup('1', axis=self.age)
+        group = LGroup('1', group2, axis=self.age)
+        assert group.name == '1'
+        group = self.age['1'] >> group2
+        assert group.name == '1'
+        # passing a named group as name
+        group2 = LGroup('1:5', 'age', self.age)
+        group = LGroup('1:5', group2, axis=self.age)
+        assert group.name == group2.name
+        group = self.age['1:5'] >> group2
+        assert group.name == group2.name
+        # additional test
+        axis = Axis('axis=a,a0..a3,b,b0..b3,c,c0..c3')
+        for code in axis.matches('^.$'):
+            group = axis.startswith(code) >> code
+            assert group == axis.startswith(code) >> str(code)
 
     def test_eq(self):
         # with axis vs no axis do not compare equal

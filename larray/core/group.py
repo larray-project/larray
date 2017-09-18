@@ -713,7 +713,7 @@ class Group(object):
 
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
-        self.name = name
+        self.name = str(_to_tick(name)) if name is not None else name
         assert axis is None or isinstance(axis, (basestring, int, ABCAxis)), \
             "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
 
@@ -726,18 +726,6 @@ class Group(object):
         # the object was to make sure that a Group from an axis (or without axis) could be used on another axis with
         # the same name. See test_array.py:test_...
         self.axis = axis
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        if isinstance(name, (Group, ABCAxis)):
-            name = name.name
-        if name is not None:
-            name = str(name)
-        self._name = name
 
     def __repr__(self):
         key = self.key
