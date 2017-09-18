@@ -7,6 +7,7 @@ import numpy as np
 
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
 from larray import Axis, LGroup, LSet
+from larray.core.group import Group
 
 
 class TestLGroup(TestCase):
@@ -45,6 +46,29 @@ class TestLGroup(TestCase):
 
         self.assertEqual(self.single_value.key, 'P03')
         self.assertEqual(self.list.key, ['P01', 'P03', 'P04'])
+
+        # passing an axis as name
+        group = LGroup('1:5', self.age, self.age)
+        assert group.name == self.age.name
+        group = self.age['1:5'] >> self.age
+        assert group.name == self.age.name
+        # passing an unnamed group as name
+        group2 = LGroup('1', axis=self.age)
+        group = LGroup('1', group2, axis=self.age)
+        assert group.name == '1'
+        group = self.age['1'] >> group2
+        assert group.name == '1'
+        # passing a named group as name
+        group2 = LGroup('1:5', 'age', self.age)
+        group = LGroup('1:5', group2, axis=self.age)
+        assert group.name == group2.name
+        group = self.age['1:5'] >> group2
+        assert group.name == group2.name
+        # additional test
+        axis = Axis('axis=a,a0..a3,b,b0..b3,c,c0..c3')
+        for code in axis.matches('^.$'):
+            group = axis.startswith(code) >> code
+            assert group == axis.startswith(code) >> str(code)
 
     def test_eq(self):
         # with axis vs no axis do not compare equal
