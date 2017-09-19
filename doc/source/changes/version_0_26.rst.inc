@@ -40,11 +40,11 @@ Miscellaneous improvements
      v1    3    4    5
      v2  nan  nan  nan
 
-* `read_excel` displays an error message when arguments `na`, `sort_rows` or `sort_columns` are used
-  with the default `xlwings` engine
-
 * replaced `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions by `fill_value`
-  (closes :issue:`394`)
+  (closes :issue:`394`).
+
+* arguments `fill_value`, `sort_rows` and `sort_columns` of `read_excel` function are also supported by the default
+  `xlwings` engine (closes :issue:`393`).
 
 * allowed to pass a label or group as `sheet_name` argument of the method `to_excel` or to a Workbook (`open_excel`).
   Same for `key` argument of the method `to_hdf`. Closes :issue:`328`.
