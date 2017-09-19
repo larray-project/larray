@@ -1152,6 +1152,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(age=57, lipro='P01,P05').shape, (44, 2, 2))
         self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape, (116, 2, 2))
 
+    def test_contains(self):
+        arr = ndrange('a=0..2;b=b0..b2;c=2..4')
+        # string label
+        assert 'b1' in arr
+        assert not 'b4' in arr
+        # int label
+        assert 1 in arr
+        assert 5 not in arr
+        # duplicate label
+        assert 2 in arr
+        # slice
+        assert not slice('b0', 'b2') in arr
+
     def test_sum_full_axes(self):
         la = self.larray
         age, geo, sex, lipro = la.axes
