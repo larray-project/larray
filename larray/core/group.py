@@ -898,7 +898,7 @@ class Group(object):
 
         Examples
         --------
-        >>> from larray import Axis, x
+        >>> from larray import Axis, X
         >>> age = Axis(range(10), 'age')
         >>> age[[1, 2, 3, 4, 5]].by(2)
         (age[1, 2], age[3, 4], age[5])
@@ -908,7 +908,7 @@ class Group(object):
         (age.i[1:3], age.i[5:6])
         >>> age[1:5].by(3, 2)
         (age.i[1:4], age.i[3:6], age.i[5:6])
-        >>> x.age[[0, 1, 2, 3, 4]].by(2)
+        >>> X.age[[0, 1, 2, 3, 4]].by(2)
         (x.age[0, 1], x.age[2, 3], x.age[4])
         """
         if step is None:
@@ -1207,12 +1207,12 @@ class LGroup(Group):
 
     Examples
     --------
-    >>> from larray import Axis, x
+    >>> from larray import Axis, X
     >>> age = Axis('0..100', 'age')
-    >>> teens = x.age[10:19].named('teens')
+    >>> teens = X.age[10:19].named('teens')
     >>> teens
     x.age[10:19] >> 'teens'
-    >>> teens = x.age[10:19] >> 'teens'
+    >>> teens = X.age[10:19] >> 'teens'
     >>> teens
     x.age[10:19] >> 'teens'
     """
