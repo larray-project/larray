@@ -117,4 +117,4 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed array creation with axis(es) containing only one label (axis name and label were inversed).
