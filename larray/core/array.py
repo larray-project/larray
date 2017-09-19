@@ -2444,6 +2444,9 @@ class LArray(ABCLArray):
     def __iter__(self):
         return LArrayIterator(self)
 
+    def __contains__(self, key):
+        return any(key in axis for axis in self.axes)
+
     def as_table(self, maxlines=None, edgeitems=5, light=False):
         """
         Generator. Returns next line of the table representing an array.
