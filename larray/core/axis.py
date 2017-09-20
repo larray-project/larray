@@ -15,7 +15,7 @@ from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id
 
-__all__ = ['Axis', 'AxisCollection', 'x']
+__all__ = ['Axis', 'AxisCollection', 'X', 'x']
 
 
 class Axis(ABCAxis):
@@ -1741,9 +1741,9 @@ class AxisCollection(object):
 
         Replace one axis (second argument `new_axis` must be provided)
 
-        >>> axes.replace(x.a, row)  # doctest: +SKIP
+        >>> axes.replace(X.a, row)  # doctest: +SKIP
         >>> # or
-        >>> axes.replace(x.a, "row=r0,r1")
+        >>> axes.replace(X.a, "row=r0,r1")
         AxisCollection([
             Axis(['r0', 'r1'], 'row'),
             Axis(['b0', 'b1', 'b2'], 'b')
@@ -1755,9 +1755,9 @@ class AxisCollection(object):
         >>> # or
         >>> axes.replace(a="row=r0,r1", b="column=c0,c1,c2")  # doctest: +SKIP
         >>> # or
-        >>> axes.replace([(x.a, row), (x.b, column)])  # doctest: +SKIP
+        >>> axes.replace([(X.a, row), (X.b, column)])  # doctest: +SKIP
         >>> # or
-        >>> axes.replace({x.a: row, x.b: column})
+        >>> axes.replace({X.a: row, X.b: column})
         AxisCollection([
             Axis(['r0', 'r1'], 'row'),
             Axis(['c0', 'c1', 'c2'], 'column')
@@ -2290,7 +2290,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         self._iswildcard = False
 
     def translate(self, key):
-        raise NotImplementedError("an AxisReference (x.) cannot translate labels")
+        raise NotImplementedError("an AxisReference (X.) cannot translate labels")
 
     def __repr__(self):
         return 'AxisReference(%r)' % self.name
@@ -2324,5 +2324,24 @@ class AxisReferenceFactory(object):
         return AxisReference(key)
 
 
-x = AxisReferenceFactory()
+X = AxisReferenceFactory()
 
+
+class DeprecatedAxisReferenceFactory(object):
+    # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__)
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
+    def __getattr__(self, key):
+        warnings.warn("Special variable 'x' is deprecated, use 'X' instead", FutureWarning, stacklevel=2)
+        return AxisReference(key)
+
+    def __getitem__(self, key):
+        warnings.warn("Special variable 'x' is deprecated, use 'X' instead", FutureWarning, stacklevel=2)
+        return AxisReference(key)
+
+
+x = DeprecatedAxisReferenceFactory()

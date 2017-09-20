@@ -5,7 +5,7 @@ from unittest import TestCase
 import pytest
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LArray, ndrange, ndtest, ipfp, x
+from larray import Axis, LArray, ndrange, ndtest, ipfp, X
 
 
 class TestIPFP(TestCase):
@@ -102,21 +102,21 @@ class TestIPFP(TestCase):
         initial_axes = initial.axes
 
         # array sums already match target sums (first axes)
-        axes = (x.a, x.b)
+        axes = (X.a, X.b)
         targets = [initial.sum(axis) for axis in axes]
         r = ipfp(targets, initial, axes=axes)
         assert_array_equal(r, initial)
         self.assertEqual(r.axes, initial_axes)
 
         # array sums already match target sums (other axes)
-        axes = (x.a, x.c)
+        axes = (X.a, X.c)
         targets = [initial.sum(axis) for axis in axes]
         r = ipfp(targets, initial, axes=axes)
         assert_array_equal(r, initial)
         self.assertEqual(r.axes, initial_axes)
 
         # array sums do not match target sums (ie the usual case) (first axes)
-        axes = (x.a, x.b)
+        axes = (X.a, X.b)
         targets = [initial.sum(axis) + 1 for axis in axes]
         r = ipfp(targets, initial, axes=axes)
         assert_array_equal(r, [[[0.0,               1.3059701492537312],
@@ -129,7 +129,7 @@ class TestIPFP(TestCase):
         assert_array_equal(r['c1'], ipfp([t['c1'] for t in targets], initial['c1']))
 
         # array sums do not match target sums (ie the usual case) (other axes)
-        axes = (x.a, x.c)
+        axes = (X.a, X.c)
         targets = [initial.sum(axis) + 1 for axis in axes]
         r = ipfp(targets, initial, axes=axes)
         assert_array_equal(r, [[[0.0,               2.0              ],
