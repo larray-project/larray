@@ -346,18 +346,10 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
         if kwargs:
             raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
                             .format(list(kwargs.keys())[0]))
-        if not np.isnan(fill_value):
-            raise NotImplementedError("fill_value argument is not currently supported with the (default) "
-                                      "xlwings engine")
-        if sort_rows:
-            raise NotImplementedError("sort_rows argument is not currently supported with the (default) "
-                                      "xlwings engine")
-        if sort_columns:
-            raise NotImplementedError("sort_columns argument is not currently supported with the (default) "
-                                      "xlwings engine")
         from larray.io.excel import open_excel
         with open_excel(filepath) as wb:
-            return wb[sheetname].load(index_col=index_col)
+            return wb[sheetname].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
+                                      sort_columns=sort_columns)
     else:
         df = pd.read_excel(filepath, sheetname, index_col=index_col, engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
@@ -388,7 +380,7 @@ def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.n
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)
 
 
-def from_lists(data, nb_index=None, index_col=None):
+def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False):
     """
     initialize array from a list of lists (lines)
 
@@ -401,6 +393,14 @@ def from_lists(data, nb_index=None, index_col=None):
         by using the position of the first '\' in the first line.
     index_col : list, optional
         List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
+    fill_value : scalar or LArray, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input.
+        Defaults to NaN.
+    sort_rows : bool, optional
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+    sort_columns : bool, optional
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Defaults to False.
 
     Returns
     -------
@@ -436,6 +436,15 @@ def from_lists(data, nb_index=None, index_col=None):
       M       FO   2.0   0.0   0.0
       F       BE   0.0   0.0   1.0
       F       FO   nan   nan   nan
+    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+    ...             [  'M', 'BE',           1,    0,    0],
+    ...             [  'M', 'FO',           2,    0,    0],
+    ...             [  'F', 'BE',           0,    0,    1]], fill_value=42)
+    sex  nat\\year  1991  1992  1993
+      M        BE     1     0     0
+      M        FO     2     0     0
+      F        BE     0     0     1
+      F        FO    42    42    42
     """
     if nb_index is not None and index_col is not None:
         raise ValueError("cannot specify both nb_index and index_col")
@@ -448,7 +457,8 @@ def from_lists(data, nb_index=None, index_col=None):
     if index_col is not None:
         df.set_index([df.columns[c] for c in index_col], inplace=True)
 
-    return df_aslarray(df, raw=index_col is None, parse_header=False)
+    return df_aslarray(df, raw=index_col is None, parse_header=False, sort_rows=sort_rows, sort_columns=sort_columns,
+                       fill_value=fill_value)
 
 
 def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
