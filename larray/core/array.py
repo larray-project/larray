@@ -101,7 +101,7 @@ from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys,
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
-from larray.core.axis import Axis, AxisReference, AxisCollection, x, _make_axis
+from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list)
 
@@ -617,7 +617,7 @@ def larray_equal(a1, a2):
     >>> arr2['b1'] += 1
     >>> larray_equal(arr1, arr2)
     False
-    >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
+    >>> arr3 = arr1.set_labels(X.a, ['x0', 'x1'])
     >>> larray_equal(arr1, arr3)
     False
     """
@@ -663,7 +663,7 @@ def larray_nan_equal(a1, a2):
     >>> arr2['b1'] = 0.0
     >>> larray_nan_equal(arr1, arr2)
     False
-    >>> arr3 = arr1.set_labels(x.a, ['x0', 'x1'])
+    >>> arr3 = arr1.set_labels(X.a, ['x0', 'x1'])
     >>> larray_nan_equal(arr1, arr3)
     False
     >>> larray_nan_equal([0], [0])
@@ -845,7 +845,7 @@ class LArray(ABCLArray):
 
         Replace one axis (second argument `new_axis` must be provided)
 
-        >>> arr.set_axes(x.a, row)
+        >>> arr.set_axes(X.a, row)
         row\\b  b0  b1  b2
            r0   0   1   2
            r1   3   4   5
@@ -854,9 +854,9 @@ class LArray(ABCLArray):
 
         >>> arr.set_axes(a=row, b=column) # doctest: +SKIP
         >>> # or
-        >>> arr.set_axes([(x.a, row), (x.b, column)]) # doctest: +SKIP
+        >>> arr.set_axes([(X.a, row), (X.b, column)]) # doctest: +SKIP
         >>> # or
-        >>> arr.set_axes({x.a: row, x.b: column})
+        >>> arr.set_axes({X.a: row, X.b: column})
         row\\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
@@ -1189,7 +1189,7 @@ class LArray(ABCLArray):
         gender\statistic  count  mean  std  min   25%  50%   75%  max
                     Male    8.0   3.0  2.0  0.0  1.75  3.0  4.25  6.0
                   Female    8.0   5.0  2.0  2.0  3.75  5.0  6.25  8.0
-        >>> arr.describe_by('gender', (x.year[:2015], x.year[2018:]))
+        >>> arr.describe_by('gender', (X.year[:2015], X.year[2018:]))
         gender  year\statistic  count  mean  std  min  25%  50%  75%  max
           Male           :2015    3.0   3.0  3.0  0.0  1.5  3.0  4.5  6.0
           Male           2018:    3.0   2.0  1.0  1.0  1.5  2.0  2.5  3.0
@@ -1265,7 +1265,7 @@ class LArray(ABCLArray):
         nat\\sex  M  F
              BE  0  1
              FO  2  3
-        >>> arr.rename(x.nat, 'nat2')
+        >>> arr.rename(X.nat, 'nat2')
         nat2\\sex  M  F
               BE  0  1
               FO  2  3
@@ -1343,11 +1343,11 @@ class LArray(ABCLArray):
 
         Reindex one axis
 
-        >>> arr.reindex(x.b, ['b1', 'b2', 'b0'], fill_value=-1)
+        >>> arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1)
         a\\b  b1  b2  b0
          a0   1  -1   0
          a1   3  -1   2
-        >>> arr.reindex(x.b, 'b0..b2', fill_value=-1)
+        >>> arr.reindex(X.b, 'b0..b2', fill_value=-1)
         a\\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
@@ -1361,7 +1361,7 @@ class LArray(ABCLArray):
          a1  -1   3   2
          a2  -1  -1  -1
          a0  -1   1   0
-        >>> arr.reindex({x.a: a, x.b: b})
+        >>> arr.reindex({X.a: a, X.b: b})
         a\\b   b2   b1   b0
          a1  nan  3.0  2.0
          a2  nan  nan  nan
@@ -1682,7 +1682,7 @@ class LArray(ABCLArray):
              EU  0  1
              FO  2  3
              BE  4  5
-        >>> a.sort_axis(x.sex)
+        >>> a.sort_axis(X.sex)
         nat\\sex  F  M
              EU  1  0
              FO  3  2
@@ -1692,7 +1692,7 @@ class LArray(ABCLArray):
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axis((x.sex, x.nat))
+        >>> a.sort_axis((X.sex, X.nat))
         nat\\sex  F  M
              BE  5  4
              EU  1  0
@@ -2416,7 +2416,7 @@ class LArray(ABCLArray):
         a\\b  b2  b3
          a1   0   1
          a2   4   9
-        >>> arr1.drop_labels(x.a) * arr2.drop_labels(x.b)
+        >>> arr1.drop_labels(X.a) * arr2.drop_labels(X.b)
         a\\b  b1  b2
          a1   0   1
          a2   4   9
@@ -2933,7 +2933,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argmin(x.sex)
+        >>> arr.argmin(X.sex)
         nat  BE  FR  IT
               M   F   M
         >>> arr.argmin()
@@ -2974,7 +2974,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.posargmin(x.sex)
+        >>> arr.posargmin(X.sex)
         nat  BE  FR  IT
               0   1   0
         >>> arr.posargmin()
@@ -3013,7 +3013,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argmax(x.sex)
+        >>> arr.argmax(X.sex)
         nat  BE  FR  IT
               F   M   F
         >>> arr.argmax()
@@ -3054,7 +3054,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.posargmax(x.sex)
+        >>> arr.posargmax(X.sex)
         nat  BE  FR  IT
               1   0   1
         >>> arr.posargmax()
@@ -3093,7 +3093,7 @@ class LArray(ABCLArray):
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.argsort(x.sex)
+        >>> arr.argsort(X.sex)
         nat\\sex  0  1
              BE  M  F
              FR  F  M
@@ -3134,7 +3134,7 @@ class LArray(ABCLArray):
              BE  1  5
              FR  3  2
              IT  0  4
-        >>> arr.posargsort(x.nat)
+        >>> arr.posargsort(X.nat)
         nat\\sex  M  F
               0  2  1
               1  0  2
@@ -3211,7 +3211,7 @@ class LArray(ABCLArray):
         nat\\sex    M    F
              BE  0.2  0.3
              FO  0.1  0.4
-        >>> a.ratio(x.sex)
+        >>> a.ratio(X.sex)
         nat\\sex    M    F
              BE  0.4  0.6
              FO  0.2  0.8
@@ -3303,14 +3303,14 @@ class LArray(ABCLArray):
         a\\b   b0   b1   b2
          a0  0.3  0.0  0.1
          a1  0.2  0.0  0.4
-        >>> arr.rationot0(x.a)
+        >>> arr.rationot0(X.a)
         a\\b   b0   b1   b2
          a0  0.6  0.0  0.2
          a1  0.4  0.0  0.8
 
         for reference, the normal ratio method would return:
 
-        >>> arr.ratio(x.a)
+        >>> arr.ratio(X.a)
         a\\b   b0   b1   b2
          a0  0.6  nan  0.2
          a1  0.4  nan  0.8
@@ -3342,7 +3342,7 @@ class LArray(ABCLArray):
         nat\\sex     M     F
              BE  20.0  30.0
              FO  10.0  40.0
-        >>> a.percent(x.sex)
+        >>> a.percent(X.sex)
         nat\\sex     M     F
              BE  40.0  60.0
              FO  20.0  80.0
@@ -3408,11 +3408,11 @@ class LArray(ABCLArray):
         >>> barr.all()
         False
         >>> # along axis 'a'
-        >>> barr.all(x.a)
+        >>> barr.all(X.a)
         b     b0     b1     b2     b3
            False  False  False  False
         >>> # along axis 'b'
-        >>> barr.all(x.b)
+        >>> barr.all(X.b)
         a    a0     a1     a2     a3
            True  False  False  False
 
@@ -3435,7 +3435,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> barr.all((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> barr.all((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b     b0     b1     b2     b3
         a01   True   True  False  False
         a23  False  False  False  False
@@ -3478,11 +3478,11 @@ class LArray(ABCLArray):
         >>> barr.all_by()
         False
         >>> # by axis 'a'
-        >>> barr.all_by(x.a)
+        >>> barr.all_by(X.a)
         a    a0     a1     a2     a3
            True  False  False  False
         >>> # by axis 'b'
-        >>> barr.all_by(x.b)
+        >>> barr.all_by(X.b)
         b     b0     b1     b2     b3
            False  False  False  False
 
@@ -3503,7 +3503,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> barr.all_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> barr.all_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a    a01    a23
            False  False
         >>> # or equivalently
@@ -3545,11 +3545,11 @@ class LArray(ABCLArray):
         >>> barr.any()
         True
         >>> # along axis 'a'
-        >>> barr.any(x.a)
+        >>> barr.any(X.a)
         b    b0    b1    b2    b3
            True  True  True  True
         >>> # along axis 'b'
-        >>> barr.any(x.b)
+        >>> barr.any(X.b)
         a    a0    a1     a2     a3
            True  True  False  False
 
@@ -3572,7 +3572,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> barr.any((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> barr.any((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b     b0     b1     b2     b3
         a01   True   True   True   True
         a23  False  False  False  False
@@ -3615,11 +3615,11 @@ class LArray(ABCLArray):
         >>> barr.any_by()
         True
         >>> # by axis 'a'
-        >>> barr.any_by(x.a)
+        >>> barr.any_by(X.a)
         a    a0    a1     a2     a3
            True  True  False  False
         >>> # by axis 'b'
-        >>> barr.any_by(x.b)
+        >>> barr.any_by(X.b)
         b    b0    b1    b2    b3
            True  True  True  True
 
@@ -3640,7 +3640,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> barr.any_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> barr.any_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a   a01    a23
            True  False
         >>> # or equivalently
@@ -3678,11 +3678,11 @@ class LArray(ABCLArray):
         >>> arr.sum()
         120
         >>> # along axis 'a'
-        >>> arr.sum(x.a)
+        >>> arr.sum(X.a)
         b  b0  b1  b2  b3
            24  28  32  36
         >>> # along axis 'b'
-        >>> arr.sum(x.b)
+        >>> arr.sum(X.b)
         a  a0  a1  a2  a3
             6  22  38  54
 
@@ -3705,7 +3705,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.sum((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.sum((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b  b0  b1  b2  b3
         a01   4   6   8  10
         a23  20  22  24  26
@@ -3742,11 +3742,11 @@ class LArray(ABCLArray):
         >>> arr.sum_by()
         120
         >>> # along axis 'a'
-        >>> arr.sum_by(x.a)
+        >>> arr.sum_by(X.a)
         a  a0  a1  a2  a3
             6  22  38  54
         >>> # along axis 'b'
-        >>> arr.sum_by(x.b)
+        >>> arr.sum_by(X.b)
         b  b0  b1  b2  b3
            24  28  32  36
 
@@ -3767,7 +3767,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.sum_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.sum_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
             28   92
         >>> # or equivalently
@@ -3804,11 +3804,11 @@ class LArray(ABCLArray):
         >>> arr.prod()
         0
         >>> # along axis 'a'
-        >>> arr.prod(x.a)
+        >>> arr.prod(X.a)
         b  b0   b1    b2    b3
             0  585  1680  3465
         >>> # along axis 'b'
-        >>> arr.prod(x.b)
+        >>> arr.prod(X.b)
         a  a0   a1    a2     a3
             0  840  7920  32760
 
@@ -3831,7 +3831,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.prod((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.prod((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b  b0   b1   b2   b3
         a01   0    5   12   21
         a23  96  117  140  165
@@ -3869,11 +3869,11 @@ class LArray(ABCLArray):
         >>> arr.prod_by()
         0
         >>> # along axis 'a'
-        >>> arr.prod_by(x.a)
+        >>> arr.prod_by(X.a)
         a  a0   a1    a2     a3
             0  840  7920  32760
         >>> # along axis 'b'
-        >>> arr.prod_by(x.b)
+        >>> arr.prod_by(X.b)
         b  b0   b1    b2    b3
             0  585  1680  3465
 
@@ -3894,7 +3894,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.prod_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.prod_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01        a23
              0  259459200
         >>> # or equivalently
@@ -3929,11 +3929,11 @@ class LArray(ABCLArray):
         >>> arr.min()
         0
         >>> # along axis 'a'
-        >>> arr.min(x.a)
+        >>> arr.min(X.a)
         b  b0  b1  b2  b3
             0   1   2   3
         >>> # along axis 'b'
-        >>> arr.min(x.b)
+        >>> arr.min(X.b)
         a  a0  a1  a2  a3
             0   4   8  12
 
@@ -3956,7 +3956,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.min((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.min((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b  b0  b1  b2  b3
         a01   0   1   2   3
         a23   8   9  10  11
@@ -3992,11 +3992,11 @@ class LArray(ABCLArray):
         >>> arr.min_by()
         0
         >>> # along axis 'a'
-        >>> arr.min_by(x.a)
+        >>> arr.min_by(X.a)
         a  a0  a1  a2  a3
             0   4   8  12
         >>> # along axis 'b'
-        >>> arr.min_by(x.b)
+        >>> arr.min_by(X.b)
         b  b0  b1  b2  b3
             0   1   2   3
 
@@ -4017,7 +4017,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.min_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.min_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
              0    8
         >>> # or equivalently
@@ -4052,11 +4052,11 @@ class LArray(ABCLArray):
         >>> arr.max()
         15
         >>> # along axis 'a'
-        >>> arr.max(x.a)
+        >>> arr.max(X.a)
         b  b0  b1  b2  b3
            12  13  14  15
         >>> # along axis 'b'
-        >>> arr.max(x.b)
+        >>> arr.max(X.b)
         a  a0  a1  a2  a3
             3   7  11  15
 
@@ -4079,7 +4079,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.max((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.max((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b  b0  b1  b2  b3
         a01   4   5   6   7
         a23  12  13  14  15
@@ -4115,11 +4115,11 @@ class LArray(ABCLArray):
         >>> arr.max_by()
         15
         >>> # along axis 'a'
-        >>> arr.max_by(x.a)
+        >>> arr.max_by(X.a)
         a  a0  a1  a2  a3
             3   7  11  15
         >>> # along axis 'b'
-        >>> arr.max_by(x.b)
+        >>> arr.max_by(X.b)
         b  b0  b1  b2  b3
            12  13  14  15
 
@@ -4140,7 +4140,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.max_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.max_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
              7   15
         >>> # or equivalently
@@ -4177,11 +4177,11 @@ class LArray(ABCLArray):
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
-        >>> arr.mean(x.a)
+        >>> arr.mean(X.a)
         b   b0   b1   b2   b3
            6.0  7.0  8.0  9.0
         >>> # along axis 'b'
-        >>> arr.mean(x.b)
+        >>> arr.mean(X.b)
         a   a0   a1   a2    a3
            1.5  5.5  9.5  13.5
 
@@ -4204,7 +4204,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.mean((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.mean((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b    b0    b1    b2    b3
         a01   2.0   3.0   4.0   5.0
         a23  10.0  11.0  12.0  13.0
@@ -4242,11 +4242,11 @@ class LArray(ABCLArray):
         >>> arr.mean()
         7.5
         >>> # along axis 'a'
-        >>> arr.mean_by(x.a)
+        >>> arr.mean_by(X.a)
         a   a0   a1   a2    a3
            1.5  5.5  9.5  13.5
         >>> # along axis 'b'
-        >>> arr.mean_by(x.b)
+        >>> arr.mean_by(X.b)
         b   b0   b1   b2   b3
            6.0  7.0  8.0  9.0
 
@@ -4267,7 +4267,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.mean_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.mean_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01   a23
            3.5  11.5
         >>> # or equivalently
@@ -4308,11 +4308,11 @@ class LArray(ABCLArray):
         >>> arr.median()
         6.5
         >>> # along axis 'a'
-        >>> arr.median(x.a)
+        >>> arr.median(X.a)
         b   b0   b1   b2   b3
            7.5  7.5  4.0  8.0
         >>> # along axis 'b'
-        >>> arr.median(x.b)
+        >>> arr.median(X.b)
         a   a0   a1   a2   a3
            8.0  6.0  4.0  7.5
 
@@ -4335,7 +4335,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.median((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.median((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b   b0   b1   b2   b3
         a01  7.5  7.5  4.0  8.0
         a23  7.5  6.0  2.5  7.5
@@ -4377,11 +4377,11 @@ class LArray(ABCLArray):
         >>> arr.median_by()
         6.5
         >>> # along axis 'a'
-        >>> arr.median_by(x.a)
+        >>> arr.median_by(X.a)
         a   a0   a1   a2   a3
            8.0  6.0  4.0  7.5
         >>> # along axis 'b'
-        >>> arr.median_by(x.b)
+        >>> arr.median_by(X.b)
         b   b0   b1   b2   b3
            7.5  7.5  4.0  8.0
 
@@ -4402,7 +4402,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.median_by((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.median_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01   a23
            7.0  5.75
         >>> # or equivalently
@@ -4443,15 +4443,15 @@ class LArray(ABCLArray):
         >>> arr.percentile(25)
         3.75
         >>> # along axis 'a'
-        >>> arr.percentile(25, x.a)
+        >>> arr.percentile(25, X.a)
         b   b0   b1   b2   b3
            3.0  4.0  5.0  6.0
         >>> # along axis 'b'
-        >>> arr.percentile(25, x.b)
+        >>> arr.percentile(25, X.b)
         a    a0    a1    a2     a3
            0.75  4.75  8.75  12.75
         >>> # several percentile values
-        >>> arr.percentile([25, 50, 75], x.b)
+        >>> arr.percentile([25, 50, 75], X.b)
         percentile\\a    a0    a1     a2     a3
                   25  0.75  4.75   8.75  12.75
                   50   1.5   5.5    9.5   13.5
@@ -4476,7 +4476,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.percentile(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.percentile(25, (X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b   b0    b1    b2    b3
         a01  1.0   2.0   3.0   4.0
         a23  9.0  10.0  11.0  12.0
@@ -4530,15 +4530,15 @@ class LArray(ABCLArray):
         >>> arr.percentile_by(25)
         3.75
         >>> # along axis 'a'
-        >>> arr.percentile_by(25, x.a)
+        >>> arr.percentile_by(25, X.a)
         a    a0    a1    a2     a3
            0.75  4.75  8.75  12.75
         >>> # along axis 'b'
-        >>> arr.percentile_by(25, x.b)
+        >>> arr.percentile_by(25, X.b)
         b   b0   b1   b2   b3
            3.0  4.0  5.0  6.0
         >>> # several percentile values
-        >>> arr.percentile_by([25, 50, 75], x.b)
+        >>> arr.percentile_by([25, 50, 75], X.b)
         percentile\\b   b0    b1    b2    b3
                   25  3.0   4.0   5.0   6.0
                   50  6.0   7.0   8.0   9.0
@@ -4561,7 +4561,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.percentile_by(25, (x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.percentile_by(25, (X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a   a01   a23
            1.75  9.75
         >>> # or equivalently
@@ -4611,11 +4611,11 @@ class LArray(ABCLArray):
         >>> arr.ptp()
         15
         >>> # along axis 'a'
-        >>> arr.ptp(x.a)
+        >>> arr.ptp(X.a)
         b  b0  b1  b2  b3
            12  12  12  12
         >>> # along axis 'b'
-        >>> arr.ptp(x.b)
+        >>> arr.ptp(X.b)
         a  a0  a1  a2  a3
             3   3   3   3
 
@@ -4638,7 +4638,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.ptp((x.a['a0', 'a1'] >> 'a01', x.a['a2', 'a3'] >> 'a23'))
+        >>> arr.ptp((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a\\b  b0  b1  b2  b3
         a01   4   4   4   4
         a23   4   4   4   4
@@ -4681,7 +4681,7 @@ class LArray(ABCLArray):
         >>> arr.var()
         4.7999999999999998
         >>> # along axis 'b'
-        >>> arr.var(x.b)
+        >>> arr.var(X.b)
         a   a0   a1
            4.0  4.0
 
@@ -4704,7 +4704,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.var((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        >>> arr.var((X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
         a\\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
@@ -4744,13 +4744,13 @@ class LArray(ABCLArray):
         >>> arr.var_by()
         4.7999999999999998
         >>> # along axis 'a'
-        >>> arr.var_by(x.a)
+        >>> arr.var_by(X.a)
         a   a0   a1
            4.0  4.0
 
         Select some columns only
 
-        >>> arr.var_by(x.a, ['b0','b1','b3'])
+        >>> arr.var_by(X.a, ['b0','b1','b3'])
         a   a0   a1
            9.0  4.0
         >>> # or equivalently
@@ -4758,7 +4758,7 @@ class LArray(ABCLArray):
 
         Split an axis in several parts
 
-        >>> arr.var_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
+        >>> arr.var_by(X.a, (['b0', 'b1', 'b3'], 'b5:'))
         a\\b  b0,b1,b3  b5:
          a0       9.0  1.0
          a1       4.0  1.0
@@ -4767,7 +4767,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.var_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        >>> arr.var_by(X.a, (X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
         a\\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
@@ -4807,7 +4807,7 @@ class LArray(ABCLArray):
         >>> arr.std()
         2.1908902300206643
         >>> # along axis 'b'
-        >>> arr.std(x.b)
+        >>> arr.std(X.b)
         a   a0   a1
            2.0  2.0
 
@@ -4830,7 +4830,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.std((x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        >>> arr.std((X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
         a\\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
@@ -4871,13 +4871,13 @@ class LArray(ABCLArray):
         >>> arr.std_by()
         2.1908902300206643
         >>> # along axis 'a'
-        >>> arr.std_by(x.a)
+        >>> arr.std_by(X.a)
         a   a0   a1
            2.0  2.0
 
         Select some columns only
 
-        >>> arr.std_by(x.a, ['b0','b1','b3'])
+        >>> arr.std_by(X.a, ['b0','b1','b3'])
         a   a0   a1
            3.0  2.0
         >>> # or equivalently
@@ -4885,7 +4885,7 @@ class LArray(ABCLArray):
 
         Split an axis in several parts
 
-        >>> arr.std_by(x.a, (['b0', 'b1', 'b3'], 'b5:'))
+        >>> arr.std_by(X.a, (['b0', 'b1', 'b3'], 'b5:'))
         a\\b  b0,b1,b3  b5:
          a0       3.0  1.0
          a1       2.0  1.0
@@ -4894,7 +4894,7 @@ class LArray(ABCLArray):
 
         Same with renaming
 
-        >>> arr.std_by(x.a, (x.b['b0', 'b1', 'b3'] >> 'b013', x.b['b5:'] >> 'b567'))
+        >>> arr.std_by(X.a, (X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
         a\\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
@@ -4943,7 +4943,7 @@ class LArray(ABCLArray):
          a1   4   9  15  22
          a2   8  17  27  38
          a3  12  25  39  54
-        >>> arr.cumsum(x.a)
+        >>> arr.cumsum(X.a)
         a\\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   6   8  10
@@ -4991,7 +4991,7 @@ class LArray(ABCLArray):
          a1   4   20   120    840
          a2   8   72   720   7920
          a3  12  156  2184  32760
-        >>> arr.cumprod(x.a)
+        >>> arr.cumprod(X.a)
         a\\b  b0   b1    b2    b3
          a0   0    1     2     3
          a1   0    5    12    21
@@ -5325,11 +5325,11 @@ class LArray(ABCLArray):
         nat\\sex    M    F
              BE  1.0  1.0
              FO  1.0  1.0
-        >>> a.append(x.sex, a.sum(x.sex), 'M+F')
+        >>> a.append(X.sex, a.sum(X.sex), 'M+F')
         nat\\sex    M    F  M+F
              BE  1.0  1.0  2.0
              FO  1.0  1.0  2.0
-        >>> a.append(x.nat, 2, 'Other')
+        >>> a.append(X.nat, 2, 'Other')
         nat\\sex    M    F
              BE  1.0  1.0
              FO  1.0  1.0
@@ -5338,7 +5338,7 @@ class LArray(ABCLArray):
         >>> b
         type  type1  type2
                 0.0    0.0
-        >>> a.append(x.nat, b, 'Other')
+        >>> a.append(X.nat, b, 'Other')
           nat  sex\\type  type1  type2
            BE         M    1.0    1.0
            BE         F    1.0    1.0
@@ -5382,11 +5382,11 @@ class LArray(ABCLArray):
         nat\sex    M    F
              BE  1.0  1.0
              FO  1.0  1.0
-        >>> a.prepend(x.sex, a.sum(x.sex), 'M+F')
+        >>> a.prepend(X.sex, a.sum(X.sex), 'M+F')
         nat\\sex  M+F    M    F
              BE  2.0  1.0  1.0
              FO  2.0  1.0  1.0
-        >>> a.prepend(x.nat, 2, 'Other')
+        >>> a.prepend(X.nat, 2, 'Other')
         nat\\sex    M    F
           Other  2.0  2.0
              BE  1.0  1.0
@@ -5395,7 +5395,7 @@ class LArray(ABCLArray):
         >>> b
         type  type1  type2
                 0.0    0.0
-        >>> a.prepend(x.nat, b, 'Other')
+        >>> a.prepend(X.nat, b, 'Other')
          type  nat\sex    M    F
         type1    Other  0.0  0.0
         type1       BE  1.0  1.0
@@ -5446,7 +5446,7 @@ class LArray(ABCLArray):
         >>> arr2
         sex\\type  type1  type2
                U    0.0    0.0
-        >>> arr1.extend(x.sex, arr2)
+        >>> arr1.extend(X.sex, arr2)
         sex\\type  type1  type2
                M    1.0    1.0
                F    1.0    1.0
@@ -5455,7 +5455,7 @@ class LArray(ABCLArray):
         >>> arr3
         sex\\nat   BE   FO
               U  0.0  0.0
-        >>> arr1.extend(x.sex, arr3)
+        >>> arr1.extend(X.sex, arr3)
         sex  type\\nat   BE   FO
           M     type1  1.0  1.0
           M     type2  1.0  1.0
@@ -6075,7 +6075,7 @@ class LArray(ABCLArray):
         nat\\sex  M  F
              BE  0  1
              FO  2  3
-        >>> a.set_labels(x.sex, ['Men', 'Women'])
+        >>> a.set_labels(X.sex, ['Men', 'Women'])
         nat\\sex  Men  Women
              BE    0      1
              FO    2      3
@@ -6083,14 +6083,14 @@ class LArray(ABCLArray):
         when passing a single string as labels, it will be interpreted to create the list of labels, so that one can
         use the same syntax than during axis creation.
 
-        >>> a.set_labels(x.sex, 'Men,Women')
+        >>> a.set_labels(X.sex, 'Men,Women')
         nat\\sex  Men  Women
              BE    0      1
              FO    2      3
 
         to replace only some labels, one must give a mapping giving the new label for each label to replace
 
-        >>> a.set_labels(x.sex, {'M': 'Men'})
+        >>> a.set_labels(X.sex, {'M': 'Men'})
         nat\\sex  Men  F
              BE    0  1
              FO    2  3
@@ -6157,11 +6157,11 @@ class LArray(ABCLArray):
         sex\\type  type1  type2  type3
                M      0      1      2
                F      3      4      5
-        >>> a.shift(x.type)
+        >>> a.shift(X.type)
         sex\\type  type2  type3
                M      0      1
                F      3      4
-        >>> a.shift(x.type, n=-1)
+        >>> a.shift(X.type, n=-1)
         sex\\type  type1  type2
                M      1      2
                F      4      5
@@ -6202,7 +6202,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum(x.type)
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum(X.type)
         >>> a
         sex\\type  type1  type2  type3
                M      0      1      3
@@ -6215,7 +6215,7 @@ class LArray(ABCLArray):
         sex\\type  type3
                M      1
                F      1
-        >>> a.diff(x.sex)
+        >>> a.diff(X.sex)
         sex\\type  type1  type2  type3
                F      3      6      9
         """
@@ -6344,7 +6344,7 @@ class LArray(ABCLArray):
         a1   b0  12  13  14  15
         a1   b1  16  17  18  19
         a1   b2  20  21  22  23
-        >>> arr.combine_axes((x.a, x.c))
+        >>> arr.combine_axes((X.a, X.c))
         a_c\\b  b0  b1  b2
         a0_c0   0   4   8
         a0_c1   1   5   9
@@ -6396,7 +6396,7 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
                  0      1      2      3      4      5
-        >>> combined.split_axis(x.a_b)
+        >>> combined.split_axis(X.a_b)
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
@@ -6407,7 +6407,7 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
-        >>> combined.split_axis(x.a_b, regex='(\w{2})(\w{2})')
+        >>> combined.split_axis(X.a_b, regex='(\w{2})(\w{2})')
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
@@ -6850,7 +6850,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     >>> sequence(3)
     {0}*  0  1  2
           0  1  2
-    >>> sequence(x.year, axes=(sex, year))
+    >>> sequence(X.year, axes=(sex, year))
     sex\\year  2016  2017  2018  2019
            M     0     1     2     3
            F     0     1     2     3

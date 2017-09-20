@@ -123,12 +123,12 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
 
     and some targets for each year:
 
-    >>> btargets = initial.sum(x.a) + 1
+    >>> btargets = initial.sum(X.a) + 1
     >>> btargets
     b\year  2014  2015  2016
         b0     7     9    11
         b1    13    15    17
-    >>> atargets = initial.sum(x.b) + 1
+    >>> atargets = initial.sum(X.b) + 1
     >>> atargets
     a\year  2014  2015  2016
         a0     4     6     8
@@ -138,7 +138,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     the year axis, but you can also apply the procedure for all years at once by using the axes argument. This is
     *much* faster than an explicit loop.
 
-    >>> result = ipfp([btargets, atargets], initial, axes=(x.a, x.b))
+    >>> result = ipfp([btargets, atargets], initial, axes=(X.a, X.b))
     """
     assert nzvzs in {'fix', 'warn', 'raise'}
     assert no_convergence in {'ignore', 'warn', 'raise'}
