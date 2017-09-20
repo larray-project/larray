@@ -2504,6 +2504,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
+        # fill_value argument
+        la = read_excel(abspath('test.xlsx'), 'missing_values', fill_value=42)
+        assert la.ndim == 3
+        assert la.shape == (5, 2, 3)
+        assert la.axes.names == ['age', 'sex', 'time']
+        assert_array_equal(la[1, 'H', :], [42, 42, 42])
+        assert_array_equal(la[4, 'F', :], [42, 42, 42])
+
+        # invalid keyword argument
         with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
                                                 "the xlwings backend"):
             read_excel(abspath('test.xlsx'), engine='xlwings', dtype=float)
@@ -2552,6 +2561,33 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
+
+    def test_from_lists(self):
+        # sort_rows
+        arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                          ['F', 'BE', 0, 0, 1],
+                          ['F', 'FO', 0, 0, 2],
+                          ['M', 'BE', 1, 0, 0],
+                          ['M', 'FO', 2, 0, 0]])
+        sorted_arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                                 ['M', 'BE', 1, 0, 0],
+                                 ['M', 'FO', 2, 0, 0],
+                                 ['F', 'BE', 0, 0, 1],
+                                 ['F', 'FO', 0, 0, 2]], sort_rows=True)
+        assert_array_equal(sorted_arr, arr)
+
+        # sort_columns
+        arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                          ['M', 'BE', 1, 0, 0],
+                          ['M', 'FO', 2, 0, 0],
+                          ['F', 'BE', 0, 0, 1],
+                          ['F', 'FO', 0, 0, 2]])
+        sorted_arr = from_lists([['sex', 'nat\\year', 1992, 1991, 1993],
+                                 ['M', 'BE', 0, 1, 0],
+                                 ['M', 'FO', 0, 2, 0],
+                                 ['F', 'BE', 0, 0, 1],
+                                 ['F', 'FO', 0, 0, 2]], sort_columns=True)
+        assert_array_equal(sorted_arr, arr)
 
     def test_df_aslarray(self):
         dt = [('age', int), ('sex', 'U1'),
