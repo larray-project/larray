@@ -436,6 +436,15 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
       M       FO   2.0   0.0   0.0
       F       BE   0.0   0.0   1.0
       F       FO   nan   nan   nan
+    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+    ...             [  'M', 'BE',           1,    0,    0],
+    ...             [  'M', 'FO',           2,    0,    0],
+    ...             [  'F', 'BE',           0,    0,    1]], fill_value=42)
+    sex  nat\\year  1991  1992  1993
+      M        BE     1     0     0
+      M        FO     2     0     0
+      F        BE     0     0     1
+      F        FO    42    42    42
     """
     if nb_index is not None and index_col is not None:
         raise ValueError("cannot specify both nb_index and index_col")
