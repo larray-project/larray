@@ -21,6 +21,10 @@ class TestAxis(TestCase):
         sex_list = ['M', 'F']
         sex_array = np.array(sex_list)
 
+        # wildcard axis
+        axis = Axis(10, 'axis')
+        assert len(axis) == 10
+        assert list(axis.labels) == list(range(10))
         # tuple of strings
         assert_array_equal(Axis(sex_tuple, 'sex').labels, sex_array)
         # list of strings
