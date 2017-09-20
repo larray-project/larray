@@ -364,7 +364,7 @@ def _to_tick(v):
         return str(v)
 
 
-def _to_ticks(s):
+def _to_ticks(s, parse_single_int=False):
     """
     Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
 
@@ -410,10 +410,10 @@ def _to_ticks(s):
     elif sys.version >= '3' and isinstance(s, range):
         return list(s)
     elif isinstance(s, basestring):
-        seq = _seq_str_to_seq(s)
+        seq = _seq_str_to_seq(s, parse_single_int=parse_single_int)
         if isinstance(seq, slice):
             raise ValueError("using : to define axes is deprecated, please use .. instead")
-        elif isinstance(seq, basestring):
+        elif isinstance(seq, (basestring, int)):
             return [seq]
         else:
             return seq

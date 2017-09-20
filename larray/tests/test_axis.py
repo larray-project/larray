@@ -21,6 +21,10 @@ class TestAxis(TestCase):
         sex_list = ['M', 'F']
         sex_array = np.array(sex_list)
 
+        # wildcard axis
+        axis = Axis(10, 'axis')
+        assert len(axis) == 10
+        assert list(axis.labels) == list(range(10))
         # tuple of strings
         assert_array_equal(Axis(sex_tuple, 'sex').labels, sex_array)
         # list of strings
@@ -526,6 +530,13 @@ class TestAxisCollection(TestCase):
         self.assertEqual(col2.names, ['lipro', 'sex'])
         assert_array_equal(col2.lipro.labels, ['P01', 'P02', 'P03'])
         assert_array_equal(col2.sex.labels, ['M', 'F'])
+
+    def test_init_from_string(self):
+        col = AxisCollection('age=10;sex=M,F;year=2000..2017')
+        assert col.names == ['age', 'sex', 'year']
+        assert list(col.age.labels) == [10]
+        assert list(col.sex.labels) == ['M', 'F']
+        assert list(col.year.labels) == [y for y in range(2000, 2018)]
 
     def test_eq(self):
         col = self.collection
