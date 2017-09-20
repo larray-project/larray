@@ -117,4 +117,4 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed array creation with axis(es) containing only one label (axis name and label were inversed).
+* fixed array creation with axis(es) given as string containing only one label (axis name and label were inversed).

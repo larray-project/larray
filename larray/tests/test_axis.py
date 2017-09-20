@@ -527,6 +527,13 @@ class TestAxisCollection(TestCase):
         assert_array_equal(col2.lipro.labels, ['P01', 'P02', 'P03'])
         assert_array_equal(col2.sex.labels, ['M', 'F'])
 
+    def test_init_from_string(self):
+        col = AxisCollection('age=10;sex=M,F;year=2000..2017')
+        assert col.names == ['age', 'sex', 'year']
+        assert list(col.age.labels) == [10]
+        assert list(col.sex.labels) == ['M', 'F']
+        assert list(col.year.labels) == [y for y in range(2000, 2018)]
+
     def test_eq(self):
         col = self.collection
         self.assertEqual(col, col)

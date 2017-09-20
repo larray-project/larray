@@ -187,7 +187,7 @@ class Axis(ABCAxis):
             # we convert to an ndarray to save memory for scalar ticks (for
             # LGroup ticks, it does not make a difference since a list of LGroup
             # and an ndarray of LGroup are both arrays of pointers)
-            ticks = _to_ticks(labels)
+            ticks = _to_ticks(labels, parse_single_int=True)
             if _contain_group_ticks(ticks):
                 # avoid getting a 2d array if all LGroup have the same length
                 labels = np.empty(len(ticks), dtype=object)
