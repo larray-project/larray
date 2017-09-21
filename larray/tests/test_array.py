@@ -2405,7 +2405,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(axis.name, 'axis')
         assert_array_equal(axis.labels, ['10', '20'])
 
-        # passing group as sheet_name
+        # passing group as key to to_hdf
         a3 = ndtest((4, 3, 4))
         fpath = abspath('test.h5')
         os.remove(fpath)
@@ -2425,9 +2425,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         group = a3.c['c0,c2'] >> ':name?with*special/\[characters]'
         a3[group].to_hdf(fpath, group)
 
+        # passing group as key to read_hdf
+        for label in a3.a:
+            subset = read_hdf(fpath, label)
+            assert_array_equal(subset, a3[label])
+
+        # load Session
         from  larray.core.session import Session
         s = Session(fpath)
         assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
+
 
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
@@ -2504,6 +2511,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
+        # passing a Group as sheetname arg
+        axis = Axis('dim=1d,2d,3d,5d')
+
+        la = read_excel(abspath('test.xlsx'), axis['1d'])
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes.names, ['time'])
+        assert_array_equal(la, [3722, 3395, 3347])
+
         # fill_value argument
         la = read_excel(abspath('test.xlsx'), 'missing_values', fill_value=42)
         assert la.ndim == 3
@@ -2561,6 +2577,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
+
+        # passing a Group as sheetname arg
+        axis = Axis('dim=1d,2d,3d,5d')
+
+        la = read_excel(abspath('test.xlsx'), axis['1d'], engine='xlrd')
+        self.assertEqual(la.ndim, 1)
+        self.assertEqual(la.shape, (3,))
+        self.assertEqual(la.axes.names, ['time'])
+        assert_array_equal(la, [3722, 3395, 3347])
 
     def test_from_lists(self):
         # sort_rows
