@@ -2435,7 +2435,6 @@ age    0       1       2       3       4       5       6       7        8  ...  
         s = Session(fpath)
         assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
-
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
