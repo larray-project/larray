@@ -569,6 +569,7 @@ class Axis(ABCAxis):
         return list(self.labels)
 
     def __contains__(self, key):
+        # TODO: ideally, _to_tick shouldn't be necessary, the __hash__ and __eq__ of Group should include this
         return _to_tick(key) in self._mapping
 
     def __hash__(self):

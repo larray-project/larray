@@ -968,6 +968,7 @@ class Group(object):
             elif isinstance(key, (tuple, list)):
                 return PGroup([orig_start_pos + k * orig_step for k in key], None, self.axis)
         elif isinstance(orig_key, ABCLArray):
+            # XXX: why .i ?
             return cls(orig_key.i[key], None, self.axis)
         elif isinstance(orig_key, int):
             # give the opportunity to subset the label/key itself (for example for string keys)
@@ -983,16 +984,20 @@ class Group(object):
     def _binop(opname):
         op_fullname = '__%s__' % opname
 
-        # TODO: implement this in a delayed fashion for reference axes
+        # TODO: implement this in a delayed fashion for axes references
         if PY2:
             # workaround the fact slice objects do not have any __binop__ methods defined on Python2 (even though
             # the actual operations work on them).
             def opmethod(self, other):
                 self_value = self.eval()
                 other_value = other.eval() if isinstance(other, Group) else other
+                # this can only happen when self.axis is not an Axis instance
                 if isinstance(self_value, slice):
                     if not isinstance(other_value, slice):
+                        # FIXME: we should raise a TypeError instead for all ops except == and !=
+                        # FIXME: we should return True for !=
                         return False
+                    # FIXME: we should raise a TypeError instead of doing this for all ops except comparison ops
                     self_value = (self_value.start, self_value.stop, self_value.step)
                     other_value = (other_value.start, other_value.stop, other_value.step)
                 return getattr(self_value, op_fullname)(other_value)
