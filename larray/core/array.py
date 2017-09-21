@@ -6119,12 +6119,14 @@ class LArray(ABCLArray):
         Belgian    0  1
              FO    2  3
         """
-        if isinstance(axis, dict):
+        if axis is None:
+            changes = {}
+        elif isinstance(axis, dict):
             changes = axis
         elif isinstance(axis, (basestring, Axis, int)):
             changes = {axis: labels}
         else:
-            changes = {}
+            raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
         changes.update(kwargs)
         # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
         # new_axes = [self.axes[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
