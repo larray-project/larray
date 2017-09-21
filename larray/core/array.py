@@ -5415,7 +5415,7 @@ class LArray(ABCLArray):
         return value.extend(axis, self)
 
     def extend(self, axis, other):
-        """Adds an to self along an axis.
+        """Adds an array to self along an axis.
 
         The two arrays must have compatible axes.
 
