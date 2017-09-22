@@ -74,14 +74,23 @@ Miscellaneous improvements
 
 * allowed to pass a Group to `read_excel`/`read_hdf` as `sheetname`/`key` argument (closes :issue:`439`).
 
-    >>> arr = ndtest((4, 4, 4))
-    >>> for label in arr.a:
-    ...     # excel (reading and writing to an Excel file should be done via open_excel function)
-    ...     arr[label].to_excel('my_file.xlsx', label)
-    ...     subset = read_excel('my_file.xlsx', label)
-    ...     # HDF
-    ...     arr[label].to_hdf('my_file.h5', label)
-    ...     subset = read_hdf('my_file.h5', label)
+    >>> a, b, c = arr.a, arr.b, arr.c
+
+    >>> # For Excel
+    >>> new_from_excel = zeros((a, b, c), dtype=int)
+    >>> for label in a:
+    ...     new_from_excel[label] = read_excel('my_file.xlsx', label)
+    >>> # But, to avoid loading the file in Excel repeatedly (which is very inefficient),
+    >>> # this particular example should rather be written like this:
+    >>> new_from_excel = zeros((a, b, c), dtype=int)
+    >>> with open_excel('my_file.xlsx') as wb:
+    ...     for label in a:
+    ...         new_from_excel[label] = wb[label].load()
+
+    >>> # For HDF
+    >>> new_from_hdf = zeros((a, b, c), dtype=int)
+    >>> for label in a:
+    ...     new_from_hdf[label] = read_hdf('my_file.h5', label)
 
 * allowed setting the name of a Group using another Group or Axis (closes :issue:`341`):
 
