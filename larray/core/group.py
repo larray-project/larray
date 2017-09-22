@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
+import fnmatch
 import re
 import sys
 import warnings
@@ -1276,44 +1277,73 @@ class Group(object):
             suffix = suffix.eval()
         return LGroup([v for v in self.eval() if v.endswith(suffix)], axis=self.axis)
 
-    def matching(self, pattern):
+    def matching(self, deprecated=None, pattern=None, regex=None):
         """
-        Returns a group with all the labels matching the specified pattern (regular expression).
+        Returns a group with all the labels matching the specified pattern or regular expression.
 
         Parameters
         ----------
         pattern : str or Group
-            Regular expression (regex).
+            Pattern to match.
+            * `?`     matches any single character
+            * `*`     matches any number of characters
+            * [seq]   matches any character in seq
+            * [!seq]  matches any character not in seq
+
+            To match any of the special characters above, wrap the character in brackets. For example, `[?]` matches
+            the character `?`.
+        regex : str or Group
+            Regular expression pattern to match. Regular expressions are more powerful than what the simple patterns
+            supported by the `pattern` argument but are also more complex to write.
+            See `Regular Expression <https://docs.python.org/3/library/re.html>`_ for more details about how to build
+            a regular expression pattern.
 
         Returns
         -------
         LGroup
             Group containing all the labels matching the pattern.
 
-        Notes
-        -----
-        See `Regular Expression <https://docs.python.org/3/library/re.html>`_
-        for more details about how to build a pattern.
-
         Examples
         --------
         >>> from larray import Axis
         >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Arthur Dent'], 'people')
 
-        All labels containing "B" and "e" with exactly 3 characters in between are given by
+        Let us create a group with all names starting with B
 
-        >>> group = people.matching('B...e')
+        >>> group = people.startingwith('B')
         >>> group
         people['Bruce Wayne', 'Bruce Willis']
 
         Within that group, all labels containing any characters then W then any characters then s are given by
-        >>> group.matching('.*W.*s')
+
+        >>> group.matching(pattern='*W*s')
         people['Bruce Willis']
+
+        Regular expressions are more powerful but usually harder to write and less readable. For example,
+        here are the labels not containing the letter "i".
+
+        >>> group.matching(regex='^[^i]*$')
+        people['Bruce Wayne']
         """
-        if isinstance(pattern, Group):
-            pattern = pattern.eval()
-        rx = re.compile(pattern)
-        return LGroup([v for v in self.eval() if rx.match(v)], axis=self.axis)
+        if deprecated is not None:
+            assert pattern is None and regex is None
+            regex = deprecated
+            warnings.warn("Group.matching() first argument will change to `pattern` in a later release. "
+                          "If your pattern is a regular expression, use Group.matching(regex='yourpattern')."
+                          "If your pattern is a 'simple pattern', use Group.matching(pattern='yourpattern').",
+                          FutureWarning, stacklevel=2)
+        if pattern is not None and regex is not None:
+            raise ValueError("Cannot use both `pattern` and `regex` arguments at the same time in Group.matching()")
+        if pattern is None and regex is None:
+            raise ValueError("Must provide either `pattern` or `regex` argument in Group.matching()")
+        if isinstance(regex, Group):
+            regex = regex.eval()
+        if pattern is not None:
+            if isinstance(pattern, Group):
+                pattern = pattern.eval()
+            regex = fnmatch.translate(pattern)
+        match = re.compile(regex).match
+        return LGroup([v for v in self.eval() if match(v)], axis=self.axis)
 
     def containing(self, substring):
         """

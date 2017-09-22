@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
+import fnmatch
 import re
 import sys
 import warnings
@@ -560,43 +561,77 @@ class Axis(ABCAxis):
         return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
             (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
 
-    def matching(self, pattern):
+    def matching(self, deprecated=None, pattern=None, regex=None):
         """
-        Returns a group with all the labels matching the specified pattern (regular expression).
+        Returns a group with all the labels matching the specified pattern or regular expression.
 
         Parameters
         ----------
         pattern : str or Group
-            Regular expression (regex).
+            Pattern to match.
+            * `?`     matches any single character
+            * `*`     matches any number of characters
+            * [seq]   matches any character in seq
+            * [!seq]  matches any character not in seq
+
+            To match any of the special characters above, wrap the character in brackets. For example, `[?]` matches
+            the character `?`.
+        regex : str or Group
+            Regular expression pattern to match. Regular expressions are more powerful than what the simple patterns
+            supported by the `pattern` argument but are also more complex to write.
+            See `Regular Expression <https://docs.python.org/3/library/re.html>`_ for more details about how to build
+            a regular expression pattern.
 
         Returns
         -------
         LGroup
             Group containing all the labels matching the pattern.
 
-        Notes
-        -----
-        See `Regular Expression <https://docs.python.org/3/library/re.html>`_
-        for more details about how to build a pattern.
-
         Examples
         --------
         >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
 
-        All labels starting with "W" and ending with "o" are given by
-
-        >>> people.matching('W.*o')
+        >>> # All labels starting with "A" and ending with "t"
+        >>> people.matching(pattern='A*t')
+        people['Arthur Dent']
+        >>> # All labels containing "W" and ending with "s"
+        >>> people.matching(pattern='*W*s')
+        people['Bruce Willis']
+        >>> # All labels with exactly 5 characters
+        >>> people.matching(pattern='?????')
         people['Waldo']
+        >>> # All labels starting with either "A" or "B"
+        >>> people.matching(pattern='[AB]*')
+        people['Bruce Wayne', 'Bruce Willis', 'Arthur Dent']
 
-        All labels not containing character "a"
+        Regular expressions are more powerful but usually harder to write and less readable
 
-        >>> people.matching('[^a]*$')
+        >>> # All labels starting with "W" and ending with "o"
+        >>> people.matching(regex='A.*t')
+        people['Arthur Dent']
+        >>> # All labels not containing character "a"
+        >>> people.matching(regex='^[^a]*$')
         people['Bruce Willis', 'Arthur Dent']
         """
-        if isinstance(pattern, Group):
-            pattern = pattern.eval()
-        rx = re.compile(pattern)
-        return LGroup([v for v in self.labels if rx.match(v)], axis=self)
+        if deprecated is not None:
+            assert pattern is None and regex is None
+            regex = deprecated
+            warnings.warn("Axis.matching() first argument will change to `pattern` in a later release. "
+                          "If your pattern is a regular expression, use Axis.matching(regex='yourpattern')."
+                          "If your pattern is a 'simple pattern', use Axis.matching(pattern='yourpattern').",
+                          FutureWarning, stacklevel=2)
+        if pattern is not None and regex is not None:
+            raise ValueError("Cannot use both `pattern` and `regex` arguments at the same time in Axis.matching()")
+        if pattern is None and regex is None:
+            raise ValueError("Must provide either `pattern` or `regex` argument in Axis.matching()")
+        if isinstance(regex, Group):
+            regex = regex.eval()
+        if pattern is not None:
+            if isinstance(pattern, Group):
+                pattern = pattern.eval()
+            regex = fnmatch.translate(pattern)
+        match = re.compile(regex).match
+        return LGroup([v for v in self.labels if match(v)], axis=self)
 
     matches = renamed_to(matching, 'matches')
 
