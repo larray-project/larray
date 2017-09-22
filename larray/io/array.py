@@ -8,6 +8,7 @@ import warnings
 
 from larray.core.axis import Axis
 from larray.core.array import LArray
+from larray.core.group import _translate_sheet_name, _translate_key_hdf
 from larray.util.misc import basestring, unique, decode, skip_comment_cells, strip_rows, csv_open, StringIO
 
 try:
@@ -275,7 +276,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
     ----------
     filepath_or_buffer : str or pandas.HDFStore
         Path and name where the HDF5 file is stored or a HDFStore object.
-    key : str
+    key : str or Group
         Name of the array.
     fill_value : scalar or LArray, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
@@ -294,6 +295,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
         fill_value = na
         warnings.warn("read_hdf `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
+
+    key = _translate_key_hdf(key)
     df = pd.read_hdf(filepath_or_buffer, key, **kwargs)
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, parse_header=False)
 
@@ -307,7 +310,7 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
     ----------
     filepath : str
         Path where the Excel file has to be read.
-    sheetname : str or int, optional
+    sheetname : str, Group or int, optional
         Name or index of the Excel sheet containing the array to be read.
         By default the array is read from the first sheet.
     nb_index : int, optional
@@ -331,6 +334,8 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
         fill_value = na
         warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
+
+    sheetname = _translate_sheet_name(sheetname)
 
     if engine is None:
         engine = 'xlwings' if xw is not None else None

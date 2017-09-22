@@ -72,6 +72,26 @@ Miscellaneous improvements
     ['_name_with_special___char_']
     >>> # special characters \ or / in labels or groups are replaced by an _ when exporting to HDF file
 
+* allowed to pass a Group to `read_excel`/`read_hdf` as `sheetname`/`key` argument (closes :issue:`439`).
+
+    >>> a, b, c = arr.a, arr.b, arr.c
+
+    >>> # For Excel
+    >>> new_from_excel = zeros((a, b, c), dtype=int)
+    >>> for label in a:
+    ...     new_from_excel[label] = read_excel('my_file.xlsx', label)
+    >>> # But, to avoid loading the file in Excel repeatedly (which is very inefficient),
+    >>> # this particular example should rather be written like this:
+    >>> new_from_excel = zeros((a, b, c), dtype=int)
+    >>> with open_excel('my_file.xlsx') as wb:
+    ...     for label in a:
+    ...         new_from_excel[label] = wb[label].load()
+
+    >>> # For HDF
+    >>> new_from_hdf = zeros((a, b, c), dtype=int)
+    >>> for label in a:
+    ...     new_from_hdf[label] = read_hdf('my_file.h5', label)
+
 * allowed setting the name of a Group using another Group or Axis (closes :issue:`341`):
 
     >>> arr = ndrange('axis=a,a0..a3,b,b0..b3,c,c0..c3')
