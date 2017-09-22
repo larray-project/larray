@@ -6048,7 +6048,7 @@ class LArray(ABCLArray):
     BE  0  1
     FO  2  3
     """
-    def set_labels(self, axis, labels=None, inplace=False):
+    def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
         """Replaces the labels of an axis of array.
 
         Parameters
@@ -6062,6 +6062,8 @@ class LArray(ABCLArray):
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
+        **kwargs : 
+            `axis`=`labels` for each axis you want to set labels. 
 
         Returns
         -------
@@ -6102,6 +6104,13 @@ class LArray(ABCLArray):
           nat\\sex  Men  Women
           Belgian    0      1
         Foreigner    2      3
+        
+        or use keyword arguments
+        
+        >>> a.set_labels(sex='Men,Women', nat='Belgian,Foreigner')
+          nat\\sex  Men  Women
+          Belgian    0      1
+        Foreigner    2      3
 
         one can also replace some labels in several axes by giving a mapping of mappings
 
@@ -6110,10 +6119,15 @@ class LArray(ABCLArray):
         Belgian    0  1
              FO    2  3
         """
-        if isinstance(axis, dict):
+        if axis is None:
+            changes = {}
+        elif isinstance(axis, dict):
             changes = axis
-        else:
+        elif isinstance(axis, (basestring, Axis, int)):
             changes = {axis: labels}
+        else:
+            raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
+        changes.update(kwargs)
         # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
         # new_axes = [self.axes[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
         new_axes = []

@@ -112,6 +112,18 @@ Miscellaneous improvements
     >>> group_even_year
     year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
 
+* allowed to use keyword arguments in `set_labels` (closes :issue:`383`):
+
+    >>> a = ndrange('nat=BE,FO;sex=M,F')
+    >>> a
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
+    >>> a.set_labels(sex='Men,Women', nat='Belgian,Foreigner')
+      nat\sex  Men  Women
+      Belgian    0      1
+    Foreigner    2      3
+
 * allowed passing an axis to `set_labels` as 'labels' argument (closes :issue:`408`).
 
 Fixes
