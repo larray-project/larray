@@ -2877,11 +2877,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_open_excel(self):
+        fpath = abspath('new_excel_file.xlsx')
+        if os.path.exists(fpath):
+            os.remove(fpath)
+
         # 1) Create new file
         # ==================
         # overwrite_file must be set to True to create a new file
         with pytest.raises(ValueError):
-            open_excel(abspath('new_excel_file.xlsx'))
+            open_excel(fpath)
 
         # 2) with headers
         # ===============
@@ -3025,6 +3029,24 @@ age    0       1       2       3       4       5       6       7        8  ...  
             wb['3D']['A20'] = a3
             res = wb['3D']['A20:D25'].load(header=False)
             assert_array_equal(res, a3.data.reshape((6, 4)))
+
+        # 4) crash test
+        # =============
+        arr = ndtest((2, 2))
+        # create and asve a test file
+        with open_excel(fpath, overwrite_file=True) as wb:
+            wb['arr'] = arr.dump()
+            wb.save()
+        # raise exception when the file is open
+        try:
+            with open_excel(fpath, overwrite_file=True) as wb:
+                raise ValueError("")
+        except ValueError:
+            pass
+        # check if file is still available
+        with open_excel(fpath) as wb:
+            assert wb.sheet_names() == ['arr']
+            assert_array_equal(wb['arr'].load(), arr)
 
     def test_ufuncs(self):
         la = self.small

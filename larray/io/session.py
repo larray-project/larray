@@ -40,7 +40,7 @@ class FileHandler(object):
     def _open_for_read(self):
         raise NotImplementedError()
 
-    def _open_for_write(self):
+    def _open_for_write(self, overwrite_file):
         raise NotImplementedError()
 
     def list(self):
@@ -109,7 +109,7 @@ class FileHandler(object):
         self.close()
         return res
 
-    def dump_arrays(self, key_values, *args, **kwargs):
+    def dump_arrays(self, key_values, overwrite_file, *args, **kwargs):
         """
         Dumps arrays corresponds to keys in file in HDF, Excel, CSV, ... format
 
@@ -117,11 +117,20 @@ class FileHandler(object):
         ----------
         key_values : list of (str, LArray) pairs
             Name and data of arrays to dump.
+        overwrite_file : bool
+            Whether or not to overwrite the existing file (or just modify the specified sheet).
         kwargs :
             * display: whether or not to display when the dump of each array is started/done.
         """
         display = kwargs.pop('display', False)
-        self._open_for_write()
+        # for XLWingsHandler, the job is already done in the Workbook class
+        if not isinstance(self, (PandasCSVHandler, XLWingsHandler)) and overwrite_file and os.path.isfile(self.fname):
+            fname = self.fname
+            self.fname = '{}~{}'.format(*os.path.splitext(self.fname))
+        else:
+            fname = None
+
+        self._open_for_write(overwrite_file)
         for key, value in key_values:
             if isinstance(value, ABCLArray) and value.ndim == 0:
                 if display:
@@ -133,7 +142,11 @@ class FileHandler(object):
             if display:
                 print("done")
         self.save()
+
         self.close()
+        if fname is not None and os.path.isfile(self.fname):
+            os.remove(fname)
+            os.rename(self.fname, fname)
 
 
 class PandasHDFHandler(FileHandler):
@@ -143,7 +156,7 @@ class PandasHDFHandler(FileHandler):
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 
-    def _open_for_write(self):
+    def _open_for_write(self, overwrite_file):
         self.handle = HDFStore(self.fname)
 
     def list(self):
@@ -169,7 +182,7 @@ class PandasExcelHandler(FileHandler):
     def _open_for_read(self):
         self.handle = ExcelFile(self.fname)
 
-    def _open_for_write(self):
+    def _open_for_write(self, overwrite_file):
         self.handle = ExcelWriter(self.fname)
 
     def list(self):
@@ -194,8 +207,7 @@ class XLWingsHandler(FileHandler):
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
 
-    def _open_for_write(self):
-        overwrite_file = not os.path.isfile(self.fname)
+    def _open_for_write(self, overwrite_file):
         self.handle = open_excel(self.fname, overwrite_file=overwrite_file)
 
     def list(self):
@@ -233,7 +245,7 @@ class PandasCSVHandler(FileHandler):
         if self.directory and not os.path.isdir(self.directory):
             raise ValueError("Directory '{}' does not exist".format(self.directory))
 
-    def _open_for_write(self):
+    def _open_for_write(self, overwrite_file):
         if self.directory is not None:
             try:
                 os.makedirs(self.directory)
@@ -270,7 +282,7 @@ class PickleHandler(FileHandler):
         with open(self.fname, 'rb') as f:
             self.data = pickle.load(f)
 
-    def _open_for_write(self):
+    def _open_for_write(self, overwrite_file):
         self.data = OrderedDict()
 
     def list(self):

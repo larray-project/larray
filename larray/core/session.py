@@ -282,15 +282,13 @@ class Session(object):
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
             engine = ext_default_engine[ext]
-        if overwrite and engine != ext_default_engine['csv'] and os.path.isfile(fname):
-            os.remove(fname)
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
         items = self.filter(kind=LArray).items()
         if names is not None:
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
-        handler.dump_arrays(items, display=display, **kwargs)
+        handler.dump_arrays(items, overwrite, display=display, **kwargs)
 
     def to_globals(self, names=None, depth=0, warn=True, inplace=False):
         """
