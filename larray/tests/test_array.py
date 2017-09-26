@@ -3033,7 +3033,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 4) crash test
         # =============
         arr = ndtest((2, 2))
-        # create and asve a test file
+        # create and save a test file
         with open_excel(fpath, overwrite_file=True) as wb:
             wb['arr'] = arr.dump()
             wb.save()

@@ -34,13 +34,15 @@ class FileHandler(object):
     fname : str
         Filename.
     """
-    def __init__(self, fname):
+    def __init__(self, fname, overwrite_file=False):
         self.fname = fname
+        self.tmp_file = None
+        self.overwrite_file = overwrite_file
 
     def _open_for_read(self):
         raise NotImplementedError()
 
-    def _open_for_write(self, overwrite_file):
+    def _open_for_write(self):
         raise NotImplementedError()
 
     def list(self):
@@ -66,6 +68,15 @@ class FileHandler(object):
         Closes file.
         """
         raise NotImplementedError()
+
+    def _create_temporay_file(self):
+        if self.overwrite_file and os.path.isfile(self.fname):
+            self.tmp_file = '{}~{}'.format(*os.path.splitext(self.fname))
+
+    def _delete_temporary_file(self):
+        if self.tmp_file is not None and os.path.isfile(self.tmp_file):
+            os.remove(self.fname)
+            os.rename(self.tmp_file, self.fname)
 
     def read_arrays(self, keys, *args, **kwargs):
         """
@@ -109,7 +120,7 @@ class FileHandler(object):
         self.close()
         return res
 
-    def dump_arrays(self, key_values, overwrite_file, *args, **kwargs):
+    def dump_arrays(self, key_values, *args, **kwargs):
         """
         Dumps arrays corresponds to keys in file in HDF, Excel, CSV, ... format
 
@@ -117,20 +128,11 @@ class FileHandler(object):
         ----------
         key_values : list of (str, LArray) pairs
             Name and data of arrays to dump.
-        overwrite_file : bool
-            Whether or not to overwrite the existing file (or just modify the specified sheet).
         kwargs :
             * display: whether or not to display when the dump of each array is started/done.
         """
         display = kwargs.pop('display', False)
-        # for XLWingsHandler, the job is already done in the Workbook class
-        if not isinstance(self, (PandasCSVHandler, XLWingsHandler)) and overwrite_file and os.path.isfile(self.fname):
-            fname = self.fname
-            self.fname = '{}~{}'.format(*os.path.splitext(self.fname))
-        else:
-            fname = None
-
-        self._open_for_write(overwrite_file)
+        self._open_for_write()
         for key, value in key_values:
             if isinstance(value, ABCLArray) and value.ndim == 0:
                 if display:
@@ -142,11 +144,7 @@ class FileHandler(object):
             if display:
                 print("done")
         self.save()
-
         self.close()
-        if fname is not None and os.path.isfile(self.fname):
-            os.remove(fname)
-            os.rename(self.fname, fname)
 
 
 class PandasHDFHandler(FileHandler):
@@ -156,8 +154,10 @@ class PandasHDFHandler(FileHandler):
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 
-    def _open_for_write(self, overwrite_file):
-        self.handle = HDFStore(self.fname)
+    def _open_for_write(self):
+        self._create_temporay_file()
+        fname = self.tmp_file if self.tmp_file is not None else self.fname
+        self.handle = HDFStore(fname)
 
     def list(self):
         return [key.strip('/') for key in self.handle.keys()]
@@ -173,6 +173,7 @@ class PandasHDFHandler(FileHandler):
 
     def close(self):
         self.handle.close()
+        self._delete_temporary_file()
 
 
 class PandasExcelHandler(FileHandler):
@@ -182,8 +183,10 @@ class PandasExcelHandler(FileHandler):
     def _open_for_read(self):
         self.handle = ExcelFile(self.fname)
 
-    def _open_for_write(self, overwrite_file):
-        self.handle = ExcelWriter(self.fname)
+    def _open_for_write(self):
+        self._create_temporay_file()
+        fname = self.tmp_file if self.tmp_file is not None else self.fname
+        self.handle = ExcelWriter(fname)
 
     def list(self):
         return self.handle.sheet_names
@@ -198,6 +201,7 @@ class PandasExcelHandler(FileHandler):
 
     def close(self):
         self.handle.close()
+        self._delete_temporary_file()
 
 
 class XLWingsHandler(FileHandler):
@@ -207,8 +211,10 @@ class XLWingsHandler(FileHandler):
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
 
-    def _open_for_write(self, overwrite_file):
-        self.handle = open_excel(self.fname, overwrite_file=overwrite_file)
+    def _open_for_write(self):
+        # for XLWingsHandler, no need to call self._create_temporay_file(),
+        # the job is already done in the Workbook class
+        self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
 
     def list(self):
         return self.handle.sheet_names()
@@ -227,8 +233,8 @@ class XLWingsHandler(FileHandler):
 
 
 class PandasCSVHandler(FileHandler):
-    def __init__(self, fname):
-        super(PandasCSVHandler, self).__init__(fname)
+    def __init__(self, fname, overwrite_file=False):
+        super(PandasCSVHandler, self).__init__(fname, overwrite_file)
         if fname is None:
             self.pattern = None
             self.directory = None
@@ -245,7 +251,7 @@ class PandasCSVHandler(FileHandler):
         if self.directory and not os.path.isdir(self.directory):
             raise ValueError("Directory '{}' does not exist".format(self.directory))
 
-    def _open_for_write(self, overwrite_file):
+    def _open_for_write(self):
         if self.directory is not None:
             try:
                 os.makedirs(self.directory)
@@ -282,7 +288,7 @@ class PickleHandler(FileHandler):
         with open(self.fname, 'rb') as f:
             self.data = pickle.load(f)
 
-    def _open_for_write(self, overwrite_file):
+    def _open_for_write(self):
         self.data = OrderedDict()
 
     def list(self):
@@ -295,8 +301,11 @@ class PickleHandler(FileHandler):
         self.data[key] = value
 
     def close(self):
-        with open(self.fname, 'wb') as f:
+        self._create_temporay_file()
+        fname = self.tmp_file if self.tmp_file is not None else self.fname
+        with open(fname, 'wb') as f:
             pickle.dump(self.data, f)
+        self._delete_temporary_file()
 
 
 handler_classes = {
