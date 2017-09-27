@@ -36,7 +36,6 @@ class FileHandler(object):
     """
     def __init__(self, fname, overwrite_file=False):
         self.fname = fname
-        self.tmp_file = None
         self.overwrite_file = overwrite_file
 
     def _open_for_read(self):
@@ -69,14 +68,17 @@ class FileHandler(object):
         """
         raise NotImplementedError()
 
-    def _create_temporay_file(self):
+    def _get_original_file_name(self):
+        original_file_name = None
         if self.overwrite_file and os.path.isfile(self.fname):
-            self.tmp_file = '{}~{}'.format(*os.path.splitext(self.fname))
+            original_file_name = self.fname
+            self.fname = '{}~{}'.format(*os.path.splitext(self.fname))
+        return original_file_name
 
-    def _delete_temporary_file(self):
-        if self.tmp_file is not None and os.path.isfile(self.tmp_file):
-            os.remove(self.fname)
-            os.rename(self.tmp_file, self.fname)
+    def _update_original_file(self, original_file_name):
+        if original_file_name is not None and os.path.isfile(self.fname):
+            os.remove(original_file_name)
+            os.rename(self.fname, original_file_name)
 
     def read_arrays(self, keys, *args, **kwargs):
         """
@@ -132,6 +134,7 @@ class FileHandler(object):
             * display: whether or not to display when the dump of each array is started/done.
         """
         display = kwargs.pop('display', False)
+        original_file_name = self._get_original_file_name()
         self._open_for_write()
         for key, value in key_values:
             if isinstance(value, ABCLArray) and value.ndim == 0:
@@ -145,6 +148,7 @@ class FileHandler(object):
                 print("done")
         self.save()
         self.close()
+        self._update_original_file(original_file_name)
 
 
 class PandasHDFHandler(FileHandler):
@@ -155,9 +159,7 @@ class PandasHDFHandler(FileHandler):
         self.handle = HDFStore(self.fname, mode='r')
 
     def _open_for_write(self):
-        self._create_temporay_file()
-        fname = self.tmp_file if self.tmp_file is not None else self.fname
-        self.handle = HDFStore(fname)
+        self.handle = HDFStore(self.fname)
 
     def list(self):
         return [key.strip('/') for key in self.handle.keys()]
@@ -173,7 +175,6 @@ class PandasHDFHandler(FileHandler):
 
     def close(self):
         self.handle.close()
-        self._delete_temporary_file()
 
 
 class PandasExcelHandler(FileHandler):
@@ -184,9 +185,7 @@ class PandasExcelHandler(FileHandler):
         self.handle = ExcelFile(self.fname)
 
     def _open_for_write(self):
-        self._create_temporay_file()
-        fname = self.tmp_file if self.tmp_file is not None else self.fname
-        self.handle = ExcelWriter(fname)
+        self.handle = ExcelWriter(self.fname)
 
     def list(self):
         return self.handle.sheet_names
@@ -201,13 +200,15 @@ class PandasExcelHandler(FileHandler):
 
     def close(self):
         self.handle.close()
-        self._delete_temporary_file()
 
 
 class XLWingsHandler(FileHandler):
     """
     Handler for Excel files using XLWings.
     """
+    def _get_original_file_name(self):
+        return None
+
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
 
@@ -246,6 +247,9 @@ class PandasCSVHandler(FileHandler):
             # Not testing for os.path.isdir(fname) here because when writing, the directory might not exist.
             self.pattern = os.path.join(fname, '*.csv')
             self.directory = fname
+
+    def _get_original_file_name(self):
+        return None
 
     def _open_for_read(self):
         if self.directory and not os.path.isdir(self.directory):
@@ -301,11 +305,8 @@ class PickleHandler(FileHandler):
         self.data[key] = value
 
     def close(self):
-        self._create_temporay_file()
-        fname = self.tmp_file if self.tmp_file is not None else self.fname
-        with open(fname, 'wb') as f:
+        with open(self.fname, 'wb') as f:
             pickle.dump(self.data, f)
-        self._delete_temporary_file()
 
 
 handler_classes = {
