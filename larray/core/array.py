@@ -103,7 +103,7 @@ from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list, renamed_to)
 
 nan = np.nan
 
@@ -885,9 +885,7 @@ class LArray(ABCLArray):
         else:
             return LArray(self.data, new_axes, title=self.title)
 
-    def with_axes(self, axes):
-        warnings.warn("LArray.with_axes is deprecated, use LArray.set_axes instead", FutureWarning, stacklevel=2)
-        return self.set_axes(axes)
+    with_axes = renamed_to('with_axes', set_axes)
 
     def __getattr__(self, key):
         if key in self.axes:
@@ -6507,9 +6505,7 @@ class LArray(ABCLArray):
         """
         return self.reshape(self.axes.split_axes(axes, sep, names, regex))
 
-    def split_axis(self, axis=None, sep='_', names=None, regex=None):
-        warnings.warn("split_axis() has been renamed to split_axes()", FutureWarning, stacklevel=2)
-        return self.split_axes(axis, sep, names, regex)
+    split_axis = renamed_to('split_axis', split_axes)
 
 
 def aslarray(a):
@@ -7075,10 +7071,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
                 ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
 
-
-def create_sequential(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
-    warnings.warn("create_sequential() has been renamed to sequence()", FutureWarning, stacklevel=2)
-    return sequence(axis, initial=initial, inc=inc, mult=mult, func=func, axes=axes, title=title)
+create_sequential = renamed_to('create_sequential', sequence)
 
 
 @_check_axes_argument

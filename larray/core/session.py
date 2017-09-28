@@ -10,7 +10,7 @@ import numpy as np
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, sequence
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to
 from larray.io.session import check_pattern, handler_classes, ext_default_engine
 
 
@@ -389,9 +389,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
-    def dump(self, fname, names=None, engine='auto', display=False, **kwargs):
-        warnings.warn("Method dump is deprecated. Use method save instead.", FutureWarning, stacklevel=2)
-        self.save(fname, names, engine, display, **kwargs)
+    dump = renamed_to('dump', save)
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
@@ -424,9 +422,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
-    def dump_hdf(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_hdf is deprecated. Use method to_hdf instead.", FutureWarning, stacklevel=2)
-        self.to_hdf(fname, names, *args, **kwargs)
+    dump_hdf = renamed_to('dump_hdf', to_hdf)
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
@@ -458,9 +454,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
-    def dump_excel(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_excel is deprecated. Use method to_excel instead.", FutureWarning, stacklevel=2)
-        self.to_excel(fname, names, *args, **kwargs)
+    dump_excel = renamed_to('dump_excel', to_excel)
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
         """
@@ -490,9 +484,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
-    def dump_csv(self, fname, names=None, *args, **kwargs):
-        warnings.warn("Method dump_csv is deprecated. Use method to_csv instead.", FutureWarning, stacklevel=2)
-        self.to_csv(fname, names, *args, **kwargs)
+    dump_csv = renamed_to('dump_csv', to_csv)
 
     def filter(self, pattern=None, kind=None):
         """

@@ -13,7 +13,8 @@ from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, PGroup, PGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _contain_group_ticks, _seq_group_to_name)
 from larray.util.oset import *
-from larray.util.misc import basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id
+from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
+                              renamed_to)
 
 __all__ = ['Axis', 'AxisCollection', 'X', 'x']
 
@@ -440,10 +441,6 @@ class Axis(ABCAxis):
         return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
                (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
 
-    def matches(self, pattern):
-        warnings.warn("Axis.matches was renamed to Axis.matching, please use that instead", FutureWarning, stacklevel=2)
-        return self.matching(pattern)
-
     def matching(self, pattern):
         """
         Returns a group with all the labels matching the specified pattern (regular expression).
@@ -482,10 +479,7 @@ class Axis(ABCAxis):
         rx = re.compile(pattern)
         return LGroup([v for v in self.labels if rx.match(v)], axis=self)
 
-    def startswith(self, prefix):
-        warnings.warn("Axis.startswith was renamed to Axis.startingwith, please use that instead", FutureWarning,
-                      stacklevel=2)
-        return self.startingwith(prefix)
+    matches = renamed_to('matches', matching)
 
     def startingwith(self, prefix):
         """
@@ -511,10 +505,7 @@ class Axis(ABCAxis):
             prefix = prefix.eval()
         return LGroup([v for v in self.labels if v.startswith(prefix)], axis=self)
 
-    def endswith(self, suffix):
-        warnings.warn("Axis.endswith was renamed to Axis.endingwith, please use that instead", FutureWarning,
-                      stacklevel=2)
-        return self.endingwith(suffix)
+    startswith = renamed_to('startswith', startingwith)
 
     def endingwith(self, suffix):
         """
@@ -539,6 +530,8 @@ class Axis(ABCAxis):
         if isinstance(suffix, Group):
             suffix = suffix.eval()
         return LGroup([v for v in self.labels if v.endswith(suffix)], axis=self)
+
+    endswith = renamed_to('endswith', endingwith)
 
     def containing(self, substring):
         """
