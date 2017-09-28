@@ -282,10 +282,8 @@ class Session(object):
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
             engine = ext_default_engine[ext]
-        if overwrite and engine != ext_default_engine['csv'] and os.path.isfile(fname):
-            os.remove(fname)
         handler_cls = handler_classes[engine]
-        handler = handler_cls(fname)
+        handler = handler_cls(fname, overwrite)
         items = self.filter(kind=LArray).items()
         if names is not None:
             names_set = set(names)

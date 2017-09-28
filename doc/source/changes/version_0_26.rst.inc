@@ -253,3 +253,6 @@ Fixes
 -----
 
 * fixed array creation with axis(es) given as string containing only one label (axis name and label were inversed).
+
+* fixed original file being deleted when trying to overwrite a file via `Session.save` or `open_excel` failed
+  (closes :issue:`441`)

@@ -64,6 +64,7 @@ if xw is not None:
 
             xw_wkb = None
             self.delayed_filepath = None
+            self.filepath = None
             self.new_workbook = False
 
             if filepath is None:
@@ -80,7 +81,10 @@ if xw is not None:
                         raise ValueError("File {} does not exist. Please give the path to an existing file or set "
                                          "overwrite_file argument to True".format(filepath))
                     if os.path.isfile(filepath) and overwrite_file:
-                        os.remove(filepath)
+                        self.filepath = filepath
+                        # we create a temporary file to work on. In case of crash, the original is not destroyed.
+                        # the temporary file is renamed as the original file at close.
+                        filepath = basename + '~' + ext
                     if not os.path.isfile(filepath):
                         self.new_workbook = True
                 else:
@@ -226,7 +230,13 @@ if xw is not None:
             Close the workbook in Excel. This will not quit the Excel instance, even if this was the last workbook of
             that Excel instance.
             """
-            self.xw_wkb.close()
+            if self.filepath is not None and os.path.isfile(self.xw_wkb.fullname):
+                tmp_file = self.xw_wkb.fullname
+                self.xw_wkb.close()
+                os.remove(self.filepath)
+                os.rename(tmp_file, self.filepath)
+            else:
+                self.xw_wkb.close()
 
         def __iter__(self):
             return iter([Sheet(None, None, xw_sheet)
