@@ -36,6 +36,7 @@ class FileHandler(object):
     """
     def __init__(self, fname, overwrite_file=False):
         self.fname = fname
+        self.original_file_name = None
         self.overwrite_file = overwrite_file
 
     def _open_for_read(self):
@@ -69,16 +70,14 @@ class FileHandler(object):
         raise NotImplementedError()
 
     def _get_original_file_name(self):
-        original_file_name = None
         if self.overwrite_file and os.path.isfile(self.fname):
-            original_file_name = self.fname
+            self.original_file_name = self.fname
             self.fname = '{}~{}'.format(*os.path.splitext(self.fname))
-        return original_file_name
 
-    def _update_original_file(self, original_file_name):
-        if original_file_name is not None and os.path.isfile(self.fname):
-            os.remove(original_file_name)
-            os.rename(self.fname, original_file_name)
+    def _update_original_file(self):
+        if self.original_file_name is not None and os.path.isfile(self.fname):
+            os.remove(self.original_file_name)
+            os.rename(self.fname, self.original_file_name)
 
     def read_arrays(self, keys, *args, **kwargs):
         """
@@ -134,7 +133,7 @@ class FileHandler(object):
             * display: whether or not to display when the dump of each array is started/done.
         """
         display = kwargs.pop('display', False)
-        original_file_name = self._get_original_file_name()
+        self._get_original_file_name()
         self._open_for_write()
         for key, value in key_values:
             if isinstance(value, ABCLArray) and value.ndim == 0:
@@ -148,7 +147,7 @@ class FileHandler(object):
                 print("done")
         self.save()
         self.close()
-        self._update_original_file(original_file_name)
+        self._update_original_file()
 
 
 class PandasHDFHandler(FileHandler):
@@ -207,14 +206,13 @@ class XLWingsHandler(FileHandler):
     Handler for Excel files using XLWings.
     """
     def _get_original_file_name(self):
-        return None
+        # for XLWingsHandler, no need to create a temporary file, the job is already done in the Workbook class
+        pass
 
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
 
     def _open_for_write(self):
-        # for XLWingsHandler, no need to call self._create_temporay_file(),
-        # the job is already done in the Workbook class
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
 
     def list(self):
@@ -249,7 +247,7 @@ class PandasCSVHandler(FileHandler):
             self.directory = fname
 
     def _get_original_file_name(self):
-        return None
+        pass
 
     def _open_for_read(self):
         if self.directory and not os.path.isdir(self.directory):
