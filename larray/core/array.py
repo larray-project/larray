@@ -1644,7 +1644,7 @@ class LArray(ABCLArray):
             raise NotImplementedError("sort_values key must have one dimension less than array.ndim")
         assert subset.ndim == 1
         axis = subset.axes[0]
-        indexofsorted = subset.indicesofsorted()
+        indicesofsorted = subset.indicesofsorted()
 
         # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
         # IGroup(nat  EU  FO  BE
@@ -1655,7 +1655,7 @@ class LArray(ABCLArray):
         # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
         # that I have now?
         # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
-        sorter = axis.i[indexofsorted.data]
+        sorter = axis.i[indicesofsorted.data]
         res = self[sorter]
         return res[axis[::-1]] if reverse else res
 
