@@ -592,3 +592,11 @@ def index_by_id(seq, value):
         if item is value:
             return i
     raise ValueError("%s is not in list" % value)
+
+
+def renamed_to(newfunc, old_name, stacklevel=2):
+    def wrapper(*args, **kwargs):
+        msg = "{}() is deprecated. Use {}() instead.".format(old_name, newfunc.__name__)
+        warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
+        return newfunc(*args, **kwargs)
+    return wrapper
