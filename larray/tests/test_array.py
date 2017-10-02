@@ -3534,6 +3534,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
         expected_np12 = "only integer scalar arrays can be converted to a scalar index"
         assert msg in {expected_np11, expected_np12}
 
+    def test_deprecated_methods(self):
+        with pytest.warns(FutureWarning) as caught_warnings:
+            ndtest((2, 2)).with_axes('a', 'd=d0,d1')
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "with_axes() is deprecated. Use set_axes() instead."
+        assert caught_warnings[0].filename == __file__
+
+        with pytest.warns(FutureWarning) as caught_warnings:
+            ndtest((2, 2)).combine_axes().split_axis()
+        assert len(caught_warnings) == 1
+        assert caught_warnings[0].message.args[0] == "split_axis() is deprecated. Use split_axes() instead."
+        assert caught_warnings[0].filename == __file__
+
+
 if __name__ == "__main__":
     # import doctest
     # import unittest
