@@ -15,7 +15,8 @@ Matrix class
 # ? implement multi group in one axis getitem: lipro['P01,P02;P05'] <=> (lipro['P01,P02'], lipro['P05'])
 
 # * we need an API to get to the "next" label. Sometimes, we want to use label+1, but that is problematic when labels
-#   are not numeric, or have not a step of 1. x.agegroup[x.agegroup.after(25):]
+#   are not numeric, or have not a step of 1. X.agegroup[X.agegroup.after(25):]
+#                                             X.agegroup[X.agegroup[25].next():]
 
 # * implement keepaxes=True for _group_aggregate instead of/in addition to group tuples
 
@@ -66,7 +67,9 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list, renamed_to)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list, renamed_to,
+                              common_type)
+
 
 nan = np.nan
 
@@ -246,39 +249,6 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
-_numeric_kinds = 'buifc'    # Boolean, Unsigned integer, Integer, Float, Complex
-_string_kinds = 'SU'        # String, Unicode
-_meta_kind = {k: 'str' for k in _string_kinds}
-_meta_kind.update({k: 'numeric' for k in _numeric_kinds})
-
-
-def common_type(arrays):
-    """
-    Returns a type which is common to the input arrays.
-    All input arrays can be safely cast to the returned dtype without loss of information.
-
-    Notes
-    -----
-    If list of arrays mixes 'numeric' and 'string' types, the function returns 'object' as common type.
-    """
-    arrays = [np.asarray(a) for a in arrays]
-    dtypes = [a.dtype for a in arrays]
-    meta_kinds = [_meta_kind.get(dt.kind, 'other') for dt in dtypes]
-    # mixing string and numeric => object
-    if any(mk != meta_kinds[0] for mk in meta_kinds[1:]):
-        return object
-    elif meta_kinds[0] == 'numeric':
-        return np.find_common_type(dtypes, [])
-    elif meta_kinds[0] == 'str':
-        need_unicode = any(dt.kind == 'U' for dt in dtypes)
-        # unicode are coded with 4 bytes
-        max_size = max(dt.itemsize // 4 if dt.kind == 'U' else dt.itemsize
-                       for dt in dtypes)
-        return np.dtype(('U' if need_unicode else 'S', max_size))
-    else:
-        return object
-
-
 def concat_empty(axis, arrays_axes, dtype):
     # Get axis by name, so that we do *NOT* check they are "compatible", because it makes sense to append axes of
     # different length
@@ -319,7 +289,7 @@ def concat(arrays, axis=0, dtype=None):
     ----------
     arrays : tuple of LArray
         Arrays to concatenate.
-    axis : AxisReference, optional
+    axis : axis reference (int, str or Axis), optional
         Axis along which to concatenate. Defaults to the first axis.
     dtype : dtype, optional
         Result data type. Defaults to the "closest" type which can hold all arrays types without loss of information.
@@ -1661,7 +1631,7 @@ class LArray(ABCLArray):
         key : scalar or tuple or Group
             Key along which to sort. Must have exactly one dimension less than ndim.
             Cannot be used in combination with `axis` argument.
-            If both `key` and `axis` are None, sort array with all axes combined. 
+            If both `key` and `axis` are None, sort array with all axes combined.
             Defaults to None.
         axis : int or str or Axis
             Axis along which to sort. Cannot be used in combination with `key` argument.
@@ -1677,7 +1647,7 @@ class LArray(ABCLArray):
         Examples
         --------
         sort the whole array (no key or axis given)
-        
+
         >>> arr_1D = LArray([10, 2, 4], 'a=a0..a2')
         >>> arr_1D
         a  a0  a1  a2
@@ -1694,9 +1664,9 @@ class LArray(ABCLArray):
         >>> arr_2D.sort_values()
         a_b  a1_b2  a0_b1  a1_b0  a0_b2  a1_b1  a0_b0
                  1      2      3      4      7     10
-                    
+
         Sort along a given key
-                    
+
         >>> # sort columns according to the values of the row associated with the label 'a1'
         >>> arr_2D.sort_values('a1')
         a\\b  b2  b0  b1
@@ -1721,9 +1691,9 @@ class LArray(ABCLArray):
         a0   b1   1   3   7
         a1   b0   6   5   1
         a1   b1   9   2   8
-                   
+
         Sort along an axis
-        
+
         >>> arr_2D
         a\\b  b0  b1  b2
          a0  10   2   4
@@ -5624,6 +5594,201 @@ class LArray(ABCLArray):
         self_target[:] = self
         other_target[:] = other
         return result
+
+    def insert(self, value, before=None, after=None, pos=None, axis=None, label=None):
+        """Inserts value in array along an axis.
+
+        Parameters
+        ----------
+        value : scalar or LArray
+            Value to insert. If an LArray, it must have compatible axes. If value already has the axis along which it
+            is inserted, `label` should not be used.
+        before : scalar or Group
+            Label or group before which to insert `value`.
+        after : scalar or Group
+            Label or group after which to insert `value`.
+        pos : int
+            Index before which to insert `value`.
+        axis : axis reference (int, str or Axis), optional
+            Axis in which to insert `value`. This is only required when using `pos` or when before or after are
+            ambiguous labels.
+        label : str, optional
+            Label for the new item in axis.
+
+        Returns
+        -------
+        LArray
+            Array with `value` inserted along `axis`. The dtype of the returned array will be the "closest" type
+            which can hold both the array values and the inserted values without loss of information. For example,
+            when mixing numeric and string types, the dtype will be object.
+
+        Examples
+        --------
+        >>> arr1 = ndtest((2, 3))
+        >>> arr1
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> arr1.insert(42, before='b1', label='b0.5')
+        a\\b  b0  b0.5  b1  b2
+         a0   0    42   1   2
+         a1   3    42   4   5
+        >>> arr2 = ndtest(2)
+        >>> arr2
+        a  a0  a1
+            0   1
+        >>> arr1.insert(arr2, after='b0', label='b0.5')
+        a\\b  b0  b0.5  b1  b2
+         a0   0     0   1   2
+         a1   3     1   4   5
+        >>> arr1.insert(42, axis='b', pos=1, label='b0.5')
+        a\\b  b0  b0.5  b1  b2
+         a0   0    42   1   2
+         a1   3    42   4   5
+        >>> arr1.insert(42, before=X.b.i[1], label='b0.5')
+        a\\b  b0  b0.5  b1  b2
+         a0   0    42   1   2
+         a1   3    42   4   5
+
+        insert an array which already has the axis
+
+        >>> arr3 = ndrange('a=a0,a1;b=b0.1,b0.2') + 42
+        >>> arr3
+        a\\b  b0.1  b0.2
+         a0    42    43
+         a1    44    45
+        >>> arr1.insert(arr3, before='b1')
+        a\\b  b0  b0.1  b0.2  b1  b2
+         a0   0    42    43   1   2
+         a1   3    44    45   4   5
+        """
+
+        # XXX: unsure we should have arr1.insert(arr3, before='b1,b2') result in (see unit tests):
+
+        # a\\b  b0  b0.1  b1  b0.2  b2
+        #  a0   0    42   1    43   2
+        #  a1   3    44   4    45   5
+
+        # we might to implement the following instead:
+
+        # a\\b  b0  b0.1  b0.2  b1  b0.1  b0.2  b2
+        #  a0   0    42    43   1    42    43   2
+        #  a1   3    44    45   4    44    45   5
+
+        # The later looks less useful and could be emulated easily via:
+        # arr1.insert([arr3, arr3], before='b1,b2')
+        # while the above is a bit harder to achieve manually:
+        # arr1.insert([arr3[[b]] for b in arr3.b], before=['b1', 'b2'])
+        # but the later is *probably* more intuitive (and wouldn't suffer from the inefficiency we currently have).
+
+        # XXX: when we have several lists, we implicitly match them by position, which we should avoid for the usual
+        # reason, but I am unsure what the best syntax for that would be.
+
+        # the goal is to get this result
+
+        # a\b  b0  b0.5  b1  b1.5  b2
+        #  a0   0     8   1     9   2
+        #  a1   3     8   4     9   5
+
+        # When the inserted arrays already contain a label, this seems reasonably readable:
+
+        # >>> arr1 = ndtest((2, 3))
+        # >>> arr1
+        # a\\b  b0  b1  b2
+        #  a0   0   1   2
+        #  a1   3   4   5
+        # >>> arr2 = full('b=b0.5', 8)
+        # >>> arr2
+        # b  b0.5
+        #       8
+        # >>> arr3 = full('b=b1.5', 9)
+        # >>> arr3
+        # b  b1.5
+        #       9
+        # >>> arr1.insert(before={'b1': arr2, 'b2': arr3})
+        # a\\b  b0  b0.5  b1  b1.5  b2
+        #  a0   0     8   1     9   2
+        #  a1   3     8   4     9   5
+
+        # When the inserted arrays/values have no label, this does not really convince me and it prevents using after
+        # or pos.
+
+        # >>> arr1.insert(value={'b0.5': ('b1', 8), 'b1.5': ('b2', 9)})
+        # a\b  b0  b0.5  b1  b1.5  b2
+        #  a0   0     8   1     9   2
+        #  a1   3     8   4     9   5
+
+        # This works with both after and pos and we could support it along with the above syntax when no label is
+        # needed. Problem: label, value is arbitrary and as such potentially hard to remember.
+
+        # >>> arr1.insert(before={'b1': ('b0.5', 8), 'b2': ('b1.5', 9)})
+        # a\b  b0  b0.5  b1  b1.5  b2
+        #  a0   0     8   1     9   2
+        #  a1   3     8   4     9   5
+
+        # This is shorter but not readable enough/even more arbitrary than the previous option.
+
+        # >>> arr1.insert([(8, 'b1', 'b0.5'), (9, 'b2', 'b1.5')])
+        # a\b  b0  b0.5  b1  b1.5  b2
+        #  a0   0     8   1     9   2
+        #  a1   3     8   4     9   5
+
+        # This is readable but odd and not much gained (except efficiency) compared with multiple insert calls
+
+        # >>> arr1.insert([(8, 'before', 'b1', 'label', 'b0.5'),
+        #                  (9, 'before', 'b2', 'label', 'b1.5')])
+        # >>> arr1.insert(8, before='b1', label='b0.5') \
+        #         .insert(9, before='b2', label='b1.5')
+        if sum([before is not None, after is not None, pos is not None]) != 1:
+            raise ValueError("must specify exactly one of before, after or pos")
+
+        axis = self.axes[axis] if axis is not None else None
+        if before is not None:
+            before = self._translate_axis_key(before) if axis is None else axis[before]
+            axis = before.axis
+            before_pos = axis.index(before)
+        elif after is not None:
+            after = self._translate_axis_key(after) if axis is None else axis[after]
+            axis = after.axis
+            before_pos = axis.index(after) + 1
+        else:
+            assert pos is not None
+            if axis is None:
+                raise ValueError("axis argument must be provided when using insert(pos=)")
+            before_pos = pos
+
+        def length(v):
+            if isinstance(v, LArray) and axis in v.axes:
+                return len(v.axes[axis])
+            else:
+                return len(v) if isinstance(v, (tuple, list, np.ndarray)) else 1
+
+        def expand(v, length):
+            return v if isinstance(v, (tuple, list, np.ndarray)) else [v] * length
+
+        num_inserts = max(length(before_pos), length(label), length(value))
+        stops = expand(before_pos, num_inserts)
+
+        if isinstance(value, LArray) and axis in value.axes:
+            # FIXME: when length(before_pos) == 1 and length(label) == 1, this is inefficient
+            values = [value[[k]] for k in value.axes[axis]]
+        else:
+            values = expand(value, num_inserts)
+        values = [aslarray(v) if not isinstance(v, LArray) else v
+                  for v in values]
+
+        if label is not None:
+            labels = expand(label, num_inserts)
+            values = [v.expand(Axis([l], axis.name), readonly=True) for v, l in zip(values, labels)]
+
+        start = 0
+        chunks = []
+        for stop, value in zip(stops, values):
+            chunks.append(self[axis.i[start:stop]])
+            chunks.append(value)
+            start = stop
+        chunks.append(self[axis.i[start:]])
+        return concat(chunks, axis)
 
     def transpose(self, *args):
         """Reorder axes.
