@@ -10,6 +10,8 @@
 * renamed `na` argument of `read_csv`, `read_excel`, `read_hdf` and `read_sas` functions to `fill_value` to avoid
   confusion as to what the argument does and to be consistent with `reindex` and `align` (closes :issue:`394`).
 
+* renamed `split_axis` to `split_axes` to reflect the fact that it can now split several axes at once (see below).
+
 
 New features
 ------------
@@ -175,7 +177,7 @@ Miscellaneous improvements
     >>> group_even_year
     year[2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016]
 
-* renamed `split_axis` as `split_axes` which now allows to split several axes at once (closes :issue:`366`):
+* `split_axes` (formerly `split_axis`) now allows to split several axes at once (closes :issue:`366`):
 
     >>> combined = ndrange('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
     >>> combined
@@ -310,3 +312,5 @@ Fixes
 
 * fixed unary and binary operations between sessions failing entirely when the operation failed/was invalid on any of
   the array. Now the result will be nan for that array but the operation will carry on for other arrays.
+
+* fixed stacking arrays with anonymous axes.

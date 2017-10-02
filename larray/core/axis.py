@@ -1350,15 +1350,16 @@ class AxisCollection(object):
         if isinstance(key, int):
             return -len(self) <= key < len(self)
         elif isinstance(key, Axis):
-            if key.name is None:
-                # XXX: use only this in all cases?
+            # the special case is just a performance optimization to avoid scanning through the whole list
+            if key.name is not None:
+                return key.name in self._map
+            else:
                 try:
                     self.index(key)
                     return True
                 except ValueError:
                     return False
-            else:
-                key = key.name
+        # key can be anything, it should just return False in case of weird types
         return key in self._map
 
     def isaxis(self, value):
@@ -1687,10 +1688,25 @@ class AxisCollection(object):
                 raise ValueError("axis %d is not in collection" % axis)
         elif isinstance(axis, Axis):
             try:
-                # first look by id. This avoids testing labels of each axis and makes sure the result is correct even
-                # if there are several axes with no name and the same labels.
+                # 1) first look for that particular axis object
+
+                # This avoids testing labels of each axis and makes sure the result is correct even if there are
+                # several axes with the same name and labels.
                 return index_by_id(self._list, axis)
             except ValueError:
+                # 2) look for an axis with the same name and labels using axis.equals
+
+                # This makes sure that if there are several axes with the same name but different labels, it returns
+                # the index of the one with the correct labels. This is especially important for anonymous axes but is
+                # also useful for other axes. Note that this shouldn't be too slow as labels will only be actually
+                # checked if the name match.
+
+                # We cannot use self._list.index because it use Axis.__eq__ which produces an LArray
+                for i, item in enumerate(self._list):
+                    if item.equals(axis):
+                        return i
+
+                # 3) otherwise look for any axis with the same name
                 name = axis.name
         else:
             name = axis
