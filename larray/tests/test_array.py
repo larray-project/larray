@@ -2384,6 +2384,86 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # la = la.append(lipro=la.sum(lipro), label='sum')
         # self.assertEqual(la.shape, (117, 44, 2, 15))
 
+    def test_insert(self):
+        # simple tests are in the docstring
+        arr1 = ndtest((2, 3))
+
+        # insert at multiple places at once
+
+        # we cannot use from_string in these tests because it deduplicates ambiguous (column) labels automatically
+        res = arr1.insert([42, 43], before='b1', label='new')
+        assert_array_equal(res, from_lists([
+        ['a\\b', 'b0', 'new', 'new', 'b1', 'b2'],
+        ['a0',      0,    42,    43,    1,    2],
+        ['a1',      3,    42,    43,    4,    5]]))
+
+        res = arr1.insert(42, before=['b1', 'b2'], label='new')
+        assert_array_equal(res, from_lists([
+        ['a\\b', 'b0', 'new', 'b1', 'new', 'b2'],
+        ['a0',      0,    42,    1,    42,    2],
+        ['a1',      3,    42,    4,    42,    5]]))
+
+        res = arr1.insert(42, before='b1', label=['b0.1', 'b0.2'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.1  b0.2  b1  b2
+         a0   0    42    42   1   2
+         a1   3    42    42   4   5"""))
+
+        res = arr1.insert(42, before=['b1', 'b2'], label=['b0.5', 'b1.5'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.5  b1  b1.5  b2
+         a0   0    42   1    42   2
+         a1   3    42   4    42   5"""))
+
+        res = arr1.insert([42, 43], before='b1', label=['b0.1', 'b0.2'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.1  b0.2  b1  b2
+         a0   0    42    43   1   2
+         a1   3    42    43   4   5"""))
+        res = arr1.insert([42, 43], before=['b1', 'b2'], label='new')
+        assert_array_equal(res, from_lists([
+        ['a\\b',  'b0',  'new',  'b1',  'new',  'b2'],
+        [  'a0',     0,     42,     1,     43,     2],
+        [  'a1',     3,     42,     4,     43,     5]]))
+
+        res = arr1.insert([42, 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.5  b1  b1.5  b2
+         a0   0    42   1    43   2
+         a1   3    42   4    43   5"""))
+        res = arr1.insert([42, 43], before='b1,b2', label=['b0.5', 'b1.5'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.5  b1  b1.5  b2
+         a0   0    42   1    43   2
+         a1   3    42   4    43   5"""))
+
+        arr2 = ndtest(2)
+        res = arr1.insert([arr2 + 42, arr2 + 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.5  b1  b1.5  b2
+         a0   0    42   1    43   2
+         a1   3    43   4    44   5"""))
+
+        arr3 = ndrange('a=a0,a1;b=b0.1,b0.2') + 42
+        res = arr1.insert(arr3, before='b1,b2')
+        assert_array_equal(res, from_string("""
+        a\\b  b0  b0.1  b1  b0.2  b2
+         a0   0    42   1    43   2
+         a1   3    44   4    45   5"""))
+
+        # with ambiguous labels
+        arr4 = ndrange('a=v0,v1;b=v0,v1')
+        res = arr4.insert(42, before='v1', axis='b', label='v0.5')
+        assert_array_equal(res, from_string("""
+        a\\b  v0  v0.5  v1
+         v0   0    42   1
+         v1   2    42   3"""))
+        res = arr4.insert(42, before=arr4.b['v1'], label='v0.5')
+        assert_array_equal(res, from_string("""
+        a\\b  v0  v0.5  v1
+         v0   0    42   1
+         v1   2    42   3"""))
+
     # the aim of this test is to drop the last value of an axis, but instead
     # of dropping the last axis tick/label, drop the first one.
     def test_shift_axis(self):

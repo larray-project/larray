@@ -30,6 +30,41 @@ Backward incompatible changes
 New features
 ------------
 
+* implemented Axis.insert and LArray.insert to add values at a given position of an axis (closes :issue:`54`).
+
+    >>> arr1 = ndtest((2, 3))
+    >>> arr1
+    a\\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+    >>> arr1.insert(42, before='b1', label='b0.5')
+    a\\b  b0  b0.5  b1  b2
+     a0   0    42   1   2
+     a1   3    42   4   5
+
+  insert an array
+
+    >>> arr2 = ndtest(2)
+    >>> arr2
+    a  a0  a1
+        0   1
+    >>> arr1.insert(arr2, after='b0', label='b0.5')
+    a\\b  b0  b0.5  b1  b2
+     a0   0     0   1   2
+     a1   3     1   4   5
+
+  insert an array which already has the axis
+
+    >>> arr3 = ndrange('a=a0,a1;b=b0.1,b0.2') + 42
+    >>> arr3
+    a\\b  b0.1  b0.2
+     a0    42    43
+     a1    44    45
+    >>> arr1.insert(arr3, before='b1')
+    a\\b  b0  b0.1  b0.2  b1  b2
+     a0   0    42    43   1   2
+     a1   3    44    45   4   5
+
 * added new items in Help menu:
   - `Report Issue...`: to report an issue on the Github project website.
   - `Users Discussion...`: redirect to the LArray Users Google Group (you need to be registered to participate).

@@ -14,7 +14,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _contain_group_ticks, _seq_group_to_name)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to)
+                              renamed_to, common_type)
 
 __all__ = ['Axis', 'AxisCollection', 'X', 'x']
 
@@ -331,6 +331,72 @@ class Axis(ABCAxis):
             return split_axes, indexing_labels
         else:
             return split_axes
+
+    def insert(self, new_labels, before=None, after=None):
+        """
+        Return a new axis with `new_labels` inserted before `before` or after `after`.
+
+        Parameters
+        ----------
+        new_labels : scalar, tuple/list/array of scalars, Group or Axis
+            New label(s) to append to the axis.
+        before : scalar or Group, optional
+            Label or group before which to insert `new_labels`.
+        after : scalar or Group, optional
+            Label or group after which to insert `new_labels`.
+
+        Returns
+        -------
+        Axis
+            A copy of the axis with the new labels inserted.
+
+        Examples
+        --------
+        >>> time = Axis([2007, 2009], 'time')
+        >>> time.insert(2008, before=2009)
+        Axis([2007, 2008, 2009], 'time')
+        >>> time.insert(2008, after=2007)
+        Axis([2007, 2008, 2009], 'time')
+        >>> time.insert(2008, before=time.i[1])
+        Axis([2007, 2008, 2009], 'time')
+        >>> time.insert(2008, after=time.i[0])
+        Axis([2007, 2008, 2009], 'time')
+        >>> b = Axis(['b1', 'b2'], 'b')
+        >>> b.insert('b1.5', before='b2')
+        Axis(['b1', 'b1.5', 'b2'], 'b')
+        >>> b.insert(['b1.1', 'b1.2'], before='b2')
+        Axis(['b1', 'b1.1', 'b1.2', 'b2'], 'b')
+        >>> c = Axis(['c1', 'c2'], 'c')
+        >>> b.insert(c, before='b2')
+        Axis(['b1', 'c1', 'c2', 'b2'], 'b')
+        """
+        if sum([before is not None, after is not None]) != 1:
+            raise ValueError("must specify exactly one of before or after")
+        if before is not None:
+            before = self.index(before)
+        else:
+            assert after is not None
+            before = self.index(after) + 1
+
+        if isinstance(new_labels, Axis):
+            new_labels = new_labels.labels
+        elif isinstance(new_labels, Group):
+            new_labels = new_labels.eval()
+        else:
+            if np.isscalar(new_labels):
+                new_labels = [new_labels]
+            new_labels = np.asarray(new_labels)
+
+        current_labels = self.labels
+        labels_type = common_type((current_labels, new_labels))
+        if labels_type is object:
+            # astype always copies, while asarray only copies if necessary
+            current_labels = np.asarray(current_labels, dtype=object)
+            new_labels = np.asarray(new_labels, dtype=object)
+
+        # not using np.insert to avoid inserted string labels being truncated (because of current_labels.dtype)
+        res_labels = np.concatenate((current_labels[:before], new_labels, current_labels[before:]))
+        return Axis(res_labels, self.name)
 
     @property
     def iswildcard(self):
