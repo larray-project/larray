@@ -502,14 +502,14 @@ Miscellaneous
    aslarray
    labels_array
    larray_equal
+   larray_nan_equal
+   nan_equal
    union
    stack
    identity
    diag
    eye
    ipfp
-   load_example_data
-   local_arrays
 
 .. _api-session:
 
@@ -520,6 +520,9 @@ Session
    :toctree: _generated/
 
    Session
+   local_arrays
+   global_arrays
+   load_example_data
 
 Exploring
 ---------

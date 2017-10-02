@@ -5,7 +5,7 @@ __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
     'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'larray_equal',
     'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std',
-    'median', 'percentile', 'stack', 'nan'
+    'median', 'percentile', 'stack', 'nan', 'nan_equal'
 ]
 
 """
@@ -629,6 +629,52 @@ def larray_equal(a1, a2):
             np.array_equal(np.asarray(a1), np.asarray(a2)))
 
 
+obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
+
+def nan_equal(a1, a2):
+    """
+    Compares two arrays element-wise and returns array of booleans. True for each cell where corresponding elements are
+    equal or are both NaN, False otherwise.
+
+    Parameters
+    ----------
+    a1, a2 : LArray-like
+        Input arrays. aslarray() is used on non-LArray inputs.
+
+    Returns
+    -------
+    LArray
+        Returns True if the arrays are equal (even in the presence of NaN).
+
+    Examples
+    --------
+    >>> arr1 = ndtest(3, dtype=float)
+    >>> arr1['a1'] = nan
+    >>> arr1
+    a   a0   a1   a2
+       0.0  nan  2.0
+    >>> arr2 = arr1.copy()
+    >>> arr1 == arr2
+    a    a0     a1    a2
+       True  False  True
+    >>> nan_equal(arr1, arr2)
+    a    a0    a1    a2
+       True  True  True
+    """
+    from larray.core.ufuncs import isnan
+
+    def general_isnan(a):
+        if np.issubclass_(a.dtype.type, np.inexact):
+            return isnan(a)
+        elif a.dtype.type is np.object_:
+            return obj_isnan(a)
+        else:
+            return False
+
+    a1, a2 = aslarray(a1), aslarray(a2)
+    return (a1 == a2) | (general_isnan(a1) & general_isnan(a2))
+
+
 def larray_nan_equal(a1, a2):
     """
     Compares two arrays and returns True if they have the same axes and elements, False otherwise.
@@ -669,16 +715,11 @@ def larray_nan_equal(a1, a2):
     >>> larray_nan_equal([0], [0])
     True
     """
-    def isnan(a):
-        assert isinstance(a, np.ndarray)
-        return np.isnan(a) if np.issubclass_(a.dtype.type, np.inexact) else False
-
     try:
         a1, a2 = aslarray(a1), aslarray(a2)
     except Exception:
         return False
-    npa1, npa2 = np.asarray(a1), np.asarray(a2)
-    return a1.axes == a2.axes and np.all((npa1 == npa2) | (isnan(npa1) & isnan(npa2)))
+    return a1.axes == a2.axes and all(nan_equal(a1, a2))
 
 
 class LArray(ABCLArray):
