@@ -35,6 +35,22 @@ New features
     >>> group.containing('Will')
     people['Bruce Willis']
 
+* implemented nan_equal() function to create an array of booleans telling whether each cell of the first array is
+  equal to the corresponding cell in the other array, even in the presence of NaN.
+
+    >>> arr1 = ndtest(3, dtype=float)
+    >>> arr1['a1'] = nan
+    >>> arr1
+    a   a0   a1   a2
+       0.0  nan  2.0
+    >>> arr2 = arr1.copy()
+    >>> arr1 == arr2
+    a    a0     a1    a2
+       True  False  True
+    >>> nan_equal(arr1, arr2)
+    a    a0    a1    a2
+       True  True  True
+
 
 Miscellaneous improvements
 --------------------------
