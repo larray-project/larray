@@ -249,39 +249,6 @@ def std(array, *args, **kwargs):
     return array.std(*args, **kwargs)
 
 
-def concat_empty(axis, arrays_axes, dtype):
-    # Get axis by name, so that we do *NOT* check they are "compatible", because it makes sense to append axes of
-    # different length
-    arrays_axis = [axes[axis] for axes in arrays_axes]
-    arrays_labels = [axis.labels for axis in arrays_axis]
-
-    # switch to object dtype if labels are of incompatible types, so that we do not implicitly convert numeric types to
-    # strings (numpy should not do this in the first place but that is another story). This can happen for example when
-    # we want to add a "total" tick to a numeric axis (eg age).
-    labels_type = common_type(arrays_labels)
-    if labels_type is object:
-        # astype always copies, while asarray only copies if necessary
-        arrays_labels = [np.asarray(labels, dtype=object) for labels in arrays_labels]
-    new_labels = np.concatenate(arrays_labels)
-    combined_axis = Axis(new_labels, arrays_axis[0].name)
-
-    new_axes = [axes.replace(axis, combined_axis) for axes, axis in zip(arrays_axes, arrays_axis)]
-
-    # combine all axes (using labels from any side if any)
-    result_axes = AxisCollection.union(*new_axes)
-
-    result = empty(result_axes, dtype=dtype)
-    lengths = [len(axis) for axis in arrays_axis]
-    cumlen = np.cumsum(lengths)
-    start_bounds = np.concatenate(([0], cumlen[:-1]))
-    stop_bounds = cumlen
-    # XXX: wouldn't it be nice to be able to say that? ie translation from index to label on the original axis then
-    # translation to index on the actual result axis?
-    # result[:axis.i[-1]]
-    return result, [result[combined_axis.i[start:stop]]
-                    for start, stop in zip(start_bounds, stop_bounds)]
-
-
 def concat(arrays, axis=0, dtype=None):
     """Concatenate arrays along axis
 
@@ -5474,13 +5441,7 @@ class LArray(ABCLArray):
         Other         F    0.0    0.0
         """
         axis = self.axes[axis]
-        if np.isscalar(value):
-            value = LArray(np.asarray(value, self.dtype))
-        # This does not prevent value to have more axes than self.
-        # We do not use .expand(..., readonly=True) so that the code is more similar to .prepend().
-        target_axes = self.axes.replace(axis, Axis([label], axis.name))
-        value = value.broadcast_with(target_axes)
-        return self.extend(axis, value)
+        return self.insert(value, pos=len(axis), axis=axis, label=label)
 
     def prepend(self, axis, value, label=None):
         """Adds an array before self along an axis.
@@ -5521,24 +5482,16 @@ class LArray(ABCLArray):
         >>> b
         type  type1  type2
                 0.0    0.0
-        >>> a.prepend(X.nat, b, 'Other')
-         type  nat\sex    M    F
-        type1    Other  0.0  0.0
-        type1       BE  1.0  1.0
-        type1       FO  1.0  1.0
-        type2    Other  0.0  0.0
-        type2       BE  1.0  1.0
-        type2       FO  1.0  1.0
+        >>> a.prepend(X.sex, b, 'Other')
+        nat  sex\\type  type1  type2
+         BE     Other    0.0    0.0
+         BE         M    1.0    1.0
+         BE         F    1.0    1.0
+         FO     Other    0.0    0.0
+         FO         M    1.0    1.0
+         FO         F    1.0    1.0
         """
-        axis = self.axes[axis]
-        if np.isscalar(value):
-            value = LArray(np.asarray(value, self.dtype))
-        # This does not prevent value to have more axes than self
-        target_axes = self.axes.replace(axis, Axis([label], axis.name))
-        # We cannot simply add the "new" axis to value (e.g. using expand) because the resulting axes would not be in
-        # the correct order.
-        value = value.broadcast_with(target_axes)
-        return value.extend(axis, self)
+        return self.insert(value, pos=0, axis=axis, label=label)
 
     def extend(self, axis, other):
         """Adds an array to self along an axis.
@@ -5590,10 +5543,7 @@ class LArray(ABCLArray):
           U     type1  0.0  0.0
           U     type2  0.0  0.0
         """
-        result, (self_target, other_target) = concat_empty(axis, (self.axes, other.axes), self.dtype)
-        self_target[:] = self
-        other_target[:] = other
-        return result
+        return concat((self, other), axis)
 
     def insert(self, value, before=None, after=None, pos=None, axis=None, label=None):
         """Inserts value in array along an axis.
@@ -8000,6 +7950,7 @@ def stack(elements=None, axis=None, title='', **kwargs):
             res.append((name, stacked))
         return Session(res)
     else:
+        # XXX : use concat?
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])
         result_axes.append(axis)
         result = empty(result_axes, title=title, dtype=common_type(values))
