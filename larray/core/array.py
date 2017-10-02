@@ -885,7 +885,7 @@ class LArray(ABCLArray):
         else:
             return LArray(self.data, new_axes, title=self.title)
 
-    with_axes = renamed_to('with_axes', set_axes)
+    with_axes = renamed_to(set_axes, 'with_axes')
 
     def __getattr__(self, key):
         if key in self.axes:
@@ -6505,7 +6505,7 @@ class LArray(ABCLArray):
         """
         return self.reshape(self.axes.split_axes(axes, sep, names, regex))
 
-    split_axis = renamed_to('split_axis', split_axes)
+    split_axis = renamed_to(split_axes, 'split_axis')
 
 
 def aslarray(a):
@@ -7071,7 +7071,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
                 ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
 
-create_sequential = renamed_to('create_sequential', sequence)
+create_sequential = renamed_to(sequence, 'create_sequential')
 
 
 @_check_axes_argument

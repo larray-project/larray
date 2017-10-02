@@ -389,7 +389,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
-    dump = renamed_to('dump', save)
+    dump = renamed_to(save, 'dump')
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
@@ -422,7 +422,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
-    dump_hdf = renamed_to('dump_hdf', to_hdf)
+    dump_hdf = renamed_to(to_hdf, 'dump_hdf')
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
@@ -454,7 +454,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
-    dump_excel = renamed_to('dump_excel', to_excel)
+    dump_excel = renamed_to(to_excel, 'dump_excel')
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
         """
@@ -484,7 +484,7 @@ class Session(object):
         """
         self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
-    dump_csv = renamed_to('dump_csv', to_csv)
+    dump_csv = renamed_to(to_csv, 'dump_csv')
 
     def filter(self, pattern=None, kind=None):
         """

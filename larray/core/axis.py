@@ -479,7 +479,7 @@ class Axis(ABCAxis):
         rx = re.compile(pattern)
         return LGroup([v for v in self.labels if rx.match(v)], axis=self)
 
-    matches = renamed_to('matches', matching)
+    matches = renamed_to(matching, 'matches')
 
     def startingwith(self, prefix):
         """
@@ -505,7 +505,7 @@ class Axis(ABCAxis):
             prefix = prefix.eval()
         return LGroup([v for v in self.labels if v.startswith(prefix)], axis=self)
 
-    startswith = renamed_to('startswith', startingwith)
+    startswith = renamed_to(startingwith, 'startswith')
 
     def endingwith(self, suffix):
         """
@@ -531,7 +531,7 @@ class Axis(ABCAxis):
             suffix = suffix.eval()
         return LGroup([v for v in self.labels if v.endswith(suffix)], axis=self)
 
-    endswith = renamed_to('endswith', endingwith)
+    endswith = renamed_to(endingwith, 'endswith')
 
     def containing(self, substring):
         """
