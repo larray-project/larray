@@ -60,6 +60,7 @@ Modifying/Selecting/Searching
    Axis.rename
    Axis.subaxis
    Axis.extend
+   Axis.insert
    Axis.replace
    Axis.union
    Axis.intersection
@@ -374,6 +375,7 @@ Reshaping/Extending/Reordering
    LArray.prepend
    LArray.append
    LArray.extend
+   LArray.insert
    LArray.broadcast_with
    LArray.align
 
