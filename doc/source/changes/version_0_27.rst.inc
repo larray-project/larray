@@ -7,7 +7,7 @@
 Backward incompatible changes
 -----------------------------
 
-* labels are checked during array subset assignement (closes :issue:`269`):
+* labels are checked during array subset assignment (closes :issue:`269`):
 
     >>> arr = ndtest(4)
     >>> arr
@@ -140,6 +140,26 @@ Miscellaneous improvements
 * made the editor more responsive when switching to or changing the filter of large arrays (closes :issue:`93`).
 
 * added support for coloring numeric values for object arrays (e.g. arrays containing both strings and numbers).
+
+* when appending/prepending/extending an array, both the original array and the added values will be converted to a
+  data type which can hold both without loss of information. It used to convert the added values to the type of the
+  original array. For example, given an array of integers like:
+
+    >>> arr = ndtest(3)
+    a  a0  a1  a2
+        0   1   2
+
+  Trying to add a floating point number to that array used to result in:
+
+    >>> arr.append('a', 2.5, 'a3')
+    a  a0  a1  a2  a3
+        0   1   2   2
+
+  Now it will result in:
+
+    >>> arr.append('a', 2.5, 'a3')
+    a   a0   a1   a2   a3
+       0.0  1.0  2.0  2.5
 
 
 Fixes
