@@ -704,7 +704,77 @@ class TestAxisCollection(TestCase):
         self.assertEqual(newcol.names, ['lipro', 'letters', 'age'])
         self.assertEqual(newcol.shape, (4, 3, 8))
 
-    # TODO: add contains_test (using both axis name and axis objects)
+    def test_contains(self):
+        col = self.collection
+        self.assertTrue('lipro' in col)
+        self.assertFalse('nonexisting' in col)
+
+        self.assertTrue(0 in col)
+        self.assertTrue(1 in col)
+        self.assertTrue(2 in col)
+        self.assertTrue(-1 in col)
+        self.assertTrue(-2 in col)
+        self.assertTrue(-3 in col)
+        self.assertFalse(3 in col)
+
+        # objects actually in col
+        self.assertTrue(self.lipro in col)
+        self.assertTrue(self.sex in col)
+        self.assertTrue(self.age in col)
+        # other axis with the same name
+        self.assertTrue(self.sex2 in col)
+        self.assertFalse(self.geo in col)
+        self.assertFalse(self.value in col)
+
+        # test anonymous axes
+        anon = Axis([0, 1])
+        col.append(anon)
+        self.assertTrue(anon in col)
+        # different object, same values
+        anon2 = anon.copy()
+        self.assertTrue(anon2 in col)
+        # different values
+        anon3 = Axis([0, 2])
+        self.assertFalse(anon3 in col)
+
+    def test_index(self):
+        col = self.collection
+        self.assertEqual(col.index('lipro'), 0)
+        with self.assertRaises(ValueError):
+            col.index('nonexisting')
+        self.assertEqual(col.index(0), 0)
+        self.assertEqual(col.index(1), 1)
+        self.assertEqual(col.index(2), 2)
+        self.assertEqual(col.index(-1), -1)
+        self.assertEqual(col.index(-2), -2)
+        self.assertEqual(col.index(-3), -3)
+        with self.assertRaises(ValueError):
+            col.index(3)
+
+        # objects actually in col
+        self.assertEqual(col.index(self.lipro), 0)
+        self.assertEqual(col.index(self.sex), 1)
+        self.assertEqual(col.index(self.age), 2)
+        # other axis with the same name
+        self.assertEqual(col.index(self.sex2), 1)
+        # non existing
+        with self.assertRaises(ValueError):
+            col.index(self.geo)
+        with self.assertRaises(ValueError):
+            col.index(self.value)
+
+        # test anonymous axes
+        anon = Axis([0, 1])
+        col.append(anon)
+        self.assertEqual(col.index(anon), 3)
+        # different object, same values
+        anon2 = anon.copy()
+        self.assertEqual(col.index(anon2), 3)
+        # different values
+        anon3 = Axis([0, 2])
+        with self.assertRaises(ValueError):
+            col.index(anon3)
+
     def test_get(self):
         col = self.collection
         self.assert_axis_eq(col.get('lipro'), self.lipro)
