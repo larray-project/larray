@@ -312,6 +312,73 @@ def concat_empty(axis, arrays_axes, dtype):
                     for start, stop in zip(start_bounds, stop_bounds)]
 
 
+def concat(arrays, axis=0, dtype=None):
+    """Concatenate arrays along axis
+
+    Parameters
+    ----------
+    arrays : tuple of LArray
+        Arrays to concatenate.
+    axis : AxisReference, optional
+        Axis along which to concatenate. Defaults to the first axis.
+    dtype : dtype, optional
+        Result data type. Defaults to the "closest" type which can hold all arrays types without loss of information.
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> arr1 = ndtest((2, 3))
+    >>> arr1
+    a\\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+    >>> arr2 = ndrange('a=a0,a1;b=b3')
+    >>> arr2
+    a\\b  b3
+     a0   0
+     a1   1
+    >>> arr3 = ndrange('b=b4,b5')
+    >>> arr3
+    b  b4  b5
+        0   1
+    >>> concat((arr1, arr2, arr3), 'b')
+    a\\b  b0  b1  b2  b3  b4  b5
+     a0   0   1   2   0   0   1
+     a1   3   4   5   1   0   1
+    """
+    # Get axis by name, so that we do *NOT* check they are "compatible", because it makes sense to append axes of
+    # different length
+    name = arrays[0].axes[axis].name
+    arrays_labels = [array.axes[axis].labels for array in arrays]
+
+    # switch to object dtype if labels are of incompatible types, so that we do not implicitly convert numeric types to
+    # strings (numpy should not do this in the first place but that is another story). This can happen for example when
+    # we want to add a "total" tick to a numeric axis (eg age).
+    labels_type = common_type(arrays_labels)
+    if labels_type is object:
+        # astype always copies, while asarray only copies if necessary
+        arrays_labels = [np.asarray(labels, dtype=object) for labels in arrays_labels]
+
+    combined_axis = Axis(np.concatenate(arrays_labels), name)
+
+    # combine all axes (using labels from any side if any)
+    result_axes = arrays[0].axes.replace(axis, combined_axis).union(*[array.axes - axis for array in arrays[1:]])
+
+    if dtype is None:
+        dtype = common_type(arrays)
+
+    result = empty(result_axes, dtype=dtype)
+    start = 0
+    for labels, array in zip(arrays_labels, arrays):
+        stop = start + len(labels)
+        result[combined_axis.i[start:stop]] = array
+        start = stop
+    return result
+
+
 class LArrayIterator(object):
     def __init__(self, array):
         self.array = array
