@@ -1779,6 +1779,8 @@ class LArray(ABCLArray):
         if not valid_axes:
             raise ValueError("%s is not a valid label for any axis" % axis_key)
         elif len(valid_axes) > 1:
+            # TODO: make an AxisCollection.display_name(axis) method out of this
+            # valid_axes = ', '.join(self.axes.display_name(axis) for a in valid_axes)
             valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
                                    for a in valid_axes)
             raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))

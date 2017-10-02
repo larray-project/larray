@@ -13,7 +13,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
+from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, df_aslarray, sequence)
@@ -3726,8 +3726,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a2 = ndrange((3, 1))
         b = a2.broadcast_with(a1)
         self.assertEqual(b.ndim, 2)
-        self.assertEqual(b.shape, (3, 1))
-        assert_array_equal(b, a2)
+        # common axes are reordered according to target (a1 in this case)
+        self.assertEqual(b.shape, (1, 3))
+        assert_larray_equiv(b, a2)
+
+        a1 = ndrange((2, 3))
+        a2 = ndrange((3, 2))
+        b = a2.broadcast_with(a1)
+        self.assertEqual(b.ndim, 2)
+        self.assertEqual(b.shape, (2, 3))
+        assert_larray_equiv(b, a2)
 
     def test_plot(self):
         pass
@@ -3877,6 +3885,29 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0b1', 'c2', 'd3', 'e2f1']
 
     def test_stack(self):
+        # simple
+        arr0 = ndtest(3)
+        arr1 = ndtest(3, start=-1)
+        a = arr0.axes[0]
+        b = Axis('b=b0,b1')
+        expected = LArray([[0, -1],
+                           [1,  0],
+                           [2,  1]], [a, b])
+        res = stack((arr0, arr1), b)
+        assert_array_equal(res, expected)
+
+        # simple with anonymous axis
+        arr0 = ndrange(3)
+        arr1 = ndrange(3, start=-1)
+        a = arr0.axes[0]
+        b = Axis('b=b0,b1')
+        expected = LArray([[0, -1],
+                           [1,  0],
+                           [2,  1]], [a, b])
+        res = stack((arr0, arr1), b)
+        assert_array_equal(res, expected)
+
+        # nd
         sex = Axis('sex=M,F')
         arr1 = ones('nat=BE, FO')
         # not using the same length as nat, otherwise numpy gets confused :(
