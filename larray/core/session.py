@@ -653,7 +653,8 @@ class Session(object):
                     other_array = other.get(name, np.nan)
                     try:
                         res_array = getattr(self_array, opfullname)(other_array)
-                    except TypeError:
+                    # TypeError for str arrays, ValueError for incompatible axes, ...
+                    except Exception:
                         res_array = np.nan
                     res.append((name, res_array))
             return Session(res)
@@ -676,7 +677,7 @@ class Session(object):
                 for k, v in self.items():
                     try:
                         res_array = getattr(v, opfullname)()
-                    except TypeError:
+                    except Exception:
                         res_array = np.nan
                     res.append((k, res_array))
             return Session(res)
