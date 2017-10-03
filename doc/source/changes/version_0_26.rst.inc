@@ -14,10 +14,13 @@
 New features
 ------------
 
-* added global_arrays() function which returns a Session containing all arrays defined in global variables. This
-  complements the local_arrays() function. When used outside of a function, these two functions should have the same
-  results, but inside a function local_arrays will return only arrays local to the function, while global_arrays will
-  return only arrays defined globally.
+* added global_arrays() and arrays() functions to complement the local_arrays() function. They return a Session
+  containing respectively all arrays defined in global variables and all available arrays (whether they are defined in
+  local or global variables).
+
+  When used outside of a function, these three functions should have the same results, but inside a function
+  local_arrays() will return only arrays local to the function, global_arrays() will return only arrays defined
+  globally and arrays() will return arrays defined either locally or globally. Closes :issue:`416`.
 
 * implemented Axis.containing to create a Group with all labels of an axis containing some substring (closes
   :issue:`402`).
