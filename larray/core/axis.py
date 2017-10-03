@@ -980,8 +980,8 @@ class Axis(ABCAxis):
         """
         if isinstance(other, Axis):
             other = other.labels
-        seen = set(other)
-        return Axis([l for l in self.labels if l in seen], self.name)
+        to_keep = set(other)
+        return Axis([l for l in self.labels if l in to_keep], self.name)
 
     def difference(self, other):
         """Returns axis with the (set) difference of this axis labels and other labels.
@@ -1008,8 +1008,8 @@ class Axis(ABCAxis):
         """
         if isinstance(other, Axis):
             other = other.labels
-        seen = set(other)
-        return Axis([l for l in self.labels if l not in seen], self.name)
+        to_drop = set(other)
+        return Axis([l for l in self.labels if l not in to_drop], self.name)
 
     def align(self, other, join='outer'):
         """Align axis with other object using specified join method.
