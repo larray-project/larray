@@ -520,6 +520,7 @@ Session
    :toctree: _generated/
 
    Session
+   arrays
    local_arrays
    global_arrays
    load_example_data
