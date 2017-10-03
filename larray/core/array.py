@@ -12,60 +12,26 @@ __all__ = [
 Matrix class
 """
 
-# * when trying to aggregate on an non existing Axis (using x.blabla),
-#   the error message is awful
+# ? implement multi group in one axis getitem: lipro['P01,P02;P05'] <=> (lipro['P01,P02'], lipro['P05'])
 
-# ? implement multi group in one axis getitem:
-#   lipro['P01,P02;P05'] <=> (lipro.group('P01,P02'), lipro.group('P05'))
-#                        <=> (lipro['P01,P02'], lipro['P05'])
+# * we need an API to get to the "next" label. Sometimes, we want to use label+1, but that is problematic when labels
+#   are not numeric, or have not a step of 1. x.agegroup[x.agegroup.after(25):]
 
-# discuss LGroup with Geert:
-# I do not "expand" key (eg :) upon group creation for perf reason
-# LGroup[:] is much faster than [A01,A02,...,A99]
-# I could make that all "contiguous" ranges are conv to slices (return views)
-# but that might introduce confusing differences if they update/setitem their
-# arrays
-
-# * we need an API to get to the "next" label. Sometimes, we want to use
-#   label+1, but when label is not numeric, or has not a step of 1, that's
-#   problematic. x.agegroup[x.agegroup.after(25):]
-
-# * implement keepaxes=True for _group_aggregate instead of/in addition to
-#   group tuples
+# * implement keepaxes=True for _group_aggregate instead of/in addition to group tuples
 
 # ? implement newaxis
 
-# * split unit tests
+# * Axis.sequence? geo.seq('A31', 'A38') (equivalent to geo['A31..A38'])
 
-# * reindex array (ie make it conform to another index, eg of another
-#   array). This can be used both for doing operations (add, divide, ...)
-#   involving arrays with incompatible axes and to (manually) reorder one axis
-#   labels
-
-# * test to_csv: does it consume too much mem?
-#   ---> test pandas (one dimension horizontally)
-
-# * add labels in LGroups.__str__
-
-# * IO functions: csv/hdf/excel?/...?
-#   >> needs discussion of the formats (users involved in the discussion?)
-#      + check pandas dialects
-# * plotting (see plot.py)
-#   >> check pandas API
-# * implement more Axis functions:
-#   - arithmetic operations: + -
-#   - regexp functions: geo.group('A3*')
-#   - sequence?: geo.seq('A31', 'A38')
-#     this NOT exactly equivalent to geo['A31':'A38'] because the later
-#     can contain A22 if it is defined between A31 and A38
 # * re-implement row_totals/col_totals? or what do we do with them?
-# * all the other TODO/XXX in the code
+
 # * time specific API so that we know if we go for a subclass or not
+
 # * data alignment in arithmetic methods
+
 # * test structured arrays
-# * review all method & argument names
-# ? move "utils" to its own project (so that it is not duplicated between
-#   larray and liam2)
+
+# ? move "utils" to its own project (so that it is not duplicated between larray and liam2)
 #   OR
 #   include utils only in larray project and make larray a dependency of liam2
 #   (and potentially rename it to reflect the broader scope)
