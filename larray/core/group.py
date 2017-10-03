@@ -740,7 +740,7 @@ class Group(object):
 
         axis_name = self.axis.name if isinstance(self.axis, ABCAxis) else self.axis
         if axis_name is not None:
-            axis_name = 'x.{}'.format(axis_name) if isinstance(self.axis, ABCAxisReference) else axis_name
+            axis_name = 'X.{}'.format(axis_name) if isinstance(self.axis, ABCAxisReference) else axis_name
             s = self.format_string.format(axis=axis_name, key=key_repr)
         else:
             if self.axis is not None:
@@ -909,7 +909,7 @@ class Group(object):
         >>> age[1:5].by(3, 2)
         (age.i[1:4], age.i[3:6], age.i[5:6])
         >>> X.age[[0, 1, 2, 3, 4]].by(2)
-        (x.age[0, 1], x.age[2, 3], x.age[4])
+        (X.age[0, 1], X.age[2, 3], X.age[4])
         """
         if step is None:
             step = length
@@ -1339,10 +1339,10 @@ class LGroup(Group):
     >>> age = Axis('0..100', 'age')
     >>> teens = X.age[10:19].named('teens')
     >>> teens
-    x.age[10:19] >> 'teens'
+    X.age[10:19] >> 'teens'
     >>> teens = X.age[10:19] >> 'teens'
     >>> teens
-    x.age[10:19] >> 'teens'
+    X.age[10:19] >> 'teens'
     """
     format_string = "{axis}[{key}]"
 
