@@ -2532,6 +2532,18 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                                 "the xlwings backend"):
             read_excel(abspath('test.xlsx'), engine='xlwings', dtype=float)
 
+        # Excel sheet with blank cells on right/bottom border of the array to read
+        fpath = abspath('test_blank_cells.xlsx')
+        good_la = read_excel(fpath, 'good')
+        bad_la = read_excel(fpath, 'bad')
+        assert_array_equal(good_la, bad_la)
+        # with additional empty column in the middle of the array to read
+        good_la2 = ndrange('a=a0,a1;b=2003..2006').astype(object)
+        good_la2[2005] = None
+        good_la2 = good_la2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
+        bad_la2 = read_excel(fpath, 'bad2')
+        assert_array_equal(good_la2, bad_la2)
+
     def test_read_excel_pandas(self):
         la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
         self.assertEqual(la.ndim, 1)
@@ -2585,6 +2597,18 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
+
+        # Excel sheet with blank cells on right/bottom border of the array to read
+        fpath = abspath('test_blank_cells.xlsx')
+        good_la = read_excel(fpath, 'good', engine='xlrd')
+        bad_la = read_excel(fpath, 'bad', engine='xlrd')
+        assert_array_equal(good_la, bad_la)
+        # with additional empty column in the middle of the array to read
+        good_la2 = ndrange('a=a0,a1;b=2003..2006').astype(float)
+        good_la2[2005] = np.nan
+        good_la2 = good_la2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
+        bad_la2 = read_excel(fpath, 'bad2', engine='xlrd')
+        assert_array_nan_equal(good_la2, bad_la2)
 
     def test_from_lists(self):
         # sort_rows
@@ -3027,7 +3051,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
             res = wb['3D']['A20:D25'].load(header=False)
             assert_array_equal(res, a3.data.reshape((6, 4)))
 
-        # 4) crash test
+        # 4) Blank cells
+        # ========================
+        # Excel sheet with blank cells on right/bottom border of the array to read
+        fpath = abspath('test_blank_cells.xlsx')
+        with open_excel(fpath) as wb:
+            good_la = wb['good'].load()
+            bad_la = wb['bad'].load()
+            # with additional empty column in the middle of the array to read
+            good_la2 = wb['bad2']['A1:E3'].load()
+            bad_la2 = wb['bad2'].load()
+        assert_array_equal(good_la, bad_la)
+        assert_array_equal(good_la2, bad_la2)
+
+        # 5) crash test
         # =============
         arr = ndtest((2, 2))
         fpath = abspath('temporary_test_file.xlsx')
