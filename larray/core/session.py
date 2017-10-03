@@ -893,12 +893,12 @@ class Session(object):
 
 def local_arrays(depth=0):
     """
-    Returns a session containing all local arrays (sorted in alphabetical order).
+    Returns a session containing all local arrays sorted in alphabetical order.
 
     Parameters
     ----------
     depth: int
-        depth of call frame to inspect. 0 is where local_arrays was called, 1 the caller of local_arrays, etc.
+        depth of call frame to inspect. 0 is where `local_arrays` was called, 1 the caller of `local_arrays`, etc.
 
     Returns
     -------
@@ -911,13 +911,12 @@ def local_arrays(depth=0):
 
 def global_arrays(depth=0):
     """
-    Returns a session containing all global arrays (sorted in alphabetical order).
+    Returns a session containing all global arrays sorted in alphabetical order.
 
     Parameters
     ----------
     depth: int
-        depth of call frame to inspect. 0 is where global_arrays was called,
-        1 the caller of global_arrays, etc.
+        depth of call frame to inspect. 0 is where `global_arrays` was called, 1 the caller of `global_arrays`, etc.
 
     Returns
     -------
@@ -926,6 +925,34 @@ def global_arrays(depth=0):
     # noinspection PyProtectedMember
     d = sys._getframe(depth + 1).f_globals
     return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
+
+
+def arrays(depth=0):
+    """
+    Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
+    alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
+    and a global variable, the local array will be returned).
+
+    Parameters
+    ----------
+    depth: int
+        depth of call frame to inspect. 0 is where `arrays` was called, 1 the caller of `arrays`, etc.
+
+    Returns
+    -------
+    Session
+    """
+    # noinspection PyProtectedMember
+    caller_frame = sys._getframe(depth + 1)
+    global_vars = caller_frame.f_globals
+    local_vars = caller_frame.f_locals
+
+    # We must first get all variables *then* filter by type, otherwise we could return a global array which is not
+    # currently available because it is shadowed by a local non-array variable.
+    all_keys = sorted(set(global_vars.keys()) | set(local_vars.keys()))
+    combined_vars = [(k, local_vars[k] if k in local_vars else global_vars[k])
+                     for k in all_keys]
+    return Session((k, v) for k, v in combined_vars if isinstance(v, LArray))
 
 
 _session_float_error_handler = float_error_handler_factory(4)
