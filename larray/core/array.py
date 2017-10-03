@@ -6067,8 +6067,8 @@ class LArray(ABCLArray):
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
-        **kwargs : 
-            `axis`=`labels` for each axis you want to set labels. 
+        **kwargs :
+            `axis`=`labels` for each axis you want to set labels.
 
         Returns
         -------
@@ -6109,9 +6109,9 @@ class LArray(ABCLArray):
           nat\\sex  Men  Women
           Belgian    0      1
         Foreigner    2      3
-        
+
         or use keyword arguments
-        
+
         >>> a.set_labels(sex='Men,Women', nat='Belgian,Foreigner')
           nat\\sex  Men  Women
           Belgian    0      1
@@ -6329,8 +6329,8 @@ class LArray(ABCLArray):
         Parameters
         ----------
         axes : tuple, list, AxisCollection of axes or list of combination of those or dict, optional
-            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes 
-            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es), 
+            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes
+            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es),
             use a {(axes, to, combine): 'new_axis_name'} dictionary. Defaults to all axes.
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
@@ -6387,9 +6387,9 @@ class LArray(ABCLArray):
         a1_c0   b1  12  13
         a1_c1   b0  10  11
         a1_c1   b1  14  15
-        
+
         # make several combinations at once
-        
+
         >>> arr.combine_axes([('a', 'c'), ('b', 'd')])
         a_c\\b_d  b0_d0  b0_d1  b1_d0  b1_d1
           a0_c0      0      1      4      5
@@ -6435,8 +6435,8 @@ class LArray(ABCLArray):
         Parameters
         ----------
         axes : int, str, Axis or any combination of those
-            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass 
-            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)} 
+            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass
+            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)}
             dictionary. Defaults to all axes whose name contains the `sep` delimiter.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'.
@@ -6477,18 +6477,18 @@ class LArray(ABCLArray):
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
-         
+
         Split several axes at once
-        
+
         >>> combined = ndrange('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
-        >>> combined 
+        >>> combined
         a_b\\c_d  c0_d0  c0_d1  c1_d0  c1_d1
           a0_b0      0      1      2      3
           a0_b1      4      5      6      7
           a1_b0      8      9     10     11
           a1_b1     12     13     14     15
-        >>> # equivalent to combined.split_axes() which split all axes 
-        >>> # whose name contains the `sep` delimiter. 
+        >>> # equivalent to combined.split_axes() which split all axes
+        >>> # whose name contains the `sep` delimiter.
         >>> combined.split_axes(['a_b', 'c_d'])
          a   b  c\\d  d0  d1
         a0  b0   c0   0   1
