@@ -959,16 +959,16 @@ class Axis(ABCAxis):
         """Returns axis with the (set) intersection of this axis labels and other labels.
 
         In other words, this will use labels from this axis if they are also in other. Labels relative order will be
-        kept intact, but only unique labels will be returned.
+        kept intact.
 
         Parameters
         ----------
-        other : Group or any sequence of labels
+        other : Axis or any sequence of labels
             other labels
 
         Returns
         -------
-        LSet
+        Axis
 
         Examples
         --------
@@ -987,7 +987,7 @@ class Axis(ABCAxis):
         """Returns axis with the (set) difference of this axis labels and other labels.
 
         In other words, this will use labels from this axis if they are not in other. Labels relative order will be
-        kept intact, but only unique labels will be returned.
+        kept intact.
 
         Parameters
         ----------
