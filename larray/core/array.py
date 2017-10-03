@@ -36,10 +36,8 @@ Matrix class
 #   include utils only in larray project and make larray a dependency of liam2
 #   (and potentially rename it to reflect the broader scope)
 
-import csv
 from collections import Iterable, Sequence
 from itertools import product, chain, groupby, islice
-import re
 import os
 import sys
 import warnings
@@ -65,7 +63,7 @@ except ImportError:
 
 from larray.core.abc import ABCLArray
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_tick, _to_key, _to_keys,
+from larray.core.group import (Group, PGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
