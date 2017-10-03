@@ -321,10 +321,19 @@ if xw is not None:
         @property
         def shape(self):
             # include top-left empty rows/columns
-            # XXX: is there an exposed xlwings API for this? expand maybe?
+            from xlwings.constants import Direction as xldir
             used = self.xw_sheet.api.UsedRange
-            return (used.Row + used.Rows.Count - 1,
-                    used.Column + used.Columns.Count - 1)
+            last_row = used.Row + used.Rows.Count
+            last_col = used.Column + used.Columns.Count
+            for last_used_row in range(last_row, 0, -1):
+                left_cell = used.Cells(last_used_row, last_col + 1).End(xldir.xlToLeft)
+                if left_cell.Column > 1 or left_cell.Value is not None:
+                    break
+            for last_used_col in range(last_col, 0, -1):
+                up_cell = used.Cells(last_row + 1, last_used_col).End(xldir.xlUp)
+                if up_cell.Row > 1 or up_cell.Value is not None:
+                    break
+            return (last_used_row, last_used_col)
 
         @property
         def ndim(self):

@@ -275,3 +275,6 @@ Fixes
 
 * fixed original file being deleted when trying to overwrite a file via `Session.save` or `open_excel` failed
   (closes :issue:`441`)
+
+* fixed loading arrays from Excel sheets containing blank cells below or right of the array to read
+  (closes :issue:`443`)
