@@ -2112,8 +2112,8 @@ class AxisCollection(object):
         Parameters
         ----------
         axes : tuple, list, AxisCollection of axes or list of combination of those or dict, optional
-            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes 
-            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es), 
+            axes to combine. Tuple, list or AxisCollection will combine several axes into one. To chain several axes
+            combinations, pass a list of tuple/list/AxisCollection of axes. To set the name(s) of resulting axis(es),
             use a {(axes, to, combine): 'new_axis_name'} dictionary. Defaults to all axes.
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
@@ -2128,7 +2128,7 @@ class AxisCollection(object):
         -------
         AxisCollection
             New AxisCollection with combined axes.
-            
+
         Examples
         --------
         >>> axes = AxisCollection('a=a0,a1;b=b0..b2')
@@ -2158,9 +2158,9 @@ class AxisCollection(object):
             Axis(['b0', 'b1', 'b2'], 'b'),
             Axis(['d0', 'd1'], 'd')
         ])
-        
+
         # make several combinations at once
-        
+
         >>> axes.combine_axes([('a', 'c'), ('b', 'd')])
         AxisCollection([
             Axis(['a0_c0', 'a0_c1', 'a0_c2', 'a1_c0', 'a1_c1', 'a1_c2'], 'a_c'),
@@ -2228,10 +2228,10 @@ class AxisCollection(object):
 
         Parameters
         ----------
-        axes : int, str, Axis or any combination of those, optional 
-            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass 
-            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)} 
-            dictionary. Defaults to all axes whose name contains the `sep` delimiter.     
+        axes : int, str, Axis or any combination of those, optional
+            axes to split. All labels *must* contain the given delimiter string. To split several axes at once, pass
+            a list or tuple of axes to split. To set the names of resulting axes, use a {'axis_to_split': (new, axes)}
+            dictionary. Defaults to all axes whose name contains the `sep` delimiter.
         sep : str, optional
             delimiter to use for splitting. Defaults to '_'. When `regex` is provided, the delimiter is only used on
             `names` if given as one string or on axis name if `names` is None.
@@ -2243,7 +2243,7 @@ class AxisCollection(object):
         Returns
         -------
         AxisCollection
-        
+
         Examples
         --------
         >>> col = AxisCollection('a=a0,a1;b=b0..b2')
@@ -2275,17 +2275,17 @@ class AxisCollection(object):
             Axis(['a0', 'a1'], 'a'),
             Axis(['b0', 'b1', 'b2'], 'b')
         ])
-         
+
         Split several axes at once
-        
+
         >>> combined = AxisCollection('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
-        >>> combined 
+        >>> combined
         AxisCollection([
             Axis(['a0_b0', 'a0_b1', 'a1_b0', 'a1_b1'], 'a_b'),
             Axis(['c0_d0', 'c0_d1', 'c1_d0', 'c1_d1'], 'c_d')
         ])
-        >>> # equivalent to combined.split_axes() which split all axes 
-        >>> # containing the delimiter defined by the argument `sep` 
+        >>> # equivalent to combined.split_axes() which split all axes
+        >>> # containing the delimiter defined by the argument `sep`
         >>> combined.split_axes(['a_b', 'c_d'])
         AxisCollection([
             Axis(['a0', 'a1'], 'a'),
