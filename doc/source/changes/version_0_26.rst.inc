@@ -63,6 +63,23 @@ New features
     a    a0    a1    a2
        True  True  True
 
+* implemented from_frame() to convert a Pandas DataFrame to an array:
+
+    >>> df = ndtest((2, 2, 2)).to_frame()
+    >>> df
+    c      c0  c1
+    a  b
+    a0 b0   0   1
+       b1   2   3
+    a1 b0   4   5
+       b1   6   7
+    >>> from_frame(df)
+     a  b\\c  c0  c1
+    a0   b0   0   1
+    a0   b1   2   3
+    a1   b0   4   5
+    a1   b1   6   7
+
 
 Miscellaneous improvements
 --------------------------
@@ -289,6 +306,15 @@ Miscellaneous improvements
      b [2]: 'b0' 'b1'
     dtype: float64
 
+* To create a 1D array using from_string() and the default separator ' ', a tabulation character `\t`
+  (instead of - previously) must be added in front of the data line:
+
+    >>> from_string('''sex  M  F
+    ...                \t   0  1''')
+    sex  M  F
+         0  1
+
+
 Fixes
 -----
 
@@ -310,6 +336,27 @@ Fixes
           M    12    10
 
   Closes :issue:`372`.
+
+* fixed converting a 1xN Pandas DataFrame to an array using `aslarray` (closes :issue:`427`):
+
+    >>> df = pd.DataFrame([[1, 2, 3]], index=['a0'], columns=['b0', 'b1', 'b2'])
+    >>> df
+        b0  b1  b2
+    a0   1   2   3
+    >>> aslarray(df)
+    {0}\{1}  b0  b1  b2
+         a0   1   2   3
+
+    >>> # setting name to index and columns
+    >>> df.index.name = 'a'
+    >>> df.columns.name = 'b'
+    >>> df
+    b   b0  b1  b2
+    a
+    a0   1   2   3
+    >>> aslarray(df)
+    a\b  b0  b1  b2
+     a0   1   2   3
 
 * fixed original file being deleted when trying to overwrite a file via `Session.save` or `open_excel` failed
   (closes :issue:`441`)

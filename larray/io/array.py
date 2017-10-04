@@ -3,18 +3,21 @@ from __future__ import absolute_import, print_function
 import csv
 import numpy as np
 import pandas as pd
-from itertools import product
 import warnings
+from itertools import product
 
 from larray.core.axis import Axis
-from larray.core.array import LArray
+from larray.core.array import LArray, ndtest
 from larray.core.group import _translate_sheet_name, _translate_key_hdf
-from larray.util.misc import basestring, unique, decode, skip_comment_cells, strip_rows, csv_open, StringIO
+from larray.util.misc import basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique
 
 try:
     import xlwings as xw
 except ImportError:
     xw = None
+
+__all__ = ['from_frame', 'read_csv', 'read_tsv', 'read_eurostat', 'read_hdf', 'read_excel', 'read_sas',
+           'from_lists', 'from_string']
 
 
 def parse(s):
@@ -70,48 +73,108 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, **kwargs):
-    # the dataframe was read without index at all (ie 2D dataframe), irrespective of the actual data dimensionality
-    if raw:
-        columns = df.columns.values.tolist()
-        try:
-            # take the first column which contains '\'
-            # pos_last = next(i for i, v in enumerate(columns) if '\\' in str(v))
-            pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
-        except StopIteration:
-            # we assume first column will not contain data
-            pos_last = 0
+def from_series(s, sort_rows=False):
+    """
+    Converts Pandas Series into 1D LArray.
 
-        axes_names = columns[:pos_last + 1]
-        # This is required to handle int column names (otherwise we can simply use column positions in set_index).
-        # This is NOT the same as df.columns[list(range(...))] !
-        index_columns = [df.columns[i] for i in range(pos_last + 1)]
-        # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
-        # df.set_index(index_columns, inplace=True)
-        df = df.set_index(index_columns)
-    else:
-        axes_names = [decode(name, 'utf8') for name in df.index.names]
+    Parameters
+    ----------
+    s : Pandas Series
+        Input Pandas Series.
+    sort_rows : bool, optional
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). 
+        Defaults to False.
+
+    Returns
+    -------
+    LArray
+    """
+    name = s.name if s.name is not None else s.index.name
+    if name is not None:
+        name = str(name)
+    labels = sorted(s.index.values) if sort_rows else list(s.index.values)
+    axis = Axis(labels, name)
+    return LArray(s.values, axis)
+
+
+def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfold_last_axis_name=False, **kwargs):
+    """
+    Converts Pandas DataFrame into LArray.
+
+    Parameters
+    ----------
+    df : Pandas DataFrame
+        Input dataframe. By default, name and labels of the last axis are defined by the name and labels of the 
+        columns Index of the dataframe unless argument unfold_last_axis_name is set to True.
+    sort_rows : bool, optional
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+    sort_columns : bool, optional
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Defaults to False.
+    parse_header : bool, optional
+        Whether or not to parse columns labels. Pandas treats column labels as strings. 
+        If True, column labels are converted into int, float or boolean whenever it is possible. 
+        Defaults to True. 
+    unfold_last_axis_name : bool, optional
+        Whether or not to extract name of the last axis from last column of index of the dataframe. 
+        If True, extract the names of the two last axes by spliting the name of the last column of index 
+         of the dataframe using '\'. Defaults to False.
+
+    Returns
+    -------
+    LArray
+
+    See Also
+    --------
+    LArray.to_frame
+
+    Examples
+    --------
+    >>> df = ndtest((2, 2, 2)).to_frame()
+    >>> df
+    c      c0  c1
+    a  b         
+    a0 b0   0   1
+       b1   2   3
+    a1 b0   4   5
+       b1   6   7
+    >>> from_frame(df)
+     a  b\\c  c0  c1
+    a0   b0   0   1
+    a0   b1   2   3
+    a1   b0   4   5
+    a1   b1   6   7
+
+    Names of the two last axes written as 'before_last_axis_name\last_axis_name' 
+
+    >>> df = ndtest((2, 2, 2)).to_frame(fold_last_axis_name=True)
+    >>> df
+            c0  c1
+    a  b\\c        
+    a0 b0    0   1
+       b1    2   3
+    a1 b0    4   5
+       b1    6   7
+    >>> from_frame(df, unfold_last_axis_name=True)
+     a  b\\c  c0  c1
+    a0   b0   0   1
+    a0   b1   2   3
+    a1   b0   4   5
+    a1   b1   6   7
+    """
+    axes_names = [decode(name, 'utf8') for name in df.index.names]
 
     # handle 2 or more dimensions with the last axis name given using \
-    if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
-        last_axes = [name.strip() for name in axes_names[-1].split('\\')]
-        axes_names = axes_names[:-1] + last_axes
-    # handle 1D
-    elif len(df) == 1 and axes_names == [None]:
-        axes_names = [df.columns.name]
-    # handle 2 or more dimensions with the last axis name given as the columns index name
-    elif len(df) > 1:
+    if unfold_last_axis_name:
+        if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
+            last_axes = [name.strip() for name in axes_names[-1].split('\\')]
+            axes_names = axes_names[:-1] + last_axes
+        else:
+            axes_names += [None]
+    else:
         axes_names += [df.columns.name]
 
-    if len(axes_names) > 1:
-        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns, **kwargs)
-    else:
-        axes_labels = []
-
-    # we could inline df_aslarray into the functions that use it, so that the
-    # original (non-cartesian) df is freed from memory at this point, but it
-    # would be much uglier and would not lower the peak memory usage which
-    # happens during cartesian_product_df.reindex
+    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns, **kwargs)
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values
     last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
@@ -122,6 +185,68 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
     data = df.values.reshape([len(axis) for axis in axes])
     return LArray(data, axes)
+
+
+def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, **kwargs):
+    """
+    Prepare Pandas DataFrame and then convert it into LArray.
+    
+    Parameters
+    ----------
+    df : Pandas DataFrame
+        Input dataframe.
+    sort_rows : bool, optional
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+    sort_columns : bool, optional
+        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Defaults to False.
+    raw : bool, optional
+        Whether or not to consider the input dataframe as a raw dataframe, i.e. read without index at all. 
+        If True, build the first N-1 axes of the output array from the first N-1 dataframe columns. 
+        Defaults to False.
+    parse_header : bool, optional
+        Whether or not to parse columns labels. Pandas treats column labels as strings. 
+        If True, column labels are converted into int, float or boolean whenever it is possible. 
+        Defaults to True. 
+
+    Returns
+    -------
+    LArray
+    """
+    # we could inline df_aslarray into the functions that use it, so that the
+    # original (non-cartesian) df is freed from memory at this point, but it
+    # would be much uglier and would not lower the peak memory usage which
+    # happens during cartesian_product_df.reindex
+
+    # raw = True: the dataframe was read without index at all (ie 2D dataframe),
+    # irrespective of the actual data dimensionality
+    if raw:
+        columns = df.columns.values.tolist()
+        try:
+            # take the first column which contains '\'
+            pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
+        except StopIteration:
+            # we assume first column will not contain data
+            pos_last = 0
+
+        # This is required to handle int column names (otherwise we can simply use column positions in set_index).
+        # This is NOT the same as df.columns[list(range(...))] !
+        index_columns = [df.columns[i] for i in range(pos_last + 1)]
+        # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
+        # df.set_index(index_columns, inplace=True)
+        df = df.set_index(index_columns)
+
+    # handle 1D
+    if len(df) == 1 and (pd.isnull(df.index.values[0]) or
+                             (isinstance(df.index.values[0], basestring) and df.index.values[0].strip() == '')):
+        series = df.iloc[0]
+        series.name = df.index.name
+        return from_series(series, sort_rows=sort_rows)
+    else:
+        axes_names = [decode(name, 'utf8') for name in df.index.names]
+        unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
+        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
+                          unfold_last_axis_name=unfold_last_axis_name, **kwargs)
 
 
 def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
@@ -225,6 +350,8 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
 
     df = pd.read_csv(filepath_or_buffer, index_col=index_col, sep=sep, **kwargs)
     if dialect == 'liam2':
+        if len(df) == 1:
+            df.set_index([[np.nan]], inplace=True)
         if len(axes_names) > 1:
             df.index.names = axes_names[:-1]
         df.columns.name = axes_names[-1]
@@ -484,8 +611,9 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
 
     Examples
     --------
-    >>> # if one dimension array and default separator ' ', a - must be added in front of the data line
-    >>> from_string("sex  M  F\\n-  0  1")
+    >>> # to create a 1D array using the default separator ' ', a tabulation character \t must be added in front 
+    >>> # of the data line
+    >>> from_string("sex  M  F\\n\\t  0  1")
     sex  M  F
          0  1
     >>> from_string("nat\\sex  M  F\\nBE  0  1\\nFO  2  3")

@@ -16,7 +16,7 @@ except ImportError:
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, df_aslarray, sequence)
+                    from_lists, from_string, open_excel, from_frame, sequence)
 from larray.core.axis import _to_ticks, _to_key
 
 
@@ -1630,8 +1630,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # issue 194
         a = ndtest((2, 3))
         b = a > 1
-        expected = from_string("""a  a0  a1
-                                  -   1   2""")
+        expected = from_string("""a,a0,a1
+                                   , 1, 2""", sep=',')
         assert_array_equal(b.sum('b1:'), expected)
 
     # TODO: fix this (and add other tests for references (x.) to anonymous axes
@@ -2436,6 +2436,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         s = Session(fpath)
         assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
+    def test_from_string(self):
+        expected = ndrange("sex=M,F")
+
+        res = from_string('''sex  M  F
+                             \t   0  1''')
+        assert_array_equal(res, expected)
+
+        res = from_string('''sex  M  F
+                             nan  0  1''')
+        assert_array_equal(res, expected)
+
+        res = from_string('''sex  M  F
+                             NaN  0  1''')
+        assert_array_equal(res, expected)
+
     def test_read_csv(self):
         la = read_csv(abspath('test1d.csv'))
         self.assertEqual(la.ndim, 1)
@@ -2656,11 +2671,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                  ['F', 'FO', 0, 0, 2]], sort_columns=True)
         assert_array_equal(sorted_arr, arr)
 
-    def test_df_aslarray(self):
+    def test_from_frame(self):
         # 1) data = scalar
         # ================
         # Dataframe becomes 1D LArray
-        data = [10]
+        data = np.array([10])
         index = ['i0']
         columns = ['c0']
         axis_index, axis_columns = Axis(index), Axis(columns)
@@ -2678,14 +2693,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0  10
         # output LArray:
         # --------------
-        # {0}  c0
-        #      10
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (1,)
-        assert la.axes.names == [None]
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns)
+        # {0}\{1}  c0
+        #      i0  10
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, 1)
+        assert la.axes.names == [None, None]
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, 1)), [axis_index, axis_columns])
         assert_array_equal(la, expected_la)
 
         # anonymous columns
@@ -2696,15 +2712,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0     10
         # output LArray:
         # --------------
-        # index  c0
-        #        10
+        # index\{1}  c0
+        #        i0  10
         df.index.name, df.columns.name = 'index', None
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (1,)
-        assert la.axes.names == ['index']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('index'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, 1)
+        assert la.axes.names == ['index', None]
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
         assert_array_equal(la, expected_la)
 
         # anonymous index
@@ -2714,15 +2731,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0       10
         # output LArray:
         # --------------
-        # columns  c0
-        #          10
+        # {0}\columns  c0
+        #          i0  10
         df.index.name, df.columns.name = None, 'columns'
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (1,)
-        assert la.axes.names == ['columns']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('columns'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, 1)
+        assert la.axes.names == [None, 'columns']
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, 1)), [axis_index, axis_columns.rename('columns')])
         assert_array_equal(la, expected_la)
 
         # index and columns with name
@@ -2733,15 +2751,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0       10
         # output LArray:
         # --------------
-        # index  c0
-        #        10
+        # index\columns  c0
+        #            i0  10
         df.index.name, df.columns.name = 'index', 'columns'
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (1,)
-        assert la.axes.names == ['index']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('index'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, 1)
+        assert la.axes.names == ['index', 'columns']
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns.rename('columns')])
         assert_array_equal(la, expected_la)
 
         # 2) data = vector
@@ -2769,14 +2788,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0   0   1   2
         # output LArray:
         # --------------
-        # {0}  c0  c1  c2
-        #       0   1   2
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (size,)
-        assert la.axes.names == [None]
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns)
+        # {0}\{1}  c0  c1  c2
+        #      i0   0   1   2
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, size)
+        assert la.axes.names == [None, None]
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, size)),[axis_index, axis_columns])
         assert_array_equal(la, expected_la)
 
         # anonymous columns
@@ -2787,15 +2807,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0      0   1   2
         # output LArray:
         # --------------
-        # index  c0  c1  c2
-        #         0   1   2
+        # index\{1}  c0  c1  c2
+        #        i0   0   1   2
         df.index.name, df.columns.name = 'index', None
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (size,)
-        assert la.axes.names == ['index']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('index'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, size)
+        assert la.axes.names == ['index', None]
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, size)),[axis_index.rename('index'), axis_columns])
         assert_array_equal(la, expected_la)
 
         # anonymous index
@@ -2805,15 +2826,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0        0   1   2
         # output LArray:
         # --------------
-        # columns  c0  c1  c2
-        #           0   1   2
+        # {0}\columns  c0  c1  c2
+        #          i0   0   1   2
         df.index.name, df.columns.name = None, 'columns'
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (size,)
-        assert la.axes.names == ['columns']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('columns'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, size)
+        assert la.axes.names == [None, 'columns']
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, size)),[axis_index, axis_columns.rename('columns')])
         assert_array_equal(la, expected_la)
 
         # index and columns with name
@@ -2824,15 +2846,16 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # i0        0   1   2
         # output LArray:
         # --------------
-        # index  c0  c1  c2
-        #         0   1   2
+        # index\columns  c0  c1  c2
+        #            i0   0   1   2
         df.index.name, df.columns.name = 'index', 'columns'
-        la = df_aslarray(df)
-        assert la.ndim == 1
-        assert la.shape == (size,)
-        assert la.axes.names == ['index']
-        assert list(la.axes.labels[0]) == columns
-        expected_la = LArray(data, axis_columns.rename('index'))
+        la = from_frame(df)
+        assert la.ndim == 2
+        assert la.shape == (1, size)
+        assert la.axes.names == ['index', 'columns']
+        assert list(la.axes.labels[0]) == index
+        assert list(la.axes.labels[1]) == columns
+        expected_la = LArray(data.reshape((1, size)),[axis_index.rename('index'), axis_columns.rename('columns')])
         assert_array_equal(la, expected_la)
 
         # 2B) data = vertical vector (N x 1)
@@ -2862,7 +2885,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         #      i0   0
         #      i1   1
         #      i2   2
-        la = df_aslarray(df)
+        la = from_frame(df)
         assert la.ndim == 2
         assert la.shape == (size, 1)
         assert la.axes.names == [None, None]
@@ -2886,7 +2909,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         #        i1   1
         #        i2   2
         df.index.name, df.columns.name = 'index', None
-        la = df_aslarray(df)
+        la = from_frame(df)
         assert la.ndim == 2
         assert la.shape == (size, 1)
         assert la.axes.names == ['index', None]
@@ -2909,7 +2932,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         #          i1   1
         #          i2   2
         df.index.name, df.columns.name = None, 'columns'
-        la = df_aslarray(df)
+        la = from_frame(df)
         assert la.ndim == 2
         assert la.shape == (size, 1)
         assert la.axes.names == [None, 'columns']
@@ -2962,7 +2985,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         df.set_index(['age', 'sex'], inplace=True)
         df.columns.name = 'time'
 
-        la = df_aslarray(df)
+        la = from_frame(df)
         assert la.ndim == 3
         assert la.shape == (4, 2, 3)
         assert la.axes.names == ['age', 'sex', 'time']
@@ -2985,7 +3008,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         df = pd.DataFrame(data)
         df.set_index(['age', 'sex\\time'], inplace=True)
 
-        la = df_aslarray(df)
+        la = from_frame(df, unfold_last_axis_name=True)
         assert la.ndim == 3
         assert la.shape == (4, 2, 3)
         assert la.axes.names == ['age', 'sex', 'time']
