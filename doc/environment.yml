@@ -10,6 +10,5 @@ dependencies:
   - pytables
   - sphinx
   - numpydoc
-  - libiconv
   - pandoc
   - ipython
