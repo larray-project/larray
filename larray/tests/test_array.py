@@ -164,7 +164,8 @@ test array
  age [116]: 0 1 2 ... 113 114 115
  geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
  sex [2]: 'M' 'F'
- lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""
+ lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'
+dtype: float64"""
         self.assertEqual(self.larray.info, expected)
 
     def test_str(self):

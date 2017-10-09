@@ -3211,17 +3211,19 @@ class LArray(ABCLArray):
         2 x 2
          nat [2]: 'BE' 'FO'
          sex [2]: 'M' 'F'
+        dtype: float64
         >>> mat1 = LArray(np.ones((2, 2)), [nat, sex], 'test matrix')
         >>> mat1.info
         test matrix
         2 x 2
          nat [2]: 'BE' 'FO'
          sex [2]: 'M' 'F'
+        dtype: float64
         """
         if self.title:
-            return ReprString(self.title + '\n' + self.axes.info)
+            return ReprString(self.title + '\n' + self.axes.info + '\ndtype: ' + self.dtype.name)
         else:
-            return self.axes.info
+            return ReprString(self.axes.info + '\ndtype: ' + self.dtype.name)
 
     def ratio(self, *axes):
         """Returns an array with all values divided by the sum of values along given axes.
