@@ -267,6 +267,18 @@ Miscellaneous improvements
 
 * allowed passing an axis to `set_labels` as 'labels' argument (closes :issue:`408`).
 
+* added data type (dtype) to array.info (closes :issue:`454`):
+
+    >>> arr = ndtest((2, 2), dtype=float)
+    >>> arr
+    a\b   b0   b1
+     a0  0.0  1.0
+     a1  2.0  3.0
+    >>> arr.info
+    2 x 2
+     a [2]: 'a0' 'a1'
+     b [2]: 'b0' 'b1'
+    dtype: float64
 
 Fixes
 -----
