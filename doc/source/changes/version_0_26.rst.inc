@@ -382,3 +382,5 @@ Fixes
 * fixed representing a 0D array (scalar) in the viewer (closes :editor_issue:`71`)
 
 * fixed viewer not displaying an error message when saving or loading a file failed (closes :editor_issue:`75`)
+
+* fixed viewer showing array with empty axes names and labels when starting a new session (closes :editor_issue:`84`)
