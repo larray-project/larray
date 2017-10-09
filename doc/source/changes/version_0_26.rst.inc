@@ -318,6 +318,8 @@ Miscellaneous improvements
     sex  M  F
          0  1
 
+* title in the viewer also includes the dtype of the current displayed array (closes :editor_issue:`85`)
+
 
 Fixes
 -----
@@ -373,10 +375,10 @@ Fixes
 
 * fixed stacking arrays with anonymous axes.
 
-* fixed background color in the viewer when using filters in the `compare()` dialog (closes :editor_issue:`66`).
+* fixed background color in the viewer when using filters in the `compare()` dialog (closes :editor_issue:`66`)
 
-* fixed autoresize of columns by double clicking between column headers (closes :editor_issue:`43`).
+* fixed autoresize of columns by double clicking between column headers (closes :editor_issue:`43`)
 
-* fixed representing a 0D array (scalar) in the viewer (closes :editor_issue:`71`).
+* fixed representing a 0D array (scalar) in the viewer (closes :editor_issue:`71`)
 
-* fixed viewer not displaying an error message when saving or loading a file failed (closes :editor_issue:`75`).
+* fixed viewer not displaying an error message when saving or loading a file failed (closes :editor_issue:`75`)
