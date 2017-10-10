@@ -3,9 +3,9 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
-    'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'larray_equal',
-    'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std',
-    'median', 'percentile', 'stack', 'nan', 'nan_equal'
+    'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
+    'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
+    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal'
 ]
 
 """
@@ -40,7 +40,6 @@ from collections import Iterable, Sequence
 from itertools import product, chain, groupby, islice
 import os
 import sys
-import warnings
 import functools
 
 try:
@@ -690,7 +689,7 @@ class LArray(ABCLArray):
     """
     A LArray object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
 
-    The function :func:`aslarray` can be used to convert a NumPy array or PandaS DataFrame into a LArray.
+    The function :func:`aslarray` can be used to convert a NumPy array or Pandas DataFrame into a LArray.
 
     Parameters
     ----------
@@ -1012,9 +1011,9 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        fold_last_axis_name : bool, optional.
-            False by default.
-        dropna : {'any', 'all', None}, optional.
+        fold_last_axis_name : bool, optional
+            Defaults to False.
+        dropna : {'any', 'all', None}, optional
             * any : if any NA values are present, drop that label
             * all : if all values are NA, drop that label
             * None by default.
@@ -1025,31 +1024,27 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> arr = ndtest((3, 3, 3))
+        >>> arr = ndtest((2, 2, 2))
+        >>> arr
+         a  b\\c  c0  c1
+        a0   b0   0   1
+        a0   b1   2   3
+        a1   b0   4   5
+        a1   b1   6   7
         >>> arr.to_frame() # doctest: +NORMALIZE_WHITESPACE
-        c      c0  c1  c2
-        a  b
-        a0 b0   0   1   2
-           b1   3   4   5
-           b2   6   7   8
-        a1 b0   9  10  11
-           b1  12  13  14
-           b2  15  16  17
-        a2 b0  18  19  20
-           b1  21  22  23
-           b2  24  25  26
-        >>> arr.to_frame(True) # doctest: +NORMALIZE_WHITESPACE
-                c0  c1  c2
-        a  b\\c
-        a0 b0    0   1   2
-           b1    3   4   5
-           b2    6   7   8
-        a1 b0    9  10  11
-           b1   12  13  14
-           b2   15  16  17
-        a2 b0   18  19  20
-           b1   21  22  23
-           b2   24  25  26
+        c      c0  c1
+        a  b         
+        a0 b0   0   1
+           b1   2   3
+        a1 b0   4   5
+           b1   6   7
+        >>> arr.to_frame(fold_last_axis_name=True) # doctest: +NORMALIZE_WHITESPACE
+                c0  c1
+        a  b\\c        
+        a0 b0    0   1
+           b1    2   3
+        a1 b0    4   5
+           b1    6   7
         """
         columns = pd.Index(self.axes[-1].labels)
         if not fold_last_axis_name:
@@ -6566,8 +6561,8 @@ def aslarray(a):
     elif hasattr(a, '__larray__'):
         return a.__larray__()
     elif isinstance(a, pd.DataFrame):
-        from larray.io.array import df_aslarray
-        return df_aslarray(a)
+        from larray.io.array import from_frame
+        return from_frame(a)
     else:
         return LArray(a)
 
