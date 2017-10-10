@@ -500,6 +500,7 @@ Miscellaneous
    :toctree: _generated/
 
    aslarray
+   from_frame
    labels_array
    larray_equal
    larray_nan_equal
