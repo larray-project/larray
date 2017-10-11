@@ -630,7 +630,7 @@ def nan_equal(a1, a2):
         if np.issubclass_(a.dtype.type, np.inexact):
             return isnan(a)
         elif a.dtype.type is np.object_:
-            return obj_isnan(a)
+            return LArray(obj_isnan(a), a.axes)
         else:
             return False
 
