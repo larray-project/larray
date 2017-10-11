@@ -310,8 +310,8 @@ Miscellaneous improvements
      b [2]: 'b0' 'b1'
     dtype: float64
 
-* To create a 1D array using from_string() and the default separator ' ', a tabulation character `\t`
-  (instead of - previously) must be added in front of the data line:
+* To create a 1D array using from_string() and the default separator " ", a tabulation character ``\t``
+  (instead of ``-`` previously) must be added in front of the data line:
 
     >>> from_string('''sex  M  F
     ...                \t   0  1''')
@@ -326,12 +326,12 @@ Fixes
 
 * fixed array creation with axis(es) given as string containing only one label (axis name and label were inverted).
 
-* fixed reading an array from a CSV or Excel file when the columns axis is not explicitly named (via `\`).
+* fixed reading an array from a CSV or Excel file when the columns axis is not explicitly named (via ``\``).
   For example, let's say we want to read a CSV file 'pop.csv' with the following content (indented for clarity) ::
 
-  sex, 2015, 2016
-    F,   11,   13
-    M,   12,   10
+    sex, 2015, 2016
+      F,   11,   13
+      M,   12,   10
 
   The result of function `read_csv` is:
 
