@@ -2358,6 +2358,7 @@ class AxisCollection(object):
             split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, _names)]
             new_axes = new_axes[:axis_index] + split_axes + new_axes[axis_index + 1:]
         return new_axes
+    split_axis = renamed_to(split_axes, 'split_axis')
 
     def align(self, other, join='outer', axes=None):
         """Align this axis collection with another.
