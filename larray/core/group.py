@@ -9,7 +9,7 @@ from itertools import product, chain
 import numpy as np
 import pandas as pd
 
-from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
+from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
 from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, renamed_to
 

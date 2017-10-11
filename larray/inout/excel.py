@@ -10,7 +10,7 @@ except ImportError:
 from larray.core.group import _translate_sheet_name
 from larray.core.axis import Axis
 from larray.core.array import LArray
-from larray.io.array import df_aslarray, from_lists
+from larray.inout.array import df_aslarray, from_lists
 
 string_types = (str,)
 

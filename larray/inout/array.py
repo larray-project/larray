@@ -468,7 +468,7 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
         if kwargs:
             raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
                             .format(list(kwargs.keys())[0]))
-        from larray.io.excel import open_excel
+        from larray.inout.excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheetname].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
                                       sort_columns=sort_columns)

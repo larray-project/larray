@@ -8,7 +8,7 @@ from itertools import product
 
 import numpy as np
 
-from larray.core.abc import ABCAxis, ABCAxisReference, ABCLArray
+from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _contain_group_ticks, _seq_group_to_name)
