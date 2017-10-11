@@ -31,6 +31,8 @@ New features
   local_arrays() will return only arrays local to the function, global_arrays() will return only arrays defined
   globally and arrays() will return arrays defined either locally or globally. Closes :issue:`416`.
 
+* a `*` symbol is appended to the window title when unsaved changes are detected in the viewer (closes :editor_issue:`21`).
+
 * implemented Axis.containing to create a Group with all labels of an axis containing some substring (closes
   :issue:`402`).
 
@@ -85,6 +87,8 @@ Miscellaneous improvements
 --------------------------
 
 * view() and edit() without argument now display global arrays in addition to local ones (closes :editor_issue:`54`).
+
+* inverted background colors in the viewer (red for low values and blue for high values). Closes :editor_issue:`18`.
 
 * allowed to pass an array of labels as `new_axis` argument to `reindex` method (closes :issue:`384`):
 
@@ -314,6 +318,8 @@ Miscellaneous improvements
     sex  M  F
          0  1
 
+* title in the viewer also includes the dtype of the current displayed array (closes :editor_issue:`85`)
+
 
 Fixes
 -----
@@ -368,3 +374,13 @@ Fixes
   the array. Now the result will be nan for that array but the operation will carry on for other arrays.
 
 * fixed stacking arrays with anonymous axes.
+
+* fixed background color in the viewer when using filters in the `compare()` dialog (closes :editor_issue:`66`)
+
+* fixed autoresize of columns by double clicking between column headers (closes :editor_issue:`43`)
+
+* fixed representing a 0D array (scalar) in the viewer (closes :editor_issue:`71`)
+
+* fixed viewer not displaying an error message when saving or loading a file failed (closes :editor_issue:`75`)
+
+* fixed viewer showing array with empty axes names and labels when starting a new session (closes :editor_issue:`84`)
