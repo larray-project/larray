@@ -519,7 +519,7 @@ silent : None or bool, optional
 app : None, "new", "active", "global" or xlwings.App, optional
     use "new" for opening a new Excel instance, "active" for the last active instance (including ones opened by the
     user) and "global" to (re)use the same instance for all workbooks of a program. None is equivalent to "active" if
-    filepath is -1 and "global" otherwise. Defaults to None.
+    filepath is -1, "new" if visible is True and "global" otherwise. Defaults to None.
 
     The "global" instance is a specific Excel instance for all input from/output to Excel from within a single Python
     program (and should not interact with instances manually opened by the user or another program).
