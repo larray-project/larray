@@ -7643,8 +7643,15 @@ def stack(elements=None, axis=None, title='', **kwargs):
         all_keys = []
         for s in sessions:
             unique_list(s.keys(), all_keys, seen)
-        return Session([(k, stack([s.get(k, np.nan) for s in sessions], axis=axis))
-                        for k in all_keys])
+        res = []
+        for name in all_keys:
+            try:
+                stacked = stack([s.get(name, np.nan) for s in sessions], axis=axis)
+            # TypeError for str arrays, ValueError for incompatible axes, ...
+            except Exception:
+                stacked = np.nan
+            res.append((name, stacked))
+        return Session(res)
     else:
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])
         result_axes.append(axis)

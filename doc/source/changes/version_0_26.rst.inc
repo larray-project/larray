@@ -370,8 +370,11 @@ Fixes
 * fixed loading arrays from Excel sheets containing blank cells below or right of the array to read
   (closes :issue:`443`)
 
-* fixed unary and binary operations between sessions failing entirely when the operation failed/was invalid on any of
-  the array. Now the result will be nan for that array but the operation will carry on for other arrays.
+* fixed unary and binary operations between sessions failing entirely when the operation failed/was invalid on any
+  array. Now the result will be nan for that array but the operation will carry on for other arrays.
+
+* fixed stacking sessions failing entirely when the stacking failed on any array.  Now the result will be nan for that
+  array but the operation will carry on for other arrays.
 
 * fixed stacking arrays with anonymous axes.
 
