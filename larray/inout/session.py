@@ -5,10 +5,10 @@ from glob import glob
 from collections import OrderedDict
 from pandas import ExcelWriter, ExcelFile, HDFStore
 
-from larray.core.abc import ABCLArray
+from larray.core.abstractbases import ABCLArray
 from larray.util.misc import pickle
-from larray.io.excel import open_excel
-from larray.io.array import df_aslarray, read_csv, read_hdf
+from larray.inout.excel import open_excel
+from larray.inout.array import df_aslarray, read_csv, read_hdf
 
 try:
     import xlwings as xw

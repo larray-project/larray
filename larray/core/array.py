@@ -60,7 +60,7 @@ try:
 except ImportError:
     np_nanprod = None
 
-from larray.core.abc import ABCLArray
+from larray.core.abstractbases import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
@@ -5709,7 +5709,7 @@ class LArray(ABCLArray):
             engine = 'xlwings' if xw is not None else None
 
         if engine == 'xlwings':
-            from larray.io.excel import open_excel
+            from larray.inout.excel import open_excel
 
             close = False
             new_workbook = False
@@ -6561,7 +6561,7 @@ def aslarray(a):
     elif hasattr(a, '__larray__'):
         return a.__larray__()
     elif isinstance(a, pd.DataFrame):
-        from larray.io.array import from_frame
+        from larray.inout.array import from_frame
         return from_frame(a)
     else:
         return LArray(a)

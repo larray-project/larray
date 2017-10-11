@@ -11,7 +11,7 @@ import numpy as np
 from larray.core.axis import Axis
 from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, sequence
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to
-from larray.io.session import check_pattern, handler_classes, ext_default_engine
+from larray.inout.session import check_pattern, handler_classes, ext_default_engine
 
 
 # XXX: inherit from OrderedDict or LArray?

@@ -11,7 +11,7 @@ except ImportError:
     xw = None
 
 from larray import ndtest, ndrange, larray_equal, open_excel, aslarray
-from larray.io import excel
+from larray.inout import excel
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
@@ -40,7 +40,7 @@ class TestWorkbook(object):
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
-            assert re.match('<larray.io.excel.Workbook \[Book\d+\]>', repr(wb))
+            assert re.match('<larray.inout.excel.Workbook \[Book\d+\]>', repr(wb))
 
     def test_getitem(self):
         with open_excel(visible=False) as wb:
@@ -166,7 +166,7 @@ class TestSheet(object):
     def test_repr(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
-            assert re.match('<larray.io.excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
+            assert re.match('<larray.inout.excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
