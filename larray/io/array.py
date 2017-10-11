@@ -82,7 +82,7 @@ def from_series(s, sort_rows=False):
     s : Pandas Series
         Input Pandas Series.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). 
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
 
     Returns
@@ -103,8 +103,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
 
     Parameters
     ----------
-    df : Pandas DataFrame
-        Input dataframe. By default, name and labels of the last axis are defined by the name and labels of the 
+    df : pandas.DataFrame
+        Input dataframe. By default, name and labels of the last axis are defined by the name and labels of the
         columns Index of the dataframe unless argument unfold_last_axis_name is set to True.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
@@ -112,13 +112,11 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
     parse_header : bool, optional
-        Whether or not to parse columns labels. Pandas treats column labels as strings. 
-        If True, column labels are converted into int, float or boolean whenever it is possible. 
-        Defaults to True. 
+        Whether or not to parse columns labels. Pandas treats column labels as strings.
+        If True, column labels are converted into int, float or boolean when possible. Defaults to True.
     unfold_last_axis_name : bool, optional
-        Whether or not to extract name of the last axis from last column of index of the dataframe. 
-        If True, extract the names of the two last axes by spliting the name of the last column of index 
-         of the dataframe using '\'. Defaults to False.
+        Whether or not to extract the names of the last two axes by splitting the name of the last index column of the
+        dataframe using ``\\``. Defaults to False.
 
     Returns
     -------
@@ -131,9 +129,9 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
     Examples
     --------
     >>> df = ndtest((2, 2, 2)).to_frame()
-    >>> df
+    >>> df                                                                             # doctest: +NORMALIZE_WHITESPACE
     c      c0  c1
-    a  b         
+    a  b
     a0 b0   0   1
        b1   2   3
     a1 b0   4   5
@@ -145,12 +143,12 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
     a1   b0   4   5
     a1   b1   6   7
 
-    Names of the two last axes written as 'before_last_axis_name\last_axis_name' 
+    Names of the last two axes written as ``before_last_axis_name\\last_axis_name``
 
     >>> df = ndtest((2, 2, 2)).to_frame(fold_last_axis_name=True)
-    >>> df
+    >>> df                                                                             # doctest: +NORMALIZE_WHITESPACE
             c0  c1
-    a  b\\c        
+    a  b\\c
     a0 b0    0   1
        b1    2   3
     a1 b0    4   5
@@ -190,7 +188,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
 def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, **kwargs):
     """
     Prepare Pandas DataFrame and then convert it into LArray.
-    
+
     Parameters
     ----------
     df : Pandas DataFrame
@@ -201,22 +199,19 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
     raw : bool, optional
-        Whether or not to consider the input dataframe as a raw dataframe, i.e. read without index at all. 
-        If True, build the first N-1 axes of the output array from the first N-1 dataframe columns. 
-        Defaults to False.
+        Whether or not to consider the input dataframe as a raw dataframe, i.e. read without index at all.
+        If True, build the first N-1 axes of the output array from the first N-1 dataframe columns. Defaults to False.
     parse_header : bool, optional
-        Whether or not to parse columns labels. Pandas treats column labels as strings. 
-        If True, column labels are converted into int, float or boolean whenever it is possible. 
-        Defaults to True. 
+        Whether or not to parse columns labels. Pandas treats column labels as strings.
+        If True, column labels are converted into int, float or boolean when possible. Defaults to True.
 
     Returns
     -------
     LArray
     """
-    # we could inline df_aslarray into the functions that use it, so that the
-    # original (non-cartesian) df is freed from memory at this point, but it
-    # would be much uglier and would not lower the peak memory usage which
-    # happens during cartesian_product_df.reindex
+    # we could inline df_aslarray into the functions that use it, so that the original (non-cartesian) df is freed from
+    # memory at this point, but it would be much uglier and would not lower the peak memory usage which happens during
+    # cartesian_product_df.reindex
 
     # raw = True: the dataframe was read without index at all (ie 2D dataframe),
     # irrespective of the actual data dimensionality
@@ -611,7 +606,7 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
 
     Examples
     --------
-    >>> # to create a 1D array using the default separator ' ', a tabulation character \t must be added in front 
+    >>> # to create a 1D array using the default separator ' ', a tabulation character \t must be added in front
     >>> # of the data line
     >>> from_string("sex  M  F\\n\\t  0  1")
     sex  M  F
