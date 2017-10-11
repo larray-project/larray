@@ -2438,8 +2438,8 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            return table2str(list(self.as_table(maxlines=200, edgeitems=5)), 'nan', fullinfo=True, maxwidth=200,
-                             keepcols=self.ndim - 1)
+            table = list(self.as_table(maxlines=200, edgeitems=5))
+            return table2str(table, 'nan', fullinfo=True, maxwidth=200, keepcols=self.ndim - 1)
     __repr__ = __str__
 
     def __iter__(self):
