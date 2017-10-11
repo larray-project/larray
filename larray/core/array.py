@@ -1031,16 +1031,16 @@ class LArray(ABCLArray):
         a0   b1   2   3
         a1   b0   4   5
         a1   b1   6   7
-        >>> arr.to_frame() # doctest: +NORMALIZE_WHITESPACE
+        >>> arr.to_frame()                                                             # doctest: +NORMALIZE_WHITESPACE
         c      c0  c1
-        a  b         
+        a  b
         a0 b0   0   1
            b1   2   3
         a1 b0   4   5
            b1   6   7
-        >>> arr.to_frame(fold_last_axis_name=True) # doctest: +NORMALIZE_WHITESPACE
+        >>> arr.to_frame(fold_last_axis_name=True)                                     # doctest: +NORMALIZE_WHITESPACE
                 c0  c1
-        a  b\\c        
+        a  b\\c
         a0 b0    0   1
            b1    2   3
         a1 b0    4   5
