@@ -94,7 +94,31 @@ def get_col_width(table, index):
 
 
 def longest_word(s):
-    return max(len(w) for w in s.split()) if s else 0
+    """Return length of the longest word in the given string
+
+    Parameters
+    ----------
+    s : str
+        string to check
+    Returns
+    -------
+    int
+        length of longest word
+
+    Examples
+    --------
+    >>> longest_word('12 123 1234')
+    4
+    >>> longest_word('12 1234 123')
+    4
+    >>> longest_word('123 12 123')
+    3
+    >>> longest_word('')
+    0
+    >>> longest_word(' ')
+    0
+    """
+    return max(len(w) for w in s.split()) if s and not s.isspace() else 0
 
 
 def get_min_width(table, index):
@@ -158,7 +182,8 @@ def table2str(table, missing, fullinfo=False, summarize=True, maxwidth=80, numed
 
     lines = []
     for row in formatted:
-        wrapped_row = [wrap(value, width) for value, width in zip(row, colwidths)]
+        wrapped_row = [wrap(value, width) if width > 0 else value
+                       for value, width in zip(row, colwidths)]
         maxlines = max(len(value) for value in wrapped_row)
         newlines = [[] for _ in range(maxlines)]
         for value, width in zip(wrapped_row, colwidths):
