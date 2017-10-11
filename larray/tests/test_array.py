@@ -16,7 +16,7 @@ except ImportError:
 from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
 from larray.core.axis import _to_ticks, _to_key
 
 
@@ -3979,6 +3979,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert len(caught_warnings) == 1
         assert caught_warnings[0].message.args[0] == "split_axis() is deprecated. Use split_axes() instead."
         assert caught_warnings[0].filename == __file__
+
+    def test_nan_equal(self):
+        a = ndtest((2, 3, 4))
+        ao = a.astype(object)
+        assert_array_equal(nan_equal(ao, ao['c0']), a == a['c0'])
 
 
 if __name__ == "__main__":
