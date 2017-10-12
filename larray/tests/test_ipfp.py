@@ -62,7 +62,7 @@ class TestIPFP(TestCase):
 
         # negative initial values
         initial = LArray([[2, -1], [1, 2]], [a, b])
-        with self.assertRaisesRegexp(ValueError, "negative value\(s\) found:\na0,b1: -1"):
+        with self.assertRaisesRegexp(ValueError, "negative value\(s\) found:\na0_b1: -1"):
             ipfp([along_a, along_b], initial)
 
     # def test_ipfp_big(self):

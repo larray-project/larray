@@ -20,6 +20,23 @@
     - `argmax`, `argmin`, `argsort` to `labelofmax`, `labelofmin`, `labelsofsorted`
     - `posargmax`, `posargmin`, `posargsort` to `indexofmax`, `indexofmin`, `indicesofsorted`
 
+
+Backward incompatible changes
+-----------------------------
+
+* getting a subset using a boolean selection returns an array with labels combined with underscore by defaults
+  (for consistency with `split_axes` and `combine_axes`). Closes :issue:`376`:
+
+    >>> arr = ndtest((2, 2))
+    >>> arr
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> arr[arr < 3]
+    a_b  a0_b0  a0_b1  a1_b0
+             0      1      2
+
+
 New features
 ------------
 

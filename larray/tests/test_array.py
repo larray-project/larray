@@ -3569,8 +3569,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a = eye(sex)
         d = diag(a)
         self.assertEqual(d.ndim, 1)
-        self.assertEqual(d.axes.names, ['sex,sex'])
-        assert_array_equal(d.axes.labels, [['M,M', 'F,F']])
+        self.assertEqual(d.axes.names, ['sex_sex'])
+        assert_array_equal(d.axes.labels, [['M_M', 'F_F']])
         self.assertEqual(d.i[0], 1.0)
         self.assertEqual(d.i[1], 1.0)
 
