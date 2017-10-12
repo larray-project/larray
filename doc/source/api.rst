@@ -65,6 +65,7 @@ Modifying/Selecting/Searching
    Axis.intersection
    Axis.difference
    Axis.align
+   Axis.split
 
 Testing
 -------
