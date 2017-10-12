@@ -6440,7 +6440,7 @@ class LArray(ABCLArray):
         new_axes = transposed.axes.combine_axes(axes, sep=sep, wildcard=wildcard)
         return transposed.reshape(new_axes)
 
-    def split_axes(self, axes=None, sep='_', names=None, regex=None):
+    def split_axes(self, axes=None, sep='_', names=None, regex=None, sort=False, fill_value=nan):
         """Split axes and returns a new array
 
         Parameters
@@ -6457,6 +6457,12 @@ class LArray(ABCLArray):
             names of resulting axes. Defaults to None.
         regex : str, optional
             use regex instead of delimiter to split labels. Defaults to None.
+        sort : bool, optional
+            Whether or not to sort the combined axis before splitting it. When all combinations of labels are present in
+            the combined axis, sorting is faster than not sorting. Defaults to False.
+        fill_value : scalar or LArray, optional
+            Value to use for missing values when the combined axis does not contain all combination of labels.
+            Defaults to NaN.
 
         Returns
         -------
@@ -6480,7 +6486,7 @@ class LArray(ABCLArray):
 
         Split labels using regex
 
-        >>> combined = ndrange('a_b = a0b0..a1b2')
+        >>> combined = ndrange('a_b=a0b0..a1b2')
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
@@ -6491,7 +6497,7 @@ class LArray(ABCLArray):
 
         Split several axes at once
 
-        >>> combined = ndrange('a_b = a0_b0..a1_b1; c_d = c0_d0..c1_d1')
+        >>> combined = ndrange('a_b=a0_b0..a1_b1; c_d=c0_d0..c1_d1')
         >>> combined
         a_b\\c_d  c0_d0  c0_d1  c1_d0  c1_d1
           a0_b0      0      1      2      3
@@ -6520,8 +6526,42 @@ class LArray(ABCLArray):
         a1  b1   c0  12  13
         a1  b1   c1  14  15
         """
-        return self.reshape(self.axes.split_axes(axes, sep, names, regex))
+        array = self.sort_axes(axes) if sort else self
+        # TODO:
+        # * do multiple axes split in one go
+        # * somehow factorize this code with AxisCollection.split_axes
+        if axes is None:
+            axes = {axis: None for axis in array.axes if sep in axis.name}
+        elif isinstance(axes, (int, basestring, Axis)):
+            axes = {axes: None}
+        elif isinstance(axes, (list, tuple)):
+            if all(isinstance(axis, (int, basestring, Axis)) for axis in axes):
+                axes = {axis: None for axis in axes}
+            else:
+                raise ValueError("Expected tuple or list of int, string or Axis instances")
+        # axes should be a dict at this time
+        assert isinstance(axes, dict)
+        for axis, names in axes.items():
+            axis = array.axes[axis]
+            split_axes, split_labels = axis.split(sep, names, regex, return_labels=True)
 
+            axis_index = array.axes.index(axis)
+            new_axes = array.axes[:axis_index] + split_axes + array.axes[axis_index + 1:]
+            # fast path when all combinations of labels are present in the combined axis
+            all_combinations_present = AxisCollection(split_axes).size == len(np.unique(axis.labels))
+            if all_combinations_present and sort:
+                array = array.reshape(new_axes)
+            else:
+                if all_combinations_present:
+                    res = empty(new_axes, dtype=array.dtype)
+                else:
+                    res = full(new_axes, fill_value=fill_value, dtype=common_type((array, fill_value)))
+                if names is not None:
+                    # make sure we broadcast correctly
+                    array = array.rename(axis, sep.join(names))
+                res.points[split_labels] = array
+                array = res
+        return array
     split_axis = renamed_to(split_axes, 'split_axis')
 
 
