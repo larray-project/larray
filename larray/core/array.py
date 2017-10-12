@@ -6498,8 +6498,7 @@ class LArray(ABCLArray):
           a0_b1      4      5      6      7
           a1_b0      8      9     10     11
           a1_b1     12     13     14     15
-        >>> # equivalent to combined.split_axes() which split all axes
-        >>> # whose name contains the `sep` delimiter.
+        >>> # equivalent to combined.split_axes() which split all axes whose name contains the `sep` delimiter.
         >>> combined.split_axes(['a_b', 'c_d'])
          a   b  c\\d  d0  d1
         a0  b0   c0   0   1
@@ -7061,8 +7060,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
             inc = full_like(initial, inc)
 
         # inc only (integer scalar)
-        if np.isscalar(mult) and mult == 1 and np.isscalar(inc) and \
-                res_dtype.kind == 'i':
+        if np.isscalar(mult) and mult == 1 and np.isscalar(inc) and res_dtype.kind == 'i':
             # stop is not included
             stop = initial + inc * len(axis)
             data = np.arange(initial, stop, inc)
@@ -7085,8 +7083,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
         else:
             mult_array = array_or_full(mult, axis, 1.0)
             cum_mult = mult_array.cumprod(axis)[axis.i[1:]]
-            res[axis.i[1:]] = \
-                ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
+            res[axis.i[1:]] = ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
 
 create_sequential = renamed_to(sequence, 'create_sequential')
