@@ -3917,9 +3917,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         arr = arr.set_axes([Axis(a.labels.astype(object), a.name) for a in arr.axes])
 
         res = arr.split_axes()
-        assert res.a.labels.dtype == np.dtype('U2')
-        assert res.b.labels.dtype == np.dtype('U2')
-        assert res.c.labels.dtype == np.dtype('U2')
+        dtype = np.dtype('U2') if sys.version_info[0] >= 3 else np.dtype('S2')
+        assert res.a.labels.dtype == dtype
+        assert res.b.labels.dtype == dtype
+        assert res.c.labels.dtype == dtype
         assert_array_equal(res, ndtest((2, 2, 2)))
 
     def test_stack(self):
