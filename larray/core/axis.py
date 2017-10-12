@@ -2299,6 +2299,8 @@ class AxisCollection(object):
     def split_axes(self, axes=None, sep='_', names=None, regex=None):
         """Split axes and returns a new collection
 
+        The split axes are inserted where the combined axis was.
+
         Parameters
         ----------
         axes : int, str, Axis or any combination of those, optional
@@ -2312,6 +2314,11 @@ class AxisCollection(object):
             names of resulting axes. Defaults to None.
         regex : str, optional
             use regex instead of delimiter to split labels. Defaults to None.
+
+        See Also
+        --------
+        Axis.split
+        LArray.split_axes
 
         Returns
         -------
@@ -2386,35 +2393,11 @@ class AxisCollection(object):
         # axes should be a dict at this time
         assert isinstance(axes, dict)
 
-        new_axes = AxisCollection([axis if axis.labels.dtype != np.dtype('O')
-                                   else Axis([str(label) for label in axis.labels], axis.name)
-                                   for axis in self])
+        new_axes = self[:]
         for axis, names in axes.items():
             axis = new_axes[axis]
             axis_index = new_axes.index(axis)
-            if names is None:
-                if sep not in axis.name:
-                    raise ValueError('{} not found in axis name ({})'.format(sep, axis.name))
-                else:
-                    _names = axis.name.split(sep)
-            elif isinstance(names, str):
-                if sep not in names:
-                    raise ValueError('{} not found in names ({})'.format(sep, names))
-                else:
-                    _names = names.split(sep)
-            else:
-                assert all(isinstance(name, str) for name in names)
-                _names = names
-
-            if not regex:
-                # gives us an array of lists
-                split_labels = np.char.split(axis.labels, sep)
-            else:
-                rx = re.compile(regex)
-                split_labels = [rx.match(l).groups() for l in axis.labels]
-            # not using np.unique because we want to keep the original order
-            axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
-            split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, _names)]
+            split_axes = axis.split(sep, names, regex)
             new_axes = new_axes[:axis_index] + split_axes + new_axes[axis_index + 1:]
         return new_axes
     split_axis = renamed_to(split_axes, 'split_axis')

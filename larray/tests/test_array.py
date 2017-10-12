@@ -3840,14 +3840,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # split one axis
         # ==============
         arr = ndtest((2, 3, 4, 5))
-        comb = arr.combine_axes((X.b, X.d))
+        comb = arr.combine_axes(('b', 'd'))
         self.assertEqual(comb.axes.names, ['a', 'b_d', 'c'])
         # default delimiter '_'
         res = comb.split_axes('b_d')
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
         self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
-        assert_array_equal(res.transpose(X.a, X.b, X.c, X.d), arr)
+        assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
         # regex
         names = ['b', 'd']
         regex = '(\w+)_(\w+)'
@@ -3855,7 +3855,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
         self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
-        assert_array_equal(res.transpose(X.a, X.b, X.c, X.d), arr)
+        assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
 
         # split several axes at once
         # ==========================
@@ -3911,16 +3911,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert list(res.axes.f.labels) == ['f0', 'f1']
         assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0b1', 'c2', 'd3', 'e2f1']
 
-        # labels with type 'object'
-        # =========================
+        # labels with object dtype
         arr = ndtest((2, 2, 2)).combine_axes(('a', 'b'))
         arr = arr.set_axes([Axis(a.labels.astype(object), a.name) for a in arr.axes])
 
         res = arr.split_axes()
-        dtype = np.dtype('U2') if sys.version_info[0] >= 3 else np.dtype('S2')
-        assert res.a.labels.dtype == dtype
-        assert res.b.labels.dtype == dtype
-        assert res.c.labels.dtype == dtype
+        expected_kind = 'U' if sys.version_info[0] >= 3 else 'S'
+        assert res.a.labels.dtype.kind == expected_kind
+        assert res.b.labels.dtype.kind == expected_kind
+        assert res.c.labels.dtype.kind == 'O'
         assert_array_equal(res, ndtest((2, 2, 2)))
 
     def test_stack(self):
