@@ -3911,6 +3911,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert list(res.axes.f.labels) == ['f0', 'f1']
         assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0b1', 'c2', 'd3', 'e2f1']
 
+        # labels with type 'object'
+        # =========================
+        arr = ndtest((2, 2, 2)).combine_axes(('a', 'b'))
+        fpath = abspath('test.csv')
+        arr.to_csv(fpath)
+        res = read_csv(fpath)
+
+        res = res.split_axes()
+        assert res.a.labels.dtype == np.dtype('U2')
+        assert res.b.labels.dtype == np.dtype('U2')
+        assert res.c.labels.dtype == np.dtype('U2')
+        assert_array_equal(res, ndtest((2, 2, 2)))
+
     def test_stack(self):
         # simple
         arr0 = ndtest(3)

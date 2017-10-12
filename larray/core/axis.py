@@ -2347,12 +2347,16 @@ class AxisCollection(object):
                 assert all(isinstance(name, str) for name in names)
                 _names = names
 
+            if axis.labels.dtype == np.dtype('O'):
+                labels = [str(label) for label in axis.labels]
+            else:
+                labels = axis.labels
             if not regex:
                 # gives us an array of lists
-                split_labels = np.char.split(axis.labels, sep)
+                split_labels = np.char.split(labels, sep)
             else:
                 rx = re.compile(regex)
-                split_labels = [rx.match(l).groups() for l in axis.labels]
+                split_labels = [rx.match(l).groups() for l in labels]
             # not using np.unique because we want to keep the original order
             axes_labels = [unique_list(ax_labels) for ax_labels in zip(*split_labels)]
             split_axes = [Axis(axis_labels, name) for axis_labels, name in zip(axes_labels, _names)]
