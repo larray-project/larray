@@ -97,7 +97,8 @@ class Session(object):
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self._objects[self.keys()[key]]
+            keys = list(self.keys())
+            return self._objects[keys[key]]
         elif isinstance(key, LArray):
             assert np.issubdtype(key.dtype, np.bool_)
             assert key.ndim == 1
