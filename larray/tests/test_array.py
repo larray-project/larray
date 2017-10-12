@@ -3922,6 +3922,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res.c.labels.dtype.kind == 'O'
         assert_array_equal(res, ndtest((2, 2, 2)))
 
+        # not sorted by first part then second part (issue #364)
+        arr = ndtest((2, 3))
+        combined = arr.combine_axes()['a0_b0, a1_b0, a0_b1, a1_b1, a0_b2, a1_b2']
+        assert_array_equal(combined.split_axes('a_b'), arr)
+
+        # another weirdly sorted test
+        combined = arr.combine_axes()['a0_b1, a0_b0, a0_b2, a1_b1, a1_b0, a1_b2']
+        assert_array_equal(combined.split_axes('a_b'), arr['b1,b0,b2'])
+
+        # combined does not contain all combinations of labels (issue #369)
+        combined_partial = combined[['a0_b0', 'a0_b1', 'a1_b1', 'a0_b2', 'a1_b2']]
+        expected = arr.astype(float)
+        expected['a1', 'b0'] = np.nan
+        assert_array_nan_equal(combined_partial.split_axes('a_b'), expected)
+
     def test_stack(self):
         # simple
         arr0 = ndtest(3)
