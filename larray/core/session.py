@@ -619,6 +619,8 @@ class Session(object):
         Examples
         --------
         >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
+        >>> # make the test pass on both Windows and Linux
+        >>> arr1, arr2, arr3 = arr1.astype(np.int64), arr2.astype(np.int64), arr3.astype(np.int64)
         >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
         >>> for k, v in s.items():
         ...     print("{}: {}".format(k, v.info))
