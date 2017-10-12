@@ -2329,7 +2329,9 @@ class AxisCollection(object):
         # axes should be a dict at this time
         assert isinstance(axes, dict)
 
-        new_axes = self[:]
+        new_axes = AxisCollection([axis if axis.labels.dtype != np.dtype('O')
+                                   else Axis([str(label) for label in axis.labels], axis.name)
+                                   for axis in self])
         for axis, names in axes.items():
             axis = new_axes[axis]
             axis_index = new_axes.index(axis)

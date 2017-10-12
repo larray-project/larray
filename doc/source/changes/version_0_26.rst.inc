@@ -395,6 +395,8 @@ Fixes
 
 * fixed stacking arrays with anonymous axes.
 
+* fixed applying `split_axes` on an array with labels of type 'Object' (could happen when an array is read from a file).
+
 * fixed background color in the viewer when using filters in the `compare()` dialog (closes :editor_issue:`66`)
 
 * fixed autoresize of columns by double clicking between column headers (closes :editor_issue:`43`)
