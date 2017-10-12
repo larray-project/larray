@@ -2125,7 +2125,7 @@ class LArray(ABCLArray):
 
         data[cross_key] = value
 
-    def _bool_key_new_axes(self, key, wildcard_allowed=False):
+    def _bool_key_new_axes(self, key, wildcard_allowed=False, sep='_'):
         """
         Returns an AxisCollection containing combined axes.
         Axes corresponding to scalar key are dropped.
@@ -2146,7 +2146,7 @@ class LArray(ABCLArray):
         -----
         See examples of properties `points` and `ipoints`.
         """
-        # TODO: use AxisCollection.combine_axes. The problem is that combine_axes use product(*axes_labels)
+        # TODO: use AxisCollection.combine_axes. The problem is that it uses product(*axes_labels)
         #       while here we need zip(*axes_labels)
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
                          if not _isnoneslice(axis_key) and
@@ -2169,7 +2169,7 @@ class LArray(ABCLArray):
         if all(axis.name is None for axis in combined_axes):
             combined_name = None
         else:
-            combined_name = '_'.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
+            combined_name = sep.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
         new_axes = other_axes
         if combined_axis_pos is not None:
             if wildcard_allowed:
@@ -2193,7 +2193,8 @@ class LArray(ABCLArray):
                     #    wildcard axis (and axes_labels discarded?)
                     combined_labels = axes_labels[0]
                 else:
-                    combined_labels = ['_'.join([str(l) for l in labels]) for labels in zip(*axes_labels)]
+                    combined_labels = [sep.join(str(l) for l in comb)
+                                       for comb in zip(*axes_labels)]
 
                 # CRAP, this can lead to duplicate labels (especially using .points)
                 combined_axis = Axis(combined_labels, combined_name)
