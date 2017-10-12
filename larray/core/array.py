@@ -6483,7 +6483,7 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
-        >>> combined.split_axes('a_b', regex='(\w{2})(\w{2})')
+        >>> combined.split_axes('a_b', regex='(\\\\w{2})(\\\\w{2})')
         a\\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5

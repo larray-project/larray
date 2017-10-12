@@ -534,13 +534,13 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
     ...             ['',      0,   1]])
     sex  M  F
          0  1
-    >>> from_lists([['sex\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex\\\\year', 1991, 1992, 1993],
     ...             [ 'M',           0,    1,    2],
     ...             [ 'F',           3,    4,    5]])
     sex\\year  1991  1992  1993
            M     0     1     2
            F     3     4     5
-    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
     ...             [  'F', 'BE',           0,    0,    1]])
@@ -558,7 +558,7 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
       M       FO   2.0   0.0   0.0
       F       BE   0.0   0.0   1.0
       F       FO   nan   nan   nan
-    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
     ...             [  'F', 'BE',           0,    0,    1]], fill_value=42)
@@ -611,7 +611,7 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
     >>> from_string("sex  M  F\\n\\t  0  1")
     sex  M  F
          0  1
-    >>> from_string("nat\\sex  M  F\\nBE  0  1\\nFO  2  3")
+    >>> from_string("nat\\\\sex  M  F\\nBE  0  1\\nFO  2  3")
     nat\sex  M  F
          BE  0  1
          FO  2  3
@@ -622,13 +622,13 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
 
     Each label is stripped of leading and trailing whitespace, so this is valid too:
 
-    >>> from_string('''nat\\sex  M  F
+    >>> from_string('''nat\\\\sex  M  F
     ...                BE        0  1
     ...                FO        2  3''')
     nat\sex  M  F
          BE  0  1
          FO  2  3
-    >>> from_string('''age  nat\\sex  M  F
+    >>> from_string('''age  nat\\\\sex  M  F
     ...                0    BE        0  1
     ...                0    FO        2  3
     ...                1    BE        4  5
@@ -642,7 +642,7 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
     Empty lines at the beginning or end are ignored, so one can also format the string like this:
 
     >>> from_string('''
-    ... nat\\sex  M  F
+    ... nat\\\\sex  M  F
     ... BE        0  1
     ... FO        2  3
     ... ''')
