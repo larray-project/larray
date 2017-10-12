@@ -274,6 +274,63 @@ class Axis(ABCAxis):
         labels = self._length + other._length if self.iswildcard else np.append(self.labels, other.labels)
         return Axis(labels, self.name)
 
+    def split(self, sep='_', names=None, regex=None, return_labels=False):
+        """Split axis and returns a list of Axis.
+
+        Parameters
+        ----------
+        sep : str, optional
+            Delimiter to use for splitting. Defaults to '_'.
+            When `regex` is provided, the delimiter is only used on `names` if given as one string or on axis name if
+            `names` is None.
+        names : str or list of str, optional
+            Names of resulting axes. Defaults to None.
+        regex : str, optional
+            Use regex instead of delimiter to split labels. Defaults to None.
+        labels : bool, optional
+            Whether or not split labels must be returned (as a tuple of tuples). These labels are suitable for indexing
+            via array.points[labels]. Defaults to False.
+
+        Returns
+        -------
+        list of Axis or (list of Axis, array-like)
+
+        Examples
+        --------
+        >>> a_b = Axis('a_b=a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
+        >>> a_b.split()
+        [Axis(['a0', 'a1'], 'a'), Axis(['b0', 'b1', 'b2'], 'b')]
+        """
+        if names is None:
+            if sep not in self.name:
+                raise ValueError('{} not found in self name ({})'.format(sep, self.name))
+            else:
+                names = self.name.split(sep)
+        elif isinstance(names, str):
+            if sep not in names:
+                raise ValueError('{} not found in names ({})'.format(sep, names))
+            else:
+                names = names.split(sep)
+        else:
+            assert all(isinstance(name, str) for name in names)
+        if not regex:
+            # np.char.split does not work on arrays with object dtype
+            labels = self.labels if self.labels.dtype.kind != 'O' else self.labels.astype(str)
+            # gives us an array of lists
+            split_labels = np.char.split(labels, sep)
+        else:
+            match = re.compile(regex).match
+            split_labels = [match(l).groups() for l in self.labels]
+        indexing_labels = zip(*split_labels)
+        if return_labels:
+            indexing_labels = tuple(indexing_labels)
+        # not using np.unique because we want to keep the original order
+        split_axes = [Axis(unique_list(ax_labels), name) for ax_labels, name in zip(indexing_labels, names)]
+        if return_labels:
+            return split_axes, indexing_labels
+        else:
+            return split_axes
+
     @property
     def iswildcard(self):
         return self._iswildcard

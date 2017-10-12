@@ -1,4 +1,4 @@
-﻿Syntax changes
+Syntax changes
 --------------
 
 * renamed special variable `x` to `X` to let users define an `x` variable in their code without breaking all
@@ -98,6 +98,12 @@ New features
     a0   b1   2   3
     a1   b0   4   5
     a1   b1   6   7
+
+* implemented Axis.split to split an axis into several.
+
+    >>> a_b = Axis('a_b=a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
+    >>> a_b.split()
+    [Axis(['a0', 'a1'], 'a'), Axis(['b0', 'b1', 'b2'], 'b')]
 
 
 Miscellaneous improvements
