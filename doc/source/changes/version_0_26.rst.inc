@@ -410,3 +410,8 @@ Fixes
 * fixed representing a 0D array (scalar) in the viewer (closes :editor_issue:`71`)
 
 * fixed viewer not displaying an error message when saving or loading a file failed (closes :editor_issue:`75`)
+
+* fixed array.split_axis when the combined axis does not contain all the combination of labels resulting
+  from the split (closes :issue:`369`).
+
+* fixed array.split_axis when combined labels are not sorted by the first part then second part (closes :issue:`364`).
