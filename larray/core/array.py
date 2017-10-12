@@ -960,7 +960,7 @@ class LArray(ABCLArray):
         [a0, b0, c0] and [a1, b2, c2], you must do:
 
         >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
-        a,b,c  a0,b0,c0  a1,b2,c2
+        a_b_c  a0_b0_c0  a1_b2_c2
                       0        22
 
         The number of label(s) on each dimension must be equal:
@@ -993,7 +993,7 @@ class LArray(ABCLArray):
         [0, 0, 0] and [1, 2, 2], you must do:
 
         >>> arr.ipoints[[0,1], [0,2], [0,2]]
-        a,b,c  a0,b0,c0  a1,b2,c2
+        a_b_c  a0_b0_c0  a1_b2_c2
                       0        22
 
         The number of index(es) on each dimension must be equal:
@@ -2169,7 +2169,7 @@ class LArray(ABCLArray):
         if all(axis.name is None for axis in combined_axes):
             combined_name = None
         else:
-            combined_name = ','.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
+            combined_name = '_'.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
         new_axes = other_axes
         if combined_axis_pos is not None:
             if wildcard_allowed:
@@ -2193,7 +2193,7 @@ class LArray(ABCLArray):
                     #    wildcard axis (and axes_labels discarded?)
                     combined_labels = axes_labels[0]
                 else:
-                    combined_labels = list(zip(*axes_labels))
+                    combined_labels = ['_'.join([str(l) for l in labels]) for labels in zip(*axes_labels)]
 
                 # CRAP, this can lead to duplicate labels (especially using .points)
                 combined_axis = Axis(combined_labels, combined_name)
@@ -7261,7 +7261,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
          FO  3  4
     >>> d = diag(a)
     >>> d
-    nat,sex  BE,M  FO,F
+    nat_sex  BE_M  FO_F
                 1     4
     >>> diag(d)
     nat\\sex  M  F
@@ -7281,9 +7281,9 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
         axis_name = axis.name
         if k != 0:
             raise NotImplementedError("k != 0 not supported for 1D arrays")
-        if split and isinstance(axis_name, str) and ',' in axis_name:
-            axes_names = axis_name.split(',')
-            axes_labels = list(zip(*np.char.split(axis.labels, ',')))
+        if split and isinstance(axis_name, str) and '_' in axis_name:
+            axes_names = axis_name.split('_')
+            axes_labels = list(zip(*np.char.split(axis.labels, '_')))
             axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
         else:
             axes = [axis] + [axis.copy() for _ in range(ndim - 1)]
