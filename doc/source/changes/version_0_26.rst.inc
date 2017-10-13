@@ -108,6 +108,8 @@ New features
     >>> a_b.split()
     [Axis(['a0', 'a1'], 'a'), Axis(['b0', 'b1', 'b2'], 'b')]
 
+* added the possibility to load the example dataset used in the tutorial via the menu ``File > Load Example``
+  in the viewer
 
 Miscellaneous improvements
 --------------------------
