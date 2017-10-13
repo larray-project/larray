@@ -12,13 +12,16 @@ Syntax changes
 
 * renamed `split_axis` to `split_axes` to reflect the fact that it can now split several axes at once (see below).
 
-* renamed PGroup as IGroup (I for Index).
+* renamed `sort_axis` to `sort_axes` to reflect the fact that it can sort multiple axes at once (and does so by
+  default).
 
 * renamed several methods with more explicit names (closes :issue:`50`):
 
-    - `sort_axis` to `sort_axes`
     - `argmax`, `argmin`, `argsort` to `labelofmax`, `labelofmin`, `labelsofsorted`
     - `posargmax`, `posargmin`, `posargsort` to `indexofmax`, `indexofmin`, `indicesofsorted`
+
+* renamed PGroup to IGroup to be consistent with other methods, especially the .i methods on axes and arrays
+  (I is for Index -- P was for Position).
 
 
 Backward incompatible changes
@@ -110,6 +113,10 @@ Miscellaneous improvements
 --------------------------
 
 * view() and edit() without argument now display global arrays in addition to local ones (closes :editor_issue:`54`).
+
+* using the mouse scrollwheel on filter combo boxes will switch to the previous/next label.
+
+* implemented a combobox to choose which color gradient to use and provide a few gradients.
 
 * inverted background colors in the viewer (red for low values and blue for high values). Closes :editor_issue:`18`.
 
@@ -341,7 +348,26 @@ Miscellaneous improvements
     sex  M  F
          0  1
 
-* title in the viewer also includes the dtype of the current displayed array (closes :editor_issue:`85`)
+* viewer window title also includes the dtype of the current displayed array (closes :editor_issue:`85`)
+
+* viewer window title uses only the file name instead of the entire file path as it made titles too long in some cases.
+
+* when editing .csv files, the viewer window title will be "directory\fname.csv - axes_info" instead of having the
+  file name repeated as before ("dir\fname.csv - fname: axes_info").
+
+* the viewer will not update digits/scientific notation nor colors when the filter changes, so that numbers are
+  more easily comparable when quickly changing the filter, especially using the scrollwheel on filter boxes.
+
+* NaN values display as grey in the viewer so that they stand out more.
+
+* compare() will color values depending on relative difference instead of absolute difference as this is usually more
+  useful.
+
+* compare(sessions) uses nan_equal to compare arrays so that identical arrays are not marked different when they
+  contain NaN values.
+
+* changed compare() "stacked axis" names: arrays -> array and sessions -> session because that reads a bit more
+  naturally.
 
 
 Fixes
@@ -415,3 +441,18 @@ Fixes
   from the split (closes :issue:`369`).
 
 * fixed array.split_axis when combined labels are not sorted by the first part then second part (closes :issue:`364`).
+
+* fixed opening .csv files in the editor will create variables named using only the filename without extension (instead
+  of being named using the full path of the file -- making it almost useless). Closes :editor_issue:`90`.
+
+* fixed deleting a variable (using the del key in the list) not marking the session/file as being modified.
+
+* fixed the link to the tutorial (Help->Online Tutorial) (closes :editor_issue:`92`).
+
+* fixed inplace modifications of arrays in the console (via array[xxx] = value) not updating the view (closes
+  :editor_issue:`94`).
+
+* fixed background color in compare() being wrong after changing axes order by drag-and-dropping them (closes
+  :editor_issue:`89`).
+
+* fixed the whole array/compare being the same color in the presence of -inf or +inf in the array.
