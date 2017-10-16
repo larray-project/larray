@@ -1,1 +1,0 @@
-python setup.py clean register sdist bdist_wheel --universal upload -r pypi
