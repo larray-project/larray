@@ -280,15 +280,34 @@ if xw is not None:
         return slice(s.start if s.start is not None else 0, s.stop if s.stop is not None else length, s.step)
 
 
-    def _concrete_key(key, shape):
+    def _concrete_key(key, obj, ndim=2):
+        """Expand key to ndim and replace None in slices start/stop bounds by 0 or obj.shape[corresponding_dim]
+        respectively.
+
+        Parameters
+        ----------
+        key : scalar, slice or tuple
+            input key
+        obj : object
+            any object with a 'shape' attribute.
+        ndim : int
+            number of dimensions to expand to. We could use len(obj.shape) instead but we avoid it to not trigger
+            obj.shape, which can be expensive in the case of a sheet with blank cells after the data.
+        """
         if not isinstance(key, tuple):
             key = (key,)
 
-        if len(key) < len(shape):
-            key = key + (slice(None),) * (len(shape) - len(key))
+        if len(key) < ndim:
+            key = key + (slice(None),) * (ndim - len(key))
 
-        # We do not use slice(*k.indices(length)) because it also clips bounds which exceed the length, which we do not
-        # want in this case (see issue #273).
+        # only compute shape if necessary because it can be expensive in some cases
+        if any(isinstance(k, slice) and k.stop is None for k in key):
+            shape = obj.shape
+        else:
+            shape = (None, None)
+
+        # We use _fill_slice instead of slice(*k.indices(length)) because the later also clips bounds which exceed
+        # the length and we do NOT want to do that in this case (see issue #273).
         return [_fill_slice(k, length) if isinstance(k, slice) else k
                 for k, length in zip(key, shape)]
 
@@ -305,7 +324,7 @@ if xw is not None:
             if isinstance(key, string_types):
                 return Range(self, key)
 
-            row, col = _concrete_key(key, self.shape)
+            row, col = _concrete_key(key, self)
             if isinstance(row, slice) or isinstance(col, slice):
                 row1, row2 = (row.start, row.stop) if isinstance(row, slice) else (row, row + 1)
                 col1, col2 = (col.start, col.stop) if isinstance(col, slice) else (col, col + 1)
@@ -447,7 +466,7 @@ if xw is not None:
             assert not isinstance(key, string_types)
             row_offset = self.xw_range.row1 - 1
             col_offset = self.xw_range.col1 - 1
-            row, col = _concrete_key(key, self.xw_range.shape)
+            row, col = _concrete_key(key, self.xw_range)
             row = slice(row.start + row_offset, row.stop + row_offset) if isinstance(row, slice) else row + row_offset
             col = slice(col.start + col_offset, col.stop + col_offset) if isinstance(col, slice) else col + col_offset
             return row, col

@@ -1,7 +1,8 @@
-Miscellaneous improvements
+﻿Miscellaneous improvements
 --------------------------
 
-* improved something.
+* Made handling Excel sheets with many blank columns/rows after the data much faster (but still slower than sheets
+  without such blank cells).
 
 Fixes
 -----
