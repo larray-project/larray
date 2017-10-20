@@ -4,7 +4,7 @@
 Version 0.26
 ============
 
-In development.
+Released on 2017-10-13.
 
 .. include:: ./changes/version_0_26.rst.inc
 
