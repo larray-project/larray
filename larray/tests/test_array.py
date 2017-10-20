@@ -2565,15 +2565,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = abspath('test_blank_cells.xlsx')
-        good_la = read_excel(fpath, 'good')
-        bad_la = read_excel(fpath, 'bad')
-        assert_array_equal(good_la, bad_la)
+        good = read_excel(fpath, 'good')
+        bad1 = read_excel(fpath, 'blanksafter_morerowsthancols')
+        bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows')
+        assert_array_equal(bad1, good)
+        assert_array_equal(bad2, good)
         # with additional empty column in the middle of the array to read
-        good_la2 = ndrange('a=a0,a1;b=2003..2006').astype(object)
-        good_la2[2005] = None
-        good_la2 = good_la2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
-        bad_la2 = read_excel(fpath, 'bad2')
-        assert_array_equal(good_la2, bad_la2)
+        good2 = ndrange('a=a0,a1;b=2003..2006').astype(object)
+        good2[2005] = None
+        good2 = good2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
+        bad3 = read_excel(fpath, 'middleblankcol')
+        bad4 = read_excel(fpath, '16384col')
+        assert_array_equal(bad3, good2)
+        assert_array_equal(bad4, good2)
 
     def test_read_excel_pandas(self):
         la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
@@ -2637,15 +2641,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = abspath('test_blank_cells.xlsx')
-        good_la = read_excel(fpath, 'good', engine='xlrd')
-        bad_la = read_excel(fpath, 'bad', engine='xlrd')
-        assert_array_equal(good_la, bad_la)
+        good1 = read_excel(fpath, 'good', engine='xlrd')
+        bad1 = read_excel(fpath, 'blanksafter_morerowsthancols', engine='xlrd')
+        bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows', engine='xlrd')
+        assert_array_equal(bad1, good1)
+        assert_array_equal(bad2, good1)
+
         # with additional empty column in the middle of the array to read
-        good_la2 = ndrange('a=a0,a1;b=2003..2006').astype(float)
-        good_la2[2005] = np.nan
-        good_la2 = good_la2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
-        bad_la2 = read_excel(fpath, 'bad2', engine='xlrd')
-        assert_array_nan_equal(good_la2, bad_la2)
+        good2 = ndrange('a=a0,a1;b=2003..2006').astype(float)
+        good2[2005] = np.nan
+        good2 = good2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
+        bad3 = read_excel(fpath, 'middleblankcol', engine='xlrd')
+        bad4 = read_excel(fpath, '16384col', engine='xlrd')
+        assert_array_nan_equal(bad3, good2)
+        assert_array_nan_equal(bad4, good2)
 
     def test_from_lists(self):
         # sort_rows
@@ -3421,13 +3430,17 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = abspath('test_blank_cells.xlsx')
         with open_excel(fpath) as wb:
-            good_la = wb['good'].load()
-            bad_la = wb['bad'].load()
+            good = wb['good'].load()
+            bad1 = wb['blanksafter_morerowsthancols'].load()
+            bad2 = wb['blanksafter_morecolsthanrows'].load()
             # with additional empty column in the middle of the array to read
-            good_la2 = wb['bad2']['A1:E3'].load()
-            bad_la2 = wb['bad2'].load()
-        assert_array_equal(good_la, bad_la)
-        assert_array_equal(good_la2, bad_la2)
+            good2 = wb['middleblankcol']['A1:E3'].load()
+            bad3 = wb['middleblankcol'].load()
+            bad4 = wb['16384col'].load()
+        assert_array_equal(bad1, good)
+        assert_array_equal(bad2, good)
+        assert_array_equal(bad3, good2)
+        assert_array_equal(bad4, good2)
 
         # 5) crash test
         # =============

@@ -1,12 +1,3 @@
-﻿New features
-------------
-
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
-
-* added another feature.
-
-.. _misc:
-
 Miscellaneous improvements
 --------------------------
 
@@ -15,4 +6,4 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed reading from and writing to Excel sheets with 16384 columns or 1048576 rows (Excel's maximum).
