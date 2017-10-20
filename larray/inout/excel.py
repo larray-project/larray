@@ -320,20 +320,63 @@ if xw is not None:
 
         @property
         def shape(self):
-            # include top-left empty rows/columns
+            """
+            shape of sheet including top-left empty rows/columns but excluding bottom-right ones.
+            """
             from xlwings.constants import Direction as xldir
-            used = self.xw_sheet.api.UsedRange
-            last_row = used.Row + used.Rows.Count
-            last_col = used.Column + used.Columns.Count
-            for last_used_row in range(last_row, 0, -1):
-                left_cell = used.Cells(last_used_row, last_col + 1).End(xldir.xlToLeft)
-                if left_cell.Column > 1 or left_cell.Value is not None:
-                    break
-            for last_used_col in range(last_col, 0, -1):
-                up_cell = used.Cells(last_row + 1, last_used_col).End(xldir.xlUp)
-                if up_cell.Row > 1 or up_cell.Value is not None:
-                    break
-            return (last_used_row, last_used_col)
+
+            sheet = self.xw_sheet.api
+            used = sheet.UsedRange
+            first_row = used.Row
+            first_col = used.Column
+            last_row = first_row + used.Rows.Count - 1
+            last_col = first_col + used.Columns.Count - 1
+            last_cell = sheet.Cells(last_row, last_col)
+
+            # fast path for sheets with a non blank bottom-right value
+            if last_cell.Value is not None:
+                return last_row, last_col
+
+            last_row_used = last_cell.End(xldir.xlToLeft).Value is not None
+            last_col_used = last_cell.End(xldir.xlUp).Value is not None
+
+            # fast path for sheets where last row and last col are not entirely blank
+            if last_row_used and last_col_used:
+                return last_row, last_col
+            else:
+                LEFT, UP = xldir.xlToLeft, xldir.xlUp
+
+                def line_length(row, col, direction):
+                    last_cell = sheet.Cells(row, col)
+                    if last_cell.Value is not None:
+                        return col if direction is LEFT else row
+                    first_cell = last_cell.End(direction)
+                    pos = first_cell.Column if direction is LEFT else first_cell.Row
+                    return pos - 1 if first_cell.Value is None else pos
+
+                if last_row < last_col:
+                    if last_row_used or last_row == 1:
+                        max_row = last_row
+                    else:
+                        for max_row in range(last_row - 1, first_row - 1, -1):
+                            if line_length(max_row, last_col, LEFT) > 0:
+                                break
+                    if last_col_used or last_col == 1:
+                        max_col = last_col
+                    else:
+                        max_col = max(line_length(row, last_col, LEFT) for row in range(first_row, max_row + 1))
+                else:
+                    if last_col_used or last_col == 1:
+                        max_col = last_col
+                    else:
+                        for max_col in range(last_col - 1, first_col - 1, -1):
+                            if line_length(last_row, max_col, UP) > 0:
+                                break
+                    if last_row_used or last_row == 1:
+                        max_row = last_row
+                    else:
+                        max_row = max(line_length(last_row, col, UP) for col in range(first_col, max_col + 1))
+                return max_row, max_col
 
         @property
         def ndim(self):
