@@ -927,6 +927,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                              "being targeted".format(la2['P01'].axes - la['P01'].axes, la['P01'].axes)):
            la['P01'] = la2['P01']
 
+        # 7) incompatible labels
+        sex2 = Axis('sex=F,M')
+        la2 = LArray(self.small_data, axes=(sex2, self.lipro))
+        with pytest.raises(ValueError, match="incompatible axes:"):
+            la[:] = la2
+
     def test_setitem_ndarray(self):
         """
         tests LArray.__setitem__(key, value) where value is a raw ndarray.

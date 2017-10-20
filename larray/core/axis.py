@@ -1644,7 +1644,7 @@ class AxisCollection(object):
         for i, axis in enumerate(axes):
             local_axis = self.get_by_pos(axis, i)
             if not local_axis.iscompatible(axis):
-                raise ValueError("incompatible axes:\n%r\nvs\n%r" % (axis, local_axis))
+                raise ValueError("incompatible axes:\n{!r}\nvs\n{!r}".format(axis, local_axis))
 
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
