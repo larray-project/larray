@@ -3076,7 +3076,7 @@ class LArray(ABCLArray):
 
     posargmax = renamed_to(indexofmax, 'posargmax')
 
-    def labelsofsorted(self, axis=None, kind='quicksort'):
+    def labelsofsorted(self, axis=None, reverse=False, kind='quicksort'):
         """Returns the labels that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3086,6 +3086,8 @@ class LArray(ABCLArray):
         ----------
         axis : int or str or Axis, optional
             Axis along which to sort. This can be omitted if array has only one axis.
+        reverse : bool, optional
+            Sort values in descending order. Defaults to False (ascending order).
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
@@ -3108,18 +3110,23 @@ class LArray(ABCLArray):
              BE  M  F
              FR  F  M
              IT  M  F
+        >>> arr.labelsofsorted(X.sex, reverse=True)
+        nat\\sex  0  1
+             BE  F  M
+             FR  M  F
+             IT  F  M
         """
         if axis is None:
             if self.ndim > 1:
-                raise ValueError("array has ndim > 1 and no axis specified for argsort")
+                raise ValueError("array has ndim > 1 and no axis specified for labelsofsorted")
             axis = self.axes[0]
         axis = self.axes[axis]
-        pos = self.indicesofsorted(axis, kind=kind)
+        pos = self.indicesofsorted(axis, reverse=reverse, kind=kind)
         return LArray(axis.labels[pos.data], pos.axes)
 
     argsort = renamed_to(labelsofsorted, 'argsort')
 
-    def indicesofsorted(self, axis=None, kind='quicksort'):
+    def indicesofsorted(self, axis=None, reverse=False, kind='quicksort'):
         """Returns the indices that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3129,6 +3136,8 @@ class LArray(ABCLArray):
         ----------
         axis : int or str or Axis, optional
             Axis along which to sort. This can be omitted if array has only one axis.
+        reverse : bool, optional
+            Sort values in descending order. Defaults to False (ascending order).
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
@@ -3151,13 +3160,22 @@ class LArray(ABCLArray):
               0  2  1
               1  0  2
               2  1  0
+        >>> arr.indicesofsorted(X.nat, reverse=True)
+        nat\\sex  M  F
+              0  1  0
+              1  0  2
+              2  2  1
         """
         if axis is None:
             if self.ndim > 1:
-                raise ValueError("array has ndim > 1 and no axis specified for posargsort")
+                raise ValueError("array has ndim > 1 and no axis specified for indicesofsorted")
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = self.data.argsort(axis_idx, kind=kind)
+        if reverse:
+            reverser = tuple(slice(None, None, -1) if i == axis_idx else slice(None)
+                             for i in range(self.ndim))
+            data = data[reverser]
         new_axis = Axis(np.arange(len(axis)), axis.name)
         return LArray(data, self.axes.replace(axis, new_axis))
 
