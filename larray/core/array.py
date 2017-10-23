@@ -6556,9 +6556,13 @@ class LArray(ABCLArray):
                     res = empty(new_axes, dtype=array.dtype)
                 else:
                     res = full(new_axes, fill_value=fill_value, dtype=common_type((array, fill_value)))
-                if names is not None:
-                    # make sure we broadcast correctly
-                    array = array.rename(axis, sep.join(names))
+                if names is None:
+                    names = axis.name.split(sep)
+                # Rename axis to make sure we broadcast correctly. We should NOT use sep here, but rather '_' must be
+                # kept in sync with the default sep of _bool_key_new_axes
+                new_axis_name = '_'.join(names)
+                if new_axis_name != axis.name:
+                    array = array.rename(axis, new_axis_name)
                 res.points[split_labels] = array
                 array = res
         return array

@@ -327,6 +327,7 @@ class Axis(ABCAxis):
         # not using np.unique because we want to keep the original order
         split_axes = [Axis(unique_list(ax_labels), name) for ax_labels, name in zip(indexing_labels, names)]
         if return_labels:
+            indexing_labels = tuple(axis[labels] for axis, labels in zip(split_axes, indexing_labels))
             return split_axes, indexing_labels
         else:
             return split_axes
