@@ -3852,23 +3852,26 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_split_axes(self):
         # split one axis
         # ==============
+
+        # default sep
         arr = ndtest((2, 3, 4, 5))
-        comb = arr.combine_axes(('b', 'd'))
-        self.assertEqual(comb.axes.names, ['a', 'b_d', 'c'])
-        # default delimiter '_'
-        res = comb.split_axes('b_d')
+        combined = arr.combine_axes(('b', 'd'))
+        self.assertEqual(combined.axes.names, ['a', 'b_d', 'c'])
+        res = combined.split_axes('b_d')
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
-        self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
         assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+
         # regex
-        names = ['b', 'd']
-        regex = '(\w+)_(\w+)'
-        res = comb.split_axes('b_d', names=names, regex=regex)
+        res = combined.split_axes('b_d', names=['b', 'd'], regex='(\w+)_(\w+)')
         self.assertEqual(res.axes.names, ['a', 'b', 'd', 'c'])
-        self.assertEqual(res.size, arr.size)
         self.assertEqual(res.shape, (2, 3, 5, 4))
         assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+
+        # custom sep
+        combined = ndrange('a|b=a0|b0,a0|b1')
+        res = combined.split_axes(sep='|')
+        assert_array_equal(res, ndrange('a=a0;b=b0,b1'))
 
         # split several axes at once
         # ==========================
@@ -3949,6 +3952,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         expected = arr.astype(float)
         expected['a1', 'b0'] = np.nan
         assert_array_nan_equal(combined_partial.split_axes('a_b'), expected)
+
+        # split labels are ambiguous (issue #485)
+        combined = ndrange('a_b=a0_b0..a1_b1;c_d=a0_b0..a1_b1')
+        expected = ndrange('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
+        assert_array_equal(combined.split_axes(('a_b', 'c_d')), expected)
 
     def test_stack(self):
         # simple
