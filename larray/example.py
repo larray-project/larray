@@ -5,7 +5,7 @@ __all__ = ['EXAMPLE_FILES_DIR', 'load_example_data']
 
 EXAMPLE_FILES_DIR = os.path.dirname(__file__) + '/tests/data/'
 AVAILABLE_EXAMPLE_DATA = {
-    'demography' : EXAMPLE_FILES_DIR + 'data.h5'
+    'demography' : os.path.join(EXAMPLE_FILES_DIR, 'demography.h5')
 }
 
 
