@@ -237,7 +237,9 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
             df.columns = pd.Index([parse(cell) for cell in df.columns.values], name=df.columns.name)
         series = df.iloc[0]
         series.name = df.index.name
-        return from_series(series, sort_rows=sort_rows)
+        if sort_rows:
+            raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
+        return from_series(series, sort_rows=sort_columns)
     else:
         axes_names = [decode(name, 'utf8') for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
