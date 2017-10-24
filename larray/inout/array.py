@@ -82,8 +82,7 @@ def from_series(s, sort_rows=False):
     s : Pandas Series
         Input Pandas Series.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
-        Defaults to False.
+        Whether or not to sort the rows alphabetically. Defaults to False.
 
     Returns
     -------
@@ -92,9 +91,9 @@ def from_series(s, sort_rows=False):
     name = s.name if s.name is not None else s.index.name
     if name is not None:
         name = str(name)
-    labels = sorted(s.index.values) if sort_rows else list(s.index.values)
-    axis = Axis(labels, name)
-    return LArray(s.values, axis)
+    if sort_rows:
+        s = s.sort_index()
+    return LArray(s.values, Axis(s.index.values, name))
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfold_last_axis_name=False, **kwargs):
