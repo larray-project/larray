@@ -18,6 +18,7 @@ from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndt
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
 from larray.core.axis import _to_ticks, _to_key
+from larray.util.misc import StringIO
 
 
 class TestValueStrings(TestCase):
@@ -2455,23 +2456,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, expected)
 
     def test_read_csv(self):
-        la = read_csv(abspath('test1d.csv'))
-        self.assertEqual(la.ndim, 1)
-        self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes.names, ['time'])
-        assert_array_equal(la, [3722, 3395, 3347])
+        res = read_csv(abspath('test1d.csv'))
+        assert_array_equal(res, ndrange('time=2007,2010,2013'))
 
-        la = read_csv(abspath('test2d.csv'))
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', 'time'])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        res = read_csv(abspath('test2d.csv'))
+        assert_array_equal(res, ndrange('a=0,1;b=0,1,2'))
 
-        la = read_csv(abspath('test3d.csv'))
-        self.assertEqual(la.ndim, 3)
-        self.assertEqual(la.shape, (5, 2, 3))
-        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
-        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+        res = read_csv(abspath('test3d.csv'))
+        expected = ndrange('age=0..3;sex=F,M;time=2015..2017') + 0.5
+        assert_array_equal(res, expected)
 
         la = read_csv(abspath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
@@ -2498,6 +2491,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
+
+        # test StringIO
+        res = read_csv(StringIO('a,1,2\n,0,1\n'))
+        assert_array_equal(res, ndrange('a=1,2'))
 
     def test_read_eurostat(self):
         la = read_eurostat(abspath('test5d_eurostat.csv'))
