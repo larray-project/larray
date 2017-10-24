@@ -17,6 +17,7 @@ from larray.tests.common import abspath, assert_array_equal, assert_array_nan_eq
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
+from larray.inout.array import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO
 
@@ -2679,6 +2680,17 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                  ['F', 'BE', 0, 0, 1],
                                  ['F', 'FO', 0, 0, 2]], sort_columns=True)
         assert_array_equal(sorted_arr, arr)
+
+    def test_from_series(self):
+        expected = ndtest(3)
+        s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
+        assert_array_equal(from_series(s), expected)
+
+        s = pd.Series([2, 0, 1], index=pd.Index(['a2', 'a0', 'a1'], name='a'))
+        assert_array_equal(from_series(s, sort_rows=True), expected)
+
+        expected = ndtest(3)[['a2', 'a0', 'a1']]
+        assert_array_equal(from_series(s), expected)
 
     def test_from_frame(self):
         # 1) data = scalar
