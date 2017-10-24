@@ -13,3 +13,5 @@ Fixes
   ambiguous with labels from other axes (closes :issue:`485`).
 
 * fixed reading 1D arrays with non-string labels (closes :issue:`495`).
+
+* fixed read_csv(sort_columns=True) for 1D arrays (closes :issue:`497`).

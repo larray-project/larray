@@ -2497,6 +2497,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = read_csv(StringIO('a,1,2\n,0,1\n'))
         assert_array_equal(res, ndrange('a=1,2'))
 
+        # sort_columns=True
+        res = read_csv(StringIO('a,a2,a0,a1\n,2,0,1\n'), sort_columns=True)
+        assert_array_equal(res, ndtest(3))
+
     def test_read_eurostat(self):
         la = read_eurostat(abspath('test5d_eurostat.csv'))
         self.assertEqual(la.ndim, 5)
