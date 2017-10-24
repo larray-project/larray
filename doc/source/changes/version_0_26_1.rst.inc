@@ -11,3 +11,5 @@ Fixes
 
 * fixed LArray.split_axes using a custom separator and not using sort=True or when the split labels are
   ambiguous with labels from other axes (closes :issue:`485`).
+
+* fixed reading 1D arrays with non-string labels (closes :issue:`495`).
