@@ -96,7 +96,7 @@ def from_series(s, sort_rows=False):
     return LArray(s.values, Axis(s.index.values, name))
 
 
-def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfold_last_axis_name=False, **kwargs):
+def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False, **kwargs):
     """
     Converts Pandas DataFrame into LArray.
 
@@ -112,7 +112,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=True, unfol
         Defaults to False.
     parse_header : bool, optional
         Whether or not to parse columns labels. Pandas treats column labels as strings.
-        If True, column labels are converted into int, float or boolean when possible. Defaults to True.
+        If True, column labels are converted into int, float or boolean when possible. Defaults to False.
     unfold_last_axis_name : bool, optional
         Whether or not to extract the names of the last two axes by splitting the name of the last index column of the
         dataframe using ``\\``. Defaults to False.
