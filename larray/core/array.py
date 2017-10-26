@@ -2109,6 +2109,7 @@ class LArray(ABCLArray):
             else:
                 axes = self._get_axes_from_translated_key(translated_key)
             value = value.broadcast_with(axes)
+            value.axes.check_compatible(axes)
 
             # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
@@ -2227,7 +2228,7 @@ class LArray(ABCLArray):
          a0   0   1   2
          a1   3  10  10
          a2   6  10  10
-        >>> arr['a1:', 'b1:'].set(ndtest((2, 2)))
+        >>> arr['a1:', 'b1:'].set(ndrange("a=a1,a2;b=b1,b2"))
         >>> arr
         a\\b  b0  b1  b2
          a0   0   1   2
