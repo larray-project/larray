@@ -13,7 +13,7 @@
     vs
     Axis(['a2', 'a3'], 'a')
 
-  previous behavior can be recovered through `drop_labels` or may change labels via
+  previous behavior can be recovered through `drop_labels` or by changing labels via
   `set_labels` or `set_axes`:
 
     >>> arr['a0,a1'] = arr['a2,a3'].drop_labels('a')
