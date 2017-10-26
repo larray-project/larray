@@ -1,4 +1,26 @@
-﻿New features
+﻿Backward incompatible changes
+-----------------------------
+
+* labels are checked during array subset assignement (closes :issue:`269`):
+
+    >>> arr = ndtest(4)
+    >>> arr
+    a  a0  a1  a2  a3
+        0   1   2   3
+    >>> arr['a0,a1'] = arr['a2,a3']
+    ValueError: incompatible axes:
+    Axis(['a0', 'a1'], 'a')
+    vs
+    Axis(['a2', 'a3'], 'a')
+
+  previous behavior can be recovered through `drop_labels` or by changing labels via
+  `set_labels` or `set_axes`:
+
+    >>> arr['a0,a1'] = arr['a2,a3'].drop_labels('a')
+    >>> arr['a0,a1'] = arr['a2,a3'].set_labels('a', {'a2': 'a0', 'a3': 'a1'})
+
+
+New features
 ------------
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details).
