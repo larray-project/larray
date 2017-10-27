@@ -5395,8 +5395,8 @@ class LArray(ABCLArray):
         Parameters
         ----------
         axis : axis reference
-            Axis along with to append input array (`value`).
-        value : LArray
+            Axis along which to append input array (`value`).
+        value : scalar or LArray
             Array with compatible axes.
         label : str, optional
             Label for the new item in axis
