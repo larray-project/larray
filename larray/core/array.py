@@ -5369,21 +5369,22 @@ class LArray(ABCLArray):
             if not isinstance(target_axes, AxisCollection):
                 target_axes = AxisCollection(target_axes)
             target_axes = (self.axes - target_axes) | target_axes
-        if out is None and self.axes == target_axes:
-            return self
-
-        # TODO: this is not necessary if out is not None ([:] already broadcast)
-        broadcasted = self.broadcast_with(target_axes)
-        # this can only happen if only the order of axes differed
-        if out is None and broadcasted.axes == target_axes:
-            return broadcasted
 
         if out is None:
+            # this is not strictly necessary but avoids doing this test twice if it is True
+            if self.axes == target_axes:
+                return self
+
+            broadcasted = self.broadcast_with(target_axes)
+            # this can only happen if only the order of axes differed and/or all extra axes have length 1
+            if broadcasted.axes == target_axes:
+                return broadcasted
+
             if readonly:
                 # requires numpy 1.10
                 return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
             else:
-                out = LArray(np.empty(target_axes.shape, dtype=self.dtype), target_axes)
+                out = empty(target_axes, dtype=self.dtype)
         out[:] = broadcasted
         return out
 
