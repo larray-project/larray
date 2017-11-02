@@ -23,7 +23,8 @@
 New features
 ------------
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
+* added possibility to show only rows with differences when comparing arrays or sessions through the `compare`
+  function in the viewer (closes :editor_issue:`102`).
 
 * added `reverse` argument to methods `indicesofsorted` and `labelsofsorted` to sort values in descending order
   instead of ascending (default behavior):
