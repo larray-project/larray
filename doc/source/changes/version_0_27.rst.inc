@@ -57,6 +57,42 @@ New features
 Miscellaneous improvements
 --------------------------
 
+* allowed to sort values of an array along an axis (closes :issue:`225`):
+    >>> a = LArray([[10, 2, 4], [3, 7, 1]], "sex=M,F; nat=EU,FO,BE")
+    >>> a
+    sex\nat  EU  FO  BE
+          M  10   2   4
+          F   3   7   1
+    >>> a.sort_values(axis='sex')
+    sex*\nat  EU  FO  BE
+           0   3   2   1
+           1  10   7   4
+    >>> a.sort_values(axis='nat')
+    sex\nat*  0  1   2
+           M  2  4  10
+           F  1  3   7
+
+* method `LArray.sort_values` can be called without argument (closes :issue:`478`):
+
+    >>> arr = LArray([0, 1, 6, 3, -1], "a=a0..a4")
+    >>> arr
+    a  a0  a1  a2  a3  a4
+        0   1   6   3  -1
+    >>> arr.sort_values()
+    a  a4  a0  a1  a3  a2
+       -1   0   1   3   6
+
+  If the array has more than one dimension, axes are combined together:
+
+    >>> a = LArray([[10, 2, 4], [3, 7, 1]], "sex=M,F; nat=EU,FO,BE")
+    >>> a
+    sex\nat  EU  FO  BE
+          M  10   2   4
+          F   3   7   1
+    >>> a.sort_values()
+    sex_nat  F_BE  M_FO  F_EU  M_BE  F_FO  M_EU
+                1     2     3     4     7    10
+
 * made the editor more responsive when switching to or changing the filter of large arrays (closes :issue:`93`).
 
 * added support for coloring numeric values for object arrays (e.g. arrays containing both strings and numbers).
