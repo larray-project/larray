@@ -1660,7 +1660,7 @@ class LArray(ABCLArray):
         Parameters
         ----------
         axes : axis reference (Axis, str, int) or list of them
-            Axis to sort. If None, sorts all axes.
+            Axis to sort. Defaults to all axes.
         reverse : bool
             Descending sort (default: False -- ascending)
 
