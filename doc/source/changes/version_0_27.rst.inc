@@ -1,4 +1,10 @@
-﻿Backward incompatible changes
+﻿Syntax changes
+--------------
+
+* renamed `Axis.translate` to `Axis.index` (closes :issue:`479`).
+
+
+Backward incompatible changes
 -----------------------------
 
 * labels are checked during array subset assignement (closes :issue:`269`):
