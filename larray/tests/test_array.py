@@ -2285,6 +2285,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = sequence('b=b0..b2', ndtest(3) * 3, 1.0)
         assert_array_equal(ndtest((3, 3), dtype=float), res)
 
+    def test_sort_values(self):
+        # 1D arrays
+        arr = LArray([0, 1, 6, 3, -1], "a=a0..a4")
+        res = arr.sort_values()
+        expected = LArray([-1, 0, 1, 3, 6], "a=a4,a0,a1,a3,a2")
+        assert_array_equal(res, expected)
+
+        # 3D arrays
+        arr = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
+                     'a=a0,a1; b=b0,b1; c=c0..c2')
+        res = arr.sort_values(axis='c')
+        expected = LArray([[[2, 4, 10], [1, 3, 7]], [[1, 5, 6], [2, 8, 9]]],
+                          [Axis('a=a0,a1'), Axis('b=b0,b1'), Axis(3, 'c')])
+        assert_array_equal(res, expected)
+
     def test_set_labels(self):
         la = self.small.copy()
         la.set_labels(X.sex, ['Man', 'Woman'], inplace=True)
