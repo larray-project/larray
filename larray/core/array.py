@@ -1754,7 +1754,7 @@ class LArray(ABCLArray):
         if isinstance(axis_key, LGroup) and axis_key.axis is not None:
             real_axis = self.axes[axis_key.axis]
             try:
-                axis_pos_key = real_axis.translate(axis_key, bool_passthrough)
+                axis_pos_key = real_axis.index(axis_key, bool_passthrough)
             except KeyError:
                 raise ValueError("%r is not a valid label for any axis" % axis_key)
             return real_axis.i[axis_pos_key]
@@ -1768,7 +1768,7 @@ class LArray(ABCLArray):
         # TODO: use axis_key dtype to only check compatible axes
         for axis in self.axes:
             try:
-                axis_pos_key = axis.translate(axis_key, bool_passthrough)
+                axis_pos_key = axis.index(axis_key, bool_passthrough)
                 valid_axes.append(axis)
             except KeyError:
                 continue
@@ -1856,7 +1856,7 @@ class LArray(ABCLArray):
         valid_axes = []
         for axis in self.axes:
             try:
-                axis.translate(axis_key)
+                axis.index(axis_key)
                 valid_axes.append(axis)
             except KeyError:
                 continue
@@ -1954,7 +1954,7 @@ class LArray(ABCLArray):
                for axis in self.axes]
 
         # IGroup -> raw positional
-        return tuple(axis.translate(axis_key, bool_passthrough=not bool_stuff)
+        return tuple(axis.index(axis_key, bool_passthrough=not bool_stuff)
                      for axis, axis_key in zip(self.axes, key))
 
     # TODO: we only need axes length => move this to AxisCollection

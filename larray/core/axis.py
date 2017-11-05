@@ -675,7 +675,7 @@ class Axis(ABCAxis):
         # object kind can match anything
         return key_kind == label_kind or key_kind == 'O' or label_kind == 'O' or py2_str_match
 
-    def translate(self, key, bool_passthrough=True):
+    def index(self, key, bool_passthrough=True):
         """
         Translates a label key to its numerical index counterpart.
 
@@ -698,9 +698,9 @@ class Axis(ABCAxis):
         Examples
         --------
         >>> people = Axis(['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
-        >>> people.translate('Waldo')
+        >>> people.index('Waldo')
         3
-        >>> people.translate(people.matching('Bruce'))
+        >>> people.index(people.matching('Bruce'))
         array([1, 2])
         """
         mapping = self._mapping
@@ -784,7 +784,7 @@ class Axis(ABCAxis):
                 return array_lookup2(key, self._sorted_keys, self._sorted_values)
         elif isinstance(key, ABCLArray):
             from .array import LArray
-            return LArray(self.translate(key.data), key.axes)
+            return LArray(self.index(key.data), key.axes)
         else:
             # the first mapping[key] above will cover most cases.
             # This code path is only used if the key was given in "non normalized form"
@@ -795,6 +795,8 @@ class Axis(ABCAxis):
             else:
                 # print("diff dtype", )
                 raise KeyError(key)
+
+    translate = renamed_to(index, 'translate')
 
     # FIXME: remove id
     @property
@@ -946,7 +948,7 @@ class Axis(ABCAxis):
             assert len(old) == len(new)
         # using object dtype because new labels length can be larger than the fixed str length in the self.labels array
         labels = self.labels.astype(object)
-        indices = self.translate(old)
+        indices = self.index(old)
         labels[indices] = new
         return Axis(labels, self.name)
 
@@ -1993,7 +1995,7 @@ class AxisCollection(object):
         (slice(None, None, None), 1, 2)
         """
         assert len(key) == len(self)
-        return tuple(axis.translate(axis_key) for axis_key, axis in zip(key, self))
+        return tuple(axis.index(axis_key) for axis_key, axis in zip(key, self))
 
     @property
     def labels(self):
@@ -2515,7 +2517,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         self._labels = None
         self._iswildcard = False
 
-    def translate(self, key):
+    def index(self, key):
         raise NotImplementedError("an AxisReference (X.) cannot translate labels")
 
     def __repr__(self):
