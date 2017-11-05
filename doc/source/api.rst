@@ -42,7 +42,7 @@ Searching
 .. autosummary::
    :toctree: _generated/
 
-   Axis.translate
+   Axis.index
    Axis.containing
    Axis.startingwith
    Axis.endingwith
