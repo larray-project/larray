@@ -1586,13 +1586,19 @@ class LArray(ABCLArray):
         left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
-    def sort_values(self, key, reverse=False):
+    def sort_values(self, key=None, axis=None, reverse=False):
         """Sorts values of the array.
 
         Parameters
         ----------
         key : scalar or tuple or Group
             Key along which to sort. Must have exactly one dimension less than ndim.
+            Cannot be used in combination with `axis` argument.
+            If both `key` and `axis` are None, sort array with all axes combined. 
+            Defaults to None.
+        axis : int or str or Axis
+            Axis along which to sort. Cannot be used in combination with `key` argument.
+            Defaults to None.
         reverse : bool, optional
             Sort values in descending order. Defaults to False (ascending order).
 
@@ -1603,55 +1609,102 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> sex = Axis('sex=M,F')
-        >>> nat = Axis('nat=EU,FO,BE')
-        >>> xtype = Axis('type=type1,type2')
-        >>> a = LArray([[10, 2, 4], [3, 7, 1]], [sex, nat])
-        >>> a
-        sex\\nat  EU  FO  BE
-              M  10   2   4
-              F   3   7   1
-        >>> a.sort_values('F')
-        sex\\nat  BE  EU  FO
-              M   4  10   2
-              F   1   3   7
-        >>> a.sort_values('F', reverse=True)
-        sex\\nat  FO  EU  BE
-              M   2  10   4
-              F   7   3   1
-        >>> b = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
-        ...            [sex, xtype, nat])
-        >>> b
-        sex  type\\nat  EU  FO  BE
-          M     type1  10   2   4
-          M     type2   3   7   1
-          F     type1   5   1   6
-          F     type2   2   8   9
-        >>> b.sort_values(('M', 'type2'))
-        sex  type\\nat  BE  EU  FO
-          M     type1   4  10   2
-          M     type2   1   3   7
-          F     type1   6   5   1
-          F     type2   9   2   8
+        sort the whole array (no key or axis given)
+        
+        >>> arr_1D = LArray([10, 2, 4], 'a=a0..a2')
+        >>> arr_1D
+        a  a0  a1  a2
+           10   2   4
+        >>> arr_1D.sort_values()
+        a  a1  a2  a0
+            2   4  10
+        >>> arr_2D = LArray([[10, 2, 4], [3, 7, 1]], 'a=a0,a1; b=b0..b2')
+        >>> arr_2D
+        a\\b  b0  b1  b2
+         a0  10   2   4
+         a1   3   7   1
+        >>> # if the array has more than one dimension, sort array with all axes combined
+        >>> arr_2D.sort_values()
+        a_b  a1_b2  a0_b1  a1_b0  a0_b2  a1_b1  a0_b0
+                 1      2      3      4      7     10
+                    
+        Sort along a given key
+                    
+        >>> # sort columns according to the values of the row associated with the label 'a1'
+        >>> arr_2D.sort_values('a1')
+        a\\b  b2  b0  b1
+         a0   4  10   2
+         a1   1   3   7
+        >>> arr_2D.sort_values('a1', reverse=True)
+        a\\b  b1  b0  b2
+         a0   2  10   4
+         a1   7   3   1
+        >>> arr_3D = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
+        ...            'a=a0,a1; b=b0,b1; c=c0..c2')
+        >>> arr_3D
+         a  b\\c  c0  c1  c2
+        a0   b0  10   2   4
+        a0   b1   3   7   1
+        a1   b0   5   1   6
+        a1   b1   2   8   9
+        >>> # sort columns according to the values of the row associated with the labels 'a0' and 'b1'
+        >>> arr_3D.sort_values(('a0', 'b1'))
+         a  b\\c  c2  c0  c1
+        a0   b0   4  10   2
+        a0   b1   1   3   7
+        a1   b0   6   5   1
+        a1   b1   9   2   8
+                   
+        Sort along an axis
+        
+        >>> arr_2D
+        a\\b  b0  b1  b2
+         a0  10   2   4
+         a1   3   7   1
+        >>> # sort values along axis 'a'
+        >>> # equivalent to sorting the values of each column of the array
+        >>> arr_2D.sort_values(axis='a')
+        a*\\b  b0  b1  b2
+           0   3   2   1
+           1  10   7   4
+        >>> # sort values along axis 'b'
+        >>> # equivalent to sorting the values of each row of the array
+        >>> arr_2D.sort_values(axis='b')
+        a\\b*  0  1   2
+          a0  2  4  10
+          a1  1  3   7
         """
-        subset = self[key]
-        if subset.ndim > 1:
-            raise NotImplementedError("sort_values key must have one dimension less than array.ndim")
-        assert subset.ndim == 1
-        axis = subset.axes[0]
-        indicesofsorted = subset.indicesofsorted()
+        if key is not None and axis is not None:
+            raise ValueError("Arguments key and axis are exclusive and cannot be used in combination")
+        if axis is not None:
+            axis = self.axes[axis]
+            axis_idx = self.axes.index(axis)
+            data = np.sort(self.data, axis_idx)
+            new_axes = self.axes.replace(axis_idx, Axis(len(axis), axis.name))
+            res = LArray(data, new_axes)
+        elif key is not None:
+            subset = self[key]
+            if subset.ndim > 1:
+                raise NotImplementedError("sort_values key must have one dimension less than array.ndim")
+            assert subset.ndim == 1
+            axis = subset.axes[0]
+            indicesofsorted = subset.indicesofsorted()
 
-        # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
-        # IGroup(nat  EU  FO  BE
-        #              1   2   0, axis='nat')
-        # which sorts the *data* correctly, but the labels on the nat axis are not sorted (because the __getitem__ in
-        # that case reuse the key axis as-is -- like it should).
-        # Both use cases have value, but I think reordering the ticks should be the default. Now, I am unsure where to
-        # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
-        # that I have now?
-        # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
-        sorter = axis.i[indicesofsorted.data]
-        res = self[sorter]
+            # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
+            # IGroup(nat  EU  FO  BE
+            #              1   2   0, axis='nat')
+            # which sorts the *data* correctly, but the labels on the nat axis are not sorted (because the __getitem__ in
+            # that case reuse the key axis as-is -- like it should).
+            # Both use cases have value, but I think reordering the ticks should be the default. Now, I am unsure where to
+            # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
+            # that I have now?
+            # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
+            sorter = axis.i[indicesofsorted.data]
+            res = self[sorter]
+        else:
+            res = self.combine_axes()
+            indicesofsorted = np.argsort(res.data)
+            res = res.i[indicesofsorted]
         return res[axis[::-1]] if reverse else res
 
     def sort_axes(self, axes=None, reverse=False):
