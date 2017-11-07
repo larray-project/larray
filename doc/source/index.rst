@@ -3,19 +3,14 @@
 
 |
 
-N-dimensional labelled arrays
-=============================
-
 .. include:: intro.rst
 
-Documentation
-=============
+.. include:: ../../README.rst
+   :start-after: start-documentation:
+   :end-before: end-readme-file
 
-For answers you do not find in the documentation, use the `mailing list`_.
-
-.. _mailing list: https://groups.google.com/forum/#!forum/larray
-
-Contents:
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
