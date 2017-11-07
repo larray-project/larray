@@ -136,13 +136,13 @@ The official documentation is hosted on ReadTheDocs at http://larray.readthedocs
 Get in touch
 ============
 
-- To be informed of each new release, please subscribe to this `mailing list`_.
-- For questions, ideas or general discussion, please go to our `Google Users Group`_.
-- To report bugs, suggest features or view the source code `on GitHub`_.
+- To be informed of each new release, please subscribe to the announce `mailing list`_.
+- For questions, ideas or general discussion, please use the `Google Users Group`_.
+- To report bugs, suggest features or view the source code, please go to our `GitHub website`_.
 
 .. _mailing list: https://groups.google.com/d/forum/larray-announce
 .. _Google Users Group: https://groups.google.com/d/forum/larray-users
-.. _on GitHub: http://github.com/liam2/larray
+.. _GitHub website: http://github.com/liam2/larray
 
 .. raw:: html
 
