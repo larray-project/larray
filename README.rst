@@ -147,7 +147,9 @@ Get in touch
 .. raw:: html
 
    <p>
-   You can subscribe to the announce mailing list by entering your email address here:
+   You can subscribe to the announce mailing list by entering your email address here
+   (if you are connected to your Google account but you want to subscribe using another address,
+    please log out first):
    </p>
    <form action="https://groups.google.com/d/forum/larray-announce/boxsubscribe">
    <input type="text" name="email:" id="subscribe-email"/>
