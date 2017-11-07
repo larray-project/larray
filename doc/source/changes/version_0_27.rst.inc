@@ -30,6 +30,13 @@ Backward incompatible changes
 New features
 ------------
 
+* added new items in Help menu:
+  - `Report Issue...`: to report an issue on the Github project website.
+  - `Users Discussion...`: redirect to the LArray Users Google Group (you need to be registered to participate).
+  - `New Releases And Announces Mailing List...`: redirect to the LArray Announce mailing list.
+  - `About`: give information about the editor and the versions of packages currently installed on your computer.
+  (closes :editor_issue:`88`)
+
 * added possibility to show only rows with differences when comparing arrays or sessions through the `compare`
   function in the viewer (closes :editor_issue:`102`).
 
