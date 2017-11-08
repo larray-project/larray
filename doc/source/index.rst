@@ -3,7 +3,15 @@
 
 |
 
-.. include:: intro.rst
+N-dimensional labelled arrays
+=============================
+
+.. include:: ../../README.rst
+   :start-after: start-intro:
+   :end-before: start-install:
+
+.. image:: _static/editor.png
+    :align: center
 
 .. include:: ../../README.rst
    :start-after: start-documentation:
