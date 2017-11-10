@@ -53,12 +53,16 @@ New features
 
   Closes :issue:`490`.
 
+
 Miscellaneous improvements
 --------------------------
 
-* improved something.
+* made the editor more responsive when switching to or changing the filter of large arrays (closes :issue:`93`).
+
+* added support for coloring numeric values for object arrays (e.g. arrays containing both strings and numbers).
+
 
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed array values being editable in view() (instead of only in edit()).
