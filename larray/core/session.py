@@ -10,7 +10,7 @@ import numpy as np
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, sequence
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
 from larray.inout.session import check_pattern, handler_classes, ext_default_engine
 
 
@@ -662,6 +662,13 @@ class Session(object):
                     # TypeError for str arrays, ValueError for incompatible axes, ...
                     except Exception:
                         res_array = np.nan
+                    # this should only ever happen when self_array is a non Array (eg. nan)
+                    if res_array is NotImplemented:
+                        try:
+                            res_array = getattr(other_array, '__%s__' % inverseop(opname))(self_array)
+                        # TypeError for str arrays, ValueError for incompatible axes, ...
+                        except Exception:
+                            res_array = np.nan
                     res.append((name, res_array))
             return Session(res)
         opmethod.__name__ = opfullname

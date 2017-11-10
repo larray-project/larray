@@ -625,3 +625,18 @@ def renamed_to(newfunc, old_name, stacklevel=2):
         warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
         return newfunc(*args, **kwargs)
     return wrapper
+
+
+def inverseop(opname):
+    comparison_ops = {
+        'lt': 'gt',
+        'gt': 'lt',
+        'le': 'ge',
+        'ge': 'le',
+        'eq': 'eq',
+        'ne': 'ne'
+    }
+    if opname in comparison_ops:
+        return comparison_ops[opname]
+    else:
+        return 'r' + opname
