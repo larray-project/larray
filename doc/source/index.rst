@@ -6,16 +6,31 @@
 N-dimensional labelled arrays
 =============================
 
-.. include:: intro.rst
+.. include:: ../../README.rst
+   :start-after: start-intro:
+   :end-before: start-install:
 
-Documentation
-=============
+.. image:: _static/editor.png
+    :align: center
 
-For answers you do not find in the documentation, use the `mailing list`_.
+.. include:: ../../README.rst
+   :start-after: start-documentation:
+   :end-before: end-readme-file
 
-.. _mailing list: https://groups.google.com/forum/#!forum/larray
+.. raw:: html
 
-Contents:
+   <p>
+   You can subscribe to the announce mailing list by entering your email address here
+   (if you are connected to your Google account but you want to subscribe using another address,
+    please log out first):
+   </p>
+   <form action="https://groups.google.com/group/larray-announce/boxsubscribe">
+   <input type="text" name="email:" id="subscribe-email"/>
+   <input type="submit" name="sub" value="Subscribe">
+   </form>
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
