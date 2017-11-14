@@ -17,6 +17,18 @@ N-dimensional labelled arrays
    :start-after: start-documentation:
    :end-before: end-readme-file
 
+.. raw:: html
+
+   <p>
+   You can subscribe to the announce mailing list by entering your email address here
+   (if you are connected to your Google account but you want to subscribe using another address,
+    please log out first):
+   </p>
+   <form action="https://groups.google.com/group/larray-announce/boxsubscribe">
+   <input type="text" name="email:" id="subscribe-email"/>
+   <input type="submit" name="sub" value="Subscribe">
+   </form>
+
 Contents
 ========
 
