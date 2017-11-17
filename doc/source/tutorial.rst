@@ -192,7 +192,7 @@ or Excel sheets (see documentation of :py:func:`read_excel` for more details)
 
     # loads array from the first sheet if no sheetname is given
     @verbatim
-    pop = read_excel(example_dir + 'data.xlsx', 'pop')
+    pop = read_excel(example_dir + 'demography.xlsx', 'pop')
 
     @suppress
     pop = read_csv(example_dir + 'pop.csv')
@@ -205,7 +205,7 @@ documentation of :py:func:`read_hdf` for more details)
 
 .. ipython:: python
 
-    mortality = read_hdf(example_dir + 'data.h5','qx')
+    mortality = read_hdf(example_dir + 'demography.h5','qx')
     mortality.info
 
 Dump in files
@@ -225,15 +225,15 @@ or in Excel files (see documentation of :py:meth:`~LArray.to_excel` for more det
 
     # if the file does not already exist, it is created with a single sheet, 
     # otherwise a new sheet is added to it
-    household.to_excel('data2.xlsx', overwrite_file=True)
+    household.to_excel('demography_2.xlsx', overwrite_file=True)
     # it is usually better to specify the sheet explicitly (by name or position) though
-    household.to_excel('data2.xlsx', 'hh')
+    household.to_excel('demography_2.xlsx', 'hh')
 
 or in HDF5 files (see documentation of :py:meth:`~LArray.to_hdf` for more details)
 
 .. ipython:: python
 
-    household.to_hdf('data2.h5', 'hh')
+    household.to_hdf('demography_2.h5', 'hh')
 
 more Excel IO
 ~~~~~~~~~~~~~
