@@ -72,6 +72,9 @@ New features
   - `About`: give information about the editor and the versions of packages currently installed on your computer.
   (closes :editor_issue:`88`)
 
+* added item `Save Command History To Script` in File menu allowing to save executed commands in a new or existing
+  Python file.
+
 * added possibility to show only rows with differences when comparing arrays or sessions through the `compare`
   function in the viewer (closes :editor_issue:`102`).
 
