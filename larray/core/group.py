@@ -1359,7 +1359,7 @@ class LGroup(Group):
         if bound is None:
             bound = self.key
         if isinstance(self.axis, ABCAxis):
-            pos = self.axis.translate(bound)
+            pos = self.axis.index(bound)
             return pos + int(stop) if np.isscalar(pos) else pos
         else:
             raise ValueError("Cannot translate an LGroup without axis")
