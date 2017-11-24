@@ -164,6 +164,8 @@ Miscellaneous improvements
     a   a0   a1   a2   a3
        0.0  1.0  2.0  2.5
 
+* documentation links in the Help menu of the editor point to the version of the documentation corresponding to
+  the installed version of larray (closes :editor_issue:`105`).
 
 Fixes
 -----
