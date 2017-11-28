@@ -67,7 +67,7 @@ def generate(fname, **kwargs):
 
 
 def _remove_readonly(function, path, excinfo):
-    if function in (os.rmdir, os.remove) and excinfo[1].errno == errno.EACCES:
+    if function in {os.rmdir, os.remove, os.unlink} and excinfo[1].errno == errno.EACCES:
         # add write permission to owner
         os.chmod(path, stat.S_IWUSR)
         # retry removing
