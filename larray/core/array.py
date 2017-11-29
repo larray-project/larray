@@ -1709,6 +1709,7 @@ class LArray(ABCLArray):
             res = self.combine_axes()
             indicesofsorted = np.argsort(res.data)
             res = res.i[indicesofsorted]
+            axis = res.axes[0]
         return res[axis[::-1]] if reverse else res
 
     def sort_axes(self, axes=None, reverse=False):
