@@ -58,7 +58,7 @@ if __name__ == '__main__':
         print("make release steps:", ', '.join(f.__name__ for f, _ in make_release_steps))
         print("update conda-forge feedstock steps:", ', '.join(f.__name__ for f, _ in update_feedstock_steps))
         print("or")
-        print("Usage: {} -a|--announce release_name")
+        print("Usage: {} -a|--announce release_name".format(argv[0]))
         sys.exit()
 
     if argv[1] == '-a' or argv[1] == '--announce':
