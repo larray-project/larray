@@ -66,11 +66,12 @@ New features
      a1   3    44    45   4   5
 
 * added new items in Help menu:
+
   - `Report Issue...`: to report an issue on the Github project website.
   - `Users Discussion...`: redirect to the LArray Users Google Group (you need to be registered to participate).
   - `New Releases And Announces Mailing List...`: redirect to the LArray Announce mailing list.
-  - `About`: give information about the editor and the versions of packages currently installed on your computer.
-  (closes :editor_issue:`88`)
+  - `About`: give information about the editor and the versions of packages currently installed on your computer
+    (closes :editor_issue:`88`).
 
 * added item `Save Command History To Script` in File menu allowing to save executed commands in a new or existing
   Python file.
