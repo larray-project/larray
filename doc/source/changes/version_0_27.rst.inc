@@ -3,6 +3,9 @@
 
 * renamed `Axis.translate` to `Axis.index` (closes :issue:`479`).
 
+* deprecated `reverse` argument of `sort_values` and `sort_axes` methods in favor of `ascending` argument
+  (defaults to True). Closes :issue:`540`.
+
 
 Backward incompatible changes
 -----------------------------
@@ -79,8 +82,8 @@ New features
 * added possibility to show only rows with differences when comparing arrays or sessions through the `compare`
   function in the viewer (closes :editor_issue:`102`).
 
-* added `reverse` argument to methods `indicesofsorted` and `labelsofsorted` to sort values in descending order
-  instead of ascending (default behavior):
+* added `ascending` argument to methods `indicesofsorted` and `labelsofsorted`.
+  Values are sorted in ascending order by default. Set to False to sort values in descending order:
 
     >>> arr = LArray([[1, 5], [3, 2], [0, 4]], "nat=BE,FR,IT; sex=M,F")
     >>> arr
@@ -88,12 +91,12 @@ New features
          BE  1  5
          FR  3  2
          IT  0  4
-    >>> arr.indicesofsorted("nat", reverse=True)
+    >>> arr.indicesofsorted("nat", ascending=False)
     nat\sex  M  F
           0  1  0
           1  0  2
           2  2  1
-    >>> arr.labelsofsorted("nat", reverse=True)
+    >>> arr.labelsofsorted("nat", ascending=False)
     nat\sex   M   F
           0  FR  BE
           1  BE  IT
