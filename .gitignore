@@ -10,4 +10,4 @@ dist/
 .idea/
 *.pyc
 *.pyd
-larray.egg-info
+*.egg-info
