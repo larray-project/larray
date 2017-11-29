@@ -6539,22 +6539,27 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> sex = Axis('sex=M,F')
-        >>> year = Axis(range(2016, 2020), 'year')
-        >>> a = LArray([[1.0, 2.0, 3.0, 3.0], [2.0, 3.0, 1.5, 3.0]],
-        ...            [sex, year])
+        >>> data = [[2, 4, 5, 4, 6], [4, 6, 3, 6, 9]]
+        >>> a = LArray(data, "sex=M,F; year=2016..2020")
         >>> a
-        sex\\year  2016  2017  2018  2019
-               M   1.0   2.0   3.0   3.0
-               F   2.0   3.0   1.5   3.0
+        sex\\year  2016  2017  2018  2019  2020
+               M     2     4     5     4     6
+               F     4     6     3     6     9
         >>> a.growth_rate()
-        sex\\year  2017  2018  2019
-               M   1.0   0.5   0.0
-               F   0.5  -0.5   1.0
+        sex\\year  2017  2018  2019  2020
+               M   1.0  0.25  -0.2   0.5
+               F   0.5  -0.5   1.0   0.5
+        >>> a.growth_rate(label='lower')
+        sex\\year  2016  2017  2018  2019
+               M   1.0  0.25  -0.2   0.5
+               F   0.5  -0.5   1.0   0.5
         >>> a.growth_rate(d=2)
-        sex\\year   2018  2019
-               M    2.0   0.5
-               F  -0.25   0.0
+        sex\\year   2018  2019  2020
+               M    1.5   0.0   0.2
+               F  -0.25   0.0   2.0
+        >>> a.growth_rate('sex')
+        sex\\year  2016  2017  2018  2019  2020
+               F   1.0   0.5  -0.4   0.5   0.5
         """
         diff = self.diff(axis=axis, d=d, label=label)
         axis_obj = self.axes[axis]
