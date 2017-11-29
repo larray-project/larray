@@ -6515,8 +6515,6 @@ class LArray(ABCLArray):
 
     # XXX: this is called pct_change in Pandas (but returns the same results, not results * 100, which I find silly).
     # Maybe change_rate would be better (because growth is not always positive)?
-    # TODO: add support for groups as axis (like aggregates)
-    # eg a.growth_rate(x.year[2018:]) instead of a[2018:].growth_rate(x.year)
     def growth_rate(self, axis=-1, d=1, label='upper'):
         """Calculates the growth along a given axis.
 
@@ -6524,8 +6522,8 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axis : int, str or Axis, optional
-            Axis along which the difference is taken. Defaults to the last axis.
+        axis : int, str, Group or Axis, optional
+            Axis or group along which the difference is taken. Defaults to the last axis.
         d : int, optional
             Periods to shift for forming difference. Defaults to 1.
         label : {'lower', 'upper'}, optional
@@ -6560,6 +6558,10 @@ class LArray(ABCLArray):
         >>> a.growth_rate('sex')
         sex\\year  2016  2017  2018  2019  2020
                F   1.0   0.5  -0.4   0.5   0.5
+        >>> a.growth_rate(a.year[2017:])
+        sex\\year  2018  2019  2020
+               M   0.25  -0.2   0.5
+               F   -0.5   1.0   0.5
         """
         diff = self.diff(axis=axis, d=d, label=label)
         axis_obj = self.axes[axis]
