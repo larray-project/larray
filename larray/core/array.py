@@ -1314,7 +1314,7 @@ class LArray(ABCLArray):
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
             In that case, the number of new axes must match the number of the old ones.
-        new_axis : int, str, list/tuple/array of str or Axis, optional
+        new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
             Value used to fill cells corresponding to label combinations which were not present before reindexing.
@@ -1362,6 +1362,10 @@ class LArray(ABCLArray):
         a\\b  b2  b1  b0
          a0  -1   1   0
          a1  -1   3   2
+       >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
+       a\\b  b1  b0
+        a0   1   0
+        a1   3   2
 
         Reindex several axes
 
@@ -1369,6 +1373,9 @@ class LArray(ABCLArray):
         a\\b  b2  b1  b0
          a1  -1   3   2
          a2  -1  -1  -1
+        >>> arr.reindex({'a': arr2.a['a1'], 'b': arr2.b['b1':]}, fill_value=-1)
+        a\\b  b1  b0
+         a1   3   2
 
         Reindex by passing a collection of axes
 
