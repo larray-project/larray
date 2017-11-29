@@ -67,8 +67,8 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
                                _range_to_slice, _translate_sheet_name, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list, renamed_to,
-                              common_type)
+                              float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
+                              renamed_to, deprecate_kwarg)
 
 
 nan = np.nan
@@ -1590,7 +1590,8 @@ class LArray(ABCLArray):
         left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
-    def sort_values(self, key=None, axis=None, reverse=False):
+    @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
+    def sort_values(self, key=None, axis=None, ascending=True):
         """Sorts values of the array.
 
         Parameters
@@ -1603,8 +1604,8 @@ class LArray(ABCLArray):
         axis : int or str or Axis
             Axis along which to sort. Cannot be used in combination with `key` argument.
             Defaults to None.
-        reverse : bool, optional
-            Sort values in descending order. Defaults to False (ascending order).
+        ascending : bool, optional
+            Sort values in ascending order. Defaults to True.
 
         Returns
         -------
@@ -1639,7 +1640,7 @@ class LArray(ABCLArray):
         a\\b  b2  b0  b1
          a0   4  10   2
          a1   1   3   7
-        >>> arr_2D.sort_values('a1', reverse=True)
+        >>> arr_2D.sort_values('a1', ascending=False)
         a\\b  b1  b0  b2
          a0   2  10   4
          a1   7   3   1
@@ -1710,17 +1711,18 @@ class LArray(ABCLArray):
             indicesofsorted = np.argsort(res.data)
             res = res.i[indicesofsorted]
             axis = res.axes[0]
-        return res[axis[::-1]] if reverse else res
+        return res[axis[::-1]] if not ascending else res
 
-    def sort_axes(self, axes=None, reverse=False):
+    @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
+    def sort_axes(self, axes=None, ascending=True):
         """Sorts axes of the array.
 
         Parameters
         ----------
-        axes : axis reference (Axis, str, int) or list of them
-            Axis to sort. Defaults to all axes.
-        reverse : bool
-            Descending sort (default: False -- ascending)
+        axes : axis reference (Axis, str, int) or list of them, optional
+            Axes to sort. Defaults to all axes.
+        ascending : bool, optional
+            Sort axes in ascending order. Defaults to True.
 
         Returns
         -------
@@ -1729,15 +1731,13 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> nat = Axis('nat=EU,FO,BE')
-        >>> sex = Axis('sex=M,F')
-        >>> a = ndrange([nat, sex])
+        >>> a = ndrange("nat=EU,FO,BE; sex=M,F")
         >>> a
         nat\\sex  M  F
              EU  0  1
              FO  2  3
              BE  4  5
-        >>> a.sort_axes(X.sex)
+        >>> a.sort_axes('sex')
         nat\\sex  F  M
              EU  1  0
              FO  3  2
@@ -1747,12 +1747,12 @@ class LArray(ABCLArray):
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axes((X.sex, X.nat))
+        >>> a.sort_axes(('sex', 'nat'))
         nat\\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axes(reverse=True)
+        >>> a.sort_axes(ascending=False)
         nat\\sex  M  F
              FO  2  3
              EU  0  1
@@ -1768,7 +1768,7 @@ class LArray(ABCLArray):
 
         def sort_key(axis):
             key = np.argsort(axis.labels)
-            if reverse:
+            if not ascending:
                 key = key[::-1]
             return axis.i[key]
 
@@ -3135,7 +3135,7 @@ class LArray(ABCLArray):
 
     posargmax = renamed_to(indexofmax, 'posargmax')
 
-    def labelsofsorted(self, axis=None, reverse=False, kind='quicksort'):
+    def labelsofsorted(self, axis=None, ascending=True, kind='quicksort'):
         """Returns the labels that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3145,8 +3145,8 @@ class LArray(ABCLArray):
         ----------
         axis : int or str or Axis, optional
             Axis along which to sort. This can be omitted if array has only one axis.
-        reverse : bool, optional
-            Sort values in descending order. Defaults to False (ascending order).
+        ascending : bool, optional
+            Sort values in ascending order. Defaults to True.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
@@ -3156,20 +3156,18 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> nat = Axis('nat=BE,FR,IT')
-        >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
         nat\\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
-        >>> arr.labelsofsorted(X.sex)
+        >>> arr.labelsofsorted('sex')
         nat\\sex  0  1
              BE  M  F
              FR  F  M
              IT  M  F
-        >>> arr.labelsofsorted(X.sex, reverse=True)
+        >>> arr.labelsofsorted('sex', ascending=False)
         nat\\sex  0  1
              BE  F  M
              FR  M  F
@@ -3180,12 +3178,12 @@ class LArray(ABCLArray):
                 raise ValueError("array has ndim > 1 and no axis specified for labelsofsorted")
             axis = self.axes[0]
         axis = self.axes[axis]
-        pos = self.indicesofsorted(axis, reverse=reverse, kind=kind)
+        pos = self.indicesofsorted(axis, ascending=ascending, kind=kind)
         return LArray(axis.labels[pos.data], pos.axes)
 
     argsort = renamed_to(labelsofsorted, 'argsort')
 
-    def indicesofsorted(self, axis=None, reverse=False, kind='quicksort'):
+    def indicesofsorted(self, axis=None, ascending=True, kind='quicksort'):
         """Returns the indices that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
@@ -3195,8 +3193,8 @@ class LArray(ABCLArray):
         ----------
         axis : int or str or Axis, optional
             Axis along which to sort. This can be omitted if array has only one axis.
-        reverse : bool, optional
-            Sort values in descending order. Defaults to False (ascending order).
+        ascending : bool, optional
+            Sort values in ascending order. Defaults to True.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm. Defaults to 'quicksort'.
 
@@ -3206,20 +3204,18 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> nat = Axis('nat=BE,FR,IT')
-        >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[1, 5], [3, 2], [0, 4]], [nat, sex])
+        >>> arr = LArray([[1, 5], [3, 2], [0, 4]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
         nat\\sex  M  F
              BE  1  5
              FR  3  2
              IT  0  4
-        >>> arr.indicesofsorted(X.nat)
+        >>> arr.indicesofsorted('nat')
         nat\\sex  M  F
               0  2  1
               1  0  2
               2  1  0
-        >>> arr.indicesofsorted(X.nat, reverse=True)
+        >>> arr.indicesofsorted('nat', ascending=False)
         nat\\sex  M  F
               0  1  0
               1  0  2
@@ -3231,7 +3227,7 @@ class LArray(ABCLArray):
             axis = self.axes[0]
         axis, axis_idx = self.axes[axis], self.axes.index(axis)
         data = self.data.argsort(axis_idx, kind=kind)
-        if reverse:
+        if not ascending:
             reverser = tuple(slice(None, None, -1) if i == axis_idx else slice(None)
                              for i in range(self.ndim))
             data = data[reverser]
