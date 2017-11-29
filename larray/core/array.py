@@ -6466,8 +6466,8 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axis : int, str or Axis, optional
-            Axis along which the difference is taken. Defaults to the last axis.
+        axis : int, str, Group or Axis, optional
+            Axis or group along which the difference is taken. Defaults to the last axis.
         d : int, optional
             Periods to shift for forming difference. Defaults to 1.
         n : int, optional
@@ -6484,7 +6484,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum(X.type)
+        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum('type')
         >>> a
         sex\\type  type1  type2  type3
                M      0      1      3
@@ -6497,11 +6497,19 @@ class LArray(ABCLArray):
         sex\\type  type3
                M      1
                F      1
-        >>> a.diff(X.sex)
+        >>> a.diff('sex')
         sex\\type  type1  type2  type3
                F      3      6      9
+        >>> a.diff(a.type['type2':])
+        sex\\type  type3
+               M      2
+               F      5
         """
-        array = self
+        if isinstance(axis, Group):
+            array = self[axis]
+            axis = Axis(axis)
+        else:
+            array = self
         for _ in range(n):
             axis_obj = array.axes[axis]
             left = array[axis_obj.i[d:]]
@@ -6560,12 +6568,16 @@ class LArray(ABCLArray):
                F   1.0   0.5  -0.4   0.5   0.5
         >>> a.growth_rate(a.year[2017:])
         sex\\year  2018  2019  2020
-               M   0.25  -0.2   0.5
-               F   -0.5   1.0   0.5
+               M  0.25  -0.2   0.5
+               F  -0.5   1.0   0.5
         """
-        diff = self.diff(axis=axis, d=d, label=label)
-        axis_obj = self.axes[axis]
-        return diff / self[axis_obj.i[:-d]].drop_labels(axis)
+        if isinstance(axis, Group):
+            array = self[axis]
+            axis = Axis(axis)
+        else:
+            array = self
+        diff = array.diff(axis=axis, d=d, label=label)
+        return diff / array[array.axes[axis].i[:-d]].drop_labels(axis)
 
     def compact(self):
         """Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
