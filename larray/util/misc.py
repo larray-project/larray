@@ -10,7 +10,7 @@ import sys
 import operator
 import warnings
 from textwrap import wrap
-from functools import reduce
+from functools import reduce, wraps
 from itertools import product
 from collections import defaultdict
 
@@ -625,6 +625,36 @@ def renamed_to(newfunc, old_name, stacklevel=2):
         warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
         return newfunc(*args, **kwargs)
     return wrapper
+
+# deprecate_kwarg is derived from pandas.util._decorators (0.21)
+def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, stacklevel=2):
+    if not isinstance(mapping, dict):
+        raise TypeError("mapping from old to new argument values must be dict!")
+    def _deprecate_kwarg(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            old_arg_value = kwargs.pop(old_arg_name, None)
+            if old_arg_value is not None:
+                if mapping is not None:
+                    new_arg_value = mapping.get(old_arg_value, old_arg_value)
+                    msg = "The {old_name}={old_val!r} keyword is deprecated, use {new_name}={new_val!r} instead"\
+                        .format(old_name=old_arg_name, old_val=old_arg_value, new_name=new_arg_name,
+                                new_val=new_arg_value)
+                else:
+                    new_arg_value = old_arg_value
+                    msg = "The '{old_name}' keyword is deprecated, use '{new_name}' instead"\
+                        .format(old_name=old_arg_name, new_name=new_arg_name)
+
+                warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
+                if new_arg_name in kwargs:
+                    msg = "Can only specify '{old_name}' or '{new_name}', not both"\
+                        .format(old_name=old_arg_name, new_name=new_arg_name)
+                    raise ValueError(msg)
+                else:
+                    kwargs[new_arg_name] = new_arg_value
+            return func(*args, **kwargs)
+        return wrapper
+    return _deprecate_kwarg
 
 
 def inverseop(opname):
