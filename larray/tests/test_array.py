@@ -2291,8 +2291,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = arr.sort_values()
         expected = LArray([-1, 0, 1, 3, 6], "a=a4,a0,a1,a3,a2")
         assert_array_equal(res, expected)
-        # reverse arg
-        res = arr.sort_values(reverse=True)
+        # ascending arg
+        res = arr.sort_values(ascending=False)
         expected = LArray([6, 3, 1, 0, -1], "a=a2,a3,a1,a0,a4")
         assert_array_equal(res, expected)
 
