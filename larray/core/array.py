@@ -1312,8 +1312,8 @@ class LArray(ABCLArray):
         axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
                           or list of Axis or AxisCollection
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
-            If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
-            In that case, the number of new axes must match the number of the old ones.
+            If a list of Axis or an AxisCollection is given, already present axes are reindexed while missing
+            are added.
         new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
@@ -1348,7 +1348,7 @@ class LArray(ABCLArray):
         a1   c0   0   1   2
         a2   c0   3   4   5
 
-        Reindex one axis
+        Reindex an axis by passing labels (list or string)
 
         >>> arr.reindex('b', ['b1', 'b2', 'b0'])
         a\\b   b1   b2   b0
@@ -1358,10 +1358,16 @@ class LArray(ABCLArray):
         a\\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
+
+        Reindex using an axis from another array
+
         >>> arr.reindex('b', arr2.b, fill_value=-1)
         a\\b  b2  b1  b0
          a0  -1   1   0
          a1  -1   3   2
+
+        Reindex using a subset of an axis
+
        >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
        a\\b  b1  b0
         a0   1   0
@@ -1373,9 +1379,10 @@ class LArray(ABCLArray):
         a\\b  b2  b1  b0
          a1  -1   3   2
          a2  -1  -1  -1
-        >>> arr.reindex({'a': arr2.a['a1'], 'b': arr2.b['b1':]}, fill_value=-1)
+        >>> arr.reindex({'a': arr2.a, 'b': arr2.b['b1':]}, fill_value=-1)
         a\\b  b1  b0
          a1   3   2
+         a2  -1  -1
 
         Reindex by passing a collection of axes
 
