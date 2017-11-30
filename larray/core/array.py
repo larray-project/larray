@@ -1400,7 +1400,7 @@ class LArray(ABCLArray):
         a1   c0   2   1
         """
         # XXX: can't we move this to AxisCollection.replace?
-        if isinstance(new_axis, (int, basestring, list, tuple, np.ndarray)):
+        if new_axis is not None and not isinstance(new_axis, Axis):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
         if isinstance(new_axis, Axis):
             new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
