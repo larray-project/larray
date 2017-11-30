@@ -68,7 +68,7 @@ New features
      a0   0    42    43   1   2
      a1   3    44    45   4   5
 
-* added new items in Help menu:
+* added new items in the Help menu of the editor:
 
   - `Report Issue...`: to report an issue on the Github project website.
   - `Users Discussion...`: redirect to the LArray Users Google Group (you need to be registered to participate).
@@ -76,11 +76,11 @@ New features
   - `About`: give information about the editor and the versions of packages currently installed on your computer
     (closes :editor_issue:`88`).
 
-* added item `Save Command History To Script` in File menu allowing to save executed commands in a new or existing
-  Python file.
+* added `Save Command History To Script` in the File menu of the editor allowing to save executed commands in a new or
+  existing Python file.
 
 * added possibility to show only rows with differences when comparing arrays or sessions through the `compare`
-  function in the viewer (closes :editor_issue:`102`).
+  function in the editor (closes :editor_issue:`102`).
 
 * added `ascending` argument to methods `indicesofsorted` and `labelsofsorted`.
   Values are sorted in ascending order by default. Set to False to sort values in descending order:
@@ -109,6 +109,7 @@ Miscellaneous improvements
 --------------------------
 
 * allowed to sort values of an array along an axis (closes :issue:`225`):
+
     >>> a = LArray([[10, 2, 4], [3, 7, 1]], "sex=M,F; nat=EU,FO,BE")
     >>> a
     sex\nat  EU  FO  BE
@@ -144,10 +145,6 @@ Miscellaneous improvements
     sex_nat  F_BE  M_FO  F_EU  M_BE  F_FO  M_EU
                 1     2     3     4     7    10
 
-* made the editor more responsive when switching to or changing the filter of large arrays (closes :issue:`93`).
-
-* added support for coloring numeric values for object arrays (e.g. arrays containing both strings and numbers).
-
 * when appending/prepending/extending an array, both the original array and the added values will be converted to a
   data type which can hold both without loss of information. It used to convert the added values to the type of the
   original array. For example, given an array of integers like:
@@ -167,6 +164,10 @@ Miscellaneous improvements
     >>> arr.append('a', 2.5, 'a3')
     a   a0   a1   a2   a3
        0.0  1.0  2.0  2.5
+
+* made the editor more responsive when switching to or changing the filter of large arrays (closes :issue:`93`).
+
+* added support for coloring numeric values for object arrays (e.g. arrays containing both strings and numbers).
 
 * documentation links in the Help menu of the editor point to the version of the documentation corresponding to
   the installed version of larray (closes :editor_issue:`105`).
