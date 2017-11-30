@@ -18,13 +18,13 @@ requirements:
     - python
     - setuptools
     - numpy >=1.10
-    - pandas
+    - pandas >=0.13.1,<0.21
     - pytest-runner
 
   run:
     - python
     - numpy >=1.10
-    - pandas
+    - pandas >=0.13.1,<0.21
     - pytest-runner
 
 test:
