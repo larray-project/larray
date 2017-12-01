@@ -81,8 +81,7 @@ Arrays can be generated through dedicated functions:
 * :py:func:`ones` : fills an array with 1
 * :py:func:`full` : fills an array with a given
 * :py:func:`eye` : identity matrix
-* :py:func:`ndrange` : fills an array with increasing numbers (mostly for testing)
-* :py:func:`ndtest` : same as ndrange but with axes generated automatically (for testing)
+* :py:func:`ndtest` : creates a test array with increasing numbers as data
 * :py:func:`sequence` : creates an array by sequentially applying modifications to the array along axis.
 
 .. ipython:: python
@@ -167,8 +166,8 @@ Let's continue with subsets:
 
 .. ipython:: python
 
-    # equivalent to: arr2 = ndrange("a=label0,label1;b=label1,label2")
-    arr2 = ndrange([Axis(["label0", "label1"], "a"), Axis(["label1", "label2"], "b")])
+    # equivalent to: arr2 = ndtest("a=label0,label1;b=label1,label2")
+    arr2 = ndtest([Axis(["label0", "label1"], "a"), Axis(["label1", "label2"], "b")])
     arr2
 
     # equivalent to: arr2["label0", "b[label1]"]

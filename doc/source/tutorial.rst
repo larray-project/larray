@@ -70,9 +70,7 @@ Array creation functions
 
 Arrays can also be generated in an easier way through creation functions:
 
--  :py:func:`ndrange` : fills an array with increasing numbers
--  :py:func:`ndtest` : same as ndrange but with axes generated automatically
-   (for testing)
+-  :py:func:`ndtest` : creates a test array with increasing numbers as data
 -  :py:func:`empty` : creates an array but leaves its allocated memory
    unchanged (i.e., it contains "garbage". Be careful !)
 -  :py:func:`zeros` : fills an array with 0
@@ -92,7 +90,7 @@ Optionally, the type of data stored by the array can be specified using argument
 .. ipython:: python
 
     # start defines the starting value of data
-    ndrange(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
+    ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
 
 .. ipython:: python
 
@@ -242,7 +240,7 @@ more Excel IO
 
     # create a 3 x 2 x 3 array 
     age, sex, time = Axis('age=0..2'), Axis('sex=M,F'), Axis('time=2007..2009')
-    arr = ndrange([age, sex, time])
+    arr = ndtest([age, sex, time])
     arr
 
 Write Arrays
@@ -494,7 +492,7 @@ It only matters for output.
     # let us now create an array with the same labels on several axes
     age, weight, size = Axis('age=0..80'), Axis('weight=0..120'), Axis('size=0..200')
 
-    arr_ws = ndrange([age, weight, size])
+    arr_ws = ndtest([age, weight, size])
 
 .. ipython::
 

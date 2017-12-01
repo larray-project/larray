@@ -153,10 +153,10 @@ class Axis(ABCAxis):
 
         Examples
         --------
-        >>> from larray import ndrange
+        >>> from larray import ndtest
         >>> sex = Axis('sex=M,F')
         >>> time = Axis([2007, 2008, 2009, 2010], 'time')
-        >>> arr = ndrange([sex, time])
+        >>> arr = ndtest([sex, time])
         >>> arr
         sex\\time  2007  2008  2009  2010
                M     0     1     2     3
@@ -1899,7 +1899,7 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> from larray import ndtest, ndrange
+        >>> from larray import ndtest
         >>> axes = ndtest((2, 3)).axes
         >>> axes
         AxisCollection([
@@ -1940,7 +1940,7 @@ class AxisCollection(object):
             Axis(['r0', 'r1'], 'row'),
             Axis(['c0', 'c1', 'c2'], 'column')
         ])
-        >>> arr = ndrange([row, column])
+        >>> arr = ndtest([row, column])
         >>> axes.replace(arr.axes)
         AxisCollection([
             Axis(['r0', 'r1'], 'row'),

@@ -14,7 +14,7 @@ except ImportError:
     xw = None
 
 from larray.tests.common import inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
-from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
+from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
 from larray.inout.array import from_series
@@ -96,20 +96,20 @@ class TestLArray(TestCase):
         return os.path.join(self.tmpdir, fname)
 
     def test_ndrange(self):
-        arr = ndrange('a=a0..a2')
+        arr = ndtest('a=a0..a2')
         self.assertEqual(arr.shape, (3,))
         self.assertEqual(arr.axes.names, ['a'])
         assert_array_equal(arr.data, np.arange(3))
 
         # using an explicit Axis object
         a = Axis('a=a0..a2')
-        arr = ndrange(a)
+        arr = ndtest(a)
         self.assertEqual(arr.shape, (3,))
         self.assertEqual(arr.axes.names, ['a'])
         assert_array_equal(arr.data, np.arange(3))
 
         # using a group as an axis
-        arr = ndrange(a[:'a1'])
+        arr = ndtest(a[:'a1'])
         self.assertEqual(arr.shape, (2,))
         self.assertEqual(arr.axes.names, ['a'])
         assert_array_equal(arr.data, np.arange(2))
@@ -266,7 +266,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la['8, 10..13, 15'], la['8,10,11,12,13,15'])
 
         # ambiguous label
-        arr = ndrange("a=l0,l1;b=l1,l2")
+        arr = ndtest("a=l0,l1;b=l1,l2")
         res = arr[arr.b['l1']]
         assert_array_equal(res, arr.data[:, 0])
 
@@ -319,7 +319,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
             la[X.bad[1, 2], X.age[3, 4]]
 
     def test_getitem_anonymous_axes(self):
-        la = ndrange((3, 4))
+        la = ndtest([Axis(3), Axis(4)])
         raw = la.data
         assert_array_equal(la[X[0][1:]], raw[1:])
         assert_array_equal(la[X[1][2:]], raw[:, 2:])
@@ -386,7 +386,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
             la[[1, 2], [999, 4]]
 
         # ambiguous key
-        arr = ndrange("a=l0,l1;b=l1,l2")
+        arr = ndtest("a=l0,l1;b=l1,l2")
         with self.assertRaisesRegexp(ValueError, "l1 is ambiguous \(valid in a, b\)"):
             arr['l1']
 
@@ -514,29 +514,29 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, raw[raw < 5])
 
     def test_getitem_bool_anonymous_axes(self):
-        a = ndrange((2, 3, 4, 5))
+        a = ndtest([Axis(2), Axis(3), Axis(4), Axis(5)])
         mask = ones(a.axes[1, 3], dtype=bool)
         res = a[mask]
-        self.assertEqual(res.ndim, 3)
-        self.assertEqual(res.shape, (15, 2, 4))
+        assert res.ndim == 3
+        assert res.shape == (15, 2, 4)
 
         # XXX: we might want to transpose the result to always move combined axes to the front
-        a = ndrange((2, 3, 4, 5))
+        a = ndtest([Axis(2), Axis(3), Axis(4), Axis(5)])
         mask = ones(a.axes[1, 2], dtype=bool)
         res = a[mask]
-        self.assertEqual(res.ndim, 3)
-        self.assertEqual(res.shape, (2, 12, 5))
+        assert res.ndim == 3
+        assert res.shape == (2, 12, 5)
 
     def test_getitem_igroup_on_int_axis(self):
         a = Axis('a=1..3')
-        arr = ndrange(a)
+        arr = ndtest(a)
         self.assertEqual(arr[a.i[1]], 1)
 
     def test_getitem_int_larray_lgroup_key(self):
         # e axis go from 0 to 3
-        arr = ndrange((2, 2, 4)).rename(0, 'c').rename(1, 'd').rename(2, 'e')
+        arr = ndtest("c=0,1; d=0,1; e=0..3")
         # key values go from 0 to 3
-        key = ndrange((2, 2)).rename(0, 'a').rename(1, 'b')
+        key = ndtest("a=0,1; b=0,1")
         # this replaces 'e' axis by 'a' and 'b' axes
         res = arr[X.e[key]]
         self.assertEqual(res.shape, (2, 2, 2, 2))
@@ -583,25 +583,25 @@ age    0       1       2       3       4       5       6       7        8  ...  
         c = Axis(['c1', 'c2', 'c3', 'c4'], 'c')
 
         # 1) key with extra axis
-        arr = ndrange([a, b])
+        arr = ndtest([a, b])
         # replace the values_axis by the extra axis
         key = LArray(['a1', 'a2', 'a2', 'a1'], [c])
         self.assertEqual(arr[key].axes, [c, b])
 
         # 2) key with the values axis (the one being replaced)
-        arr = ndrange([a, b])
+        arr = ndtest([a, b])
         key = LArray(['b2', 'b1', 'b3'], [b])
         # axis stays the same but data should be flipped/shuffled
         self.assertEqual(arr[key].axes, [a, b])
 
         # 2bis) key with part of the values axis (the one being replaced)
-        arr = ndrange([a, b])
+        arr = ndtest([a, b])
         b_bis = Axis(['b1', 'b2'], 'b')
         key = LArray(['b3', 'b2'], [b_bis])
         self.assertEqual(arr[key].axes, [a, b_bis])
 
         # 3) key with another existing axis (not the values axis)
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     key = LArray(['a1', 'a2', 'a1'], [b])
     #     # we need points indexing
     #     # equivalent to
@@ -611,7 +611,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
     #     self.assertEqual(arr[key].axes, [b])
     #
     #     # 3bis) key with part of another existing axis (not the values axis)
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     b_bis = Axis('b', ['b1', 'b2'])
     #     key = LArray(['a2', 'a1'], [b_bis])
     #     # we need points indexing
@@ -624,7 +624,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
     #     # a\b b1 b2 b3
     #     #  a1  0  1  2
     #     #  a2  3  4  5
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     # a\b b1 b2 b3
     #     #  a1 a1 a2 a1
     #     #  a2 a2 a1 a2
@@ -656,19 +656,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
     #                              [3, 1, 5]])
     #
     #     # 5) key has both the values axis and an extra axis
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     key = LArray([['a1', 'a2', 'a2', 'a1'], ['a2', 'a1', 'a1', 'a2']],
     #                  [a, c])
     #     self.assertEqual(arr[key].axes, [a, c])
     #
     #     # 6) key has both another existing axis (not values) and an extra axis
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     key = LArray([['b1', 'b2', 'b1', 'b2'], ['b3', 'b4', 'b3', 'b4']],
     #                  [a, c])
     #     self.assertEqual(arr[key].axes, [a, c])
     #
     #     # 7) key has the values axis, another existing axis and an extra axis
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     key = LArray([[['a1', 'a2', 'a1', 'a2'],
     #                    ['a2', 'a1', 'a2', 'a1'],
     #                    ['a1', 'a2', 'a1', 'a2']],
@@ -687,13 +687,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
     #     e = Axis('e', ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'])
     #
     #     # 1) key with extra disjoint axes
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c])
     #     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [d])
     #     self.assertEqual(arr[k1, k2].axes, [c, d])
     #
     #     # 2) key with common extra axes
-    #     arr = ndrange([a, b])
+    #     arr = ndtest([a, b])
     #     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c, d])
     #     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [c, e])
     #     # TODO: not sure what *should* happen in this case!
@@ -716,7 +716,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         d = Axis([6, 7], 'd')
         e = Axis([8, 9, 10, 11], 'e')
 
-        arr = ndrange([c, d, e])
+        arr = ndtest([c, d, e])
         key = LArray([[8, 9], [10, 11]], [a, b])
         self.assertEqual(arr[key].axes, [c, d, a, b])
 
@@ -725,7 +725,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         d = Axis([6, 7], 'd')
         e = Axis([8, 9, 10, 11], 'e')
 
-        arr = ndrange([c, d, e])
+        arr = ndtest([c, d, e])
         # ND keys do not work yet
         # key = np.array([[8, 11], [10, 9]])
         key = np.array([8, 11, 10])
@@ -1173,7 +1173,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.filter(geo='A57', lipro='P01,P05').shape, (116, 2, 2))
 
     def test_contains(self):
-        arr = ndrange('a=0..2;b=b0..b2;c=2..4')
+        arr = ndtest('a=0..2;b=b0..b2;c=2..4')
         # string label
         assert 'b1' in arr
         assert not 'b4' in arr
@@ -1624,20 +1624,20 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_group_agg_one_axis(self):
         a = Axis(range(3), 'a')
-        la = ndrange(a)
+        la = ndtest(a)
         raw = np.asarray(la)
 
         assert_array_equal(la.sum(a[0, 2]), raw[[0, 2]].sum())
 
     def test_group_agg_anonymous_axis(self):
-        la = ndrange((2, 3))
+        la = ndtest([Axis(2), Axis(3)])
         a1, a2 = la.axes
         raw = np.asarray(la)
         assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
 
     def test_group_agg_on_int_array(self):
         # issue 193
-        arr = ndrange('year=2014..2018')
+        arr = ndtest('year=2014..2018')
         group = arr.year[:2016]
         self.assertEqual(arr.mean(group), 1.0)
         self.assertEqual(arr.median(group), 1.0)
@@ -1655,7 +1655,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     # TODO: fix this (and add other tests for references (x.) to anonymous axes
     # def test_group_agg_anonymous_axis_ref(self):
-    #     la = ndrange((2, 3))
+    #     la = ndtest([Axis(2), Axis(3)])
     #     raw = np.asarray(la)
     #     # this does not work because x[1] refers to an axis with name 1,
     #     # which does not exist. We might want to change this.
@@ -2091,7 +2091,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(res.axes, [c, b, a])
 
     def test_transpose_anonymous(self):
-        a = ndrange((2, 3, 4))
+        a = ndtest([Axis(2), Axis(3), Axis(4)])
 
         # reordered = a.transpose(0, 2, 1)
         # self.assertEqual(reordered.shape, (2, 4, 3))
@@ -2183,8 +2183,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_binary_ops_no_name_axes(self):
         raw = self.small_data
         raw2 = self.small_data + 1
-        la = ndrange(self.small.shape)
-        la2 = ndrange(self.small.shape) + 1
+        la = ndtest([Axis(l) for l in self.small.shape])
+        la2 = ndtest([Axis(l) for l in self.small.shape]) + 1
 
         assert_array_equal(la + la2, raw + raw2)
         assert_array_equal(la + 1, raw + 1)
@@ -2223,24 +2223,24 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # mixed operations
         raw2 = raw / 2
         la_raw2 = la - raw2
-        self.assertEqual(la_raw2.axes, la.axes)
+        assert la_raw2.axes == la.axes
         assert_array_equal(la_raw2, raw - raw2)
         raw2_la = raw2 - la
-        self.assertEqual(raw2_la.axes, la.axes)
+        assert raw2_la.axes == la.axes
         assert_array_equal(raw2_la, raw2 - raw)
 
         la_ge_raw2 = la >= raw2
-        self.assertEqual(la_ge_raw2.axes, la.axes)
+        assert la_ge_raw2.axes == la.axes
         assert_array_equal(la_ge_raw2, raw >= raw2)
 
         raw2_ge_la = raw2 >= la
-        self.assertEqual(raw2_ge_la.axes, la.axes)
+        assert raw2_ge_la.axes == la.axes
         assert_array_equal(raw2_ge_la, raw2 >= raw)
 
     def test_broadcasting_no_name(self):
-        a = ndrange((2, 3))
-        b = ndrange(3)
-        c = ndrange(2)
+        a = ndtest([Axis(2), Axis(3)])
+        b = ndtest(Axis(3))
+        c = ndtest(Axis(2))
 
         with self.assertRaises(ValueError):
             # ValueError: incompatible axes:
@@ -2357,14 +2357,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                                   a1   3  -1   2"""))
 
         # LArray fill value
-        filler = ndrange(arr.a)
+        filler = ndtest(arr.a)
         res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=filler)
         assert_array_equal(res, from_string("""a\\b  b1  b2  b0
                                                  a0   1   0   0
                                                  a1   3   1   2"""))
 
         # using labels from another array
-        arr = ndrange('a=v0..v2;b=v0,v2,v1,v3')
+        arr = ndtest('a=v0..v2;b=v0,v2,v1,v3')
         res = arr.reindex('a', arr.b.labels, fill_value=-1)
         assert_array_equal(res, from_string("""a\\b  v0  v2  v1  v3
                                                  v0   0   1   2   3
@@ -2465,7 +2465,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
          a0   0    42   1    43   2
          a1   3    43   4    44   5"""))
 
-        arr3 = ndrange('a=a0,a1;b=b0.1,b0.2') + 42
+        arr3 = ndtest('a=a0,a1;b=b0.1,b0.2') + 42
         res = arr1.insert(arr3, before='b1,b2')
         assert_array_equal(res, from_string("""
         a\\b  b0  b0.1  b1  b0.2  b2
@@ -2473,7 +2473,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
          a1   3    44   4    45   5"""))
 
         # with ambiguous labels
-        arr4 = ndrange('a=v0,v1;b=v0,v1')
+        arr4 = ndtest('a=v0,v1;b=v0,v1')
         res = arr4.insert(42, before='v1', axis='b', label='v0.5')
         assert_array_equal(res, from_string("""
         a\\b  v0  v0.5  v1
@@ -2566,7 +2566,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
     def test_from_string(self):
-        expected = ndrange("sex=M,F")
+        expected = ndtest("sex=M,F")
 
         res = from_string('''sex  M  F
                              \t   0  1''')
@@ -2582,13 +2582,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_read_csv(self):
         res = read_csv(inputpath('test1d.csv'))
-        assert_array_equal(res, ndrange('time=2007,2010,2013'))
+        assert_array_equal(res, ndtest('time=2007,2010,2013'))
 
         res = read_csv(inputpath('test2d.csv'))
-        assert_array_equal(res, ndrange('a=0,1;b=0,1,2'))
+        assert_array_equal(res, ndtest('a=0,1;b=0,1,2'))
 
         res = read_csv(inputpath('test3d.csv'))
-        expected = ndrange('age=0..3;sex=F,M;time=2015..2017') + 0.5
+        expected = ndtest('age=0..3;sex=F,M;time=2015..2017') + 0.5
         assert_array_equal(res, expected)
 
         la = read_csv(inputpath('test5d.csv'))
@@ -2619,7 +2619,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # test StringIO
         res = read_csv(StringIO('a,1,2\n,0,1\n'))
-        assert_array_equal(res, ndrange('a=1,2'))
+        assert_array_equal(res, ndtest('a=1,2'))
 
         # sort_columns=True
         res = read_csv(StringIO('a,a2,a0,a1\n,2,0,1\n'), sort_columns=True)
@@ -2697,7 +2697,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(bad1, good)
         assert_array_equal(bad2, good)
         # with additional empty column in the middle of the array to read
-        good2 = ndrange('a=a0,a1;b=2003..2006').astype(object)
+        good2 = ndtest('a=a0,a1;b=2003..2006').astype(object)
         good2[2005] = None
         good2 = good2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
         bad3 = read_excel(fpath, 'middleblankcol')
@@ -2774,7 +2774,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(bad2, good1)
 
         # with additional empty column in the middle of the array to read
-        good2 = ndrange('a=a0,a1;b=2003..2006').astype(float)
+        good2 = ndtest('a=a0,a1;b=2003..2006').astype(float)
         good2[2005] = np.nan
         good2 = good2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
         bad3 = read_excel(fpath, 'middleblankcol', engine='xlrd')
@@ -3186,7 +3186,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la = ndrange([Axis('time=2015..2017')])
+        la = ndtest([Axis('time=2015..2017')])
         la.to_csv(self.tmp_path('test_out1d.csv'))
         result = ['time,2015,2016,2017\n',
                   ',0,1,2\n']
@@ -3676,7 +3676,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_diag(self):
         # 2D -> 1D
-        a = ndrange((3, 3))
+        a = ndtest((3, 3))
         d = diag(a)
         self.assertEqual(d.ndim, 1)
         self.assertEqual(d.i[0], a.i[0, 0])
@@ -3691,7 +3691,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(a2.i[2, 2], a.i[2, 2])
 
         # 3D -> 2D
-        a = ndrange((3, 3, 3))
+        a = ndtest((3, 3, 3))
         d = diag(a)
         self.assertEqual(d.ndim, 2)
         self.assertEqual(d.i[0, 0], a.i[0, 0, 0])
@@ -3730,14 +3730,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
     @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
     def test_matmul(self):
         # 2D / anonymous axes
-        a1 = eye(3) * 2
-        a2 = ndrange((3, 3))
+        a1 = ndtest([Axis(3), Axis(3)])
+        a2 = eye(3, 3) * 2
         # cannot use @ in the tests because that is an invalid syntax in Python 2
         # LArray value
-        assert_array_equal(a1.__matmul__(a2), ndrange((3, 3)) * 2)
+        assert_array_equal(a1.__matmul__(a2), ndtest([Axis(3), Axis(3)]) * 2)
 
         # ndarray value
-        assert_array_equal(a1.__matmul__(a2.data), ndrange((3, 3)) * 2)
+        assert_array_equal(a1.__matmul__(a2.data), ndtest([Axis(3), Axis(3)]) * 2)
 
         # non anonymous axes (N <= 2)
         arr1d = ndtest(3)
@@ -3776,7 +3776,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # different axes
         a1 = ndtest('a=a0..a1;b=b0..b2')
-        a2 = ndrange('b=b0..b2;c=c0..c3')
+        a2 = ndtest('b=b0..b2;c=c0..c3')
         res = from_lists([['a\c', 'c0', 'c1', 'c2', 'c3'],
                           ['a0', 20, 23, 26, 29],
                           ['a1', 56, 68, 80, 92]])
@@ -3884,31 +3884,39 @@ age    0       1       2       3       4       5       6       7        8  ...  
     @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
     def test_rmatmul(self):
         a1 = eye(3) * 2
-        a2 = ndrange((3, 3))
+        a2 = ndtest([Axis(3), Axis(3)])
 
         # equivalent to a1.data @ a2
         res = a2.__rmatmul__(a1.data)
         self.assertIsInstance(res, LArray)
-        assert_array_equal(res, ndrange((3, 3)) * 2)
+        assert_array_equal(res, ndtest([Axis(3), Axis(3)]) * 2)
 
     def test_broadcast_with(self):
-        a1 = ndrange((3, 2))
-        a2 = ndrange(3)
+        a1 = ndtest((3, 2))
+        a2 = ndtest(3)
         b = a2.broadcast_with(a1)
         self.assertEqual(b.ndim, a1.ndim)
         self.assertEqual(b.shape, (3, 1))
         assert_array_equal(b.i[:, 0], a2)
 
-        a1 = ndrange((1, 3))
-        a2 = ndrange((3, 1))
+        # anonymous axes
+        a1 = ndtest([Axis(3), Axis(2)])
+        a2 = ndtest(Axis(3))
+        b = a2.broadcast_with(a1)
+        self.assertEqual(b.ndim, a1.ndim)
+        self.assertEqual(b.shape, (3, 1))
+        assert_array_equal(b.i[:, 0], a2)
+
+        a1 = ndtest([Axis(1), Axis(3)])
+        a2 = ndtest([Axis(3), Axis(1)])
         b = a2.broadcast_with(a1)
         self.assertEqual(b.ndim, 2)
         # common axes are reordered according to target (a1 in this case)
         self.assertEqual(b.shape, (1, 3))
         assert_larray_equiv(b, a2)
 
-        a1 = ndrange((2, 3))
-        a2 = ndrange((3, 2))
+        a1 = ndtest([Axis(2), Axis(3)])
+        a2 = ndtest([Axis(3), Axis(2)])
         b = a2.broadcast_with(a1)
         self.assertEqual(b.ndim, 2)
         self.assertEqual(b.shape, (2, 3))
@@ -4006,13 +4014,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
 
         # custom sep
-        combined = ndrange('a|b=a0|b0,a0|b1')
+        combined = ndtest('a|b=a0|b0,a0|b1')
         res = combined.split_axes(sep='|')
-        assert_array_equal(res, ndrange('a=a0;b=b0,b1'))
+        assert_array_equal(res, ndtest('a=a0;b=b0,b1'))
 
         # split several axes at once
         # ==========================
-        arr = ndrange('a_b=a0_b0..a1_b2; c=c0..c3; d=d0..d3; e_f=e0_f0..e2_f1')
+        arr = ndtest('a_b=a0_b0..a1_b2; c=c0..c3; d=d0..d3; e_f=e0_f0..e2_f1')
 
         # using a list of tuples
         res = arr.split_axes(['a_b', 'e_f'])
@@ -4035,7 +4043,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res.shape == (2, 3, 4, 4, 3, 2)
 
         # split an axis in more than 2 axes
-        arr = ndrange('a_b_c=a0_b0_c0..a1_b2_c3; d=d0..d3; e_f=e0_f0..e2_f1')
+        arr = ndtest('a_b_c=a0_b0_c0..a1_b2_c3; d=d0..d3; e_f=e0_f0..e2_f1')
         res = arr.split_axes(['a_b_c', 'e_f'])
         assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
         assert res.size == arr.size
@@ -4053,7 +4061,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert res.shape == (2, 3, 4, 4, 3, 2)
 
         # using regex
-        arr = ndrange('ab=a0b0..a1b2; c=c0..c3; d=d0..d3; ef=e0f0..e2f1')
+        arr = ndtest('ab=a0b0..a1b2; c=c0..c3; d=d0..d3; ef=e0f0..e2f1')
         res = arr.split_axes({'ab': ('a', 'b'), 'ef': ('e', 'f')}, regex='(\w{2})(\w{2})')
         assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
         assert res.size == arr.size
@@ -4091,8 +4099,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_nan_equal(combined_partial.split_axes('a_b'), expected)
 
         # split labels are ambiguous (issue #485)
-        combined = ndrange('a_b=a0_b0..a1_b1;c_d=a0_b0..a1_b1')
-        expected = ndrange('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
+        combined = ndtest('a_b=a0_b0..a1_b1;c_d=a0_b0..a1_b1')
+        expected = ndtest('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
         assert_array_equal(combined.split_axes(('a_b', 'c_d')), expected)
 
     def test_stack(self):
@@ -4108,8 +4116,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, expected)
 
         # simple with anonymous axis
-        arr0 = ndrange(3)
-        arr1 = ndrange(3, start=-1)
+        arr0 = ndtest(Axis(3))
+        arr1 = ndtest(Axis(3), start=-1)
         a = arr0.axes[0]
         b = Axis('b=b0,b1')
         expected = LArray([[0, -1],
