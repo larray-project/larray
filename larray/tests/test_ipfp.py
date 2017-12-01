@@ -5,7 +5,7 @@ from unittest import TestCase
 import pytest
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LArray, ndrange, ndtest, ipfp, X
+from larray import Axis, LArray, ndtest, ipfp, X
 
 
 class TestIPFP(TestCase):
@@ -143,9 +143,9 @@ class TestIPFP(TestCase):
 
     def test_ipfp_no_values(self):
         # 6, 12, 18
-        along_a = ndrange([(3, 'b')], start=1) * 6
+        along_a = ndtest([(3, 'b')], start=1) * 6
         # 6, 12, 18
-        along_b = ndrange([(3, 'a')], start=1) * 6
+        along_b = ndtest([(3, 'a')], start=1) * 6
         r = ipfp([along_a, along_b])
         assert_array_equal(r, [[1.0, 2.0, 3.0],
                                [2.0, 4.0, 6.0],

@@ -239,7 +239,6 @@ Array Creation Functions
    :toctree: _generated/
 
    sequence
-   ndrange
    ndtest
    zeros
    zeros_like
