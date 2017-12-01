@@ -113,7 +113,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     Now let us assume you have a 3D array like this:
 
     >>> year = Axis('year=2014..2016')
-    >>> initial = ndrange([a, b, year])
+    >>> initial = ndtest([a, b, year])
     >>> initial
      a  b\year  2014  2015  2016
     a0      b0     0     1     2

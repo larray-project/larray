@@ -40,6 +40,13 @@ Miscellaneous improvements
            M  0.25  -0.2   0.5
            F  -0.5   1.0   0.5
 
+* function `ndrange` has been deprecated in favor of `sequence` or `ndtest`.
+  Also, an Axis or a list/tuple/collection of axes can be passed to the `ndtest` function (closes:issue:`534`):
+
+    >>> ndtest("nat=BE,FO;sex=M,F")
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
 
 Fixes
 -----

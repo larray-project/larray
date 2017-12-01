@@ -296,7 +296,7 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
     >>> from larray import ndrange
     >>> tmpdir = getfixture('tmpdir')
     >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
-    >>> a = ndrange('nat=BE,FO;sex=M,F')
+    >>> a = ndtest('nat=BE,FO;sex=M,F')
 
     >>> a.to_csv(fname)
     >>> read_csv(fname)

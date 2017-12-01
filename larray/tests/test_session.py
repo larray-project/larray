@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath
-from larray import Session, Axis, LArray, ndrange, isnan, larray_equal, zeros_like
+from larray import Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest
 from larray.util.misc import pickle
 
 try:
@@ -33,10 +33,10 @@ class TestSession(TestCase):
         self.b = Axis([], 'b')
         self.c = 'c'
         self.d = {}
-        self.e = ndrange([(2, 'a0'), (3, 'a1')])
-        self.e2 = ndrange(('a=a0..a2', 'b=b0..b2'))
-        self.f = ndrange([(3, 'a0'), (2, 'a1')])
-        self.g = ndrange([(2, 'a0'), (4, 'a1')])
+        self.e = ndtest([(2, 'a0'), (3, 'a1')])
+        self.e2 = ndtest(('a=a0..a2', 'b=b0..b2'))
+        self.f = ndtest([(3, 'a0'), (2, 'a1')])
+        self.g = ndtest([(2, 'a0'), (4, 'a1')])
         self.session = Session([
             ('b', self.b), ('a', self.a),
             ('c', self.c), ('d', self.d),

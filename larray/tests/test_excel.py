@@ -10,7 +10,7 @@ try:
 except ImportError:
     xw = None
 
-from larray import ndtest, ndrange, larray_equal, open_excel, aslarray
+from larray import ndtest, larray_equal, open_excel, aslarray, Axis
 from larray.inout import excel
 
 
@@ -154,7 +154,7 @@ class TestSheet(object):
             assert larray_equal(res1, arr1)
 
             # array with int labels
-            arr2 = ndrange('0..1;0..2')
+            arr2 = ndtest('0..1;0..2')
             sheet['A1'] = arr2.dump()
             res2 = sheet.array('B2:D3', 'A2:A3', 'B1:D1')
             # larray_equal passes even if the labels are floats...
@@ -211,7 +211,7 @@ class TestRange(object):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
 
-            arr1 = ndrange((2, 3))
+            arr1 = ndtest([Axis(2), Axis(3)])
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
             res1 = aslarray(sheet['A1:C2'])
@@ -223,7 +223,7 @@ class TestRange(object):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
 
-            arr1 = ndrange((2, 3))
+            arr1 = ndtest((2, 3))
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
             res = sheet['A1:C2'].sum()
@@ -233,7 +233,7 @@ class TestRange(object):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
 
-            arr1 = ndrange((2, 3))
+            arr1 = ndtest((2, 3))
             sheet['A1'] = arr1
             res = repr(sheet['A1:C2'])
             assert res == """\

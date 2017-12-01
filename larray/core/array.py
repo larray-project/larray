@@ -272,12 +272,12 @@ def concat(arrays, axis=0, dtype=None):
     a\\b  b0  b1  b2
      a0   0   1   2
      a1   3   4   5
-    >>> arr2 = ndrange('a=a0,a1;b=b3')
+    >>> arr2 = ndtest('a=a0,a1;b=b3')
     >>> arr2
     a\\b  b3
      a0   0
      a1   1
-    >>> arr3 = ndrange('b=b4,b5')
+    >>> arr3 = ndtest('b=b4,b5')
     >>> arr3
     b  b4  b5
         0   1
@@ -716,7 +716,7 @@ class LArray(ABCLArray):
     See Also
     --------
     sequence : Create a LArray by sequentially applying modifications to the array along axis.
-    ndrange : Create a LArray with increasing elements.
+    ndtest : Create a test LArray with increasing elements.
     zeros : Create a LArray, each element of which is zero.
     ones : Create a LArray, each element of which is 1.
     full : Create a LArray filled with a given value.
@@ -875,7 +875,7 @@ class LArray(ABCLArray):
         row\\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
-        >>> arr2 = ndrange([row, column])
+        >>> arr2 = ndtest([row, column])
         >>> arr.set_axes(arr2.axes)
         row\\column  c0  c1  c2
                 r0   0   1   2
@@ -1262,7 +1262,7 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FO')
         >>> sex = Axis('sex=M,F')
-        >>> arr = ndrange([nat, sex])
+        >>> arr = ndtest([nat, sex])
         >>> arr
         nat\\sex  M  F
              BE  0  1
@@ -1742,7 +1742,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange("nat=EU,FO,BE; sex=M,F")
+        >>> a = ndtest("nat=EU,FO,BE; sex=M,F")
         >>> a
         nat\\sex  M  F
              EU  0  1
@@ -1966,7 +1966,7 @@ class LArray(ABCLArray):
 
                 # do I want to allow key_axis.name to match against axis.num? does not seem like a good idea.
                 # but this should work
-                # >>> a = ndrange((3, 4))
+                # >>> a = ndtest((3, 4))
                 # >>> x1, x2 = a.axes
                 # >>> a[x2 > 2]
 
@@ -2297,7 +2297,7 @@ class LArray(ABCLArray):
          a0   0   1   2
          a1   3  10  10
          a2   6  10  10
-        >>> arr['a1:', 'b1:'].set(ndrange("a=a1,a2;b=b1,b2"))
+        >>> arr['a1:', 'b1:'].set(ndtest("a=a1,a2;b=b1,b2"))
         >>> arr
         a\\b  b0  b1  b2
          a0   0   1   2
@@ -2455,7 +2455,7 @@ class LArray(ABCLArray):
         >>> a = Axis('a=a1,a2')
         >>> b = Axis('b=b1,b2')
         >>> b2 = Axis('b=b2,b3')
-        >>> arr1 = ndrange([a, b])
+        >>> arr1 = ndtest([a, b])
         >>> arr1
         a\\b  b1  b2
          a1   0   1
@@ -2468,7 +2468,7 @@ class LArray(ABCLArray):
         a*\\b*  0  1
             0  0  1
             1  2  3
-        >>> arr2 = ndrange([a, b2])
+        >>> arr2 = ndtest([a, b2])
         >>> arr2
         a\\b  b2  b3
          a1   0   1
@@ -5189,7 +5189,7 @@ class LArray(ABCLArray):
         >>> arr2d @ arr1d # doctest: +SKIP
         a  a0  a1  a2
             5  14  23
-        >>> arr3d = ndrange('c=c0..c2;d=d0..d2;e=e0..e2')
+        >>> arr3d = ndtest('c=c0..c2;d=d0..d2;e=e0..e2')
         >>> arr1d @ arr3d # doctest: +SKIP
         c\\e  e0  e1  e2
          c0  15  18  21
@@ -5296,12 +5296,12 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FO')
         >>> sex = Axis('sex=M,F')
-        >>> a = ndrange((nat, sex))
+        >>> a = ndtest((nat, sex))
         >>> a
         nat\\sex  M  F
              BE  0  1
              FO  2  3
-        >>> b = ndrange(sex)
+        >>> b = ndtest(sex)
         >>> b
         sex  M  F
              0  1
@@ -5353,7 +5353,7 @@ class LArray(ABCLArray):
         --------
         >>> a = Axis('a=a1,a2')
         >>> b = Axis('b=b1,b2')
-        >>> arr = ndrange([a, b])
+        >>> arr = ndtest([a, b])
         >>> arr
         a\\b  b1  b2
          a1   0   1
@@ -5609,7 +5609,7 @@ class LArray(ABCLArray):
 
         insert an array which already has the axis
 
-        >>> arr3 = ndrange('a=a0,a1;b=b0.1,b0.2') + 42
+        >>> arr3 = ndtest('a=a0,a1;b=b0.1,b0.2') + 42
         >>> arr3
         a\\b  b0.1  b0.2
          a0    42    43
@@ -5865,7 +5865,7 @@ class LArray(ABCLArray):
         --------
         >>> tmpdir = getfixture('tmpdir')
         >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex  M  F
              BE  0  1
@@ -5957,7 +5957,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> # write to a new (unnamed) sheet
         >>> a.to_excel('test.xlsx')  # doctest: +SKIP
         >>> # write to top-left corner of an existing sheet
@@ -6021,7 +6021,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a.to_clipboard()  # doctest: +SKIP
         """
         self.to_frame().to_clipboard(*args, **kwargs)
@@ -6151,7 +6151,7 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> import matplotlib.pyplot as plt # doctest: +SKIP
-        >>> a = ndrange('sex=M,F;age=0..20')
+        >>> a = ndtest('sex=M,F;age=0..20')
 
         Simple line plot
 
@@ -6201,7 +6201,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F;type=type1,type2,type3')
+        >>> a = ndtest('nat=BE,FO;sex=M,F;type=type1,type2,type3')
         >>> a.shape  # doctest: +SKIP
         (2, 2, 3)
         """
@@ -6218,7 +6218,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a.ndim
         2
         """
@@ -6235,7 +6235,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3')
+        >>> a = ndtest('sex=M,F;type=type1,type2,type3')
         >>> a.size
         6
         """
@@ -6252,7 +6252,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
+        >>> a = ndtest('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.nbytes
         48
         """
@@ -6269,7 +6269,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3', dtype=float)
+        >>> a = ndtest('sex=M,F;type=type1,type2,type3', dtype=float)
         >>> a.memory_used
         '48 bytes'
         """
@@ -6350,7 +6350,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('nat=BE,FO;sex=M,F')
+        >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex  M  F
              BE  0  1
@@ -6444,7 +6444,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3')
+        >>> a = ndtest('sex=M,F;type=type1,type2,type3')
         >>> a
         sex\\type  type1  type2  type3
                M      0      1      2
@@ -6494,7 +6494,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndrange('sex=M,F;type=type1,type2,type3').cumsum('type')
+        >>> a = ndtest('sex=M,F;type=type1,type2,type3').cumsum('type')
         >>> a
         sex\\type  type1  type2  type3
                M      0      1      3
@@ -6768,7 +6768,7 @@ class LArray(ABCLArray):
 
         Split labels using regex
 
-        >>> combined = ndrange('a_b=a0b0..a1b2')
+        >>> combined = ndtest('a_b=a0b0..a1b2')
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
@@ -6779,7 +6779,7 @@ class LArray(ABCLArray):
 
         Split several axes at once
 
-        >>> combined = ndrange('a_b=a0_b0..a1_b1; c_d=c0_d0..c1_d1')
+        >>> combined = ndtest('a_b=a0_b0..a1_b1; c_d=c0_d0..c1_d1')
         >>> combined
         a_b\\c_d  c0_d0  c0_d1  c1_d0  c1_d1
           a0_b0      0      1      2      3
@@ -6967,11 +6967,11 @@ def zeros_like(array, title='', dtype=None, order='K'):
 
     Examples
     --------
-    >>> a = ndrange((2, 3))
+    >>> a = ndtest((2, 3))
     >>> zeros_like(a)
-    {0}*\\{1}*  0  1  2
-            0  0  0  0
-            1  0  0  0
+    a\\b  b0  b1  b2
+     a0   0   0   0
+     a1   0   0   0
     """
     if not title:
         title = array.title
@@ -7033,11 +7033,11 @@ def ones_like(array, title='', dtype=None, order='K'):
 
     Examples
     --------
-    >>> a = ndrange((2, 3))
+    >>> a = ndtest((2, 3))
     >>> ones_like(a)
-    {0}*\\{1}*  0  1  2
-            0  1  1  1
-            1  1  1  1
+    a\\b  b0  b1  b2
+     a0   1   1   1
+     a1   1   1   1
     """
     axes = array.axes
     if not title:
@@ -7100,12 +7100,12 @@ def empty_like(array, title='', dtype=None, order='K'):
 
     Examples
     --------
-    >>> a = ndrange((3, 2))
+    >>> a = ndtest((3, 2))
     >>> empty_like(a)   # doctest: +SKIP
-    -\-                   0                   1
-      0  2.12199579097e-314  6.36598737388e-314
-      1  1.06099789568e-313  1.48539705397e-313
-      2  1.90979621226e-313  2.33419537056e-313
+    a\\b                  b0                  b1
+     a0  2.12199579097e-314  6.36598737388e-314
+     a1  1.06099789568e-313  1.48539705397e-313
+     a2  1.90979621226e-313  2.33419537056e-313
     """
     if not title:
         title = array.title
@@ -7143,7 +7143,7 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
     nat\\sex     M     F
          BE  42.0  42.0
          FO  42.0  42.0
-    >>> initial_value = ndrange([sex])
+    >>> initial_value = ndtest([sex])
     >>> initial_value
     sex  M  F
          0  1
@@ -7186,11 +7186,11 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
 
     Examples
     --------
-    >>> a = ndrange((2, 3))
+    >>> a = ndtest((2, 3))
     >>> full_like(a, 5)
-    {0}*\\{1}*  0  1  2
-            0  5  5  5
-            1  5  5  5
+    a\\b  b0  b1  b2
+     a0   5   5   5
+     a1   5   5   5
     """
     if not title:
         title = array.title
@@ -7201,8 +7201,7 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
     return res
 
 
-# XXX: would it be possible to generalize to multiple axes and deprecate ndrange?
-# ndrange is only ever used to create test data (except for 1d). See https://github.com/pydata/pandas/issues/4567
+# XXX: would it be possible to generalize to multiple axes?
 def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     """
     Creates an array by sequentially applying modifications to the array along axis.
@@ -7414,80 +7413,15 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
 
 create_sequential = renamed_to(sequence, 'create_sequential')
 
-
 @_check_axes_argument
 def ndrange(axes, start=0, title='', dtype=int):
-    """Returns an array with the specified axes and filled with increasing int.
-
-    Parameters
-    ----------
-    axes : single axis or tuple/list/AxisCollection of axes
-        Axes of the array to create. Each axis can be given as either:
-
-        * Axis object: actual axis object to use.
-        * single int: length of axis. will create a wildcard axis of that length.
-        * str: coma separated list of labels, with optional leading '=' to set the name of the axis.
-               eg. "a,b,c" or "sex=F,M"
-        * (labels, name) pair: name and labels of axis
-    start : number, optional
-    title : str, optional
-        Title.
-    dtype : dtype, optional
-        The type of the output array.  Defaults to int.
-
-    Returns
-    -------
-    LArray
-
-    Examples
-    --------
-    >>> nat = Axis('nat=BE,FO')
-    >>> sex = Axis('sex=M,F')
-    >>> ndrange([nat, sex])
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> ndrange(['nat=BE,FO', 'sex=M,F'])
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> ndrange([(['BE', 'FO'], 'nat'),
-    ...          (['M', 'F'], 'sex')])
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> ndrange([('BE,FO', 'nat'),
-    ...          ('M,F', 'sex')])
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> ndrange('nat=BE,FO;sex=M,F')
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> ndrange([2, 3], dtype=float)
-    {0}*\\{1}*    0    1    2
-            0  0.0  1.0  2.0
-            1  3.0  4.0  5.0
-    >>> ndrange(3, start=2)
-    {0}*  0  1  2
-          2  3  4
-    >>> ndrange('a,b,c')
-    {0}  a  b  c
-         0  1  2
-    """
-    # XXX: implement something like:
-    # >>> mat = ndrange([['BE', 'FO'], ['M', 'F']], axes=['nat', 'sex'])
-    # >>> mat = ndrange(['BE,FO', 'M,F'], axes=['nat', 'sex'])
-    # XXX: try to come up with a syntax where start is before "end". For ndim
-    #  > 1, I cannot think of anything nice.
-    axes = AxisCollection(axes)
-    data = np.arange(start, start + axes.size, dtype=dtype)
-    return LArray(data.reshape(axes.shape), axes, title)
+    import warnings
+    warnings.warn("ndrange() is deprecated. Use sequence() or ndtest() instead.", FutureWarning, stacklevel=2)
+    return ndtest(axes, start=start, title=title, dtype=dtype)
 
 
 @_check_axes_argument
-def ndtest(shape, start=0, label_start=0, title='', dtype=int):
+def ndtest(shape_or_axes, start=0, label_start=0, title='', dtype=int):
     """Returns test array with given shape.
 
     Axes are named by single letters starting from 'a'.
@@ -7496,8 +7430,10 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
 
     Parameters
     ----------
-    shape : int, tuple/list of int
-        Shape of the array to create. An int can be used directly for one dimensional arrays.
+    shape_or_axes : int, tuple/list of int, str, single axis or tuple/list/AxisCollection of axes
+        If int or tuple/list of int, represents the shape of the array to create.
+        In that case, default axes are generated.
+        If string, it is used to generate axes (see :py:class:`AxisCollection` constructor).
     start : int or float, optional
         Start value
     label_start : int, optional
@@ -7513,6 +7449,8 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
 
     Examples
     --------
+    Create test array by passing a shape
+
     >>> ndtest(6)
     a  a0  a1  a2  a3  a4  a5
         0   1   2   3   4   5
@@ -7524,16 +7462,45 @@ def ndtest(shape, start=0, label_start=0, title='', dtype=int):
     a\\b  b1  b2  b3
      a1   0   1   2
      a2   3   4   5
+    >>> ndtest((2, 3), start=2)
+    a\\b  b0  b1  b2
+     a0   2   3   4
+     a1   5   6   7
+    >>> ndtest((2, 3), dtype=float)
+    a\\b   b0   b1   b2
+     a0  0.0  1.0  2.0
+     a1  3.0  4.0  5.0
+
+    Create test array by passing axes
+
+    >>> ndtest("nat=BE,FO;sex=M,F")
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
+    >>> nat = Axis("nat=BE,FO")
+    >>> sex = Axis("sex=M,F")
+    >>> ndtest([nat, sex])
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     """
-    a = ndrange(shape, start=start, dtype=dtype, title=title)
-    # TODO: move this to a class method on AxisCollection
-    assert a.ndim <= 26
-    axes_names = [chr(ord('a') + i) for i in range(a.ndim)]
-    label_ranges = [range(label_start, label_start + length)
-                    for length in a.shape]
-    new_axes = [Axis([name + str(i) for i in label_range], name)
-                for name, label_range in zip(axes_names, label_ranges)]
-    return a.set_axes(new_axes)
+    # XXX: try to come up with a syntax where start is before "end".
+    # For ndim > 1, I cannot think of anything nice.
+    if isinstance(shape_or_axes, int):
+        shape_or_axes = (shape_or_axes,)
+    if isinstance(shape_or_axes, (list, tuple)) and all([isinstance(i, int) for i in shape_or_axes]):
+        # TODO: move this to a class method on AxisCollection
+        assert len(shape_or_axes) <= 26
+        axes_names = [chr(ord('a') + i) for i in range(len(shape_or_axes))]
+        label_ranges = [range(label_start, label_start + length) for length in shape_or_axes]
+        shape_or_axes = [Axis(['{}{}'.format(name, i) for i in label_range], name)
+                         for name, label_range in zip(axes_names, label_ranges)]
+    if isinstance(shape_or_axes, AxisCollection):
+        axes = shape_or_axes
+    else:
+        axes = AxisCollection(shape_or_axes)
+    data = np.arange(start, start + axes.size, dtype=dtype).reshape(axes.shape)
+    return LArray(data, axes, title=title)
 
 
 def kth_diag_indices(shape, k):
@@ -7578,7 +7545,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     --------
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
-    >>> a = ndrange([nat, sex], start=1)
+    >>> a = ndtest([nat, sex], start=1)
     >>> a
     nat\\sex  M  F
          BE  1  2
@@ -7591,7 +7558,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     nat\\sex  M  F
          BE  1  0
          FO  0  4
-    >>> a = ndrange(sex, start=1)
+    >>> a = ndtest(sex, start=1)
     >>> a
     sex  M  F
          1  2
