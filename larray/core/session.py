@@ -9,7 +9,7 @@ from collections import OrderedDict
 import numpy as np
 
 from larray.core.axis import Axis
-from larray.core.array import LArray, larray_nan_equal, get_axes, ndtest, zeros, zeros_like, sequence
+from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
 from larray.inout.session import check_pattern, handler_classes, ext_default_engine
 
@@ -681,6 +681,8 @@ class Session(object):
     __sub__ = _binop('sub')
     __mul__ = _binop('mul')
     __truediv__ = _binop('truediv')
+    __eq__ = _binop('eq')
+    __ne__ = _binop('ne')
 
     # element-wise method factory
     # unary operations are (also) dispatched element-wise to all arrays
@@ -705,15 +707,108 @@ class Session(object):
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
-    # XXX: use _binop (ie elementwise comparison instead of aggregating directly?)
-    def __eq__(self, other):
+    def array_equals(self, other):
+        """Test if arrays of the current session are equal to those of another session.
+
+        Equivalent to apply :py:meth:`LArray.equals` with flag nan_equals=True to all arrays from two sessions.
+
+        Parameters
+        ----------
+        other : Session
+            Session to compare with.
+
+        Returns
+        -------
+        Boolean LArray
+
+        See Also
+        --------
+        Session.equals
+
+        Examples
+        --------
+        >>> s1 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s2 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s1.array_equals(s2)
+        name  arr1  arr2
+              True  True
+
+        Different value(s)
+
+        >>> s2.arr1['a1'] = 0
+        >>> s1.array_equals(s2)
+        name   arr1  arr2
+              False  True
+
+        Different label(s)
+
+        >>> s2.arr2 = ndtest("b=b0,b1; a=a0,a1")
+        >>> s1.array_equals(s2)
+        name   arr1   arr2
+              False  False
+
+        Extra/missing array(s)
+
+        >>> s2.arr3 = ndtest((3, 3))
+        >>> s1.array_equals(s2)
+        name   arr1   arr2   arr3
+              False  False  False
+        """
         self_keys = set(self.keys())
         all_keys = list(self.keys()) + [n for n in other.keys() if n not in self_keys]
+        def larray_nan_equal(a1, a2):
+            try:
+                a1 = aslarray(a1)
+            except Exception:
+                return False
+            return a1.equals(a2, nan_equals=True)
         res = [larray_nan_equal(self.get(key), other.get(key)) for key in all_keys]
         return LArray(res, [Axis(all_keys, 'name')])
 
-    def __ne__(self, other):
-        return ~(self == other)
+    def equals(self, other):
+        """Test if all arrays of the current session are equal to those of another session.
+
+        Parameters
+        ----------
+        other : Session
+            Session to compare with.
+
+        Returns
+        -------
+        True if arrays of both sessions are all equal, False otherwise.
+
+        See Also
+        --------
+        Session.array_equals
+
+        Examples
+        --------
+        >>> s1 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s2 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s1.equals(s2)
+        True
+
+        Different value(s)
+
+        >>> s2.arr1['a1'] = 0
+        >>> s1.equals(s2)
+        False
+
+        Different label(s)
+
+        >>> s2 = s1.copy()
+        >>> s2.arr2 = ndtest("b=b0,b1; a=a0,a1")
+        >>> s1.equals(s2)
+        False
+
+        Extra/missing array(s)
+
+        >>> s2 = s1.copy()
+        >>> s2.arr3 = ndtest((3, 3))
+        >>> s1.equals(s2)
+        False
+        """
+        return all(self.array_equals(other))
 
     def transpose(self, *args):
         """Reorder axes of arrays in session, ignoring missing axes for each array.

@@ -20,7 +20,7 @@ except ImportError:
 
 def equal(o1, o2):
     if isinstance(o1, LArray) or isinstance(o2, LArray):
-        return larray_equal(o1, o2)
+        return o1.equals(o2)
     elif isinstance(o1, Axis) or isinstance(o2, Axis):
         return o1.equals(o2)
     else:
@@ -89,10 +89,10 @@ class TestSession(TestCase):
     def test_getitem_larray(self):
         s1 = self.session.filter(kind=LArray)
         s2 = Session({'e': self.e + 1, 'f': self.f})
-        res_eq = s1[s1 == s2]
-        res_neq = s1[s1 != s2]
-        self.assertEqual(list(res_eq), [self.f])
-        self.assertEqual(list(res_neq), [self.e, self.g])
+        res_eq = s1[s1.array_equals(s2)]
+        res_neq = s1[~(s1.array_equals(s2))]
+        assert list(res_eq) == [self.f]
+        assert list(res_neq) == [self.e, self.g]
 
     def test_setitem(self):
         s = self.session
@@ -280,46 +280,58 @@ class TestSession(TestCase):
         self.assertIsNot(e, self.session.e)
         # check the content has changed
         assert_array_nan_equal(e, self.session.e)
-        self.assertFalse(larray_equal(e, backup_value))
+        self.assertFalse(e.equals(backup_value))
+
+    def test_array_equals(self):
+        sess = self.session.filter(kind=LArray)
+        expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
+        assert all(sess.array_equals(expected))
+
+        other = Session({'e': self.e, 'f': self.f})
+        res = sess.array_equals(other)
+        assert res.ndim == 1
+        assert res.axes.names == ['name']
+        assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
+        assert list(res) == [True, False, True]
+
+        e2 = self.e.copy()
+        e2.i[1, 1] = 42
+        other = Session({'e': e2, 'f': self.f})
+        res = sess.array_equals(other)
+        assert res.axes.names == ['name']
+        assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
+        assert list(res) == [False, False, True]
 
     def test_eq(self):
         sess = self.session.filter(kind=LArray)
         expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
-        self.assertTrue(all(sess == expected))
+        assert all([array.all() for array in (sess == expected).values()])
 
-        other = Session({'e': self.e, 'f': self.f})
+        other = Session([('e', self.e), ('f', self.f)])
         res = sess == other
-        self.assertEqual(res.ndim, 1)
-        self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
-        self.assertEqual(list(res), [True, False, True])
+        assert list(res.keys()) == ['e', 'g', 'f']
+        assert [arr.all() for arr in res.values()] == [True, False, True]
 
         e2 = self.e.copy()
         e2.i[1, 1] = 42
-        other = Session({'e': e2, 'f': self.f})
+        other = Session([('e', e2), ('f', self.f)])
         res = sess == other
-        self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
-        self.assertEqual(list(res), [False, False, True])
+        assert [arr.all() for arr in res.values()] == [False, False, True]
 
     def test_ne(self):
         sess = self.session.filter(kind=LArray)
         expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
-        self.assertFalse(any(sess != expected))
+        assert ([(~array).all() for array in (sess != expected).values()])
 
-        other = Session({'e': self.e, 'f': self.f})
+        other = Session([('e', self.e), ('f', self.f)])
         res = sess != other
-        self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
-        self.assertEqual(list(res), [False, True, False])
+        assert [(~arr).all() for arr in res.values()] == [True, False, True]
 
         e2 = self.e.copy()
         e2.i[1, 1] = 42
-        other = Session({'e': e2, 'f': self.f})
+        other = Session([('e', e2), ('f', self.f)])
         res = sess != other
-        self.assertEqual(res.axes.names, ['name'])
-        self.assertTrue(np.array_equal(res.axes.labels[0], ['e', 'g', 'f']))
-        self.assertEqual(list(res), [True, True, False])
+        assert [(~arr).all() for arr in res.values()] == [False, False, True]
 
     def test_sub(self):
         sess = self.session.filter(kind=LArray)
@@ -358,7 +370,7 @@ class TestSession(TestCase):
         original = self.session
         s = pickle.dumps(original)
         res = pickle.loads(s)
-        self.assertTrue(all(res == original))
+        assert res.equals(original)
 
 
 if __name__ == "__main__":
