@@ -386,6 +386,7 @@ Testing/Searching
 .. autosummary::
    :toctree: _generated/
 
+   LArray.equals
    LArray.nonzero
    LArray.all
    LArray.all_by
@@ -512,8 +513,6 @@ Miscellaneous
    aslarray
    from_frame
    labels_array
-   larray_equal
-   larray_nan_equal
    nan_equal
    union
    stack
@@ -555,6 +554,15 @@ Copying
    :toctree: _generated/
 
    Session.copy
+
+Testing
+-------
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session.array_equals
+   Session.equals
 
 Selecting
 ---------
