@@ -89,7 +89,7 @@ class TestWorkbook(object):
             arr = ndtest((3, 3))
             for label in arr.b:
                 wb[label] = arr[label].dump()
-                assert larray_equal(wb[label].load(), arr[label])
+                assert arr[label].equals(wb[label].load())
 
     def test_delitem(self):
         with open_excel(visible=False) as wb:
@@ -130,7 +130,7 @@ class TestSheet(object):
             # array without header
             assert np.array_equal(sheet['A5:C6'].value, arr.data)
             # array with header
-            assert larray_equal(sheet['A8:D10'].load(), arr)
+            assert arr.equals(sheet['A8:D10'].load())
 
     def test_asarray(self):
         with open_excel(visible=False) as wb:
@@ -151,14 +151,14 @@ class TestSheet(object):
             arr1 = ndtest((2, 3))
             sheet['A1'] = arr1.dump()
             res1 = sheet.array('B2:D3', 'A2:A3', 'B1:D1', names=['a', 'b'])
-            assert larray_equal(res1, arr1)
+            assert arr1.equals(res1)
 
             # array with int labels
             arr2 = ndtest('0..1;0..2')
             sheet['A1'] = arr2.dump()
             res2 = sheet.array('B2:D3', 'A2:A3', 'B1:D1')
             # larray_equal passes even if the labels are floats...
-            assert larray_equal(res2, arr2)
+            assert arr2.equals(res2)
             # so we check the dtype explicitly
             assert res2.axes[0].labels.dtype == arr2.axes[0].labels.dtype
             assert res2.axes[1].labels.dtype == arr2.axes[1].labels.dtype
@@ -215,7 +215,7 @@ class TestRange(object):
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
             res1 = aslarray(sheet['A1:C2'])
-            assert larray_equal(res1, arr1)
+            assert res1.equals(arr1)
             assert res1.dtype == arr1.dtype
 
     # this tests Range.__getattr__ with an LArray attribute

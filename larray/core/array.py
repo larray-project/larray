@@ -545,57 +545,6 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
                         np.std, np.nanstd, np.var, np.nanvar}
 
-
-def larray_equal(a1, a2):
-    """
-    Compares two arrays and returns True if they have the same axes and elements (and do not contain nan values,
-    see note below), False otherwise.
-
-    Parameters
-    ----------
-    a1, a2 : LArray-like
-        Input arrays. aslarray() is used on non-LArray inputs.
-
-    Returns
-    -------
-    bool
-        Returns True if the arrays are equal (and do not contain nan values).
-
-    Notes
-    -----
-    An array containing nan values is never equal to another array, even if that other array also contains nan values at
-    the same positions. The reason is that a nan value is different from *anything*, including itself. One might want
-    to use larray_nan_equal to avoid this behavior.
-
-    See Also
-    --------
-    larray_nan_equal
-
-    Examples
-    --------
-    >>> arr1 = ndtest((2, 3))
-    >>> arr1
-    a\\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-    >>> arr2 = arr1.copy()
-    >>> larray_equal(arr1, arr2)
-    True
-    >>> arr2['b1'] += 1
-    >>> larray_equal(arr1, arr2)
-    False
-    >>> arr3 = arr1.set_labels(X.a, ['x0', 'x1'])
-    >>> larray_equal(arr1, arr3)
-    False
-    """
-    try:
-        a1, a2 = aslarray(a1), aslarray(a2)
-    except Exception:
-        return False
-    return (a1.axes == a2.axes and
-            np.array_equal(np.asarray(a1), np.asarray(a2)))
-
-
 obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
 
 def nan_equal(a1, a2):
@@ -640,53 +589,6 @@ def nan_equal(a1, a2):
 
     a1, a2 = aslarray(a1), aslarray(a2)
     return (a1 == a2) | (general_isnan(a1) & general_isnan(a2))
-
-
-def larray_nan_equal(a1, a2):
-    """
-    Compares two arrays and returns True if they have the same axes and elements, False otherwise.
-
-    Parameters
-    ----------
-    a1, a2 : LArray-like
-        Input arrays. aslarray() is used on non-LArray inputs.
-
-    Returns
-    -------
-    bool
-        Returns True if the arrays are equal, even in the presence of nan values (if they are at the same positions).
-
-    See Also
-    --------
-    larray_equal
-
-    Examples
-    --------
-    >>> arr1 = ndtest((2, 3), dtype=float)
-    >>> arr1['a1', 'b1'] = nan
-    >>> arr1
-    a\\b   b0   b1   b2
-     a0  0.0  1.0  2.0
-     a1  3.0  nan  5.0
-    >>> arr2 = arr1.copy()
-    >>> larray_equal(arr1, arr2)
-    False
-    >>> larray_nan_equal(arr1, arr2)
-    True
-    >>> arr2['b1'] = 0.0
-    >>> larray_nan_equal(arr1, arr2)
-    False
-    >>> arr3 = arr1.set_labels(X.a, ['x0', 'x1'])
-    >>> larray_nan_equal(arr1, arr3)
-    False
-    >>> larray_nan_equal([0], [0])
-    True
-    """
-    try:
-        a1, a2 = aslarray(a1), aslarray(a2)
-    except Exception:
-        return False
-    return a1.axes == a2.axes and all(nan_equal(a1, a2))
 
 
 class LArray(ABCLArray):
@@ -1341,7 +1243,7 @@ class LArray(ABCLArray):
         a\\b  b0  b1
          a0   0   1
          a1   2   3
-        >>> arr2 = ndrange('a=a1,a2;c=c0;b=b2..b0')
+        >>> arr2 = ndtest('a=a1,a2;c=c0;b=b2..b0')
         >>> arr2
          a  c\\b  b2  b1  b0
         a1   c0   0   1   2
@@ -5279,6 +5181,69 @@ class LArray(ABCLArray):
     def __float__(self):
         return self.data.__float__()
 
+    def equals(self, other, nan_equals=False):
+        """
+        Compares self with another array and returns True if they have the same axes and elements, False otherwise.
+
+        Parameters
+        ----------
+        other: LArray-like
+            Input array. aslarray() is used on a non-LArray input.
+        nan_equals: boolean, optional
+            Whether or not to consider nan values at the same positions in the two arrays as equal.
+            By default, an array containing nan values is never equal to another array, even if that other array
+            also contains nan values at the same positions. The reason is that a nan value is different from
+            *anything*, including itself. Defaults to False.
+
+        Returns
+        -------
+        bool
+            Returns True if self is equal to other.
+
+        Examples
+        --------
+        >>> arr1 = ndtest((2, 3))
+        >>> arr1
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> arr2 = arr1.copy()
+        >>> arr1.equals(arr2)
+        True
+        >>> arr2['b1'] += 1
+        >>> arr1.equals(arr2)
+        False
+        >>> arr3 = arr1.set_labels('a', ['x0', 'x1'])
+        >>> arr1.equals(arr3)
+        False
+
+        Arrays with nan values
+
+        >>> arr1 = ndtest((2, 3), dtype=float)
+        >>> arr1['a1', 'b1'] = nan
+        >>> arr1
+        a\\b   b0   b1   b2
+         a0  0.0  1.0  2.0
+         a1  3.0  nan  5.0
+        >>> arr2 = arr1.copy()
+        >>> # By default, an array containing nan values is never equal to another array,
+        >>> # even if that other array also contains nan values at the same positions.
+        >>> # The reason is that a nan value is different from *anything*, including itself.
+        >>> arr1.equals(arr2)
+        False
+        >>> # set flag nan_equals to True to overwrite this behavior
+        >>> arr1.equals(arr2, nan_equals=True)
+        True
+        """
+        try:
+            other = aslarray(other)
+        except Exception:
+            return False
+        if nan_equals:
+            return self.axes == other.axes and all(nan_equal(self, other))
+        else:
+            return self.axes == other.axes and np.array_equal(np.asarray(self), np.asarray(other))
+
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
 
@@ -6849,6 +6814,28 @@ class LArray(ABCLArray):
                 array = res
         return array
     split_axis = renamed_to(split_axes, 'split_axis')
+
+
+def larray_equal(a1, a2):
+    import warnings
+    msg = "larray_equal() is deprecated. Use LArray.equals() instead."
+    warnings.warn(msg, FutureWarning, stacklevel=2)
+    try:
+        a1 = aslarray(a1)
+    except Exception:
+        return False
+    return a1.equals(a2)
+
+
+def larray_nan_equal(a1, a2):
+    import warnings
+    msg = "larray_nan_equal() is deprecated. Use LArray.equals() instead."
+    warnings.warn(msg, FutureWarning, stacklevel=2)
+    try:
+        a1 = aslarray(a1)
+    except Exception:
+        return False
+    return a1.equals(a2, nan_equals=True)
 
 
 def aslarray(a):
