@@ -573,6 +573,9 @@ else:
         def save(self, path=None):
             raise Exception()
 
+        def close(self):
+            raise Exception()
+
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
         raise Exception("open_excel() is not available because xlwings is not installed")
 
@@ -624,6 +627,22 @@ Examples
 ...     wb['arr2'] = arr2.dump()
 ...     wb['arr3'] = arr3.dump()
 ...     wb.save()
+"""
+
+    Workbook.close.__doc__ = """
+Close the workbook in Excel.
+
+Need to be called if the workbook has been opened without the `with` statement.
+
+Examples
+--------
+>>> arr, arr2, arr3 = ndtest((3, 3)), ndtest((2, 2)), ndtest(4)   # doctest: +SKIP
+>>> wb = open_excel('excel_file.xlsx', overwrite_file=True)       # doctest: +SKIP
+>>> wb['arr'] = arr.dump()                                        # doctest: +SKIP
+>>> wb['arr2'] = arr2.dump()                                      # doctest: +SKIP
+>>> wb['arr3'] = arr3.dump()                                      # doctest: +SKIP
+>>> wb.save()                                                     # doctest: +SKIP
+>>> wb.close()                                                    # doctest: +SKIP
 """
 
 open_excel.__doc__ = """

@@ -498,6 +498,7 @@ Excel
    Workbook
    Workbook.sheet_names
    Workbook.save
+   Workbook.close
 
 .. _api-misc:
 
