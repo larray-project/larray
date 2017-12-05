@@ -1312,9 +1312,8 @@ class LArray(ABCLArray):
         axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
                           or list of Axis or AxisCollection
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
-            If a list of Axis or an AxisCollection is given, all axes will be reindexed by the new ones.
-            In that case, the number of new axes must match the number of the old ones.
-        new_axis : int, str, list/tuple/array of str or Axis, optional
+            If a list of Axis or an AxisCollection is given, existing axes are reindexed while missing ones are added.
+        new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
             Value used to fill cells corresponding to label combinations which were not present before reindexing.
@@ -1342,58 +1341,70 @@ class LArray(ABCLArray):
         a\\b  b0  b1
          a0   0   1
          a1   2   3
+        >>> arr2 = ndrange('a=a1,a2;c=c0;b=b2..b0')
+        >>> arr2
+         a  c\\b  b2  b1  b0
+        a1   c0   0   1   2
+        a2   c0   3   4   5
 
-        Reindex one axis
+        Reindex an axis by passing labels (list or string)
 
-        >>> arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1)
-        a\\b  b1  b2  b0
-         a0   1  -1   0
-         a1   3  -1   2
-        >>> arr.reindex(X.b, 'b0..b2', fill_value=-1)
+        >>> arr.reindex('b', ['b1', 'b2', 'b0'])
+        a\\b   b1   b2   b0
+         a0  1.0  nan  0.0
+         a1  3.0  nan  2.0
+        >>> arr.reindex('b', 'b0..b2', fill_value=-1)
         a\\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
 
+        Reindex using an axis from another array
+
+        >>> arr.reindex('b', arr2.b, fill_value=-1)
+        a\\b  b2  b1  b0
+         a0  -1   1   0
+         a1  -1   3   2
+
+        Reindex using a subset of an axis
+
+       >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
+       a\\b  b1  b0
+        a0   1   0
+        a1   3   2
+
         Reindex several axes
 
-        >>> a = Axis(['a1', 'a2', 'a0'], 'a')
-        >>> b = Axis(['b2', 'b1', 'b0'], 'b')
-        >>> arr.reindex({'a': a, 'b': b}, fill_value=-1)
+        >>> arr.reindex({'a': arr2.a, 'b': arr2.b}, fill_value=-1)
         a\\b  b2  b1  b0
          a1  -1   3   2
          a2  -1  -1  -1
-         a0  -1   1   0
-        >>> arr.reindex({X.a: a, X.b: b})
-        a\\b   b2   b1   b0
-         a1  nan  3.0  2.0
-         a2  nan  nan  nan
-         a0  nan  1.0  0.0
+        >>> arr.reindex({'a': arr2.a, 'b': arr2.b['b1':]}, fill_value=-1)
+        a\\b  b1  b0
+         a1   3   2
+         a2  -1  -1
 
-        Reindex using axes from another array
+        Reindex by passing a collection of axes
 
-        >>> arr2 = ndrange('a=a0,a1;c=c0..c0;b=b0..b2')
-        >>> arr2
-         a  c\\b  b0  b1  b2
-        a0   c0   0   1   2
-        a1   c0   3   4   5
-        >>> arr.reindex(arr2.axes)
-         a  b\\c   c0
-        a0   b0  0.0
-        a0   b1  1.0
-        a0   b2  nan
-        a1   b0  2.0
-        a1   b1  3.0
-        a1   b2  nan
-        >>> arr2.reindex(arr.axes)
-         a  c\\b   b0   b1
-        a0   c0  0.0  1.0
-        a1   c0  3.0  4.0
+        >>> arr.reindex(arr2.axes, fill_value=-1)
+         a  b\\c  c0
+        a1   b2  -1
+        a1   b1   3
+        a1   b0   2
+        a2   b2  -1
+        a2   b1  -1
+        a2   b0  -1
+        >>> arr2.reindex(arr.axes, fill_value=-1)
+         a  c\\b  b0  b1
+        a0   c0  -1  -1
+        a1   c0   2   1
         """
         # XXX: can't we move this to AxisCollection.replace?
-        if isinstance(new_axis, (int, basestring, list, tuple, np.ndarray)):
+        if new_axis is not None and not isinstance(new_axis, Axis):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
-        if isinstance(new_axis, Axis):
+        elif isinstance(new_axis, Axis):
             new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
+        if isinstance(axes_to_reindex, (list, tuple)) and all([isinstance(axis, Axis) for axis in axes_to_reindex]):
+            axes_to_reindex = AxisCollection(axes_to_reindex)
         if isinstance(axes_to_reindex, AxisCollection):
             assert new_axis is None
             # add extra axes if needed

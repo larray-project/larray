@@ -1411,9 +1411,8 @@ class AxisCollection(object):
             for k, v in zip(key, value):
                 self[k] = v
         else:
-            if isinstance(value, (int, basestring, list, tuple)):
+            if not isinstance(value, Axis):
                 value = Axis(value)
-            assert isinstance(value, Axis)
             idx = self.index(key)
             step = 1 if idx >= 0 else -1
             self[idx:idx + step:step] = [value]

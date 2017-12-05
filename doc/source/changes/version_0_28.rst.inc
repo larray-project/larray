@@ -10,6 +10,19 @@
 Miscellaneous improvements
 --------------------------
 
+* added possibility to call the method `reindex` with a group (closes :issue:`531`):
+
+    >>> arr = ndtest((2, 2))
+    >>> arr
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> b = Axis("b=b2..b0")
+    >>> arr.reindex('b', b['b1':])
+    a\b  b1  b0
+     a0   1   0
+     a1   3   2
+
 * added possibility to call the methods `diff` and `growth_rate` with a group (closes :issue:`532`):
 
     >>> data = [[2, 4, 5, 4, 6], [4, 6, 3, 6, 9]]
