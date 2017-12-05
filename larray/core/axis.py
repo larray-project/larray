@@ -1413,7 +1413,6 @@ class AxisCollection(object):
         else:
             if not isinstance(value, Axis):
                 value = Axis(value)
-            assert isinstance(value, Axis)
             idx = self.index(key)
             step = 1 if idx >= 0 else -1
             self[idx:idx + step:step] = [value]
