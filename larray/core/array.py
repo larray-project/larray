@@ -6507,7 +6507,7 @@ class LArray(ABCLArray):
         """
         if isinstance(axis, Group):
             array = self[axis]
-            axis = Axis(axis)
+            axis = array.axes[axis.axis]
         else:
             array = self
         for _ in range(n):
@@ -6573,11 +6573,12 @@ class LArray(ABCLArray):
         """
         if isinstance(axis, Group):
             array = self[axis]
-            axis = Axis(axis)
+            axis = array.axes[axis.axis]
         else:
             array = self
+            axis = array.axes[axis]
         diff = array.diff(axis=axis, d=d, label=label)
-        return diff / array[array.axes[axis].i[:-d]].drop_labels(axis)
+        return diff / array[axis.i[:-d]].drop_labels(axis)
 
     def compact(self):
         """Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
