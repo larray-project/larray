@@ -2370,6 +2370,15 @@ age    0       1       2       3       4       5       6       7        8  ...  
                                                  v1   4   5   6   7
                                                  v3  -1  -1  -1  -1"""))
 
+        # passing a list of Axis
+        arr = ndtest((2, 2))
+        res = arr.reindex([Axis("a=a0,a1"), Axis("c=c0"), Axis("b=b1,b2")], fill_value=-1)
+        assert_array_equal(res, from_string(""" a  b\\c  c0
+                                               a0   b1   1
+                                               a0   b2  -1
+                                               a1   b1   3
+                                               a1   b2  -1"""))
+
     def test_append(self):
         la = self.small
         sex, lipro = la.axes
