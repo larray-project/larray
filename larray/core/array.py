@@ -1401,7 +1401,7 @@ class LArray(ABCLArray):
         # XXX: can't we move this to AxisCollection.replace?
         if new_axis is not None and not isinstance(new_axis, Axis):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
-        if isinstance(new_axis, Axis):
+        elif isinstance(new_axis, Axis):
             new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
         if isinstance(axes_to_reindex, AxisCollection):
             assert new_axis is None
