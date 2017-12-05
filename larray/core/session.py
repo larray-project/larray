@@ -628,14 +628,17 @@ class Session(object):
         arr2: 4
          a [4]: 'a0' 'a1' 'a2' 'a3'
         dtype: int64
+        memory used: 32 bytes
         arr1: 2 x 2
          a [2]: 'a0' 'a1'
          b [2]: 'b0' 'b1'
         dtype: int64
+        memory used: 32 bytes
         arr3: 3 x 2
          a [3]: 'a0' 'a1' 'a2'
          b [2]: 'b0' 'b1'
         dtype: int64
+        memory used: 48 bytes
         """
         return self._objects.items()
 
