@@ -1403,6 +1403,8 @@ class LArray(ABCLArray):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
         elif isinstance(new_axis, Axis):
             new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
+        if isinstance(axes_to_reindex, (list, tuple)) and all([isinstance(axis, Axis) for axis in axes_to_reindex]):
+            axes_to_reindex = AxisCollection(axes_to_reindex)
         if isinstance(axes_to_reindex, AxisCollection):
             assert new_axis is None
             # add extra axes if needed
