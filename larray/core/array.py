@@ -3263,26 +3263,25 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> nat = Axis('nat=BE,FO')
-        >>> sex = Axis('sex=M,F')
-        >>> mat0 = ones([nat, sex])
+        >>> mat0 = LArray([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M")
         >>> mat0.info
         2 x 2
          nat [2]: 'BE' 'FO'
-         sex [2]: 'M' 'F'
+         sex [2]: 'F' 'M'
         dtype: float64
-        >>> mat1 = LArray(np.ones((2, 2)), [nat, sex], 'test matrix')
+        memory used: 32 bytes
+        >>> mat1 = LArray([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M", 'test matrix')
         >>> mat1.info
         test matrix
         2 x 2
          nat [2]: 'BE' 'FO'
-         sex [2]: 'M' 'F'
+         sex [2]: 'F' 'M'
         dtype: float64
+        memory used: 32 bytes
         """
-        if self.title:
-            return ReprString(self.title + '\n' + self.axes.info + '\ndtype: ' + self.dtype.name)
-        else:
-            return ReprString(self.axes.info + '\ndtype: ' + self.dtype.name)
+        str_info = '{}\n'.format(self.title) if self.title else ''
+        str_info += '{}\ndtype: {}\nmemory used: {}'.format(self.axes.info, self.dtype.name, self.memory_used)
+        return ReprString(str_info)
 
     def ratio(self, *axes):
         """Returns an array with all values divided by the sum of values along given axes.
