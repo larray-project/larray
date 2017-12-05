@@ -1312,8 +1312,7 @@ class LArray(ABCLArray):
         axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
                           or list of Axis or AxisCollection
             Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
-            If a list of Axis or an AxisCollection is given, already present axes are reindexed while missing
-            are added.
+            If a list of Axis or an AxisCollection is given, existing axes are reindexed while missing ones are added.
         new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_replace` contains a single axis reference.
         fill_value : scalar or LArray, optional
