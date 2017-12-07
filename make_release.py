@@ -8,7 +8,9 @@ from __future__ import print_function, unicode_literals
 
 import sys
 from os.path import abspath, dirname, join
-from releaser import make_release, update_feedstock, short, no
+
+from subprocess import check_call
+from releaser import make_release, update_feedstock, short, no, chdir, doechocall, set_config
 from releaser.make_release import steps_funcs as make_release_steps
 from releaser.update_feedstock import steps_funcs as update_feedstock_steps
 
@@ -26,6 +28,23 @@ LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
 LARRAY_USERS_GROUP = "larray-users@googlegroups.com"
 
 
+def update_metapackage(context):
+    if not context['public_release']:
+        return
+
+    chdir(context['repository'])
+    version = short(context['release_name'])
+
+    def fill(s):
+        return s.format(version=version)
+
+    # TODO: this should be echocall(redirect_stdout=False)
+    print(fill('Updating larrayenv metapackage to version {version}'))
+    check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', fill('larray =={version}'),
+                fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
+                'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'xlsxwriter', 'xlrd', 'openpyxl', 'xlwings'])
+
+
 # TODO : move to larrayenv project
 def announce_new_release(release_name):
     import win32com.client as win32
@@ -34,7 +53,7 @@ def announce_new_release(release_name):
     mail = outlook.CreateItem(0)
     mail.To = LARRAY_ANNOUNCE_MAILING_LIST
     mail.Subject = "LArray {} released".format(version)
-    mail.Body  = """\
+    mail.Body = """\
 Hello all, 
 
 We are pleased to announce that version {version} of LArray is now available. 
@@ -59,13 +78,18 @@ if __name__ == '__main__':
         print("update conda-forge feedstock steps:", ', '.join(f.__name__ for f, _ in update_feedstock_steps))
         print("or")
         print("Usage: {} -a|--announce release_name".format(argv[0]))
+        print("Usage: {} -m release_name".format(argv[0]))
         sys.exit()
 
-    if argv[1] == '-a' or argv[1] == '--announce':
+    local_repository = abspath(dirname(__file__))
+    if argv[1] == '-m':
+        config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, argv[2], branch='master',
+                            src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
+        update_metapackage(config)
+    elif argv[1] == '-a' or argv[1] == '--announce':
         no("Is metapackage larrayenv updated?")
         announce_new_release(argv[2])
-    if argv[1] == '-c' or argv[1] == '--conda':
+    elif argv[1] == '-c' or argv[1] == '--conda':
         update_feedstock(GITHUB_REP, CONDA_FEEDSTOCK_REP, SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
     else:
-        local_repository = abspath(dirname(__file__))
         make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:], src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
