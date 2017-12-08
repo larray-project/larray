@@ -9,7 +9,8 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath
-from larray import Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest
+from larray import (Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest,
+                    local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
 
 try:
@@ -25,6 +26,9 @@ def equal(o1, o2):
         return o1.equals(o2)
     else:
         return o1 == o2
+
+global_arr1 = ndtest((2, 2))
+_global_arr2 = ndtest((3, 3))
 
 
 class TestSession(TestCase):
@@ -371,6 +375,46 @@ class TestSession(TestCase):
         s = pickle.dumps(original)
         res = pickle.loads(s)
         assert res.equals(original)
+
+    def test_local_arrays(self):
+        local_arr1 = ndtest(2)
+        _local_arr2 = ndtest(3)
+
+        # exclude private local arrays
+        s = local_arrays()
+        s_expected = Session([('local_arr1', local_arr1)])
+        assert s.equals(s_expected)
+
+        # all local arrays
+        s = local_arrays(include_private=True)
+        s_expected = Session([('local_arr1', local_arr1), ('_local_arr2', _local_arr2)])
+        assert s.equals(s_expected)
+
+    def test_global_arrays(self):
+        # exclude private global arrays
+        s = global_arrays()
+        s_expected = Session([('global_arr1', global_arr1)])
+        assert s.equals(s_expected)
+
+        # all global arrays
+        s = global_arrays(include_private=True)
+        s_expected = Session([('global_arr1', global_arr1), ('_global_arr2', _global_arr2)])
+        assert s.equals(s_expected)
+
+    def test_arrays(self):
+        local_arr1 = ndtest(2)
+        _local_arr2 = ndtest(3)
+
+        # exclude private arrays
+        s = arrays()
+        s_expected = Session([('local_arr1', local_arr1), ('global_arr1', global_arr1)])
+        assert s.equals(s_expected)
+
+        # all arrays
+        s = arrays(include_private=True)
+        s_expected = Session([('local_arr1', local_arr1), ('_local_arr2', _local_arr2),
+                              ('global_arr1', global_arr1), ('_global_arr2', _global_arr2)])
+        assert s.equals(s_expected)
 
 
 if __name__ == "__main__":

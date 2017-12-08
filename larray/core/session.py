@@ -1003,7 +1003,11 @@ class Session(object):
         return '\n'.join(template.format(**kwargs) for kwargs in templ_kwargs)
 
 
-def local_arrays(depth=0):
+def _exclude_private_vars(vars_dict):
+    return {k: v for k, v in vars_dict.items() if not k.startswith('_')}
+
+
+def local_arrays(depth=0, include_private=False):
     """
     Returns a session containing all local arrays sorted in alphabetical order.
 
@@ -1011,6 +1015,8 @@ def local_arrays(depth=0):
     ----------
     depth: int
         depth of call frame to inspect. 0 is where `local_arrays` was called, 1 the caller of `local_arrays`, etc.
+    include_private: boolean, optional
+        Whether or not to include private local arrays (i.e. arrays starting with `_`). Defaults to False.
 
     Returns
     -------
@@ -1018,10 +1024,12 @@ def local_arrays(depth=0):
     """
     # noinspection PyProtectedMember
     d = sys._getframe(depth + 1).f_locals
+    if not include_private:
+        d = _exclude_private_vars(d)
     return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
 
 
-def global_arrays(depth=0):
+def global_arrays(depth=0, include_private=False):
     """
     Returns a session containing all global arrays sorted in alphabetical order.
 
@@ -1029,6 +1037,8 @@ def global_arrays(depth=0):
     ----------
     depth: int
         depth of call frame to inspect. 0 is where `global_arrays` was called, 1 the caller of `global_arrays`, etc.
+    include_private: boolean, optional
+        Whether or not to include private globals arrays (i.e. arrays starting with `_`). Defaults to False.
 
     Returns
     -------
@@ -1036,10 +1046,12 @@ def global_arrays(depth=0):
     """
     # noinspection PyProtectedMember
     d = sys._getframe(depth + 1).f_globals
+    if not include_private:
+        d = _exclude_private_vars(d)
     return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
 
 
-def arrays(depth=0):
+def arrays(depth=0, include_private=False):
     """
     Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
     alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
@@ -1049,6 +1061,8 @@ def arrays(depth=0):
     ----------
     depth: int
         depth of call frame to inspect. 0 is where `arrays` was called, 1 the caller of `arrays`, etc.
+    include_private: boolean, optional
+        Whether or not to include private arrays (i.e. arrays starting with `_`). Defaults to False.
 
     Returns
     -------
@@ -1058,6 +1072,10 @@ def arrays(depth=0):
     caller_frame = sys._getframe(depth + 1)
     global_vars = caller_frame.f_globals
     local_vars = caller_frame.f_locals
+
+    if not include_private:
+        global_vars = _exclude_private_vars(global_vars)
+        local_vars = _exclude_private_vars(local_vars)
 
     # We must first get all variables *then* filter by type, otherwise we could return a global array which is not
     # currently available because it is shadowed by a local non-array variable.
