@@ -360,6 +360,22 @@ class TestSession(TestCase):
         assert_array_nan_equal(diff['f'], self.f - 1)
         assert isnan(diff['g']).all()
 
+    def test_rsub(self):
+        sess = self.session.filter(kind=LArray)
+
+        # scalar - session
+        diff = 2 - sess
+        assert_array_nan_equal(diff['e'], 2 - self.e)
+        assert_array_nan_equal(diff['f'], 2 - self.f)
+        assert_array_nan_equal(diff['g'], 2 - self.g)
+
+        # dict(LArray and scalar) - session
+        other = {'e': ones_like(self.e), 'f': 1}
+        diff = other - sess
+        assert_array_nan_equal(diff['e'], ones_like(self.e) - self.e)
+        assert_array_nan_equal(diff['f'], 1 - self.f)
+        assert isnan(diff['g']).all()
+
     def test_div(self):
         sess = self.session.filter(kind=LArray)
         other = Session({'e': self.e - 1, 'f': self.f + 1})
@@ -377,6 +393,21 @@ class TestSession(TestCase):
         flat_f = np.arange(6) / np.arange(1, 7)
         assert_array_nan_equal(res['f'], flat_f.reshape(3, 2))
         self.assertTrue(isnan(res['g']).all())
+
+    def test_rdiv(self):
+        sess = self.session.filter(kind=LArray)
+
+        # scalar / session
+        res = 2 / sess
+        assert_array_nan_equal(res['e'], 2 / self.e)
+        assert_array_nan_equal(res['f'], 2 / self.f)
+        assert_array_nan_equal(res['g'], 2 / self.g)
+
+        # dict(LArray and scalar) - session
+        other = {'e': self.e, 'f': self.f}
+        res = other / sess
+        assert_array_nan_equal(res['e'], self.e / self.e)
+        assert_array_nan_equal(res['f'], self.f / self.f)
 
     def test_summary(self):
         sess = self.session.filter(kind=LArray)
