@@ -125,6 +125,46 @@ Miscellaneous improvements
     ['global_arr1', 'local_arr1']
     ['_global_arr2', '_local_arr2', 'global_arr1', 'local_arr1']
 
+* implemented sessions binary operations with non sessions objects (closes :issue:`514`):
+
+    >>> s = Session(arr1=ndtest((2, 2)), arr2=ndtest((3, 3)))
+    >>> s.arr1
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> s.arr2
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+     a2   6   7   8
+
+    Add a scalar to all arrays
+
+    >>> # equivalent to s2 = 3 + s
+    >>> s2 = s + 3
+    >>> s2.arr1
+    a\b  b0  b1
+     a0   3   4
+     a1   5   6
+    >>> s2.arr2
+    a\b  b0  b1  b2
+     a0   3   4   5
+     a1   6   7   8
+     a2   9  10  11
+
+    Apply binary operations between two sessions
+
+    >>> sdiff = (s2 - s) / s
+    >>> sdiff.arr1
+    a\b   b0   b1
+     a0  inf  3.0
+     a1  1.5  1.0
+    >>> sdiff.arr2
+    a\b   b0    b1     b2
+     a0  inf   3.0    1.5
+     a1  1.0  0.75    0.6
+     a2  0.5  0.43  0.375
+
 * added possibility to call the method `reindex` with a group (closes :issue:`531`):
 
     >>> arr = ndtest((2, 2))

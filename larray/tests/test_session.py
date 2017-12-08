@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath
-from larray import (Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest,
+from larray import (Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest, ones_like,
                     local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
 
@@ -339,11 +339,26 @@ class TestSession(TestCase):
 
     def test_sub(self):
         sess = self.session.filter(kind=LArray)
-        other = Session({'e': self.e - 1, 'f': 1})
+
+        # session - session
+        other = Session({'e': self.e - 1, 'f': ones_like(self.f)})
         diff = sess - other
         assert_array_nan_equal(diff['e'], np.full((2, 3), 1, dtype=np.int32))
-        assert_array_nan_equal(diff['f'], np.arange(-1, 5).reshape(3, 2))
-        self.assertTrue(isnan(diff['g']).all())
+        assert_array_nan_equal(diff['f'], self.f - ones_like(self.f))
+        assert isnan(diff['g']).all()
+
+        # session - scalar
+        diff = sess - 2
+        assert_array_nan_equal(diff['e'], self.e - 2)
+        assert_array_nan_equal(diff['f'], self.f - 2)
+        assert_array_nan_equal(diff['g'], self.g - 2)
+
+        # session - dict(LArray and scalar)
+        other = {'e': ones_like(self.e), 'f': 1}
+        diff = sess - other
+        assert_array_nan_equal(diff['e'], self.e - ones_like(self.e))
+        assert_array_nan_equal(diff['f'], self.f - 1)
+        assert isnan(diff['g']).all()
 
     def test_div(self):
         sess = self.session.filter(kind=LArray)
