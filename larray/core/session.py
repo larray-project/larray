@@ -680,9 +680,14 @@ class Session(object):
         return opmethod
 
     __add__ = _binop('add')
+    __radd__ = _binop('radd')
     __sub__ = _binop('sub')
+    __rsub__ = _binop('rsub')
     __mul__ = _binop('mul')
+    __rmul__ = _binop('rmul')
     __truediv__ = _binop('truediv')
+    __rtruediv__ = _binop('rtruediv')
+
     __eq__ = _binop('eq')
     __ne__ = _binop('ne')
 

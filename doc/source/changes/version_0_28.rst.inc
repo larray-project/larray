@@ -125,7 +125,7 @@ Miscellaneous improvements
     ['global_arr1', 'local_arr1']
     ['_global_arr2', '_local_arr2', 'global_arr1', 'local_arr1']
 
-* implemented sessions binary operations with non sessions objects (closes :issue:`514`):
+* implemented sessions binary operations with non sessions objects (closes :issue:`514` and :issue:`515`):
 
     >>> s = Session(arr1=ndtest((2, 2)), arr2=ndtest((3, 3)))
     >>> s.arr1
@@ -151,7 +151,7 @@ Miscellaneous improvements
      a0   3   4   5
      a1   6   7   8
      a2   9  10  11
-
+     
     Apply binary operations between two sessions
 
     >>> sdiff = (s2 - s) / s
