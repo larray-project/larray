@@ -105,6 +105,26 @@ New features
 Miscellaneous improvements
 --------------------------
 
+* functions `local_arrays`, `global_arrays` and `arrays` returns a session excluding arrays starting by `_`
+  by default. To include them, set the flag `include_private` to True (closes :issue:`513`):
+
+    >>> global_arr1 = ndtest((2, 2))
+    >>> _global_arr2 = ndtest((3, 3))
+    >>> def foo():
+    ...     local_arr1 = ndtest(2)
+    ...     _local_arr2 = ndtest(3)
+    ...
+    ...     # exclude arrays starting with '_' by default
+    ...     s = arrays()
+    ...     print(s.names)
+    ...
+    ...     # use flag 'include_private' to include arrays starting with '_'
+    ...     s = arrays(include_private=True)
+    ...     print(s.names)
+    >>> foo()
+    ['global_arr1', 'local_arr1']
+    ['_global_arr2', '_local_arr2', 'global_arr1', 'local_arr1']
+
 * added possibility to call the method `reindex` with a group (closes :issue:`531`):
 
     >>> arr = ndtest((2, 2))
