@@ -654,21 +654,23 @@ class Session(object):
 
         def opmethod(self, other):
             self_keys = set(self.keys())
-            all_keys = list(self.keys()) + [n for n in other.keys() if n not in self_keys]
+            all_keys = list(self.keys())
+            if hasattr(other, 'keys'):
+                all_keys += [n for n in other.keys() if n not in self_keys]
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for name in all_keys:
                     self_array = self.get(name, np.nan)
-                    other_array = other.get(name, np.nan)
+                    other_operand = other.get(name, np.nan) if hasattr(other, 'get') else other
                     try:
-                        res_array = getattr(self_array, opfullname)(other_array)
+                        res_array = getattr(self_array, opfullname)(other_operand)
                     # TypeError for str arrays, ValueError for incompatible axes, ...
                     except Exception:
                         res_array = np.nan
                     # this should only ever happen when self_array is a non Array (eg. nan)
                     if res_array is NotImplemented:
                         try:
-                            res_array = getattr(other_array, '__%s__' % inverseop(opname))(self_array)
+                            res_array = getattr(other_operand, '__%s__' % inverseop(opname))(self_array)
                         # TypeError for str arrays, ValueError for incompatible axes, ...
                         except Exception:
                             res_array = np.nan
