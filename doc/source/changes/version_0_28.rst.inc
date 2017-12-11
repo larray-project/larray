@@ -151,3 +151,18 @@ Fixes
     >>> axis = Axis("a=a0,a1")
     >>> axis['a0'][0]
     'a'
+
+* fixed `Axis.union`, `Axis.intersection` and `Axis.difference` when passed value is a single string
+  (closes :issue:`489`):
+
+    >>> a = Axis('a=a0..a2')
+    >>> a.union('a1')
+    Axis(['a0', 'a1', 'a2'], 'a')
+    >>> a.union('a3')
+    Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+    >>> a.union('a1..a3')
+    Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+    >>> a.intersection('a1..a3')
+    Axis(['a1', 'a2'], 'a')
+    >>> a.difference('a1..a3')
+    Axis(['a0'], 'a')

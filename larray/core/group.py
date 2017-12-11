@@ -1075,11 +1075,13 @@ class Group(object):
         Examples
         --------
         >>> from larray import Axis
-        >>> letters = Axis('letters=a..d')
-        >>> letters['a', 'b'].union(letters['b', 'c'])
-        letters['a', 'b', 'c'].set()
-        >>> letters['a', 'b'].union(['b', 'c'])
-        letters['a', 'b', 'c'].set()
+        >>> a = Axis('a=a0..a2')
+        >>> a['a0', 'a1'].union(a['a1', 'a2'])
+        a['a0', 'a1', 'a2'].set()
+        >>> a['a0', 'a1'].union('a1,a2')
+        a['a0', 'a1', 'a2'].set()
+        >>> a['a0', 'a1'].union(['a1', 'a2'])
+        a['a0', 'a1', 'a2'].set()
         """
         return self.set().union(other)
 
@@ -1101,11 +1103,13 @@ class Group(object):
         Examples
         --------
         >>> from larray import Axis
-        >>> letters = Axis('letters=a..d')
-        >>> letters['a', 'b'].intersection(letters['b', 'c'])
-        letters['b'].set()
-        >>> letters['a', 'b'].intersection(['b', 'c'])
-        letters['b'].set()
+        >>> a = Axis('a=a0..a2')
+        >>> a['a0', 'a1'].intersection(a['a1', 'a2'])
+        a['a1'].set()
+        >>> a['a0', 'a1'].intersection('a1,a2')
+        a['a1'].set()
+        >>> a['a0', 'a1'].intersection(['a1', 'a2'])
+        a['a1'].set()
         """
         return self.set().intersection(other)
 
@@ -1127,11 +1131,13 @@ class Group(object):
         Examples
         --------
         >>> from larray import Axis
-        >>> letters = Axis('letters=a..d')
-        >>> letters['a', 'b'].difference(letters['b', 'c'])
-        letters['a'].set()
-        >>> letters['a', 'b'].difference(['b', 'c'])
-        letters['a'].set()
+        >>> a = Axis('a=a0..a2')
+        >>> a['a0', 'a1'].difference(a['a1', 'a2'])
+        a['a0'].set()
+        >>> a['a0', 'a1'].difference('a1,a2')
+        a['a0'].set()
+        >>> a['a0', 'a1'].difference(['a1', 'a2'])
+        a['a0'].set()
         """
         return self.set().difference(other)
 
