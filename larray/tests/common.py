@@ -15,6 +15,14 @@ def abspath(relpath):
     """
     return os.path.join(TESTDATADIR, relpath)
 
+def inputpath(relpath):
+    """
+    :param relpath: path relative to current module
+    :return: absolute path to input data files
+    """
+    return os.path.join(TESTDATADIR, 'data', relpath)
+
+
 # XXX: maybe we should force value groups to use tuple and families (group of groups to use lists, or vice versa, so
 # that we know which is which) or use a class, just for that? group(a, b, c) vs family(group(a), b, c)
 

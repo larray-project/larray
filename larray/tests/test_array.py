@@ -13,7 +13,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
+from larray.tests.common import inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndrange, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
@@ -87,6 +87,13 @@ class TestLArray(TestCase):
         self.small_title = 'small test array'
         self.small_data = np.arange(30).reshape(2, 15)
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro), title=self.small_title)
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+        self.tmpdir = tmpdir.strpath
+
+    def get_path(self, fname):
+        return os.path.join(self.tmpdir, fname)
 
     def test_ndrange(self):
         arr = ndrange('a=a0..a2')
@@ -2508,8 +2515,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_hdf_roundtrip(self):
         a = ndtest((2, 3))
-        a.to_hdf(abspath('test.h5'), 'a')
-        res = read_hdf(abspath('test.h5'), 'a')
+        fpath = self.get_path('test.h5')
+        a.to_hdf(fpath, 'a')
+        res = read_hdf(fpath, 'a')
 
         self.assertEqual(a.ndim, 2)
         self.assertEqual(a.shape, (2, 3))
@@ -2517,10 +2525,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, a)
 
         # issue 72: int-like strings should not be parsed (should round-trip correctly)
+        fpath = self.get_path('issue72.h5')
         a = from_lists([['axis', '10', '20'],
                         ['',        0,    1]])
-        a.to_hdf(abspath('issue72.h5'), 'a')
-        res = read_hdf(abspath('issue72.h5'), 'a')
+        a.to_hdf(fpath, 'a')
+        res = read_hdf(fpath, 'a')
         self.assertEqual(res.ndim, 1)
         axis = res.axes[0]
         self.assertEqual(axis.name, 'axis')
@@ -2528,7 +2537,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # passing group as key to to_hdf
         a3 = ndtest((4, 3, 4))
-        fpath = abspath('test.h5')
+        fpath = self.get_path('test.h5')
         os.remove(fpath)
         # single element group
         for label in a3.a:
@@ -2572,36 +2581,36 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, expected)
 
     def test_read_csv(self):
-        res = read_csv(abspath('test1d.csv'))
+        res = read_csv(inputpath('test1d.csv'))
         assert_array_equal(res, ndrange('time=2007,2010,2013'))
 
-        res = read_csv(abspath('test2d.csv'))
+        res = read_csv(inputpath('test2d.csv'))
         assert_array_equal(res, ndrange('a=0,1;b=0,1,2'))
 
-        res = read_csv(abspath('test3d.csv'))
+        res = read_csv(inputpath('test3d.csv'))
         expected = ndrange('age=0..3;sex=F,M;time=2015..2017') + 0.5
         assert_array_equal(res, expected)
 
-        la = read_csv(abspath('test5d.csv'))
+        la = read_csv(inputpath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la = read_csv(abspath('test2d_classic.csv'))
+        la = read_csv(inputpath('test2d_classic.csv'))
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', None])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        la = read_csv(abspath('test1d_liam2.csv'), dialect='liam2')
+        la = read_csv(inputpath('test1d_liam2.csv'), dialect='liam2')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
-        la = read_csv(abspath('test5d_liam2.csv'), dialect='liam2')
+        la = read_csv(inputpath('test5d_liam2.csv'), dialect='liam2')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
@@ -2617,7 +2626,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, ndtest(3))
 
     def test_read_eurostat(self):
-        la = read_eurostat(abspath('test5d_eurostat.csv'))
+        la = read_eurostat(inputpath('test5d_eurostat.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
@@ -2627,32 +2636,32 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_read_excel_xlwings(self):
-        la = read_excel(abspath('test.xlsx'), '1d')
+        la = read_excel(inputpath('test.xlsx'), '1d')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '2d')
+        la = read_excel(inputpath('test.xlsx'), '2d')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', 'time'])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '3d')
+        la = read_excel(inputpath('test.xlsx'), '3d')
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '5d')
+        la = read_excel(inputpath('test.xlsx'), '5d')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '2d_classic')
+        la = read_excel(inputpath('test.xlsx'), '2d_classic')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', None])
@@ -2661,14 +2670,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # passing a Group as sheetname arg
         axis = Axis('dim=1d,2d,3d,5d')
 
-        la = read_excel(abspath('test.xlsx'), axis['1d'])
+        la = read_excel(inputpath('test.xlsx'), axis['1d'])
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
         # fill_value argument
-        la = read_excel(abspath('test.xlsx'), 'missing_values', fill_value=42)
+        la = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
         assert la.ndim == 3
         assert la.shape == (5, 2, 3)
         assert la.axes.names == ['age', 'sex', 'time']
@@ -2678,10 +2687,10 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # invalid keyword argument
         with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
                                                 "the xlwings backend"):
-            read_excel(abspath('test.xlsx'), engine='xlwings', dtype=float)
+            read_excel(inputpath('test.xlsx'), engine='xlwings', dtype=float)
 
         # Excel sheet with blank cells on right/bottom border of the array to read
-        fpath = abspath('test_blank_cells.xlsx')
+        fpath = inputpath('test_blank_cells.xlsx')
         good = read_excel(fpath, 'good')
         bad1 = read_excel(fpath, 'blanksafter_morerowsthancols')
         bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows')
@@ -2697,51 +2706,51 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(bad4, good2)
 
     def test_read_excel_pandas(self):
-        la = read_excel(abspath('test.xlsx'), '1d', engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '2d', nb_index=1, engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '2d', nb_index=1, engine='xlrd')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', 'time'])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '2d', engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', 'time'])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '3d', engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
         self.assertEqual(la.ndim, 3)
         self.assertEqual(la.shape, (5, 2, 3))
         self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '5d', nb_index=4, engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '5d', nb_index=4, engine='xlrd')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '5d', engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '5d', engine='xlrd')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la = read_excel(abspath('test.xlsx'), '2d_classic', engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', None])
@@ -2750,14 +2759,14 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # passing a Group as sheetname arg
         axis = Axis('dim=1d,2d,3d,5d')
 
-        la = read_excel(abspath('test.xlsx'), axis['1d'], engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
         self.assertEqual(la.ndim, 1)
         self.assertEqual(la.shape, (3,))
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
         # Excel sheet with blank cells on right/bottom border of the array to read
-        fpath = abspath('test_blank_cells.xlsx')
+        fpath = inputpath('test_blank_cells.xlsx')
         good1 = read_excel(fpath, 'good', engine='xlrd')
         bad1 = read_excel(fpath, 'blanksafter_morerowsthancols', engine='xlrd')
         bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows', engine='xlrd')
@@ -3156,36 +3165,36 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
 
     def test_to_csv(self):
-        la = read_csv(abspath('test5d.csv'))
+        la = read_csv(inputpath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la.to_csv(abspath('out.csv'))
+        la.to_csv(self.get_path('out.csv'))
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
                   '1,0,F,1,3722,3395,3347\n',
                   '1,0,F,2,338,316,323\n']
-        with open(abspath('out.csv')) as f:
+        with open(self.get_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la.to_csv(abspath('out.csv'), transpose=False)
+        la.to_csv(self.get_path('out.csv'), transpose=False)
         result = ['arr,age,sex,nat,time,0\n',
                   '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
-        with open(abspath('out.csv')) as f:
+        with open(self.get_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
         la = ndrange([Axis('time=2015..2017')])
-        la.to_csv(abspath('test_out1d.csv'))
+        la.to_csv(self.get_path('test_out1d.csv'))
         result = ['time,2015,2016,2017\n',
                   ',0,1,2\n']
-        with open(abspath('test_out1d.csv')) as f:
+        with open(self.get_path('test_out1d.csv')) as f:
             self.assertEqual(f.readlines(), result)
 
     def test_to_excel_xlsxwriter(self):
-        fpath = abspath('test_to_excel_xlsxwriter.xlsx')
+        fpath = self.get_path('test_to_excel_xlsxwriter.xlsx')
 
         # 1D
         a1 = ndtest(3)
@@ -3314,7 +3323,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_to_excel_xlwings(self):
-        fpath = abspath('test_to_excel_xlwings.xlsx')
+        fpath = self.get_path('test_to_excel_xlwings.xlsx')
 
         # 1D
         a1 = ndtest(3)
@@ -3398,7 +3407,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
     def test_open_excel(self):
         # 1) Create new file
         # ==================
-        fpath = abspath('should_not_extist.xlsx')
+        fpath = inputpath('should_not_extist.xlsx')
         # overwrite_file must be set to True to create a new file
         with pytest.raises(ValueError):
             open_excel(fpath)
@@ -3483,7 +3492,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
             # the third axis should have the same labels (but not the same name obviously)
             assert_array_equal(res.axes[2].labels, a3.axes[2].labels)
 
-        with open_excel(abspath('test.xlsx')) as wb:
+        with open_excel(inputpath('test.xlsx')) as wb:
             res = wb['2d_classic'].load()
             assert res.ndim == 2
             assert res.shape == (5, 3)
@@ -3556,7 +3565,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 4) Blank cells
         # ========================
         # Excel sheet with blank cells on right/bottom border of the array to read
-        fpath = abspath('test_blank_cells.xlsx')
+        fpath = inputpath('test_blank_cells.xlsx')
         with open_excel(fpath) as wb:
             good = wb['good'].load()
             bad1 = wb['blanksafter_morerowsthancols'].load()
@@ -3573,7 +3582,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 5) crash test
         # =============
         arr = ndtest((2, 2))
-        fpath = abspath('temporary_test_file.xlsx')
+        fpath = self.get_path('temporary_test_file.xlsx')
         # create and save a test file
         with open_excel(fpath, overwrite_file=True) as wb:
             wb['arr'] = arr.dump()

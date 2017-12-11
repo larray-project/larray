@@ -292,23 +292,22 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
 
     Examples
     --------
-    >>> from larray.tests.common import abspath
     >>> from larray import ndrange
-    >>> fpath = abspath('test.csv')
+    >>> fname = 'test.csv'
     >>> a = ndrange('nat=BE,FO;sex=M,F')
 
-    >>> a.to_csv(fpath)
-    >>> read_csv(fpath)
+    >>> a.to_csv(fname)                       # doctest: +SKIP
+    >>> read_csv(fname)                       # doctest: +SKIP
     nat\\sex  M  F
          BE  0  1
          FO  2  3
-    >>> read_csv(fpath, sort_columns=True)
+    >>> read_csv(fname, sort_columns=True)    # doctest: +SKIP
     nat\\sex  F  M
          BE  1  0
          FO  3  2
-    >>> fpath = abspath('no_axis_name.csv')
-    >>> a.to_csv(fpath, dialect='classic')
-    >>> read_csv(fpath, nb_index=1)
+    >>> fname = 'no_axis_name.csv'            # doctest: +SKIP
+    >>> a.to_csv(fname, dialect='classic')    # doctest: +SKIP
+    >>> read_csv(fname, nb_index=1)           # doctest: +SKIP
     nat\\{1}  M  F
          BE  0  1
          FO  2  3
