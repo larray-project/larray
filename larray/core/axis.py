@@ -1067,12 +1067,21 @@ class Axis(ABCAxis):
 
         Examples
         --------
-        >>> letters = Axis('letters=a,b')
-        >>> letters.union(Axis('letters=b,c'))
-        Axis(['a', 'b', 'c'], 'letters')
-        >>> letters.union(['b', 'c'])
-        Axis(['a', 'b', 'c'], 'letters')
+        >>> a = Axis('a=a0..a2')
+        >>> a.union('a1')
+        Axis(['a0', 'a1', 'a2'], 'a')
+        >>> a.union('a3')
+        Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+        >>> a.union(Axis('a=a1..a3'))
+        Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+        >>> a.union('a1..a3')
+        Axis(['a0', 'a1', 'a2', 'a3'], 'a')
+        >>> a.union(['a1', 'a2', 'a3'])
+        Axis(['a0', 'a1', 'a2', 'a3'], 'a')
         """
+        if isinstance(other, basestring):
+            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
+            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
             other = other.labels
         unique_labels = []
@@ -1098,12 +1107,21 @@ class Axis(ABCAxis):
 
         Examples
         --------
-        >>> letters = Axis('letters=a,b')
-        >>> letters.intersection(Axis('letters=b,c'))
-        Axis(['b'], 'letters')
-        >>> letters.intersection(['b', 'c'])
-        Axis(['b'], 'letters')
+        >>> a = Axis('a=a0..a2')
+        >>> a.intersection('a1')
+        Axis(['a1'], 'a')
+        >>> a.intersection('a3')
+        Axis([], 'a')
+        >>> a.intersection(Axis('a=a1..a3'))
+        Axis(['a1', 'a2'], 'a')
+        >>> a.intersection('a1..a3')
+        Axis(['a1', 'a2'], 'a')
+        >>> a.intersection(['a1', 'a2', 'a3'])
+        Axis(['a1', 'a2'], 'a')
         """
+        if isinstance(other, basestring):
+            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
+            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
             other = other.labels
         to_keep = set(other)
@@ -1126,12 +1144,21 @@ class Axis(ABCAxis):
 
         Examples
         --------
-        >>> letters = Axis('letters=a,b')
-        >>> letters.difference(Axis('letters=b,c'))
-        Axis(['a'], 'letters')
-        >>> letters.difference(['b', 'c'])
-        Axis(['a'], 'letters')
+        >>> a = Axis('a=a0..a2')
+        >>> a.difference('a1')
+        Axis(['a0', 'a2'], 'a')
+        >>> a.difference('a3')
+        Axis(['a0', 'a1', 'a2'], 'a')
+        >>> a.difference(Axis('a=a1..a3'))
+        Axis(['a0'], 'a')
+        >>> a.difference('a1..a3')
+        Axis(['a0'], 'a')
+        >>> a.difference(['a1', 'a2', 'a3'])
+        Axis(['a0'], 'a')
         """
+        if isinstance(other, basestring):
+            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
+            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
             other = other.labels
         to_drop = set(other)
