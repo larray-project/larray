@@ -5863,29 +5863,29 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> from larray.tests.common import abspath
-        >>> fpath = abspath('test.csv')
+        >>> tmpdir = getfixture('tmpdir')
+        >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
         >>> a = ndrange('nat=BE,FO;sex=M,F')
         >>> a
         nat\\sex  M  F
              BE  0  1
              FO  2  3
-        >>> a.to_csv(fpath)
-        >>> with open(fpath) as f:
+        >>> a.to_csv(fname)
+        >>> with open(fname) as f:
         ...     print(f.read().strip())
         nat\\sex,M,F
         BE,0,1
         FO,2,3
-        >>> a.to_csv(fpath, sep=';', transpose=False)
-        >>> with open(fpath) as f:
+        >>> a.to_csv(fname, sep=';', transpose=False)
+        >>> with open(fname) as f:
         ...     print(f.read().strip())
         nat;sex;0
         BE;M;0
         BE;F;1
         FO;M;2
         FO;F;3
-        >>> a.to_csv(fpath, dialect='classic')
-        >>> with open(fpath) as f:
+        >>> a.to_csv(fname, dialect='classic')
+        >>> with open(fname) as f:
         ...     print(f.read().strip())
         nat,M,F
         BE,0,1

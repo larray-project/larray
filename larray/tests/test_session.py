@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import assert_array_nan_equal, abspath
+from larray.tests.common import assert_array_nan_equal, inputpath
 from larray import Session, Axis, LArray, ndrange, isnan, larray_equal, zeros_like
 from larray.util.misc import pickle
 
@@ -43,6 +43,13 @@ class TestSession(TestCase):
             ('e', self.e), ('g', self.g), ('f', self.f),
         ])
 
+    @pytest.fixture(autouse=True)
+    def output_dir(self, tmpdir_factory):
+        self.tmpdir = tmpdir_factory.mktemp('tmp_session').strpath
+
+    def get_path(self, fname):
+        return os.path.join(self.tmpdir, fname)
+
     def assertObjListEqual(self, got, expected):
         self.assertEqual(len(got), len(expected))
         for e1, e2 in zip(got, expected):
@@ -53,7 +60,7 @@ class TestSession(TestCase):
                     e=self.e, f=self.f, g=self.g)
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g'])
 
-        s = Session(abspath('test_session.h5'))
+        s = Session(inputpath('test_session.h5'))
         self.assertEqual(s.names, ['e', 'f', 'g'])
 
         # this needs xlwings installed
@@ -137,7 +144,7 @@ class TestSession(TestCase):
         self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
 
     def test_h5_io(self):
-        fpath = abspath('test_session.h5')
+        fpath = self.get_path('test_session.h5')
         self.session.save(fpath)
 
         s = Session()
@@ -156,7 +163,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'f'])
 
     def test_xlsx_pandas_io(self):
-        fpath = abspath('test_session.xlsx')
+        fpath = self.get_path('test_session.xlsx')
         self.session.save(fpath, engine='pandas_excel')
 
         s = Session()
@@ -169,7 +176,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
         assert_array_nan_equal(s['e'], self.e2)
 
-        fpath = abspath('test_session_ef.xlsx')
+        fpath = self.get_path('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
         s = Session()
         s.load(fpath, engine='pandas_excel')
@@ -177,7 +184,7 @@ class TestSession(TestCase):
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
-        fpath = abspath('test_session_xw.xlsx')
+        fpath = self.get_path('test_session_xw.xlsx')
         # test save when Excel file does not exist
         self.session.save(fpath, engine='xlwings_excel')
 
@@ -192,7 +199,7 @@ class TestSession(TestCase):
         self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
         assert_array_nan_equal(s['e'], self.e2)
 
-        fpath = abspath('test_session_ef_xw.xlsx')
+        fpath = self.get_path('test_session_ef_xw.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
         s = Session()
         s.load(fpath, engine='xlwings_excel')
@@ -200,7 +207,7 @@ class TestSession(TestCase):
 
     def test_csv_io(self):
         try:
-            fpath = abspath('test_session_csv')
+            fpath = self.get_path('test_session_csv')
             self.session.to_csv(fpath)
 
             # test loading a directory
@@ -233,7 +240,7 @@ class TestSession(TestCase):
             shutil.rmtree(fpath)
 
     def test_pickle_io(self):
-        fpath = abspath('test_session.pkl')
+        fpath = self.get_path('test_session.pkl')
         self.session.save(fpath)
 
         s = Session()

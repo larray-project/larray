@@ -5,9 +5,8 @@ from unittest import TestCase
 import pytest
 import numpy as np
 
-from larray.tests.common import abspath, assert_array_equal, assert_array_nan_equal
+from larray.tests.common import assert_array_equal
 from larray import Axis, LGroup, LSet
-from larray.core.group import Group
 
 
 class TestLGroup(TestCase):
