@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LGroup, LSet
+from larray import Axis, LGroup, LSet, ndtest
 
 
 class TestLGroup(TestCase):
@@ -97,6 +97,18 @@ class TestLGroup(TestCase):
         self.assertEqual(self.single_value, 'P03')
         self.assertEqual(self.list, ['P01', 'P03', 'P04'])
         self.assertEqual(self.list_named, ['P01', 'P03', 'P04'])
+
+    def test_getitem(self):
+        axis = Axis("a=a0,a1")
+        assert axis['a0'][0] == 'a'
+        assert axis['a0'][1] == '0'
+        assert axis['a0':'a1'][1] == 'a1'
+        assert axis[:][1] == 'a1'
+        assert list(axis[:][0:2]) == ['a0', 'a1']
+        assert list((axis[:][[1, 0]])) == ['a1', 'a0']
+        assert axis[['a0', 'a1', 'a0']][2] == 'a0'
+        assert axis[('a0', 'a1', 'a0')][2] == 'a0'
+        assert axis[ndtest("a=a0,a1,a0")][2] == 2
 
     def test_sorted(self):
         self.assertEqual(sorted(LGroup(['c', 'd', 'a', 'b'])),
@@ -234,6 +246,17 @@ class TestIGroup(TestCase):
 
         self._assert_array_equal_is_true_array(self.list, ['a0', 'a1', 'a3', 'a4'])
         self._assert_array_equal_is_true_array(self.tuple, ['a0', 'a1', 'a3', 'a4'])
+
+    def test_getitem(self):
+        axis = Axis("a=a0,a1")
+        assert axis.i[0][0] == 'a'
+        assert axis.i[0][1] == '0'
+        assert axis.i[0:1][1] == 'a1'
+        assert axis.i[:][1] == 'a1'
+        assert list(axis.i[:][0:2]) == ['a0', 'a1']
+        assert list((axis.i[:][[1, 0]])) == ['a1', 'a0']
+        assert axis.i[[0, 1, 0]][2] == 'a0'
+        assert axis.i[(0, 1, 0)][2] == 'a0'
 
     def test_getattr(self):
         agg = Axis(['a1:a2', ':a2', 'a1:'], 'agg')

@@ -146,4 +146,8 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed subscript a string LGroup key (closes :issue:`437`):
+
+    >>> axis = Axis("a=a0,a1")
+    >>> axis['a0'][0]
+    'a'
