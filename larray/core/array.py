@@ -1705,15 +1705,20 @@ class LArray(ABCLArray):
         IGroup
             Positional group with valid axes (from self.axes)
         """
+        axis_key = remove_nested_groups(axis_key)
 
         if isinstance(axis_key, Group) and axis_key.axis is not None:
             # retarget to real axis, if needed
             # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
             if isinstance(axis_key, IGroup):
-                axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
-
-        axis_key = remove_nested_groups(axis_key)
+                try:
+                    axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
+                except KeyError:
+                    # axis associated with axis_key may not belong to self.
+                    # In that case, we translate IGroup to labels and search for a compatible axis
+                    # (see end of this method)
+                    axis_key = axis_key.to_label()
 
         # already positional
         if isinstance(axis_key, IGroup):
@@ -1723,12 +1728,17 @@ class LArray(ABCLArray):
 
         # labels but known axis
         if isinstance(axis_key, LGroup) and axis_key.axis is not None:
-            real_axis = self.axes[axis_key.axis]
             try:
-                axis_pos_key = real_axis.index(axis_key, bool_passthrough)
+                real_axis = self.axes[axis_key.axis]
+                try:
+                    axis_pos_key = real_axis.index(axis_key, bool_passthrough)
+                except KeyError:
+                    raise ValueError("%r is not a valid label for any axis" % axis_key)
+                return real_axis.i[axis_pos_key]
             except KeyError:
-                raise ValueError("%r is not a valid label for any axis" % axis_key)
-            return real_axis.i[axis_pos_key]
+                # axis associated with axis_key may not belong to self.
+                # In that case, we need to search for a compatible axis as below
+                pass
 
         # otherwise we need to guess the axis
         # TODO: instead of checking all axes, we should have a big mapping

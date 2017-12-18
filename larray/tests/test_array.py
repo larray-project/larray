@@ -270,13 +270,21 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = arr[arr.b['l1']]
         assert_array_equal(res, arr.data[:, 0])
 
+        # scalar group on another axis
+        arr = ndtest((3, 2))
+        alt_a = Axis("alt_a=a1..a2")
+        lgroup = alt_a['a1']
+        assert_array_equal(arr[lgroup], arr['a1'])
+        pgroup = alt_a.i[0]
+        assert_array_equal(arr[pgroup], arr['a1'])
+
         # key with duplicate axes
         with self.assertRaises(ValueError):
             la[age[1, 2], age[3, 4]]
 
         # key with invalid axis
         bad = Axis(3, 'bad')
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             la[bad[1, 2], age[3, 4]]
 
     def test_getitem_abstract_axes(self):
@@ -315,7 +323,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
             la[X.age[1, 2], X.age[3]]
 
         # key with invalid axis
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             la[X.bad[1, 2], X.age[3, 4]]
 
     def test_getitem_anonymous_axes(self):
