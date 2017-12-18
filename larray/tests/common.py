@@ -7,18 +7,16 @@ from larray import LArray, isnan, aslarray
 
 TESTDATADIR = os.path.dirname(__file__)
 
-
-def abspath(relpath):
-    """
-    :param relpath: path relative to current module
-    :return: absolute path
-    """
-    return os.path.join(TESTDATADIR, relpath)
-
 def inputpath(relpath):
     """
-    :param relpath: path relative to current module
-    :return: absolute path to input data files
+    Parameters
+    ----------
+    relpath: str
+        path relative to current module
+
+    Returns
+    -------
+    absolute path to input data file
     """
     return os.path.join(TESTDATADIR, 'data', relpath)
 

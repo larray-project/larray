@@ -92,7 +92,7 @@ class TestLArray(TestCase):
     def setup(self, tmpdir):
         self.tmpdir = tmpdir.strpath
 
-    def get_path(self, fname):
+    def tmp_path(self, fname):
         return os.path.join(self.tmpdir, fname)
 
     def test_ndrange(self):
@@ -2515,7 +2515,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_hdf_roundtrip(self):
         a = ndtest((2, 3))
-        fpath = self.get_path('test.h5')
+        fpath = self.tmp_path('test.h5')
         a.to_hdf(fpath, 'a')
         res = read_hdf(fpath, 'a')
 
@@ -2525,7 +2525,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(res, a)
 
         # issue 72: int-like strings should not be parsed (should round-trip correctly)
-        fpath = self.get_path('issue72.h5')
+        fpath = self.tmp_path('issue72.h5')
         a = from_lists([['axis', '10', '20'],
                         ['',        0,    1]])
         a.to_hdf(fpath, 'a')
@@ -2537,7 +2537,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # passing group as key to to_hdf
         a3 = ndtest((4, 3, 4))
-        fpath = self.get_path('test.h5')
+        fpath = self.tmp_path('test.h5')
         os.remove(fpath)
         # single element group
         for label in a3.a:
@@ -3172,29 +3172,29 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
                            [3722, 3395, 3347])
 
-        la.to_csv(self.get_path('out.csv'))
+        la.to_csv(self.tmp_path('out.csv'))
         result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
                   '1,0,F,1,3722,3395,3347\n',
                   '1,0,F,2,338,316,323\n']
-        with open(self.get_path('out.csv')) as f:
+        with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la.to_csv(self.get_path('out.csv'), transpose=False)
+        la.to_csv(self.tmp_path('out.csv'), transpose=False)
         result = ['arr,age,sex,nat,time,0\n',
                   '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
-        with open(self.get_path('out.csv')) as f:
+        with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
         la = ndrange([Axis('time=2015..2017')])
-        la.to_csv(self.get_path('test_out1d.csv'))
+        la.to_csv(self.tmp_path('test_out1d.csv'))
         result = ['time,2015,2016,2017\n',
                   ',0,1,2\n']
-        with open(self.get_path('test_out1d.csv')) as f:
+        with open(self.tmp_path('test_out1d.csv')) as f:
             self.assertEqual(f.readlines(), result)
 
     def test_to_excel_xlsxwriter(self):
-        fpath = self.get_path('test_to_excel_xlsxwriter.xlsx')
+        fpath = self.tmp_path('test_to_excel_xlsxwriter.xlsx')
 
         # 1D
         a1 = ndtest(3)
@@ -3323,7 +3323,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_to_excel_xlwings(self):
-        fpath = self.get_path('test_to_excel_xlwings.xlsx')
+        fpath = self.tmp_path('test_to_excel_xlwings.xlsx')
 
         # 1D
         a1 = ndtest(3)
@@ -3582,7 +3582,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # 5) crash test
         # =============
         arr = ndtest((2, 2))
-        fpath = self.get_path('temporary_test_file.xlsx')
+        fpath = self.tmp_path('temporary_test_file.xlsx')
         # create and save a test file
         with open_excel(fpath, overwrite_file=True) as wb:
             wb['arr'] = arr.dump()
