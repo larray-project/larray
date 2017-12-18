@@ -494,6 +494,14 @@ Excel
 
    open_excel
 
+.. autosummary::
+   :toctree: _generated/
+
+   Workbook
+   Workbook.sheet_names
+   Workbook.save
+   Workbook.close
+
 .. _api-misc:
 
 Miscellaneous
