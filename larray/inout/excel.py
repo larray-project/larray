@@ -1,3 +1,9 @@
+# -*- coding: utf8 -*-
+from __future__ import absolute_import, print_function
+
+__all__ = ['open_excel', 'Workbook']
+
+
 import os
 import atexit
 
@@ -9,8 +15,9 @@ except ImportError:
 
 from larray.core.group import _translate_sheet_name
 from larray.core.axis import Axis
-from larray.core.array import LArray
+from larray.core.array import LArray, ndtest
 from larray.inout.array import df_aslarray, from_lists
+from larray.util.misc import PY2
 
 string_types = (str,)
 
@@ -59,7 +66,6 @@ if xw is not None:
     # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
-            """See open_excel doc for parameters"""
             global global_app
 
             xw_wkb = None
@@ -226,10 +232,8 @@ if xw is not None:
             self.xw_wkb.save(path=path)
 
         def close(self):
-            """
-            Close the workbook in Excel. This will not quit the Excel instance, even if this was the last workbook of
-            that Excel instance.
-            """
+            # Close the workbook in Excel.
+            # This will not quit the Excel instance, even if this was the last workbook of that Excel instance.
             if self.filepath is not None and os.path.isfile(self.xw_wkb.fullname):
                 tmp_file = self.xw_wkb.fullname
                 self.xw_wkb.close()
@@ -555,12 +559,91 @@ if xw is not None:
             else:
                 return LArray(list_data)
 
-    # XXX: remove this function?
+    # XXX: deprecate this function?
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
         return Workbook(filepath, overwrite_file, visible, silent, app)
 else:
+    class Workbook(object):
+        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
+            raise Exception("Workbook class cannot be instanciated because xlwings is not installed")
+
+        def sheet_names(self):
+            raise Exception()
+
+        def save(self, path=None):
+            raise Exception()
+
+        def close(self):
+            raise Exception()
+
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
         raise Exception("open_excel() is not available because xlwings is not installed")
+
+
+# We define Workbook and open_excel documentation here since Readthedocs runs on Linux
+if not PY2:
+    Workbook.__doc__ = """
+Excel Workbook.
+
+See Also
+--------
+open_excel
+"""
+
+    Workbook.sheet_names.__doc__ = """
+Returns the names of the Excel sheets.
+
+Examples
+--------
+>>> arr, arr2, arr3 = ndtest((3, 3)), ndtest((2, 2)), ndtest(4)
+>>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
+...     wb['arr'] = arr.dump()
+...     wb['arr2'] = arr2.dump()
+...     wb['arr3'] = arr3.dump()
+...     wb.save()
+... 
+...     wb.sheet_names()
+['arr', 'arr2', 'arr3']
+"""
+
+    Workbook.save.__doc__ = """
+Saves the Workbook. 
+
+If a path is being provided, this works like SaveAs() in Excel. 
+If no path is specified and if the file hasn’t been saved previously, 
+it’s being saved in the current working directory with the current filename. 
+Existing files are overwritten without prompting.
+
+Parameters
+----------
+path : str, optional
+    Full path to the workbook. Defaults to None.
+    
+Examples
+--------
+>>> arr, arr2, arr3 = ndtest((3, 3)), ndtest((2, 2)), ndtest(4)
+>>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
+...     wb['arr'] = arr.dump()
+...     wb['arr2'] = arr2.dump()
+...     wb['arr3'] = arr3.dump()
+...     wb.save()
+"""
+
+    Workbook.close.__doc__ = """
+Close the workbook in Excel.
+
+Need to be called if the workbook has been opened without the `with` statement.
+
+Examples
+--------
+>>> arr, arr2, arr3 = ndtest((3, 3)), ndtest((2, 2)), ndtest(4)   # doctest: +SKIP
+>>> wb = open_excel('excel_file.xlsx', overwrite_file=True)       # doctest: +SKIP
+>>> wb['arr'] = arr.dump()                                        # doctest: +SKIP
+>>> wb['arr2'] = arr2.dump()                                      # doctest: +SKIP
+>>> wb['arr3'] = arr3.dump()                                      # doctest: +SKIP
+>>> wb.save()                                                     # doctest: +SKIP
+>>> wb.close()                                                    # doctest: +SKIP
+"""
 
 open_excel.__doc__ = """
 Open an Excel workbook
@@ -592,7 +675,6 @@ Excel workbook.
 
 Examples
 --------
->>> from larray import *
 >>> arr = ndtest((3, 3))
 >>> arr
 a\\b  b0  b1  b2
