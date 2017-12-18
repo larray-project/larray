@@ -971,7 +971,7 @@ class Group(object):
         elif isinstance(orig_key, ABCLArray):
             # XXX: why .i ?
             return cls(orig_key.i[key], None, self.axis)
-        elif isinstance(orig_key, int):
+        elif np.isscalar(orig_key):
             # give the opportunity to subset the label/key itself (for example for string keys)
             value = self.eval()
             return value[key]
