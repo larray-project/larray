@@ -7,13 +7,19 @@ from larray import LArray, isnan, aslarray
 
 TESTDATADIR = os.path.dirname(__file__)
 
+def inputpath(relpath):
+    """
+    Parameters
+    ----------
+    relpath: str
+        path relative to current module
 
-def abspath(relpath):
+    Returns
+    -------
+    absolute path to input data file
     """
-    :param relpath: path relative to current module
-    :return: absolute path
-    """
-    return os.path.join(TESTDATADIR, relpath)
+    return os.path.join(TESTDATADIR, 'data', relpath)
+
 
 # XXX: maybe we should force value groups to use tuple and families (group of groups to use lists, or vice versa, so
 # that we know which is which) or use a class, just for that? group(a, b, c) vs family(group(a), b, c)
