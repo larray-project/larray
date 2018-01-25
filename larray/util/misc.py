@@ -20,6 +20,10 @@ except ImportError:
     izip = zip
 
 import numpy as np
+try:
+    np.set_printoptions(legacy='1.13')
+except TypeError:
+    pass
 
 if sys.version_info[0] < 3:
     basestring = basestring
