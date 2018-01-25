@@ -119,6 +119,27 @@ New features
 
   Closes :issue:`488` and :issue:`518`.
 
+* added `Load from Script` in the File menu of the editor allowing to load commands from an
+  existing Python file (closes :editor_issue:`96`).
+
+* added `Edit` menu allowing to undo and redo changes of array values by editing cells and
+  removed `Apply` and `Discard` buttons. Changes are now kept when switching from an array to another
+  instead of losing them as previously (closes :editor_issue:`32`).
+
+* allowed to provide an absolute or relative tolerance value when comparing arrays through the `compare` function
+  (closes :editor_issue:`131`).
+
+* made the editor able to detect and display plot objects stored in tuple, list or arrays.
+  For example, arrays of plot objects are returned when using `subplots=True` option in calls of `plot` method:
+
+    >>> a = ndtest('sex=M,F; nat=BE,FO; year=2000..2017')
+    >>> # display 4 plots vertically placed (one plot for each pair (sex, nationality))
+    >>> a.plot(subplots=True)
+    >>> # display 4 plots ordered in a 2 x 2 grid
+    >>> a.plot(subplots=True, layout=(2, 2))
+
+  Closes :editor_issue:`135`.
+
 
 Miscellaneous improvements
 --------------------------
@@ -345,6 +366,9 @@ Miscellaneous improvements
 
     >>> Axis('zero_padding=01,02,03,10,11,12')
     Axis(['01', '02', '03', '10', '11', '12'], 'zero_padding')
+
+* added a dropdown menu containing recently used files in dialog boxes of `Save Command History To Script`
+  and `Load from Script` from File menu.
 
 
 Fixes
