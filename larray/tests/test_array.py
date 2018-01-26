@@ -282,9 +282,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
         with self.assertRaises(ValueError):
             la[age[1, 2], age[3, 4]]
 
-        # key with invalid axis
+        # key with lgroup from another axis leading to duplicate axis
         bad = Axis(3, 'bad')
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             la[bad[1, 2], age[3, 4]]
 
     def test_getitem_abstract_axes(self):
