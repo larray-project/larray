@@ -1712,9 +1712,9 @@ class LArray(ABCLArray):
             # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
             if isinstance(axis_key, IGroup):
-                try:
+                if axis_key.axis in self.axes:
                     axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
-                except KeyError:
+                else:
                     # axis associated with axis_key may not belong to self.
                     # In that case, we translate IGroup to labels and search for a compatible axis
                     # (see end of this method)
@@ -1737,8 +1737,9 @@ class LArray(ABCLArray):
                 return real_axis.i[axis_pos_key]
             except KeyError:
                 # axis associated with axis_key may not belong to self.
-                # In that case, we need to search for a compatible axis as below
-                pass
+                # In that case, we translate LGroup to labels and search for a compatible axis
+                # (see end of this method)
+                axis_key = axis_key.to_label()
 
         # otherwise we need to guess the axis
         # TODO: instead of checking all axes, we should have a big mapping
