@@ -151,7 +151,7 @@ Miscellaneous improvements
      a0   3   4   5
      a1   6   7   8
      a2   9  10  11
-     
+
     Apply binary operations between two sessions
 
     >>> sdiff = (s2 - s) / s
@@ -205,6 +205,20 @@ Miscellaneous improvements
 
 Fixes
 -----
+
+* fixed passing a scalar group from an external axis to get a subset of an array (closes :issue:`178`):
+
+    >>> arr = ndtest((3, 2))
+    >>> arr['a1']
+    b  b0  b1
+        2   3
+    >>> alt_a = Axis("alt_a=a1..a2")
+    >>> arr[alt_a['a1']]
+    b  b0  b1
+        2   3
+    >>> arr[alt_a.i[0]]
+    b  b0  b1
+        2   3
 
 * fixed subscript a string LGroup key (closes :issue:`437`):
 
