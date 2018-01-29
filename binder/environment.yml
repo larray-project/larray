@@ -1,0 +1,10 @@
+name: larray-binder
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - pytables
+  - larray
