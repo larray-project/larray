@@ -41,6 +41,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.extlinks',
     'numpydoc',
+    'nbsphinx',
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting'
@@ -58,6 +59,36 @@ autosummary_generate = True
 numpydoc_class_members_toctree = True
 # avoid pulling in base class (ndarray) methods
 numpydoc_show_class_members = False
+
+# ==============================================================
+
+# There are three possible settings, "always", "auto" and "never".
+# By default (= "auto"), notebooks with no outputs are executed and notebooks with
+# at least one output are not.
+# nbsphinx_execute = 'auto'
+
+# Normally, if an exception is raised while executing a notebook,
+# the Sphinx build process is stopped immediately.
+# However, it is possible to allow errors in all notebooks using option bellow
+nbsphinx_allow_errors = True
+
+# This is processed by Jinja2 and inserted before each notebook
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base='doc') %}
+
+.. only:: html
+
+    .. role:: raw-html(raw)
+        :format: html
+        
+    .. nbinfo::
+        Interactive online version:
+        :raw-html:`<a href="https://mybinder.org/v2/gh/liam2/larray/{{ env.config.release }}?
+        filepath={{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge.svg" 
+        style="vertical-align:text-bottom"></a>`
+
+    __ https://github.com/liam2/larray/blob/{{ env.config.release }}/{{ docname }}
+"""
 
 # ==============================================================
 
