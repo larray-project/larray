@@ -12,3 +12,5 @@ dependencies:
   - numpydoc
   - pandoc
   - ipython
+  - ipykernel
+  - nbsphinx
