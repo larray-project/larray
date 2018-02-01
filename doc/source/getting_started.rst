@@ -161,7 +161,7 @@ Let's continue with subsets:
     When several axes have common labels and you do not specify explicitly
     on which axis to work, it fails with an error
     (ValueError: ... is ambiguous (valid in a, b)).
-    Specifying the axis can be done using the special notation ``x.axis_name``.
+    Specifying the axis can be done using the special notation ``X.axis_name``.
     The axis name must not contain whitespaces and special characters.
 
 .. ipython:: python
@@ -171,7 +171,7 @@ Let's continue with subsets:
     arr2
 
     # equivalent to: arr2["label0", "b[label1]"]
-    arr2["label0", x.b["label1"]]
+    arr2["label0", X.b["label1"]]
 
 You can also define slices (defined by 'start:stop' or 'start:stop:step').
 A slice will select all labels between `start` and `stop` (stop included).
@@ -200,7 +200,7 @@ For example, to calculate the sum along an axis, write:
     arr_3D
 
     # equivalent to: arr_3D.sum("a")
-    arr_3D.sum(x.a)
+    arr_3D.sum(X.a)
 
 To aggregate along all axes except one, you simply have to append `_by`
 to the aggregation method you want to use:
@@ -208,7 +208,7 @@ to the aggregation method you want to use:
 .. ipython:: python
 
     # equivalent to: arr_3D.sum_by("a")
-    arr_3D.sum_by(x.a)
+    arr_3D.sum_by(X.a)
 
 See :ref:`here <la_agg>` to get the list of all available aggregation methods.
 
@@ -221,10 +221,10 @@ A :ref:`Group <api-group>` represents a subset of labels or positions of an axis
 
     arr
 
-    even = x.a["a0", "a2"]
+    even = X.a["a0", "a2"]
     even
 
-    odd = x.a["a1", "a3"]
+    odd = X.a["a1", "a3"]
     odd
 
 They can be used in selections:
