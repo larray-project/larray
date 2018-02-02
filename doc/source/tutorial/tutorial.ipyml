@@ -1499,6 +1499,9 @@ metadata:
     nbconvert_exporter: python
     pygments_lexer: ipython3
     version: 3.6.3
+  livereveal:
+    autolaunch: true
+    scroll: true
 nbformat: 4
 nbformat_minor: 2
 
