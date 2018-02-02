@@ -1,5 +1,6 @@
 name: larray-binder
 channels:
+  - damianavila82    # rise
   - conda-forge
   - defaults
 dependencies:
@@ -7,4 +8,6 @@ dependencies:
   - pandas
   - matplotlib
   - pytables
+  - bokeh
+  - rise
   - larray
