@@ -211,7 +211,6 @@ Miscellaneous improvements
      a0   0   0
      a1   1   1
 
-
 * renamed argument `nb_index` of `read_csv`, `read_excel`, `read_sas`, `from_lists` and `from_string` functions
   as `nb_axes`. The relation between `nb_index` and `nb_axes` is given by `nb_axes = nb_index + 1`:
 
@@ -233,6 +232,40 @@ Miscellaneous improvements
     >>> arr = read_csv('arr.csv', nb_axes=3)
 
   Closes :issue:`548`:
+
+* renamed argument `transpose` by `wide` in `to_csv` method.
+
+* added argument `wide` in `to_excel` method. When argument `wide` is set to False, the array is exported
+  in "narrow" format, i.e. one column per axis plus one value column:
+
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+
+  Default behavior (`wide=True`):
+
+    >>> arr.to_excel('my_file.xlsx')
+
+    a\b  b0  b1  b2
+    a0    0   1   2
+    a1    3   4   5
+
+  With `wide=False`:
+
+    >>> arr.to_excel('my_file.xlsx', wide=False)
+
+     a   b  value
+    a0  b0      0
+    a0  b1      1
+    a0  b2      2
+    a1  b0      3
+    a1  b1      4
+    a1  b2      5
+
+  Argument `transpose` has a different purpose than `wide` and is mainly useful to allow multiple axes as header
+  when exporting arrays with more than 2 dimensions. Closes :issue:`575` and :issue:`371`.
 
 
 Fixes
