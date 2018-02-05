@@ -975,12 +975,14 @@ class LArray(ABCLArray):
         return df
     df = property(to_frame)
 
-    def to_series(self, dropna=False):
+    def to_series(self, name=None, dropna=False):
         """
         Converts LArray into Pandas Series.
 
         Parameters
         ----------
+        name : str, optional
+            Name of the series. Defaults to None.
         dropna : bool, optional.
             False by default.
 
@@ -991,6 +993,10 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> arr = ndtest((2, 3), dtype=float)
+        >>> arr
+        a\\b   b0   b1   b2
+         a0  0.0  1.0  2.0
+         a1  3.0  4.0  5.0
         >>> arr.to_series() # doctest: +NORMALIZE_WHITESPACE
         a   b
         a0  b0    0.0
@@ -1000,9 +1006,36 @@ class LArray(ABCLArray):
             b1    4.0
             b2    5.0
         dtype: float64
+
+        Set a name
+
+        >>> arr.to_series('my_name') # doctest: +NORMALIZE_WHITESPACE
+                a   b
+        a0  b0    0.0
+            b1    1.0
+            b2    2.0
+        a1  b0    3.0
+            b1    4.0
+            b2    5.0
+        Name: my_name, dtype: float64
+
+        Drop nan values
+
+        >>> arr['b1'] = np.nan
+        >>> arr
+        a\\b   b0   b1   b2
+         a0  0.0  nan  2.0
+         a1  3.0  nan  5.0
+        >>> arr.to_series(dropna=True) # doctest: +NORMALIZE_WHITESPACE
+        a   b
+        a0  b0    0.0
+            b2    2.0
+        a1  b0    3.0
+            b2    5.0
+        dtype: float64
         """
         index = pd.MultiIndex.from_product([axis.labels for axis in self.axes], names=self.axes.names)
-        series = pd.Series(np.asarray(self).reshape(self.size), index)
+        series = pd.Series(np.asarray(self).reshape(self.size), index, name=name)
         if dropna:
             series.dropna(inplace=True)
         return series
@@ -5874,7 +5907,7 @@ class LArray(ABCLArray):
             frame = self.to_frame(fold, dropna)
             frame.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
         else:
-            series = self.to_series(dropna is not None)
+            series = self.to_series(dropna=dropna is not None)
             series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True, **kwargs)
 
     def to_hdf(self, filepath, key, *args, **kwargs):
