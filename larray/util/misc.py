@@ -631,8 +631,8 @@ def renamed_to(newfunc, old_name, stacklevel=2):
     return wrapper
 
 # deprecate_kwarg is derived from pandas.util._decorators (0.21)
-def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, stacklevel=2):
-    if not isinstance(mapping, dict):
+def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None, stacklevel=2):
+    if mapping is not None and not isinstance(mapping, dict):
         raise TypeError("mapping from old to new argument values must be dict!")
     def _deprecate_kwarg(func):
         @wraps(func)
@@ -641,13 +641,13 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, stacklevel=2):
             if old_arg_value is not None:
                 if mapping is not None:
                     new_arg_value = mapping.get(old_arg_value, old_arg_value)
-                    msg = "The {old_name}={old_val!r} keyword is deprecated, use {new_name}={new_val!r} instead"\
-                        .format(old_name=old_arg_name, old_val=old_arg_value, new_name=new_arg_name,
-                                new_val=new_arg_value)
+                elif arg_converter is not None:
+                    new_arg_value = arg_converter(old_arg_value)
                 else:
                     new_arg_value = old_arg_value
-                    msg = "The '{old_name}' keyword is deprecated, use '{new_name}' instead"\
-                        .format(old_name=old_arg_name, new_name=new_arg_name)
+                msg = "The {old_name}={old_val!r} keyword is deprecated, use {new_name}={new_val!r} instead"\
+                    .format(old_name=old_arg_name, old_val=old_arg_value, new_name=new_arg_name,
+                            new_val=new_arg_value)
 
                 warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
                 if new_arg_name in kwargs:
