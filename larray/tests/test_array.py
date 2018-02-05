@@ -3187,7 +3187,8 @@ age    0       1       2       3       4       5       6       7        8  ...  
         with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la.to_csv(self.tmp_path('out.csv'), transpose=False)
+        # stacked data (one column containing all the values and another column listing the context of the value)
+        la.to_csv(self.tmp_path('out.csv'), wide=False)
         result = ['arr,age,sex,nat,time,0\n',
                   '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
@@ -3216,6 +3217,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
         res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
+
+        # fpath/Sheet1/A1
+        # stacked data (one column containing all the values and another column listing the context of the value)
+        a1.to_excel(fpath, wide=False, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
+        stacked_a1 = a1.reshape([a1.a, Axis([0])])
+        assert_array_equal(res, stacked_a1)
 
         # 2D
         a2 = ndtest((2, 3))
@@ -3269,6 +3277,13 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
         res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
+
+        # fpath/Sheet1/A1
+        # stacked data (one column containing all the values and another column listing the context of the value)
+        a1.to_excel(fpath, wide=False, engine='xlsxwriter')
+        res = read_excel(fpath, engine='xlrd')
+        stacked_a1 = a1.reshape([a1.a, Axis([0])])
+        assert_array_equal(res, stacked_a1)
 
         # 2D
         a2 = ndtest((2, 3))
@@ -3349,6 +3364,12 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # fpath/Sheet1/A1(transposed)
         a1.to_excel(fpath, transpose=True, engine='xlwings')
+        res = read_excel(fpath, engine='xlrd')
+        assert_array_equal(res, a1)
+
+        # fpath/Sheet1/A1
+        # stacked data (one column containing all the values and another column listing the context of the value)
+        a1.to_excel(fpath, wide=False, engine='xlwings')
         res = read_excel(fpath, engine='xlrd')
         assert_array_equal(res, a1)
 
