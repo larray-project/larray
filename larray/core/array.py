@@ -5816,7 +5816,8 @@ class LArray(ABCLArray):
         from larray.core.ufuncs import clip
         return clip(self, a_min, a_max, out)
 
-    def to_csv(self, filepath, sep=',', na_rep='', transpose=True, dropna=None, dialect='default', **kwargs):
+    @deprecate_kwarg('transpose', 'wide')
+    def to_csv(self, filepath, sep=',', na_rep='', wide=True, dropna=None, dialect='default', **kwargs):
         """
         Writes array to a csv file.
 
@@ -5824,15 +5825,16 @@ class LArray(ABCLArray):
         ----------
         filepath : str
             path where the csv file has to be written.
-        sep : str
-            seperator for the csv file.
-        na_rep : str
-            replace NA values with na_rep.
-        transpose : boolean
-            transpose = True  => transpose over last axis.
-            transpose = False => no transpose.
-        dialect : 'default' | 'classic'
-            Whether or not to write the last axis name (using '\' )
+        sep : str, optional
+            separator for the csv file. Defaults to `,`.
+        na_rep : str, optional
+            replace NA values with na_rep. Defaults to ''.
+        wide : boolean, optional
+            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
+            value column. Defaults to True.
+        dialect : 'default' | 'classic', optional
+            Whether or not to write the last axis name (using '\' ). Defaults to 'default'.
         dropna : None, 'all', 'any' or True, optional
             Drop lines if 'all' its values are NA, if 'any' value is NA or do not drop any line (default).
             True is equivalent to 'all'.
@@ -5852,7 +5854,7 @@ class LArray(ABCLArray):
         nat\\sex,M,F
         BE,0,1
         FO,2,3
-        >>> a.to_csv(fname, sep=';', transpose=False)
+        >>> a.to_csv(fname, sep=';', wide=False)
         >>> with open(fname) as f:
         ...     print(f.read().strip())
         nat;sex;0
@@ -5868,7 +5870,7 @@ class LArray(ABCLArray):
         FO,2,3
         """
         fold = dialect == 'default'
-        if transpose:
+        if wide:
             frame = self.to_frame(fold, dropna)
             frame.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
         else:
@@ -5900,7 +5902,7 @@ class LArray(ABCLArray):
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
-                 header=True, transpose=False, engine=None, *args, **kwargs):
+                 header=True, transpose=False, wide=True, engine=None, *args, **kwargs):
         """
         Writes array in the specified sheet of specified excel workbook.
 
@@ -5923,8 +5925,12 @@ class LArray(ABCLArray):
         header : bool, optional
             Whether or not to write a header (axes names and labels). Defaults to True.
         transpose : bool, optional
-            Whether or not to transpose the resulting array. This can be used, for example, for writing one dimensional
-            arrays vertically. Defaults to False.
+            Whether or not to transpose the array transpose over last axis.
+            This is equivalent to paste with option transpose in Excel. Defaults to False.
+        wide : boolean, optional
+            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
+            value column. Defaults to True.
         engine : 'xlwings' | 'openpyxl' | 'xlsxwriter' | 'xlwt' | None, optional
             Engine to use to make the output. If None (default), it will use 'xlwings' by default if the module is
             installed and relies on Pandas default writer otherwise.
@@ -5943,7 +5949,11 @@ class LArray(ABCLArray):
         """
         sheet_name = _translate_sheet_name(sheet_name)
 
-        df = self.to_frame(fold_last_axis_name=True)
+        if wide:
+            pd_obj = self.to_frame(fold_last_axis_name=True)
+        else:
+            pd_obj = self.to_series()
+
         if engine is None:
             engine = 'xlwings' if xw is not None else None
 
@@ -5977,7 +5987,7 @@ class LArray(ABCLArray):
                 sheet = wb.sheets.add(sheet_name, after=wb.sheets[-1])
 
             options = dict(header=header, index=header, transpose=transpose)
-            sheet[position].options(**options).value = df
+            sheet[position].options(**options).value = pd_obj
             # TODO: implement transpose via/in dump
             # sheet[position] = self.dump(header=header, transpose=transpose)
             if close:
@@ -5988,7 +5998,7 @@ class LArray(ABCLArray):
                 sheet_name = 'Sheet1'
             # TODO: implement position in this case
             # startrow, startcol
-            df.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
+            pd_obj.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """Sends the content of the array to clipboard.
