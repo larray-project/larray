@@ -267,6 +267,8 @@ Miscellaneous improvements
   Argument `transpose` has a different purpose than `wide` and is mainly useful to allow multiple axes as header
   when exporting arrays with more than 2 dimensions. Closes :issue:`575` and :issue:`371`.
 
+* added argument `name` to `to_series` method allowing to set a name to the Pandas Series returned by the method.
+
 
 Fixes
 -----
