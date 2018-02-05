@@ -5850,7 +5850,7 @@ class LArray(ABCLArray):
         return clip(self, a_min, a_max, out)
 
     @deprecate_kwarg('transpose', 'wide')
-    def to_csv(self, filepath, sep=',', na_rep='', wide=True, dropna=None, dialect='default', **kwargs):
+    def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None, dialect='default', **kwargs):
         """
         Writes array to a csv file.
 
@@ -5866,6 +5866,9 @@ class LArray(ABCLArray):
             Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Defaults to True.
+        value_name : str, optional
+            Name of the column containing the values (last column) in the csv file when `wide=False` (see above).
+            Defaults to 'value'.
         dialect : 'default' | 'classic', optional
             Whether or not to write the last axis name (using '\' ). Defaults to 'default'.
         dropna : None, 'all', 'any' or True, optional
@@ -5890,7 +5893,15 @@ class LArray(ABCLArray):
         >>> a.to_csv(fname, sep=';', wide=False)
         >>> with open(fname) as f:
         ...     print(f.read().strip())
-        nat;sex;0
+        nat;sex;value
+        BE;M;0
+        BE;F;1
+        FO;M;2
+        FO;F;3
+        >>> a.to_csv(fname, sep=';', wide=False, value_name='population')
+        >>> with open(fname) as f:
+        ...     print(f.read().strip())
+        nat;sex;population
         BE;M;0
         BE;F;1
         FO;M;2
@@ -5907,7 +5918,7 @@ class LArray(ABCLArray):
             frame = self.to_frame(fold, dropna)
             frame.to_csv(filepath, sep=sep, na_rep=na_rep, **kwargs)
         else:
-            series = self.to_series(dropna=dropna is not None)
+            series = self.to_series(value_name, dropna is not None)
             series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True, **kwargs)
 
     def to_hdf(self, filepath, key, *args, **kwargs):
@@ -5935,7 +5946,7 @@ class LArray(ABCLArray):
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
     def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
-                 header=True, transpose=False, wide=True, engine=None, *args, **kwargs):
+                 header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
         """
         Writes array in the specified sheet of specified excel workbook.
 
@@ -5964,6 +5975,9 @@ class LArray(ABCLArray):
             Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Defaults to True.
+        value_name : str, optional
+            Name of the column containing the values (last column) in the Excel sheet when `wide=False` (see above).
+            Defaults to 'value'.
         engine : 'xlwings' | 'openpyxl' | 'xlsxwriter' | 'xlwt' | None, optional
             Engine to use to make the output. If None (default), it will use 'xlwings' by default if the module is
             installed and relies on Pandas default writer otherwise.
@@ -5985,7 +5999,7 @@ class LArray(ABCLArray):
         if wide:
             pd_obj = self.to_frame(fold_last_axis_name=True)
         else:
-            pd_obj = self.to_series()
+            pd_obj = self.to_series(value_name)
 
         if engine is None:
             engine = 'xlwings' if xw is not None else None
@@ -6021,8 +6035,8 @@ class LArray(ABCLArray):
 
             options = dict(header=header, index=header, transpose=transpose)
             sheet[position].options(**options).value = pd_obj
-            # TODO: implement transpose via/in dump
-            # sheet[position] = self.dump(header=header, transpose=transpose)
+            # TODO: implement wide via/in dump
+            # sheet[position] = self.dump(header=header, wide=wide)
             if close:
                 wb.save()
                 wb.close()
