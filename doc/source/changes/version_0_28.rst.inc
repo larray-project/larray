@@ -212,6 +212,29 @@ Miscellaneous improvements
      a1   1   1
 
 
+* renamed argument `nb_index` of `read_csv`, `read_excel`, `read_sas`, `from_lists` and `from_string` functions
+  as `nb_axes`. The relation between `nb_index` and `nb_axes` is given by `nb_axes = nb_index + 1`:
+
+  For a given file 'arr.csv' with content ::
+
+  a,b\c,c0,c1
+  a0,b0,0,1
+  a0,b1,2,3
+  a1,b0,4,5
+  a1,b1,6,7
+
+  previous code to read this array such as :
+
+    >>> # deprecated
+    >>> arr = read_csv('arr.csv', nb_index=2)
+
+  must be updated as follow :
+
+    >>> arr = read_csv('arr.csv', nb_axes=3)
+
+  Closes :issue:`548`:
+
+
 Fixes
 -----
 
