@@ -10,7 +10,8 @@ from itertools import product
 from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
 from larray.core.group import _translate_sheet_name, _translate_key_hdf
-from larray.util.misc import basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique
+from larray.util.misc import (basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique,
+                              deprecate_kwarg)
 
 try:
     import xlwings as xw
@@ -248,7 +249,8 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
                           unfold_last_axis_name=unfold_last_axis_name, **kwargs)
 
 
-def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
+@deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
              na=np.nan, sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
@@ -267,10 +269,13 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
     ----------
     filepath_or_buffer : str or any file-like object
         Path where the csv file has to be read or a file handle.
-    nb_index : int, optional
-        Number of leading index columns (ex. 4).
+    nb_axes : int, optional
+        Number of axes of output array. The first `nb_axes` - 1 columns and the header of the CSV file will be used
+        to set the axes of the output array. If not specified, the number of axes is given by the position of the
+        column header including the character `\` plus one. If no column header includes the character `\`, the array
+        is assumed to have one axis. Defaults to None.
     index_col : list, optional
-        List of columns for the index (ex. [0, 1, 2, 3]).
+        Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str, optional
         Separator.
     headersep : str or None, optional
@@ -309,7 +314,7 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
          FO  3  2
     >>> fname = 'no_axis_name.csv'
     >>> a.to_csv(fname, dialect='classic')
-    >>> read_csv(fname, nb_index=1)
+    >>> read_csv(fname, nb_axes=2)
     nat\\{1}  M  F
          BE  0  1
          FO  2  3
@@ -328,18 +333,18 @@ def read_csv(filepath_or_buffer, nb_index=None, index_col=None, sep=',', headers
             line_stream = skip_comment_cells(strip_rows(reader))
             axes_names = next(line_stream)
 
-        if nb_index is not None or index_col is not None:
-            raise ValueError("nb_index and index_col are not compatible with dialect='liam2'")
+        if nb_axes is not None or index_col is not None:
+            raise ValueError("nb_axes and index_col are not compatible with dialect='liam2'")
         if len(axes_names) > 1:
-            nb_index = len(axes_names) - 1
+            nb_axes = len(axes_names)
         # use the second data line for column headers (excludes comments and blank lines before counting)
         kwargs['header'] = 1
         kwargs['comment'] = '#'
 
-    if nb_index is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_index and index_col")
-    elif nb_index is not None:
-        index_col = list(range(nb_index))
+    if nb_axes is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_axes and index_col")
+    elif nb_axes is not None:
+        index_col = list(range(nb_axes - 1))
     elif isinstance(index_col, int):
         index_col = [index_col]
 
@@ -422,7 +427,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, parse_header=False)
 
 
-def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan,
+@deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
                sort_rows=False, sort_columns=False, engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
@@ -434,10 +440,13 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
     sheetname : str, Group or int, optional
         Name or index of the Excel sheet containing the array to be read.
         By default the array is read from the first sheet.
-    nb_index : int, optional
-        Number of leading index columns (ex. 4). Defaults to 1.
+    nb_axes : int, optional
+        Number of axes of output array. The first `nb_axes` - 1 columns and the header of the Excel sheet will be used
+        to set the axes of the output array. If not specified, the number of axes is given by the position of the
+        column header including the character `\` plus one. If no column header includes the character `\`, the array
+        is assumed to have one axis. Defaults to None.
     index_col : list, optional
-        List of columns for the index (ex. [0, 1, 2, 3]). Default to [0].
+        Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     fill_value : scalar or LArray, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
@@ -461,10 +470,10 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
     if engine is None:
         engine = 'xlwings' if xw is not None else None
 
-    if nb_index is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_index and index_col")
-    elif nb_index is not None:
-        index_col = list(range(nb_index))
+    if nb_axes is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_axes and index_col")
+    elif nb_axes is not None:
+        index_col = list(range(nb_axes - 1))
     elif isinstance(index_col, int):
         index_col = [index_col]
 
@@ -482,23 +491,24 @@ def read_excel(filepath, sheetname=0, nb_index=None, index_col=None, fill_value=
                            fill_value=fill_value)
 
 
-def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False,
+@deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+def read_sas(filepath, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False,
              **kwargs):
     """
     Reads sas file and returns an LArray with the contents
-        nb_index: number of leading index columns (e.g. 4)
+        nb_axes: number of axes of the output array
     or
-        index_col: list of columns for the index (e.g. [0, 1, 3])
+        index_col: Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3])
     """
     if not np.isnan(na):
         fill_value = na
         warnings.warn("read_sas `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
 
-    if nb_index is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_index and index_col")
-    elif nb_index is not None:
-        index_col = list(range(nb_index))
+    if nb_axes is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_axes and index_col")
+    elif nb_axes is not None:
+        index_col = list(range(nb_axes - 1))
     elif isinstance(index_col, int):
         index_col = [index_col]
 
@@ -506,7 +516,8 @@ def read_sas(filepath, nb_index=None, index_col=None, fill_value=np.nan, na=np.n
     return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)
 
 
-def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False):
+@deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False):
     """
     initialize array from a list of lists (lines)
 
@@ -514,11 +525,13 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
     ----------
     data : sequence (tuple, list, ...)
         Input data. All data is supposed to already have the correct type (e.g. strings are not parsed).
-    nb_index : int, optional
-        Number of leading index columns (ex. 4). Defaults to None, in which case it guesses the number of index columns
-        by using the position of the first '\' in the first line.
+    nb_axes : int, optional
+        Number of axes of output array. The first `nb_axes` - 1 columns and the header will be used
+        to set the axes of the output array. If not specified, the number of axes is given by the position of the
+        column header including the character `\` plus one. If no column header includes the character `\`, the array
+        is assumed to have one axis. Defaults to None.
     index_col : list, optional
-        List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
+        Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     fill_value : scalar or LArray, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
@@ -556,7 +569,7 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
     >>> from_lists([['sex', 'nat', 1991, 1992, 1993],
     ...             [  'M', 'BE',     1,    0,    0],
     ...             [  'M', 'FO',     2,    0,    0],
-    ...             [  'F', 'BE',     0,    0,    1]], nb_index=2)
+    ...             [  'F', 'BE',     0,    0,    1]], nb_axes=3)
     sex  nat\\{2}  1991  1992  1993
       M       BE   1.0   0.0   0.0
       M       FO   2.0   0.0   0.0
@@ -572,10 +585,10 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
       F        BE     0     0     1
       F        FO    42    42    42
     """
-    if nb_index is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_index and index_col")
-    elif nb_index is not None:
-        index_col = list(range(nb_index))
+    if nb_axes is not None and index_col is not None:
+        raise ValueError("cannot specify both nb_axes and index_col")
+    elif nb_axes is not None:
+        index_col = list(range(nb_axes - 1))
     elif isinstance(index_col, int):
         index_col = [index_col]
 
@@ -587,18 +600,21 @@ def from_lists(data, nb_index=None, index_col=None, fill_value=np.nan, sort_rows
                        fill_value=fill_value)
 
 
-def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
+@deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+def from_string(s, nb_axes=None, index_col=None, sep=' ', **kwargs):
     """Create an array from a multi-line string.
 
     Parameters
     ----------
     s : str
         input string.
-    nb_index : int, optional
-        Number of leading index columns (ex. 4). Defaults to None, in which case it guesses the number of index columns
-        by using the position of the first '\' in the first line.
+    nb_axes : int, optional
+        Number of axes of output array. The first `nb_axes` - 1 columns and the header will be used
+        to set the axes of the output array. If not specified, the number of axes is given by the position of the
+        column header including the character `\` plus one. If no column header includes the character `\`, the array
+        is assumed to have one axis. Defaults to None.
     index_col : list, optional
-        List of columns for the index (ex. [0, 1, 2, 3]). Defaults to None (see nb_index above).
+        Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str
         delimiter used to split each line into cells.
     \**kwargs
@@ -654,4 +670,4 @@ def from_string(s, nb_index=None, index_col=None, sep=' ', **kwargs):
          BE  0  1
          FO  2  3
     """
-    return read_csv(StringIO(s), nb_index=nb_index, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)
+    return read_csv(StringIO(s), nb_axes=nb_axes, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)

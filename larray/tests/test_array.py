@@ -2720,7 +2720,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['time'])
         assert_array_equal(la, [3722, 3395, 3347])
 
-        la = read_excel(inputpath('test.xlsx'), '2d', nb_index=1, engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
         self.assertEqual(la.ndim, 2)
         self.assertEqual(la.shape, (5, 3))
         self.assertEqual(la.axes.names, ['age', 'time'])
@@ -2744,7 +2744,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-        la = read_excel(inputpath('test.xlsx'), '5d', nb_index=4, engine='xlrd')
+        la = read_excel(inputpath('test.xlsx'), '5d', nb_axes=5, engine='xlrd')
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
