@@ -7778,7 +7778,7 @@ def stack(elements=None, axis=None, title='', **kwargs):
 
         Stacking sessions will return a new session containing the arrays of all sessions stacked together. An array
         missing in a session will be replaced by NaN.
-    axis : str or Axis, optional
+    axis : str or Axis or Group, optional
         Axis to create. If None, defaults to a range() axis.
     title : str, optional
         Title.
@@ -7792,67 +7792,72 @@ def stack(elements=None, axis=None, title='', **kwargs):
     --------
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
-    >>> arr1 = ones(nat)
+    >>> arr1 = ones(sex)
     >>> arr1
-    nat   BE   FO
+    sex    M    F
          1.0  1.0
-    >>> arr2 = zeros(nat)
+    >>> arr2 = zeros(sex)
     >>> arr2
-    nat   BE   FO
+    sex    M    F
          0.0  0.0
 
-    In the case the axis to create has already been defined in a variable
+    In the case the axis to create has already been defined in a variable (Axis or Group)
 
-    >>> stack({'M': arr1, 'F': arr2}, sex)
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
+    >>> stack({'BE': arr1, 'FO': arr2}, nat)
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
+    >>> all_nat = Axis('nat=BE,DE,FR,NL,UK')
+    >>> stack({'BE': arr1, 'DE': arr2}, all_nat[:'DE'])
+    sex\\nat   BE   DE
+          M  1.0  0.0
+          F  1.0  0.0
 
     Otherwise (when one wants to create an axis from scratch), any of these syntaxes works:
 
-    >>> stack([arr1, arr2], 'sex=M,F')
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
-    >>> stack({'M': arr1, 'F': arr2}, 'sex=M,F')
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
-    >>> stack([('M', arr1), ('F', arr2)], 'sex')
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
+    >>> stack([arr1, arr2], 'nat=BE,FO')
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
+    >>> stack({'BE': arr1, 'FO': arr2}, 'nat=BE,FO')
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
+    >>> stack([('BE', arr1), ('FO', arr2)], 'nat=BE,FO')
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
 
     When stacking arrays with different axes, the result has the union of all axes present:
 
-    >>> stack({'M': arr1, 'F': 0}, sex)
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
+    >>> stack({'BE': arr1, 'FO': 0}, nat)
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
 
     Creating an axis without name nor labels can be done using:
 
     >>> stack((arr1, arr2))
-    nat\\{1}*    0    1
-          BE  1.0  0.0
-          FO  1.0  0.0
+    sex\\{1}*    0    1
+           M  1.0  0.0
+           F  1.0  0.0
 
     When labels are "simple" strings (ie no integers, no string starting with integers, etc.), using keyword
     arguments can be an attractive alternative.
 
-    >>> stack(F=arr2, M=arr1, axis=sex)
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
+    >>> stack(FO=arr2, BE=arr1, axis=nat)
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
 
     Without passing an explicit order for labels (or an axis object like above), it should only be used on Python 3.6
     or later because keyword arguments are NOT ordered on earlier Python versions.
 
     >>> # use this only on Python 3.6 and later
-    >>> stack(M=arr1, F=arr2, axis='sex')   # doctest: +SKIP
-    nat\\sex    M    F
-         BE  1.0  0.0
-         FO  1.0  0.0
+    >>> stack(BE=arr1, FO=arr2, axis='nat')   # doctest: +SKIP
+    sex\\nat   BE   FO
+          M  1.0  0.0
+          F  1.0  0.0
 
     To stack sessions, let us first create two test sessions. For example suppose we have a session storing the results
     of a baseline simulation:
@@ -7870,17 +7875,19 @@ def stack(elements=None, axis=None, title='', **kwargs):
     >>> stacked
     Session(arr1, arr2)
     >>> stacked.arr1
-    nat\sessions  baseline  variant
-              BE       1.0      1.5
-              FO       1.0      1.5
+    sex\sessions  baseline  variant
+               M       1.0      1.5
+               F       1.0      1.5
     >>> stacked.arr2
-    nat\sessions  baseline  variant
-              BE       0.0      0.5
-              FO       0.0      0.5
+    sex\sessions  baseline  variant
+               M       0.0      0.5
+               F       0.0      0.5
     """
     from larray import Session
 
     if isinstance(axis, str) and '=' in axis:
+        axis = Axis(axis)
+    if isinstance(axis, Group):
         axis = Axis(axis)
     if elements is None:
         if not isinstance(axis, Axis) and sys.version_info[:2] < (3, 6):
