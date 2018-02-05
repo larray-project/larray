@@ -269,6 +269,20 @@ Miscellaneous improvements
 
 * added argument `name` to `to_series` method allowing to set a name to the Pandas Series returned by the method.
 
+* added argument `value_name` to `to_csv` and `to_excel` allowing to change the default name ('value') to
+  the column containg the values when the argument `wide` is set to False:
+
+    >>> arr.to_csv('my_file.csv', wide=False, value_name='data')
+    a,b,data
+    a0,b0,0
+    a0,b1,1
+    a0,b2,2
+    a1,b0,3
+    a1,b1,4
+    a1,b2,5
+
+  Closes :issue:`549`.
+
 
 Fixes
 -----

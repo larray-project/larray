@@ -3171,7 +3171,6 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert la.axes.names == ['age', 'sex', 'time']
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
-
     def test_to_csv(self):
         la = read_csv(inputpath('test5d.csv'))
         self.assertEqual(la.ndim, 5)
@@ -3189,7 +3188,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
         # stacked data (one column containing all the values and another column listing the context of the value)
         la.to_csv(self.tmp_path('out.csv'), wide=False)
-        result = ['arr,age,sex,nat,time,0\n',
+        result = ['arr,age,sex,nat,time,value\n',
                   '1,0,F,1,2007,3722\n',
                   '1,0,F,1,2010,3395\n']
         with open(self.tmp_path('out.csv')) as f:
@@ -3222,7 +3221,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # stacked data (one column containing all the values and another column listing the context of the value)
         a1.to_excel(fpath, wide=False, engine='xlsxwriter')
         res = read_excel(fpath, engine='xlrd')
-        stacked_a1 = a1.reshape([a1.a, Axis([0])])
+        stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
         assert_array_equal(res, stacked_a1)
 
         # 2D
@@ -3282,7 +3281,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         # stacked data (one column containing all the values and another column listing the context of the value)
         a1.to_excel(fpath, wide=False, engine='xlsxwriter')
         res = read_excel(fpath, engine='xlrd')
-        stacked_a1 = a1.reshape([a1.a, Axis([0])])
+        stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
         assert_array_equal(res, stacked_a1)
 
         # 2D
