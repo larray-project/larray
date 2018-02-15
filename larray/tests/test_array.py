@@ -3390,6 +3390,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a2)
 
+        # transpose
+        a2.to_excel(fpath, 'transpose', transpose=True, engine='xlwings')
+        res = read_excel(fpath, 'transpose', engine='xlrd')
+        assert_array_equal(res, a2.T)
+
         # 3D
         a3 = ndtest((2, 3, 4))
 
