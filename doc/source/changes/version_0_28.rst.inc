@@ -231,7 +231,29 @@ Miscellaneous improvements
 
     >>> arr = read_csv('arr.csv', nb_axes=3)
 
-  Closes :issue:`548`:
+  Closes :issue:`548`.
+
+* added the relative tolerance `rtol` and the absolute tolerance `atol` arguments to the `LArray.equals` method.
+  These two arguments can be used to test the equality between two arrays within a given relative or
+  absolute tolerance:
+
+      >>> arr1 = LArray([6., 8.], "a=a0,a1")
+      >>> arr1
+      a   a0   a1
+         6.0  8.0
+      >>> arr2 = LArray([5.999, 8.001], "a=a0,a1")
+      >>> arr2
+      a     a0     a1
+         5.999  8.001
+      >>> arr1.equals(arr2)
+      False
+      >>> # equals returns True if abs(array1 - array2) <= (atol + rtol * abs(array2))
+      >>> arr1.equals(arr2, atol=0.01)
+      True
+      >>> arr1.equals(arr2, rtol=0.01)
+      True
+
+  Closes :issue:`488`.
 
 * renamed argument `transpose` by `wide` in `to_csv` method.
 
