@@ -306,7 +306,7 @@ Miscellaneous improvements
   Closes :issue:`549`.
   
 * Renamed argument `sheet_name` to `sheet` on array.py `to_excel` def.
-  Also sheet_name can also be an index (closes :issue:`580`).
+  since sheet_name can also be an index (closes :issue:`580`).
 
 
 Fixes
