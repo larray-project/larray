@@ -5979,6 +5979,7 @@ class LArray(ABCLArray):
         key = _translate_key_hdf(key)
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
+    @deprecate_kwarg('sheet_name', 'sheet') 
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
         """
@@ -6028,7 +6029,7 @@ class LArray(ABCLArray):
         >>> # add to existing sheet starting at position A15
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
-        sheet = _translate_sheet(sheet)
+        sheet = _translate_sheet_name(sheet)
 
         if wide:
             pd_obj = self.to_frame(fold_last_axis_name=True)
@@ -6057,18 +6058,18 @@ class LArray(ABCLArray):
             wb = open_excel(filepath, overwrite_file=overwrite_file)
 
             if new_workbook:
-                sheet = wb.sheets[0]
+                sheetobj = wb.sheets[0]
                 if sheet is not None:
-                    sheet.name = sheet
+                    sheetobj.name = sheet
             elif sheet is not None and sheet in wb:
-                sheet = wb.sheets[sheet]
+                sheetobj = wb.sheets[sheet]
                 if clear_sheet:
-                    sheet.clear()
+                    sheetobj.clear()
             else:
-                sheet = wb.sheets.add(sheet, after=wb.sheets[-1])
+                sheetobj = wb.sheets.add(sheet, after=wb.sheets[-1])
 
             options = dict(header=header, index=header, transpose=transpose)
-            sheet[position].options(**options).value = pd_obj
+            sheetobj[position].options(**options).value = pd_obj
             # TODO: implement wide via/in dump
             # sheet[position] = self.dump(header=header, wide=wide)
             if close:
@@ -6079,7 +6080,7 @@ class LArray(ABCLArray):
                 sheet = 'Sheet1'
             # TODO: implement position in this case
             # startrow, startcol
-            pd_obj.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
+            pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """Sends the content of the array to clipboard.
