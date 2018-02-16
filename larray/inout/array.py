@@ -9,7 +9,7 @@ from itertools import product
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
-from larray.core.group import _translate_sheet_name, _translate_key_hdf
+from larray.core.group import _translate_sheet, _translate_key_hdf
 from larray.util.misc import (basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique,
                               deprecate_kwarg)
 
