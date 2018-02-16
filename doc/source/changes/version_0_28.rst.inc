@@ -304,10 +304,8 @@ Miscellaneous improvements
     a1,b2,5
 
   Closes :issue:`549`.
-  
-* Renamed argument `sheet_name` to `sheet` on array.py `to_excel` def.
-  since sheet_name can also be an index (closes :issue:`580`).
 
+* Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
 
 Fixes
 -----
