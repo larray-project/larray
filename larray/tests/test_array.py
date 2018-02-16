@@ -96,6 +96,8 @@ class TestLArray(TestCase):
         self.io_missing_values = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
         self.io_missing_values[2, 'b0'] = np.nan
         self.io_missing_values[3, 'b1'] = np.nan
+        self.io_narrow_missing_values = self.io_missing_values.copy()
+        self.io_narrow_missing_values[2, 'b1', 'c1'] = np.nan
 
     @pytest.fixture(autouse=True)
     def setup(self, tmpdir):
@@ -2637,6 +2639,26 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = read_csv(StringIO('a,a2,a0,a1\n,2,0,1\n'), sort_columns=True)
         assert_array_equal(res, ndtest(3))
 
+        #################
+        # narrow format #
+        #################
+        res = read_csv(inputpath('test1d_narrow.csv'), wide=False)
+        assert_array_equal(res, self.io_1d)
+
+        res = read_csv(inputpath('test2d_narrow.csv'), wide=False)
+        assert_array_equal(res, self.io_2d)
+
+        res = read_csv(inputpath('test3d_narrow.csv'), wide=False)
+        assert_array_equal(res, self.io_3d)
+
+        # missing values
+        res = read_csv(inputpath('testmissing_values_narrow.csv'), wide=False)
+        assert_array_nan_equal(res, self.io_narrow_missing_values)
+
+        # unsorted values
+        res = read_csv(inputpath('testunsorted_narrow.csv'), wide=False)
+        assert_array_equal(res, self.io_unsorted)
+
     def test_read_eurostat(self):
         la = read_eurostat(inputpath('test5d_eurostat.csv'))
         self.assertEqual(la.ndim, 5)
@@ -2667,7 +2689,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         axis = Axis('dim=1d,2d,3d,5d')
 
         arr = read_excel(inputpath('test.xlsx'), axis['1d'])
-        assert_array_equal(arr, ndtest(3))
+        assert_array_equal(arr, self.io_1d)
 
         # missing rows + fill_value argument
         arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
@@ -2675,10 +2697,39 @@ age    0       1       2       3       4       5       6       7        8  ...  
         expected[isnan(expected)] = 42
         assert_array_equal(arr, expected)
 
-        # invalid keyword argument
+        #################
+        # narrow format #
+        #################
+        arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False)
+        assert_array_equal(arr, self.io_1d)
+
+        arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False)
+        assert_array_equal(arr, self.io_2d)
+
+        arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False)
+        assert_array_equal(arr, self.io_3d)
+
+        # missing rows + fill_value argument
+        arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values', fill_value=42, wide=False)
+        expected = self.io_narrow_missing_values.copy()
+        expected[isnan(expected)] = 42
+        assert_array_equal(arr, expected)
+
+        # unsorted values
+        arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False)
+        assert_array_equal(arr, self.io_unsorted)
+
+        ##############################
+        #  invalid keyword argument  #
+        ##############################
+
         with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
                                                 "the xlwings backend"):
             read_excel(inputpath('test.xlsx'), engine='xlwings', dtype=float)
+
+        #################
+        #  blank cells  #
+        #################
 
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = inputpath('test_blank_cells.xlsx')
@@ -2722,13 +2773,40 @@ age    0       1       2       3       4       5       6       7        8  ...  
         axis = Axis('dim=1d,2d,3d,5d')
 
         arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
-        assert_array_equal(arr, ndtest(3))
+        assert_array_equal(arr, self.io_1d)
 
         # missing rows + fill_value argument
         arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='xlrd')
         expected = self.io_missing_values.copy()
         expected[isnan(expected)] = 42
         assert_array_equal(arr, expected)
+
+        #################
+        # narrow format #
+        #################
+        arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='xlrd')
+        assert_array_equal(arr, self.io_1d)
+
+        arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='xlrd')
+        assert_array_equal(arr, self.io_2d)
+
+        arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='xlrd')
+        assert_array_equal(arr, self.io_3d)
+
+        # missing rows + fill_value argument
+        arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
+                         fill_value=42, wide=False, engine='xlrd')
+        expected = self.io_narrow_missing_values
+        expected[isnan(expected)] = 42
+        assert_array_equal(arr, expected)
+
+        # unsorted values
+        arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='xlrd')
+        assert_array_equal(arr, self.io_unsorted)
+
+        #################
+        #  blank cells  #
+        #################
 
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = inputpath('test_blank_cells.xlsx')

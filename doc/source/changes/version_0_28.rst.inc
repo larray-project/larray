@@ -289,6 +289,17 @@ Miscellaneous improvements
   Argument `transpose` has a different purpose than `wide` and is mainly useful to allow multiple axes as header
   when exporting arrays with more than 2 dimensions. Closes :issue:`575` and :issue:`371`.
 
+* added argument `wide` to `read_csv` and `read_excel` functions. If False, the array to be loaded is assumed to
+  be stored in "narrow" format:
+
+    >>> # assuming the array was saved using command: arr.to_excel('my_file.xlsx', wide=False)
+    >>> read_excel('my_file.xlsx', wide=False)
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+
+  Closes :issue:`574`.
+
 * added argument `name` to `to_series` method allowing to set a name to the Pandas Series returned by the method.
 
 * added argument `value_name` to `to_csv` and `to_excel` allowing to change the default name ('value') to

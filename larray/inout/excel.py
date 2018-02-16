@@ -418,9 +418,9 @@ if xw is not None:
             setattr(self.xw_sheet, key, value)
 
         def load(self, header=True, convert_float=True, nb_index=None, index_col=None, fill_value=np.nan,
-                 sort_rows=False, sort_columns=False):
+                 sort_rows=False, sort_columns=False, wide=True):
             return self[:].load(header=header, convert_float=convert_float, nb_index=nb_index, index_col=index_col,
-                                sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)
+                                fill_value=fill_value, sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
 
         # TODO: generalize to more than 2 dimensions or scrap it
         def array(self, data, row_labels=None, column_labels=None, names=None):
@@ -547,7 +547,7 @@ if xw is not None:
         __repr__ = __str__
 
         def load(self, header=True, convert_float=True, nb_index=None, index_col=None, fill_value=np.nan,
-                 sort_rows=False, sort_columns=False):
+                 sort_rows=False, sort_columns=False, wide=True):
             if not self.ndim:
                 return LArray([])
 
@@ -555,7 +555,7 @@ if xw is not None:
 
             if header:
                 return from_lists(list_data, nb_index=nb_index, index_col=index_col, fill_value=fill_value,
-                                  sort_rows=sort_rows, sort_columns=sort_columns)
+                                  sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
             else:
                 return LArray(list_data)
 
