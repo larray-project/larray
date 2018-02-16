@@ -9,7 +9,7 @@ from itertools import product
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
-from larray.core.group import _translate_sheet_name, _translate_key_hdf
+from larray.core.group import _translate_sheet, _translate_key_hdf
 from larray.util.misc import (basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique,
                               deprecate_kwarg)
 
@@ -538,7 +538,11 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
 
+<<<<<<< HEAD
     sheet = _translate_sheet_name(sheet)
+=======
+    sheet = _translate_sheet(sheet)
+>>>>>>> fix(#580): Added some fix to feat testunits
 
     if engine is None:
         engine = 'xlwings' if xw is not None else None
