@@ -634,12 +634,12 @@ def _to_keys(value, stack_depth=1):
 _sheet_name_pattern = re.compile('[\\\/?*\[\]:]')
 
 
-def _translate_sheet_name(sheet_name):
-    if isinstance(sheet_name, Group):
-        sheet_name = _sheet_name_pattern.sub('_', str(_to_tick(sheet_name)))
-    if isinstance(sheet_name, basestring) and len(sheet_name) > 30:
+def _translate_sheet(sheet):
+    if isinstance(sheet, Group):
+        sheet_name = _sheet_name_pattern.sub('_', str(_to_tick(sheet)))
+    if isinstance(sheet, basestring) and len(sheet) > 30:
         raise ValueError("Sheet names cannot exceed 31 characters")
-    return sheet_name
+    return sheet
 
 
 # forbidden characters for dataset names in HDF files
