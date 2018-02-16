@@ -315,6 +315,9 @@ Miscellaneous improvements
     a1,b2,5
 
   Closes :issue:`549`.
+  
+* Renamed argument `sheet_name` to `sheet` on array.py `to_excel` def.
+  Also sheet_name can also be an index (closes :issue:`580`).
 
 * renamed argument `sheetname` of `read_excel` function as `sheet` (closes :issue:`587`).
 
