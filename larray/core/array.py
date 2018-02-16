@@ -5979,10 +5979,7 @@ class LArray(ABCLArray):
         key = _translate_key_hdf(key)
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
-<<<<<<< HEAD
     @deprecate_kwarg('sheet_name', 'sheet') 
-=======
->>>>>>> Fix(#580): Renamed sheet_name to sheet in to_excel
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
         """
@@ -6061,27 +6058,15 @@ class LArray(ABCLArray):
             wb = open_excel(filepath, overwrite_file=overwrite_file)
 
             if new_workbook:
-<<<<<<< HEAD
                 sheetobj = wb.sheets[0]
                 if sheet is not None:
                     sheetobj.name = sheet
             elif sheet is not None and sheet in wb:
                 sheetobj = wb.sheets[sheet]
-=======
-                sheet = wb.sheets[0]
-                if sheet is not None:
-                    sheet.name = sheet
-            elif sheet is not None and sheet in wb:
-                sheet = wb.sheets[sheet]
->>>>>>> Fix(#580): Renamed sheet_name to sheet in to_excel
                 if clear_sheet:
                     sheetobj.clear()
             else:
-<<<<<<< HEAD
                 sheetobj = wb.sheets.add(sheet, after=wb.sheets[-1])
-=======
-                sheet = wb.sheets.add(sheet, after=wb.sheets[-1])
->>>>>>> Fix(#580): Renamed sheet_name to sheet in to_excel
 
             options = dict(header=header, index=header, transpose=transpose)
             sheetobj[position].options(**options).value = pd_obj
