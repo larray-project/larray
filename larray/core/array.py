@@ -64,7 +64,7 @@ except ImportError:
 from larray.core.abstractbases import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
-                               _range_to_slice, _translate_sheet_name, _translate_key_hdf)
+                               _range_to_slice, _translate_sheet, _translate_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
