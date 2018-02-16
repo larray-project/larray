@@ -9,7 +9,7 @@ from itertools import product
 
 from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
-from larray.core.group import _translate_sheet_name, _translate_key_hdf
+from larray.core.group import _translate_sheet, _translate_key_hdf
 from larray.util.misc import (basestring, skip_comment_cells, strip_rows, csv_open, StringIO, decode, unique,
                               deprecate_kwarg)
 
@@ -186,7 +186,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     return LArray(data, axes)
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, **kwargs):
+def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, **kwargs):
     """
     Prepare Pandas DataFrame and then convert it into LArray.
 
@@ -205,6 +205,10 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     parse_header : bool, optional
         Whether or not to parse columns labels. Pandas treats column labels as strings.
         If True, column labels are converted into int, float or boolean when possible. Defaults to True.
+    wide : bool, optional
+        Whether or not to assume the array is stored in "wide" format.
+        If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
 
     Returns
     -------
@@ -218,19 +222,37 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     # irrespective of the actual data dimensionality
     if raw:
         columns = df.columns.values.tolist()
-        try:
-            # take the first column which contains '\'
-            pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
-        except StopIteration:
-            # we assume first column will not contain data
-            pos_last = 0
+        if wide:
+            try:
+                # take the first column which contains '\'
+                pos_last = next(i for i, v in enumerate(columns) if isinstance(v, basestring) and '\\' in v)
+            except StopIteration:
+                # we assume first column will not contain data
+                pos_last = 0
 
-        # This is required to handle int column names (otherwise we can simply use column positions in set_index).
-        # This is NOT the same as df.columns[list(range(...))] !
-        index_columns = [df.columns[i] for i in range(pos_last + 1)]
-        # TODO: we should pass a flag to df_aslarray so that we can use inplace=True here
-        # df.set_index(index_columns, inplace=True)
-        df = df.set_index(index_columns)
+            # This is required to handle int column names (otherwise we can simply use column positions in set_index).
+            # This is NOT the same as df.columns[list(range(...))] !
+            index_columns = [df.columns[i] for i in range(pos_last + 1)]
+            df.set_index(index_columns, inplace=True)
+        else:
+            index_columns = [df.columns[i] for i in range(len(df.columns) - 1)]
+            df.set_index(index_columns, inplace=True)
+            series = df[df.columns[-1]]
+            if isinstance(series.index, pd.core.index.MultiIndex):
+                fill_value = kwargs.get('fill_value', np.nan)
+                # TODO: use argument sort=False when it will be available
+                # (see https://github.com/pandas-dev/pandas/issues/15105)
+                df = series.unstack(level=-1, fill_value=fill_value)
+                # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
+                labels = df_labels(series, sort=False)
+                index = pd.MultiIndex.from_tuples(list(product(*labels[:-1])), names=series.index.names[:-1])
+                columns = labels[-1]
+                df = df.reindex(index=index, columns=columns, fill_value=fill_value)
+            else:
+                series.name = series.index.name
+                if sort_rows:
+                    raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
+                return from_series(series, sort_rows=sort_columns)
 
     # handle 1D
     if len(df) == 1 and (pd.isnull(df.index.values[0]) or
@@ -249,9 +271,24 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
                           unfold_last_axis_name=unfold_last_axis_name, **kwargs)
 
 
+def _get_index_col(nb_axes=None, index_col=None, wide=True):
+    if not wide:
+        if nb_axes is not None or index_col is not None:
+            raise ValueError("`nb_axes` or `index_col` argument cannot be used when `wide` argument is False")
+
+    if nb_axes is not None and index_col is not None:
+        raise ValueError("cannot specify both `nb_axes` and `index_col`")
+    elif nb_axes is not None:
+        index_col = list(range(nb_axes - 1))
+    elif isinstance(index_col, int):
+        index_col = [index_col]
+
+    return index_col
+
+
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
-             na=np.nan, sort_rows=False, sort_columns=False, dialect='larray', **kwargs):
+             na=np.nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
 
@@ -288,6 +325,10 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
+    wide : bool, optional
+        Whether or not to assume the array is stored in "wide" format.
+        If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
     dialect : 'classic' | 'larray' | 'liam2', optional
         Name of dialect. Defaults to 'larray'.
     **kwargs
@@ -298,22 +339,54 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Examples
     --------
-    >>> from larray import ndrange
     >>> tmpdir = getfixture('tmpdir')
     >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
     >>> a = ndtest('nat=BE,FO;sex=M,F')
-
+    >>> a
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
     >>> a.to_csv(fname)
+    >>> with open(fname) as f:
+    ...     print(f.read().strip())
+    nat\\sex,M,F
+    BE,0,1
+    FO,2,3
     >>> read_csv(fname)
     nat\\sex  M  F
          BE  0  1
          FO  2  3
+
+    Sort columns
+
     >>> read_csv(fname, sort_columns=True)
     nat\\sex  F  M
          BE  1  0
          FO  3  2
-    >>> fname = 'no_axis_name.csv'
+
+    Read array saved in "narrow" format (wide=False)
+
+    >>> a.to_csv(fname, wide=False)
+    >>> with open(fname) as f:
+    ...     print(f.read().strip())
+    nat,sex,value
+    BE,M,0
+    BE,F,1
+    FO,M,2
+    FO,F,3
+    >>> read_csv(fname, wide=False)
+    nat\\sex  M  F
+         BE  0  1
+         FO  2  3
+
+    Specify the number of axes of the output array (useful when the name of the last axis is implicit)
+
     >>> a.to_csv(fname, dialect='classic')
+    >>> with open(fname) as f:
+    ...     print(f.read().strip())
+    nat,M,F
+    BE,0,1
+    FO,2,3
     >>> read_csv(fname, nb_axes=2)
     nat\\{1}  M  F
          BE  0  1
@@ -341,12 +414,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         kwargs['header'] = 1
         kwargs['comment'] = '#'
 
-    if nb_axes is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_axes and index_col")
-    elif nb_axes is not None:
-        index_col = list(range(nb_axes - 1))
-    elif isinstance(index_col, int):
-        index_col = [index_col]
+    index_col = _get_index_col(nb_axes, index_col, wide)
 
     if headersep is not None:
         if index_col is None:
@@ -369,7 +437,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         df.index.names = combined_axes_names.split(headersep)
         raw = False
 
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw)
+    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw, wide=wide)
 
 
 def read_tsv(filepath_or_buffer, **kwargs):
@@ -430,7 +498,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
-               sort_rows=False, sort_columns=False, engine=None, **kwargs):
+               sort_rows=False, sort_columns=False, wide=True, engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
 
@@ -456,6 +524,10 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
+    wide : bool, optional
+        Whether or not to assume the array is stored in "wide" format.
+        If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
     engine : {'xlrd', 'xlwings'}, optional
         Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
         installed and relies on Pandas default reader otherwise.
@@ -466,17 +538,16 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
 
+<<<<<<< HEAD
     sheet = _translate_sheet_name(sheet)
+=======
+    sheet = _translate_sheet(sheet)
+>>>>>>> fix(#580): Added some fix to feat testunits
 
     if engine is None:
         engine = 'xlwings' if xw is not None else None
 
-    if nb_axes is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_axes and index_col")
-    elif nb_axes is not None:
-        index_col = list(range(nb_axes - 1))
-    elif isinstance(index_col, int):
-        index_col = [index_col]
+    index_col = _get_index_col(nb_axes, index_col, wide)
 
     if engine == 'xlwings':
         if kwargs:
@@ -485,11 +556,11 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         from larray.inout.excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheet].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
-                                  sort_columns=sort_columns)
+                                      sort_columns=sort_columns, wide=wide)
     else:
         df = pd.read_excel(filepath, sheet, index_col=index_col, engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
-                           fill_value=fill_value)
+                           fill_value=fill_value, wide=wide)
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
@@ -518,7 +589,7 @@ def read_sas(filepath, nb_axes=None, index_col=None, fill_value=np.nan, na=np.na
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False):
+def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False, wide=True):
     """
     initialize array from a list of lists (lines)
 
@@ -541,6 +612,10 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
+    wide : bool, optional
+        Whether or not to assume the array is stored in "wide" format.
+        If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
 
     Returns
     -------
@@ -558,6 +633,9 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=
     sex\\year  1991  1992  1993
            M     0     1     2
            F     3     4     5
+
+    Read array with missing values + `fill_value` argument
+
     >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
@@ -567,15 +645,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=
       M        FO   2.0   0.0   0.0
       F        BE   0.0   0.0   1.0
       F        FO   nan   nan   nan
-    >>> from_lists([['sex', 'nat', 1991, 1992, 1993],
-    ...             [  'M', 'BE',     1,    0,    0],
-    ...             [  'M', 'FO',     2,    0,    0],
-    ...             [  'F', 'BE',     0,    0,    1]], nb_axes=3)
-    sex  nat\\{2}  1991  1992  1993
-      M       BE   1.0   0.0   0.0
-      M       FO   2.0   0.0   0.0
-      F       BE   0.0   0.0   1.0
-      F       FO   nan   nan   nan
+
     >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
@@ -585,24 +655,49 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=
       M        FO     2     0     0
       F        BE     0     0     1
       F        FO    42    42    42
+
+    Specify the number of axes of the array to be read
+
+    >>> from_lists([['sex', 'nat', 1991, 1992, 1993],
+    ...             [  'M', 'BE',     1,    0,    0],
+    ...             [  'M', 'FO',     2,    0,    0],
+    ...             [  'F', 'BE',     0,    0,    1]], nb_axes=3)
+    sex  nat\\{2}  1991  1992  1993
+      M       BE   1.0   0.0   0.0
+      M       FO   2.0   0.0   0.0
+      F       BE   0.0   0.0   1.0
+      F       FO   nan   nan   nan
+
+    Read array saved in "narrow" format (wide=False)
+
+    >>> from_lists([['sex', 'nat', 'year', 'value'],
+    ...             [  'M', 'BE',  1991,    1     ],
+    ...             [  'M', 'BE',  1992,    0     ],
+    ...             [  'M', 'BE',  1993,    0     ],
+    ...             [  'M', 'FO',  1991,    2     ],
+    ...             [  'M', 'FO',  1992,    0     ],
+    ...             [  'M', 'FO',  1993,    0     ],
+    ...             [  'F', 'BE',  1991,    0     ],
+    ...             [  'F', 'BE',  1992,    0     ],
+    ...             [  'F', 'BE',  1993,    1     ]], wide=False)
+    sex  nat\\year  1991  1992  1993
+      M        BE   1.0   0.0   0.0
+      M        FO   2.0   0.0   0.0
+      F        BE   0.0   0.0   1.0
+      F        FO   nan   nan   nan
     """
-    if nb_axes is not None and index_col is not None:
-        raise ValueError("cannot specify both nb_axes and index_col")
-    elif nb_axes is not None:
-        index_col = list(range(nb_axes - 1))
-    elif isinstance(index_col, int):
-        index_col = [index_col]
+    index_col = _get_index_col(nb_axes, index_col, wide)
 
     df = pd.DataFrame(data[1:], columns=data[0])
     if index_col is not None:
         df.set_index([df.columns[c] for c in index_col], inplace=True)
 
     return df_aslarray(df, raw=index_col is None, parse_header=False, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=fill_value)
+                       fill_value=fill_value, wide=wide)
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def from_string(s, nb_axes=None, index_col=None, sep=' ', **kwargs):
+def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
     """Create an array from a multi-line string.
 
     Parameters
@@ -618,6 +713,10 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', **kwargs):
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str
         delimiter used to split each line into cells.
+    wide : bool, optional
+        Whether or not to assume the array is stored in "wide" format.
+        If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
     \**kwargs
         See arguments of Pandas read_csv function.
 
@@ -671,4 +770,5 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', **kwargs):
          BE  0  1
          FO  2  3
     """
-    return read_csv(StringIO(s), nb_axes=nb_axes, index_col=index_col, sep=sep, skipinitialspace=True, **kwargs)
+    return read_csv(StringIO(s), nb_axes=nb_axes, index_col=index_col, sep=sep, skipinitialspace=True,
+                    wide=wide, **kwargs)
