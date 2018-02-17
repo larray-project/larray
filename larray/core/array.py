@@ -5225,7 +5225,7 @@ class LArray(ABCLArray):
     def __float__(self):
         return self.data.__float__()
 
-    def equals(self, other, nan_equals=False):
+    def equals(self, other, rtol=0, atol=0, nan_equals=False):
         """
         Compares self with another array and returns True if they have the same axes and elements, False otherwise.
 
@@ -5233,6 +5233,10 @@ class LArray(ABCLArray):
         ----------
         other: LArray-like
             Input array. aslarray() is used on a non-LArray input.
+        rtol : float or int, optional
+            The relative tolerance parameter (see Notes). Defaults to 0.
+        atol : float or int, optional
+            The absolute tolerance parameter (see Notes). Defaults to 0.
         nan_equals: boolean, optional
             Whether or not to consider nan values at the same positions in the two arrays as equal.
             By default, an array containing nan values is never equal to another array, even if that other array
@@ -5243,6 +5247,15 @@ class LArray(ABCLArray):
         -------
         bool
             Returns True if self is equal to other.
+
+        Notes
+        -----
+        For finite values, equals uses the following equation to test whether two values are equal:
+
+            absolute(array1 - array2) <= (atol + rtol * absolute(array2))
+
+        The above equation is not symmetric in array1 and array2, so that equals(array1, array2) might be different
+        from equals(array2, array1) in some rare cases.
 
         Examples
         --------
@@ -5260,6 +5273,24 @@ class LArray(ABCLArray):
         >>> arr3 = arr1.set_labels('a', ['x0', 'x1'])
         >>> arr1.equals(arr3)
         False
+
+        Test equality between two arrays within a given tolerance range.
+        Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
+
+        >>> arr1 = LArray([6., 8.], "a=a0,a1")
+        >>> arr1
+        a   a0   a1
+           6.0  8.0
+        >>> arr2 = LArray([5.999, 8.001], "a=a0,a1")
+        >>> arr2
+        a     a0     a1
+           5.999  8.001
+        >>> arr1.equals(arr2)
+        False
+        >>> arr1.equals(arr2, atol=0.01)
+        True
+        >>> arr1.equals(arr2, rtol=0.01)
+        True
 
         Arrays with nan values
 
@@ -5283,10 +5314,13 @@ class LArray(ABCLArray):
             other = aslarray(other)
         except Exception:
             return False
-        if nan_equals:
-            return self.axes == other.axes and all(nan_equal(self, other))
+        if rtol == 0 and atol == 0:
+            if nan_equals:
+                return self.axes == other.axes and all(nan_equal(self, other))
+            else:
+                return self.axes == other.axes and np.array_equal(np.asarray(self), np.asarray(other))
         else:
-            return self.axes == other.axes and np.array_equal(np.asarray(self), np.asarray(other))
+            return self.axes == other.axes and np.allclose(np.asarray(self), np.asarray(other), rtol, atol, nan_equals)
 
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
