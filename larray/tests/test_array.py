@@ -88,6 +88,15 @@ class TestLArray(TestCase):
         self.small_data = np.arange(30).reshape(2, 15)
         self.small = LArray(self.small_data, axes=(self.sex, self.lipro), title=self.small_title)
 
+        self.io_1d = ndtest(3)
+        self.io_2d = ndtest("a=1..3; b=b0,b1")
+        self.io_3d = ndtest("a=1..3; b=b0,b1; c=c0..c2")
+        self.io_int_labels = ndtest("a=0..2; b=0..2; c=0..2")
+        self.io_unsorted = ndtest("a=3..1; b=b1,b0; c=c2..c0")
+        self.io_missing_values = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
+        self.io_missing_values[2, 'b0'] = np.nan
+        self.io_missing_values[3, 'b1'] = np.nan
+
     @pytest.fixture(autouse=True)
     def setup(self, tmpdir):
         self.tmpdir = tmpdir.strpath
@@ -2590,27 +2599,19 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     def test_read_csv(self):
         res = read_csv(inputpath('test1d.csv'))
-        assert_array_equal(res, ndtest('time=2007,2010,2013'))
+        assert_array_equal(res, self.io_1d)
 
         res = read_csv(inputpath('test2d.csv'))
-        assert_array_equal(res, ndtest('a=0,1;b=0,1,2'))
+        assert_array_equal(res, self.io_2d)
 
         res = read_csv(inputpath('test3d.csv'))
-        expected = ndtest('age=0..3;sex=F,M;time=2015..2017') + 0.5
-        assert_array_equal(res, expected)
+        assert_array_equal(res, self.io_3d)
 
-        la = read_csv(inputpath('test5d.csv'))
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
+        res = read_csv(inputpath('testint_labels.csv'))
+        assert_array_equal(res, self.io_int_labels)
 
-        la = read_csv(inputpath('test2d_classic.csv'))
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', None])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        res = read_csv(inputpath('test2d_classic.csv'))
+        assert_array_equal(res, ndtest("a=a0..a2; b0..b2"))
 
         la = read_csv(inputpath('test1d_liam2.csv'), dialect='liam2')
         self.assertEqual(la.ndim, 1)
@@ -2622,8 +2623,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.ndim, 5)
         self.assertEqual(la.shape, (2, 5, 2, 2, 3))
         self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
+        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :], [3722, 3395, 3347])
+
+        # missing values
+        res = read_csv(inputpath('testmissing_values.csv'))
+        assert_array_nan_equal(res, self.io_missing_values)
 
         # test StringIO
         res = read_csv(StringIO('a,1,2\n,0,1\n'))
@@ -2644,53 +2648,32 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_read_excel_xlwings(self):
-        la = read_excel(inputpath('test.xlsx'), '1d')
-        self.assertEqual(la.ndim, 1)
-        self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes.names, ['time'])
-        assert_array_equal(la, [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '1d')
+        assert_array_equal(arr, self.io_1d)
 
-        la = read_excel(inputpath('test.xlsx'), '2d')
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', 'time'])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '2d')
+        assert_array_equal(arr, self.io_2d)
 
-        la = read_excel(inputpath('test.xlsx'), '3d')
-        self.assertEqual(la.ndim, 3)
-        self.assertEqual(la.shape, (5, 2, 3))
-        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
-        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '3d')
+        assert_array_equal(arr, self.io_3d)
 
-        la = read_excel(inputpath('test.xlsx'), '5d')
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), 'int_labels')
+        assert_array_equal(arr, self.io_int_labels)
 
-        la = read_excel(inputpath('test.xlsx'), '2d_classic')
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', None])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '2d_classic')
+        assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
         # passing a Group as sheet arg
         axis = Axis('dim=1d,2d,3d,5d')
 
-        la = read_excel(inputpath('test.xlsx'), axis['1d'])
-        self.assertEqual(la.ndim, 1)
-        self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes.names, ['time'])
-        assert_array_equal(la, [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), axis['1d'])
+        assert_array_equal(arr, ndtest(3))
 
-        # fill_value argument
-        la = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
-        assert la.ndim == 3
-        assert la.shape == (5, 2, 3)
-        assert la.axes.names == ['age', 'sex', 'time']
-        assert_array_equal(la[1, 'H', :], [42, 42, 42])
-        assert_array_equal(la[4, 'F', :], [42, 42, 42])
+        # missing rows + fill_value argument
+        arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
+        expected = self.io_missing_values.copy()
+        expected[isnan(expected)] = 42
+        assert_array_equal(arr, expected)
 
         # invalid keyword argument
         with self.assertRaisesRegexp(TypeError, "'dtype' is an invalid keyword argument for this function when using "
@@ -2714,64 +2697,38 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(bad4, good2)
 
     def test_read_excel_pandas(self):
-        la = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
-        self.assertEqual(la.ndim, 1)
-        self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes.names, ['time'])
-        assert_array_equal(la, [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
+        assert_array_equal(arr, self.io_1d)
 
-        la = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', 'time'])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
+        assert_array_equal(arr, self.io_2d)
 
-        la = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', 'time'])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
+        assert_array_equal(arr, self.io_2d)
 
-        la = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
-        self.assertEqual(la.ndim, 3)
-        self.assertEqual(la.shape, (5, 2, 3))
-        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
-        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
+        assert_array_equal(arr, self.io_3d)
 
-        la = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
-        self.assertEqual(la.ndim, 3)
-        self.assertEqual(la.shape, (5, 2, 3))
-        self.assertEqual(la.axes.names, ['age', 'sex', 'time'])
-        assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
+        assert_array_equal(arr, self.io_3d)
 
-        la = read_excel(inputpath('test.xlsx'), '5d', nb_axes=5, engine='xlrd')
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='xlrd')
+        assert_array_equal(arr, self.io_int_labels)
 
-        la = read_excel(inputpath('test.xlsx'), '5d', engine='xlrd')
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
-
-        la = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
-        self.assertEqual(la.ndim, 2)
-        self.assertEqual(la.shape, (5, 3))
-        self.assertEqual(la.axes.names, ['age', None])
-        assert_array_equal(la[0, :], [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
+        assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
         # passing a Group as sheet arg
         axis = Axis('dim=1d,2d,3d,5d')
 
-        la = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
-        self.assertEqual(la.ndim, 1)
-        self.assertEqual(la.shape, (3,))
-        self.assertEqual(la.axes.names, ['time'])
-        assert_array_equal(la, [3722, 3395, 3347])
+        arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
+        assert_array_equal(arr, ndtest(3))
+
+        # missing rows + fill_value argument
+        arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='xlrd')
+        expected = self.io_missing_values.copy()
+        expected[isnan(expected)] = 42
+        assert_array_equal(arr, expected)
 
         # Excel sheet with blank cells on right/bottom border of the array to read
         fpath = inputpath('test_blank_cells.xlsx')
@@ -3172,31 +3129,26 @@ age    0       1       2       3       4       5       6       7        8  ...  
         assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
     def test_to_csv(self):
-        la = read_csv(inputpath('test5d.csv'))
-        self.assertEqual(la.ndim, 5)
-        self.assertEqual(la.shape, (2, 5, 2, 2, 3))
-        self.assertEqual(la.axes.names, ['arr', 'age', 'sex', 'nat', 'time'])
-        assert_array_equal(la[X.arr[1], 0, 'F', X.nat[1], :],
-                           [3722, 3395, 3347])
+        arr = self.io_3d.copy()
 
-        la.to_csv(self.tmp_path('out.csv'))
-        result = ['arr,age,sex,nat\\time,2007,2010,2013\n',
-                  '1,0,F,1,3722,3395,3347\n',
-                  '1,0,F,2,338,316,323\n']
+        arr.to_csv(self.tmp_path('out.csv'))
+        result = ['a,b\\c,c0,c1,c2\n',
+                  '1,b0,0,1,2\n',
+                  '1,b1,3,4,5\n']
         with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
         # stacked data (one column containing all the values and another column listing the context of the value)
-        la.to_csv(self.tmp_path('out.csv'), wide=False)
-        result = ['arr,age,sex,nat,time,value\n',
-                  '1,0,F,1,2007,3722\n',
-                  '1,0,F,1,2010,3395\n']
+        arr.to_csv(self.tmp_path('out.csv'), wide=False)
+        result = ['a,b,c,value\n',
+                  '1,b0,c0,0\n',
+                  '1,b0,c1,1\n']
         with open(self.tmp_path('out.csv')) as f:
             self.assertEqual(f.readlines()[:3], result)
 
-        la = ndtest([Axis('time=2015..2017')])
-        la.to_csv(self.tmp_path('test_out1d.csv'))
-        result = ['time,2015,2016,2017\n',
+        arr = self.io_1d.copy()
+        arr.to_csv(self.tmp_path('test_out1d.csv'))
+        result = ['a,a0,a1,a2\n',
                   ',0,1,2\n']
         with open(self.tmp_path('test_out1d.csv')) as f:
             self.assertEqual(f.readlines(), result)
@@ -3521,11 +3473,9 @@ age    0       1       2       3       4       5       6       7        8  ...  
             assert_array_equal(res.axes[2].labels, a3.axes[2].labels)
 
         with open_excel(inputpath('test.xlsx')) as wb:
+            expected = ndtest("a=a0..a2; b0..b2")
             res = wb['2d_classic'].load()
-            assert res.ndim == 2
-            assert res.shape == (5, 3)
-            assert res.axes.names == ['age', None]
-            assert_array_equal(res[0, :], [3722, 3395, 3347])
+            assert_array_equal(res, expected)
 
         # 3) without headers
         # ==================
