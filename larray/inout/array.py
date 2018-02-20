@@ -465,7 +465,7 @@ def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=n
         warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
 
-    sheetname = _translate_sheet_name(sheetname)
+    sheet = _translate_sheet_name(sheet)
 
     if engine is None:
         engine = 'xlwings' if xw is not None else None
