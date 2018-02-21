@@ -305,6 +305,8 @@ Miscellaneous improvements
 
   Closes :issue:`549`.
 
+* renamed argument `sheetname` of `read_excel` function as `sheet` (closes :issue:`587`).
+
 
 Fixes
 -----

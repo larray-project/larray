@@ -200,7 +200,7 @@ cells:
     or Excel sheets
     
     ```python
-    # loads array from the first sheet if no sheetname is given
+    # loads array from the first sheet if no sheet is given
     pop = read_excel('demography.xlsx', 'pop')
     ```
 

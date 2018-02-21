@@ -2675,7 +2675,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['age', None])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        # passing a Group as sheetname arg
+        # passing a Group as sheet arg
         axis = Axis('dim=1d,2d,3d,5d')
 
         la = read_excel(inputpath('test.xlsx'), axis['1d'])
@@ -2764,7 +2764,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
         self.assertEqual(la.axes.names, ['age', None])
         assert_array_equal(la[0, :], [3722, 3395, 3347])
 
-        # passing a Group as sheetname arg
+        # passing a Group as sheet arg
         axis = Axis('dim=1d,2d,3d,5d')
 
         la = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
