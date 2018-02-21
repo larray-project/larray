@@ -428,7 +428,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
+@deprecate_kwarg('sheetname', 'sheet')
+def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
                sort_rows=False, sort_columns=False, engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
@@ -437,7 +438,7 @@ def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=n
     ----------
     filepath : str
         Path where the Excel file has to be read.
-    sheetname : str, Group or int, optional
+    sheet : str, Group or int, optional
         Name or index of the Excel sheet containing the array to be read.
         By default the array is read from the first sheet.
     nb_axes : int, optional
@@ -465,7 +466,7 @@ def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=n
         warnings.warn("read_excel `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
 
-    sheetname = _translate_sheet_name(sheetname)
+    sheet = _translate_sheet_name(sheet)
 
     if engine is None:
         engine = 'xlwings' if xw is not None else None
@@ -483,10 +484,10 @@ def read_excel(filepath, sheetname=0, nb_axes=None, index_col=None, fill_value=n
                             .format(list(kwargs.keys())[0]))
         from larray.inout.excel import open_excel
         with open_excel(filepath) as wb:
-            return wb[sheetname].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
-                                      sort_columns=sort_columns)
+            return wb[sheet].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
+                                  sort_columns=sort_columns)
     else:
-        df = pd.read_excel(filepath, sheetname, index_col=index_col, engine=engine, **kwargs)
+        df = pd.read_excel(filepath, sheet, index_col=index_col, engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
                            fill_value=fill_value)
 
