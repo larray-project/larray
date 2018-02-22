@@ -6031,12 +6031,10 @@ class LArray(ABCLArray):
         sheet_name = _translate_sheet_name(sheet_name)
 
         if wide:
+            pd_obj = self.to_frame(fold_last_axis_name=True)
             if transpose and self.ndim >= 2:
-                axes = self.axes[:-2] + Axis(self.axes[-2].labels, self.axes[-1].name) + \
-                       Axis(self.axes[-1].labels, self.axes[-2].name)
-                pd_obj = self.set_axes(axes).to_frame(fold_last_axis_name=True)
-            else:
-                pd_obj = self.to_frame(fold_last_axis_name=True)
+                names = pd_obj.index.names
+                pd_obj.index.names = names[:-2] + ['\\'.join(reversed(names[-1].split('\\')))]
         else:
             pd_obj = self.to_series(value_name)
 
