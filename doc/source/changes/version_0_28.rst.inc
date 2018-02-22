@@ -351,8 +351,7 @@ Fixes
     >>> arr = ndtest((2, 3))
     >>> arr.to_excel('my_file.xlsx', transpose=True)
 
-    b\a	 a0	 a1
-    b0	  0	  3
-    b1	  1	  4
-    b2	  2	  5
-
+    b\a  a0  a1
+    b0    0   3
+    b1    1   4
+    b2    2   5
