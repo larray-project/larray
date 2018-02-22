@@ -5979,7 +5979,8 @@ class LArray(ABCLArray):
         key = _translate_key_hdf(key)
         self.to_frame().to_hdf(filepath, key, *args, **kwargs)
 
-    def to_excel(self, filepath=None, sheet_name=None, position='A1', overwrite_file=False, clear_sheet=False,
+    @deprecate_kwarg('sheet_name', 'sheet') 
+    def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
         """
         Writes array in the specified sheet of specified excel workbook.
@@ -5990,9 +5991,9 @@ class LArray(ABCLArray):
             Path where the excel file has to be written. If None (default), creates a new Excel Workbook in a live Excel
             instance (Windows only). Use -1 to use the currently active Excel Workbook. Use a name without extension
             (.xlsx) to use any unsaved* workbook.
-        sheet_name : str or Group or int or None, optional
+        sheet : str or Group or int or None, optional
             Sheet where the data has to be written. Defaults to None, Excel standard name if adding a sheet to an
-            existing file, "Sheet1" otherwise. sheet_name can also refer to the position of the sheet
+            existing file, "Sheet1" otherwise. sheet can also refer to the position of the sheet
             (e.g. 0 for the first sheet, -1 for the last one).
         position : str or tuple of integers, optional
             Integer position (row, column) must be 1-based. Defaults to 'A1'.
@@ -6028,7 +6029,7 @@ class LArray(ABCLArray):
         >>> # add to existing sheet starting at position A15
         >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
         """
-        sheet_name = _translate_sheet_name(sheet_name)
+        sheet = _translate_sheet_name(sheet)
 
         if wide:
             pd_obj = self.to_frame(fold_last_axis_name=True)
@@ -6057,29 +6058,29 @@ class LArray(ABCLArray):
             wb = open_excel(filepath, overwrite_file=overwrite_file)
 
             if new_workbook:
-                sheet = wb.sheets[0]
-                if sheet_name is not None:
-                    sheet.name = sheet_name
-            elif sheet_name is not None and sheet_name in wb:
-                sheet = wb.sheets[sheet_name]
+                sheetobj = wb.sheets[0]
+                if sheet is not None:
+                    sheetobj.name = sheet
+            elif sheet is not None and sheet in wb:
+                sheetobj = wb.sheets[sheet]
                 if clear_sheet:
-                    sheet.clear()
+                    sheetobj.clear()
             else:
-                sheet = wb.sheets.add(sheet_name, after=wb.sheets[-1])
+                sheetobj = wb.sheets.add(sheet, after=wb.sheets[-1])
 
             options = dict(header=header, index=header, transpose=transpose)
-            sheet[position].options(**options).value = pd_obj
+            sheetobj[position].options(**options).value = pd_obj
             # TODO: implement wide via/in dump
             # sheet[position] = self.dump(header=header, wide=wide)
             if close:
                 wb.save()
                 wb.close()
         else:
-            if sheet_name is None:
-                sheet_name = 'Sheet1'
+            if sheet is None:
+                sheet = 'Sheet1'
             # TODO: implement position in this case
             # startrow, startcol
-            pd_obj.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
+            pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """Sends the content of the array to clipboard.
