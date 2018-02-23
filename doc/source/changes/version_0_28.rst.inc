@@ -357,3 +357,13 @@ Fixes
     Axis(['a1', 'a2'], 'a')
     >>> a.difference('a1..a3')
     Axis(['a0'], 'a')
+
+* fixed `to_excel` applied on >= 2D arrays using `transpose=True` (closes :issue:`579`)
+
+    >>> arr = ndtest((2, 3))
+    >>> arr.to_excel('my_file.xlsx', transpose=True)
+
+    b\a  a0  a1
+    b0    0   3
+    b1    1   4
+    b2    2   5

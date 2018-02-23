@@ -6004,7 +6004,7 @@ class LArray(ABCLArray):
         header : bool, optional
             Whether or not to write a header (axes names and labels). Defaults to True.
         transpose : bool, optional
-            Whether or not to transpose the array transpose over last axis.
+            Whether or not to transpose the array over last axis.
             This is equivalent to paste with option transpose in Excel. Defaults to False.
         wide : boolean, optional
             Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
@@ -6033,6 +6033,9 @@ class LArray(ABCLArray):
 
         if wide:
             pd_obj = self.to_frame(fold_last_axis_name=True)
+            if transpose and self.ndim >= 2:
+                names = pd_obj.index.names
+                pd_obj.index.names = names[:-2] + ['\\'.join(reversed(names[-1].split('\\')))]
         else:
             pd_obj = self.to_series(value_name)
 
