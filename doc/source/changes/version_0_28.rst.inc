@@ -318,6 +318,7 @@ Miscellaneous improvements
 
 * renamed argument `sheetname` of `read_excel` function as `sheet` (closes :issue:`587`).
 
+* Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
 
 Fixes
 -----
