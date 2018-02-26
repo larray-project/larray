@@ -634,34 +634,6 @@ def equals(a1, a2, rtol=0, atol=0, nan_equals=False):
 
 
 def nan_equal(a1, a2):
-    """
-    Compares two arrays element-wise and returns array of booleans. True for each cell where corresponding elements are
-    equal or are both NaN, False otherwise.
-
-    Parameters
-    ----------
-    a1, a2 : LArray-like
-        Input arrays. aslarray() is used on non-LArray inputs.
-
-    Returns
-    -------
-    LArray
-        Returns True if the arrays are equal (even in the presence of NaN).
-
-    Examples
-    --------
-    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
-    >>> arr1
-    a   a0   a1   a2
-       6.0  nan  8.0
-    >>> arr2 = arr1.copy()
-    >>> arr1 == arr2
-    a    a0     a1    a2
-       True  False  True
-    >>> nan_equal(arr1, arr2)
-    a    a0    a1    a2
-       True  True  True
-    """
     import warnings
     warnings.warn("nan_equal() is deprecated. Use equal() instead.", FutureWarning, stacklevel=2)
     return equals(a1, a2, nan_equals=True)

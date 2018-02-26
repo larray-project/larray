@@ -514,7 +514,6 @@ Miscellaneous
    from_frame
    labels_array
    equals
-   nan_equal
    union
    stack
    identity
