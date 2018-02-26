@@ -5390,13 +5390,7 @@ class LArray(ABCLArray):
             other = aslarray(other)
         except Exception:
             return False
-        if rtol == 0 and atol == 0:
-            if nan_equals:
-                return self.axes == other.axes and all(nan_equal(self, other))
-            else:
-                return self.axes == other.axes and np.array_equal(np.asarray(self), np.asarray(other))
-        else:
-            return self.axes == other.axes and np.allclose(np.asarray(self), np.asarray(other), rtol, atol, nan_equals)
+        return self.axes == other.axes and all(equal(self, other, rtol=rtol, atol=atol, nan_equals=nan_equals))
 
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
