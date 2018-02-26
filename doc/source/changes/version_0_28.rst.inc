@@ -255,7 +255,7 @@ Miscellaneous improvements
 
   Closes :issue:`488`.
 
-* deprecated `nan_equal` function in favor of `equal` function which has the same optional arguments
+* deprecated `nan_equal` function in favor of `equals` function which has the same optional arguments
   as the `LArray.equals` method (closes :issue:`593`).
 
 * renamed argument `transpose` by `wide` in `to_csv` method.
