@@ -569,7 +569,8 @@ def equals(a1, a2, rtol=0, atol=0, nan_equals=False):
     Returns
     -------
     LArray
-        Returns True if the arrays are equal (even in the presence of NaN).
+        Boolean array of where a1 and a2 are equal within a tolerance range if given.
+        If nan_equals=True, nan’s in a1 will be considered equal to nan’s in a2 in the output array.
 
     Notes
     -----
