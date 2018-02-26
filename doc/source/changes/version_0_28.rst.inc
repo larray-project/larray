@@ -255,8 +255,20 @@ Miscellaneous improvements
 
   Closes :issue:`488`.
 
-* deprecated `nan_equal` function in favor of `equals` function which has the same optional arguments
-  as the `LArray.equals` method (closes :issue:`593`).
+* deprecated `nan_equal` function in favor of `equals` function. The `equals` function has the same optional
+  arguments as the `LArray.equals` method but compares two arrays element-wise and returns array of booleans:
+
+      >>> equals(arr1, arr2)
+      a     a0     a1
+         False  False
+      >>> equals(arr1, arr2, atol=0.01)
+      a    a0    a1
+         True  True
+      >>> equals(arr1, arr2, rtol=0.01)
+      a    a0    a1
+         True  True
+
+  Closes :issue:`593`.
 
 * renamed argument `transpose` by `wide` in `to_csv` method.
 
