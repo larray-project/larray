@@ -5,7 +5,7 @@ __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
     'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
     'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
-    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal'
+    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'equal'
 ]
 
 """
@@ -547,6 +547,92 @@ _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percent
 
 obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
 
+
+def equal(a1, a2, rtol=0, atol=0, nan_equals=False):
+    """
+    Compares two arrays element-wise and returns array of booleans.
+
+    Parameters
+    ----------
+    a1, a2 : LArray-like
+        Input arrays. aslarray() is used on non-LArray inputs.
+    rtol : float or int, optional
+        The relative tolerance parameter (see Notes). Defaults to 0.
+    atol : float or int, optional
+        The absolute tolerance parameter (see Notes). Defaults to 0.
+    nan_equals: boolean, optional
+        Whether or not to consider nan values at the same positions in the two arrays as equal.
+        By default, an array containing nan values is never equal to another array, even if that other array
+        also contains nan values at the same positions. The reason is that a nan value is different from
+        *anything*, including itself. Defaults to False.
+
+    Returns
+    -------
+    LArray
+        Returns True if the arrays are equal (even in the presence of NaN).
+
+    Notes
+    -----
+    For finite values, nan_equal uses the following equation to test whether two values are equal:
+
+        absolute(array1 - array2) <= (atol + rtol * absolute(array2))
+
+    The above equation is not symmetric in array1 and array2, so that nan_equal(array1, array2) might be different
+    from nan_equal(array2, array1) in some rare cases.
+
+    Examples
+    --------
+    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+    >>> arr1
+    a   a0   a1   a2
+       6.0  nan  8.0
+
+    Default behavior (same as == operator)
+
+    >>> arr2 = arr1.copy()
+    >>> equal(arr1, arr2)
+    a    a0     a1    a2
+       True  False  True
+
+    Test equality between two arrays within a given tolerance range.
+    Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
+
+    >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+    >>> arr2
+    a     a0   a1     a2
+       5.999  nan  8.001
+    >>> equal(arr1, arr2, nan_equals=True)
+    a     a0    a1     a2
+       False  True  False
+    >>> equal(arr1, arr2, atol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
+    >>> equal(arr1, arr2, rtol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
+    """
+    a1, a2 = aslarray(a1), aslarray(a2)
+
+    if rtol == 0 and atol == 0:
+        if not nan_equals:
+            return a1 == a2
+        else:
+            from larray.core.ufuncs import isnan
+
+            def general_isnan(a):
+                if np.issubclass_(a.dtype.type, np.inexact):
+                    return isnan(a)
+                elif a.dtype.type is np.object_:
+                    return LArray(obj_isnan(a), a.axes)
+                else:
+                    return False
+
+            return (a1 == a2) | (general_isnan(a1) & general_isnan(a2))
+    else:
+        (a1, a2), res_axes = make_numpy_broadcastable([a1, a2])
+        return LArray(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nan_equals), res_axes)
+
+
 def nan_equal(a1, a2):
     """
     Compares two arrays element-wise and returns array of booleans. True for each cell where corresponding elements are
@@ -564,11 +650,10 @@ def nan_equal(a1, a2):
 
     Examples
     --------
-    >>> arr1 = ndtest(3, dtype=float)
-    >>> arr1['a1'] = nan
+    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
     >>> arr1
     a   a0   a1   a2
-       0.0  nan  2.0
+       6.0  nan  8.0
     >>> arr2 = arr1.copy()
     >>> arr1 == arr2
     a    a0     a1    a2
@@ -577,18 +662,9 @@ def nan_equal(a1, a2):
     a    a0    a1    a2
        True  True  True
     """
-    from larray.core.ufuncs import isnan
-
-    def general_isnan(a):
-        if np.issubclass_(a.dtype.type, np.inexact):
-            return isnan(a)
-        elif a.dtype.type is np.object_:
-            return LArray(obj_isnan(a), a.axes)
-        else:
-            return False
-
-    a1, a2 = aslarray(a1), aslarray(a2)
-    return (a1 == a2) | (general_isnan(a1) & general_isnan(a2))
+    import warnings
+    warnings.warn("nan_equal() is deprecated. Use equal() instead.", FutureWarning, stacklevel=2)
+    return equal(a1, a2, nan_equals=True)
 
 
 class LArray(ABCLArray):

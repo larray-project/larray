@@ -513,6 +513,7 @@ Miscellaneous
    aslarray
    from_frame
    labels_array
+   equal
    nan_equal
    union
    stack
