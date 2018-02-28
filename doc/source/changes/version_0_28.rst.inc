@@ -98,9 +98,6 @@ New features
     >>> arr1.equals(arr2, nan_equal=True)
     True
 
-* added another feature.
-
-.. _misc:
 
 Miscellaneous improvements
 --------------------------
@@ -255,18 +252,30 @@ Miscellaneous improvements
 
   Closes :issue:`488`.
 
-* deprecated `nan_equal` function in favor of `equals` function. The `equals` function has the same optional
-  arguments as the `LArray.equals` method but compares two arrays element-wise and returns array of booleans:
+* deprecated `nan_equal` function in favor of `element_equals` function. The `element_equals` function has the
+  same optional arguments as the `LArray.equals` method but compares two arrays element-wise and
+  returns an array of booleans:
 
-      >>> equals(arr1, arr2)
-      a     a0     a1
-         False  False
-      >>> equals(arr1, arr2, atol=0.01)
-      a    a0    a1
-         True  True
-      >>> equals(arr1, arr2, rtol=0.01)
-      a    a0    a1
-         True  True
+    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+    >>> arr1
+    a   a0   a1   a2
+       6.0  nan  8.0
+    >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+    >>> arr2
+    a     a0   a1     a2
+       5.999  nan  8.001
+    >>> element_equals(arr1, arr2)
+    a     a0     a1     a2
+       False  False  False
+    >>> element_equals(arr1, arr2, nan_equals=True)
+    a     a0    a1     a2
+       False  True  False
+    >>> element_equals(arr1, arr2, atol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
+    >>> element_equals(arr1, arr2, rtol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
 
   Closes :issue:`593`.
 
