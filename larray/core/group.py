@@ -223,6 +223,10 @@ def _range_str_to_range(s, stack_depth=1):
     >>> list(_range_str_to_range('2..6 step 2'))
     [2, 4, 6]
 
+    0 padding
+    >>> list(_range_str_to_range('01..12'))
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
     any special character except . and spaces should work
     >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
     ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
@@ -236,6 +240,8 @@ def _range_str_to_range(s, stack_depth=1):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop = _parse_bound(stop, stack_depth + 1)
+    if isinstance(start, basestring) or isinstance(stop, basestring):
+        start, stop = str(start), str(stop)
     # TODO: use parse_bound
     step = int(step) if step is not None else 1
     return generalized_range(start, stop, step)
@@ -382,7 +388,9 @@ def _to_ticks(s, parse_single_int=False):
 
     Notes
     -----
-    This function is only used in Axis.__init__ and union().
+    1) This function is only used in Axis.__init__ and union().
+    2) In Axis.labels setter, the line labels = np.asarray(ticks) returns an Numpy array
+       with string dtype if at least one tick is a string (see last doctest)
 
     Examples
     --------
@@ -394,6 +402,10 @@ def _to_ticks(s, parse_single_int=False):
     ['U']
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
+    >>> _to_ticks('01..12')
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    >>> _to_ticks('01,02,03,10,11,12')
+    ['01', '02', '03', 10, 11, 12]
     """
     if isinstance(s, ABCAxis):
         return s.labels

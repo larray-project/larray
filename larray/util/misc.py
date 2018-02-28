@@ -7,6 +7,7 @@ import __main__
 import math
 import itertools
 import sys
+import re
 import operator
 import warnings
 from textwrap import wrap
@@ -515,8 +516,28 @@ def float_error_handler_factory(stacklevel):
     return error_handler
 
 
+_zero_padding_pattern = re.compile('0+[1-9]+')
+
+
 def _isintstring(s):
-    return s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())
+    """
+    Parameters
+    ----------
+    s : str
+
+    Examples
+    --------
+    >>> _isintstring('12')
+    True
+    >>> _isintstring('-12')
+    True
+    >>> _isintstring('a1')
+    False
+    >>> _isintstring('01')
+    False
+    """
+    return (s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())) and \
+           _zero_padding_pattern.match(s) is None
 
 
 def _parse_bound(s, stack_depth=1, parse_int=True):
@@ -545,6 +566,8 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
     2
     >>> _parse_bound('42')
     42
+    >>> _parse_bound('01')
+    '01'
     """
     s = s.strip()
     if s == '':
