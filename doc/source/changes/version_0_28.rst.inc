@@ -344,10 +344,10 @@ Miscellaneous improvements
 
 * Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
 
-* allowed to create an axis with int-like labels starting with one or several 0 (closes :issue:`533`):
+* allowed to create axes with zero padded string labels (closes :issue:`533`):
 
-    >>> Axis('01..12', 'zero_padding')
-    Axis(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], 'zero_padding')
+    >>> Axis('01,02,03,10,11,12', 'zero_padding')
+    Axis(['01', '02', '03', '10', '11', '12'], 'zero_padding')
 
 
 Fixes
