@@ -513,7 +513,7 @@ Miscellaneous
    aslarray
    from_frame
    labels_array
-   element_equals
+   element_equal
    union
    stack
    identity

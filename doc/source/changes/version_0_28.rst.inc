@@ -252,7 +252,7 @@ Miscellaneous improvements
 
   Closes :issue:`488`.
 
-* deprecated `nan_equal` function in favor of `element_equals` function. The `element_equals` function has the
+* deprecated `nan_equal` function in favor of `element_equal` function. The `element_equal` function has the
   same optional arguments as the `LArray.equals` method but compares two arrays element-wise and
   returns an array of booleans:
 
@@ -264,16 +264,16 @@ Miscellaneous improvements
     >>> arr2
     a     a0   a1     a2
        5.999  nan  8.001
-    >>> element_equals(arr1, arr2)
+    >>> element_equal(arr1, arr2)
     a     a0     a1     a2
        False  False  False
-    >>> element_equals(arr1, arr2, nan_equals=True)
+    >>> element_equal(arr1, arr2, nan_equals=True)
     a     a0    a1     a2
        False  True  False
-    >>> element_equals(arr1, arr2, atol=0.01, nan_equals=True)
+    >>> element_equal(arr1, arr2, atol=0.01, nan_equals=True)
     a    a0    a1    a2
        True  True  True
-    >>> element_equals(arr1, arr2, rtol=0.01, nan_equals=True)
+    >>> element_equal(arr1, arr2, rtol=0.01, nan_equals=True)
     a    a0    a1    a2
        True  True  True
 

@@ -5,7 +5,7 @@ __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
     'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
     'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
-    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'element_equals'
+    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'element_equal'
 ]
 
 """
@@ -548,7 +548,7 @@ _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percent
 obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
 
 
-def element_equals(a1, a2, rtol=0, atol=0, nan_equals=False):
+def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
     """
     Compares two arrays element-wise and returns array of booleans.
 
@@ -574,12 +574,12 @@ def element_equals(a1, a2, rtol=0, atol=0, nan_equals=False):
 
     Notes
     -----
-    For finite values, element_equals uses the following equation to test whether two values are equal:
+    For finite values, element_equal uses the following equation to test whether two values are equal:
 
         absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
-    The above equation is not symmetric in array1 and array2, so that element_equals(array1, array2)
-    might be different from element_equals(array2, array1) in some rare cases.
+    The above equation is not symmetric in array1 and array2, so that element_equal(array1, array2)
+    might be different from element_equal(array2, array1) in some rare cases.
 
     Examples
     --------
@@ -590,8 +590,7 @@ def element_equals(a1, a2, rtol=0, atol=0, nan_equals=False):
 
     Default behavior (same as == operator)
 
-    >>> arr2 = arr1.copy()
-    >>> element_equals(arr1, arr2)
+    >>> element_equal(arr1, arr1)
     a    a0     a1    a2
        True  False  True
 
@@ -602,13 +601,13 @@ def element_equals(a1, a2, rtol=0, atol=0, nan_equals=False):
     >>> arr2
     a     a0   a1     a2
        5.999  nan  8.001
-    >>> element_equals(arr1, arr2, nan_equals=True)
+    >>> element_equal(arr1, arr2, nan_equals=True)
     a     a0    a1     a2
        False  True  False
-    >>> element_equals(arr1, arr2, atol=0.01, nan_equals=True)
+    >>> element_equal(arr1, arr2, atol=0.01, nan_equals=True)
     a    a0    a1    a2
        True  True  True
-    >>> element_equals(arr1, arr2, rtol=0.01, nan_equals=True)
+    >>> element_equal(arr1, arr2, rtol=0.01, nan_equals=True)
     a    a0    a1    a2
        True  True  True
     """
@@ -637,7 +636,7 @@ def element_equals(a1, a2, rtol=0, atol=0, nan_equals=False):
 def nan_equal(a1, a2):
     import warnings
     warnings.warn("nan_equal() is deprecated. Use equal() instead.", FutureWarning, stacklevel=2)
-    return element_equals(a1, a2, nan_equals=True)
+    return element_equal(a1, a2, nan_equals=True)
 
 
 class LArray(ABCLArray):
@@ -5363,7 +5362,7 @@ class LArray(ABCLArray):
             other = aslarray(other)
         except Exception:
             return False
-        return self.axes == other.axes and all(element_equals(self, other, rtol=rtol, atol=atol, nan_equals=nan_equals))
+        return self.axes == other.axes and all(element_equal(self, other, rtol=rtol, atol=atol, nan_equals=nan_equals))
 
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
