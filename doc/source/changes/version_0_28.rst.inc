@@ -98,9 +98,6 @@ New features
     >>> arr1.equals(arr2, nan_equal=True)
     True
 
-* added another feature.
-
-.. _misc:
 
 Miscellaneous improvements
 --------------------------
@@ -255,6 +252,33 @@ Miscellaneous improvements
 
   Closes :issue:`488`.
 
+* deprecated `nan_equal` function in favor of `element_equal` function. The `element_equal` function has the
+  same optional arguments as the `LArray.equals` method but compares two arrays element-wise and
+  returns an array of booleans:
+
+    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+    >>> arr1
+    a   a0   a1   a2
+       6.0  nan  8.0
+    >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+    >>> arr2
+    a     a0   a1     a2
+       5.999  nan  8.001
+    >>> element_equal(arr1, arr2)
+    a     a0     a1     a2
+       False  False  False
+    >>> element_equal(arr1, arr2, nan_equals=True)
+    a     a0    a1     a2
+       False  True  False
+    >>> element_equal(arr1, arr2, atol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
+    >>> element_equal(arr1, arr2, rtol=0.01, nan_equals=True)
+    a    a0    a1    a2
+       True  True  True
+
+  Closes :issue:`593`.
+
 * renamed argument `transpose` by `wide` in `to_csv` method.
 
 * added argument `wide` in `to_excel` method. When argument `wide` is set to False, the array is exported
@@ -319,6 +343,7 @@ Miscellaneous improvements
 * renamed argument `sheetname` of `read_excel` function as `sheet` (closes :issue:`587`).
 
 * Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
+
 
 Fixes
 -----
