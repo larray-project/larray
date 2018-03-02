@@ -1654,6 +1654,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         raw = np.asarray(la)
         assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
 
+    def test_group_agg_zero_padded_label(self):
+        arr = ndtest("a=01,02,03,10,11; b=b0..b2")
+        expected = LArray([36, 30, 39], "a=01_03,10,11")
+        assert_array_equal(arr.sum("01,02,03 >> 01_03; 10; 11", "b"), expected)
+
     def test_group_agg_on_int_array(self):
         # issue 193
         arr = ndtest('year=2014..2018')

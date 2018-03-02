@@ -397,3 +397,13 @@ Fixes
     b0    0   3
     b1    1   4
     b2    2   5
+
+* fixed aggregation on arrays containing zero padded string labels (closes :issue:`522`):
+
+    >>> arr = ndtest(Axis('01,02,03,10,11,12', 'zero_padding'))
+    >>> arr
+    zero_padding  01  02  03  10  11  12
+                   0   1   2   3   4   5
+    >>> arr.sum('01,02,03 >> 01_03; 10')
+    zero_padding  01_03  10
+                      3   3
