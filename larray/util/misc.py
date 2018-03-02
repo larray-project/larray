@@ -516,14 +516,15 @@ def float_error_handler_factory(stacklevel):
     return error_handler
 
 
-_zero_padding_pattern = re.compile('0+[1-9]+')
-
-
 def _isintstring(s):
     """
+    Return True if the passed string represents an integer.
+    Zero padded integers are considered as strings and not integers.
+
     Parameters
     ----------
     s : str
+        string to test if representing an integer.
 
     Examples
     --------
@@ -536,8 +537,10 @@ def _isintstring(s):
     >>> _isintstring('01')
     False
     """
-    return (s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())) and \
-           _zero_padding_pattern.match(s) is None
+    def isposint(s):
+        # exclude zero padded strings
+        return s.isdigit() and not (len(s) > 1 and s[0] == '0')
+    return isposint(s) or (len(s) > 1 and s[0] == '-' and isposint(s[1:]))
 
 
 def _parse_bound(s, stack_depth=1, parse_int=True):
