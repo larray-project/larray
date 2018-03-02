@@ -24,15 +24,15 @@ from larray.util.misc import StringIO
 
 class TestValueStrings(TestCase):
     def test_split(self):
-        self.assertEqual(_to_ticks('M,F'), ['M', 'F'])
-        self.assertEqual(_to_ticks('M, F'), ['M', 'F'])
+        assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
+        assert_array_equal(_to_ticks('M, F'), np.asarray(['M', 'F']))
 
     def test_union(self):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
 
     def test_range(self):
-        self.assertEqual(_to_ticks('0..115'), range(116))
-        self.assertEqual(_to_ticks('..115'), range(116))
+        assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
+        assert_array_equal(_to_ticks('..115'), np.asarray(range(116)))
         with self.assertRaises(ValueError):
             _to_ticks('10..')
         with self.assertRaises(ValueError):

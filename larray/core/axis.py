@@ -197,7 +197,7 @@ class Axis(ABCAxis):
                 for i, tick in enumerate(ticks):
                     labels[i] = tick
             else:
-                labels = np.asarray(ticks)
+                labels = ticks
             length = len(labels)
             iswildcard = False
 
