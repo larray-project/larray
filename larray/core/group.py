@@ -371,6 +371,7 @@ def _to_tick(v):
         return str(v)
 
 
+# TODO: remove the conversion to list in doctests once Python 2 is dropped
 def _to_ticks(s, parse_single_int=False):
     """
     Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
@@ -394,24 +395,18 @@ def _to_ticks(s, parse_single_int=False):
 
     Examples
     --------
-    >>> _to_ticks('M , F')
-    array(['M', 'F'],
-          dtype='<U1')
-    >>> _to_ticks('A,C..E,F..G,Z')
-    array(['A', 'C', 'D', 'E', 'F', 'G', 'Z'],
-          dtype='<U1')
-    >>> _to_ticks('U')
-    array(['U'],
-          dtype='<U1')
-    >>> _to_ticks('..3')
-    array([0, 1, 2, 3])
-    >>> _to_ticks('01..12')
-    array(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11',
-           '12'],
-          dtype='<U2')
-    >>> _to_ticks('01,02,03,10,11,12')
-    array(['01', '02', '03', '10', '11', '12'],
-          dtype='<U2')
+    >>> list(_to_ticks('M , F'))
+    ['M', 'F']
+    >>> list(_to_ticks('A,C..E,F..G,Z'))
+    ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
+    >>> list(_to_ticks('U'))
+    ['U']
+    >>> list(_to_ticks('..3'))
+    [0, 1, 2, 3]
+    >>> list(_to_ticks('01..12'))
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    >>> list(_to_ticks('01,02,03,10,11,12'))
+    ['01', '02', '03', '10', '11', '12']
     """
     if isinstance(s, ABCAxis):
         return s.labels
