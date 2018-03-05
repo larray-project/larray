@@ -7,7 +7,6 @@ import __main__
 import math
 import itertools
 import sys
-import re
 import operator
 import warnings
 from textwrap import wrap
