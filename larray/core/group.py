@@ -385,13 +385,7 @@ def _to_ticks(s, parse_single_int=False):
 
     Returns
     -------
-    collection of labels
-
-    Notes
-    -----
-    1) This function is only used in Axis.__init__ and union().
-    2) In Axis.labels setter, the line labels = np.asarray(ticks) returns an Numpy array
-       with string dtype if at least one tick is a string (see last doctest)
+    Numpy 1D array containing labels
 
     Examples
     --------
