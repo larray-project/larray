@@ -400,7 +400,7 @@ Fixes
 
 * fixed aggregation on arrays containing zero padded string labels (closes :issue:`522`):
 
-    >>> arr = ndtest(Axis('zero_padding=01,02,03,10,11,12'))
+    >>> arr = ndtest('zero_padding=01,02,03,10,11,12')
     >>> arr
     zero_padding  01  02  03  10  11  12
                    0   1   2   3   4   5
