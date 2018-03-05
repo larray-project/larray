@@ -184,20 +184,7 @@ class Axis(ABCAxis):
             labels = np.arange(length)
             iswildcard = True
         else:
-            # TODO: move this to _to_ticks????
-            # we convert to an ndarray to save memory for scalar ticks (for
-            # LGroup ticks, it does not make a difference since a list of LGroup
-            # and an ndarray of LGroup are both arrays of pointers)
-            ticks = _to_ticks(labels, parse_single_int=True)
-            if _contain_group_ticks(ticks):
-                # avoid getting a 2d array if all LGroup have the same length
-                labels = np.empty(len(ticks), dtype=object)
-                # this does not work if some values have a length (with a valid __len__) and others not
-                # labels[:] = ticks
-                for i, tick in enumerate(ticks):
-                    labels[i] = tick
-            else:
-                labels = ticks
+            labels = _to_ticks(labels, parse_single_int=True)
             length = len(labels)
             iswildcard = False
 
