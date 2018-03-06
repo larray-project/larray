@@ -1,0 +1,271 @@
+cells:
+
+- markdown: |
+    # Transforming Arrays (Renaming, Relabeling, Reordering, Sorting, ...)
+
+
+- code: |
+    # @tutorial writers: You can remove cells from the HTML/LaTeX output by adding this to the cell metadata:
+    # "nbsphinx": "hidden"
+    
+    # ignore warnings
+    import warnings
+    warnings.filterwarnings('ignore')
+    
+    # simplify exception output
+    %xmode Plain
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+  id: 1
+
+- markdown: |
+    ## Manipulating axes
+
+
+- code: |
+    # let's start with
+    pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
+    pop
+
+  id: 2
+
+- markdown: |
+    ### Relabeling
+    
+    Replace all labels of one axis
+
+
+- code: |
+    # returns a copy by default
+    pop_new_labels = pop.set_labels('sex', ['Men', 'Women'])
+    pop_new_labels
+
+  id: 3
+
+- code: |
+    # inplace flag avoids to create a copy
+    pop.set_labels('sex', ['M', 'F'], inplace=True)
+
+  id: 4
+
+- markdown: |
+    ### Renaming axes
+    
+    Rename one axis
+
+
+- code: |
+    pop.info
+
+  id: 5
+
+- code: |
+    # 'rename' returns a copy of the array
+    pop2 = pop.rename('sex', 'gender')
+    pop2
+
+  id: 6
+
+- markdown: |
+    Rename several axes at once
+
+
+- code: |
+    # No x. here because sex and nat are keywords and not actual axes
+    pop2 = pop.rename(sex='gender', nat='nationality')
+    pop2
+
+  id: 7
+
+- markdown: |
+    ### Reordering axes
+    
+    Axes can be reordered using ``transpose`` method.
+    By default, *transpose* reverse axes, otherwise it permutes the axes according to the list given as argument.
+    Axes not mentioned come after those which are mentioned(and keep their relative order).
+    Finally, *transpose* returns a copy of the array.
+
+
+- code: |
+    # starting order : age, sex, nat
+    pop
+
+  id: 8
+
+- code: |
+    # no argument --> reverse axes
+    pop.transpose()
+    
+    # .T is a shortcut for .transpose()
+    pop.T
+
+  id: 9
+
+- code: |
+    # reorder according to list
+    pop.transpose('age', 'nat', 'sex')
+
+  id: 10
+
+- code: |
+    # axes not mentioned come after those which are mentioned (and keep their relative order)
+    pop.transpose('sex')
+
+  id: 11
+
+- markdown: |
+    ## Combining arrays
+    
+    ### Append/Prepend
+    
+    Append/prepend one element to an axis of an array
+
+
+- code: |
+    pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
+    
+    # imagine that you have now acces to the number of non-EU foreigners
+    data = [[25, 54], [15, 33], [12, 28], [11, 37], [5, 21], [7, 19]]
+    pop_non_eu = LArray(data, pop['FO'].axes)
+    
+    # you can do something like this
+    pop = pop.append('nat', pop_non_eu, 'NEU')
+    pop
+
+  id: 12
+
+- code: |
+    # you can also add something at the start of an axis
+    pop = pop.prepend('sex', pop.sum('sex'), 'B')
+    pop
+
+  id: 13
+
+- markdown: |
+    The value being appended/prepended can have missing (or even extra) axes as long as common axes are compatible
+
+
+- code: |
+    aliens = zeros(pop.axes['sex'])
+    aliens
+
+  id: 14
+
+- code: |
+    pop = pop.append('nat', aliens, 'AL')
+    pop
+
+  id: 15
+
+- markdown: |
+    ### Extend
+    
+    Extend an array along an axis with another array *with* that axis (but other labels)
+
+
+- code: |
+    _pop = load_example_data('demography').pop
+    pop = _pop[2016, 'BruCap', 90:95]
+    pop_next = _pop[2016, 'BruCap', 96:100]
+    
+    # concatenate along age axis
+    pop.extend('age', pop_next)
+
+  id: 16
+
+- markdown: |
+    ### Stack
+    
+    Stack several arrays together to create an entirely new dimension
+
+
+- code: |
+    # imagine you have loaded data for each nationality in different arrays (e.g. loaded from different Excel sheets)
+    pop_be, pop_fo = pop['BE'], pop['FO']
+    
+    # first way to stack them
+    nat = Axis('nat=BE,FO,NEU')
+    pop = stack([pop_be, pop_fo, pop_non_eu], nat)
+    
+    # second way
+    pop = stack([('BE', pop_be), ('FO', pop_fo), ('NEU', pop_non_eu)], 'nat')
+    
+    pop
+
+  id: 17
+
+- markdown: |
+    ## Sorting
+    
+    Sort an axis (alphabetically if labels are strings)
+
+
+- code: |
+    pop_sorted = pop.sort_axes('nat')
+    pop_sorted
+
+  id: 18
+
+- markdown: |
+    Give labels which would sort the axis
+
+
+- code: |
+    pop_sorted.labelsofsorted('sex')
+
+  id: 19
+
+- markdown: |
+    Sort according to values
+
+
+- code: |
+    pop_sorted.sort_values((90, 'F'))
+
+  id: 20
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.6.4
+  livereveal:
+    autolaunch: false
+    scroll: true
+nbformat: 4
+nbformat_minor: 2
+
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}]

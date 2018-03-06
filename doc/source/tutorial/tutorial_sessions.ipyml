@@ -1,0 +1,150 @@
+cells:
+
+- markdown: |
+    ## Working With Sessions
+
+
+- code: |
+    # @tutorial writers: You can remove cells from the HTML/LaTeX output by adding this to the cell metadata:
+    # "nbsphinx": "hidden"
+    
+    # ignore warnings
+    import warnings
+    warnings.filterwarnings('ignore')
+    
+    # simplify exception output
+    %xmode Plain
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+  id: 1
+
+- markdown: |
+    Create test sessions:
+
+
+- code: |
+    s1 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
+    
+    # same as s1
+    s2 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
+    
+    # modify elements of the first array
+    s3 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
+    s3.arr1['a0', 'b1':] = 0
+    
+    # add a new array
+    s4 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))),
+                  ('arr3', ndtest((2, 4))), ('arr4', ndtest((3, 3)))])
+
+  id: 2
+
+- markdown: |
+    Use ``equals`` and ``array_equals`` to compare arrays between two sessions:
+
+
+- code: |
+    # 'equals' returns True if all arrays of two sessions have exactly the same arrays
+    s1.equals(s2)
+
+  id: 3
+
+- code: |
+    s1.equals(s3)
+
+  id: 4
+
+- code: |
+    s1.equals(s4)
+
+  id: 5
+
+- code: |
+    # 'array_equals' compare arrays one by one
+    s1.array_equals(s2)
+
+  id: 6
+
+- code: |
+    s1.array_equals(s3)
+
+  id: 7
+
+- code: |
+    s1.array_equals(s4)
+
+  id: 8
+
+- markdown: |
+    The ``==`` and ``!=`` operators return a new session with boolean arrays: 
+
+
+- code: |
+    diff = s1 != s2
+    
+    diff.arr1
+
+  id: 9
+
+- code: |
+    diff = s1 != s3
+    
+    diff.arr1
+
+  id: 10
+
+- code: |
+    diff = s1 != s4
+    
+    diff.arr4
+
+  id: 11
+
+- markdown: |
+    Use the function ``compare`` to compare sessions (this a bit experimental but can be useful nonetheless (open a graphical interface)). Session must have the same list of arrays:
+    
+    ```python
+    compare(s1, s2, s3)
+    ```
+
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.6.4
+  livereveal:
+    autolaunch: false
+    scroll: true
+nbformat: 4
+nbformat_minor: 2
+
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]

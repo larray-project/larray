@@ -1,0 +1,481 @@
+cells:
+
+- markdown: |
+    # Indexing, Selecting and Assigning
+
+
+- code: |
+    # @tutorial writers: You can remove cells from the HTML/LaTeX output by adding this to the cell metadata:
+    # "nbsphinx": "hidden"
+    
+    # ignore warnings
+    import warnings
+    warnings.filterwarnings('ignore')
+    
+    # simplify exception output
+    %xmode Plain
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+  id: 1
+
+- markdown: |
+    Import the test array ``pop``:
+
+
+- code: |
+    # let's start with
+    pop = load_example_data('demography').pop
+    pop
+
+  id: 2
+
+- markdown: |
+    ## Selecting (Subsets)
+    
+    LArray allows to select a subset of an array either by labels or positions
+
+
+- markdown: |
+    ### Selecting by Labels
+    
+    To take a subset of an array using labels, use brackets [ ].
+    
+    Let's start by selecting a single element:
+
+
+- code: |
+    # here we select the value associated with Belgian women
+    # of age 50 from Brussels region for the year 2015
+    pop[2015, 'BruCap', 50, 'F', 'BE']
+
+  id: 3
+
+- markdown: |
+    Continue with selecting a subset using slices and lists of labels
+
+
+- code: |
+    # here we select the subset associated with Belgian women of age 50, 51 and 52
+    # from Brussels region for the years 2010 to 2016
+    pop[2010:2016, 'BruCap', 50:52, 'F', 'BE']
+
+  id: 4
+
+- code: |
+    # slices bounds are optional:
+    # if not given start is assumed to be the first label and stop is the last one.
+    # Here we select all years starting from 2010
+    pop[2010:, 'BruCap', 50:52, 'F', 'BE']
+
+  id: 5
+
+- code: |
+    # Slices can also have a step (defaults to 1), to take every Nth labels
+    # Here we select all even years starting from 2010
+    pop[2010::2, 'BruCap', 50:52, 'F', 'BE']
+
+  id: 6
+
+- code: |
+    # one can also use list of labels to take non-contiguous labels.
+    # Here we select years 2008, 2010, 2013 and 2015
+    pop[[2008, 2010, 2013, 2015], 'BruCap', 50:52, 'F', 'BE']
+
+  id: 7
+
+- markdown: |
+    The order of indexing does not matter either, so you usually do not care/have to remember about axes positions during computation. It only matters for output.
+
+
+- code: |
+    # order of index doesn't matter
+    pop['F', 'BE', 'BruCap', [2008, 2010, 2013, 2015], 50:52]
+
+  id: 8
+
+- markdown: |
+    <div class="alert alert-warning">
+    **Warning:** Selecting by labels as above works well as long as there is no ambiguity.
+       When two or more axes have common labels, it may lead to a crash.
+       The solution is then to precise to which axis belong the labels.
+    </div>
+
+
+- code: |
+    # let us now create an array with the same labels on several axes
+    age, weight, size = Axis('age=0..80'), Axis('weight=0..120'), Axis('size=0..200')
+    
+    arr_ws = ndtest([age, weight, size])
+
+  id: 9
+
+- code: |
+    # let's try to select teenagers with size between 1 m 60 and 1 m 65 and weight > 80 kg.
+    # In this case the subset is ambiguous and this results in an error:
+    arr_ws[10:18, :80, 160:165]
+
+  id: 10
+
+- code: |
+    # the solution is simple. You need to precise the axes on which you make a selection
+    arr_ws[age[10:18], weight[:80], size[160:165]]
+
+  id: 11
+
+- markdown: |
+    ### Ambiguous Cases - Specifying Axes Using The Special Variable X
+    
+    When selecting, assiging or using aggregate functions, an axis can be
+    refered via the special variable ``X``:
+    
+    -  pop[X.age[:20]]
+    -  pop.sum(X.age)
+    
+    This gives you acces to axes of the array you are manipulating. The main
+    drawback of using **X** is that you lose the autocompletion available from
+    many editors. It only works with non-wildcard axes.
+
+
+- code: |
+    # the previous example could have been also written as
+    arr_ws[X.age[10:18], X.weight[:80], X.size[160:165]]
+
+  id: 12
+
+- markdown: |
+    ### Selecting by Positions
+    
+    Sometimes it is more practical to use positions along the axis, instead of labels.
+    You need to add the character ``i`` before the brackets: ``.i[positions]``.
+    As for selection with labels, you can use single position or slice or list of positions.
+    Positions can be also negative (-1 represent the last element of an axis).
+
+
+- markdown: |
+    <div class="alert alert-info">
+    **Note:** Remember that positions (indices) are always **0-based** in Python.
+    So the first element is at position 0, the second is at position 1, etc.
+    </div>
+
+
+- code: |
+    # here we select the subset associated with Belgian women of age 50, 51 and 52
+    # from Brussels region for the first 3 years
+    pop[X.time.i[:3], 'BruCap', 50:52, 'F', 'BE']
+
+  id: 13
+
+- code: |
+    # same but for the last 3 years
+    pop[X.time.i[-3:], 'BruCap', 50:52, 'F', 'BE']
+
+  id: 14
+
+- code: |
+    # using list of positions
+    pop[X.time.i[-9,-7,-4,-2], 'BruCap', 50:52, 'F', 'BE']
+
+  id: 15
+
+- markdown: |
+    <div class="alert alert-warning">
+    **Warning:** The end *indice* (position) is EXCLUSIVE while the end label is INCLUSIVE.
+    </div>
+
+
+- code: |
+    # with labels (3 is included)
+    pop[2015, 'BruCap', X.age[:3], 'F', 'BE']
+
+  id: 16
+
+- code: |
+    # with position (3 is out)
+    pop[2015, 'BruCap', X.age.i[:3], 'F', 'BE']
+
+  id: 17
+
+- markdown: |
+    You can use ``.i[]`` selection directly on array instead of axes.
+    In this context, if you want to select a subset of the first and third axes for example, you must use a full slice ``:`` for the second one.
+
+
+- code: |
+    # here we select the last year and first 3 ages
+    # equivalent to: pop.i[-1, :, :3, :, :]
+    pop.i[-1, :, :3]
+
+  id: 18
+
+- markdown: |
+    ### Using Groups In Selections
+
+
+- code: |
+    teens = pop.age[10:20]
+    
+    pop[2015, 'BruCap', teens, 'F', 'BE']
+
+  id: 19
+
+- markdown: |
+    ## Assigning subsets
+    
+    ### Assigning A Value
+    
+    Assign a value to a subset
+
+
+- code: |
+    # let's take a smaller array
+    pop = load_example_data('demography').pop[2016, 'BruCap', 100:105]
+    pop2 = pop
+    pop2
+
+  id: 20
+
+- code: |
+    # set all data corresponding to age >= 102 to 0
+    pop2[102:] = 0
+    pop2
+
+  id: 21
+
+- markdown: |
+    One very important gotcha though...
+    
+    <div class="alert alert-warning">
+    **Warning:** Modifying a slice of an array in-place like we did above should be done with care otherwise you could have **unexpected effects**. The reason is that taking a **slice** subset of an array does not return a copy of that array, but rather a view on that array. To avoid such behavior, use ``.copy()`` method.
+    </div>
+    
+    Remember:
+    
+    -  taking a slice subset of an array is extremely fast (no data is
+       copied)
+    -  if one modifies that subset in-place, one also **modifies the
+       original array**
+    -  **.copy()** returns a copy of the subset (takes speed and memory) but
+       allows you to change the subset without modifying the original array
+       in the same time
+
+
+- code: |
+    # indeed, data from the original array have also changed
+    pop
+
+  id: 22
+
+- code: |
+    # the right way
+    pop = load_example_data('demography').pop[2016, 'BruCap', 100:105]
+    
+    pop2 = pop.copy()
+    pop2[102:] = 0
+    pop2
+
+  id: 23
+
+- code: |
+    # now, data from the original array have not changed this time
+    pop
+
+  id: 24
+
+- markdown: |
+    ### Assigning Arrays And Broadcasting
+    
+    Instead of a value, we can also assign an array to a subset. In that
+    case, that array can have less axes than the target but those which are
+    present must be compatible with the subset being targeted.
+
+
+- code: |
+    sex, nat = Axis('sex=M,F'), Axis('nat=BE,FO')
+    new_value = LArray([[1, -1], [2, -2]],[sex, nat])
+    new_value
+
+  id: 25
+
+- code: |
+    # this assigns 1, -1 to Belgian, Foreigner men
+    # and 2, -2 to Belgian, Foreigner women for all
+    # people older than 100
+    pop[102:] = new_value
+    pop
+
+  id: 26
+
+- markdown: |
+    <div class="alert alert-warning">
+    **Warning:** The array being assigned must have compatible axes (i.e. same axes names and same labels) with the target subset.
+    </div>
+
+
+- code: |
+    # assume we define the following array with shape 3 x 2 x 2
+    new_value = zeros(['age=100..102', sex, nat])
+    new_value
+
+  id: 27
+
+- code: |
+    # now let's try to assign the previous array in a subset from age 103 to 105
+    pop[103:105] = new_value
+
+  id: 28
+
+- code: |
+    # but this works
+    pop[100:102] = new_value
+    pop
+
+  id: 29
+
+- markdown: |
+    ## Boolean Filtering
+    
+    Boolean filtering can be use to extract subsets.
+
+
+- code: |
+    #Let's focus on population living in Brussels during the year 2016
+    pop = load_example_data('demography').pop[2016, 'BruCap']
+    
+    # here we select all males and females with age less than 5 and 10 respectively
+    subset = pop[((X.sex == 'H') & (X.age <= 5)) | ((X.sex == 'F') & (X.age <= 10))]
+    subset
+
+  id: 30
+
+- markdown: |
+    <div class="alert alert-info">
+    **Note:** Be aware that after boolean filtering, several axes may have merged.
+    </div>
+
+
+- code: |
+    # 'age' and 'sex' axes have been merged together
+    subset.info
+
+  id: 31
+
+- markdown: |
+    This may be not what you because previous selections on merged axes are no longer valid
+
+
+- code: |
+    # now let's try to calculate the proportion of females with age less than 10
+    subset['F'].sum() / pop['F'].sum()
+
+  id: 32
+
+- markdown: |
+    Therefore, it is sometimes more useful to not select, but rather set to 0 (or another value) non matching elements
+
+
+- code: |
+    subset = pop.copy()
+    subset[((X.sex == 'F') & (X.age > 10))] = 0
+    subset['F', :20]
+
+  id: 33
+
+- code: |
+    # now we can calculate the proportion of females with age less than 10
+    subset['F'].sum() / pop['F'].sum()
+
+  id: 34
+
+- markdown: |
+    Boolean filtering can also mix axes and arrays. Example above could also have been written as
+
+
+- code: |
+    age_limit = sequence('sex=M,F', initial=5, inc=5)
+    age_limit
+
+  id: 35
+
+- code: |
+    age = pop.axes['age']
+    (age <= age_limit)[:20]
+
+  id: 36
+
+- code: |
+    subset = pop.copy()
+    subset[X.age > age_limit] = 0
+    subset['F'].sum() / pop['F'].sum()
+
+  id: 37
+
+- markdown: |
+    Finally, you can choose to filter on data instead of axes
+
+
+- code: |
+    # let's focus on females older than 90
+    subset = pop['F', 90:110].copy()
+    subset
+
+  id: 38
+
+- code: |
+    # here we set to 0 all data < 10
+    subset[subset < 10] = 0
+    subset
+
+  id: 39
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.6.4
+  livereveal:
+    autolaunch: false
+    scroll: true
+nbformat: 4
+nbformat_minor: 2
+
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
