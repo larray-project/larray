@@ -344,6 +344,11 @@ Miscellaneous improvements
 
 * Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
 
+* allowed to create axes with zero padded string labels (closes :issue:`533`):
+
+    >>> Axis('zero_padding=01,02,03,10,11,12')
+    Axis(['01', '02', '03', '10', '11', '12'], 'zero_padding')
+
 
 Fixes
 -----
@@ -392,3 +397,13 @@ Fixes
     b0    0   3
     b1    1   4
     b2    2   5
+
+* fixed aggregation on arrays containing zero padded string labels (closes :issue:`522`):
+
+    >>> arr = ndtest('zero_padding=01,02,03,10,11,12')
+    >>> arr
+    zero_padding  01  02  03  10  11  12
+                   0   1   2   3   4   5
+    >>> arr.sum('01,02,03 >> 01_03; 10')
+    zero_padding  01_03  10
+                      3   3

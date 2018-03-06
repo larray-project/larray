@@ -24,15 +24,15 @@ from larray.util.misc import StringIO
 
 class TestValueStrings(TestCase):
     def test_split(self):
-        self.assertEqual(_to_ticks('M,F'), ['M', 'F'])
-        self.assertEqual(_to_ticks('M, F'), ['M', 'F'])
+        assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
+        assert_array_equal(_to_ticks('M, F'), np.asarray(['M', 'F']))
 
     def test_union(self):
         self.assertEqual(union('A11,A22', 'A12,A22'), ['A11', 'A22', 'A12'])
 
     def test_range(self):
-        self.assertEqual(_to_ticks('0..115'), range(116))
-        self.assertEqual(_to_ticks('..115'), range(116))
+        assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
+        assert_array_equal(_to_ticks('..115'), np.asarray(range(116)))
         with self.assertRaises(ValueError):
             _to_ticks('10..')
         with self.assertRaises(ValueError):
@@ -1653,6 +1653,11 @@ age    0       1       2       3       4       5       6       7        8  ...  
         a1, a2 = la.axes
         raw = np.asarray(la)
         assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
+
+    def test_group_agg_zero_padded_label(self):
+        arr = ndtest("a=01,02,03,10,11; b=b0..b2")
+        expected = LArray([36, 30, 39], "a=01_03,10,11")
+        assert_array_equal(arr.sum("01,02,03 >> 01_03; 10; 11", "b"), expected)
 
     def test_group_agg_on_int_array(self):
         # issue 193

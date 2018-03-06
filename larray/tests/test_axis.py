@@ -38,6 +38,10 @@ class TestAxis(TestCase):
         # range-string
         axis = Axis('0..115', 'age')
         assert_array_equal(axis.labels, np.arange(116))
+        # int-like labels with 0 padding
+        assert_array_equal(Axis('01..12', 'zero_padding').labels, [str(i).zfill(2) for i in range(1, 13)])
+        assert_array_equal(Axis('01,02,03,10,11,12', 'zero_padding').labels, ['01', '02', '03', '10', '11', '12'])
+
         # another axis group
         group = axis[:10]
         group_axis = Axis(group)

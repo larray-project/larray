@@ -223,6 +223,10 @@ def _range_str_to_range(s, stack_depth=1):
     >>> list(_range_str_to_range('2..6 step 2'))
     [2, 4, 6]
 
+    0 padding
+    >>> list(_range_str_to_range('01..12'))
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
     any special character except . and spaces should work
     >>> _range_str_to_range('a|+*@-b .. a|+*@-d')
     ['a|+*@-b', 'a|+*@-c', 'a|+*@-d']
@@ -236,6 +240,8 @@ def _range_str_to_range(s, stack_depth=1):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop = _parse_bound(stop, stack_depth + 1)
+    if isinstance(start, basestring) or isinstance(stop, basestring):
+        start, stop = str(start), str(stop)
     # TODO: use parse_bound
     step = int(step) if step is not None else 1
     return generalized_range(start, stop, step)
@@ -365,6 +371,7 @@ def _to_tick(v):
         return str(v)
 
 
+# TODO: remove the conversion to list in doctests once Python 2 is dropped
 def _to_ticks(s, parse_single_int=False):
     """
     Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
@@ -378,53 +385,52 @@ def _to_ticks(s, parse_single_int=False):
 
     Returns
     -------
-    collection of labels
-
-    Notes
-    -----
-    This function is only used in Axis.__init__ and union().
+    Numpy 1D array containing labels
 
     Examples
     --------
-    >>> _to_ticks('M , F')
+    >>> list(_to_ticks('M , F'))
     ['M', 'F']
-    >>> _to_ticks('A,C..E,F..G,Z')
+    >>> list(_to_ticks('A,C..E,F..G,Z'))
     ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
-    >>> _to_ticks('U')
+    >>> list(_to_ticks('U'))
     ['U']
     >>> list(_to_ticks('..3'))
     [0, 1, 2, 3]
+    >>> list(_to_ticks('01..12'))
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    >>> list(_to_ticks('01,02,03,10,11,12'))
+    ['01', '02', '03', '10', '11', '12']
     """
     if isinstance(s, ABCAxis):
         return s.labels
     if isinstance(s, Group):
         # a single LGroup used for all ticks of an Axis
         return _to_ticks(s.eval())
-    elif isinstance(s, pd.Index):
-        return s.values
     elif isinstance(s, np.ndarray):
         # we assume it has already been translated
         # XXX: Is it a safe assumption?
         return s
+
+    if isinstance(s, pd.Index):
+        ticks = s.values
     elif isinstance(s, (list, tuple)):
-        return [_to_tick(e) for e in s]
+        ticks = [_to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
-        return list(s)
+        ticks = s
     elif isinstance(s, basestring):
         seq = _seq_str_to_seq(s, parse_single_int=parse_single_int)
         if isinstance(seq, slice):
             raise ValueError("using : to define axes is deprecated, please use .. instead")
-        elif isinstance(seq, (basestring, int)):
-            return [seq]
-        else:
-            return seq
+        ticks = [seq] if isinstance(seq, (basestring, int)) else seq
     elif hasattr(s, '__array__'):
-        return s.__array__()
+        ticks = s.__array__()
     else:
         try:
-            return list(s)
+            ticks = list(s)
         except TypeError:
             raise TypeError("ticks must be iterable (%s is not)" % type(s))
+    return np.asarray(ticks)
 
 
 _axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
