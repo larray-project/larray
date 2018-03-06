@@ -516,7 +516,30 @@ def float_error_handler_factory(stacklevel):
 
 
 def _isintstring(s):
-    return s.isdigit() or (len(s) > 1 and s[0] == '-' and s[1:].isdigit())
+    """
+    Return True if the passed string represents an integer.
+    Zero padded integers are considered as strings and not integers.
+
+    Parameters
+    ----------
+    s : str
+        string to test if representing an integer.
+
+    Examples
+    --------
+    >>> _isintstring('12')
+    True
+    >>> _isintstring('-12')
+    True
+    >>> _isintstring('a1')
+    False
+    >>> _isintstring('01')
+    False
+    """
+    def isposint(s):
+        # exclude zero padded strings
+        return s.isdigit() and not (len(s) > 1 and s[0] == '0')
+    return isposint(s) or (len(s) > 1 and s[0] == '-' and isposint(s[1:]))
 
 
 def _parse_bound(s, stack_depth=1, parse_int=True):
@@ -545,6 +568,8 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
     2
     >>> _parse_bound('42')
     42
+    >>> _parse_bound('01')
+    '01'
     """
     s = s.strip()
     if s == '':
