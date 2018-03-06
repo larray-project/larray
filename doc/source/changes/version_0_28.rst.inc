@@ -2,7 +2,7 @@
 -----------------------------
 
 * changed behavior of operators `session1 == session2` and `session1 != session2`: returns a session
-  of boolean arrays (closes:issue:`516`):
+  of boolean arrays (closes :issue:`516`):
 
     >>> s1 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
     >>> s2 = Session([('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
@@ -61,9 +61,9 @@ New features
     >>> s1.equals(s2)
     False
 
-  Closes:issue:`517`.
+  Closes :issue:`517`.
 
-* added method `equals` to `LArray` object to compare two arrays (closes :issue:`518`):
+* added method `equals` to `LArray` object to compare two arrays:
 
     >>> arr1 = ndtest((2, 3))
     >>> arr1
@@ -98,12 +98,33 @@ New features
     >>> arr1.equals(arr2, nan_equal=True)
     True
 
+ This method also includes the arguments `rtol` (relative tolerance) and `atol` (absolute tolerance)
+ allowing to test the equality between two arrays within a given relative or absolute tolerance:
+
+    >>> arr1 = LArray([6., 8.], "a=a0,a1")
+    >>> arr1
+    a   a0   a1
+       6.0  8.0
+    >>> arr2 = LArray([5.999, 8.001], "a=a0,a1")
+    >>> arr2
+    a     a0     a1
+       5.999  8.001
+    >>> arr1.equals(arr2)
+    False
+    >>> # equals returns True if abs(array1 - array2) <= (atol + rtol * abs(array2))
+    >>> arr1.equals(arr2, atol=0.01)
+    True
+    >>> arr1.equals(arr2, rtol=0.01)
+    True
+
+  Closes :issue:`488` and :issue:`518`.
+
 
 Miscellaneous improvements
 --------------------------
 
-* functions `local_arrays`, `global_arrays` and `arrays` returns a session excluding arrays starting by `_`
-  by default. To include them, set the flag `include_private` to True (closes :issue:`513`):
+* functions `local_arrays`, `global_arrays` and `arrays` returns a session excluding arrays starting by
+  an underscore by default. To include them, set the flag `include_private` to True (closes :issue:`513`):
 
     >>> global_arr1 = ndtest((2, 2))
     >>> _global_arr2 = ndtest((3, 3))
@@ -213,11 +234,11 @@ Miscellaneous improvements
 
   For a given file 'arr.csv' with content ::
 
-  a,b\c,c0,c1
-  a0,b0,0,1
-  a0,b1,2,3
-  a1,b0,4,5
-  a1,b1,6,7
+    a,b\c,c0,c1
+    a0,b0,0,1
+    a0,b1,2,3
+    a1,b0,4,5
+    a1,b1,6,7
 
   previous code to read this array such as :
 
@@ -229,28 +250,6 @@ Miscellaneous improvements
     >>> arr = read_csv('arr.csv', nb_axes=3)
 
   Closes :issue:`548`.
-
-* added the relative tolerance `rtol` and the absolute tolerance `atol` arguments to the `LArray.equals` method.
-  These two arguments can be used to test the equality between two arrays within a given relative or
-  absolute tolerance:
-
-      >>> arr1 = LArray([6., 8.], "a=a0,a1")
-      >>> arr1
-      a   a0   a1
-         6.0  8.0
-      >>> arr2 = LArray([5.999, 8.001], "a=a0,a1")
-      >>> arr2
-      a     a0     a1
-         5.999  8.001
-      >>> arr1.equals(arr2)
-      False
-      >>> # equals returns True if abs(array1 - array2) <= (atol + rtol * abs(array2))
-      >>> arr1.equals(arr2, atol=0.01)
-      True
-      >>> arr1.equals(arr2, rtol=0.01)
-      True
-
-  Closes :issue:`488`.
 
 * deprecated `nan_equal` function in favor of `element_equal` function. The `element_equal` function has the
   same optional arguments as the `LArray.equals` method but compares two arrays element-wise and
@@ -293,7 +292,6 @@ Miscellaneous improvements
   Default behavior (`wide=True`):
 
     >>> arr.to_excel('my_file.xlsx')
-
     a\b  b0  b1  b2
     a0    0   1   2
     a1    3   4   5
@@ -301,7 +299,6 @@ Miscellaneous improvements
   With `wide=False`:
 
     >>> arr.to_excel('my_file.xlsx', wide=False)
-
      a   b  value
     a0  b0      0
     a0  b1      1
@@ -342,7 +339,7 @@ Miscellaneous improvements
 
 * renamed argument `sheetname` of `read_excel` function as `sheet` (closes :issue:`587`).
 
-* Renamed sheet_name of LArray.to_excel to sheet since it can also be an index (closes :issue:580).
+* Renamed `sheet_name` of `LArray.to_excel` to `sheet` since it can also be an index (closes :issue:`580`).
 
 * allowed to create axes with zero padded string labels (closes :issue:`533`):
 
@@ -392,7 +389,6 @@ Fixes
 
     >>> arr = ndtest((2, 3))
     >>> arr.to_excel('my_file.xlsx', transpose=True)
-
     b\a  a0  a1
     b0    0   3
     b1    1   4
