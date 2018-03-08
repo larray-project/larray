@@ -11,6 +11,7 @@ cells:
     # simplify exception output
     %xmode Plain
 
+  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -21,11 +22,12 @@ cells:
 - code: |
     from larray import *
 
+  id: 1
 
 - markdown: |
     ## Axis creation
     
-    An [Axis](api.rst#Axis) represents a dimension of an LArray object.
+    An Axis represents a dimension of an LArray object.
     It consists of a name and a list of labels. They are several ways to create an axis:
 
 
@@ -41,11 +43,12 @@ cells:
     
     age, sex, time, other
 
+  id: 2
 
 - markdown: |
     ## Array creation
     
-    A [LArray](api.rst#LArray) object represents a multidimensional array with labeled axes.
+    A LArray object represents a multidimensional array with labeled axes.
     
     ### From scratch
     
@@ -66,11 +69,12 @@ cells:
     arr = LArray(data, axes, title)
     arr
 
+  id: 3
 
 - markdown: |
     ### Array creation functions
     
-    Arrays can also be generated in an easier way through [creation functions](api.rst#array-creation-functions):
+    Arrays can also be generated in an easier way through creation functions:
     
     -  `ndtest` : creates a test array with increasing numbers as data
     -  `empty` : creates an array but leaves its allocated memory
@@ -95,12 +99,14 @@ cells:
     # start defines the starting value of data
     ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
 
+  id: 4
 
 - code: |
     # start defines the starting value of data
     # label_start defines the starting index of labels
     ndtest((3, 3), start=-1, label_start=2)
 
+  id: 5
 
 - code: |
     # empty generates uninitialised array with correct axes 
@@ -111,20 +117,24 @@ cells:
     # will be overridden. 
     empty(['age=0..2', 'sex=M,F', 'time=2007..2009'])
 
+  id: 6
 
 - code: |
     # example with anonymous axes
     zeros(['0..2', 'M,F', '2007..2009'])
 
+  id: 7
 
 - code: |
     # dtype=int forces to store int data instead of default float
     ones(['age=0..2', 'sex=M,F', 'time=2007..2009'], dtype=int)
 
+  id: 8
 
 - code: |
     full(['age=0..2', 'sex=M,F', 'time=2007..2009'], 1.23)
 
+  id: 9
 
 - markdown: |
     All the above functions exist in *(func)_like* variants which take axes from another array
@@ -133,6 +143,7 @@ cells:
 - code: |
     ones_like(arr)
 
+  id: 10
 
 - markdown: |
     ### Sequence
@@ -142,16 +153,19 @@ cells:
     # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ... 
     sequence('sex=M,F', initial=1.0, inc=0.5)
 
+  id: 11
 
 - code: |
     # With initial=1.0 and mult=2.0, we generate the sequence 1.0, 2.0, 4.0, 8.0, ... 
     sequence('age=0..2', initial=1.0, mult=2.0) 
 
+  id: 12
 
 - code: |
     # Using your own function
     sequence('time=2007..2009', initial=2.0, func=lambda value: value**2)
 
+  id: 13
 
 - markdown: |
     You can also create N-dimensional array by passing (N-1)-dimensional
@@ -163,6 +177,7 @@ cells:
     cumulate_newborns = sequence('time=2007..2009', initial=0.0, inc=birth)
     cumulate_newborns
 
+  id: 14
 
 - code: |
     initial = LArray([90, 100], 'sex=M,F') 
@@ -170,6 +185,7 @@ cells:
     pop = sequence('age=80..83', initial=initial, mult=survival)
     pop
 
+  id: 15
 
 - markdown: |
     ## Load/Dump from files
@@ -181,6 +197,7 @@ cells:
     pop = demography.pop
     mortality = demography.qx
 
+  id: 16
   metadata:
     nbsphinx: hidden
 
@@ -215,7 +232,7 @@ cells:
 
 
 - markdown: |
-    See documentation of [reading functions](api.rst#read) for more details
+    See documentation of reading functions for more details
 
 
 - markdown: |
@@ -249,7 +266,7 @@ cells:
 
 
 - markdown: |
-    See documentation of [writing methods](api.rst#write) for more details
+    See documentation of writing methods for more details
 
 
 - markdown: |
@@ -388,6 +405,7 @@ cells:
     # load population array
     pop = load_example_data('demography').pop
 
+  id: 17
 
 - markdown: |
     Get array summary : dimensions + description of axes
@@ -396,6 +414,7 @@ cells:
 - code: |
     pop.info
 
+  id: 18
 
 - markdown: |
     Get axes  
@@ -404,6 +423,7 @@ cells:
 - code: |
     time, geo, age, sex, nat = pop.axes
 
+  id: 19
 
 - markdown: |
     Get array dimensions 
@@ -412,6 +432,7 @@ cells:
 - code: |
     pop.shape
 
+  id: 20
 
 - markdown: |
     Get number of elements  
@@ -420,6 +441,7 @@ cells:
 - code: |
     pop.size
 
+  id: 21
 
 - markdown: |
     Get size in memory
@@ -428,6 +450,7 @@ cells:
 - code: |
     pop.memory_used
 
+  id: 22
 
 - markdown: |
     Start viewer (graphical user interface) in read-only mode.
@@ -465,6 +488,7 @@ cells:
     # of age 50 from Brussels region for the year 2015
     pop[2015, 'BruCap', 50, 'F', 'BE']
 
+  id: 23
 
 - markdown: |
     Continue with selecting a subset using slices and lists of labels
@@ -475,6 +499,7 @@ cells:
     # from Brussels region for the years 2010 to 2016
     pop[2010:2016, 'BruCap', 50:52, 'F', 'BE']
 
+  id: 24
 
 - code: |
     # slices bounds are optional: 
@@ -482,18 +507,21 @@ cells:
     # Here we select all years starting from 2010
     pop[2010:, 'BruCap', 50:52, 'F', 'BE']
 
+  id: 25
 
 - code: |
     # Slices can also have a step (defaults to 1), to take every Nth labels
     # Here we select all even years starting from 2010
     pop[2010::2, 'BruCap', 50:52, 'F', 'BE']
 
+  id: 26
 
 - code: |
     # one can also use list of labels to take non-contiguous labels.
     # Here we select years 2008, 2010, 2013 and 2015
     pop[[2008, 2010, 2013, 2015], 'BruCap', 50:52, 'F', 'BE']
 
+  id: 27
 
 - markdown: |
     The order of indexing does not matter either, so you usually do not care/have to remember about axes positions during computation. It only matters for output.
@@ -503,6 +531,7 @@ cells:
     # order of index doesn't matter
     pop['F', 'BE', 'BruCap', [2008, 2010, 2013, 2015], 50:52]
 
+  id: 28
 
 - markdown: |
     <div class="alert alert-warning">
@@ -518,17 +547,20 @@ cells:
     
     arr_ws = ndtest([age, weight, size])
 
+  id: 29
 
 - code: |
     # let's try to select teenagers with size between 1 m 60 and 1 m 65 and weight > 80 kg.
     # In this case the subset is ambiguous and this results in an error:
     arr_ws[10:18, :80, 160:165]
 
+  id: 30
 
 - code: |
     # the solution is simple. You need to precise the axes on which you make a selection
     arr_ws[age[10:18], weight[:80], size[160:165]]
 
+  id: 31
 
 - markdown: |
     ### Special variable X
@@ -548,6 +580,7 @@ cells:
     # the previous example could have been also written as  
     arr_ws[X.age[10:18], X.weight[:80], X.size[160:165]]
 
+  id: 32
 
 - markdown: |
     ### Selection by Positions
@@ -570,16 +603,19 @@ cells:
     # from Brussels region for the first 3 years
     pop[X.time.i[:3], 'BruCap', 50:52, 'F', 'BE']
 
+  id: 33
 
 - code: |
     # same but for the last 3 years
     pop[X.time.i[-3:], 'BruCap', 50:52, 'F', 'BE']
 
+  id: 34
 
 - code: |
     # using list of positions
     pop[X.time.i[-9,-7,-4,-2], 'BruCap', 50:52, 'F', 'BE']
 
+  id: 35
 
 - markdown: |
     <div class="alert alert-warning">
@@ -591,11 +627,13 @@ cells:
     # with labels (3 is included)
     pop[2015, 'BruCap', X.age[:3], 'F', 'BE']
 
+  id: 36
 
 - code: |
     # with position (3 is out)
     pop[2015, 'BruCap', X.age.i[:3], 'F', 'BE']
 
+  id: 37
 
 - markdown: |
     You can use ``.i[]`` selection directly on array instead of axes. 
@@ -607,6 +645,7 @@ cells:
     # equivalent to: pop.i[-1, :, :3, :, :]
     pop.i[-1, :, :3]
 
+  id: 38
 
 - markdown: |
     ### Assigning subsets
@@ -622,12 +661,14 @@ cells:
     pop2 = pop
     pop2
 
+  id: 39
 
 - code: |
     # set all data corresponding to age >= 102 to 0
     pop2[102:] = 0
     pop2
 
+  id: 40
 
 - markdown: |
     One very important gotcha though...
@@ -651,6 +692,7 @@ cells:
     # indeed, data from the original array have also changed
     pop
 
+  id: 41
 
 - code: |
     # the right way
@@ -660,11 +702,13 @@ cells:
     pop2[102:] = 0
     pop2
 
+  id: 42
 
 - code: |
     # now, data from the original array have not changed this time
     pop
 
+  id: 43
 
 - markdown: |
     #### Assigning Arrays & Broadcasting
@@ -679,6 +723,7 @@ cells:
     new_value = LArray([[1, -1], [2, -2]],[sex, nat])
     new_value
 
+  id: 44
 
 - code: |
     # this assigns 1, -1 to Belgian, Foreigner men 
@@ -687,6 +732,7 @@ cells:
     pop[102:] = new_value
     pop
 
+  id: 45
 
 - markdown: |
     <div class="alert alert-warning">
@@ -699,17 +745,20 @@ cells:
     new_value = zeros(['age=0..2', sex, nat]) 
     new_value
 
+  id: 46
 
 - code: |
     # now let's try to assign the previous array in a subset with shape 7 x 2 x 2
     pop[102:] = new_value
 
+  id: 47
 
 - code: |
     # but this works
     pop[102:104] = new_value
     pop
 
+  id: 48
 
 - markdown: |
     ### Boolean filtering
@@ -725,6 +774,7 @@ cells:
     subset = pop[((X.sex == 'H') & (X.age <= 5)) | ((X.sex == 'F') & (X.age <= 10))]
     subset
 
+  id: 49
 
 - markdown: |
     <div class="alert alert-info">
@@ -736,6 +786,7 @@ cells:
     # 'age' and 'sex' axes have been merged together
     subset.info
 
+  id: 50
 
 - markdown: |
     This may be not what you because previous selections on merged axes are no longer valid
@@ -745,6 +796,7 @@ cells:
     # now let's try to calculate the proportion of females with age less than 10
     subset['F'].sum() / pop['F'].sum()
 
+  id: 51
 
 - markdown: |
     Therefore, it is sometimes more useful to not select, but rather set to 0 (or another value) non matching elements
@@ -755,11 +807,13 @@ cells:
     subset[((X.sex == 'F') & (X.age > 10))] = 0
     subset['F', :20]
 
+  id: 52
 
 - code: |
     # now we can calculate the proportion of females with age less than 10
     subset['F'].sum() / pop['F'].sum()
 
+  id: 53
 
 - markdown: |
     Boolean filtering can also mix axes and arrays. Example above could also have been written as
@@ -769,17 +823,20 @@ cells:
     age_limit = sequence('sex=M,F', initial=5, inc=5)
     age_limit
 
+  id: 54
 
 - code: |
     age = pop.axes['age']
     (age <= age_limit)[:20]
 
+  id: 55
 
 - code: |
     subset = pop.copy()
     subset[X.age > age_limit] = 0
     subset['F'].sum() / pop['F'].sum()
 
+  id: 56
 
 - markdown: |
     Finally, you can choose to filter on data instead of axes
@@ -790,12 +847,14 @@ cells:
     subset = pop['F', 90:110].copy()
     subset
 
+  id: 57
 
 - code: |
     # here we set to 0 all data < 10
     subset[subset < 10] = 0
     subset
 
+  id: 58
 
 - markdown: |
     ## Manipulates axes from arrays
@@ -806,6 +865,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
     pop
 
+  id: 59
 
 - markdown: |
     ### Relabeling
@@ -818,11 +878,13 @@ cells:
     pop_new_labels = pop.set_labels('sex', ['Men', 'Women'])
     pop_new_labels
 
+  id: 60
 
 - code: |
     # inplace flag avoids to create a copy
     pop.set_labels('sex', ['M', 'F'], inplace=True)
 
+  id: 61
 
 - markdown: |
     ### Renaming axes
@@ -833,12 +895,14 @@ cells:
 - code: |
     pop.info
 
+  id: 62
 
 - code: |
     # 'rename' returns a copy of the array
     pop2 = pop.rename('sex', 'gender')
     pop2
 
+  id: 63
 
 - markdown: |
     Rename several axes at once
@@ -849,6 +913,7 @@ cells:
     pop2 = pop.rename(sex='gender', nat='nationality')
     pop2
 
+  id: 64
 
 - markdown: |
     ### Reordering axes
@@ -863,6 +928,7 @@ cells:
     # starting order : age, sex, nat
     pop
 
+  id: 65
 
 - code: |
     # no argument --> reverse axes
@@ -871,16 +937,19 @@ cells:
     # .T is a shortcut for .transpose()
     pop.T
 
+  id: 66
 
 - code: |
     # reorder according to list
     pop.transpose('age', 'nat', 'sex')
 
+  id: 67
 
 - code: |
     # axes not mentioned come after those which are mentioned (and keep their relative order)
     pop.transpose('sex')
 
+  id: 68
 
 - markdown: |
     ## Aggregates
@@ -892,6 +961,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap']
     pop.sum('age')
 
+  id: 69
 
 - markdown: |
     or along all axes except one by appending `_by` to the aggregation function
@@ -902,9 +972,10 @@ cells:
     # is equivalent to 
     pop[90:95].sum('sex', 'nat')
 
+  id: 70
 
 - markdown: |
-    There are many other [aggregation functions](api.rst#aggregation-functions):
+    There are many other aggregation functions:
     
     -  mean, min, max, median, percentile, var (variance), std (standard
        deviation)
@@ -932,6 +1003,7 @@ cells:
     
     strange
 
+  id: 71
 
 - markdown: |
     or rename them
@@ -946,6 +1018,7 @@ cells:
     
     pensioners 
 
+  id: 72
 
 - markdown: |
     Then, use them in selections
@@ -954,6 +1027,7 @@ cells:
 - code: |
     pop[strange]
 
+  id: 73
 
 - markdown: |
     or aggregations
@@ -962,16 +1036,19 @@ cells:
 - code: |
     pop.sum(pensioners)
 
+  id: 74
 
 - code: |
     # several groups (here you see the interest of groups renaming)
     pop.sum((teens, pensioners, strange))
 
+  id: 75
 
 - code: |
     # combined with other axes
     pop.sum((teens, pensioners, strange), 'nat')
 
+  id: 76
 
 - markdown: |
     ## Arithmetic operations
@@ -982,6 +1059,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
     pop
 
+  id: 77
 
 - markdown: |
     One can do all usual arithmetic operations on an array, it will apply the operation to all elements individually
@@ -991,21 +1069,25 @@ cells:
     # addition
     pop + 200
 
+  id: 78
 
 - code: |
     # multiplication
     pop * 2
 
+  id: 79
 
 - code: |
     # ** means raising to the power (squaring in this case)
     pop ** 2
 
+  id: 80
 
 - code: |
     # % means modulo (aka remainder of division)
     pop % 10
 
+  id: 81
 
 - markdown: |
     More interestingly, it also works between two arrays
@@ -1019,6 +1101,7 @@ cells:
     death = pop * mortality
     death
 
+  id: 82
 
 - markdown: |
     <div class="alert alert-info">
@@ -1033,6 +1116,7 @@ cells:
     death = (pop * mortality).astype(int)
     death
 
+  id: 83
 
 - markdown: |
     But operations between two arrays only works when they have compatible axes (i.e. same labels)
@@ -1041,6 +1125,7 @@ cells:
 - code: |
     pop[90:92] * mortality[93:95]
 
+  id: 84
 
 - markdown: |
     You can override that but at your own risk. 
@@ -1050,6 +1135,7 @@ cells:
 - code: |
     pop[90:92] * mortality[93:95].drop_labels('age')
 
+  id: 85
 
 - markdown: |
     ### Boolean Operations
@@ -1060,31 +1146,37 @@ cells:
     pop2['F'] = -pop2['F']
     pop2
 
+  id: 86
 
 - code: |
     # testing for equality is done using == (a single = assigns the value)
     pop == pop2
 
+  id: 87
 
 - code: |
     # testing for inequality
     pop != pop2
 
+  id: 88
 
 - code: |
     # what was our original array like again?
     pop
 
+  id: 89
 
 - code: |
     # & means (boolean array) and
     (pop >= 500) & (pop <= 1000)
 
+  id: 90
 
 - code: |
     # | means (boolean array) or
     (pop < 500) | (pop > 1000)
 
+  id: 91
 
 - markdown: |
     ### Arithmetic operations with missing axes
@@ -1093,21 +1185,25 @@ cells:
 - code: |
     pop.sum('age')
 
+  id: 92
 
 - code: |
     # arr has 3 dimensions
     pop.info
 
+  id: 93
 
 - code: |
     # and arr.sum(age) has two
     pop.sum('age').info
 
+  id: 94
 
 - code: |
     # you can do operation with missing axes so this works
     pop / pop.sum('age')
 
+  id: 95
 
 - markdown: |
     ### Axis order does not matter much (except for output)
@@ -1119,17 +1215,20 @@ cells:
 - code: |
     pop
 
+  id: 96
 
 - code: |
     # let us change the order of axes
     pop_transposed = pop.T
     pop_transposed
 
+  id: 97
 
 - code: |
     # mind blowing
     pop_transposed + pop
 
+  id: 98
 
 - markdown: |
     ## Combining arrays
@@ -1150,12 +1249,14 @@ cells:
     pop = pop.append(nat, pop_non_eu, 'NEU')
     pop
 
+  id: 99
 
 - code: |
     # you can also add something at the start of an axis
     pop = pop.prepend('sex', pop.sum('sex'), 'B')
     pop
 
+  id: 100
 
 - markdown: |
     The value being appended/prepended can have missing (or even extra) axes as long as common axes are compatible
@@ -1165,11 +1266,13 @@ cells:
     aliens = zeros(pop.axes['sex'])
     aliens
 
+  id: 101
 
 - code: |
     pop = pop.append('nat', aliens, 'AL')
     pop
 
+  id: 102
 
 - markdown: |
     ### Extend
@@ -1185,6 +1288,7 @@ cells:
     # concatenate along age axis
     pop.extend('age', pop_next)
 
+  id: 103
 
 - markdown: |
     ### Stack
@@ -1205,6 +1309,7 @@ cells:
     
     pop
 
+  id: 104
 
 - markdown: |
     ## Sorting
@@ -1216,6 +1321,7 @@ cells:
     pop_sorted = pop.sort_axes('nat')
     pop_sorted
 
+  id: 105
 
 - markdown: |
     Give labels which would sort the axis   
@@ -1224,6 +1330,7 @@ cells:
 - code: |
     pop_sorted.labelsofsorted('sex')
 
+  id: 106
 
 - markdown: |
     Sort according to values   
@@ -1232,6 +1339,7 @@ cells:
 - code: |
     pop_sorted.sort_values((90, 'F'))
 
+  id: 107
 
 - markdown: |
     ## Plotting
@@ -1242,11 +1350,13 @@ cells:
 - code: |
     pop.plot()
 
+  id: 108
 
 - code: |
     # plot total of both sex
     pop.sum('sex').plot()
 
+  id: 109
 
 - markdown: |
     ## Interesting methods
@@ -1257,6 +1367,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 100:105]
     pop
 
+  id: 110
 
 - markdown: |
     ### with total
@@ -1267,6 +1378,7 @@ cells:
 - code: |
     pop.with_total('sex', label='B')
 
+  id: 111
 
 - markdown: |
     Add totals to all axes at once
@@ -1276,6 +1388,7 @@ cells:
     # by default label is 'total'
     pop.with_total()
 
+  id: 112
 
 - markdown: |
     ### where
@@ -1287,6 +1400,7 @@ cells:
     # where(condition, value if true, value if false)
     where(pop < 10, 0, -pop)
 
+  id: 113
 
 - markdown: |
     ### clip
@@ -1299,6 +1413,7 @@ cells:
     # values below 10 are set to 10 and values above 50 are set to 50
     pop.clip(10, 50)
 
+  id: 114
 
 - markdown: |
     ### divnot0
@@ -1309,6 +1424,7 @@ cells:
 - code: |
     pop['BE'] / pop['FO']
 
+  id: 115
 
 - code: |
     # divnot0 replaces results of division by 0 by 0. 
@@ -1316,6 +1432,7 @@ cells:
     # because it can hide a real error in your data.
     pop['BE'].divnot0(pop['FO'])
 
+  id: 116
 
 - markdown: |
     ### diff
@@ -1328,16 +1445,19 @@ cells:
     pop = load_example_data('demography').pop[2005:2015, 'BruCap', 50]
     pop
 
+  id: 117
 
 - code: |
     # calculates 'pop[year+1] - pop[year]'
     pop.diff('time')
 
+  id: 118
 
 - code: |
     # calculates 'pop[year+2] - pop[year]'
     pop.diff('time', d=2)
 
+  id: 119
 
 - markdown: |
     ### ratio
@@ -1349,6 +1469,7 @@ cells:
     # which is equivalent to
     pop / pop.sum('nat')
 
+  id: 120
 
 - markdown: |
     ### percents
@@ -1358,6 +1479,7 @@ cells:
     # or, if you want the previous ratios in percents
     pop.percent('nat')
 
+  id: 121
 
 - markdown: |
     ### growth\_rate
@@ -1368,6 +1490,7 @@ cells:
 - code: |
     pop.growth_rate('time')
 
+  id: 122
 
 - markdown: |
     ### shift
@@ -1378,23 +1501,26 @@ cells:
 - code: |
     pop.shift('time')
 
+  id: 123
 
 - code: |
     # when shift is applied on an (increasing) time axis, 
     # it effectively brings "past" data into the future
     pop.shift('time').drop_labels('time') == pop[2005:2014].drop_labels('time')
 
+  id: 124
 
 - code: |
     # this is mostly useful when you want to do operations between the past and now
     # as an example, here is an alternative implementation of the .diff method seen above:
     pop.i[1:] - pop.shift('time')
 
+  id: 125
 
 - markdown: |
     ### Misc other interesting functions
     
-    There are a lot more [interesting functions](api.rst#miscellaneous) available:
+    There are a lot more interesting functions available:
     
     - round, floor, ceil, trunc,
     - exp, log, log10,
@@ -1406,7 +1532,7 @@ cells:
 - markdown: |
     ## Sessions
     
-    You can group several arrays in a [Session](api.rst#session)
+    You can group several arrays in a Session
 
 
 - code: |
@@ -1421,11 +1547,13 @@ cells:
     
     s1
 
+  id: 126
 
 - code: |
     s2 = s1.copy()
     s3 = s1.copy()
 
+  id: 127
   metadata:
     nbsphinx: hidden
 
@@ -1458,20 +1586,24 @@ cells:
 - code: |
     s1.equals(s2)
 
+  id: 128
 
 - code: |
     # let us introduce a difference (a variant, or a mistake perhaps)
     s2.arr1['a0', 'b1':] = 0
 
+  id: 129
 
 - code: |
     s1.equals(s2)
 
+  id: 130
 
 - code: |
     s_diff = s1 != s2
     s_diff
 
+  id: 131
 
 - markdown: |
     This a bit experimental but can be useful nonetheless (open a graphical interface)
@@ -1498,10 +1630,65 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.3
+    version: 3.6.4
   livereveal:
     autolaunch: false
     scroll: true
 nbformat: 4
 nbformat_minor: 2
 
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
