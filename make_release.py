@@ -20,7 +20,7 @@ TMP_PATH_CONDA = r"c:\tmp\larray_conda_new_release"
 PACKAGE_NAME = "larray"
 SRC_CODE = "larray"
 SRC_DOC = join('doc', 'source')
-GITHUB_REP = "https://github.com/liam2/larray"
+GITHUB_REP = "https://github.com/larray-project/larray"
 CONDA_FEEDSTOCK_REP = "https://github.com/larray-project/larray-feedstock.git"
 
 LARRAY_READTHEDOCS = "http://larray.readthedocs.io/en/stable/"

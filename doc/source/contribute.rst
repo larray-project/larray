@@ -13,7 +13,7 @@ Getting the code (for the first time)
 
 - clone the repository on your local machine ::
 
-  > git clone https://github.com/liam2/larray.git
+  > git clone https://github.com/larray-project/larray.git
 
 
 Installing the module
