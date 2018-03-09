@@ -19,7 +19,7 @@ TESTS_REQUIRE = ['pytest']
 SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
-URL = 'https://github.com/liam2/larray'
+URL = 'https://github.com/larray-project/larray'
 PACKAGE_DATA = {'larray': ['tests/data/*']}
 
 CLASSIFIERS = [

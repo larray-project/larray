@@ -48,7 +48,7 @@ extensions = [
 ]
 
 extlinks = {
-    'issue': ('https://github.com/liam2/larray/issues/%s', 'issue '),
+    'issue': ('https://github.com/larray-project/larray/issues/%s', 'issue '),
     'editor_issue': ('https://github.com/larray-project/larray-editor/issues/%s', 'issue ')
 }
 
@@ -83,7 +83,7 @@ nbsphinx_prolog = r"""
         
     .. nbinfo::
         Interactive online version:
-        :raw-html:`<a href="https://mybinder.org/v2/gh/liam2/larray/{{ env.config.release }}?
+        :raw-html:`<a href="https://mybinder.org/v2/gh/larray-project/larray/{{ env.config.release }}?
         filepath={{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge.svg" 
         style="vertical-align:text-bottom"></a>`
 """
