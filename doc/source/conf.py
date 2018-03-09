@@ -74,7 +74,7 @@ nbsphinx_allow_errors = True
 
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = r"""
-{% set docname = env.doc2path(env.docname, base='doc') %}
+{% set docname = env.doc2path(env.docname, base='doc/source/') %}
 
 .. only:: html
 
@@ -86,8 +86,6 @@ nbsphinx_prolog = r"""
         :raw-html:`<a href="https://mybinder.org/v2/gh/liam2/larray/{{ env.config.release }}?
         filepath={{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge.svg" 
         style="vertical-align:text-bottom"></a>`
-
-    __ https://github.com/liam2/larray/blob/{{ env.config.release }}/{{ docname }}
 """
 
 # ==============================================================
