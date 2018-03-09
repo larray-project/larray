@@ -63,7 +63,7 @@ Building from source
 --------------------
 
 The latest release of LArray is available from
-https://github.com/liam2/larray.git
+https://github.com/larray-project/larray.git
 
 Once you have satisfied the requirements detailed below, simply run::
 
@@ -142,14 +142,14 @@ Get in touch
 
 .. _mailing list: https://groups.google.com/d/forum/larray-announce
 .. _Google Users Group: https://groups.google.com/d/forum/larray-users
-.. _GitHub website: http://github.com/liam2/larray
+.. _GitHub website: http://github.com/larray-project/larray
 
 .. end-readme-file
 
-.. |build-status| image:: https://travis-ci.org/liam2/larray.svg?branch=master
+.. |build-status| image:: https://travis-ci.org/larray-project/larray.svg?branch=master
     :alt: build status
     :scale: 100%
-    :target: https://travis-ci.org/liam2/larray
+    :target: https://travis-ci.org/larray-project/larray
 
 .. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=stable
     :alt: Documentation Status

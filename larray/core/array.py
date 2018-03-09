@@ -1134,7 +1134,7 @@ class LArray(ABCLArray):
         labels = ['count', 'mean', 'std', 'min'] + plabels + ['max']
         percentiles = [0] + list(percentiles) + [100]
         # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
-        # when *args is not empty (see https://github.com/liam2/larray/issues/192)
+        # when *args is not empty (see https://github.com/larray-project/larray/issues/192)
         # return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args),
         #               *self.percentile(percentiles, *args)], Axis(labels, 'stats'))
         return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)] +

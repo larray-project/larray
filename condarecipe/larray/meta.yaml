@@ -4,7 +4,7 @@ package:
 
 source:
   git_tag: 0.28-dev
-  git_url: https://github.com/liam2/larray.git
+  git_url: https://github.com/larray-project/larray.git
 #  git_tag: master
 #  git_url: file://c:/Users/gdm/devel/larray/.git
 
@@ -50,7 +50,7 @@ test:
     # - nose
 
 about:
-  home: http://github.com/liam2/larray
+  home: http://github.com/larray-project/larray
   license: GPL
   summary: "Labeled N-dimensional array."
 
