@@ -29,4 +29,6 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed Excel add-ins not loaded when opening an Excel Workbook by calling the method
+  ``to_excel`` with no path on an array or via "Copy to Excel (CTRL+E)" in the editor
+  (closes :issue:`154`).
