@@ -121,8 +121,10 @@ if xw is not None:
                 else:
                     app = "global"
 
+            load_addins = False
             if app == "new":
                 app = xw.App(visible=visible, add_book=False)
+                load_addins = True
             elif app == "active":
                 app = xw.apps.active
             elif app == "global":
@@ -130,6 +132,7 @@ if xw is not None:
                     atexit.register(kill_global_app)
                 if global_app is None or not is_app_alive(global_app):
                     global_app = xw.App(visible=visible, add_book=False)
+                    load_addins = True
                 app = global_app
             assert isinstance(app, xw.App)
 
@@ -138,6 +141,14 @@ if xw is not None:
 
             if silent is None:
                 silent = not visible
+
+            # activate XLA(M) addins
+            # (for some reasons, add-ins are not activated when an Excel Workbook is opened from Python)
+            if load_addins:
+                for ia in range(1, app.api.Addins.Count + 1):
+                    addin_path = app.api.Addins(ia).FullName
+                    if not '.xll' in addin_path.lower():
+                        app.api.Workbooks.Open(addin_path)
 
             update_links_backup = app.api.AskToUpdateLinks
             display_alerts_backup = app.display_alerts
