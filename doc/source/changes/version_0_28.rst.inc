@@ -21,8 +21,8 @@
 New features
 ------------
 
-* made it possible to run the tutorial as a Jupyter notebook by clicking on the ``launch|binder`` badge on
-  the top of the tutorial HTML page (closes :issue:`73`)
+* made it possible to run the tutorial online (as a Jupyter notebook) by clicking on the ``launch|binder`` badge
+  on top of the tutorial web page (closes :issue:`73`)
 
 * added methods `array_equals` and `equals` to `Session` object to compare arrays from two sessions.
   The method `array_equals` return a boolean value for each array while the method `equals` returns a unique
