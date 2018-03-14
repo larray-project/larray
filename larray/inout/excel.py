@@ -72,6 +72,7 @@ if xw is not None:
             self.delayed_filepath = None
             self.filepath = None
             self.new_workbook = False
+            self.active_workbook = filepath == -1
 
             if filepath is None:
                 self.new_workbook = True
@@ -100,21 +101,21 @@ if xw is not None:
                     app = xw_wkb.app
 
             # active workbook use active app by default
-            if filepath == -1 and app not in {None, "active"}:
+            if self.active_workbook and app not in {None, "active"}:
                 raise ValueError("to connect to the active workbook, one must use the 'active' Excel instance "
                                  "(app='active' or app=None)")
 
             # unless explicitly set, app is set to visible for brand new or active book.
             # For unsaved_book it is left intact.
             if visible is None:
-                if filepath is None or filepath == -1:
+                if filepath is None or self.active_workbook:
                     visible = True
                 elif xw_wkb is None:
                     # filepath is not None but we don't target an unsaved book
                     visible = False
 
             if app is None:
-                if filepath == -1:
+                if self.active_workbook:
                     app = "active"
                 elif visible:
                     app = "new"
@@ -162,7 +163,7 @@ if xw is not None:
             if filepath is None:
                 # creates a new/blank Book
                 xw_wkb = app.books.add()
-            elif filepath == -1:
+            elif self.active_workbook:
                 xw_wkb = app.books.active
             elif xw_wkb is None:
                 # file already exists (and is a file)
@@ -270,7 +271,8 @@ if xw is not None:
             return self
 
         def __exit__(self, type_, value, traceback):
-            self.close()
+            if not self.active_workbook:
+                self.close()
 
         def __repr__(self):
             cls = self.__class__
@@ -663,7 +665,7 @@ Parameters
 ----------
 filepath : None, int or str, optional
     path to the Excel file. The file must exist if overwrite_file is False. Use None for a new blank workbook,
-    -1 for the last active workbook. Defaults to None.
+    -1 for the currently active workbook. Defaults to None.
 overwrite_file : bool, optional
     whether or not to overwrite an existing file, if any. Defaults to False.
 visible : None or bool, optional
