@@ -505,7 +505,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     Parameters
     ----------
     filepath : str
-        Path where the Excel file has to be read.
+        Path where the Excel file has to be read or use -1 to refer to the currently active workbook.
     sheet : str, Group or int, optional
         Name or index of the Excel sheet containing the array to be read.
         By default the array is read from the first sheet.
@@ -552,7 +552,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         from larray.inout.excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheet].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
-                                      sort_columns=sort_columns, wide=wide)
+                                  sort_columns=sort_columns, wide=wide)
     else:
         df = pd.read_excel(filepath, sheet, index_col=index_col, engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
