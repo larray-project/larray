@@ -4,7 +4,7 @@
 Version 0.28
 ============
 
-In development.
+Released on 2018-03-15.
 
 .. include:: ./changes/version_0_28.rst.inc
 
