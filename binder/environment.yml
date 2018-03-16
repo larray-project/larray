@@ -10,4 +10,5 @@ dependencies:
   - pytables
   - bokeh
   - rise
-  - larray
+  - pip:
+    - larray
