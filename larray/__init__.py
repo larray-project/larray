@@ -7,4 +7,4 @@ from larray.example import *
 from larray.extra import *
 from larray.viewer import *
 
-__version__ = '0.28'
+__version__ = '0.29-dev'
