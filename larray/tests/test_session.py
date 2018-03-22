@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath
-from larray import (Session, Axis, LArray, isnan, larray_equal, zeros_like, ndtest, ones_like,
+from larray import (Session, Axis, LArray, isnan, zeros_like, ndtest, ones_like,
                     local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
 
@@ -27,14 +27,15 @@ def equal(o1, o2):
     else:
         return o1 == o2
 
+
 global_arr1 = ndtest((2, 2))
 _global_arr2 = ndtest((3, 3))
 
 
 class TestSession(TestCase):
     def setUp(self):
-        self.a = Axis([], 'a')
-        self.b = Axis([], 'b')
+        self.a = Axis('a=a0..a2')
+        self.b = Axis('b=b0..b2')
         self.c = 'c'
         self.d = {}
         self.e = ndtest([(2, 'a0'), (3, 'a1')])
@@ -42,8 +43,7 @@ class TestSession(TestCase):
         self.f = ndtest([(3, 'a0'), (2, 'a1')])
         self.g = ndtest([(2, 'a0'), (4, 'a1')])
         self.session = Session([
-            ('b', self.b), ('a', self.a),
-            ('c', self.c), ('d', self.d),
+            ('b', self.b), ('a', self.a), ('c', self.c), ('d', self.d),
             ('e', self.e), ('g', self.g), ('f', self.f),
         ])
 
@@ -55,17 +55,16 @@ class TestSession(TestCase):
         return os.path.join(self.tmpdir, fname)
 
     def assertObjListEqual(self, got, expected):
-        self.assertEqual(len(got), len(expected))
+        assert len(got) == len(expected)
         for e1, e2 in zip(got, expected):
-            self.assertTrue(equal(e1, e2), "{} != {}".format(e1, e2))
+            assert equal(e1, e2), "{} != {}".format(e1, e2)
 
     def test_init(self):
-        s = Session(self.b, self.a, c=self.c, d=self.d,
-                    e=self.e, f=self.f, g=self.g)
-        self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+        s = Session(self.b, self.a, c=self.c, d=self.d, e=self.e, f=self.f, g=self.g)
+        assert s.names == ['a', 'b', 'c', 'd', 'e', 'f', 'g']
 
         s = Session(inputpath('test_session.h5'))
-        self.assertEqual(s.names, ['e', 'f', 'g'])
+        assert s.names == ['e', 'f', 'g']
 
         # this needs xlwings installed
         # s = Session('test_session_ef.xlsx')
@@ -77,18 +76,18 @@ class TestSession(TestCase):
 
     def test_getitem(self):
         s = self.session
-        self.assertIs(s['a'], self.a)
-        self.assertIs(s['b'], self.b)
-        self.assertEqual(s['c'], 'c')
-        self.assertEqual(s['d'], {})
+        assert s['a'] is self.a
+        assert s['b'] is self.b
+        assert s['c'] == 'c'
+        assert s['d'] == {}
 
     def test_getitem_list(self):
         s = self.session
-        self.assertEqual(list(s[[]]), [])
-        self.assertEqual(list(s[['b', 'a']]), [self.b, self.a])
-        self.assertEqual(list(s[['a', 'b']]), [self.a, self.b])
-        self.assertEqual(list(s[['a', 'e', 'g']]), [self.a, self.e, self.g])
-        self.assertEqual(list(s[['g', 'a', 'e']]), [self.g, self.a, self.e])
+        assert list(s[[]]) == []
+        assert list(s[['b', 'a']]) == [self.b, self.a]
+        assert list(s[['a', 'b']]) == [self.a, self.b]
+        assert list(s[['a', 'e', 'g']]) == [self.a, self.e, self.g]
+        assert list(s[['g', 'a', 'e']]) == [self.g, self.a, self.e]
 
     def test_getitem_larray(self):
         s1 = self.session.filter(kind=LArray)
@@ -101,26 +100,28 @@ class TestSession(TestCase):
     def test_setitem(self):
         s = self.session
         s['g'] = 'g'
-        self.assertEqual(s['g'], 'g')
+        assert s['g'] == 'g'
 
     def test_getattr(self):
         s = self.session
-        self.assertIs(s.a, self.a)
-        self.assertIs(s.b, self.b)
-        self.assertEqual(s.c, 'c')
-        self.assertEqual(s.d, {})
+        assert s.a is self.a
+        assert s.b is self.b
+        assert s.c == 'c'
+        assert s.d == {}
 
     def test_setattr(self):
         s = self.session
         s.h = 'h'
-        self.assertEqual(s.h, 'h')
+        assert s.h == 'h'
 
     def test_add(self):
         s = self.session
-        h = Axis([], 'h')
-        s.add(h, i='i')
-        self.assertTrue(h.equals(s.h))
-        self.assertEqual(s.i, 'i')
+        h = Axis('h=h0..h2')
+        h01 = h['h0,h1'] >> 'h01'
+        s.add(h, h01, i='i')
+        assert h.equals(s.h)
+        assert h01 == s.h01
+        assert s.i == 'i'
 
     def test_iter(self):
         expected = [self.b, self.a, self.c, self.d, self.e, self.g, self.f]
@@ -131,21 +132,21 @@ class TestSession(TestCase):
         s.ax = 'ax'
         self.assertObjListEqual(s.filter(), [self.b, self.a, 'c', {},
                                              self.e, self.g, self.f, 'ax'])
-        self.assertEqual(list(s.filter('a')), [self.a, 'ax'])
-        self.assertEqual(list(s.filter('a', dict)), [])
-        self.assertEqual(list(s.filter('a', str)), ['ax'])
-        self.assertEqual(list(s.filter('a', Axis)), [self.a])
-        self.assertEqual(list(s.filter(kind=Axis)), [self.b, self.a])
+        assert  s.filter('a') == [self.a, 'ax']
+        assert list(s.filter('a', dict)) == []
+        assert list(s.filter('a', str)) == ['ax']
+        assert list(s.filter('a', Axis)) == [self.a]
+        assert list(s.filter(kind=Axis)) == [self.b, self.a]
         self.assertObjListEqual(s.filter(kind=LArray), [self.e, self.g, self.f])
-        self.assertEqual(list(s.filter(kind=dict)), [{}])
+        assert list(s.filter(kind=dict)) == [{}]
 
     def test_names(self):
         s = self.session
-        self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+        assert s.names == ['a', 'b', 'c', 'd', 'e', 'f', 'g']
         # add them in the "wrong" order
         s.add(i='i')
         s.add(h='h')
-        self.assertEqual(s.names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+        assert s.names == ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 
     def test_h5_io(self):
         fpath = self.get_path('test_session.h5')
@@ -154,17 +155,17 @@ class TestSession(TestCase):
         s = Session()
         s.load(fpath)
         # HDF does *not* keep ordering (ie, keys are always sorted)
-        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+        assert list(s.keys()) == ['e', 'f', 'g']
 
         # update an array (overwrite=False)
         Session(e=self.e2).save(fpath, overwrite=False)
         s.load(fpath)
-        self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+        assert list(s.keys()) == ['e', 'f', 'g']
         assert_array_nan_equal(s['e'], self.e2)
 
         s = Session()
         s.load(fpath, ['e', 'f'])
-        self.assertEqual(list(s.keys()), ['e', 'f'])
+        assert list(s.keys()) == ['e', 'f']
 
     def test_xlsx_pandas_io(self):
         fpath = self.get_path('test_session.xlsx')
@@ -172,19 +173,19 @@ class TestSession(TestCase):
 
         s = Session()
         s.load(fpath, engine='pandas_excel')
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
 
         # update an array (overwrite=False)
         Session(e=self.e2).save(fpath, engine='pandas_excel', overwrite=False)
         s.load(fpath, engine='pandas_excel')
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
         assert_array_nan_equal(s['e'], self.e2)
 
         fpath = self.get_path('test_session_ef.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
         s = Session()
         s.load(fpath, engine='pandas_excel')
-        self.assertEqual(list(s.keys()), ['e', 'f'])
+        assert list(s.keys()) == ['e', 'f']
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
@@ -195,19 +196,19 @@ class TestSession(TestCase):
         s = Session()
         s.load(fpath, engine='xlwings_excel')
         # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
 
         # update an array (overwrite=False)
         Session(e=self.e2).save(fpath, engine='xlwings_excel', overwrite=False)
         s.load(fpath, engine='xlwings_excel')
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
         assert_array_nan_equal(s['e'], self.e2)
 
         fpath = self.get_path('test_session_ef_xw.xlsx')
         self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
         s = Session()
         s.load(fpath, engine='xlwings_excel')
-        self.assertEqual(list(s.keys()), ['e', 'f'])
+        assert list(s.keys()) == ['e', 'f']
 
     def test_csv_io(self):
         try:
@@ -218,14 +219,14 @@ class TestSession(TestCase):
             s = Session()
             s.load(fpath, engine='pandas_csv')
             # CSV cannot keep ordering (so we always sort keys)
-            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+            assert list(s.keys()) == ['e', 'f', 'g']
 
             # test loading with a pattern
             pattern = os.path.join(fpath, '*.csv')
             s = Session(pattern)
             # s = Session()
             # s.load(pattern)
-            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+            assert list(s.keys()) == ['e', 'f', 'g']
 
             # create an invalid .csv file
             invalid_fpath = os.path.join(fpath, 'invalid.csv')
@@ -239,7 +240,7 @@ class TestSession(TestCase):
             # test loading a pattern, ignoring invalid/unsupported files
             s = Session()
             s.load(pattern, ignore_exceptions=True)
-            self.assertEqual(list(s.keys()), ['e', 'f', 'g'])
+            assert list(s.keys()) == ['e', 'f', 'g']
         finally:
             shutil.rmtree(fpath)
 
@@ -249,12 +250,12 @@ class TestSession(TestCase):
 
         s = Session()
         s.load(fpath, engine='pickle')
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
 
         # update an array (overwrite=False)
         Session(e=self.e2).save(fpath, overwrite=False)
         s.load(fpath, engine='pickle')
-        self.assertEqual(list(s.keys()), ['e', 'g', 'f'])
+        assert list(s.keys()) == ['e', 'g', 'f']
         assert_array_nan_equal(s['e'], self.e2)
 
     def test_to_globals(self):
@@ -411,10 +412,7 @@ class TestSession(TestCase):
 
     def test_summary(self):
         sess = self.session.filter(kind=LArray)
-        self.assertEqual(sess.summary(),
-                         "e: a0*, a1*\n    \n\n"
-                         "g: a0*, a1*\n    \n\n"
-                         "f: a0*, a1*\n    \n")
+        assert sess.summary() == "e: a0*, a1*\n    \n\ng: a0*, a1*\n    \n\nf: a0*, a1*\n    \n"
 
     def test_pickle_roundtrip(self):
         original = self.session
