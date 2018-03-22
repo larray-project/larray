@@ -98,3 +98,7 @@ assert_nparray_nan_equal = assert_nparray_equal_factory(nan_equal, check_shape=T
 
 assert_nparray_equiv = assert_nparray_equal_factory(equal)
 assert_nparray_nan_equiv = assert_nparray_equal_factory(nan_equal)
+
+
+def assert_axis_eq(axis1, axis2):
+    assert axis1.equals(axis2)
