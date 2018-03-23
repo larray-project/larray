@@ -319,21 +319,20 @@ def concat(arrays, axis=0, dtype=None):
 
 
 class LArrayIterator(object):
+    __slots__ = ('nextfunc', 'axes')
+
     def __init__(self, array):
-        self.array = array
-        self.index = 0
+        data_iter = iter(array.data)
+        self.nextfunc = data_iter.__next__
+        self.axes = array.axes[1:]
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        array = self.array
-        if self.index == len(self.array):
-            raise StopIteration
-        # result = array.i[array.axes[0].i[self.index]]
-        result = array.i[self.index]
-        self.index += 1
-        return result
+        # using a fastpath via a keyword argument is safer but it is a ~10% perf penalty :(
+        return LArray(self.nextfunc(), self.axes, fastpath=True)
+
     # Python 2
     next = __next__
 
@@ -370,6 +369,8 @@ class LArrayPositionalIndexer(object):
 
 
 class LArrayPointsIndexer(object):
+    __slots__ = ('array',)
+
     def __init__(self, array):
         self.array = array
 
@@ -560,13 +561,54 @@ def nan_equal(a1, a2):
 
 
 def _handle_deprecated_argument_title(meta, title):
-    if meta is None:
-        meta = Metadata()
     if title is not None:
+        if meta is None:
+            meta = Metadata()
         import warnings
         warnings.warn("title argument is deprecated. Please use meta argument instead", FutureWarning, stacklevel=3)
         meta['title'] = title
     return meta
+
+
+# make use meta is either None or a Metadata instance
+def _handle_meta(meta, title):
+    if title is not None:
+        meta = _handle_deprecated_argument_title(meta, title)
+    if meta is None or isinstance(meta, Metadata):
+        return meta
+    if not isinstance(meta, (list, dict, OrderedDict)):
+        raise TypeError("Expected None, list of pairs, dict, OrderedDict or Metadata object "
+                        "instead of {}".format(type(meta).__name__))
+    return Metadata(meta)
+
+
+class LArrayRegridder(object):
+    __slots__ = ('array', 'grid')
+
+    def __init__(self, array, grid):
+        self.array = array
+        self.grid = grid
+
+    def count(self):
+        return self.grid.count(self.array)
+
+    def sum(self, *args, **kwargs):
+        return self.array.sum(self.grid, *args, **kwargs)
+
+    def describe(self, *args, **kwargs):
+        return self.array.describe(self.grid, *args, **kwargs)
+
+    def mean(self, *args, **kwargs):
+        return self.array.mean(self.grid, *args, **kwargs)
+
+    def median(self, *args, **kwargs):
+        return self.array.median(self.grid, *args, **kwargs)
+
+    def percentile(self, *args, **kwargs):
+        return self.array.percentile(self.grid, *args, **kwargs)
+
+    def __len__(self):
+        return len(self.grid)
 
 
 class LArray(ABCLArray):
@@ -663,34 +705,37 @@ class LArray(ABCLArray):
           M  10   9   8
           F  10  11  12
     """
+    __slots__ = ('data', 'axes', '_meta')
 
-    def __init__(self, data, axes=None, title=None, meta=None):
-        data = np.asarray(data)
-        ndim = data.ndim
-        if axes is None:
-            axes = AxisCollection(data.shape)
-        else:
-            if not isinstance(axes, AxisCollection):
-                axes = AxisCollection(axes)
-            if axes.ndim != ndim:
-                raise ValueError("number of axes (%d) does not match "
-                                 "number of dimensions of data (%d)"
-                                 % (axes.ndim, ndim))
-            if axes.shape != data.shape:
-                raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (axes.shape, data.shape))
+    def __init__(self, data, axes=None, title=None, meta=None, fastpath=False):
+        # fastpath assumes that data, axes and meta are all of the correct type
+        # and shape: np.ndarray(data), AxisCollection(axes), None or Metadata(meta)
+        if not fastpath:
+            data = np.asarray(data)
+            ndim = data.ndim
+            if axes is None:
+                axes = AxisCollection(data.shape)
+            else:
+                if not isinstance(axes, AxisCollection):
+                    axes = AxisCollection(axes)
+                if axes.ndim != ndim:
+                    raise ValueError("number of axes (%d) does not match "
+                                     "number of dimensions of data (%d)"
+                                     % (axes.ndim, ndim))
+                if axes.shape != data.shape:
+                    raise ValueError("length of axes %s does not match "
+                                     "data shape %s" % (axes.shape, data.shape))
+            meta = _handle_meta(meta, title)
 
         self.data = data
         self.axes = axes
-
-        meta = _handle_deprecated_argument_title(meta, title)
-        self.meta = meta
+        self._meta = meta
 
     @property
     def title(self):
         import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
-        return self._meta.title if 'title' in self._meta else None
+        return self._meta.title if self._meta is not None and 'title' in self._meta else None
 
     @title.setter
     def title(self, title):
@@ -709,14 +754,13 @@ class LArray(ABCLArray):
         Metadata:
             Metadata of the array.
         """
+        if self._meta is None:
+            self._meta = Metadata()
         return self._meta
 
     @meta.setter
     def meta(self, meta):
-        if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
-            raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
-                            "instead of {}".format(type(meta).__name__))
-        self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
+        self._meta = _handle_meta(meta, None)
 
     # TODO: rename to posnonzero and implement a label version of nonzero
     # TODO: implement wildcard argument to avoid producing the combined labels
@@ -884,7 +928,7 @@ class LArray(ABCLArray):
             self.axes = new_axes
             return self
         else:
-            return LArray(self.data, new_axes)
+            return LArray(self.data, new_axes, fastpath=True)
 
     with_axes = renamed_to(set_axes, 'with_axes')
 
@@ -897,14 +941,15 @@ class LArray(ABCLArray):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before .axes exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return self.data, self.axes, self._meta
 
     def __setstate__(self, d):
-        self.__dict__ = d
+        self.data, self.axes, self._meta = d
 
     def __dir__(self):
         axis_names = set(axis.name for axis in self.axes if axis.name is not None)
-        return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | axis_names)
+        attributes = self.__slots__
+        return list(set(dir(self.__class__)) | set(attributes) | axis_names)
 
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
@@ -1277,13 +1322,14 @@ class LArray(ABCLArray):
         cases.
         """
         data = np.ndarray.__array_wrap__(self.data, out_arr, context)
-        return LArray(data, self.axes)
+        return LArray(data, self.axes, fastpath=True)
 
     def __bool__(self):
         return bool(self.data)
     # Python 2
     __nonzero__ = __bool__
 
+    # TODO: this should be a thin wrapper around a method in AxisCollection
     def rename(self, renames=None, to=None, inplace=False, **kwargs):
         """Renames axes of the array.
 
@@ -1341,13 +1387,13 @@ class LArray(ABCLArray):
             items = []
         items += kwargs.items()
         renames = {self.axes[k]: v for k, v in items}
-        axes = [a.rename(renames[a]) if a in renames else a
-                for a in self.axes]
+        axes = AxisCollection([a.rename(renames[a]) if a in renames else a
+                               for a in self.axes])
         if inplace:
-            self.axes = AxisCollection(axes)
+            self.axes = axes
             return self
         else:
-            return LArray(self.data, axes)
+            return LArray(self.data, axes, fastpath=True)
 
     def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=nan, inplace=False, **kwargs):
         """Reorder and/or add new labels in axes.
@@ -1649,6 +1695,277 @@ class LArray(ABCLArray):
         left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
+    def groupby(self, key=None, axes=None, sort=False):
+        r"""Groups values of the array by the distinct values for `key`
+
+        Parameters
+        ----------
+        key : scalar or tuple or Group
+            Key along which to sort. Must have exactly one dimension less than ndim.
+            Cannot be used in combination with `axis` argument.
+            If both `key` and `axis` are None, sort array with all axes combined.
+            Defaults to None.
+
+        Returns
+        -------
+        GroupBy
+            Array with sorted values.
+
+        Examples
+        --------
+        THIS TEST ONLY WORKS OUTSIDE OF PYCHARM !!!!!!!!!!!
+
+        >>> arr = ndtest("a=a0,a2,a1,a0,a1;b=b0,b1,b1")
+        >>> arr
+        a\b  b0  b1  b1
+         a0   0   1   2
+         a2   3   4   5
+         a1   6   7   8
+         a0   9  10  11
+         a1  12  13  14
+
+        FIXME: it should display (or probably be stored) without the tuple, though the display should ideally be
+        independent of the storage, because there are much more efficient ways to store this for regular grids
+        (ie avoid storing the axis for each group)
+           (a.i[0, 3],)  (a.i[1],)  (a.i[2, 4],)
+
+        >>> arr = LArray([[[3, 2, 0],
+        ...                [1, 2, 1],
+        ...                [3, 7, 0],
+        ...                [1, 7, 1],
+        ...                [1, 2, 0]],
+        ...               [[3, 2, 0],
+        ...                [1, 7, 0],
+        ...                [3, 7, 0],
+        ...                [5, 7, 1],
+        ...                [1, 2, 1]]], 'period=2016,2017;id=0,1,2,3,4;field=a,b,c')
+        >>> arr
+        period  id\field  a  b  c
+          2016         0  3  2  0
+          2016         1  1  2  1
+          2016         2  3  7  0
+          2016         3  1  7  1
+          2016         4  1  2  0
+          2017         0  3  2  0
+          2017         1  1  7  0
+          2017         2  3  7  0
+          2017         3  5  7  1
+          2017         4  1  2  1
+        >>> arr['a']
+        period\id  0  1  2  3  4
+             2016  3  1  3  1  1
+             2017  3  1  3  5  1
+        >>> arr.groupby(axes='period', key='a').grid
+        a\period                                          2016                                    2017
+               3        (id.i[id  0  2     0  2], period.i[0])  (id.i[id  0  2     0  2], period.i[1])
+               1  (id.i[id  1  3  4     1  3  4], period.i[0])  (id.i[id  1  4     1  4], period.i[1])
+               5               (id.i[LArray([])], period.i[0])        (id.i[id  3     3], period.i[1])
+        >>> arr.groupby(axes='period', key='a').sum()
+        period  field\a  3   1  5
+          2016        a  6   3  0
+          2016        b  9  11  0
+          2016        c  0   2  0
+          2017        a  6   2  5
+          2017        b  9   9  7
+          2017        c  0   1  1
+
+        arr.groupby(key=('a', 'b')).sum()
+        field  a\b  2  7
+            c    3  0  0
+            c    1  1  1
+        arr.groupby(key=('a', 'c')).sum()
+        field  a\c  0  1
+            b    3  9  0
+            b    1  2  9
+
+        arr.groupby('a').sum()
+        a\field  a   b  c
+              3  6   9  0
+              1  3  11  2
+        """
+        r"""
+        >>> arr.groupby(axes='a').grid
+        a           a0      a2           a1
+           ['a0' 'a0']  ['a2']  ['a1' 'a1']
+        >>> arr.groupby(axes='a').count()
+        a  a0  a2  a1
+            2   1   2
+        >>> arr.groupby(axes='a').sum()
+        a\b  b0  b1  b1
+         a0   9  11  13
+         a2   3   4   5
+         a1  18  20  22
+        >>> arr.groupby(axes=('a', 'b')).sum()
+        a\b  b0  b1
+         a0   9  24
+         a2   3   9
+         a1  18  42
+        >>> arr.groupby(axes=('a', 'b')).count()
+        a\b  b0  b1
+         a0   2   4
+         a2   1   2
+         a1   2   4
+        >>> arr.groupby(axes=('a', 'b')).mean()
+        a\b   b0    b1
+         a0  4.5   6.0
+         a2  3.0   4.5
+         a1  9.0  10.5
+        >>> arr.groupby(axes=('a', 'b')).sum() / arr.groupby(axes=('a', 'b')).count()
+        a\b   b0    b1
+         a0  4.5   6.0
+         a2  3.0   4.5
+         a1  9.0  10.5
+        >>> arr = LArray([[3, 2, 0],
+        ...               [1, 2, 1],
+        ...               [3, 7, 0],
+        ...               [1, 7, 1],
+        ...               [1, 2, 0]], 'id=0,1,2,3,4;field=a,b,c')
+        >>> arr
+        id\field  a  b  c
+               0  3  2  0
+               1  1  2  1
+               2  3  7  0
+               3  1  7  1
+               4  1  2  0
+        >>> arr.groupby('a').count()
+        a  3  1
+           2  3
+        >>> arr.groupby('a').sum()
+        field\a  3   1
+              a  6   3
+              b  9  11
+              c  0   2
+
+        FIXME: .grid should not be necessary to get a useful display
+        FIXME: it should display as id.i[0] or even id['john'] id['jeff', 'mary']
+
+        >>> arr.groupby(key=('a', 'b')).grid
+        a\b      2    7
+          3    [0]  [2]
+          1  [1 4]  [3]
+        >>> arr.groupby(key=('a', 'c')).grid
+        a\c      0      1
+          3  [0 2]    nan
+          1    [4]  [1 3]
+        >>> arr.groupby(key=('a', 'b')).count()
+        a\b  2  7
+          3  1  1
+          1  2  1
+        >>> arr.groupby(key=('a', 'c')).count()
+        a\c  0  1
+          3  2  0
+          1  1  2
+
+        This is correct but completely unreadable. I should really remove "grouped" columns
+
+        >>> arr.groupby(key=('a', 'b')).sum()
+        field  a\b  2  7
+            a    3  3  3
+            a    1  2  1
+            b    3  2  7
+            b    1  4  7
+            c    3  0  0
+            c    1  1  1
+        >>> arr.groupby(key=('a', 'c')).sum()
+        field  a\c  0  1
+            a    3  6  0
+            a    1  1  2
+            b    3  9  0
+            b    1  2  9
+            c    3  0  0
+            c    1  0  2
+
+        >>> # arr.id.groupby(arr['a'])
+        a        3           1
+          id[0, 2] id[1, 3, 4]
+        >>> id_ = arr.id
+        >>> # arr.sum(arr.id.groupby(arr['a']))
+        >>> arr.sum((id_[0, 2], id_[1, 3, 4]))
+        id\field  a   b  c
+             0,2  6   9  0
+           1,3,4  3  11  2
+        >>> groups = (id_[0, 2] >> 3, id_[1, 3, 4] >> 1)
+        >>> arr.sum(groups)
+        id\field  a   b  c
+               3  6   9  0
+               1  3  11  2
+        >>> arr.sum(groups).rename('id', 'a')[arr.field.difference('a')]
+        a\field   b  c
+              3   9  0
+              1  11  2
+        >>> # arr.groupby('a', axis='id').count()
+        >>> # arr.groupby('a', axis='id').sum()
+        >>> # arr.sum('')group('id').by('a').sum()
+        >>> # arr.group('id').by('a').sum()
+        >>> # arr.groupby('a', axis='id').sum()  # <--- axis has the opposite meaning than axes !!!
+        >>> # for .sum, empty groups should be 0, not nan because sum([]) == 0
+        >>> arr.groupby('period', 'a').sum()
+        period  a\field    b    c
+          2016        3    9    0
+          2016        1   11    2
+          2016        5    0    0
+          2017        3    9    0
+          2017        1    9    1
+          2017        5    7    1
+        >>> arr.groupby('a').grid
+        a                              3                                         1         5
+           [2016,0;2016,2;2017,0;2017,2]  [2016,1; 2016,3; 2016,4; 2017,1; 2017,4]  [2017,3]
+        # OR (I am unsure what the display should be, but behind the scene, it should be more like below
+        >>> arr.groupby('a').grid
+        other_axes\a                         3                              1       5
+              period  [2016, 2016, 2017, 2017] [2016, 2016, 2016, 2017, 2017]  [2017]
+                  id  [   0,    2,    0,    2] [   1,    3,    4,    1,    4]  [   3]
+        >>> arr.groupby('a').sum()
+        a\field    b    c
+              3   18    0
+              1   20    3
+              5    7    1
+        >>> # groupby by keys on different axes. I don't think it makes sense because we will "target" the same
+        >>> # cell multiple times (from different axes)
+        >>> arr.groupby(2017, 'a').grid
+        # unique for    a: 3, 1, 5
+        # unique for 2017: 3, 9, 0, 1 5, 7
+        # unique combinations: 3/3, 3/9, 3/0, 1/1, 1/9, *1/1*, 5/5, 5/7, 5/1
+        #   for example, in the 3/3 combination, both 3 are from the same cell.
+        """
+        # * "key" (should remove one or several labels on an axis and) replaces the implicit "grouped axes" (e.g. id)
+        #         by an axis per key (e.g. a, b)
+        # * "axes" replaces the axes by the same axes without duplicates
+        if axes is not None:
+            if not isinstance(axes, tuple):
+                axes = (axes,)
+            axes = self.axes[axes]
+
+        if key is not None:
+            if not isinstance(key, tuple):
+                key = (key,)
+            # get index for each "column" in key
+            key = [self._translate_axis_key(k) for k in key]
+            key_axis = key[0].axis
+            # all keys must have the same axis (for now)
+            assert all(k.axis is key_axis for k in key[1:])
+            group_axes = self.axes - key_axis
+            if axes is not None:
+                group_axes = group_axes - axes
+            # for now
+            assert len(group_axes) == 1
+            group_axis = group_axes[0]
+            columns = self[key].transpose(group_axis)
+            name = [str(k) for k in key]
+            axis_grids = [group_axis.groupby(columns, sort=sort, name=name, loop_axes=axes)]
+            axes = None
+        else:
+            axis_grids = []
+
+        if axes is not None:
+            axis_grids.extend([axis.group_unique(sort=sort) for axis in axes])
+
+        if key is None and axes is None:
+            raise ValueError("key or axis must be provided")
+
+        grid = _RegularGrid.from_product(axis_grids)
+        return LArrayRegridder(self, grid)
+
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True):
         """Sorts values of the array.
@@ -1745,7 +2062,7 @@ class LArray(ABCLArray):
             axis_idx = self.axes.index(axis)
             data = np.sort(self.data, axis_idx)
             new_axes = self.axes.replace(axis_idx, Axis(len(axis), axis.name))
-            res = LArray(data, new_axes)
+            res = LArray(data, new_axes, fastpath=True)
         elif key is not None:
             subset = self[key]
             if subset.ndim > 1:
@@ -1831,8 +2148,7 @@ class LArray(ABCLArray):
                 key = key[::-1]
             return axis.i[key]
 
-        res = self[tuple(sort_key(axis) for axis in axes)]
-        return res
+        return self[tuple(sort_key(axis) for axis in axes)]
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
 
@@ -2118,8 +2434,10 @@ class LArray(ABCLArray):
         #            -> 3, 8 WRONG (non adjacent dimensions)
         #            -> 8, 3 WRONG
         #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
+        if not isinstance(target_axes, AxisCollection):
+            target_axes = AxisCollection(target_axes)
         data = np.asarray(self).reshape([len(axis) for axis in target_axes])
-        return LArray(data, target_axes)
+        return LArray(data, target_axes, fastpath=True)
 
     def reshape_like(self, target):
         """
@@ -2268,7 +2586,7 @@ class LArray(ABCLArray):
         else:
             axes = self.axes[axes]
         res_axes = self.axes.replace([(axis, axis.ignore_labels()) for axis in axes])
-        return LArray(self.data, res_axes)
+        return LArray(self.data, res_axes, fastpath=True)
     drop_labels = renamed_to(ignore_labels, 'drop_labels')
 
     def __str__(self):
@@ -2282,7 +2600,11 @@ class LArray(ABCLArray):
     __repr__ = __str__
 
     def __iter__(self):
-        return LArrayIterator(self)
+        # fast path for 1D arrays where we return elements
+        if self.ndim <= 1:
+            return iter(self.data)
+        else:
+            return LArrayIterator(self)
 
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
@@ -2484,7 +2806,7 @@ class LArray(ABCLArray):
             # scalars don't need to be wrapped in LArray
             return res_data
         else:
-            return LArray(res_data, res_axes)
+            return LArray(res_data, res_axes, fastpath=True)
 
     def _cum_aggregate(self, op, axis):
         """
@@ -2493,8 +2815,122 @@ class LArray(ABCLArray):
         time.
         """
         # TODO: accept a single group in axis, to filter & aggregate in one shot
-        return LArray(op(np.asarray(self), axis=self.axes.index(axis)),
-                      self.axes)
+        return LArray(op(np.asarray(self), axis=self.axes.index(axis)), self.axes, fastpath=True)
+
+    def _grid_aggregate(self, op, grid, out=None, **kwargs):
+        r"""
+        Examples
+        --------
+        >>> arr = ndtest((3, 4))
+        >>> arr
+        a\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+         a2   8   9  10  11
+        >>> a, b = arr.axes
+
+        >>> g = _RegularGrid([a['a0,a1'], a['a1,a2']], 'c=c0,c1')
+        >>> g
+        c            c0            c1
+           ['a0', 'a1']  ['a1', 'a2']
+        >>> arr.sum(g)
+        b\c  c0  c1
+         b0   4  12
+         b1   6  14
+         b2   8  16
+         b3  10  18
+
+        >>> g = _RegularGrid(['a0,a1', 'a1,a2'], 'c=c0,c1')
+        >>> g
+        c     c0     c1
+           a0,a1  a1,a2
+        >>> arr.sum(g)
+        b\c  c0  c1
+         b0   4  12
+         b1   6  14
+         b2   8  16
+         b3  10  18
+
+        >>> g = _RegularGrid.from_product([['a0,a1', 'a1,a2'], ['b0,b2', 'b1,b3']], 'c=c0,c1;d=d0,d1')
+        >>> g
+        c\d                  d0                  d1
+         c0  ('a0,a1', 'b0,b2')  ('a0,a1', 'b1,b3')
+         c1  ('a1,a2', 'b0,b2')  ('a1,a2', 'b1,b3')
+        >>> arr.sum(g)
+        c\d  d0  d1
+         c0  12  16
+         c1  28  32
+
+        >>> g = _Grid([[(a['a0,a1'], b['b0,b2']), (a['a0,a1'], b['b1,b3'])],
+        ...            [(a['a1,a2'], b['b0,b2']), (a['a1,a2'], b['b1,b3'])]], 'c=c0,c1;d=d0,d1')
+        >>> g
+        c\d                              d0                              d1
+         c0  (a['a0', 'a1'], b['b0', 'b2'])  (a['a0', 'a1'], b['b1', 'b3'])
+         c1  (a['a1', 'a2'], b['b0', 'b2'])  (a['a1', 'a2'], b['b1', 'b3'])
+        >>> arr.sum(g)
+        c\d  d0  d1
+         c0  12  16
+         c1  28  32
+        >>> g = _Grid([[('a0,a1', 'b0,b2'), ('a0,a1', 'b1,b3')],
+        ...            [('a1,a2', 'b0,b2'), ('a1,a2', 'b1,b3')]], 'c=c0,c1;d=d0,d1')
+        >>> g
+        c\d                  d0                  d1
+         c0  ('a0,a1', 'b0,b2')  ('a0,a1', 'b1,b3')
+         c1  ('a1,a2', 'b0,b2')  ('a1,a2', 'b1,b3')
+        >>> arr.sum(g)
+        c\d  d0  d1
+         c0  12  16
+         c1  28  32
+
+        g = _Grid([['a0,a1;b0,b2', 'a0,a1;b1,b3'],
+                   ['a1,a2;b0,b2', 'a1,a2;b1,b3']], 'c=c0,c1;d=d0,d1')
+        c\d           d0           d1
+         c0  a0,a1;b0,b2  a0,a1;b1,b3
+         c1  a1,a2;b0,b2  a1,a2;b1,b3
+        >>> arr.sum(g)
+        c\d  d0  d1
+         c0  12  16
+         c1  28  32
+        """
+        res_axes = grid.result_axes(self)
+        res_dtype = float if op in _always_return_float else self.dtype
+        if op in (np.sum, np.nansum) and self.dtype in (np.bool, np.bool_):
+            res_dtype = int
+        if out is None:
+            # XXX: empty with nan indexer => non initialized parts?
+            res = empty(res_axes, dtype=res_dtype)
+        else:
+            # TODO: check that out.axes >= res_axes
+            res = out
+
+        # TODO: there are a lot of ways to do this more efficiently.
+        # * Implementing out= in _group_aggregate
+        # * .items() could be passed the array so that the iteration order is as close as possible
+        #   to the source array axes, instead of using the destination array axes (I guess it would be more
+        #   cache-friendly and thus better for performance).
+        # * for ProductGrid:
+        #   - we should not create the Grid entirely
+        #   - we should translate keys once (before calling itertools.product)
+        for dst_indexer, src_indexer in grid.items():
+            # FIXME: this should be done in Grid
+            if isinstance(src_indexer, float) and np.isnan(src_indexer):
+                src_indexer = tuple(axis.i[[]] for axis in self.axes)
+            if not isinstance(src_indexer, tuple):
+                src_indexer = (src_indexer,)
+            # dst_array = res[dst_indexer]
+            # self._group_aggregate(op, src_indexer, out=dst_array, **kwargs)
+            # _group_aggregate wants Group instances, not strings
+            # res[dst_indexer] = self._group_aggregate(op, src_indexer, **kwargs)
+            res[dst_indexer] = self._aggregate(op, src_indexer, **kwargs)
+
+            # src_array = self.__getitem__(src_indexer, collapse_slices=True).data
+            # src_axes = src_array.axes
+            # indexer_axes = ...
+            # axes_idx = [src_axes.index(axis) for axis in axes]
+            # axis = item.axis
+            # axis, axis_idx = self.axes[axis], res.axes.index(axis)
+            # op(src_array, axis=axis_idx, out=dst_array, **kwargs)
+        return res
 
     # TODO: now that items is never a (k, v), it should be renamed to
     # something else: args? (groups would be misleading because each "item" can contain several groups)
@@ -2582,7 +3018,7 @@ class LArray(ABCLArray):
                 res_axes[axis_idx] = Axis(groups, axis.name)
 
             if isinstance(res_data, np.ndarray):
-                res = LArray(res_data, res_axes)
+                res = LArray(res_data, res_axes, fastpath=True)
             else:
                 res = res_data
         return res
@@ -2645,7 +3081,9 @@ class LArray(ABCLArray):
                                           % (key, type(key).__name__))
 
         def standardise_arg(arg, stack_depth=1):
-            if self.axes.isaxis(arg):
+            if isinstance(arg, _Grid):
+                return arg
+            elif self.axes.isaxis(arg):
                 return self.axes[arg]
             else:
                 return to_labelgroup(arg, stack_depth + 1)
@@ -2672,6 +3110,8 @@ class LArray(ABCLArray):
 
     def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False, commutative=False,
                    out=None, extra_kwargs={}):
+        if args and isinstance(args[0], _Grid):
+            return self._grid_aggregate(op, args[0])
         operations = self._prepare_aggregate(op, args, kwargs, commutative, stack_depth=3)
         if by_agg and operations != self.axes:
             operations = self._by_args_to_normal_agg_args(operations)
@@ -2816,7 +3256,7 @@ class LArray(ABCLArray):
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
             data = axis.labels[self.data.argmin(axis_idx)]
-            return LArray(data, self.axes - axis)
+            return LArray(data, self.axes - axis, fastpath=True)
         else:
             indices = np.unravel_index(self.data.argmin(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
@@ -2858,7 +3298,7 @@ class LArray(ABCLArray):
         """
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
-            return LArray(self.data.argmin(axis_idx), self.axes - axis)
+            return LArray(self.data.argmin(axis_idx), self.axes - axis, fastpath=True)
         else:
             return np.unravel_index(self.data.argmin(), self.shape)
 
@@ -2900,7 +3340,7 @@ class LArray(ABCLArray):
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
             data = axis.labels[self.data.argmax(axis_idx)]
-            return LArray(data, self.axes - axis)
+            return LArray(data, self.axes - axis, fastpath=True)
         else:
             indices = np.unravel_index(self.data.argmax(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
@@ -2942,7 +3382,7 @@ class LArray(ABCLArray):
         """
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
-            return LArray(self.data.argmax(axis_idx), self.axes - axis)
+            return LArray(self.data.argmax(axis_idx), self.axes - axis, fastpath=True)
         else:
             return np.unravel_index(self.data.argmax(), self.shape)
 
@@ -2992,7 +3432,7 @@ class LArray(ABCLArray):
             axis = self.axes[0]
         axis = self.axes[axis]
         pos = self.indicesofsorted(axis, ascending=ascending, kind=kind)
-        return LArray(axis.labels[pos.data], pos.axes)
+        return LArray(axis.labels[pos.data], pos.axes, fastpath=True)
 
     argsort = renamed_to(labelsofsorted, 'argsort')
 
@@ -3045,14 +3485,80 @@ class LArray(ABCLArray):
                              for i in range(self.ndim))
             data = data[reverser]
         new_axis = Axis(np.arange(len(axis)), axis.name)
-        return LArray(data, self.axes.replace(axis, new_axis))
+        return LArray(data, self.axes.replace(axis, new_axis), fastpath=True)
 
     posargsort = renamed_to(indicesofsorted, 'posargsort')
+
+    # XXX: this is a useful internal API, but I am unsure it is worth exposing it as a public API
+    def values(self, axis=None):
+        if axis is None:
+            return np.ravel(self.data)
+        axis = self.axes[axis]
+        transposed = self.transpose(axis)
+        return transposed.combine_axes(axis, wildcard=True) if isinstance(axis, AxisCollection) else transposed
+
+    # TODO: return a view instead of a zip object/iterator
+    # XXX: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing
+    def items(self, axis=None):
+        if axis is not None and not isinstance(axis, (tuple, AxisCollection)):
+            axis = (axis,)
+        iter_axes = self.axes[axis] if axis is not None else self.axes
+        return zip(iter_axes.iter_labels(), self.values(axis))
+
+    # TODO: make this a property like numpy
+    def flat(self, flat_key, sep='_'):
+        axes_labels = self.axes.labels
+        shape = self.axes.shape
+        # TODO: either use .flat in .ipoints (by using np.ravel_multi_index) or use .ipoints here (by using
+        # np.unravel_index)
+        divs = [int(np.prod(shape[i + 1:])) for i in range(len(shape))]
+        # use np.unravel_index?
+        indexed_labels = [axis_labels[flat_key // div % length].astype(np.str).tolist()
+                          for axis_labels, div, length in zip(axes_labels, divs, shape)]
+        sepjoin = sep.join
+        # FIXME: compute correct dtype
+        res_labels = np.empty(len(flat_key), dtype='<U9')
+        # TODO: this is the fastest way I could come up with and it is still desperately slow. I think I will write a
+        # Cython extension just for this.
+        res_labels[:] = [sepjoin(c) for c in zip(*indexed_labels)]
+        data = self.data.flat[flat_key]
+        # FIXME: axis name is bogus
+        return LArray(data, Axis(res_labels, 'unique'))
+
+    def unique(self, axis=None, sort=False, sep='_'):
+        if axis is not None:
+            axis = self.axes[axis]
+        axis_idx = self.axes.index(axis) if isinstance(axis, Axis) else None
+
+        if not isinstance(axis, AxisCollection):
+            # axis needs np >= 1.13
+            _, unq_index = np.unique(self, axis=axis_idx, return_index=True)
+            if not sort:
+                unq_index = np.sort(unq_index)
+            if axis is None:
+                return self.flat(unq_index)
+            else:
+                return self[axis.i[unq_index]]
+        else:
+            if sort:
+                raise NotImplementedError('sort=True is not implemented for unique along multiple axes')
+            unq_list = []
+            seen = set()
+            list_append = unq_list.append
+            seen_add = seen.add
+            sep_join = sep.join
+            axis_name = sep_join(a.name for a in axis)
+            for labels, value in self.items(axis):
+                hashable_value = value.data.tobytes() if isinstance(value, LArray) else value
+                if hashable_value not in seen:
+                    list_append((sep_join(str(l) for l in labels), value))
+                    seen_add(hashable_value)
+            return stack(unq_list, axis_name)
 
     def copy(self):
         """Returns a copy of the array.
         """
-        return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta)
+        return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta, fastpath=True)
 
     @property
     def info(self):
@@ -4925,7 +5431,7 @@ class LArray(ABCLArray):
                 # TODO: first test if it is not already broadcastable
                 (self, other), res_axes = make_numpy_broadcastable([self, other])
                 other = other.data
-            return LArray(super_method(self.data, other), res_axes)
+            return LArray(super_method(self.data, other), res_axes, fastpath=True)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -5045,7 +5551,10 @@ class LArray(ABCLArray):
             res_axes += [axes[-2]]
         if other.ndim > 1:
             res_axes += [other_axes[-1].copy()]
-        return LArray(res_data, res_axes)
+        if res_axes:
+            return LArray(res_data, AxisCollection(res_axes), fastpath=True)
+        else:
+            return res_data
 
     def __rmatmul__(self, other):
         if isinstance(other, np.ndarray):
@@ -5060,7 +5569,7 @@ class LArray(ABCLArray):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self):
-            return LArray(super_method(self.data), self.axes)
+            return LArray(super_method(self.data), self.axes, fastpath=True)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -5264,6 +5773,8 @@ class LArray(ABCLArray):
                     else:
                         return False
 
+                # TODO: it would probably be faster to first make the arrays numpy broadcastable and then compute the
+                # data at numpy's level and return LArray(res_data, res_axes, fastpath=True)
                 return (self == other) | (general_isnan(self) & general_isnan(other))
         else:
             (a1, a2), res_axes = make_numpy_broadcastable([self, other])
@@ -5383,7 +5894,7 @@ class LArray(ABCLArray):
 
             if readonly:
                 # requires numpy 1.10
-                return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
+                return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes, fastpath=True)
             else:
                 out = empty(target_axes, dtype=self.dtype)
         out[:] = broadcasted
@@ -5889,7 +6400,7 @@ class LArray(ABCLArray):
         indices_present = set(axes_indices)
         missing_indices = [i for i in range(len(self.axes)) if i not in indices_present]
         axes_indices = axes_indices + missing_indices
-        return LArray(self.data.transpose(axes_indices), self.axes[axes_indices])
+        return LArray(self.data.transpose(axes_indices), self.axes[axes_indices], fastpath=True)
     T = property(transpose)
 
     def clip(self, a_min, a_max, out=None):
@@ -6547,10 +7058,10 @@ class LArray(ABCLArray):
             self.axes = axes
             return self
         else:
-            return LArray(self.data, axes)
+            return LArray(self.data, axes, fastpath=True)
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
-        return LArray(self.data.astype(dtype, order, casting, subok, copy), self.axes)
+        return LArray(self.data.astype(dtype, order, casting, subok, copy), self.axes, fastpath=True)
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1):
@@ -6977,6 +7488,224 @@ class LArray(ABCLArray):
     split_axis = renamed_to(split_axes, 'split_axis')
 
 
+# TODO: we inherit from LArray so that we can slice it and display it. Aggregates and other "numeric" stuff will not
+#       make sense, but the rest is already very valuable. Before we make this part of the public API,
+#       we should make sure that slicing & display work nicely and that aggregates and binops fail gracefully.
+# TODO: we should support array[grid] returning an LArray containing arrays (of various sizes)
+#       though at first except to display/slice it, we will not be able to do much with that kind of array.
+# TODO: rewrite this code using the groupby code from LIAM2
+# TODO: we should create a specific subclass to handle the case for a list of groups per axis (like here) so
+#       that we do not even have to create the explicit Grid with each cell
+class _Grid(LArray):
+    # data should be a ND array of "indexers"
+    # axes will be the new "destination" axes created by using the grid to aggregate an array
+    # indexers can be anything valid in []
+    # most likely these will be tuples of "groups" (one "group" in the tuple per axis to aggregate)
+    # e.g.
+    # src_axes   -> dst_axes
+    # a, b -> c, d
+    # Note that in the general case, it is NOT required to have the same "source" axes in all cells.
+    # This would produce an array of arrays with different shapes. This is kinda crazy (and I fail to come up with
+    # a usecase where this would be useful) but it might someday be useful to somebody.
+    def __init__(self, data, axes=None):
+        # data should be a ND array of tuple of "groups" (one group in the tuple per axis to aggregate)
+        # e.g.
+        # src_axes -> dst_axes
+        # a, b     -> c, d
+        if isinstance(data, LArray):
+            assert axes is None
+            axes = data.axes
+            data = data.data
+        else:
+            assert axes is not None
+            axes = AxisCollection(axes)
+
+        if isinstance(data, np.ndarray):
+            array_data = data
+        else:
+            # avoid homogeneous indexing tuples to be interpreted like an array with an extra dimension by np.asarray
+            array_data = np.empty(axes.shape, dtype=object)
+            array_data[:] = data
+        # for idx, group in zip(np.ndindex(axes.shape), product(*groups)):
+        #     res_data[idx] = group
+
+        # c\d     d0     d1
+        #  c0  a0,a1  b1,b3
+        #  c1  b0,b2  a1,a2
+        # LArray.__init__(self, array_data, axes)
+        super(_Grid, self).__init__(array_data, axes)
+
+    # For the General case. source axes can vary from cell to cell, so the result axes is always the grid axes
+    # (and each cell can potentially be an array)
+    def result_axes(self, array):
+        return self.axes
+
+
+# the "final" dst_axes can have more labels than the dst_axes mentioned in _Grid without that needing to be
+# handled by _Grid. If one wants to have reindex-like behavior at the same time as regriding, he only needs
+# to initialize an array with the fill_value and use _grid_aggregate with out=
+
+vlen = np.vectorize(len)
+
+
+class _RegularGrid(_Grid):
+    """
+    Grid with the same "source" axes in all cells
+    """
+    def __init__(self, data, axes=None):
+        # data should be a ND array of tuple of "groups" (one group in the tuple per axis to aggregate)
+        # e.g.
+        # src_axes -> dst_axes
+        # a, b     -> c, d
+
+        # c\d              d0               d1
+        #  c0 ('a0,a1', 'b0')  ('a1', 'b1,b3')
+        #  c1 ('a1', 'b0,b2')  ('a1,a2', 'b3')
+
+        # should be stored as:
+        # .axes = [c, d]
+        # .source_axes = [a, b]
+        # .source_indices:
+        #  list of 2D array of arrays (one array per axis)
+        #   [array([[array([0, 1]), array([1])],
+        #           [array([1]), array([1, 2])]])
+        #    array([[array([0]), array([1, 3])],
+        #           [array([0, 2]), array([3])]])
+        # OR
+        #  3D array of arrays:
+        #   array([[[array([0, 1]), array([1])],
+        #           [array([1]), array([1, 2])]],
+        #          [[array([0]), array([1, 3])],
+        #           [array([0, 2]), array([3])]]])
+
+        # It should display as:
+
+        # c\d             d0              d1
+        #  c0 ('a0,a1' 'b0')  ('a1' 'b1,b3')
+        #  c1 ('a1' 'b0,b2')  ('a1,a2' 'b3')
+
+        # OR
+
+        #  c  d\source_axis        a        b
+        # c0             d0  'a0,a1'     'b0'
+        # c0             d1     'a1'  'b1,b3'
+        # c1             d0     'a1'  'b0,b2'
+        # c1             d1  'a1,a2'     'b3'
+
+        # OR (assuming we can display several axes in columns)
+
+        #            d         d0         d0         d1         d1
+        #  source_axis          a          b          a          b
+        #            c
+        #           c0  'a0','a1'       'b0'       'a1'  'b1','b3'
+        #           c1  'a1'       'b0','b2'  'a1','a2'       'b3'
+        super(_RegularGrid, self).__init__(data, axes)
+
+    def result_axes(self, array):
+        # FIXME: axes which are both in grid.group_axes and grid.axes should not move
+        aggregated_axes = self.aggregated_axes(array)
+        modified_axes = self.axes & aggregated_axes
+        added_axes = self.axes - modified_axes
+        removed_axes = aggregated_axes - modified_axes
+        replace_dict = dict(zip(modified_axes.names, modified_axes))
+        return array.axes.replace(replace_dict) - removed_axes + added_axes
+
+    # == "source" axes
+    def aggregated_axes(self, array):
+        first_indexer = self.data.flat[0]
+        if not isinstance(first_indexer, tuple):
+            first_indexer = (first_indexer,)
+        # this is a bit wasteful to translate the key and not keep the result...
+        return AxisCollection([array._translate_axis_key(g).axis for g in first_indexer])
+
+    # XXX: unsure this method should exist at all. I think we should use ProductGrid instead.
+    @classmethod
+    def from_product(cls, groups, axes=None):
+        # should be a list of tuple of "groups" (one tuple per axis)
+        # [('a0,a1', 'a2,a3'), ('b0,b2', 'b1,b3')]
+        if isinstance(groups[0], _Grid):
+            if len(groups) == 1:
+                return groups[0]
+            assert all(g.ndim == 1 for g in groups)
+            if axes is None:
+                axes = [g.axes[0] for g in groups]
+            # TODO: avoid conversion to tuple
+            groups = [tuple(g.data) for g in groups]
+        axes = AxisCollection(axes)
+        res = empty(axes, dtype=object)
+        # there ought to be a better way to do this
+        for idx, group in zip(res.axes.iter_labels(), product(*groups)):
+            res[idx] = group
+
+        # this does not work (because target is a scalar)
+        # for target, value in zip(res.values(), product(*groups)):
+        #     target[:] = value
+
+        # this does not work either
+        # res_data = np.empty(axes.shape, dtype=object)
+        # res_data.flat[:] = list(product(*groups))
+        # but maybe we could make this work:
+        # res.flat[:] = list(product(*groups))
+        # or this (but it is not much of an improvement)
+        # for i, group in enumerate(product(*groups)):
+        #     res_data.flat[i] = group
+        # I think this works
+        # for idx, group in zip(np.ndindex(axes.shape), product(*groups)):
+        #     res_data[idx] = group
+        # flat_groups = np.array(list(product(*groups)))
+        # groups = flat_groups.reshape(axes.shape)
+        return _RegularGrid(res)
+
+    def count(self, array):
+        def get_length(array, ndgroup):
+            if isinstance(ndgroup, float) and np.isnan(ndgroup):
+                return 0
+            if not isinstance(ndgroup, tuple):
+                ndgroup = (ndgroup,)
+            return np.prod([len(array._translate_axis_key(group)) for group in ndgroup])
+
+        # vgl = np.vectorize(get_length)
+        # flat_size = vgl(self.data)
+        flat_size = np.array([get_length(array, g) for g in self.data.flat])
+        group_sizes = flat_size.reshape(self.axes.shape)
+
+        # intersection of groups = product of lengths
+        # TODO: there are surely much better ways to do this, but this whole code should be rewritten anyway
+        # to create actual groups for each cell
+        # lengths = vlen(self.data)
+        return LArray(group_sizes, self.axes, fastpath=True)
+
+
+class _ProductGrid(_RegularGrid):
+    def __init__(self, groups, axes=None):
+        # should be a list of tuple of "groups" (one tuple per axis)
+        # [('a0,a1', 'a2,a3'), ('b0,b2', 'b1,b3')]
+        self.groups = groups
+
+        # group_axes -> axes
+        # a, b       -> c
+        if axes is None:
+            axes = [Axis(axis_groups, axis_groups[0].axis.name)
+                    for axis_groups in groups]
+        self.axes = AxisCollection(axes)
+
+    def count(self):
+        # intersection of groups = product of lengths
+        # TODO: there are surely much better ways to do this, but this whole code should be rewritten anyway
+        # to create actual groups for each cell
+        lengths = [[len(g) for g in axis_groups]
+                   for axis_groups in self.groups]
+        flat_size = np.array([np.prod(v) for v in product(*lengths)])
+        group_sizes = flat_size.reshape(self.axes.shape)
+        return LArray(group_sizes, self.axes, fastpath=True)
+
+    def __iter__(self):
+        return iter(self.groups)
+
+    def __len__(self):
+        return len(self.groups)
+
+
 def larray_equal(a1, a2):
     import warnings
     msg = "larray_equal() is deprecated. Use LArray.equals() instead."
@@ -7103,9 +7832,11 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None):
          BE  0.0  0.0
          FO  0.0  0.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    # FIXME: the error message is wrong (stackdepth is wrong) because of _check_axes_argument
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.zeros(axes.shape, dtype, order), axes, meta=meta)
+    # FIXME: for meta, fastpath is wrong
+    return LArray(np.zeros(axes.shape, dtype, order), axes, meta=meta, fastpath=True)
 
 
 def zeros_like(array, title=None, dtype=None, order='K', meta=None):
@@ -7139,8 +7870,8 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
      a0   0   0   0
      a1   0   0   0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
-    return LArray(np.zeros_like(array, dtype, order), array.axes, meta=meta)
+    meta = _handle_meta(meta, title)
+    return LArray(np.zeros_like(array, dtype, order), array.axes, meta=meta, fastpath=True)
 
 
 @_check_axes_argument
@@ -7175,9 +7906,9 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
          BE  1.0  1.0
          FO  1.0  1.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.ones(axes.shape, dtype, order), axes, meta=meta)
+    return LArray(np.ones(axes.shape, dtype, order), axes, meta=meta, fastpath=True)
 
 
 def ones_like(array, title=None, dtype=None, order='K', meta=None):
@@ -7211,9 +7942,9 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
      a0   1   1   1
      a1   1   1   1
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = array.axes
-    return LArray(np.ones_like(array, dtype, order), axes, meta=meta)
+    return LArray(np.ones_like(array, dtype, order), axes, meta=meta, fastpath=True)
 
 
 @_check_axes_argument
@@ -7248,9 +7979,9 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
          BE  2.47311483356e-315  2.47498446195e-315
          FO                 0.0  6.07684618082e-31
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.empty(axes.shape, dtype, order), axes, meta=meta)
+    return LArray(np.empty(axes.shape, dtype, order), axes, meta=meta, fastpath=True)
 
 
 def empty_like(array, title=None, dtype=None, order='K', meta=None):
@@ -7285,9 +8016,9 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
      a1  1.06099789568e-313  1.48539705397e-313
      a2  1.90979621226e-313  2.33419537056e-313
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # cannot use empty() because order == 'K' is not understood
-    return LArray(np.empty_like(array.data, dtype, order), array.axes, meta=meta)
+    return LArray(np.empty_like(array.data, dtype, order), array.axes, meta=meta, fastpath=True)
 
 
 # We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
@@ -7332,7 +8063,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
          BE  0  1
          FO  0  1
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     if isinstance(fill_value, Axis):
         raise ValueError("If you want to pass several axes or dimension lengths to full, you must pass them as a "
                          "list (using []) or tuple (using()).")
@@ -7376,7 +8107,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
      a0   5   5   5
      a1   5   5   5
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
     res = empty_like(array, dtype, meta=meta)
@@ -7490,7 +8221,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     year  2016  2017  2018  2019
            1.0   2.0   3.0   3.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
 
     if inc is None:
         inc = 1 if mult is 1 else 0
@@ -7687,7 +8418,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
          BE  0  1
          FO  2  3
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # XXX: try to come up with a syntax where start is before "end".
     # For ndim > 1, I cannot think of anything nice.
     if isinstance(shape_or_axes, int):
@@ -7704,7 +8435,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
     else:
         axes = AxisCollection(shape_or_axes)
     data = np.arange(start, start + axes.size, dtype=dtype).reshape(axes.shape)
-    return LArray(data, axes, meta=meta)
+    return LArray(data, axes, meta=meta, fastpath=True)
 
 
 def kth_diag_indices(shape, k):
@@ -7838,7 +8569,7 @@ def labels_array(axes, title=None, meta=None):
     # nat\\sex     M     F
     #      BE  BE,M  BE,F
     #      FO  FO,M  FO,F
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
     if len(axes) > 1:
         res_axes = axes + Axis(axes.names, 'axis')
@@ -7851,7 +8582,7 @@ def labels_array(axes, title=None, meta=None):
     else:
         res_axes = axes
         res_data = axes[0].labels
-    return LArray(res_data, res_axes, meta=meta)
+    return LArray(res_data, res_axes, meta=meta, fastpath=True)
 
 
 def identity(axis):
@@ -7908,13 +8639,13 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
             1  0.0  0.0  1.0
             2  0.0  0.0  0.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     if columns is None:
         columns = rows.copy() if isinstance(rows, Axis) else rows
     axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
-    return LArray(data, axes, meta=meta)
+    return LArray(data, axes, meta=meta, fastpath=True)
 
 
 # XXX: we could change the syntax to use *args
@@ -8105,7 +8836,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
                M       0.0      0.5
                F       0.0      0.5
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
 
     from larray import Session
 
@@ -8115,6 +8846,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         axis = Axis(axis)
     if elements is None:
         if not isinstance(axis, Axis) and sys.version_info[:2] < (3, 6):
+            # XXX: this should probably be a warning, not an error
             raise TypeError("axis argument should provide label order when using keyword arguments on Python < 3.6")
         elements = kwargs.items()
     elif kwargs:
@@ -8130,6 +8862,8 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         axis = elements.axes[axis]
         values = [elements[k] for k in axis]
     elif isinstance(elements, dict):
+        # TODO: support having not Axis for Python3.7 (without error or warning)
+        # XXX: we probably want to support this with a warning on Python < 3.7
         assert isinstance(axis, Axis)
         values = [elements[v] for v in axis.labels]
     elif isinstance(elements, Iterable):

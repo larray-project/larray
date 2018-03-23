@@ -67,7 +67,7 @@ def broadcastify(func):
         # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
         res_data = func(*raw_args, **kwargs)
         if combined_axes:
-            return LArray(res_data, combined_axes)
+            return LArray(res_data, combined_axes, fastpath=True)
         else:
             return res_data
     # copy meaningful attributes (numpy ufuncs do not have __annotations__ nor __qualname__)

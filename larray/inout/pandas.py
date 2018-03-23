@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from larray.core.array import LArray
-from larray.core.axis import Axis
+from larray.core.axis import Axis, AxisCollection
 from larray.core.group import LGroup
 from larray.core.constants import nan
 from larray.util.misc import basestring, decode, unique
@@ -176,9 +176,9 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     axes_names = [str(name) if name is not None else name
                   for name in axes_names]
 
-    axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
+    axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.values.reshape([len(axis) for axis in axes])
-    return LArray(data, axes)
+    return LArray(data, axes, fastpath=True)
 
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, **kwargs):

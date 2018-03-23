@@ -96,10 +96,12 @@ class Session(object):
             if isinstance(a0, str):
                 # assume a0 is a filename
                 self.load(a0)
+            elif hasattr(a0, 'items'):
+                for k, v in a0.items():
+                    self[k] = v
             else:
-                items = a0.items() if isinstance(a0, dict) else a0
                 # assume we have an iterable of tuples
-                for k, v in items:
+                for k, v in a0:
                     self[k] = v
         else:
             self.add(*args, **kwargs)

@@ -92,7 +92,6 @@ if PY2:
 
 else:
     class AttributeDict(OrderedDict):
-
         def __getattr__(self, key):
             try:
                 return self[key]
@@ -127,7 +126,7 @@ class Metadata(AttributeDict):
     >>> # Python 2 or <= 3.5
     >>> arr = ndtest((3, 3), meta=[('title', 'the title'), ('author', 'John Smith')])
     >>> # Python 3.6+
-    >>> arr = ndtest((3, 3), meta=Metadata(title = 'the title', author = 'John Smith'))  # doctest: +SKIP
+    >>> arr = ndtest((3, 3), meta=Metadata(title='the title', author='John Smith'))  # doctest: +SKIP
 
     Add metadata after array initialization
 
@@ -146,7 +145,6 @@ class Metadata(AttributeDict):
 
     >>> del arr.meta.creation_date
     """
-
     # TODO: use LArray.from_dict once ready (issue 581)
     def __larray__(self):
         from larray.core.array import LArray

@@ -78,6 +78,8 @@ class Axis(ABCAxis):
     >>> anonymous
     Axis([0, 1, 2, 3, 4], None)
     """
+    __slots__ = ('name', '__mapping', '__sorted_keys', '__sorted_values', '_labels', '_length', '_iswildcard')
+
     # ticks instead of labels?
     def __init__(self, labels, name=None):
         if isinstance(labels, Group) and name is None:
@@ -96,7 +98,10 @@ class Axis(ABCAxis):
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
         is_python_str = type(name) is unicode or type(name) is bytes
-        assert name is None or isinstance(name, int) or is_python_str, type(name)
+        if isinstance(name, str) and not is_python_str:
+            name = str(name)
+        if name is not None and not isinstance(name, (int, str)):
+            raise TypeError("Axis name should be None, int or str but is: %s (%s)" % (name, type(name).__name__))
         self.name = name
         self._labels = None
         self.__mapping = None
@@ -104,6 +109,7 @@ class Axis(ABCAxis):
         self.__sorted_values = None
         self._length = None
         self._iswildcard = False
+        # set _labels, _length and _iswildcard via the property
         self.labels = labels
 
     @property
@@ -224,6 +230,155 @@ class Axis(ABCAxis):
         (age.i[0:5], age.i[3:8], age.i[6:10], age.i[9:10])
         """
         return self[:].by(length, step)
+
+    def group_unique(self, sort=False):
+        """
+        Group axis by unique label.
+
+        Parameters
+        ----------
+        sort : bool, optional
+            Whether or not to sort the groups (or have them in order of the first occurence of each unique label).
+            It is faster to sort than not to sort. Defaults to False.
+
+        Returns
+        -------
+        tuple of Group
+            Return one group per unique label in axis, each group containing all indices with that label.
+
+        Examples
+        --------
+        >>> a = Axis("a=a0,a2,a1,a0,a1,a3")
+        >>> a.group_unique()
+        a           a0      a2           a1      a3
+           ['a0' 'a0']  ['a2']  ['a1' 'a1']  ['a3']
+        >>> a.group_unique(sort=True)
+        a           a0           a1      a2      a3
+           ['a0' 'a0']  ['a1' 'a1']  ['a2']  ['a3']
+        """
+        return self.groupby(self.labels, sort=sort, name=self.name)
+
+    # XXX: maybe this should not be part of the public API, or have a less obvious name because this will confuse users
+    def groupby(self, column, sort=False, name=None, loop_axes=None):
+        r"""
+        Make axis groups for each unique values of column.
+
+        Parameters
+        ----------
+        columns : list of LArray #array-like
+            Must have the same (first dimension) length than this axis.
+        sort : bool, optional
+            Whether or not to sort the groups (or have them in order of the first occurence of each unique label).
+            It is faster to sort than not to sort. Defaults to False.
+        loop_axes : axes
+            yada
+
+        Returns
+        -------
+        tuple of Group
+            Return one group per unique value in column, each group containing all indices with that value.
+
+        Examples
+        --------
+        >>> from larray import LArray
+        >>> a = Axis("a=a0,a2,a1,a0,a1,a3")
+        >>> data = LArray([0, 2, 1, 0, 1, 3], a)
+        >>> a.groupby(data)
+        {0}                            0                    2                            1                    3
+             (a.i[a  a0  a0     0   3],)  (a.i[a  a2     1],)  (a.i[a  a1  a1     2   4],)  (a.i[a  a3     5],)
+        >>> a.groupby(data, sort=True)
+        {0}             0             1          2          3
+             (a.i[0, 3],)  (a.i[2, 4],)  (a.i[1],)  (a.i[5],)
+        >>> data = LArray([0, 0, 0, 1, 1, 1], a)
+        >>> a.groupby(data, name='a')
+        a                0                1
+           (a.i[0, 1, 2],)  (a.i[3, 4, 5],)
+        >>> data = LArray([[0, 1],
+        ...                [2, 1],
+        ...                [1, 1],
+        ...                [0, 1],
+        ...                [1, 2],
+        ...                [3, 2]], [a, 'b=0,1'])
+        >>> # FIXME: name of axes should be a, b not {0}, {1}
+        >>> a.groupby(data)
+        {0}\{1}             1          2
+              0  (a.i[0, 3],)        nan
+              2     (a.i[1],)        nan
+              1     (a.i[2],)  (a.i[4],)
+              3           nan  (a.i[5],)
+        >>> a.groupby(data, loop_axes='b')
+        {0}\b                    0                          1
+            0  (a.i[0, 3], b.i[0])            (a.i[], b.i[1])
+            1  (a.i[2, 4], b.i[0])  (a.i[0, 1, 2, 3], b.i[1])
+            2     (a.i[1], b.i[0])        (a.i[4, 5], b.i[1])
+            3     (a.i[5], b.i[0])            (a.i[], b.i[1])
+        """
+        from larray.core.array import _RegularGrid, empty, aslarray
+        from larray import view
+
+        column = aslarray(column)
+        if self not in column.axes:
+            raise ValueError('passed array must have an {} axis'.format(self.name))
+        if loop_axes is not None:
+            loop_axes = column.axes[loop_axes]
+        if not isinstance(loop_axes, AxisCollection):
+            loop_axes = AxisCollection(loop_axes)
+        # XXX: move this code in the caller (kill the fields/column axis)?
+        # XXX: unsure this is still necessary
+        if column.ndim > 1 and column.shape[-1] == 1:
+            column = column[column.axes[-1].i[0]]
+            assert len(name) == 1
+            name = name[0]
+        combination_axes = column.axes - self
+        if loop_axes is not None:
+            combination_axes -= loop_axes
+
+        unique_axis = self
+        if loop_axes is not None:
+            unique_axis += loop_axes
+
+        # TODO: bump numpy requirements (np.1.13 because of np.unique(axis=)
+        unique_values = column.unique(unique_axis, sort=sort)
+        noncomb = unique_values.axes - combination_axes
+
+        # TODO: it should be possible to avoid going via a 1d axis: create an array filled with nan (or even better:
+        # an empty group) and complete it as we go.
+        if combination_axes:
+            name = '_'.join(n for n in name) if name is not None else None
+            axis1d = Axis(['_'.join(str(value) for value in combination)
+                           for combination in unique_values.values(noncomb)],
+                          name=name)
+        else:
+            axis1d = Axis(unique_values, name=name)
+
+        if loop_axes:
+            result_axes = axis1d + loop_axes
+        else:
+            result_axes = axis1d
+        res = empty(result_axes, dtype=object)
+
+        def all_(array, axes):
+            """all() with support for AxisCollections, including empty ones"""
+            if len(axes):
+                return array.all(*axes)
+            else:
+                return array
+
+        for unique_idx, unique_comb in zip(axis1d, unique_values.values(noncomb)):
+            alleq = all_(column == unique_comb, combination_axes)
+            if loop_axes:
+                for loop_idx, value in alleq.items(loop_axes):
+                    # FIXME: this syntax is not compatible with Python2.7
+                    res[(unique_idx, *loop_idx)] = (*value.nonzero(), *loop_idx)
+                    # using NDGroups could help
+                    # res[unique_idx & loop_idx] = value.nonzero() & loop_idx
+            else:
+                res[unique_idx] = alleq.nonzero()
+        if combination_axes:
+            ndgroups = res.split_axes(axis1d)
+        else:
+            ndgroups = res
+        return _RegularGrid(ndgroups)
 
     def extend(self, labels):
         """
@@ -680,7 +835,8 @@ class Axis(ABCAxis):
         return self._length
 
     def __iter__(self):
-        return iter([self.i[i] for i in range(self._length)])
+        # return iter([self.i[i] for i in range(self._length)])
+        return iter([IGroup(i, None, self) for i in range(self._length)])
 
     def __getitem__(self, key):
         """
@@ -1297,6 +1453,7 @@ def _make_axis(obj):
 # not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
 # functionality than just a named tuple
 class AxisCollection(object):
+    __slots__ = ('_list', '_map')
     """
     Represents a collection of axes.
 
@@ -1381,6 +1538,30 @@ class AxisCollection(object):
     def __iter__(self):
         return iter(self._list)
 
+    def iter_labels(self):
+        r"""
+        >>> from larray import ndtest
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> for index in arr.axes.iter_labels():
+        ...     print(index, arr[index])
+        (a.i[0], b.i[0]) 0
+        (a.i[0], b.i[1]) 1
+        (a.i[0], b.i[2]) 2
+        (a.i[1], b.i[0]) 3
+        (a.i[1], b.i[1]) 4
+        (a.i[1], b.i[2]) 5
+
+        Returns
+        -------
+
+        """
+        for index in product(*self):
+            yield index
+
     def __getattr__(self, key):
         try:
             return self._map[key]
@@ -1390,10 +1571,11 @@ class AxisCollection(object):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before _map exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        # XXX: self._map is probably unnecessary
+        return self._list, self._map
 
     def __setstate__(self, d):
-        self.__dict__ = d
+        self._list, self._map = d
 
     def __getitem__(self, key):
         if isinstance(key, Axis):
@@ -2819,9 +3001,9 @@ class AxisCollection(object):
                     # Q: if axis is a wildcard axis, should the result be a wildcard axis (and axes_labels discarded?)
                     combined_labels = _axes[0].labels
                 else:
-                    combined_labels = [sep.join(str(l) for l in p)
-                                       for p in product(*_axes.labels)]
-
+                    sepjoin = sep.join
+                    axes_labels = [np.array(l, np.str, copy=False) for l in _axes.labels]
+                    combined_labels = [sepjoin(p) for p in product(*axes_labels)]
                 combined_axis = Axis(combined_labels, combined_name)
             new_axes = new_axes - _axes
             new_axes.insert(combined_axis_pos, combined_axis)

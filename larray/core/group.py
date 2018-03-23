@@ -714,6 +714,8 @@ class IGroupMaker(object):
 class Group(object):
     """Abstract Group.
     """
+    __slots__ = ('key', 'name', 'axis')
+
     format_string = None
 
     def __init__(self, key, name=None, axis=None):
@@ -722,6 +724,16 @@ class Group(object):
         if isinstance(key, Group):
             key = key.to_label()
         self.key = remove_nested_groups(key)
+        #     keys = key
+        # else:
+        #     keys = (key,)
+        # # if isinstance(key, tuple):
+        # #     key = list(key)
+        # # if isinstance(key, Group):
+        # #     key = key.to_label()
+        # keys = tuple(key.to_label() if isinstance(key, Group) else key
+        #              for key in keys)
+        # self.keys = tuple(remove_nested_groups(key) for key in keys)
 
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
@@ -738,6 +750,23 @@ class Group(object):
         # the object was to make sure that a Group from an axis (or without axis) could be used on another axis with
         # the same name. See test_array.py:test_...
         self.axis = axis
+    #     if isinstance(axis, tuple):
+    #         axes = axis
+    #     else:
+    #         axes = (axis,)
+    #     self.axes = axes
+    #     if axis is not None:
+    #         assert len(axes) == len(keys)
+    #
+    # @property
+    # def key(self):
+    #     assert len(self.keys) == 1
+    #     return self.keys[0]
+    #
+    # @property
+    # def axis(self):
+    #     assert len(self.axes) == 1
+    #     return self.axes[0]
 
     def __repr__(self):
         key = self.key
@@ -859,7 +888,9 @@ class Group(object):
     def __iter__(self):
         # XXX: use translate/IGroup instead, so that it works even in the presence of duplicate labels
         #      possibly, only if axis is set?
-        return iter([LGroup(v, axis=self.axis) for v in self.eval()])
+        # return iter([LGroup(v, axis=self.axis) for v in self.eval()])
+        axis = self.axis
+        return iter([LGroup(v, axis=axis) for v in self.eval()])
 
     def named(self, name):
         """Returns group with a different name.
@@ -1435,7 +1466,8 @@ class Group(object):
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
         # dir() takes care of sorting but not uniqueness, so we must ensure that.
-        return list(set(dir(self.eval())) | set(self.__dict__.keys()) | set(dir(self.__class__)))
+        attributes = self.__slots__
+        return list(set(dir(self.eval())) | set(attributes) | set(dir(self.__class__)))
 
     def __getattr__(self, key):
         if key == '__array_struct__':
@@ -1446,10 +1478,10 @@ class Group(object):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before .key exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return (self.key, self.name, self.axis)
 
     def __setstate__(self, d):
-        self.__dict__ = d
+        self.key, self.name, self.axis = d
 
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this standardize on a single notation so that they can
@@ -1507,6 +1539,7 @@ class LGroup(Group):
     >>> teens
     X.age[10:19] >> 'teens'
     """
+    __slots__ = ()
     format_string = "{axis}[{key}]"
 
     def __init__(self, key, name=None, axis=None):
@@ -1566,6 +1599,7 @@ class LSet(LGroup):
     >>> abc & letters['b:d']
     letters['b', 'c'].set()
     """
+    __slots__ = ()
     format_string = "{axis}[{key}].set()"
 
     def __init__(self, key, name=None, axis=None):
@@ -1628,6 +1662,7 @@ class IGroup(Group):
     axis : int, str, Axis, optional
         Axis for group.
     """
+    __slots__ = ()
     format_string = "{axis}.i[{key}]"
 
     def translate(self, bound=None, stop=False):
