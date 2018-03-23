@@ -723,7 +723,7 @@ class Group(object):
 
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
-        self.name = str(_to_tick(name)) if name is not None else name
+        self.name = _to_tick(name) if name is not None else name
         assert axis is None or isinstance(axis, (basestring, int, ABCAxis)), \
             "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
 
