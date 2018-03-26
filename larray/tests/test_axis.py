@@ -1,9 +1,10 @@
 from __future__ import absolute_import, division, print_function
 import pytest
+import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LGroup, IGroup
+from larray import Axis, LGroup, IGroup, read_hdf
 
 
 def test_init():
@@ -359,6 +360,80 @@ def test_contains():
     assert ['2', '7'] not in agg
     assert age['2,7'] not in agg
     assert age[['2', '7']] not in agg
+
+def test_h5_io(tmpdir):
+    age = Axis('age=0..10')
+    lipro = Axis('lipro=P01..P05')
+    anonymous = Axis(range(3))
+    wildcard = Axis(3, 'wildcard')
+    fpath = os.path.join(str(tmpdir), 'axes.h5')
+
+    # ---- default behavior ----
+    # int axis
+    age.to_hdf(fpath)
+    age2 = read_hdf(fpath, key=age.name)
+    assert age.equals(age2)
+    # string axis
+    lipro.to_hdf(fpath)
+    lipro2 = read_hdf(fpath, key=lipro.name)
+    assert lipro.equals(lipro2)
+    # anonymous axis
+    with pytest.raises(ValueError, message="Argument key must be provided explicitly in case of anonymous axis"):
+        anonymous.to_hdf(fpath)
+    # wildcard axis
+    wildcard.to_hdf(fpath)
+    wildcard2 = read_hdf(fpath, key=wildcard.name)
+    assert wildcard2.iswildcard
+    assert wildcard.equals(wildcard2)
+
+    # ---- specific key ----
+    # int axis
+    key = 'axis_age'
+    age.to_hdf(fpath, key)
+    age2 = read_hdf(fpath, key=key)
+    assert age.equals(age2)
+    # string axis
+    key = 'axis_lipro'
+    lipro.to_hdf(fpath, key)
+    lipro2 = read_hdf(fpath, key=key)
+    assert lipro.equals(lipro2)
+    # anonymous axis
+    key = 'axis_anonymous'
+    anonymous.to_hdf(fpath, key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert_array_equal(anonymous.labels, anonymous2.labels)
+    # wildcard axis
+    key = 'axis_wildcard'
+    wildcard.to_hdf(fpath, key)
+    wildcard2 = read_hdf(fpath, key=key)
+    assert wildcard2.iswildcard
+    assert wildcard.equals(wildcard2)
+
+    # ---- specific hdf group + key ----
+    hdf_group = 'my_axes'
+    # int axis
+    key = hdf_group + '/axis_age'
+    age.to_hdf(fpath, key)
+    age2 = read_hdf(fpath, key=key)
+    assert age.equals(age2)
+    # string axis
+    key = hdf_group + '/axis_lipro'
+    lipro.to_hdf(fpath, key)
+    lipro2 = read_hdf(fpath, key=key)
+    assert lipro.equals(lipro2)
+    # anonymous axis
+    key = hdf_group + '/axis_anonymous'
+    anonymous.to_hdf(fpath, key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert_array_equal(anonymous.labels, anonymous2.labels)
+    # wildcard axis
+    key = hdf_group + '/axis_wildcard'
+    wildcard.to_hdf(fpath, key)
+    wildcard2 = read_hdf(fpath, key=key)
+    assert wildcard2.iswildcard
+    assert wildcard.equals(wildcard2)
 
 
 if __name__ == "__main__":

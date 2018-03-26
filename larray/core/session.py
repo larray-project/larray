@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 import numpy as np
 
+from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
@@ -17,30 +18,36 @@ from larray.inout.session import check_pattern, handler_classes, ext_default_eng
 # XXX: inherit from OrderedDict or LArray?
 class Session(object):
     """
-    Groups several array objects together.
+    Groups several objects together.
 
     Parameters
     ----------
-    args : str or dict of str, array or iterable of tuples (str, array)
-        Name of file to load or dictionary containing couples (name, array).
-    kwargs : dict of str, array
-        List of arrays to add written as 'name'=array, ...
+    *args : str or dict of {str: object} or iterable of tuples (str, object)
+        Path to the file containing the session to load or
+        list/tuple/dictionary containing couples (name, object).
+    **kwargs : dict of {str: object}
+        Objects to add written as name=object, ...
 
     Examples
     --------
-    >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
+    >>> # axes
+    >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")
+    >>> # groups
+    >>> a01 = a['a0,a1'] >> 'a01'
+    >>> # arrays
+    >>> arr1, arr2 = ndtest((a, b)), ndtest(a)
 
-    create a Session by passing a list of pairs (name, array)
+    create a Session by passing a list of pairs (name, object)
 
-    >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+    >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])
 
     create a Session using keyword arguments (but you lose order on Python < 3.6)
 
-    >>> s = Session(arr1=arr1, arr2=arr2, arr3=arr3)
+    >>> s = Session(a=a, b=b, a01=a01, arr1=arr1, arr2=arr2)
 
     create a Session by passing a dictionary (but you lose order on Python < 3.6)
 
-    >>> s = Session({'arr1': arr1, 'arr2': arr2, 'arr3': arr3})
+    >>> s = Session({'a': a, 'b': b, 'a01': a01, 'arr1': arr1, 'arr2': arr2})
 
     load Session from file
 
@@ -72,10 +79,10 @@ class Session(object):
 
         Parameters
         ----------
-        args : array
-            List of objects to add. Objects must have an attribute 'name'.
-        kwargs : dict of str, array
-            List of objects to add written as 'name'=array, ...
+        *args : list of object
+            Objects to add. Objects must have an attribute 'name'.
+        **kwargs : dict of {str: object}
+            Objects to add written as 'name'=array, ...
 
         Examples
         --------
@@ -113,30 +120,36 @@ class Session(object):
 
     def get(self, key, default=None):
         """
-        Returns the array object corresponding to the key.
-        If the key doesn't correspond to any array object, a default one can be returned.
+        Returns the object corresponding to the key.
+        If the key doesn't correspond to any object, a default one can be returned.
 
         Parameters
         ----------
         key : str
-            Name of the array.
-        default : array, optional
-            Returned array if the key doesn't correspond to any array of the current session.
+            Name of the object.
+        default : object, optional
+            Returned object if the key doesn't correspond to any object of the current session.
 
         Returns
         -------
-        LArray
-            Array corresponding to the given key or a default one if not found.
+        object
+            Object corresponding to the given key or a default one if not found.
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])
         >>> arr = s.get('arr1')
         >>> arr
-        a\\b  b0  b1
-         a0   0   1
-         a1   2   3
+        a\\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+         a2   6   7   8
         >>> arr = s.get('arr4', zeros('a=a0,a1;b=b0,b1', dtype=int))
         >>> arr
         a\\b  b0  b1
@@ -180,7 +193,7 @@ class Session(object):
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
-        Loads array objects from a file, or several .csv files.
+        Loads LArray, Axis and Group objects from a file, or several .csv files.
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
         to arbitrary code execution.
@@ -191,7 +204,8 @@ class Session(object):
             This can be either the path to a single file, a path to a directory containing .csv files or a pattern
             representing several .csv files.
         names : list of str, optional
-            List of arrays to load. If `fname` is None, list of paths to CSV files.
+            List of objects to load.
+            If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Load using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
@@ -200,19 +214,24 @@ class Session(object):
 
         Examples
         --------
-        In one module
+        In one module:
 
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
-        >>> s.save('input.h5')                                             # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> s.save('input.h5')                                                               # doctest: +SKIP
 
-        In another module
+        In another module: load only some objects
 
-        >>> s = Session()                                 # doctest: +SKIP
-        >>> s.load('input.h5', ['arr1', 'arr2', 'arr3'])  # doctest: +SKIP
-        >>> arr1, arr2, arr3 = s['arr1', 'arr2', 'arr3']  # doctest: +SKIP
+        >>> s = Session()                                   # doctest: +SKIP
+        >>> s.load('input.h5', ['a', 'b', 'arr1', 'arr2'])  # doctest: +SKIP
+        >>> a, b, arr1, arr2 = s['a', 'b', 'arr1', 'arr2']  # doctest: +SKIP
         >>> # only if you know the order of arrays stored in session
-        >>> arr1, arr2, arr3 = s.values()                 # doctest: +SKIP
+        >>> a, b, a01, arr1, arr2 = s.values()              # doctest: +SKIP
 
         Using .csv files (assuming the same session as above)
 
@@ -220,7 +239,7 @@ class Session(object):
         >>> s = Session()                                 # doctest: +SKIP
         >>> # load all .csv files starting with "output" in the data directory
         >>> s.load('data')                                # doctest: +SKIP
-        >>> # or equivalently in this case
+        >>> # or only arrays (i.e. all CSV files starting with 'arr')
         >>> s.load('data/arr*.csv')                       # doctest: +SKIP
         """
         if display:
@@ -236,20 +255,22 @@ class Session(object):
             engine = ext_default_engine[ext]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname)
-        arrays = handler.read_arrays(names, display=display, **kwargs)
-        for k, v in arrays.items():
+        objects = handler.read_items(names, display=display, **kwargs)
+        for k, v in objects.items():
             self[k] = v
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         """
-        Dumps all array objects from the current session to a file.
+        Dumps LArray, Axis and Group objects from the current session to a file.
 
         Parameters
         ----------
         fname : str
-            Path for the dump.
+            Path of the file for the dump.
+            If objects are saved in CSV files, the path corresponds to a directory.
         names : list of str or None, optional
-            List of names of objects to dump. If `fname` is None, list of paths to CSV files.
+            List of names of LArray/Axis/Group objects to dump.
+            If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
@@ -261,16 +282,21 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
 
-        Save all arrays
+        Save all objects
 
-        >>> s.save('output.h5')  # doctest: +SKIP
+        >>> s.save('output.h5')                             # doctest: +SKIP
 
-        Save only some arrays
+        Save only some objects
 
-        >>> s.save('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
+        >>> s.save('output.h5', ['a', 'b', 'arr1'])         # doctest: +SKIP
 
         Update file
 
@@ -285,11 +311,14 @@ class Session(object):
             engine = ext_default_engine[ext]
         handler_cls = handler_classes[engine]
         handler = handler_cls(fname, overwrite)
-        items = self.filter(kind=LArray).items()
+        if engine != 'pandas_hdf':
+            items = self.filter(kind=LArray).items()
+        else:
+            items = self.items()
         if names is not None:
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
-        handler.dump_arrays(items, display=display, **kwargs)
+        handler.dump_items(items, display=display, **kwargs)
 
     def to_globals(self, names=None, depth=0, warn=True, inplace=False):
         """
@@ -394,14 +423,15 @@ class Session(object):
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
-        Dumps all array objects from the current session to an HDF file.
+        Dumps LArray, Axis and Group objects from the current session to an HDF file.
 
         Parameters
         ----------
         fname : str
-            Path for the dump.
+            Path of the file for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects present in the Session.
+            Names of LArray/Axis/Group objects to dump.
+            Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
@@ -410,16 +440,21 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
 
         Save all arrays
 
         >>> s.to_hdf('output.h5')  # doctest: +SKIP
 
-        Save only some arrays
+        Save only some objects
 
-        >>> s.to_hdf('output.h5', ['arr1', 'arr3'])  # doctest: +SKIP
+        >>> s.to_hdf('output.h5', ['a', 'b', 'arr1'])  # doctest: +SKIP
         """
         self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
@@ -489,14 +524,14 @@ class Session(object):
 
     def filter(self, pattern=None, kind=None):
         """
-        Returns a new session with array objects which match some criteria.
+        Returns a new session with objects which match some criteria.
 
         Parameters
         ----------
         pattern : str, optional
             Only keep arrays whose key match `pattern`.
-        kind : type, optional
-            Only keep arrays which are instances of type `kind`.
+        kind : (tuple of) type, optional
+            Only keep objects which are instances of type(s) `kind`.
 
         Returns
         -------
@@ -506,18 +541,21 @@ class Session(object):
         Examples
         --------
         >>> axis = Axis('a=a0..a2')
-        >>> test1, test2, zero1 = ndtest((2, 2)), ndtest(4), zeros((3, 2))
-        >>> s = Session([('test1', test1), ('test2', test2), ('zero1', zero1), ('axis', axis)])
+        >>> group = axis['a0,a1'] >> 'a01'
+        >>> test1, zero1 = ndtest((2, 2)), zeros((3, 2))
+        >>> s = Session([('test1', test1), ('zero1', zero1), ('axis', axis), ('group', group)])
 
         Filter using a pattern argument
 
         >>> s.filter(pattern='test').names
-        ['test1', 'test2']
+        ['test1']
 
         Filter using kind argument
 
         >>> s.filter(kind=Axis).names
         ['axis']
+        >>> s.filter(kind=(Axis, Group)).names
+        ['axis', 'group']
         """
         items = self._objects.items()
         if pattern is not None:
@@ -529,7 +567,7 @@ class Session(object):
     @property
     def names(self):
         """
-        Returns the list of names of the array objects in the session.
+        Returns the list of names of the objects in the session.
         The list is sorted alphabetically and does not follow the internal order.
 
         Returns
@@ -542,15 +580,17 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
+        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
         >>> # print array's names in the alphabetical order
         >>> s.names
-        ['arr1', 'arr2', 'arr3']
+        ['arr1', 'arr2', 'axis1', 'group1']
 
         >>> # keys() follows the internal order
         >>> list(s.keys())
-        ['arr2', 'arr1', 'arr3']
+        ['arr2', 'arr1', 'group1', 'axis1']
         """
         return sorted(self._objects.keys())
 
@@ -574,15 +614,17 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
+        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
         >>> # similar to names by follows the internal order
         >>> list(s.keys())
-        ['arr2', 'arr1', 'arr3']
+        ['arr2', 'arr1', 'group1', 'axis1']
 
-        >>> # gives the names of arrays in alphabetical order
+        >>> # gives the names of objects in alphabetical order
         >>> s.names
-        ['arr1', 'arr2', 'arr3']
+        ['arr1', 'arr2', 'axis1', 'group1']
         """
         return self._objects.keys()
 
@@ -596,16 +638,20 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
-        >>> # assuming you know the order of arrays stored in the session
-        >>> arr2, arr1, arr3 = s.values()
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
+        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
+        >>> # assuming you know the order of objects stored in the session
+        >>> arr2, arr1, group1, axis1 = s.values()
         >>> # otherwise, prefer the following syntax
-        >>> arr1, arr2, arr3 = s['arr1', 'arr2', 'arr3']
+        >>> arr1, arr2, axis1, group1 = s['arr1', 'arr2', 'axis1', 'group1']
         >>> arr1
         a\\b  b0  b1
          a0   0   1
          a1   2   3
+        >>> axis1
+        Axis(['a0', 'a1', 'a2'], 'a')
         """
         return self._objects.values()
 
@@ -619,12 +665,14 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
         >>> # make the test pass on both Windows and Linux
-        >>> arr1, arr2, arr3 = arr1.astype(np.int64), arr2.astype(np.int64), arr3.astype(np.int64)
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('arr3', arr3)])
+        >>> arr1, arr2 = arr1.astype(np.int64), arr2.astype(np.int64)
+        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
         >>> for k, v in s.items():
-        ...     print("{}: {}".format(k, v.info))
+        ...     print("{}: {}".format(k, v.info if isinstance(v, LArray) else repr(v)))
         arr2: 4
          a [4]: 'a0' 'a1' 'a2' 'a3'
         dtype: int64
@@ -634,11 +682,8 @@ class Session(object):
          b [2]: 'b0' 'b1'
         dtype: int64
         memory used: 32 bytes
-        arr3: 3 x 2
-         a [3]: 'a0' 'a1' 'a2'
-         b [2]: 'b0' 'b1'
-        dtype: int64
-        memory used: 48 bytes
+        group1: a['a0', 'a1'] >> 'a01'
+        axis1: Axis(['a0', 'a1', 'a2'], 'a')
         """
         return self._objects.items()
 
@@ -971,7 +1016,7 @@ class Session(object):
 
     def summary(self, template=None):
         """
-        Returns a summary of the content of the session.
+        Returns a summary of the content of the session (arrays only).
 
         Parameters
         ----------
@@ -982,7 +1027,7 @@ class Session(object):
         Returns
         -------
         str
-            Short representation of the content of the session.
+            Short representation of the content of the session (arrays only).
 .
         Examples
         --------
@@ -1006,7 +1051,8 @@ class Session(object):
             template = "{name}: {axes_names}\n    {title}\n"
         templ_kwargs = [{'name': k,
                          'axes_names': ', '.join(v.axes.display_names),
-                         'title': v.title} for k, v in self.items()]
+                         'title': v.title}
+                        for k, v in self.items() if isinstance(v, LArray)]
         return '\n'.join(template.format(**kwargs) for kwargs in templ_kwargs)
 
 

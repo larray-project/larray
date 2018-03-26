@@ -17,7 +17,7 @@ from larray.tests.common import inputpath, assert_array_equal, assert_array_nan_
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
-from larray.inout.array import from_series
+from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO
 

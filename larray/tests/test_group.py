@@ -1,14 +1,16 @@
 from __future__ import absolute_import, division, print_function
 import pytest
+import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LGroup, LSet, ndtest
+from larray import Axis, LGroup, LSet, ndtest, read_hdf
 
 
 age = Axis('age=0..10')
 lipro = Axis('lipro=P01..P05')
 anonymous = Axis(range(3))
+age_wildcard = Axis(10, 'wildcard')
 
 
 # ################## #
@@ -123,7 +125,7 @@ def test_repr_lgroup(lgroups):
     assert repr(lgroups.list) == "LGroup(['P01', 'P03', 'P04'])"
     assert repr(lgroups.slice_none_no_axis) == "LGroup(slice(None, None, None))"
     assert repr(lgroups.slice_none_wh_named_axis) == "lipro[:]"
-    assert repr(lgroups.slice_none_wh_anonymous_axis) ==    "LGroup(slice(None, None, None), axis=Axis([0, 1, 2], None))"
+    assert repr(lgroups.slice_none_wh_anonymous_axis) == "LGroup(slice(None, None, None), axis=Axis([0, 1, 2], None))"
 
 def test_to_int_lgroup():
     a = Axis(['42'], 'a')
@@ -132,6 +134,78 @@ def test_to_int_lgroup():
 def test_to_float_lgroup():
     a = Axis(['42'], 'a')
     assert float(a['42']) == 42.0
+
+def test_h5_io_lgroup(tmpdir):
+    fpath = os.path.join(str(tmpdir), 'lgroups.h5')
+    age.to_hdf(fpath)
+
+    named = age[':5'] >> 'age_05'
+    named_axis_not_in_file = lipro['P01,P03,P05'] >> 'P_odd'
+    anonymous = age[':5']
+    wildcard = age_wildcard[':5'] >> 'age_w_05'
+
+    # ---- default behavior ----
+    # named group
+    named.to_hdf(fpath)
+    named2 = read_hdf(fpath, key=named.name)
+    assert all(named == named2)
+    # anonymous group
+    with pytest.raises(ValueError, message="Argument key must be provided explicitly in case of anonymous axis"):
+        anonymous.to_hdf(fpath)
+    # wildcard group
+    wildcard.to_hdf(fpath)
+    wildcard2 = read_hdf(fpath, key=wildcard.name)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    named_axis_not_in_file.to_hdf(fpath)
+    named2 = read_hdf(fpath, key=named_axis_not_in_file.name)
+    assert all(named_axis_not_in_file == named2)
+
+    # ---- specific hdf group + key ----
+    hdf_group = 'my_groups'
+    # named group
+    key = hdf_group + '/named_group'
+    named.to_hdf(fpath, key)
+    named2 = read_hdf(fpath, key=key)
+    assert all(named == named2)
+    # anonymous group
+    key = hdf_group + '/anonymous_group'
+    anonymous.to_hdf(fpath, key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert all(anonymous == anonymous2)
+    # wildcard group
+    key = hdf_group + '/wildcard_group'
+    wildcard.to_hdf(fpath, key)
+    wildcard2 = read_hdf(fpath, key=key)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    key = hdf_group + '/named_group_axis_not_in_file'
+    named_axis_not_in_file.to_hdf(fpath, key=key)
+    named2 = read_hdf(fpath, key=key)
+    assert all(named_axis_not_in_file == named2)
+
+    # ---- specific axis_key ----
+    axis_key = 'axes/associated_axis_0'
+    # named group
+    named.to_hdf(fpath, axis_key=axis_key)
+    named2 = read_hdf(fpath, key=named.name)
+    assert all(named == named2)
+    # anonymous group
+    key = 'anonymous'
+    anonymous.to_hdf(fpath, key=key, axis_key=axis_key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert all(anonymous == anonymous2)
+    # wildcard group
+    wildcard.to_hdf(fpath, axis_key=axis_key)
+    wildcard2 = read_hdf(fpath, key=wildcard.name)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    axis_key = 'axes/associated_axis_1'
+    named_axis_not_in_file.to_hdf(fpath, axis_key=axis_key)
+    named2 = read_hdf(fpath, key=named_axis_not_in_file.name)
+    assert all(named_axis_not_in_file == named2)
 
 
 # ################## #
@@ -267,6 +341,77 @@ def test_to_float_igroup():
     a = Axis(['42'], 'a')
     assert float(a.i[0]) == 42.0
 
+def test_h5_io_igroup(tmpdir):
+    fpath = os.path.join(str(tmpdir), 'igroups.h5')
+    age.to_hdf(fpath)
+
+    named = age.i[:6] >> 'age_05'
+    named_axis_not_in_file = lipro.i[1::2] >> 'P_odd'
+    anonymous = age.i[:6]
+    wildcard = age_wildcard.i[:6] >> 'age_w_05'
+
+    # ---- default behavior ----
+    # named group
+    named.to_hdf(fpath)
+    named2 = read_hdf(fpath, key=named.name)
+    assert all(named == named2)
+    # anonymous group
+    with pytest.raises(ValueError, message="Argument key must be provided explicitly in case of anonymous axis"):
+        anonymous.to_hdf(fpath)
+    # wildcard group
+    wildcard.to_hdf(fpath)
+    wildcard2 = read_hdf(fpath, key=wildcard.name)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    named_axis_not_in_file.to_hdf(fpath)
+    named2 = read_hdf(fpath, key=named_axis_not_in_file.name)
+    assert all(named_axis_not_in_file == named2)
+
+    # ---- specific hdf group + key ----
+    hdf_group = 'my_groups'
+    # named group
+    key = hdf_group + '/named_group'
+    named.to_hdf(fpath, key)
+    named2 = read_hdf(fpath, key=key)
+    assert all(named == named2)
+    # anonymous group
+    key = hdf_group + '/anonymous_group'
+    anonymous.to_hdf(fpath, key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert all(anonymous == anonymous2)
+    # wildcard group
+    key = hdf_group + '/wildcard_group'
+    wildcard.to_hdf(fpath, key)
+    wildcard2 = read_hdf(fpath, key=key)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    key = hdf_group + '/named_group_axis_not_in_file'
+    named_axis_not_in_file.to_hdf(fpath, key=key)
+    named2 = read_hdf(fpath, key=key)
+    assert all(named_axis_not_in_file == named2)
+
+    # ---- specific axis_key ----
+    axis_key = 'axes/associated_axis_0'
+    # named group
+    named.to_hdf(fpath, axis_key=axis_key)
+    named2 = read_hdf(fpath, key=named.name)
+    assert all(named == named2)
+    # anonymous group
+    key = 'anonymous'
+    anonymous.to_hdf(fpath, key=key, axis_key=axis_key)
+    anonymous2 = read_hdf(fpath, key=key)
+    assert anonymous2.name is None
+    assert all(anonymous == anonymous2)
+    # wildcard group
+    wildcard.to_hdf(fpath, axis_key=axis_key)
+    wildcard2 = read_hdf(fpath, key=wildcard.name)
+    assert all(wildcard == wildcard2)
+    # associated axis not saved yet
+    axis_key = 'axes/associated_axis_1'
+    named_axis_not_in_file.to_hdf(fpath, axis_key=axis_key)
+    named2 = read_hdf(fpath, key=named_axis_not_in_file.name)
+    assert all(named_axis_not_in_file == named2)
 
 if __name__ == "__main__":
     pytest.main()

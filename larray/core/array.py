@@ -64,11 +64,11 @@ except ImportError:
 from larray.core.abstractbases import ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
-                               _range_to_slice, _translate_sheet_name, _translate_key_hdf)
+                               _range_to_slice, _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg)
+                              renamed_to, deprecate_kwarg, LHDFStore)
 
 
 nan = np.nan
@@ -5997,7 +5997,7 @@ class LArray(ABCLArray):
             series = self.to_series(value_name, dropna is not None)
             series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True, **kwargs)
 
-    def to_hdf(self, filepath, key, *args, **kwargs):
+    def to_hdf(self, filepath, key):
         """
         Writes array to a HDF file.
 
@@ -6009,17 +6009,31 @@ class LArray(ABCLArray):
         filepath : str
             Path where the hdf file has to be written.
         key : str or Group
-            Name of the array within the HDF file.
-        *args
-        **kargs
+            Key (path) of the array within the HDF file (see Notes below).
+
+        Notes
+        -----
+        Objects stored in a HDF file can be grouped together in `HDF groups`.
+        If an object 'my_obj' is stored in a HDF group 'my_group',
+        the key associated with this object is then 'my_group/my_obj'.
+        Be aware that a HDF group can have subgroups.
 
         Examples
         --------
         >>> a = ndtest((2, 3))
-        >>> a.to_hdf('test.h5', 'a')  # doctest: +SKIP
+
+        Save an array
+
+        >>> a.to_hdf('test.h5', 'a')          # doctest: +SKIP
+
+        Save an array in a specific HDF group
+
+        >>> a.to_hdf('test.h5', 'arrays/a')  # doctest: +SKIP
         """
-        key = _translate_key_hdf(key)
-        self.to_frame().to_hdf(filepath, key, *args, **kwargs)
+        key = _translate_group_key_hdf(key)
+        with LHDFStore(filepath) as store:
+            store.put(key, self.to_frame())
+            store.get_storer(key).attrs.type = 'Array'
 
     @deprecate_kwarg('sheet_name', 'sheet') 
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -6085,7 +6099,7 @@ class LArray(ABCLArray):
             engine = 'xlwings' if xw is not None else None
 
         if engine == 'xlwings':
-            from larray.inout.excel import open_excel
+            from larray.inout.xw_excel import open_excel
 
             close = False
             new_workbook = False
@@ -7022,7 +7036,7 @@ def aslarray(a):
     elif hasattr(a, '__larray__'):
         return a.__larray__()
     elif isinstance(a, pd.DataFrame):
-        from larray.inout.array import from_frame
+        from larray.inout.pandas import from_frame
         return from_frame(a)
     else:
         return LArray(a)
