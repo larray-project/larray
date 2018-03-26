@@ -11,7 +11,7 @@ except ImportError:
     xw = None
 
 from larray import ndtest, larray_equal, open_excel, aslarray, Axis
-from larray.inout import excel
+from larray.inout import xw_excel
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
@@ -26,7 +26,7 @@ class TestWorkbook(object):
             wb1.sheet_names()
         wb2 = open_excel(visible=False)
         app2 = wb2.app
-        assert app1 == app2 == excel.global_app
+        assert app1 == app2 == xw_excel.global_app
         # this effectively close all workbooks but leaves the instance intact (this is probably due to us keeping a
         # reference to it).
         app1.quit()
@@ -40,18 +40,18 @@ class TestWorkbook(object):
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
-            assert re.match('<larray.inout.excel.Workbook \[Book\d+\]>', repr(wb))
+            assert re.match('<larray.inout.xw_excel.Workbook \[Book\d+\]>', repr(wb))
 
     def test_getitem(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
-            assert isinstance(sheet, excel.Sheet)
+            assert isinstance(sheet, xw_excel.Sheet)
             # this might not be true on non-English locale
             assert sheet.name == 'Sheet1'
 
             # this might not work on non-English locale
             sheet = wb['Sheet1']
-            assert isinstance(sheet, excel.Sheet)
+            assert isinstance(sheet, xw_excel.Sheet)
             assert sheet.name == 'Sheet1'
 
             with pytest.raises(KeyError) as e_info:
@@ -166,7 +166,7 @@ class TestSheet(object):
     def test_repr(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
-            assert re.match('<larray.inout.excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
+            assert re.match('<larray.inout.xw_excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")

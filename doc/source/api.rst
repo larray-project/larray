@@ -77,6 +77,14 @@ Testing
    Axis.iscompatible
    Axis.equals
 
+Save
+----
+
+.. autosummary::
+   :toctree: _generated/
+
+   Axis.to_hdf
+
 .. _api-group:
 
 Group
@@ -104,6 +112,7 @@ IGroup
    IGroup.startingwith
    IGroup.endingwith
    IGroup.matching
+   IGroup.to_hdf
 
 LGroup
 ------
@@ -127,6 +136,7 @@ LGroup
    LGroup.startingwith
    LGroup.endingwith
    LGroup.matching
+   LGroup.to_hdf
 
 .. _api-set:
 

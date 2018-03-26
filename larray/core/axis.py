@@ -7,14 +7,15 @@ import warnings
 from itertools import product
 
 import numpy as np
+import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
-                               _contain_group_ticks, _seq_group_to_name)
+                               _contain_group_ticks, _seq_group_to_name, _translate_group_key_hdf)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to, common_type)
+                              renamed_to, common_type, LHDFStore)
 
 __all__ = ['Axis', 'AxisCollection', 'X', 'x']
 
@@ -1193,6 +1194,57 @@ class Axis(ABCAxis):
             if not isinstance(other, Axis):
                 other = Axis(other)
             return other
+
+    def to_hdf(self, filepath, key=None):
+        """
+        Writes axis to a HDF file.
+
+        A HDF file can contain multiple axes.
+        The 'key' parameter is a unique identifier for the axis.
+
+        Parameters
+        ----------
+        filepath : str
+            Path where the hdf file has to be written.
+        key : str or Group, optional
+            Key (path) of the axis within the HDF file (see Notes below).
+            If None, the name of the axis is used.
+            Defaults to None.
+
+        Notes
+        -----
+        Objects stored in a HDF file can be grouped together in `HDF groups`.
+        If an object 'my_obj' is stored in a HDF group 'my_group',
+        the key associated with this object is then 'my_group/my_obj'.
+        Be aware that a HDF group can have subgroups.
+
+        Examples
+        --------
+        >>> a = Axis("a=a0..a2")
+
+        Save axis
+
+        >>> # by default, the key is the name of the axis
+        >>> a.to_hdf('test.h5')            # doctest: +SKIP
+
+        Save axis with a specific key
+
+        >>> a.to_hdf('test.h5', 'a')       # doctest: +SKIP
+
+        Save axis in a specific HDF group
+
+        >>> a.to_hdf('test.h5', 'axes/a')  # doctest: +SKIP
+        """
+        if key is None:
+            if self.name is None:
+                raise ValueError("Argument key must be provided explicitly in case of anonymous axis")
+            key = self.name
+        key = _translate_group_key_hdf(key)
+        s = pd.Series(data=self.labels, name=self.name)
+        with LHDFStore(filepath) as store:
+            store.put(key, s)
+            store.get_storer(key).attrs.type = 'Axis'
+            store.get_storer(key).attrs.wildcard = self.iswildcard
 
 
 def _make_axis(obj):
