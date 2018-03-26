@@ -11,7 +11,8 @@ import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
-from larray.util.misc import basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, renamed_to
+from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary,
+                              renamed_to, LHDFStore)
 
 __all__ = ['Group', 'LGroup', 'LSet', 'IGroup', 'union']
 
@@ -652,7 +653,7 @@ def _translate_sheet_name(sheet_name):
 _key_hdf_pattern = re.compile('[\\\/]')
 
 
-def _translate_key_hdf(key):
+def _translate_group_key_hdf(key):
     if isinstance(key, Group):
         key = _key_hdf_pattern.sub('_', str(_to_tick(key)))
     return key
@@ -1274,6 +1275,80 @@ class Group(object):
         if isinstance(substring, Group):
             substring = substring.eval()
         return LGroup([v for v in self.eval() if substring in v], axis=self.axis)
+
+    def to_hdf(self, filepath, key=None, axis_key=None):
+        """
+        Writes group to a HDF file.
+
+        A HDF file can contain multiple groups.
+        The 'key' parameter is a unique identifier for the group.
+        The 'axis_key' parameter is the unique identifier for the associated axis.
+        The associated axis will be saved if not already present in the HDF file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path where the hdf file has to be written.
+        key : str or Group, optional
+            Key (path) of the group within the HDF file (see Notes below).
+            If None, the name of the group is used.
+            Defaults to None.
+        axis_key : str, optional
+            Key (path) of the associated axis in the HDF file (see Notes below).
+            If None, the name of the axis associated with the group is used.
+            Defaults to None.
+
+        Notes
+        -----
+        Objects stored in a HDF file can be grouped together in `HDF groups`.
+        If an object 'my_obj' is stored in a HDF group 'my_group',
+        the key associated with this object is then 'my_group/my_obj'.
+        Be aware that a HDF group can have subgroups.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> a = Axis("a=a0..a2")
+        >>> a.to_hdf('test.h5')
+        >>> a01 = a['a0,a1'] >> 'a01'
+
+        Save group
+
+        >>> # by default, the key is the name of the group
+        >>> # and axis_key the name of the associated axis
+        >>> a01.to_hdf('test.h5')                  # doctest: +SKIP
+
+        Save group with a specific key
+
+        >>> a01.to_hdf('test.h5', 'a_01')           # doctest: +SKIP
+
+        Save group in a specific HDF group
+
+        >>> a.to_hdf('test.h5', 'groups/a01')       # doctest: +SKIP
+
+        The associated axis is saved with the group if not already present in the HDF file
+
+        >>> b = Axis("b=b0..b2")
+        >>> b01 = b['b0,b1'] >> 'b01'
+        >>> # save both the group 'b01' and the associated axis 'b'
+        >>> b01.to_hdf('test.h5')                   # doctest: +SKIP
+        """
+        if key is None:
+            if self.name is None:
+                raise ValueError("Argument key must be provided explicitly in case of anonymous group")
+            key = self.name
+        key = _translate_group_key_hdf(key)
+        if axis_key is None:
+            if self.axis.name is None:
+                raise ValueError("Argument axis_key must be provided explicitly if the associated axis is anonymous")
+            axis_key = self.axis.name
+        s = pd.Series(data=self.eval(), name=self.name)
+        with LHDFStore(filepath) as store:
+            store.put(key, s)
+            store.get_storer(key).attrs.type = 'Group'
+            if axis_key not in store:
+                self.axis.to_hdf(store, key=axis_key)
+            store.get_storer(key).attrs.axis_key = axis_key
 
     # this makes range(LGroup(int)) possible
     def __index__(self):

@@ -23,7 +23,25 @@ New features
 Miscellaneous improvements
 --------------------------
 
-* improved something.
+* saving or loading a session from a file now includes `Axis` and `Group` objects in addition to arrays
+  (closes :issue:`578`):
+
+    Create a session containing axes, groups and arrays
+
+    >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")
+    >>> a01 = a['a0,a1'] >> 'a01'
+    >>> arr1, arr2 = ndtest((a, b)), ndtest(a)
+    >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])
+
+    Saving a session will save axes, groups and arrays
+
+    >>> s.save('session.h5')
+
+    Loading a session will load axes, groups and arrays
+
+    >>> s2 = s.load('session.h5')
+    >>> s2
+    Session(arr1, arr2, a, b, a01)
 
 
 Fixes

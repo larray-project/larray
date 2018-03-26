@@ -25,6 +25,8 @@ try:
 except TypeError:
     pass
 
+import pandas as pd
+
 if sys.version_info[0] < 3:
     basestring = basestring
     bytes = str
@@ -732,3 +734,23 @@ def common_type(arrays):
         return np.dtype(('U' if need_unicode else 'S', max_size))
     else:
         return object
+
+
+class LHDFStore(object):
+    """Context manager for pandas HDFStore"""
+    def __init__(self, filepath_or_buffer, **kwargs):
+        if isinstance(filepath_or_buffer, pd.HDFStore):
+            if not filepath_or_buffer.is_open:
+                raise IOError('The HDFStore must be open for reading.')
+            self.store = filepath_or_buffer
+            self.close_store = False
+        else:
+            self.store = pd.HDFStore(filepath_or_buffer, **kwargs)
+            self.close_store = True
+
+    def __enter__(self):
+        return self.store
+
+    def __exit__(self, type_, value, traceback):
+        if self.close_store:
+            self.store.close()
