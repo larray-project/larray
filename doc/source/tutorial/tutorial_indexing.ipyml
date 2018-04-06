@@ -4,21 +4,6 @@ cells:
     # Indexing, Selecting and Assigning
 
 
-- code: |
-    # @tutorial writers: You can remove cells from the HTML/LaTeX output by adding this to the cell metadata:
-    # "nbsphinx": "hidden"
-    
-    # ignore warnings
-    import warnings
-    warnings.filterwarnings('ignore')
-    
-    # simplify exception output
-    %xmode Plain
-
-  id: 0
-  metadata:
-    nbsphinx: hidden
-
 - markdown: |
     Import the LArray library:
 
