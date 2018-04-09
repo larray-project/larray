@@ -11,7 +11,7 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
+  id: 0
 
 - markdown: |
     Import the test array ``pop``:
@@ -22,12 +22,12 @@ cells:
     pop = load_example_data('demography').pop
     pop
 
-  id: 2
+  id: 1
 
 - markdown: |
     ## Selecting (Subsets)
     
-    LArray allows to select a subset of an array either by labels or positions
+    LArray allows to select a subset of an array either by labels or indices (positions)
 
 
 - markdown: |
@@ -43,7 +43,7 @@ cells:
     # of age 50 from Brussels region for the year 2015
     pop[2015, 'BruCap', 50, 'F', 'BE']
 
-  id: 3
+  id: 2
 
 - markdown: |
     Continue with selecting a subset using slices and lists of labels
@@ -54,7 +54,7 @@ cells:
     # from Brussels region for the years 2010 to 2016
     pop[2010:2016, 'BruCap', 50:52, 'F', 'BE']
 
-  id: 4
+  id: 3
 
 - code: |
     # slices bounds are optional:
@@ -62,21 +62,21 @@ cells:
     # Here we select all years starting from 2010
     pop[2010:, 'BruCap', 50:52, 'F', 'BE']
 
-  id: 5
+  id: 4
 
 - code: |
     # Slices can also have a step (defaults to 1), to take every Nth labels
     # Here we select all even years starting from 2010
     pop[2010::2, 'BruCap', 50:52, 'F', 'BE']
 
-  id: 6
+  id: 5
 
 - code: |
     # one can also use list of labels to take non-contiguous labels.
     # Here we select years 2008, 2010, 2013 and 2015
     pop[[2008, 2010, 2013, 2015], 'BruCap', 50:52, 'F', 'BE']
 
-  id: 7
+  id: 6
 
 - markdown: |
     The order of indexing does not matter either, so you usually do not care/have to remember about axes positions during computation. It only matters for output.
@@ -86,7 +86,7 @@ cells:
     # order of index doesn't matter
     pop['F', 'BE', 'BruCap', [2008, 2010, 2013, 2015], 50:52]
 
-  id: 8
+  id: 7
 
 - markdown: |
     <div class="alert alert-warning">
@@ -102,20 +102,20 @@ cells:
     
     arr_ws = ndtest([age, weight, size])
 
-  id: 9
+  id: 8
 
 - code: |
     # let's try to select teenagers with size between 1 m 60 and 1 m 65 and weight > 80 kg.
     # In this case the subset is ambiguous and this results in an error:
     arr_ws[10:18, :80, 160:165]
 
-  id: 10
+  id: 9
 
 - code: |
     # the solution is simple. You need to precise the axes on which you make a selection
     arr_ws[age[10:18], weight[:80], size[160:165]]
 
-  id: 11
+  id: 10
 
 - markdown: |
     ### Ambiguous Cases - Specifying Axes Using The Special Variable X
@@ -127,29 +127,29 @@ cells:
     -  pop.sum(X.age)
     
     This gives you acces to axes of the array you are manipulating. The main
-    drawback of using **X** is that you lose the autocompletion available from
-    many editors. It only works with non-wildcard axes.
+    drawback of using ``X`` is that you lose the autocompletion available from
+    many editors. It only works with non-anonymous axes for which names do not contain whitespaces or special characters.
 
 
 - code: |
     # the previous example could have been also written as
     arr_ws[X.age[10:18], X.weight[:80], X.size[160:165]]
 
-  id: 12
+  id: 11
 
 - markdown: |
-    ### Selecting by Positions
+    ### Selecting by Indices
     
-    Sometimes it is more practical to use positions along the axis, instead of labels.
-    You need to add the character ``i`` before the brackets: ``.i[positions]``.
-    As for selection with labels, you can use single position or slice or list of positions.
-    Positions can be also negative (-1 represent the last element of an axis).
+    Sometimes it is more practical to use indices (positions) along the axis, instead of labels.
+    You need to add the character ``i`` before the brackets: ``.i[indices]``.
+    As for selection with labels, you can use single index or slice or list of indices.
+    Indices can be also negative (-1 represent the last element of an axis).
 
 
 - markdown: |
     <div class="alert alert-info">
-    **Note:** Remember that positions (indices) are always **0-based** in Python.
-    So the first element is at position 0, the second is at position 1, etc.
+    **Note:** Remember that indices (positions) are always **0-based** in Python.
+    So the first element is at index 0, the second is at index 1, etc.
     </div>
 
 
@@ -158,19 +158,19 @@ cells:
     # from Brussels region for the first 3 years
     pop[X.time.i[:3], 'BruCap', 50:52, 'F', 'BE']
 
-  id: 13
+  id: 12
 
 - code: |
     # same but for the last 3 years
     pop[X.time.i[-3:], 'BruCap', 50:52, 'F', 'BE']
 
-  id: 14
+  id: 13
 
 - code: |
-    # using list of positions
+    # using list of indices
     pop[X.time.i[-9,-7,-4,-2], 'BruCap', 50:52, 'F', 'BE']
 
-  id: 15
+  id: 14
 
 - markdown: |
     <div class="alert alert-warning">
@@ -182,13 +182,13 @@ cells:
     # with labels (3 is included)
     pop[2015, 'BruCap', X.age[:3], 'F', 'BE']
 
-  id: 16
+  id: 15
 
 - code: |
-    # with position (3 is out)
+    # with indices (3 is out)
     pop[2015, 'BruCap', X.age.i[:3], 'F', 'BE']
 
-  id: 17
+  id: 16
 
 - markdown: |
     You can use ``.i[]`` selection directly on array instead of axes.
@@ -200,7 +200,7 @@ cells:
     # equivalent to: pop.i[-1, :, :3, :, :]
     pop.i[-1, :, :3]
 
-  id: 18
+  id: 17
 
 - markdown: |
     ### Using Groups In Selections
@@ -211,7 +211,7 @@ cells:
     
     pop[2015, 'BruCap', teens, 'F', 'BE']
 
-  id: 19
+  id: 18
 
 - markdown: |
     ## Assigning subsets
@@ -227,14 +227,14 @@ cells:
     pop2 = pop
     pop2
 
-  id: 20
+  id: 19
 
 - code: |
     # set all data corresponding to age >= 102 to 0
     pop2[102:] = 0
     pop2
 
-  id: 21
+  id: 20
 
 - markdown: |
     One very important gotcha though...
@@ -258,7 +258,7 @@ cells:
     # indeed, data from the original array have also changed
     pop
 
-  id: 22
+  id: 21
 
 - code: |
     # the right way
@@ -268,13 +268,13 @@ cells:
     pop2[102:] = 0
     pop2
 
-  id: 23
+  id: 22
 
 - code: |
     # now, data from the original array have not changed this time
     pop
 
-  id: 24
+  id: 23
 
 - markdown: |
     ### Assigning Arrays And Broadcasting
@@ -289,7 +289,7 @@ cells:
     new_value = LArray([[1, -1], [2, -2]],[sex, nat])
     new_value
 
-  id: 25
+  id: 24
 
 - code: |
     # this assigns 1, -1 to Belgian, Foreigner men
@@ -298,7 +298,7 @@ cells:
     pop[102:] = new_value
     pop
 
-  id: 26
+  id: 25
 
 - markdown: |
     <div class="alert alert-warning">
@@ -311,20 +311,20 @@ cells:
     new_value = zeros(['age=100..102', sex, nat])
     new_value
 
-  id: 27
+  id: 26
 
 - code: |
     # now let's try to assign the previous array in a subset from age 103 to 105
     pop[103:105] = new_value
 
-  id: 28
+  id: 27
 
 - code: |
     # but this works
     pop[100:102] = new_value
     pop
 
-  id: 29
+  id: 28
 
 - markdown: |
     ## Boolean Filtering
@@ -340,7 +340,7 @@ cells:
     subset = pop[((X.sex == 'H') & (X.age <= 5)) | ((X.sex == 'F') & (X.age <= 10))]
     subset
 
-  id: 30
+  id: 29
 
 - markdown: |
     <div class="alert alert-info">
@@ -352,7 +352,7 @@ cells:
     # 'age' and 'sex' axes have been merged together
     subset.info
 
-  id: 31
+  id: 30
 
 - markdown: |
     This may be not what you because previous selections on merged axes are no longer valid
@@ -362,7 +362,7 @@ cells:
     # now let's try to calculate the proportion of females with age less than 10
     subset['F'].sum() / pop['F'].sum()
 
-  id: 32
+  id: 31
 
 - markdown: |
     Therefore, it is sometimes more useful to not select, but rather set to 0 (or another value) non matching elements
@@ -373,13 +373,13 @@ cells:
     subset[((X.sex == 'F') & (X.age > 10))] = 0
     subset['F', :20]
 
-  id: 33
+  id: 32
 
 - code: |
     # now we can calculate the proportion of females with age less than 10
     subset['F'].sum() / pop['F'].sum()
 
-  id: 34
+  id: 33
 
 - markdown: |
     Boolean filtering can also mix axes and arrays. Example above could also have been written as
@@ -389,20 +389,20 @@ cells:
     age_limit = sequence('sex=M,F', initial=5, inc=5)
     age_limit
 
-  id: 35
+  id: 34
 
 - code: |
     age = pop.axes['age']
     (age <= age_limit)[:20]
 
-  id: 36
+  id: 35
 
 - code: |
     subset = pop.copy()
     subset[X.age > age_limit] = 0
     subset['F'].sum() / pop['F'].sum()
 
-  id: 37
+  id: 36
 
 - markdown: |
     Finally, you can choose to filter on data instead of axes
@@ -413,14 +413,14 @@ cells:
     subset = pop['F', 90:110].copy()
     subset
 
-  id: 38
+  id: 37
 
 - code: |
     # here we set to 0 all data < 10
     subset[subset < 10] = 0
     subset
 
-  id: 39
+  id: 38
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -463,4 +463,4 @@ data:
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+      outputs: []}, {execution_count: null, outputs: []}]

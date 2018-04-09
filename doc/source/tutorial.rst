@@ -17,7 +17,7 @@ page first.
 
    ./tutorial/tutorial_presenting_larray_objects.ipynb
    ./tutorial/tutorial_IO.ipynb
-   ./tutorial/tutorial_refactoring.ipynb
+   ./tutorial/tutorial_transforming.ipynb
    ./tutorial/tutorial_indexing.ipynb
    ./tutorial/tutorial_arithmetic_op_and_aggregation.ipynb
    ./tutorial/tutorial_plotting.ipynb

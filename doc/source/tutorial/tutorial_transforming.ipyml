@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Transforming Arrays (Renaming, Relabeling, Reordering, Sorting, ...)
+    # Transforming Arrays (Relabeling, Renaming, Reordering, Combining, Extending, Sorting, ...)
 
 
 - markdown: |
@@ -11,7 +11,7 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
+  id: 0
 
 - markdown: |
     ## Manipulating axes
@@ -22,7 +22,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
     pop
 
-  id: 2
+  id: 1
 
 - markdown: |
     ### Relabeling
@@ -35,13 +35,13 @@ cells:
     pop_new_labels = pop.set_labels('sex', ['Men', 'Women'])
     pop_new_labels
 
-  id: 3
+  id: 2
 
 - code: |
     # inplace flag avoids to create a copy
     pop.set_labels('sex', ['M', 'F'], inplace=True)
 
-  id: 4
+  id: 3
 
 - markdown: |
     ### Renaming axes
@@ -52,14 +52,14 @@ cells:
 - code: |
     pop.info
 
-  id: 5
+  id: 4
 
 - code: |
     # 'rename' returns a copy of the array
     pop2 = pop.rename('sex', 'gender')
     pop2
 
-  id: 6
+  id: 5
 
 - markdown: |
     Rename several axes at once
@@ -70,7 +70,7 @@ cells:
     pop2 = pop.rename(sex='gender', nat='nationality')
     pop2
 
-  id: 7
+  id: 6
 
 - markdown: |
     ### Reordering axes
@@ -85,7 +85,7 @@ cells:
     # starting order : age, sex, nat
     pop
 
-  id: 8
+  id: 7
 
 - code: |
     # no argument --> reverse axes
@@ -94,19 +94,19 @@ cells:
     # .T is a shortcut for .transpose()
     pop.T
 
-  id: 9
+  id: 8
 
 - code: |
     # reorder according to list
     pop.transpose('age', 'nat', 'sex')
 
-  id: 10
+  id: 9
 
 - code: |
     # axes not mentioned come after those which are mentioned (and keep their relative order)
     pop.transpose('sex')
 
-  id: 11
+  id: 10
 
 - markdown: |
     ## Combining arrays
@@ -127,14 +127,14 @@ cells:
     pop = pop.append('nat', pop_non_eu, 'NEU')
     pop
 
-  id: 12
+  id: 11
 
 - code: |
     # you can also add something at the start of an axis
     pop = pop.prepend('sex', pop.sum('sex'), 'B')
     pop
 
-  id: 13
+  id: 12
 
 - markdown: |
     The value being appended/prepended can have missing (or even extra) axes as long as common axes are compatible
@@ -144,13 +144,13 @@ cells:
     aliens = zeros(pop.axes['sex'])
     aliens
 
-  id: 14
+  id: 13
 
 - code: |
     pop = pop.append('nat', aliens, 'AL')
     pop
 
-  id: 15
+  id: 14
 
 - markdown: |
     ### Extend
@@ -166,7 +166,7 @@ cells:
     # concatenate along age axis
     pop.extend('age', pop_next)
 
-  id: 16
+  id: 15
 
 - markdown: |
     ### Stack
@@ -187,7 +187,7 @@ cells:
     
     pop
 
-  id: 17
+  id: 16
 
 - markdown: |
     ## Sorting
@@ -199,7 +199,7 @@ cells:
     pop_sorted = pop.sort_axes('nat')
     pop_sorted
 
-  id: 18
+  id: 17
 
 - markdown: |
     Give labels which would sort the axis
@@ -208,7 +208,7 @@ cells:
 - code: |
     pop_sorted.labelsofsorted('sex')
 
-  id: 19
+  id: 18
 
 - markdown: |
     Sort according to values
@@ -217,7 +217,7 @@ cells:
 - code: |
     pop_sorted.sort_values((90, 'F'))
 
-  id: 20
+  id: 19
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -252,5 +252,4 @@ data:
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}]
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
