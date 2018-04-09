@@ -166,92 +166,98 @@ class TestSession(TestCase):
         s = Session()
         s.load(fpath)
         # HDF does *not* keep ordering (ie, keys are always sorted +
-        # read LArray objects, then Axis objects and finally Group objects)
-        assert list(s.keys()) == ['e', 'f', 'g', 'a', 'b', 'a01', 'b12']
+        # read Axis objects, then Groups objects and finally LArray objects)
+        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
 
         # update a Group + an Axis + an array (overwrite=False)
         a2 = Axis('a=0..2')
         a2_01 = a2['0,1'] >> 'a01'
         e2 = ndtest((a2, 'b=b0..b2'))
         Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False)
+        s = Session()
         s.load(fpath)
-        assert list(s.keys()) == ['e', 'f', 'g', 'a', 'b', 'a01', 'b12']
+        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
         assert s['a'].equals(a2)
         assert all(s['a01'] == a2_01)
         assert_array_nan_equal(s['e'], e2)
 
+        # load only some objects
         s = Session()
-        s.load(fpath, ['e', 'f'])
-        assert list(s.keys()) == ['e', 'f']
+        s.load(fpath, names=['a', 'a01', 'e', 'f'])
+        assert list(s.keys()) == ['a', 'a01', 'e', 'f']
 
     def test_xlsx_pandas_io(self):
-        session = self.session.filter(kind=LArray)
-
         fpath = self.get_path('test_session.xlsx')
-        session.save(fpath, engine='pandas_excel')
+        self.session.save(fpath, engine='pandas_excel')
 
         s = Session()
         s.load(fpath, engine='pandas_excel')
-        assert list(s.keys()) == ['e', 'g', 'f']
+        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
 
-        # update an array (overwrite=False)
-        e2 = ndtest(('a=0..2', 'b=b0..b2'))
-        Session(e=e2).save(fpath, engine='pandas_excel', overwrite=False)
+        # update a Group + an Axis + an array (overwrite=False)
+        a2 = Axis('a=0..2')
+        a2_01 = a2['0,1'] >> 'a01'
+        e2 = ndtest((a2, 'b=b0..b2'))
+        Session(a=a2, a01=a2_01, e=e2).save(fpath, engine='pandas_excel')
+        s = Session()
         s.load(fpath, engine='pandas_excel')
-        assert list(s.keys()) == ['e', 'g', 'f']
+        assert list(s.keys()) == ['a', 'a01', 'e']
+        assert s['a'].equals(a2)
+        assert all(s['a01'] == a2_01)
         assert_array_nan_equal(s['e'], e2)
 
-        fpath = self.get_path('test_session_ef.xlsx')
-        self.session.save(fpath, ['e', 'f'], engine='pandas_excel')
+        # load only some objects
+        self.session.save(fpath, engine='pandas_excel')
         s = Session()
-        s.load(fpath, engine='pandas_excel')
-        assert list(s.keys()) == ['e', 'f']
+        s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pandas_excel')
+        assert list(s.keys()) == ['a', 'a01', 'e', 'f']
 
     @pytest.mark.skipif(xw is None, reason="xlwings is not available")
     def test_xlsx_xlwings_io(self):
-        session = self.session.filter(kind=LArray)
-
         fpath = self.get_path('test_session_xw.xlsx')
         # test save when Excel file does not exist
-        session.save(fpath, engine='xlwings_excel')
+        self.session.save(fpath, engine='xlwings_excel')
 
         s = Session()
         s.load(fpath, engine='xlwings_excel')
         # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
-        assert list(s.keys()) == ['e', 'g', 'f']
+        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
 
-        # update an array (overwrite=False)
-        e2 = ndtest(('a=0..2', 'b=b0..b2'))
-        Session(e=e2).save(fpath, engine='xlwings_excel', overwrite=False)
-        s.load(fpath, engine='xlwings_excel')
-        assert list(s.keys()) == ['e', 'g', 'f']
-        assert_array_nan_equal(s['e'], e2)
-
-        fpath = self.get_path('test_session_ef_xw.xlsx')
-        self.session.save(fpath, ['e', 'f'], engine='xlwings_excel')
+        # update a Group + an Axis + an array (overwrite=False)
+        a2 = Axis('a=0..2')
+        a2_01 = a2['0,1'] >> 'a01'
+        e2 = ndtest((a2, 'b=b0..b2'))
+        Session(a=a2, a01=a2_01, e=e2).save(fpath, engine='xlwings_excel', overwrite=False)
         s = Session()
         s.load(fpath, engine='xlwings_excel')
-        assert list(s.keys()) == ['e', 'f']
+        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
+        assert s['a'].equals(a2)
+        assert all(s['a01'] == a2_01)
+        assert_array_nan_equal(s['e'], e2)
+
+        # load only some objects
+        s = Session()
+        s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='xlwings_excel')
+        assert list(s.keys()) == ['a', 'a01', 'e', 'f']
 
     def test_csv_io(self):
         try:
-            session = self.session.filter(kind=LArray)
-
             fpath = self.get_path('test_session_csv')
-            session.to_csv(fpath)
+            self.session.to_csv(fpath)
 
             # test loading a directory
             s = Session()
             s.load(fpath, engine='pandas_csv')
             # CSV cannot keep ordering (so we always sort keys)
-            assert list(s.keys()) == ['e', 'f', 'g']
+            # Also, Axis objects are read first, then Groups objects and finally LArray objects
+            assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
 
             # test loading with a pattern
             pattern = os.path.join(fpath, '*.csv')
             s = Session(pattern)
             # s = Session()
             # s.load(pattern)
-            assert list(s.keys()) == ['e', 'f', 'g']
+            assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
 
             # create an invalid .csv file
             invalid_fpath = os.path.join(fpath, 'invalid.csv')
@@ -265,26 +271,41 @@ class TestSession(TestCase):
             # test loading a pattern, ignoring invalid/unsupported files
             s = Session()
             s.load(pattern, ignore_exceptions=True)
-            assert list(s.keys()) == ['e', 'f', 'g']
+            assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+
+            # load only some objects
+            s = Session()
+            s.load(fpath, names=['a', 'a01', 'e', 'f'])
+            assert list(s.keys()) == ['a', 'a01', 'e', 'f']
         finally:
             shutil.rmtree(fpath)
 
     def test_pickle_io(self):
-        session = self.session.filter(kind=LArray)
-
         fpath = self.get_path('test_session.pkl')
-        session.save(fpath)
+        self.session.save(fpath)
 
         s = Session()
         s.load(fpath, engine='pickle')
-        assert list(s.keys()) == ['e', 'g', 'f']
+        assert list(s.keys()) == ['b', 'a', 'b12', 'a01', 'e', 'g', 'f']
 
-        # update an array (overwrite=False)
-        e2 = ndtest(('a=0..2', 'b=b0..b2'))
-        Session(e=e2).save(fpath, overwrite=False)
+        # update a Group + an Axis + an array (overwrite=False)
+        a2 = Axis('a=0..2')
+        a2_01 = a2['0,1'] >> 'a01'
+        e2 = ndtest((a2, 'b=b0..b2'))
+        Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False)
+        s = Session()
         s.load(fpath, engine='pickle')
-        assert list(s.keys()) == ['e', 'g', 'f']
+        assert list(s.keys()) == ['b', 'a', 'b12', 'a01', 'e', 'g', 'f']
+        assert s['a'].equals(a2)
+        assert isinstance(a2_01, Group)
+        assert isinstance(s['a01'], Group)
+        assert s['a01'].eval() == a2_01.eval()
         assert_array_nan_equal(s['e'], e2)
+
+        # load only some objects
+        s = Session()
+        s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pickle')
+        assert list(s.keys()) == ['a', 'a01', 'e', 'f']
 
     def test_to_globals(self):
         with pytest.warns(RuntimeWarning) as caught_warnings:

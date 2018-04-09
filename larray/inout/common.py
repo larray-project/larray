@@ -3,8 +3,6 @@ from __future__ import absolute_import, print_function
 import os
 from collections import OrderedDict
 
-from larray.core.axis import Axis
-from larray.core.group import Group
 from larray.core.array import LArray
 
 
@@ -21,9 +19,6 @@ def _get_index_col(nb_axes=None, index_col=None, wide=True):
         index_col = [index_col]
 
     return index_col
-
-
-_allowed_types = (LArray, Axis, Group)
 
 
 class FileHandler(object):
@@ -51,16 +46,18 @@ class FileHandler(object):
     def _open_for_write(self):
         raise NotImplementedError()
 
-    def list(self):
+    def list_items(self):
         """
-        Returns the list of objects' names.
+        Return list containing pairs (name, type) for all stored objects
         """
         raise NotImplementedError()
 
-    def _read_item(self, key, *args, **kwargs):
+    def _read_item(self, key, type, *args, **kwargs):
+        """Read item"""
         raise NotImplementedError()
 
-    def _dump(self, key, value, *args, **kwargs):
+    def _dump_item(self, key, value, *args, **kwargs):
+        """Dump item. Raises an TypeError if type not taken into account by the FileHandler subclass."""
         raise NotImplementedError()
 
     def save(self):
@@ -111,14 +108,15 @@ class FileHandler(object):
         display = kwargs.pop('display', False)
         ignore_exceptions = kwargs.pop('ignore_exceptions', False)
         self._open_for_read()
+        key_types = self.list_items()
+        if keys is not None:
+            key_types = [(key, type) for key, type in key_types if key in keys]
         res = OrderedDict()
-        if keys is None:
-            keys = self.list()
-        for key in keys:
+        for key, type in key_types:
             if display:
-                print("loading", key, "...", end=' ')
+                print("loading", type, "object", key, "...", end=' ')
             try:
-                key, item = self._read_item(key, *args, **kwargs)
+                key, item = self._read_item(key, type, *args, **kwargs)
                 res[key] = item
             except Exception:
                 if not ignore_exceptions:
@@ -142,17 +140,20 @@ class FileHandler(object):
         display = kwargs.pop('display', False)
         self._get_original_file_name()
         self._open_for_write()
-        key_values = [(k, v) for k, v in key_values if isinstance(v, _allowed_types)]
         for key, value in key_values:
             if isinstance(value, LArray) and value.ndim == 0:
                 if display:
                     print('Cannot dump {}. Dumping 0D arrays is currently not supported.'.format(key))
                 continue
-            if display:
-                print("dumping", key, "...", end=' ')
-            self._dump(key, value, *args, **kwargs)
-            if display:
-                print("done")
+            try:
+                if display:
+                    print("dumping", key, "...", end=' ')
+                self._dump_item(key, value, *args, **kwargs)
+                if display:
+                    print("done")
+            except TypeError:
+                if display:
+                    print("Cannot dump {}. {} is not a supported type".format(key, type(value).__name__))
         self.save()
         self.close()
         self._update_original_file()

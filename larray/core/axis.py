@@ -12,7 +12,7 @@ import pandas as pd
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
-                               _contain_group_ticks, _seq_group_to_name, _translate_group_key_hdf)
+                               _seq_group_to_name, _translate_group_key_hdf)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
                               renamed_to, common_type, LHDFStore)

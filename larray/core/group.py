@@ -1376,6 +1376,14 @@ class Group(object):
         else:
             return getattr(self.eval(), key)
 
+    # needed to make *un*pickling work (because otherwise, __getattr__ is called before .key exists, which leads to
+    # an infinite recursion)
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this standardize on a single notation so that they can
         # all target each other. eg, this removes spaces in "list strings", instead of hashing them directly

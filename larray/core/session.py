@@ -12,7 +12,11 @@ from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
-from larray.inout.session import check_pattern, handler_classes, ext_default_engine
+from larray.inout.session import ext_default_engine, get_file_handler
+
+
+def check_pattern(k, pattern):
+    return k.startswith(pattern)
 
 
 # XXX: inherit from OrderedDict or LArray?
@@ -253,8 +257,11 @@ class Session(object):
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
             engine = ext_default_engine[ext]
-        handler_cls = handler_classes[engine]
-        handler = handler_cls(fname)
+        handler_cls = get_file_handler(engine)
+        if engine == 'pandas_csv' and 'sep' in kwargs:
+            handler = handler_cls(fname, kwargs['sep'])
+        else:
+            handler = handler_cls(fname)
         objects = handler.read_items(names, display=display, **kwargs)
         for k, v in objects.items():
             self[k] = v
@@ -275,10 +282,14 @@ class Session(object):
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. Ignored for CSV files. If False, file is updated.
-            Defaults to True.
+            Whether or not to overwrite an existing file, if any. Ignored for CSV files and 'pandas_excel' engine.
+            If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
+
+        Notes
+        -----
+        See Notes section from :py:meth:`~Session.to_csv` and :py:meth:`~Session.to_excel`.
 
         Examples
         --------
@@ -309,12 +320,12 @@ class Session(object):
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
             engine = ext_default_engine[ext]
-        handler_cls = handler_classes[engine]
-        handler = handler_cls(fname, overwrite)
-        if engine != 'pandas_hdf':
-            items = self.filter(kind=LArray).items()
+        handler_cls = get_file_handler(engine)
+        if engine == 'pandas_csv' and 'sep' in kwargs:
+            handler = handler_cls(fname, overwrite, kwargs['sep'])
         else:
-            items = self.items()
+            handler = handler_cls(fname, overwrite)
+        items = self.items()
         if names is not None:
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
@@ -387,7 +398,7 @@ class Session(object):
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
-        Dumps all array objects from the current session to a file using pickle.
+        Dumps LArray, Axis and Group objects from the current session to a file using pickle.
 
         WARNING: never load a pickle file (.pkl or .pickle) from an untrusted source, as it can lead to arbitrary code
         execution.
@@ -397,7 +408,8 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects present in the Session.
+            Names of LArray/Axis/Group objects to dump.
+            Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
@@ -406,16 +418,21 @@ class Session(object):
 
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
 
         Save all arrays
 
         >>> s.to_pickle('output.pkl')  # doctest: +SKIP
 
-        Save only some arrays
+        Save only some objects
 
-        >>> s.to_pickle('output.pkl', ['arr1', 'arr3'])  # doctest: +SKIP
+        >>> s.to_pickle('output.pkl', ['a', 'b', 'arr1'])  # doctest: +SKIP
         """
         self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
@@ -462,31 +479,43 @@ class Session(object):
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         """
-        Dumps all array objects from the current session to an Excel file.
+        Dumps LArray, Axis and Group objects from the current session to an Excel file.
 
         Parameters
         ----------
         fname : str
-            Path for the dump.
+            Path of the file for the dump.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects present in the Session.
+            Names of LArray/Axis/Group objects to dump.
+            Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any. If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
+        Notes
+        -----
+        - each array is saved in a separate sheet
+        - all Axis objects are saved together in the same sheet named __axes__
+        - all Group objects are saved together in the same sheet named __groups__
+
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
 
         Save all arrays
 
         >>> s.to_excel('output.xlsx')  # doctest: +SKIP
 
-        Save only some arrays
+        Save only some objects
 
-        >>> s.to_excel('output.xlsx', ['arr1', 'arr3'])  # doctest: +SKIP
+        >>> s.to_excel('output.xlsx', ['a', 'b', 'arr1'])  # doctest: +SKIP
         """
         self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
@@ -494,21 +523,33 @@ class Session(object):
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
         """
-        Dumps all array objects from the current session to CSV files.
+        Dumps LArray, Axis and Group objects from the current session to CSV files.
 
         Parameters
         ----------
         fname : str
             Path for the directory that will contain CSV files.
         names : list of str or None, optional
-            List of names of objects to dump. Defaults to all objects present in the Session.
+            Names of LArray/Axis/Group objects to dump.
+            Defaults to all objects present in the Session.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
+        Notes
+        -----
+        - each array is saved in a separate file
+        - all Axis objects are saved together in the same CSV file named __axes__.csv
+        - all Group objects are saved together in the same CSV file named __groups__.csv
+
         Examples
         --------
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))   # doctest: +SKIP
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])  # doctest: +SKIP
+        >>> # axes
+        >>> a, b = Axis("a=a0..a2"), Axis("b=b0..b2")    # doctest: +SKIP
+        >>> # groups
+        >>> a01 = a['a0,a1'] >> 'a01'                    # doctest: +SKIP
+        >>> # arrays
+        >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
+        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
 
         Save all arrays
 
@@ -516,7 +557,7 @@ class Session(object):
 
         Save only some arrays
 
-        >>> s.to_csv('./Output', ['arr1', 'arr3'])  # doctest: +SKIP
+        >>> s.to_csv('./Output', ['a', 'b', 'arr1'])  # doctest: +SKIP
         """
         self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
