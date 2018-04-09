@@ -9,8 +9,9 @@ from larray.core.axis import Axis
 from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.core.array import LArray
 from larray.util.misc import LHDFStore
-from larray.inout.pandas import df_aslarray
+from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
+from larray.inout.pandas import df_aslarray
 
 
 __all__ = ['read_hdf']
@@ -113,6 +114,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
     return res
 
 
+@register_file_handler('pandas_hdf', ['h5', 'hdf'])
 class PandasHDFHandler(FileHandler):
     """
     Handler for HDF5 files using Pandas.
@@ -123,31 +125,42 @@ class PandasHDFHandler(FileHandler):
     def _open_for_write(self):
         self.handle = HDFStore(self.fname)
 
-    def list(self):
-        return [key.strip('/') for key in self.handle.keys()]
+    def list_items(self):
+        keys = [key.strip('/') for key in self.handle.keys()]
+        # axes
+        items = [(key.split('/')[-1], 'Axis') for key in keys if '__axes__' in key]
+        # groups
+        items += [(key.split('/')[-1], 'Group') for key in keys if '__groups__' in key]
+        # arrays
+        items += [(key, 'Array') for key in keys if '/' not in key]
+        return items
 
-    def _read_item(self, key, *args, **kwargs):
-        if '__axes__' in key:
-            session_key = key.split('/')[-1]
-            kwargs['name'] = session_key
-        elif '__groups__' in key:
-            session_key = key.split('/')[-1]
-            kwargs['name'] = session_key
+    def _read_item(self, key, type, *args, **kwargs):
+        if type == 'Array':
+            hdf_key = '/' + key
+        elif type == 'Axis':
+            hdf_key = '__axes__/' + key
+            kwargs['name'] = key
+        elif type == 'Group':
+            hdf_key = '__groups__/' + key
+            kwargs['name'] = key
         else:
-            session_key = key
-        key = '/' + key
-        return session_key, read_hdf(self.handle, key, *args, **kwargs)
+            raise TypeError()
+        return key, read_hdf(self.handle, hdf_key, *args, **kwargs)
 
-    def _dump(self, key, value, *args, **kwargs):
-        if isinstance(value, Axis):
-            key = '__axes__/' + key
+    def _dump_item(self, key, value, *args, **kwargs):
+        if isinstance(value, LArray):
+            hdf_key = '/' + key
+            value.to_hdf(self.handle, hdf_key, *args, **kwargs)
+        elif isinstance(value, Axis):
+            hdf_key = '__axes__/' + key
+            value.to_hdf(self.handle, hdf_key, *args, **kwargs)
         elif isinstance(value, Group):
-            key = '__groups__/' + key
-            # axis_key (see Group.to_hdf)
-            args = ('__axes__/' + value.axis.name,) + args
+            hdf_key = '__groups__/' + key
+            hdf_axis_key = '__axes__/' + value.axis.name
+            value.to_hdf(self.handle, hdf_key, hdf_axis_key, *args, **kwargs)
         else:
-            key = '/' + key
-        value.to_hdf(self.handle, key, *args, **kwargs)
+            raise TypeError()
 
     def close(self):
         self.handle.close()

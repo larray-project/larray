@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 import warnings
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -9,10 +10,13 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.group import _translate_sheet_name
+from larray.core.axis import Axis
+from larray.core.group import Group, _translate_sheet_name
+from larray.core.array import LArray
 from larray.util.misc import deprecate_kwarg
+from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
 from larray.inout.xw_excel import open_excel
 
 __all__ = ['read_excel']
@@ -172,55 +176,174 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
                            fill_value=fill_value, wide=wide)
 
 
+@register_file_handler('pandas_excel')
 class PandasExcelHandler(FileHandler):
     """
     Handler for Excel files using Pandas.
     """
+    def __init__(self, fname, overwrite_file=False):
+        super(PandasExcelHandler, self).__init__(fname, overwrite_file)
+        self.axes = None
+        self.groups = None
+
+    def _load_axes_and_groups(self):
+        # load all axes
+        sheet_axes = '__axes__'
+        if sheet_axes in self.handle.sheet_names:
+            df = pd.read_excel(self.handle, sheet_axes)
+            self.axes = _df_to_axes(df)
+        else:
+            self.axes = OrderedDict()
+        # load all groups
+        sheet_groups = '__groups__'
+        if sheet_groups in self.handle.sheet_names:
+            df = pd.read_excel(self.handle, sheet_groups)
+            self.groups = _df_to_groups(df, self.axes)
+        else:
+            self.groups = OrderedDict()
+
     def _open_for_read(self):
         self.handle = pd.ExcelFile(self.fname)
+        self._load_axes_and_groups()
 
     def _open_for_write(self):
         self.handle = pd.ExcelWriter(self.fname)
+        self.axes = OrderedDict()
+        self.groups = OrderedDict()
 
-    def list(self):
-        return self.handle.sheet_names
+    def list_items(self):
+        sheet_names = self.handle.sheet_names
+        items = []
+        try:
+            sheet_names.remove('__axes__')
+            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+        except:
+            pass
+        try:
+            sheet_names.remove('__groups__')
+            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+        except:
+            pass
+        items += [(name, 'Array') for name in sheet_names]
+        return items
 
-    def _read_item(self, key, *args, **kwargs):
-        df = self.handle.parse(key, *args, **kwargs)
-        return key, df_aslarray(df, raw=True)
+    def _read_item(self, key, type, *args, **kwargs):
+        if type == 'Array':
+            df = self.handle.parse(key, *args, **kwargs)
+            return key, df_aslarray(df, raw=True)
+        elif type == 'Axis':
+            return key, self.axes[key]
+        elif type == 'Group':
+            return key, self.groups[key]
+        else:
+            raise TypeError()
 
-    def _dump(self, key, value, *args, **kwargs):
+    def _dump_item(self, key, value, *args, **kwargs):
         kwargs['engine'] = 'xlsxwriter'
-        value.to_excel(self.handle, key, *args, **kwargs)
+        if isinstance(value, LArray):
+            value.to_excel(self.handle, key, *args, **kwargs)
+        elif isinstance(value, Axis):
+            self.axes[key] = value
+        elif isinstance(value, Group):
+            self.groups[key] = value
+        else:
+            raise TypeError()
+
+    def save(self):
+        if len(self.axes) > 0:
+            df = _axes_to_df(self.axes.values())
+            df.to_excel(self.handle, '__axes__', engine='xlsxwriter')
+        if len(self.groups) > 0:
+            df = _groups_to_df(self.groups.values())
+            df.to_excel(self.handle, '__groups__', engine='xlsxwriter')
 
     def close(self):
         self.handle.close()
 
 
+@register_file_handler('xlwings_excel', ['xls', 'xlsx'])
 class XLWingsHandler(FileHandler):
     """
     Handler for Excel files using XLWings.
     """
+    def __init__(self, fname, overwrite_file=False):
+        super(XLWingsHandler, self).__init__(fname, overwrite_file)
+        self.axes = None
+        self.groups = None
+
     def _get_original_file_name(self):
         # for XLWingsHandler, no need to create a temporary file, the job is already done in the Workbook class
         pass
 
+    def _load_axes_and_groups(self):
+        # load all axes
+        sheet_axes = '__axes__'
+        if sheet_axes in self.handle:
+            df = self.handle[sheet_axes][:].options(pd.DataFrame, index=False).value
+            self.axes = _df_to_axes(df)
+        else:
+            self.axes = OrderedDict()
+        # load all groups
+        sheet_groups = '__groups__'
+        if sheet_groups in self.handle:
+            df = self.handle[sheet_groups][:].options(pd.DataFrame, index=False).value
+            self.groups = _df_to_groups(df, self.axes)
+        else:
+            self.groups = OrderedDict()
+
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
+        self._load_axes_and_groups()
 
     def _open_for_write(self):
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
+        self._load_axes_and_groups()
 
-    def list(self):
-        return self.handle.sheet_names()
+    def list_items(self):
+        sheet_names = self.handle.sheet_names()
+        items = []
+        try:
+            sheet_names.remove('__axes__')
+            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+        except:
+            pass
+        try:
+            sheet_names.remove('__groups__')
+            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+        except:
+            pass
+        items += [(name, 'Array') for name in sheet_names]
+        return items
 
-    def _read_item(self, key, *args, **kwargs):
-        return key, self.handle[key].load(*args, **kwargs)
+    def _read_item(self, key, type, *args, **kwargs):
+        if type == 'Array':
+            return key, self.handle[key].load(*args, **kwargs)
+        elif type == 'Axis':
+            return key, self.axes[key]
+        elif type == 'Group':
+            return key, self.groups[key]
+        else:
+            raise TypeError()
 
-    def _dump(self, key, value, *args, **kwargs):
-        self.handle[key] = value.dump(*args, **kwargs)
+    def _dump_item(self, key, value, *args, **kwargs):
+        if isinstance(value, LArray):
+            self.handle[key] = value.dump(*args, **kwargs)
+        elif isinstance(value, Axis):
+            self.axes[key] = value
+        elif isinstance(value, Group):
+            self.groups[key] = value
+        else:
+            raise TypeError()
 
     def save(self):
+        if len(self.axes) > 0:
+            df = _axes_to_df(self.axes.values())
+            self.handle['__axes__'] = ''
+            self.handle['__axes__'][:].options(pd.DataFrame, index=False).value = df
+        if len(self.groups) > 0:
+            df = _groups_to_df(self.groups.values())
+            self.handle['__groups__'] = ''
+            self.handle['__groups__'][:].options(pd.DataFrame, index=False).value = df
         self.handle.save()
 
     def close(self):

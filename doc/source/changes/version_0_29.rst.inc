@@ -43,6 +43,9 @@ Miscellaneous improvements
     >>> s2
     Session(arr1, arr2, a, b, a01)
 
+  Note: all axes (groups) of a session are stored in the same CSV file/Excel sheet/HDF group
+  named __axes__ (__groups__).
+
 * added examples for `read_excel` and `read_hdf` functions (closes :issue:`617`).
 
 

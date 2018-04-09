@@ -4,14 +4,18 @@ import os
 import csv
 import warnings
 from glob import glob
+from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
 
+from larray.core.axis import Axis
+from larray.core.group import Group
 from larray.core.array import LArray, ndtest
 from larray.util.misc import skip_comment_cells, strip_rows, csv_open, deprecate_kwarg
+from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
 
 
 __all__ = ['read_csv', 'read_tsv', 'read_eurostat']
@@ -227,9 +231,13 @@ def read_eurostat(filepath_or_buffer, **kwargs):
     return read_csv(filepath_or_buffer, sep='\t', headersep=',', **kwargs)
 
 
+@register_file_handler('pandas_csv', 'csv')
 class PandasCSVHandler(FileHandler):
-    def __init__(self, fname, overwrite_file=False):
+    def __init__(self, fname, overwrite_file=False, sep=','):
         super(PandasCSVHandler, self).__init__(fname, overwrite_file)
+        self.sep = sep
+        self.axes = None
+        self.groups = None
         if fname is None:
             self.pattern = None
             self.directory = None
@@ -245,9 +253,32 @@ class PandasCSVHandler(FileHandler):
     def _get_original_file_name(self):
         pass
 
+    def _to_filepath(self, key):
+        if self.directory is not None:
+            return os.path.join(self.directory, '{}.csv'.format(key))
+        else:
+            return key
+
+    def _load_axes_and_groups(self):
+        # load all axes
+        filepath_axes = self._to_filepath('__axes__')
+        if os.path.isfile(filepath_axes):
+            df = pd.read_csv(filepath_axes, sep=self.sep)
+            self.axes = _df_to_axes(df)
+        else:
+            self.axes = OrderedDict()
+        # load all groups
+        filepath_groups = self._to_filepath('__groups__')
+        if os.path.isfile(filepath_groups):
+            df = pd.read_csv(filepath_groups, sep=self.sep)
+            self.groups = _df_to_groups(df, self.axes)
+        else:
+            self.groups = OrderedDict()
+
     def _open_for_read(self):
         if self.directory and not os.path.isdir(self.directory):
             raise ValueError("Directory '{}' does not exist".format(self.directory))
+        self._load_axes_and_groups()
 
     def _open_for_write(self):
         if self.directory is not None:
@@ -256,26 +287,57 @@ class PandasCSVHandler(FileHandler):
             except OSError:
                 if not os.path.isdir(self.directory):
                     raise ValueError("Path {} must represent a directory".format(self.directory))
+        self.axes = OrderedDict()
+        self.groups = OrderedDict()
 
-    def list(self):
+    def list_items(self):
         fnames = glob(self.pattern) if self.pattern is not None else []
         # drop directory
         fnames = [os.path.basename(fname) for fname in fnames]
         # strip extension from files
         # XXX: unsure we should use sorted here
-        return sorted([os.path.splitext(fname)[0] for fname in fnames])
+        fnames = sorted([os.path.splitext(fname)[0] for fname in fnames])
+        items = []
+        try:
+            fnames.remove('__axes__')
+            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+        except:
+            pass
+        try:
+            fnames.remove('__groups__')
+            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+        except:
+            pass
+        items += [(name, 'Array') for name in fnames]
+        return items
 
-    def _to_filepath(self, key):
-        if self.directory is not None:
-            return os.path.join(self.directory, '{}.csv'.format(key))
+    def _read_item(self, key, type, *args, **kwargs):
+        if type == 'Array':
+            return key, read_csv(self._to_filepath(key), *args, **kwargs)
+        elif type == 'Axis':
+            return key, self.axes[key]
+        elif type == 'Group':
+            return key, self.groups[key]
         else:
-            return key
+            raise TypeError()
 
-    def _read_item(self, key, *args, **kwargs):
-        return key, read_csv(self._to_filepath(key), *args, **kwargs)
+    def _dump_item(self, key, value, *args, **kwargs):
+        if isinstance(value, LArray):
+            value.to_csv(self._to_filepath(key), *args, **kwargs)
+        elif isinstance(value, Axis):
+            self.axes[key] = value
+        elif isinstance(value, Group):
+            self.groups[key] = value
+        else:
+            raise TypeError()
 
-    def _dump(self, key, value, *args, **kwargs):
-        value.to_csv(self._to_filepath(key), *args, **kwargs)
+    def save(self):
+        if len(self.axes) > 0:
+            df = _axes_to_df(self.axes.values())
+            df.to_csv(self._to_filepath('__axes__'), sep=self.sep, index=False)
+        if len(self.groups) > 0:
+            df = _groups_to_df(self.groups.values())
+            df.to_csv(self._to_filepath('__groups__'), sep=self.sep, index=False)
 
     def close(self):
         pass
