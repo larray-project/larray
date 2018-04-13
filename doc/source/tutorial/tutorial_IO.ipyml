@@ -1,0 +1,276 @@
+cells:
+
+- markdown: |
+    # Load/Dump Arrays And Sessions From/To Files
+
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+  id: 1
+
+- markdown: |
+    ## Load from CVS, Excel or HDF5 files
+    
+    Arrays can be loaded from CSV files
+    
+    ```python
+    # read_tsv is a shortcut when data are separated by tabs instead of commas (default separator of read_csv)
+    # read_eurostat is a shortcut to read EUROSTAT TSV files
+    household = read_csv('hh.csv')
+    ```
+
+
+- markdown: |
+    or Excel sheets
+    
+    ```python
+    # loads array from the first sheet if no sheet is given
+    pop = read_excel('demography.xlsx', 'pop')
+    ```
+
+
+- markdown: |
+    or HDF5 files (HDF5 is file format designed to store and organize large amounts of data.
+    An HDF5 file can contain multiple arrays.
+    
+    ```python
+    mortality = read_hdf('demography.h5','qx')
+    ```
+
+
+- markdown: |
+    See documentation of reading functions for more details.
+
+
+- markdown: |
+    ### Load Sessions
+
+
+- markdown: |
+    The advantage of sessions is that you can load many arrays in one shot:
+    
+    ```python
+    # this load several arrays from a single Excel file (each array is stored on a different sheet)
+    s = Session()
+    s.load('test.xlsx')
+    # or 
+    s = Session('test.xlsx')
+    
+    # this load several arrays from a single HDF5 file (which is a very fast format)
+    s = Session()
+    s.load('test.h5')
+    # or 
+    s = Session('test.h5')
+    ```
+
+
+- markdown: |
+    ## Dump to CSV, Excel or HDF5 files
+    
+    Arrays can be dumped in CSV files
+    
+    ```python
+    household.to_csv('hh2.csv')
+    ```
+
+
+- markdown: |
+    or in Excel files
+    
+    ```python
+    # if the file does not already exist, it is created with a single sheet,
+    # otherwise a new sheet is added to it
+    household.to_excel('demography_2.xlsx', overwrite_file=True)
+    # it is usually better to specify the sheet explicitly (by name or position) though
+    household.to_excel('demography_2.xlsx', 'hh')
+    ```
+
+
+- markdown: |
+    or in HDF5 files
+    
+    ```python
+    household.to_hdf('demography_2.h5', 'hh')
+    ```
+
+
+- markdown: |
+    See documentation of writing methods for more details.
+
+
+- markdown: |
+    ### Dump Sessions
+
+
+- markdown: |
+    The advantage of sessions is that you can save many arrays in one shot:
+    
+    ```python
+    # this saves all the arrays in a single excel file (each array on a different sheet)
+    s.save('test.xlsx')
+    
+    # this saves all the arrays in a single HDF5 file (which is a very fast format)
+    s.save('test.h5')
+    ```
+
+
+- markdown: |
+    ## Interact with Excel files
+
+
+- markdown: |
+    ### Write Arrays
+    
+    Open an Excel file
+    
+    ```python
+    wb = open_excel('test.xlsx', overwrite_file=True)
+    ```
+
+
+- markdown: |
+    Put an array in an Excel Sheet, **excluding** headers (labels)
+    
+    ```python
+    # put arr at A1 in Sheet1, excluding headers (labels)
+    wb['Sheet1'] = arr
+    # same but starting at A9
+    # note that Sheet1 must exist
+    wb['Sheet1']['A9'] = arr
+    ```
+
+
+- markdown: |
+    Put an array in an Excel Sheet, **including** headers (labels)
+    
+    ```python
+    # dump arr at A1 in Sheet2, including headers (labels)
+    wb['Sheet2'] = arr.dump()
+    # same but starting at A10
+    wb['Sheet2']['A10'] = arr.dump()
+    ```
+
+
+- markdown: |
+    Save file to disk
+    
+    ```python
+    wb.save()
+    ```
+
+
+- markdown: |
+    Close file
+    
+    ```python
+    wb.close()
+    ```
+
+
+- markdown: |
+    ### Read Arrays
+    
+    Open an Excel file
+    
+    ```python
+    wb = open_excel('test.xlsx')
+    ```
+
+
+- markdown: |
+    Load an array from a sheet (assuming the presence of (correctly formatted) headers and only one array in sheet)
+    
+    ```python
+    # save one array in Sheet3 (including headers)
+    wb['Sheet3'] = arr.dump()
+    
+    # load array from the data starting at A1 in Sheet3
+    arr = wb['Sheet3'].load()
+    ```
+
+
+- markdown: |
+    Load an array with its axes information from a range
+    
+    ```python
+    # if you need to use the same sheet several times,
+    # you can create a sheet variable
+    sheet2 = wb['Sheet2']
+    
+    # load array contained in the 4 x 4 table defined by cells A10 and D14
+    arr2 = sheet2['A10:D14'].load()
+    ```
+
+
+- markdown: |
+    ### Read Ranges (experimental)
+    
+    Load an array (raw data) with no axis information from a range
+    
+    ```python
+    arr3 = wb['Sheet1']['A1:B4']
+    ```
+
+
+- markdown: |
+    in fact, this is not really an LArray ...
+    
+    ```python
+    type(arr3)
+    
+    larray.io.excel.Range
+    ```
+
+
+- markdown: |
+    ... but it can be used as such
+    
+    ```python
+    arr3.sum(axis=0)
+    ```
+
+
+- markdown: |
+    ... and it can be used for other stuff, like setting the formula instead of the value:
+    
+    ```python
+    arr3.formula = '=D10+1'
+    ```
+
+
+- markdown: |
+    In the future, we should also be able to set font name, size, style, etc.
+
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.6.4
+  livereveal:
+    autolaunch: false
+    scroll: true
+nbformat: 4
+nbformat_minor: 2
+
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
