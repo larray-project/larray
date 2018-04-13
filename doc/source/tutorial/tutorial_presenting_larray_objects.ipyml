@@ -1,0 +1,344 @@
+cells:
+
+- markdown: |
+    # Presenting LArray objects (Axis, Groups, LArray, Session)
+
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+  id: 1
+
+- markdown: |
+    ## Axis
+    
+    An ``Axis`` represents a dimension of an LArray object.
+    It consists of a name and a list of labels. 
+    
+    They are several ways to create an axis:
+
+
+- code: |
+    # create a wildcard axis
+    age = Axis(3, 'age')
+    # labels given as a list
+    time = Axis([2007, 2008, 2009], 'time')
+    # create an axis using one string
+    sex = Axis('sex=M,F')
+    # labels generated using a special syntax
+    other = Axis('other=A01..C03')
+    
+    age, sex, time, other
+
+  id: 2
+
+- markdown: |
+    ## Groups
+    
+    A ``Group`` represents a selection of labels from an Axis. It can optionally have a name (using operator ``>>``). 
+    Groups can be used when selecting a subset (#ref needed) of an array and in aggregations (#ref needed). 
+    
+    Group objects are created as follow:
+
+
+- code: |
+    # define an Axis object 'age'
+    age = Axis('age=0..100')
+    
+    # create an anonymous Group object 'teens'
+    teens = age[10:20]
+    # create a Group object 'pensioners' with a name 
+    pensioners = age[67:] >> 'pensioners'
+    
+    teens
+
+  id: 3
+
+- markdown: |
+    It is possible to set a name or to rename a group after its declaration: 
+
+
+- code: |
+    # method 'named' returns a new group with the given name
+    teens = teens.named('teens')
+    
+    # operator >> is just a shortcut for the call of the method named
+    teens = teens >> 'teens'
+    
+    teens
+
+  id: 4
+
+- markdown: |
+    ## LArray
+    
+    A ``LArray`` object represents a multidimensional array with labeled axes (#ref needed).
+    
+    ### Create an array from scratch
+    
+    To create an array from scratch, you need to provide the data and a list
+    of axes. Optionally, a title can be defined:
+
+
+- code: |
+    import numpy as np
+    
+    # list of the axes
+    axes = [age, sex, time, other]
+    # data (the shape of data array must match axes lengths)
+    data = np.random.randint(100, size=[len(axis) for axis in axes])
+    # title (optional)
+    title = 'random data'
+    
+    arr = LArray(data, axes, title)
+    arr
+
+  id: 5
+
+- markdown: |
+    ### Array creation functions
+    
+    Arrays can also be generated in an easier way through creation functions (#ref needed):
+    
+    -  `ndtest` : creates a test array with increasing numbers as data
+    -  `empty` : creates an array but leaves its allocated memory
+       unchanged (i.e., it contains "garbage". Be careful !)
+    -  `zeros`: fills an array with 0
+    -  `ones` : fills an array with 1
+    -  `full` : fills an array with a given value
+    -  `sequence` : creates an array from an axis by iteratively applying a function to a given initial value.
+    
+    Except for ndtest, a list of axes must be provided.
+    Axes can be passed in different ways:
+    
+    -  as Axis objects
+    -  as integers defining the lengths of auto-generated wildcard axes
+    -  as a string : 'sex=M,F;time=2007,2008,2009' (name is optional)
+    -  as pairs (name, labels)
+    
+    Optionally, the type of data stored by the array can be specified using argument dtype.
+
+
+- code: |
+    # start defines the starting value of data
+    ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
+
+  id: 6
+
+- code: |
+    # start defines the starting value of data
+    # label_start defines the starting index of labels
+    ndtest((3, 3), start=-1, label_start=2)
+
+  id: 7
+
+- code: |
+    # empty generates uninitialised array with correct axes
+    # (much faster but use with care!).
+    # This not really random either, it just reuses a portion
+    # of memory that is available, with whatever content is there.
+    # Use it only if performance matters and make sure all data
+    # will be overridden.
+    empty(['age=0..2', 'sex=M,F', 'time=2007..2009'])
+
+  id: 8
+
+- code: |
+    # example with anonymous axes
+    zeros(['0..2', 'M,F', '2007..2009'])
+
+  id: 9
+
+- code: |
+    # dtype=int forces to store int data instead of default float
+    ones(['age=0..2', 'sex=M,F', 'time=2007..2009'], dtype=int)
+
+  id: 10
+
+- code: |
+    full(['age=0..2', 'sex=M,F', 'time=2007..2009'], 1.23)
+
+  id: 11
+
+- markdown: |
+    All the above functions exist in *(func)_like* variants which take axes from another array
+
+
+- code: |
+    ones_like(arr)
+
+  id: 12
+
+- markdown: |
+    Create an array using the special ``sequence`` function (see link to documention of ``sequence`` in API reference for more examples):
+
+
+- code: |
+    # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
+    sequence('sex=M,F', initial=1.0, inc=0.5)
+
+  id: 13
+
+- markdown: |
+    ### Inspecting LArray objects
+
+
+- code: |
+    # create a test array
+    arr = ndtest([age, sex, time, other])
+
+  id: 14
+
+- markdown: |
+    Get array summary : dimensions + description of axes
+
+
+- code: |
+    arr.info
+
+  id: 15
+
+- markdown: |
+    Get axes
+
+
+- code: |
+    arr.axes
+
+  id: 16
+
+- markdown: |
+    Get array dimensions
+
+
+- code: |
+    arr.shape
+
+  id: 17
+
+- markdown: |
+    Get number of elements
+
+
+- code: |
+    arr.size
+
+  id: 18
+
+- markdown: |
+    Get size in memory
+
+
+- code: |
+    arr.memory_used
+
+  id: 19
+
+- markdown: |
+    Display the array in the viewer (graphical user interface) in read-only mode.
+    This will open a new window and block execution of the rest of code until the windows is closed! Required PyQt installed.
+    
+    ```python
+    view(arr)
+    ```
+
+
+- markdown: |
+    Or load it in Excel:
+    
+    ```python
+    arr.to_excel()
+    ```
+
+
+- markdown: |
+    ## Session
+    
+    A ``Session`` object is a dictionary-like object used to group several arrays (#ref needed). 
+    A session is particularly adapted to group all input arrays of a model or to group the output arrays from different scenarios.  
+    
+    In addition to simple dictionaries, sessions offer several specific methods, like: 
+    - ``save`` and ``load`` to save and load all arrays of a session at once in/from CSV or Excel or HDF5 file(s),
+    - ``equals`` and ``array_equals`` to compare arrays between two sessions (scenarios) one by one,
+    - ``apply`` to apply a function to all arrays of a session.
+    
+    See API Reference to explore the all methods of Session objects (#ref needed).
+
+
+- markdown: |
+    ### Create a Session
+    
+    Create an empty and populate it:
+
+
+- code: |
+    # create an empty session
+    s = Session()
+    
+    # populate the session using 2 ways:
+    # 1) with syntax: session.array_name = array
+    s.arr1 = ndtest((3, 3))
+    s.arr2 = ndtest((4, 2))
+    # 2) like a dictionary: session['array_name'] = array
+    s['arr3'] = ndtest((2, 4))
+    
+    s
+
+  id: 20
+
+- markdown: |
+    Load a session from a file:
+
+
+- code: |
+    from larray import EXAMPLE_FILES_DIR
+    
+    # path of the file to be read
+    filepath = EXAMPLE_FILES_DIR + 'demography.h5'
+    
+    # load session
+    s2 = Session(filepath)
+    
+    s2
+
+  id: 21
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.6.4
+  livereveal:
+    autolaunch: false
+    scroll: true
+nbformat: 4
+nbformat_minor: 2
+
+# ---------------------------------------------------------------------------
+data:
+  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]

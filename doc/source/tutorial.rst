@@ -15,4 +15,11 @@ page first.
 .. toctree::
    :maxdepth: 2
 
-   ./tutorial/tutorial.ipynb
+   ./tutorial/tutorial_presenting_larray_objects.ipynb
+   ./tutorial/tutorial_IO.ipynb
+   ./tutorial/tutorial_transforming.ipynb
+   ./tutorial/tutorial_indexing.ipynb
+   ./tutorial/tutorial_arithmetic_op_and_aggregation.ipynb
+   ./tutorial/tutorial_plotting.ipynb
+   ./tutorial/tutorial_miscellaneous.ipynb
+   ./tutorial/tutorial_sessions.ipynb
