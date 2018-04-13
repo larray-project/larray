@@ -16,7 +16,6 @@ from larray.inout.common import FileHandler
 __all__ = ['read_hdf']
 
 
-# TODO : add examples
 def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
     """Reads an array named key from a HDF5 file in filepath (path+name)
@@ -42,6 +41,68 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
     Returns
     -------
     LArray
+
+    Examples
+    --------
+    >>> import os
+    >>> from larray import EXAMPLE_FILES_DIR
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test.h5')
+
+    Read array by passing its identifier (key) inside the HDF file
+
+    >>> read_hdf(fname, '3d')
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   6   7   8
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1  15  16  17
+
+    Missing label combinations
+
+    >>> # by default, cells associated with missing label combinations are fulfilled with NaN.
+    >>> # In that case, an int array are converted to a float array.
+    >>> read_hdf(fname, 'missing_values')
+    a  b\c    c0    c1    c2
+    1   b0   0.0   1.0   2.0
+    1   b1   3.0   4.0   5.0
+    2   b0   nan   nan   nan
+    2   b1   9.0  10.0  11.0
+    3   b0  12.0  13.0  14.0
+    3   b1   nan   nan   nan
+    >>> # using argument 'fill_value', you can choose which value to set in cells
+    >>> # associated with missing label .
+    >>> read_hdf(fname, 'missing_values', fill_value=0)
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   0   0   0
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1   0   0   0
+
+    Sort rows and columns
+
+    >>> # let's first read the array 'unsorted' as it.
+    >>> read_hdf(fname, 'unsorted')
+    a  b\c  c2  c1  c0
+    3   b1   0   1   2
+    3   b0   3   4   5
+    2   b1   6   7   8
+    2   b0   9  10  11
+    1   b1  12  13  14
+    1   b0  15  16  17
+    >>> # by setting arguments 'sort_rows' and 'sort_columns' to True,
+    >>> # the output array has rows and columns sorted.
+    >>> read_hdf(fname, 'unsorted', sort_rows=True, sort_columns=True)
+    a  b\c  c0  c1  c2
+    1   b0  17  16  15
+    1   b1  14  13  12
+    2   b0  11  10   9
+    2   b1   8   7   6
+    3   b0   5   4   3
+    3   b1   2   1   0
     """
     if not np.isnan(na):
         fill_value = na
@@ -56,7 +117,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
         # for backward compatibility but any object read from an hdf file should have an attribute 'type'
         _type = attrs.type if 'type' in dir(attrs) else 'Array'
         if _type == 'Array':
-            res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, parse_header=False)
+            res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
+                              parse_header=False)
         elif _type == 'Axis':
             if name is None:
                 name = str(pd_obj.name)

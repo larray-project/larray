@@ -18,7 +18,6 @@ from larray.inout.xw_excel import open_excel
 __all__ = ['read_excel']
 
 
-# TODO : add examples
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
@@ -56,6 +55,138 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
         installed and relies on Pandas default reader otherwise.
     **kwargs
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> import os
+    >>> from larray import EXAMPLE_FILES_DIR
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test.xlsx')
+
+    Read array from first sheet
+
+    >>> read_excel(fname)
+    a  a0  a1  a2
+        0   1   2
+
+    Read array from a specific sheet
+
+    >>> read_excel(fname, '3d')
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   6   7   8
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1  15  16  17
+
+    Missing label combinations
+
+    >>> # let's take a look inside the sheet 'missing_values'.
+    >>> # they are missing label combinations: (a=2, b=b0) and (a=3, b=b1):
+
+    a  b\c  c0  c1  c2
+    1  b0   0   1   2
+    1  b1   3   4   5
+    2  b1   9   10  11
+    3  b0   12  13  14
+
+    >>> # by default, cells associated with missing label combinations are fulfilled with NaN.
+    >>> # In that case, an int array are converted to a float array.
+    >>> read_excel(fname, 'missing_values')
+    a  b\c    c0    c1    c2
+    1   b0   0.0   1.0   2.0
+    1   b1   3.0   4.0   5.0
+    2   b0   nan   nan   nan
+    2   b1   9.0  10.0  11.0
+    3   b0  12.0  13.0  14.0
+    3   b1   nan   nan   nan
+    >>> # using argument 'fill_value', you can choose which value to set in cells
+    >>> # associated with missing label combinations.
+    >>> read_excel(fname, 'missing_values', fill_value=0)
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   0   0   0
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1   0   0   0
+
+    Specify the number of axes of the output array (useful when the name of the last axis is implicit)
+
+    >>> # read the array stored in the CSV file as it
+    >>> read_excel(fname, '2d_classic')
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+    >>> # using argument 'nb_axes', you can force the number of axes of the output array
+    >>> read_excel(fname, '2d_classic', nb_axes=2)
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+
+    Sort rows and columns
+
+    >>> # let's first read the arrays from sheet 'unsorted' as it:
+    >>> read_excel(fname, 'unsorted')
+    a  b\c  c2  c1  c0
+    3   b1   0   1   2
+    3   b0   3   4   5
+    2   b1   6   7   8
+    2   b0   9  10  11
+    1   b1  12  13  14
+    1   b0  15  16  17
+    >>> # by setting arguments 'sort_rows' and 'sort_columns' to True,
+    >>> # the output array has rows and columns sorted.
+    >>> read_excel(fname, 'unsorted', sort_rows=True, sort_columns=True)
+    a  b\c  c0  c1  c2
+    1   b0  17  16  15
+    1   b1  14  13  12
+    2   b0  11  10   9
+    2   b1   8   7   6
+    3   b0   5   4   3
+    3   b1   2   1   0
+
+    Read array saved in "narrow" format (wide=False)
+
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test_narrow.xlsx')
+    >>> # let's take a look inside the sheet '3d'.
+    >>> # The data are stored in a 'narrow' format:
+
+    a  b   c   value
+    1  b0  c0  0
+    1  b0  c1  1
+    1  b0  c2  2
+    1  b1  c0  3
+    1  b1  c1  4
+    1  b1  c2  5
+    2  b0  c0  6
+    2  b0  c1  7
+    2  b0  c2  8
+    2  b1  c0  9
+    2  b1  c1  10
+    2  b1  c2  11
+    3  b0  c0  12
+    3  b0  c1  13
+    3  b0  c2  14
+    3  b1  c0  15
+    3  b1  c1  16
+    3  b1  c2  17
+
+    >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
+    >>> read_excel(fname, '3d', wide=False)
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   6   7   8
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1  15  16  17
     """
     if not np.isnan(na):
         fill_value = na
