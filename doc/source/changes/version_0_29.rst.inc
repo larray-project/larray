@@ -43,6 +43,8 @@ Miscellaneous improvements
     >>> s2
     Session(arr1, arr2, a, b, a01)
 
+* added examples for `read_excel` and `read_hdf` function (closes :issue:`617`).
+
 
 Fixes
 -----
