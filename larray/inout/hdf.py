@@ -80,28 +80,6 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
     2   b1   9  10  11
     3   b0  12  13  14
     3   b1   0   0   0
-
-    Sort rows and columns
-
-    >>> # let's first read the array 'unsorted' as it.
-    >>> read_hdf(fname, 'unsorted')
-    a  b\c  c2  c1  c0
-    3   b1   0   1   2
-    3   b0   3   4   5
-    2   b1   6   7   8
-    2   b0   9  10  11
-    1   b1  12  13  14
-    1   b0  15  16  17
-    >>> # by setting arguments 'sort_rows' and 'sort_columns' to True,
-    >>> # the output array has rows and columns sorted.
-    >>> read_hdf(fname, 'unsorted', sort_rows=True, sort_columns=True)
-    a  b\c  c0  c1  c2
-    1   b0  17  16  15
-    1   b1  14  13  12
-    2   b0  11  10   9
-    2   b1   8   7   6
-    3   b0   5   4   3
-    3   b1   2   1   0
     """
     if not np.isnan(na):
         fill_value = na

@@ -72,19 +72,16 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     --------
     >>> import os
     >>> from larray import EXAMPLE_FILES_DIR
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test3d.csv')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test2d.csv')
     >>> read_csv(fname)
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   6   7   8
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1  15  16  17
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
 
     Missing label combinations
 
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'testmissing_values.csv')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'missing_values_3d.csv')
     >>> # let's take a look inside the CSV file.
     >>> # they are missing label combinations: (a=2, b=b0) and (a=3, b=b1)
     >>> with open(fname) as f:
@@ -116,7 +113,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test2d_classic.csv')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'missing_axis_name.csv')
     >>> # let's take a look inside the CSV file.
     >>> # The name of the second axis is missing.
     >>> with open(fname) as f:
@@ -140,62 +137,24 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Read array saved in "narrow" format (wide=False)
 
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test3d_narrow.csv')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'narrow_2d.csv')
     >>> # let's take a look inside the CSV file.
     >>> # Here, data are stored in a 'narrow' format.
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    a,b,c,value
-    1,b0,c0,0
-    1,b0,c1,1
-    1,b0,c2,2
-    1,b1,c0,3
-    1,b1,c1,4
-    1,b1,c2,5
-    2,b0,c0,6
-    2,b0,c1,7
-    2,b0,c2,8
-    2,b1,c0,9
-    2,b1,c1,10
-    2,b1,c2,11
-    3,b0,c0,12
-    3,b0,c1,13
-    3,b0,c2,14
-    3,b1,c0,15
-    3,b1,c1,16
-    3,b1,c2,17
+    a,b,value
+    1,b0,0
+    1,b1,1
+    2,b0,2
+    2,b1,3
+    3,b0,4
+    3,b1,5
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_csv
     >>> read_csv(fname, wide=False)
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   6   7   8
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1  15  16  17
-
-    Sort rows and columns
-
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'testunsorted_narrow.csv')
-    >>> # let's first read the data as it.
-    >>> read_csv(fname, wide=False)
-    a  b\c  c2  c1  c0
-    3   b1   0   1   2
-    3   b0   3   4   5
-    2   b1   6   7   8
-    2   b0   9  10  11
-    1   b1  12  13  14
-    1   b0  15  16  17
-    >>> # by setting arguments 'sort_rows' and 'sort_columns' to True,
-    >>> # the output array has rows and columns sorted.
-    >>> read_csv(fname, wide=False, sort_rows=True, sort_columns=True)
-    a  b\c  c0  c1  c2
-    1   b0  17  16  15
-    1   b1  14  13  12
-    2   b0  11  10   9
-    2   b1   8   7   6
-    3   b0   5   4   3
-    3   b1   2   1   0
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
     """
     if not np.isnan(na):
         fill_value = na

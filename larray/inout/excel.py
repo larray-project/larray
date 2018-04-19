@@ -64,7 +64,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     --------
     >>> import os
     >>> from larray import EXAMPLE_FILES_DIR
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test.xlsx')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'examples.xlsx')
 
     Read array from first sheet
 
@@ -74,14 +74,11 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
 
     Read array from a specific sheet
 
-    >>> read_excel(fname, '3d')
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   6   7   8
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1  15  16  17
+    >>> read_excel(fname, '2d')
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
 
     Missing label combinations
 
@@ -117,75 +114,37 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
     >>> # read the array stored in the CSV file as it
-    >>> read_excel(fname, '2d_classic')
+    >>> read_excel(fname, 'missing_axis_name')
     a\{1}  b0  b1  b2
        a0   0   1   2
        a1   3   4   5
        a2   6   7   8
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> read_excel(fname, '2d_classic', nb_axes=2)
+    >>> read_excel(fname, 'missing_axis_name', nb_axes=2)
     a\{1}  b0  b1  b2
        a0   0   1   2
        a1   3   4   5
        a2   6   7   8
 
-    Sort rows and columns
-
-    >>> # let's first read the arrays from sheet 'unsorted' as it:
-    >>> read_excel(fname, 'unsorted')
-    a  b\c  c2  c1  c0
-    3   b1   0   1   2
-    3   b0   3   4   5
-    2   b1   6   7   8
-    2   b0   9  10  11
-    1   b1  12  13  14
-    1   b0  15  16  17
-    >>> # by setting arguments 'sort_rows' and 'sort_columns' to True,
-    >>> # the output array has rows and columns sorted.
-    >>> read_excel(fname, 'unsorted', sort_rows=True, sort_columns=True)
-    a  b\c  c0  c1  c2
-    1   b0  17  16  15
-    1   b1  14  13  12
-    2   b0  11  10   9
-    2   b1   8   7   6
-    3   b0   5   4   3
-    3   b1   2   1   0
-
     Read array saved in "narrow" format (wide=False)
 
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test_narrow.xlsx')
-    >>> # let's take a look inside the sheet '3d'.
+    >>> # let's take a look inside the sheet 'narrow_2d'.
     >>> # The data are stored in a 'narrow' format:
 
-    a  b   c   value
-    1  b0  c0  0
-    1  b0  c1  1
-    1  b0  c2  2
-    1  b1  c0  3
-    1  b1  c1  4
-    1  b1  c2  5
-    2  b0  c0  6
-    2  b0  c1  7
-    2  b0  c2  8
-    2  b1  c0  9
-    2  b1  c1  10
-    2  b1  c2  11
-    3  b0  c0  12
-    3  b0  c1  13
-    3  b0  c2  14
-    3  b1  c0  15
-    3  b1  c1  16
-    3  b1  c2  17
+    a  b   value
+    1  b0  0
+    1  b1  1
+    2  b0  2
+    2  b1  3
+    3  b0  4
+    3  b1  5
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
-    >>> read_excel(fname, '3d', wide=False)
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   6   7   8
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1  15  16  17
+    >>> read_excel(fname, 'narrow_2d', wide=False)
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
     """
     if not np.isnan(na):
         fill_value = na
