@@ -94,8 +94,8 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     1,b1,3,4,5
     2,b1,9,10,11
     3,b0,12,13,14
-    >>> # by default, cells associated with missing label combinations are fulfilled with NaN.
-    >>> # In that case, an int array are converted to a float array.
+    >>> # by default, cells associated with missing label combinations are filled with NaN.
+    >>> # In that case, an int array is converted to a float array.
     >>> read_csv(fname)
     a  b\c    c0    c1    c2
     1   b0   0.0   1.0   2.0
@@ -104,8 +104,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     2   b1   9.0  10.0  11.0
     3   b0  12.0  13.0  14.0
     3   b1   nan   nan   nan
-    >>> # using argument 'fill_value', you can choose which value to set in cells
-    >>> # associated with missing label .
+    >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
     >>> read_csv(fname, fill_value=0)
     a  b\c  c0  c1  c2
     1   b0   0   1   2
