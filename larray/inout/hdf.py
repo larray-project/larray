@@ -92,7 +92,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
         pd_obj = store.get(key)
         attrs = store.get_storer(key).attrs
         # for backward compatibility but any object read from an hdf file should have an attribute 'type'
-        _type = attrs.type if 'type' in dir(attrs) else 'Array'
+        _type = attrs.type if 'type' in attrs else 'Array'
         if _type == 'Array':
             res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
                               parse_header=False)
