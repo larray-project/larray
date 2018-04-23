@@ -18,7 +18,6 @@ from larray.inout.xw_excel import open_excel
 __all__ = ['read_excel']
 
 
-# TODO : add examples
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
@@ -56,6 +55,96 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
         Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
         installed and relies on Pandas default reader otherwise.
     **kwargs
+
+    Returns
+    -------
+    LArray
+
+    Examples
+    --------
+    >>> import os
+    >>> from larray import EXAMPLE_FILES_DIR
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'examples.xlsx')
+
+    Read array from first sheet
+
+    >>> read_excel(fname)
+    a  a0  a1  a2
+        0   1   2
+
+    Read array from a specific sheet
+
+    >>> read_excel(fname, '2d')
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
+
+    Missing label combinations
+
+    >>> # let's take a look inside the sheet 'missing_values'.
+    >>> # they are missing label combinations: (a=2, b=b0) and (a=3, b=b1):
+
+    a  b\c  c0  c1  c2
+    1  b0   0   1   2
+    1  b1   3   4   5
+    2  b1   9   10  11
+    3  b0   12  13  14
+
+    >>> # by default, cells associated with missing label combinations are filled with NaN.
+    >>> # In that case, an int array is converted to a float array.
+    >>> read_excel(fname, sheet='missing_values')
+    a  b\c    c0    c1    c2
+    1   b0   0.0   1.0   2.0
+    1   b1   3.0   4.0   5.0
+    2   b0   nan   nan   nan
+    2   b1   9.0  10.0  11.0
+    3   b0  12.0  13.0  14.0
+    3   b1   nan   nan   nan
+    >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
+    >>> read_excel(fname, sheet='missing_values', fill_value=0)
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   0   0   0
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1   0   0   0
+
+    Specify the number of axes of the output array (useful when the name of the last axis is implicit)
+
+    >>> # read the array stored in the CSV file as it
+    >>> read_excel(fname, sheet='missing_axis_name')
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+    >>> # using argument 'nb_axes', you can force the number of axes of the output array
+    >>> read_excel(fname, sheet='missing_axis_name', nb_axes=2)
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+
+    Read array saved in "narrow" format (wide=False)
+
+    >>> # let's take a look inside the sheet 'narrow_2d'.
+    >>> # The data are stored in a 'narrow' format:
+
+    a  b   value
+    1  b0  0
+    1  b1  1
+    2  b0  2
+    2  b1  3
+    3  b0  4
+    3  b1  5
+
+    >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
+    >>> read_excel(fname, 'narrow_2d', wide=False)
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
     """
     if not np.isnan(na):
         fill_value = na

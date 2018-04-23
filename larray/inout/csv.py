@@ -70,58 +70,91 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Examples
     --------
-    >>> tmpdir = getfixture('tmpdir')
-    >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
-    >>> a = ndtest('nat=BE,FO;sex=M,F')
-    >>> a
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
-    >>> a.to_csv(fname)
-    >>> with open(fname) as f:
-    ...     print(f.read().strip())
-    nat\\sex,M,F
-    BE,0,1
-    FO,2,3
+    >>> import os
+    >>> from larray import EXAMPLE_FILES_DIR
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test2d.csv')
     >>> read_csv(fname)
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
 
-    Sort columns
+    Missing label combinations
 
-    >>> read_csv(fname, sort_columns=True)
-    nat\\sex  F  M
-         BE  1  0
-         FO  3  2
-
-    Read array saved in "narrow" format (wide=False)
-
-    >>> a.to_csv(fname, wide=False)
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'missing_values_3d.csv')
+    >>> # let's take a look inside the CSV file.
+    >>> # they are missing label combinations: (a=2, b=b0) and (a=3, b=b1)
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    nat,sex,value
-    BE,M,0
-    BE,F,1
-    FO,M,2
-    FO,F,3
-    >>> read_csv(fname, wide=False)
-    nat\\sex  M  F
-         BE  0  1
-         FO  2  3
+    a,b\c,c0,c1,c2
+    1,b0,0,1,2
+    1,b1,3,4,5
+    2,b1,9,10,11
+    3,b0,12,13,14
+    >>> # by default, cells associated with missing label combinations are filled with NaN.
+    >>> # In that case, an int array is converted to a float array.
+    >>> read_csv(fname)
+    a  b\c    c0    c1    c2
+    1   b0   0.0   1.0   2.0
+    1   b1   3.0   4.0   5.0
+    2   b0   nan   nan   nan
+    2   b1   9.0  10.0  11.0
+    3   b0  12.0  13.0  14.0
+    3   b1   nan   nan   nan
+    >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
+    >>> read_csv(fname, fill_value=0)
+    a  b\c  c0  c1  c2
+    1   b0   0   1   2
+    1   b1   3   4   5
+    2   b0   0   0   0
+    2   b1   9  10  11
+    3   b0  12  13  14
+    3   b1   0   0   0
 
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
-    >>> a.to_csv(fname, dialect='classic')
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'missing_axis_name.csv')
+    >>> # let's take a look inside the CSV file.
+    >>> # The name of the second axis is missing.
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    nat,M,F
-    BE,0,1
-    FO,2,3
+    a,b0,b1,b2
+    a0,0,1,2
+    a1,3,4,5
+    a2,6,7,8
+    >>> # read the array stored in the CSV file as is
+    >>> read_csv(fname)
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+    >>> # using argument 'nb_axes', you can force the number of axes of the output array
     >>> read_csv(fname, nb_axes=2)
-    nat\\{1}  M  F
-         BE  0  1
-         FO  2  3
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+       a2   6   7   8
+
+    Read array saved in "narrow" format (wide=False)
+
+    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'narrow_2d.csv')
+    >>> # let's take a look inside the CSV file.
+    >>> # Here, data are stored in a 'narrow' format.
+    >>> with open(fname) as f:
+    ...     print(f.read().strip())
+    a,b,value
+    1,b0,0
+    1,b1,1
+    2,b0,2
+    2,b1,3
+    3,b0,4
+    3,b1,5
+    >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_csv
+    >>> read_csv(fname, wide=False)
+    a\\b  b0  b1
+      1   0   1
+      2   2   3
+      3   4   5
     """
     if not np.isnan(na):
         fill_value = na
