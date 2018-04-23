@@ -122,7 +122,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     a0,0,1,2
     a1,3,4,5
     a2,6,7,8
-    >>> # read the array stored in the CSV file as it
+    >>> # read the array stored in the CSV file as is
     >>> read_csv(fname)
     a\{1}  b0  b1  b2
        a0   0   1   2
