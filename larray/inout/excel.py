@@ -93,7 +93,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
 
     >>> # by default, cells associated with missing label combinations are filled with NaN.
     >>> # In that case, an int array is converted to a float array.
-    >>> read_excel(fname, 'missing_values')
+    >>> read_excel(fname, sheet='missing_values')
     a  b\c    c0    c1    c2
     1   b0   0.0   1.0   2.0
     1   b1   3.0   4.0   5.0
@@ -102,7 +102,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     3   b0  12.0  13.0  14.0
     3   b1   nan   nan   nan
     >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
-    >>> read_excel(fname, 'missing_values', fill_value=0)
+    >>> read_excel(fname, sheet='missing_values', fill_value=0)
     a  b\c  c0  c1  c2
     1   b0   0   1   2
     1   b1   3   4   5
@@ -114,13 +114,13 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.na
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
     >>> # read the array stored in the CSV file as it
-    >>> read_excel(fname, 'missing_axis_name')
+    >>> read_excel(fname, sheet='missing_axis_name')
     a\{1}  b0  b1  b2
        a0   0   1   2
        a1   3   4   5
        a2   6   7   8
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> read_excel(fname, 'missing_axis_name', nb_axes=2)
+    >>> read_excel(fname, sheet='missing_axis_name', nb_axes=2)
     a\{1}  b0  b1  b2
        a0   0   1   2
        a1   3   4   5
