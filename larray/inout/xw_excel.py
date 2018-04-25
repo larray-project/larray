@@ -66,7 +66,7 @@ if xw is not None:
 
     # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
-        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
+        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, load_addins=None, app=None):
             global global_app
 
             xw_wkb = None
@@ -123,10 +123,10 @@ if xw is not None:
                 else:
                     app = "global"
 
-            load_addins = False
+            own_app = False
             if app == "new":
                 app = xw.App(visible=visible, add_book=False)
-                load_addins = True
+                own_app = True
             elif app == "active":
                 app = xw.apps.active
             elif app == "global":
@@ -134,23 +134,27 @@ if xw is not None:
                     atexit.register(kill_global_app)
                 if global_app is None or not is_app_alive(global_app):
                     global_app = xw.App(visible=visible, add_book=False)
-                    load_addins = True
                 app = global_app
             assert isinstance(app, xw.App)
+
+            if load_addins is None:
+                load_addins = visible and own_app
+
+            # activate XLA(M) addins, if nee
+            # By default, add-ins are not activated when an Excel Workbook is opened via COM
+            if load_addins:
+                xl_app = app.api
+                for i in range(1, xl_app.AddIns.Count + 1):
+                    addin = xl_app.AddIns(i)
+                    addin_path = addin.FullName
+                    if addin.Installed and '.xll' not in addin_path.lower():
+                        xl_app.Workbooks.Open(addin_path)
 
             if visible:
                 app.visible = visible
 
             if silent is None:
                 silent = not visible
-
-            # activate XLA(M) addins
-            # (for some reasons, add-ins are not activated when an Excel Workbook is opened from Python)
-            if load_addins:
-                for ia in range(1, app.api.Addins.Count + 1):
-                    addin_path = app.api.Addins(ia).FullName
-                    if not '.xll' in addin_path.lower():
-                        app.api.Workbooks.Open(addin_path)
 
             update_links_backup = app.api.AskToUpdateLinks
             display_alerts_backup = app.display_alerts
@@ -675,6 +679,8 @@ visible : None or bool, optional
 silent : None or bool, optional
     whether or not to show dialog boxes for updating links or when some links cannot be updated.
     Defaults to False if visible, True otherwise.
+load_addins : None or bool, optional
+    whether or not to load Excel addins. Defaults to True if visible and app == "new", False otherwise.
 app : None, "new", "active", "global" or xlwings.App, optional
     use "new" for opening a new Excel instance, "active" for the last active instance (including ones opened by the
     user) and "global" to (re)use the same instance for all workbooks of a program. None is equivalent to "active" if
