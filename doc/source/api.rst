@@ -572,7 +572,7 @@ Testing
 .. autosummary::
    :toctree: _generated/
 
-   Session.array_equals
+   Session.element_equals
    Session.equals
 
 Selecting
