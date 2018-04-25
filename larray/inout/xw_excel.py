@@ -181,6 +181,10 @@ if xw is not None:
 
             self.xw_wkb = xw_wkb
 
+        @property
+        def app(self):
+            return self.xw_wkb.app
+
         def __contains__(self, key):
             if isinstance(key, int):
                 length = len(self)
@@ -207,7 +211,7 @@ if xw is not None:
                 self.new_workbook = False
             key_in_self = key in self
             if isinstance(value, Sheet):
-                if value.xw_sheet.book.app != self.xw_wkb.app:
+                if value.xw_sheet.book.app != self.app:
                     raise ValueError("cannot copy a sheet from one instance of Excel to another")
 
                 # xlwings index is 1-based
