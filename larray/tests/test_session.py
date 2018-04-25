@@ -98,8 +98,8 @@ class TestSession(TestCase):
     def test_getitem_larray(self):
         s1 = self.session.filter(kind=LArray)
         s2 = Session({'e': self.e + 1, 'f': self.f})
-        res_eq = s1[s1.array_equals(s2)]
-        res_neq = s1[~(s1.array_equals(s2))]
+        res_eq = s1[s1.element_equals(s2)]
+        res_neq = s1[~(s1.element_equals(s2))]
         assert list(res_eq) == [self.f]
         assert list(res_neq) == [self.e, self.g]
 
@@ -339,10 +339,10 @@ class TestSession(TestCase):
     def test_array_equals(self):
         sess = self.session.filter(kind=LArray)
         expected = Session([('e', self.e), ('f', self.f), ('g', self.g)])
-        assert all(sess.array_equals(expected))
+        assert all(sess.element_equals(expected))
 
         other = Session({'e': self.e, 'f': self.f})
-        res = sess.array_equals(other)
+        res = sess.element_equals(other)
         assert res.ndim == 1
         assert res.axes.names == ['name']
         assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
@@ -351,7 +351,7 @@ class TestSession(TestCase):
         e2 = self.e.copy()
         e2.i[1, 1] = 42
         other = Session({'e': e2, 'f': self.f})
-        res = sess.array_equals(other)
+        res = sess.element_equals(other)
         assert res.axes.names == ['name']
         assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
         assert list(res) == [False, False, True]

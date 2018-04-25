@@ -13,6 +13,28 @@ anonymous = Axis(range(3))
 age_wildcard = Axis(10, 'wildcard')
 
 
+def test_equals():
+    a = Axis('a=a0..a2')
+    # keys are single value
+    assert a['a0'].equals(a['a0'])
+    # keys are arrays
+    assert a[np.array(['a0', 'a2'])].equals(a[np.array(['a0', 'a2'])])
+    # axis names
+    anonymous_axis = Axis('a0..a2')
+    assert anonymous_axis['a0:a2'].equals(anonymous_axis['a0:a2'])
+    assert not a['a0:a2'].equals(anonymous_axis['a0:a2'])
+    assert not a['a0:a2'].equals(a.rename('other_name')['a0:a2'])
+    # list of labels
+    a02 = a['a0,a1,a2'] >> 'group'
+    assert a02.equals(a02)
+    a02_unamed = a['a0,a1,a2']
+    assert not a02.equals(a02_unamed)
+    a13 = a['a1,a2,a3'] >> 'group'
+    assert not a02.equals(a13)
+    a02_other_axis_name = a.rename('other_name')['a0,a1,a2'] >> 'group'
+    assert not a02.equals(a02_other_axis_name)
+
+
 # ################## #
 #       LGroup       #
 # ################## #
@@ -66,7 +88,7 @@ def test_init_lgroup(lgroups):
     axis = Axis('axis=a,a0..a3,b,b0..b3,c,c0..c3')
     for code in axis.matching('^.$'):
         group = axis.startingwith(code) >> code
-        assert group == axis.startingwith(code) >> str(code)
+        assert group.equals(axis.startingwith(code) >> str(code))
 
 def test_eq_lgroup(lgroups):
     # with axis vs no axis do not compare equal

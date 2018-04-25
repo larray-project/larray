@@ -13,9 +13,21 @@ Backward incompatible changes
 New features
 ------------
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
+* added method `equals` to Group which compares group names, associated axis names
+  and labels between two groups:
 
-* added another feature.
+    >>> a = Axis('a=a0..a3')
+    >>> a02 = a['a0:a2'] >> 'group_a'
+    >>> # different group name
+    >>> a02.equals(a['a0:a2'])
+    False
+    >>> # different axis name
+    >>> other_axis = a.rename('other_name')
+    >>> a02.equals(other_axis['a0:a2'] >> 'group_a')
+    False
+    >>> # different labels
+    >>> a02.equals(a['a1:a3'] >> 'group_a')
+    False
 
 
 .. _misc:
@@ -93,6 +105,45 @@ Miscellaneous improvements
     arr3 -> a, b (3 x 2)
       title = array 3
       dtype = int64
+
+* renamed method `array_equals` of Session as `element_equals`.
+
+* methods `equals` and `element_equals` of Session also compare axes and groups in addition to arrays
+  (closes :issue:`610`):
+
+    >>> a = Axis('a=a0..a2')
+    >>> a01 = a['a0,a1'] >> 'a01'
+    >>> s1 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+    >>> s2 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+
+    Identical sessions
+
+    >>> s1.element_equals(s2)
+    name     a   a01  arr1  arr2
+          True  True  True  True
+
+    Different value(s) between two arrays
+
+    >>> s2.arr1['a1'] = 0
+    >>> s1.element_equals(s2)
+    name     a   a01   arr1  arr2
+          True  True  False  True
+
+    Different label(s)
+
+    >>> s2.arr2 = ndtest("b=b0,b1; a=a0,a1")
+    >>> s2.a = Axis('a=a0,a1')
+    >>> s1.element_equals(s2)
+    name      a   a01   arr1   arr2
+          False  True  False  False
+
+    Extra/missing objects
+
+    >>> s2.arr3 = ndtest((3, 3))
+    >>> del s2.a
+    >>> s1.element_equals(s2)
+    name      a   a01   arr1   arr2   arr3
+          False  True  False  False  False
 
 
 Fixes
