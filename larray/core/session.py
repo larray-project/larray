@@ -929,7 +929,7 @@ class Session(object):
         >>> arr2 = ndtest((2, 2))
         >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
         >>> def print_summary(s):
-        ...     print(s.summary("{name} -> {axes_names}"))
+        ...     print(s.summary({"array": "{name} -> {axes_names}"}))
         >>> print_summary(sess)
         arr1 -> a, b, c
         arr2 -> a, b
@@ -1061,40 +1061,84 @@ class Session(object):
 
         Parameters
         ----------
-        template: str
+        template: dict {str: str}
             Template describing how items are summarized (see examples).
-            Available arguments are 'name', 'axes_names' and 'title'
+            Accepted keys are 'axis', 'group' and 'array'.
+            Available arguments are 'name', 'group_name', 'axis', 'labels' and 'length' for groups,
+            'name', 'axis_name', 'labels' and 'length' for axes and
+            'name', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
 
         Returns
         -------
         str
-            Short representation of the content of the session (arrays only).
+            Short representation of the content of the session.
 .
         Examples
         --------
-        >>> arr1 = ndtest((2, 2), title='array 1')
-        >>> arr2 = ndtest(4, title='array 2')
-        >>> arr3 = ndtest((3, 2), title='array 3')
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1 = ndtest((2, 2), title='array 1', dtype=np.int64)
+        >>> arr2 = ndtest(4, title='array 2', dtype=np.int64)
+        >>> arr3 = ndtest((3, 2), title='array 3', dtype=np.int64)
+        >>> s = Session([('axis1', axis1), ('group1', group1), ('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+
+        Default template
+
         >>> print(s.summary())  # doctest: +NORMALIZE_WHITESPACE
-        arr1: a, b
+        axis1: a ['a0' 'a1' 'a2'] (3)
+        group1: a01@a ['a0', 'a1'] (2)
+        arr1: a, b (2 x 2)
             array 1
-        arr2: a
+            int64
+        arr2: a (4)
             array 2
-        arr3: a, b
+            int64
+        arr3: a, b (3 x 2)
             array 3
-        >>> print(s.summary("{name} -> {axes_names}"))
-        arr1 -> a, b
-        arr2 -> a
-        arr3 -> a, b
+            int64
+
+        Using a specific template
+
+        >>> template = {"axis":  "{name} -> {axis_name} [{labels}] ({length})",
+        ...             "group": "{name} -> {group_name}:{axis} {labels} ({length})",
+        ...             "array": "{name} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
+        >>> print(s.summary(template))
+        axis1 -> a ['a0' 'a1' 'a2'] (3)
+        group1 -> a01:a ['a0', 'a1'] (2)
+        arr1 -> a, b (2 x 2)
+          title = array 1
+          dtype = int64
+        arr2 -> a (4)
+          title = array 2
+          dtype = int64
+        arr3 -> a, b (3 x 2)
+          title = array 3
+          dtype = int64
         """
         if template is None:
-            template = "{name}: {axes_names}\n    {title}\n"
-        templ_kwargs = [{'name': k,
-                         'axes_names': ', '.join(v.axes.display_names),
-                         'title': v.title}
-                        for k, v in self.items() if isinstance(v, LArray)]
-        return '\n'.join(template.format(**kwargs) for kwargs in templ_kwargs)
+            template = {}
+        if 'axis' not in template:
+            template['axis'] = "{name}: {axis_name} [{labels}] ({length})"
+        if 'group' not in template:
+            template["group"] = "{name}: {group_name}@{axis} {labels} ({length})"
+        if 'array' not in template:
+            template["array"] = "{name}: {axes_names} ({shape})\n    {title}\n    {dtype}"
+
+        def kind_kwargs(k, v):
+            if isinstance(v, Axis):
+                return ('axis', {'name': k, 'axis_name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
+            elif isinstance(v, Group):
+                return ('group', {'name': k, 'group_name': v.name, 'axis': v.axis.name, 'labels': v.key,
+                                  'length': len(v)})
+            elif isinstance(v, LArray):
+                return ('array', {'name': k, 'axes_names': ', '.join(v.axes.display_names),
+                                  'shape': ' x '.join(str(i) for i in v.shape), 'title': v.title, 'dtype': v.dtype})
+            else:
+                return None
+
+        templ_kwargs = [kind_kwargs(k, v) for k, v in self.items()]
+        templ_kwargs = [k for k in templ_kwargs if k is not None]
+        return '\n'.join(template[kind].format(**kwargs) for kind, kwargs in templ_kwargs)
 
 
 def _exclude_private_vars(vars_dict):
