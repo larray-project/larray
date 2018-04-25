@@ -1055,6 +1055,69 @@ class Group(object):
     __ne__ = _binop('ne')
     __eq__ = _binop('eq')
 
+    def equals(self, other):
+        """
+        Checks if this group is equal to another group.
+        Two groups are equal if they have the same group and axis names and correspond to the same labels.
+
+        Parameters
+        ----------
+        other : Group
+            Group to compare with.
+
+        Returns
+        -------
+        bool
+            True if the other group is equal to this group, False otherwise.
+
+        Examples
+        --------
+        >>> from larray import Axis
+        >>> a = Axis('a=a0..a3')
+        >>> a02 = a['a0:a2'] >> 'group_a'
+
+        Same group names, axis names and labels
+
+        >>> a02.equals(a02)
+        True
+
+        Different group names (one is None)
+
+        >>> a02.equals(a['a0:a2'])
+        False
+
+        Different axis name
+
+        >>> other_axis = a.rename('other_name')
+        >>> a02.equals(other_axis['a0:a2'] >> 'group_a')
+        False
+
+        Different labels
+
+        >>> a02.equals(a['a1:a3'] >> 'group_a')
+        False
+
+        Mixing slice and list groups
+
+        >>> a['a0:a2'].equals(a['a0,a1,a2'])
+        True
+
+        Mixing LGroup and IGroup
+
+        >>> a['a0:a2'].equals(a.i[0:3])
+        True
+        """
+        if self is other:
+            return True
+        if self.name != other.name:
+            return False
+        self_axis_name = self.axis.name if isinstance(self.axis, ABCAxis) else self.axis
+        other_axis_name = other.axis.name if isinstance(other.axis, ABCAxis) else other.axis
+        if self_axis_name != other_axis_name:
+            return False
+        res = self == other
+        return res if isinstance(res, bool) else all(res)
+
     def set(self):
         """Creates LSet from this group
 
