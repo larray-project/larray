@@ -929,7 +929,7 @@ class Session(object):
         >>> arr2 = ndtest((2, 2))
         >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
         >>> def print_summary(s):
-        ...     print(s.summary({"array": "{name} -> {axes_names}"}))
+        ...     print(s.summary({LArray: "{name} -> {axes_names}"}))
         >>> print_summary(sess)
         arr1 -> a, b, c
         arr2 -> a, b
@@ -1057,16 +1057,19 @@ class Session(object):
 
     def summary(self, template=None):
         """
-        Returns a summary of the content of the session (arrays only).
+        Returns a summary of the content of the session.
 
         Parameters
         ----------
-        template: dict {str: str}
+        template: dict {object type: str}
             Template describing how items are summarized (see examples).
-            Accepted keys are 'axis', 'group' and 'array'.
-            Available arguments are 'name', 'group_name', 'axis', 'labels' and 'length' for groups,
-            'name', 'axis_name', 'labels' and 'length' for axes and
-            'name', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
+            The string provided for a given type must include specific arguments written inside brackets {}.
+            Available arguments are:
+
+                - for LArray: 'name', 'group_name', 'axis', 'labels' and 'length' for groups,
+                - for Axis: 'name', 'axis_name', 'labels' and 'length' for axes and
+                - for Group: 'name', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
+                - for all other types: 'name', 'value'
 
         Returns
         -------
@@ -1099,9 +1102,9 @@ class Session(object):
 
         Using a specific template
 
-        >>> template = {"axis":  "{name} -> {axis_name} [{labels}] ({length})",
-        ...             "group": "{name} -> {group_name}:{axis} {labels} ({length})",
-        ...             "array": "{name} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
+        >>> template = {Axis:  "{name} -> {axis_name} [{labels}] ({length})",
+        ...             Group: "{name} -> {group_name}:{axis} {labels} ({length})",
+        ...             LArray: "{name} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
         >>> print(s.summary(template))
         axis1 -> a ['a0' 'a1' 'a2'] (3)
         group1 -> a01:a ['a0', 'a1'] (2)
@@ -1117,24 +1120,24 @@ class Session(object):
         """
         if template is None:
             template = {}
-        if 'axis' not in template:
-            template['axis'] = "{name}: {axis_name} [{labels}] ({length})"
-        if 'group' not in template:
-            template["group"] = "{name}: {group_name}@{axis} {labels} ({length})"
-        if 'array' not in template:
-            template["array"] = "{name}: {axes_names} ({shape})\n    {title}\n    {dtype}"
+        if Axis not in template:
+            template[Axis] = "{name}: {axis_name} [{labels}] ({length})"
+        if Group not in template:
+            template[Group] = "{name}: {group_name}@{axis} {labels} ({length})"
+        if LArray not in template:
+            template[LArray] = "{name}: {axes_names} ({shape})\n    {title}\n    {dtype}"
 
         def kind_kwargs(k, v):
             if isinstance(v, Axis):
-                return ('axis', {'name': k, 'axis_name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
+                return (Axis, {'name': k, 'axis_name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
             elif isinstance(v, Group):
-                return ('group', {'name': k, 'group_name': v.name, 'axis': v.axis.name, 'labels': v.key,
+                return (Group, {'name': k, 'group_name': v.name, 'axis': v.axis.name, 'labels': v.key,
                                   'length': len(v)})
             elif isinstance(v, LArray):
-                return ('array', {'name': k, 'axes_names': ', '.join(v.axes.display_names),
+                return (LArray, {'name': k, 'axes_names': ', '.join(v.axes.display_names),
                                   'shape': ' x '.join(str(i) for i in v.shape), 'title': v.title, 'dtype': v.dtype})
             else:
-                return None
+                return (type(v),{'name': k, 'value': str(v)})
 
         templ_kwargs = [kind_kwargs(k, v) for k, v in self.items()]
         templ_kwargs = [k for k in templ_kwargs if k is not None]
