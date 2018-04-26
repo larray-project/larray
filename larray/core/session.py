@@ -1090,15 +1090,12 @@ class Session(object):
         >>> print(s.summary())  # doctest: +NORMALIZE_WHITESPACE
         axis1: a ['a0' 'a1' 'a2'] (3)
         group1: a01@a ['a0', 'a1'] (2)
-        arr1: a, b (2 x 2)
+        arr1: a, b (2 x 2) [int64]
             array 1
-            int64
-        arr2: a (4)
+        arr2: a (4) [int64]
             array 2
-            int64
-        arr3: a, b (3 x 2)
+        arr3: a, b (3 x 2) [int64]
             array 3
-            int64
 
         Using a specific template
 
@@ -1125,7 +1122,7 @@ class Session(object):
         if Group not in template:
             template[Group] = "{key}: {name}@{axis_name} {labels} ({length})"
         if LArray not in template:
-            template[LArray] = "{key}: {axes_names} ({shape})\n    {title}\n    {dtype}"
+            template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]\n    {title}"
 
         def kind_kwargs(k, v):
             if isinstance(v, Axis):
