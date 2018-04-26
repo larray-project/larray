@@ -929,7 +929,7 @@ class Session(object):
         >>> arr2 = ndtest((2, 2))
         >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
         >>> def print_summary(s):
-        ...     print(s.summary({LArray: "{name} -> {axes_names}"}))
+        ...     print(s.summary({LArray: "{key} -> {axes_names}"}))
         >>> print_summary(sess)
         arr1 -> a, b, c
         arr2 -> a, b
@@ -1066,10 +1066,10 @@ class Session(object):
             The string provided for a given type must include specific arguments written inside brackets {}.
             Available arguments are:
 
-                - for LArray: 'name', 'group_name', 'axis', 'labels' and 'length' for groups,
-                - for Axis: 'name', 'axis_name', 'labels' and 'length' for axes and
-                - for Group: 'name', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
-                - for all other types: 'name', 'value'
+                - for LArray: 'key', 'name', 'axis_name', 'labels' and 'length' for groups,
+                - for Axis: 'key', 'name', 'labels' and 'length' for axes and
+                - for Group: 'key', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
+                - for all other types: 'key', 'value'
 
         Returns
         -------
@@ -1102,9 +1102,9 @@ class Session(object):
 
         Using a specific template
 
-        >>> template = {Axis:  "{name} -> {axis_name} [{labels}] ({length})",
-        ...             Group: "{name} -> {group_name}:{axis} {labels} ({length})",
-        ...             LArray: "{name} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
+        >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
+        ...             Group: "{key} -> {name}:{axis_name} {labels} ({length})",
+        ...             LArray: "{key} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
         >>> print(s.summary(template))
         axis1 -> a ['a0' 'a1' 'a2'] (3)
         group1 -> a01:a ['a0', 'a1'] (2)
@@ -1121,23 +1121,23 @@ class Session(object):
         if template is None:
             template = {}
         if Axis not in template:
-            template[Axis] = "{name}: {axis_name} [{labels}] ({length})"
+            template[Axis] = "{key}: {name} [{labels}] ({length})"
         if Group not in template:
-            template[Group] = "{name}: {group_name}@{axis} {labels} ({length})"
+            template[Group] = "{key}: {name}@{axis_name} {labels} ({length})"
         if LArray not in template:
-            template[LArray] = "{name}: {axes_names} ({shape})\n    {title}\n    {dtype}"
+            template[LArray] = "{key}: {axes_names} ({shape})\n    {title}\n    {dtype}"
 
         def kind_kwargs(k, v):
             if isinstance(v, Axis):
-                return (Axis, {'name': k, 'axis_name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
+                return (Axis, {'key': k, 'name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
             elif isinstance(v, Group):
-                return (Group, {'name': k, 'group_name': v.name, 'axis': v.axis.name, 'labels': v.key,
+                return (Group, {'key': k, 'name': v.name, 'axis_name': v.axis.name, 'labels': v.key,
                                   'length': len(v)})
             elif isinstance(v, LArray):
-                return (LArray, {'name': k, 'axes_names': ', '.join(v.axes.display_names),
+                return (LArray, {'key': k, 'axes_names': ', '.join(v.axes.display_names),
                                   'shape': ' x '.join(str(i) for i in v.shape), 'title': v.title, 'dtype': v.dtype})
             else:
-                return (type(v),{'name': k, 'value': str(v)})
+                return (type(v),{'key': k, 'value': str(v)})
 
         templ_kwargs = [kind_kwargs(k, v) for k, v in self.items()]
         templ_kwargs = [k for k in templ_kwargs if k is not None]
