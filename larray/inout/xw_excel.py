@@ -585,6 +585,9 @@ else:
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
             raise Exception("Workbook class cannot be instanciated because xlwings is not installed")
 
+        def app(self):
+            raise Exception()
+
         def sheet_names(self):
             raise Exception()
 
@@ -661,6 +664,10 @@ Examples
 >>> wb['arr3'] = arr3.dump()                                      # doctest: +SKIP
 >>> wb.save()                                                     # doctest: +SKIP
 >>> wb.close()                                                    # doctest: +SKIP
+"""
+
+    Workbook.app.__doc__ = """
+Return the currently active Excel instance.
 """
 
 open_excel.__doc__ = """

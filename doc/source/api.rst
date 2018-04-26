@@ -511,6 +511,7 @@ Excel
    Workbook.sheet_names
    Workbook.save
    Workbook.close
+   Workbook.app
 
 .. _api-misc:
 
