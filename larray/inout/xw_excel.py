@@ -667,7 +667,7 @@ Examples
 """
 
     Workbook.app.__doc__ = """
-Return the currently active Excel instance.
+Return the Excel instance this workbook is attached to.
 """
 
 open_excel.__doc__ = """
