@@ -63,7 +63,7 @@ Miscellaneous improvements
 
     >>> print(s.summary())
     axis1: a ['a0' 'a1' 'a2'] (3)
-    group1: a01@a ['a0', 'a1'] (2)
+    group1: a['a0', 'a1'] >> a01 (2)
     arr1: a, b (2 x 2) [int64]
         array 1
     arr2: a (4) [int64]
@@ -79,11 +79,11 @@ Miscellaneous improvements
     ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
     ...                                                                 array.title, array.dtype)
     >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
-    ...             Group: "{key} -> {name}:{axis_name} {labels} ({length})",
+    ...             Group: "{key} -> {name}: {axis_name} {labels} ({length})",
     ...             LArray: print_array}
     >>> print(s.summary(template))
     axis1 -> a ['a0' 'a1' 'a2'] (3)
-    group1 -> a01:a ['a0', 'a1'] (2)
+    group1 -> a01: a ['a0', 'a1'] (2)
     arr1 -> a, b (2 x 2)
       title = array 1
       dtype = int64
