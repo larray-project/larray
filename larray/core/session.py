@@ -11,7 +11,7 @@ import numpy as np
 from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -929,7 +929,7 @@ class Session(object):
         >>> arr2 = ndtest((2, 2))
         >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
         >>> def print_summary(s):
-        ...     print(s.summary("{name} -> {axes_names}"))
+        ...     print(s.summary({LArray: "{key} -> {axes_names}"}))
         >>> print_summary(sess)
         arr1 -> a, b, c
         arr2 -> a, b
@@ -1057,44 +1057,100 @@ class Session(object):
 
     def summary(self, template=None):
         """
-        Returns a summary of the content of the session (arrays only).
+        Returns a summary of the content of the session.
 
         Parameters
         ----------
-        template: str
-            Template describing how items are summarized (see examples).
-            Available arguments are 'name', 'axes_names' and 'title'
+        template: dict {object type: str} or dict {object type: func}
+            Template describing how items are summarized.
+            For each object type, it is possible to provide either a string template or a function taking the
+            the key and value of a session item as parameters and returning a string (see examples).
+            A string template contains specific arguments written inside brackets {}.
+            Available arguments are:
+
+                - for groups: 'key', 'name', 'axis_name', 'labels' and 'length',
+                - for axes: 'key', 'name', 'labels' and 'length',
+                - for arrays: 'key', 'axes_names', 'shape', 'dtype' and 'title',
+                - for all other types: 'key', 'value'.
 
         Returns
         -------
         str
-            Short representation of the content of the session (arrays only).
+            Short representation of the content of the session.
 .
         Examples
         --------
-        >>> arr1 = ndtest((2, 2), title='array 1')
-        >>> arr2 = ndtest(4, title='array 2')
-        >>> arr3 = ndtest((3, 2), title='array 3')
-        >>> s = Session([('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+        >>> axis1 = Axis("a=a0..a2")
+        >>> group1 = axis1['a0,a1'] >> 'a01'
+        >>> arr1 = ndtest((2, 2), title='array 1', dtype=np.int64)
+        >>> arr2 = ndtest(4, title='array 2', dtype=np.int64)
+        >>> arr3 = ndtest((3, 2), title='array 3', dtype=np.int64)
+        >>> s = Session([('axis1', axis1), ('group1', group1), ('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+
+        Default template
+
         >>> print(s.summary())  # doctest: +NORMALIZE_WHITESPACE
-        arr1: a, b
+        axis1: a ['a0' 'a1' 'a2'] (3)
+        group1: a['a0', 'a1'] >> a01 (2)
+        arr1: a, b (2 x 2) [int64]
             array 1
-        arr2: a
+        arr2: a (4) [int64]
             array 2
-        arr3: a, b
+        arr3: a, b (3 x 2) [int64]
             array 3
-        >>> print(s.summary("{name} -> {axes_names}"))
-        arr1 -> a, b
-        arr2 -> a
-        arr3 -> a, b
+
+        Using a specific template
+
+        >>> def print_array(key, array):
+        ...     axes_names = ', '.join(array.axes.display_names)
+        ...     shape = ' x '.join(str(i) for i in array.shape)
+        ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
+        ...                                                                 array.title, array.dtype)
+        >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
+        ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
+        ...             LArray: print_array}
+        >>> print(s.summary(template))
+        axis1 -> a ['a0' 'a1' 'a2'] (3)
+        group1 -> a01: a['a0', 'a1'] (2)
+        arr1 -> a, b (2 x 2)
+          title = array 1
+          dtype = int64
+        arr2 -> a (4)
+          title = array 2
+          dtype = int64
+        arr3 -> a, b (3 x 2)
+          title = array 3
+          dtype = int64
         """
         if template is None:
-            template = "{name}: {axes_names}\n    {title}\n"
-        templ_kwargs = [{'name': k,
-                         'axes_names': ', '.join(v.axes.display_names),
-                         'title': v.title}
-                        for k, v in self.items() if isinstance(v, LArray)]
-        return '\n'.join(template.format(**kwargs) for kwargs in templ_kwargs)
+            template = {}
+        if Axis not in template:
+            template[Axis] = "{key}: {name} [{labels}] ({length})"
+        if Group not in template:
+            template[Group] = "{key}: {axis_name}{labels} >> {name} ({length})"
+        if LArray not in template:
+            template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]\n    {title}"
+
+        def display(k, v):
+            t = Group if isinstance(v, Group) else type(v)
+            tmpl = template.get(t, "{key}: {value}")
+            if not (isinstance(tmpl, basestring) or callable(tmpl)):
+                raise TypeError("Expected a string template or a function for type {}. "
+                                "Got {}".format(type(v), type(tmpl)))
+            if isinstance(tmpl, basestring):
+                if isinstance(v, Axis):
+                    return tmpl.format(key=k, name=v.name, labels=v.labels_summary(), length=len(v))
+                elif isinstance(v, Group):
+                    return tmpl.format(key=k, name=v.name, axis_name=v.axis.name, labels=v.key, length=len(v))
+                elif isinstance(v, LArray):
+                    return tmpl.format(key=k, axes_names=', '.join(v.axes.display_names),
+                                       shape=' x '.join(str(i) for i in v.shape), title=v.title, dtype=v.dtype)
+                else:
+                    return tmpl.format(key=k, value=str(v))
+            else:
+                return tmpl(k, v)
+
+        return '\n'.join(display(k, v) for k, v in self.items())
 
 
 def _exclude_private_vars(vars_dict):
