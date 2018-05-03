@@ -1133,7 +1133,7 @@ class Session(object):
 
         def display(k, v):
             t = Group if isinstance(v, Group) else type(v)
-            tmpl = template.get(t, None)
+            tmpl = template.get(t, "{key}: {value}")
             if not (isinstance(tmpl, basestring) or callable(tmpl)):
                 raise TypeError("Expected a string template or a function for type {}. "
                                 "Got {}".format(type(v), type(tmpl)))
