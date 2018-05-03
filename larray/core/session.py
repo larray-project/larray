@@ -1134,10 +1134,9 @@ class Session(object):
                 return (LArray, {'key': k, 'axes_names': ', '.join(v.axes.display_names),
                                   'shape': ' x '.join(str(i) for i in v.shape), 'title': v.title, 'dtype': v.dtype})
             else:
-                return (type(v),{'key': k, 'value': str(v)})
+                return (type(v), {'key': k, 'value': str(v)})
 
         templ_kwargs = [kind_kwargs(k, v) for k, v in self.items()]
-        templ_kwargs = [k for k in templ_kwargs if k is not None]
         return '\n'.join(template[kind].format(**kwargs) for kind, kwargs in templ_kwargs)
 
 
