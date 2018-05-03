@@ -11,7 +11,7 @@ import numpy as np
 from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -1061,9 +1061,11 @@ class Session(object):
 
         Parameters
         ----------
-        template: dict {object type: str}
-            Template describing how items are summarized (see examples).
-            The string provided for a given type must include specific arguments written inside brackets {}.
+        template: dict {object type: str} or dict {object type: func}
+            Template describing how items are summarized.
+            For each object type, it is possible to provide either a string template or a function taking the
+            the key and value of a session item as parameters and returning a string (see examples).
+            A string template contains specific arguments written inside brackets {}.
             Available arguments are:
 
                 - for groups: 'key', 'name', 'axis_name', 'labels' and 'length',
@@ -1099,9 +1101,14 @@ class Session(object):
 
         Using a specific template
 
+        >>> def print_array(key, array):
+        ...     axes_names = ', '.join(array.axes.display_names)
+        ...     shape = ' x '.join(str(i) for i in array.shape)
+        ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
+        ...                                                                 array.title, array.dtype)
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
         ...             Group: "{key} -> {name}:{axis_name} {labels} ({length})",
-        ...             LArray: "{key} -> {axes_names} ({shape})\\n  title = {title}\\n  dtype = {dtype}"}
+        ...             LArray: print_array}
         >>> print(s.summary(template))
         axis1 -> a ['a0' 'a1' 'a2'] (3)
         group1 -> a01:a ['a0', 'a1'] (2)
@@ -1124,20 +1131,26 @@ class Session(object):
         if LArray not in template:
             template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]\n    {title}"
 
-        def kind_kwargs(k, v):
-            if isinstance(v, Axis):
-                return (Axis, {'key': k, 'name': v.name, 'labels': v.labels_summary(), 'length': len(v)})
-            elif isinstance(v, Group):
-                return (Group, {'key': k, 'name': v.name, 'axis_name': v.axis.name, 'labels': v.key,
-                                  'length': len(v)})
-            elif isinstance(v, LArray):
-                return (LArray, {'key': k, 'axes_names': ', '.join(v.axes.display_names),
-                                  'shape': ' x '.join(str(i) for i in v.shape), 'title': v.title, 'dtype': v.dtype})
+        def display(k, v):
+            t = Group if isinstance(v, Group) else type(v)
+            tmpl = template.get(t, None)
+            if not (isinstance(tmpl, basestring) or callable(tmpl)):
+                raise TypeError("Expected a string template or a function for type {}. "
+                                "Got {}".format(type(v), type(tmpl)))
+            if isinstance(tmpl, basestring):
+                if isinstance(v, Axis):
+                    return tmpl.format(key=k, name=v.name, labels=v.labels_summary(), length=len(v))
+                elif isinstance(v, Group):
+                    return tmpl.format(key=k, name=v.name, axis_name=v.axis.name, labels=v.key, length=len(v))
+                elif isinstance(v, LArray):
+                    return tmpl.format(key=k, axes_names=', '.join(v.axes.display_names),
+                                       shape=' x '.join(str(i) for i in v.shape), title=v.title, dtype=v.dtype)
+                else:
+                    return tmpl.format(key=k, value=str(v))
             else:
-                return (type(v), {'key': k, 'value': str(v)})
+                return tmpl(k, v)
 
-        templ_kwargs = [kind_kwargs(k, v) for k, v in self.items()]
-        return '\n'.join(template[kind].format(**kwargs) for kind, kwargs in templ_kwargs)
+        return '\n'.join(display(k, v) for k, v in self.items())
 
 
 def _exclude_private_vars(vars_dict):
