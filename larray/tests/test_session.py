@@ -459,14 +459,6 @@ class TestSession(TestCase):
         assert_array_nan_equal(res['e'], self.e / self.e)
         assert_array_nan_equal(res['f'], self.f / self.f)
 
-    def test_summary(self):
-        # only arrays
-        sess = self.session.filter(kind=LArray)
-        assert sess.summary() == "e: a0*, a1*\n    \n\ng: a0*, a1*\n    \n\nf: a0*, a1*\n    \n"
-        # all objects
-        sess = self.session
-        assert sess.summary() == "e: a0*, a1*\n    \n\ng: a0*, a1*\n    \n\nf: a0*, a1*\n    \n"
-
     def test_pickle_roundtrip(self):
         original = self.session.filter(kind=LArray)
         s = pickle.dumps(original)
