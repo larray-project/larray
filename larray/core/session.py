@@ -1091,7 +1091,7 @@ class Session(object):
 
         >>> print(s.summary())  # doctest: +NORMALIZE_WHITESPACE
         axis1: a ['a0' 'a1' 'a2'] (3)
-        group1: a01@a ['a0', 'a1'] (2)
+        group1: a['a0', 'a1'] >> a01 (2)
         arr1: a, b (2 x 2) [int64]
             array 1
         arr2: a (4) [int64]
@@ -1107,11 +1107,11 @@ class Session(object):
         ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
         ...                                                                 array.title, array.dtype)
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
-        ...             Group: "{key} -> {name}:{axis_name} {labels} ({length})",
+        ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
         ...             LArray: print_array}
         >>> print(s.summary(template))
         axis1 -> a ['a0' 'a1' 'a2'] (3)
-        group1 -> a01:a ['a0', 'a1'] (2)
+        group1 -> a01: a['a0', 'a1'] (2)
         arr1 -> a, b (2 x 2)
           title = array 1
           dtype = int64
@@ -1127,7 +1127,7 @@ class Session(object):
         if Axis not in template:
             template[Axis] = "{key}: {name} [{labels}] ({length})"
         if Group not in template:
-            template[Group] = "{key}: {name}@{axis_name} {labels} ({length})"
+            template[Group] = "{key}: {axis_name}{labels} >> {name} ({length})"
         if LArray not in template:
             template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]\n    {title}"
 
