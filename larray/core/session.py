@@ -1066,10 +1066,10 @@ class Session(object):
             The string provided for a given type must include specific arguments written inside brackets {}.
             Available arguments are:
 
-                - for LArray: 'key', 'name', 'axis_name', 'labels' and 'length' for groups,
-                - for Axis: 'key', 'name', 'labels' and 'length' for axes and
-                - for Group: 'key', 'axes_names', 'shape', 'dtype' and 'title' for arrays.
-                - for all other types: 'key', 'value'
+                - for groups: 'key', 'name', 'axis_name', 'labels' and 'length',
+                - for axes: 'key', 'name', 'labels' and 'length',
+                - for arrays: 'key', 'axes_names', 'shape', 'dtype' and 'title',
+                - for all other types: 'key', 'value'.
 
         Returns
         -------
