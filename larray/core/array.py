@@ -472,8 +472,11 @@ _kwarg_agg = {
             Whether or not to skip NaN (null) values. If False, resulting cells will be NaN if any of the aggregated
             cells is NaN. Defaults to True."""},
     'keepaxes': {'value': False, 'doc': """
-        keepaxes : bool, optional
-            Whether or not reduced axes are left in the result as dimensions with size one. Defaults to False."""
+        keepaxes : bool or label-like, optional
+            Whether or not reduced axes are left in the result as dimensions with size one. 
+            If True, reduced axes will contain a unique label representing the applied aggregation 
+            (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value 
+            (e.g. keepaxes='summation'). Defaults to False."""
     },
     'interpolation': {'value': 'linear', 'doc': """
         interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}, optional
