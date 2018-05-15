@@ -145,6 +145,8 @@ Miscellaneous improvements
     name      a   a01   arr1   arr2   arr3
           False  True  False  False  False
 
+* updated documentation of argument 'keepaxes' of aggregation functions (closes :issue:`607`).
+
 
 Fixes
 -----
