@@ -778,7 +778,7 @@ class LArray(ABCLArray):
                             "instead of {}".format(type(meta).__name__))
         self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
 
-    # XXX: rename to posnonzero and implement a label version of nonzero
+    # TODO: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
         """
         Returns the indices of the elements that are non-zero.
