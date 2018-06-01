@@ -3,8 +3,6 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import datetime as dt
-from collections import OrderedDict
-from unittest import TestCase
 
 import pytest
 import numpy as np
@@ -21,7 +19,7 @@ from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
-from larray.util.misc import StringIO, LHDFStore, PY2
+from larray.util.misc import StringIO, LHDFStore
 from larray.core.metadata import Metadata
 
 
