@@ -113,23 +113,32 @@ class Metadata(AttributeDict):
 
     Examples
     --------
+    >>> from larray import ndtest
     >>> from datetime import datetime
 
-    # instantiate a new AttributeDict
-    >>> attrs = Metadata(title='the title')
+    Add metadata at array initialization
 
-    # add new metadata
-    >>> attrs.creation_date = datetime(2017, 2, 10)
+    >>> # Python 2 or <= 3.5
+    >>> arr = ndtest((3, 3), meta=[('title', 'the title'), ('author', 'John Smith')])
+    >>> # Python 3.6+
+    >>> arr = ndtest((3, 3), meta=Metadata(title = 'the title', author = 'John Smith'))  # doctest: +SKIP
 
-    # access metadata
-    >>> attrs.creation_date
+    Add metadata after array initialization
+
+    >>> arr.meta.creation_date = datetime(2017, 2, 10)
+
+    Access to metadata
+
+    >>> arr.meta.creation_date
     datetime.datetime(2017, 2, 10, 0, 0)
 
-    # modify metadata
-    >>> attrs.creation_date = datetime(2017, 2, 16)
+    Modify metadata
 
-    # delete metadata
-    >>> del attrs.creation_date
+    >>> arr.meta.creation_date = datetime(2017, 2, 16)
+
+    Delete metadata
+
+    >>> del arr.meta.creation_date
     """
 
     # ---------- IO methods ----------
