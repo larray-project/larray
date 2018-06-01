@@ -29,6 +29,43 @@ New features
     >>> a02.equals(a['a1:a3'] >> 'group_a')
     False
 
+* allowed arrays to have metadata (e.g. title, description, authors, ...).
+  Metadata can be accessed using the syntax ``array.meta.name``.
+  See bellow for use cases:
+
+    >>> # add metadata to/from an array
+    >>> # for Python <= 3.5
+    >>> arr = ndtest((3, 3), meta=[('title', 'array for testing'), ('author', 'John Smith')])
+    >>> # for Python >= 3.6
+    >>> arr = ndtest((3, 3), meta=Metadata(title='array for testing', author='John Smith'))
+    >>> # access an item
+    >>> arr.meta.author
+    'John Smith'
+    >>> # update/add an item (the item is added if not found in existing metadata)
+    >>> arr.meta.city = 'London'
+    >>> # delete an item
+    >>> del arr.meta.city
+
+  Warnings:
+
+  - Currently, only the HDF (.h5) file format supports saving and loading metadata.
+  - Metadata are not kept when actions or methods are applied on a array
+    except for operations modifying the object in-place, such as `pop[age < 10] = 0`,
+    and when the method `copy()` is called. Do not add metadata to an array if you know
+    you will apply actions or methods on it before dumping it.
+
+  Closes :issue:`78` and :issue:`79`.
+
+* deprecated attribute `title` of array objects. A title is now considered as a metadata
+  and must be added as:
+
+    >>> # add title at array creation
+    >>> arr = ndtest((3, 3), meta=[('title', 'array for testing')])
+
+    >>> # or after array creation
+    >>> arr = ndtest((3, 3))
+    >>> arr.meta.title = 'array for testing'
+
 
 .. _misc:
 

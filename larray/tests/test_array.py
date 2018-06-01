@@ -7,6 +7,7 @@ import datetime as dt
 import pytest
 import numpy as np
 import pandas as pd
+from collections import OrderedDict
 
 try:
     import xlwings as xw
@@ -88,7 +89,7 @@ def meta():
                      ('location', location), ('date', date)])
 
 
-def test_array_metadata(meta, tmpdir):
+def test_read_set_update_delete_metadata(meta, tmpdir):
     # __eq__
     meta2 = meta.copy()
     assert meta2 == meta
@@ -125,7 +126,6 @@ def test_array_metadata(meta, tmpdir):
         meta2 = Metadata(pickle.load(f))
     assert meta2 == meta
 
-
 def test_metadata_hdf(meta, tmpdir):
     key = 'meta'
     fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
@@ -134,6 +134,19 @@ def test_metadata_hdf(meta, tmpdir):
         meta.to_hdf(store, key)
         meta2 = Metadata.from_hdf(store, key)
         assert meta2 == meta
+
+
+def test_meta_arg_array_creation(array):
+    meta_list = [('title', 'test array'), ('description', 'Array used for testing'),
+                 ('author', 'John Cleese')]
+    meta = Metadata(meta_list)
+
+    # meta as list
+    arr = LArray(array.data, array.axes, meta=meta_list)
+    assert arr.meta == meta
+    # meta as OrderedDict
+    arr = LArray(array.data, array.axes, meta=OrderedDict(meta_list))
+    assert arr.meta == meta
 
 
 # ================= #
@@ -156,15 +169,15 @@ geo = Axis(belgium, 'geo')
 
 # ARRAYS
 @pytest.fixture()
-def array(meta):
+def array():
     data = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15).astype(float)
-    return LArray(data, axes=(age, geo, sex, lipro), meta=meta)
+    return LArray(data, axes=(age, geo, sex, lipro))
 
 
 @pytest.fixture()
-def small_array(meta):
+def small_array():
     small_data = np.arange(30).reshape(2, 15)
-    return LArray(small_data, axes=(sex, lipro), meta=meta)
+    return LArray(small_data, axes=(sex, lipro))
 
 
 io_1d = ndtest(3)
@@ -178,8 +191,7 @@ io_missing_values[3, 'b1'] = np.nan
 io_narrow_missing_values = io_missing_values.copy()
 io_narrow_missing_values[2, 'b1', 'c1'] = np.nan
 
-
-def test_ndrange():
+def test_ndtest():
     arr = ndtest('a=a0..a2')
     assert arr.shape == (3,)
     assert arr.axes.names == ['a']
@@ -256,7 +268,8 @@ def test_rename(array):
     assert new_array.axes.names == ['age', 'geo', 'gender', 'lipro']
 
 
-def test_info(array):
+def test_info(array, meta):
+    array.meta = meta
     expected = """\
 title: test array
 description: Array used for testing
@@ -2441,21 +2454,20 @@ def test_sort_values():
 
 def test_set_labels(small_array):
     small_array.set_labels(X.sex, ['Man', 'Woman'], inplace=True)
-    assert_array_equal(small_array, small_array.set_labels(X.sex, ['Man', 'Woman']))
+    expected = small_array.set_labels(X.sex, ['Man', 'Woman'])
+    assert_array_equal(small_array, expected)
 
 
-def test_replace_axes(small_array):
+def test_set_axes(small_array):
     lipro2 = Axis([l.replace('P', 'Q') for l in lipro.labels], 'lipro2')
     sex2 = Axis(['Man', 'Woman'], 'sex2')
 
-    la = LArray(small_array.data, axes=(sex, lipro2), title=small_array.title)
+    la = LArray(small_array.data, axes=(sex, lipro2))
     # replace one axis
     la2 = small_array.set_axes(X.lipro, lipro2)
     assert_array_equal(la, la2)
-    assert la.title == la2.title, "title of array returned by replace_axes should be the same as the " \
-                                          "original one. We got '{}' instead of '{}'".format(la2.title, la.title)
 
-    la = LArray(small_array.data, axes=(sex2, lipro2), title=small_array.title)
+    la = LArray(small_array.data, axes=(sex2, lipro2))
     # all at once
     la2 = small_array.set_axes([sex2, lipro2])
     assert_array_equal(la, la2)
@@ -2569,6 +2581,7 @@ def test_insert():
     a\\b  b0  b0.1  b0.2  b1  b2
      a0   0    42    43   1   2
      a1   3    42    43   4   5"""))
+
     res = arr1.insert([42, 43], before=['b1', 'b2'], label='new')
     assert_array_equal(res, from_lists([
     ['a\\b',  'b0',  'new',  'b1',  'new',  'b2'],
@@ -2580,6 +2593,7 @@ def test_insert():
     a\\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
      a1   3    42   4    43   5"""))
+
     res = arr1.insert([42, 43], before='b1,b2', label=['b0.5', 'b1.5'])
     assert_array_equal(res, from_string("""
     a\\b  b0  b0.5  b1  b1.5  b2
@@ -2607,6 +2621,7 @@ def test_insert():
     a\\b  v0  v0.5  v1
      v0   0    42   1
      v1   2    42   3"""))
+
     res = arr4.insert(42, before=arr4.b['v1'], label='v0.5')
     assert_array_equal(res, from_string("""
     a\\b  v0  v0.5  v1
@@ -2642,7 +2657,7 @@ def test_extend(small_array):
     assert small_array.shape == (3, 16)
 
 
-def test_hdf_roundtrip(tmpdir):
+def test_hdf_roundtrip(tmpdir, meta):
     a = ndtest((2, 3))
     fpath = tmp_path(tmpdir, 'test.h5')
     a.to_hdf(fpath, 'a')
@@ -2652,6 +2667,7 @@ def test_hdf_roundtrip(tmpdir):
     assert a.shape == (2, 3)
     assert a.axes.names == ['a', 'b']
     assert_array_equal(res, a)
+    assert res.meta == a.meta
 
     # issue 72: int-like strings should not be parsed (should round-trip correctly)
     fpath = tmp_path(tmpdir, 'issue72.h5')
