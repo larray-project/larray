@@ -94,9 +94,12 @@ def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=Fa
         attrs = store.get_storer(key).attrs
         # for backward compatibility but any object read from an hdf file should have an attribute 'type'
         _type = attrs.type if 'type' in attrs else 'Array'
+        _meta = attrs.metadata if 'metadata' in attrs else None
         if _type == 'Array':
             res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
                               parse_header=False)
+            if _meta is not None:
+                res.meta = _meta
         elif _type == 'Axis':
             if name is None:
                 name = str(pd_obj.name)

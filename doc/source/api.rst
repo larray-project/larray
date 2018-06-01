@@ -468,6 +468,16 @@ Plotting
 
    LArray.plot
 
+.. _api-metadata:
+
+Metadata
+========
+
+.. autosummary::
+   :toctree: _generated/
+
+   Metadata
+
 .. _api-IO:
 
 Input/Output

@@ -542,7 +542,6 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
         .format(specific=doc_specific, action_verb=action_verb, long_name=long_name)
     parameters = """Parameters
         ----------{args}{varargs}{kwargs}""".format(args=doc_args, varargs=doc_varargs, kwargs=doc_kwargs)
-
     func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters)
 
 
@@ -643,6 +642,16 @@ def nan_equal(a1, a2):
     return element_equal(a1, a2, nan_equals=True)
 
 
+def _handle_deprecated_argument_title(meta, title):
+    if meta is None:
+        meta = Metadata()
+    if title is not None:
+        import warnings
+        warnings.warn("title argument is deprecated. Please use meta argument instead", FutureWarning, stacklevel=3)
+        meta['title'] = title
+    return meta
+
+
 class LArray(ABCLArray):
     """
     A LArray object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
@@ -656,9 +665,8 @@ class LArray(ABCLArray):
     axes : collection (tuple, list or AxisCollection) of axes (int, str or Axis), optional
         Axes.
     title : str, optional
-        Title of the array. It will be included in metadata but will be accessible via both syntax
-        '.title' or '.meta.title'.
-    meta : dict or OrderedDict or Metadata, optional
+        Deprecated. See 'meta' below.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -680,6 +688,13 @@ class LArray(ABCLArray):
     full : Create a LArray filled with a given value.
     empty : Create a LArray, but leave its allocated memory unchanged (i.e., it contains “garbage”).
 
+    Warnings
+    --------
+    Metadata are not kept when actions or methods are applied on a array
+    except for operations modifying the object in-place, such as: `pop[age < 10] = 0`.
+    Do not add metadata to an array if you know you will apply actions or methods
+    on it before dumping it.
+
     Examples
     --------
     >>> age = Axis([10, 11, 12], 'age')
@@ -687,6 +702,7 @@ class LArray(ABCLArray):
     >>> time = Axis([2007, 2008, 2009], 'time')
     >>> axes = [age, sex, time]
     >>> data = np.zeros((len(axes), len(sex), len(time)))
+
     >>> LArray(data, axes)
     age  sex\\time  2007  2008  2009
      10         M   0.0   0.0   0.0
@@ -695,6 +711,13 @@ class LArray(ABCLArray):
      11         F   0.0   0.0   0.0
      12         M   0.0   0.0   0.0
      12         F   0.0   0.0   0.0
+    >>> # with metadata (Python <= 3.5)
+    >>> arr = LArray(data, axes, meta=[('title', 'my title'), ('author', 'John Smith')])
+    >>> # with metadata (Python 3.6+)
+    >>> arr = LArray(data, axes, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
+
+    Array creation functions
+
     >>> full(axes, 10.0)
     age  sex\\time  2007  2008  2009
      10         M  10.0  10.0  10.0
@@ -743,21 +766,21 @@ class LArray(ABCLArray):
         self.data = data
         self.axes = axes
 
-        if meta is None:
-            meta = Metadata()
-        if title is not None:
-            if 'title' in meta:
-                import warnings
-                warnings.warn("title was already present in passed metadata but will be overridden.", stacklevel=2)
-            meta['title'] = title
+        meta = _handle_deprecated_argument_title(meta, title)
         self.meta = meta
 
     @property
     def title(self):
+        import warnings
+        warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
         return self._meta.title if 'title' in self._meta else None
 
     @title.setter
     def title(self, title):
+        import warnings
+        warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
+        if not isinstance(title, basestring):
+            raise TypeError("Expected string value, got {}".format(type(title).__name__))
         self._meta.title = title
 
     @property
@@ -773,8 +796,8 @@ class LArray(ABCLArray):
 
     @meta.setter
     def meta(self, meta):
-        if not isinstance(meta, (dict, OrderedDict, Metadata)):
-            raise TypeError("Expected dict or OrderedDict or Metadata object "
+        if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
+            raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
                             "instead of {}".format(type(meta).__name__))
         self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
 
@@ -845,7 +868,7 @@ class LArray(ABCLArray):
 
         Replace one axis (second argument `new_axis` must be provided)
 
-        >>> arr.set_axes(X.a, row)
+        >>> arr.set_axes('a', row)
         row\\b  b0  b1  b2
            r0   0   1   2
            r1   3   4   5
@@ -854,9 +877,9 @@ class LArray(ABCLArray):
 
         >>> arr.set_axes(a=row, b=column) # doctest: +SKIP
         >>> # or
-        >>> arr.set_axes([(X.a, row), (X.b, column)]) # doctest: +SKIP
+        >>> arr.set_axes([('a', row), ('b', column)]) # doctest: +SKIP
         >>> # or
-        >>> arr.set_axes({X.a: row, X.b: column})
+        >>> arr.set_axes({'a': row, 'b': column})
         row\\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
@@ -883,7 +906,7 @@ class LArray(ABCLArray):
             self.axes = new_axes
             return self
         else:
-            return LArray(self.data, new_axes, title=self.title)
+            return LArray(self.data, new_axes)
 
     with_axes = renamed_to(set_axes, 'with_axes')
 
@@ -902,8 +925,8 @@ class LArray(ABCLArray):
         self.__dict__ = d
 
     def __dir__(self):
-        names = set(axis.name for axis in self.axes if axis.name is not None)
-        return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | names)
+        axis_names = set(axis.name for axis in self.axes if axis.name is not None)
+        return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | axis_names)
 
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
@@ -1018,6 +1041,11 @@ class LArray(ABCLArray):
         -------
         Pandas DataFrame
 
+        Notes
+        -----
+        Since pandas does not provide a way to handle metadata (yet), all metadata associated with
+        the array will be lost.
+
         Examples
         --------
         >>> arr = ndtest((2, 2, 2))
@@ -1079,6 +1107,11 @@ class LArray(ABCLArray):
         Returns
         -------
         Pandas Series
+
+        Notes
+        -----
+        Since pandas does not provide a way to handle metadata (yet), all metadata associated with
+        the array will be lost.
 
         Examples
         --------
@@ -1292,7 +1325,7 @@ class LArray(ABCLArray):
         nat\\sex  M  F
              BE  0  1
              FO  2  3
-        >>> arr.rename(X.nat, 'nat2')
+        >>> arr.rename(nat, 'nat2')
         nat2\\sex  M  F
               BE  0  1
               FO  2  3
@@ -1624,7 +1657,8 @@ class LArray(ABCLArray):
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
             raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
         left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
-        return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
+        return self.reindex(left_axes, fill_value=fill_value), \
+               other.reindex(right_axes, fill_value=fill_value)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True):
@@ -1808,7 +1842,8 @@ class LArray(ABCLArray):
                 key = key[::-1]
             return axis.i[key]
 
-        return self[tuple(sort_key(axis) for axis in axes)]
+        res = self[tuple(sort_key(axis) for axis in axes)]
+        return res
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
 
@@ -2130,7 +2165,6 @@ class LArray(ABCLArray):
                     if not np.isscalar(axis_key)]
 
     def __getitem__(self, key, collapse_slices=False):
-
         if isinstance(key, ExprNode):
             key = key.evaluate(self.axes)
 
@@ -3286,16 +3320,16 @@ class LArray(ABCLArray):
     def copy(self):
         """Returns a copy of the array.
         """
-        return LArray(self.data.copy(), axes=self.axes[:], title=self.title)
+        return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta)
 
     @property
     def info(self):
-        """Describes a LArray (title + shape and labels for each axis).
+        """Describes a LArray (metadata + shape and labels for each axis).
 
         Returns
         -------
         str
-            Description of the array (title + shape and labels for each axis).
+            Description of the array (metadata + shape and labels for each axis).
 
         Examples
         --------
@@ -3306,8 +3340,8 @@ class LArray(ABCLArray):
          sex [2]: 'F' 'M'
         dtype: float64
         memory used: 32 bytes
-        >>> mat1 = LArray([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M", 'test matrix')
-        >>> mat1.info
+        >>> mat0.meta.title = 'test matrix'
+        >>> mat0.info
         title: test matrix
         2 x 2
          nat [2]: 'BE' 'FO'
@@ -6094,6 +6128,7 @@ class LArray(ABCLArray):
         with LHDFStore(filepath) as store:
             store.put(key, self.to_frame())
             store.get_storer(key).attrs.type = 'Array'
+            self.meta.to_hdf(store, key)
 
     @deprecate_kwarg('sheet_name', 'sheet')
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
@@ -7060,7 +7095,7 @@ def larray_nan_equal(a1, a2):
     return a1.equals(a2, nan_equals=True)
 
 
-def aslarray(a):
+def aslarray(a, meta=None):
     """
     Converts input as LArray if possible.
 
@@ -7068,6 +7103,9 @@ def aslarray(a):
     ----------
     a : array-like
         Input array to convert into a LArray.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7092,14 +7130,22 @@ def aslarray(a):
           c     3.0      1.0
     """
     if isinstance(a, LArray):
-        return a
+        if meta is not None:
+            res = a.copy()
+            res.meta = meta
+            return res
+        else:
+            return a
     elif hasattr(a, '__larray__'):
-        return a.__larray__()
+        res = a.__larray__()
+        if meta is not None:
+            res.meta = meta
+        return res
     elif isinstance(a, pd.DataFrame):
         from larray.inout.pandas import from_frame
-        return from_frame(a)
+        return from_frame(a, meta=meta)
     else:
-        return LArray(a)
+        return LArray(a, meta=meta)
 
 
 def _check_axes_argument(func):
@@ -7113,7 +7159,7 @@ def _check_axes_argument(func):
 
 
 @_check_axes_argument
-def zeros(axes, title='', dtype=float, order='C'):
+def zeros(axes, title=None, dtype=float, order='C', meta=None):
     """Returns an array with the specified axes and filled with zeros.
 
     Parameters
@@ -7121,12 +7167,15 @@ def zeros(axes, title='', dtype=float, order='C'):
     axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`. Default is `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7150,11 +7199,12 @@ def zeros(axes, title='', dtype=float, order='C'):
          BE  0.0  0.0
          FO  0.0  0.0
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.zeros(axes.shape, dtype, order), axes, title)
+    return LArray(np.zeros(axes.shape, dtype, order), axes, meta=meta)
 
 
-def zeros_like(array, title='', dtype=None, order='K'):
+def zeros_like(array, title=None, dtype=None, order='K', meta=None):
     """Returns an array with the same axes as array and filled with zeros.
 
     Parameters
@@ -7162,13 +7212,16 @@ def zeros_like(array, title='', dtype=None, order='K'):
     array : LArray
          Input array.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7182,13 +7235,12 @@ def zeros_like(array, title='', dtype=None, order='K'):
      a0   0   0   0
      a1   0   0   0
     """
-    if not title:
-        title = array.title
-    return LArray(np.zeros_like(array, dtype, order), array.axes, title)
+    meta = _handle_deprecated_argument_title(meta, title)
+    return LArray(np.zeros_like(array, dtype, order), array.axes, meta=meta)
 
 
 @_check_axes_argument
-def ones(axes, title='', dtype=float, order='C'):
+def ones(axes, title=None, dtype=float, order='C', meta=None):
     """Returns an array with the specified axes and filled with ones.
 
     Parameters
@@ -7196,12 +7248,15 @@ def ones(axes, title='', dtype=float, order='C'):
     axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`.  Default is `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7216,11 +7271,12 @@ def ones(axes, title='', dtype=float, order='C'):
          BE  1.0  1.0
          FO  1.0  1.0
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.ones(axes.shape, dtype, order), axes, title)
+    return LArray(np.ones(axes.shape, dtype, order), axes, meta=meta)
 
 
-def ones_like(array, title='', dtype=None, order='K'):
+def ones_like(array, title=None, dtype=None, order='K', meta=None):
     """Returns an array with the same axes as array and filled with ones.
 
     Parameters
@@ -7228,13 +7284,16 @@ def ones_like(array, title='', dtype=None, order='K'):
     array : LArray
         Input array.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7248,14 +7307,13 @@ def ones_like(array, title='', dtype=None, order='K'):
      a0   1   1   1
      a1   1   1   1
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     axes = array.axes
-    if not title:
-        title = array.title
-    return LArray(np.ones_like(array, dtype, order), axes, title)
+    return LArray(np.ones_like(array, dtype, order), axes, meta=meta)
 
 
 @_check_axes_argument
-def empty(axes, title='', dtype=float, order='C'):
+def empty(axes, title=None, dtype=float, order='C', meta=None):
     """Returns an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
@@ -7263,12 +7321,15 @@ def empty(axes, title='', dtype=float, order='C'):
     axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Desired data-type for the array, e.g., `numpy.int8`.  Default is `numpy.float64`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7283,11 +7344,12 @@ def empty(axes, title='', dtype=float, order='C'):
          BE  2.47311483356e-315  2.47498446195e-315
          FO                 0.0  6.07684618082e-31
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.empty(axes.shape, dtype, order), axes, title)
+    return LArray(np.empty(axes.shape, dtype, order), axes, meta=meta)
 
 
-def empty_like(array, title='', dtype=None, order='K'):
+def empty_like(array, title=None, dtype=None, order='K', meta=None):
     """Returns an array with the same axes as array and uninitialized (arbitrary) data.
 
     Parameters
@@ -7295,13 +7357,16 @@ def empty_like(array, title='', dtype=None, order='K'):
     array : LArray
         Input array.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7316,14 +7381,13 @@ def empty_like(array, title='', dtype=None, order='K'):
      a1  1.06099789568e-313  1.48539705397e-313
      a2  1.90979621226e-313  2.33419537056e-313
     """
-    if not title:
-        title = array.title
+    meta = _handle_deprecated_argument_title(meta, title)
     # cannot use empty() because order == 'K' is not understood
-    return LArray(np.empty_like(array.data, dtype, order), array.axes, title)
+    return LArray(np.empty_like(array.data, dtype, order), array.axes, meta=meta)
 
 
 # We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
-def full(axes, fill_value, title='', dtype=None, order='C'):
+def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
     """Returns an array with the specified axes and filled with fill_value.
 
     Parameters
@@ -7333,12 +7397,15 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
     fill_value : scalar or LArray
         Value to fill the array
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Desired data-type for the array. Default is the data type of fill_value.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7361,17 +7428,18 @@ def full(axes, fill_value, title='', dtype=None, order='C'):
          BE  0  1
          FO  0  1
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     if isinstance(fill_value, Axis):
         raise ValueError("If you want to pass several axes or dimension lengths to full, you must pass them as a "
                          "list (using []) or tuple (using()).")
     if dtype is None:
         dtype = np.asarray(fill_value).dtype
-    res = empty(axes, title, dtype, order)
+    res = empty(axes, dtype=dtype, order=order, meta=meta)
     res[:] = fill_value
     return res
 
 
-def full_like(array, fill_value, title='', dtype=None, order='K'):
+def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
     """Returns an array with the same axes and type as input array and filled with fill_value.
 
     Parameters
@@ -7381,13 +7449,16 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
     fill_value : scalar or LArray
         Value to fill the array
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Overrides the data type of the result. Defaults to the data type of array.
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7401,17 +7472,16 @@ def full_like(array, fill_value, title='', dtype=None, order='K'):
      a0   5   5   5
      a1   5   5   5
     """
-    if not title:
-        title = array.title
+    meta = _handle_deprecated_argument_title(meta, title)
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
-    res = empty_like(array, title, dtype, order)
+    res = empty_like(array, dtype, meta=meta)
     res[:] = fill_value
     return res
 
 
 # XXX: would it be possible to generalize to multiple axes?
-def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
+def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None, meta=None):
     """
     Creates an array by sequentially applying modifications to the array along axis.
 
@@ -7436,7 +7506,10 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
         Axes of the result. Defaults to the union of axes present in other arguments.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Examples
     --------
@@ -7513,6 +7586,8 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
     year  2016  2017  2018  2019
            1.0   2.0   3.0   3.0
     """
+    meta = _handle_deprecated_argument_title(meta, title)
+
     if inc is None:
         inc = 1 if mult is 1 else 0
 
@@ -7528,7 +7603,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
         axes = AxisCollection(axes)
         axis = axes[axis]
     res_dtype = np.dtype(common_type((initial, inc, mult)))
-    res = empty(axes, title=title, dtype=res_dtype)
+    res = empty(axes, dtype=res_dtype, meta=meta)
     res[axis.i[0]] = initial
     def has_axis(a, axis):
         return isinstance(a, LArray) and axis in a.axes
@@ -7580,7 +7655,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
         # it gets hairy for array inc AND array mult. It seems doable but let us wait until someone requests it.
         def array_or_full(a, axis, initial):
             dt = common_type((a, initial))
-            r = empty((get_axes(a) - axis) | axis, title=title, dtype=dt)
+            r = empty((get_axes(a) - axis) | axis, dtype=dt)
             r[axis.i[0]] = initial
             if isinstance(a, LArray) and axis in a.axes:
                 # not using axis.i[1:] because a could have less ticks
@@ -7623,14 +7698,14 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=''):
 create_sequential = renamed_to(sequence, 'create_sequential')
 
 @_check_axes_argument
-def ndrange(axes, start=0, title='', dtype=int):
+def ndrange(axes, start=0, title=None, dtype=int):
     import warnings
     warnings.warn("ndrange() is deprecated. Use sequence() or ndtest() instead.", FutureWarning, stacklevel=2)
     return ndtest(axes, start=start, title=title, dtype=dtype)
 
 
 @_check_axes_argument
-def ndtest(shape_or_axes, start=0, label_start=0, title='', dtype=int):
+def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=None):
     """Returns test array with given shape.
 
     Axes are named by single letters starting from 'a'.
@@ -7648,9 +7723,12 @@ def ndtest(shape_or_axes, start=0, label_start=0, title='', dtype=int):
     label_start : int, optional
         Label index for each axis is `label_start + position`. `label_start` defaults to 0.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : type or np.dtype, optional
         Type of resulting array.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7693,6 +7771,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title='', dtype=int):
          BE  0  1
          FO  2  3
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     # XXX: try to come up with a syntax where start is before "end".
     # For ndim > 1, I cannot think of anything nice.
     if isinstance(shape_or_axes, int):
@@ -7709,7 +7788,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title='', dtype=int):
     else:
         axes = AxisCollection(shape_or_axes)
     data = np.arange(start, start + axes.size, dtype=dtype).reshape(axes.shape)
-    return LArray(data, axes, title=title)
+    return LArray(data, axes, meta=meta)
 
 
 def kth_diag_indices(shape, k):
@@ -7804,7 +7883,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
 
 
 @_check_axes_argument
-def labels_array(axes, title=''):
+def labels_array(axes, title=None, meta=None):
     """Returns an array with specified axes and the combination of
     corresponding labels as values.
 
@@ -7812,7 +7891,10 @@ def labels_array(axes, title=''):
     ----------
     axes : Axis or collection of Axis
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7836,6 +7918,7 @@ def labels_array(axes, title=''):
     # nat\\sex     M     F
     #      BE  BE,M  BE,F
     #      FO  FO,M  FO,F
+    meta = _handle_deprecated_argument_title(meta, title)
     axes = AxisCollection(axes)
     if len(axes) > 1:
         res_axes = axes + Axis(axes.names, 'axis')
@@ -7848,7 +7931,7 @@ def labels_array(axes, title=''):
     else:
         res_axes = axes
         res_data = axes[0].labels
-    return LArray(res_data, res_axes, title)
+    return LArray(res_data, res_axes, meta=meta)
 
 
 def identity(axis):
@@ -7857,7 +7940,7 @@ def identity(axis):
                               "In other cases, you should use labels_array(axis) instead.")
 
 
-def eye(rows, columns=None, k=0, title='', dtype=None):
+def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
     """Returns a 2-D array with ones on the diagonal and zeros elsewhere.
 
     Parameters
@@ -7870,9 +7953,12 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
         Index of the diagonal: 0 (the default) refers to the main diagonal, a positive value refers to an upper
         diagonal, and a negative value to a lower diagonal.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
     dtype : data-type, optional
         Data-type of the returned array. Defaults to float.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -7902,12 +7988,13 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
             1  0.0  0.0  1.0
             2  0.0  0.0  0.0
     """
+    meta = _handle_deprecated_argument_title(meta, title)
     if columns is None:
         columns = rows.copy() if isinstance(rows, Axis) else rows
     axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
-    return LArray(data, axes, title)
+    return LArray(data, axes, meta=meta)
 
 
 # XXX: we could change the syntax to use *args
@@ -7976,7 +8063,8 @@ def eye(rows, columns=None, k=0, title='', dtype=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
-def stack(elements=None, axis=None, title='', **kwargs):
+#TODO: add metadata to returned Session once Session will handle metadata
+def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     """
     Combines several arrays or sessions along an axis.
 
@@ -7992,7 +8080,10 @@ def stack(elements=None, axis=None, title='', **kwargs):
     axis : str or Axis or Group, optional
         Axis to create. If None, defaults to a range() axis.
     title : str, optional
-        Title.
+        Deprecated. See 'meta' below.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -8094,6 +8185,8 @@ def stack(elements=None, axis=None, title='', **kwargs):
                M       0.0      0.5
                F       0.0      0.5
     """
+    meta = _handle_deprecated_argument_title(meta, title)
+
     from larray import Session
 
     if isinstance(axis, str) and '=' in axis:
@@ -8163,7 +8256,7 @@ def stack(elements=None, axis=None, title='', **kwargs):
         # XXX : use concat?
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])
         result_axes.append(axis)
-        result = empty(result_axes, title=title, dtype=common_type(values))
+        result = empty(result_axes, dtype=common_type(values), meta=meta)
         for k, v in zip(axis, values):
             result[k] = v
         return result
