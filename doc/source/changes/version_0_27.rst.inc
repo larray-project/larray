@@ -172,6 +172,7 @@ Miscellaneous improvements
 * documentation links in the Help menu of the editor point to the version of the documentation corresponding to
   the installed version of larray (closes :editor_issue:`105`).
 
+
 Fixes
 -----
 
