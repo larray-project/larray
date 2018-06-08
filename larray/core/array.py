@@ -8312,7 +8312,7 @@ def _equal_modulo_len1(shape1, shape2):
 # all because it copies the axes/change the object, and thus "flatten" wouldn't work with index axes:
 # a[ones(a.axes[axes], dtype=bool)]
 # but if we had assigned axes names from the start (without dropping them) this wouldn't be a problem.
-def make_numpy_broadcastable(values):
+def make_numpy_broadcastable(values, min_axes=None):
     """
     Returns values where LArrays are (NumPy) broadcastable between them.
     For that to be possible, all common axes must be compatible (see Axis class documentation).
@@ -8326,22 +8326,40 @@ def make_numpy_broadcastable(values):
     ----------
     values : iterable of arrays
         Arrays that requires to be (NumPy) broadcastable between them.
+    min_axes : AxisCollection, optional
+        Minimum axes the result should have. This argument is useful both when one wants to have extra axes in the
+        result or for having resulting axes in a specific order. Defaults to all input axes, ordered by first
+        appearance.
 
     Returns
     -------
-    list of arrays
+    arrays : list of arrays
         List of arrays broadcastable between them. Arrays will have the combination of all axes found in the input
         arrays, the earlier arrays defining the order of axes.
-    AxisCollection
-        Collection of axes of all input arrays.
+    res_axes : AxisCollection
+        Union of ``min_axes`` and the axes of all input arrays.
 
     See Also
     --------
     Axis.iscompatible : tests if axes are compatible between them.
     """
     all_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    if min_axes is not None:
+        if not isinstance(min_axes, AxisCollection):
+            min_axes = AxisCollection(min_axes)
+        all_axes = min_axes | all_axes
     return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
             for v in values], all_axes
+
+
+def raw_broadcastable(values, min_axes=None):
+    """
+    same as make_numpy_broadcastable but returns numpy arrays
+    """
+    arrays, res_axes = make_numpy_broadcastable(values, min_axes)
+    raw = [a.data if isinstance(a, LArray) else a
+           for a in arrays]
+    return raw, res_axes
 
 
 _default_float_error_handler = float_error_handler_factory(3)
