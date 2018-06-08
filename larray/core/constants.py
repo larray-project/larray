@@ -1,0 +1,20 @@
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+
+__all__ = ['nan', 'inf', 'pi', 'e', 'euler_gamma']
+
+nan = np.nan
+r"NaN (Not a Number)"
+
+inf = np.inf
+r":math:`\infty` (infinite)"
+
+pi = np.pi
+r":math:`\pi`"
+
+e = np.e
+r":math:`e`"
+
+euler_gamma = np.euler_gamma
+r"Euler's :math:`\gamma`"

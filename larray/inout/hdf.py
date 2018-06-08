@@ -5,9 +5,10 @@ import warnings
 import numpy as np
 from pandas import HDFStore
 
-from larray.core.axis import Axis
-from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.core.array import LArray
+from larray.core.axis import Axis
+from larray.core.constants import nan
+from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
@@ -17,7 +18,7 @@ from larray.inout.pandas import df_aslarray
 __all__ = ['read_hdf']
 
 
-def read_hdf(filepath_or_buffer, key, fill_value=np.nan, na=np.nan, sort_rows=False, sort_columns=False,
+def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
     """Reads an array named key from a HDF5 file in filepath (path+name)
 

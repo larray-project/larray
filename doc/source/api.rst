@@ -637,3 +637,17 @@ Editor
    view
    edit
    compare
+
+Constants
+=========
+
+.. currentmodule:: larray.core.constants
+.. autosummary::
+   :nosignatures:
+   :toctree: _generated/
+
+   nan
+   inf
+   pi
+   e
+   euler_gamma

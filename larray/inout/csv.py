@@ -9,9 +9,10 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
+from larray.core.array import LArray
 from larray.core.axis import Axis
+from larray.core.constants import nan
 from larray.core.group import Group
-from larray.core.array import LArray, ndtest
 from larray.util.misc import skip_comment_cells, strip_rows, csv_open, deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
@@ -22,8 +23,8 @@ __all__ = ['read_csv', 'read_tsv', 'read_eurostat']
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=np.nan,
-             na=np.nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):
+def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=nan,
+             na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):
     """
     Reads csv file and returns an array with the contents.
 
@@ -191,7 +192,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     df = pd.read_csv(filepath_or_buffer, index_col=index_col, sep=sep, **kwargs)
     if dialect == 'liam2':
         if len(df) == 1:
-            df.set_index([[np.nan]], inplace=True)
+            df.set_index([[nan]], inplace=True)
         if len(axes_names) > 1:
             df.index.names = axes_names[:-1]
         df.columns.name = axes_names[-1]
