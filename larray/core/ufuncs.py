@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from larray.core.array import LArray, make_numpy_broadcastable
+from larray.core.array import LArray, raw_broadcastable
 
 __all__ = [
     # Trigonometric functions
@@ -51,9 +51,9 @@ def broadcastify(func):
     def wrapper(*args, **kwargs):
         # TODO: normalize args/kwargs like in LIAM2 so that we can also broadcast if args are given via kwargs
         #       (eg out=)
-        args, combined_axes = make_numpy_broadcastable(args)
+        raw_args, combined_axes = raw_broadcastable(args)
 
-        # We pass only raw numpy arrays to the ufuncs even though numpy is normally meant to handle those case itself
+        # We pass only raw numpy arrays to the ufuncs even though numpy is normally meant to handle those cases itself
         # via __array_wrap__
 
         # There is a problem with np.clip though (and possibly other ufuncs): np.clip is roughly equivalent to
@@ -65,8 +65,6 @@ def broadcastify(func):
         # It fails on "np.minimum(ndarray, LArray)" because it calls __array_wrap__(high, result) which cannot work if
         # there was broadcasting involved (high has potentially less labels than result).
         # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
-        raw_args = [np.asarray(a) if isinstance(a, LArray) else a
-                    for a in args]
         res_data = func(*raw_args, **kwargs)
         if combined_axes:
             return LArray(res_data, combined_axes)
