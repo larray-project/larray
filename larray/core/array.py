@@ -55,6 +55,7 @@ except ImportError:
     np_nanprod = None
 
 from larray.core.abstractbases import ABCLArray
+from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
@@ -69,11 +70,8 @@ __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
     'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
     'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
-    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'element_equal'
+    'var', 'std', 'median', 'percentile', 'stack', 'nan_equal', 'element_equal'
 ]
-
-
-nan = np.nan
 
 
 def all(values, axis=None):
@@ -585,7 +583,7 @@ def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
 
     Examples
     --------
-    >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+    >>> arr1 = LArray([6., nan, 8.], "a=a0..a2")
     >>> arr1
     a   a0   a1   a2
        6.0  nan  8.0
@@ -599,7 +597,7 @@ def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
     Test equality between two arrays within a given tolerance range.
     Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
 
-    >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+    >>> arr2 = LArray([5.999, nan, 8.001], "a=a0..a2")
     >>> arr2
     a     a0   a1     a2
        5.999  nan  8.001
@@ -1143,7 +1141,7 @@ class LArray(ABCLArray):
 
         Drop nan values
 
-        >>> arr['b1'] = np.nan
+        >>> arr['b1'] = nan
         >>> arr
         a\\b   b0   b1   b2
          a0  0.0  nan  2.0
@@ -1359,7 +1357,7 @@ class LArray(ABCLArray):
         else:
             return LArray(self.data, axes)
 
-    def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=np.nan, inplace=False, **kwargs):
+    def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=nan, inplace=False, **kwargs):
         """Reorder and/or add new labels in axes.
 
         Place NaN or given `fill_value` in locations having no value previously.
@@ -8282,10 +8280,10 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         res = []
         for name in all_keys:
             try:
-                stacked = stack([s.get(name, np.nan) for s in sessions], axis=axis)
+                stacked = stack([s.get(name, nan) for s in sessions], axis=axis)
             # TypeError for str arrays, ValueError for incompatible axes, ...
             except Exception:
-                stacked = np.nan
+                stacked = nan
             res.append((name, stacked))
         return Session(res)
     else:

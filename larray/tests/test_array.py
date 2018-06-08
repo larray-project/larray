@@ -17,7 +17,7 @@ from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan
                                  tmp_path, meta)
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO, LHDFStore
@@ -172,10 +172,10 @@ io_3d = ndtest("a=1..3; b=b0,b1; c=c0..c2")
 io_int_labels = ndtest("a=0..2; b=0..2; c=0..2")
 io_unsorted = ndtest("a=3..1; b=b1,b0; c=c2..c0")
 io_missing_values = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
-io_missing_values[2, 'b0'] = np.nan
-io_missing_values[3, 'b1'] = np.nan
+io_missing_values[2, 'b0'] = nan
+io_missing_values[3, 'b1'] = nan
 io_narrow_missing_values = io_missing_values.copy()
-io_narrow_missing_values[2, 'b1', 'c1'] = np.nan
+io_narrow_missing_values[2, 'b1', 'c1'] = nan
 
 
 def test_ndtest():
@@ -1333,7 +1333,7 @@ def test_sum_full_axes(array):
 
 
 def test_sum_full_axes_with_nan(array):
-    array['M', 'P02', 'A12', 0] = np.nan
+    array['M', 'P02', 'A12', 0] = nan
     raw = array.data
 
     # everything
@@ -2937,7 +2937,7 @@ def test_read_excel_pandas():
 
     # with additional empty column in the middle of the array to read
     good2 = ndtest('a=a0,a1;b=2003..2006').astype(float)
-    good2[2005] = np.nan
+    good2[2005] = nan
     good2 = good2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
     bad3 = read_excel(fpath, 'middleblankcol', engine='xlrd')
     bad4 = read_excel(fpath, '16384col', engine='xlrd')
@@ -4295,7 +4295,7 @@ def test_split_axes():
     # combined does not contain all combinations of labels (issue #369)
     combined_partial = combined[['a0_b0', 'a0_b1', 'a1_b1', 'a0_b2', 'a1_b2']]
     expected = arr.astype(float)
-    expected['a1', 'b0'] = np.nan
+    expected['a1', 'b0'] = nan
     assert_array_nan_equal(combined_partial.split_axes('a_b'), expected)
 
     # split labels are ambiguous (issue #485)

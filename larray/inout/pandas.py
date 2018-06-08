@@ -1,15 +1,15 @@
 from __future__ import absolute_import, print_function
 
-import os.path
 from itertools import product
 from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
+from larray.core.array import LArray
 from larray.core.axis import Axis
 from larray.core.group import LGroup
-from larray.core.array import LArray
+from larray.core.constants import nan
 from larray.util.misc import basestring, decode, unique
 
 
@@ -234,7 +234,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
             df.set_index(index_columns, inplace=True)
             series = df[df.columns[-1]]
             if isinstance(series.index, pd.core.index.MultiIndex):
-                fill_value = kwargs.get('fill_value', np.nan)
+                fill_value = kwargs.get('fill_value', nan)
                 # TODO: use argument sort=False when it will be available
                 # (see https://github.com/pandas-dev/pandas/issues/15105)
                 df = series.unstack(level=-1, fill_value=fill_value)

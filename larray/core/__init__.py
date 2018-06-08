@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+from larray.core.constants import *
 from larray.core.group import *
 from larray.core.axis import *
 from larray.core.array import *

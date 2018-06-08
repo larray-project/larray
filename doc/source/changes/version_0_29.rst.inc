@@ -66,6 +66,21 @@ New features
     >>> arr = ndtest((3, 3))
     >>> arr.meta.title = 'array for testing'
 
+* made a few useful constants accessible directly from the larray module: nan, inf, pi, e and euler_gamma. Like for
+  any Python functionality, you can choose how to import and use them. For example, for pi:
+
+    >>> from larray import *
+    >>> pi
+    3.141592653589793
+    OR
+    >>> from larray import pi
+    >>> pi
+    3.141592653589793
+    OR
+    >>> import larray as la
+    >>> la.pi
+    3.141592653589793
+
 
 .. _misc:
 
