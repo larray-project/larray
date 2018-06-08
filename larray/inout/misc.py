@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 import numpy as np
 from pandas import DataFrame
 
+from larray.core.constants import nan
 from larray.util.misc import StringIO, deprecate_kwarg
 from larray.inout.common import _get_index_col
 from larray.inout.pandas import df_aslarray
@@ -13,7 +14,7 @@ __all__ = ['from_lists', 'from_string']
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def from_lists(data, nb_axes=None, index_col=None, fill_value=np.nan, sort_rows=False, sort_columns=False, wide=True):
+def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False, wide=True):
     """
     initialize array from a list of lists (lines)
 

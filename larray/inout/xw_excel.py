@@ -10,9 +10,10 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.group import _translate_sheet_name
-from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
+from larray.core.axis import Axis
+from larray.core.constants import nan
+from larray.core.group import _translate_sheet_name
 from larray.inout.pandas import df_aslarray
 from larray.inout.misc import from_lists
 from larray.util.misc import PY2, deprecate_kwarg
@@ -441,7 +442,7 @@ if xw is not None:
             setattr(self.xw_sheet, key, value)
 
         @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=np.nan,
+        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=nan,
                  sort_rows=False, sort_columns=False, wide=True):
             return self[:].load(header=header, convert_float=convert_float, nb_axes=nb_axes, index_col=index_col,
                                 fill_value=fill_value, sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
@@ -571,7 +572,7 @@ if xw is not None:
         __repr__ = __str__
 
         @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=np.nan,
+        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=nan,
                  sort_rows=False, sort_columns=False, wide=True):
             if not self.ndim:
                 return LArray([])

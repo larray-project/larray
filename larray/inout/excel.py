@@ -10,9 +10,10 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.axis import Axis
-from larray.core.group import Group, _translate_sheet_name
 from larray.core.array import LArray
+from larray.core.axis import Axis
+from larray.core.constants import nan
+from larray.core.group import Group, _translate_sheet_name
 from larray.util.misc import deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
@@ -24,7 +25,7 @@ __all__ = ['read_excel']
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
-def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=np.nan, na=np.nan,
+def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
                sort_rows=False, sort_columns=False, wide=True, engine=None, **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents

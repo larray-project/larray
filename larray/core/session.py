@@ -10,6 +10,7 @@ import numpy as np
 
 from larray.core.group import Group
 from larray.core.axis import Axis
+from larray.core.constants import nan
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
@@ -746,20 +747,20 @@ class Session(object):
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for name in all_keys:
-                    self_array = self.get(name, np.nan)
-                    other_operand = other.get(name, np.nan) if hasattr(other, 'get') else other
+                    self_array = self.get(name, nan)
+                    other_operand = other.get(name, nan) if hasattr(other, 'get') else other
                     try:
                         res_array = getattr(self_array, opfullname)(other_operand)
                     # TypeError for str arrays, ValueError for incompatible axes, ...
                     except Exception:
-                        res_array = np.nan
+                        res_array = nan
                     # this should only ever happen when self_array is a non Array (eg. nan)
                     if res_array is NotImplemented:
                         try:
                             res_array = getattr(other_operand, '__%s__' % inverseop(opname))(self_array)
                         # TypeError for str arrays, ValueError for incompatible axes, ...
                         except Exception:
-                            res_array = np.nan
+                            res_array = nan
                     res.append((name, res_array))
             return Session(res)
         opmethod.__name__ = opfullname
@@ -789,7 +790,7 @@ class Session(object):
                     try:
                         res_array = getattr(v, opfullname)()
                     except Exception:
-                        res_array = np.nan
+                        res_array = nan
                     res.append((k, res_array))
             return Session(res)
         opmethod.__name__ = opfullname
