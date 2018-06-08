@@ -13,6 +13,51 @@ Backward incompatible changes
 New features
 ------------
 
+* added new module to create arrays with values generated randomly following a few different distributions, or shuffle
+  an existing array along an axis:
+
+    >>> from larray.random import *
+
+    generate integers between two bounds (0 and 10 in this example)
+
+    >>> randint(0, 10, axes='a=a0..a2')
+    a  a0  a1  a2
+        3   6   2
+
+    generate values following a uniform distribution
+
+    >>> uniform(axes='a=a0..a2')
+    a                   a0                  a1                  a2
+       0.33293756929238394  0.5331412592583252  0.6748786766763107
+
+    generate values following a normal distribution (:math:`\mu` = 1 and :math:`\sigma` = 2 in this example)
+
+    >>> normal(1, scale=2, axes='a=a0..a2')
+    a                   a0                 a1                  a2
+       -0.9216651561025018  5.119734598931103  4.4467876992838935
+
+    randomly shuffle an existing array along one axis
+
+    >>> arr = ndtest((3, 3))
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+     a2   6   7   8
+    >>> permutation(arr, axis='b')
+    a\b  b1  b2  b0
+     a0   1   2   0
+     a1   4   5   3
+     a2   7   8   6
+
+    generate values by randomly choosing between specified values (5, 10 and 15 in this example), potentially with a
+    specified probability for each value (respectively a 30%, 50%, 20% probability of occurring in this example).
+
+    >>> choice([5, 10, 15], p=[0.3, 0.5, 0.2], axes='a=a0,a1;b=b0..b2')
+    a\b  b0  b1  b2
+     a0  15  10  10
+     a1  10   5  10
+
 * added method `equals` to Group which compares group names, associated axis names
   and labels between two groups:
 

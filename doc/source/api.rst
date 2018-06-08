@@ -638,6 +638,18 @@ Editor
    edit
    compare
 
+Random
+======
+
+.. autosummary::
+   :toctree: _generated/
+
+   random.randint
+   random.normal
+   random.uniform
+   random.permutation
+   random.choice
+
 Constants
 =========
 
