@@ -266,8 +266,8 @@ If you hesitate in which section to add your change log, feel free to ask.
 Make sure to include the GitHub issue number when adding your entry (using `` closes :issue:`issue-number` ``
 where `issue-number` is the number associated with the fixed issue).
 
-Step 6: Commit your code
-~~~~~~~~~~~~~~~~~~~~~~~~
+Step 6: Commit your changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you think you have (finally) fixed the issue (after documenting your code, running all the tests
 and adding a change log), make sure that one of your commit messages start with ``fix #issue-number :``
