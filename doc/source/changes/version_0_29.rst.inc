@@ -348,6 +348,9 @@ Miscellaneous improvements
 
 * made the `from_series` function support series with multiindex (closes :issue:`465`)
 
+* completely rewritten the 'Load And Dump Arrays, Sessions, Axes And Groups' section of the tutorial
+  (closes :issue:`645`)
+
 
 Fixes
 -----
