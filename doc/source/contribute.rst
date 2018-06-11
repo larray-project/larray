@@ -54,8 +54,6 @@ To do it manually, follow these steps::
     cd larray
     git remote add upstream https://github.com/larray-project/larray.git
 
-Or do it with PyCharm following **VCS > Checkout from Version Control > GitHub** in the menu bar.
-
 This creates the directory `larray` and connects your repository to
 the upstream (main project) *larray* repository.
 
@@ -159,9 +157,6 @@ leads to merge conflicts, you must resolve these before submitting your pull
 request.  If you have uncommitted changes, you will need to ``stash`` them prior
 to updating.  This will effectively store your changes and they can be reapplied
 after updating.
-
-For managing branches with PyCharm, please refer to
-`this page <https://www.jetbrains.com/help/pycharm/manage-branches.html>`_.
 
 Step 2: Write your code
 ~~~~~~~~~~~~~~~~~~~~~~~
