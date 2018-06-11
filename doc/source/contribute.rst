@@ -36,8 +36,8 @@ Creating a development environment
 Getting started with Git
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-`GitHub has instructions <http://help.github.com/set-up-git-redirect>`__ for installing git,
-setting up your SSH key, and configuring git.
+`GitHub has instructions <http://help.github.com/set-up-git-redirect>`__
+for installing and configuring git.
 
 .. contributing.getting_code
 
