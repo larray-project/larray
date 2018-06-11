@@ -386,7 +386,7 @@ To run all unit tests: ::
 
   > pytest larray/tests/test_array.py
 
-Before writting any unit tests, please read the section `Conventions for Python test discovery
+Before writing any unit tests, please read the section `Conventions for Python test discovery
 <https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_ from the pytest documentation.
 
 
