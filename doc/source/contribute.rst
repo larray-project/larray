@@ -80,6 +80,19 @@ We'll now kick off a two-step process:
    conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl xlsxwriter pytest
    conda activate larray_dev
 
+This will create the new environment, and not touch any of your existing environments,
+nor any existing Python installation.
+
+To view your environments::
+
+      conda info -e
+
+To return to your root environment::
+
+      conda deactivate
+
+See the full conda docs `here <http://conda.pydata.org/docs>`_.
+
 2. Build and install larray
 
 You could install LArray in the standard way:
@@ -95,28 +108,16 @@ convenient to use:
 
   python setup.py develop
 
-This creates some kind of symlink between your python installation "modules" directory and your repository,
-so that any change in your local copy is automatically usable by other modules.
+This creates some kind of symbolic link between your python installation "modules"
+directory and your repository, so that any change in your local copy is automatically
+usable by other modules.
 
 At this point you should be able to import larray from your locally built version::
 
    $ python  # start an interpreter
    >>> import larray
    >>> larray.__version__
-   '0.29'
-
-This will create the new environment, and not touch any of your existing environments,
-nor any existing Python installation.
-
-To view your environments::
-
-      conda info -e
-
-To return to your root environment::
-
-      conda deactivate
-
-See the full conda docs `here <http://conda.pydata.org/docs>`_.
+   '0.29-dev'
 
 
 Starting to contribute
