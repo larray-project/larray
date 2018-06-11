@@ -281,8 +281,8 @@ where `issue-number` is the number associated with the fixed issue before to sta
 Step 7: Push your changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you want your changes to appear publicly on your GitHub page, push your
-forked feature branch's commits::
+When you want your changes to appear publicly on the web page of your fork on GitHub,
+push your forked feature branch's commits::
 
     git push origin issue-to-fix
 
