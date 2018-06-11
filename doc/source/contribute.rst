@@ -18,10 +18,6 @@ To contribute you will need to sign up for a `free GitHub account <https://githu
 
 We use `Git <http://git-scm.com/>`_ for version control to allow many people to work together on the project.
 
-For managing the Python packages and developing the code we use `miniconda <https://conda.io/miniconda.html>`_
-and the IDE `PyCharm <https://www.jetbrains.com/pycharm>`_ respectively.
-Alternatively to `miniconda`, you may install `Anaconda <https://www.anaconda.com/download/>`_.
-
 The documentation is written partly using reStructuredText and partly using Jupyter notebooks (for the tutorial).
 It is built to various formats using `Sphinx <http://sphinx-doc.org/>`_
 and `nbsphinx <https://nbsphinx.readthedocs.io>`_.
@@ -67,7 +63,8 @@ Creating a Python Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before starting any development, you'll need to create an isolated larray
-development environment:
+development environment. One of the easiest way to do it is via `Anaconda` or `miniconda`
+(while this not mandatory):
 
 - Install either `Anaconda <https://www.anaconda.com/download/>`_ or `miniconda
   <https://conda.io/miniconda.html>`_ as :ref:`suggest earlier <contributing.tools>`
