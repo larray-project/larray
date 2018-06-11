@@ -37,8 +37,10 @@ def test_value_string_split():
     assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
     assert_array_equal(_to_ticks('M, F'), np.asarray(['M', 'F']))
 
+
 def test_value_string_union():
     assert union('A11,A22', 'A12,A22') == ['A11', 'A22', 'A12']
+
 
 def test_value_string_range():
     assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
@@ -57,11 +59,13 @@ def test_key_string_nonstring():
     assert _to_key(('M', 'F')) == ['M', 'F']
     assert _to_key(['M', 'F']) == ['M', 'F']
 
+
 def test_key_string_split():
     assert _to_key('M,F') == ['M', 'F']
     assert _to_key('M, F') == ['M', 'F']
     assert _to_key('M,') == ['M']
     assert _to_key('M') == 'M'
+
 
 def test_key_string_slice_strings():
     # these two examples have different results and this is fine because numeric axes do not necessarily start at 0
@@ -151,6 +155,7 @@ bru_str = bru
 belgium = union(vla, wal, bru)
 geo = Axis(belgium, 'geo')
 
+
 # ARRAYS
 @pytest.fixture()
 def array(meta):
@@ -195,21 +200,25 @@ def test_ndrange():
     assert arr.axes.names == ['a']
     assert_array_equal(arr.data, np.arange(2))
 
+
 def test_getattr(array):
     assert type(array.geo) == Axis
     assert array.geo is geo
     with pytest.raises(AttributeError):
         array.geom
 
+
 def test_zeros():
     la = zeros((geo, age))
     assert la.shape == (44, 116)
     assert_array_equal(la, np.zeros((44, 116)))
 
+
 def test_zeros_like(array):
     la = zeros_like(array)
     assert la.shape == (116, 44, 2, 15)
     assert_array_equal(la, np.zeros((116, 44, 2, 15)))
+
 
 def test_bool():
     a = ones([2])
@@ -230,10 +239,12 @@ def test_bool():
     a = LArray(np.array(0), [])
     assert not bool(a)
 
+
 def test_iter(small_array):
     l = list(small_array)
     assert_array_equal(l[0], small_array['M'])
     assert_array_equal(l[1], small_array['F'])
+
 
 def test_rename(array):
     new_array = array.rename('sex', 'gender')
@@ -245,6 +256,7 @@ def test_rename(array):
     # old array axes names not modified
     assert array.axes.names == ['age', 'geo', 'sex', 'lipro']
     assert new_array.axes.names == ['age', 'geo', 'gender', 'lipro']
+
 
 def test_info(array):
     expected = """\
@@ -261,6 +273,7 @@ date: 1970-03-21 00:00:00
 dtype: float64
 memory used: 1.17 Mb"""
     assert array.info == expected
+
 
 def test_str(small_array, array):
     lipro3 = lipro['P01:P03']
@@ -303,6 +316,7 @@ age    0       1       2       3       4       5       6       7        8  ...  
 
     arr = LArray([0, ''], Axis(['a0', ''], 'a'))
     assert str(arr) == "a  a0  \n    0  "
+
 
 def test_getitem(array):
     raw = array.data
@@ -368,6 +382,7 @@ def test_getitem(array):
     with pytest.raises(ValueError):
         array[bad[1, 2], age[3, 4]]
 
+
 def test_getitem_abstract_axes(array):
     raw = array.data
     age, geo, sex, lipro = array.axes
@@ -406,6 +421,7 @@ def test_getitem_abstract_axes(array):
     with pytest.raises(ValueError):
         array[X.bad[1, 2], X.age[3, 4]]
 
+
 def test_getitem_anonymous_axes():
     arr = ndtest([Axis(3), Axis(4)])
     raw = arr.data
@@ -413,6 +429,7 @@ def test_getitem_anonymous_axes():
     assert_array_equal(arr[X[1][2:]], raw[:, 2:])
     assert_array_equal(arr[X[0][2:], X[1][1:]], raw[2:, 1:])
     assert_array_equal(arr.i[2:, 1:], raw[2:, 1:])
+
 
 def test_getitem_guess_axis(array):
     raw = array.data
@@ -481,6 +498,7 @@ def test_getitem_guess_axis(array):
     res = arr['b[l1]']
     assert_array_equal(res, arr.data[:, 0])
 
+
 def test_getitem_positional_group(array):
     raw = array.data
     age, geo, sex, lipro = array.axes
@@ -516,6 +534,7 @@ def test_getitem_positional_group(array):
     # key with duplicate axes
     with pytest.raises(ValueError, message="key has several values for axis: age"):
         array[age.i[1, 2], age.i[3, 4]]
+
 
 def test_getitem_abstract_positional(array):
     raw = array.data
@@ -553,6 +572,7 @@ def test_getitem_abstract_positional(array):
     with pytest.raises(ValueError, message="key has several values for axis: age"):
         array[X.age.i[2, 3], X.age.i[1, 5]]
 
+
 def test_getitem_bool_larray_key():
     arr = ndtest((3, 2, 4))
     raw = arr.data
@@ -573,6 +593,7 @@ def test_getitem_bool_larray_key():
     raw_d1, raw_d3 = raw_key.nonzero()
     assert_array_equal(res, raw[raw_d1, :, raw_d3])
 
+
 def test_getitem_bool_larray_and_group_key():
     arr = ndtest((3, 6, 4)).set_labels('b', '0..5')
 
@@ -588,12 +609,14 @@ def test_getitem_bool_larray_and_group_key():
     assert res.ndim == 3
     assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
 
+
 def test_getitem_bool_ndarray_key(array):
     raw = array.data
     res = array[raw < 5]
     assert isinstance(res, LArray)
     assert res.ndim == 1
     assert_array_equal(res, raw[raw < 5])
+
 
 def test_getitem_bool_anonymous_axes():
     a = ndtest([Axis(2), Axis(3), Axis(4), Axis(5)])
@@ -609,10 +632,12 @@ def test_getitem_bool_anonymous_axes():
     assert res.ndim == 3
     assert res.shape == (2, 12, 5)
 
+
 def test_getitem_igroup_on_int_axis():
     a = Axis('a=1..3')
     arr = ndtest(a)
     assert arr[a.i[1]] == 1
+
 
 def test_getitem_int_larray_lgroup_key():
     # e axis go from 0 to 3
@@ -623,6 +648,7 @@ def test_getitem_int_larray_lgroup_key():
     res = arr[X.e[key]]
     assert res.shape == (2, 2, 2, 2)
     assert res.axes.names == ['c', 'd', 'a', 'b']
+
 
 def test_getitem_structured_key_with_groups():
     arr = ndtest((3, 2))
@@ -658,6 +684,7 @@ def test_getitem_structured_key_with_groups():
 
     # d.2) IGroup.axis not from array.axes
     assert_array_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
+
 
 def test_getitem_single_larray_key_guess():
     a = Axis(['a1', 'a2'], 'a')
@@ -761,6 +788,7 @@ def test_getitem_single_larray_key_guess():
 #                  [a, b, c])
 #     self.assertEqual(arr[key].axes, [a, c])
 #
+#
 # def test_getitem_multiple_larray_key_guess():
 #     a = Axis('a', ['a1', 'a2'])
 #     b = Axis('b', ['b1', 'b2', 'b3'])
@@ -790,6 +818,7 @@ def test_getitem_ndarray_key_guess(array):
     assert res.axes == array.axes.replace(X.lipro, Axis(keys, 'lipro'))
     assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
 
+
 def test_getitem_int_larray_key_guess():
     a = Axis([0, 1], 'a')
     b = Axis([2, 3], 'b')
@@ -800,6 +829,7 @@ def test_getitem_int_larray_key_guess():
     arr = ndtest([c, d, e])
     key = LArray([[8, 9], [10, 11]], [a, b])
     assert arr[key].axes == [c, d, a, b]
+
 
 def test_getitem_int_ndarray_key_guess():
     c = Axis([4, 5], 'c')
@@ -812,6 +842,7 @@ def test_getitem_int_ndarray_key_guess():
     key = np.array([8, 11, 10])
     res = arr[key]
     assert res.axes == [c, d, Axis([8, 11, 10], 'e')]
+
 
 def test_getitem_axis_object():
     arr = ndtest((2, 3))
@@ -826,6 +857,7 @@ def test_getitem_axis_object():
                                                  a0   0   2
                                                  a1   3   5"""))
 
+
 def test_positional_indexer_getitem(array):
     raw = array.data
     for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0], ([1, 0], 5)]:
@@ -833,6 +865,7 @@ def test_positional_indexer_getitem(array):
     assert_array_equal(array.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
     with pytest.raises(IndexError):
         array.i[0, 0, 0, 0, 0]
+
 
 def test_positional_indexer_setitem(array):
     for key in [0, (0, 2, 1, 2), (slice(None), 2, 1), (0, 2), [1, 0], ([1, 0], 2)]:
@@ -846,6 +879,7 @@ def test_positional_indexer_setitem(array):
     array.i[[1, 0], [5, 4]] = 42
     raw[np.ix_([1, 0], [5, 4])] = 42
     assert_array_equal(array, raw)
+
 
 def test_points_indexer_getitem():
     arr = ndtest((2, 3, 3))
@@ -874,6 +908,7 @@ def test_points_indexer_getitem():
     # XXX: we might want to raise KeyError or IndexError instead?
     with pytest.raises(ValueError):
         arr.points['a0', 'b1', 'c2', 'd0']
+
 
 def test_points_indexer_setitem():
     keys = [
@@ -912,6 +947,7 @@ def test_points_indexer_setitem():
     data[:, [0, 1, 2], [0, 1, 2]] = value
     arr.points['b0,b1,b2', 'c0,c1,c2'] = arr['b0', 'c0']
     assert_array_equal(arr, data)
+
 
 def test_setitem_larray(array, small_array):
     """
@@ -1020,6 +1056,7 @@ def test_setitem_larray(array, small_array):
     with pytest.raises(ValueError, match="incompatible axes:"):
         arr[:] = la2
 
+
 def test_setitem_ndarray(array):
     """
     tests LArray.__setitem__(key, value) where value is a raw ndarray.
@@ -1041,6 +1078,7 @@ def test_setitem_ndarray(array):
     raw[[1, 5, 9]] = value
     assert_array_equal(arr, raw)
 
+
 def test_setitem_scalar(array):
     """
     tests LArray.__setitem__(key, value) where value is a scalar
@@ -1058,6 +1096,7 @@ def test_setitem_scalar(array):
     arr[0, 'P02', 'A12', 'M'] = 42
     raw[0, 1, 0, 1] = 42
     assert_array_equal(arr, raw)
+
 
 def test_setitem_bool_array_key(array):
     # XXX: this test is awfully slow (more than 1s)
@@ -1115,6 +1154,7 @@ def test_setitem_bool_array_key(array):
     with pytest.raises(ValueError):
         arr[key] = 0
 
+
 def test_set(array):
     age, geo, sex, lipro = array.axes
 
@@ -1161,6 +1201,7 @@ def test_set(array):
     arr.set(arr[[1, 5, 9]] + 27.0, age=[1, 5, 9])
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
     assert_array_equal(arr, raw)
+
 
 def test_filter(array):
     age, geo, sex, lipro = array.axes
@@ -1229,6 +1270,7 @@ def test_filter(array):
     # filter chain with a slice
     assert array.filter(age=slice(17)).filter(geo='A12,A13').shape == (18, 2, 2, 15)
 
+
 def test_filter_multiple_axes(array):
     # multiple values in each group
     assert array.filter(age=[1, 5, 9], lipro='P01,P02').shape == (3, 44, 2, 2)
@@ -1247,6 +1289,7 @@ def test_filter_multiple_axes(array):
     assert array.filter(age=57, lipro='P01,P05').shape == (44, 2, 2)
     assert array.filter(geo='A57', lipro='P01,P05').shape == (116, 2, 2)
 
+
 def test_contains():
     arr = ndtest('a=0..2;b=b0..b2;c=2..4')
     # string label
@@ -1259,6 +1302,7 @@ def test_contains():
     assert 2 in arr
     # slice
     assert not slice('b0', 'b2') in arr
+
 
 def test_sum_full_axes(array):
     age, geo, sex, lipro = array.axes
@@ -1288,6 +1332,7 @@ def test_sum_full_axes(array):
     # filter on aggregated
     assert aggregated.filter(geo=vla_str).shape == (22, 15)
 
+
 def test_sum_full_axes_with_nan(array):
     array['M', 'P02', 'A12', 0] = np.nan
     raw = array.data
@@ -1303,6 +1348,7 @@ def test_sum_full_axes_with_nan(array):
     assert_array_nan_equal(array.sum(X.age, X.sex), np.nansum(raw, (0, 2)))
     assert_array_nan_equal(array.sum(X.age, X.sex, skipna=False), raw.sum((0, 2)))
 
+
 def test_sum_full_axes_keep_axes(array):
     agg = array.sum(keepaxes=True)
     assert agg.shape == (1, 1, 1, 1)
@@ -1314,12 +1360,14 @@ def test_sum_full_axes_keep_axes(array):
     for axis in agg.axes:
         assert axis.labels == ['total']
 
+
 def test_mean_full_axes(array):
     raw = array.data
 
     assert array.mean() == np.mean(raw)
     assert_array_nan_equal(array.mean(X.age), np.mean(raw, 0))
     assert_array_nan_equal(array.mean(X.age, X.sex), np.mean(raw, (0, 2)))
+
 
 def test_mean_groups(array):
     # using int type to test that we get a float in return
@@ -1328,6 +1376,7 @@ def test_mean_groups(array):
     res = arr.mean(X.geo['A11', 'A13', 'A24', 'A31'])
     assert_array_nan_equal(res, np.mean(raw[:, [0, 2, 4, 5]], 1))
 
+
 def test_median_full_axes(array):
     raw = array.data
 
@@ -1335,11 +1384,13 @@ def test_median_full_axes(array):
     assert_array_nan_equal(array.median(X.age), np.median(raw, 0))
     assert_array_nan_equal(array.median(X.age, X.sex), np.median(raw, (0, 2)))
 
+
 def test_median_groups(array):
     raw = array.data
     res = array.median(X.geo['A11', 'A13', 'A24'])
     assert res.shape == (116, 2, 15)
     assert_array_nan_equal(res, np.median(raw[:, [0, 2, 4]], 1))
+
 
 def test_percentile_full_axes():
     arr = ndtest((2, 3, 4))
@@ -1348,12 +1399,14 @@ def test_percentile_full_axes():
     assert_array_nan_equal(arr.percentile(10, X.a), np.percentile(raw, 10, 0))
     assert_array_nan_equal(arr.percentile(10, X.c, X.a), np.percentile(raw, 10, (2, 0)))
 
+
 def test_percentile_groups():
     arr = ndtest((2, 5, 3))
     raw = arr.data
 
     res = arr.percentile(10, X.b['b0', 'b2', 'b4'])
     assert_array_nan_equal(res, np.percentile(raw[:, [0, 2, 4]], 10, 1))
+
 
 def test_cumsum(array):
     raw = array.data
@@ -1367,6 +1420,7 @@ def test_cumsum(array):
 
     # using axes names
     assert_array_equal(array.cumsum('sex'), raw.cumsum(2))
+
 
 def test_group_agg_kwargs(array):
     age, geo, sex, lipro = array.axes
@@ -1419,6 +1473,7 @@ def test_group_agg_kwargs(array):
     # c) chain group aggregate after axis aggregate
     res = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
     assert res.shape == (4, 15)
+
 
 def test_group_agg_guess_axis(array):
     raw = array.data.copy()
@@ -1493,6 +1548,7 @@ def test_group_agg_guess_axis(array):
     res = array.sum(age, sex).sum((vla, wal, bru, belgium))
     assert res.shape == (4, 15)
 
+
 def test_group_agg_label_group(array):
     age, geo, sex, lipro = array.axes
     vla, wal, bru = geo[vla_str], geo[wal_str], geo[bru_str]
@@ -1559,6 +1615,7 @@ def test_group_agg_label_group(array):
     res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
     assert res.shape == (4, 15)
 
+
 def test_group_agg_label_group_no_axis(array):
     age, geo, sex, lipro = array.axes
     vla, wal, bru = LGroup(vla_str), LGroup(wal_str), LGroup(bru_str)
@@ -1612,6 +1669,7 @@ def test_group_agg_label_group_no_axis(array):
     # c) chain group aggregate after axis aggregate
     res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
     assert res.shape == (4, 15)
+
 
 def test_group_agg_axis_ref_label_group(array):
     age, geo, sex, lipro = X.age, X.geo, X.sex, X.lipro
@@ -1682,6 +1740,7 @@ def test_group_agg_axis_ref_label_group(array):
     res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
     assert res.shape == (4, 15)
 
+
 def test_group_agg_one_axis():
     a = Axis(range(3), 'a')
     la = ndtest(a)
@@ -1689,16 +1748,19 @@ def test_group_agg_one_axis():
 
     assert_array_equal(la.sum(a[0, 2]), raw[[0, 2]].sum())
 
+
 def test_group_agg_anonymous_axis():
     la = ndtest([Axis(2), Axis(3)])
     a1, a2 = la.axes
     raw = np.asarray(la)
     assert_array_equal(la.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
 
+
 def test_group_agg_zero_padded_label():
     arr = ndtest("a=01,02,03,10,11; b=b0..b2")
     expected = LArray([36, 30, 39], "a=01_03,10,11")
     assert_array_equal(arr.sum("01,02,03 >> 01_03; 10; 11", "b"), expected)
+
 
 def test_group_agg_on_int_array():
     # issue 193
@@ -1710,6 +1772,7 @@ def test_group_agg_on_int_array():
     assert arr.std(group) == 1.0
     assert arr.var(group) == 1.0
 
+
 def test_group_agg_on_bool_array():
     # issue 194
     a = ndtest((2, 3))
@@ -1718,6 +1781,7 @@ def test_group_agg_on_bool_array():
                                , 1, 2""", sep=',')
     assert_array_equal(b.sum('b1:'), expected)
 
+
 # TODO: fix this (and add other tests for references (x.) to anonymous axes
 # def test_group_agg_anonymous_axis_ref():
 #     la = ndtest([Axis(2), Axis(3)])
@@ -1725,6 +1789,7 @@ def test_group_agg_on_bool_array():
 #     # this does not work because x[1] refers to an axis with name 1,
 #     # which does not exist. We might want to change this.
 #     assert_array_equal(la.sum(x[1][0, 2]), raw[:, [0, 2]].sum(1))
+
 
 # group aggregates on a group-aggregated array
 def test_group_agg_on_group_agg(array):
@@ -1759,6 +1824,7 @@ def test_group_agg_on_group_agg(array):
 
     # self.assertEqual(reg.sum(geo=([vla, bru], [wal, bru])).shape, (2, 3))
     # vla, wal, bru
+
 
 # group aggregates on a group-aggregated array
 def test_group_agg_on_group_agg_nokw(array):
@@ -1798,6 +1864,7 @@ def test_group_agg_on_group_agg_nokw(array):
     # self.assertEqual(reg.sum(geo=([vla, bru], [wal, bru])).shape, (2, 3))
     # vla, wal, bru
 
+
 def test_getitem_on_group_agg(array):
     age, geo, sex, lipro = array.axes
     vla, wal, bru = vla_str, wal_str, bru_str
@@ -1834,6 +1901,7 @@ def test_getitem_on_group_agg(array):
     assert reg[(vla, slice(None))].shape == (15,)
     assert reg[vla, slice(None)].shape == (15,)
     assert reg[vla, :].shape == (15,)
+
 
 def test_getitem_on_group_agg_nokw(array):
     age, geo, sex, lipro = array.axes
@@ -1872,6 +1940,7 @@ def test_getitem_on_group_agg_nokw(array):
     assert reg[vla, slice(None)].shape == (15,)
     assert reg[vla, :].shape == (15,)
 
+
 def test_filter_on_group_agg(array):
     age, geo, sex, lipro = array.axes
     vla, wal, bru = vla_str, wal_str, bru_str
@@ -1909,6 +1978,7 @@ def test_filter_on_group_agg(array):
     byage = array.sum(age=(child_named, 5, working, retired))
     assert byage.filter(age=child_named).shape == (44, 2, 15)
 
+
 def test_sum_several_lg_groups(array):
     fla = geo[vla_str] >> 'Flanders'
     wal = geo[wal_str] >> 'Wallonia'
@@ -1938,6 +2008,7 @@ def test_sum_several_lg_groups(array):
     assert reg.filter(geo=vla_str).shape == (116, 2, 15)
     assert reg.filter(geo=(vla_str, wal_str)).shape == (116, 2, 2, 15)
 
+
 def test_sum_with_groups_from_other_axis(small_array):
     # use a group from another *compatible* axis
     lipro2 = Axis('lipro=P01..P15')
@@ -1956,6 +2027,7 @@ def test_sum_with_groups_from_other_axis(small_array):
     with pytest.raises(ValueError, message="lipro\['P01', 'P16'\] is not a valid label for any axis"):
         small_array.sum(lipro4['P01,P16'])
 
+
 def test_agg_kwargs(array):
     raw = array.data
 
@@ -1970,6 +2042,7 @@ def test_agg_kwargs(array):
     out = zeros_like(res)
     array.std(X.sex, out=out)
     assert_array_equal(res, out)
+
 
 def test_agg_by(array):
     age, geo, sex, lipro = array.axes
@@ -2025,10 +2098,12 @@ def test_agg_by(array):
     assert res2.shape == (4,)
     assert_array_equal(res2, res.sum(sex, geo=(vla, wal, bru, belgium)))
 
+
 def test_agg_igroup():
     arr = ndtest(3)
     res = arr.sum((X.a.i[:2], X.a.i[1:]))
     assert_array_equal(res.a.labels, [':a1', 'a1:'])
+
 
 def test_ratio(array):
     age, geo, sex, lipro = array.axes
@@ -2056,6 +2131,7 @@ def test_ratio(array):
     assert ratio.shape == (3, 15)
     assert ratio.sum() == 1.0
 
+
 def test_percent(array):
     age, geo, sex, lipro = array.axes
 
@@ -2081,6 +2157,7 @@ def test_percent(array):
     assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
     assert percent.shape == (3, 15)
     assert round(abs(percent.sum()-100.0), 7) == 0
+
 
 def test_total(array):
     age, geo, sex, lipro = array.axes
@@ -2120,6 +2197,7 @@ def test_total(array):
     a4 = array.with_total((':P05', 'P05:'), op=mean)
     assert a4.shape == (116, 44, 2, 17)
 
+
 def test_transpose():
     arr = ndtest((2, 3, 4))
     a, b, c = arr.axes
@@ -2135,6 +2213,7 @@ def test_transpose():
     assert res.axes == [b, c, a]
     res = arr.transpose('c', Ellipsis, 'a')
     assert res.axes == [c, b, a]
+
 
 def test_transpose_anonymous():
     a = ndtest([Axis(2), Axis(3), Axis(4)])
@@ -2161,6 +2240,7 @@ def test_transpose_anonymous():
 
     reordered = a.transpose()
     assert reordered.shape == (4, 3, 2)
+
 
 def test_binary_ops(small_array):
     raw = small_array.data
@@ -2225,6 +2305,7 @@ def test_binary_ops(small_array):
     assert raw2_ge_la.axes == small_array.axes
     assert_array_equal(raw2_ge_la, raw2 >= raw)
 
+
 def test_binary_ops_no_name_axes(small_array):
     raw = small_array.data
     raw2 = small_array.data + 1
@@ -2282,6 +2363,7 @@ def test_binary_ops_no_name_axes(small_array):
     assert raw2_ge_la.axes == la.axes
     assert_array_equal(raw2_ge_la, raw2 >= raw)
 
+
 def test_broadcasting_no_name():
     a = ndtest([Axis(2), Axis(3)])
     b = ndtest(Axis(3))
@@ -2312,6 +2394,7 @@ def test_broadcasting_no_name():
         # ValueError: operands could not be broadcast together with shapes (2,3) (2,)
         np.asarray(a) * np.asarray(c)
 
+
 def test_unary_ops(small_array):
     raw = small_array.data
 
@@ -2326,14 +2409,17 @@ def test_unary_ops(small_array):
     assert_array_equal(+small_array, +raw)
     assert_array_equal(~small_array, ~raw)
 
+
 def test_mean(small_array):
     raw = small_array.data
     sex, lipro = small_array.axes
     assert_array_equal(small_array.mean(lipro), raw.mean(1))
 
+
 def test_sequence():
     res = sequence('b=b0..b2', ndtest(3) * 3, 1.0)
     assert_array_equal(ndtest((3, 3), dtype=float), res)
+
 
 def test_sort_values():
     # 1D arrays
@@ -2354,9 +2440,11 @@ def test_sort_values():
                       [Axis('a=a0,a1'), Axis('b=b0,b1'), Axis(3, 'c')])
     assert_array_equal(res, expected)
 
+
 def test_set_labels(small_array):
     small_array.set_labels(X.sex, ['Man', 'Woman'], inplace=True)
     assert_array_equal(small_array, small_array.set_labels(X.sex, ['Man', 'Woman']))
+
 
 def test_replace_axes(small_array):
     lipro2 = Axis([l.replace('P', 'Q') for l in lipro.labels], 'lipro2')
@@ -2382,6 +2470,7 @@ def test_replace_axes(small_array):
     # using list of pairs (axis_to_replace, new_axis)
     la2 = small_array.set_axes([(X.sex, sex2), (X.lipro, lipro2)])
     assert_array_equal(la, la2)
+
 
 def test_reindex():
     arr = ndtest((2, 2))
@@ -2427,6 +2516,7 @@ def test_reindex():
                                            a1   b1   3
                                            a1   b2  -1"""))
 
+
 def test_append(small_array):
     sex, lipro = small_array.axes
 
@@ -2443,6 +2533,7 @@ def test_append(small_array):
     # another syntax (which implies we could not have an axis named "label")
     # small_array = small_array.append(lipro=small_array.sum(lipro), label='sum')
     # self.assertEqual(small_array.shape, (117, 44, 2, 15))
+
 
 def test_insert():
     # simple tests are in the docstring
@@ -2524,6 +2615,7 @@ def test_insert():
      v0   0    42   1
      v1   2    42   3"""))
 
+
 # the aim of this test is to drop the last value of an axis, but instead
 # of dropping the last axis tick/label, drop the first one.
 def test_shift_axis(small_array):
@@ -2539,6 +2631,7 @@ def test_shift_axis(small_array):
     l2 = small_array[:, 'P02':]
     l2.axes.lipro.labels = lipro.labels[1:]
 
+
 def test_extend(small_array):
     sex, lipro = small_array.axes
 
@@ -2549,6 +2642,7 @@ def test_extend(small_array):
     # test with a string axis
     small_array = small_array.extend('sex', small_array.sum(sex=(sex[:],)))
     assert small_array.shape == (3, 16)
+
 
 def test_hdf_roundtrip(tmpdir):
     a = ndtest((2, 3))
@@ -2602,6 +2696,7 @@ def test_hdf_roundtrip(tmpdir):
     s = Session(fpath)
     assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
+
 def test_from_string():
     expected = ndtest("sex=M,F")
 
@@ -2616,6 +2711,7 @@ def test_from_string():
     res = from_string('''sex  M  F
                          NaN  0  1''')
     assert_array_equal(res, expected)
+
 
 def test_read_csv():
     res = read_csv(inputpath('test1d.csv'))
@@ -2677,6 +2773,7 @@ def test_read_csv():
     res = read_csv(inputpath('testunsorted_narrow.csv'), wide=False)
     assert_array_equal(res, io_unsorted)
 
+
 def test_read_eurostat():
     la = read_eurostat(inputpath('test5d_eurostat.csv'))
     assert la.ndim == 5
@@ -2685,6 +2782,7 @@ def test_read_eurostat():
     # FIXME: integer labels should be parsed as such
     assert_array_equal(la[X.arr['1'], '0', 'F', X.nat['1'], :],
                        [3722, 3395, 3347])
+
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
 def test_read_excel_xlwings():
@@ -2765,6 +2863,7 @@ def test_read_excel_xlwings():
     assert_array_equal(bad3, good2)
     assert_array_equal(bad4, good2)
 
+
 def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
     assert_array_equal(arr, io_1d)
@@ -2843,6 +2942,7 @@ def test_read_excel_pandas():
     assert_array_nan_equal(bad3, good2)
     assert_array_nan_equal(bad4, good2)
 
+
 def test_from_lists():
     # sort_rows
     arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
@@ -2870,6 +2970,7 @@ def test_from_lists():
                              ['F', 'FO', 0, 0, 2]], sort_columns=True)
     assert_array_equal(sorted_arr, arr)
 
+
 def test_from_series():
     expected = ndtest(3)
     s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
@@ -2880,6 +2981,7 @@ def test_from_series():
 
     expected = ndtest(3)[['a2', 'a0', 'a1']]
     assert_array_equal(from_series(s), expected)
+
 
 def test_from_frame():
     # 1) data = scalar
@@ -3224,6 +3326,7 @@ def test_from_frame():
     assert la.axes.names == ['age', 'sex', 'time']
     assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
+
 def test_to_csv(tmpdir):
     arr = io_3d.copy()
 
@@ -3248,6 +3351,7 @@ def test_to_csv(tmpdir):
               ',0,1,2\n']
     with open(tmp_path(tmpdir, 'test_out1d.csv')) as f:
         assert f.readlines() == result
+
 
 def test_to_excel_xlsxwriter(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlsxwriter.xlsx')
@@ -3391,6 +3495,7 @@ def test_to_excel_xlsxwriter(tmpdir):
     group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
     a3[group].to_excel(fpath, group, engine='xlsxwriter')
 
+
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
 def test_to_excel_xlwings(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlwings.xlsx')
@@ -3483,6 +3588,7 @@ def test_to_excel_xlwings(tmpdir):
     sheet_names = sorted(open_excel(fpath).sheet_names())
     assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
                                   '_name_with_special___char_'])
+
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
 def test_open_excel(tmpdir):
@@ -3680,6 +3786,7 @@ def test_open_excel(tmpdir):
     if os.path.exists(fpath):
         os.remove(fpath)
 
+
 def test_ufuncs(small_array):
     raw = small_array.data
 
@@ -3752,6 +3859,7 @@ def test_ufuncs(small_array):
     rounded = round(small_float)
     assert_array_equal(rounded, np.round(raw + 0.6))
 
+
 def test_diag():
     # 2D -> 1D
     a = ndtest((3, 3))
@@ -3804,6 +3912,7 @@ def test_diag():
     assert_array_equal(d.axes.labels, [['M_M', 'F_F']])
     assert d.i[0] == 1.0
     assert d.i[1] == 1.0
+
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
 def test_matmul():
@@ -3959,6 +4068,7 @@ def test_matmul():
                       ['a1', 'b1', 'd1', 66, 71]])
     assert_array_equal(arr2d.__matmul__(arr4d), res)
 
+
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
 def test_rmatmul():
     a1 = eye(3) * 2
@@ -3968,6 +4078,7 @@ def test_rmatmul():
     res = a2.__rmatmul__(a1.data)
     assert isinstance(res, LArray)
     assert_array_equal(res, ndtest([Axis(3), Axis(3)]) * 2)
+
 
 def test_broadcast_with():
     a1 = ndtest((3, 2))
@@ -4000,6 +4111,7 @@ def test_broadcast_with():
     assert b.shape == (2, 3)
     assert_larray_equiv(b, a2)
 
+
 def test_plot():
     pass
     # small_h = small['M']
@@ -4014,6 +4126,7 @@ def test_plot():
     #large = LArray(large_data, axes=[large_axis])
     #large.plot()
     #large.hist()
+
 
 def test_combine_axes():
     # combine N axes into 1
@@ -4071,6 +4184,7 @@ def test_combine_axes():
     assert res.axes.names == ['AC', 'BEF', 'd']
     assert res.size == arr.size
     assert res.shape == (2 * 4, 3 * 3 * 2, 4)
+
 
 def test_split_axes():
     # split one axis
@@ -4181,6 +4295,7 @@ def test_split_axes():
     expected = ndtest('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
     assert_array_equal(combined.split_axes(('a_b', 'c_d')), expected)
 
+
 def test_stack():
     # simple
     arr0 = ndtest(3)
@@ -4220,6 +4335,7 @@ def test_stack():
                                FO         3  1.0  0.0""")
     assert_array_equal(res, expected)
 
+
 def test_0darray_convert():
     int_arr = LArray(1)
     assert int(int_arr) == 1
@@ -4237,6 +4353,7 @@ def test_0darray_convert():
     expected_np12 = "only integer scalar arrays can be converted to a scalar index"
     assert msg in {expected_np11, expected_np12}
 
+
 def test_deprecated_methods():
     with pytest.warns(FutureWarning) as caught_warnings:
         ndtest((2, 2)).with_axes('a', 'd=d0,d1')
@@ -4249,6 +4366,7 @@ def test_deprecated_methods():
     assert len(caught_warnings) == 1
     assert caught_warnings[0].message.args[0] == "split_axis() is deprecated. Use split_axes() instead."
     assert caught_warnings[0].filename == __file__
+
 
 def test_nan_equal():
     a = ndtest((2, 3, 4))
