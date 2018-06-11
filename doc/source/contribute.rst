@@ -388,7 +388,7 @@ For example: ::
 
 To run all unit tests: ::
 
-  > pytest larray\tests\test_la.py
+  > pytest larray/tests/test_array.py
 
 Before writting any unit tests, please read the section `Conventions for Python test discovery
 <https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_ from the pytest documentation.
@@ -410,7 +410,7 @@ understand what the function does. For example: ::
 
 To run doc tests: ::
 
-  > pytest larray\larray.py
+  > pytest larray/core/array.py
 
 To run all the tests, simply go to root directory and type: ::
 
