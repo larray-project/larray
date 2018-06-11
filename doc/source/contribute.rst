@@ -1,7 +1,7 @@
 How to contribute
 =================
 
-Before to Start
+Before Starting
 ---------------
 
 Where to find the code
