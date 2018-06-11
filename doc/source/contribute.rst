@@ -44,8 +44,8 @@ setting up your SSH key, and configuring git.
 Getting the code (for the first time)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You will need your own fork to work on the code. Go to the `larray project
-page <https://github.com/larray-project/larray>`_ and hit the ``Fork`` button.
+You will need your own fork to work on the code. Go to the `larray project page
+<https://github.com/larray-project/larray>`_ and hit the ``Fork`` button.
 
 You will want to clone your fork to your machine.
 To do it manually, follow these steps::
@@ -135,17 +135,12 @@ Step 1: Create a new branch
 You want your master branch to reflect only production-ready code, so create a
 feature branch for making your changes. For example::
 
-    git branch issue-to-fix
-    git checkout issue-to-fix
-
-The above can be simplified to::
-
     git checkout -b issue-to-fix
 
-This changes your working directory to the issue-to-fix branch.  Keep any
-changes in this branch specific to one bug or feature so it is clear
-what the branch brings to *larray*. You can have many "issue-to-fix"
-and switch in between them using the ``git checkout`` command.
+This changes your working directory to the issue-to-fix branch.
+Keep any changes in this branch specific to one bug or feature so it is clear
+what the branch brings to the project. You can have many different branches
+and switch between them using the ``git checkout`` command.
 
 To update this branch, you need to retrieve the changes from the master branch::
 
