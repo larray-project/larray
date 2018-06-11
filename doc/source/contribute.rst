@@ -56,6 +56,17 @@ To do it manually, follow these steps::
 
 This creates the directory `larray` and connects your repository to
 the upstream (main project) *larray* repository.
+You can see the remote repositories::
+
+    git remote -v
+
+If you added the upstream repository as described above you will see something
+like::
+
+    origin  git@github.com:yourname/larray.git (fetch)
+    origin  git@github.com:yourname/larray.git (push)
+    upstream        git://github.com/larray-project/larray.git (fetch)
+    upstream        git://github.com/larray-project/larray.git (push)
 
 Creating a Python Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,17 +294,6 @@ push your forked feature branch's commits::
     git push origin issue-to-fix
 
 Here ``origin`` is the default name given to your remote repository on GitHub.
-You can see the remote repositories::
-
-    git remote -v
-
-If you added the upstream repository as described above you will see something
-like::
-
-    origin  git@github.com:yourname/larray.git (fetch)
-    origin  git@github.com:yourname/larray.git (push)
-    upstream        git://github.com/larray-project/larray.git (fetch)
-    upstream        git://github.com/larray-project/larray.git (push)
 
 Step 8: Start a pull request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
