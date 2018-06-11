@@ -126,7 +126,7 @@ Starting to contribute
 For developing the LArray library, we follow the `Forking Workflow
 <https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
 In the :ref:`Getting code <contributing.getting_code>` section,
-we have already explained how to get fork of the main larray repository.
+we have already explained how to get a fork of the main larray repository.
 
 To make a contribution, please follow the steps described bellow.
 
