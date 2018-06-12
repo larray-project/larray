@@ -67,6 +67,15 @@ if xw is not None:
 
     LArrayConverter.register(LArray)
 
+    def _disable_screen_updates(app):
+        xl_app = app.api
+        xl_app.ScreenUpdating = False
+        xl_app.DisplayStatusBar = False
+        # this makes our test suite freeze
+        # app.calculation = "manual"
+        # unsure we can safely do this
+        # xl_app.EnableEvents = False
+
 
     # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
@@ -132,6 +141,8 @@ if xw is not None:
 
             if app == "new":
                 app = xw.App(visible=visible, add_book=False)
+                if not visible:
+                    _disable_screen_updates(app)
             elif app == "active":
                 app = xw.apps.active
             elif app == "global":
@@ -139,6 +150,8 @@ if xw is not None:
                     atexit.register(kill_global_app)
                 if global_app is None or not is_app_alive(global_app):
                     global_app = xw.App(visible=visible, add_book=False)
+                    if not visible:
+                        _disable_screen_updates(global_app)
                 app = global_app
             assert isinstance(app, xw.App)
 

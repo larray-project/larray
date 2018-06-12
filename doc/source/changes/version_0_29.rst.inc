@@ -192,6 +192,10 @@ Miscellaneous improvements
   Note: all axes (groups) of a session are stored in the same CSV file/Excel sheet/HDF group
   named __axes__ (__groups__).
 
+* made some operations on Excel Workbooks a bit faster by telling Excel to avoid updating the screen when the Excel
+  instance is not visible anyway. This affects all workbooks opened via open_excel as well as read_excel and
+  LArray.to_excel when using the default "xlwings" engine.
+
 * added examples for `read_excel` and `read_hdf` functions (closes :issue:`617`).
 
 * updated `Session.summary` so as to display all kinds of objects and allowed to pass a function
