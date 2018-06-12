@@ -4199,6 +4199,12 @@ def test_split_axes():
     assert res.shape == (2, 3, 5, 4)
     assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
 
+    # with specified names
+    res = combined.rename(b_d='bd').split_axes('bd', names=('b', 'd'))
+    assert res.axes.names == ['a', 'b', 'd', 'c']
+    assert res.shape == (2, 3, 5, 4)
+    assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+
     # regex
     res = combined.split_axes('b_d', names=['b', 'd'], regex='(\w+)_(\w+)')
     assert res.axes.names == ['a', 'b', 'd', 'c']

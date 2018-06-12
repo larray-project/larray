@@ -157,3 +157,5 @@ Fixes
 
 * fixed current active Excel Workbook closed when calling the method ``to_excel`` on an array
   with -1 as filepath argument (closes :issue:`473`).
+
+* fixed LArray.split_axes names argument when splitting a single axis (e.g. arr.split_axes('bd', names=('b', 'd'))).

@@ -7002,7 +7002,7 @@ class LArray(ABCLArray):
         if axes is None:
             axes = {axis: None for axis in array.axes if sep in axis.name}
         elif isinstance(axes, (int, basestring, Axis)):
-            axes = {axes: None}
+            axes = {axes: names}
         elif isinstance(axes, (list, tuple)):
             if all(isinstance(axis, (int, basestring, Axis)) for axis in axes):
                 axes = {axis: None for axis in axes}
