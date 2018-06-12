@@ -66,7 +66,7 @@ if xw is not None:
 
     # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
-        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, load_addins=None, app=None):
+        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
             global global_app
 
             xw_wkb = None
@@ -112,7 +112,7 @@ if xw is not None:
                 if filepath is None or self.active_workbook:
                     visible = True
                 elif xw_wkb is None:
-                    # filepath is not None but we don't target an unsaved book
+                    # filepath is not None and we target a real file (not an unsaved book)
                     visible = False
 
             if app is None:
@@ -123,10 +123,11 @@ if xw is not None:
                 else:
                     app = "global"
 
-            own_app = False
+            if load_addins is None:
+                load_addins = visible and app == "new"
+
             if app == "new":
                 app = xw.App(visible=visible, add_book=False)
-                own_app = True
             elif app == "active":
                 app = xw.apps.active
             elif app == "global":
@@ -136,9 +137,6 @@ if xw is not None:
                     global_app = xw.App(visible=visible, add_book=False)
                 app = global_app
             assert isinstance(app, xw.App)
-
-            if load_addins is None:
-                load_addins = visible and own_app
 
             # activate XLA(M) addins, if nee
             # By default, add-ins are not activated when an Excel Workbook is opened via COM
@@ -582,12 +580,13 @@ if xw is not None:
                 return LArray(list_data)
 
     # XXX: deprecate this function?
-    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
-        return Workbook(filepath, overwrite_file, visible, silent, app)
+    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
+        return Workbook(filepath, overwrite_file=overwrite_file, visible=visible, silent=silent, app=app,
+                        load_addins=load_addins)
 else:
     class Workbook(object):
-        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
-            raise Exception("Workbook class cannot be instanciated because xlwings is not installed")
+        def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
+            raise Exception("Workbook class cannot be instantiated because xlwings is not installed")
 
         def app(self):
             raise Exception()
@@ -601,7 +600,7 @@ else:
         def close(self):
             raise Exception()
 
-    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None):
+    def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
         raise Exception("open_excel() is not available because xlwings is not installed")
 
 
@@ -690,8 +689,6 @@ visible : None or bool, optional
 silent : None or bool, optional
     whether or not to show dialog boxes for updating links or when some links cannot be updated.
     Defaults to False if visible, True otherwise.
-load_addins : None or bool, optional
-    whether or not to load Excel addins. Defaults to True if visible and app == "new", False otherwise.
 app : None, "new", "active", "global" or xlwings.App, optional
     use "new" for opening a new Excel instance, "active" for the last active instance (including ones opened by the
     user) and "global" to (re)use the same instance for all workbooks of a program. None is equivalent to "active" if
@@ -699,6 +696,8 @@ app : None, "new", "active", "global" or xlwings.App, optional
 
     The "global" instance is a specific Excel instance for all input from/output to Excel from within a single Python
     program (and should not interact with instances manually opened by the user or another program).
+load_addins : None or bool, optional
+    whether or not to load Excel addins. Defaults to True if visible and app == "new", False otherwise.
 
 Returns
 -------
