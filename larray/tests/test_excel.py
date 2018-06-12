@@ -81,6 +81,7 @@ class TestWorkbook(object):
             assert wb['sheet2']['A1'].value == 'sheet1 content'
 
             with open_excel(visible=False, app="new") as wb2:
+                assert wb.app != wb2.app
                 with pytest.raises(ValueError) as e_info:
                     wb2['sheet1'] = wb['sheet1']
                 assert e_info.value.args[0] == "cannot copy a sheet from one instance of Excel to another"
