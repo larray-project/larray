@@ -5825,6 +5825,22 @@ class LArray(ABCLArray):
         #                  (9, 'before', 'b2', 'label', 'b1.5')])
         # >>> arr1.insert(8, before='b1', label='b0.5') \
         #         .insert(9, before='b2', label='b1.5')
+
+        # @alixdamman suggested using a list of dictionaries {'value': XX, 'before': YY, 'label': ZZ}
+
+        # >>> arr1.insert([{'value': 8, 'before': 'b1', 'label': 'b0.5'},
+        #                  {'value': 9, 'before': 'b2', 'label': 'b1.5'}])
+        # >>> arr1.insert([dict(value=8, before='b1', label='b0.5'),
+        #                  dict(value=9, before='b2', label='b1.5')])
+
+        # It would be nice to somehow support easily inserting values defined using an LArray
+
+        # >>> toinsert = LArray([[8, 'b1', 'b0.5'],
+        # >>>                    [9, 'b2', 'b1.5']], "row=2;column=value,before,label")
+        # >>> arr1.insert(toinsert)
+        # >>> arr1.insert(value=toinsert['value'], before=toinsert['before'], label=toinsert['label'])
+        # >>> arr1.insert(**toinsert)
+        # >>> arr1.insert(**toinsert.to_dict('column'))
         if sum([before is not None, after is not None, pos is not None]) != 1:
             raise ValueError("must specify exactly one of before, after or pos")
 
@@ -6079,7 +6095,7 @@ class LArray(ABCLArray):
             store.put(key, self.to_frame())
             store.get_storer(key).attrs.type = 'Array'
 
-    @deprecate_kwarg('sheet_name', 'sheet') 
+    @deprecate_kwarg('sheet_name', 'sheet')
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
         """
