@@ -73,9 +73,9 @@ like::
 Creating a Python Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before starting any development, you'll need to create an isolated larray
-development environment. One of the easiest way to do it is via `Anaconda` or `miniconda`
-(while this not mandatory):
+Before starting any development, you will need a working Python installation.
+It is recommended (but not required) to create an isolated larray development environment.
+One of the easiest way to do it is via `Anaconda` or `Miniconda`:
 
 - Install either `Anaconda <https://www.anaconda.com/download/>`_ or `miniconda
   <https://conda.io/miniconda.html>`_ as :ref:`suggest earlier <contributing.tools>`
@@ -108,14 +108,7 @@ See the full conda docs `here <http://conda.pydata.org/docs>`_.
 
 2. Build and install larray
 
-You could install LArray in the standard way:
-
-.. code-block:: none
-
-  python setup.py install
-
-but in that case you need to "install" it again every time you change it. When developing, it is usually more
-convenient to use:
+Install larray using the following command:
 
 .. code-block:: none
 
