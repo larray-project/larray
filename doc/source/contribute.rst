@@ -132,11 +132,7 @@ At this point you should be able to import larray from your local version::
 Starting to contribute
 ----------------------
 
-For developing the LArray library, we follow the `Forking Workflow
-<https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
-In the :ref:`Getting code <contributing.getting_code>` section,
-we have already explained how to get a fork of the main larray repository.
-
+With your local version of larray, you are now ready to contribute to the project.
 To make a contribution, please follow the steps described bellow.
 
 Step 1: Create a new branch
