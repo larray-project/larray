@@ -121,7 +121,7 @@ This creates some kind of symbolic link between your python installation "module
 directory and your repository, so that any change in your local copy is automatically
 usable by other modules.
 
-At this point you should be able to import larray from your locally built version::
+At this point you should be able to import larray from your local version::
 
    $ python  # start an interpreter
    >>> import larray
