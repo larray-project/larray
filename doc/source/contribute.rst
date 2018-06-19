@@ -272,11 +272,11 @@ Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
 and our tests modules are located in `/larray/tests/`.
 An example of a unit test function using `pytest`: ::
 
- from larray import to_ticks
+  from larray.core.axis import _to_key
 
- def test_split():
-      assert to_ticks('M,F')  == ['M', 'F']
-      assert to_ticks('M, F') == ['M', 'F']
+  def test_key_string_split():
+      assert _to_key('M,F') == ['M', 'F']
+      assert _to_key('M,') == ['M']
 
 To run all unit tests: ::
 
