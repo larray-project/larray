@@ -4353,6 +4353,13 @@ def test_stack():
                                FO         3  1.0  0.0""")
     assert_array_equal(res, expected)
 
+    # non scalar/non LArray
+    expected = LArray([[1, 4],
+                       [2, 5],
+                       [3, 6]])
+    res = stack(([1, 2, 3], [4, 5, 6]))
+    assert_array_equal(res, expected)
+
 
 def test_0darray_convert():
     int_arr = LArray(1)

@@ -8288,6 +8288,8 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         return Session(res, meta=meta)
     else:
         # XXX : use concat?
+        values = [aslarray(v) if not np.isscalar(v) else v
+                  for v in values]
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])
         result_axes.append(axis)
         result = empty(result_axes, dtype=common_type(values), meta=meta)

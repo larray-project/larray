@@ -287,6 +287,13 @@ Miscellaneous improvements
 * added missing arguments `wide` and `value_name` to methods `LArray.as_table` and `LArray.dump`
   (closes :issue:`653`).
 
+* stack accepts any array-like object instead of only LArray
+
+    >>> stack(a0=[1, 2, 3], a1=[4, 5, 6], axis='a')
+    {0}*\a  a0  a1
+         0   1   4
+         1   2   5
+         2   3   6
 
 Fixes
 -----
