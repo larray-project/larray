@@ -349,9 +349,8 @@ Here ``origin`` is the default name given to your remote repository on GitHub.
 Step 8: Start a pull request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If everything looks good, you are ready to make a pull request.
-This pull request and its associated changes will eventually be committed to the master branch
-and available in the next release.
+You are ready to request your changes to be included in the master branch
+(so that they will be available in the next release).
 To submit a pull request:
 
 #. Navigate to your repository on GitHub
