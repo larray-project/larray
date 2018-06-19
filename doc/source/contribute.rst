@@ -141,9 +141,9 @@ Step 1: Create a new branch
 You want your master branch to reflect only production-ready code, so create a
 feature branch for making your changes. For example::
 
-    git checkout -b issue-to-fix
+    git checkout -b issue123
 
-This changes your working directory to the issue-to-fix branch.
+This changes your working directory to the issue123 branch.
 Keep any changes in this branch specific to one bug or feature so it is clear
 what the branch brings to the project. You can have many different branches
 and switch between them using the ``git checkout`` command.
@@ -334,7 +334,7 @@ Step 7: Push your changes
 When you want your changes to appear publicly on the web page of your fork on GitHub,
 push your forked feature branch's commits::
 
-    git push origin issue-to-fix
+    git push origin issue123
 
 Here ``origin`` is the default name given to your remote repository on GitHub.
 
@@ -360,7 +360,7 @@ the code. If you need to make more changes, you can make them in
 your branch, add them to a new commit, push them to GitHub, and the pull request
 will be automatically updated. Pushing them to GitHub again is done by::
 
-    git push origin shiny-new-feature
+    git push origin issue123
 
 This will automatically update your pull request with the latest code and restart the
 :ref:`Continuous Integration` tests.
