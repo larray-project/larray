@@ -58,6 +58,17 @@ New features
      a0  15  10  10
      a1  10   5  10
 
+    same as above with labels and probabilities given as a one dimensional LArray
+
+    >>> proba = LArray([0.3, 0.5, 0.2], Axis([5, 10, 15], 'outcome'))
+    >>> proba
+    outcome    5   10   15
+             0.3  0.5  0.2
+    >>> choice(p=proba, axes='a=a0,a1;b=b0..b2')
+    a\b  b0  b1  b2
+     a0  10  15   5
+     a1  10   5  10
+
 * added method `equals` to Group which compares group names, associated axis names
   and labels between two groups:
 
