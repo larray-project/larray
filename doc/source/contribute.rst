@@ -262,20 +262,21 @@ Sometimes doctests are not enough and new features require to go a step further 
 
 Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
 and our tests modules are located in `/larray/tests/`.
-The `pytest` library is able to automatically detect and run unit tests
+The pytest library is able to automatically detect and run unit tests
 as long as you respect some conventions:
 
-  - `pytest` will search for ``test_*.py`` or ``*_test.py files``.
+  - pytest will search for ``test_*.py`` or ``*_test.py files``.
   - From those files, collect test items:
+
     - ``test_`` prefixed test functions or methods outside of class.
     - ``test_`` prefixed test functions or methods inside Test prefixed test classes
       (without an __init__ method).
 
 For more details, please read the section `Conventions for Python test discovery
 <https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_
-from the `pytest` documentation.
+from the pytest documentation.
 
-Here is an example of a unit test function using `pytest`: ::
+Here is an example of a unit test function using pytest: ::
 
   from larray.core.axis import _to_key
 
@@ -309,7 +310,7 @@ To run all the tests, simply go to root directory and type: ::
 
   > pytest
 
-`pytest` will automatically detect all existing unit tests and doctests and run them all.
+pytest will automatically detect all existing unit tests and doctests and run them all.
 
 Step 5: Add a change log
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -318,14 +319,14 @@ Changes should be reflected in the release notes located in ``doc/source/changes
 This file contains an ongoing change log for the next release.
 Add an entry to this file to document your fix, enhancement or (unavoidable) breaking change.
 If you hesitate in which section to add your change log, feel free to ask.
-Make sure to include the GitHub issue number when adding your entry (using `` closes :issue:`123` ``
-where `123` is the number associated with the fixed issue).
+Make sure to include the GitHub issue number when adding your entry (using ``closes :issue:`123```
+where 123 is the number associated with the fixed issue).
 
 Step 6: Commit your changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When all the above is done, commit your changes. Make sure that one of your commit messages starts with
-``fix #123 :`` (where `123` is the issue number) before starting any pull request
+``fix #123 :`` (where 123 is the issue number) before starting any pull request
 (see `this github page <https://help.github.com/articles/closing-issues-using-keywords>`_ for more details).
 
 Step 7: Push your changes
