@@ -261,13 +261,54 @@ For example: ::
       """
       return str(number) == string
 
+.. _contributing.testing:
 
 Step 4: Test your code
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes doctests are not enough and new features require to go a step further by writing unit tests.
-Our unit tests modules are located in `/larray/tests/`.
-See the :ref:`Tests <contributing.testing>` section bellow for more details.
+
+Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
+and our tests modules are located in `/larray/tests/`.
+An example of a unit test function using `pytest`: ::
+
+ from larray import to_ticks
+
+ def test_split():
+      assert to_ticks('M,F')  == ['M', 'F']
+      assert to_ticks('M, F') == ['M', 'F']
+
+To run all unit tests: ::
+
+  > pytest larray/tests/test_array.py
+
+Before writing any unit tests, please read the section `Conventions for Python test discovery
+<https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_ from the pytest documentation.
+
+
+We also use doctests for some tests. Doctests is specially-formatted code within the docstring of a function which
+embeds the result of calling said function with a particular set of arguments. This can be used both as documentation
+and testing. We only use doctests for the cases where the test is simple enough to fit on one line and it can help
+understand what the function does. For example: ::
+
+  def slice_to_str(key):
+      """Converts a slice to a string
+
+      >>> slice_to_str(slice(None))
+      ':'
+      """
+      # some clever code here
+      return ':'
+
+To run doc tests: ::
+
+  > pytest larray/core/array.py
+
+To run all the tests, simply go to root directory and type: ::
+
+  > pytest
+
+`pytest` will automatically detect all existing unit tests and doctests and run them all.
 
 Step 5: Add a change log
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -370,50 +411,3 @@ If you want to also generate the .pdf and .chm (and you have the extra requireme
 use: ::
 
   > buildall
-
-
-.. _contributing.testing:
-
-Tests
------
-
-We use both unit tests and doctests. Unit tests are written using the `pytest library <https://docs.pytest.org>`_.
-For example: ::
-
- from larray import to_ticks
-
- def test_split():
-      assert to_ticks('M,F')  == ['M', 'F']
-      assert to_ticks('M, F') == ['M', 'F']
-
-To run all unit tests: ::
-
-  > pytest larray/tests/test_array.py
-
-Before writing any unit tests, please read the section `Conventions for Python test discovery
-<https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_ from the pytest documentation.
-
-
-We also use doctests for some tests. Doctests is specially-formatted code within the docstring of a function which
-embeds the result of calling said function with a particular set of arguments. This can be used both as documentation
-and testing. We only use doctests for the cases where the test is simple enough to fit on one line and it can help
-understand what the function does. For example: ::
-
-  def slice_to_str(key):
-      """Converts a slice to a string
-
-      >>> slice_to_str(slice(None))
-      ':'
-      """
-      # some clever code here
-      return ':'
-
-To run doc tests: ::
-
-  > pytest larray/core/array.py
-
-To run all the tests, simply go to root directory and type: ::
-
-  > pytest
-
-`pytest` will automatically detect all existing unit tests and doctests and run them all.
