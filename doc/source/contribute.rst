@@ -258,8 +258,6 @@ For example: ::
 Step 4: Test your code
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Sometimes doctests are not enough and new features require to go a step further by writing unit tests.
-
 Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
 and our tests modules are located in `/larray/tests/`.
 The pytest library is able to automatically detect and run unit tests
