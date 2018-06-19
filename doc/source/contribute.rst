@@ -352,7 +352,7 @@ To submit a pull request:
    okay one last time
 #. Write a description of your changes in the ``Preview Discussion`` tab
 #. If this is your first pull request, please state explicitly that you accept and are allowed
-   to have your contribution (and any future contribution) is licensed under the GPL license
+   to have your contribution (and any future contribution) licensed under the GPL license
    (See section :ref:`Licensing <contributing.licensing>` above).
 #. Click ``Send Pull Request``.
 
