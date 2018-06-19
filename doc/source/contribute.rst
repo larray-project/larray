@@ -28,7 +28,7 @@ Licensing
 ~~~~~~~~~
 
 LArray is licensed under the GPLv3. Before starting to work on any issue, make sure
-you accept that your contributions will be released under that license.
+you accept and are allowed to have your contributions released under that license.
 
 Creating a development environment
 ----------------------------------
