@@ -270,7 +270,20 @@ Sometimes doctests are not enough and new features require to go a step further 
 
 Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
 and our tests modules are located in `/larray/tests/`.
-An example of a unit test function using `pytest`: ::
+The `pytest` library is able to automatically detect and run unit tests
+as long as you respect some conventions:
+
+  - `pytest` will search for ``test_*.py`` or ``*_test.py files``.
+  - From those files, collect test items:
+    - ``test_`` prefixed test functions or methods outside of class.
+    - ``test_`` prefixed test functions or methods inside Test prefixed test classes
+      (without an __init__ method).
+
+For more details, please read the section `Conventions for Python test discovery
+<https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_
+from the `pytest` documentation.
+
+Here is an example of a unit test function using `pytest`: ::
 
   from larray.core.axis import _to_key
 
@@ -281,10 +294,6 @@ An example of a unit test function using `pytest`: ::
 To run all unit tests: ::
 
   > pytest larray/tests/test_array.py
-
-Before writing any unit tests, please read the section `Conventions for Python test discovery
-<https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_ from the pytest documentation.
-
 
 We also use doctests for some tests. Doctests is specially-formatted code within the docstring of a function which
 embeds the result of calling said function with a particular set of arguments. This can be used both as documentation
