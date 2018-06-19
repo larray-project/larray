@@ -537,6 +537,7 @@ Miscellaneous
 
    aslarray
    from_frame
+   get_example_filepath
    labels_array
    union
    stack
