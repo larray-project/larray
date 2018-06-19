@@ -1,12 +1,41 @@
 import os
 import larray as la
 
-__all__ = ['EXAMPLE_FILES_DIR', 'load_example_data']
+__all__ = ['get_example_filepath', 'load_example_data']
 
 EXAMPLE_FILES_DIR = os.path.dirname(__file__) + '/tests/data/'
 AVAILABLE_EXAMPLE_DATA = {
     'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5')
 }
+AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
+
+
+def get_example_filepath(fname):
+    """Return absolute path to an example file if exist.
+
+    Parameters
+    ----------
+    fname : str
+        Filename of an existing example file.
+
+    Returns
+    -------
+    Filepath
+        Absolute filepath to an example file if exists.
+
+    Notes
+    -----
+    A ValueError is raised if the provided filename does not represent an existing example file.
+
+    Examples
+    --------
+    >>> fpath = get_example_filepath('examples.xlsx')
+    """
+    fpath = os.path.abspath(os.path.join(EXAMPLE_FILES_DIR, fname))
+    if not os.path.exists(fpath):
+        raise ValueError("Example file {} does not exist. "
+                         "Available example files are: {}".format(fname, AVAILABLE_EXAMPLE_FILES))
+    return fpath
 
 
 def load_example_data(name):

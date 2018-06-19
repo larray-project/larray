@@ -14,6 +14,7 @@ from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
 from larray.inout.pandas import df_aslarray
+from larray.example import get_example_filepath
 
 
 __all__ = ['read_hdf']
@@ -47,42 +48,19 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
     Examples
     --------
-    >>> import os
-    >>> from larray import EXAMPLE_FILES_DIR
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'test.h5')
+    >>> fname = get_example_filepath('examples.h5')
 
     Read array by passing its identifier (key) inside the HDF file
 
-    >>> read_hdf(fname, '3d')
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   6   7   8
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1  15  16  17
-
-    Missing label combinations
-
-    >>> # by default, cells associated with missing label combinations are filled with NaN.
-    >>> # In that case, an int array is converted to a float array.
-    >>> read_hdf(fname, key='missing_values')
-    a  b\c    c0    c1    c2
-    1   b0   0.0   1.0   2.0
-    1   b1   3.0   4.0   5.0
-    2   b0   nan   nan   nan
-    2   b1   9.0  10.0  11.0
-    3   b0  12.0  13.0  14.0
-    3   b1   nan   nan   nan
-    >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
-    >>> read_hdf(fname, key='missing_values', fill_value=0)
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   0   0   0
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1   0   0   0
+    >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
+    >>> read_hdf(fname, 'pop')
+        geo  gender\\time      2013      2014      2015
+    Belgium         Male   5472856   5493792   5524068
+    Belgium       Female   5665118   5687048   5713206
+     France         Male  31772665  31936596  32175328
+     France       Female  33827685  34005671  34280951
+    Germany         Male  39380976  39556923  39835457
+    Germany       Female  41142770  41210540  41362080
     """
     if not np.isnan(na):
         fill_value = na

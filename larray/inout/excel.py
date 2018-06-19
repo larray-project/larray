@@ -21,6 +21,8 @@ from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
 from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
 from larray.inout.xw_excel import open_excel
+from larray.example import get_example_filepath
+
 
 __all__ = ['read_excel']
 
@@ -69,89 +71,114 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Examples
     --------
-    >>> import os
-    >>> from larray import EXAMPLE_FILES_DIR
-    >>> fname = os.path.join(EXAMPLE_FILES_DIR, 'examples.xlsx')
+    >>> fname = get_example_filepath('examples.xlsx')
 
     Read array from first sheet
 
+    >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_excel(fname)
-    a  a0  a1  a2
-        0   1   2
+        geo  gender\\time      2013      2014      2015
+    Belgium         Male   5472856   5493792   5524068
+    Belgium       Female   5665118   5687048   5713206
+     France         Male  31772665  31936596  32175328
+     France       Female  33827685  34005671  34280951
+    Germany         Male  39380976  39556923  39835457
+    Germany       Female  41142770  41210540  41362080
 
     Read array from a specific sheet
 
-    >>> read_excel(fname, '2d')
-    a\\b  b0  b1
-      1   0   1
-      2   2   3
-      3   4   5
+    >>> # The data below is derived from a subset of the demo_fasec table from Eurostat
+    >>> read_excel(fname, 'births')
+        geo  gender\\time    2013    2014    2015
+    Belgium         Male   64371   64173   62561
+    Belgium       Female   61235   60841   59713
+     France         Male  415762  418721  409145
+     France       Female  396581  400607  390526
+    Germany         Male  349820  366835  378478
+    Germany       Female  332249  348092  359097
 
     Missing label combinations
 
-    >>> # let's take a look inside the sheet 'missing_values'.
-    >>> # they are missing label combinations: (a=2, b=b0) and (a=3, b=b1):
+    >>> # let's take a look inside the sheet 'pop_missing_values'.
+    >>> # they are missing label combinations: (Paris, male) and (New York, female):
 
-    a  b\c  c0  c1  c2
-    1  b0   0   1   2
-    1  b1   3   4   5
-    2  b1   9   10  11
-    3  b0   12  13  14
+    geo       gender\\time  2013      2014      2015
+    Belgium   Male          5472856   5493792   5524068
+    Belgium   Female        5665118   5687048   5713206
+    France    Female        33827685  34005671  34280951
+    Germany   Male          39380976  39556923  39835457
 
     >>> # by default, cells associated with missing label combinations are filled with NaN.
     >>> # In that case, an int array is converted to a float array.
-    >>> read_excel(fname, sheet='missing_values')
-    a  b\c    c0    c1    c2
-    1   b0   0.0   1.0   2.0
-    1   b1   3.0   4.0   5.0
-    2   b0   nan   nan   nan
-    2   b1   9.0  10.0  11.0
-    3   b0  12.0  13.0  14.0
-    3   b1   nan   nan   nan
+    >>> read_excel(fname, sheet='pop_missing_values')
+        geo  gender\\time        2013        2014        2015
+    Belgium         Male   5472856.0   5493792.0   5524068.0
+    Belgium       Female   5665118.0   5687048.0   5713206.0
+     France         Male         nan         nan         nan
+     France       Female  33827685.0  34005671.0  34280951.0
+    Germany         Male  39380976.0  39556923.0  39835457.0
+    Germany       Female         nan         nan         nan
     >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
-    >>> read_excel(fname, sheet='missing_values', fill_value=0)
-    a  b\c  c0  c1  c2
-    1   b0   0   1   2
-    1   b1   3   4   5
-    2   b0   0   0   0
-    2   b1   9  10  11
-    3   b0  12  13  14
-    3   b1   0   0   0
+    >>> read_excel(fname, sheet='pop_missing_values', fill_value=0)
+        geo  gender\\time      2013      2014      2015
+    Belgium         Male   5472856   5493792   5524068
+    Belgium       Female   5665118   5687048   5713206
+     France         Male         0         0         0
+     France       Female  33827685  34005671  34280951
+    Germany         Male  39380976  39556923  39835457
+    Germany       Female         0         0         0
 
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
-    >>> # read the array stored in the CSV file as it
-    >>> read_excel(fname, sheet='missing_axis_name')
-    a\{1}  b0  b1  b2
-       a0   0   1   2
-       a1   3   4   5
-       a2   6   7   8
+    The content of the sheet 'missing_axis_name' is:
+
+    geo      gender  2013      2014      2015
+    Belgium  Male    5472856   5493792   5524068
+    Belgium  Female  5665118   5687048   5713206
+    France   Male    31772665  31936596  32175328
+    France   Female  33827685  34005671  34280951
+    Germany  Male    39380976  39556923  39835457
+    Germany  Female  41142770  41210540  41362080
+
+    >>> # read the array stored in the sheet 'pop_missing_axis_name' as is
+    >>> arr = read_excel(fname, sheet='pop_missing_axis_name')
+    >>> # we expected a 3 x 2 x 3 array with data of type int
+    >>> # but we got a 6 x 4 array with data of type object
+    >>> arr.info
+    6 x 4
+     geo [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
+     {1} [4]: 'gender' '2013' '2014' '2015'
+    dtype: object
+    memory used: 192 bytes
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> read_excel(fname, sheet='missing_axis_name', nb_axes=2)
-    a\{1}  b0  b1  b2
-       a0   0   1   2
-       a1   3   4   5
-       a2   6   7   8
+    >>> arr = read_excel(fname, sheet='pop_missing_axis_name', nb_axes=3)
+    >>> # as expected, we have a 3 x 2 x 3 array with data of type int
+    >>> arr.info
+    3 x 2 x 3
+     geo [3]: 'Belgium' 'France' 'Germany'
+     gender [2]: 'Male' 'Female'
+     {2} [3]: 2013 2014 2015
+    dtype: int64
+    memory used: 144 bytes
 
     Read array saved in "narrow" format (wide=False)
 
-    >>> # let's take a look inside the sheet 'narrow_2d'.
+    >>> # let's take a look inside the sheet 'pop_narrow'.
     >>> # The data are stored in a 'narrow' format:
 
-    a  b   value
-    1  b0  0
-    1  b1  1
-    2  b0  2
-    2  b1  3
-    3  b0  4
-    3  b1  5
+    geo      time  value
+    Belgium  2013  11137974
+    Belgium  2014  11180840
+    Belgium  2015  11237274
+    France   2013  65600350
+    France   2014  65942267
+    France   2015  66456279
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
-    >>> read_excel(fname, 'narrow_2d', wide=False)
-    a\\b  b0  b1
-      1   0   1
-      2   2   3
-      3   4   5
+    >>> read_excel(fname, 'pop_narrow_format', wide=False)
+    geo\\time      2013      2014      2015
+     Belgium  11137974  11180840  11237274
+      France  65600350  65942267  66456279
     """
     if not np.isnan(na):
         fill_value = na
