@@ -25,7 +25,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
-from larray.core import AxisCollection, LArray, aslarray
+from larray.core import Axis, AxisCollection, LArray, aslarray
 from larray.core.array import raw_broadcastable
 import larray as la
 
@@ -363,15 +363,17 @@ def permutation(x, axis=0):
         return x[g]
 
 
-def choice(choices, axes=None, replace=True, p=None, meta=None):
+def choice(choices=None, axes=None, replace=True, p=None, meta=None):
     r"""
     Generates a random sample from given choices
 
     Parameters
     -----------
-    choices : 1-D array-like or int
-        If an ndarray, a random sample is generated from its elements.
+    choices : 1-D array-like or int, optional
+        Values to choose from.
+        If an array, a random sample is generated from its elements.
         If an int n, the random sample is generated as if choices was la.sequence(n)
+        If p is a 1-D LArray, choices are taken from its axis.
     axes : int, tuple of int, str, Axis or tuple/list/AxisCollection of Axis, optional
         Axes (or shape) of the resulting array. If ``axes`` is None (the default), a single value is returned.
         Otherwise, if the resulting axes have a shape of, e.g., ``(m, n, k)``, then ``m * n * k`` samples are drawn.
@@ -379,6 +381,7 @@ def choice(choices, axes=None, replace=True, p=None, meta=None):
         Whether the sample is with or without replacement.
     p : 1-D array-like, optional
         The probabilities associated with each entry in choices.
+        If p is a 1-D LArray, choices are taken from its axis.
         If not given the sample assumes a uniform distribution over all entries in choices.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
@@ -420,6 +423,17 @@ def choice(choices, axes=None, replace=True, p=None, meta=None):
      a0  15  10  10
      a1  10   5  10
 
+    same as above with labels and probabilities given as a one dimensional LArray
+
+    >>> proba = LArray([0.3, 0.5, 0.2], Axis([5, 10, 15], 'outcome'))                   # doctest: +SKIP
+    >>> proba                                                                           # doctest: +SKIP
+    outcome    5   10   15
+             0.3  0.5  0.2
+    >>> choice(p=proba, axes='a=a0,a1;b=b0..b2')                                        # doctest: +SKIP
+    a\b  b0  b1  b2
+     a0  10  15   5
+     a1  10   5  10
+
     Generate a uniform random sample of size 3 from la.sequence(5):
 
     >>> la.random.choice(5, 3)                                                          # doctest: +SKIP
@@ -434,4 +448,14 @@ def choice(choices, axes=None, replace=True, p=None, meta=None):
           world  !  hello
     """
     axes = AxisCollection(axes)
+    if isinstance(p, LArray):
+        if choices is not None:
+            raise ValueError("choices argument cannot be used when p argument is an LArray")
+
+        if p.ndim > 1:
+            raise ValueError("using an larray with ndim > 1 for p is currently not supported")
+        choices = p.axes[0].labels
+        p = p.data
+    if choices is None:
+        raise ValueError("choices argument must be provided unless p is an LArray")
     return LArray(np.random.choice(choices, axes.shape, replace, p), axes, meta=meta)
