@@ -324,8 +324,8 @@ where `123` is the number associated with the fixed issue).
 Step 6: Commit your changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When all the above is done, commit your changes. Make sure that one of your commit messages start with
-``fix #123 :`` (where `123` is the issue number) before to start any pull request
+When all the above is done, commit your changes. Make sure that one of your commit messages starts with
+``fix #123 :`` (where `123` is the issue number) before starting any pull request
 (see `this github page <https://help.github.com/articles/closing-issues-using-keywords>`_ for more details).
 
 Step 7: Push your changes
