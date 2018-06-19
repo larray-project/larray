@@ -291,7 +291,7 @@ Here is an example of a unit test function using `pytest`: ::
       assert _to_key('M,F') == ['M', 'F']
       assert _to_key('M,') == ['M']
 
-To run all unit tests: ::
+To run unit tests for a given test module: ::
 
   > pytest larray/tests/test_array.py
 
