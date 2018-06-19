@@ -24,6 +24,8 @@ and `nbsphinx <https://nbsphinx.readthedocs.io>`_.
 
 The unit tests are written using the `pytest library <https://docs.pytest.org>`_.
 
+.. _contributing.licensing:
+
 Licensing
 ~~~~~~~~~
 
@@ -39,7 +41,7 @@ Getting started with Git
 `GitHub has instructions <http://help.github.com/set-up-git-redirect>`__
 for installing and configuring git.
 
-.. contributing.getting_code
+.. _contributing.getting_code:
 
 Getting the code (for the first time)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -307,6 +309,9 @@ To submit a pull request:
 #. You can then click on ``Commits`` and ``Files Changed`` to make sure everything looks
    okay one last time
 #. Write a description of your changes in the ``Preview Discussion`` tab
+#. If this is your first pull request, please state explicitly that you accept and are allowed
+   to have your contribution (and any future contribution) is licensed under the GPL license
+   (See section :ref:`Licensing <contributing.licensing>` above).
 #. Click ``Send Pull Request``.
 
 This request then goes to the repository maintainers, and they will review
@@ -367,7 +372,7 @@ use: ::
   > buildall
 
 
-.. contributing.testing
+.. _contributing.testing:
 
 Tests
 -----
