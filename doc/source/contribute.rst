@@ -24,7 +24,7 @@ and `nbsphinx <https://nbsphinx.readthedocs.io>`_.
 
 The unit tests are written using the `pytest library <https://docs.pytest.org>`_.
 
-Many editors and IDE exists to edit Python code and provide integration with control version tools (like git).
+Many editors and IDE exist to edit Python code and provide integration with version control tools (like git).
 A good IDE, such as PyCharm, can make many of the steps below much more efficient.
 
 .. _contributing.licensing:
