@@ -1,49 +1,169 @@
 How to contribute
 =================
 
+Before Starting
+---------------
+
+Where to find the code
+~~~~~~~~~~~~~~~~~~~~~~
+
+The code is hosted on `GitHub <https://www.github.com/larray-project/larray>`_.
+
+.. _contributing.tools:
+
+Tools
+~~~~~
+
+To contribute you will need to sign up for a `free GitHub account <https://github.com/signup/free>`_.
+
+We use `Git <http://git-scm.com/>`_ for version control to allow many people to work together on the project.
+
+The documentation is written partly using reStructuredText and partly using Jupyter notebooks (for the tutorial).
+It is built to various formats using `Sphinx <http://sphinx-doc.org/>`_
+and `nbsphinx <https://nbsphinx.readthedocs.io>`_.
+
+The unit tests are written using the `pytest library <https://docs.pytest.org>`_.
+
+Many editors and IDE exist to edit Python code and provide integration with version control tools (like git).
+A good IDE, such as PyCharm, can make many of the steps below much more efficient.
+
+.. _contributing.licensing:
+
+Licensing
+~~~~~~~~~
+
+LArray is licensed under the GPLv3. Before starting to work on any issue, make sure
+you accept and are allowed to have your contributions released under that license.
+
+Creating a development environment
+----------------------------------
+
+Getting started with Git
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+`GitHub has instructions <http://help.github.com/set-up-git-redirect>`__
+for installing and configuring git.
+
+.. _contributing.getting_code:
+
 Getting the code (for the first time)
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- install a Git client
+You will need your own fork to work on the code. Go to the `larray project page
+<https://github.com/larray-project/larray>`_ and hit the ``Fork`` button.
 
-  On Windows, TortoiseGit provides a nice graphical wrapper. You need to install both the console client from
-  http://msysgit.github.io/ and `TortoiseGit <https://code.google.com/p/tortoisegit>`_ itself.
+You will want to clone your fork to your machine.
+To do it manually, follow these steps::
 
-- create an account on `GitHub <https://github.com/>`_ (not necessary for readonly).
+    git clone https://github.com/your-user-name/larray.git
+    cd larray
+    git remote add upstream https://github.com/larray-project/larray.git
 
-- clone the repository on your local machine ::
+This creates the directory `larray` and connects your repository to
+the upstream (main project) *larray* repository.
+You can see the remote repositories::
 
-  > git clone https://github.com/larray-project/larray.git
+    git remote -v
+
+If you added the upstream repository as described above you will see something
+like::
+
+    origin  git@github.com:yourname/larray.git (fetch)
+    origin  git@github.com:yourname/larray.git (push)
+    upstream        git://github.com/larray-project/larray.git (fetch)
+    upstream        git://github.com/larray-project/larray.git (push)
+
+Creating a Python Environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before starting any development, you will need a working Python installation.
+It is recommended (but not required) to create an isolated larray development environment.
+One of the easiest way to do it is via `Anaconda` or `Miniconda`:
+
+- Install either `Anaconda <https://www.anaconda.com/download/>`_ or `miniconda
+  <https://conda.io/miniconda.html>`_ as :ref:`suggest earlier <contributing.tools>`
+- Make sure your conda is up to date (``conda update conda``)
+- Make sure that you have :ref:`cloned the repository <contributing.getting_code>`
+- ``cd`` to the *larray* source directory
+
+We'll now kick off a two-step process:
+
+1. Install the build dependencies
+
+.. code-block:: none
+
+   # Create and activate the build environment
+   conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl xlsxwriter pytest
+   conda activate larray_dev
+
+This will create the new environment, and not touch any of your existing environments,
+nor any existing Python installation.
+
+To view your environments::
+
+      conda info -e
+
+To return to your root environment::
+
+      conda deactivate
+
+See the full conda docs `here <http://conda.pydata.org/docs>`_.
+
+2. Build and install larray
+
+Install larray using the following command:
+
+.. code-block:: none
+
+  python setup.py develop
+
+This creates some kind of symbolic link between your python installation "modules"
+directory and your repository, so that any change in your local copy is automatically
+usable by other modules.
+
+At this point you should be able to import larray from your local version::
+
+   $ python  # start an interpreter
+   >>> import larray
+   >>> larray.__version__
+   '0.29-dev'
 
 
-Installing the module
----------------------
+Starting to contribute
+----------------------
 
-You could install LArray in the standard way: ::
+With your local version of larray, you are now ready to contribute to the project.
+To make a contribution, please follow the steps described bellow.
 
-  > python setup.py install
+Step 1: Create a new branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-but in that case you need to "install" it again every time you change it. When developing, it is usually more
-convenient to use: ::
+You want your master branch to reflect only production-ready code, so create a
+feature branch for making your changes. For example::
 
-  > python setup.py develop
+    git checkout -b issue123
 
-This creates some kind of symlink between your python installation "modules" directory and your repository, so that any
-change in your local copy is automatically usable by other modules.
+This changes your working directory to the issue123 branch.
+Keep any changes in this branch specific to one bug or feature so it is clear
+what the branch brings to the project. You can have many different branches
+and switch between them using the ``git checkout`` command.
 
+To update this branch, you need to retrieve the changes from the master branch::
 
-Updating your local copy with remote changes
---------------------------------------------
+    git fetch upstream
+    git rebase upstream/master
 
-::
+This will replay your commits on top of the latest larray git master.  If this
+leads to merge conflicts, you must resolve these before submitting your pull
+request.  If you have uncommitted changes, you will need to ``stash`` them prior
+to updating.  This will effectively store your changes and they can be reapplied
+after updating.
 
-  > git pull  # or git fetch + git merge
+Step 2: Write your code
+~~~~~~~~~~~~~~~~~~~~~~~
 
-
-Code conventions
-----------------
-
-`PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ is your friend. Among others, this means:
+When writing your code, please follow the `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_
+code conventions. Among others, this means:
 
 - 120 characters lines
 - 4 spaces indentation
@@ -56,9 +176,11 @@ Code conventions
 
 This summary should not prevent you from reading the PEP!
 
+LArray is currently compatible with both Python 2 and 3.
+So make sure your code is compatible with both versions.
 
-Docstring conventions
----------------------
+Step 3: Document your code
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We use Numpy conventions for docstrings. Here is a template: ::
 
@@ -131,6 +253,123 @@ For example: ::
       """
       return str(number) == string
 
+.. _contributing.testing:
+
+Step 4: Test your code
+~~~~~~~~~~~~~~~~~~~~~~
+
+Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
+and our tests modules are located in `/larray/tests/`.
+The pytest library is able to automatically detect and run unit tests
+as long as you respect some conventions:
+
+  - pytest will search for ``test_*.py`` or ``*_test.py files``.
+  - From those files, collect test items:
+
+    - ``test_`` prefixed test functions or methods outside of class.
+    - ``test_`` prefixed test functions or methods inside Test prefixed test classes
+      (without an __init__ method).
+
+For more details, please read the section `Conventions for Python test discovery
+<https://docs.pytest.org/en/latest/goodpractices.html#test-discovery>`_
+from the pytest documentation.
+
+Here is an example of a unit test function using pytest: ::
+
+  from larray.core.axis import _to_key
+
+  def test_key_string_split():
+      assert _to_key('M,F') == ['M', 'F']
+      assert _to_key('M,') == ['M']
+
+To run unit tests for a given test module: ::
+
+  > pytest larray/tests/test_array.py
+
+We also use doctests for some tests. Doctests is specially-formatted code within the docstring of a function which
+embeds the result of calling said function with a particular set of arguments. This can be used both as documentation
+and testing. We only use doctests for the cases where the test is simple enough to fit on one line and it can help
+understand what the function does. For example: ::
+
+  def slice_to_str(key):
+      """Converts a slice to a string
+
+      >>> slice_to_str(slice(None))
+      ':'
+      """
+      # some clever code here
+      return ':'
+
+To run doc tests: ::
+
+  > pytest larray/core/array.py
+
+To run all the tests, simply go to root directory and type: ::
+
+  > pytest
+
+pytest will automatically detect all existing unit tests and doctests and run them all.
+
+Step 5: Add a change log
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Changes should be reflected in the release notes located in ``doc/source/changes/version_<next_release_version>.inc``.
+This file contains an ongoing change log for the next release.
+Add an entry to this file to document your fix, enhancement or (unavoidable) breaking change.
+If you hesitate in which section to add your change log, feel free to ask.
+Make sure to include the GitHub issue number when adding your entry (using ``closes :issue:`123```
+where 123 is the number associated with the fixed issue).
+
+Step 6: Commit your changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When all the above is done, commit your changes. Make sure that one of your commit messages starts with
+``fix #123 :`` (where 123 is the issue number) before starting any pull request
+(see `this github page <https://help.github.com/articles/closing-issues-using-keywords>`_ for more details).
+
+Step 7: Push your changes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you want your changes to appear publicly on the web page of your fork on GitHub,
+push your forked feature branch's commits::
+
+    git push origin issue123
+
+Here ``origin`` is the default name given to your remote repository on GitHub.
+
+Step 8: Start a pull request
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You are ready to request your changes to be included in the master branch
+(so that they will be available in the next release).
+To submit a pull request:
+
+#. Navigate to your repository on GitHub
+#. Click on the ``Pull Request`` button
+#. You can then click on ``Commits`` and ``Files Changed`` to make sure everything looks
+   okay one last time
+#. Write a description of your changes in the ``Preview Discussion`` tab
+#. If this is your first pull request, please state explicitly that you accept and are allowed
+   to have your contribution (and any future contribution) licensed under the GPL license
+   (See section :ref:`Licensing <contributing.licensing>` above).
+#. Click ``Send Pull Request``.
+
+This request then goes to the repository maintainers, and they will review
+the code. If you need to make more changes, you can make them in
+your branch, add them to a new commit, push them to GitHub, and the pull request
+will be automatically updated. Pushing them to GitHub again is done by::
+
+    git push origin issue123
+
+This will automatically update your pull request with the latest code and restart the
+:ref:`Continuous Integration` tests.
+
+The *larray* test suite will run automatically on `Travis-CI <https://travis-ci.org/>`__
+continuous integration service. A pull-request will be considered for merging when you have
+an all 'green' build. If any tests are failing, then you will get a red 'X', where you can click
+through to see the individual failed tests.
+
+``Warning``: Please do not rebase your local branch during the review process.
 
 Documentation
 -------------
@@ -144,13 +383,12 @@ Installing Requirements
 
 Basic requirements (to generate an .html version of the documentation) can be installed using: ::
 
-  > conda install sphinx numpydoc
+  > conda install sphinx numpydoc nbsphinx
 
 To build the .pdf version, you need a LaTeX processor. We use `MiKTeX <http://miktex.org>`_.
 
 To build the .chm version, you need `HTML Help Workshop
 <http://www.microsoft.com/en-us/download/details.aspx?id=21138>`_.
-
 
 Generating the documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,66 +410,3 @@ If you want to also generate the .pdf and .chm (and you have the extra requireme
 use: ::
 
   > buildall
-
-
-Tests
------
-
-We use both unit tests and doctests. Unit tests are written using Python's built-in
-`unittest module <https://docs.python.org/3/library/unittest.html>`_.
-For example: ::
-
-  from unittest import TestCase
-
-  class TestValueStrings(TestCase):
-      def setUp(self):
-          pass
-
-      def tearDown(self):
-          pass
-
-      def test_split(self):
-          self.assertEqual(to_ticks('M,F'), ['M', 'F'])
-          self.assertEqual(to_ticks('M, F'), ['M', 'F'])
-
-To run all unit tests: ::
-
-  > python -m unittest -v larray\tests\test_la.py
-
-We also use doctests for some tests. Doctests is specially-formatted code within the docstring of a function which
-embeds the result of calling said function with a particular set of arguments. This can be used both as documentation
-and testing. We only use doctests for the cases where the test is simple enough to fit on one line and it can help
-understand what the function does. For example: ::
-
-  def slice_to_str(key):
-      """Converts a slice to a string
-
-      >>> slice_to_str(slice(None))
-      ':'
-      """
-      # some clever code here
-      return ':'
-
-To run doc tests: ::
-
-  > python -m doctest -v larray\larray.py
-
-To run both at the same time, one can use nosetests (install with `conda install nose`): ::
-
-  > nosetests -v --with-doctest
-
-
-Sending your changes
---------------------
-
-::
-
-  > git add       # tell git it should care about a file it previously ignored (only if needed)
-
-  > git commit    # creates a new revision of the repository using its current state
-
-  > git pull      # updates your local repository with "upstream" changes.
-                  # this might create conflicts that you will need to resolve.
-                  # this should also be done before you start making changes.
-
-  > git push      # send all your committed changes "upstream".
