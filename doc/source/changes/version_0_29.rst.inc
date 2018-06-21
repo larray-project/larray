@@ -310,3 +310,5 @@ Fixes
   with -1 as filepath argument (closes :issue:`473`).
 
 * fixed LArray.split_axes names argument when splitting a single axis (e.g. arr.split_axes('bd', names=('b', 'd'))).
+
+* fixed splitting an anonymous axis without specifying the names argument.

@@ -290,7 +290,9 @@ class Axis(ABCAxis):
         [Axis(['a0', 'a1'], 'a'), Axis(['b0', 'b1', 'b2'], 'b')]
         """
         if names is None:
-            if sep not in self.name:
+            if self.name is None:
+                names = None
+            elif sep not in self.name:
                 raise ValueError('{} not found in self name ({})'.format(sep, self.name))
             else:
                 names = self.name.split(sep)
@@ -309,6 +311,8 @@ class Axis(ABCAxis):
         else:
             match = re.compile(regex).match
             split_labels = [match(l).groups() for l in self.labels]
+        if names is None:
+            names = [None] * len(split_labels)
         indexing_labels = zip(*split_labels)
         if return_labels:
             indexing_labels = tuple(indexing_labels)
