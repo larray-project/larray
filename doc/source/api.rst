@@ -308,6 +308,7 @@ Modifying/Selecting
    LArray.points
    LArray.ipoints
    LArray.set
+   LArray.drop
    LArray.drop_labels
    LArray.filter
 

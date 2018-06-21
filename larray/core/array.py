@@ -5984,6 +5984,83 @@ class LArray(ABCLArray):
         chunks.append(self[axis.i[start:]])
         return concat(chunks, axis)
 
+    def drop(self, labels=None):
+        r"""Return array without some labels or indices along an axis.
+
+        Parameters
+        ----------
+        labels : scalar, list or Group
+            Label(s) or group to remove. To remove indices, one must pass an IGroup.
+
+        Returns
+        -------
+        LArray
+            Array with `labels` removed along their axis.
+
+        Examples
+        --------
+        >>> arr1 = ndtest((2, 4))
+        >>> arr1
+        a\b  b0  b1  b2  b3
+         a0   0   1   2   3
+         a1   4   5   6   7
+        >>> a, b = arr1.axes
+
+        dropping a single label
+
+        >>> arr1.drop('b1')
+        a\b  b0  b2  b3
+         a0   0   2   3
+         a1   4   6   7
+
+        dropping multiple labels
+
+        >>> # arr1.drop('b1,b3')
+        >>> arr1.drop(['b1', 'b3'])
+        a\b  b0  b2
+         a0   0   2
+         a1   4   6
+
+        dropping a slice
+
+        >>> # arr1.drop('b1:b3')
+        >>> arr1.drop(b['b1':'b3'])
+        a\b  b0
+         a0   0
+         a1   4
+
+        when deleting indices instead of labels, one must specify the axis explicitly (using an IGroup):
+
+        >>> # arr1.drop('b.i[1]')
+        >>> arr1.drop(b.i[1])
+        a\b  b0  b2  b3
+         a0   0   2   3
+         a1   4   6   7
+
+        as when deleting ambiguous labels (which are present on several axes):
+
+        >>> a = Axis('a=label0..label2')
+        >>> b = Axis('b=label0..label2')
+        >>> arr2 = ndtest((a, b))
+        >>> arr2
+           a\b  label0  label1  label2
+        label0       0       1       2
+        label1       3       4       5
+        label2       6       7       8
+        >>> # arr2.drop('a[label1]')
+        >>> arr2.drop(a['label1'])
+           a\b  label0  label1  label2
+        label0       0       1       2
+        label2       6       7       8
+        """
+        group = self._translate_axis_key(labels)
+        axis = group.axis
+        indices = axis.index(group)
+        axis_idx = self.axes.index(axis)
+        new_axis = Axis(np.delete(axis.labels, indices), axis.name)
+        new_axes = self.axes.replace(axis, new_axis)
+        return LArray(np.delete(self.data, indices, axis_idx), new_axes)
+
     def transpose(self, *args):
         """Reorder axes.
 
