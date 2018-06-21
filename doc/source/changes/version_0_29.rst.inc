@@ -1,4 +1,4 @@
-Syntax changes
+﻿Syntax changes
 --------------
 
 * new syntax
@@ -161,6 +161,46 @@ New features
     on it before dumping it.
 
   Closes :issue:`640`.
+
+* implemented LArray.drop to return the array without some labels or indices along an axis (closes :issue:`506`).
+
+    >>> arr1 = ndtest((2, 4))
+    >>> arr1
+    a\b  b0  b1  b2  b3
+     a0   0   1   2   3
+     a1   4   5   6   7
+    >>> a, b = arr1.axes
+
+    dropping a single label
+
+    >>> arr1.drop('b1')
+    a\b  b0  b2  b3
+     a0   0   2   3
+     a1   4   6   7
+
+    dropping multiple labels or a slice
+
+    >>> # arr1.drop('b1,b3')
+    >>> arr1.drop(['b1', 'b3'])
+    a\b  b0  b2
+     a0   0   2
+     a1   4   6
+
+    dropping a slice
+
+    >>> # arr1.drop('b1:b3')
+    >>> arr1.drop(b['b1':'b3'])
+    a\b  b0
+     a0   0
+     a1   4
+
+    dropping labels by position requires to specify the axis
+
+    >>> # arr1.drop('b.i[1]')
+    >>> arr1.drop(b.i[1])
+    a\b  b0  b2  b3
+     a0   0   2   3
+     a1   4   6   7
 
 
 .. _misc:

@@ -2627,6 +2627,67 @@ def test_insert():
      v1   2    42   3"""))
 
 
+def test_drop():
+    arr1 = ndtest(3)
+    expected = LArray([0, 2], 'a=a0,a2')
+
+    # indices
+    res = arr1.drop('a.i[1]')
+    assert_array_equal(res, expected)
+
+    res = arr1.drop(X.a.i[1])
+    assert_array_equal(res, expected)
+
+    # labels
+    res = arr1.drop(X.a['a1'])
+    assert_array_equal(res, expected)
+
+    res = arr1.drop('a[a1]')
+    assert_array_equal(res, expected)
+
+    # 2D array
+    arr2 = ndtest((2, 4))
+    expected = from_string(r"""
+    a\b  b0  b2
+     a0   0   2
+     a1   4   6""")
+    res = arr2.drop(['b1', 'b3'])
+    assert_array_equal(res, expected)
+
+    res = arr2.drop(X.b['b1', 'b3'])
+    assert_array_equal(res, expected)
+
+    res = arr2.drop('b.i[1, 3]')
+    assert_array_equal(res, expected)
+
+    res = arr2.drop(X.b.i[1, 3])
+    assert_array_equal(res, expected)
+
+    a = Axis('a=label0..label2')
+    b = Axis('b=label0..label2')
+    arr3 = ndtest((a, b))
+
+    res = arr3.drop('a[label1]')
+    assert_array_equal(res, from_string(r"""
+       a\b  label0  label1  label2
+    label0       0       1       2
+    label2       6       7       8"""))
+
+    # XXX: implement the following (#671)?
+    # res = arr3.drop('0[label1]')
+    res = arr3.drop(X[0]['label1'])
+    assert_array_equal(res, from_string(r"""
+       a\b  label0  label1  label2
+    label0       0       1       2
+    label2       6       7       8"""))
+
+    res = arr3.drop(a['label1'])
+    assert_array_equal(res, from_string(r"""
+       a\b  label0  label1  label2
+    label0       0       1       2
+    label2       6       7       8"""))
+
+
 # the aim of this test is to drop the last value of an axis, but instead
 # of dropping the last axis tick/label, drop the first one.
 def test_shift_axis(small_array):
