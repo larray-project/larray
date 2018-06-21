@@ -66,12 +66,13 @@ from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, R
                               renamed_to, deprecate_kwarg, LHDFStore)
 
 
+_deprecated = ['create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal']
+
 __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
-    'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
-    'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
-    'var', 'std', 'median', 'percentile', 'stack', 'nan_equal', 'element_equal'
-]
+    'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'all', 'any', 'sum', 'prod', 'cumsum',
+    'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std', 'median', 'percentile', 'stack', 'element_equal',
+] + _deprecated
 
 
 def all(values, axis=None):
