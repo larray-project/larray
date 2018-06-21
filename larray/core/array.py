@@ -66,12 +66,12 @@ from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, R
                               renamed_to, deprecate_kwarg, LHDFStore)
 
 
-_deprecated = ['create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal']
+_deprecated = ['create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal']
 
 __all__ = [
     'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
     'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'all', 'any', 'sum', 'prod', 'cumsum',
-    'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std', 'median', 'percentile', 'stack', 'element_equal',
+    'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std', 'median', 'percentile', 'stack',
 ] + _deprecated
 
 
@@ -550,94 +550,18 @@ obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
 
 
 def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
-    """
-    Compares two arrays element-wise and returns array of booleans.
-
-    Parameters
-    ----------
-    a1, a2 : LArray-like
-        Input arrays. aslarray() is used on non-LArray inputs.
-    rtol : float or int, optional
-        The relative tolerance parameter (see Notes). Defaults to 0.
-    atol : float or int, optional
-        The absolute tolerance parameter (see Notes). Defaults to 0.
-    nan_equals: boolean, optional
-        Whether or not to consider nan values at the same positions in the two arrays as equal.
-        By default, an array containing nan values is never equal to another array, even if that other array
-        also contains nan values at the same positions. The reason is that a nan value is different from
-        *anything*, including itself. Defaults to False.
-
-    Returns
-    -------
-    LArray
-        Boolean array of where a1 and a2 are equal within a tolerance range if given.
-        If nan_equals=True, nan’s in a1 will be considered equal to nan’s in a2 in the output array.
-
-    Notes
-    -----
-    For finite values, element_equal uses the following equation to test whether two values are equal:
-
-        absolute(array1 - array2) <= (atol + rtol * absolute(array2))
-
-    The above equation is not symmetric in array1 and array2, so that element_equal(array1, array2)
-    might be different from element_equal(array2, array1) in some rare cases.
-
-    Examples
-    --------
-    >>> arr1 = LArray([6., nan, 8.], "a=a0..a2")
-    >>> arr1
-    a   a0   a1   a2
-       6.0  nan  8.0
-
-    Default behavior (same as == operator)
-
-    >>> element_equal(arr1, arr1)
-    a    a0     a1    a2
-       True  False  True
-
-    Test equality between two arrays within a given tolerance range.
-    Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
-
-    >>> arr2 = LArray([5.999, nan, 8.001], "a=a0..a2")
-    >>> arr2
-    a     a0   a1     a2
-       5.999  nan  8.001
-    >>> element_equal(arr1, arr2, nan_equals=True)
-    a     a0    a1     a2
-       False  True  False
-    >>> element_equal(arr1, arr2, atol=0.01, nan_equals=True)
-    a    a0    a1    a2
-       True  True  True
-    >>> element_equal(arr1, arr2, rtol=0.01, nan_equals=True)
-    a    a0    a1    a2
-       True  True  True
-    """
-    a1, a2 = aslarray(a1), aslarray(a2)
-
-    if rtol == 0 and atol == 0:
-        if not nan_equals:
-            return a1 == a2
-        else:
-            from larray.core.ufuncs import isnan
-
-            def general_isnan(a):
-                if np.issubclass_(a.dtype.type, np.inexact):
-                    return isnan(a)
-                elif a.dtype.type is np.object_:
-                    return LArray(obj_isnan(a), a.axes)
-                else:
-                    return False
-
-            return (a1 == a2) | (general_isnan(a1) & general_isnan(a2))
-    else:
-        (a1, a2), res_axes = make_numpy_broadcastable([a1, a2])
-        return LArray(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nan_equals), res_axes)
+    import warnings
+    warnings.warn("element_equal() is deprecated. Use array1.eq(array2, rtol, atol, nan_equals) instead.",
+                  FutureWarning, stacklevel=2)
+    a1 = aslarray(a1)
+    return a1.eq(a2, rtol, atol, nan_equals)
 
 
 def nan_equal(a1, a2):
     import warnings
-    warnings.warn("nan_equal() is deprecated. Use equal() instead.", FutureWarning, stacklevel=2)
-    return element_equal(a1, a2, nan_equals=True)
+    warnings.warn("nan_equal() is deprecated. Use array1.eq(array2, nans_equal=True) instead.",
+                  FutureWarning, stacklevel=2)
+    return a1.eq(a2, nans_equal=True)
 
 
 def _handle_deprecated_argument_title(meta, title):
@@ -5390,7 +5314,8 @@ class LArray(ABCLArray):
     def __float__(self):
         return self.data.__float__()
 
-    def equals(self, other, rtol=0, atol=0, nan_equals=False):
+    @deprecate_kwarg('nan_equals', 'nans_equal')
+    def equals(self, other, rtol=0, atol=0, nans_equal=False):
         """
         Compares self with another array and returns True if they have the same axes and elements, False otherwise.
 
@@ -5402,7 +5327,7 @@ class LArray(ABCLArray):
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
-        nan_equals: boolean, optional
+        nans_equal: boolean, optional
             Whether or not to consider nan values at the same positions in the two arrays as equal.
             By default, an array containing nan values is never equal to another array, even if that other array
             also contains nan values at the same positions. The reason is that a nan value is different from
@@ -5413,14 +5338,18 @@ class LArray(ABCLArray):
         bool
             Returns True if self is equal to other.
 
+        See Also
+        --------
+        LArray.eq
+
         Notes
         -----
         For finite values, equals uses the following equation to test whether two values are equal:
 
             absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
-        The above equation is not symmetric in array1 and array2, so that equals(array1, array2) might be different
-        from equals(array2, array1) in some rare cases.
+        The above equation is not symmetric in array1 and array2, so that array1.equals(array2)
+        might be different from array2.equals(array1) in some rare cases.
 
         Examples
         --------
@@ -5471,15 +5400,105 @@ class LArray(ABCLArray):
         >>> # The reason is that a nan value is different from *anything*, including itself.
         >>> arr1.equals(arr2)
         False
-        >>> # set flag nan_equals to True to overwrite this behavior
-        >>> arr1.equals(arr2, nan_equals=True)
+        >>> # set flag nans_equal to True to overwrite this behavior
+        >>> arr1.equals(arr2, nans_equal=True)
         True
         """
         try:
             other = aslarray(other)
         except Exception:
             return False
-        return self.axes == other.axes and all(element_equal(self, other, rtol=rtol, atol=atol, nan_equals=nan_equals))
+        return self.axes == other.axes and all(self.eq(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
+
+    @deprecate_kwarg('nan_equals', 'nans_equal')
+    def eq(self, other, rtol=0, atol=0, nans_equal=False):
+        """
+        Compares self with another array element-wise and returns an array of booleans.
+
+        Parameters
+        ----------
+        other: LArray-like
+            Input array. aslarray() is used on a non-LArray input.
+        rtol : float or int, optional
+            The relative tolerance parameter (see Notes). Defaults to 0.
+        atol : float or int, optional
+            The absolute tolerance parameter (see Notes). Defaults to 0.
+        nans_equal: boolean, optional
+            Whether or not to consider nan values at the same positions in the two arrays as equal.
+            By default, an array containing nan values is never equal to another array, even if that other array
+            also contains nan values at the same positions. The reason is that a nan value is different from
+            *anything*, including itself. Defaults to False.
+
+        Returns
+        -------
+        LArray
+            Boolean array where each cell tells whether corresponding elements of self and other are equal
+            within a tolerance range if given. If nans_equal=True, corresponding elements with nan values
+            will be considered as equal.
+
+        See Also
+        --------
+        LArray.equals
+
+        Notes
+        -----
+        For finite values, eq uses the following equation to test whether two values are equal:
+
+            absolute(array1 - array2) <= (atol + rtol * absolute(array2))
+
+        The above equation is not symmetric in array1 and array2, so that array1.eq(array2)
+        might be different from array2.eq(array1) in some rare cases.
+
+        Examples
+        --------
+        >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+        >>> arr1
+        a   a0   a1   a2
+           6.0  nan  8.0
+
+        Default behavior (same as == operator)
+
+        >>> arr1.eq(arr1)
+        a    a0     a1    a2
+           True  False  True
+
+        Test equality between two arrays within a given tolerance range.
+        Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
+
+        >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+        >>> arr2
+        a     a0   a1     a2
+           5.999  nan  8.001
+        >>> arr1.eq(arr2, nans_equal=True)
+        a     a0    a1     a2
+           False  True  False
+        >>> arr1.eq(arr2, atol=0.01, nans_equal=True)
+        a    a0    a1    a2
+           True  True  True
+        >>> arr1.eq(arr2, rtol=0.01, nans_equal=True)
+        a    a0    a1    a2
+           True  True  True
+        """
+        other = aslarray(other)
+
+        if rtol == 0 and atol == 0:
+            if not nans_equal:
+                return self == other
+            else:
+                from larray.core.ufuncs import isnan
+
+                def general_isnan(a):
+                    if np.issubclass_(a.dtype.type, np.inexact):
+                        return isnan(a)
+                    elif a.dtype.type is np.object_:
+                        return LArray(obj_isnan(a), a.axes)
+                    else:
+                        return False
+
+                return (self == other) | (general_isnan(self) & general_isnan(other))
+        else:
+            (a1, a2), res_axes = make_numpy_broadcastable([self, other])
+            return LArray(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
 
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
@@ -7133,7 +7152,7 @@ def larray_nan_equal(a1, a2):
         a1 = aslarray(a1)
     except Exception:
         return False
-    return a1.equals(a2, nan_equals=True)
+    return a1.equals(a2, nans_equal=True)
 
 
 def aslarray(a, meta=None):

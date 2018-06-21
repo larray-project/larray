@@ -397,6 +397,7 @@ Testing/Searching
    :toctree: _generated/
 
    LArray.equals
+   LArray.eq
    LArray.nonzero
    LArray.all
    LArray.all_by
@@ -534,7 +535,6 @@ Miscellaneous
    aslarray
    from_frame
    labels_array
-   element_equal
    union
    stack
    identity
