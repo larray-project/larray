@@ -447,5 +447,13 @@ def test_h5_io(tmpdir):
     assert wildcard.equals(wildcard2)
 
 
+def test_split():
+    # test splitting an anonymous axis
+    a_b = Axis('a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
+    a, b = a_b.split()
+    assert a.equals(Axis(['a0', 'a1']))
+    assert b.equals(Axis(['b0', 'b1', 'b2']))
+
+
 if __name__ == "__main__":
     pytest.main()
