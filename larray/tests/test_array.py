@@ -4409,10 +4409,10 @@ def test_deprecated_methods():
     assert caught_warnings[0].filename == __file__
 
 
-def test_nan_equal():
+def test_eq():
     a = ndtest((2, 3, 4))
     ao = a.astype(object)
-    assert_array_equal(nan_equal(ao, ao['c0']), a == a['c0'])
+    assert_array_equal(ao.eq(ao['c0'], nans_equal=True), a == a['c0'])
 
 
 if __name__ == "__main__":

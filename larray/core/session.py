@@ -876,9 +876,10 @@ class Session(object):
     __invert__ = _unaryop('invert')
 
     def element_equals(self, other):
-        """Test if groups, axes and arrays of the current session are equal to those of another session.
+        """Test if each element (group, axis and array) of the current session equals
+        the corresponding element of another session.
 
-        For arrays, it is equivalent to apply :py:meth:`LArray.equals` with flag nan_equals=True
+        For arrays, it is equivalent to apply :py:meth:`LArray.equals` with flag nans_equal=True
         to all arrays from two sessions.
 
         Parameters
@@ -945,7 +946,7 @@ class Session(object):
             if isinstance(e1, (Group, Axis)):
                 return e1.equals(e2)
             else:
-                return e1.equals(e2, nan_equals=True)
+                return e1.equals(e2, nans_equal=True)
 
         res = [elem_equal(self.get(key), other.get(key)) for key in all_keys]
         return LArray(res, [Axis(all_keys, 'name')])
@@ -953,7 +954,8 @@ class Session(object):
     array_equals = renamed_to(element_equals, 'array_equals')
 
     def equals(self, other):
-        """Test if all groups, axes and arrays of the current session are equal to those of another session.
+        """Test if all elements (groups, axes and arrays) of the current session are equal
+        to those of another session.
 
         Parameters
         ----------
@@ -962,7 +964,7 @@ class Session(object):
 
         Returns
         -------
-        True if arrays of both sessions are all equal, False otherwise.
+        True if elements of both sessions are all equal, False otherwise.
 
         Notes
         -----

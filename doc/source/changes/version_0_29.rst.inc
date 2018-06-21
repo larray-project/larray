@@ -299,6 +299,11 @@ Miscellaneous improvements
          1   2   5
          2   3   6
 
+* replaced the `element_equal` function by the `eq` method of LArray (closes :issue:`630`).
+
+* renamed `nan_equals` argument of `equals` and `eq` methods of LArray as `nans_equal`.
+
+
 Fixes
 -----
 
