@@ -196,3 +196,6 @@ Fixes
   with -1 as filepath argument (closes :issue:`473`).
 
 * fixed LArray.split_axes names argument when splitting a single axis (e.g. arr.split_axes('bd', names=('b', 'd'))).
+
+* added missing arguments `wide` and `value_name` to methods `LArray.as_table` and `LArray.dump`
+  (closes :issue:`653`)
