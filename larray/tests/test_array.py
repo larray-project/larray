@@ -4313,6 +4313,14 @@ def test_split_axes():
     expected = ndtest('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
     assert_array_equal(combined.split_axes(('a_b', 'c_d')), expected)
 
+    # anonymous axes
+    combined = ndtest('a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
+    expected = ndtest('a0,a1;b0,b1,b2')
+    assert_array_equal(combined.split_axes(0), expected)
+
+    # when no axis is specified and no axis contains the sep, split_axes is a no-op.
+    assert_array_equal(combined.split_axes(), combined)
+
 
 def test_stack():
     # simple

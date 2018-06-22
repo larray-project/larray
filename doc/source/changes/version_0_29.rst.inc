@@ -298,6 +298,16 @@ Fixes
 * fixed current active Excel Workbook closed when calling the method ``to_excel`` on an array
   with -1 as filepath argument (closes :issue:`473`).
 
-* fixed LArray.split_axes names argument when splitting a single axis (e.g. arr.split_axes('bd', names=('b', 'd'))).
+* fixed LArray.split_axes when splitting a single axis and using the names argument
+  (e.g. arr.split_axes('bd', names=('b', 'd'))).
 
 * fixed splitting an anonymous axis without specifying the names argument.
+
+  >>> combined = ndtest('a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
+  >>> combined
+  {0}  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
+           0      1      2      3      4      5
+  >>> combined.split_axes(0)
+  {0}\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5

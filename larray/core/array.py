@@ -7067,7 +7067,7 @@ class LArray(ABCLArray):
         # * do multiple axes split in one go
         # * somehow factorize this code with AxisCollection.split_axes
         if axes is None:
-            axes = {axis: None for axis in array.axes if sep in axis.name}
+            axes = {axis: None for axis in array.axes if axis.name is not None and sep in axis.name}
         elif isinstance(axes, (int, basestring, Axis)):
             axes = {axes: names}
         elif isinstance(axes, (list, tuple)):
@@ -7092,13 +7092,14 @@ class LArray(ABCLArray):
                     res = empty(new_axes, dtype=array.dtype)
                 else:
                     res = full(new_axes, fill_value=fill_value, dtype=common_type((array, fill_value)))
-                if names is None:
-                    names = axis.name.split(sep)
-                # Rename axis to make sure we broadcast correctly. We should NOT use sep here, but rather '_' must be
-                # kept in sync with the default sep of _bool_key_new_axes
-                new_axis_name = '_'.join(names)
-                if new_axis_name != axis.name:
-                    array = array.rename(axis, new_axis_name)
+                if axis.name is not None:
+                    if names is None:
+                        names = axis.name.split(sep)
+                    # Rename axis to make sure we broadcast correctly. We should NOT use sep here, but rather '_'
+                    # must be kept in sync with the default sep of _bool_key_new_axes
+                    new_axis_name = '_'.join(names)
+                    if new_axis_name != axis.name:
+                        array = array.rename(axis, new_axis_name)
                 res.points[split_labels] = array
                 array = res
         return array
