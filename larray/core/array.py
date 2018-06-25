@@ -2589,7 +2589,7 @@ class LArray(ABCLArray):
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
-    def as_table(self, maxlines=None, edgeitems=5, light=False):
+    def as_table(self, maxlines=None, edgeitems=5, light=False, wide=True, value_name='value'):
         """
         Generator. Returns next line of the table representing an array.
 
@@ -2602,6 +2602,13 @@ class LArray(ABCLArray):
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not None.
             Equals to 5 by default.
+        wide : boolean, optional
+            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
+            represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
+            value column. Defaults to True.
+        value_name : str, optional
+            Name of the column containing the values (last column) when `wide=False` (see above).
+            Defaults to 'value'.
 
         Returns
         -------
@@ -2623,6 +2630,20 @@ class LArray(ABCLArray):
          ['', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
          ['', 'b1', 9, 10, 11]]
+        >>> list(arr.as_table(wide=False, value_name='data'))  # doctest: +NORMALIZE_WHITESPACE
+        [['a', 'b', 'c', 'data'],
+         ['a0', 'b0', 'c0', 0],
+         ['a0', 'b0', 'c1', 1],
+         ['a0', 'b0', 'c2', 2],
+         ['a0', 'b1', 'c0', 3],
+         ['a0', 'b1', 'c1', 4],
+         ['a0', 'b1', 'c2', 5],
+         ['a1', 'b0', 'c0', 6],
+         ['a1', 'b0', 'c1', 7],
+         ['a1', 'b0', 'c2', 8],
+         ['a1', 'b1', 'c0', 9],
+         ['a1', 'b1', 'c1', 10],
+         ['a1', 'b1', 'c2', 11]]
         """
         if not self.ndim:
             return
@@ -2630,18 +2651,23 @@ class LArray(ABCLArray):
         # ert     unit  geo\time  2012    2011    2010
         # NEER27  I05   AT        101.41  101.63  101.63
         # NEER27  I05   AU        134.86  125.29  117.08
-        width = self.shape[-1]
-        height = int(np.prod(self.shape[:-1]))
+        if wide:
+            width = self.shape[-1]
+            height = int(np.prod(self.shape[:-1]))
+        else:
+            width = 1
+            height = int(np.prod(self.shape))
         data = np.asarray(self).reshape(height, width)
 
         # get list of names of axes
         axes_names = self.axes.display_names[:]
         # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
-        if len(axes_names) > 1:
+        if wide and len(axes_names) > 1:
             axes_names[-2] = '\\'.join(axes_names[-2:])
             axes_names.pop()
-        # get list of labels for each axis except the last one.
-        labels = [axis.labels.tolist() for axis in self.axes[:-1]]
+        axes = self.axes[:-1] if wide else self.axes
+        # get list of labels for each axis (except the last one if wide=True)
+        labels = [axis.labels.tolist() for axis in axes]
         # creates vertical lines (ticks is a list of list)
         if self.ndim == 1:
             # There is no vertical axis, so the axis name should not have
@@ -2651,8 +2677,9 @@ class LArray(ABCLArray):
             ticks = light_product(*labels)
         else:
             ticks = product(*labels)
-        # returns the first line (axes names + labels of last axis)
-        yield axes_names + self.axes[-1].labels.tolist()
+        # returns the first line
+        other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
+        yield axes_names + other_colnames
         # summary if needed
         if maxlines is not None and height > maxlines:
             # replace middle lines of the table by '...'.
@@ -2672,13 +2699,20 @@ class LArray(ABCLArray):
                 # returns next line (labels of N-1 first axes + data)
                 yield list(tick) + dataline.tolist()
 
-    def dump(self, header=True):
+    def dump(self, header=True, wide=True, value_name='value'):
         """Dump array as a 2D nested list
 
         Parameters
         ----------
         header : bool
             Whether or not to output axes names and labels.
+        wide : boolean, optional
+            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
+            represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
+            value column. Not used if header=False. Defaults to True.
+        value_name : str, optional
+            Name of the column containing the values (last column) when `wide=False` (see above).
+            Not used if header=False. Defaults to 'value'.
 
         Returns
         -------
@@ -2688,7 +2722,7 @@ class LArray(ABCLArray):
             # flatten all dimensions except the last one
             return self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table())
+            return list(self.as_table(wide=wide, value_name=value_name))
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default

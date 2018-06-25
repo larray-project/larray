@@ -184,6 +184,9 @@ Miscellaneous improvements
 
 * updated documentation of argument 'keepaxes' of aggregation functions (closes :issue:`607`).
 
+* added missing arguments `wide` and `value_name` to methods `LArray.as_table` and `LArray.dump`
+  (closes :issue:`653`)
+
 
 Fixes
 -----
