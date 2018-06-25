@@ -2678,12 +2678,8 @@ class LArray(ABCLArray):
         else:
             ticks = product(*labels)
         # returns the first line
-        # if wide=True: axes names + labels of last axis
-        # else: axes names + value_name
-        if wide:
-            yield axes_names + self.axes[-1].labels.tolist()
-        else:
-            yield axes_names + [value_name]
+        other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
+        yield axes_names + other_colnames
         # summary if needed
         if maxlines is not None and height > maxlines:
             # replace middle lines of the table by '...'.
