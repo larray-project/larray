@@ -184,8 +184,11 @@ Miscellaneous improvements
 
 * updated documentation of argument 'keepaxes' of aggregation functions (closes :issue:`607`).
 
+* deprecated argument `nb_index` in favor of `nb_axes` in load method used
+  in the context of ``open_excel`` (closes :issue:`648`).
+
 * added missing arguments `wide` and `value_name` to methods `LArray.as_table` and `LArray.dump`
-  (closes :issue:`653`)
+  (closes :issue:`653`).
 
 
 Fixes

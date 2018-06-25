@@ -3686,7 +3686,7 @@ def test_open_excel(tmpdir):
         wb['3D']['A20'] = a3.dump()
         # assume we have no name for the columns axis (ie change b\c to b)
         wb['3D']['B20'] = 'b'
-        res = wb['3D']['A20:F26'].load(nb_index=2)
+        res = wb['3D']['A20:F26'].load(nb_axes=3)
         assert_array_equal(res, a3.data)
         # the two first axes should be the same
         assert res.axes[:2] == a3.axes[:2]
