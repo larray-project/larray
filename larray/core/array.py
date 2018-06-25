@@ -2603,11 +2603,11 @@ class LArray(ABCLArray):
             Only active if `maxlines` is not None.
             Equals to 5 by default.
         wide : boolean, optional
-            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Defaults to True.
         value_name : str, optional
-            Name of the column containing the values (last column) in the csv file when `wide=False` (see above).
+            Name of the column containing the values (last column) when `wide=False` (see above).
             Defaults to 'value'.
 
         Returns
@@ -2711,11 +2711,11 @@ class LArray(ABCLArray):
         header : bool
             Whether or not to output axes names and labels.
         wide : boolean, optional
-            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Not used if header=False. Defaults to True.
         value_name : str, optional
-            Name of the column containing the values (last column) in the csv file when `wide=False` (see above).
+            Name of the column containing the values (last column) when `wide=False` (see above).
             Not used if header=False. Defaults to 'value'.
 
         Returns
