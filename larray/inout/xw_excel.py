@@ -18,7 +18,7 @@ from larray.core.axis import Axis
 from larray.core.array import LArray, ndtest
 from larray.inout.pandas import df_aslarray
 from larray.inout.misc import from_lists
-from larray.util.misc import PY2
+from larray.util.misc import PY2, deprecate_kwarg
 
 string_types = (str,)
 
@@ -437,9 +437,10 @@ if xw is not None:
         def __setattr__(self, key, value):
             setattr(self.xw_sheet, key, value)
 
-        def load(self, header=True, convert_float=True, nb_index=None, index_col=None, fill_value=np.nan,
+        @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=np.nan,
                  sort_rows=False, sort_columns=False, wide=True):
-            return self[:].load(header=header, convert_float=convert_float, nb_index=nb_index, index_col=index_col,
+            return self[:].load(header=header, convert_float=convert_float, nb_axes=nb_axes, index_col=index_col,
                                 fill_value=fill_value, sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
 
         # TODO: generalize to more than 2 dimensions or scrap it
@@ -566,7 +567,8 @@ if xw is not None:
             return str(self.__larray__())
         __repr__ = __str__
 
-        def load(self, header=True, convert_float=True, nb_index=None, index_col=None, fill_value=np.nan,
+        @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
+        def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=np.nan,
                  sort_rows=False, sort_columns=False, wide=True):
             if not self.ndim:
                 return LArray([])
@@ -574,7 +576,7 @@ if xw is not None:
             list_data = self._converted_value(convert_float=convert_float)
 
             if header:
-                return from_lists(list_data, nb_index=nb_index, index_col=index_col, fill_value=fill_value,
+                return from_lists(list_data, nb_axes=nb_axes, index_col=index_col, fill_value=fill_value,
                                   sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
             else:
                 return LArray(list_data)
