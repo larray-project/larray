@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-import datetime as dt
 
 import pytest
 import numpy as np
@@ -14,7 +13,8 @@ try:
 except ImportError:
     xw = None
 
-from larray.tests.common import inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv
+from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
+                                 tmp_path, meta)
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan_equal)
@@ -22,10 +22,6 @@ from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO, LHDFStore
 from larray.core.metadata import Metadata
-
-
-def tmp_path(tmpdir, fname):
-    return os.path.join(tmpdir.strpath, fname)
 
 
 # ================== #
@@ -77,17 +73,6 @@ def test_key_string_slice_strings():
 # =================== #
 #    Test Metadata    #
 # =================== #
-
-@pytest.fixture
-def meta():
-    title = 'test array'
-    description = 'Array used for testing'
-    author = 'John Cleese'
-    location = 'Ministry of Silly Walks'
-    date = dt.datetime(1970, 3, 21)
-    return Metadata([('title', title), ('description', description), ('author', author),
-                     ('location', location), ('date', date)])
-
 
 def test_read_set_update_delete_metadata(meta, tmpdir):
     # __eq__

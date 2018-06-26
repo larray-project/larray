@@ -1,8 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import pytest
+import datetime as dt
 import numpy as np
-from larray import LArray, isnan, aslarray
+from larray import LArray, isnan, aslarray, Metadata
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -103,3 +105,18 @@ assert_nparray_nan_equiv = assert_nparray_equal_factory(nan_equal)
 
 def assert_axis_eq(axis1, axis2):
     assert axis1.equals(axis2)
+
+
+def tmp_path(tmpdir, fname):
+    return os.path.join(tmpdir.strpath, fname)
+
+
+@pytest.fixture
+def meta():
+    title = 'test array'
+    description = 'Array used for testing'
+    author = 'John Cleese'
+    location = 'Ministry of Silly Walks'
+    date = dt.datetime(1970, 3, 21)
+    return Metadata([('title', title), ('description', description), ('author', author),
+                     ('location', location), ('date', date)])
