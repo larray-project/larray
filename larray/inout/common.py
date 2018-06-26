@@ -56,8 +56,16 @@ class FileHandler(object):
         """Read item"""
         raise NotImplementedError()
 
+    def _read_metadata(self):
+        """Read metadata"""
+        raise NotImplementedError()
+
     def _dump_item(self, key, value, *args, **kwargs):
         """Dump item. Raises an TypeError if type not taken into account by the FileHandler subclass."""
+        raise NotImplementedError()
+
+    def _dump_metadata(self, metadata):
+        """Dump metadata"""
         raise NotImplementedError()
 
     def save(self):
@@ -82,7 +90,7 @@ class FileHandler(object):
             os.remove(self.original_file_name)
             os.rename(self.fname, self.original_file_name)
 
-    def read_items(self, keys, *args, **kwargs):
+    def read(self, keys, *args, **kwargs):
         """
         Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 
@@ -102,12 +110,15 @@ class FileHandler(object):
 
         Returns
         -------
+        Metadata
+            List of metadata to load.
         OrderedDict(str, LArray/Axis/Group)
-            Dictionary containing the loaded object.
+            Dictionary containing the loaded objects.
         """
         display = kwargs.pop('display', False)
         ignore_exceptions = kwargs.pop('ignore_exceptions', False)
         self._open_for_read()
+        metadata = self._read_metadata()
         key_types = self.list_items()
         if keys is not None:
             key_types = [(key, type) for key, type in key_types if key in keys]
@@ -124,14 +135,16 @@ class FileHandler(object):
             if display:
                 print("done")
         self.close()
-        return res
+        return metadata, res
 
-    def dump_items(self, key_values, *args, **kwargs):
+    def dump(self, metadata, key_values, *args, **kwargs):
         """
         Dumps objects corresponding to keys in file in HDF, Excel, CSV, ... format
 
         Parameters
         ----------
+        metadata: Metadata
+            List of metadata to dump.
         key_values : list of (str, LArray/Axis/Group) pairs
             Name and data of objects to dump.
         kwargs :
@@ -140,6 +153,8 @@ class FileHandler(object):
         display = kwargs.pop('display', False)
         self._get_original_file_name()
         self._open_for_write()
+        if metadata is not None:
+            self._dump_metadata(metadata)
         for key, value in key_values:
             if isinstance(value, LArray) and value.ndim == 0:
                 if display:

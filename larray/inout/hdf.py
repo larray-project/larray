@@ -9,6 +9,7 @@ from larray.core.array import LArray
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, LGroup, _translate_group_key_hdf
+from larray.core.metadata import Metadata
 from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
@@ -20,7 +21,7 @@ __all__ = ['read_hdf']
 
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
-    """Reads an array named key from a HDF5 file in filepath (path+name)
+    """Reads an axis or group or array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
@@ -165,6 +166,13 @@ class PandasHDFHandler(FileHandler):
             value.to_hdf(self.handle, hdf_key, hdf_axis_key, *args, **kwargs)
         else:
             raise TypeError()
+
+    def _read_metadata(self):
+        attrs = self.handle.get_node('')._v_attrs
+        return attrs.metadata if 'metadata' in attrs else Metadata()
+
+    def _dump_metadata(self, metadata):
+        self.handle.get_node('')._v_attrs.metadata = metadata
 
     def close(self):
         self.handle.close()

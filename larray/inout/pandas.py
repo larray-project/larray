@@ -266,9 +266,9 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
                           unfold_last_axis_name=unfold_last_axis_name, **kwargs)
 
 
-# ############################## #
-#    SERIES <--> AXIS, GROUP     #
-# ############################## #
+# #################################### #
+#    SERIES <--> AXIS, GROUP, META     #
+# #################################### #
 
 def _axis_to_series(axis, dtype=None):
     return pd.Series(data=axis.labels, name=str(axis), dtype=dtype)
@@ -291,9 +291,9 @@ def _series_to_group(series, axis):
     return LGroup(key=series.values, name=name, axis=axis)
 
 
-# ################################## #
-#    DATAFRAME <--> AXES, GROUPS     #
-# ################################## #
+# ######################################## #
+#    DATAFRAME <--> AXES, GROUPS, META     #
+# ######################################## #
 
 def _df_to_axes(df):
     return OrderedDict([(col_name, _series_to_axis(df[col_name])) for col_name in df.columns.values])

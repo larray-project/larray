@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
-from larray.util.misc import PY2
+from larray.util.misc import PY2, basestring
 
 
 __all__ = ['Metadata']
@@ -31,6 +31,13 @@ if PY2:
             od = object.__getattribute__(self, '__odict')
             del od[key]
 
+        def __reduce__(self):
+            'Return state information for pickling'
+            od = object.__getattribute__(self, '__odict')
+            res = list(od.__reduce__())
+            res[0] = self.__class__
+            return tuple(res)
+
         def __dir__(self):
             od = object.__getattribute__(self, '__odict')
             return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | set(od.keys()))
@@ -55,9 +62,6 @@ if PY2:
 
         __iter__ = method_factory('iter')
         __len__ = method_factory('len')
-
-        __reduce__ = method_factory('reduce')
-        __reduce_ex__ = method_factory('reduce_ex')
 
         __reversed__ = method_factory('reversed')
 
@@ -142,6 +146,29 @@ class Metadata(AttributeDict):
 
     >>> del arr.meta.creation_date
     """
+
+    # TODO: use LArray.from_dict once ready (issue 581)
+    def __larray__(self):
+        from larray.core.array import LArray
+        from larray.core.axis import Axis
+        return LArray(list(self.values()), Axis(self.keys(), name='metadata'))
+
+    @classmethod
+    def from_array(cls, array):
+        from larray.core.array import aslarray
+        array = aslarray(array)
+        if array.ndim != 1:
+            raise ValueError("Expected LArray object of dimension 1. Got array of dimension {}".format(array.ndim))
+
+        from pandas import to_numeric, to_datetime
+
+        def _convert_value(value):
+            value = to_numeric([value], errors='ignore')[0]
+            if isinstance(value, basestring):
+                value = to_datetime(value, errors='ignore', infer_datetime_format=True)
+            return value
+
+        return Metadata([(key, _convert_value(value)) for key, value in zip(array.axes.labels[0], array.data)])
 
     # ---------- IO methods ----------
     def to_hdf(self, hdfstore, key):

@@ -687,7 +687,7 @@ class LArray(ABCLArray):
 
     Warnings
     --------
-    Metadata are not kept when actions or methods are applied on a array
+    Metadata is not kept when actions or methods are applied on an array
     except for operations modifying the object in-place, such as: `pop[age < 10] = 0`.
     Do not add metadata to an array if you know you will apply actions or methods
     on it before dumping it.
@@ -8097,7 +8097,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
-# TODO: add metadata to returned Session once Session will handle metadata
+
 def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     """
     Combines several arrays or sessions along an axis.
@@ -8285,7 +8285,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
             except Exception:
                 stacked = nan
             res.append((name, stacked))
-        return Session(res)
+        return Session(res, meta=meta)
     else:
         # XXX : use concat?
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])

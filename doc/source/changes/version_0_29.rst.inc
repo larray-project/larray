@@ -75,8 +75,8 @@ New features
     False
 
 * allowed arrays to have metadata (e.g. title, description, authors, ...).
-  Metadata can be accessed using the syntax ``array.meta.name``.
-  See bellow for use cases:
+  Array metadata can be accessed using the syntax ``array.meta.name``.
+  See below for use cases:
 
     >>> # add metadata to/from an array
     >>> # for Python <= 3.5
@@ -93,8 +93,8 @@ New features
 
   Warnings:
 
-  - Currently, only the HDF (.h5) file format supports saving and loading metadata.
-  - Metadata are not kept when actions or methods are applied on a array
+  - Currently, only the HDF (.h5) file format supports saving and loading array metadata.
+  - Metadata is not kept when actions or methods are applied on an array
     except for operations modifying the object in-place, such as `pop[age < 10] = 0`,
     and when the method `copy()` is called. Do not add metadata to an array if you know
     you will apply actions or methods on it before dumping it.
@@ -125,6 +125,32 @@ New features
     >>> import larray as la
     >>> la.pi
     3.141592653589793
+
+
+* allowed sessions to have metadata.
+  Like for arrays, session metadata can be accessed using the syntax ``session.meta.name``.
+  See below for use cases:
+
+    >>> # add metadata to a session at creation
+    >>> # Python <= 3.5
+    >>> s = Session([('arr1', ndtest(2)), ('arr2', ndtest(3)], meta=[('title', 'my title'), ('author', 'John Smith')])
+    >>> # Python 3.6+
+    >>> s = Session(arr1=ndtest(2), arr2=ndtest(3), meta=Metadata(title='my title', author='John Smith'))
+    >>> # show/access metadata
+    >>> s.meta
+    title: my title
+    author: John Smith
+
+  Warnings:
+
+  - Contrary to array metadata, saving and loading session metadata is supported for
+    all current session file formats: Excel, CSV and HDF (.h5)
+  - Metadata is not kept when actions or methods are applied on a session
+    except for operations modifying a specific array, such as: `s['arr1'] = 0`.
+    Do not add metadata to a session if you know you will apply actions or methods
+    on it before dumping it.
+
+  Closes :issue:`640`.
 
 
 .. _misc:
