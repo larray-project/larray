@@ -6,6 +6,7 @@ from collections import OrderedDict
 from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import LArray
+from larray.core.metadata import Metadata
 from larray.util.misc import pickle
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
@@ -46,6 +47,15 @@ class PickleHandler(FileHandler):
             self.data[key] = value
         else:
             raise TypeError()
+
+    def _read_metadata(self):
+        if '__metadata__' in self.data:
+            return self.data['__metadata__']
+        else:
+            return Metadata()
+
+    def _dump_metadata(self, metadata):
+        self.data['__metadata__'] = metadata
 
     def close(self):
         with open(self.fname, 'wb') as f:
