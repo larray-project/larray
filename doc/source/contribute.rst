@@ -23,6 +23,8 @@ It is built to various formats using `Sphinx <http://sphinx-doc.org/>`_
 and `nbsphinx <https://nbsphinx.readthedocs.io>`_.
 
 The unit tests are written using the `pytest library <https://docs.pytest.org>`_.
+The compliance with the PEP8 conventions is tested using the extension
+`pytest-pep8 <https://pypi.org/project/pytest-pep8/>`_.
 
 Many editors and IDE exist to edit Python code and provide integration with version control tools (like git).
 A good IDE, such as PyCharm, can make many of the steps below much more efficient.
@@ -92,8 +94,11 @@ We'll now kick off a two-step process:
 
 .. code-block:: none
 
+   # add 'conda-forge' channel (required to install some dependencies)
+   conda config --add channels conda-forge
+
    # Create and activate the build environment
-   conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl xlsxwriter pytest
+   conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl xlsxwriter pytest pytest-pep8
    conda activate larray_dev
 
 This will create the new environment, and not touch any of your existing environments,
@@ -260,6 +265,8 @@ Step 4: Test your code
 
 Our unit tests are written using the `pytest library <https://docs.pytest.org>`_
 and our tests modules are located in `/larray/tests/`.
+We also use its extension `pytest-pep8 <https://pypi.org/project/pytest-pep8/>`_
+to check if the code is PEP8 compliant.
 The pytest library is able to automatically detect and run unit tests
 as long as you respect some conventions:
 

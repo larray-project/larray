@@ -258,7 +258,7 @@ class Axis(ABCAxis):
         """
         other = labels if isinstance(labels, Axis) else Axis(labels)
         if self.iswildcard != other.iswildcard:
-            raise ValueError ("Axis to append must (not) be wildcard if self is (not) wildcard")
+            raise ValueError("Axis to append must (not) be wildcard if self is (not) wildcard")
         labels = self._length + other._length if self.iswildcard else np.append(self.labels, other.labels)
         return Axis(labels, self.name)
 
@@ -414,7 +414,7 @@ class Axis(ABCAxis):
         key = args[0] if len(args) == 1 else args
         return self[key] >> name if name else self[key]
 
-    def group(self,  *args, **kwargs):
+    def group(self, *args, **kwargs):
         group_name = kwargs.pop('name', None)
         key = args[0] if len(args) == 1 else args
         syntax = '{}[{}]'.format(self.name if self.name else 'axis', key)
@@ -551,7 +551,7 @@ class Axis(ABCAxis):
 
         # this might need to change if we ever support wildcard axes with real labels
         return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
-               (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
+            (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
 
     def matching(self, pattern):
         """
@@ -1316,7 +1316,7 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
-            raise ValueError("Cannot have multiple occurrences of the same axis object in a collection ('%s' -- %s "\
+            raise ValueError("Cannot have multiple occurrences of the same axis object in a collection ('%s' -- %s "
                              "with id %d). Several axes with the same name are allowed though (but not recommended)."
                              % (axis.name, axis.labels_summary(), id(axis)))
         self._list = axes

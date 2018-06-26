@@ -32,12 +32,14 @@ def test_init():
     assert_array_equal(axis.labels, other.labels)
     assert_array_equal(axis.name, 'age')
 
+
 def test_equals():
     assert Axis('sex=M,F').equals(Axis('sex=M,F'))
     assert Axis('sex=M,F').equals(Axis(['M', 'F'], 'sex'))
     assert not Axis('sex=M,W').equals(Axis('sex=M,F'))
     assert not Axis('sex1=M,F').equals(Axis('sex2=M,F'))
     assert not Axis('sex1=M,W').equals(Axis('sex2=M,F'))
+
 
 def test_getitem():
     age = Axis('age=0..10')
@@ -70,30 +72,33 @@ def test_getitem():
     group = age[age2]
     assert list(group.key) == list(age2.labels)
 
+
 def test_translate():
     # an axis with labels having the object dtype
     a = Axis(np.array(["a0", "a1"], dtype=object), 'a')
     assert a.index('a1') == 1
     assert a.index('a1 >> A1') == 1
 
+
 def test_getitem_lgroup_keys():
     def group_equal(g1, g2):
-        return (g1.key == g2.key and g1.name == g2.name and        g1.axis is g2.axis)
+        return (g1.key == g2.key and g1.name == g2.name and g1.axis is g2.axis)
 
     age = Axis(range(100), 'age')
-    ages=[1,5,9]
-    val_only=LGroup(ages)
-    assert group_equal(age[val_only],LGroup(ages,axis=age))
-    assert group_equal(age[val_only]>>'a_name',LGroup(ages,'a_name',axis=age))
-    val_name=LGroup(ages,'val_name')
-    assert group_equal(age[val_name],LGroup(ages,'val_name',age))
-    assert group_equal(age[val_name]>>'a_name',LGroup(ages,'a_name',age))
-    val_axis=LGroup(ages,axis=age)
-    assert group_equal(age[val_axis],LGroup(ages,axis=age))
-    assert group_equal(age[val_axis]>>'a_name',LGroup(ages,'a_name',axis=age))
-    val_axis_name=LGroup(ages,'val_axis_name',age)
-    assert group_equal(age[val_axis_name],LGroup(ages,'val_axis_name',age))
-    assert group_equal(age[val_axis_name]>>'a_name',LGroup(ages,'a_name',age))
+    ages = [1, 5, 9]
+    val_only = LGroup(ages)
+    assert group_equal(age[val_only], LGroup(ages, axis=age))
+    assert group_equal(age[val_only] >> 'a_name', LGroup(ages, 'a_name', axis=age))
+    val_name = LGroup(ages, 'val_name')
+    assert group_equal(age[val_name], LGroup(ages, 'val_name', age))
+    assert group_equal(age[val_name] >> 'a_name', LGroup(ages, 'a_name', age))
+    val_axis = LGroup(ages, axis=age)
+    assert group_equal(age[val_axis], LGroup(ages, axis=age))
+    assert group_equal(age[val_axis] >> 'a_name', LGroup(ages, 'a_name', axis=age))
+    val_axis_name = LGroup(ages, 'val_axis_name', age)
+    assert group_equal(age[val_axis_name], LGroup(ages, 'val_axis_name', age))
+    assert group_equal(age[val_axis_name] >> 'a_name', LGroup(ages, 'a_name', age))
+
 
 def test_getitem_group_keys():
     a = Axis('a=a0..a2')
@@ -271,11 +276,13 @@ def test_getitem_group_keys():
     assert g[0].axis is alt_a
     assert g[1].axis is alt_a
 
+
 def test_init_from_group():
     code = Axis('code=C01..C03')
     code_group = code[:'C02']
     subset_axis = Axis(code_group, 'code_subset')
     assert_array_equal(subset_axis.labels, ['C01', 'C02'])
+
 
 def test_matching():
     sutcode = Axis(['A23', 'A2301', 'A25', 'A2501'], 'sutcode')
@@ -283,15 +290,18 @@ def test_matching():
     assert sutcode.startingwith('A23') == LGroup(['A23', 'A2301'])
     assert sutcode.endingwith('01') == LGroup(['A2301', 'A2501'])
 
+
 def test_iter():
     sex = Axis('sex=M,F')
     assert list(sex) == [IGroup(0, axis=sex), IGroup(1, axis=sex)]
+
 
 def test_positional():
     age = Axis('age=0..115')
     key = age.i[:-1]
     assert key.key == slice(None, -1)
     assert key.axis is age
+
 
 def test_contains():
     # normal Axis
@@ -320,7 +330,7 @@ def test_contains():
     assert age20qua not in age
     assert ['3', '5', '9'] not in age
     assert '3,5,9' not in age
-    assert  '3:9' not in age
+    assert '3:9' not in age
     assert age247 not in age
     assert age247bis not in age
     assert age359 not in age
@@ -360,6 +370,7 @@ def test_contains():
     assert ['2', '7'] not in agg
     assert age['2,7'] not in agg
     assert age[['2', '7']] not in agg
+
 
 def test_h5_io(tmpdir):
     age = Axis('age=0..10')

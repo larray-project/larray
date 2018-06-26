@@ -176,7 +176,7 @@ def table2str(table, missing, fullinfo=False, summarize=True, maxwidth=80, numed
                         numedges = maxi - 1
                     else:
                         numedges = 0
-                head = keepcols+numedges
+                head = keepcols + numedges
                 tail = -numedges if numedges else numcol
                 formatted = [row[:head] + [cont] + row[tail:]
                              for row in formatted]
@@ -657,10 +657,12 @@ def renamed_to(newfunc, old_name, stacklevel=2):
         return newfunc(*args, **kwargs)
     return wrapper
 
+
 # deprecate_kwarg is derived from pandas.util._decorators (0.21)
 def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None, stacklevel=2):
     if mapping is not None and not isinstance(mapping, dict):
         raise TypeError("mapping from old to new argument values must be dict!")
+
     def _deprecate_kwarg(func):
         @wraps(func)
         def wrapper(*args, **kwargs):

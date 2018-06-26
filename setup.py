@@ -15,7 +15,7 @@ AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
 INSTALL_REQUIRES = ['numpy >= 1.10', 'pandas >= 0.13.1, <0.21']
-TESTS_REQUIRE = ['pytest']
+TESTS_REQUIRE = ['pytest', 'pytest-pep8']
 SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'

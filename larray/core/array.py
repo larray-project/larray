@@ -1,13 +1,6 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
 
-__all__ = [
-    'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
-    'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
-    'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
-    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'element_equal'
-]
-
 """
 Matrix class
 """
@@ -70,6 +63,14 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore)
+
+
+__all__ = [
+    'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
+    'create_sequential', 'ndrange', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
+    'larray_equal', 'larray_nan_equal', 'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp',
+    'var', 'std', 'median', 'percentile', 'stack', 'nan', 'nan_equal', 'element_equal'
+]
 
 
 nan = np.nan
@@ -474,11 +475,10 @@ _kwarg_agg = {
             cells is NaN. Defaults to True."""},
     'keepaxes': {'value': False, 'doc': """
         keepaxes : bool or label-like, optional
-            Whether or not reduced axes are left in the result as dimensions with size one. 
-            If True, reduced axes will contain a unique label representing the applied aggregation 
-            (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value 
-            (e.g. keepaxes='summation'). Defaults to False."""
-    },
+            Whether or not reduced axes are left in the result as dimensions with size one.
+            If True, reduced axes will contain a unique label representing the applied aggregation
+            (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value
+            (e.g. keepaxes='summation'). Defaults to False."""},
     'interpolation': {'value': 'linear', 'doc': """
         interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}, optional
             Interpolation method to use when the desired quantile lies between two data points ``i < j``:
@@ -490,8 +490,7 @@ _kwarg_agg = {
               * nearest: ``i`` or ``j``, whichever is nearest.
               * midpoint: ``(i + j) / 2``.
 
-            Defaults to 'linear'."""
-    }
+            Defaults to 'linear'."""}
 }
 
 
@@ -1293,7 +1292,7 @@ class LArray(ABCLArray):
     def __bool__(self):
         return bool(self.data)
     # Python 2
-    __nonzero__= __bool__
+    __nonzero__ = __bool__
 
     def rename(self, renames=None, to=None, inplace=False, **kwargs):
         """Renames axes of the array.
@@ -1470,6 +1469,7 @@ class LArray(ABCLArray):
         else:
             res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
         res = full(res_axes, fill_value, dtype=common_type((self.data, fill_value)))
+
         def get_labels(self_axis):
             res_axis = res_axes[self_axis]
             if res_axis.equals(self_axis):
@@ -1657,8 +1657,7 @@ class LArray(ABCLArray):
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
             raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
         left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
-        return self.reindex(left_axes, fill_value=fill_value), \
-               other.reindex(right_axes, fill_value=fill_value)
+        return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True):
@@ -1768,11 +1767,11 @@ class LArray(ABCLArray):
             # FIXME: .data shouldn't be necessary, but currently, if we do not do it, we get
             # IGroup(nat  EU  FO  BE
             #              1   2   0, axis='nat')
-            # which sorts the *data* correctly, but the labels on the nat axis are not sorted (because the __getitem__ in
-            # that case reuse the key axis as-is -- like it should).
-            # Both use cases have value, but I think reordering the ticks should be the default. Now, I am unsure where to
-            # change this. Probably in IGroupMaker.__getitem__, but then how do I get the "not reordering labels" behavior
-            # that I have now?
+            # which sorts the *data* correctly, but the labels on the nat axis are not sorted
+            # (because the __getitem__ in that case reuse the key axis as-is -- like it should).
+            # Both use cases have value, but I think reordering the ticks should be the default.
+            # Now, I am unsure where to change this. Probably in IGroupMaker.__getitem__,
+            # but then how do I get the "not reordering labels" behavior that I have now?
             # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
             sorter = axis.i[indicesofsorted.data]
             res = self[sorter]
@@ -2290,7 +2289,7 @@ class LArray(ABCLArray):
         #       while here we need zip(*axes_labels)
         combined_axes = [axis for axis_key, axis in zip(key, self.axes)
                          if not _isnoneslice(axis_key) and
-                            not np.isscalar(axis_key)]
+                         not np.isscalar(axis_key)]
         # scalar axes are not taken, since we want to kill them
         other_axes = [axis for axis_key, axis in zip(key, self.axes)
                       if _isnoneslice(axis_key)]
@@ -4699,7 +4698,7 @@ class LArray(ABCLArray):
             res = stack([(v, self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
                           extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
             return res.transpose()
-        else :
+        else:
             _extra_kwargs = {'q': q, 'interpolation': interpolation}
             return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes, commutative=True,
                                    out=out, extra_kwargs=_extra_kwargs)
@@ -6054,7 +6053,8 @@ class LArray(ABCLArray):
         return clip(self, a_min, a_max, out)
 
     @deprecate_kwarg('transpose', 'wide')
-    def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None, dialect='default', **kwargs):
+    def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None,
+               dialect='default', **kwargs):
         """
         Writes array to a csv file.
 
@@ -7639,6 +7639,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     res_dtype = np.dtype(common_type((initial, inc, mult)))
     res = empty(axes, dtype=res_dtype, meta=meta)
     res[axis.i[0]] = initial
+
     def has_axis(a, axis):
         return isinstance(a, LArray) and axis in a.axes
     if func is not None:
@@ -7730,6 +7731,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     return res
 
 create_sequential = renamed_to(sequence, 'create_sequential')
+
 
 @_check_axes_argument
 def ndrange(axes, start=0, title=None, dtype=int):
@@ -8097,7 +8099,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
-#TODO: add metadata to returned Session once Session will handle metadata
+# TODO: add metadata to returned Session once Session will handle metadata
 def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     """
     Combines several arrays or sessions along an axis.
