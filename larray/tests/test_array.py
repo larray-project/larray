@@ -4197,6 +4197,14 @@ def test_combine_axes():
     assert res.size == arr.size
     assert res.shape == (2 * 4, 3 * 3 * 2, 4)
 
+    # combine with wildcard=True
+    arr = ndtest((2, 3))
+    res = arr.combine_axes(wildcard=True)
+    assert res.axes.names == ['a_b']
+    assert res.size == arr.size
+    assert res.shape == (6,)
+    assert_array_equal(res.axes[0].labels, np.arange(6))
+
 
 def test_split_axes():
     # split one axis
