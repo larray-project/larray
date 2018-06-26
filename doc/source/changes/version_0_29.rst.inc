@@ -322,3 +322,5 @@ Fixes
   {0}\{1}  b0  b1  b2
        a0   0   1   2
        a1   3   4   5
+
+* fixed LArray.combine_axes(wildcard=True).

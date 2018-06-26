@@ -180,7 +180,7 @@ class Axis(ABCAxis):
     def labels(self, labels):
         if labels is None:
             raise TypeError("labels should be a sequence or a single int")
-        if isinstance(labels, (int, long)):
+        if isinstance(labels, (int, long, np.integer)):
             length = labels
             labels = np.arange(length)
             iswildcard = True

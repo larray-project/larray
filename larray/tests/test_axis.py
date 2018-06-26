@@ -8,16 +8,21 @@ from larray import Axis, LGroup, IGroup, read_hdf
 
 
 def test_init():
+    axis = Axis(3)
+    assert len(axis) == 3
+    assert list(axis.labels) == list(range(3))
+    axis = Axis(np.int32(3))
+    assert len(axis) == 3
+    assert list(axis.labels) == list(range(3))
+
     sex_tuple = ('M', 'F')
     sex_list = ['M', 'F']
     sex_array = np.array(sex_list)
-    axis = Axis(10, 'axis')
-    assert len(axis) == 10
-    assert list(axis.labels) == list(range(10))
     assert_array_equal(Axis(sex_tuple, 'sex').labels, sex_array)
     assert_array_equal(Axis(sex_list, 'sex').labels, sex_array)
     assert_array_equal(Axis(sex_array, 'sex').labels, sex_array)
     assert_array_equal(Axis('sex=M,F').labels, sex_array)
+
     assert_array_equal(Axis(range(116), 'age').labels, np.arange(116))
     axis = Axis('0..115', 'age')
     assert_array_equal(axis.labels, np.arange(116))
