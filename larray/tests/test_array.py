@@ -262,6 +262,8 @@ title: test array
 description: Array used for testing
 author: John Cleese
 location: Ministry of Silly Walks
+office_number: 42
+score: 9.7
 date: 1970-03-21 00:00:00
 116 x 44 x 2 x 15
  age [116]: 0 1 2 ... 113 114 115

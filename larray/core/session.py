@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 import numpy as np
 
+from larray.core.metadata import Metadata
 from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
@@ -31,7 +32,18 @@ class Session(object):
         Path to the file containing the session to load or
         list/tuple/dictionary containing couples (name, object).
     **kwargs : dict of {str: object}
-        Objects to add written as name=object, ...
+
+        * Objects to add written as name=object
+        * meta : list of pairs or dict or OrderedDict or Metadata
+            Metadata (title, description, author, creation_date, ...) associated with the array.
+            Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+
+    Warnings
+    --------
+    Metadata is not kept when actions or methods are applied on a session
+    except for operations modifying a specific array, such as: `s['arr1'] = 0`.
+    Do not add metadata to a session if you know you will apply actions or methods
+    on it before dumping it.
 
     Examples
     --------
@@ -57,9 +69,27 @@ class Session(object):
     load Session from file
 
     >>> s = Session('my_session.h5')  # doctest: +SKIP
+
+    create a session with metadata
+
+    >>> # Python <= 3.5
+    >>> s = Session([('arr1', arr1), ('arr2', arr2)], meta=[('title', 'my title'), ('author', 'John Smith')])
+    >>> s.meta
+    title: my title
+    author: John Smith
+    >>> # Python 3.6+
+    >>> s = Session(arr1=arr1, arr2=arr2, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
+    >>> s.meta
+    title: my title
+    author: John Smith
     """
     def __init__(self, *args, **kwargs):
         object.__setattr__(self, '_objects', OrderedDict())
+
+        meta = kwargs.pop('meta', None)
+        if meta is None:
+            meta = Metadata()
+        self.meta = meta
 
         if len(args) == 1:
             a0 = args[0]
@@ -172,14 +202,24 @@ class Session(object):
     def __delitem__(self, key):
         del self._objects[key]
 
+    # TODO: add a a meta property when Python 2.7 will be dropped
     def __getattr__(self, key):
-        if key in self._objects:
+        if key is 'meta':
+            return self._meta
+        elif key in self._objects:
             return self._objects[key]
         else:
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
 
+    # TODO: implement meta.setter when Python 2.7 will be dropped
     def __setattr__(self, key, value):
-        self._objects[key] = value
+        if key is 'meta':
+            if not isinstance(value, (list, dict, OrderedDict, Metadata)):
+                raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
+                                "instead of {}".format(type(value).__name__))
+            object.__setattr__(self, '_meta', value if isinstance(value, Metadata) else Metadata(value))
+        else:
+            self._objects[key] = value
 
     def __delattr__(self, key):
         del self._objects[key]
@@ -198,7 +238,7 @@ class Session(object):
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         """
-        Loads LArray, Axis and Group objects from a file, or several .csv files.
+        Load LArray, Axis and Group objects from a file, or several .csv files.
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
         to arbitrary code execution.
@@ -228,9 +268,24 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
-        >>> s.save('input.h5')                                                               # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
+        >>> # save the session in an HDF5 file
+        >>> s.save('input.h5')                           # doctest: +SKIP
 
-        In another module: load only some objects
+        In another module: load the whole session
+
+        >>> # the load method is automatically called when passing
+        >>> # the path of file to the Session constructor
+        >>> s = Session('input.h5')     # doctest: +SKIP
+        >>> s                           # doctest: +SKIP
+        Session(a, b, a01, arr1, arr2)
+        >>> s.meta                      # doctest: +SKIP
+        title: my title
+        author: John Smith
+
+        Load only some objects
 
         >>> s = Session()                                   # doctest: +SKIP
         >>> s.load('input.h5', ['a', 'b', 'arr1', 'arr2'])  # doctest: +SKIP
@@ -263,9 +318,10 @@ class Session(object):
             handler = handler_cls(fname, kwargs['sep'])
         else:
             handler = handler_cls(fname)
-        objects = handler.read_items(names, display=display, **kwargs)
+        metadata, objects = handler.read(names, display=display, **kwargs)
         for k, v in objects.items():
             self[k] = v
+        self.meta = metadata
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         """
@@ -301,6 +357,9 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
 
         Save all objects
 
@@ -326,11 +385,12 @@ class Session(object):
             handler = handler_cls(fname, overwrite, kwargs['sep'])
         else:
             handler = handler_cls(fname, overwrite)
+        meta = self.meta if overwrite else None
         items = self.items()
         if names is not None:
             names_set = set(names)
             items = [(k, v) for k, v in items if k in names_set]
-        handler.dump_items(items, display=display, **kwargs)
+        handler.dump(meta, items, display=display, **kwargs)
 
     def to_globals(self, names=None, depth=0, warn=True, inplace=False):
         """
@@ -426,6 +486,9 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
 
         Save all arrays
 
@@ -465,6 +528,9 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
 
         Save all arrays
 
@@ -499,6 +565,7 @@ class Session(object):
         - each array is saved in a separate sheet
         - all Axis objects are saved together in the same sheet named __axes__
         - all Group objects are saved together in the same sheet named __groups__
+        - all session metadata is saved in the same sheet named __metadata__
 
         Examples
         --------
@@ -509,6 +576,9 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
 
         Save all arrays
 
@@ -541,6 +611,7 @@ class Session(object):
         - each array is saved in a separate file
         - all Axis objects are saved together in the same CSV file named __axes__.csv
         - all Group objects are saved together in the same CSV file named __groups__.csv
+        - all session metadata is saved in the same CSV file named __metadata__.csv
 
         Examples
         --------
@@ -551,6 +622,9 @@ class Session(object):
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)       # doctest: +SKIP
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])  # doctest: +SKIP
+        >>> # metadata
+        >>> s.meta.title = 'my title'                    # doctest: +SKIP
+        >>> s.meta.author = 'John Smith'                 # doctest: +SKIP
 
         Save all arrays
 
@@ -816,6 +890,10 @@ class Session(object):
         -------
         Boolean LArray
 
+        Notes
+        -----
+        Metadata is ignored.
+
         See Also
         --------
         Session.equals
@@ -875,7 +953,7 @@ class Session(object):
     array_equals = renamed_to(element_equals, 'array_equals')
 
     def equals(self, other):
-        """Test if all arrays of the current session are equal to those of another session.
+        """Test if all groups, axes and arrays of the current session are equal to those of another session.
 
         Parameters
         ----------
@@ -886,9 +964,13 @@ class Session(object):
         -------
         True if arrays of both sessions are all equal, False otherwise.
 
+        Notes
+        -----
+        Metadata is ignored.
+
         See Also
         --------
-        Session.array_equals
+        Session.element_equals
 
         Examples
         --------
@@ -1083,7 +1165,7 @@ class Session(object):
         Parameters
         ----------
         template: dict {object type: str} or dict {object type: func}
-            Template describing how items are summarized.
+            Template describing how items and metadata are summarized.
             For each object type, it is possible to provide either a string template or a function taking the
             the key and value of a session item as parameters and returning a string (see examples).
             A string template contains specific arguments written inside brackets {}.
@@ -1092,6 +1174,7 @@ class Session(object):
                 - for groups: 'key', 'name', 'axis_name', 'labels' and 'length',
                 - for axes: 'key', 'name', 'labels' and 'length',
                 - for arrays: 'key', 'axes_names', 'shape', 'dtype' and 'title',
+                - for session metadata: 'key', 'value',
                 - for all other types: 'key', 'value'.
 
         Returns
@@ -1103,22 +1186,24 @@ class Session(object):
         --------
         >>> axis1 = Axis("a=a0..a2")
         >>> group1 = axis1['a0,a1'] >> 'a01'
-        >>> arr1 = ndtest((2, 2), title='array 1', dtype=np.int64)
-        >>> arr2 = ndtest(4, title='array 2', dtype=np.int64)
-        >>> arr3 = ndtest((3, 2), title='array 3', dtype=np.int64)
+        >>> arr1 = ndtest((2, 2), dtype=np.int64, meta=[('title', 'array 1')])
+        >>> arr2 = ndtest(4, dtype=np.int64, meta=[('title', 'array 2')])
+        >>> arr3 = ndtest((3, 2), dtype=np.int64, meta=[('title', 'array 3')])
         >>> s = Session([('axis1', axis1), ('group1', group1), ('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+        >>> s.meta.title = 'my title'
+        >>> s.meta.author = 'John Smith'
 
         Default template
 
         >>> print(s.summary())  # doctest: +NORMALIZE_WHITESPACE
+        Metadata:
+            title: my title
+            author: John Smith
         axis1: a ['a0' 'a1' 'a2'] (3)
         group1: a['a0', 'a1'] >> a01 (2)
         arr1: a, b (2 x 2) [int64]
-            array 1
         arr2: a (4) [int64]
-            array 2
         arr3: a, b (3 x 2) [int64]
-            array 3
 
         Using a specific template
 
@@ -1126,11 +1211,15 @@ class Session(object):
         ...     axes_names = ', '.join(array.axes.display_names)
         ...     shape = ' x '.join(str(i) for i in array.shape)
         ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
-        ...                                                                 array.title, array.dtype)
+        ...                                                                 array.meta.title, array.dtype)
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
         ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
-        ...             LArray: print_array}
-        >>> print(s.summary(template))
+        ...             LArray: print_array,
+        ...             Metadata: "\\t{key} -> {value}"}
+        >>> print(s.summary(template))   # doctest: +NORMALIZE_WHITESPACE
+        Metadata:
+            title -> my title
+            author -> John Smith
         axis1 -> a ['a0' 'a1' 'a2'] (3)
         group1 -> a01: a['a0', 'a1'] (2)
         arr1 -> a, b (2 x 2)
@@ -1150,11 +1239,16 @@ class Session(object):
         if Group not in template:
             template[Group] = "{key}: {axis_name}{labels} >> {name} ({length})"
         if LArray not in template:
-            template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]\n    {title}"
+            template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]"
+        if Metadata not in template:
+            template[Metadata] = "\t{key}: {value}"
 
-        def display(k, v):
-            t = Group if isinstance(v, Group) else type(v)
-            tmpl = template.get(t, "{key}: {value}")
+        def display(k, v, is_metadata=False):
+            if not is_metadata:
+                t = Group if isinstance(v, Group) else type(v)
+                tmpl = template.get(t, "{key}: {value}")
+            else:
+                tmpl = template[Metadata]
             if not (isinstance(tmpl, basestring) or callable(tmpl)):
                 raise TypeError("Expected a string template or a function for type {}. "
                                 "Got {}".format(type(v), type(tmpl)))
@@ -1165,20 +1259,25 @@ class Session(object):
                     return tmpl.format(key=k, name=v.name, axis_name=v.axis.name, labels=v.key, length=len(v))
                 elif isinstance(v, LArray):
                     return tmpl.format(key=k, axes_names=', '.join(v.axes.display_names),
-                                       shape=' x '.join(str(i) for i in v.shape), title=v.title, dtype=v.dtype)
+                                       shape=' x '.join(str(i) for i in v.shape), dtype=v.dtype)
                 else:
                     return tmpl.format(key=k, value=str(v))
             else:
                 return tmpl(k, v)
 
-        return '\n'.join(display(k, v) for k, v in self.items())
+        res = ''
+        if len(self.meta) > 0:
+            res = 'Metadata:\n'
+            res += '\n'.join(display(k, v, True) for k, v in self.meta.items()) + '\n'
+        res += '\n'.join(display(k, v) for k, v in self.items())
+        return res
 
 
 def _exclude_private_vars(vars_dict):
     return {k: v for k, v in vars_dict.items() if not k.startswith('_')}
 
 
-def local_arrays(depth=0, include_private=False):
+def local_arrays(depth=0, include_private=False, meta=None):
     """
     Returns a session containing all local arrays sorted in alphabetical order.
 
@@ -1188,6 +1287,9 @@ def local_arrays(depth=0, include_private=False):
         depth of call frame to inspect. 0 is where `local_arrays` was called, 1 the caller of `local_arrays`, etc.
     include_private: boolean, optional
         Whether or not to include private local arrays (i.e. arrays starting with `_`). Defaults to False.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -1197,10 +1299,10 @@ def local_arrays(depth=0, include_private=False):
     d = sys._getframe(depth + 1).f_locals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
+    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray)], meta=meta)
 
 
-def global_arrays(depth=0, include_private=False):
+def global_arrays(depth=0, include_private=False, meta=None):
     """
     Returns a session containing all global arrays sorted in alphabetical order.
 
@@ -1210,6 +1312,9 @@ def global_arrays(depth=0, include_private=False):
         depth of call frame to inspect. 0 is where `global_arrays` was called, 1 the caller of `global_arrays`, etc.
     include_private: boolean, optional
         Whether or not to include private globals arrays (i.e. arrays starting with `_`). Defaults to False.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -1219,10 +1324,10 @@ def global_arrays(depth=0, include_private=False):
     d = sys._getframe(depth + 1).f_globals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session((k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray))
+    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray)], meta=meta)
 
 
-def arrays(depth=0, include_private=False):
+def arrays(depth=0, include_private=False, meta=None):
     """
     Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
     alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
@@ -1234,6 +1339,9 @@ def arrays(depth=0, include_private=False):
         depth of call frame to inspect. 0 is where `arrays` was called, 1 the caller of `arrays`, etc.
     include_private: boolean, optional
         Whether or not to include private arrays (i.e. arrays starting with `_`). Defaults to False.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -1253,7 +1361,7 @@ def arrays(depth=0, include_private=False):
     all_keys = sorted(set(global_vars.keys()) | set(local_vars.keys()))
     combined_vars = [(k, local_vars[k] if k in local_vars else global_vars[k])
                      for k in all_keys]
-    return Session((k, v) for k, v in combined_vars if isinstance(v, LArray))
+    return Session([(k, v) for k, v in combined_vars if isinstance(v, LArray)], meta=meta)
 
 
 _session_float_error_handler = float_error_handler_factory(4)

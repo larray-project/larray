@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import os
 import warnings
 from collections import OrderedDict
 
@@ -10,10 +11,11 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.array import LArray
+from larray.core.array import LArray, aslarray
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, _translate_sheet_name
+from larray.core.metadata import Metadata
 from larray.util.misc import deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
@@ -216,6 +218,10 @@ class PandasExcelHandler(FileHandler):
         sheet_names = self.handle.sheet_names
         items = []
         try:
+            sheet_names.remove('__metadata__')
+        except:
+            pass
+        try:
             sheet_names.remove('__axes__')
             items = [(name, 'Axis') for name in sorted(self.axes.keys())]
         except:
@@ -249,6 +255,19 @@ class PandasExcelHandler(FileHandler):
             self.groups[key] = value
         else:
             raise TypeError()
+
+    def _read_metadata(self):
+        sheet_meta = '__metadata__'
+        if sheet_meta in self.handle.sheet_names:
+            meta = read_excel(self.handle, sheet_meta, engine='xlrd', wide=False)
+            return Metadata.from_array(meta)
+        else:
+            return Metadata()
+
+    def _dump_metadata(self, metadata):
+        if len(metadata) > 0:
+            metadata = aslarray(metadata)
+            metadata.to_excel(self.handle, '__metadata__', engine='xlsxwriter', wide=False, value_name='')
 
     def save(self):
         if len(self.axes) > 0:
@@ -304,6 +323,10 @@ class XLWingsHandler(FileHandler):
         sheet_names = self.handle.sheet_names()
         items = []
         try:
+            sheet_names.remove('__metadata__')
+        except:
+            pass
+        try:
             sheet_names.remove('__axes__')
             items = [(name, 'Axis') for name in sorted(self.axes.keys())]
         except:
@@ -335,6 +358,19 @@ class XLWingsHandler(FileHandler):
             self.groups[key] = value
         else:
             raise TypeError()
+
+    def _read_metadata(self):
+        sheet_meta = '__metadata__'
+        if sheet_meta in self.handle:
+            meta = self.handle[sheet_meta].load(wide=False)
+            return Metadata.from_array(meta)
+        else:
+            return Metadata()
+
+    def _dump_metadata(self, metadata):
+        if len(metadata) > 0:
+            metadata = aslarray(metadata)
+            self.handle['__metadata__'] = metadata.dump(wide=False, value_name='')
 
     def save(self):
         if len(self.axes) > 0:

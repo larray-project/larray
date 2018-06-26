@@ -4,6 +4,7 @@ import os
 import pytest
 import datetime as dt
 import numpy as np
+import pandas as pd
 from larray import LArray, isnan, aslarray, Metadata
 
 
@@ -117,6 +118,9 @@ def meta():
     description = 'Array used for testing'
     author = 'John Cleese'
     location = 'Ministry of Silly Walks'
-    date = dt.datetime(1970, 3, 21)
+    office_number = 42
+    score = 9.70
+    date = pd.Timestamp(dt.datetime(1970, 3, 21))
     return Metadata([('title', title), ('description', description), ('author', author),
-                     ('location', location), ('date', date)])
+                     ('location', location), ('office_number', office_number),
+                     ('score', score), ('date', date)])

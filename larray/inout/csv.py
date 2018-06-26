@@ -9,10 +9,11 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-from larray.core.array import LArray
+from larray.core.array import LArray, aslarray, ndtest
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group
+from larray.core.metadata import Metadata
 from larray.util.misc import skip_comment_cells, strip_rows, csv_open, deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
@@ -300,6 +301,10 @@ class PandasCSVHandler(FileHandler):
         fnames = sorted([os.path.splitext(fname)[0] for fname in fnames])
         items = []
         try:
+            fnames.remove('__metadata__')
+        except:
+            pass
+        try:
             fnames.remove('__axes__')
             items = [(name, 'Axis') for name in sorted(self.axes.keys())]
         except:
@@ -331,6 +336,19 @@ class PandasCSVHandler(FileHandler):
             self.groups[key] = value
         else:
             raise TypeError()
+
+    def _read_metadata(self):
+        filepath = self._to_filepath('__metadata__')
+        if os.path.isfile(filepath):
+            meta = read_csv(filepath, wide=False)
+            return Metadata.from_array(meta)
+        else:
+            return Metadata()
+
+    def _dump_metadata(self, metadata):
+        if len(metadata) > 0:
+            meta = aslarray(metadata)
+            meta.to_csv(self._to_filepath('__metadata__'), sep=self.sep, wide=False, value_name='')
 
     def save(self):
         if len(self.axes) > 0:

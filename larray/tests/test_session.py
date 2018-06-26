@@ -52,7 +52,7 @@ def session():
                     ('c', c), ('d', d), ('e', e), ('g', g), ('f', f)])
 
 
-def test_init_session():
+def test_init_session(meta):
     s = Session(b, b12, a, a01, c=c, d=d, e=e, f=f, g=g)
     assert s.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g']
 
@@ -66,6 +66,10 @@ def test_init_session():
     # TODO: format autodetection does not work in this case
     # s = Session('test_session_csv')
     # assertEqual(s.names, ['e', 'f', 'g'])
+
+    # metadata
+    s = Session(b, b12, a, a01, c=c, d=d, e=e, f=f, g=g, meta=meta)
+    assert s.meta == meta
 
 
 def test_getitem(session):
@@ -154,8 +158,9 @@ def test_names(session):
     assert session.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 
 
-def test_h5_io(tmpdir, session):
+def test_h5_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.h5')
+    session.meta = meta
     session.save(fpath)
 
     s = Session()
@@ -163,6 +168,7 @@ def test_h5_io(tmpdir, session):
     # HDF does *not* keep ordering (ie, keys are always sorted +
     # read Axis objects, then Groups objects and finally LArray objects)
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+    assert s.meta == meta
 
     # update a Group + an Axis + an array (overwrite=False)
     a2 = Axis('a=0..2')
@@ -175,43 +181,51 @@ def test_h5_io(tmpdir, session):
     assert s['a'].equals(a2)
     assert all(s['a01'] == a2_01)
     assert_array_nan_equal(s['e'], e2)
+    assert s.meta == meta
 
     # load only some objects
     s = Session()
     s.load(fpath, names=['a', 'a01', 'e', 'f'])
     assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+    assert s.meta == meta
 
 
-def test_xlsx_pandas_io(tmpdir, session):
+def test_xlsx_pandas_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.xlsx')
+    session.meta = meta
     session.save(fpath, engine='pandas_excel')
 
     s = Session()
     s.load(fpath, engine='pandas_excel')
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
+    assert s.meta == meta
 
-    # update a Group + an Axis + an array (overwrite=False)
+    # update a Group + an Axis + an array
+    # XXX: overwrite is not taken into account by the pandas_excel engine
     a2 = Axis('a=0..2')
     a2_01 = a2['0,1'] >> 'a01'
     e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2).save(fpath, engine='pandas_excel')
+    Session(a=a2, a01=a2_01, e=e2, meta=meta).save(fpath, engine='pandas_excel')
     s = Session()
     s.load(fpath, engine='pandas_excel')
     assert list(s.keys()) == ['a', 'a01', 'e']
     assert s['a'].equals(a2)
     assert all(s['a01'] == a2_01)
     assert_array_nan_equal(s['e'], e2)
+    assert s.meta == meta
 
     # load only some objects
     session.save(fpath, engine='pandas_excel')
     s = Session()
     s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pandas_excel')
     assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+    assert s.meta == meta
 
 
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
-def test_xlsx_xlwings_io(tmpdir, session):
+def test_xlsx_xlwings_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session_xw.xlsx')
+    session.meta = meta
     # test save when Excel file does not exist
     session.save(fpath, engine='xlwings_excel')
 
@@ -219,6 +233,7 @@ def test_xlsx_xlwings_io(tmpdir, session):
     s.load(fpath, engine='xlwings_excel')
     # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
+    assert s.meta == meta
 
     # update a Group + an Axis + an array (overwrite=False)
     a2 = Axis('a=0..2')
@@ -231,16 +246,19 @@ def test_xlsx_xlwings_io(tmpdir, session):
     assert s['a'].equals(a2)
     assert all(s['a01'] == a2_01)
     assert_array_nan_equal(s['e'], e2)
+    assert s.meta == meta
 
     # load only some objects
     s = Session()
     s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='xlwings_excel')
     assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+    assert s.meta == meta
 
 
-def test_csv_io(tmpdir, session):
+def test_csv_io(tmpdir, session, meta):
     try:
         fpath = tmp_path(tmpdir, 'test_session_csv')
+        session.meta = meta
         session.to_csv(fpath)
 
         # test loading a directory
@@ -249,6 +267,7 @@ def test_csv_io(tmpdir, session):
         # CSV cannot keep ordering (so we always sort keys)
         # Also, Axis objects are read first, then Groups objects and finally LArray objects
         assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+        assert s.meta == meta
 
         # test loading with a pattern
         pattern = os.path.join(fpath, '*.csv')
@@ -256,6 +275,7 @@ def test_csv_io(tmpdir, session):
         # s = Session()
         # s.load(pattern)
         assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+        assert s.meta == meta
 
         # create an invalid .csv file
         invalid_fpath = os.path.join(fpath, 'invalid.csv')
@@ -270,22 +290,26 @@ def test_csv_io(tmpdir, session):
         s = Session()
         s.load(pattern, ignore_exceptions=True)
         assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+        assert s.meta == meta
 
         # load only some objects
         s = Session()
         s.load(fpath, names=['a', 'a01', 'e', 'f'])
         assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+        assert s.meta == meta
     finally:
         shutil.rmtree(fpath)
 
 
-def test_pickle_io(tmpdir, session):
+def test_pickle_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.pkl')
+    session.meta = meta
     session.save(fpath)
 
     s = Session()
     s.load(fpath, engine='pickle')
     assert list(s.keys()) == ['b', 'a', 'b12', 'a01', 'e', 'g', 'f']
+    assert s.meta == meta
 
     # update a Group + an Axis + an array (overwrite=False)
     a2 = Axis('a=0..2')
@@ -300,11 +324,13 @@ def test_pickle_io(tmpdir, session):
     assert isinstance(s['a01'], Group)
     assert s['a01'].eval() == a2_01.eval()
     assert_array_nan_equal(s['e'], e2)
+    assert s.meta == meta
 
     # load only some objects
     s = Session()
     s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pickle')
     assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+    assert s.meta == meta
 
 
 def test_to_globals(session):
@@ -469,11 +495,13 @@ def test_rdiv(session):
     assert_array_nan_equal(res['f'], f / f)
 
 
-def test_pickle_roundtrip(session):
+def test_pickle_roundtrip(session, meta):
     original = session.filter(kind=LArray)
+    original.meta = meta
     s = pickle.dumps(original)
     res = pickle.loads(s)
     assert res.equals(original)
+    assert res.meta == meta
 
 
 def test_local_arrays():
