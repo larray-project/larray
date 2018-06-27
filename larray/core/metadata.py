@@ -42,6 +42,7 @@ if PY2:
         def method_factory(name):
             fullname = '__%s__' % name
             odict_method = getattr(OrderedDict, fullname)
+
             def method(self, *args, **kwargs):
                 od = object.__getattribute__(self, '__odict')
                 return odict_method(od, *args, **kwargs)
@@ -65,6 +66,7 @@ if PY2:
         def _binop(name):
             fullname = '__%s__' % name
             odict_method = getattr(OrderedDict, fullname)
+
             def opmethod(self, other):
                 self_od = object.__getattribute__(self, '__odict')
                 if not isinstance(other, AttributeDict):

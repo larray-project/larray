@@ -251,7 +251,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
 
     # handle 1D
     if len(df) == 1 and (pd.isnull(df.index.values[0]) or
-                             (isinstance(df.index.values[0], basestring) and df.index.values[0].strip() == '')):
+                         (isinstance(df.index.values[0], basestring) and df.index.values[0].strip() == '')):
         if parse_header:
             df.columns = pd.Index([parse(cell) for cell in df.columns.values], name=df.columns.name)
         series = df.iloc[0]

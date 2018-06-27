@@ -7,6 +7,7 @@ from larray import LArray, isnan, aslarray
 
 TESTDATADIR = os.path.dirname(__file__)
 
+
 def inputpath(relpath):
     """
     Parameters

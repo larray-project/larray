@@ -126,6 +126,7 @@ def test_read_set_update_delete_metadata(meta, tmpdir):
         meta2 = Metadata(pickle.load(f))
     assert meta2 == meta
 
+
 def test_metadata_hdf(meta, tmpdir):
     key = 'meta'
     fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
@@ -190,6 +191,7 @@ io_missing_values[2, 'b0'] = np.nan
 io_missing_values[3, 'b1'] = np.nan
 io_narrow_missing_values = io_missing_values.copy()
 io_narrow_missing_values[2, 'b1', 'c1'] = np.nan
+
 
 def test_ndtest():
     arr = ndtest('a=a0..a2')
@@ -820,6 +822,7 @@ def test_getitem_single_larray_key_guess():
 #     # TODO: not sure what *should* happen in this case!
 #     self.assertEqual(arr[k1, k2].axes, [c, d, e])
 
+
 def test_getitem_ndarray_key_guess(array):
     raw = array.data
     keys = ['P04', 'P01', 'P03', 'P02']
@@ -1053,13 +1056,13 @@ def test_setitem_larray(array, small_array):
     with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
                                          "A value can only have the same axes or fewer axes than the subset "
                                          "being targeted".format(la2.axes - arr['P01'].axes, arr['P01'].axes)):
-       arr['P01'] = la2
+        arr['P01'] = la2
 
     la2 = arr.rename('sex', 'gender')
     with pytest.raises(ValueError, match="Value {!s} axis is not present in target subset {!s}. "
                                          "A value can only have the same axes or fewer axes than the subset "
                                          "being targeted".format(la2['P01'].axes - arr['P01'].axes, arr['P01'].axes)):
-       arr['P01'] = la2['P01']
+        arr['P01'] = la2['P01']
 
     # 7) incompatible labels
     sex2 = Axis('sex=F,M')
@@ -1305,7 +1308,7 @@ def test_contains():
     arr = ndtest('a=0..2;b=b0..b2;c=2..4')
     # string label
     assert 'b1' in arr
-    assert not 'b4' in arr
+    assert 'b4' not in arr
     # int label
     assert 1 in arr
     assert 5 not in arr
@@ -2167,7 +2170,7 @@ def test_percent(array):
     percent = reg.percent(geo, lipro)
     assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
     assert percent.shape == (3, 15)
-    assert round(abs(percent.sum()-100.0), 7) == 0
+    assert round(abs(percent.sum() - 100.0), 7) == 0
 
 
 def test_total(array):
@@ -2393,13 +2396,13 @@ def test_broadcasting_no_name():
     #         0  0  0  0
     #         1  3  4  5
     assert np.array_equal(d, [[0, 0, 0],
-                                       [3, 4, 5]])
+                              [3, 4, 5]])
 
     # it is unfortunate that the behavior is different from numpy (even though I find our behavior more intuitive)
     d = np.asarray(a) * np.asarray(b)
     assert d.shape == (2, 3)
     assert np.array_equal(d, [[0, 1,  4],
-                                       [0, 4, 10]])
+                              [0, 4, 10]])
 
     with pytest.raises(ValueError):
         # ValueError: operands could not be broadcast together with shapes (2,3) (2,)
@@ -2706,7 +2709,7 @@ def test_hdf_roundtrip(tmpdir, meta):
         assert_array_equal(subset, a3[label])
 
     # load Session
-    from  larray.core.session import Session
+    from larray.core.session import Session
     s = Session(fpath)
     assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
 
@@ -3122,7 +3125,7 @@ def test_from_frame():
     assert la.axes.names == [None, None]
     assert list(la.axes.labels[0]) == index
     assert list(la.axes.labels[1]) == columns
-    expected_la = LArray(data.reshape((1, size)),[axis_index, axis_columns])
+    expected_la = LArray(data.reshape((1, size)), [axis_index, axis_columns])
     assert_array_equal(la, expected_la)
 
     # anonymous columns
@@ -3142,7 +3145,7 @@ def test_from_frame():
     assert la.axes.names == ['index', None]
     assert list(la.axes.labels[0]) == index
     assert list(la.axes.labels[1]) == columns
-    expected_la = LArray(data.reshape((1, size)),[axis_index.rename('index'), axis_columns])
+    expected_la = LArray(data.reshape((1, size)), [axis_index.rename('index'), axis_columns])
     assert_array_equal(la, expected_la)
 
     # anonymous index
@@ -3161,7 +3164,7 @@ def test_from_frame():
     assert la.axes.names == [None, 'columns']
     assert list(la.axes.labels[0]) == index
     assert list(la.axes.labels[1]) == columns
-    expected_la = LArray(data.reshape((1, size)),[axis_index, axis_columns.rename('columns')])
+    expected_la = LArray(data.reshape((1, size)), [axis_index, axis_columns.rename('columns')])
     assert_array_equal(la, expected_la)
 
     # index and columns with name
@@ -3181,7 +3184,7 @@ def test_from_frame():
     assert la.axes.names == ['index', 'columns']
     assert list(la.axes.labels[0]) == index
     assert list(la.axes.labels[1]) == columns
-    expected_la = LArray(data.reshape((1, size)),[axis_index.rename('index'), axis_columns.rename('columns')])
+    expected_la = LArray(data.reshape((1, size)), [axis_index.rename('index'), axis_columns.rename('columns')])
     assert_array_equal(la, expected_la)
 
     # 2B) data = vertical vector (N x 1)
@@ -3866,7 +3869,7 @@ def test_ufuncs(small_array):
     # where (with broadcasting)
     result = where(small_array['P01'] < 5, -5, small_array)
     assert result.axes.names == ['sex', 'lipro']
-    assert_array_equal(result, np.where(raw[:,[0]] < 5, -5, raw))
+    assert_array_equal(result, np.where(raw[:, [0]] < 5, -5, raw))
 
     # round
     small_float = small_array + 0.6
@@ -4129,17 +4132,17 @@ def test_broadcast_with():
 def test_plot():
     pass
     # small_h = small['M']
-    #small_h.plot(kind='bar')
-    #small_h.plot()
-    #small_h.hist()
+    # small_h.plot(kind='bar')
+    # small_h.plot()
+    # small_h.hist()
 
-    #large_data = np.random.randn(1000)
-    #tick_v = np.random.randint(ord('a'), ord('z'), size=1000)
-    #ticks = [chr(c) for c in tick_v]
-    #large_axis = Axis('large', ticks)
-    #large = LArray(large_data, axes=[large_axis])
-    #large.plot()
-    #large.hist()
+    # large_data = np.random.randn(1000)
+    # tick_v = np.random.randint(ord('a'), ord('z'), size=1000)
+    # ticks = [chr(c) for c in tick_v]
+    # large_axis = Axis('large', ticks)
+    # large = LArray(large_data, axes=[large_axis])
+    # large.plot()
+    # large.hist()
 
 
 def test_combine_axes():
