@@ -1,9 +1,6 @@
 # -*- coding: utf8 -*-
 from __future__ import absolute_import, print_function
 
-__all__ = ['open_excel', 'Workbook']
-
-
 import os
 import atexit
 
@@ -20,6 +17,10 @@ from larray.inout.pandas import df_aslarray
 from larray.inout.misc import from_lists
 from larray.util.misc import PY2, deprecate_kwarg
 
+
+__all__ = ['open_excel', 'Workbook']
+
+
 string_types = (str,)
 
 
@@ -27,6 +28,7 @@ if xw is not None:
     from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 
     global_app = None
+
 
     def is_app_alive(app):
         try:
@@ -63,6 +65,7 @@ if xw is not None:
             return PandasDataFrameConverter.write_value(df, options)
 
     LArrayConverter.register(LArray)
+
 
     # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
@@ -581,6 +584,7 @@ if xw is not None:
             else:
                 return LArray(list_data)
 
+
     # XXX: deprecate this function?
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
         return Workbook(filepath, overwrite_file=overwrite_file, visible=visible, silent=silent, app=app,
@@ -627,24 +631,24 @@ Examples
 ...     wb['arr2'] = arr2.dump()
 ...     wb['arr3'] = arr3.dump()
 ...     wb.save()
-... 
+...
 ...     wb.sheet_names()
 ['arr', 'arr2', 'arr3']
 """
 
     Workbook.save.__doc__ = """
-Saves the Workbook. 
+Saves the Workbook.
 
-If a path is being provided, this works like SaveAs() in Excel. 
-If no path is specified and if the file hasn’t been saved previously, 
-it’s being saved in the current working directory with the current filename. 
+If a path is being provided, this works like SaveAs() in Excel.
+If no path is specified and if the file hasn’t been saved previously,
+it’s being saved in the current working directory with the current filename.
 Existing files are overwritten without prompting.
 
 Parameters
 ----------
 path : str, optional
     Full path to the workbook. Defaults to None.
-    
+
 Examples
 --------
 >>> arr, arr2, arr3 = ndtest((3, 3)), ndtest((2, 2)), ndtest(4)

@@ -12,6 +12,7 @@ age = Axis('age=0..7')
 geo = Axis('geo=A11,A12,A13')
 value = Axis('value=0..10')
 
+
 @pytest.fixture
 def col():
     return AxisCollection((lipro, sex, age))
@@ -24,6 +25,7 @@ def test_init_from_group():
     assert_array_equal(col2.lipro.labels, ['P01', 'P02', 'P03'])
     assert_array_equal(col2.sex.labels, ['M', 'F'])
 
+
 def test_init_from_string():
     col = AxisCollection('age=10;sex=M,F;year=2000..2017')
     assert col.names == ['age', 'sex', 'year']
@@ -31,16 +33,19 @@ def test_init_from_string():
     assert list(col.sex.labels) == ['M', 'F']
     assert list(col.year.labels) == [y for y in range(2000, 2018)]
 
+
 def test_eq(col):
     assert col == col
     assert col == AxisCollection((lipro, sex, age))
     assert col == (lipro, sex, age)
     assert col != (lipro, age, sex)
 
+
 def test_getitem_name(col):
     assert_axis_eq(col['lipro'], lipro)
     assert_axis_eq(col['sex'], sex)
     assert_axis_eq(col['age'], age)
+
 
 def test_getitem_int(col):
     assert_axis_eq(col[0], lipro)
@@ -50,11 +55,13 @@ def test_getitem_int(col):
     assert_axis_eq(col[2], age)
     assert_axis_eq(col[-1], age)
 
+
 def test_getitem_slice(col):
     col = col[:2]
     assert len(col) == 2
     assert_axis_eq(col[0], lipro)
     assert_axis_eq(col[1], sex)
+
 
 def test_setitem_name(col):
     col2 = col[:]
@@ -71,6 +78,7 @@ def test_setitem_name(col):
     col2['geo'] = age
     assert col2 == col
 
+
 def test_setitem_name_axis_def(col):
     col2 = col[:]
     col2['lipro'] = 'geo=A11,A12,A13'
@@ -86,6 +94,7 @@ def test_setitem_name_axis_def(col):
     col2['geo'] = 'age=0..7'
     assert col2 == col
 
+
 def test_setitem_int(col):
     col[1] = geo
     assert len(col) == 3
@@ -95,9 +104,11 @@ def test_setitem_int(col):
     col[-1] = age
     assert col == [lipro, geo, age]
 
+
 def test_setitem_list_replace(col):
     col[['lipro', 'age']] = [geo, lipro]
     assert col == [geo, sex, lipro]
+
 
 def test_setitem_slice_replace(col):
     col2 = col[:]
@@ -106,15 +117,18 @@ def test_setitem_slice_replace(col):
     col2[1:] = col[1:]
     assert col2 == col
 
+
 def test_setitem_slice_insert(col):
     col[1:1] = [geo]
     assert col == [lipro, geo, sex, age]
+
 
 def test_setitem_slice_delete(col):
     col[1:2] = []
     assert col == [lipro, age]
     col[0:1] = []
     assert col == [age]
+
 
 def test_delitem(col):
     assert len(col) == 3
@@ -128,6 +142,7 @@ def test_delitem(col):
     del col[sex]
     assert len(col) == 0
 
+
 def test_delitem_slice(col):
     assert len(col) == 3
     del col[0:2]
@@ -135,6 +150,7 @@ def test_delitem_slice(col):
     assert col == [age]
     del col[:]
     assert len(col) == 0
+
 
 def test_pop(col):
     lipro, sex, age = col
@@ -148,6 +164,7 @@ def test_pop(col):
     assert col[0] is lipro
     assert col.pop() is lipro
     assert len(col) == 0
+
 
 def test_replace(col):
     col2 = col[:]
@@ -173,6 +190,7 @@ def test_replace(col):
     assert newcol.names == ['lipro', 'letters', 'age']
     assert newcol.shape == (4, 3, 8)
 
+
 def test_contains(col):
     assert 'lipro' in col
     assert not ('nonexisting' in col)
@@ -197,11 +215,12 @@ def test_contains(col):
     anon3 = Axis([0, 2])
     assert not (anon3 in col)
 
+
 def test_index(col):
     assert col.index('lipro') == 0
     with pytest.raises(ValueError):
         col.index('nonexisting')
-        assert col.index(0)== 0
+        assert col.index(0) == 0
     assert col.index(1) == 1
     assert col.index(2) == 2
     assert col.index(-1) == -1
@@ -226,35 +245,42 @@ def test_index(col):
     assert col.index(anon) == 3
     anon2 = anon.copy()
     assert col.index(anon2) == 3
-    anon3 = Axis([0,2])
+    anon3 = Axis([0, 2])
     with pytest.raises(ValueError):
             col.index(anon3)
+
 
 def test_get(col):
     assert_axis_eq(col.get('lipro'), lipro)
     assert col.get('nonexisting') is None
     assert col.get('nonexisting', value) is value
 
+
 def test_keys(col):
     assert col.keys() == ['lipro', 'sex', 'age']
+
 
 def test_getattr(col):
     assert_axis_eq(col.lipro, lipro)
     assert_axis_eq(col.sex, sex)
     assert_axis_eq(col.age, age)
 
+
 def test_append(col):
     geo = Axis('geo=A11,A12,A13')
     col.append(geo)
     assert col == [lipro, sex, age, geo]
 
+
 def test_extend(col):
     col.extend([geo, value])
-    assert col ==    [lipro, sex, age, geo, value]
+    assert col == [lipro, sex, age, geo, value]
+
 
 def test_insert(col):
     col.insert(1, geo)
     assert col == [lipro, geo, sex, age]
+
 
 def test_add(col):
     col2 = col.copy()
@@ -268,7 +294,8 @@ def test_add(col):
 
     # 2) other AxisCollection
     new = col2 + AxisCollection([geo, value])
-    assert new == [lipro,sex,age,geo,value]
+    assert new == [lipro, sex, age, geo, value]
+
 
 def test_combine(col):
     res = col.combine_axes((lipro, sex))
@@ -288,6 +315,7 @@ def test_combine(col):
     assert res.shape == (4, 2 * 8)
     assert_array_equal(res.sex_age.labels[0], 'M_0')
 
+
 def test_info(col):
     expected = """\
 4 x 2 x 8
@@ -296,8 +324,10 @@ def test_info(col):
  age [8]: 0 1 2 ... 5 6 7"""
     assert col.info == expected
 
+
 def test_str(col):
     assert str(col) == "{lipro, sex, age}"
+
 
 def test_repr(col):
     assert repr(col) == """AxisCollection([
