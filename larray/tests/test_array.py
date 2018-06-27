@@ -2646,7 +2646,7 @@ def test_extend(small_array):
 
 
 def test_hdf_roundtrip(tmpdir, meta):
-    a = ndtest((2, 3))
+    a = ndtest((2, 3), meta=meta)
     fpath = tmp_path(tmpdir, 'test.h5')
     a.to_hdf(fpath, 'a')
     res = read_hdf(fpath, 'a')
