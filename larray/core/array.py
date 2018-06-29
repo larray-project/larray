@@ -726,7 +726,7 @@ class LArray(ABCLArray):
 
     # TODO: rename to posnonzero and implement a label version of nonzero
     def nonzero(self):
-        """
+        r"""
         Returns the indices of the elements that are non-zero.
 
         Specifically, it returns a tuple of arrays (one for each dimension)
@@ -739,17 +739,61 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> arr = ndtest((2, 3)) % 2
+        >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b  b0  b1  b2
-         a0   0   1   0
-         a1   1   0   1
-        >>> arr.nonzero() # doctest: +SKIP
-        [array([0, 1, 1]), array([1, 0, 2])]
+        a\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> cond = arr > 1
+        >>> cond
+        a\b     b0     b1    b2
+         a0  False  False  True
+         a1   True   True  True
+        >>> cond.nonzero()
+        (a.i[0, 1, 1, 1], b.i[2, 0, 1, 2])
+        >>> arr.points[cond.nonzero()]
+        a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                 2      3      4      5
+        >>> arr[cond]
+        a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                 2      3      4      5
         """
-        # FIXME: return tuple of IGroup instead (or even NDGroup) so that you
-        #  can do a[a.nonzero()]
-        return self.data.nonzero()
+        # TODO: return a Grid or an NDGroup so that
+        # 1) cond.nonzero() *displays* (however it is stored!) as something like:
+
+        # a_b  a0,b2  a1,b0  a1,b1  a1,b2
+
+        # OR
+
+        # {0}            0            1            2            3
+        #      a[a0],b[b2]  a[a1],b[b0]  a[a1],b[b1]  a[a1],b[b2]
+
+        # OR
+
+        #     0   1   2   3
+        # a  a0  a1  a1  a1
+        # b  b2  b0  b1  b2
+
+        # OR
+
+        # axis\a_b  a0_b2  a1_b0  a1_b1  a1_b2
+        #        a     a0     a1     a1     a1
+        #        b     b2     b0     b1     b2
+
+        # OR
+
+        # a_b\axis   a   b
+        #    a0_b2  a0  b2
+        #    a1_b0  a1  b0
+        #    a1_b1  a1  b1
+        #    a1_b2  a1  b2
+
+        # I think the last two options are best (dtypes of a and b column can be different but since we probably only
+        # store indices, this shouldn't be a problem). The nice thing is that the resulting axes
+        # are known. But we need something (maybe not for nonzero) which can handle more dimensions (both cartesian
+        # product and "points") dimensions in the result.
+        # 2) you can do a[cond.nonzero()]
+        return tuple(IGroup(key, axis=axis) for key, axis in zip(self.data.nonzero(), self.axes))
 
     def set_axes(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
         """
