@@ -11,7 +11,7 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
+  id: 0
 
 - markdown: |
     ## Axis
@@ -34,7 +34,7 @@ cells:
     
     age, sex, time, other
 
-  id: 2
+  id: 1
 
 - markdown: |
     ## Groups
@@ -56,7 +56,7 @@ cells:
     
     teens
 
-  id: 3
+  id: 2
 
 - markdown: |
     It is possible to set a name or to rename a group after its declaration: 
@@ -71,7 +71,7 @@ cells:
     
     teens
 
-  id: 4
+  id: 3
 
 - markdown: |
     ## LArray
@@ -81,7 +81,7 @@ cells:
     ### Create an array from scratch
     
     To create an array from scratch, you need to provide the data and a list
-    of axes. Optionally, a title can be defined:
+    of axes. Optionally, metadata (title, description, creation date, authors, ...) can be associated to the array:
 
 
 - code: |
@@ -91,13 +91,39 @@ cells:
     axes = [age, sex, time, other]
     # data (the shape of data array must match axes lengths)
     data = np.random.randint(100, size=[len(axis) for axis in axes])
-    # title (optional)
-    title = 'random data'
+    # metadata
+    meta = [('title', 'random array')]
     
-    arr = LArray(data, axes, title)
+    arr = LArray(data, axes, meta=meta)
     arr
 
+  id: 4
+
+- markdown: |
+    Metadata can be added to an array at any time using: 
+
+
+- code: |
+    arr.meta.description = 'array containing random values between 0 and 100'
+    
+    arr.meta
+
   id: 5
+
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:**  
+      <ul>
+        <li>Currently, only the HDF (.h5) file format supports saving and loading array metadata.</li>
+        <li>Metadata is not kept when actions or methods are applied on an array
+            except for operations modifying the object in-place, such as `pop[age < 10] = 0`,
+            and when the method `copy()` is called. Do not add metadata to an array if you know
+            you will apply actions or methods on it before dumping it.</li>
+      </ul>
+    
+    </div>
+
 
 - markdown: |
     ### Array creation functions
@@ -258,37 +284,58 @@ cells:
 - markdown: |
     ## Session
     
-    A ``Session`` object is a dictionary-like object used to group several arrays (#ref needed). 
-    A session is particularly adapted to group all input arrays of a model or to group the output arrays from different scenarios.  
+    A ``Session`` object is a dictionary-like object used to gather several arrays, axes and groups. 
+    A session is particularly adapted to gather all input objects of a model or to gather the output arrays from different scenarios. Like with arrays, it is possible to associate metadata to sessions.
     
-    In addition to simple dictionaries, sessions offer several specific methods, like: 
+    In addition to act like dictionaries, sessions offer several specific methods, like:
     - ``save`` and ``load`` to save and load all arrays of a session at once in/from CSV or Excel or HDF5 file(s),
     - ``equals`` and ``array_equals`` to compare arrays between two sessions (scenarios) one by one,
     - ``apply`` to apply a function to all arrays of a session.
     
-    See API Reference to explore the all methods of Session objects (#ref needed).
+    See the API Reference section to explore all methods of Session objects.
 
 
 - markdown: |
     ### Create a Session
     
-    Create an empty and populate it:
+    Create an empty session and populate it:
 
 
 - code: |
     # create an empty session
     s = Session()
     
-    # populate the session using 2 ways:
-    # 1) with syntax: session.array_name = array
-    s.arr1 = ndtest((3, 3))
-    s.arr2 = ndtest((4, 2))
-    # 2) like a dictionary: session['array_name'] = array
-    s['arr3'] = ndtest((2, 4))
+    # populate the session (with arrays, axes or groups) using 2 ways:
+    # 1) with syntax: session.object_name = object 
+    s.axisa = Axis('a=a0..a2')
+    s.arr1 = ndtest(s.axisa)
+    # 2) like a dictionary: session['object_name'] = object
+    s['axisb'] = Axis('b=b0..b3')
+    s['arr2'] = ndtest((s['axisa'], s['axisb']))
+    
+    # add metadata after creation
+    s.meta.title = 'Input objects'
+    s.meta.description = 'Input axes and arrays for the model X'
     
     s
 
   id: 20
+
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:**
+      <ul>
+        <li>Contrary to array metadata, saving and loading session metadata is supported for
+            all current session file formats: Excel, CSV and HDF (.h5).</li>
+        <li>Metadata is not kept when actions or methods are applied on a session
+            except for operations modifying a session in-place, such as: `s['arr1'] = 0`.
+            Do not add metadata to a session if you know you will apply actions or methods
+            on it before dumping it.</li>
+      </ul>
+    
+    </div>
+
 
 - markdown: |
     Load a session from a file:
@@ -342,3 +389,4 @@ data:
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+
