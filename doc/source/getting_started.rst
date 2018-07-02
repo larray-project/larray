@@ -33,7 +33,7 @@ You can create an array from scratch by supplying data, axes and optionally a ti
     sex = Axis(["M", "F"], "sex")
 
     # create LArray object
-    arr = LArray(data, [age_category, sex], "population by age category and sex")
+    arr = LArray(data, [age_category, sex], meta=[("title", "population by age category and sex")])
     arr
 
 .. note::
