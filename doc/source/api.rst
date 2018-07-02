@@ -104,6 +104,7 @@ IGroup
    IGroup.named
    IGroup.with_axis
    IGroup.by
+   IGroup.equals
    IGroup.translate
    IGroup.union
    IGroup.intersection
@@ -128,6 +129,7 @@ LGroup
    LGroup.named
    LGroup.with_axis
    LGroup.by
+   LGroup.equals
    LGroup.translate
    LGroup.union
    LGroup.intersection
