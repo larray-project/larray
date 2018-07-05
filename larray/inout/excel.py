@@ -191,14 +191,14 @@ class PandasExcelHandler(FileHandler):
         # load all axes
         sheet_axes = '__axes__'
         if sheet_axes in self.handle.sheet_names:
-            df = pd.read_excel(self.handle, sheet_axes)
+            df = pd.read_excel(self.handle, sheet_axes, index_col=None)
             self.axes = _df_to_axes(df)
         else:
             self.axes = OrderedDict()
         # load all groups
         sheet_groups = '__groups__'
         if sheet_groups in self.handle.sheet_names:
-            df = pd.read_excel(self.handle, sheet_groups)
+            df = pd.read_excel(self.handle, sheet_groups, index_col=None)
             self.groups = _df_to_groups(df, self.axes)
         else:
             self.groups = OrderedDict()
@@ -253,10 +253,10 @@ class PandasExcelHandler(FileHandler):
     def save(self):
         if len(self.axes) > 0:
             df = _axes_to_df(self.axes.values())
-            df.to_excel(self.handle, '__axes__', engine='xlsxwriter')
+            df.to_excel(self.handle, '__axes__', index=False, engine='xlsxwriter')
         if len(self.groups) > 0:
             df = _groups_to_df(self.groups.values())
-            df.to_excel(self.handle, '__groups__', engine='xlsxwriter')
+            df.to_excel(self.handle, '__groups__', index=False, engine='xlsxwriter')
 
     def close(self):
         self.handle.close()
