@@ -1154,8 +1154,15 @@ class LArray(ABCLArray):
             b2    5.0
         dtype: float64
         """
-        index = pd.MultiIndex.from_product([axis.labels for axis in self.axes], names=self.axes.names)
-        series = pd.Series(np.asarray(self).reshape(self.size), index, name=name)
+        if self.ndim == 0:
+            raise ValueError('cannot convert 0D array to Series')
+        elif self.ndim == 1:
+            axis = self.axes[0]
+            # Note that string labels will be converted to object dtype in the process
+            index = pd.Index(axis.labels, name=axis.name, tupleize_cols=False)
+        else:
+            index = pd.MultiIndex.from_product(self.axes.labels, names=self.axes.names)
+        series = pd.Series(self.data.reshape(-1), index, name=name)
         if dropna:
             series.dropna(inplace=True)
         return series
