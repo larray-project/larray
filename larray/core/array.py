@@ -2666,7 +2666,7 @@ class LArray(ABCLArray):
         # get list of labels for each axis (except the last one if wide=True)
         labels = [axis.labels.tolist() for axis in axes]
         # creates vertical lines (ticks is a list of list)
-        if self.ndim == 1:
+        if self.ndim == 1 and wide:
             # There is no vertical axis, so the axis name should not have
             # any "tick" below it and we add an empty "tick".
             ticks = [['']]
