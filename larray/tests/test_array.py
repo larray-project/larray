@@ -3592,6 +3592,14 @@ def test_to_excel_xlwings(tmpdir):
                                   '_name_with_special___char_'])
 
 
+def test_as_table():
+    res = list(ndtest(3).as_table(wide=False, value_name='data'))
+    assert res == [['a', 'data'],
+                   ['a0', 0],
+                   ['a1', 1],
+                   ['a2', 2]]
+
+
 @pytest.mark.skipif(xw is None, reason="xlwings is not available")
 def test_open_excel(tmpdir):
     # 1) Create new file
