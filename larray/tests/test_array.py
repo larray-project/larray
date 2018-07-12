@@ -951,11 +951,11 @@ def test_points_indexer_setitem():
 
     # test when broadcasting is involved
     arr = ndtest((2, 3, 4))
-    data = arr.data.copy()
-    value = data[:, 0, 0].reshape(2, 1)
-    data[:, [0, 1, 2], [0, 1, 2]] = value
+    raw = arr.data.copy()
+    raw_value = raw[:, 0, 0].reshape(2, 1)
+    raw[:, [0, 1, 2], [0, 1, 2]] = raw_value
     arr.points['b0,b1,b2', 'c0,c1,c2'] = arr['b0', 'c0']
-    assert_array_equal(arr, data)
+    assert_array_equal(arr, raw)
 
 
 def test_setitem_larray(array, small_array):
