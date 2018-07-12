@@ -2645,6 +2645,46 @@ class AxisCollection(object):
         axes_changes = list(zip(join_axes, new_axes))
         return self.replace(axes_changes), other.replace(axes_changes)
 
+    # XXX: make this into a public method/property? axes_col.flat_labels[flat_indices]?
+    def _flat_lookup(self, flat_indices):
+        r"""Return labels corresponding to indices into the flattened axes
+
+        Parameters
+        ----------
+        flat_indices : array-like
+            indices to get
+
+        Examples
+        --------
+        >>> from larray import ndtest, LArray
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> indices = LArray([2, 5, 0], 'draw=d0..d2')
+        >>> indices
+        draw  d0  d1  d2
+               2   5   0
+        >>> arr.axes._flat_lookup(indices)
+        draw\axis   a   b
+               d0  a0  b2
+               d1  a1  b2
+               d2  a0  b0
+        """
+        from larray.core.array import aslarray, LArray, stack
+
+        flat_indices = aslarray(flat_indices)
+        shape = self.shape
+        divisors = np.roll(np.cumprod(shape[::-1])[::-1], -1)
+        divisors[-1] = 1
+        axes_indices = [(flat_indices // div) % length for div, length in zip(divisors, shape)]
+        # This could return an LArray with object dtype because axes labels can have different types (but not length)
+        # TODO: this should be:
+        # return stack([(axis.name, axis.i[inds]) for axis, inds in zip(axes, axes_indices)], axis='axis')
+        return stack([(axis.name, LArray(axis.labels[inds], inds.axes)) for axis, inds in zip(self, axes_indices)],
+                     axis='axis')
+
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):
     def __init__(self, name):
