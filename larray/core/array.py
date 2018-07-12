@@ -2286,7 +2286,7 @@ class LArray(ABCLArray):
             combined_name = None
         else:
             combined_name = sep.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
-        new_axes = other_axes
+        res_axes = other_axes
         if combined_axis_pos is not None:
             if wildcard_allowed:
                 lengths = [len(axis_key) for axis_key in key
@@ -2314,8 +2314,8 @@ class LArray(ABCLArray):
 
                 # CRAP, this can lead to duplicate labels (especially using .points)
                 combined_axis = Axis(combined_labels, combined_name)
-            new_axes.insert(combined_axis_pos, combined_axis)
-        return AxisCollection(new_axes)
+            res_axes.insert(combined_axis_pos, combined_axis)
+        return AxisCollection(res_axes)
 
     def set(self, value, **kwargs):
         """
