@@ -123,7 +123,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
-    """Create an array from a multi-line string.
+    r"""Create an array from a multi-line string.
 
     Parameters
     ----------
@@ -153,27 +153,27 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
     --------
     >>> # to create a 1D array using the default separator ' ', a tabulation character \t must be added in front
     >>> # of the data line
-    >>> from_string("sex  M  F\\n\\t  0  1")
+    >>> from_string("sex  M  F\n\t  0  1")
     sex  M  F
          0  1
-    >>> from_string("nat\\\\sex  M  F\\nBE  0  1\\nFO  2  3")
+    >>> from_string("nat\\sex  M  F\nBE  0  1\nFO  2  3")
     nat\sex  M  F
          BE  0  1
          FO  2  3
-    >>> from_string("period  a  b\\n2010  0  1\\n2011  2  3")
+    >>> from_string("period  a  b\n2010  0  1\n2011  2  3")
     period\{1}  a  b
           2010  0  1
           2011  2  3
 
     Each label is stripped of leading and trailing whitespace, so this is valid too:
 
-    >>> from_string('''nat\\\\sex  M  F
+    >>> from_string('''nat\\sex  M  F
     ...                BE        0  1
     ...                FO        2  3''')
     nat\sex  M  F
          BE  0  1
          FO  2  3
-    >>> from_string('''age  nat\\\\sex  M  F
+    >>> from_string('''age  nat\\sex  M  F
     ...                0    BE        0  1
     ...                0    FO        2  3
     ...                1    BE        4  5
@@ -187,7 +187,7 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
     Empty lines at the beginning or end are ignored, so one can also format the string like this:
 
     >>> from_string('''
-    ... nat\\\\sex  M  F
+    ... nat\\sex  M  F
     ... BE        0  1
     ... FO        2  3
     ... ''')
