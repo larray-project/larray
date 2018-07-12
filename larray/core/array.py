@@ -338,6 +338,7 @@ class LArrayIterator(object):
     next = __next__
 
 
+# TODO: rename to LArrayIndexIndexer or something like that
 class LArrayPositionalIndexer(object):
     def __init__(self, array):
         self.array = array
@@ -393,6 +394,7 @@ class LArrayPointsIndexer(object):
         data[translated_key] = value
 
 
+# TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
     def __init__(self, array):
         self.array = array
@@ -915,13 +917,16 @@ class LArray(ABCLArray):
         a1   b1  16  17  18  19
         a1   b2  20  21  22  23
 
-        >>> arr.i[:, 0:2, [0,2]]
+        # TODO: the first slice here should be documented
+        >>> arr.i[:, 0:2, [0, 2]]
          a  b\\c  c0  c2
         a0   b0   0   2
         a0   b1   4   6
         a1   b0  12  14
         a1   b1  16  18
         """
+        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
+        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPositionalIndexer(self)
 
     @property
@@ -956,6 +961,8 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
+        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
+        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPointsIndexer(self)
 
     @property
@@ -978,6 +985,9 @@ class LArray(ABCLArray):
         To select the two points with index coordinates
         [0, 0, 0] and [1, 2, 2], you must do:
 
+        # TODO: show that we need to use a "full slice" for leaving the dimension alone
+        # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
+        # (except at the end)
         >>> arr.ipoints[[0,1], [0,2], [0,2]]
         a_b_c  a0_b0_c0  a1_b2_c2
                       0        22
@@ -989,6 +999,8 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
+        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
+        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
@@ -2241,6 +2253,7 @@ class LArray(ABCLArray):
 
         data[cross_key] = value
 
+    # TODO: rename to _points_key_new_axes
     def _bool_key_new_axes(self, key, wildcard_allowed=False, sep='_'):
         """
         Returns an AxisCollection containing combined axes.
