@@ -25,7 +25,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
-from larray.core import Axis, AxisCollection, LArray, aslarray
+from larray.core import Axis, AxisCollection, LArray, aslarray, stack, ndtest
 from larray.core.array import raw_broadcastable
 import larray as la
 
@@ -368,7 +368,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
     Generates a random sample from given choices
 
     Parameters
-    -----------
+    ----------
     choices : 1-D array-like or int, optional
         Values to choose from.
         If an array, a random sample is generated from its elements.
@@ -379,21 +379,22 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
         Otherwise, if the resulting axes have a shape of, e.g., ``(m, n, k)``, then ``m * n * k`` samples are drawn.
     replace : boolean, optional
         Whether the sample is with or without replacement.
-    p : 1-D array-like, optional
+    p : array-like, optional
         The probabilities associated with each entry in choices.
-        If p is a 1-D LArray, choices are taken from its axis.
+        If p is a 1-D LArray, choices are taken from its axis labels. If p is an N-D LArray, each cell represents the
+        probability that the combination of labels will occur.
         If not given the sample assumes a uniform distribution over all entries in choices.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
-    --------
+    -------
     LArray or scalar
         The generated random samples with given ``axes`` (or shape).
 
     Raises
-    -------
+    ------
     ValueError
         If choices is an int and less than zero, if choices or p are not 1-dimensional,
         if choices is an array-like of size 0, if p is not a vector of probabilities,
@@ -401,11 +402,11 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
         if replace=False and the sample size is greater than the population size.
 
     See Also
-    ---------
+    --------
     randint, permutation
 
     Examples
-    ---------
+    --------
     Generate one random value out of given choices (each choice has the same probability of occurring):
 
     >>> la.random.choice(['hello', 'world', '!'])                                       # doctest: +SKIP
@@ -423,7 +424,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
      a0  15  10  10
      a1  10   5  10
 
-    same as above with labels and probabilities given as a one dimensional LArray
+    Same as above with labels and probabilities given as a one dimensional LArray
 
     >>> proba = LArray([0.3, 0.5, 0.2], Axis([5, 10, 15], 'outcome'))                   # doctest: +SKIP
     >>> proba                                                                           # doctest: +SKIP
@@ -446,6 +447,23 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
     >>> la.random.choice(['hello', 'world', '!'], 3, replace=False, p=[0.1, 0.6, 0.3])  # doctest: +SKIP
     {0}*      0  1      2
           world  !  hello
+
+    Using an N-dimensional array as probabilities:
+
+    >>> proba = LArray([[0.15, 0.25, 0.10],
+    ...                 [0.20, 0.10, 0.20]], 'a=a0,a1;b=b0..b2')                        # doctest: +SKIP
+    >>> proba                                                                           # doctest: +SKIP
+    a\b    b0    b1   b2
+     a0  0.15  0.25  0.1
+     a1   0.2   0.1  0.2
+    >>> choice(p=proba, axes='draw=d0..d5')                                             # doctest: +SKIP
+    draw\axis   a   b
+           d0  a1  b2
+           d1  a1  b1
+           d2  a0  b1
+           d3  a0  b0
+           d4  a1  b2
+           d5  a0  b1
     """
     axes = AxisCollection(axes)
     if isinstance(p, LArray):
@@ -453,9 +471,12 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
             raise ValueError("choices argument cannot be used when p argument is an LArray")
 
         if p.ndim > 1:
-            raise ValueError("using an larray with ndim > 1 for p is currently not supported")
-        choices = p.axes[0].labels
-        p = p.data
+            flat_p = p.data.reshape(-1)
+            flat_indices = choice(p.size, axes=axes, replace=replace, p=flat_p)
+            return p.axes._flat_lookup(flat_indices)
+        else:
+            choices = p.axes[0].labels
+            p = p.data
     if choices is None:
         raise ValueError("choices argument must be provided unless p is an LArray")
     return LArray(np.random.choice(choices, axes.shape, replace, p), axes, meta=meta)
