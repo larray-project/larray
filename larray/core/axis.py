@@ -169,6 +169,8 @@ class Axis(ABCAxis):
                M     0     3
                F     4     7
         """
+        # TODO: the resulting object should be cached. It is good that we do not create it on axis creation (for perf
+        # reasons) but it is silly to create it over and over for each use on the same axis.
         return IGroupMaker(self)
 
     @property
@@ -1533,8 +1535,10 @@ class AxisCollection(object):
             result.extend(a, validate=validate, replace_wildcards=replace_wildcards)
         return result
     __or__ = union
+    # TODO: deprecate method (should use | or union instead)
     __add__ = union
 
+    # TODO: deprecate method (should use | or union instead) but implement __ror__ !)
     def __radd__(self, other):
         result = AxisCollection(other)
         result.extend(self)
@@ -1640,6 +1644,7 @@ class AxisCollection(object):
         axes_repr = (repr(axis) for axis in self._list)
         return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
 
+    # TODO: kill name argument (does not seem to be used anywhere
     def get(self, key, default=None, name=None):
         """
         Returns axis corresponding to key. If not found, the argument `name` is used to create a new Axis.
@@ -1810,6 +1815,9 @@ class AxisCollection(object):
             if not local_axis.iscompatible(axis):
                 raise ValueError("incompatible axes:\n{!r}\nvs\n{!r}".format(axis, local_axis))
 
+    # TODO: deprecate method. union is enough
+    # TODO: deprecate validate argument (unused)
+    # TODO: deprecate replace_wildcards argument (unused)
     def extend(self, axes, validate=True, replace_wildcards=False):
         """
         Extends the collection by appending the axes from `axes`.
@@ -2071,7 +2079,7 @@ class AxisCollection(object):
         else:
             return AxisCollection(axes)
 
-    # XXX: kill this method?
+    # TODO: deprecate method (should use __sub__ instead)
     def without(self, axes):
         """
         Returns a new collection without some axes.
