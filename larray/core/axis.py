@@ -148,7 +148,7 @@ class Axis(ABCAxis):
             _, values = self._update_key_values()
         return values
 
-    @property
+    @lazy_attribute
     def i(self):
         """
         Allows to define a subset using positions along the axis
@@ -169,8 +169,6 @@ class Axis(ABCAxis):
                M     0     3
                F     4     7
         """
-        # TODO: the resulting object should be cached. It is good that we do not create it on axis creation (for perf
-        # reasons) but it is silly to create it over and over for each use on the same axis.
         return IGroupMaker(self)
 
     @property
