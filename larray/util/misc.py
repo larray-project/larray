@@ -690,6 +690,25 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None
     return _deprecate_kwarg
 
 
+class lazy_attribute(object):
+    """
+    Decorate a method of a class and turn it into an attribute on the instance
+    when first called. Should obviously only be used when the result of the method is constant.
+    """
+    def __init__(self, func):
+        self.func = func
+
+    # descriptor protocol
+    # see https://docs.python.org/3/reference/datamodel.html#implementing-descriptors
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        value = self.func(instance)
+        setattr(instance, self.func.__name__, value)
+        return value
+
+
 def inverseop(opname):
     comparison_ops = {
         'lt': 'gt',

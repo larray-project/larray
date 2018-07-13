@@ -64,7 +64,7 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg, LHDFStore)
+                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
 
 
 _deprecated = ['create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal']
@@ -900,7 +900,7 @@ class LArray(ABCLArray):
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
 
-    @property
+    @lazy_attribute
     def i(self):
         """
         Allows selection of a subset using indices of labels.
@@ -925,11 +925,9 @@ class LArray(ABCLArray):
         a1   b0  12  14
         a1   b1  16  18
         """
-        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
-        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPositionalIndexer(self)
 
-    @property
+    @lazy_attribute
     def points(self):
         """
         Allows selection of arbitrary items in the array
@@ -961,11 +959,9 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
-        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
-        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPointsIndexer(self)
 
-    @property
+    @lazy_attribute
     def ipoints(self):
         """
         Allows selection of arbitrary items in the array based on their N-dimensional index.
@@ -999,8 +995,6 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
-        # TODO: the resulting object should be cached. It is good that we do not create it on array creation (for perf
-        # reasons) but it is silly to create it over and over for each use on the same array.
         return LArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
