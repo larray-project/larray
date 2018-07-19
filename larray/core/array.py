@@ -1318,8 +1318,8 @@ class LArray(ABCLArray):
 
         Notes
         -----
-        When introducing NAs into an array containing integers via reindex,
-        all data will be promoted to float in order to store the NAs.
+        When introducing NaNs into an array containing integers via reindex,
+        all data will be promoted to float in order to store the NaNs.
 
         Examples
         --------
@@ -1354,10 +1354,10 @@ class LArray(ABCLArray):
 
         Reindex using a subset of an axis
 
-       >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
-       a\\b  b1  b0
-        a0   1   0
-        a1   3   2
+        >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
+        a\\b  b1  b0
+         a0   1   0
+         a1   3   2
 
         Reindex several axes
 

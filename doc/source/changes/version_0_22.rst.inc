@@ -147,7 +147,6 @@
     >>> a.i[:2].set()
     a['a0', 'a1'].set()
 
-.. _misc:
 
 Miscellaneous improvements
 --------------------------
