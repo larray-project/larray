@@ -256,7 +256,7 @@ cells:
 
 
 - markdown: |
-    There are many other [aggregation functions](api.rst#aggregation-functions):
+    There are many other aggregation functions:
     
     -  mean, min, max, median, percentile, var (variance), std (standard
        deviation)
