@@ -40,7 +40,7 @@ cells:
     ## Groups
     
     A ``Group`` represents a selection of labels from an Axis. It can optionally have a name (using operator ``>>``). 
-    Groups can be used when selecting a subset (#ref needed) of an array and in aggregations (#ref needed). 
+    Groups can be used when selecting a subset of an array and in aggregations.
     
     Group objects are created as follow:
 
@@ -76,7 +76,7 @@ cells:
 - markdown: |
     ## LArray
     
-    A ``LArray`` object represents a multidimensional array with labeled axes (#ref needed).
+    A ``LArray`` object represents a multidimensional array with labeled axes.
     
     ### Create an array from scratch
     
@@ -128,7 +128,7 @@ cells:
 - markdown: |
     ### Array creation functions
     
-    Arrays can also be generated in an easier way through creation functions (#ref needed):
+    Arrays can also be generated in an easier way through creation functions:
     
     -  `ndtest` : creates a test array with increasing numbers as data
     -  `empty` : creates an array but leaves its allocated memory
