@@ -1,4 +1,4 @@
-﻿Syntax changes
+Syntax changes
 --------------
 
 * new syntax
@@ -136,7 +136,6 @@ New features
     >>> import larray as la
     >>> la.pi
     3.141592653589793
-
 
 * allowed sessions to have metadata.
   Like for arrays, session metadata can be accessed using the syntax ``session.meta.name``.
@@ -329,3 +328,6 @@ Fixes
        a1   3   4   5
 
 * fixed LArray.combine_axes(wildcard=True).
+
+* fixed taking a subset of an array by giving an index along a specific axis using a string (strings
+  like 'axisname.i[pos]').

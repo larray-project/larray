@@ -536,6 +536,14 @@ def test_getitem_positional_group(array):
         array[age.i[1, 2], age.i[3, 4]]
 
 
+def test_getitem_str_positional_group():
+    arr = ndtest('a=l0..l2;b=l0..l2')
+    a, b = arr.axes
+    res = arr['b.i[1]']
+    expected = LArray([1, 4, 7], 'a=l0..l2')
+    assert_array_equal(res, expected)
+
+
 def test_getitem_abstract_positional(array):
     raw = array.data
     age, geo, sex, lipro = array.axes
