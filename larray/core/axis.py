@@ -1253,6 +1253,10 @@ class Axis(ABCAxis):
             store.get_storer(key).attrs.type = 'Axis'
             store.get_storer(key).attrs.wildcard = self.iswildcard
 
+    @property
+    def dtype(self):
+        return self._labels.dtype
+
 
 def _make_axis(obj):
     if isinstance(obj, Axis):
