@@ -796,15 +796,16 @@ class Axis(ABCAxis):
         if not PY2 and isinstance(key, range):
             key = list(key)
 
+        # this can happen when key was passed as a string and converted to a Group via _to_key
+        if isinstance(key, Group) and isinstance(key.axis, basestring) and key.axis != self.name:
+            raise KeyError(key)
+
         if isinstance(key, IGroup):
-            assert key.axis is self
+            if isinstance(key.axis, Axis):
+                assert key.axis is self
             return key.key
 
         if isinstance(key, LGroup):
-            # this can happen when key was passed as a string and converted to an LGroup via _to_key
-            if isinstance(key.axis, basestring) and key.axis != self.name:
-                raise KeyError(key)
-
             # at this point we do not care about the axis nor the name
             key = key.key
 
