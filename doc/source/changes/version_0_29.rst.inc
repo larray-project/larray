@@ -1,7 +1,9 @@
 ﻿Syntax changes
 --------------
 
-* new syntax
+* LArray.insert pos and axis arguments are deprecated because those were only useful for very specific cases and those
+  can easily be rewritten by using an indices group (axis.i[pos]) for the "before" argument instead
+  (closes :issue:`652`).
 
 
 Backward incompatible changes
