@@ -35,6 +35,7 @@ from itertools import product, chain, groupby, islice
 import os
 import sys
 import functools
+import warnings
 
 try:
     import builtins
@@ -5669,7 +5670,7 @@ class LArray(ABCLArray):
         Other         F    0.0    0.0
         """
         axis = self.axes[axis]
-        return self.insert(value, pos=len(axis), axis=axis, label=label)
+        return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
 
     def prepend(self, axis, value, label=None):
         """Adds an array before self along an axis.
@@ -5719,7 +5720,7 @@ class LArray(ABCLArray):
          FO         M    1.0    1.0
          FO         F    1.0    1.0
         """
-        return self.insert(value, pos=0, axis=axis, label=label)
+        return self.insert(value, before=IGroup(0, axis=axis), label=label)
 
     def extend(self, axis, other):
         """Adds an array to self along an axis.
@@ -5774,7 +5775,7 @@ class LArray(ABCLArray):
         return concat((self, other), axis)
 
     def insert(self, value, before=None, after=None, pos=None, axis=None, label=None):
-        """Inserts value in array along an axis.
+        r"""Inserts value in array along an axis.
 
         Parameters
         ----------
@@ -5785,11 +5786,6 @@ class LArray(ABCLArray):
             Label or group before which to insert `value`.
         after : scalar or Group
             Label or group after which to insert `value`.
-        pos : int
-            Index before which to insert `value`.
-        axis : axis reference (int, str or Axis), optional
-            Axis in which to insert `value`. This is only required when using `pos` or when before or after are
-            ambiguous labels.
         label : str, optional
             Label for the new item in axis.
 
@@ -5804,52 +5800,56 @@ class LArray(ABCLArray):
         --------
         >>> arr1 = ndtest((2, 3))
         >>> arr1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> arr1.insert(42, before='b1', label='b0.5')
-        a\\b  b0  b0.5  b1  b2
+        a\b  b0  b0.5  b1  b2
          a0   0    42   1   2
          a1   3    42   4   5
+
+        The inserted value can be an array:
+
         >>> arr2 = ndtest(2)
         >>> arr2
         a  a0  a1
             0   1
         >>> arr1.insert(arr2, after='b0', label='b0.5')
-        a\\b  b0  b0.5  b1  b2
+        a\b  b0  b0.5  b1  b2
          a0   0     0   1   2
          a1   3     1   4   5
-        >>> arr1.insert(42, axis='b', pos=1, label='b0.5')
-        a\\b  b0  b0.5  b1  b2
-         a0   0    42   1   2
-         a1   3    42   4   5
-        >>> arr1.insert(42, before=X.b.i[1], label='b0.5')
-        a\\b  b0  b0.5  b1  b2
+
+        If you want to target positions, you have to somehow specify the axis:
+
+        >>> a, b = arr1.axes
+        >>> # arr1.insert(42, before='b.i[1]', label='b0.5')
+        >>> arr1.insert(42, before=b.i[1], label='b0.5')
+        a\b  b0  b0.5  b1  b2
          a0   0    42   1   2
          a1   3    42   4   5
 
-        insert an array which already has the axis
+        Insert an array which already has the axis
 
         >>> arr3 = ndtest('a=a0,a1;b=b0.1,b0.2') + 42
         >>> arr3
-        a\\b  b0.1  b0.2
+        a\b  b0.1  b0.2
          a0    42    43
          a1    44    45
         >>> arr1.insert(arr3, before='b1')
-        a\\b  b0  b0.1  b0.2  b1  b2
+        a\b  b0  b0.1  b0.2  b1  b2
          a0   0    42    43   1   2
          a1   3    44    45   4   5
         """
 
         # XXX: unsure we should have arr1.insert(arr3, before='b1,b2') result in (see unit tests):
 
-        # a\\b  b0  b0.1  b1  b0.2  b2
+        # a\b  b0  b0.1  b1  b0.2  b2
         #  a0   0    42   1    43   2
         #  a1   3    44   4    45   5
 
         # we might to implement the following instead:
 
-        # a\\b  b0  b0.1  b0.2  b1  b0.1  b0.2  b2
+        # a\b  b0  b0.1  b0.2  b1  b0.1  b0.2  b2
         #  a0   0    42    43   1    42    43   2
         #  a1   3    44    45   4    44    45   5
 
@@ -5872,7 +5872,7 @@ class LArray(ABCLArray):
 
         # >>> arr1 = ndtest((2, 3))
         # >>> arr1
-        # a\\b  b0  b1  b2
+        # a\b  b0  b1  b2
         #  a0   0   1   2
         #  a1   3   4   5
         # >>> arr2 = full('b=b0.5', 8)
@@ -5884,7 +5884,7 @@ class LArray(ABCLArray):
         # b  b1.5
         #       9
         # >>> arr1.insert(before={'b1': arr2, 'b2': arr3})
-        # a\\b  b0  b0.5  b1  b1.5  b2
+        # a\b  b0  b0.5  b1  b1.5  b2
         #  a0   0     8   1     9   2
         #  a1   3     8   4     9   5
 
@@ -5936,20 +5936,19 @@ class LArray(ABCLArray):
         if sum([before is not None, after is not None, pos is not None]) != 1:
             raise ValueError("must specify exactly one of before, after or pos")
 
-        axis = self.axes[axis] if axis is not None else None
+        if pos is not None or axis is not None:
+            warnings.warn("The 'pos' and 'axis' keyword arguments are deprecated, please use axis.i[pos] instead",
+                          FutureWarning, stacklevel=2)
+            before = IGroup(pos, axis=axis)
+
         if before is not None:
-            before = self._translate_axis_key(before) if axis is None else axis[before]
+            before = self._translate_axis_key(before)
             axis = before.axis
             before_pos = axis.index(before)
-        elif after is not None:
-            after = self._translate_axis_key(after) if axis is None else axis[after]
+        else:
+            after = self._translate_axis_key(after)
             axis = after.axis
             before_pos = axis.index(after) + 1
-        else:
-            assert pos is not None
-            if axis is None:
-                raise ValueError("axis argument must be provided when using insert(pos=)")
-            before_pos = pos
 
         def length(v):
             if isinstance(v, LArray) and axis in v.axes:
