@@ -3975,7 +3975,7 @@ def test_diag():
     assert d.i[2] == a.i[2, 2, 2]
 
     # 1D (anon) -> 2D
-    d_anon = d.rename(0, None).drop_labels()
+    d_anon = d.rename(0, None).ignore_labels()
     a2 = diag(d_anon)
     assert a2.ndim == 2
 
