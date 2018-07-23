@@ -63,7 +63,7 @@ cells:
 - code: |
     # load mortality equivalent array
     mortality = load_example_data('demography').qx[2016, 'BruCap', 90:95]
-    
+
     # compute number of deaths
     death = pop * mortality
     death
@@ -99,7 +99,7 @@ cells:
   id: 9
 
 - code: |
-    pop[90:92] * mortality[93:95].drop_labels('age')
+    pop[90:92] * mortality[93:95].ignore_labels('age')
 
   id: 10
 
@@ -173,7 +173,7 @@ cells:
 
 - markdown: |
     ### Axis order does not matter much (except for output)
-    
+
     You can do operations between arrays having different axes order.
     The axis order of the result is the same as the left array
 
@@ -198,7 +198,7 @@ cells:
 
 - markdown: |
     ## Aggregates
-    
+
     Calculate the sum along an axis:
 
 
@@ -225,7 +225,7 @@ cells:
 
 - code: |
     teens = pop.age[10:20]
-    
+
     pop.sum(teens)
 
   id: 26
@@ -236,7 +236,7 @@ cells:
 
 - code: |
     pensioners = pop.age[67:]
-    
+
     # groups from the same axis must be grouped in a tuple
     pop.sum((teens, pensioners))
 
@@ -257,7 +257,7 @@ cells:
 
 - markdown: |
     There are many other aggregation functions:
-    
+
     -  mean, min, max, median, percentile, var (variance), std (standard
        deviation)
     -  labelofmin, labelofmax (label indirect minimum/maxium -- labels where the

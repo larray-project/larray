@@ -309,7 +309,7 @@ Modifying/Selecting
    LArray.ipoints
    LArray.set
    LArray.drop
-   LArray.drop_labels
+   LArray.ignore_labels
    LArray.filter
 
 .. _la_axes_labels:

@@ -1,6 +1,8 @@
 ﻿Syntax changes
 --------------
 
+* renamed LArray.drop_labels to ignore_labels to avoid confusion with the new LArray.drop (closes :issue:`672`).
+
 * LArray.insert pos and axis arguments are deprecated because those were only useful for very specific cases and those
   can easily be rewritten by using an indices group (axis.i[pos]) for the "before" argument instead
   (closes :issue:`652`).

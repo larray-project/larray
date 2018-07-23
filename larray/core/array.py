@@ -2412,7 +2412,7 @@ class LArray(ABCLArray):
         target_axes = (self.axes - target_axes) | target_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
-        # but that use case should use drop_labels
+        # but that use case should use ignore_labels
         # self.axes.check_compatible(target_axes)
 
         # 1) reorder axes to target order
@@ -2430,7 +2430,7 @@ class LArray(ABCLArray):
     # columns. On the other hand, it makes wild axes less obvious and I
     # wonder if there would be a risk of wildcard axes inadvertently leaking.
     # plus it might be confusing if incompatible labels "work".
-    def drop_labels(self, axes=None):
+    def ignore_labels(self, axes=None):
         """Drops the labels from axes (replace those axes by "wildcard" axes).
 
         Useful when you want to apply operations between two arrays
@@ -2460,11 +2460,11 @@ class LArray(ABCLArray):
         a\\b  b1  b2
          a1   0   1
          a2   2   3
-        >>> arr1.drop_labels(b)
+        >>> arr1.ignore_labels(b)
         a\\b*  0  1
           a1  0  1
           a2  2  3
-        >>> arr1.drop_labels([a, b])
+        >>> arr1.ignore_labels([a, b])
         a*\\b*  0  1
             0  0  1
             1  2  3
@@ -2480,15 +2480,15 @@ class LArray(ABCLArray):
         Axis(['b2', 'b3'], 'b')
         vs
         Axis(['b1', 'b2'], 'b')
-        >>> arr1 * arr2.drop_labels()
+        >>> arr1 * arr2.ignore_labels()
         a\\b  b1  b2
          a1   0   1
          a2   4   9
-        >>> arr1.drop_labels() * arr2
+        >>> arr1.ignore_labels() * arr2
         a\\b  b2  b3
          a1   0   1
          a2   4   9
-        >>> arr1.drop_labels(X.a) * arr2.drop_labels(X.b)
+        >>> arr1.ignore_labels(X.a) * arr2.ignore_labels(X.b)
         a\\b  b1  b2
          a1   0   1
          a2   4   9
@@ -2502,6 +2502,7 @@ class LArray(ABCLArray):
         res_axes = self.axes[:]
         res_axes[axes] = new_axes
         return LArray(self.data, res_axes)
+    drop_labels = renamed_to(ignore_labels, 'drop_labels')
 
     def __str__(self):
         if not self.ndim:
@@ -6882,9 +6883,9 @@ class LArray(ABCLArray):
             left = array[axis_obj.i[d:]]
             right = array[axis_obj.i[:-d]]
             if label == 'upper':
-                right = right.drop_labels(axis)
+                right = right.ignore_labels(axis)
             else:
-                left = left.drop_labels(axis)
+                left = left.ignore_labels(axis)
             array = left - right
         return array
 
@@ -6945,7 +6946,7 @@ class LArray(ABCLArray):
             array = self
             axis = array.axes[axis]
         diff = array.diff(axis=axis, d=d, label=label)
-        return diff / array[axis.i[:-d]].drop_labels(axis)
+        return diff / array[axis.i[:-d]].ignore_labels(axis)
 
     def compact(self):
         """Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)

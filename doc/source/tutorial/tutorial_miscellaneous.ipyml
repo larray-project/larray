@@ -26,7 +26,7 @@ cells:
 
 - markdown: |
     ### with total
-    
+
     Add totals to one axis
 
 
@@ -47,7 +47,7 @@ cells:
 
 - markdown: |
     ### where
-    
+
     where can be used to apply some computation depending on a condition
 
 
@@ -59,7 +59,7 @@ cells:
 
 - markdown: |
     ### clip
-    
+
     Set all data between a certain range
 
 
@@ -72,7 +72,7 @@ cells:
 
 - markdown: |
     ### divnot0
-    
+
     Replace division by 0 to 0
 
 
@@ -91,7 +91,7 @@ cells:
 
 - markdown: |
     ### diff
-    
+
     The ``diff`` method calculates the n-th order discrete difference along a given axis.
     The first order difference is given by out[n+1] = in[n + 1] - in[n] along the given axis.
 
@@ -120,7 +120,7 @@ cells:
 
 - code: |
     pop.ratio('nat')
-    
+
     # which is equivalent to
     pop / pop.sum('nat')
 
@@ -138,7 +138,7 @@ cells:
 
 - markdown: |
     ### growth\_rate
-    
+
     using the same principle than `diff`
 
 
@@ -149,7 +149,7 @@ cells:
 
 - markdown: |
     ### shift
-    
+
     The ``shift`` method drops first label of an axis and shifts all subsequent labels
 
 
@@ -161,7 +161,7 @@ cells:
 - code: |
     # when shift is applied on an (increasing) time axis,
     # it effectively brings "past" data into the future
-    pop.shift('time').drop_labels('time') == pop[2005:2014].drop_labels('time')
+    pop.shift('time').ignore_labels('time') == pop[2005:2014].ignore_labels('time')
 
   id: 16
 
@@ -174,9 +174,9 @@ cells:
 
 - markdown: |
     ### Misc other interesting functions
-    
+
     There are a lot more interesting functions available:
-    
+
     - round, floor, ceil, trunc,
     - exp, log, log10,
     - sqrt, absolute, nan_to_num, isnan, isinf, inverse,
