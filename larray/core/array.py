@@ -6285,7 +6285,7 @@ class LArray(ABCLArray):
             existing file, "Sheet1" otherwise. sheet can also refer to the position of the sheet
             (e.g. 0 for the first sheet, -1 for the last one).
         position : str or tuple of integers, optional
-            Integer position (row, column) must be 1-based. Defaults to 'A1'.
+            Integer position (row, column) must be 1-based. Used only if engine is 'xlwings'. Defaults to 'A1'.
         overwrite_file : bool, optional
             Whether or not to overwrite the existing file (or just modify the specified sheet). Defaults to False.
         clear_sheet : bool, optional
