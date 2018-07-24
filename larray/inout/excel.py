@@ -27,10 +27,11 @@ from larray.example import get_example_filepath
 __all__ = ['read_excel']
 
 
+# TODO: remove '# doctest: +SKIP' next to arr.info when Python 2.7 will be dropped
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
-               sort_rows=False, sort_columns=False, wide=True, engine=None, **kwargs):
+               sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs):
     """
     Reads excel file from sheet name and returns an LArray with the contents
 
@@ -63,6 +64,9 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     engine : {'xlrd', 'xlwings'}, optional
         Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
         installed and relies on Pandas default reader otherwise.
+    range : str, optional
+        Range to load the array from (only supported for the 'xlwings' engine). Defaults to slice(None) which loads
+        the whole sheet, ignoring blank cells in the bottom right corner.
     **kwargs
 
     Returns
@@ -144,7 +148,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     >>> arr = read_excel(fname, sheet='pop_missing_axis_name')
     >>> # we expected a 3 x 2 x 3 array with data of type int
     >>> # but we got a 6 x 4 array with data of type object
-    >>> arr.info
+    >>> arr.info            # doctest: +SKIP
     6 x 4
      geo [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
      {1} [4]: 'gender' '2013' '2014' '2015'
@@ -153,7 +157,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
     >>> arr = read_excel(fname, sheet='pop_missing_axis_name', nb_axes=3)
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
-    >>> arr.info
+    >>> arr.info            # doctest: +SKIP
     3 x 2 x 3
      geo [3]: 'Belgium' 'France' 'Germany'
      gender [2]: 'Male' 'Female'
@@ -179,6 +183,17 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     geo\\time      2013      2014      2015
      Belgium  11137974  11180840  11237274
       France  65600350  65942267  66456279
+
+    Extract array from a given range (xlwings only)
+
+    >>> read_excel(fname, 'pop_births_deaths', range='A9:E15')     # doctest: +SKIP
+        geo  gender\\time    2013    2014    2015
+    Belgium         Male   64371   64173   62561
+    Belgium       Female   61235   60841   59713
+     France         Male  415762  418721  409145
+     France       Female  396581  400607  390526
+    Germany         Male  349820  366835  378478
+    Germany       Female  332249  348092  359097
     """
     if not np.isnan(na):
         fill_value = na
@@ -198,9 +213,10 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
                             .format(list(kwargs.keys())[0]))
         from larray.inout.xw_excel import open_excel
         with open_excel(filepath) as wb:
-            return wb[sheet].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
-                                  sort_columns=sort_columns, wide=wide)
+            return wb[sheet][range].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,
+                                         sort_columns=sort_columns, wide=wide)
     else:
+        # TODO: add support for range argument (using usecols, skiprows and nrows arguments of pandas.read_excel)
         df = pd.read_excel(filepath, sheet, index_col=index_col, engine=engine, **kwargs)
         return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
                            fill_value=fill_value, wide=wide)

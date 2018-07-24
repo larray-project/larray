@@ -2888,6 +2888,10 @@ def test_read_excel_xlwings():
     expected[isnan(expected)] = 42
     assert_array_equal(arr, expected)
 
+    # range
+    arr = read_excel(inputpath('test.xlsx'), 'position', range='D3:H9')
+    assert_array_equal(arr, io_3d)
+
     #################
     # narrow format #
     #################
@@ -2909,6 +2913,10 @@ def test_read_excel_xlwings():
     # unsorted values
     arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False)
     assert_array_equal(arr, io_unsorted)
+
+    # range
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'position', range='D3:G21', wide=False)
+    assert_array_equal(arr, io_3d)
 
     ##############################
     #  invalid keyword argument  #
