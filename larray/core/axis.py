@@ -1257,6 +1257,26 @@ class Axis(ABCAxis):
     def dtype(self):
         return self._labels.dtype
 
+    def ignore_labels(self):
+        """Returns a wildcard axis with the same name and length than this axis.
+
+        Useful when you want to apply operations between two arrays with the same shape but incompatible axes
+        (different labels).
+
+        Returns
+        -------
+        Axis
+
+        Examples
+        --------
+        >>> a = Axis('a=a1,a2')
+        >>> a
+        Axis(['a1', 'a2'], 'a')
+        >>> a.ignore_labels()
+        Axis(2, 'a')
+        """
+        return Axis(len(self), self.name)
+
 
 def _make_axis(obj):
     if isinstance(obj, Axis):
