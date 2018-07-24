@@ -50,8 +50,8 @@ Searching
    Axis.endingwith
    Axis.matching
 
-Modifying/Selecting/Searching
------------------------------
+Modifying/Selecting
+-------------------
 
 .. autosummary::
    :toctree: _generated/
@@ -69,6 +69,7 @@ Modifying/Selecting/Searching
    Axis.difference
    Axis.align
    Axis.split
+   Axis.ignore_labels
 
 Testing
 -------
