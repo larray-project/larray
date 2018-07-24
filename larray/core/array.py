@@ -2431,7 +2431,7 @@ class LArray(ABCLArray):
     # wonder if there would be a risk of wildcard axes inadvertently leaking.
     # plus it might be confusing if incompatible labels "work".
     def ignore_labels(self, axes=None):
-        """Drops the labels from axes (replace those axes by "wildcard" axes).
+        """Ignore labels from axes (replace those axes by "wildcard" axes).
 
         Useful when you want to apply operations between two arrays
         or subarrays with same shape but incompatible axes
@@ -2495,12 +2495,11 @@ class LArray(ABCLArray):
         """
         if axes is None:
             axes = self.axes
-        if not isinstance(axes, (tuple, list, AxisCollection)):
-            axes = [axes]
-        old_axes = self.axes[axes]
-        new_axes = [Axis(len(axis), axis.name) for axis in old_axes]
-        res_axes = self.axes[:]
-        res_axes[axes] = new_axes
+        elif not isinstance(axes, (tuple, list, AxisCollection)):
+            axes = self.axes[[axes]]
+        else:
+            axes = self.axes[axes]
+        res_axes = self.axes.replace([(axis, axis.ignore_labels()) for axis in axes])
         return LArray(self.data, res_axes)
     drop_labels = renamed_to(ignore_labels, 'drop_labels')
 
