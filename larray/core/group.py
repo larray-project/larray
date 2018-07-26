@@ -272,6 +272,8 @@ def _range_to_slice(seq, length=None):
     --------
     >>> _range_to_slice([3, 4, 5])
     slice(3, 6, None)
+    >>> _range_to_slice([3, 4, 6])
+    [3, 4, 6]
     >>> _range_to_slice([3, 5, 7])
     slice(3, 9, 2)
     >>> _range_to_slice([-3, -2])
