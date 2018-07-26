@@ -314,6 +314,24 @@ def test_add(col):
 #     assert res == AxisCollection([Axis('a0,a1'), Axis(2)])
 
 
+def test_sub():
+    col = AxisCollection('a0,a1;b0,b1,b2')
+    res = col - Axis(2)
+    assert res == AxisCollection('b0,b1,b2')
+
+    res = col - Axis(3)
+    assert res == AxisCollection('a0,a1')
+
+    col = AxisCollection('a0,a1;b0,b1')
+    # when several axes are compatible, remove first
+    res = col - Axis(2)
+    assert res == AxisCollection('b0,b1')
+
+    # when no axis is compatible, do not remove any
+    res = col - Axis(3)
+    assert res == col
+
+
 def test_combine(col):
     res = col.combine_axes((lipro, sex))
     assert res.names == ['lipro_sex', 'age']
