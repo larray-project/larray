@@ -3359,8 +3359,756 @@ age    0       1       2       3       4       5       6       7        8  ...  
         res = read_excel(fpath, 'other', engine='xlrd')
         assert_array_equal(res, a3)
 
-        # passing group as sheet_name
-        a3 = ndtest((4, 3, 4))
+    #################
+    # narrow format #
+    #################
+    arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False)
+    assert_array_equal(arr, io_1d)
+
+    arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False)
+    assert_array_equal(arr, io_2d)
+
+    arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False)
+    assert_array_equal(arr, io_3d)
+
+    # missing rows + fill_value argument
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values', fill_value=42, wide=False)
+    expected = io_narrow_missing_values.copy()
+    expected[isnan(expected)] = 42
+    assert_array_equal(arr, expected)
+
+    # unsorted values
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False)
+    assert_array_equal(arr, io_unsorted)
+
+    ##############################
+    #  invalid keyword argument  #
+    ##############################
+
+    with pytest.raises(TypeError, message="'dtype' is an invalid keyword argument for this function "
+                                          "when using the xlwings backend"):
+        read_excel(inputpath('test.xlsx'), engine='xlwings', dtype=float)
+
+    #################
+    #  blank cells  #
+    #################
+
+    # Excel sheet with blank cells on right/bottom border of the array to read
+    fpath = inputpath('test_blank_cells.xlsx')
+    good = read_excel(fpath, 'good')
+    bad1 = read_excel(fpath, 'blanksafter_morerowsthancols')
+    bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows')
+    assert_array_equal(bad1, good)
+    assert_array_equal(bad2, good)
+    # with additional empty column in the middle of the array to read
+    good2 = ndtest('a=a0,a1;b=2003..2006').astype(object)
+    good2[2005] = None
+    good2 = good2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
+    bad3 = read_excel(fpath, 'middleblankcol')
+    bad4 = read_excel(fpath, '16384col')
+    assert_array_equal(bad3, good2)
+    assert_array_equal(bad4, good2)
+
+
+def test_read_excel_pandas():
+    arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
+    assert_array_equal(arr, io_1d)
+
+    arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
+    assert_array_equal(arr, io_2d)
+
+    arr = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
+    assert_array_equal(arr, io_2d)
+
+    arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
+    assert_array_equal(arr, io_3d)
+
+    arr = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
+    assert_array_equal(arr, io_3d)
+
+    arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='xlrd')
+    assert_array_equal(arr, io_int_labels)
+
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
+    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+
+    # passing a Group as sheet arg
+    axis = Axis('dim=1d,2d,3d,5d')
+
+    arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
+    assert_array_equal(arr, io_1d)
+
+    # missing rows + fill_value argument
+    arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='xlrd')
+    expected = io_missing_values.copy()
+    expected[isnan(expected)] = 42
+    assert_array_equal(arr, expected)
+
+    #################
+    # narrow format #
+    #################
+    arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='xlrd')
+    assert_array_equal(arr, io_1d)
+
+    arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='xlrd')
+    assert_array_equal(arr, io_2d)
+
+    arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='xlrd')
+    assert_array_equal(arr, io_3d)
+
+    # missing rows + fill_value argument
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
+                     fill_value=42, wide=False, engine='xlrd')
+    expected = io_narrow_missing_values
+    expected[isnan(expected)] = 42
+    assert_array_equal(arr, expected)
+
+    # unsorted values
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='xlrd')
+    assert_array_equal(arr, io_unsorted)
+
+    #################
+    #  blank cells  #
+    #################
+
+    # Excel sheet with blank cells on right/bottom border of the array to read
+    fpath = inputpath('test_blank_cells.xlsx')
+    good1 = read_excel(fpath, 'good', engine='xlrd')
+    bad1 = read_excel(fpath, 'blanksafter_morerowsthancols', engine='xlrd')
+    bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows', engine='xlrd')
+    assert_array_equal(bad1, good1)
+    assert_array_equal(bad2, good1)
+
+    # with additional empty column in the middle of the array to read
+    good2 = ndtest('a=a0,a1;b=2003..2006').astype(float)
+    good2[2005] = nan
+    good2 = good2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
+    bad3 = read_excel(fpath, 'middleblankcol', engine='xlrd')
+    bad4 = read_excel(fpath, '16384col', engine='xlrd')
+    assert_array_nan_equal(bad3, good2)
+    assert_array_nan_equal(bad4, good2)
+
+
+def test_from_lists():
+    # sort_rows
+    arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                      ['F', 'BE', 0, 0, 1],
+                      ['F', 'FO', 0, 0, 2],
+                      ['M', 'BE', 1, 0, 0],
+                      ['M', 'FO', 2, 0, 0]])
+    sorted_arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                             ['M', 'BE', 1, 0, 0],
+                             ['M', 'FO', 2, 0, 0],
+                             ['F', 'BE', 0, 0, 1],
+                             ['F', 'FO', 0, 0, 2]], sort_rows=True)
+    assert_array_equal(sorted_arr, arr)
+
+    # sort_columns
+    arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
+                      ['M', 'BE', 1, 0, 0],
+                      ['M', 'FO', 2, 0, 0],
+                      ['F', 'BE', 0, 0, 1],
+                      ['F', 'FO', 0, 0, 2]])
+    sorted_arr = from_lists([['sex', 'nat\\year', 1992, 1991, 1993],
+                             ['M', 'BE', 0, 1, 0],
+                             ['M', 'FO', 0, 2, 0],
+                             ['F', 'BE', 0, 0, 1],
+                             ['F', 'FO', 0, 0, 2]], sort_columns=True)
+    assert_array_equal(sorted_arr, arr)
+
+
+def test_from_series():
+    # Series with Index as index
+    expected = ndtest(3)
+    s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
+    assert_array_equal(from_series(s), expected)
+
+    s = pd.Series([2, 0, 1], index=pd.Index(['a2', 'a0', 'a1'], name='a'))
+    assert_array_equal(from_series(s, sort_rows=True), expected)
+
+    expected = ndtest(3)[['a2', 'a0', 'a1']]
+    assert_array_equal(from_series(s), expected)
+
+    # Series with MultiIndex as index
+    age = Axis('age=0..3')
+    gender = Axis('gender=M,F')
+    time = Axis('time=2015..2017')
+    expected = ndtest((age, gender, time))
+
+    index = pd.MultiIndex.from_product(expected.axes.labels, names=expected.axes.names)
+    data = expected.data.flatten()
+    s = pd.Series(data, index)
+
+    res = from_series(s)
+    assert_array_equal(res, expected)
+
+    res = from_series(s, sort_rows=True)
+    assert_array_equal(res, expected.sort_axes())
+
+    expected[0, 'F'] = -1
+    s = s.reset_index().drop([3, 4, 5]).set_index(['age', 'gender', 'time'])[0]
+    res = from_series(s, fill_value=-1)
+    assert_array_equal(res, expected)
+
+
+def test_from_frame():
+    # 1) data = scalar
+    # ================
+    # Dataframe becomes 1D LArray
+    data = np.array([10])
+    index = ['i0']
+    columns = ['c0']
+    axis_index, axis_columns = Axis(index), Axis(columns)
+
+    df = pd.DataFrame(data, index=index, columns=columns)
+    assert df.index.name is None
+    assert df.columns.name is None
+    assert list(df.index.values) == index
+    assert list(df.columns.values) == columns
+
+    # anonymous indexes/columns
+    # input dataframe:
+    # ----------------
+    #     c0
+    # i0  10
+    # output LArray:
+    # --------------
+    # {0}\{1}  c0
+    #      i0  10
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, 1)
+    assert la.axes.names == [None, None]
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, 1)), [axis_index, axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous columns
+    # input dataframe:
+    # ----------------
+    #        c0
+    # index
+    # i0     10
+    # output LArray:
+    # --------------
+    # index\{1}  c0
+    #        i0  10
+    df.index.name, df.columns.name = 'index', None
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, 1)
+    assert la.axes.names == ['index', None]
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous index
+    # input dataframe:
+    # ----------------
+    # columns  c0
+    # i0       10
+    # output LArray:
+    # --------------
+    # {0}\columns  c0
+    #          i0  10
+    df.index.name, df.columns.name = None, 'columns'
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, 1)
+    assert la.axes.names == [None, 'columns']
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, 1)), [axis_index, axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # index and columns with name
+    # input dataframe:
+    # ----------------
+    # columns  c0
+    # index
+    # i0       10
+    # output LArray:
+    # --------------
+    # index\columns  c0
+    #            i0  10
+    df.index.name, df.columns.name = 'index', 'columns'
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, 1)
+    assert la.axes.names == ['index', 'columns']
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # 2) data = vector
+    # ================
+    size = 3
+
+    # 2A) data = horizontal vector (1 x N)
+    # ====================================
+    # Dataframe becomes 1D LArray
+    data = np.arange(size)
+    indexes = ['i0']
+    columns = ['c{}'.format(i) for i in range(size)]
+    axis_index, axis_columns = Axis(indexes), Axis(columns)
+
+    df = pd.DataFrame(data.reshape(1, size), index=indexes, columns=columns)
+    assert df.index.name is None
+    assert df.columns.name is None
+    assert list(df.index.values) == indexes
+    assert list(df.columns.values) == columns
+
+    # anonymous indexes/columns
+    # input dataframe:
+    # ----------------
+    #     c0  c1  c2
+    # i0   0   1   2
+    # output LArray:
+    # --------------
+    # {0}\{1}  c0  c1  c2
+    #      i0   0   1   2
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, size)
+    assert la.axes.names == [None, None]
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, size)), [axis_index, axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous columns
+    # input dataframe:
+    # ----------------
+    #        c0  c1  c2
+    # index
+    # i0      0   1   2
+    # output LArray:
+    # --------------
+    # index\{1}  c0  c1  c2
+    #        i0   0   1   2
+    df.index.name, df.columns.name = 'index', None
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, size)
+    assert la.axes.names == ['index', None]
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, size)), [axis_index.rename('index'), axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous index
+    # input dataframe:
+    # ----------------
+    # columns  c0  c1  c2
+    # i0        0   1   2
+    # output LArray:
+    # --------------
+    # {0}\columns  c0  c1  c2
+    #          i0   0   1   2
+    df.index.name, df.columns.name = None, 'columns'
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, size)
+    assert la.axes.names == [None, 'columns']
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, size)), [axis_index, axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # index and columns with name
+    # input dataframe:
+    # ----------------
+    # columns  c0  c1  c2
+    # index
+    # i0        0   1   2
+    # output LArray:
+    # --------------
+    # index\columns  c0  c1  c2
+    #            i0   0   1   2
+    df.index.name, df.columns.name = 'index', 'columns'
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (1, size)
+    assert la.axes.names == ['index', 'columns']
+    assert list(la.axes.labels[0]) == index
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data.reshape((1, size)), [axis_index.rename('index'), axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # 2B) data = vertical vector (N x 1)
+    # ==================================
+    # Dataframe becomes 2D LArray
+    data = data.reshape(size, 1)
+    indexes = ['i{}'.format(i) for i in range(size)]
+    columns = ['c0']
+    axis_index, axis_columns = Axis(indexes), Axis(columns)
+
+    df = pd.DataFrame(data, index=indexes, columns=columns)
+    assert df.index.name is None
+    assert df.columns.name is None
+    assert list(df.index.values) == indexes
+    assert list(df.columns.values) == columns
+
+    # anonymous indexes/columns
+    # input dataframe:
+    # ----------------
+    #     c0
+    # i0   0
+    # i1   1
+    # i2   2
+    # output LArray:
+    # --------------
+    # {0}\{1}  c0
+    #      i0   0
+    #      i1   1
+    #      i2   2
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (size, 1)
+    assert la.axes.names == [None, None]
+    assert list(la.axes.labels[0]) == indexes
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data, [axis_index, axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous columns
+    # input dataframe:
+    # ----------------
+    #        c0
+    # index
+    # i0      0
+    # i1      1
+    # i2      2
+    # output LArray:
+    # --------------
+    # index\{1}  c0
+    #        i0   0
+    #        i1   1
+    #        i2   2
+    df.index.name, df.columns.name = 'index', None
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (size, 1)
+    assert la.axes.names == ['index', None]
+    assert list(la.axes.labels[0]) == indexes
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data, [axis_index.rename('index'), axis_columns])
+    assert_array_equal(la, expected_la)
+
+    # anonymous index
+    # input dataframe:
+    # ----------------
+    # columns  c0
+    # i0        0
+    # i1        1
+    # i2        2
+    # output LArray:
+    # --------------
+    # {0}\columns  c0
+    #          i0   0
+    #          i1   1
+    #          i2   2
+    df.index.name, df.columns.name = None, 'columns'
+    la = from_frame(df)
+    assert la.ndim == 2
+    assert la.shape == (size, 1)
+    assert la.axes.names == [None, 'columns']
+    assert list(la.axes.labels[0]) == indexes
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data, [axis_index, axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # index and columns with name
+    # input dataframe:
+    # ----------------
+    # columns  c0
+    # index
+    # i0        0
+    # i1        1
+    # i2        2
+    # output LArray:
+    # --------------
+    # {0}\columns  c0
+    #          i0   0
+    #          i1   1
+    #          i2   2
+    df.index.name, df.columns.name = 'index', 'columns'
+    assert la.ndim == 2
+    assert la.shape == (size, 1)
+    assert la.axes.names == [None, 'columns']
+    assert list(la.axes.labels[0]) == indexes
+    assert list(la.axes.labels[1]) == columns
+    expected_la = LArray(data, [axis_index, axis_columns.rename('columns')])
+    assert_array_equal(la, expected_la)
+
+    # 3) 3D array
+    # ===========
+
+    # 3A) Dataframe with 2 index columns
+    # ==================================
+    dt = [('age', int), ('sex', 'U1'),
+          ('2007', int), ('2010', int), ('2013', int)]
+    data = np.array([
+        (0, 'F', 3722, 3395, 3347),
+        (0, 'M', 338, 316, 323),
+        (1, 'F', 2878, 2791, 2822),
+        (1, 'M', 1121, 1037, 976),
+        (2, 'F', 4073, 4161, 4429),
+        (2, 'M', 1561, 1463, 1467),
+        (3, 'F', 3507, 3741, 3366),
+        (3, 'M', 2052, 2052, 2118),
+    ], dtype=dt)
+    df = pd.DataFrame(data)
+    df.set_index(['age', 'sex'], inplace=True)
+    df.columns.name = 'time'
+
+    la = from_frame(df)
+    assert la.ndim == 3
+    assert la.shape == (4, 2, 3)
+    assert la.axes.names == ['age', 'sex', 'time']
+    assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+
+    # 3B) Dataframe with columns.name containing \\
+    # =============================================
+    dt = [('age', int), ('sex\\time', 'U1'),
+          ('2007', int), ('2010', int), ('2013', int)]
+    data = np.array([
+        (0, 'F', 3722, 3395, 3347),
+        (0, 'M', 338, 316, 323),
+        (1, 'F', 2878, 2791, 2822),
+        (1, 'M', 1121, 1037, 976),
+        (2, 'F', 4073, 4161, 4429),
+        (2, 'M', 1561, 1463, 1467),
+        (3, 'F', 3507, 3741, 3366),
+        (3, 'M', 2052, 2052, 2118),
+    ], dtype=dt)
+    df = pd.DataFrame(data)
+    df.set_index(['age', 'sex\\time'], inplace=True)
+
+    la = from_frame(df, unfold_last_axis_name=True)
+    assert la.ndim == 3
+    assert la.shape == (4, 2, 3)
+    assert la.axes.names == ['age', 'sex', 'time']
+    assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+
+    # 4) test sort_rows and sort_columns arguments
+    # ============================================
+    age = Axis('age=2,0,1,3')
+    gender = Axis('gender=M,F')
+    time = Axis('time=2016,2015,2017')
+    columns = pd.Index(time.labels, name=time.name)
+
+    # df.index is an Index instance
+    expected = ndtest((gender, time))
+    index = pd.Index(gender.labels, name=gender.name)
+    data = expected.data
+    df = pd.DataFrame(data, index=index, columns=columns)
+
+    expected = expected.sort_axes()
+    res = from_frame(df, sort_rows=True, sort_columns=True)
+    assert_array_equal(res, expected)
+
+    # df.index is a MultiIndex instance
+    expected = ndtest((age, gender, time))
+    index = pd.MultiIndex.from_product(expected.axes[:-1].labels, names=expected.axes[:-1].names)
+    data = expected.data.reshape(len(age) * len(gender), len(time))
+    df = pd.DataFrame(data, index=index, columns=columns)
+
+    res = from_frame(df, sort_rows=True, sort_columns=True)
+    assert_array_equal(res, expected.sort_axes())
+
+    # 5) test fill_value
+    # ==================
+    expected[0, 'F'] = -1
+    df = df.reset_index().drop([3]).set_index(['age', 'gender'])
+    res = from_frame(df, fill_value=-1)
+    assert_array_equal(res, expected)
+
+
+def test_to_csv(tmpdir):
+    arr = io_3d.copy()
+
+    arr.to_csv(tmp_path(tmpdir, 'out.csv'))
+    result = ['a,b\\c,c0,c1,c2\n',
+              '1,b0,0,1,2\n',
+              '1,b1,3,4,5\n']
+    with open(tmp_path(tmpdir, 'out.csv')) as f:
+        assert f.readlines()[:3] == result
+
+    # stacked data (one column containing all the values and another column listing the context of the value)
+    arr.to_csv(tmp_path(tmpdir, 'out.csv'), wide=False)
+    result = ['a,b,c,value\n',
+              '1,b0,c0,0\n',
+              '1,b0,c1,1\n']
+    with open(tmp_path(tmpdir, 'out.csv')) as f:
+        assert f.readlines()[:3] == result
+
+    arr = io_1d.copy()
+    arr.to_csv(tmp_path(tmpdir, 'test_out1d.csv'))
+    result = ['a,a0,a1,a2\n',
+              ',0,1,2\n']
+    with open(tmp_path(tmpdir, 'test_out1d.csv')) as f:
+        assert f.readlines() == result
+
+
+def test_to_excel_xlsxwriter(tmpdir):
+    fpath = tmp_path(tmpdir, 'test_to_excel_xlsxwriter.xlsx')
+
+    # 1D
+    a1 = ndtest(3)
+
+    # fpath/Sheet1/A1
+    a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a1)
+
+    # fpath/Sheet1/A1(transposed)
+    a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a1)
+
+    # fpath/Sheet1/A1
+    # stacked data (one column containing all the values and another column listing the context of the value)
+    a1.to_excel(fpath, wide=False, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
+    assert_array_equal(res, stacked_a1)
+
+    # 2D
+    a2 = ndtest((2, 3))
+
+    # fpath/Sheet1/A1
+    a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a2)
+
+    # fpath/Sheet1/A10
+    # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
+    # a2.to_excel('fpath', 'Sheet1', 'A10', engine='xlsxwriter')
+    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
+    # assert_array_equal(res, a2)
+
+    # fpath/other/A1
+    a2.to_excel(fpath, 'other', engine='xlsxwriter')
+    res = read_excel(fpath, 'other', engine='xlrd')
+    assert_array_equal(res, a2)
+
+    # 3D
+    a3 = ndtest((2, 3, 4))
+
+    # fpath/Sheet1/A1
+    # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
+    a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+    # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a3)
+
+    # fpath/Sheet1/A20
+    # TODO: implement position (see above)
+    # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
+    # assert_array_equal(res, a3)
+
+    # fpath/other/A1
+    a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
+    res = read_excel(fpath, 'other', engine='xlrd')
+    assert_array_equal(res, a3)
+
+    # 1D
+    a1 = ndtest(3)
+
+    # fpath/Sheet1/A1
+    a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a1)
+
+    # fpath/Sheet1/A1(transposed)
+    a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a1)
+
+    # fpath/Sheet1/A1
+    # stacked data (one column containing all the values and another column listing the context of the value)
+    a1.to_excel(fpath, wide=False, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
+    assert_array_equal(res, stacked_a1)
+
+    # 2D
+    a2 = ndtest((2, 3))
+
+    # fpath/Sheet1/A1
+    a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a2)
+
+    # fpath/Sheet1/A10
+    # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
+    # a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlsxwriter')
+    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
+    # assert_array_equal(res, a2)
+
+    # fpath/other/A1
+    a2.to_excel(fpath, 'other', engine='xlsxwriter')
+    res = read_excel(fpath, 'other', engine='xlrd')
+    assert_array_equal(res, a2)
+
+    # 3D
+    a3 = ndtest((2, 3, 4))
+
+    # fpath/Sheet1/A1
+    # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
+    a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
+    # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
+    res = read_excel(fpath, engine='xlrd')
+    assert_array_equal(res, a3)
+
+    # fpath/Sheet1/A20
+    # TODO: implement position (see above)
+    # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
+    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
+    # assert_array_equal(res, a3)
+
+    # fpath/other/A1
+    a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
+    res = read_excel(fpath, 'other', engine='xlrd')
+    assert_array_equal(res, a3)
+
+    # passing group as sheet_name
+    a3 = ndtest((4, 3, 4))
+    os.remove(fpath)
+    # single element group
+    for label in a3.a:
+        a3[label].to_excel(fpath, label, engine='xlsxwriter')
+    # unnamed group
+    group = a3.c['c0,c2']
+    a3[group].to_excel(fpath, group, engine='xlsxwriter')
+    # unnamed group + slice
+    group = a3.c['c0::2']
+    a3[group].to_excel(fpath, group, engine='xlsxwriter')
+    # named group
+    group = a3.c['c0,c2'] >> 'even'
+    a3[group].to_excel(fpath, group, engine='xlsxwriter')
+    # group with name containing special characters (replaced by _)
+    group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
+    a3[group].to_excel(fpath, group, engine='xlsxwriter')
+
+
+@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+def test_to_excel_xlwings(tmpdir):
+    fpath = tmp_path(tmpdir, 'test_to_excel_xlwings.xlsx')
+
+    # 1D
+    a1 = ndtest(3)
+
+    # live book/Sheet1/A1
+    # a1.to_excel()
+
+    # fpath/Sheet1/A1 (create a new file if does not exist)
+    if os.path.isfile(fpath):
         os.remove(fpath)
         # single element group
         for label in a3.a:

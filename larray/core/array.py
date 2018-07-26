@@ -1009,8 +1009,10 @@ class LArray(ABCLArray):
                 tmp = axes_names[-1] if axes_names[-1] is not None else ''
                 if self.axes[-1].name:
                     axes_names[-1] = "{}\\{}".format(tmp, self.axes[-1].name)
-
-            index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=axes_names)
+            if self.ndim == 2:
+                index = pd.Index(data=self.axes[0].labels, name=axes_names[0])
+            else:
+                index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=axes_names)
         else:
             index = pd.Index([''])
             if fold_last_axis_name:
