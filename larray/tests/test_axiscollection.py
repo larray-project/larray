@@ -1,4 +1,6 @@
 from __future__ import absolute_import, division, print_function
+
+import numpy as np
 import pytest
 
 from larray.tests.common import assert_array_equal, assert_axis_eq
@@ -54,6 +56,9 @@ def test_getitem_int(col):
     assert_axis_eq(col[-2], sex)
     assert_axis_eq(col[2], age)
     assert_axis_eq(col[-1], age)
+
+    # test using a numpy int
+    assert_axis_eq(col[np.int32(0)], lipro)
 
 
 def test_getitem_slice(col):
