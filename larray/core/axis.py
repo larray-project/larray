@@ -1875,7 +1875,7 @@ class AxisCollection(object):
                 if replace_wildcards and old_axis.iswildcard:
                     self[old_axis] = axis
 
-    def index(self, axis):
+    def index(self, axis, compatible=False):
         """
         Returns the index of axis.
 
@@ -1887,6 +1887,9 @@ class AxisCollection(object):
         ----------
         axis : Axis or int or str
             Can be the axis itself or its position (returned if represents a valid index) or its name.
+        compatible : bool, optional
+            If axis is an Axis, whether to find an exact match (using Axis.equals) or any
+            compatible axis (using Axis.iscompatible)
 
         Returns
         -------
@@ -1929,10 +1932,15 @@ class AxisCollection(object):
                 # also useful for other axes. Note that this shouldn't be too slow as labels will only be actually
                 # checked if the name match.
 
-                # We cannot use self._list.index because it use Axis.__eq__ which produces an LArray
-                for i, item in enumerate(self._list):
-                    if item.equals(axis):
-                        return i
+                if compatible:
+                    for i, item in enumerate(self._list):
+                        if item.iscompatible(axis):
+                            return i
+                else:
+                    # We cannot use self._list.index because it use Axis.__eq__ which produces an LArray
+                    for i, item in enumerate(self._list):
+                        if item.equals(axis):
+                            return i
 
                 # 3) otherwise look for any axis with the same name
                 name = axis.name
@@ -2132,8 +2140,14 @@ class AxisCollection(object):
         elif isinstance(axes, (int, Axis)):
             axes = [axes]
 
+        def index_first_compatible(axis):
+            try:
+                return self.index(axis, compatible=True)
+            except ValueError:
+                return -1
         # only keep indices (as this works for unnamed axes too)
-        to_remove = set(self.index(axis) for axis in axes if axis in self)
+        to_remove = set(index_first_compatible(axis) for axis in axes)
+        # -1 in to_remove are not a problem since enumerate starts at 0
         return AxisCollection([axis for i, axis in enumerate(self) if i not in to_remove])
 
     def translate_full_key(self, key):
