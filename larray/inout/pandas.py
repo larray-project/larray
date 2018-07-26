@@ -92,7 +92,8 @@ def from_series(s, sort_rows=False):
     return LArray(s.values, Axis(s.index.values, name))
 
 
-def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False, **kwargs):
+def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False, meta=None,
+               **kwargs):
     """
     Converts Pandas DataFrame into LArray.
 
@@ -112,6 +113,9 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     unfold_last_axis_name : bool, optional
         Whether or not to extract the names of the last two axes by splitting the name of the last index column of the
         dataframe using ``\\``. Defaults to False.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
@@ -178,7 +182,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
 
     axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
     data = df.values.reshape([len(axis) for axis in axes])
-    return LArray(data, axes)
+    return LArray(data, axes, meta=meta)
 
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, **kwargs):
