@@ -15,9 +15,9 @@ except ImportError:
 
 from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
                                  tmp_path, meta)
-from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
+from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal, IGroup)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO, LHDFStore
@@ -706,127 +706,170 @@ def test_getitem_structured_key_with_groups():
 
 
 def test_getitem_single_larray_key_guess():
-    a = Axis(['a1', 'a2'], 'a')
-    b = Axis(['b1', 'b2', 'b3'], 'b')
-    c = Axis(['c1', 'c2', 'c3', 'c4'], 'c')
+    # TODO: we really need another way to get test axes, e.g. testaxes(2, 3, 4) or testaxes((2, 3, 4))
+    a, b, c = ndtest((2, 3, 4)).axes
+    arr = ndtest((a, b))
+    # >>> arr
+    # a\b b0 b1 b2
+    #  a0  0  1  2
+    #  a1  3  4  5
 
     # 1) key with extra axis
-    arr = ndtest([a, b])
-    # replace the values_axis by the extra axis
-    key = LArray(['a1', 'a2', 'a2', 'a1'], [c])
-    assert arr[key].axes == [c, b]
+    key = LArray(['a0', 'a1', 'a1', 'a0'], c)
+    # replace the target axis by the extra axis
+    expected = from_string(r"""
+c\b  b0  b1  b2
+ c0   0   1   2
+ c1   3   4   5
+ c2   3   4   5
+ c3   0   1   2""")
+    assert_array_equal(arr[key], expected)
 
-    # 2) key with the values axis (the one being replaced)
-    arr = ndtest([a, b])
-    key = LArray(['b2', 'b1', 'b3'], [b])
+    # 2) key with the target axis (the one being replaced)
+    key = LArray(['b1', 'b0', 'b2'], b)
     # axis stays the same but data should be flipped/shuffled
-    assert arr[key].axes == [a, b]
+    expected = from_string(r"""
+a\b  b0  b1  b2
+ a0   1   0   2
+ a1   4   3   5""")
+    assert_array_equal(arr[key], expected)
 
-    # 2bis) key with part of the values axis (the one being replaced)
-    arr = ndtest([a, b])
-    b_bis = Axis(['b1', 'b2'], 'b')
-    key = LArray(['b3', 'b2'], [b_bis])
-    assert arr[key].axes == [a, b_bis]
+    # 2bis) key with part of the target axis (the one being replaced)
+    key = LArray(['b2', 'b1'], 'b=b0,b1')
+    expected = from_string(r"""
+a\b  b0  b1
+ a0   2   1
+ a1   5   4""")
+    assert_array_equal(arr[key], expected)
 
-    # 3) key with another existing axis (not the values axis)
-#     arr = ndtest([a, b])
-#     key = LArray(['a1', 'a2', 'a1'], [b])
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a['a1', 'a2', 'a1'] ^ x.b['b1', 'b2', 'b3']]
-#     # res = tmp.set_axes([b])
-#     # both the values axis and the other existing axis
-#     self.assertEqual(arr[key].axes, [b])
-#
-#     # 3bis) key with part of another existing axis (not the values axis)
-#     arr = ndtest([a, b])
-#     b_bis = Axis('b', ['b1', 'b2'])
-#     key = LArray(['a2', 'a1'], [b_bis])
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a['a2', 'a1'] ^ x.b['b1', 'b2']]
-#     # res = tmp.set_axes([b_bis])
-#     self.assertEqual(arr[key].axes, [b_bis])
-#
-#     # 4) key has both the values axis and another existing axis
-#     # a\b b1 b2 b3
-#     #  a1  0  1  2
-#     #  a2  3  4  5
-#     arr = ndtest([a, b])
-#     # a\b b1 b2 b3
-#     #  a1 a1 a2 a1
-#     #  a2 a2 a1 a2
-#     key = LArray([['a1', 'a2', 'a1'],
-#                   ['a2', 'a1', 'a2']],
-#                  [a, b])
-#     # a\b b1 b2 b3
-#     #  a1  0  4  2
-#     #  a2  3  1  5
-#     # we need to produce the following keys for numpy:
-#     # k0:
-#     # [[0, 1, 0],
-#     #  [1, 0, 1]]
-#     # TODO: [0, 1, 2] is enough in this case (thanks to broadcasting) because in numpy missing dimensions are
-#     #       filled by adding length 1 dimensions to the left. Ie it works because b is the last dimension.
-#     # k1:
-#     # [[0, 1, 2],
-#     #  [0, 1, 2]]
-#
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a[['a1', 'a2', 'a1'],
-#     #               ['a2', 'a1', 'a2']] ^ x.b['b1', 'b2', 'b3']]
-#     # res = tmp.set_axes([a, b])
-#     # this is kinda ugly because a ND x.a has implicit (positional dimension
-#     res = arr[key]
-#     self.assertEqual(res.axes, [a, b])
-#     assert_array_equal(res, [[0, 4, 2],
-#                              [3, 1, 5]])
-#
-#     # 5) key has both the values axis and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([['a1', 'a2', 'a2', 'a1'], ['a2', 'a1', 'a1', 'a2']],
-#                  [a, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#     # 6) key has both another existing axis (not values) and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([['b1', 'b2', 'b1', 'b2'], ['b3', 'b4', 'b3', 'b4']],
-#                  [a, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#     # 7) key has the values axis, another existing axis and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([[['a1', 'a2', 'a1', 'a2'],
-#                    ['a2', 'a1', 'a2', 'a1'],
-#                    ['a1', 'a2', 'a1', 'a2']],
-#
-#                   [['a1', 'a2', 'a2', 'a1'],
-#                    ['a2', 'a2', 'a2', 'a2'],
-#                    ['a1', 'a2', 'a2', 'a1']]],
-#                  [a, b, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#
-# def test_getitem_multiple_larray_key_guess():
-#     a = Axis('a', ['a1', 'a2'])
-#     b = Axis('b', ['b1', 'b2', 'b3'])
-#     c = Axis('c', ['c1', 'c2', 'c3', 'c4'])
-#     d = Axis('d', ['d1', 'd2', 'd3', 'd4', 'd5'])
-#     e = Axis('e', ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'])
-#
-#     # 1) key with extra disjoint axes
-#     arr = ndtest([a, b])
-#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c])
-#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [d])
-#     self.assertEqual(arr[k1, k2].axes, [c, d])
-#
-#     # 2) key with common extra axes
-#     arr = ndtest([a, b])
-#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c, d])
-#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [c, e])
-#     # TODO: not sure what *should* happen in this case!
-#     self.assertEqual(arr[k1, k2].axes, [c, d, e])
+    # 3) key with another existing axis (not the target axis)
+    key = LArray(['a0', 'a1', 'a0'], b)
+    expected = from_string("""
+b  b0  b1  b2
+\t  0   4   2""")
+    assert_array_equal(arr[key], expected)
+
+    # TODO: this does not work yet but should be much easier to implement with "align" in make_np_broadcastable
+    # 3bis) key with *part* of another existing axis (not the target axis)
+    # key = LArray(['a1', 'a0'], 'b=b0,b1')
+    # expected = from_string("""
+    # b  b0  b1
+    # \t  3   1""")
+    # assert_array_equal(arr[key], expected)
+
+    # 4) key has both the target axis and another existing axis
+    # TODO: maybe we should make this work without requiring astype!
+    key = from_string(r"""
+a\b b0 b1 b2
+ a0 a0 a1 a0
+ a1 a1 a0 a1""").astype(str)
+    expected = from_string(r"""
+a\b  b0  b1  b2
+ a0   0   4   2
+ a1   3   1   5""")
+    assert_array_equal(arr[key], expected)
+
+    # 5) key has both the target axis and an extra axis
+    key = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0  a0  a1  a1  a0
+ a1  a1  a0  a0  a1""").astype(str)
+    expected = from_string(r"""
+ a  c\b  b0  b1  b2
+a0   c0   0   1   2
+a0   c1   3   4   5
+a0   c2   3   4   5
+a0   c3   0   1   2
+a1   c0   3   4   5
+a1   c1   0   1   2
+a1   c2   0   1   2
+a1   c3   3   4   5""")
+    assert_array_equal(arr[key], expected)
+
+    # 6) key has both another existing axis (not target) and an extra axis
+    key = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0  b0  b1  b0  b1
+ a1  b2  b1  b2  b1""").astype(str)
+    expected = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0   0   1   0   1
+ a1   5   4   5   4""")
+    assert_array_equal(arr[key], expected)
+
+    # 7) key has the target axis, another existing axis and an extra axis
+    key = from_string(r"""
+ a  b\c  c0  c1  c2  c3
+a0   b0  a0  a1  a0  a1
+a0   b1  a1  a0  a1  a0
+a0   b2  a0  a1  a0  a1
+a1   b0  a0  a1  a1  a0
+a1   b1  a1  a1  a1  a1
+a1   b2  a0  a1  a1  a0""").astype(str)
+    expected = from_string(r"""
+ a  b\c  c0  c1  c2  c3
+a0   b0   0   3   0   3
+a0   b1   4   1   4   1
+a0   b2   2   5   2   5
+a1   b0   0   3   3   0
+a1   b1   4   4   4   4
+a1   b2   2   5   5   2""")
+    assert_array_equal(arr[key], expected)
+
+
+def test_getitem_multiple_larray_key_guess():
+    a, b, c, d, e = ndtest((2, 3, 2, 3, 2)).axes
+    arr = ndtest((a, b))
+    # >>> arr
+    # a\b  b0  b1  b2
+    #  a0   0   1   2
+    #  a1   3   4   5
+
+    # 1) keys with each a different existing axis
+    k1 = from_string(""" a  a1  a0
+                        \t  b2  b0""")
+    k2 = from_string(""" b  b1  b2  b3
+                        \t  a0  a1  a0""")
+    expected = from_string(r"""b\a  a1  a0
+                                b1   2   0
+                                b2   5   3
+                                b3   2   0""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 2) keys with a common existing axis
+    k1 = from_string(""" b  b0  b1  b2
+                        \t  a1  a0  a1""")
+    k2 = from_string(""" b  b0  b1  b2
+                        \t  b1  b2  b0""")
+    expected = from_string(""" b  b0  b1  b2
+                              \t   4   2   3""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 3) keys with each a different extra axis
+    k1 = from_string(""" c  c0  c1
+                        \t  a1  a0""")
+    k2 = from_string(""" d  d0  d1  d2
+                        \t  b1  b2  b0""")
+    expected = from_string(r"""c\d  d0  d1  d2
+                                c0   4   5   3
+                                c1   1   2   0""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 4) keys with a common extra axis
+    k1 = from_string(r"""c\d  d0  d1  d2
+                          c0  a1  a0  a1
+                          c1  a0  a1  a0""").astype(str)
+    k2 = from_string(r"""c\e  e0  e1
+                          c0  b1  b2
+                          c1  b0  b1""").astype(str)
+    expected = from_string(r""" c  d\e  e0  e1
+                               c0   d0   4   5
+                               c0   d1   1   2
+                               c0   d2   4   5
+                               c1   d0   0   1
+                               c1   d1   3   4
+                               c1   d2   0   1""")
+    assert_array_equal(arr[k1, k2], expected)
 
 
 def test_getitem_ndarray_key_guess(array):
@@ -876,6 +919,19 @@ def test_getitem_axis_object():
     assert_array_equal(arr[b2], from_string("""a\\b  b0  b2
                                                  a0   0   2
                                                  a1   3   5"""))
+
+
+def test_getitem_empty_tuple():
+    # an empty tuple should return a view on the original array
+    arr = ndtest((2, 3))
+    res = arr[()]
+    assert_array_equal(res, arr)
+    assert res is not arr
+
+    z = LArray(0)
+    res = z[()]
+    assert res == z
+    assert res is not z
 
 
 def test_positional_indexer_getitem(array):
@@ -1075,6 +1131,43 @@ def test_setitem_larray(array, small_array):
     la2 = LArray(small_array.data, axes=(sex2, lipro))
     with pytest.raises(ValueError, match="incompatible axes:"):
         arr[:] = la2
+
+    # key has multiple LArrays (this is used within .points indexing)
+    # ===============================================================
+    # first some setup
+    a = Axis(['a0', 'a1'], None)
+    b = Axis(['b0', 'b1', 'b2'], None)
+    expected = ndtest((a, b))
+    value = expected.combine_axes()
+
+    # a) with anonymous axes
+    combined_axis = value.axes[0]
+    a_key = LArray([0, 0, 0, 1, 1, 1], combined_axis)
+    b_key = LArray([0, 1, 2, 0, 1, 2], combined_axis)
+    key = (a.i[a_key], b.i[b_key])
+    array = empty((a, b))
+    array[key] = value
+    assert_array_equal(array, expected)
+
+    # b) with wildcard combined_axis
+    wild_combined_axis = combined_axis.ignore_labels()
+    wild_a_key = LArray([0, 0, 0, 1, 1, 1], wild_combined_axis)
+    wild_b_key = LArray([0, 1, 2, 0, 1, 2], wild_combined_axis)
+    wild_key = (a.i[wild_a_key], b.i[wild_b_key])
+    array = empty((a, b))
+    array[wild_key] = value
+    assert_array_equal(array, expected)
+
+    # c) with a wildcard value
+    wild_value = value.ignore_labels()
+    array = empty((a, b))
+    array[key] = wild_value
+    assert_array_equal(array, expected)
+
+    # d) with a wildcard combined axis and wildcard value
+    array = empty((a, b))
+    array[wild_key] = wild_value
+    assert_array_equal(array, expected)
 
 
 def test_setitem_ndarray(array):
@@ -1308,6 +1401,30 @@ def test_filter_multiple_axes(array):
     assert array.filter(age=57, sex='M,F').shape == (44, 2, 15)
     assert array.filter(age=57, lipro='P01,P05').shape == (44, 2, 2)
     assert array.filter(geo='A57', lipro='P01,P05').shape == (116, 2, 2)
+
+
+def test_nonzero():
+    arr = ndtest((2, 3))
+    a, b = arr.axes
+    cond = arr > 1
+    assert_array_equal(cond, from_string(r"""a\b     b0     b1    b2
+                                              a0  False  False  True
+                                              a1   True   True  True"""))
+    a_group, b_group = cond.nonzero()
+    assert isinstance(a_group, IGroup)
+    assert a_group.axis is a
+    assert a_group.key.equals(from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                                              \t      0      1      1      1"""))
+    assert isinstance(b_group, IGroup)
+    assert b_group.axis is b
+    assert b_group.key.equals(from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                                              \t      2      0      1      2"""))
+
+    expected = from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                               \t      2      3      4      5""")
+    assert_array_equal(arr[a_group, b_group], expected)
+    assert_array_equal(arr.points[a_group, b_group], expected)
+    assert_array_equal(arr[cond], expected)
 
 
 def test_contains():
