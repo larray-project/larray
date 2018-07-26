@@ -609,13 +609,14 @@ def test_getitem_bool_larray_and_group_key():
     res = arr['a0,a2', arr.b < 3, 'c0:c3']
     assert isinstance(res, LArray)
     assert res.ndim == 3
-    assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
+    expected = arr['a0,a2', '0:2', 'c0:c3']
+    assert_array_equal(res, expected)
 
     # using axis reference
     res = arr['a0,a2', X.b < 3, 'c0:c3']
     assert isinstance(res, LArray)
     assert res.ndim == 3
-    assert_array_equal(res, arr['a0,a2', '0:2', 'c0:c3'])
+    assert_array_equal(res, expected)
 
 
 def test_getitem_bool_ndarray_key(array):
