@@ -377,3 +377,5 @@ Fixes
 
 * fixed taking a subset of an array by giving an index along a specific axis using a string (strings
   like 'axisname.i[pos]').
+
+* made LArray support pandas versions >= 0.21 (closes :issue:`569`)

@@ -39,11 +39,10 @@ def parse(s):
         return s
 
 
-def df_labels(df, sort=True):
+def index_to_labels(idx, sort=True):
     """
     Returns unique labels for each dimension.
     """
-    idx = df.index
     if isinstance(idx, pd.core.index.MultiIndex):
         if sort:
             return list(idx.levels)
@@ -51,26 +50,33 @@ def df_labels(df, sort=True):
             return [list(unique(idx.get_level_values(l))) for l in idx.names]
     else:
         assert isinstance(idx, pd.core.index.Index)
-        # use .values if needed
-        return [idx]
+        labels = list(idx.values)
+        return [sorted(labels) if sort else labels]
 
 
-def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
-    labels = df_labels(df, sort=sort_rows)
-    if sort_rows:
-        new_index = pd.MultiIndex.from_product(labels)
+def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan, **kwargs):
+    idx = df.index
+    labels = index_to_labels(idx, sort=sort_rows)
+    if isinstance(idx, pd.core.index.MultiIndex):
+        if sort_rows:
+            new_index = pd.MultiIndex.from_product(labels)
+        else:
+            new_index = pd.MultiIndex.from_tuples(list(product(*labels)))
     else:
-        new_index = pd.MultiIndex.from_tuples(list(product(*labels)))
+        if sort_rows:
+            new_index = pd.Index(labels[0], name=idx.name)
+        else:
+            new_index = idx
     columns = sorted(df.columns) if sort_columns else list(df.columns)
     # the prodlen test is meant to avoid the more expensive array_equal test
     prodlen = np.prod([len(axis_labels) for axis_labels in labels])
     if prodlen == len(df) and columns == list(df.columns) and np.array_equal(df.index.values, new_index.values):
         return df, labels
-    return df.reindex(new_index, columns, **kwargs), labels
+    return df.reindex(index=new_index, columns=columns, fill_value=fill_value, **kwargs), labels
 
 
-def from_series(s, sort_rows=False, meta=None, **kwargs):
-    """
+def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
+    r"""
     Converts Pandas Series into LArray.
 
     Parameters
@@ -79,6 +85,9 @@ def from_series(s, sort_rows=False, meta=None, **kwargs):
         Input Pandas Series.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically. Defaults to False.
+    fill_value : scalar, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input Series.
+        Defaults to NaN.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
@@ -107,7 +116,7 @@ def from_series(s, sort_rows=False, meta=None, **kwargs):
             c1    7.0
     dtype: float64
     >>> from_series(s)
-     a  b\\c   c0   c1
+     a  b\c   c0   c1
     a0   b0  0.0  1.0
     a0   b1  2.0  3.0
     a1   b0  4.0  5.0
@@ -116,7 +125,6 @@ def from_series(s, sort_rows=False, meta=None, **kwargs):
     if isinstance(s.index, pd.core.index.MultiIndex):
         # TODO: use argument sort=False when it will be available
         # (see https://github.com/pandas-dev/pandas/issues/15105)
-        fill_value = kwargs.get('fill_value', nan)
         df = s.unstack(level=-1, fill_value=fill_value)
         # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
         if not sort_rows:
@@ -127,7 +135,7 @@ def from_series(s, sort_rows=False, meta=None, **kwargs):
                 index = labels[0]
             columns = labels[-1]
             df = df.reindex(index=index, columns=columns, fill_value=fill_value)
-        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_rows, meta=meta, **kwargs)
+        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_rows, fill_value=fill_value, meta=meta, **kwargs)
     else:
         name = decode(s.name, 'utf8') if s.name is not None else decode(s.index.name, 'utf8')
         if sort_rows:
@@ -135,9 +143,9 @@ def from_series(s, sort_rows=False, meta=None, **kwargs):
         return LArray(s.values, Axis(s.index.values, name), meta=meta)
 
 
-def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False, meta=None,
-               **kwargs):
-    """
+def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
+               fill_value=nan, meta=None, **kwargs):
+    r"""
     Converts Pandas DataFrame into LArray.
 
     Parameters
@@ -155,7 +163,10 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         If True, column labels are converted into int, float or boolean when possible. Defaults to False.
     unfold_last_axis_name : bool, optional
         Whether or not to extract the names of the last two axes by splitting the name of the last index column of the
-        dataframe using ``\\``. Defaults to False.
+        dataframe using ``\``. Defaults to False.
+    fill_value : scalar, optional
+        Value used to fill cells corresponding to label combinations which are not present in the input DataFrame.
+        Defaults to NaN.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
@@ -180,7 +191,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     a1 b0   4   5
        b1   6   7
     >>> from_frame(df)
-     a  b\\c  c0  c1
+     a  b\c  c0  c1
     a0   b0   0   1
     a0   b1   2   3
     a1   b0   4   5
@@ -191,13 +202,13 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     >>> df = ndtest((2, 2, 2)).to_frame(fold_last_axis_name=True)
     >>> df                                                                             # doctest: +NORMALIZE_WHITESPACE
             c0  c1
-    a  b\\c
+    a  b\c
     a0 b0    0   1
        b1    2   3
     a1 b0    4   5
        b1    6   7
     >>> from_frame(df, unfold_last_axis_name=True)
-     a  b\\c  c0  c1
+     a  b\c  c0  c1
     a0   b0   0   1
     a0   b1   2   3
     a1   b0   4   5
@@ -215,7 +226,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     else:
         axes_names += [df.columns.name]
 
-    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns, **kwargs)
+    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                                           fill_value=fill_value, **kwargs)
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values
     last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
