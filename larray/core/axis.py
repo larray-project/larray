@@ -1407,7 +1407,7 @@ class AxisCollection(object):
                     # target real axes
                     key = key.name
 
-        if isinstance(key, int):
+        if isinstance(key, (int, np.integer)):
             return self._list[key]
         elif isinstance(key, (tuple, list)):
             if any(axis is Ellipsis for axis in key):
