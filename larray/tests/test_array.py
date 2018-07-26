@@ -601,6 +601,16 @@ def test_getitem_bool_larray_key():
     raw_d1, raw_d3 = raw_key.nonzero()
     assert_array_equal(res, raw[raw_d1, :, raw_d3])
 
+    # using an Axis object
+    arr = ndtest('a=a0,a1;b=0..3')
+    raw = arr.data
+    res = arr[arr.b < 2]
+    assert_array_equal(res, raw[:, :2])
+
+    # using an AxisReference (ExprNode)
+    res = arr[X.b < 2]
+    assert_array_equal(res, raw[:, :2])
+
 
 def test_getitem_bool_larray_and_group_key():
     arr = ndtest((3, 6, 4)).set_labels('b', '0..5')
