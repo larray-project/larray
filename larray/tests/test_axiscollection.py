@@ -297,6 +297,18 @@ def test_add(col):
     assert new == [lipro, sex, age, geo, value]
 
 
+# def test_or():
+#     col = AxisCollection('a0,a1')
+#     res = col | Axis(2)
+#     assert res == col
+#
+#     res = col | Axis(3)
+#     assert res == AxisCollection([Axis('a0,a1'), Axis(3)])
+#
+#     res = col | AxisCollection([Axis(2), Axis(2)])
+#     assert res == AxisCollection([Axis('a0,a1'), Axis(2)])
+
+
 def test_combine(col):
     res = col.combine_axes((lipro, sex))
     assert res.names == ['lipro_sex', 'age']
