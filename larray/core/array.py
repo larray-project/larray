@@ -60,7 +60,7 @@ from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
-                               _range_to_slice, _translate_sheet_name, _translate_group_key_hdf)
+                               _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
@@ -340,6 +340,9 @@ class LArrayIterator(object):
 
 # TODO: rename to LArrayIndexIndexer or something like that
 class LArrayPositionalIndexer(object):
+    """
+    numpy indexing *except* we index the cross product
+    """
     def __init__(self, array):
         self.array = array
 
@@ -370,51 +373,40 @@ class LArrayPointsIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    def __getitem__(self, key):
-        # TODO: this should generate an "intersection"/points NDGroup and simply do return self.array[nd_group]
-        data = np.asarray(self.array)
-        translated_key = self.array._translated_key(key, bool_stuff=True)
+    def _prepare_key(self, key, wildcard=False):
+        axes = self.array.axes
+        # 1) complete key & translate (those two cannot be dissociated because to complete
+        #    the key we need to know which axis each key belongs to and to do that, we need to
+        #    translate the key to indices.
+        translated_key = axes._translated_key(key)
+        # 2) transform keys to IGroup and non-LArray advanced keys to LArray with a combined axis
+        return axes._adv_keys_to_combined_axis_la_keys(translated_key, wildcard)
 
-        axes = self.array._bool_key_new_axes(translated_key)
-        data = data[translated_key]
-        # drop length 1 dimensions created by scalar keys
-        # data = data.reshape(tuple(len(axis) for axis in axes))
-        if not axes:
-            # scalars do not need to be wrapped in LArray
-            return data
-        else:
-            return LArray(data, axes)
+    def __getitem__(self, key):
+        return self.array.__getitem__(self._prepare_key(key), translate_key=False)
 
     def __setitem__(self, key, value):
-        data = np.asarray(self.array)
-        translated_key = self.array._translated_key(key, bool_stuff=True)
-        if isinstance(value, LArray):
-            axes = self.array._bool_key_new_axes(translated_key, wildcard_allowed=True)
-            value = value.broadcast_with(axes)
-        data[translated_key] = value
+        self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
 # TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
+    """
+    the closer to numpy indexing we get, but not 100% the same.
+    """
     def __init__(self, array):
         self.array = array
 
-    def __getitem__(self, key):
-        data = np.asarray(self.array)
+    def _prepare_key(self, key, wildcard=False):
+        return self.array.axes._adv_keys_to_combined_axis_la_keys(key, wildcard)
 
-        axes = self.array._bool_key_new_axes(key, wildcard_allowed=False)
-        data = data[key]
-        # drop length 1 dimensions created by scalar keys
-        # data = data.reshape(tuple(len(axis) for axis in axes))
-        if not axes:
-            # scalars do not need to be wrapped in LArray
-            return data
-        else:
-            return LArray(data, axes)
+    def __getitem__(self, key):
+        return self.array.__getitem__(self._prepare_key(key), translate_key=False)
 
     def __setitem__(self, key, value):
-        data = np.asarray(self.array)
-        data[key] = value
+        # we still need to prepare the key instead of letting numpy handle everything so that
+        # existing (integer)LArray keys are handled correctly (broadcasted using axes names).
+        self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
 def get_axis(obj, i):
@@ -727,6 +719,7 @@ class LArray(ABCLArray):
         self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
 
     # TODO: rename to posnonzero and implement a label version of nonzero
+    # TODO: implement wildcard argument to avoid producing the combined labels
     def nonzero(self):
         r"""
         Returns the indices of the elements that are non-zero.
@@ -751,51 +744,67 @@ class LArray(ABCLArray):
         a\b     b0     b1    b2
          a0  False  False  True
          a1   True   True  True
-        >>> cond.nonzero()
-        (a.i[0, 1, 1, 1], b.i[2, 0, 1, 2])
+        >>> a, b = cond.nonzero()
+        >>> a
+        a.i[a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                 0      1      1      1]
+        >>> b
+        b.i[a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                 2      0      1      2]
         >>> arr.points[cond.nonzero()]
+        a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                 2      3      4      5
+        >>> arr[cond.nonzero()]
         a_b  a0_b2  a1_b0  a1_b1  a1_b2
                  2      3      4      5
         >>> arr[cond]
         a_b  a0_b2  a1_b0  a1_b1  a1_b2
                  2      3      4      5
         """
-        # TODO: return a Grid or an NDGroup so that
-        # 1) cond.nonzero() *displays* (however it is stored!) as something like:
+        # the next step will be to return a Grid instead so that cond.nonzero() *displays*
+        # (however it is stored!) as something like:
 
-        # a_b  a0,b2  a1,b0  a1,b1  a1,b2
+        # option a)
 
-        # OR
+        # a_b  a0_b2  a1_b0  a1_b1  a1_b2
+        #      a0,b2  a1,b0  a1,b1  a1,b2
 
-        # {0}            0            1            2            3
-        #      a[a0],b[b2]  a[a1],b[b0]  a[a1],b[b1]  a[a1],b[b2]
-
-        # OR
-
-        #     0   1   2   3
-        # a  a0  a1  a1  a1
-        # b  b2  b0  b1  b2
+        # PRO: * result axes are the same as grid axes
+        # CON: * does not support getting the indexing for one axis (or at least it does not make it obvious that it
+        #        is supported)
+        #      * in the case of ambiguous labels (same label on several axes), this is not explicit enough
 
         # OR
 
-        # axis\a_b  a0_b2  a1_b0  a1_b1  a1_b2
-        #        a     a0     a1     a1     a1
-        #        b     b2     b0     b1     b2
+        # option b)
+
+        # source_axis\a_b  a0_b2  a1_b0  a1_b1  a1_b2
+        #               a     a0     a1     a1     a1
+        #               b     b2     b0     b1     b2
+
+        # in the presence of duplicate labels on the same axis (e.g. assuming we replace 'b2' by a duplicate 'b1' label)
+
+        # source_axis\a_b  a0_b1#1  a1_b0  a1_b1#0  a1_b1#1
+        #               a       a0     a1       a1       a1
+        #               b     b1#1     b0     b1#0     b1#1
 
         # OR
 
-        # a_b\axis   a   b
-        #    a0_b2  a0  b2
-        #    a1_b0  a1  b0
-        #    a1_b1  a1  b1
-        #    a1_b2  a1  b2
+        # option c)
 
-        # I think the last two options are best (dtypes of a and b column can be different but since we probably only
-        # store indices, this shouldn't be a problem). The nice thing is that the resulting axes
-        # are known. But we need something (maybe not for nonzero) which can handle more dimensions (both cartesian
-        # product and "points") dimensions in the result.
-        # 2) you can do a[cond.nonzero()]
-        return tuple(IGroup(key, axis=axis) for key, axis in zip(self.data.nonzero(), self.axes))
+        # a_b\source_axis   a   b
+        #           a0_b2  a0  b2
+        #           a1_b0  a1  b0
+        #           a1_b1  a1  b1
+        #           a1_b2  a1  b2
+
+        # Notes
+        # -----
+        # dtypes of a and b column can be different but since we probably only store indices, we will not even need
+        # an LFrame so this shouldn't be a problem.
+        ikey = self.data.nonzero()
+        la_key = self.axes._adv_keys_to_combined_axis_la_keys(ikey)
+        return tuple(IGroup(axis_key, axis=axis) for axis_key, axis in zip(la_key, self.axes))
 
     def set_axes(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
         """
@@ -1913,12 +1922,6 @@ class LArray(ABCLArray):
         if isinstance(axis_key, ExprNode):
             axis_key = axis_key.evaluate(self.axes)
 
-        if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_) and bool_passthrough:
-            if len(axis_key.axes) > 1:
-                raise ValueError("mixing ND boolean filters with other filters in getitem is not currently supported")
-            else:
-                return IGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
-
         # translate Axis keys to LGroup keys
         # FIXME: this should be simply:
         # if isinstance(axis_key, Axis):
@@ -1935,6 +1938,7 @@ class LArray(ABCLArray):
         if isinstance(axis_key, (tuple, list, np.ndarray, LArray)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is useful, and estimate which numbers to use
+            # FIXME: check that size is < than key size
             for size in (1, 10, 100, 1000):
                 # TODO: do not recheck already checked elements
                 key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
@@ -1988,206 +1992,42 @@ class LArray(ABCLArray):
             raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
         return valid_axes[0][axis_key]
 
-    # TODO: move this to AxisCollection
-    def _translated_key(self, key, bool_stuff=False):
-        """Completes and translates key
-
-        Parameters
-        ----------
-        key : single axis key or tuple of keys or dict {axis_name: axis_key}
-           Each axis key can be either a scalar, a list of scalars or an LGroup.
-
-        Returns
-        -------
-        Returns a full N dimensional positional key.
-        """
-
-        if isinstance(key, np.ndarray) and np.issubdtype(key.dtype, np.bool_) and not bool_stuff:
-            return key.nonzero()
-        if isinstance(key, LArray) and np.issubdtype(key.dtype, np.bool_) and not bool_stuff:
-            # if only the axes order is wrong, transpose
-            # FIXME: if the key has both missing and extra axes, it could be the correct size (or even shape, see below)
-            if key.size == self.size and key.shape != self.shape:
-                return np.asarray(key.transpose(self.axes)).nonzero()
-            # otherwise we need to transform the key to integer
-            elif key.size != self.size:
-                extra_key_axes = key.axes - self.axes
-                if extra_key_axes:
-                    raise ValueError("subset key %s contains more axes than array %s" % (key.axes, self.axes))
-
-                # do I want to allow key_axis.name to match against axis.num? does not seem like a good idea.
-                # but this should work
-                # >>> a = ndtest((3, 4))
-                # >>> x1, x2 = a.axes
-                # >>> a[x2 > 2]
-
-                # the current solution with hash = (labels, name) works but is slow for large axes and broken if axis
-                # labels are modified in-place, which I am unsure I want to support anyway
-                self.axes.check_compatible(key.axes)
-                local_axes = [self.axes[axis] for axis in key.axes]
-                map_key = dict(zip(local_axes, np.asarray(key).nonzero()))
-                return tuple(map_key.get(axis, slice(None)) for axis in self.axes)
-            else:
-                # correct shape
-                # FIXME: if the key has both missing and extra axes (at the index of the missing axes), the shape
-                # could be the same while the result should not
-                return np.asarray(key).nonzero()
-
-        # convert scalar keys to 1D keys
-        if not isinstance(key, (tuple, dict)):
-            key = (key,)
-
-        if isinstance(key, tuple):
-            # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
-            # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
-            #      a single slice(None) a[:], I don't think there is any point.
-            key = [axis_key for axis_key in key
-                   if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
-
-            # translate all keys to IGroup
-            key = [self._translate_axis_key(axis_key, bool_passthrough=not bool_stuff)
-                   for axis_key in key]
-
-            assert all(isinstance(axis_key, IGroup) for axis_key in key)
-
-            # extract axis from Group keys
-            key_items = [(k.axis, k) for k in key]
+    def __getitem__(self, key, collapse_slices=False, translate_key=True):
+        data = self.data
+        # FIXME: I have a huge problem with boolean axis labels + non points
+        raw_broadcasted_key, res_axes, transpose_indices = self.axes._key_to_raw_and_axes(key, collapse_slices,
+                                                                                          translate_key)
+        res_data = data[raw_broadcasted_key]
+        if res_axes:
+            res = LArray(res_data, res_axes)
+            # if some axes have been moved in front because of advanced indexing, we transpose them back to their
+            # original position
+            return res.transpose(transpose_indices) if transpose_indices is not None else res
         else:
-            # key axes could be strings or axis references and we want real axes
-            key_items = [(self.axes[k], v) for k, v in key.items()]
-            # TODO: use _translate_axis_key (to translate to IGroup here too)
-            # key_items = [axis.translate(axis_key, bool_passthrough=not bool_stuff)
-            #              for axis, axis_key in key_items]
+            return res_data
 
-        # even keys given as dict can contain duplicates (if the same axis was
-        # given under different forms, e.g. name and AxisReference).
-        dupe_axes = list(duplicates(axis for axis, axis_key in key_items))
-        if dupe_axes:
-            dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-            raise ValueError("key has several values for axis: %s" % dupe_axes)
-
-        key = dict(key_items)
-
-        # dict -> tuple (complete and order key)
-        assert all(isinstance(k, Axis) for k in key)
-        key = [key[axis] if axis in key else slice(None)
-               for axis in self.axes]
-
-        # IGroup -> raw positional
-        return tuple(axis.index(axis_key, bool_passthrough=not bool_stuff)
-                     for axis, axis_key in zip(self.axes, key))
-
-    # TODO: we only need axes length => move this to AxisCollection
-    # (but this backend/numpy-specific so we'll probably need to create a subclass of it)
-    def _cross_key(self, key):
-        """
-        Returns a key indexing the cross product.
-
-        Parameters
-        ----------
-        key : complete (contains all dimensions) index-based key.
-
-        Returns
-        -------
-        key
-            A key for indexing the cross product.
-        """
-
-        # handle advanced indexing with more than one indexing array: basic indexing (only integer and slices) and
-        # advanced indexing with only one indexing array are handled fine by numpy
-        if self._needs_advanced_indexing(key):
-            # np.ix_ wants only lists so:
-
-            # 1) transform scalar-key to lists of 1 element. In that case, ndarray.__getitem__ leaves length 1
-            #    dimensions instead of dropping them like we would like, so we will need to drop them later ourselves
-            #    (via reshape)
-            noscalar_key = [[axis_key] if np.isscalar(axis_key) else axis_key
-                            for axis_key in key]
-
-            # 2) expand slices to lists (ranges)
-            # XXX: cache the range in the axis?
-            # TODO: fork np.ix_ to allow for slices directly
-            # it will be tricky to get right though because in that case the result of a[key] can have its dimensions in
-            # the wrong order (if the ix_arrays are not next to each other, the corresponding dimensions are moved to
-            # the front). It is probably worth the trouble though because it is much faster than the current solution
-            # (~5x in my simple test) but this case (num_ix_arrays > 1) is rare in the first place (at least in demo)
-            # so it is not a priority.
-            listkey = tuple(np.arange(*axis_key.indices(len(axis))) if isinstance(axis_key, slice) else axis_key
-                            for axis_key, axis in zip(noscalar_key, self.axes))
-            # np.ix_ computes the cross product of all lists
-            return np.ix_(*listkey)
-        else:
-            return tuple(key)
-
-    def _needs_advanced_indexing(self, key):
-        sequence = (tuple, list, np.ndarray)
-        # count number of indexing arrays (ie non scalar/slices) in tuple
-        num_ix_arrays = sum(isinstance(axis_key, sequence) for axis_key in key)
-        num_scalars = sum(np.isscalar(axis_key) for axis_key in key)
-        num_slices = sum(isinstance(axis_key, slice) for axis_key in key)
-        assert len(key) == num_ix_arrays + num_scalars + num_slices
-        return num_ix_arrays > 1 or (num_ix_arrays > 0 and num_scalars)
-
-    def _collapse_slices(self, key):
-        # isinstance(ndarray, collections.Sequence) is False but it
-        # behaves like one
-        sequence = (tuple, list, np.ndarray)
-        return [_range_to_slice(axis_key, len(axis)) if isinstance(axis_key, sequence) else axis_key
-                for axis_key, axis in zip(key, self.axes)]
-
-    def _get_axes_from_translated_key(self, translated_key, include_scalar_axis_key=False):
-        if include_scalar_axis_key:
-            return [axis.subaxis(axis_key) if not np.isscalar(axis_key) else Axis(1, axis.name)
-                    for axis, axis_key in zip(self.axes, translated_key)]
-        else:
-            return [axis.subaxis(axis_key)
-                    for axis, axis_key in zip(self.axes, translated_key)
-                    if not np.isscalar(axis_key)]
-
-    def __getitem__(self, key, collapse_slices=False):
-        if isinstance(key, ExprNode):
-            key = key.evaluate(self.axes)
-
-        data = np.asarray(self.data)
-        # XXX: I think I should split this into complete_key and translate_key because for LArray keys I need a
-        #      complete key with axes for subaxis
-        translated_key = self._translated_key(key)
-
-        # FIXME: I have a huge problem with boolean labels + non points
-        if isinstance(key, (LArray, np.ndarray)) and np.issubdtype(key.dtype, np.bool_):
-            return LArray(data[translated_key], self._bool_key_new_axes(translated_key))
-
-        if any(isinstance(axis_key, LArray) for axis_key in translated_key):
-            k2 = [k.data if isinstance(k, LArray) else k
-                  for k in translated_key]
-            res_data = data[k2]
-            axes = self._get_axes_from_translated_key(translated_key)
-            first_col = AxisCollection(axes[0])
-            res_axes = first_col.union(*axes[1:])
-            return LArray(res_data, res_axes)
-
-        # TODO: if the original key was a list of labels, subaxis(translated_key).labels == orig_key, so we should use
-        #       orig_axis_key.copy()
-        axes = self._get_axes_from_translated_key(translated_key)
-
-        if collapse_slices:
-            translated_key = self._collapse_slices(translated_key)
-        cross_key = self._cross_key(translated_key)
-        data = data[cross_key]
-        if not axes:
-            # scalars do not need to be wrapped in LArray
-            return data
-        else:
-            # drop length 1 dimensions created by scalar keys
-            res_data = data.reshape(tuple(len(axis) for axis in axes))
-            assert _equal_modulo_len1(data.shape, res_data.shape)
-            return LArray(res_data, axes)
-
-    def __setitem__(self, key, value, collapse_slices=True):
-        # TODO: if key or value has more axes than self, we should use
+    def __setitem__(self, key, value, collapse_slices=True, translate_key=True):
+        # TODO: if key or value has more axes than self, we could use
         # total_axes = self.axes + key.axes + value.axes
         # expanded = self.expand(total_axes)
         # data = np.asarray(expanded.data)
+        data = self.data
+        raw_broadcasted_key, target_axes, _ = self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key)
+        if isinstance(value, LArray):
+            # TODO: the check_compatible should be included in broadcast_with
+            value = value.broadcast_with(target_axes)
+            value.axes.check_compatible(target_axes)
+
+            # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
+            # for users by "incompatible axes"
+            extra_axes = [axis for axis in value.axes - target_axes if len(axis) > 1]
+            if extra_axes:
+                extra_axes = AxisCollection(extra_axes)
+                axes = AxisCollection(target_axes)
+                text = 'axes are' if len(extra_axes) > 1 else 'axis is'
+                raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "
+                                 "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
+        data[raw_broadcasted_key] = value
 
         # concerning keys this can make sense in several cases:
         # single bool LArray key with extra axes.
@@ -2198,129 +2038,6 @@ class LArray(ABCLArray):
 
         # the bool value represents whether the axis label is taken or not if any bool key (part) has more than one
         # axis, we get combined dimensions out of it.
-
-        # int LArray keys
-        # the int value represent an index along ONE particular axis, even if the key has more than one axis.
-        if isinstance(key, ExprNode):
-            key = key.evaluate(self.axes)
-
-        data = np.asarray(self.data)
-        translated_key = self._translated_key(key)
-
-        if isinstance(key, (LArray, np.ndarray)) and np.issubdtype(key.dtype, np.bool_):
-            if isinstance(value, LArray):
-                new_axes = self._bool_key_new_axes(translated_key, wildcard_allowed=True)
-                value = value.broadcast_with(new_axes)
-            data[translated_key] = value
-            return
-
-        if collapse_slices:
-            translated_key = self._collapse_slices(translated_key)
-        cross_key = self._cross_key(translated_key)
-
-        if isinstance(value, LArray):
-            # XXX: we might want to create fakes (or wildcard?) axes in this case, as we only use axes names and axes
-            # length, not the ticks, and those could theoretically take a significant time to compute
-            if self._needs_advanced_indexing(translated_key):
-                # when adv indexing is needed, cross_key converts scalars to lists of 1 element, which does not remove
-                # the dimension like scalars normally do
-                axes = self._get_axes_from_translated_key(translated_key, True)
-            else:
-                axes = self._get_axes_from_translated_key(translated_key)
-            value = value.broadcast_with(axes)
-            value.axes.check_compatible(axes)
-
-            # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
-            # for users by "incompatible axes"
-            extra_axes = [axis for axis in value.axes - axes if len(axis) > 1]
-            if extra_axes:
-                extra_axes = AxisCollection(extra_axes)
-                axes = AxisCollection(axes)
-                text = 'axes are' if len(extra_axes) > 1 else 'axis is'
-                raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "
-                                 "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
-        else:
-            # if value is a "raw" ndarray we rely on numpy broadcasting
-            pass
-
-        data[cross_key] = value
-
-    # TODO: rename to _points_key_new_axes
-    def _bool_key_new_axes(self, key, wildcard_allowed=False, sep='_'):
-        """
-        Returns an AxisCollection containing combined axes.
-        Axes corresponding to scalar key are dropped.
-
-        This method is used in case of boolean key.
-
-        Parameters
-        ----------
-        key : tuple
-            Position-based key
-        wildcard_allowed : bool
-
-        Returns
-        -------
-        AxisCollection
-
-        Notes
-        -----
-        See examples of properties `points` and `ipoints`.
-        """
-        # TODO: use AxisCollection.combine_axes. The problem is that it uses product(*axes_labels)
-        #       while here we need zip(*axes_labels)
-        combined_axes = [axis for axis_key, axis in zip(key, self.axes)
-                         if not _isnoneslice(axis_key) and
-                         not np.isscalar(axis_key)]
-        # scalar axes are not taken, since we want to kill them
-        other_axes = [axis for axis_key, axis in zip(key, self.axes)
-                      if _isnoneslice(axis_key)]
-        assert len(key) > 0
-        axes_indices = [self.axes.index(axis) for axis in combined_axes]
-        diff = np.diff(axes_indices)
-        # this can happen if key has only None slices and scalars
-        if not len(combined_axes):
-            combined_axis_pos = None
-        elif np.any(diff > 1):
-            # combined axes in front
-            combined_axis_pos = 0
-        else:
-            combined_axis_pos = axes_indices[0]
-        # all anonymous axes => anonymous combined axis
-        if all(axis.name is None for axis in combined_axes):
-            combined_name = None
-        else:
-            combined_name = sep.join(str(self.axes.axis_id(axis)) for axis in combined_axes)
-        res_axes = other_axes
-        if combined_axis_pos is not None:
-            if wildcard_allowed:
-                lengths = [len(axis_key) for axis_key in key
-                           if not _isnoneslice(axis_key) and not np.isscalar(axis_key)]
-                combined_axis_len = lengths[0]
-                assert all(l == combined_axis_len for l in lengths)
-                combined_axis = Axis(combined_axis_len, combined_name)
-            else:
-                # TODO: the combined keys should be objects which display as:
-                # (axis1_label, axis2_label, ...) but which should also store
-                # the axis (names?)
-                # Q: Should it be the same object as the NDLGroup?/NDKey?
-                # A: yes, probably. On the Pandas backend, we could/should have
-                #    separate axes. On the numpy backend we cannot.
-                axes_labels = [axis.labels[axis_key]
-                               for axis_key, axis in zip(key, self.axes)
-                               if not _isnoneslice(axis_key) and not np.isscalar(axis_key)]
-                if len(combined_axes) == 1:
-                    # Q: if axis is a wildcard axis, should the result be a
-                    #    wildcard axis (and axes_labels discarded?)
-                    combined_labels = axes_labels[0]
-                else:
-                    combined_labels = [sep.join(str(l) for l in comb)
-                                       for comb in zip(*axes_labels)]
-
-                # CRAP, this can lead to duplicate labels (especially using .points)
-                combined_axis = Axis(combined_labels, combined_name)
-            res_axes.insert(combined_axis_pos, combined_axis)
-        return AxisCollection(res_axes)
 
     def set(self, value, **kwargs):
         """
@@ -2459,7 +2176,7 @@ class LArray(ABCLArray):
                 target_axes = AxisCollection(target_axes)
         if self.axes == target_axes:
             return self
-
+        # determine real target order (= left_only then target_axes)
         target_axes = (self.axes - target_axes) | target_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
@@ -7250,7 +6967,7 @@ class LArray(ABCLArray):
                     if names is None:
                         names = axis.name.split(sep)
                     # Rename axis to make sure we broadcast correctly. We should NOT use sep here, but rather '_'
-                    # must be kept in sync with the default sep of _bool_key_new_axes
+                    # must be kept in sync with the default sep of _adv_keys_to_combined_axis_la_keys
                     new_axis_name = '_'.join(names)
                     if new_axis_name != axis.name:
                         array = array.rename(axis, new_axis_name)
@@ -8021,7 +7738,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
         Target number of dimensions when constructing a diagonal array from an array without axes names/labels.
         Defaults to 2.
     split : bool, optional
-        Whether or not to try to split the axis name and labels
+        Whether or not to try to split the axis name and labels. Defaults to True.
 
     Returns
     -------
@@ -8064,6 +7781,10 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
             axes_labels = list(zip(*np.char.split(axis.labels, '_')))
             axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
         else:
+            # avoid checking the axis name and labels (it expects a value lik sex_sex=M_M,F_F instead of sex=M,F)
+            # TODO: in theory, this should work, but something breaks (probably those damn axes matching rules)
+            # a = a.rename(0, None).ignore_labels()
+            a = a.data
             axes = [axis] + [axis.copy() for _ in range(ndim - 1)]
         res = zeros(axes, dtype=a.dtype)
         diag_indices = kth_diag_indices(res.shape, k)

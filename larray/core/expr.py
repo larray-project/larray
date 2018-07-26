@@ -68,6 +68,7 @@ class ExprNode(object):
 
 
 def expr_eval(expr, context):
+    # in the end it all comes down to AxisReference.evaluate(AxisCollection) which returns the Axis
     return expr.evaluate(context) if isinstance(expr, ExprNode) else expr
 
 

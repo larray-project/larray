@@ -15,7 +15,7 @@ except ImportError:
 
 from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
                                  tmp_path, meta)
-from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, ones, eye, diag, stack,
+from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal)
 from larray.inout.pandas import from_series
@@ -878,6 +878,19 @@ def test_getitem_axis_object():
                                                  a1   3   5"""))
 
 
+def test_getitem_empty_tuple():
+    # an empty tuple should return a view on the original array
+    arr = ndtest((2, 3))
+    res = arr[()]
+    assert_array_equal(res, arr)
+    assert res is not arr
+
+    z = LArray(0)
+    res = z[()]
+    assert res == z
+    assert res is not z
+
+
 def test_positional_indexer_getitem(array):
     raw = array.data
     for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0], ([1, 0], 5)]:
@@ -1075,6 +1088,43 @@ def test_setitem_larray(array, small_array):
     la2 = LArray(small_array.data, axes=(sex2, lipro))
     with pytest.raises(ValueError, match="incompatible axes:"):
         arr[:] = la2
+
+    # key has multiple LArrays (this is used within .points indexing)
+    # ===============================================================
+    # first some setup
+    a = Axis(['a0', 'a1'], None)
+    b = Axis(['b0', 'b1', 'b2'], None)
+    expected = ndtest((a, b))
+    value = expected.combine_axes()
+
+    # a) with anonymous axes
+    combined_axis = value.axes[0]
+    a_key = LArray([0, 0, 0, 1, 1, 1], combined_axis)
+    b_key = LArray([0, 1, 2, 0, 1, 2], combined_axis)
+    key = (a.i[a_key], b.i[b_key])
+    array = empty((a, b))
+    array[key] = value
+    assert_array_equal(array, expected)
+
+    # b) with wildcard combined_axis
+    wild_combined_axis = combined_axis.ignore_labels()
+    wild_a_key = LArray([0, 0, 0, 1, 1, 1], wild_combined_axis)
+    wild_b_key = LArray([0, 1, 2, 0, 1, 2], wild_combined_axis)
+    wild_key = (a.i[wild_a_key], b.i[wild_b_key])
+    array = empty((a, b))
+    array[wild_key] = value
+    assert_array_equal(array, expected)
+
+    # c) with a wildcard value
+    wild_value = value.ignore_labels()
+    array = empty((a, b))
+    array[key] = wild_value
+    assert_array_equal(array, expected)
+
+    # d) with a wildcard combined axis and wildcard value
+    array = empty((a, b))
+    array[wild_key] = wild_value
+    assert_array_equal(array, expected)
 
 
 def test_setitem_ndarray(array):
