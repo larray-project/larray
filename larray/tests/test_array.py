@@ -3071,8 +3071,12 @@ def test_from_series():
     res = from_series(s)
     assert_array_equal(res, expected)
 
-    expected = expected.sort_axes()
     res = from_series(s, sort_rows=True)
+    assert_array_equal(res, expected.sort_axes())
+
+    expected[0, 'F'] = -1
+    s = s.reset_index().drop([3, 4, 5]).set_index(['age', 'gender', 'time'])[0]
+    res = from_series(s, fill_value=-1)
     assert_array_equal(res, expected)
 
 
@@ -3418,6 +3422,39 @@ def test_from_frame():
     assert la.shape == (4, 2, 3)
     assert la.axes.names == ['age', 'sex', 'time']
     assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+
+    # 4) test sort_rows and sort_columns arguments
+    # ============================================
+    age = Axis('age=2,0,1,3')
+    gender = Axis('gender=M,F')
+    time = Axis('time=2016,2015,2017')
+    columns = pd.Index(time.labels, name=time.name)
+
+    # df.index is an Index instance
+    expected = ndtest((gender, time))
+    index = pd.Index(gender.labels, name=gender.name)
+    data = expected.data
+    df = pd.DataFrame(data, index=index, columns=columns)
+
+    expected = expected.sort_axes()
+    res = from_frame(df, sort_rows=True, sort_columns=True)
+    assert_array_equal(res, expected)
+
+    # df.index is a MultiIndex instance
+    expected = ndtest((age, gender, time))
+    index = pd.MultiIndex.from_product(expected.axes[:-1].labels, names=expected.axes[:-1].names)
+    data = expected.data.reshape(len(age) * len(gender), len(time))
+    df = pd.DataFrame(data, index=index, columns=columns)
+
+    res = from_frame(df, sort_rows=True, sort_columns=True)
+    assert_array_equal(res, expected.sort_axes())
+
+    # 5) test fill_value
+    # ==================
+    expected[0, 'F'] = -1
+    df = df.reset_index().drop([3]).set_index(['age', 'gender'])
+    res = from_frame(df, fill_value=-1)
+    assert_array_equal(res, expected)
 
 
 def test_to_csv(tmpdir):
