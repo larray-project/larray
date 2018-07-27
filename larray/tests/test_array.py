@@ -818,24 +818,20 @@ a1   b2   2   5   5   2""")
 
 
 # def test_getitem_multiple_larray_key_guess():
-#     a = Axis('a', ['a1', 'a2'])
-#     b = Axis('b', ['b1', 'b2', 'b3'])
-#     c = Axis('c', ['c1', 'c2', 'c3', 'c4'])
-#     d = Axis('d', ['d1', 'd2', 'd3', 'd4', 'd5'])
-#     e = Axis('e', ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'])
+#     a, b, c, d, e = ndtest((2, 3, 4, 5, 6)).axes
 #
-#     # 1) key with extra disjoint axes
-#     arr = ndtest([a, b])
-#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c])
-#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [d])
-#     self.assertEqual(arr[k1, k2].axes, [c, d])
+#     # 1) keys with each a different extra axis
+#     arr = ndtest((a, b))
+#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], c)
+#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], d)
+#     assert arr[k1, k2].axes == [c, d]
 #
-#     # 2) key with common extra axes
-#     arr = ndtest([a, b])
+#     # 2) key with a common extra axis
+#     arr = ndtest((a, b))
 #     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c, d])
 #     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [c, e])
 #     # TODO: not sure what *should* happen in this case!
-#     self.assertEqual(arr[k1, k2].axes, [c, d, e])
+#     assert arr[k1, k2].axes == [c, d, e]
 
 
 def test_getitem_ndarray_key_guess(array):
