@@ -3047,6 +3047,7 @@ def test_from_lists():
 
 
 def test_from_series():
+    # Series with Index as index
     expected = ndtest(3)
     s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
     assert_array_equal(from_series(s), expected)
@@ -3056,6 +3057,23 @@ def test_from_series():
 
     expected = ndtest(3)[['a2', 'a0', 'a1']]
     assert_array_equal(from_series(s), expected)
+
+    # Series with MultiIndex as index
+    age = Axis('age=0..3')
+    gender = Axis('gender=M,F')
+    time = Axis('time=2015..2017')
+    expected = ndtest((age, gender, time))
+
+    index = pd.MultiIndex.from_product(expected.axes.labels, names=expected.axes.names)
+    data = expected.data.flatten()
+    s = pd.Series(data, index)
+
+    res = from_series(s)
+    assert_array_equal(res, expected)
+
+    expected = expected.sort_axes()
+    res = from_series(s, sort_rows=True)
+    assert_array_equal(res, expected)
 
 
 def test_from_frame():

@@ -346,6 +346,8 @@ Miscellaneous improvements
 
 * renamed `nan_equals` argument of `equals` and `eq` methods of LArray as `nans_equal`.
 
+* made the `from_series` function support series with multiindex (closes :issue:`465`)
+
 
 Fixes
 -----
