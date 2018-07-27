@@ -706,108 +706,117 @@ def test_getitem_structured_key_with_groups():
 
 
 def test_getitem_single_larray_key_guess():
-    a = Axis(['a1', 'a2'], 'a')
-    b = Axis(['b1', 'b2', 'b3'], 'b')
-    c = Axis(['c1', 'c2', 'c3', 'c4'], 'c')
+    # TODO: we really need another way to get test axes, e.g. testaxes(2, 3, 4) or testaxes((2, 3, 4))
+    a, b, c = ndtest((2, 3, 4)).axes
+    arr = ndtest((a, b))
+    # >>> arr
+    # a\b b0 b1 b2
+    #  a0  0  1  2
+    #  a1  3  4  5
 
     # 1) key with extra axis
-    arr = ndtest([a, b])
-    # replace the values_axis by the extra axis
-    key = LArray(['a1', 'a2', 'a2', 'a1'], [c])
-    assert arr[key].axes == [c, b]
+    key = LArray(['a0', 'a1', 'a1', 'a0'], c)
+    # replace the target axis by the extra axis
+    expected = from_string(r"""
+c\b  b0  b1  b2
+ c0   0   1   2
+ c1   3   4   5
+ c2   3   4   5
+ c3   0   1   2""")
+    assert_array_equal(arr[key], expected)
 
-    # 2) key with the values axis (the one being replaced)
-    arr = ndtest([a, b])
-    key = LArray(['b2', 'b1', 'b3'], [b])
+    # 2) key with the target axis (the one being replaced)
+    key = LArray(['b1', 'b0', 'b2'], b)
     # axis stays the same but data should be flipped/shuffled
-    assert arr[key].axes == [a, b]
+    expected = from_string(r"""
+a\b  b0  b1  b2
+ a0   1   0   2
+ a1   4   3   5""")
+    assert_array_equal(arr[key], expected)
 
-    # 2bis) key with part of the values axis (the one being replaced)
-    arr = ndtest([a, b])
-    b_bis = Axis(['b1', 'b2'], 'b')
-    key = LArray(['b3', 'b2'], [b_bis])
-    assert arr[key].axes == [a, b_bis]
+    # 2bis) key with part of the target axis (the one being replaced)
+    key = LArray(['b2', 'b1'], 'b=b0,b1')
+    expected = from_string(r"""
+a\b  b0  b1
+ a0   2   1
+ a1   5   4""")
+    assert_array_equal(arr[key], expected)
 
-    # 3) key with another existing axis (not the values axis)
-#     arr = ndtest([a, b])
-#     key = LArray(['a1', 'a2', 'a1'], [b])
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a['a1', 'a2', 'a1'] ^ x.b['b1', 'b2', 'b3']]
-#     # res = tmp.set_axes([b])
-#     # both the values axis and the other existing axis
-#     self.assertEqual(arr[key].axes, [b])
-#
-#     # 3bis) key with part of another existing axis (not the values axis)
-#     arr = ndtest([a, b])
-#     b_bis = Axis('b', ['b1', 'b2'])
-#     key = LArray(['a2', 'a1'], [b_bis])
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a['a2', 'a1'] ^ x.b['b1', 'b2']]
-#     # res = tmp.set_axes([b_bis])
-#     self.assertEqual(arr[key].axes, [b_bis])
-#
-#     # 4) key has both the values axis and another existing axis
-#     # a\b b1 b2 b3
-#     #  a1  0  1  2
-#     #  a2  3  4  5
-#     arr = ndtest([a, b])
-#     # a\b b1 b2 b3
-#     #  a1 a1 a2 a1
-#     #  a2 a2 a1 a2
-#     key = LArray([['a1', 'a2', 'a1'],
-#                   ['a2', 'a1', 'a2']],
-#                  [a, b])
-#     # a\b b1 b2 b3
-#     #  a1  0  4  2
-#     #  a2  3  1  5
-#     # we need to produce the following keys for numpy:
-#     # k0:
-#     # [[0, 1, 0],
-#     #  [1, 0, 1]]
-#     # TODO: [0, 1, 2] is enough in this case (thanks to broadcasting) because in numpy missing dimensions are
-#     #       filled by adding length 1 dimensions to the left. Ie it works because b is the last dimension.
-#     # k1:
-#     # [[0, 1, 2],
-#     #  [0, 1, 2]]
-#
-#     # we need points indexing
-#     # equivalent to
-#     # tmp = arr[x.a[['a1', 'a2', 'a1'],
-#     #               ['a2', 'a1', 'a2']] ^ x.b['b1', 'b2', 'b3']]
-#     # res = tmp.set_axes([a, b])
-#     # this is kinda ugly because a ND x.a has implicit (positional dimension
-#     res = arr[key]
-#     self.assertEqual(res.axes, [a, b])
-#     assert_array_equal(res, [[0, 4, 2],
-#                              [3, 1, 5]])
-#
-#     # 5) key has both the values axis and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([['a1', 'a2', 'a2', 'a1'], ['a2', 'a1', 'a1', 'a2']],
-#                  [a, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#     # 6) key has both another existing axis (not values) and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([['b1', 'b2', 'b1', 'b2'], ['b3', 'b4', 'b3', 'b4']],
-#                  [a, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#     # 7) key has the values axis, another existing axis and an extra axis
-#     arr = ndtest([a, b])
-#     key = LArray([[['a1', 'a2', 'a1', 'a2'],
-#                    ['a2', 'a1', 'a2', 'a1'],
-#                    ['a1', 'a2', 'a1', 'a2']],
-#
-#                   [['a1', 'a2', 'a2', 'a1'],
-#                    ['a2', 'a2', 'a2', 'a2'],
-#                    ['a1', 'a2', 'a2', 'a1']]],
-#                  [a, b, c])
-#     self.assertEqual(arr[key].axes, [a, c])
-#
-#
+    # 3) key with another existing axis (not the target axis)
+    key = LArray(['a0', 'a1', 'a0'], b)
+    expected = from_string("""
+b  b0  b1  b2
+\t  0   4   2""")
+    assert_array_equal(arr[key], expected)
+
+    # TODO: this does not work yet but should be much easier to implement with "align" in make_np_broadcastable
+    # 3bis) key with *part* of another existing axis (not the target axis)
+    # key = LArray(['a1', 'a0'], 'b=b0,b1')
+    # expected = from_string("""
+    # b  b0  b1
+    # \t  3   1""")
+    # assert_array_equal(arr[key], expected)
+
+    # 4) key has both the target axis and another existing axis
+    # TODO: maybe we should make this work without requiring astype!
+    key = from_string(r"""
+a\b b0 b1 b2
+ a0 a0 a1 a0
+ a1 a1 a0 a1""").astype(str)
+    expected = from_string(r"""
+a\b  b0  b1  b2
+ a0   0   4   2
+ a1   3   1   5""")
+    assert_array_equal(arr[key], expected)
+
+    # 5) key has both the target axis and an extra axis
+    key = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0  a0  a1  a1  a0
+ a1  a1  a0  a0  a1""").astype(str)
+    expected = from_string(r"""
+ a  c\b  b0  b1  b2
+a0   c0   0   1   2
+a0   c1   3   4   5
+a0   c2   3   4   5
+a0   c3   0   1   2
+a1   c0   3   4   5
+a1   c1   0   1   2
+a1   c2   0   1   2
+a1   c3   3   4   5""")
+    assert_array_equal(arr[key], expected)
+
+    # 6) key has both another existing axis (not target) and an extra axis
+    key = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0  b0  b1  b0  b1
+ a1  b2  b1  b2  b1""").astype(str)
+    expected = from_string(r"""
+a\c  c0  c1  c2  c3
+ a0   0   1   0   1
+ a1   5   4   5   4""")
+    assert_array_equal(arr[key], expected)
+
+    # 7) key has the target axis, another existing axis and an extra axis
+    key = from_string(r"""
+ a  b\c  c0  c1  c2  c3
+a0   b0  a0  a1  a0  a1
+a0   b1  a1  a0  a1  a0
+a0   b2  a0  a1  a0  a1
+a1   b0  a0  a1  a1  a0
+a1   b1  a1  a1  a1  a1
+a1   b2  a0  a1  a1  a0""").astype(str)
+    expected = from_string(r"""
+ a  b\c  c0  c1  c2  c3
+a0   b0   0   3   0   3
+a0   b1   4   1   4   1
+a0   b2   2   5   2   5
+a1   b0   0   3   3   0
+a1   b1   4   4   4   4
+a1   b2   2   5   5   2""")
+    assert_array_equal(arr[key], expected)
+
+
 # def test_getitem_multiple_larray_key_guess():
 #     a = Axis('a', ['a1', 'a2'])
 #     b = Axis('b', ['b1', 'b2', 'b3'])
