@@ -7780,6 +7780,15 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     if inc is None:
         inc = 1 if mult is 1 else 0
 
+    # fast path for the most common case
+    if (mult is 1 and isinstance(inc, (int, np.integer)) and isinstance(initial, (int, np.integer)) and
+            func is None and axes is None):
+        axis = _make_axis(axis)
+        # stop is not included
+        stop = initial + inc * len(axis)
+        data = np.arange(initial, stop, inc)
+        return LArray(data, axis, meta=meta)
+
     if axes is None:
         if not isinstance(axis, Axis):
             axis = _make_axis(axis)
@@ -7791,6 +7800,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     else:
         axes = AxisCollection(axes)
         axis = axes[axis]
+
     res_dtype = np.dtype(common_type((initial, inc, mult)))
     res = empty(axes, dtype=res_dtype, meta=meta)
     res[axis.i[0]] = initial
@@ -7858,7 +7868,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
         if isinstance(initial, LArray) and np.isscalar(inc):
             inc = full_like(initial, inc)
 
-        # inc only (integer scalar)
+        # inc only (integer scalar). Equivalent to fastpath above but with axes not None).
         if np.isscalar(mult) and mult == 1 and np.isscalar(inc) and res_dtype.kind == 'i':
             # stop is not included
             stop = initial + inc * len(axis)
