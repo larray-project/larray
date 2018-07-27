@@ -69,9 +69,9 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, **kwargs):
     return df.reindex(new_index, columns, **kwargs), labels
 
 
-def from_series(s, sort_rows=False):
+def from_series(s, sort_rows=False, meta=None, **kwargs):
     """
-    Converts Pandas Series into 1D LArray.
+    Converts Pandas Series into LArray.
 
     Parameters
     ----------
@@ -79,17 +79,60 @@ def from_series(s, sort_rows=False):
         Input Pandas Series.
     sort_rows : bool, optional
         Whether or not to sort the rows alphabetically. Defaults to False.
+    meta : list of pairs or dict or OrderedDict or Metadata, optional
+        Metadata (title, description, author, creation_date, ...) associated with the array.
+        Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
     LArray
+
+    See Also
+    --------
+    LArray.to_series
+
+    Examples
+    --------
+    >>> from larray import ndtest
+    >>> s = ndtest((2, 2, 2), dtype=float).to_series()
+    >>> s                                                                             # doctest: +NORMALIZE_WHITESPACE
+    a   b   c
+    a0  b0  c0    0.0
+            c1    1.0
+        b1  c0    2.0
+            c1    3.0
+    a1  b0  c0    4.0
+            c1    5.0
+        b1  c0    6.0
+            c1    7.0
+    dtype: float64
+    >>> from_series(s)
+     a  b\\c   c0   c1
+    a0   b0  0.0  1.0
+    a0   b1  2.0  3.0
+    a1   b0  4.0  5.0
+    a1   b1  6.0  7.0
     """
-    name = s.name if s.name is not None else s.index.name
-    if name is not None:
-        name = str(name)
-    if sort_rows:
-        s = s.sort_index()
-    return LArray(s.values, Axis(s.index.values, name))
+    if isinstance(s.index, pd.core.index.MultiIndex):
+        # TODO: use argument sort=False when it will be available
+        # (see https://github.com/pandas-dev/pandas/issues/15105)
+        fill_value = kwargs.get('fill_value', nan)
+        df = s.unstack(level=-1, fill_value=fill_value)
+        # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
+        if not sort_rows:
+            labels = index_to_labels(s.index, sort=False)
+            if isinstance(df.index, pd.core.index.MultiIndex):
+                index = pd.MultiIndex.from_tuples(list(product(*labels[:-1])), names=s.index.names[:-1])
+            else:
+                index = labels[0]
+            columns = labels[-1]
+            df = df.reindex(index=index, columns=columns, fill_value=fill_value)
+        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_rows, meta=meta, **kwargs)
+    else:
+        name = decode(s.name, 'utf8') if s.name is not None else decode(s.index.name, 'utf8')
+        if sort_rows:
+            s = s.sort_index()
+        return LArray(s.values, Axis(s.index.values, name), meta=meta)
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False, meta=None,
@@ -237,23 +280,10 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
             index_columns = [df.columns[i] for i in range(len(df.columns) - 1)]
             df.set_index(index_columns, inplace=True)
             series = df[df.columns[-1]]
-            if isinstance(series.index, pd.core.index.MultiIndex):
-                fill_value = kwargs.get('fill_value', nan)
-                # TODO: use argument sort=False when it will be available
-                # (see https://github.com/pandas-dev/pandas/issues/15105)
-                df = series.unstack(level=-1, fill_value=fill_value)
-                # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
-                labels = df_labels(series, sort=False)
-                index = pd.MultiIndex.from_tuples(list(product(*labels[:-1])), names=series.index.names[:-1])
-                columns = labels[-1]
-                df = df.reindex(index=index, columns=columns, fill_value=fill_value)
-            else:
-                series.name = series.index.name
-                if sort_rows:
-                    raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
-                return from_series(series, sort_rows=sort_columns)
+            series.name = df.index.name
+            return from_series(series, sort_rows=sort_columns, **kwargs)
 
-    # handle 1D
+    # handle 1D arrays
     if len(df) == 1 and (pd.isnull(df.index.values[0]) or
                          (isinstance(df.index.values[0], basestring) and df.index.values[0].strip() == '')):
         if parse_header:
