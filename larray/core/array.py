@@ -6268,7 +6268,8 @@ class LArray(ABCLArray):
 
     @deprecate_kwarg('sheet_name', 'sheet')
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
-                 header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
+                 header=True, transpose=False, wide=True, value_name='value', engine=None, sheets=None,
+                 *args, **kwargs):
         """
         Writes array in the specified sheet of specified excel workbook.
 
@@ -6303,28 +6304,76 @@ class LArray(ABCLArray):
         engine : 'xlwings' | 'openpyxl' | 'xlsxwriter' | 'xlwt' | None, optional
             Engine to use to make the output. If None (default), it will use 'xlwings' by default if the module is
             installed and relies on Pandas default writer otherwise.
+        sheets : str or Axis or AxisRefence or Group or any sequence of them, optional
+            Axis(es) or group(s) used to split and dump the array into multiple sheets. If axis(es), each
+            (combination of) label(s) will create a new sheet and dump the corresponding subset in it.
+            If groups, each group will be used to extract and dump a new subset.
+            The `sheets` argument is only available for 'xlwings' engine.
+            The `sheets` argument cannot by used in combination with the `sheet` argument. Default to None.
         *args
         **kwargs
 
         Examples
         --------
-        >>> a = ndtest('nat=BE,FO;sex=M,F')
-        >>> # write to a new (unnamed) sheet
-        >>> a.to_excel('test.xlsx')  # doctest: +SKIP
-        >>> # write to top-left corner of an existing sheet
-        >>> a.to_excel('test.xlsx', 'Sheet1')  # doctest: +SKIP
-        >>> # add to existing sheet starting at position A15
-        >>> a.to_excel('test.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
-        """
-        sheet = _translate_sheet_name(sheet)
+        >>> pop = ndtest('age=0..5;gender=M,F;nat=BE,FO')
 
-        if wide:
-            pd_obj = self.to_frame(fold_last_axis_name=True)
-            if transpose and self.ndim >= 2:
-                names = pd_obj.index.names
-                pd_obj.index.names = names[:-2] + ['\\'.join(reversed(names[-1].split('\\')))]
+        Write to a new (unnamed) sheet
+
+        >>> pop.to_excel('pop.xlsx')  # doctest: +SKIP
+
+        Write to top-left corner of an existing sheet
+
+        >>> pop.to_excel('pop.xlsx', 'Sheet1')  # doctest: +SKIP
+
+        Add to existing sheet starting at position A15
+
+        >>> pop.to_excel('pop.xlsx', 'Sheet1', 'A15')  # doctest: +SKIP
+
+        Split an array into several sheets
+
+        >>> # save pop[BE] in sheet BE and pop[FO] in sheet FO
+        >>> pop.to_excel('pop.xlsx', sheets='nat') # doctest: +SKIP
+        >>> # equivalent to:
+        >>> # with open('pop.xlsx', overwrite_file=True) as wb:
+        >>> #     for n in pop.nat:
+        >>> #         wb[n] = pop[n]
+
+        >>> # save pop[M, BE], ..., pop[F, FO] in sheets M_BE, ..., F_FO.
+        >>> pop.to_excel('pop.xlsx', sheets=('gender', 'nat')) # doctest: +SKIP
+
+        >>> # save pop[0], pop[2], pop[4] in sheets 0, 2, 4.
+        >>> even = pop.age[0::2] >> 'even'
+        >>> pop.to_excel('pop.xlsx', sheets=even) # doctest: +SKIP
+
+        >>> # save pop[even] and pop[odd] in sheets even and odd.
+        >>> odd = pop.age[1::2] >> 'odd'
+        >>> pop.to_excel('pop.xlsx', sheets=(even, odd)) # doctest: +SKIP
+        """
+        if sheet is not None and sheets is not None:
+            raise ValueError("'sheet' and 'sheets' arguments cannot be used in the same time")
+
+        array = self
+        if sheets is not None:
+            if isinstance(sheets, Group) or \
+                    (hasattr(sheets, '__len__') and any([isinstance(g, Group) for g in sheets])):
+                labels_or_groups = sheets
+            else:
+                labels_or_groups = self.axes[sheets]
+                if not isinstance(labels_or_groups, Axis):
+                    array = self.combine_axes(labels_or_groups)
+                    labels_or_groups = (array.axes - self.axes)[0]
         else:
-            pd_obj = self.to_series(value_name)
+            labels_or_groups = None
+
+        def to_pandas_obj(array, wide):
+            if wide:
+                pd_obj = array.to_frame(fold_last_axis_name=True)
+                if transpose and array.ndim >= 2:
+                    names = pd_obj.index.names
+                    pd_obj.index.names = names[:-2] + ['\\'.join(reversed(names[-1].split('\\')))]
+                return pd_obj
+            else:
+                return array.to_series(value_name)
 
         if engine is None:
             engine = 'xlwings' if xw is not None else None
@@ -6347,19 +6396,29 @@ class LArray(ABCLArray):
 
             wb = open_excel(filepath, overwrite_file=overwrite_file)
 
-            if new_workbook:
-                sheetobj = wb.sheets[0]
-                if sheet is not None:
-                    sheetobj.name = sheet
-            elif sheet is not None and sheet in wb:
-                sheetobj = wb.sheets[sheet]
-                if clear_sheet:
-                    sheetobj.clear()
-            else:
-                sheetobj = wb.sheets.add(sheet, after=wb.sheets[-1])
+            def set_sheet(sheet_name):
+                sheet_name = _translate_sheet_name(sheet_name)
+                if new_workbook:
+                    sheetobj = wb.sheets[0]
+                    if sheet_name is not None:
+                        sheetobj.name = sheet_name
+                elif sheet_name is not None and sheet_name in wb:
+                    sheetobj = wb.sheets[sheet_name]
+                    if clear_sheet:
+                        sheetobj.clear()
+                else:
+                    sheetobj = wb.sheets.add(sheet_name, after=wb.sheets[-1])
+                return sheetobj
 
             options = dict(header=header, index=header, transpose=transpose)
-            sheetobj[position].options(**options).value = pd_obj
+            if labels_or_groups is None:
+                sheetobj = set_sheet(sheet)
+                sheetobj[position].options(**options).value = to_pandas_obj(array, wide)
+            else:
+                for label_or_group in labels_or_groups:
+                    sheetobj = set_sheet(label_or_group)
+                    sheetobj[position].options(**options).value = to_pandas_obj(array[label_or_group], wide)
+                    new_workbook = False
             # TODO: implement wide via/in dump
             # sheet[position] = self.dump(header=header, wide=wide)
             if close:
@@ -6370,7 +6429,9 @@ class LArray(ABCLArray):
                 sheet = 'Sheet1'
             # TODO: implement position in this case
             # startrow, startcol
-            pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
+            sheet_name = _translate_sheet_name(sheet)
+            pd_obj = to_pandas_obj(array, wide)
+            pd_obj.to_excel(filepath, sheet_name, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """Sends the content of the array to clipboard.

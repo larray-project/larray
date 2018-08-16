@@ -346,6 +346,39 @@ Miscellaneous improvements
 
 * renamed `nan_equals` argument of `equals` and `eq` methods of LArray as `nans_equal`.
 
+* added `sheets` argument to the `to_excel` method. It allows to split an array along an axis
+  or several axes or a group or several groups and dump each subset into a separate Excel sheet:
+
+    >>> pop = ndtest('age=0..5;gender=M,F;nat=BE,FO')
+
+    Split an array along an axis
+
+    >>> # save pop[BE] in sheet BE and pop[FO] in sheet FO
+    >>> pop.to_excel('pop.xlsx', sheets='nat')
+    >>> # equivalent to:
+    >>> with open('pop.xlsx', overwrite_file=True) as wb:
+    >>>     for n in pop.nat:
+    >>>         wb[n] = a[n]
+
+    Split an array along axes
+
+    >>> # save pop[M, BE], ..., pop[F, FO] in sheets M_BE, ..., F_FO.
+    >>> pop.to_excel('pop.xlsx', sheets=('gender', 'nat'))
+
+    Split an array along a group
+
+    >>> # save pop[0], pop[2], pop[4] in sheets 0, 2, 4.
+    >>> even = pop.age[0::2] >> 'even'
+    >>> pop.to_excel('pop.xlsx', sheets=even)
+
+    Split an array along groups
+
+    >>> # save pop[even] and pop[odd] in sheets even and odd.
+    >>> odd = pop.age[1::2] >> 'odd'
+    >>> pop.to_excel('pop.xlsx', sheets=(even, odd))
+
+  Closes issue:`423`.
+
 
 Fixes
 -----
