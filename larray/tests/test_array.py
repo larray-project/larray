@@ -3660,9 +3660,40 @@ def test_to_excel_xlwings(tmpdir):
     group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
     a3[group].to_excel(fpath, group, engine='xlwings')
     # checks sheet names
-    sheet_names = sorted(open_excel(fpath).sheet_names())
-    assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
-                                  '_name_with_special___char_'])
+    with open_excel(fpath) as wb:
+        sheet_names = sorted(wb.sheet_names())
+        assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
+                                      '_name_with_special___char_'])
+
+    # split array in several sheets using sheets argument
+    # a) sheets = axis
+    os.remove(fpath)
+    a3.to_excel(fpath, sheets='c', engine='xlwings')
+    for label in a3.c:
+        res = read_excel(fpath, label, engine='xlrd')
+        assert_array_equal(res, a3[label])
+    # b) sheets = axes
+    os.remove(fpath)
+    axes = ('b', 'c')
+    a3.to_excel(fpath, sheets=axes, engine='xlwings')
+    a3_combined = a3.combine_axes(axes)
+    for label in a3_combined.b_c:
+        res = read_excel(fpath, label, engine='xlrd')
+        assert_array_equal(res, a3_combined[label])
+    # c) sheets = group
+    os.remove(fpath)
+    group = a3.c['c0,c2'] >> 'even'
+    a3.to_excel(fpath, sheets=group, engine='xlwings')
+    for label in group:
+        res = read_excel(fpath, label, engine='xlrd')
+        assert_array_equal(res, a3[label])
+    # d) sheets = groups
+    os.remove(fpath)
+    groups = [a3.c['c0,c2'] >> 'even', a3.c['c1,c3'] >> 'odd']
+    a3.to_excel(fpath, sheets=groups, engine='xlwings')
+    for group in groups:
+        res = read_excel(fpath, group.name, engine='xlrd')
+        assert_array_equal(res, a3[group])
 
 
 def test_as_table():
