@@ -817,21 +817,59 @@ a1   b2   2   5   5   2""")
     assert_array_equal(arr[key], expected)
 
 
-# def test_getitem_multiple_larray_key_guess():
-#     a, b, c, d, e = ndtest((2, 3, 4, 5, 6)).axes
-#
-#     # 1) keys with each a different extra axis
-#     arr = ndtest((a, b))
-#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], c)
-#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], d)
-#     assert arr[k1, k2].axes == [c, d]
-#
-#     # 2) key with a common extra axis
-#     arr = ndtest((a, b))
-#     k1 = LArray(['a1', 'a2', 'a2', 'a1'], [c, d])
-#     k2 = LArray(['b1', 'b2', 'b3', 'b1'], [c, e])
-#     # TODO: not sure what *should* happen in this case!
-#     assert arr[k1, k2].axes == [c, d, e]
+def test_getitem_multiple_larray_key_guess():
+    a, b, c, d, e = ndtest((2, 3, 2, 3, 2)).axes
+    arr = ndtest((a, b))
+    # >>> arr
+    # a\b  b0  b1  b2
+    #  a0   0   1   2
+    #  a1   3   4   5
+
+    # 1) keys with each a different existing axis
+    k1 = from_string(""" a  a1  a0
+                        \t  b2  b0""")
+    k2 = from_string(""" b  b1  b2  b3
+                        \t  a0  a1  a0""")
+    expected = from_string(r"""b\a  a1  a0
+                                b1   2   0
+                                b2   5   3
+                                b3   2   0""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 2) keys with a common existing axis
+    k1 = from_string(""" b  b0  b1  b2
+                        \t  a1  a0  a1""")
+    k2 = from_string(""" b  b0  b1  b2
+                        \t  b1  b2  b0""")
+    expected = from_string(""" b  b0  b1  b2
+                              \t   4   2   3""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 3) keys with each a different extra axis
+    k1 = from_string(""" c  c0  c1
+                        \t  a1  a0""")
+    k2 = from_string(""" d  d0  d1  d2
+                        \t  b1  b2  b0""")
+    expected = from_string(r"""c\d  d0  d1  d2
+                                c0   4   5   3
+                                c1   1   2   0""")
+    assert_array_equal(arr[k1, k2], expected)
+
+    # 4) keys with a common extra axis
+    k1 = from_string(r"""c\d  d0  d1  d2
+                          c0  a1  a0  a1
+                          c1  a0  a1  a0""").astype(str)
+    k2 = from_string(r"""c\e  e0  e1
+                          c0  b1  b2
+                          c1  b0  b1""").astype(str)
+    expected = from_string(r""" c  d\e  e0  e1
+                               c0   d0   4   5
+                               c0   d1   1   2
+                               c0   d2   4   5
+                               c1   d0   0   1
+                               c1   d1   3   4
+                               c1   d2   0   1""")
+    assert_array_equal(arr[k1, k2], expected)
 
 
 def test_getitem_ndarray_key_guess(array):
