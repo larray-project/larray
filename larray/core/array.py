@@ -751,13 +751,8 @@ class LArray(ABCLArray):
         >>> b
         b.i[a_b  a0_b2  a1_b0  a1_b1  a1_b2
                  2      0      1      2]
-        >>> arr.points[cond.nonzero()]
-        a_b  a0_b2  a1_b0  a1_b1  a1_b2
-                 2      3      4      5
+        >>> # equivalent to arr[cond]
         >>> arr[cond.nonzero()]
-        a_b  a0_b2  a1_b0  a1_b1  a1_b2
-                 2      3      4      5
-        >>> arr[cond]
         a_b  a0_b2  a1_b0  a1_b1  a1_b2
                  2      3      4      5
         """

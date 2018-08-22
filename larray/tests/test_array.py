@@ -17,7 +17,7 @@ from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan
                                  tmp_path, meta)
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal, IGroup)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO, LHDFStore
@@ -1363,6 +1363,30 @@ def test_filter_multiple_axes(array):
     assert array.filter(age=57, sex='M,F').shape == (44, 2, 15)
     assert array.filter(age=57, lipro='P01,P05').shape == (44, 2, 2)
     assert array.filter(geo='A57', lipro='P01,P05').shape == (116, 2, 2)
+
+
+def test_nonzero():
+    arr = ndtest((2, 3))
+    a, b = arr.axes
+    cond = arr > 1
+    assert_array_equal(cond, from_string(r"""a\b     b0     b1    b2
+                                              a0  False  False  True
+                                              a1   True   True  True"""))
+    a_group, b_group = cond.nonzero()
+    assert isinstance(a_group, IGroup)
+    assert a_group.axis is a
+    assert a_group.key.equals(from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                                              \t      0      1      1      1"""))
+    assert isinstance(b_group, IGroup)
+    assert b_group.axis is b
+    assert b_group.key.equals(from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                                              \t      2      0      1      2"""))
+
+    expected = from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
+                               \t      2      3      4      5""")
+    assert_array_equal(arr[a_group, b_group], expected)
+    assert_array_equal(arr.points[a_group, b_group], expected)
+    assert_array_equal(arr[cond], expected)
 
 
 def test_contains():
