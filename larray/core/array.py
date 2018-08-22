@@ -377,7 +377,7 @@ class LArrayPointsIndexer(object):
         axes = self.array.axes
         # 1) complete key & translate (those two cannot be dissociated because to complete
         #    the key we need to know which axis each key belongs to and to do that, we need to
-        #    translate the key to indices.
+        #    translate the key to indices)
         translated_key = axes._translated_key(key)
         # 2) transform keys to IGroup and non-LArray advanced keys to LArray with a combined axis
         return axes._adv_keys_to_combined_axis_la_keys(translated_key, wildcard)
