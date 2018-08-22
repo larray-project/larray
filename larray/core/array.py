@@ -5266,6 +5266,48 @@ class LArray(ABCLArray):
             (a1, a2), res_axes = make_numpy_broadcastable([self, other])
             return LArray(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
 
+    def isin(self, test_values, assume_unique=False, invert=False):
+        r"""
+        Computes whether each element of this array is in `test_values`. Returns a boolean array of the same shape as
+        this array that is True where the array element is in `test_values` and False otherwise.
+
+        Parameters
+        ----------
+        test_values : array_like or set
+            The values against which to test each element of this array. If `test_values` is not a 1D array, it will be
+            converted to one.
+        assume_unique : bool, optional
+            If True, this array and `test_values` are both assumed to be unique, which can speed up the calculation.
+            Defaults to False.
+        invert : bool, optional
+            If True, the values in the returned array are inverted, as if calculating `element not in test_values`.
+            Defaults to False. ``isin(a, b, invert=True)`` is equivalent to (but faster than) ``~isin(a, b)``.
+
+        Returns
+        -------
+        LArray
+            boolean array of the same shape as this array that is True where the array element is in `test_values`
+            and False otherwise.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3))
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   1   2
+         a1   3   4   5
+        >>> arr.isin([1, 5, 7])
+        a\b     b0     b1     b2
+         a0  False   True  False
+         a1  False  False   True
+        >>> arr[arr.isin([1, 5, 7])]
+        a_b  a0_b1  a1_b2
+                 1      5
+        """
+        if isinstance(test_values, set):
+            test_values = list(test_values)
+        return LArray(np.isin(self.data, test_values, assume_unique=assume_unique, invert=invert), self.axes)
+
     def divnot0(self, other):
         """Divides array by other, but returns 0.0 where other is 0.
 

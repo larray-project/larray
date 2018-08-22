@@ -404,6 +404,7 @@ Testing/Searching
 
    LArray.equals
    LArray.eq
+   LArray.isin
    LArray.nonzero
    LArray.all
    LArray.all_by
