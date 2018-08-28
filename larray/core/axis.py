@@ -196,7 +196,7 @@ class Axis(ABCAxis):
         self._labels = labels
         self._iswildcard = iswildcard
 
-    def by(self, length, step=None, name_template=None):
+    def by(self, length, step=None):
         """Split axis into several groups of specified length.
 
         Parameters
@@ -205,10 +205,6 @@ class Axis(ABCAxis):
             length of groups
         step : int, optional
             step between groups. Defaults to length.
-        name_template : str, optional
-            template describing how group names are generated. It is a string containing specific arguments
-            written inside brackets {}. Available arguments are {start} and {end} representing the first and last label
-            of each group. By default, template is defined as '{start}:{end}'.
 
         Notes
         -----
@@ -222,15 +218,13 @@ class Axis(ABCAxis):
         --------
         >>> age = Axis(range(10), 'age')
         >>> age.by(3)
-        (age.i[0:3] >> '0:2', age.i[3:6] >> '3:5', age.i[6:9] >> '6:8', age.i[9:10] >> '9')
+        (age.i[0:3] >> '0:2', age.i[3:6] >> '3:5', age.i[6:9] >> '6:8', age.i[9:10] >> '9:9')
         >>> age.by(3, 4)
         (age.i[0:3] >> '0:2', age.i[4:7] >> '4:6', age.i[8:10] >> '8:9')
         >>> age.by(5, 3)
-        (age.i[0:5] >> '0:4', age.i[3:8] >> '3:7', age.i[6:10] >> '6:9', age.i[9:10] >> '9')
-        >>> age.by(5, 3, '{start}->{end}')
-        (age.i[0:5] >> '0->4', age.i[3:8] >> '3->7', age.i[6:10] >> '6->9', age.i[9:10] >> '9')
+        (age.i[0:5] >> '0:4', age.i[3:8] >> '3:7', age.i[6:10] >> '6:9', age.i[9:10] >> '9:9')
         """
-        return self[:].by(length, step, name_template)
+        return self[:].by(length, step)
 
     def extend(self, labels):
         """
