@@ -153,6 +153,26 @@ Miscellaneous improvements
 
   Closes :issue:`669`.
 
+* allowed to specify an axis by its postion when selecting a subset of an array using the string notation:
+
+    >>> pop_mouv = ndtest('geo_from=BE,FR,UK;geo_to=BE,FR,UK')
+    >>> pop_mouv
+    geo_from\geo_to  BE  FR  UK
+                 BE   0   1   2
+                 FR   3   4   5
+                 UK   6   7   8
+    >>> pop_mouv['0[BE, UK]']   # equivalent to pop_mouv[pop_mouv.geo_from['BE,UK']]
+    geo_from\geo_to  BE  FR  UK
+                 BE   0   1   2
+                 UK   6   7   8
+    >>> pop_mouv['1.i[0, 2]']   # equivalent to pop_mouv[pop_mouv.geo_to.i[0, 2]]
+    geo_from\geo_to  BE  UK
+                 BE   0   2
+                 FR   3   5
+                 UK   6   8
+
+  Closes :issue:`671`.
+
 
 Fixes
 -----

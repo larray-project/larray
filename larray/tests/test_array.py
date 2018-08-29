@@ -658,6 +658,21 @@ def test_getitem_igroup_on_int_axis():
     assert arr[a.i[1]] == 1
 
 
+def test_getitem_integer_string_axes():
+    arr = ndtest((5, 5))
+    a, b = arr.axes
+
+    assert_array_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
+    assert_array_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
+    with pytest.raises(ValueError):
+        arr['1[a0, a2]']
+
+    assert_array_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
+    assert_array_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
+    with pytest.raises(ValueError):
+        arr['3.i[0, 2]']
+
+
 def test_getitem_int_larray_lgroup_key():
     # e axis go from 0 to 3
     arr = ndtest("c=0,1; d=0,1; e=0..3")

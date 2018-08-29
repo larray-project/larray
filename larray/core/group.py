@@ -12,7 +12,7 @@ import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
-from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary,
+from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
                               renamed_to, LHDFStore)
 
 _deprecated = ['PGroup']
@@ -439,7 +439,7 @@ def _to_ticks(s, parse_single_int=False):
     return np.asarray(ticks)
 
 
-_axis_name_pattern = re.compile('\s*(([A-Za-z]\w*)(\.i)?\s*\[)?(.*)')
+_axis_name_pattern = re.compile('\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
 
 
 def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
@@ -530,6 +530,10 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     LGroup(['a', 'b', 'c']) >> 'abc'
     >>> _to_key('a:c >> abc')
     LGroup(slice('a', 'c', None)) >> 'abc'
+    >>> _to_key('0[a0]')
+    0['a0']
+    >>> _to_key('0.i[a0]')
+    0.i['a0']
 
     # evaluated variables do not work on Python 2, probably because the stackdepth is different
     # >>> ext = [1, 2, 3]
@@ -564,6 +568,8 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
             key, name = key[:name_pos].strip(), key[name_pos + 2:].strip()
         if axis is not None:
             axis = axis.strip()
+            if _isintstring(axis):
+                axis = int(axis)
             axis_bracket_open = m.end(1) - 1
             # check that the string parentheses are correctly balanced
             _ = find_closing_chr(v, axis_bracket_open)
