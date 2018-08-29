@@ -829,7 +829,7 @@ class Group(object):
                 raise ValueError('cannot retarget a Group defined without a real axis object (e.g. using '
                                  'an AxisReference (x.)) to an axis with a different name')
             return self.__class__(self.key, self.name, target_axis)
-        elif self.axis.equals(target_axis) or isinstance(self.axis, int):
+        elif isinstance(self.axis, int) or self.axis.equals(target_axis):
             # in the case of isinstance(self.axis, int), we can only hope the axis corresponds. This is the
             # case if we come from _translate_axis_key_chunk, but if the users calls this manually, we cannot know.
             # XXX: maybe changing this to retarget_to_axes would be a good idea after all?
