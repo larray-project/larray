@@ -2318,6 +2318,14 @@ class AxisCollection(object):
         """
         from .array import LArray
 
+        # Need to convert string keys to groups otherwise command like
+        # >>> ndtest((5, 5)).drop('1[a0]')
+        # will work although it shouldn't
+        if isinstance(axis_key, basestring):
+            key = _to_key(axis_key)
+            if isinstance(key, Group):
+                axis_key = key
+
         if isinstance(axis_key, ExprNode):
             raise Exception('yada')
             axis_key = axis_key.evaluate(self)
