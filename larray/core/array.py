@@ -1642,16 +1642,20 @@ class LArray(ABCLArray):
 
         Test if two arrays are aligned
 
-        >>> arr1.align(arr2, join='exact')
+        >>> arr1.align(arr2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        ValueError: Axis(['a0', 'a1'], 'a') is not equal to Axis(['a0', 'a1', 'a2'], 'a')
+        ValueError: Both arrays are not aligned because Axis(['a0', 'a1'], 'a') is not equal to
+        Axis(['a0', 'a1', 'a2'], 'a')
         """
         other = aslarray(other)
         # reindex does not currently support anonymous axes
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
             raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
-        left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
+        try:
+            left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
+        except ValueError as e:
+            raise ValueError("Both arrays are not aligned because {}".format(e))
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
