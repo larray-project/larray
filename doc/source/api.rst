@@ -270,6 +270,7 @@ Copying
    :toctree: _generated/
 
    LArray.copy
+   LArray.astype
 
 .. _la_inspecting:
 
@@ -294,7 +295,6 @@ LArray.title        Title of the array (str)
    LArray.size
    LArray.nbytes
    LArray.memory_used
-   LArray.astype
 
 .. _la_selecting:
 
