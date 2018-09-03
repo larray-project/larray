@@ -4,6 +4,15 @@ cells:
     # Plotting
 
 
+- code: |
+    # run this cell to avoid annoying warnings
+    import warnings
+    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
 - markdown: |
     Import the LArray library:
 
@@ -14,6 +23,16 @@ cells:
   id: 1
 
 - markdown: |
+    Check the version of LArray:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+  id: 2
+
+- markdown: |
     Import a subset of the test array ``pop``:
 
 
@@ -22,7 +41,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
     pop
 
-  id: 2
+  id: 3
 
 - markdown: |
     Inline matplotlib:
@@ -31,7 +50,7 @@ cells:
 - code: |
     %matplotlib inline  
 
-  id: 3
+  id: 4
 
 - markdown: |
     Create a plot (last axis define the different curves to draw):
@@ -40,13 +59,13 @@ cells:
 - code: |
     pop.plot()
 
-  id: 4
+  id: 5
 
 - code: |
     # plot total of both sex
     pop.sum('sex').plot()
 
-  id: 5
+  id: 6
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -76,4 +95,5 @@ nbformat_minor: 2
 data:
   [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}]
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+

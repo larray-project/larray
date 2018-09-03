@@ -4,6 +4,15 @@ cells:
     # Arithmetic Operations And Aggregations
 
 
+- code: |
+    # run this cell to avoid annoying warnings
+    import warnings
+    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
 - markdown: |
     Import the LArray library:
 
@@ -12,6 +21,16 @@ cells:
     from larray import *
 
   id: 1
+
+- markdown: |
+    Check the version of LArray:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+  id: 2
 
 - markdown: |
     ## Arithmetic operations
@@ -26,7 +45,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
     pop
 
-  id: 2
+  id: 3
 
 - markdown: |
     One can do all usual arithmetic operations on an array, it will apply the operation to all elements individually
@@ -36,25 +55,25 @@ cells:
     # addition
     pop + 200
 
-  id: 3
+  id: 4
 
 - code: |
     # multiplication
     pop * 2
 
-  id: 4
+  id: 5
 
 - code: |
     # ** means raising to the power (squaring in this case)
     pop ** 2
 
-  id: 5
+  id: 6
 
 - code: |
     # % means modulo (aka remainder of division)
     pop % 10
 
-  id: 6
+  id: 7
 
 - markdown: |
     More interestingly, it also works between two arrays
@@ -63,12 +82,12 @@ cells:
 - code: |
     # load mortality equivalent array
     mortality = load_example_data('demography').qx[2016, 'BruCap', 90:95]
-
+    
     # compute number of deaths
     death = pop * mortality
     death
 
-  id: 7
+  id: 8
 
 - markdown: |
     <div class="alert alert-info">
@@ -83,7 +102,7 @@ cells:
     death = (pop * mortality).astype(int)
     death
 
-  id: 8
+  id: 9
 
 - markdown: |
     <div class="alert alert-warning">
@@ -96,12 +115,12 @@ cells:
 - code: |
     pop[90:92] * mortality[93:95]
 
-  id: 9
+  id: 10
 
 - code: |
     pop[90:92] * mortality[93:95].ignore_labels('age')
 
-  id: 10
+  id: 11
 
 - markdown: |
     ### Boolean Operations
@@ -112,37 +131,37 @@ cells:
     pop2['F'] = -pop2['F']
     pop2
 
-  id: 11
+  id: 12
 
 - code: |
     # testing for equality is done using == (a single = assigns the value)
     pop == pop2
 
-  id: 12
+  id: 13
 
 - code: |
     # testing for inequality
     pop != pop2
 
-  id: 13
+  id: 14
 
 - code: |
     # what was our original array like again?
     pop
 
-  id: 14
+  id: 15
 
 - code: |
     # & means (boolean array) and
     (pop >= 500) & (pop <= 1000)
 
-  id: 15
+  id: 16
 
 - code: |
     # | means (boolean array) or
     (pop < 500) | (pop > 1000)
 
-  id: 16
+  id: 17
 
 - markdown: |
     ### Arithmetic operations with missing axes
@@ -151,29 +170,29 @@ cells:
 - code: |
     pop.sum('age')
 
-  id: 17
+  id: 18
 
 - code: |
     # arr has 3 dimensions
     pop.info
 
-  id: 18
+  id: 19
 
 - code: |
     # and arr.sum(age) has two
     pop.sum('age').info
 
-  id: 19
+  id: 20
 
 - code: |
     # you can do operation with missing axes so this works
     pop / pop.sum('age')
 
-  id: 20
+  id: 21
 
 - markdown: |
     ### Axis order does not matter much (except for output)
-
+    
     You can do operations between arrays having different axes order.
     The axis order of the result is the same as the left array
 
@@ -181,24 +200,24 @@ cells:
 - code: |
     pop
 
-  id: 21
+  id: 22
 
 - code: |
     # let us change the order of axes
     pop_transposed = pop.T
     pop_transposed
 
-  id: 22
+  id: 23
 
 - code: |
     # mind blowing
     pop_transposed + pop
 
-  id: 23
+  id: 24
 
 - markdown: |
     ## Aggregates
-
+    
     Calculate the sum along an axis:
 
 
@@ -206,7 +225,7 @@ cells:
     pop = load_example_data('demography').pop[2016, 'BruCap']
     pop.sum('age')
 
-  id: 24
+  id: 25
 
 - markdown: |
     or along all axes except one by appending `_by` to the aggregation function
@@ -217,7 +236,7 @@ cells:
     # is equivalent to
     pop[90:95].sum('sex', 'nat')
 
-  id: 25
+  id: 26
 
 - markdown: |
     Calculate the sum along one group:
@@ -225,10 +244,10 @@ cells:
 
 - code: |
     teens = pop.age[10:20]
-
+    
     pop.sum(teens)
 
-  id: 26
+  id: 27
 
 - markdown: |
     Calculate the sum along two groups:
@@ -236,11 +255,11 @@ cells:
 
 - code: |
     pensioners = pop.age[67:]
-
+    
     # groups from the same axis must be grouped in a tuple
     pop.sum((teens, pensioners))
 
-  id: 27
+  id: 28
 
 - markdown: |
     Mixing axes and groups in aggregations:
@@ -249,7 +268,7 @@ cells:
 - code: |
     pop.sum((teens, pensioners), 'nat')
 
-  id: 28
+  id: 29
 
 - markdown: |
     ### More On Aggregations
@@ -257,7 +276,7 @@ cells:
 
 - markdown: |
     There are many other aggregation functions:
-
+    
     -  mean, min, max, median, percentile, var (variance), std (standard
        deviation)
     -  labelofmin, labelofmax (label indirect minimum/maxium -- labels where the
@@ -304,4 +323,5 @@ data:
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}]
+      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+

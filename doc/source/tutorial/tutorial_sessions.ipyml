@@ -4,6 +4,15 @@ cells:
     ## Working With Sessions
 
 
+- code: |
+    # run this cell to avoid annoying warnings
+    import warnings
+    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
 - markdown: |
     Import the LArray library:
 
@@ -12,6 +21,16 @@ cells:
     from larray import *
 
   id: 1
+
+- markdown: |
+    Check the version of LArray:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+  id: 2
 
 - markdown: |
     Create test sessions:
@@ -31,43 +50,43 @@ cells:
     s4 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))),
                   ('arr3', ndtest((2, 4))), ('arr4', ndtest((3, 3)))])
 
-  id: 2
+  id: 3
 
 - markdown: |
-    Use ``equals`` and ``array_equals`` to compare arrays between two sessions:
+    Use ``equals`` and ``element_equals`` to compare arrays between two sessions:
 
 
 - code: |
     # 'equals' returns True if all arrays of two sessions have exactly the same arrays
     s1.equals(s2)
 
-  id: 3
+  id: 4
 
 - code: |
     s1.equals(s3)
 
-  id: 4
+  id: 5
 
 - code: |
     s1.equals(s4)
 
-  id: 5
-
-- code: |
-    # 'array_equals' compare arrays one by one
-    s1.array_equals(s2)
-
   id: 6
 
 - code: |
-    s1.array_equals(s3)
+    # 'element_equals' compare arrays one by one
+    s1.element_equals(s2)
 
   id: 7
 
 - code: |
-    s1.array_equals(s4)
+    s1.element_equals(s3)
 
   id: 8
+
+- code: |
+    s1.element_equals(s4)
+
+  id: 9
 
 - markdown: |
     The ``==`` and ``!=`` operators return a new session with boolean arrays: 
@@ -78,21 +97,21 @@ cells:
     
     diff.arr1
 
-  id: 9
+  id: 10
 
 - code: |
     diff = s1 != s3
     
     diff.arr1
 
-  id: 10
+  id: 11
 
 - code: |
     diff = s1 != s4
     
     diff.arr4
 
-  id: 11
+  id: 12
 
 - markdown: |
     Use the function ``compare`` to compare sessions (this a bit experimental but can be useful nonetheless (open a graphical interface)). Session must have the same list of arrays:
@@ -132,4 +151,6 @@ data:
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}]
+

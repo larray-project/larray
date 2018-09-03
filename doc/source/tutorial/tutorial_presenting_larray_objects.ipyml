@@ -4,6 +4,15 @@ cells:
     # Presenting LArray objects (Axis, Groups, LArray, Session)
 
 
+- code: |
+    # run this cell to avoid annoying warnings
+    import warnings
+    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
+
+  id: 0
+  metadata:
+    nbsphinx: hidden
+
 - markdown: |
     Import the LArray library:
 
@@ -11,7 +20,17 @@ cells:
 - code: |
     from larray import *
 
-  id: 0
+  id: 1
+
+- markdown: |
+    Check the version of LArray:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+  id: 2
 
 - markdown: |
     ## Axis
@@ -34,13 +53,13 @@ cells:
     
     age, sex, time, other
 
-  id: 1
+  id: 3
 
 - markdown: |
     ## Groups
     
     A ``Group`` represents a selection of labels from an Axis. It can optionally have a name (using operator ``>>``). 
-    Groups can be used when selecting a subset of an array and in aggregations.
+    Groups can be used when selecting a subset (#ref needed) of an array and in aggregations (#ref needed). 
     
     Group objects are created as follow:
 
@@ -56,7 +75,7 @@ cells:
     
     teens
 
-  id: 2
+  id: 4
 
 - markdown: |
     It is possible to set a name or to rename a group after its declaration: 
@@ -71,12 +90,12 @@ cells:
     
     teens
 
-  id: 3
+  id: 5
 
 - markdown: |
     ## LArray
     
-    A ``LArray`` object represents a multidimensional array with labeled axes.
+    A ``LArray`` object represents a multidimensional array with labeled axes (#ref needed).
     
     ### Create an array from scratch
     
@@ -97,7 +116,7 @@ cells:
     arr = LArray(data, axes, meta=meta)
     arr
 
-  id: 4
+  id: 6
 
 - markdown: |
     Metadata can be added to an array at any time using: 
@@ -108,7 +127,7 @@ cells:
     
     arr.meta
 
-  id: 5
+  id: 7
 
 - markdown: |
     <div class="alert alert-warning">
@@ -128,7 +147,7 @@ cells:
 - markdown: |
     ### Array creation functions
     
-    Arrays can also be generated in an easier way through creation functions:
+    Arrays can also be generated in an easier way through creation functions (#ref needed):
     
     -  `ndtest` : creates a test array with increasing numbers as data
     -  `empty` : creates an array but leaves its allocated memory
@@ -153,14 +172,14 @@ cells:
     # start defines the starting value of data
     ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
 
-  id: 6
+  id: 8
 
 - code: |
     # start defines the starting value of data
     # label_start defines the starting index of labels
     ndtest((3, 3), start=-1, label_start=2)
 
-  id: 7
+  id: 9
 
 - code: |
     # empty generates uninitialised array with correct axes
@@ -171,24 +190,24 @@ cells:
     # will be overridden.
     empty(['age=0..2', 'sex=M,F', 'time=2007..2009'])
 
-  id: 8
+  id: 10
 
 - code: |
     # example with anonymous axes
     zeros(['0..2', 'M,F', '2007..2009'])
 
-  id: 9
+  id: 11
 
 - code: |
     # dtype=int forces to store int data instead of default float
     ones(['age=0..2', 'sex=M,F', 'time=2007..2009'], dtype=int)
 
-  id: 10
+  id: 12
 
 - code: |
     full(['age=0..2', 'sex=M,F', 'time=2007..2009'], 1.23)
 
-  id: 11
+  id: 13
 
 - markdown: |
     All the above functions exist in *(func)_like* variants which take axes from another array
@@ -197,7 +216,7 @@ cells:
 - code: |
     ones_like(arr)
 
-  id: 12
+  id: 14
 
 - markdown: |
     Create an array using the special ``sequence`` function (see link to documention of ``sequence`` in API reference for more examples):
@@ -207,7 +226,7 @@ cells:
     # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
     sequence('sex=M,F', initial=1.0, inc=0.5)
 
-  id: 13
+  id: 15
 
 - markdown: |
     ### Inspecting LArray objects
@@ -217,7 +236,7 @@ cells:
     # create a test array
     arr = ndtest([age, sex, time, other])
 
-  id: 14
+  id: 16
 
 - markdown: |
     Get array summary : dimensions + description of axes
@@ -226,7 +245,7 @@ cells:
 - code: |
     arr.info
 
-  id: 15
+  id: 17
 
 - markdown: |
     Get axes
@@ -235,7 +254,7 @@ cells:
 - code: |
     arr.axes
 
-  id: 16
+  id: 18
 
 - markdown: |
     Get array dimensions
@@ -244,7 +263,7 @@ cells:
 - code: |
     arr.shape
 
-  id: 17
+  id: 19
 
 - markdown: |
     Get number of elements
@@ -253,7 +272,7 @@ cells:
 - code: |
     arr.size
 
-  id: 18
+  id: 20
 
 - markdown: |
     Get size in memory
@@ -262,7 +281,7 @@ cells:
 - code: |
     arr.memory_used
 
-  id: 19
+  id: 21
 
 - markdown: |
     Display the array in the viewer (graphical user interface) in read-only mode.
@@ -319,7 +338,7 @@ cells:
     
     s
 
-  id: 20
+  id: 22
 
 - markdown: |
     <div class="alert alert-warning">
@@ -342,17 +361,15 @@ cells:
 
 
 - code: |
-    from larray import EXAMPLE_FILES_DIR
-    
-    # path of the file to be read
-    filepath = EXAMPLE_FILES_DIR + 'demography.h5'
+    # get the filepath of the example file to be read
+    filepath = get_example_filepath('demography.h5')
     
     # load session
     s2 = Session(filepath)
     
     s2
 
-  id: 21
+  id: 23
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -388,5 +405,6 @@ data:
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
     {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
       outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
+    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
+      outputs: []}, {execution_count: null, outputs: []}]
 

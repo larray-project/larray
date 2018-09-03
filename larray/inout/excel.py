@@ -81,7 +81,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_excel(fname)
-        geo  gender\time      2013      2014      2015
+    country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male  31772665  31936596  32175328
@@ -93,7 +93,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     >>> # The data below is derived from a subset of the demo_fasec table from Eurostat
     >>> read_excel(fname, 'births')
-        geo  gender\time    2013    2014    2015
+    country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713
      France         Male  415762  418721  409145
@@ -106,7 +106,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Let us take a look inside the sheet 'pop_missing_values'. Note the missing label combinations:
     (Paris, male) and (New York, female): ::
 
-            geo  gender\time      2013      2014      2015
+        country  gender\time      2013      2014      2015
         Belgium         Male   5472856   5493792   5524068
         Belgium       Female   5665118   5687048   5713206
          France       Female  33827685  34005671  34280951
@@ -116,7 +116,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     is converted to a float array.
 
     >>> read_excel(fname, sheet='pop_missing_values')
-        geo  gender\time        2013        2014        2015
+    country  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
      France         Male         nan         nan         nan
@@ -127,7 +127,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Using the ``fill_value`` argument, you can choose another value to use to fill missing cells.
 
     >>> read_excel(fname, sheet='pop_missing_values', fill_value=0)
-        geo  gender\time      2013      2014      2015
+    country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male         0         0         0
@@ -139,7 +139,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     The content of the sheet 'missing_axis_name' is: ::
 
-            geo  gender      2013      2014      2015
+        country  gender      2013      2014      2015
         Belgium    Male   5472856   5493792   5524068
         Belgium  Female   5665118   5687048   5713206
          France    Male  31772665  31936596  32175328
@@ -153,7 +153,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     >>> # but we got a 6 x 4 array with data of type object
     >>> arr.info            # doctest: +SKIP
     6 x 4
-     geo [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
+     country [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
      {1} [4]: 'gender' '2013' '2014' '2015'
     dtype: object
     memory used: 192 bytes
@@ -162,7 +162,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
     >>> arr.info            # doctest: +SKIP
     3 x 2 x 3
-     geo [3]: 'Belgium' 'France' 'Germany'
+     country [3]: 'Belgium' 'France' 'Germany'
      gender [2]: 'Male' 'Female'
      {2} [3]: 2013 2014 2015
     dtype: int64
@@ -172,7 +172,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Let us take a look inside the sheet 'pop_narrow' where the data is stored in a 'narrow' format: ::
 
-            geo  time     value
+        country  time     value
         Belgium  2013  11137974
         Belgium  2014  11180840
         Belgium  2015  11237274
@@ -182,14 +182,14 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
     >>> read_excel(fname, 'pop_narrow_format', wide=False)
-    geo\time      2013      2014      2015
-     Belgium  11137974  11180840  11237274
-      France  65600350  65942267  66456279
+    country\time      2013      2014      2015
+         Belgium  11137974  11180840  11237274
+          France  65600350  65942267  66456279
 
     Extract array from a given range (xlwings only)
 
     >>> read_excel(fname, 'pop_births_deaths', range='A9:E15')     # doctest: +SKIP
-        geo  gender\time    2013    2014    2015
+    country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713
      France         Male  415762  418721  409145
