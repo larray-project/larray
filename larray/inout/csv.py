@@ -77,7 +77,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     For example: ::
 
-        geo,gender\time,2013,2014,2015
+        country,gender\time,2013,2014,2015
         Belgium,Male,5472856,5493792,5524068
         Belgium,Female,5665118,5687048,5713206
         France,Male,31772665,31936596,32175328
@@ -92,7 +92,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_csv(fname)
-        geo  gender\time      2013      2014      2015
+    country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male  31772665  31936596  32175328
@@ -107,7 +107,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # they are missing label combinations: (Paris, male) and (New York, female)
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    geo,gender\time,2013,2014,2015
+    country,gender\time,2013,2014,2015
     Belgium,Male,5472856,5493792,5524068
     Belgium,Female,5665118,5687048,5713206
     France,Female,33827685,34005671,34280951
@@ -115,7 +115,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # by default, cells associated with missing label combinations are filled with NaN.
     >>> # In that case, an int array is converted to a float array.
     >>> read_csv(fname)
-        geo  gender\time        2013        2014        2015
+    country  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
      France         Male         nan         nan         nan
@@ -124,7 +124,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     Germany       Female         nan         nan         nan
     >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
     >>> read_csv(fname, fill_value=0)
-        geo  gender\time      2013      2014      2015
+    country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male         0         0         0
@@ -139,7 +139,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # The name of the last axis is missing.
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    geo,gender,2013,2014,2015
+    country,gender,2013,2014,2015
     Belgium,Male,5472856,5493792,5524068
     Belgium,Female,5665118,5687048,5713206
     France,Male,31772665,31936596,32175328
@@ -152,7 +152,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # but we got a 6 x 4 array with data of type object
     >>> arr.info
     6 x 4
-     geo [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
+     country [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
      {1} [4]: 'gender' '2013' '2014' '2015'
     dtype: object
     memory used: 192 bytes
@@ -161,7 +161,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
     >>> arr.info
     3 x 2 x 3
-     geo [3]: 'Belgium' 'France' 'Germany'
+     country [3]: 'Belgium' 'France' 'Germany'
      gender [2]: 'Male' 'Female'
      {2} [3]: 2013 2014 2015
     dtype: int64
@@ -174,7 +174,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # Here, data are stored in a 'narrow' format.
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    geo,time,value
+    country,time,value
     Belgium,2013,11137974
     Belgium,2014,11180840
     Belgium,2015,11237274
@@ -183,9 +183,9 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     France,2015,66456279
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_csv
     >>> read_csv(fname, wide=False)
-    geo\time      2013      2014      2015
-     Belgium  11137974  11180840  11237274
-      France  65600350  65942267  66456279
+    country\time      2013      2014      2015
+         Belgium  11137974  11180840  11237274
+          France  65600350  65942267  66456279
     """
     if not np.isnan(na):
         fill_value = na
