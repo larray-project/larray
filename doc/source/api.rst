@@ -537,6 +537,7 @@ Miscellaneous
 
    aslarray
    from_frame
+   from_series
    get_example_filepath
    labels_array
    union
