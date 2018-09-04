@@ -360,9 +360,17 @@ Miscellaneous improvements
   instance is not visible anyway. This affects all workbooks opened via :py:obj:`open_excel()` as well as
   :py:obj:`read_excel()` and :py:obj:`LArray.to_excel()` when using the default ``xlwings`` engine.
 
+* made the documentation link in Windows start menu version-specific (instead of always pointing to the
+  latest release) so that users do not inadvertently use the latest release syntax when using an older version of
+  larray (closes :editor_issue:`142`).
+
+* added menu bar with undo/redo when editing single arrays (as a byproduct of :editor_issue:`133`).
+
 
 Fixes
 -----
+
+* fixed Copy(to Excel)/Paste/Plot in the editor not working for 1D and 2D arrays (closes :editor_issue:`140`).
 
 * fixed Excel add-ins not loaded when opening an Excel Workbook by calling the :py:obj:`LArray.to_excel()` method
   with no path or via "Copy to Excel (CTRL+E)" in the editor (closes :issue:`154`).
@@ -390,3 +398,5 @@ Fixes
 
 * fixed taking a subset of an array by giving an index along a specific axis using a string (strings
   like ``"axisname.i[pos]"``).
+
+* fixed the editor not working with Python 2 or recent Qt4 versions.
