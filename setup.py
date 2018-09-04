@@ -20,7 +20,6 @@ SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
 URL = 'https://github.com/larray-project/larray'
-PACKAGE_DATA = {'larray': ['tests/data/*']}
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
@@ -53,5 +52,5 @@ setup(
     setup_requires=SETUP_REQUIRES,
     url=URL,
     packages=find_packages(),
-    package_data=PACKAGE_DATA,
+   include_package_data=True,
 )

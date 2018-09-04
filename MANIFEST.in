@@ -1,0 +1,2 @@
+include COPYING
+recursive-include larray/tests/data *.csv *.xlsx *.h5
