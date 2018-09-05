@@ -27,30 +27,18 @@ __all__ = ['read_csv', 'read_tsv', 'read_eurostat']
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=nan,
              na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):
-    """
+    r"""
     Reads csv file and returns an array with the contents.
-
-    Notes
-    -----
-    csv file format:
-
-    geo,gender\\time,2013,2014,2015
-    Belgium,Male,5472856,5493792,5524068
-    Belgium,Female,5665118,5687048,5713206
-    France,Male,31772665,31936596,32175328
-    France,Female,33827685,34005671,34280951
-    Germany,Male,39380976,39556923,39835457
-    Germany,Female,41142770,41210540,41362080
 
     Parameters
     ----------
     filepath_or_buffer : str or any file-like object
         Path where the csv file has to be read or a file handle.
     nb_axes : int, optional
-        Number of axes of output array. The first `nb_axes` - 1 columns and the header of the CSV file will be used
+        Number of axes of output array. The first ``nb_axes`` - 1 columns and the header of the CSV file will be used
         to set the axes of the output array. If not specified, the number of axes is given by the position of the
-        column header including the character `\` plus one. If no column header includes the character `\`, the array
-        is assumed to have one axis. Defaults to None.
+        first column header including a ``\`` character plus one. If no column header includes a ``\`` character,
+        the array is assumed to have one axis. Defaults to None.
     index_col : list, optional
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str, optional
@@ -77,6 +65,26 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     -------
     LArray
 
+    Notes
+    -----
+    Without using any argument to tell otherwise, the csv files are assumed to be in this format: ::
+
+        axis0_name,axis1_name\axis2_name,axis2_label0,axis2_label1
+        axis0_label0,axis1_label0,value,value
+        axis0_label0,axis1_label1,value,value
+        axis0_label1,axis1_label0,value,value
+        axis0_label1,axis1_label1,value,value
+
+    For example: ::
+
+        geo,gender\time,2013,2014,2015
+        Belgium,Male,5472856,5493792,5524068
+        Belgium,Female,5665118,5687048,5713206
+        France,Male,31772665,31936596,32175328
+        France,Female,33827685,34005671,34280951
+        Germany,Male,39380976,39556923,39835457
+        Germany,Female,41142770,41210540,41362080
+
     Examples
     --------
     >>> csv_dir = get_example_filepath('examples')
@@ -84,7 +92,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_csv(fname)
-        geo  gender\\time      2013      2014      2015
+        geo  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male  31772665  31936596  32175328
@@ -99,7 +107,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # they are missing label combinations: (Paris, male) and (New York, female)
     >>> with open(fname) as f:
     ...     print(f.read().strip())
-    geo,gender\\time,2013,2014,2015
+    geo,gender\time,2013,2014,2015
     Belgium,Male,5472856,5493792,5524068
     Belgium,Female,5665118,5687048,5713206
     France,Female,33827685,34005671,34280951
@@ -107,7 +115,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     >>> # by default, cells associated with missing label combinations are filled with NaN.
     >>> # In that case, an int array is converted to a float array.
     >>> read_csv(fname)
-        geo  gender\\time        2013        2014        2015
+        geo  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
      France         Male         nan         nan         nan
@@ -116,7 +124,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     Germany       Female         nan         nan         nan
     >>> # using argument 'fill_value', you can choose which value to use to fill missing cells.
     >>> read_csv(fname, fill_value=0)
-        geo  gender\\time      2013      2014      2015
+        geo  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male         0         0         0
@@ -175,7 +183,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     France,2015,66456279
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_csv
     >>> read_csv(fname, wide=False)
-    geo\\time      2013      2014      2015
+    geo\time      2013      2014      2015
      Belgium  11137974  11180840  11237274
       France  65600350  65942267  66456279
     """
