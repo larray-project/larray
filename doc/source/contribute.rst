@@ -361,20 +361,19 @@ To submit a pull request:
    (See section :ref:`Licensing <contributing.licensing>` above).
 #. Click ``Send Pull Request``.
 
-This request then goes to the repository maintainers, and they will review
-the code. If you need to make more changes, you can make them in
-your branch, add them to a new commit, push them to GitHub, and the pull request
-will be automatically updated. Pushing them to GitHub again is done by::
+This request then goes to the repository maintainers, and they will review the code.
+Your modifications will also be automatically tested by running the *larray* test suite on
+`Travis-CI <https://travis-ci.org/>`__ continuous integration service. A pull request will only be
+considered for merging when you have an all 'green' build.
+If any tests are failing, then you will get a red 'X', where you can click through to see the individual failed tests.
+
+If you need to make more changes to fix test failures or to take our comments into account, you can make them in
+your branch, add them to a new commit and push them to GitHub using::
 
     git push origin issue123
 
-This will automatically update your pull request with the latest code and restart the
-:ref:`Continuous Integration` tests.
+This will automatically update your pull request with the latest code and trigger the automated tests again.
 
-The *larray* test suite will run automatically on `Travis-CI <https://travis-ci.org/>`__
-continuous integration service. A pull-request will be considered for merging when you have
-an all 'green' build. If any tests are failing, then you will get a red 'X', where you can click
-through to see the individual failed tests.
 
 ``Warning``: Please do not rebase your local branch during the review process.
 
