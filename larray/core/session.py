@@ -1183,7 +1183,7 @@ class Session(object):
         -------
         str
             Short representation of the content of the session.
-.
+
         Examples
         --------
         >>> axis1 = Axis("a=a0..a2")
