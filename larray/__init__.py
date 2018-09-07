@@ -8,4 +8,4 @@ from larray.extra import *
 from larray.viewer import *
 import larray.random
 
-__version__ = '0.29-dev'
+__version__ = '0.29'
