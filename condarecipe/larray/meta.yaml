@@ -8,52 +8,47 @@ source:
 #  git_tag: master
 #  git_url: file://c:/Users/gdm/devel/larray/.git
 
-# build:
-  # If this is a new build for the same version, increment the build
-  # number. If you do not include this key, it defaults to 0.
-  # number: 1
+build:
+  # If this is a new build for the same version, increment the build number
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vvv"
 
 requirements:
   build:
+    - pip
     - python
-    - setuptools
-    - numpy >=1.10
-    - pandas >=0.13.1
-    - pytest-runner
 
   run:
     - python
     - numpy >=1.10
     - pandas >=0.13.1
-    - pytest-runner
 
 test:
 #  requires:
 #    - pytest
-#    - pytest-runner
+#    - pytables
 
   imports:
     - larray
 
 #  commands:
-#    - pytest
-
-  # commands:
-    # You can put test commands to be run here.  Use this to test that the
-    # entry points work.
-
-  # You can also put a file called run_test.py in the recipe that will be run
-  # at test time.
-
-  # requires:
-    # Put any additional test requirements here.  For example
-    # - nose
+#    # You can also put a file called run_test.py in the recipe that will be run# at test time.
+#    - pytest --pyargs larray
 
 about:
   home: http://github.com/larray-project/larray
-  license: GPL
+  license: GPL-3.0
+  license_family: GPL
+  license_file: COPYING
   summary: "Labeled N-dimensional array."
+#  doc_url:
+#  dev_url:
+
+extra:
+  recipe-maintainers:
+    - alixdamman
+    - gdementen
 
 # See
-# http://docs.continuum.io/conda/build.html for
-# more information about meta.yaml
+# https://conda.io/docs/user-guide/tasks/build-packages/index.html
+# for more information about meta.yaml

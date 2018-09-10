@@ -14,9 +14,9 @@ AUTHOR = 'Gaetan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
 AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
+SETUP_REQUIRES = []
 INSTALL_REQUIRES = ['numpy >= 1.10', 'pandas >= 0.13.1']
 TESTS_REQUIRE = ['pytest', 'pytest-pep8']
-SETUP_REQUIRES = ['pytest-runner']
 
 LICENSE = 'GPLv3'
 URL = 'https://github.com/larray-project/larray'
@@ -47,10 +47,10 @@ setup(
     classifiers=CLASSIFIERS,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    setup_requires=SETUP_REQUIRES,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
-    setup_requires=SETUP_REQUIRES,
     url=URL,
     packages=find_packages(),
-   include_package_data=True,
+    include_package_data=True,
 )
