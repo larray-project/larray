@@ -8,6 +8,8 @@ dependencies:
   - pandas
   - matplotlib
   - pytables
+  - xlrd
+  - openpyxl
   - bokeh
   - rise
   - pip:
