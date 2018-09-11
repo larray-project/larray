@@ -5081,23 +5081,27 @@ class LArray(ABCLArray):
         return self.data.__float__()
 
     @deprecate_kwarg('nan_equals', 'nans_equal')
-    def equals(self, other, rtol=0, atol=0, nans_equal=False):
-        """
+    def equals(self, other, rtol=0, atol=0, nans_equal=False, check_axes=False):
+        r"""
         Compares self with another array and returns True if they have the same axes and elements, False otherwise.
 
         Parameters
         ----------
-        other: LArray-like
+        other : LArray-like
             Input array. aslarray() is used on a non-LArray input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
-        nans_equal: boolean, optional
+        nans_equal : boolean, optional
             Whether or not to consider nan values at the same positions in the two arrays as equal.
             By default, an array containing nan values is never equal to another array, even if that other array
             also contains nan values at the same positions. The reason is that a nan value is different from
             *anything*, including itself. Defaults to False.
+        check_axes : boolean, optional
+            Whether or not to check that the set of axes and their order is the same on both sides. Defaults to False.
+            If False, two arrays with compatible axes (and the same data) will compare equal, even if some axis is
+            missing on either side or if the axes are in a different order.
 
         Returns
         -------
@@ -5121,17 +5125,17 @@ class LArray(ABCLArray):
         --------
         >>> arr1 = ndtest((2, 3))
         >>> arr1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> arr2 = arr1.copy()
-        >>> arr1.equals(arr2)
+        >>> arr2.equals(arr1)
         True
         >>> arr2['b1'] += 1
-        >>> arr1.equals(arr2)
+        >>> arr2.equals(arr1)
         False
         >>> arr3 = arr1.set_labels('a', ['x0', 'x1'])
-        >>> arr1.equals(arr3)
+        >>> arr3.equals(arr1)
         False
 
         Test equality between two arrays within a given tolerance range.
@@ -5145,11 +5149,11 @@ class LArray(ABCLArray):
         >>> arr2
         a     a0     a1
            5.999  8.001
-        >>> arr1.equals(arr2)
+        >>> arr2.equals(arr1)
         False
-        >>> arr1.equals(arr2, atol=0.01)
+        >>> arr2.equals(arr1, atol=0.01)
         True
-        >>> arr1.equals(arr2, rtol=0.01)
+        >>> arr2.equals(arr1, rtol=0.01)
         True
 
         Arrays with nan values
@@ -5157,24 +5161,56 @@ class LArray(ABCLArray):
         >>> arr1 = ndtest((2, 3), dtype=float)
         >>> arr1['a1', 'b1'] = nan
         >>> arr1
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  1.0  2.0
          a1  3.0  nan  5.0
         >>> arr2 = arr1.copy()
         >>> # By default, an array containing nan values is never equal to another array,
         >>> # even if that other array also contains nan values at the same positions.
         >>> # The reason is that a nan value is different from *anything*, including itself.
-        >>> arr1.equals(arr2)
+        >>> arr2.equals(arr1)
         False
         >>> # set flag nans_equal to True to overwrite this behavior
-        >>> arr1.equals(arr2, nans_equal=True)
+        >>> arr2.equals(arr1, nans_equal=True)
         True
+
+        Arrays with the same data but different axes
+
+        >>> arr1 = ndtest((2, 2))
+        >>> arr1
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+        >>> arr2 = arr1.transpose()
+        >>> arr2
+        b\a  a0  a1
+         b0   0   2
+         b1   1   3
+        >>> arr2.equals(arr1)
+        True
+        >>> arr2.equals(arr1, check_axes=True)
+        False
+        >>> arr2 = arr1.expand('c=c0,c1')
+        >>> arr2
+         a  b\c  c0  c1
+        a0   b0   0   0
+        a0   b1   1   1
+        a1   b0   2   2
+        a1   b1   3   3
+        >>> arr2.equals(arr1)
+        True
+        >>> arr2.equals(arr1, check_axes=True)
+        False
         """
         try:
             other = aslarray(other)
         except Exception:
             return False
-        return self.axes == other.axes and all(self.eq(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
+        try:
+            axes_equal = self.axes == other.axes if check_axes else True
+            return axes_equal and all(self.eq(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
+        except ValueError:
+            return False
 
     @deprecate_kwarg('nan_equals', 'nans_equal')
     def eq(self, other, rtol=0, atol=0, nans_equal=False):
@@ -5183,13 +5219,13 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        other: LArray-like
+        other : LArray-like
             Input array. aslarray() is used on a non-LArray input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
-        nans_equal: boolean, optional
+        nans_equal : boolean, optional
             Whether or not to consider nan values at the same positions in the two arrays as equal.
             By default, an array containing nan values is never equal to another array, even if that other array
             also contains nan values at the same positions. The reason is that a nan value is different from

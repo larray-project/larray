@@ -7,7 +7,71 @@
 Backward incompatible changes
 -----------------------------
 
-* backward incompatible changes
+* :py:obj:`LArray.equals()` now returns True for arrays even when axes are in a different order or some axes are
+  missing on either side (but the data is constant over that axis on the other side). To get back the old behavior, use
+  check_axes=True. Closes :issue:`237`.
+
+    >>> a = Axis('a=a0,a1')
+    >>> arr1 = ndtest(a)
+    >>> arr1
+    a  a0  a1
+        0   1
+
+    Identical arrays are (still) considered equal
+
+    >>> arr2 = arr1.copy()
+    >>> arr2.equals(arr1)
+    True
+
+    Arrays with different labels (for the same axes), are (still) not equal
+
+    >>> arr3 = arr1.set_labels('a', 'a8,a9')
+    >>> arr3
+    a  a8  a9
+        0   1
+    >>> arr3.equals(arr1)
+    False
+
+    Arrays with the same axes but different data, are (still) not equal
+
+    >>> arr4 = arr1.copy()
+    >>> arr4['a1'] = 42
+    >>> arr4
+    a  a0  a1
+        0  42
+    >>> arr4.equals(arr1)
+    False
+
+    Arrays with extra axes but the same data are now considered equal
+
+    >>> arr5 = arr1.expand('b=b0..b2')
+    >>> arr5
+    a\b  b0  b1  b2
+     a0   0   0   0
+     a1   1   1   1
+    >>> arr5.equals(arr1)
+    True
+
+    Unless check_axes is True
+
+    >>> arr5.equals(arr1, check_axes=True)
+    False
+
+    Arrays with axes in a different order (but the same data) are also equal...
+
+    >>> arr6 = arr5.transpose()
+    >>> arr6
+    b\a  a0  a1
+     b0   0   1
+     b1   0   1
+     b2   0   1
+    >>> arr6.equals(arr5)
+    True
+
+    Unless check_axes is True
+
+    >>> arr3.equals(arr4, check_axes=True)
+    False
 
 
 New features
