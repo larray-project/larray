@@ -32,7 +32,7 @@ test:
     - larray
 
 #  commands:
-#    # You can also put a file called run_test.py in the recipe that will be run# at test time.
+#    # You can also put a file called run_test.py in the recipe that will be run at test time.
 #    - pytest --pyargs larray
 
 about:
