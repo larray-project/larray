@@ -11,6 +11,7 @@ source:
 build:
   # If this is a new build for the same version, increment the build number
   number: 0
+  # we can use this instead of explicit build scripts (bld.bat and build.sh)
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vvv"
 
 requirements:
@@ -41,8 +42,11 @@ about:
   license_family: GPL
   license_file: COPYING
   summary: "Labeled N-dimensional array."
-#  doc_url:
-#  dev_url:
+  description: |
+    LArray is open source Python library that aims to provide tools for
+    easy exploration and manipulation of N-dimensional labelled data structures.
+  doc_url: http://larray.readthedocs.io/
+  dev_url: http://github.com/larray-project/larray
 
 extra:
   recipe-maintainers:
