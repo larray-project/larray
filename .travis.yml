@@ -11,12 +11,8 @@ python:
 branches:
     only:
         - master
-        #- devel
 
 before_install:
-    # cannot use sudo with the container-based infrastructure
-    # - sudo apt-get update
-
     # Install Miniconda
     # We do this conditionally because it saves us some downloading if the
     # version is the same.
@@ -35,18 +31,13 @@ before_install:
     # Useful for debugging any issues with conda
     - conda info -a
 
-    # The next couple lines fix a crash with multiprocessing on Travis
-    # and are not specific to using Miniconda
-    # - sudo rm -rf /dev/shm
-    # - sudo ln -s /run/shm /dev/shm
-
 install:
     # Setup environment
     # pandas will bring dateutil numpy pytz setuptools six and scipy, we
     # might want to avoid the later by installing all dependencies manually
     # except scipy and install pandas with --no-deps
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
-            numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl
+            numpy pandas pytables matplotlib xlrd openpyxl
             xlsxwriter pytest pytest-pep8
     - source activate travisci
 
