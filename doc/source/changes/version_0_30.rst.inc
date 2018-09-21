@@ -138,6 +138,9 @@ New features
 
 * implemented :py:obj:`AxisCollection.rename()` to rename axes of an AxisCollection, independently of any array.
 
+* implemented :py:obj:`AxisCollection.iter_labels()` to iterate over all (possible combinations of) labels of the axes
+  of the collection.
+
 
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
