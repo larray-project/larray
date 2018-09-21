@@ -75,6 +75,8 @@ class Axis(ABCAxis):
     >>> anonymous
     Axis([0, 1, 2, 3, 4], None)
     """
+    __slots__ = ('name', '__mapping', '__sorted_keys', '__sorted_values', '_labels', '_length', '_iswildcard')
+
     # ticks instead of labels?
     def __init__(self, labels, name=None):
         if isinstance(labels, Group) and name is None:
@@ -766,6 +768,24 @@ class Axis(ABCAxis):
     def __hash__(self):
         return id(self)
 
+    # needed for Python 2 only (on Python2 all classes defining __slots__ need to define __getstate__/__setstate__ too)
+    def __getstate__(self):
+        return self.name, self._length if self._iswildcard else self._labels
+
+    # needed for Python 2 only
+    def __setstate__(self, state):
+        name, labels = state
+        self.name = name
+        self._labels = None
+        self._length = None
+        self._iswildcard = False
+
+        self.__mapping = None
+        self.__sorted_keys = None
+        self.__sorted_values = None
+        # set _labels, _length and _iswildcard via the property
+        self.labels = labels
+
     def _is_key_type_compatible(self, key):
         key_kind = np.dtype(type(key)).kind
         label_kind = self.labels.dtype.kind
@@ -1371,6 +1391,7 @@ def _make_axis(obj):
 # not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
 # functionality than just a named tuple
 class AxisCollection(object):
+    __slots__ = ('_list', '_map')
     """
     Represents a collection of axes.
 
@@ -1464,10 +1485,11 @@ class AxisCollection(object):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before _map exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return self._list
 
-    def __setstate__(self, d):
-        self.__dict__ = d
+    def __setstate__(self, state):
+        self._list = state
+        self._map = {axis.name: axis for axis in state if axis.name is not None}
 
     def __getitem__(self, key):
         if isinstance(key, Axis):
