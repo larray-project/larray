@@ -2904,9 +2904,9 @@ class AxisCollection(object):
                     # Q: if axis is a wildcard axis, should the result be a wildcard axis (and axes_labels discarded?)
                     combined_labels = _axes[0].labels
                 else:
-                    combined_labels = [sep.join(str(l) for l in p)
-                                       for p in product(*_axes.labels)]
-
+                    sepjoin = sep.join
+                    axes_labels = [np.array(l, np.str, copy=False) for l in _axes.labels]
+                    combined_labels = [sepjoin(p) for p in product(*axes_labels)]
                 combined_axis = Axis(combined_labels, combined_name)
             new_axes = new_axes - _axes
             new_axes.insert(combined_axis_pos, combined_axis)
