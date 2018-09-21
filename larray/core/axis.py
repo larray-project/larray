@@ -92,8 +92,11 @@ class Axis(ABCAxis):
 
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
-        is_python_str = type(name) is unicode or type(name) is bytes
-        assert name is None or isinstance(name, int) or is_python_str, type(name)
+        name_is_python_str = type(name) is unicode or type(name) is bytes
+        if isinstance(name, str) and not name_is_python_str:
+            name = str(name)
+        if name is not None and not isinstance(name, (int, str)):
+            raise TypeError("Axis name should be None, int or str but is: %s (%s)" % (name, type(name).__name__))
         self.name = name
         self._labels = None
         self.__mapping = None
