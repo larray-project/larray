@@ -5122,7 +5122,10 @@ class LArray(ABCLArray):
             res_axes += [axes[-2]]
         if other.ndim > 1:
             res_axes += [other_axes[-1].copy()]
-        return LArray(res_data, res_axes)
+        if res_axes:
+            return LArray(res_data, res_axes)
+        else:
+            return res_data
 
     def __rmatmul__(self, other):
         if isinstance(other, np.ndarray):
