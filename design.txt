@@ -1,6 +1,4 @@
-
-a(sex, age)
-age_limit(sex)
+assuming the following arrays: a(sex, age) and age_limit(sex)
 
 step 1:
 
@@ -10,10 +8,10 @@ b = a * (age > age_limit)
 
 step 2:
 
-a[x.age > age_limit]
-# this is also possible ("x.age > age_limit" return an Expr, expr is evaluated
+a[X.age > age_limit]
+# this is also possible ("X.age > age_limit" return an Expr, expr is evaluated
 # during the binop (axes ref replace by real axe)
-b = a * (x.age > age_limit)
+b = a * (X.age > age_limit)
 
 ==============
 in general:
@@ -55,31 +53,28 @@ in general:
 
 # API for ND groups (my example is mixing label with positional):
 
-# union (bands): x.axis1[5:10] | x.axis2.i[3:4]
-# intersection/cross/default: x.axis1[5:10] & x.axis2.i[3:4]
-# points: x.axis1[5:10] ^ x.axis2.i[1:6]
-# ----> this prevents symetric difference. this is little used but...
-# ----> Points(x.axis[5:10], x.axis2.i[1:6])
+# union (bands): X.axis1[5:10] | X.axis2.i[3:4]
+# intersection/cross/default: X.axis1[5:10] & X.axis2.i[3:4]
+# points:
+# * X.axis1[5:10] ^ X.axis2.i[1:6] --> this prevents symetric difference. this is little used but...
+# * Points(X.axis[5:10], X.axis2.i[1:6])
+# * X.axis[5:10].combine(X.axis2.i[1:6])
 
 # this is very nice and would have orderedset-like semantics
 
 # it does not seem to conflict with the axis methods (even though that might be
 # confusing):
 
-# x.axis1 | x.axis2 would have a very different meaning than
-# x.axis1[:] | x.axis2[:]
+# X.axis1 | X.axis2 would have a very different meaning than
+# X.axis1[:] | X.axis2[:]
 
 # Note that cross sections is the default and it is useless to introduce
 # another API **except to give a name**, so the & syntax is useless unless
 # we allow naming groups after the fact
 
-# => NDGroup((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
-# => Group((x.axis1[5:10], x.axis2.i[2.5]), 'exports')
-# => (x.axis1[5:10] & x.axis2.i[2.5]).named('exports')
-
-# generalizing "named" and suppressing .group seems like a good idea!
-# => x.axis1.group([5, 7, 10], name='brussels')
-# => x.axis1[5, 7, 10].named('brussels')
+# => NDGroup((X.axis1[5:10], X.axis2.i[2.5]), 'exports')
+# => Group((X.axis1[5:10], X.axis2.i[2.5]), 'exports')
+# => (X.axis1[5:10] & X.axis2.i[2.5]).named('exports')
 
 # http://xarray.pydata.org/en/stable/indexing.html#pointwise-indexing
 # http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.lookup.html#pandas.DataFrame.lookup
@@ -92,14 +87,14 @@ in general:
 
 # I wonder if, for axes subscripting, I could not allow tuples as sequences,
 # which would make it a bit nicer:
-# x.axis1[5, 7, 10].named('brussels')
+# X.axis1[5, 7, 10].named('brussels')
 # instead of
-# x.axis1[[5, 7, 10]].named('brussels')
+# X.axis1[[5, 7, 10]].named('brussels')
 # since axes are always 1D, this is not a direct problem. However the
 # question is whether this would lead to an inconsistent API/confuse users
 # because they would still have to write the brackets when no axis is present
 # a[[5, 7, 9]]
-# a[x.axis1[5, 7, 9]]
+# a[X.axis1[5, 7, 9]]
 # in practice, this syntax is little used anyway
 
 # options
@@ -210,7 +205,7 @@ ou alors on utilise une méthode spécifique pour split (split ou groups ou
 multi):
 
 G.split[2, 5] == G[2], G[5]
-G.clength.split[2, 5:10, 20] == G.clength[2], G.clength[5:10], G.clength[5]
+G.clength.split[2, 5:10, 20] == G.clength[2], G.clength[5:10], G.clength[20]
 G.clength.split[2, 5] == G.clength[2], G.clength[5]
 
 
@@ -347,14 +342,14 @@ G.clength.split[2, 5] == G.clength[2], G.clength[5]
 
 # m = {G[2:7, 'M']: 1, G[2:7, 'F']: 2, G[5:10, 'M']: 3, G[5:10, 'F']: 4}
 # breaks if combination of axes
-# a.set(x.age[m])
+# a.set(X.age[m])
 
 2) multiple range in same [] means "and"
 =========================================
-   => set op if same axis, ND group otherwise
+   => and set op if same axis, ND group otherwise
 
-   G.age[5, 7, 9] == G.age[5] & G.age[7] & G.age[9] => BREAKS !
-   => must use G.age[[5, 7, 9]]
+   G.age[5, 7, 9] == G.age[5] & G.age[7] & G.age[9] => EMPTY group !
+   => MUST use double brackets: G.age[[5, 7, 9]]
 
    G.age[:20, 10:30] == G.age[:20] & G.age[10:30] == G.age[20:30]
    G[2:7, 'M', ['P01', 'P05']] == G[2:7] & G['M'] & G['P01', 'PO5']
@@ -394,16 +389,50 @@ G.clength.split[2, 5] == G.clength[2], G.clength[5]
    or whether slice or scalar
 ===========================================================================
 
+7) multiple range in same [] are only allowed for same axis (and means "or")
+============================================================================
+   => set op if same axis, different axis not allowed
+   => the definition of a Group is: a list of labels of one axis
+      implies more or less that we must have a different object for ND Groups
+   => implies more or less that we will not support
+          array['5, 7, 11, P01,P05, M']
+          array[5, 7, 11, 'P01, P05, M']
+      this is fine though:
+          array['5, 7, 11; P01, P05; M']
+          array[[5, 7, 11], ['P01', 'P05'], 'M']
+          array[[5, 7, 11], 'P01, P05', 'M']
+      and maybe this too:
+          array[[5, 7, 11], 'P01, P05; M']
+
+   G.age[5, 7, 11] == G.age[[5, 7, 11]] == G.age[5] | G.age[7] | G.age[9]
+   G.age[5, 7:9, 11] == G.age[5, 7, 8, 9, 11]
+   G.age[:20, 10:30] == G.age[:20] | G.age[10:30] == G.age[:30]
+   G[5, 7:9, 'M', ['P01', 'P05']]       --> fails because it tries to find a single axis containing all of those
+   G[5, 7:9] & G['M'] & G['P01', 'P05'] --> works (returns NDGroup)
+   G['5, 7:9; P01,P05; M']              --> returns NDGroup (same as above)
+   G[[5, 7:9], ['P01', 'P05'], 'M']     --> fails 7:9 is sadly an invalid syntax
+   G[[5 7,8,9], 'P01, P05', 'M']        --> works too
+   == age[5, 7, 8, 9] & sex['M'] & lipro['P01', 'PO5']
+   == NDGroup([[5, 7, 8, 9], 'M', ['P01', 'P05']], axes=['age', 'sex', 'lipro'])
+   OR
+   == NDGroup({'age': [5, 7, 8, 9],
+               'sex': 'M'
+               'lipro': ['P01', 'P05']})
+
+   '5,7:9; M; P01,P05'
+   'age[5,7:9]; sex[M]; lipro[P01,P05]'
+
 
 # use cases
 
 # 1) simple get/set
 
+a['2:7; M; P01,P02']
 a[2:7, 'M', ['P01', 'P02']]
 
 # 2) boolean selection
 
-a[(x.age < 10) | (x.clength > 5)]
+a[(X.age < 10) | (X.clength > 5)]
 
 # 3) simple with ambiguous values
 
@@ -413,16 +442,19 @@ a[G.age[2:7], G.clength[5, 7, 9], 'M', ['P01', 'P02']]
 
 a[G.age[2:4] ^ G.clength[5, 7, 9], 'M', ['P01', 'P02']]
 a[G[2, 9, 3] ^ G['M', 'F', 'M'], ['P01', 'P02']]
+# set "diagonal" to 0
+countries = ...
+use[src[countries] ^ dst[countries]] = 0
+
 
 # 4b) lookup (this is a form of point-selection), wh potentially repeated values
 person_age = [5, 1, 2, 1, 6, 5]
 person_gender = ['M', 'F', 'F', 'M', 'M', 'F']
 person_workstate = [1, 3, 1, 2, 1, 3]
-income = mean_income[person_age, person_gender]  # <-- no ! does cross product
+income = mean_income[person_age, person_gender]  # <-- FAILS ! (it does a cross product)
 income = mean_income[G[person_age] ^ G[person_gender]]
-income = mean_income[G.points[person_age, person_gender]] # <-- disallow having
-                                                          # an axis named
-                                                          # "points"
+income = mean_income[G[person_age].combine(G[person_gender])]
+income = mean_income[G.points[person_age, person_gender]] # <-- disallow having an axis named "points"
 income = mean_income.points[person_age, person_gender]
 # if ambiguous
 income = mean_income.points[G.age[person_age], person_gender]
@@ -453,7 +485,7 @@ income = extra_income[LK[person_gender] & (LK[workstate] == 1)]
 #    .points by default.
 # A: yes, that's an option but would not solve the "set" problem.
 
-# => I NEED a way to set the axis on an LKey. maybe x.abc[LK] should not
+# => I NEED a way to set the axis on an LKey. maybe X.abc[LK] should not
 # return an LSet? but an LKey with an axis.
 
 
@@ -520,8 +552,8 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 
 # 6) multi slices, aggregate (one group per slice)
 
-# groups = (x.clength[1:15], x.clength[16:25], x.clength[26:30],
-#           x.clength[31:35], x.clength[36:40], x.clength[41:50])
+# groups = (X.clength[1:15], X.clength[16:25], X.clength[26:30],
+#           X.clength[31:35], X.clength[36:40], X.clength[41:50])
 # agg = arr.sum(groups)
 
 # groups = G.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
@@ -532,46 +564,46 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # 7) multi slices, assign one value per slice
 
 # multip_mat_min = zeros([clength, year])
-# multip_mat_min[x.clength[1:15], x.year[first_year_p:2024]] = 7 / 7
-# multip_mat_min[x.clength[16:25], x.year[first_year_p:2024]] = 20 / 20
-# multip_mat_min[x.clength[26:30], x.year[first_year_p:2024]] = 27 / 27
-# multip_mat_min[x.clength[31:35], x.year[first_year_p:2024]] = 32 / 32
-# multip_mat_min[x.clength[36:40], x.year[first_year_p:2024]] = 37 / 37
-# multip_mat_min[x.clength[41:50], x.year[first_year_p:2024]] = 42 / 42
-# multip_mat_min[x.clength[1:15], x.year[2025:2029]] = 8 / 7
-# multip_mat_min[x.clength[16:25], x.year[2025:2029]] = 21 / 20
-# multip_mat_min[x.clength[26:30], x.year[2025:2029]] = 28 / 27
-# multip_mat_min[x.clength[31:35], x.year[2025:2029]] = 33 / 32
-# multip_mat_min[x.clength[36:40], x.year[2025:2029]] = 38 / 37
-# multip_mat_min[x.clength[41:50], x.year[2025:2029]] = 43 / 42
-# multip_mat_min[x.clength[1:15], x.year[2030:]] = 9 / 7
-# multip_mat_min[x.clength[16:25], x.year[2030:]] = 22 / 20
-# multip_mat_min[x.clength[26:30], x.year[2030:]] = 29 / 27
-# multip_mat_min[x.clength[31:35], x.year[2030:]] = 34 / 32
-# multip_mat_min[x.clength[36:40], x.year[2030:]] = 39 / 37
-# multip_mat_min[x.clength[41:50], x.year[2030:]] = 44 / 42
+# multip_mat_min[X.clength[1:15], X.year[first_year_p:2024]] = 7 / 7
+# multip_mat_min[X.clength[16:25], X.year[first_year_p:2024]] = 20 / 20
+# multip_mat_min[X.clength[26:30], X.year[first_year_p:2024]] = 27 / 27
+# multip_mat_min[X.clength[31:35], X.year[first_year_p:2024]] = 32 / 32
+# multip_mat_min[X.clength[36:40], X.year[first_year_p:2024]] = 37 / 37
+# multip_mat_min[X.clength[41:50], X.year[first_year_p:2024]] = 42 / 42
+# multip_mat_min[X.clength[1:15], X.year[2025:2029]] = 8 / 7
+# multip_mat_min[X.clength[16:25], X.year[2025:2029]] = 21 / 20
+# multip_mat_min[X.clength[26:30], X.year[2025:2029]] = 28 / 27
+# multip_mat_min[X.clength[31:35], X.year[2025:2029]] = 33 / 32
+# multip_mat_min[X.clength[36:40], X.year[2025:2029]] = 38 / 37
+# multip_mat_min[X.clength[41:50], X.year[2025:2029]] = 43 / 42
+# multip_mat_min[X.clength[1:15], X.year[2030:]] = 9 / 7
+# multip_mat_min[X.clength[16:25], X.year[2030:]] = 22 / 20
+# multip_mat_min[X.clength[26:30], X.year[2030:]] = 29 / 27
+# multip_mat_min[X.clength[31:35], X.year[2030:]] = 34 / 32
+# multip_mat_min[X.clength[36:40], X.year[2030:]] = 39 / 37
+# multip_mat_min[X.clength[41:50], X.year[2030:]] = 44 / 42
 #
 # # already possible
 # m = zeros(clength)
-# m[x.clength[1:15]] = 7
-# m[x.clength[16:25]] = 20
-# m[x.clength[26:30]] = 27
-# m[x.clength[31:35]] = 32
-# m[x.clength[36:40]] = 37
-# m[x.clength[41:50]] = 42
+# m[X.clength[1:15]] = 7
+# m[X.clength[16:25]] = 20
+# m[X.clength[26:30]] = 27
+# m[X.clength[31:35]] = 32
+# m[X.clength[36:40]] = 37
+# m[X.clength[41:50]] = 42
 # multip_mat_min = zeros([clength, year])
-# multip_mat_min[x.year[:2024]] = m / m
-# multip_mat_min[x.year[2025:2029]] = (m + 1) / m
-# multip_mat_min[x.year[2030:]] = (m + 2) / m
+# multip_mat_min[X.year[:2024]] = m / m
+# multip_mat_min[X.year[2025:2029]] = (m + 1) / m
+# multip_mat_min[X.year[2030:]] = (m + 2) / m
 
 # >>> very nice for this case but it does not scale very well with number of
 #     values to set. On the other hand, splitting it in case it does not fit
 #     on a line is not TOO horrible (just a bit horrible ;-))
 # m = zeros(clength)
-# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
+# m[X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
 #            [   7,    20,    27,    32,    37,     42]
 # multip_mat_min = zeros([clength, year])
-# multip_mat_min[x.year[:2024,   2025:2029,       2030:]] = \
+# multip_mat_min[X.year[:2024,   2025:2029,       2030:]] = \
 #                      [m / m, (m + 1) / m, (m + 2) / m]
 
 # m = zeros(clength)
@@ -613,12 +645,12 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # a[G.age[5, 7, 9]]
 # a[G.geo[5, 7, 9].named('brussels')]
 
-# a[x.age[G[5, 7, 9]]]
-# a[x.age[G[5, 7, 9].named('brussels')]]
+# a[X.age[G[5, 7, 9]]]
+# a[X.age[G[5, 7, 9].named('brussels')]]
 
 # a[G.get('strange axis')[5, 7, 9].named('Brussels')]
 
-# a[x.age[5, 7, 9]]
+# a[X.age[5, 7, 9]]
 
 # positional groups *without axis* (G.i, P[], or I[]) does not make much sense,
 # because it will matches all axes, but might be useful as an intermediate
@@ -673,29 +705,29 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # we also need the best possible syntax to handle, "arbitrary" resampling
 
 # pure_min_w1_comp_agg = zeros(result_axes)
-# pure_min_w1_comp_agg[x.LBMosesXLS[1]] = pure_min_w1_comp.sum(x.clength[1:15])
-# pure_min_w1_comp_agg[x.LBMosesXLS[2]] = pure_min_w1_comp.sum(x.clength[16:25])
-# pure_min_w1_comp_agg[x.LBMosesXLS[3]] = pure_min_w1_comp.sum(x.clength[26:30])
-# pure_min_w1_comp_agg[x.LBMosesXLS[4]] = pure_min_w1_comp.sum(x.clength[31:35])
-# pure_min_w1_comp_agg[x.LBMosesXLS[5]] = pure_min_w1_comp.sum(x.clength[36:40])
-# pure_min_w1_comp_agg[x.LBMosesXLS[6]] = pure_min_w1_comp.sum(x.clength[41:50])
+# pure_min_w1_comp_agg[X.LBMosesXLS[1]] = pure_min_w1_comp.sum(X.clength[1:15])
+# pure_min_w1_comp_agg[X.LBMosesXLS[2]] = pure_min_w1_comp.sum(X.clength[16:25])
+# pure_min_w1_comp_agg[X.LBMosesXLS[3]] = pure_min_w1_comp.sum(X.clength[26:30])
+# pure_min_w1_comp_agg[X.LBMosesXLS[4]] = pure_min_w1_comp.sum(X.clength[31:35])
+# pure_min_w1_comp_agg[X.LBMosesXLS[5]] = pure_min_w1_comp.sum(X.clength[36:40])
+# pure_min_w1_comp_agg[X.LBMosesXLS[6]] = pure_min_w1_comp.sum(X.clength[41:50])
 #
-# clength_groups = (x.clength[1:15], x.clength[16:25], x.clength[26:30],
-#                   x.clength[31:35], x.clength[36:40], x.clength[41:50])
+# clength_groups = (X.clength[1:15], X.clength[16:25], X.clength[26:30],
+#                   X.clength[31:35], X.clength[36:40], X.clength[41:50])
 # pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups).rename(
-#     x.clength, x.LBMosesXLS)
+#     X.clength, X.LBMosesXLS)
 
 # clength_groups = (L[1:15], L[16:25], L[26:30],
 #                   L[31:35], L[36:40], L[41:50])
 # pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups).rename(
-#     x.clength, x.LBMosesXLS)
+#     X.clength, X.LBMosesXLS)
 #
-# clength_groups = x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
+# clength_groups = X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
 # pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups)
 #
 # clength_groups = G[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]
 # pure_min_w1_comp_agg2 = pure_min_w1_comp.sum(clength_groups) \
-#                                         .replace(x.clength, LBMosesXLS)
+#                                         .replace(X.clength, LBMosesXLS)
 
 # XXX: what if I want to sum on all the slices (as if it was a single slice)
 # clength_groups = G[1:15] | G[16:25] | G[26:30] | G[31:35] | G[36:40] | G[41:50]
@@ -715,40 +747,40 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # ])
 #
 # multip_mat_min = zeros([clength, year])
-# multip_mat_min[x.clength[1:15], x.year[first_year_p:2024]] = 7 / 7
-# multip_mat_min[x.clength[16:25], x.year[first_year_p:2024]] = 20 / 20
-# multip_mat_min[x.clength[26:30], x.year[first_year_p:2024]] = 27 / 27
-# multip_mat_min[x.clength[31:35], x.year[first_year_p:2024]] = 32 / 32
-# multip_mat_min[x.clength[36:40], x.year[first_year_p:2024]] = 37 / 37
-# multip_mat_min[x.clength[41:50], x.year[first_year_p:2024]] = 42 / 42
-# multip_mat_min[x.clength[1:15], x.year[2025:2029]] = 8 / 7
-# multip_mat_min[x.clength[16:25], x.year[2025:2029]] = 21 / 20
-# multip_mat_min[x.clength[26:30], x.year[2025:2029]] = 28 / 27
-# multip_mat_min[x.clength[31:35], x.year[2025:2029]] = 33 / 32
-# multip_mat_min[x.clength[36:40], x.year[2025:2029]] = 38 / 37
-# multip_mat_min[x.clength[41:50], x.year[2025:2029]] = 43 / 42
-# multip_mat_min[x.clength[1:15], x.year[2030:]] = 9 / 7
-# multip_mat_min[x.clength[16:25], x.year[2030:]] = 22 / 20
-# multip_mat_min[x.clength[26:30], x.year[2030:]] = 29 / 27
-# multip_mat_min[x.clength[31:35], x.year[2030:]] = 34 / 32
-# multip_mat_min[x.clength[36:40], x.year[2030:]] = 39 / 37
-# multip_mat_min[x.clength[41:50], x.year[2030:]] = 44 / 42
+# multip_mat_min[X.clength[1:15], X.year[first_year_p:2024]] = 7 / 7
+# multip_mat_min[X.clength[16:25], X.year[first_year_p:2024]] = 20 / 20
+# multip_mat_min[X.clength[26:30], X.year[first_year_p:2024]] = 27 / 27
+# multip_mat_min[X.clength[31:35], X.year[first_year_p:2024]] = 32 / 32
+# multip_mat_min[X.clength[36:40], X.year[first_year_p:2024]] = 37 / 37
+# multip_mat_min[X.clength[41:50], X.year[first_year_p:2024]] = 42 / 42
+# multip_mat_min[X.clength[1:15], X.year[2025:2029]] = 8 / 7
+# multip_mat_min[X.clength[16:25], X.year[2025:2029]] = 21 / 20
+# multip_mat_min[X.clength[26:30], X.year[2025:2029]] = 28 / 27
+# multip_mat_min[X.clength[31:35], X.year[2025:2029]] = 33 / 32
+# multip_mat_min[X.clength[36:40], X.year[2025:2029]] = 38 / 37
+# multip_mat_min[X.clength[41:50], X.year[2025:2029]] = 43 / 42
+# multip_mat_min[X.clength[1:15], X.year[2030:]] = 9 / 7
+# multip_mat_min[X.clength[16:25], X.year[2030:]] = 22 / 20
+# multip_mat_min[X.clength[26:30], X.year[2030:]] = 29 / 27
+# multip_mat_min[X.clength[31:35], X.year[2030:]] = 34 / 32
+# multip_mat_min[X.clength[36:40], X.year[2030:]] = 39 / 37
+# multip_mat_min[X.clength[41:50], X.year[2030:]] = 44 / 42
 #
 # # already possible
 # m = zeros(clength)
-# m[x.clength[1:15]] = 7
-# m[x.clength[16:25]] = 20
-# m[x.clength[26:30]] = 27
-# m[x.clength[31:35]] = 32
-# m[x.clength[36:40]] = 37
-# m[x.clength[41:50]] = 42
+# m[X.clength[1:15]] = 7
+# m[X.clength[16:25]] = 20
+# m[X.clength[26:30]] = 27
+# m[X.clength[31:35]] = 32
+# m[X.clength[36:40]] = 37
+# m[X.clength[41:50]] = 42
 # multip_mat_min = zeros([clength, year])
-# multip_mat_min[x.year[:2024]] = m / m
-# multip_mat_min[x.year[2025:2029]] = (m + 1) / m
-# multip_mat_min[x.year[2030:]] = (m + 2) / m
+# multip_mat_min[X.year[:2024]] = m / m
+# multip_mat_min[X.year[2025:2029]] = (m + 1) / m
+# multip_mat_min[X.year[2030:]] = (m + 2) / m
 
 # TODO: it would be nice to be able to say:
-# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]
+# m[X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]
 # but I am unsure it is possible/unambiguous
 
 # this kind of pattern is not supported by numpy
@@ -773,13 +805,12 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # (and if not, whether or not we can come up with a syntax that is both nice
 #  and not ambiguous)
 
-# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = \
-#            [7, 20, 27, 32, 37, 42]
-# multip_mat_min[x.year[:2024, 2025:2029, 2030:]] = [m / m, (m + 1) / m,
+# m[X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]
+# multip_mat_min[X.year[:2024, 2025:2029, 2030:]] = [m / m, (m + 1) / m,
 #                                                   (m + 2) / m]
 
 # for the multi-value case to work I would probably have to make
-# m[x.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]]
+# m[X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]]
 # return multiple arrays (as a tuple of arrays or an array of arrays)
 # with pandas/MI support, we could just return an array with
 # a (second) clength axis
@@ -798,18 +829,19 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # aggregate)
 
 # ideally s.sum() would first sum each array then sum those sums
-# and s.sum(x.age) would sum each array along age
-# and s.sum(x.arrays) would try to add arrays together (and fail in
+# and s.sum(X.age) would sum each array along age
+# and s.sum(X.arrays) would try to add arrays together (and fail in
 # some/most cases)
 # the problem is that one important use case is not covered:
-# aggregating along all dimensions of the arrays but NOT on x.arrays
+# aggregating along all dimensions of the arrays but NOT on X.arrays
+# but see below for solutions
 
 # Q: s.elements.sum() (or s.arrays.sum()) vs s.sum() solve this?
 # A1: s.arrays.sum() would dispatch to each array and return a new Session
 #     s.sum() would try to do s.arrays.sum().sum()
 #     seems doable...
 
-# A2: s.sum_by(x.arrays) (like Pandas default aggregate) would solve
+# A2: s.sum_by(X.arrays) (like Pandas default aggregate) would solve
 #     the issue even more nicely, but this is a bit more work (is it?) and
 #     can be safely added later.
 
@@ -821,7 +853,7 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # A:
 
 # Q: what happens when you do s1 + s2 ?
-# A: same than s1.arrays + s2.arrays
+# A: same than [a1 + a2 for a1, a2 in zip(s1, s2)]
 #    if we view s1 as a big array with an extra dimension, it would give
 #    that result (modulo union of names until we are Pandas based)
 
@@ -835,7 +867,7 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 #    (s1 == s2).all()
 
 # Q: what if I want to know which arrays are equal and which are not?
-# A: (s1 == s2).all_by(x.arrays)
+# A: (s1 == s2).all_by(X.arrays)
 
 # boolean ops
 # ===========
@@ -908,20 +940,20 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
     >>> a.sum('10:19 > 10_19 ; 20:29 > 20_29 ; year=#-1')
     >>> a.sum('(10:19 > 10_19 ; 20:29 > 20_29) & year=#-1')
     >>> teens = G['age=10:19 >> teens']
-    >>> teens = x.age[10:19].named('teens')
+    >>> teens = X.age[10:19].named('teens')
     >>> twenties = G['age=20:29']
     >>> a.sum('({teens}, {twenties})')
     >>> a.sum((teens, twenties))
     # will we ever want to support this?
     >>> a.sum('age > clength')
     >>> a.sum('age > {ext}')
-    >>> a.sum(x.age > ext)
+    >>> a.sum(X.age > ext)
     >>> a.sum('age > 10')
     LGroup(['a', 'b', 'c'], name='abc')
 
 
-expend_flow[x.cat_from['married_women'], x.cat_to['retirement_survival_women'], y] = \
-        flow[x.cat_from['married_women'], x.cat_to['retirement_survival_women'], y] * \
+expend_flow[X.cat_from['married_women'], X.cat_to['retirement_survival_women'], y] = \
+        flow[X.cat_from['married_women'], X.cat_to['retirement_survival_women'], y] * \
         pension_age_diff_lag['married_men', y] * 1.1 * (45 / average_clength_survival['married_men', y])
 
 expend_flow['cat_from[married_women], cat_to[retirement_survival_women]', y] = \
@@ -957,45 +989,45 @@ expend_flow['cat_from[married_women], cat_to[retirement_survival_women]', y] = \
 # ================ set operation on groups ===============
 # ========================================================
 
-we want + and - ops on groups to be both set operation
-or arithmetic operation depending on the case.
+PROBLEM: we want __sub__ op on groups to be both a set operation or arithmetic operation depending on the case.
 
 
 for y in time[start_year + 1:]:
     res = a[y + 1]
 
-for c in sutcode.matches('^...$') + sutcode.matches('^..$') - 'ND':
-    g = sutcode.startswith(c) - c
+for c in sutcode.matching('^...$') + sutcode.matching('^..$') - 'ND':
+    g = sutcode.startingwith(c) - c
 
-# option 1
-# ========
 
-op on evaluated key by default (whatever it is -- scalar or ndarray)
+# option 1 (current)
+# ==================
+
+execute __op__ on key.eval() by default (whatever it is -- scalar or ndarray)
 set ops must use specific methods
 
 for y in time[start_year + 1:]:
     res = a[y + 1]
 
-for c in sutcode.matches('^...$').union(sutcode.matches('^..$')).setdiff('ND'):
-    g = sutcode.startswith(c).setdiff(c)
-for c in sutcode.matches('^...$').union(sutcode.matches('^..$')).difference('ND'):
-    g = sutcode.startswith(c).difference(c)
+for c in sutcode.matching('^...$').union(sutcode.matching('^..$')).difference('ND'):
+    g = sutcode.startingwith(c).difference(c)
 
-# option 2
-# ========
 
-op on evaluated key by default (whatever it is -- scalar or ndarray)
-convert LGroup to LSet using method a specific method
+# option 2 (current too)
+# ======================
+
+execute __op__ on key.eval() by default (whatever it is -- scalar or ndarray)
+convert LGroup to LSet using a specific method
 
 for y in time[start_year + 1:]:
     res = a[y + 1]
 
 # the second .set() is optional
-for c in sutcode.matches('^...$').set() | sutcode.matches('^..$').set() - 'ND':
-    g = sutcode.startswith(c).set() - c
+for c in sutcode.matching('^...$').set() | sutcode.matching('^..$').set() - 'ND':
+    g = sutcode.startingwith(c).set() - c
 
-# option 3 (current)
-# ==================
+
+# option 3 (before)
+# =================
 
 set op on evaluated key by default
 need to use .labels on the axis or .eval() on the group to do arithmetic ops
@@ -1005,31 +1037,78 @@ for y in time.labels:
 for y in time[start_year + 1:].eval():
     res = a[y + 1]
 
-for c in sutcode.matches('^...$') | sutcode.matches('^..$') - 'ND':
-    g = sutcode.startswith(c) - c
+for c in sutcode.matching('^...$') | sutcode.matching('^..$') - 'ND':
+    g = sutcode.startingwith(c) - c
+
 
 # option 4
 # ========
 
-set op if sequence, arithmetic if scalar. This looks good in our example and is usually what people want
-but this is not the path of least surprise !
+set op if "current" (left object) is a sequence, arithmetic if scalar.
+This looks good in our example and is usually what people want but this is not the path of least surprise !
 
 for y in time[start_year + 1:]:
+    # expected result (arithmetic)
     res = a[y + 1]
 
-for c in sutcode.matches('^...$') | sutcode.matches('^..$') - 'ND':
-    g = sutcode.startswith(c) - c
+# expected result (set op)
+for c in sutcode.matching('^...$') | sutcode.matching('^..$') - 'ND':
+    # expected result (set op)
+    g = sutcode.startingwith(c) - c
+
+# UNEXPECTED result (set op)
+for age in age[1:] + 1:
 
 
-# an example of unexpected result would be:
-age[1:] + 1
+# option 5
+# ========
 
+set op if string type (scalar or sequence), arithmetic if *numeric* (scalar or sequence).
+This also looks good in our example and is usually what people want but this can lead to surprises too !
 
 for y in time[start_year + 1:]:
+    # expected result (arithmetic)
     res = a[y + 1]
 
-for c in sutcode.matches('^...$') | sutcode.matches('^..$') - 'ND':
-    g = sutcode.startswith(c) - c
+# expected result (set op)
+for c in sutcode.matching('^...$') | sutcode.matching('^..$') - 'ND':
+    # expected result (set op)
+    g = sutcode.startingwith(c) - c
+
+
+# expected result (arith op)
+for age in age[1:] + 1:
+    ...
+
+# unexpected result (arith op)
+codes.in_([1, 2, 5]) - bad_code
+
+
+# option 6 (variant of option 4)
+# ==============================
+
+iter(Axis) and iter(Group) return a Label, not a Group.
+now we could make both axis[a_single_label] returns a Label or a Group, but it would probably be cleaner to kill
+"scalar" groups altogether, so we would have:
+* axis[a_single_label] returns a Label
+* axis[[a_single_label]] return a Group with a single element. This is not the same (never was) than a scalar Group.
+In either case, on Group: "setish" ops (ie allow duplicates on the LHS)
+on Label: op on .eval()
+
+for y in time[start_year + 1:]:
+    # expected result (arithmetic via Label)
+    res = a[y + 1]
+
+# expected result (set op)
+for c in sutcode.matching('^...$') | sutcode.matching('^..$') - 'ND':
+    # expected result (set op)
+    g = sutcode.startingwith(c) - c
+
+# somewhat UNEXPECTED result (fails: no + defined on Group)
+for age in age[1:] + 1:
+# somewhat UNEXPECTED result (set op)
+for age in age[1:] - 1:
+
 
 ==========================================
 ==========================================
@@ -1054,5 +1133,3 @@ subset = pop.q('M, sum(10:20 >> yada1, 20:30 >> yada2'))
 # if using a function (like .q) we could also "rename" axes on the fly. the above would create an aggregated axis
 # named "age" but the code below would create "toto" instead
 subset = pop.q('M', toto=age.sum[10:20, 20:30])
-
-
