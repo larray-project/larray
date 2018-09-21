@@ -270,6 +270,7 @@ if xw is not None:
             if self.filepath is not None and os.path.isfile(self.xw_wkb.fullname):
                 tmp_file = self.xw_wkb.fullname
                 self.xw_wkb.close()
+                # XXX: do we check for this case earlier and act differently depending on overwrite?
                 os.remove(self.filepath)
                 os.rename(tmp_file, self.filepath)
             else:
@@ -292,6 +293,10 @@ if xw is not None:
             return self
 
         def __exit__(self, type_, value, traceback):
+            # XXX: we should probably also avoid closing the workbook for visible=True???
+            # XXX: we might want to disallow using open_excel as a context manager (in __enter__)
+            #      when we have nothing to do in close because it is kinda misleading (this might piss off
+            #      users though, so maybe a warning would be better).
             if not self.active_workbook:
                 self.close()
 

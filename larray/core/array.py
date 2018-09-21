@@ -17,7 +17,7 @@ Matrix class
 
 # * Axis.sequence? geo.seq('A31', 'A38') (equivalent to geo['A31..A38'])
 
-# * re-implement row_totals/col_totals? or what do we do with them?
+# ? re-implement row_totals/col_totals? or what do we do with them?
 
 # * time specific API so that we know if we go for a subclass or not
 
@@ -397,7 +397,7 @@ class LArrayPositionalPointsIndexer(object):
 
     def __setitem__(self, key, value):
         # we still need to prepare the key instead of letting numpy handle everything so that
-        # existing (integer)LArray keys are handled correctly (broadcasted using axes names).
+        # existing (integer)LArray keys are broadcasted correctly (using axes names).
         self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
@@ -710,7 +710,7 @@ class LArray(ABCLArray):
                             "instead of {}".format(type(meta).__name__))
         self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
 
-    # TODO: rename to posnonzero and implement a label version of nonzero
+    # TODO: rename to inonzero and implement a label version of nonzero
     # TODO: implement wildcard argument to avoid producing the combined labels
     def nonzero(self):
         r"""
@@ -1273,6 +1273,9 @@ class LArray(ABCLArray):
     # Python 2
     __nonzero__ = __bool__
 
+    # TODO: this should be a thin wrapper around a method in AxisCollection
+    # TODO: either support a list (of axes names) as first argument here (and set_labels)
+    #       or don't support that in set_axes
     def rename(self, renames=None, to=None, inplace=False, **kwargs):
         """Renames axes of the array.
 
@@ -8379,6 +8382,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         axis = Axis(axis)
     if elements is None:
         if not isinstance(axis, Axis) and sys.version_info[:2] < (3, 6):
+            # XXX: this should probably be a warning, not an error
             raise TypeError("axis argument should provide label order when using keyword arguments on Python < 3.6")
         elements = kwargs.items()
     elif kwargs:
@@ -8394,6 +8398,8 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
         axis = elements.axes[axis]
         values = [elements[k] for k in axis]
     elif isinstance(elements, dict):
+        # TODO: support having no Axis object for Python3.7 (without error or warning)
+        # XXX: we probably want to support this with a warning on Python < 3.7
         assert isinstance(axis, Axis)
         values = [elements[v] for v in axis.labels]
     elif isinstance(elements, Iterable):
