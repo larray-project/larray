@@ -295,6 +295,11 @@ Miscellaneous improvements
 * allowed to pass a single axis or group as ``axes_to_reindex`` argument
   of the :py:obj:`LArray.reindex()` method (closes :issue:`712`).
 
+* substantially improved performance of creating, iterating, and doing a few other operations over larray objects.
+  This solves a few pathological cases of slow operations, especially those involving many small-ish arrays but sadly
+  the overall performance improvement is negligible over most of the real-world models using larray that we tested these
+  changes on.
+
 
 Fixes
 ^^^^^

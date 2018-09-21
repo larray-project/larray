@@ -558,14 +558,22 @@ def nan_equal(a1, a2):
     return a1.eq(a2, nans_equal=True)
 
 
-def _handle_deprecated_argument_title(meta, title):
-    if meta is None:
-        meta = Metadata()
+def _handle_meta(meta, title):
+    """
+    Make sure meta is either None or a Metadata instance
+    """
     if title is not None:
-        import warnings
-        warnings.warn("title argument is deprecated. Please use meta argument instead", FutureWarning, stacklevel=3)
+        if meta is None:
+            meta = Metadata()
+        warnings.warn("title argument is deprecated. Please use meta argument instead", FutureWarning, stacklevel=2)
         meta['title'] = title
-    return meta
+    if meta is None or isinstance(meta, Metadata):
+        return meta
+    # XXX: move this test in Metadata.__init__?
+    if not isinstance(meta, (list, dict, OrderedDict)):
+        raise TypeError("Expected None, list of pairs, dict, OrderedDict or Metadata object "
+                        "instead of {}".format(type(meta).__name__))
+    return Metadata(meta)
 
 
 class LArray(ABCLArray):
@@ -685,14 +693,14 @@ class LArray(ABCLArray):
         self.data = data
         self.axes = axes
 
-        meta = _handle_deprecated_argument_title(meta, title)
-        self.meta = meta
+        meta = _handle_meta(meta, title)
+        self._meta = meta
 
     @property
     def title(self):
         import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
-        return self._meta.title if 'title' in self._meta else None
+        return self._meta.title if self._meta is not None and 'title' in self._meta else None
 
     @title.setter
     def title(self, title):
@@ -711,14 +719,13 @@ class LArray(ABCLArray):
         Metadata:
             Metadata of the array.
         """
+        if self._meta is None:
+            self._meta = Metadata()
         return self._meta
 
     @meta.setter
     def meta(self, meta):
-        if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
-            raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
-                            "instead of {}".format(type(meta).__name__))
-        self._meta = meta if isinstance(meta, Metadata) else Metadata(meta)
+        self._meta = _handle_meta(meta, None)
 
     # TODO: rename to inonzero and implement a label version of nonzero
     # TODO: implement wildcard argument to avoid producing the combined labels
@@ -7400,7 +7407,8 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None):
          BE  0.0  0.0
          FO  0.0  0.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    # FIXME: the error message is wrong (stackdepth is wrong) because of _check_axes_argument
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
     return LArray(np.zeros(axes.shape, dtype, order), axes, meta=meta)
 
@@ -7436,7 +7444,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
      a0   0   0   0
      a1   0   0   0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     return LArray(np.zeros_like(array, dtype, order), array.axes, meta=meta)
 
 
@@ -7472,7 +7480,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
          BE  1.0  1.0
          FO  1.0  1.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
     return LArray(np.ones(axes.shape, dtype, order), axes, meta=meta)
 
@@ -7508,7 +7516,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
      a0   1   1   1
      a1   1   1   1
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = array.axes
     return LArray(np.ones_like(array, dtype, order), axes, meta=meta)
 
@@ -7545,7 +7553,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
          BE  2.47311483356e-315  2.47498446195e-315
          FO                 0.0  6.07684618082e-31
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
     return LArray(np.empty(axes.shape, dtype, order), axes, meta=meta)
 
@@ -7582,7 +7590,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
      a1  1.06099789568e-313  1.48539705397e-313
      a2  1.90979621226e-313  2.33419537056e-313
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # cannot use empty() because order == 'K' is not understood
     return LArray(np.empty_like(array.data, dtype, order), array.axes, meta=meta)
 
@@ -7629,7 +7637,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
          BE  0  1
          FO  0  1
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     if isinstance(fill_value, Axis):
         raise ValueError("If you want to pass several axes or dimension lengths to full, you must pass them as a "
                          "list (using []) or tuple (using()).")
@@ -7673,7 +7681,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
      a0   5   5   5
      a1   5   5   5
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
     res = empty_like(array, dtype=dtype, meta=meta)
@@ -7787,7 +7795,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     year  2016  2017  2018  2019
            1.0   2.0   3.0   3.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
 
     if inc is None:
         inc = 1 if mult is 1 else 0
@@ -7984,7 +7992,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
          BE  0  1
          FO  2  3
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     # XXX: try to come up with a syntax where start is before "end".
     # For ndim > 1, I cannot think of anything nice.
     if isinstance(shape_or_axes, int):
@@ -8135,7 +8143,7 @@ def labels_array(axes, title=None, meta=None):
     # nat\\sex     M     F
     #      BE  BE,M  BE,F
     #      FO  FO,M  FO,F
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
     if len(axes) > 1:
         res_axes = axes + Axis(axes.names, 'axis')
@@ -8205,7 +8213,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
             1  0.0  0.0  1.0
             2  0.0  0.0  0.0
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
     if columns is None:
         columns = rows.copy() if isinstance(rows, Axis) else rows
     axes = AxisCollection([rows, columns])
@@ -8404,7 +8412,7 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
                M       0.0      0.5
                F       0.0      0.5
     """
-    meta = _handle_deprecated_argument_title(meta, title)
+    meta = _handle_meta(meta, title)
 
     from larray import Session
 
