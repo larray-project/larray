@@ -4212,7 +4212,9 @@ def test_matmul():
     # 2D / anonymous axes
     a1 = ndtest([Axis(3), Axis(3)])
     a2 = eye(3, 3) * 2
-    # cannot use @ in the tests because that is an invalid syntax in Python 2
+
+    # Note that we cannot use @ because that is an invalid syntax in Python 2
+
     # LArray value
     assert_array_equal(a1.__matmul__(a2), ndtest([Axis(3), Axis(3)]) * 2)
 
@@ -4224,7 +4226,9 @@ def test_matmul():
     arr2d = ndtest((3, 3))
 
     # 1D @ 1D
-    assert arr1d.__matmul__(arr1d) == 5
+    res = arr1d.__matmul__(arr1d)
+    assert isinstance(res, np.integer)
+    assert res == 5
 
     # 1D @ 2D
     assert_array_equal(arr1d.__matmul__(arr2d),
