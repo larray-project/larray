@@ -104,6 +104,7 @@ class Axis(ABCAxis):
         self.__sorted_values = None
         self._length = None
         self._iswildcard = False
+        # set _labels, _length and _iswildcard via the property
         self.labels = labels
 
     @property
@@ -2059,6 +2060,9 @@ class AxisCollection(object):
         """
         return self[:]
 
+    # XXX: what's the point in supporting a list of Axis or AxisCollection in axes_to_replace?
+    #      it is used in LArray.set_axes but if it is only there, shouldn't the support for that be
+    #      moved there?
     def replace(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
         """Replace one, several or all axes of the collection.
 
