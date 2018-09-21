@@ -186,6 +186,7 @@ Searching
    AxisCollection.translate_full_key
    AxisCollection.axis_id
    AxisCollection.ids
+   AxisCollection.iter_labels
 
 Modifying/Selecting
 -------------------
