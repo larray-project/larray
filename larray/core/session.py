@@ -95,10 +95,8 @@ class Session(object):
                 # assume a0 is a filename
                 self.load(a0)
             else:
-                items = a0.items() if isinstance(a0, dict) else a0
-                # assume we have an iterable of tuples
-                for k, v in items:
-                    self[k] = v
+                # iterable of tuple or dict-like
+                self.update(a0)
         else:
             self.add(*args, **kwargs)
 
