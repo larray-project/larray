@@ -16,7 +16,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi)
+                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi, Product)
 
 
 class Axis(ABCAxis):
@@ -1453,6 +1453,74 @@ class AxisCollection(object):
 
     def __iter__(self):
         return iter(self._list)
+
+    # TODO: move a few doctests to unit tests
+    def iter_labels(self, axes=None, ascending=True):
+        r"""Returns a view of the axes labels.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the collection).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position. The precise type of which is considered an
+            implementation detail and should not be relied on.
+
+        Examples
+        --------
+
+        >>> from larray import ndtest
+        >>> axes = ndtest((2, 2)).axes
+        >>> axes
+        AxisCollection([
+            Axis(['a0', 'a1'], 'a'),
+            Axis(['b0', 'b1'], 'b')
+        ])
+        >>> axes.iter_labels()[0]
+        (a.i[0], b.i[0])
+        >>> for index in axes.iter_labels():
+        ...     print(index)
+        (a.i[0], b.i[0])
+        (a.i[0], b.i[1])
+        (a.i[1], b.i[0])
+        (a.i[1], b.i[1])
+        >>> axes.iter_labels(ascending=False)[0]
+        (a.i[1], b.i[1])
+        >>> for index in axes.iter_labels(ascending=False):
+        ...     print(index)
+        (a.i[1], b.i[1])
+        (a.i[1], b.i[0])
+        (a.i[0], b.i[1])
+        (a.i[0], b.i[0])
+        >>> axes.iter_labels(('b', 'a'))[0]
+        (b.i[0], a.i[0])
+        >>> for index in axes.iter_labels(('b', 'a')):
+        ...     print(index)
+        (b.i[0], a.i[0])
+        (b.i[0], a.i[1])
+        (b.i[1], a.i[0])
+        (b.i[1], a.i[1])
+        >>> axes.iter_labels('b')[0]
+        (b.i[0],)
+        >>> for index in axes.iter_labels('b'):
+        ...     print(index)
+        (b.i[0],)
+        (b.i[1],)
+        """
+        axes = self if axes is None else self[axes]
+        if not isinstance(axes, AxisCollection):
+            axes = (axes,)
+        # we need .i because Product uses len and [] on axes and not iter; and [] creates LGroup and not IGroup
+        p = Product([axis.i for axis in axes])
+        if not ascending:
+            p = p[::-1]
+        return p
 
     def __getattr__(self, key):
         try:
