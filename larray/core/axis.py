@@ -75,6 +75,8 @@ class Axis(ABCAxis):
     >>> anonymous
     Axis([0, 1, 2, 3, 4], None)
     """
+    __slots__ = ('name', '__mapping', '__sorted_keys', '__sorted_values', '_labels', '_length', '_iswildcard')
+
     # ticks instead of labels?
     def __init__(self, labels, name=None):
         if isinstance(labels, Group) and name is None:
@@ -1371,6 +1373,7 @@ def _make_axis(obj):
 # not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
 # functionality than just a named tuple
 class AxisCollection(object):
+    __slots__ = ('_list', '_map')
     """
     Represents a collection of axes.
 
@@ -1464,10 +1467,11 @@ class AxisCollection(object):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before _map exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return self._list
 
-    def __setstate__(self, d):
-        self.__dict__ = d
+    def __setstate__(self, state):
+        self._list = state
+        self._map = {axis.name: axis for axis in state if axis.name is not None}
 
     def __getitem__(self, key):
         if isinstance(key, Axis):

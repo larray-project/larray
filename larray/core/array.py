@@ -310,6 +310,8 @@ def concat(arrays, axis=0, dtype=None):
 
 
 class LArrayIterator(object):
+    __slots__ = ('nextfunc', 'axes')
+
     def __init__(self, array):
         data_iter = iter(array.data)
         self.nextfunc = data_iter.__next__
@@ -332,6 +334,7 @@ class LArrayIterator(object):
 
 # TODO: rename to LArrayIndexIndexer or something like that
 class LArrayPositionalIndexer(object):
+    __slots__ = ('array',)
     """
     numpy indexing *except* we index the cross product
     """
@@ -362,6 +365,8 @@ class LArrayPositionalIndexer(object):
 
 
 class LArrayPointsIndexer(object):
+    __slots__ = ('array',)
+
     def __init__(self, array):
         self.array = array
 
@@ -383,6 +388,7 @@ class LArrayPointsIndexer(object):
 
 # TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
+    __slots__ = ('array',)
     """
     the closest to numpy indexing we get, but not 100% the same.
     """
@@ -657,6 +663,7 @@ class LArray(ABCLArray):
           M  10   9   8
           F  10  11  12
     """
+    __slots__ = ('data', 'axes', '_meta')
 
     def __init__(self, data, axes=None, title=None, meta=None, dtype=None):
         data = np.asarray(data, dtype=dtype)
@@ -886,14 +893,15 @@ class LArray(ABCLArray):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before .axes exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return self.data, self.axes, self._meta
 
     def __setstate__(self, d):
-        self.__dict__ = d
+        self.data, self.axes, self._meta = d
 
     def __dir__(self):
         axis_names = set(axis.name for axis in self.axes if axis.name is not None)
-        return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | axis_names)
+        attributes = self.__slots__
+        return list(set(dir(self.__class__)) | set(attributes) | axis_names)
 
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
