@@ -3,7 +3,7 @@ import pytest
 import os.path
 import numpy as np
 
-from larray.tests.common import assert_array_equal
+from larray.tests.common import assert_array_equal, assert_nparray_equal
 from larray import Axis, LGroup, IGroup, read_hdf
 
 
@@ -14,6 +14,15 @@ def test_init():
     axis = Axis(np.int32(3))
     assert len(axis) == 3
     assert list(axis.labels) == list(range(3))
+
+    axis = Axis([0, 1], name='test')
+    assert axis.name == 'test'
+    assert_nparray_equal(axis.labels, [0, 1])
+
+    axis = Axis([0, 1], name=np.str_('test'))
+    assert axis.name == 'test'
+    assert type(axis.name) is not np.str_
+    assert_nparray_equal(axis.labels, [0, 1])
 
     sex_tuple = ('M', 'F')
     sex_list = ['M', 'F']
