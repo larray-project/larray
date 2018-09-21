@@ -706,6 +706,8 @@ class IGroupMaker(object):
     -----
     This class is used by the method `Axis.i`
     """
+    __slots__ = ('axis',)
+
     def __init__(self, axis):
         assert isinstance(axis, ABCAxis)
         self.axis = axis
@@ -724,6 +726,8 @@ class IGroupMaker(object):
 class Group(object):
     """Abstract Group.
     """
+    __slots__ = ('key', 'name', 'axis')
+
     format_string = None
 
     def __init__(self, key, name=None, axis=None):
@@ -1484,7 +1488,8 @@ class Group(object):
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
         # dir() takes care of sorting but not uniqueness, so we must ensure that.
-        return list(set(dir(self.eval())) | set(self.__dict__.keys()) | set(dir(self.__class__)))
+        attributes = self.__slots__
+        return list(set(dir(self.eval())) | set(attributes) | set(dir(self.__class__)))
 
     def __getattr__(self, key):
         if key == '__array_struct__':
@@ -1495,10 +1500,10 @@ class Group(object):
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before .key exists, which leads to
     # an infinite recursion)
     def __getstate__(self):
-        return self.__dict__
+        return self.key, self.name, self.axis
 
     def __setstate__(self, d):
-        self.__dict__ = d
+        self.key, self.name, self.axis = d
 
     def __hash__(self):
         # to_tick & to_key are partially opposite operations but this standardize on a single notation so that they can
@@ -1556,6 +1561,7 @@ class LGroup(Group):
     >>> teens
     X.age[10:19] >> 'teens'
     """
+    __slots__ = ()
     format_string = "{axis}[{key}]"
 
     def __init__(self, key, name=None, axis=None):
@@ -1615,6 +1621,7 @@ class LSet(LGroup):
     >>> abc & letters['b:d']
     letters['b', 'c'].set()
     """
+    __slots__ = ()
     format_string = "{axis}[{key}].set()"
 
     def __init__(self, key, name=None, axis=None):
@@ -1677,6 +1684,7 @@ class IGroup(Group):
     axis : int, str, Axis, optional
         Axis for group.
     """
+    __slots__ = ()
     format_string = "{axis}.i[{key}]"
 
     def translate(self, bound=None, stop=False):
