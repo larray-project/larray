@@ -251,7 +251,7 @@ def concat(arrays, axis=0, dtype=None):
     arrays : tuple of LArray
         Arrays to concatenate.
     axis : axis reference (int, str or Axis), optional
-        Axis along which to concatenate. Defaults to the first axis.
+        Axis along which to concatenate. All arrays must have that axis. Defaults to the first axis.
     dtype : dtype, optional
         Result data type. Defaults to the "closest" type which can hold all arrays types without loss of information.
 
@@ -384,7 +384,7 @@ class LArrayPointsIndexer(object):
 # TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
     """
-    the closer to numpy indexing we get, but not 100% the same.
+    the closest to numpy indexing we get, but not 100% the same.
     """
     def __init__(self, array):
         self.array = array
@@ -5485,7 +5485,7 @@ class LArray(ABCLArray):
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False):
-        """Expands array to target_axes.
+        r"""Expands array to target_axes.
 
         Target axes will be added to array if not present.
         In most cases this function is not needed because LArray can do operations with arrays having different
@@ -5493,7 +5493,7 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        target_axes : list of Axis or AxisCollection, optional
+        target_axes : string, list of Axis or AxisCollection, optional
             Self can contain axes not present in `target_axes`.
             The result axes will be: [self.axes not in target_axes] + target_axes
         out : LArray, optional
@@ -5513,22 +5513,37 @@ class LArray(ABCLArray):
         >>> b = Axis('b=b1,b2')
         >>> arr = ndtest([a, b])
         >>> arr
-        a\\b  b1  b2
+        a\b  b1  b2
          a1   0   1
          a2   2   3
+
+        Adding one or several axes will append the new axes at the end
+
         >>> c = Axis('c=c1,c2')
-        >>> arr.expand([a, c, b])
-         a  c\\b  b1  b2
-        a1   c1   0   1
-        a1   c2   0   1
-        a2   c1   2   3
-        a2   c2   2   3
-        >>> arr.expand([b, c])
-         a  b\\c  c1  c2
+        >>> arr.expand(c)
+         a  b\c  c1  c2
         a1   b1   0   0
         a1   b2   1   1
         a2   b1   2   2
         a2   b2   3   3
+
+        If you want to new axes to be inserted in a particular order, you have to give that order
+
+        >>> arr.expand([a, c, b])
+         a  c\b  b1  b2
+        a1   c1   0   1
+        a1   c2   0   1
+        a2   c1   2   3
+        a2   c2   2   3
+
+        But it is enough to list only the added axes and the axes after them:
+
+        >>> arr.expand([c, b])
+         a  c\b  b1  b2
+        a1   c1   0   1
+        a1   c2   0   1
+        a2   c1   2   3
+        a2   c2   2   3
         """
         if sum([target_axes is not None, out is not None]) != 1:
             raise ValueError("exactly one of either `target_axes` or `out` must be defined (not both)")
@@ -6767,8 +6782,8 @@ class LArray(ABCLArray):
         ----------
         axis : int, str or Axis
             Axis for which we want to perform the shift.
-        n : int
-            Number of cells to shift.
+        n : int, optional
+            Number of cells to shift. Defaults to 1.
 
         Returns
         -------
@@ -8275,7 +8290,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     Returns
     -------
     LArray
-        A single array combining arrays.
+        A single array combining arrays. The new (stacked) axes will be the last axes of the new array.
 
     Examples
     --------
