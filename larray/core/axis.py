@@ -721,7 +721,7 @@ class Axis(ABCAxis):
         return self._length
 
     def __iter__(self):
-        return iter([self.i[i] for i in range(self._length)])
+        return iter([IGroup(i, None, self) for i in range(self._length)])
 
     def __getitem__(self, key):
         """

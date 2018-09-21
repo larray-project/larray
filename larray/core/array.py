@@ -311,20 +311,21 @@ def concat(arrays, axis=0, dtype=None):
 
 class LArrayIterator(object):
     def __init__(self, array):
-        self.array = array
-        self.index = 0
+        data_iter = iter(array.data)
+        self.nextfunc = data_iter.__next__
+        self.axes = array.axes[1:]
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        array = self.array
-        if self.index == len(self.array):
-            raise StopIteration
-        # result = array.i[array.axes[0].i[self.index]]
-        result = array.i[self.index]
-        self.index += 1
-        return result
+        data = self.nextfunc()
+        axes = self.axes
+        if len(axes):
+            return LArray(data, axes)
+        else:
+            return data
+
     # Python 2
     next = __next__
 
@@ -2290,7 +2291,11 @@ class LArray(ABCLArray):
     __repr__ = __str__
 
     def __iter__(self):
-        return LArrayIterator(self)
+        # fast path for 1D arrays where we return elements
+        if self.ndim <= 1:
+            return iter(self.data)
+        else:
+            return LArrayIterator(self)
 
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)

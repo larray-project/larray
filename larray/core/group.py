@@ -870,7 +870,8 @@ class Group(object):
     def __iter__(self):
         # XXX: use translate/IGroup instead, so that it works even in the presence of duplicate labels
         #      possibly, only if axis is set?
-        return iter([LGroup(v, axis=self.axis) for v in self.eval()])
+        axis = self.axis
+        return iter([LGroup(v, axis=axis) for v in self.eval()])
 
     def named(self, name):
         """Returns group with a different name.
