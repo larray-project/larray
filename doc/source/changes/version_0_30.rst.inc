@@ -100,6 +100,24 @@ Backward incompatible changes
 New features
 ------------
 
+* implemented :py:obj:`read_stata()` and :py:obj:`LArray.to_stata()` to read arrays from and write arrays to Stata .dta
+  files.
+
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+    >>> arr.to_stata('test.dta')
+    >>> read_stata('test.dta')
+    {0}\{1}   a  b0  b1  b2
+          0  a0   0   1   2
+          1  a1   3   4   5
+    >>> read_stata('test.dta', index_col='a')
+    a\{1}  b0  b1  b2
+       a0   0   1   2
+       a1   3   4   5
+
 * added :py:obj:`LArray.isin()` method to check whether each element of an array is contained in a list (or array) of
   values.
 

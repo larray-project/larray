@@ -623,6 +623,7 @@ Read
    read_hdf
    read_eurostat
    read_sas
+   read_stata
 
 Write
 -----
@@ -633,6 +634,7 @@ Write
    LArray.to_csv
    LArray.to_excel
    LArray.to_hdf
+   LArray.to_stata
 
 Excel
 =====

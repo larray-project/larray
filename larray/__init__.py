@@ -28,6 +28,7 @@ from larray.inout.csv import read_csv, read_tsv, read_eurostat
 from larray.inout.excel import read_excel
 from larray.inout.hdf import read_hdf
 from larray.inout.sas import read_sas
+from larray.inout.stata import read_stata
 from larray.inout.xw_excel import open_excel, Workbook
 
 from larray.viewer import view, edit, compare
@@ -67,7 +68,7 @@ __all__ = [
     'real_if_close', 'interp', 'isnan', 'isinf', 'inverse',
     # inout
     'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
-    'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'open_excel', 'Workbook',
+    'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'read_stata', 'open_excel', 'Workbook',
     # viewer
     'view', 'edit', 'compare',
     # ipfp
