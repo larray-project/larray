@@ -101,6 +101,9 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* implemented :py:obj:`read_stata()` and :py:obj:`LArray.to_stata()` to read arrays from and write arrays to Stata .dta
+  files.
+
 * added :py:obj:`LArray.isin()` method to check whether each element of an array is contained in a list (or array) of
   values.
 

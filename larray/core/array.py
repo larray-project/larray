@@ -6266,6 +6266,38 @@ class LArray(ABCLArray):
             attrs.writer = 'LArray'
             self.meta.to_hdf(store, key)
 
+    def to_stata(self, filepath_or_buffer, **kwargs):
+        r"""
+        Writes array to a Stata .dta file.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str or file-like object
+            Path to .dta file or a file handle.
+
+        See Also
+        --------
+        read_stata
+
+        Notes
+        -----
+        The round trip to Stata (LArray.to_stata followed by read_stata) loose the name of the "column" axis.
+
+        Examples
+        --------
+        >>> axes = [Axis(3, 'row'), Axis('column=country,sex')]    # doctest: +SKIP
+        >>> arr = LArray([['BE', 'F'],
+        ...               ['FR', 'M'],
+        ...               ['FR', 'F']], axes=axes)                 # doctest: +SKIP
+        >>> arr                                                    # doctest: +SKIP
+        row*\column  age  sex
+                  0    5    F
+                  1   25    M
+                  2   30    F
+        >>> arr.to_stata('test.dta')                               # doctest: +SKIP
+        """
+        self.to_frame().to_stata(filepath_or_buffer, **kwargs)
+
     @deprecate_kwarg('sheet_name', 'sheet')
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
