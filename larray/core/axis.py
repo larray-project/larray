@@ -1956,7 +1956,11 @@ class AxisCollection(object):
             if not local_axis.iscompatible(axis):
                 raise ValueError("incompatible axes:\n{!r}\nvs\n{!r}".format(axis, local_axis))
 
-    # TODO: deprecate method. union is enough
+    # XXX: deprecate method (functionality is duplicated in union)?
+    #      I am not so sure anymore we need to actually deprecate the method: having both methods with the same
+    #      semantic like we currently have is useless indeed but I think we should have both a set-like method (union)
+    #      and the possibility to add an axis unconditionally (append or extend). That is, add an axis, even if that
+    #      name already exists. This is especially important for anonymous axes (see my comments in stack for example)
     # TODO: deprecate validate argument (unused)
     # TODO: deprecate replace_wildcards argument (unused)
     def extend(self, axes, validate=True, replace_wildcards=False):
@@ -2470,6 +2474,62 @@ class AxisCollection(object):
         else:
             return self._translate_axis_key_chunk(axis_key, bool_passthrough)
 
+    def to_igroup(self, key):
+        """
+        Transforms any key (from LArray.__get|setitem__) to a complete indices-based group key.
+
+        Parameters
+        ----------
+        key : scalar, list/array of scalars, Group or tuple or dict of them
+            any key supported by LArray.__get|setitem__
+
+        Returns
+        -------
+        tuple of IGroup
+            len(tuple) == len(key) if isinstance(key, tuple) else 1
+        """
+        from .array import LArray
+
+        # convert scalar keys to 1D keys
+        if not isinstance(key, (tuple, dict)):
+            key = (key,)
+
+        # FIXME: add support for dict key
+
+        # always the case except if key is a dict
+        if isinstance(key, tuple):
+            key = tuple(axis_key.evaluate(self) if isinstance(axis_key, ExprNode) else axis_key
+                        for axis_key in key)
+
+            nonboolkey = []
+            for axis_key in key:
+                if isinstance(axis_key, np.ndarray) and np.issubdtype(axis_key.dtype, np.bool_):
+                    if axis_key.shape != self.shape:
+                        raise ValueError("boolean key with a different shape ({}) than array ({})"
+                                         .format(axis_key.shape, self.shape))
+                    axis_key = LArray(axis_key, self)
+
+                if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
+                    extra_key_axes = axis_key.axes - self
+                    if extra_key_axes:
+                        raise ValueError("subset key contains more axes ({}) than array ({})"
+                                         .format(axis_key.axes, self))
+                    nonboolkey.extend(axis_key.nonzero())
+                else:
+                    nonboolkey.append(axis_key)
+            key = tuple(nonboolkey)
+
+            # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
+            # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
+            #      a single slice(None) a[:], I don't think there is any point.
+            key = [axis_key for axis_key in key
+                   if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
+
+            # translate all keys to IGroup
+            return tuple(self._translate_axis_key(axis_key) for axis_key in key)
+        else:
+            raise ValueError('dict key not supported for now')
+
     def _translated_key(self, key):
         """
         Transforms any key (from LArray.__get|setitem__) to a complete indices-based key.
@@ -2487,6 +2547,8 @@ class AxisCollection(object):
             This key is not yet usable as is in a numpy array as it can still contain LArray parts and the advanced key
             parts are not broadcasted together yet.
         """
+        # FIXME: use to_igroup
+
         from .array import LArray
 
         # convert scalar keys to 1D keys

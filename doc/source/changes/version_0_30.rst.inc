@@ -287,6 +287,25 @@ Miscellaneous improvements
      A0   0   1
      A1   2   3
 
+* py:obj:`stack()` can now stack along several axes at once.
+
+    >>> gender = Axis('gender=M,F')
+    >>> country = Axis('country=BE,FR,DE')
+    >>> stack({('BE', 'M'): 0,
+    ...        ('FR', 'F'): 2,
+    ...        ('BE', 'F'): 2,
+    ...        ('FR', 'M'): 2,
+    ...        ('DE', 'M'): 2,
+    ...        ('DE', 'F'): 2},
+    ...       (gender, country))
+    FIXME: this is not correct
+    sex  nat\test   T1   T2
+      M        BE  1.0  0.0
+      M        FO  0.0  1.0
+      F        BE  1.0  0.0
+      F        FO  0.0  1.0
+
+
 * added option ``exact`` to ``join`` argument of :py:obj:`Axis.align()` and :py:obj:`LArray.align()` methods.
   Instead of aligning, passing ``join='exact'`` to the ``align`` method will raise an error when axes are not equal.
   Closes :issue:`338`.

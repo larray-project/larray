@@ -8,8 +8,9 @@ Matrix class
 # ? implement multi group in one axis getitem: lipro['P01,P02;P05'] <=> (lipro['P01,P02'], lipro['P05'])
 
 # * we need an API to get to the "next" label. Sometimes, we want to use label+1, but that is problematic when labels
-#   are not numeric, or have not a step of 1. X.agegroup[X.agegroup.after(25):]
-#                                             X.agegroup[X.agegroup[25].next():]
+#   are not numeric, or have not a step of 1.
+#       X.agegroup[X.agegroup.after(25):]
+#       X.agegroup[X.agegroup[25].next():]
 
 # * implement keepaxes=True for _group_aggregate instead of/in addition to group tuples
 
@@ -25,10 +26,7 @@ Matrix class
 
 # * test structured arrays
 
-# ? move "utils" to its own project (so that it is not duplicated between larray and liam2)
-#   OR
-#   include utils only in larray project and make larray a dependency of liam2
-#   (and potentially rename it to reflect the broader scope)
+# * use larray "utils" in LIAM2 (to avoid duplicated code)
 
 from collections import Iterable, Sequence, OrderedDict
 from itertools import product, chain, groupby, islice
@@ -8656,7 +8654,69 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 #       ('FR', 'M'): 2, ('FR', 'F'): 3,
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
+# for 2D, I think the best compromise is the nested dict (especially for python 3.7+):
 
+# stack({'BE': {'M': 0, 'F': 1},
+#        'FR': {'M': 2, 'F': 3},
+#        'DE': {'M': 4, 'F': 5}}, axes=('nationality', 'sex'))
+
+# we could make this valid too (combine pos and labels) but I don't think it worth it unless it comes
+# naturally from the implementation:
+
+# stack({'BE': {'M,F': [0, 1]},
+#        'FR': {'M,F': [2, 3]},
+#        'DE': {'M,F': [4, 5]}}, axes=('nationality', 'sex'))
+
+# It looks especially nice if the labels have been extracted to variables:
+
+# BE, FR, DE = nat['BE,FR,DE']
+# M, F = sex['M,F']
+
+# stack({BE: {M: 0, F: 1},
+#        FR: {M: 2, F: 3},
+#        DE: {M: 4, F: 5}})
+
+# for 3D:
+
+# stack({'a0': {'b0': {'c0':  0, 'c1':  1},
+#               'b1': {'c0':  2, 'c1':  3},
+#               'b2': {'c0':  4, 'c1':  5}},
+#        'a1': {'b0': {'c0':  6, 'c1':  7},
+#               'b1': {'c0':  8, 'c1':  9},
+#               'b2': {'c0': 10, 'c1': 11}}},
+#       axes=('a', 'b', 'c'))
+
+# a0, a1 = a['a0,a1']
+# b0, b1, b2 = b['b0,b1,b2']
+# c0, c1 = c['c0,c1']
+
+# stack({a0: {b0: {c0:  0, c1:  1},
+#             b1: {c0:  2, c1:  3},
+#             b2: {c0:  4, c1:  5}},
+#        a1: {b0: {c0:  6, c1:  7},
+#             b1: {c0:  8, c1:  9},
+#             b2: {c0: 10, c1: 11}}},
+#       axes=(a, b, c))
+
+# if we implement:
+#     arr[key] = {'a0': 0, 'a1': 1}
+# where key must not be related to the "a" axis
+# if would make it relatively easy to implement the nested dict syntax I think:
+# first do a pass at the structure to get axes (if not provided) then:
+#     for k, v in d.items():
+#         arr[k] = v
+# but that syntax could be annoying if we want to have an array of dicts
+
+# alternatives:
+
+# arr['a0'] = 0; arr['a1'] = 1 # <-- this already works
+# arr['a0,a1'] = [0, 1]        # <-- unsure if this works, but we should make it work (it is annoying if we
+#                              #     have an array of lists
+# arr[:] = {'a0': 0, 'a1': 1}
+# arr[:] = stack({'a0': 0, 'a1': 1}) # <-- not equivalent if a has more labels
+
+
+# TODO: rename axis to axes (with deprecation)
 def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs):
     r"""
     Combines several arrays or sessions along an axis.
@@ -8670,8 +8730,8 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
 
         Stacking sessions will return a new session containing the arrays of all sessions stacked together. An array
         missing in a session will be replaced by NaN.
-    axis : str or Axis or Group, optional
-        Axis to create. If None, defaults to a range() axis.
+    axis : str or Axis or Group or tuple/AxisCollection of Axis, optional
+        Axes to create. If None, defaults to a range() axis.
     title : str, optional
         Deprecated. See 'meta' below.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
@@ -8704,6 +8764,8 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
     sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
+
+    >>> # TODO: move this to a unit test
     >>> all_nat = Axis('nat=BE,DE,FR,NL,UK')
     >>> stack({'BE': arr1, 'DE': arr2}, all_nat[:'DE'])
     sex\nat   BE   DE
@@ -8756,6 +8818,20 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
           M  1.0  0.0
           F  1.0  0.0
 
+    Stack can also stack along several axes
+
+    >>> test = Axis('test=T1,T2')
+    >>> stack({('BE', 'T1'): arr1,
+    ...        ('BE', 'T2'): arr2,
+    ...        ('FO', 'T1'): arr2,
+    ...        ('FO', 'T2'): arr1},
+    ...       (nat, test))
+    sex  nat\test   T1   T2
+      M        BE  1.0  0.0
+      M        FO  0.0  1.0
+      F        BE  1.0  0.0
+      F        FO  0.0  1.0
+
     To stack sessions, let us first create two test sessions. For example suppose we have a session storing the results
     of a baseline simulation:
 
@@ -8796,67 +8872,115 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
     elif kwargs:
         raise TypeError("stack() accept either keyword arguments OR a collection of elements, not both")
 
-    if isinstance(axis, Axis) and all(isinstance(e, tuple) for e in elements):
-        assert all(len(e) == 2 for e in elements)
-        elements = {k: v for k, v in elements}
-
     if isinstance(elements, LArray):
         if axis is None:
             axis = -1
         axis = elements.axes[axis]
-        values = [elements[k] for k in axis]
+        items = elements.items(axis)
     elif isinstance(elements, dict):
+        axis_tuple = isinstance(axis, tuple) and all(isinstance(a, Axis) for a in axis)
+        axis_seq = isinstance(axis, AxisCollection) or axis_tuple
         # TODO: support having no Axis object for Python3.7 (without error or warning)
         # XXX: we probably want to support this with a warning on Python < 3.7
-        assert isinstance(axis, Axis)
-        values = [elements[v] for v in axis.labels]
+        assert isinstance(axis, Axis) or axis_seq
+        if not isinstance(axis, AxisCollection):
+            axis = AxisCollection(axis)
+
+        # this assumes we support non complete axes
+        # items = [(axis.to_igroup(k), v) for k, v in elements.items()]
+
+        # translate elements keys to a group or tuple of groups so that they are compatible with
+        # what iter_labels gives us
+        # FIXME: we must also reorder translated keys otherwise if axis order is different it does not match
+        #     e.g.
+        #     >>> gender = Axis('gender=M,F')
+        #     >>> country = Axis('country=BE,FR,DE')
+        #     >>> stack({('BE', 'M'): 0,
+        #     ...        ('FR', 'F'): 2,
+        #     ...        ('BE', 'F'): 2,
+        #     ...        ('FR', 'M'): 2,
+        #     ...        ('DE', 'M'): 2,
+        #     ...        ('DE', 'F'): 2},
+        #     ...       (gender, country))
+        # solution: in to_igroup, go via dict then tuple of igroups or slice(None)
+        elements = {axis.to_igroup(k): v for k, v in elements.items()}
+        items = [(k, elements[k]) for k in axis.iter_labels()]
     elif isinstance(elements, Iterable):
         if not isinstance(elements, Sequence):
             elements = list(elements)
 
         if all(isinstance(e, tuple) for e in elements):
             assert all(len(e) == 2 for e in elements)
-            keys = [k for k, v in elements]
-            values = [v for k, v in elements]
-            assert all(np.isscalar(k) for k in keys)
-            # this case should already be handled
-            assert not isinstance(axis, Axis)
-            # axis should be None or str
-            axis = Axis(keys, axis)
+            items = elements
+            if axis is None or isinstance(axis, basestring):
+                keys = [k for k, v in elements]
+                # assert that all keys are indexers
+                assert all(np.isscalar(k) or isinstance(k, (Group, tuple)) for k in keys)
+                axis = Axis(keys, axis)
         else:
-            values = elements
             if axis is None or isinstance(axis, basestring):
                 axis = Axis(len(elements), axis)
             else:
                 assert len(axis) == len(elements)
+            items = list(zip(axis, elements))
     else:
         raise TypeError('unsupported type for arrays: %s' % type(elements).__name__)
 
-    if any(isinstance(v, Session) for v in values):
-        sessions = values
-        if not all(isinstance(s, Session) for s in sessions):
+    if any(isinstance(v, Session) for k, v in items):
+        if not all(isinstance(v, Session) for k, v in items):
             raise TypeError("stack() only supports stacking Session with other Session objects")
 
-        all_keys = unique_multi(s.keys() for s in sessions)
-        res = []
-        for name in all_keys:
+        array_names = unique_multi(sess.keys() for sess_name, sess in items)
+
+        def stack_one(array_name):
             try:
-                stacked = stack([s.get(name, nan) for s in sessions], axis=axis)
+                return stack([(sess_name, sess.get(array_name, nan))
+                              for sess_name, sess in items], axis=axis)
             # TypeError for str arrays, ValueError for incompatible axes, ...
             except Exception:
-                stacked = nan
-            res.append((name, stacked))
-        return Session(res, meta=meta)
+                return nan
+
+        return Session([(name, stack_one(name)) for name in array_names], meta=meta)
     else:
-        # XXX : use concat?
         values = [aslarray(v) if not np.isscalar(v) else v
-                  for v in values]
-        result_axes = AxisCollection.union(*[get_axes(v) for v in values])
-        result_axes.append(axis)
+                  for k, v in items]
+
+        # we need a kludge to support stacking along an anonymous axis because AxisCollection.extend (and thus
+        # AxisCollection.union support for anonymous axes is kinda messy).
+        if isinstance(axis, Axis) and axis.name is None:
+            axis = axis.rename('__anonymous__')
+            kludge = True
+        else:
+            kludge = False
+
+        # XXX: with the current semantics of stack, we need to compute the union of axes for values but axis
+        #      needs to be added unconditionally. We *might* want to change the semantics to mean either stack or
+        #      concat depending on whether or not the axis already exists.
+        #      this would be more convenient for users I think, but would mean one class of error we cannot detect
+        #      anymore: if a user unintentionally stacks an array with the axis already present.
+        #      (this is very similar to the debate about combining LArray.append and LArray.extend)
+        all_axes = [get_axes(v) for v in values] + [axis]
+        result_axes = AxisCollection.union(*all_axes)
+        if kludge:
+            # TODO: use AxisCollection.rename when it will exist
+            result_axes = result_axes.replace(axis, axis.rename(None))
+
         if dtype is None:
             dtype = common_type(values)
+
+        # XXX: if we want to support partial axes, we need to use full with a fillvalue
+        #      but only if not entirely filled. How do we check that efficiently?
+        #      *assuming* axes do not contain duplicate labels, we could check that
+        #      len(unique(keys)) == result_axes.size but that would be expensive
+        #      Note that we can translate the keys first then check if it fills the whole array
+        #      as it will be faster to compare ints than strings.
+        #      a quick check would be len(items) == result_axes.size but that isn't very robust
         result = empty(result_axes, dtype=dtype, meta=meta)
-        for k, v in zip(axis, values):
+
+        # FIXME: this is *much* faster but it only works for scalars and not for stacking arrays
+        # keys = tuple(zip(*[k for k, v in items]))
+        # result.points[keys] = values
+        for k, v in items:
             result[k] = v
         return result
 
