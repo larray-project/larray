@@ -142,11 +142,9 @@ class Metadata(AttributeDict):
 
     >>> del arr.meta.creation_date
     """
-    # TODO: use LArray.from_dict once ready (issue 581)
     def __larray__(self):
-        from larray.core.array import LArray
-        from larray.core.axis import Axis
-        return LArray(list(self.values()), Axis(self.keys(), name='metadata'))
+        from larray.core.array import stack
+        return stack(self.items(), axes='metadata')
 
     @classmethod
     def from_array(cls, array):
