@@ -6,6 +6,9 @@ Syntax changes
 
 * :py:obj:`LArray.as_table()` is deprecated. Please use :py:obj:`LArray.dump()` instead.
 
+* :py:obj:`stack()` ``axis`` argument was renamed to ``axes`` to reflect the fact that the function can now stack
+  along multiple axes at once (see below).
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -195,6 +198,30 @@ Miscellaneous improvements
     a\b  b0  b1
      A0   0   1
      A1   2   3
+
+* py:obj:`stack()` can now stack along several axes at once (closes :issue:`56`).
+
+    >>> country = Axis('country=BE,FR,DE')
+    >>> gender = Axis('gender=M,F')
+    >>> stack({('BE', 'M'): 0,
+    ...        ('BE', 'F'): 1,
+    ...        ('FR', 'M'): 2,
+    ...        ('FR', 'F'): 3,
+    ...        ('DE', 'M'): 4,
+    ...        ('DE', 'F'): 5},
+    ...       (country, gender))
+    country\gender  M  F
+                BE  0  1
+                FR  2  3
+                DE  4  5
+
+* py:obj:`stack()` using a dictionary as elements can now use a simple axis name instead of requiring a full axis
+  object. This will print a warning on Python < 3.7 though because the ordering of labels is not guaranteed in
+  that case. Closes :issue:`755` and :issue:`581`.
+
+* py:obj:`stack()` using keyword arguments can now use a simple axis name instead of requiring a full axis
+  object, even on Python < 3.6. This will print a warning though because the ordering of labels is not guaranteed in
+  that case.
 
 * added option ``exact`` to ``join`` argument of :py:obj:`Axis.align()` and :py:obj:`LArray.align()` methods.
   Instead of aligning, passing ``join='exact'`` to the ``align`` method will raise an error when axes are not equal.

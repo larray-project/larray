@@ -2237,9 +2237,9 @@ def test_filter_on_group_agg(array):
     vla, wal, bru = vla_str, wal_str, bru_str
 
     # using a string
-    vla = vla_str
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-    assert reg.filter(geo=vla).shape == (15,)
+    # vla = vla_str
+    # reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+    # assert reg.filter(geo=vla).shape == (15,)
 
     # using a named LGroup
     vla = geo[vla_str] >> 'Vlaanderen'
@@ -2264,13 +2264,15 @@ def test_filter_on_group_agg(array):
     assert byage.shape == (4, 44, 2, 15)
 
     # filter on an aggregated larray created with mixed groups
-    assert byage.filter(age=':17').shape == (44, 2, 15)
+    # assert byage.filter(age=':17').shape == (44, 2, 15)
 
     byage = array.sum(age=(child_named, 5, working, retired))
     assert byage.filter(age=child_named).shape == (44, 2, 15)
 
 
 def test_sum_several_lg_groups(array):
+    # 1) aggregated array created using LGroups
+    # -----------------------------------------
     fla = geo[vla_str] >> 'Flanders'
     wal = geo[wal_str] >> 'Wallonia'
     bru = geo[bru_str] >> 'Brussels'
@@ -2279,25 +2281,27 @@ def test_sum_several_lg_groups(array):
     assert reg.shape == (116, 3, 2, 15)
 
     # the result is indexable
-    # a) by LGroup
+    # 1.a) by LGroup
     assert reg.filter(geo=fla).shape == (116, 2, 15)
     assert reg.filter(geo=(fla, wal)).shape == (116, 2, 2, 15)
 
-    # b) by string (name of groups)
+    # 1.b) by string (name of groups)
     assert reg.filter(geo='Flanders').shape == (116, 2, 15)
     assert reg.filter(geo='Flanders,Wallonia').shape == (116, 2, 2, 15)
 
-    # using string groups
+    # 2) aggregated array created using string groups
+    # -----------------------------------------------
     reg = array.sum(geo=(vla_str, wal_str, bru_str))
     assert reg.shape == (116, 3, 2, 15)
+
     # the result is indexable
-    # a) by string (def)
-    assert reg.filter(geo=vla_str).shape == (116, 2, 15)
+    # 2.a) by string (def)
+    # assert reg.filter(geo=vla_str).shape == (116, 2, 15)
     assert reg.filter(geo=(vla_str, wal_str)).shape == (116, 2, 2, 15)
 
-    # b) by LGroup
-    assert reg.filter(geo=vla_str).shape == (116, 2, 15)
-    assert reg.filter(geo=(vla_str, wal_str)).shape == (116, 2, 2, 15)
+    # 2.b) by LGroup
+    # assert reg.filter(geo=fla).shape == (116, 2, 15)
+    # assert reg.filter(geo=(fla, wal)).shape == (116, 2, 2, 15)
 
 
 def test_sum_with_groups_from_other_axis(small_array):
@@ -4064,8 +4068,8 @@ def test_to_excel_xlwings(tmpdir):
         a3.to_excel(fpath, "sheetname_longer_than_31_characters", engine='xlwings')
 
 
-def test_as_table():
-    res = list(ndtest(3).as_table(wide=False, value_name='data'))
+def test_dump():
+    res = list(ndtest(3).dump(wide=False, value_name='data'))
     assert res == [['a', 'data'],
                    ['a0', 0],
                    ['a1', 1],
@@ -4805,49 +4809,185 @@ def test_split_axes():
 
 
 def test_stack():
+    # stack along a single axis
+    # =========================
+
     # simple
-    arr0 = ndtest(3)
-    arr1 = ndtest(3, start=-1)
-    a = arr0.axes[0]
+    a = Axis('a=a0,a1,a2')
     b = Axis('b=b0,b1')
+
+    arr0 = ndtest(a)
+    arr1 = ndtest(a, start=-1)
+
+    res = stack((arr0, arr1), b)
     expected = LArray([[0, -1],
                        [1,  0],
                        [2,  1]], [a, b])
-    res = stack((arr0, arr1), b)
+    assert_array_equal(res, expected)
+
+    # same but using a group as the stacking axis
+    larger_b = Axis('b=b0..b3')
+    res = stack((arr0, arr1), larger_b[:'b1'])
     assert_array_equal(res, expected)
 
     # simple with anonymous axis
-    arr0 = ndtest(Axis(3))
-    arr1 = ndtest(Axis(3), start=-1)
-    a = arr0.axes[0]
-    b = Axis('b=b0,b1')
+    axis0 = Axis(3)
+    arr0 = ndtest(axis0)
+    arr1 = ndtest(axis0, start=-1)
+    res = stack((arr0, arr1), b)
     expected = LArray([[0, -1],
                        [1,  0],
-                       [2,  1]], [a, b])
-    res = stack((arr0, arr1), b)
+                       [2,  1]], [axis0, b])
     assert_array_equal(res, expected)
 
-    # nd
+    # using res_axes
+    res = stack({'b0': 0, 'b1': 1}, axes=b, res_axes=(a, b))
+    expected = LArray([[0, 1],
+                       [0, 1],
+                       [0, 1]], [a, b])
+    assert_array_equal(res, expected)
+
+    # giving elements as on LArray containing LArrays
     sex = Axis('sex=M,F')
+    # not using the same length for nat and type, otherwise numpy gets confused :(
     arr1 = ones('nat=BE, FO')
-    # not using the same length as nat, otherwise numpy gets confused :(
     arr2 = zeros('type=1..3')
-    nd = LArray([arr1, arr2], sex)
-    res = stack(nd, sex)
-    expected = from_string("""nat  type\\sex   M    F
-                               BE         1  1.0  0.0
-                               BE         2  1.0  0.0
-                               BE         3  1.0  0.0
-                               FO         1  1.0  0.0
-                               FO         2  1.0  0.0
-                               FO         3  1.0  0.0""")
+    array_of_arrays = LArray([arr1, arr2], sex)
+    res = stack(array_of_arrays, sex)
+    expected = from_string(r"""nat  type\sex    M    F
+                                BE         1  1.0  0.0
+                                BE         2  1.0  0.0
+                                BE         3  1.0  0.0
+                                FO         1  1.0  0.0
+                                FO         2  1.0  0.0
+                                FO         3  1.0  0.0""")
     assert_array_equal(res, expected)
 
     # non scalar/non LArray
+    res = stack(([1, 2, 3], [4, 5, 6]))
     expected = LArray([[1, 4],
                        [2, 5],
                        [3, 6]])
-    res = stack(([1, 2, 3], [4, 5, 6]))
+    assert_array_equal(res, expected)
+
+    # stack along multiple axes
+    # =========================
+    # a) simple
+    res = stack({('a0', 'b0'): 0,
+                 ('a0', 'b1'): 1,
+                 ('a1', 'b0'): 2,
+                 ('a1', 'b1'): 3,
+                 ('a2', 'b0'): 4,
+                 ('a2', 'b1'): 5},
+                (a, b))
+    expected = ndtest((a, b))
+    assert_array_equal(res, expected)
+
+    # b) keys not given in axes iteration order
+    res = stack({('a0', 'b0'): 0,
+                 ('a1', 'b0'): 2,
+                 ('a2', 'b0'): 4,
+                 ('a0', 'b1'): 1,
+                 ('a1', 'b1'): 3,
+                 ('a2', 'b1'): 5},
+                (a, b))
+    expected = ndtest((a, b))
+    assert_array_equal(res, expected)
+
+    # c) key parts not given in the order of axes (ie key part for b before key part for a)
+    res = stack({('a0', 'b0'): 0,
+                 ('a1', 'b0'): 1,
+                 ('a2', 'b0'): 2,
+                 ('a0', 'b1'): 3,
+                 ('a1', 'b1'): 4,
+                 ('a2', 'b1'): 5},
+                (b, a))
+    expected = ndtest((b, a))
+    assert_array_equal(res, expected)
+
+    # d) same as c) but with a key-value sequence
+    res = stack([(('a0', 'b0'), 0),
+                 (('a1', 'b0'), 1),
+                 (('a2', 'b0'), 2),
+                 (('a0', 'b1'), 3),
+                 (('a1', 'b1'), 4),
+                 (('a2', 'b1'), 5)],
+                (b, a))
+    expected = ndtest((b, a))
+    assert_array_equal(res, expected)
+
+
+@needs_python36
+def test_stack_kwargs_no_axis_labels():
+    # these tests rely on kwargs ordering, hence python 3.6
+
+    # 1) using scalars
+    # ----------------
+    # a) with an axis name
+    res = stack(a0=0, a1=1, axes='a')
+    expected = LArray([0, 1], 'a=a0,a1')
+    assert_array_equal(res, expected)
+
+    # b) without an axis name
+    res = stack(a0=0, a1=1)
+    expected = LArray([0, 1], 'a0,a1')
+    assert_array_equal(res, expected)
+
+    # 2) dict of arrays
+    # -----------------
+    a = Axis('a=a0,a1,a2')
+    arr0 = ndtest(a)
+    arr1 = ndtest(a, start=-1)
+
+    # a) with an axis name
+    res = stack(b0=arr0, b1=arr1, axes='b')
+    expected = LArray([[0, -1],
+                       [1,  0],
+                       [2,  1]], [a, 'b=b0,b1'])
+    assert_array_equal(res, expected)
+
+    # b) without an axis name
+    res = stack(b0=arr0, b1=arr1)
+    expected = LArray([[0, -1],
+                       [1,  0],
+                       [2,  1]], [a, 'b0,b1'])
+    assert_array_equal(res, expected)
+
+
+@needs_python37
+def test_stack_dict_no_axis_labels():
+    # these tests rely on dict ordering, hence python 3.7
+
+    # 1) dict of scalars
+    # ------------------
+    # a) with an axis name
+    res = stack({'a0': 0, 'a1': 1}, 'a')
+    expected = LArray([0, 1], 'a=a0,a1')
+    assert_array_equal(res, expected)
+
+    # b) without an axis name
+    res = stack({'a0': 0, 'a1': 1})
+    expected = LArray([0, 1], 'a0,a1')
+    assert_array_equal(res, expected)
+
+    # 2) dict of arrays
+    # -----------------
+    a = Axis('a=a0,a1,a2')
+    arr0 = ndtest(a)
+    arr1 = ndtest(a, start=-1)
+
+    # a) with an axis name
+    res = stack({'b0': arr0, 'b1': arr1}, 'b')
+    expected = LArray([[0, -1],
+                       [1,  0],
+                       [2,  1]], [a, 'b=b0,b1'])
+    assert_array_equal(res, expected)
+
+    # b) without an axis name
+    res = stack({'b0': arr0, 'b1': arr1})
+    expected = LArray([[0, -1],
+                       [1,  0],
+                       [2,  1]], [a, 'b0,b1'])
     assert_array_equal(res, expected)
 
 

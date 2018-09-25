@@ -754,6 +754,16 @@ class Axis(ABCAxis):
             # this creates a group for each key if it wasn't and retargets IGroup
             list_res = [self[k] for k in key]
             return list_res if isinstance(key, list) else tuple(list_res)
+        # allow targeting a label from an aggregated axis with the group which created it
+        elif (isinstance(key, Group) and isinstance(key.axis, Axis) and key.axis.name == self.name and
+              key.name in self):
+            return LGroup(key.name, None, self)
+        # elif isinstance(key, basestring) and key in self:
+            # TODO: this is an awful workaround to avoid the "processing" of string keys which exist as is in the axis
+            #       (probably because the string was used in an aggregate function to create the label)
+            # res = LGroup(slice(None), None, self)
+            # res.key = key
+            # return res
 
         name = key.name if isinstance(key, Group) else None
         return LGroup(key, name, self)
@@ -1973,7 +1983,11 @@ class AxisCollection(object):
             if not local_axis.iscompatible(axis):
                 raise ValueError("incompatible axes:\n{!r}\nvs\n{!r}".format(axis, local_axis))
 
-    # TODO: deprecate method. union is enough
+    # XXX: deprecate method (functionality is duplicated in union)?
+    #      I am not so sure anymore we need to actually deprecate the method: having both methods with the same
+    #      semantic like we currently have is useless indeed but I think we should have both a set-like method (union)
+    #      and the possibility to add an axis unconditionally (append or extend). That is, add an axis, even if that
+    #      name already exists. This is especially important for anonymous axes (see my comments in stack for example)
     # TODO: deprecate validate argument (unused)
     # TODO: deprecate replace_wildcards argument (unused)
     def extend(self, axes, validate=True, replace_wildcards=False):
@@ -2374,36 +2388,6 @@ class AxisCollection(object):
         # -1 in to_remove are not a problem since enumerate starts at 0
         return AxisCollection([axis for i, axis in enumerate(self) if i not in to_remove])
 
-    # TODO: remove this method (it is not used anywhere!)
-    def translate_full_key(self, key):
-        """
-        Translates a label-based key to a positional key.
-
-        Parameters
-        ----------
-        key : tuple
-            A full label-based key. All dimensions must be present and in the correct order.
-
-        Returns
-        -------
-        tuple
-            A full positional key.
-
-        See Also
-        --------
-        Axis.translate
-
-        Examples
-        --------
-        >>> age = Axis(range(20), 'age')
-        >>> sex = Axis('sex=M,F')
-        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
-        >>> AxisCollection([age,sex,time]).translate_full_key((':', 'F', 2009))
-        (slice(None, None, None), 1, 2)
-        """
-        assert len(key) == len(self)
-        return tuple(axis.index(axis_key) for axis_key, axis in zip(key, self))
-
     def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
         """
         Translates axis(es) key into axis(es) position(s).
@@ -2485,7 +2469,7 @@ class AxisCollection(object):
         Returns
         -------
         IGroup
-            Positional group with valid axes (from self)
+            Indices group with valid axes (from self)
         """
         from .array import LArray
 
@@ -2533,6 +2517,8 @@ class AxisCollection(object):
                     tkey = self._translate_axis_key_chunk(key_chunk, bool_passthrough)
                     axis = tkey.axis
                     break
+                # TODO: we should only continue when ValueError is caused by an ambiguous key, otherwise we only delay
+                #       an inevitable failure
                 except ValueError:
                     continue
             # the (start of the) key match a single axis
@@ -2548,9 +2534,9 @@ class AxisCollection(object):
         else:
             return self._translate_axis_key_chunk(axis_key, bool_passthrough)
 
-    def _translated_key(self, key):
+    def _key_to_igroups(self, key):
         """
-        Transforms any key (from LArray.__get|setitem__) to a complete indices-based key.
+        Translates any key to an IGroups tuple.
 
         Parameters
         ----------
@@ -2560,10 +2546,12 @@ class AxisCollection(object):
         Returns
         -------
         tuple
-            len(tuple) == self.ndim
+            tuple of IGroup, each IGroup having a real axis from this array.
+            The order of the IGroups is *not* guaranteed to be the same as the order of axes.
 
-            This key is not yet usable as is in a numpy array as it can still contain LArray parts and the advanced key
-            parts are not broadcasted together yet.
+        See Also
+        --------
+        Axis.index
         """
         from .array import LArray
 
@@ -2601,18 +2589,37 @@ class AxisCollection(object):
                    if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
             # translate all keys to IGroup
-            key = [self._translate_axis_key(axis_key) for axis_key in key]
+            return tuple(self._translate_axis_key(axis_key) for axis_key in key)
 
-            assert all(isinstance(axis_key, IGroup) for axis_key in key)
-
-            # extract axis from Group keys
-            key_items = [(k.axis, k) for k in key]
         else:
+            assert isinstance(key, dict)
+
             # key axes could be strings or axis references and we want real axes
-            key_items = [(self[k], v) for k, v in key.items()]
-            # TODO: use _translate_axis_key (to translate to IGroup here too)
-            # key_items = [axis.translate(axis_key, bool_passthrough=not bool_stuff)
-            #              for axis, axis_key in key_items]
+            return tuple(self._translate_axis_key(self[axis][axis_key])
+                         for axis, axis_key in key.items())
+
+    def _translated_key(self, key):
+        """
+        Transforms any key (from LArray.__get|setitem__) to a complete indices-based key.
+
+        Parameters
+        ----------
+        key : scalar, list/array of scalars, Group or tuple or dict of them
+            any key supported by LArray.__get|setitem__
+
+        Returns
+        -------
+        tuple
+            len(tuple) == self.ndim
+
+            This key is not yet usable as is in a numpy array as it can still contain LArray parts and the advanced key
+            parts are not broadcasted together yet.
+        """
+        # any key -> (IGroup, IGroup, ...)
+        igroup_key = self._key_to_igroups(key)
+
+        # extract axis from Group keys
+        key_items = [(k.axis, k) for k in igroup_key]
 
         # even keys given as dict can contain duplicates (if the same axis was
         # given under different forms, e.g. name and AxisReference).
@@ -2620,16 +2627,15 @@ class AxisCollection(object):
         if dupe_axes:
             dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
             raise ValueError("key has several values for axis: %s\n%s" % (dupe_axes, key_items))
-        key = dict(key_items)
+
+        # IGroup -> raw positional
+        dict_key = {axis: axis.index(axis_key) for axis, axis_key in key_items}
+
         # dict -> tuple (complete and order key)
-        assert all(isinstance(k, Axis) for k in key)
-        key = [key[axis] if axis in key else slice(None)
-               for axis in self]
-        # IGroup (or anything if we come from dict path) -> raw positional
-        key = tuple(axis.index(axis_key)
-                    for axis, axis_key in zip(self, key))
-        assert all(isinstance(k, (int, np.integer, slice, list, np.ndarray, LArray)) for k in key)
-        return key
+        assert all(isinstance(k, Axis) for k in dict_key)
+
+        return tuple(dict_key[axis] if axis in dict_key else slice(None)
+                     for axis in self)
 
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True):
         """
@@ -3305,7 +3311,7 @@ class AxisCollection(object):
         # return stack([(axis.name, axis.i[inds]) for axis, inds in zip(axes, axes_indices)], axis='axis')
         flat_axes = flat_indices.axes
         return stack([(axis.name, LArray(axis.labels[inds], flat_axes)) for axis, inds in zip(self, axes_indices)],
-                     axis='axis')
+                     axes='axis')
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
         """
