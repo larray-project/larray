@@ -3171,14 +3171,12 @@ class AxisCollection(object):
         from larray.core.array import aslarray, LArray, stack
 
         flat_indices = aslarray(flat_indices)
-        shape = self.shape
-        divisors = np.roll(np.cumprod(shape[::-1])[::-1], -1)
-        divisors[-1] = 1
-        axes_indices = [(flat_indices // div) % length for div, length in zip(divisors, shape)]
+        axes_indices = np.unravel_index(flat_indices, self.shape)
         # This could return an LArray with object dtype because axes labels can have different types (but not length)
         # TODO: this should be:
         # return stack([(axis.name, axis.i[inds]) for axis, inds in zip(axes, axes_indices)], axis='axis')
-        return stack([(axis.name, LArray(axis.labels[inds], inds.axes)) for axis, inds in zip(self, axes_indices)],
+        flat_axes = flat_indices.axes
+        return stack([(axis.name, LArray(axis.labels[inds], flat_axes)) for axis, inds in zip(self, axes_indices)],
                      axis='axis')
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
