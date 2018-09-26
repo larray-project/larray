@@ -8352,10 +8352,7 @@ def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs)
         if not all(isinstance(s, Session) for s in sessions):
             raise TypeError("stack() only supports stacking Session with other Session objects")
 
-        seen = set()
-        all_keys = []
-        for s in sessions:
-            unique_list(s.keys(), all_keys, seen)
+        all_keys = unique_multi(s.keys() for s in sessions)
         res = []
         for name in all_keys:
             try:

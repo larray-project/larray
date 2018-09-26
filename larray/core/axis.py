@@ -16,7 +16,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice)
+                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi)
 
 
 class Axis(ABCAxis):
@@ -1145,11 +1145,7 @@ class Axis(ABCAxis):
             other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
             other = other.labels
-        unique_labels = []
-        seen = set()
-        unique_list(self.labels, unique_labels, seen)
-        unique_list(other, unique_labels, seen)
-        return Axis(unique_labels, self.name)
+        return Axis(unique_multi((self.labels, other)), self.name)
 
     def intersection(self, other):
         """Returns axis with the (set) intersection of this axis labels and other labels.

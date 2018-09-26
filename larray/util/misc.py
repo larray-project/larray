@@ -234,6 +234,17 @@ def unique_list(iterable, res=None, seen=None):
     return res
 
 
+def unique_multi(iterable_of_iterables):
+    """
+    Returns a list of all unique elements across multiple iterables. Elements of earlier iterables will come first.
+    """
+    seen = set()
+    res = []
+    for iterable in iterable_of_iterables:
+        unique_list(iterable, res, seen)
+    return res
+
+
 def duplicates(iterable):
     """
     List duplicated elements once, preserving order. Remember all elements ever seen.
