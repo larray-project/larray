@@ -358,6 +358,8 @@ Aggregation Functions
    LArray.ptp
    LArray.with_total
    LArray.percent
+   LArray.ratio
+   LArray.rationot0
    LArray.growth_rate
    LArray.describe
    LArray.describe_by
@@ -438,8 +440,6 @@ Miscellaneous
 .. autosummary::
    :toctree: _generated/
 
-   LArray.ratio
-   LArray.rationot0
    LArray.divnot0
    LArray.clip
    LArray.shift
