@@ -712,7 +712,12 @@ class IGroupMaker(object):
         self.axis = axis
 
     def __getitem__(self, key):
+        if isinstance(key, (int, np.integer)) and not isinstance(self.axis, ABCAxisReference) and key >= len(self.axis):
+            raise IndexError("{} is out of range for axis of length {}".format(key, len(self.axis)))
         return IGroup(key, None, self.axis)
+
+    def __len__(self):
+        return len(self.axis)
 
 
 # We need a separate class for LGroup and cannot simply create a new Axis with a subset of values/ticks/labels:
