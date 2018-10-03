@@ -3189,25 +3189,27 @@ class AxisCollection(object):
         # TODO: use/factorize with AxisCollection.combine_axes. The problem is that it uses product(*axes_labels)
         #       while here we need zip(*axes_labels)
         ignored_types = (int, np.integer, slice, LArray)
-        adv_key_axes = [axis for axis_key, axis in zip(key, self)
-                        if not isinstance(axis_key, ignored_types)]
-        if not adv_key_axes:
+        adv_keys = [(axis_key, axis) for axis_key, axis in zip(key, self)
+                    if not isinstance(axis_key, ignored_types)]
+        if not adv_keys:
             return key
 
         # axes with a scalar key are not taken, since we want to kill them
 
         # all anonymous axes => anonymous combined axis
-        if all(axis.name is None for axis in adv_key_axes):
+        if all(axis.name is None for axis_key, axis in adv_keys):
             combined_name = None
         else:
             # using axis_id instead of name to allow combining a mix of anonymous & non anonymous axes
-            combined_name = sep.join(str(self.axis_id(axis)) for axis in adv_key_axes)
+            combined_name = sep.join(str(self.axis_id(axis)) for axis_key, axis in adv_keys)
+
+        # explicitly check that all combined keys have the same length
+        first_key, first_axis = adv_keys[0]
+        combined_axis_len = len(first_key)
+        if not all(len(axis_key) == combined_axis_len for axis_key, axis in adv_keys[1:]):
+            raise ValueError("all combined keys should have the same length")
 
         if wildcard:
-            lengths = [len(axis_key) for axis_key in key
-                       if not isinstance(axis_key, ignored_types)]
-            combined_axis_len = lengths[0]
-            assert all(l == combined_axis_len for l in lengths)
             combined_axis = Axis(combined_axis_len, combined_name)
         else:
             # TODO: the combined keys should be objects which display as:
@@ -3217,31 +3219,24 @@ class AxisCollection(object):
             # A: yes, probably. On the Pandas backend, we could/should have
             #    separate axes. On the numpy backend we cannot.
             # TODO: only convert if
-            if len(adv_key_axes) == 1:
-                # we don't convert to string when there is only a single axis
+            if len(adv_keys) == 1:
+                # we do not convert to string when there is only a single axis
                 axes_labels = [axis.labels[axis_key]
-                               for axis_key, axis in zip(key, self)
-                               if not isinstance(axis_key, ignored_types)]
+                               for axis_key, axis in adv_keys]
                 # Q: if axis is a wildcard axis, should the result be a
                 #    wildcard axis (and axes_labels discarded?)
                 combined_labels = axes_labels[0]
             else:
                 axes_labels = [axis.labels.astype(np.str, copy=False)[axis_key].tolist()
-                               for axis_key, axis in zip(key, self)
-                               if not isinstance(axis_key, ignored_types)]
+                               for axis_key, axis in adv_keys]
                 sepjoin = sep.join
                 combined_labels = [sepjoin(comb) for comb in zip(*axes_labels)]
             combined_axis = Axis(combined_labels, combined_name)
 
         # 2) transform all advanced non-LArray keys to LArray with the combined axis
         # ==========================================================================
-        def to_la_key(axis_key, combined_axis):
-            if isinstance(axis_key, (int, np.integer, slice, LArray)):
-                return axis_key
-            else:
-                assert len(axis_key) == len(combined_axis)
-                return LArray(axis_key, combined_axis)
-        return tuple(to_la_key(axis_key, combined_axis) for axis_key in key)
+        return tuple(axis_key if isinstance(axis_key, ignored_types) else LArray(axis_key, combined_axis)
+                     for axis_key in key)
 
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):
