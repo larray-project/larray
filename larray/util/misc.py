@@ -778,3 +778,58 @@ class LHDFStore(object):
     def __exit__(self, type_, value, traceback):
         if self.close_store:
             self.store.close()
+
+
+class SequenceZip(object):
+    """
+    Represents the "combination" of several sequences.
+
+    This is very similar to python's builtin zip but only accepts sequences and acts as a Sequence (it can be
+    indexed and has a len).
+
+    Parameters
+    ----------
+    sequences : Iterable of Sequence
+        Sequences to combine.
+
+    Examples
+    --------
+    >>> z = SequenceZip([['a', 'b', 'c'], [1, 2, 3]])
+    >>> for i in range(len(z)):
+    ...     print(z[i])
+    ('a', 1)
+    ('b', 2)
+    ('c', 3)
+    >>> for v in z:
+    ...     print(v)
+    ('a', 1)
+    ('b', 2)
+    ('c', 3)
+    >>> list(z[1:4])
+    [('b', 2), ('c', 3)]
+    """
+    def __init__(self, sequences):
+        self.sequences = sequences
+        length = len(sequences[0])
+        bad_length_seqs = [i for i, s in enumerate(sequences[1:], start=1) if len(s) != length]
+        if bad_length_seqs:
+            first_bad = bad_length_seqs[0]
+            raise ValueError("sequence {} has a length of {} which is different from the length of the "
+                             "first sequence ({})".format(first_bad, len(sequences[first_bad]), length))
+        self._length = length
+
+    def __len__(self):
+        return self._length
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, np.integer)):
+            return tuple(seq[key] for seq in self.sequences)
+        else:
+            assert isinstance(key, slice), "key (%s) has invalid type (%s)" % (key, type(key))
+            return SequenceZip([seq[key] for seq in self.sequences])
+
+    def __iter__(self):
+        return iter(zip(*self.sequences)) if PY2 else zip(*self.sequences)
+
+    def __repr__(self):
+        return 'SequenceZip({})'.format(self.sequences)
