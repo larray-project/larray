@@ -86,7 +86,7 @@ def test_init_lgroup(lgroups):
     group = age['1:5'] >> group2
     assert group.name == group2.name
     axis = Axis('axis=a,a0..a3,b,b0..b3,c,c0..c3')
-    for code in axis.matching('^.$'):
+    for code in axis.matching(regex='^.$'):
         group = axis.startingwith(code) >> code
         assert group.equals(axis.startingwith(code) >> str(code))
 

@@ -300,7 +300,7 @@ def test_init_from_group():
 
 def test_matching():
     sutcode = Axis(['A23', 'A2301', 'A25', 'A2501'], 'sutcode')
-    assert sutcode.matching('^...$') == LGroup(['A23', 'A25'])
+    assert sutcode.matching(regex='^...$') == LGroup(['A23', 'A25'])
     assert sutcode.startingwith('A23') == LGroup(['A23', 'A2301'])
     assert sutcode.endingwith('01') == LGroup(['A2301', 'A2501'])
 
