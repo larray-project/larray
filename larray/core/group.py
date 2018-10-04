@@ -33,7 +33,6 @@ def _slice_to_str(key, repr_func=str):
     >>> _slice_to_str(slice(None, 5, 2))
     ':5:2'
     """
-    # examples of result: ":24" "25:" ":" ":5:2"
     start = repr_func(key.start) if key.start is not None else ''
     stop = repr_func(key.stop) if key.stop is not None else ''
     step = (":" + repr_func(key.step)) if key.step is not None else ''
