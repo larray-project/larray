@@ -1,7 +1,5 @@
 .. currentmodule:: larray
 
-.. _start_getting_started:
-
 Getting Started
 ===============
 
