@@ -126,11 +126,13 @@ To load a saved array, call the function :py:meth:`read_csv`:
 Other input/output functions are described in the :ref:`corresponding section <api-IO>`
 of the API documentation.
 
-Indexing
---------
+Selecting a subset
+------------------
 
-To select an element or a subset of an array, use brackets [ ].
-Let’s start by selecting a single element:
+To select an element or a subset of an array, use brackets [ ]. In Python we usually use the term *indexing* for this
+operation.
+
+Let us start by selecting a single element:
 
 .. ipython:: python
 
