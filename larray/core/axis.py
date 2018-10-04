@@ -801,7 +801,7 @@ class Axis(ABCAxis):
         >>> people = Axis(['John Doe', 'Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
         >>> people.index('Waldo')
         3
-        >>> people.index(people.matching('Bruce'))
+        >>> people.index(people.containing('Bruce'))
         array([1, 2])
         """
         mapping = self._mapping
