@@ -14,9 +14,10 @@ Create an array
 
 Working with the LArray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
 They represent N-dimensional labelled arrays and are composed of data (numpy ndarray), :ref:`axes <api-axis>`
-and optionally a title. An axis contains a list of labels and may have a name (if not given, the axis is anonymous).
+and optionally some metadata. An axis contains a list of labels and may have a name (if not given, the axis is
+anonymous).
 
-You can create an array from scratch by supplying data, axes and optionally a title:
+You can create an array from scratch by supplying data, axes and optionally some metadata:
 
 .. ipython:: python
 
@@ -33,25 +34,6 @@ You can create an array from scratch by supplying data, axes and optionally a ti
     # create LArray object
     arr = LArray(data, [age, sex], meta=[("title", "population by age category and sex")])
     arr
-
-.. note::
-
-   LArray offers two syntaxes to build axes and make selections and aggregations.
-   The first one is more Pythonic (uses Python structures) and allows to use any
-   character in labels. The second one consists of using strings that are parsed.
-   It is shorter to type. For example, you could create the *age* axis
-   above as follows::
-
-       age = Axis("age=0-9,10-17,18-66,67+")
-
-   The drawback of the string syntax is that some characters such as `, ; = : .. [ ] >>`
-   have a special meaning and cannot be used in labels.
-   Strings containing only integers are interpreted as such.
-
-   In this getting started section we will use the first, more verbose, syntax which
-   works in all cases and provide the equivalent using the shorter syntax in comments.
-   More examples can be found in the :ref:`tutorial <start_tutorial>` and the
-   :ref:`API reference <start_api>` section.
 
 Here are the key properties for an array:
 
@@ -99,29 +81,38 @@ The LArray library offers many I/O functions to read and write arrays in various
 
 .. ipython:: python
 
-    arr_3D = ndtest((2, 2, 2))
-    arr_3D
+    # let us first define one more axis
+    year = Axis([2016, 2017, 2018], "year")
 
-    arr_3D.to_csv('arr_3D.csv')
+    # then create a test array with 3 axes
+    arr = ndtest([age, sex, year])
+    arr
 
-Content of 'arr_3D.csv' file is ::
+    # now save that array to a .csv file
+    arr.to_csv('test_array.csv')
 
-  a,b\c,c0,c1
-  a0,b0,0,1
-  a0,b1,2,3
-  a1,b0,4,5
-  a1,b1,6,7
+The content of 'test_array.csv' file is ::
+
+    age,sex\children,0,1,2+
+    0-9,M,0,1,2
+    0-9,F,3,4,5
+    10-17,M,6,7,8
+    10-17,F,9,10,11
+    18-66,M,12,13,14
+    18-66,F,15,16,17
+    67+,M,18,19,20
+    67+,F,21,22,23
 
 .. note::
    In CSV or Excel files, the last dimension is horizontal and the names of the
-   two last dimensions are separated by a \\.
+   two last dimensions are separated by a ``\``.
 
 To load a saved array, call the function :py:meth:`read_csv`:
 
 .. ipython:: python
 
-    arr_3D = read_csv('arr_3D.csv')
-    arr_3D
+    arr = read_csv('test_array.csv')
+    arr
 
 Other input/output functions are described in the :ref:`corresponding section <api-IO>`
 of the API documentation.
@@ -136,60 +127,82 @@ Let us start by selecting a single element:
 
 .. ipython:: python
 
-    arr = ndtest((4, 4))
-    arr
+    arr['67+', 'F', 2017]
 
-    arr['a0', 'b1']
-
-    # labels can be given in arbitrary order
-    arr['b1', 'a0']
-
-Let's continue with subsets:
+Labels can be given in arbitrary order
 
 .. ipython:: python
 
-    # select subset along one axis
-    arr['a0']
+    arr[2017, 'F', '67+']
 
-    arr['b0']
+When selecting a larger subset the result is an array
 
-    # labels associated with the same axis must be given as a list
-    # equivalent to: arr['a0', 'b1,b3']
-    arr['a0', ['b1', 'b3']]
+.. ipython:: python
+
+    arr[2017]
+    arr['M']
+
+When selecting several labels for the same axis, they must be given as a list (enclosed by ``[ ]``)
+
+.. ipython:: python
+    arr['F', ['0-9', '10-17']]
+
 
 .. warning::
 
     Selecting by labels as above only works as long as there is no ambiguity.
     When several axes have common labels and you do not specify explicitly
-    on which axis to work, it fails with an error
-    (ValueError: ... is ambiguous (valid in a, b)).
-    Specifying the axis can be done using the special notation ``X.axis_name``.
-    The axis name must not contain whitespaces and special characters.
+    on which axis to work, it fails with an error ending with something like
+    ValueError: somelabel is ambiguous (valid in axis1, axis2).
+
+For example, let us create a test array with an ambiguous label.
+First create an axis (some kind of status code) with an "F" label (remember we already had an "F" label on the sex
+axis).
 
 .. ipython:: python
 
-    # equivalent to: arr2 = ndtest("a=label0,label1;b=label1,label2")
-    arr2 = ndtest([Axis(["label0", "label1"], "a"), Axis(["label1", "label2"], "b")])
-    arr2
+    status = Axis(["A", "C", "F"], "status")
 
-    # equivalent to: arr2["label0", "b[label1]"]
-    arr2["label0", X.b["label1"]]
+Then create a test array using both axes
+
+.. ipython:: python
+
+    ambiguous_arr = ndtest([sex, status, year])
+    ambiguous_arr
+
+If we try to get to a subset of the array with "F"...
+
+.. ipython:: python
+    :verbatim:
+
+    ambiguous_arr[2017, "F"]
+
+... we receive back a volley of insults ::
+
+    [some long error message ending with the line below]
+    [...]
+    ValueError: F is ambiguous (valid in sex, status)
+
+In that case, we have to specify which axis the "F" we want belongs to:
+
+.. ipython:: python
+
+    ambiguous_arr[2017, sex["F"]]
 
 You can also define slices (defined by 'start:stop' or 'start:stop:step').
 A slice will select all labels between `start` and `stop` (stop included).
-All arguments of a slice are optional.
-When not given, start is the first label of an axis, stop the last one.
+Specifying the start and stop bounds of a slice is optional: when not given,
+start is the first label of an axis, stop the last one.
 
 .. ipython:: python
 
-    # "b1":"b3" is a shortcut for ["b1", "b2", "b3"]
-    # equivalent to: arr["a0,a2", "b1:b3"]
-    arr[["a0", "a2"], "b1":"b3"]
+    # "10-17":"67+" is a shortcut for ["10-17", "18-66", "67+"]
+    arr["F", "10-17":"67+"]
 
-    # :"a2" will select all labels between the first one and "a2"
-    # "b1": will select all labels between "b1" and the last one
-    # equivalent to: arr[":a2", "b1:"]
-    arr[:"a2", "b1":]
+    # :"18-66" will select all labels between the first one and "18-66"
+    # 2017: will select all labels between 2017 and the last one
+    arr[:"18-66", 2017:]
+
 
 Aggregation
 -----------
@@ -199,20 +212,19 @@ For example, to calculate the sum along an axis, write:
 
 .. ipython:: python
 
-    arr_3D
+    arr
+    arr.sum("sex")
+    arr.sum("age", "sex")
 
-    # equivalent to: arr_3D.sum("a")
-    arr_3D.sum(X.a)
-
-To aggregate along all axes except one, you simply have to append `_by`
+To aggregate along all axes except some, you simply have to append `_by`
 to the aggregation method you want to use:
 
 .. ipython:: python
 
-    # equivalent to: arr_3D.sum_by("a")
-    arr_3D.sum_by(X.a)
+    arr.sum_by("year")
 
 See :ref:`here <la_agg>` to get the list of all available aggregation methods.
+
 
 Groups
 ------
@@ -223,36 +235,42 @@ A :ref:`Group <api-group>` represents a subset of labels or positions of an axis
 
     arr
 
-    even = X.a["a0", "a2"]
-    even
+    children = age["0-9", "10-17"]
+    children
 
-    odd = X.a["a1", "a3"]
-    odd
-
-They can be used in selections:
+It is often useful to attach them an explicit name using the ``>>`` operator:
 
 .. ipython:: python
 
-    arr[even]
+    working = age["10-17"] >> "working"
+    working
 
-    arr[odd]
+    nonworking = age["0-9", "10-17", "67+"] >> "nonworking"
+    nonworking
+
+Groups can be used in selections:
+
+.. ipython:: python
+
+    arr[children]
+    arr[nonworking]
 
 or aggregations:
 
 .. ipython:: python
 
-    arr.sum((even, odd))
+    arr.sum(children)
 
-In the case of aggregations, it is often useful to attach them a name
-using the ``>>`` operator:
+When aggregating several groups, the names we set above using ``>>`` determines the label on the aggregated axis.
+Since we did not give a name for the children group, the resulting label is generated automatically :
 
 .. ipython:: python
 
-    # equivalent to: arr.sum("a0,a2 >> even; a1,a3 >> odd")
-    arr.sum((even >> "even", odd >> "odd"))
+    arr.sum((children, working, nonworking))
 
-Group arrays in Session
------------------------
+
+Grouping arrays in a Session
+----------------------------
 
 Arrays may be grouped in :ref:`Session <api-session>` objects.
 A session is an ordered dict-like container of LArray objects with special I/O methods.
@@ -289,8 +307,9 @@ One of the main interests of using sessions is to save and load many arrays at o
     ses.save("my_session.h5")
     ses = Session("my_session.h5")
 
-Graphical User Interface
-------------------------
+
+Graphical User Interface (viewer)
+---------------------------------
 
 The LArray project provides an optional package called :ref:`larray-editor <start-dependencies-gui>`
 allowing users to explore and edit arrays using a graphical interface.
