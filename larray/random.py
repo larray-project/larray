@@ -26,7 +26,7 @@
 import numpy as np
 
 from larray.core.axis import Axis, AxisCollection
-from larray.core.array import LArray, aslarray, stack, ndtest
+from larray.core.array import LArray, aslarray
 from larray.core.array import raw_broadcastable
 import larray as la
 
@@ -35,7 +35,7 @@ __all__ = ['randint', 'normal', 'uniform', 'permutation', 'choice']
 
 
 def generic_random(np_func, args, min_axes, meta):
-    args, res_axes = raw_broadcastable(args, min_axes)
+    args, res_axes = raw_broadcastable(args, min_axes=min_axes)
     res_data = np_func(*args, size=res_axes.shape)
     return LArray(res_data, res_axes, meta=meta)
 
