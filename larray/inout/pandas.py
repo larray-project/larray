@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from larray.core.array import LArray
-from larray.core.axis import Axis
+from larray.core.axis import Axis, AxisCollection
 from larray.core.group import LGroup
 from larray.core.constants import nan
 from larray.util.misc import basestring, decode, unique
@@ -67,7 +67,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan
     columns = sorted(df.columns) if sort_columns else list(df.columns)
     # the prodlen test is meant to avoid the more expensive array_equal test
     prodlen = np.prod([len(axis_labels) for axis_labels in labels])
-    if prodlen == len(df) and columns == list(df.columns) and np.array_equal(df.index.values, new_index.values):
+    if prodlen == len(df) and columns == list(df.columns) and np.array_equal(idx.values, new_index.values):
         return df, labels
     return df.reindex(index=new_index, columns=columns, fill_value=fill_value, **kwargs), labels
 
@@ -233,8 +233,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     axes_names = [str(name) if name is not None else name
                   for name in axes_names]
 
-    axes = [Axis(labels, name) for labels, name in zip(axes_labels, axes_names)]
-    data = df.values.reshape([len(axis) for axis in axes])
+    axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
+    data = df.values.reshape(axes.shape)
     return LArray(data, axes, meta=meta)
 
 

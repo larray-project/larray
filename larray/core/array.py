@@ -1332,10 +1332,10 @@ class LArray(ABCLArray):
             items = []
         items += kwargs.items()
         renames = {self.axes[k]: v for k, v in items}
-        axes = [a.rename(renames[a]) if a in renames else a
-                for a in self.axes]
+        axes = AxisCollection([a.rename(renames[a]) if a in renames else a
+                               for a in self.axes])
         if inplace:
-            self.axes = AxisCollection(axes)
+            self.axes = axes
             return self
         else:
             return LArray(self.data, axes)
@@ -1834,8 +1834,7 @@ class LArray(ABCLArray):
                 key = key[::-1]
             return axis.i[key]
 
-        res = self[tuple(sort_key(axis) for axis in axes)]
-        return res
+        return self[tuple(sort_key(axis) for axis in axes)]
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
 
@@ -2077,6 +2076,7 @@ class LArray(ABCLArray):
         """
         self.__setitem__(kwargs, value)
 
+    # TODO: this should be a private method
     def reshape(self, target_axes):
         """
         Given a list of new axes, changes the shape of the array.
@@ -2121,9 +2121,12 @@ class LArray(ABCLArray):
         #            -> 3, 8 WRONG (non adjacent dimensions)
         #            -> 8, 3 WRONG
         #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
-        data = np.asarray(self).reshape([len(axis) for axis in target_axes])
+        if not isinstance(target_axes, AxisCollection):
+            target_axes = AxisCollection(target_axes)
+        data = np.asarray(self).reshape(target_axes.shape)
         return LArray(data, target_axes)
 
+    # TODO: this should be a private method
     def reshape_like(self, target):
         """
         Same as reshape but with an array as input.
@@ -8405,7 +8408,7 @@ def raw_broadcastable(values, min_axes=None):
     """
     same as make_numpy_broadcastable but returns numpy arrays
     """
-    arrays, res_axes = make_numpy_broadcastable(values, min_axes)
+    arrays, res_axes = make_numpy_broadcastable(values, min_axes=min_axes)
     raw = [a.data if isinstance(a, LArray) else a
            for a in arrays]
     return raw, res_axes
