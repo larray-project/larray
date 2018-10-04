@@ -27,11 +27,11 @@ You can create an array from scratch by supplying data, axes and optionally a ti
             [28, 34]]
 
     # define axes
-    age_category = Axis(["0-9", "10-17", "18-66", "67+"], "age_category")
+    age = Axis(["0-9", "10-17", "18-66", "67+"], "age")
     sex = Axis(["M", "F"], "sex")
 
     # create LArray object
-    arr = LArray(data, [age_category, sex], meta=[("title", "population by age category and sex")])
+    arr = LArray(data, [age, sex], meta=[("title", "population by age category and sex")])
     arr
 
 .. note::
@@ -39,10 +39,10 @@ You can create an array from scratch by supplying data, axes and optionally a ti
    LArray offers two syntaxes to build axes and make selections and aggregations.
    The first one is more Pythonic (uses Python structures) and allows to use any
    character in labels. The second one consists of using strings that are parsed.
-   It is shorter to type. For example, you could create the *age_category* axis
+   It is shorter to type. For example, you could create the *age* axis
    above as follows::
 
-       age_category = Axis("age_category=0-9,10-17,18-66,67+")
+       age = Axis("age=0-9,10-17,18-66,67+")
 
    The drawback of the string syntax is that some characters such as `, ; = : .. [ ] >>`
    have a special meaning and cannot be used in labels.
@@ -86,7 +86,7 @@ Arrays can be generated through dedicated functions:
 
 .. ipython:: python
 
-   zeros([age_category, sex])
+   zeros([age, sex])
 
    ndtest((3, 3))
 
