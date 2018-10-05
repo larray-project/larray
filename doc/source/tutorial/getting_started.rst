@@ -12,7 +12,7 @@ To use the LArray library, the first thing to do is to import it
 Create an array
 ---------------
 
-Working with the LArray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
+Working with the larray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
 They represent N-dimensional labelled arrays and are composed of data (numpy ndarray), :ref:`axes <api-axis>`
 and optionally some metadata. An axis contains a list of labels and may have a name (if not given, the axis is
 anonymous).
@@ -21,41 +21,62 @@ You can create an array from scratch by supplying data, axes and optionally some
 
 .. ipython:: python
 
-    # define data
-    data = [[20, 22],
-            [33, 31],
-            [79, 81],
-            [28, 34]]
+    # define some data. This is the belgian population (in thousands). Source: eurostat.
+    data = [[[633, 635, 634],
+             [663, 665, 664]],
+            [[484, 486, 491],
+             [505, 511, 516]],
+            [[3572, 3581, 3583],
+             [3600, 3618, 3616]],
+            [[1023, 1038, 1053],
+             [756, 775, 793]]]
 
     # define axes
     age = Axis(["0-9", "10-17", "18-66", "67+"], "age")
-    sex = Axis(["M", "F"], "sex")
+    sex = Axis(["F", "M"], "sex")
+    year = Axis([2015, 2016, 2017], "year")
 
     # create LArray object
-    arr = LArray(data, [age, sex], meta=[("title", "population by age category and sex")])
-    arr
+    pop = LArray(data, [age, sex, year], meta=[("title", "population by age, sex and year")])
+    pop
 
 Here are the key properties for an array:
 
-.. ipython:: python
+* Array summary : dimensions + description of axes
 
-    # array summary : dimensions + description of axes
-    arr.info
+    .. ipython:: python
 
-    # number of dimensions
-    arr.ndim
+        pop.info
 
-    # array dimensions
-    arr.shape
+* number of dimensions
 
-    # number of elements
-    arr.size
+    .. ipython:: python
 
-    # size in memory
-    arr.memory_used
+        pop.ndim
 
-    # type of the data of the array
-    arr.dtype
+* length of each dimension
+
+    .. ipython:: python
+
+        pop.shape
+
+* total number of elements of the array
+
+    .. ipython:: python
+
+        pop.size
+
+* size in memory of the array
+
+    .. ipython:: python
+
+        pop.memory_used
+
+* type of the data of the array
+
+    .. ipython:: python
+
+        pop.dtype
 
 Arrays can be generated through dedicated functions:
 
@@ -79,40 +100,34 @@ The LArray library offers many I/O functions to read and write arrays in various
 (CSV, Excel, HDF5, pickle). For example, to save an array in a CSV file, call the method
 :py:meth:`~LArray.to_csv`:
 
+For example, to save our ``pop`` array to a ``.csv`` file
+
 .. ipython:: python
 
-    # let us first define one more axis
-    year = Axis([2016, 2017, 2018], "year")
+    pop.to_csv('belgium_pop.csv')
 
-    # then create a test array with 3 axes
-    arr = ndtest([age, sex, year])
-    arr
+The content of 'belgium_pop.csv' is then::
 
-    # now save that array to a .csv file
-    arr.to_csv('test_array.csv')
-
-The content of 'test_array.csv' file is ::
-
-    age,sex\children,0,1,2+
-    0-9,M,0,1,2
-    0-9,F,3,4,5
-    10-17,M,6,7,8
-    10-17,F,9,10,11
-    18-66,M,12,13,14
-    18-66,F,15,16,17
-    67+,M,18,19,20
-    67+,F,21,22,23
+    age,sex\time,2015,2016,2017
+    0-9,F,633,635,634
+    0-9,M,663,665,664
+    10-17,F,484,486,491
+    10-17,M,505,511,516
+    18-66,F,3572,3581,3583
+    18-66,M,3600,3618,3616
+    67+,F,1023,1038,1053
+    67+,M,756,775,793
 
 .. note::
    In CSV or Excel files, the last dimension is horizontal and the names of the
-   two last dimensions are separated by a ``\``.
+   last two dimensions are separated by a ``\``.
 
 To load a saved array, call the function :py:meth:`read_csv`:
 
 .. ipython:: python
 
-    arr = read_csv('test_array.csv')
-    arr
+    pop = read_csv('belgium_pop.csv')
+    pop
 
 Other input/output functions are described in the :ref:`corresponding section <api-IO>`
 of the API documentation.
@@ -127,37 +142,52 @@ Let us start by selecting a single element:
 
 .. ipython:: python
 
-    arr['67+', 'F', 2017]
+    pop['67+', 'F', 2017]
 
 Labels can be given in arbitrary order
 
 .. ipython:: python
 
-    arr[2017, 'F', '67+']
+    pop[2017, 'F', '67+']
 
 When selecting a larger subset the result is an array
 
 .. ipython:: python
 
-    arr[2017]
-    arr['M']
+    pop[2017]
+    pop['M']
 
 When selecting several labels for the same axis, they must be given as a list (enclosed by ``[ ]``)
 
 .. ipython:: python
-    arr['F', ['0-9', '10-17']]
 
+    pop['F', ['0-9', '10-17']]
+
+You can also select *slices*, which are all labels between two bounds (we usually call them the `start` and `stop`
+bounds). Specifying the `start` and `stop` bounds of a slice is optional: when not given, `start` is the first label
+of the corresponding axis, `stop` the last one.
+
+.. note::
+    Contrary to slices on normal Python lists, the ``stop`` bound **is** included in the selection.
+
+.. ipython:: python
+
+    # in this case "10-17":"67+" is equivalent to ["10-17", "18-66", "67+"]
+    pop["F", "10-17":"67+"]
+
+    # :"18-66" selects all labels between the first one and "18-66"
+    # 2017: selects all labels between 2017 and the last one
+    pop[:"18-66", 2017:]
 
 .. warning::
 
     Selecting by labels as above only works as long as there is no ambiguity.
-    When several axes have common labels and you do not specify explicitly
+    When several axes have some labels in common and you do not specify explicitly
     on which axis to work, it fails with an error ending with something like
-    ValueError: somelabel is ambiguous (valid in axis1, axis2).
+    ValueError: <somelabel> is ambiguous (valid in <axis1>, <axis2>).
 
-For example, let us create a test array with an ambiguous label.
-First create an axis (some kind of status code) with an "F" label (remember we already had an "F" label on the sex
-axis).
+For example, let us create a test array with an ambiguous label. We first create an axis (some kind of status code)
+with an "F" label (remember we already have an "F" label on the sex axis).
 
 .. ipython:: python
 
@@ -170,58 +200,56 @@ Then create a test array using both axes
     ambiguous_arr = ndtest([sex, status, year])
     ambiguous_arr
 
-If we try to get to a subset of the array with "F"...
+If we try to get the subset of our array concerning women (represented by the "F" label in our array), we might
+try something like:
 
 .. ipython:: python
     :verbatim:
 
     ambiguous_arr[2017, "F"]
 
-... we receive back a volley of insults ::
+... but we receive back a volley of insults ::
 
     [some long error message ending with the line below]
     [...]
     ValueError: F is ambiguous (valid in sex, status)
 
-In that case, we have to specify which axis the "F" we want belongs to:
+In that case, we have to specify explicitly which axis the "F" label we want to select belongs to:
 
 .. ipython:: python
 
     ambiguous_arr[2017, sex["F"]]
 
-You can also define slices (defined by 'start:stop' or 'start:stop:step').
-A slice will select all labels between `start` and `stop` (stop included).
-Specifying the start and stop bounds of a slice is optional: when not given,
-start is the first label of an axis, stop the last one.
-
-.. ipython:: python
-
-    # "10-17":"67+" is a shortcut for ["10-17", "18-66", "67+"]
-    arr["F", "10-17":"67+"]
-
-    # :"18-66" will select all labels between the first one and "18-66"
-    # 2017: will select all labels between 2017 and the last one
-    arr[:"18-66", 2017:]
-
 
 Aggregation
 -----------
 
-The LArray library includes many aggregations methods.
-For example, to calculate the sum along an axis, write:
+The LArray library includes many aggregations methods: sum, mean, min, max, std, var, ...
+
+For example, assuming we still have an array in the ``pop`` variable:
 
 .. ipython:: python
 
-    arr
-    arr.sum("sex")
-    arr.sum("age", "sex")
+    pop
 
-To aggregate along all axes except some, you simply have to append `_by`
-to the aggregation method you want to use:
+We can sum along the "sex" axis using:
 
 .. ipython:: python
 
-    arr.sum_by("year")
+    pop.sum("sex")
+
+Or sum along both "age" and "sex":
+
+.. ipython:: python
+
+    pop.sum("age", "sex")
+
+It is sometimes more convenient to aggregate along all axes **except** some. In that case, use the aggregation
+methods ending with `_by`. For example:
+
+.. ipython:: python
+
+    pop.sum_by("year")
 
 See :ref:`here <la_agg>` to get the list of all available aggregation methods.
 
@@ -232,8 +260,6 @@ Groups
 A :ref:`Group <api-group>` represents a subset of labels or positions of an axis:
 
 .. ipython:: python
-
-    arr
 
     children = age["0-9", "10-17"]
     children
@@ -248,25 +274,31 @@ It is often useful to attach them an explicit name using the ``>>`` operator:
     nonworking = age["0-9", "10-17", "67+"] >> "nonworking"
     nonworking
 
+Still using the same ``pop`` array:
+
+.. ipython:: python
+
+    pop
+
 Groups can be used in selections:
 
 .. ipython:: python
 
-    arr[children]
-    arr[nonworking]
+    pop[children]
+    pop[nonworking]
 
 or aggregations:
 
 .. ipython:: python
 
-    arr.sum(children)
+    pop.sum(children)
 
 When aggregating several groups, the names we set above using ``>>`` determines the label on the aggregated axis.
 Since we did not give a name for the children group, the resulting label is generated automatically :
 
 .. ipython:: python
 
-    arr.sum((children, working, nonworking))
+    pop.sum((children, working, nonworking))
 
 
 Grouping arrays in a Session
@@ -373,19 +405,3 @@ Windows Start Menu. This menu contains:
 Once the graphical interface is open, all LArray objects and functions are directly accessible.
 No need to start by `from larray import *`.
 
-Compatibility with pandas
--------------------------
-
-To convert a LArray object into a pandas DataFrame, the method :py:meth:`~LArray.to_frame` can be used:
-
-.. ipython:: python
-
-    df = arr.to_frame()
-    df
-
-Inversely, to convert a DataFrame into a LArray object, use the function :py:func:`aslarray`:
-
-.. ipython:: python
-
-    arr = aslarray(df)
-    arr
