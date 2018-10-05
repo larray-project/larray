@@ -17,6 +17,8 @@ They represent N-dimensional labelled arrays and are composed of data (numpy nda
 and optionally some metadata. An axis contains a list of labels and may have a name (if not given, the axis is
 anonymous).
 
+TODO: this section needs more explanation / presentation of the objects.
+
 You can create an array from scratch by supplying data, axes and optionally some metadata:
 
 .. ipython:: python
@@ -48,6 +50,8 @@ Here are the key properties for an array:
 
         pop.info
 
+# TODO: move this in a section of the tutorial (inspecting arrays)
+
 * number of dimensions
 
     .. ipython:: python
@@ -77,6 +81,8 @@ Here are the key properties for an array:
     .. ipython:: python
 
         pop.dtype
+
+TODO: this section needs more explanation!!!
 
 Arrays can be generated through dedicated functions:
 
@@ -129,8 +135,7 @@ To load a saved array, call the function :py:meth:`read_csv`:
     pop = read_csv('belgium_pop.csv')
     pop
 
-Other input/output functions are described in the :ref:`corresponding section <api-IO>`
-of the API documentation.
+Other input/output functions are described in the :ref:`corresponding section <api-IO>` of the API documentation.
 
 Selecting a subset
 ------------------
@@ -169,6 +174,8 @@ of the corresponding axis, `stop` the last one.
 
 .. note::
     Contrary to slices on normal Python lists, the ``stop`` bound **is** included in the selection.
+
+TODO: need some text here (it s ugly to have code just after the note)
 
 .. ipython:: python
 
