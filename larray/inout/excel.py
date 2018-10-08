@@ -282,11 +282,11 @@ class PandasExcelHandler(FileHandler):
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
             df = self.handle.parse(key, *args, **kwargs)
-            return key, df_aslarray(df, raw=True)
+            return df_aslarray(df, raw=True)
         elif type == 'Axis':
-            return key, self.axes[key]
+            return self.axes[key]
         elif type == 'Group':
-            return key, self.groups[key]
+            return self.groups[key]
         else:
             raise TypeError()
 
@@ -386,11 +386,11 @@ class XLWingsHandler(FileHandler):
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
-            return key, self.handle[key].load(*args, **kwargs)
+            return self.handle[key].load(*args, **kwargs)
         elif type == 'Axis':
-            return key, self.axes[key]
+            return self.axes[key]
         elif type == 'Group':
-            return key, self.groups[key]
+            return self.groups[key]
         else:
             raise TypeError()
 

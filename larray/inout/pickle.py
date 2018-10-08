@@ -34,8 +34,8 @@ class PickleHandler(FileHandler):
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
-        if type in ['Array', 'Axis', 'Group']:
-            return key, self.data[key]
+        if type in {'Array', 'Axis', 'Group'}:
+            return self.data[key]
         else:
             raise TypeError()
 
