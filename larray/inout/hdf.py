@@ -132,7 +132,7 @@ class PandasHDFHandler(FileHandler):
             kwargs['name'] = key
         else:
             raise TypeError()
-        return key, read_hdf(self.handle, hdf_key, *args, **kwargs)
+        return read_hdf(self.handle, hdf_key, *args, **kwargs)
 
     def _dump_item(self, key, value, *args, **kwargs):
         if isinstance(value, LArray):

@@ -127,8 +127,7 @@ class FileHandler(object):
             if display:
                 print("loading", type, "object", key, "...", end=' ')
             try:
-                key, item = self._read_item(key, type, *args, **kwargs)
-                res[key] = item
+                res[key] = self._read_item(key, type, *args, **kwargs)
             except Exception:
                 if not ignore_exceptions:
                     raise
