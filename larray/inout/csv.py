@@ -342,11 +342,11 @@ class PandasCSVHandler(FileHandler):
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
-            return key, read_csv(self._to_filepath(key), *args, **kwargs)
+            return read_csv(self._to_filepath(key), *args, **kwargs)
         elif type == 'Axis':
-            return key, self.axes[key]
+            return self.axes[key]
         elif type == 'Group':
-            return key, self.groups[key]
+            return self.groups[key]
         else:
             raise TypeError()
 
