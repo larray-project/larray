@@ -1225,10 +1225,11 @@ class Axis(ABCAxis):
         Axis(['a0', 'a1', 'a2'], 'a')
         >>> axis1.align(axis2, join='right')
         Axis(['a1', 'a2', 'a3'], 'a')
-        >>> axis1.align(axis2, join='exact')
+        >>> axis1.align(axis2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        ValueError: Axis(['a0', 'a1', 'a2'], 'a') is not equal to Axis(['a1', 'a2', 'a3'], 'a')
+        ValueError: align method with join='exact' expected
+        Axis(['a0', 'a1', 'a2'], 'a') to be equal to Axis(['a1', 'a2', 'a3'], 'a')
         """
         assert join in {'outer', 'inner', 'left', 'right', 'exact'}
         if join == 'outer':
@@ -1243,7 +1244,8 @@ class Axis(ABCAxis):
             return other
         elif join == 'exact':
             if not self.equals(other):
-                raise ValueError("{!r} is not equal to {!r}".format(self, other))
+                raise ValueError("align method with join='exact' "
+                                 "expected {!r} to be equal to {!r}".format(self, other))
             else:
                 return self
 

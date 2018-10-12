@@ -1645,8 +1645,8 @@ class LArray(ABCLArray):
         >>> arr1.align(arr2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        ValueError: Both arrays are not aligned because Axis(['a0', 'a1'], 'a') is not equal to
-        Axis(['a0', 'a1', 'a2'], 'a')
+        ValueError: Both arrays are not aligned because align method with join='exact'
+        expected Axis(['a0', 'a1'], 'a') to be equal to Axis(['a0', 'a1', 'a2'], 'a')
         """
         other = aslarray(other)
         # reindex does not currently support anonymous axes
