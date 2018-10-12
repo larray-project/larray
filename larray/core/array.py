@@ -1481,13 +1481,14 @@ class LArray(ABCLArray):
         Parameters
         ----------
         other : LArray-like
-        join : {'outer', 'inner', 'left', 'right'}, optional
+        join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Join method. For each axis common to both arrays:
               - outer: will use a label if it is in either arrays axis (ordered like the first array).
                        This is the default as it results in no information loss.
-              - inner: will use a label if it is in both arrays axis (ordered like the first array)
-              - left: will use the first array axis labels
+              - inner: will use a label if it is in both arrays axis (ordered like the first array).
+              - left: will use the first array axis labels.
               - right: will use the other array axis labels.
+              - exact: instead of aligning, raise an error when axes to be aligned are not equal.
         fill_value : scalar or LArray, optional
             Value used to fill cells corresponding to label combinations which are not common to both arrays.
             Defaults to NaN.
@@ -1638,12 +1639,23 @@ class LArray(ABCLArray):
          a0   0.0  -1.0  nan
          a1  -2.0  -3.0  nan
          a2  -4.0  -5.0  nan
+
+        Test if two arrays are aligned
+
+        >>> arr1.align(arr2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        ValueError: Both arrays are not aligned because align method with join='exact'
+        expected Axis(['a0', 'a1'], 'a') to be equal to Axis(['a0', 'a1', 'a2'], 'a')
         """
         other = aslarray(other)
         # reindex does not currently support anonymous axes
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
             raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
-        left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
+        try:
+            left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
+        except ValueError as e:
+            raise ValueError("Both arrays are not aligned because {}".format(e))
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})

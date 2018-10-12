@@ -135,6 +135,11 @@ Miscellaneous improvements
     people['Bruce Wayne', 'Bruce Willis', 'Arthur Dent']
 
 
+* added option ``exact`` to ``join`` argument of :py:obj:`Axis.align()` and :py:obj:`LArray.align()` methods.
+  Instead of aligning, passing ``join='exact'`` to the ``align`` method will raise an error when axes are not equal.
+  Closes :issue:`338`.
+
+
 Fixes
 -----
 

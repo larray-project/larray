@@ -1201,7 +1201,7 @@ class Axis(ABCAxis):
         Parameters
         ----------
         other : Axis or label sequence
-        join : {'outer', 'inner', 'left', 'right'}, optional
+        join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Defaults to 'outer'.
 
         Returns
@@ -1225,8 +1225,13 @@ class Axis(ABCAxis):
         Axis(['a0', 'a1', 'a2'], 'a')
         >>> axis1.align(axis2, join='right')
         Axis(['a1', 'a2', 'a3'], 'a')
+        >>> axis1.align(axis2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        ValueError: align method with join='exact' expected
+        Axis(['a0', 'a1', 'a2'], 'a') to be equal to Axis(['a1', 'a2', 'a3'], 'a')
         """
-        assert join in {'outer', 'inner', 'left', 'right'}
+        assert join in {'outer', 'inner', 'left', 'right', 'exact'}
         if join == 'outer':
             return self.union(other)
         elif join == 'inner':
@@ -1237,6 +1242,12 @@ class Axis(ABCAxis):
             if not isinstance(other, Axis):
                 other = Axis(other)
             return other
+        elif join == 'exact':
+            if not self.equals(other):
+                raise ValueError("align method with join='exact' "
+                                 "expected {!r} to be equal to {!r}".format(self, other))
+            else:
+                return self
 
     def to_hdf(self, filepath, key=None):
         """
@@ -2976,7 +2987,7 @@ class AxisCollection(object):
         Parameters
         ----------
         other : AxisCollection
-        join : {'outer', 'inner', 'left', 'right'}, optional
+        join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Defaults to 'outer'.
         axes : AxisReference or sequence of them, optional
             Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
@@ -3047,8 +3058,8 @@ class AxisCollection(object):
             Axis(['c0'], None)
         ])
         """
-        if join not in {'outer', 'inner', 'left', 'right'}:
-            raise ValueError("join should be one of 'outer', 'inner', 'left' or 'right'")
+        if join not in {'outer', 'inner', 'left', 'right', 'exact'}:
+            raise ValueError("join should be one of 'outer', 'inner', 'left', 'right' or 'exact'")
         other = other if isinstance(other, AxisCollection) else AxisCollection(other)
 
         # if axes not specified
