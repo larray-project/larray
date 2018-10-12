@@ -891,7 +891,7 @@ class Group(object):
         """
         return self.__class__(self.key, self.name, axis)
 
-    def by(self, length, step=None):
+    def by(self, length, step=None, name_template=None):
         """Split group into several groups of specified length.
 
         Parameters
@@ -900,6 +900,10 @@ class Group(object):
             length of new groups
         step : int, optional
             step between groups. Defaults to length.
+        name_template : str, optional
+            template describing how group names are generated. It is a string containing specific arguments
+            written inside brackets {}. Available arguments are {start} and {end} representing the first and last label
+            of each group. By default, template is defined as '{start}:{end}'.
 
         Notes
         -----
@@ -914,25 +918,31 @@ class Group(object):
         >>> from larray import Axis, X
         >>> age = Axis(range(10), 'age')
         >>> age[[1, 2, 3, 4, 5]].by(2)
-        (age[1, 2] >> '1,2', age[3, 4] >> '3,4', age[5] >> '[5],')
+        (age[1, 2] >> '1:2', age[3, 4] >> '3:4', age[5] >> '5')
         >>> age[1:5].by(2)
-        (age.i[1:3] >> '1:2', age.i[3:5] >> '3:4', age.i[5:6] >> '5:5')
+        (age.i[1:3] >> '1:2', age.i[3:5] >> '3:4', age.i[5:6] >> '5')
         >>> age[1:5].by(2, 4)
-        (age.i[1:3] >> '1:2', age.i[5:6] >> '5:5')
+        (age.i[1:3] >> '1:2', age.i[5:6] >> '5')
         >>> age[1:5].by(3, 2)
-        (age.i[1:4] >> '1:3', age.i[3:6] >> '3:5', age.i[5:6] >> '5:5')
+        (age.i[1:4] >> '1:3', age.i[3:6] >> '3:5', age.i[5:6] >> '5')
+        >>> age[1:5].by(3, 2, '{start}->{end}')
+        (age.i[1:4] >> '1->3', age.i[3:6] >> '3->5', age.i[5:6] >> '5')
         >>> X.age[[0, 1, 2, 3, 4]].by(2)
-        (X.age[0, 1] >> '0,1', X.age[2, 3] >> '2,3', X.age[4] >> '[4],')
+        (X.age[0, 1] >> '0:1', X.age[2, 3] >> '2:3', X.age[4] >> '4')
         """
-        def make_group(start, length):
+        def make_group(start, length, name_template):
             g = self[start:start + length]
-            # call _to_tick() to be consistent with output from aggregation methods.
-            # See LArray._group_aggregate() and Axis.labels()
-            g.name = _to_tick(g)
+            labels = g.eval()
+            if labels[0] != labels[-1]:
+                g.name = name_template.format(start=labels[0], end=labels[-1])
+            else:
+                g.name = str(labels[0])
             return g
         if step is None:
             step = length
-        return tuple(make_group(start, length) for start in range(0, len(self), step))
+        if name_template is None:
+            name_template = '{start}:{end}'
+        return tuple(make_group(start, length, name_template) for start in range(0, len(self), step))
 
     # TODO: __getitem__ should work by label and .i[] should work by position. I guess it would be more consistent this
     # way even if the usefulness of subsetting a group with labels is dubious (but it is sometimes practical to treat
