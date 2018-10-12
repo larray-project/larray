@@ -227,8 +227,8 @@ class Axis(ABCAxis):
         (age.i[0:3] >> '0:2', age.i[4:7] >> '4:6', age.i[8:10] >> '8:9')
         >>> age.by(5, 3)
         (age.i[0:5] >> '0:4', age.i[3:8] >> '3:7', age.i[6:10] >> '6:9', age.i[9:10] >> '9')
-        >>> age.by(5, 3, '{start}->{end}')
-        (age.i[0:5] >> '0->4', age.i[3:8] >> '3->7', age.i[6:10] >> '6->9', age.i[9:10] >> '9')
+        >>> age.by(5, 3, '{start}-{end}')
+        (age.i[0:5] >> '0-4', age.i[3:8] >> '3-7', age.i[6:10] >> '6-9', age.i[9:10] >> '9')
         """
         return self[:].by(length, step, name_template)
 
