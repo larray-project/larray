@@ -134,10 +134,24 @@ Miscellaneous improvements
     >>> people.matching(pattern='[AB]*')
     people['Bruce Wayne', 'Bruce Willis', 'Arthur Dent']
 
-
 * added option ``exact`` to ``join`` argument of :py:obj:`Axis.align()` and :py:obj:`LArray.align()` methods.
   Instead of aligning, passing ``join='exact'`` to the ``align`` method will raise an error when axes are not equal.
   Closes :issue:`338`.
+
+* made :py:obj:`Axis.by()` and :py:obj:`Group.by()` return a list of named groups instead of anonymous groups.
+  By default, group names are defined as ``<start>:<end>``. This can be changed via the new ``template`` argument:
+
+    >>> age = Axis('age=0..6')
+    >>> age
+    Axis([0, 1, 2, 3, 4, 5, 6], 'age')
+    >>> age.by(3)
+    (age.i[0:3] >> '0:2', age.i[3:6] >> '3:5', age.i[6:7] >> '6')
+    >>> age.by(3, step=2)
+    (age.i[0:3] >> '0:2', age.i[2:5] >> '2:4', age.i[4:7] >> '4:6', age.i[6:7] >> '6')
+    >>> age.by(3, template='{start}-{end}')
+    (age.i[0:3] >> '0-2', age.i[3:6] >> '3-5', age.i[6:7] >> '6')
+
+  Closes :issue:`669`.
 
 
 Fixes
