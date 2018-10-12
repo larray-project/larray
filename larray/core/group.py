@@ -933,11 +933,9 @@ class Group(object):
         def make_group(start, length, name_template):
             g = self[start:start + length]
             labels = g.eval()
-            if labels[0] != labels[-1]:
-                g.name = name_template.format(start=labels[0], end=labels[-1])
-            else:
-                g.name = str(labels[0])
+            g.name = name_template.format(start=labels[0], end=labels[-1]) if len(labels) > 1 else str(labels[0])
             return g
+
         if step is None:
             step = length
         if name_template is None:
