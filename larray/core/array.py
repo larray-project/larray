@@ -5428,7 +5428,7 @@ class LArray(ABCLArray):
             # on average given that other is likely to contain zeros when using divnot0.
             otherdata = np.where(other_eq0, 1, otherdata)
             res_data = self.data / otherdata
-            res_data[other_eq0] = 0.0
+            res_data[np.broadcast_to(other_eq0, res_data.shape)] = 0.0
             return LArray(res_data, res_axes)
 
     # XXX: rename/change to "add_axes" ?
