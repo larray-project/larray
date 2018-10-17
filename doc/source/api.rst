@@ -444,6 +444,7 @@ Miscellaneous
    LArray.divnot0
    LArray.clip
    LArray.shift
+   LArray.roll
    LArray.diff
    LArray.to_clipboard
 
