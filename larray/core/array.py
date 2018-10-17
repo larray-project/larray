@@ -5420,10 +5420,16 @@ class LArray(ABCLArray):
             else:
                 return self / other
         else:
-            with np.errstate(divide='ignore', invalid='ignore'):
-                res = self / other
-            res[other == 0] = 0
-            return res
+            (self, other), res_axes = make_numpy_broadcastable((self, other))
+            otherdata = other.data
+            other_eq0 = otherdata == 0
+            # numpy array division gets slower the more zeros you have in other, so we change it before the division
+            # happens. This is obviously slower than doing nothing if we have very few zeros but I think it's a win
+            # on average given that other is likely to contain zeros when using divnot0.
+            otherdata = np.where(other_eq0, 1, otherdata)
+            res_data = self.data / otherdata
+            res_data[other_eq0] = 0.0
+            return LArray(res_data, res_axes)
 
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
