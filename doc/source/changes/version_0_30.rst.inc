@@ -157,4 +157,4 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed something (closes :issue:`1`).
+* fixed LArray.divnot0 being slow when the divisor has many axes and many zeros (closes :issue:`705`).
