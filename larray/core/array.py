@@ -6797,6 +6797,53 @@ class LArray(ABCLArray):
         else:
             return self[:]
 
+    def roll(self, axis=None, n=1):
+        r"""Rolls the cells of the array n-times to the right along axis
+
+        Parameters
+        ----------
+        axis : int, str or Axis, optional
+            Axis along which to roll. Defaults to None (all axes).
+        n : int or LArray, optional
+            Number of positions to roll. Defaults to 1. Use a negative integers to roll left.
+            If n is an LArray the number of positions rolled can vary along the axes of n.
+
+        Returns
+        -------
+        LArray
+
+        Examples
+        --------
+        >>> arr = ndtest('sex=M,F;time=2010..2012')
+        >>> arr
+        sex\time  2010  2011  2012
+               M     0     1     2
+               F     3     4     5
+        >>> arr.roll('time')
+        sex\time  2010  2011  2012
+               M     2     0     1
+               F     5     3     4
+        >>> n = sequence(arr.sex, initial=1)
+        >>> n
+        sex  M  F
+             1  2
+        >>> arr.roll('time', n)
+        sex\time  2010  2011  2012
+               M     2     0     1
+               F     4     5     3
+        """
+        if isinstance(n, (int, np.integer)):
+            axis_idx = None if axis is None else self.axes.index(axis)
+            return LArray(np.roll(self.data, n, axis=axis_idx), self.axes)
+        else:
+            if not isinstance(n, LArray):
+                raise TypeError("n should either be an integer or an LArray")
+            if axis is None:
+                raise TypeError("axis may not be None if n is an LArray")
+            axis = self.axes[axis]
+            seq = sequence(axis)
+            return self[axis.i[(seq - n) % len(axis)]]
+
     # TODO: add support for groups as axis (like aggregates)
     # eg a.diff(x.year[2018:]) instead of a[2018:].diff(x.year)
     def diff(self, axis=-1, d=1, n=1, label='upper'):
