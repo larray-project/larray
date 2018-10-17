@@ -132,7 +132,12 @@ New features
 * implemented :py:obj:`wrap_elementwise_array_func()` function to make a function defined in another library work with
   LArray arguments instead of with numpy arrays.
 
+* implemented :py:obj:`LArray.roll()` to roll the cells of an array n-times to the right along an axis. This is similar
+  to :py:obj:`LArray.shift()`, except that cells which are pushed "outside of the axis" are reintroduced on the opposite
+  side of the axis instead of being dropped.
+
 * implemented :py:obj:`AxisCollection.rename()` to rename axes of an AxisCollection, independently of any array.
+
 
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

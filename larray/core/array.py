@@ -6853,6 +6853,11 @@ class LArray(ABCLArray):
         -------
         LArray
 
+        See Also
+        --------
+        LArray.roll : cells which are pushed "outside of the axis" are reintroduced on the opposite side of the axis
+                      instead of being dropped.
+
         Examples
         --------
         >>> arr = ndtest('sex=M,F;year=2019..2021')
@@ -6876,6 +6881,63 @@ class LArray(ABCLArray):
             return self[axis.i[-n:]].set_labels(axis, axis.labels[:n])
         else:
             return self[:]
+
+    def roll(self, axis=None, n=1):
+        r"""Rolls the cells of the array n-times to the right along axis. Cells which would be pushed "outside of the
+        axis" are reintroduced on the opposite side of the axis.
+
+        Parameters
+        ----------
+        axis : int, str or Axis, optional
+            Axis along which to roll. Defaults to None (all axes).
+        n : int or LArray, optional
+            Number of positions to roll. Defaults to 1. Use a negative integers to roll left.
+            If n is an LArray the number of positions rolled can vary along the axes of n.
+
+        Returns
+        -------
+        LArray
+
+        See Also
+        --------
+        LArray.shift : cells which are pushed "outside of the axis" are dropped instead of being reintroduced on the
+                       opposite side of the axis.
+
+        Examples
+        --------
+        >>> arr = ndtest('sex=M,F;year=2019..2021')
+        >>> arr
+        sex\year  2019  2020  2021
+               M     0     1     2
+               F     3     4     5
+        >>> arr.roll('year')
+        sex\year  2019  2020  2021
+               M     2     0     1
+               F     5     3     4
+
+        One can also roll by a different amount depending on another axis
+
+        >>> # let us roll by 1 for men and by 2 for women
+        >>> n = sequence(arr.sex, initial=1)
+        >>> n
+        sex  M  F
+             1  2
+        >>> arr.roll('year', n)
+        sex\year  2019  2020  2021
+               M     2     0     1
+               F     4     5     3
+        """
+        if isinstance(n, (int, np.integer)):
+            axis_idx = None if axis is None else self.axes.index(axis)
+            return LArray(np.roll(self.data, n, axis=axis_idx), self.axes)
+        else:
+            if not isinstance(n, LArray):
+                raise TypeError("n should either be an integer or an LArray")
+            if axis is None:
+                raise TypeError("axis may not be None if n is an LArray")
+            axis = self.axes[axis]
+            seq = sequence(axis)
+            return self[axis.i[(seq - n) % len(axis)]]
 
     # TODO: add support for groups as axis (like aggregates)
     # eg a.diff(x.year[2018:]) instead of a[2018:].diff(x.year)
