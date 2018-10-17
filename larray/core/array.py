@@ -2303,6 +2303,9 @@ class LArray(ABCLArray):
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not None.
             Equals to 5 by default.
+        light : bool, optional
+            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
+            previous one. Defaults to False.
         wide : boolean, optional
             Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
