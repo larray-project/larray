@@ -288,11 +288,13 @@ def test_str(small_array, array):
     assert str(small_array[lipro3, sex['M']]) == """\
 lipro  P01  P02  P03
          0    1    2"""
+
     # two dimensions
     assert str(small_array.filter(lipro=lipro3)) == """\
 sex\\lipro  P01  P02  P03
         M    0    1    2
         F   15   16   17"""
+
     # four dimensions (too many rows)
     assert str(array.filter(lipro=lipro3)) == """\
 age  geo  sex\\lipro       P01       P02       P03
@@ -307,6 +309,7 @@ age  geo  sex\\lipro       P01       P02       P03
 115  A93          F  153075.0  153076.0  153077.0
 115  A21          M  153090.0  153091.0  153092.0
 115  A21          F  153105.0  153106.0  153107.0"""
+
     # too many columns
     assert str(array['P01', 'A11', 'M']) == """\
 age    0       1       2  ...       112       113       114       115

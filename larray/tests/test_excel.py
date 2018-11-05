@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import needs_xlwings
-from larray import ndtest, larray_equal, open_excel, aslarray, Axis
+from larray import ndtest, open_excel, aslarray, Axis
 from larray.inout import xw_excel
 
 
@@ -36,7 +36,7 @@ class TestWorkbook(object):
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
-            assert re.match('<larray.inout.xw_excel.Workbook \[Book\d+\]>', repr(wb))
+            assert re.match(r'<larray.inout.xw_excel.Workbook \[Book\d+\]>', repr(wb))
 
     def test_getitem(self):
         with open_excel(visible=False) as wb:
@@ -119,6 +119,20 @@ class TestSheet(object):
             # array with header
             sheet['A8'] = arr.dump()
 
+            # object array with a *numpy* NaN (dc2019 infamous 65535 bug)
+            obj_arr = ndtest((2, 3)).astype(object)
+            obj_arr['a0', 'b1'] = np.float64('nan')
+
+            assert type(obj_arr['a0', 'b1']) is np.float64
+
+            obj_arr_dump = obj_arr.dump()
+            # [['a\\b', 'b0', 'b1', 'b2'], ['a0', 0, nan, 2], ['a1', 3, 4, 5]]
+
+            # float and *not* np.float64, otherwise it gets converted to 65535 when written to Excel
+            assert type(obj_arr_dump[1][2]) is float
+
+            sheet['A12'] = obj_arr_dump
+
             # read them back
             assert sheet['A1'].value == 1.5
             assert sheet['A2'].value == 2
@@ -127,7 +141,8 @@ class TestSheet(object):
             # array without header
             assert np.array_equal(sheet['A5:C6'].value, arr.data)
             # array with header
-            assert arr.equals(sheet['A8:D10'].load())
+            assert sheet['A8:D10'].load().equals(arr)
+            assert sheet['A12:D14'].load().equals(obj_arr, nans_equal=True)
 
     def test_asarray(self):
         with open_excel(visible=False) as wb:
@@ -163,7 +178,7 @@ class TestSheet(object):
     def test_repr(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
-            assert re.match('<larray.inout.xw_excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
+            assert re.match(r'<larray.inout.xw_excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
 
 
 @needs_xlwings
@@ -234,9 +249,10 @@ class TestRange(object):
             sheet['A1'] = arr1
             res = repr(sheet['A1:C2'])
             assert res == """\
-{0}*\{1}*  0  1  2
+{0}*\\{1}*  0  1  2
         0  0  1  2
         1  3  4  5"""
+
 
 if __name__ == "__main__":
     pytest.main()

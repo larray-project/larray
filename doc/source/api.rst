@@ -637,6 +637,7 @@ Write
    LArray.to_excel
    LArray.to_hdf
    LArray.to_stata
+   LArray.dump
 
 Excel
 =====

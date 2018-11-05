@@ -983,3 +983,34 @@ class Product(object):
 
     def __repr__(self):
         return 'Product({})'.format(self.sequences)
+
+
+_np_generic = np.generic
+
+
+def _kill_np_type(value):
+    return value.item() if isinstance(value, _np_generic) else value
+
+
+_kill_np_types = np.vectorize(_kill_np_type, otypes=[object])
+
+
+def ensure_no_numpy_type(array):
+    """
+    Converts array to a (potentially nested) list of builtin Python values (i.e. using no numpy-specific types)
+
+    Parameters
+    ----------
+    array : np.ndarray
+        array to convert.
+
+    Returns
+    -------
+    list
+        a (potentially nested) list with the same "shape" as `array` but any numpy type converted to the closest
+        Python builtin type
+    """
+    assert isinstance(array, np.ndarray)
+    if array.dtype.kind == 'O':
+        array = _kill_np_types(array)
+    return array.tolist()

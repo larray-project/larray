@@ -30,7 +30,7 @@ Matrix class
 #   include utils only in larray project and make larray a dependency of liam2
 #   (and potentially rename it to reflect the broader scope)
 
-from collections import Iterable, Sequence, OrderedDict
+from collections import Iterable, Sequence, OrderedDict, abc
 from itertools import product, chain, groupby, islice
 import os
 import sys
@@ -64,7 +64,8 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, PY2)
+                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
+                              Repeater, Product, ensure_no_numpy_type, PY2)
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
@@ -2325,7 +2326,7 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            table = list(self.as_table(_OPTIONS[DISPLAY_MAXLINES], _OPTIONS[DISPLAY_EDGEITEMS]))
+            table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS])
             return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
                              precision=_OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
@@ -2342,120 +2343,17 @@ class LArray(ABCLArray):
 
     def as_table(self, maxlines=-1, edgeitems=5, light=False, wide=True, value_name='value'):
         r"""
-        Generator. Returns next line of the table representing an array.
-
-        Parameters
-        ----------
-        maxlines : int, optional
-            Maximum number of lines to show. Defaults to -1 (all lines are shown).
-        edgeitems : int, optional
-            If number of lines to display is greater than `maxlines`,
-            only the first and last `edgeitems` lines are displayed.
-            Only active if `maxlines` is not -1.
-            Defaults to 5.
-        light : bool, optional
-            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
-            previous one. Defaults to False.
-        wide : boolean, optional
-            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
-            represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
-            value column. Defaults to True.
-        value_name : str, optional
-            Name of the column containing the values (last column) when `wide=False` (see above).
-            Defaults to 'value'.
-
-        Returns
-        -------
-        list
-            Next line of the table as a list.
-
-        Examples
-        --------
-        >>> arr = ndtest((2, 2, 3))
-        >>> list(arr.as_table())  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\c', 'c0', 'c1', 'c2'],
-         ['a0', 'b0', 0, 1, 2],
-         ['a0', 'b1', 3, 4, 5],
-         ['a1', 'b0', 6, 7, 8],
-         ['a1', 'b1', 9, 10, 11]]
-        >>> list(arr.as_table(light=True))  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\c', 'c0', 'c1', 'c2'],
-         ['a0', 'b0', 0, 1, 2],
-         ['', 'b1', 3, 4, 5],
-         ['a1', 'b0', 6, 7, 8],
-         ['', 'b1', 9, 10, 11]]
-        >>> list(arr.as_table(wide=False, value_name='data'))  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b', 'c', 'data'],
-         ['a0', 'b0', 'c0', 0],
-         ['a0', 'b0', 'c1', 1],
-         ['a0', 'b0', 'c2', 2],
-         ['a0', 'b1', 'c0', 3],
-         ['a0', 'b1', 'c1', 4],
-         ['a0', 'b1', 'c2', 5],
-         ['a1', 'b0', 'c0', 6],
-         ['a1', 'b0', 'c1', 7],
-         ['a1', 'b0', 'c2', 8],
-         ['a1', 'b1', 'c0', 9],
-         ['a1', 'b1', 'c1', 10],
-         ['a1', 'b1', 'c2', 11]]
+        Deprecated. Please use LArray.dump() instead.
         """
-        if not self.ndim:
-            return
+        warnings.warn("LArray.as_table() is deprecated. Please use LArray.dump() instead.", FutureWarning,
+                      stacklevel=2)
+        return self.dump(maxlines=maxlines, edgeitems=edgeitems, light=light, wide=wide, value_name=value_name)
 
-        # ert     unit  geo\time  2012    2011    2010
-        # NEER27  I05   AT        101.41  101.63  101.63
-        # NEER27  I05   AU        134.86  125.29  117.08
-        if wide:
-            width = self.shape[-1]
-            height = int(np.prod(self.shape[:-1]))
-        else:
-            width = 1
-            height = int(np.prod(self.shape))
-        data = np.asarray(self).reshape(height, width)
-
-        # get list of names of axes
-        axes_names = self.axes.display_names[:]
-        # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
-        if wide and len(axes_names) > 1:
-            axes_names[-2] = '\\'.join(axes_names[-2:])
-            axes_names.pop()
-        axes = self.axes[:-1] if wide else self.axes
-        # get list of labels for each axis (except the last one if wide=True)
-        labels = [axis.labels.tolist() for axis in axes]
-        # creates vertical lines (ticks is a list of list)
-        if self.ndim == 1 and wide:
-            # There is no vertical axis, so the axis name should not have
-            # any "tick" below it and we add an empty "tick".
-            ticks = [['']]
-        elif light:
-            ticks = light_product(*labels)
-        else:
-            ticks = product(*labels)
-        # returns the first line
-        other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
-        yield axes_names + other_colnames
-        # summary if needed
-        if maxlines >= 0 and height > maxlines:
-            # replace middle lines of the table by '...'.
-            # We show only the first and last edgeitems lines.
-            startticks = islice(ticks, edgeitems)
-            midticks = [["..."] * (self.ndim - 1)]
-            endticks = list(islice(rproduct(*labels), edgeitems))[::-1]
-            ticks = chain(startticks, midticks, endticks)
-            data = chain(data[:edgeitems].tolist(),
-                         [["..."] * width],
-                         data[-edgeitems:].tolist())
-            for tick, dataline in izip(ticks, data):
-                # returns next line (labels of N-1 first axes + data)
-                yield list(tick) + dataline
-        else:
-            for tick, dataline in izip(ticks, data):
-                # returns next line (labels of N-1 first axes + data)
-                yield list(tick) + dataline.tolist()
-
-    def dump(self, header=True, wide=True, value_name='value'):
-        """
-        Dump array as a 2D nested list
+    # XXX: dump as a 2D LArray with row & col dims?
+    def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
+             maxlines=-1, edgeitems=5):
+        r"""
+        Dump array as a 2D nested list. This is especially useful when writing to an Excel sheet via open_excel().
 
         Parameters
         ----------
@@ -2468,16 +2366,140 @@ class LArray(ABCLArray):
         value_name : str, optional
             Name of the column containing the values (last column) when `wide=False` (see above).
             Not used if header=False. Defaults to 'value'.
+        light : bool, optional
+            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
+            previous one. Defaults to False.
+        axes_names : bool or 'except_last', optional
+            Assuming header is True, whether or not to include axes names. If axes_names is 'except_last',
+            all axes names will be included except the last. Defaults to True.
+        na_repr : any scalar, optional
+            Replace missing values (NaN floats) by this value. Default to 'as_is' (do not do any replacement).
+        maxlines : int, optional
+            Maximum number of lines to show. Defaults to -1 (all lines are shown).
+        edgeitems : int, optional
+            If number of lines to display is greater than `maxlines`, only the first and last `edgeitems` lines are
+            displayed. Only active if `maxlines` is not -1. Defaults to 5.
 
         Returns
         -------
-        2D nested list
+        2D nested list or None for 0d arrays
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2, 2))
+        >>> arr.dump()                               # doctest: +NORMALIZE_WHITESPACE
+        [['a',  'b\\c', 'c0', 'c1'],
+         ['a0',   'b0',    0,    1],
+         ['a0',   'b1',    2,    3],
+         ['a1',   'b0',    4,    5],
+         ['a1',   'b1',    6,    7]]
+        >>> arr.dump(axes_names=False)               # doctest: +NORMALIZE_WHITESPACE
+        [['',       '', 'c0', 'c1'],
+         ['a0',   'b0',    0,    1],
+         ['a0',   'b1',    2,    3],
+         ['a1',   'b0',    4,    5],
+         ['a1',   'b1',    6,    7]]
+        >>> arr.dump(axes_names='except_last')       # doctest: +NORMALIZE_WHITESPACE
+        [['a',     'b', 'c0', 'c1'],
+         ['a0',   'b0',    0,    1],
+         ['a0',   'b1',    2,    3],
+         ['a1',   'b0',    4,    5],
+         ['a1',   'b1',    6,    7]]
+        >>> arr.dump(light=True)                     # doctest: +NORMALIZE_WHITESPACE
+        [['a',  'b\\c', 'c0', 'c1'],
+         ['a0',   'b0',    0,    1],
+         ['',     'b1',    2,    3],
+         ['a1',   'b0',    4,    5],
+         ['',     'b1',    6,    7]]
+        >>> arr.dump(wide=False, value_name='data')  # doctest: +NORMALIZE_WHITESPACE
+        [['a',   'b',  'c', 'data'],
+         ['a0', 'b0', 'c0',      0],
+         ['a0', 'b0', 'c1',      1],
+         ['a0', 'b1', 'c0',      2],
+         ['a0', 'b1', 'c1',      3],
+         ['a1', 'b0', 'c0',      4],
+         ['a1', 'b0', 'c1',      5],
+         ['a1', 'b1', 'c0',      6],
+         ['a1', 'b1', 'c1',      7]]
+        >>> arr.dump(maxlines=3, edgeitems=1)        # doctest: +NORMALIZE_WHITESPACE
+        [['a',   'b\\c',  'c0',  'c1'],
+         ['a0',    'b0',     0,     1],
+         ['...',  '...', '...', '...'],
+         ['a1',    'b1',     6,     7]]
         """
+        display_axes_names = axes_names
+
         if not header:
+            # ensure_no_numpy_type is there mostly to avoid problems with xlwings, but I am unsure where that problem
+            # should be fixed: in np.array.tolist, in xlwings, here or in xw_excel.Sheet.__setitem__. Doing it here
+            # is uglier than in xw_excel but is faster because nothing (extra) needs to be done when the
+            # array is not of object dtype (the usual case).
+
             # flatten all dimensions except the last one
-            return self.data.reshape(-1, self.shape[-1]).tolist()
+            # same fix should be applies in as_table above (it uses tolist too)
+            res2d = ensure_no_numpy_type(self.data.reshape(-1, self.shape[-1]))
         else:
-            return list(self.as_table(maxlines=-1, wide=wide, value_name=value_name))
+            if not self.ndim:
+                return None
+
+            if wide:
+                width = self.shape[-1]
+                height = int(np.prod(self.shape[:-1]))
+            else:
+                width = 1
+                height = int(np.prod(self.shape))
+            data = self.data.reshape(height, width)
+
+            # get list of names of axes
+            axes_names = self.axes.display_names[:]
+
+            # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
+            if wide and len(axes_names) > 1:
+                if display_axes_names is True:
+                    axes_names[-2] = '\\'.join(axes_names[-2:])
+                    axes_names.pop()
+                elif display_axes_names == 'except_last':
+                    axes_names = axes_names[:-1]
+                else:
+                    axes_names = [''] * (len(axes_names) - 1)
+
+            axes = self.axes[:-1] if wide else self.axes
+
+            # get list of labels for each axis (except the last one if wide=True)
+            labels = [ensure_no_numpy_type(axis.labels) for axis in axes]
+
+            # creates vertical lines (ticks is a list of list)
+            if self.ndim == 1 and wide:
+                # There is no vertical axis, so the axis name should not have
+                # any "tick" below it and we add an empty "tick".
+                ticks = [['']]
+            elif light:
+                ticks = light_product(*labels)
+            else:
+                ticks = Product(labels)
+
+            # computes the first line
+            other_colnames = ensure_no_numpy_type(self.axes[-1].labels) if wide else [value_name]
+            res2d = [axes_names + other_colnames]
+
+            # summary if needed
+            if maxlines != -1 and height > maxlines:
+                # replace middle lines of the table by '...'.
+                # We show only the first and last edgeitems lines.
+                res2d.extend([list(tick) + dataline
+                              for tick, dataline in zip(ticks[:edgeitems], ensure_no_numpy_type(data[:edgeitems]))])
+                res2d.append(["..."] * (self.ndim - 1 + width))
+                res2d.extend([list(tick) + dataline
+                              for tick, dataline in zip(ticks[-edgeitems:], ensure_no_numpy_type(data[-edgeitems:]))])
+            else:
+                # all other lines (labels of N-1 first axes + data)
+                res2d.extend([list(tick) + ensure_no_numpy_type(dataline) for tick, dataline in zip(ticks, data)])
+
+        if na_repr != 'as_is':
+            res2d = [[na_repr if value != value else value
+                      for value in line]
+                     for line in res2d]
+        return res2d
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
