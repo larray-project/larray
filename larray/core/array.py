@@ -2432,7 +2432,7 @@ class LArray(ABCLArray):
                 # returns next line (labels of N-1 first axes + data)
                 yield list(tick) + dataline.tolist()
 
-    def dump(self, header=True, wide=True, value_name='value'):
+    def dump(self, header=True, wide=True, value_name='value', light=False):
         """Dump array as a 2D nested list
 
         Parameters
@@ -2446,6 +2446,9 @@ class LArray(ABCLArray):
         value_name : str, optional
             Name of the column containing the values (last column) when `wide=False` (see above).
             Not used if header=False. Defaults to 'value'.
+        light : bool, optional
+            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
+            previous one. Defaults to False.
 
         Returns
         -------
@@ -2455,7 +2458,7 @@ class LArray(ABCLArray):
             # flatten all dimensions except the last one
             return self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table(wide=wide, value_name=value_name))
+            return list(self.as_table(wide=wide, value_name=value_name, light=light))
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
