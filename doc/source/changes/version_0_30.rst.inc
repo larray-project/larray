@@ -4,7 +4,7 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
-* new syntax
+* :py:obj:`LArray.as_table()` is deprecated. Please use :py:obj:`LArray.dump()` instead.
 
 
 Backward incompatible changes
@@ -302,6 +302,12 @@ Miscellaneous improvements
 * allowed to pass a single axis or group as ``axes_to_reindex`` argument
   of the :py:obj:`LArray.reindex()` method (closes :issue:`712`).
 
+* :py:obj:`LArray.dump()` gained a few extra arguments to further customize output :
+  - axes_names : to specify whether or not the output should contain the axes names (and which)
+  - maxlines and edgeitems : to dump only the start and end of large arrays
+  - light : to output axes labels only when they change instead of repeating them on each line
+  - na_repr : to specify how to represent N/A (NaN) values
+
 * substantially improved performance of creating, iterating, and doing a few other operations over larray objects.
   This solves a few pathological cases of slow operations, especially those involving many small-ish arrays but sadly
   the overall performance improvement is negligible over most of the real-world models using larray that we tested these
@@ -310,6 +316,9 @@ Miscellaneous improvements
 
 Fixes
 ^^^^^
+
+* fixed dumping to Excel arrays of "object" dtype containing NaN values using numpy float types (fixes the
+  infamous 65535 bug).
 
 * fixed :py:obj:`LArray.divnot0()` being slow when the divisor has many axes and many zeros (closes :issue:`705`).
 
