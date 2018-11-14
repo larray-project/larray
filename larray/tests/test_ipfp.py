@@ -27,23 +27,23 @@ def test_ipfp():
                            [1.1538461538461537, 0.8461538461538463]])
 
     # inverted target sums
-    with pytest.raises(ValueError, message="axes of target sum along a \(axis 0\) do not match corresponding "
-                                           "array axes: got {a} but expected {b}. Are the target sums in the "
-                                           "correct order\?"):
+    with pytest.raises(ValueError, message=r"axes of target sum along a \(axis 0\) do not match corresponding "
+                                           r"array axes: got {a} but expected {b}. Are the target sums in the "
+                                           r"correct order\?"):
         ipfp([along_b, along_a], initial)
 
     # different target sums totals
     along_a = LArray([2, 1], b)
     along_b = LArray([1, 3], a)
-    with pytest.raises(ValueError, message="target sum along b \(axis 1\) is different than target sum along "
-                                           "a \(axis 0\): 4 vs 3"):
+    with pytest.raises(ValueError, message=r"target sum along b \(axis 1\) is different than target sum along "
+                                           r"a \(axis 0\): 4 vs 3"):
         ipfp([along_a, along_b], initial)
 
     # all zero values
     initial = LArray([[0, 0], [1, 2]], [a, b])
     along_a = LArray([2, 1], b)
     along_b = LArray([1, 2], a)
-    with pytest.raises(ValueError, message="found all zero values sum along b \(axis 1\) but non zero target "
+    with pytest.raises(ValueError, message="found all zero values sum along b \\(axis 1\\) but non zero target "
                                            "sum:\na0: 1"):
         ipfp([along_a, along_b], initial)
 
@@ -51,14 +51,14 @@ def test_ipfp():
     initial = LArray([[2, 1], [1, 2]], [a, b])
     along_a = LArray([0, 1], b)
     along_b = LArray([1, 0], a)
-    with pytest.raises(ValueError, message="found Non Zero Values but Zero target Sum \(nzvzs\) along a "
-                                           "\(axis 0\), use nzvzs='warn' or 'fix' to set them to zero "
+    with pytest.raises(ValueError, message="found Non Zero Values but Zero target Sum \\(nzvzs\\) along a "
+                                           "\\(axis 0\\), use nzvzs='warn' or 'fix' to set them to zero "
                                            "automatically:\nb0: 3"):
         ipfp([along_a, along_b], initial)
 
     # negative initial values
     initial = LArray([[2, -1], [1, 2]], [a, b])
-    with pytest.raises(ValueError, message="negative value\(s\) found:\na0_b1: -1"):
+    with pytest.raises(ValueError, message="negative value\\(s\\) found:\na0_b1: -1"):
         ipfp([along_a, along_b], initial)
 
 # def test_ipfp_big():

@@ -196,7 +196,7 @@ def generalized_range(start, stop, step=1):
         return irange(start, stop, step)
 
 
-_range_str_pattern = re.compile('(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)?(\s+step\s+(?P<step>\d+))?')
+_range_str_pattern = re.compile(r'(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)?(\s+step\s+(?P<step>\d+))?')
 
 
 def _range_str_to_range(s, stack_depth=1):
@@ -435,7 +435,7 @@ def _to_ticks(s, parse_single_int=False):
     return np.asarray(ticks)
 
 
-_axis_name_pattern = re.compile('\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
+_axis_name_pattern = re.compile(r'\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
 
 
 def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
@@ -645,7 +645,7 @@ def _to_keys(value, stack_depth=1):
 
 
 # forbidden characters in sheet names
-_sheet_name_pattern = re.compile('[\\\/?*\[\]:]')
+_sheet_name_pattern = re.compile(r'[\\/?*\[\]:]')
 
 
 def _translate_sheet_name(sheet_name):
@@ -659,7 +659,7 @@ def _translate_sheet_name(sheet_name):
 
 
 # forbidden characters for dataset names in HDF files
-_key_hdf_pattern = re.compile('[\\\/]')
+_key_hdf_pattern = re.compile(r'[\\/]')
 
 
 def _translate_group_key_hdf(key):
