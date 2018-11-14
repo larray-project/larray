@@ -401,7 +401,7 @@ class LArrayPositionalPointsIndexer(object):
 
 
 def get_axis(obj, i):
-    """
+    r"""
     Returns an axis according to its position.
 
     Parameters
@@ -497,7 +497,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 
     doc_args = "".join(_arg_agg[arg] for arg in extra_args)
     doc_kwargs = "".join(_kwarg_agg[kw]['doc'] for kw in kwargs)
-    doc_varargs = """
+    doc_varargs = r"""
         \*axes_and_groups : None or int or str or Axis or Group or any combination of those
             {specific}
             The default (no axis or group) is to {action_verb} the {long_name} over all the dimensions of the input
@@ -1193,7 +1193,7 @@ class LArray(ABCLArray):
                      [self.percentile(p, *args) for p in percentiles], Axis(labels, 'statistic'))
 
     def describe_by(self, *args, **kwargs):
-        """
+        r"""
         Descriptive summary statistics, excluding NaN values, along axes or for groups.
 
         By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
@@ -1465,7 +1465,7 @@ class LArray(ABCLArray):
             return res
 
     def align(self, other, join='outer', fill_value=nan, axes=None):
-        """Align two arrays on their axes with the specified join method.
+        r"""Align two arrays on their axes with the specified join method.
 
         In other words, it ensure all common axes are compatible. Those arrays can then be used in binary operations.
 
@@ -1500,14 +1500,14 @@ class LArray(ABCLArray):
         --------
         >>> arr1 = ndtest((2, 3))
         >>> arr1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> arr2 = -ndtest((3, 2))
         >>> # reorder array to make the test more interesting
         >>> arr2 = arr2[['b1', 'b0']]
         >>> arr2
-        a\\b  b1  b0
+        a\b  b1  b0
          a0  -1   0
          a1  -3  -2
          a2  -5  -4
@@ -1516,12 +1516,12 @@ class LArray(ABCLArray):
 
         >>> aligned1, aligned2 = arr1.align(arr2)
         >>> aligned1
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  1.0  2.0
          a1  3.0  4.0  5.0
          a2  nan  nan  nan
         >>> aligned2
-        a\\b    b0    b1   b2
+        a\b    b0    b1   b2
          a0   0.0  -1.0  nan
          a1  -2.0  -3.0  nan
          a2  -4.0  -5.0  nan
@@ -1529,7 +1529,7 @@ class LArray(ABCLArray):
         After aligning all common axes, one can then do operations between the two arrays
 
         >>> aligned1 + aligned2
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  0.0  nan
          a1  1.0  1.0  nan
          a2  nan  nan  nan
@@ -1538,30 +1538,30 @@ class LArray(ABCLArray):
 
         >>> aligned1, aligned2 = arr1.align(arr2, join='inner')
         >>> aligned1
-        a\\b   b0   b1
+        a\b   b0   b1
          a0  0.0  1.0
          a1  3.0  4.0
         >>> aligned2
-        a\\b    b0    b1
+        a\b    b0    b1
          a0   0.0  -1.0
          a1  -2.0  -3.0
         >>> aligned1, aligned2 = arr1.align(arr2, join='left')
         >>> aligned1
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  1.0  2.0
          a1  3.0  4.0  5.0
         >>> aligned2
-        a\\b    b0    b1   b2
+        a\b    b0    b1   b2
          a0   0.0  -1.0  nan
          a1  -2.0  -3.0  nan
         >>> aligned1, aligned2 = arr1.align(arr2, join='right')
         >>> aligned1
-        a\\b   b1   b0
+        a\b   b1   b0
          a0  1.0  0.0
          a1  4.0  3.0
          a2  nan  nan
         >>> aligned2
-        a\\b    b1    b0
+        a\b    b1    b0
          a0  -1.0   0.0
          a1  -3.0  -2.0
          a2  -5.0  -4.0
@@ -1570,17 +1570,17 @@ class LArray(ABCLArray):
 
         >>> aligned1, aligned2 = arr1.align(arr2, fill_value=0)
         >>> aligned1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
          a2   0   0   0
         >>> aligned2
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0  -1   0
          a1  -2  -3   0
          a2  -4  -5   0
         >>> aligned1 + aligned2
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   0   2
          a1   1   1   5
          a2  -4  -5   0
@@ -1589,11 +1589,11 @@ class LArray(ABCLArray):
 
         >>> arr3 = ndtest((3, 2, 2))
         >>> arr1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> arr3
-         a  b\\c  c0  c1
+         a  b\c  c0  c1
         a0   b0   0   1
         a0   b1   2   3
         a1   b0   4   5
@@ -1602,7 +1602,7 @@ class LArray(ABCLArray):
         a2   b1  10  11
         >>> aligned1, aligned2 = arr1.align(arr3, join='inner')
         >>> aligned1
-        a\\b   b0   b1
+        a\b   b0   b1
          a0  0.0  1.0
          a1  3.0  4.0
         >>> aligned2
@@ -1612,7 +1612,7 @@ class LArray(ABCLArray):
         a1   b0  4.0  5.0
         a1   b1  6.0  7.0
         >>> aligned1 + aligned2
-         a  b\\c    c0    c1
+         a  b\c    c0    c1
         a0   b0   0.0   1.0
         a0   b1   3.0   4.0
         a1   b0   7.0   8.0
@@ -1622,11 +1622,11 @@ class LArray(ABCLArray):
 
         >>> aligned1, aligned2 = arr1.align(arr2, axes='b')
         >>> aligned1
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  1.0  2.0
          a1  3.0  4.0  5.0
         >>> aligned2
-        a\\b    b0    b1   b2
+        a\b    b0    b1   b2
          a0   0.0  -1.0  nan
          a1  -2.0  -3.0  nan
          a2  -4.0  -5.0  nan
@@ -5515,7 +5515,7 @@ class LArray(ABCLArray):
         return out
 
     def append(self, axis, value, label=None):
-        """Adds an array to self along an axis.
+        r"""Adds an array to self along an axis.
 
         The two arrays must have compatible axes.
 
@@ -5537,15 +5537,15 @@ class LArray(ABCLArray):
         --------
         >>> a = ones('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  1.0  1.0
              FO  1.0  1.0
         >>> a.append('sex', a.sum('sex'), 'M+F')
-        nat\\sex    M    F  M+F
+        nat\sex    M    F  M+F
              BE  1.0  1.0  2.0
              FO  1.0  1.0  2.0
         >>> a.append('nat', 2, 'Other')
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  1.0  1.0
              FO  1.0  1.0
           Other  2.0  2.0
@@ -5554,7 +5554,7 @@ class LArray(ABCLArray):
         type  type1  type2
                 0.0    0.0
         >>> a.append('nat', b, 'Other')
-          nat  sex\\type  type1  type2
+          nat  sex\type  type1  type2
            BE         M    1.0    1.0
            BE         F    1.0    1.0
            FO         M    1.0    1.0
@@ -5566,7 +5566,7 @@ class LArray(ABCLArray):
         return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
 
     def prepend(self, axis, value, label=None):
-        """Adds an array before self along an axis.
+        r"""Adds an array before self along an axis.
 
         The two arrays must have compatible axes.
 
@@ -5592,11 +5592,11 @@ class LArray(ABCLArray):
              BE  1.0  1.0
              FO  1.0  1.0
         >>> a.prepend('sex', a.sum('sex'), 'M+F')
-        nat\\sex  M+F    M    F
+        nat\sex  M+F    M    F
              BE  2.0  1.0  1.0
              FO  2.0  1.0  1.0
         >>> a.prepend('nat', 2, 'Other')
-        nat\\sex    M    F
+        nat\sex    M    F
           Other  2.0  2.0
              BE  1.0  1.0
              FO  1.0  1.0
@@ -5605,7 +5605,7 @@ class LArray(ABCLArray):
         type  type1  type2
                 0.0    0.0
         >>> a.prepend('sex', b, 'Other')
-        nat  sex\\type  type1  type2
+        nat  sex\type  type1  type2
          BE     Other    0.0    0.0
          BE         M    1.0    1.0
          BE         F    1.0    1.0
@@ -6318,7 +6318,7 @@ class LArray(ABCLArray):
 
     @property
     def plot(self):
-        """Plots the data of the array into a graph (window pop-up).
+        r"""Plots the data of the array into a graph (window pop-up).
 
         The graph can be tweaked to achieve the desired formatting and can be saved to a .png file.
 
@@ -7137,7 +7137,7 @@ def larray_nan_equal(a1, a2):
 
 
 def aslarray(a, meta=None):
-    """
+    r"""
     Converts input as LArray if possible.
 
     Parameters
@@ -7201,7 +7201,7 @@ def _check_axes_argument(func):
 
 @_check_axes_argument
 def zeros(axes, title=None, dtype=float, order='C', meta=None):
-    """Returns an array with the specified axes and filled with zeros.
+    r"""Returns an array with the specified axes and filled with zeros.
 
     Parameters
     ----------
@@ -7516,7 +7516,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
     meta = _handle_deprecated_argument_title(meta, title)
     # cannot use full() because order == 'K' is not understood
     # cannot use np.full_like() because it would not handle LArray fill_value
-    res = empty_like(array, dtype, meta=meta)
+    res = empty_like(array, dtype=dtype, meta=meta)
     res[:] = fill_value
     return res
 
@@ -8122,7 +8122,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 
 
 def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
-    """
+    r"""
     Combines several arrays or sessions along an axis.
 
     Parameters
@@ -8163,41 +8163,41 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     In the case the axis to create has already been defined in a variable (Axis or Group)
 
     >>> stack({'BE': arr1, 'FO': arr2}, nat)
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
     >>> all_nat = Axis('nat=BE,DE,FR,NL,UK')
     >>> stack({'BE': arr1, 'DE': arr2}, all_nat[:'DE'])
-    sex\\nat   BE   DE
+    sex\nat   BE   DE
           M  1.0  0.0
           F  1.0  0.0
 
     Otherwise (when one wants to create an axis from scratch), any of these syntaxes works:
 
     >>> stack([arr1, arr2], 'nat=BE,FO')
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
     >>> stack({'BE': arr1, 'FO': arr2}, 'nat=BE,FO')
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
     >>> stack([('BE', arr1), ('FO', arr2)], 'nat=BE,FO')
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
 
     When stacking arrays with different axes, the result has the union of all axes present:
 
     >>> stack({'BE': arr1, 'FO': 0}, nat)
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
 
     Creating an axis without name nor labels can be done using:
 
     >>> stack((arr1, arr2))
-    sex\\{1}*    0    1
+    sex\{1}*    0    1
            M  1.0  0.0
            F  1.0  0.0
 
@@ -8205,7 +8205,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     arguments can be an attractive alternative.
 
     >>> stack(FO=arr2, BE=arr1, axis=nat)
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
 
@@ -8214,7 +8214,7 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
 
     >>> # use this only on Python 3.6 and later
     >>> stack(BE=arr1, FO=arr2, axis='nat')   # doctest: +SKIP
-    sex\\nat   BE   FO
+    sex\nat   BE   FO
           M  1.0  0.0
           F  1.0  0.0
 
