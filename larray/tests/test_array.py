@@ -290,12 +290,12 @@ lipro  P01  P02  P03
          0    1    2"""
     # two dimensions
     assert str(small_array.filter(lipro=lipro3)) == """\
-sex\lipro  P01  P02  P03
+sex\\lipro  P01  P02  P03
         M    0    1    2
         F   15   16   17"""
     # four dimensions (too many rows)
     assert str(array.filter(lipro=lipro3)) == """\
-age  geo  sex\lipro       P01       P02       P03
+age  geo  sex\\lipro       P01       P02       P03
   0  A11          M       0.0       1.0       2.0
   0  A11          F      15.0      16.0      17.0
   0  A12          M      30.0      31.0      32.0
@@ -475,21 +475,21 @@ def test_getitem_guess_axis(array):
         array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
-    with pytest.raises(ValueError, message="\[998, 999\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, message=r"\[998, 999\] is not a valid label for any axis"):
         array[[1, 2], [998, 999]]
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
     # FIXME: the message should be the same as for 999, 4 (ie it should NOT mention age).
-    with pytest.raises(ValueError, message="age\[3, 999\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, message=r"age\[3, 999\] is not a valid label for any axis"):
         array[[1, 2], [3, 999]]
 
-    with pytest.raises(ValueError, message="\[999, 4\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, message=r"\[999, 4\] is not a valid label for any axis"):
         array[[1, 2], [999, 4]]
 
     # ambiguous key
     arr = ndtest("a=l0,l1;b=l1,l2")
-    with pytest.raises(ValueError, message="l1 is ambiguous \(valid in a, b\)"):
+    with pytest.raises(ValueError, message=r"l1 is ambiguous \(valid in a, b\)"):
         arr['l1']
 
     # ambiguous key disambiguated via string
@@ -2174,7 +2174,7 @@ def test_sum_with_groups_from_other_axis(small_array):
     # use a group (from another axis) which is incompatible with the axis of
     # the same name in the array
     lipro4 = Axis('lipro=P01,P03,P16')
-    with pytest.raises(ValueError, message="lipro\['P01', 'P16'\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, message=r"lipro\['P01', 'P16'\] is not a valid label for any axis"):
         small_array.sum(lipro4['P01,P16'])
 
 
@@ -2912,7 +2912,7 @@ def test_hdf_roundtrip(tmpdir, meta):
     group = a3.c['c0,c2'] >> 'even'
     a3[group].to_hdf(fpath, group)
     # group with name containing special characters (replaced by _)
-    group = a3.c['c0,c2'] >> ':name?with*special/\[characters]'
+    group = a3.c['c0,c2'] >> r':name?with*special/\[characters]'
     a3[group].to_hdf(fpath, group)
 
     # passing group as key to read_hdf
@@ -3803,7 +3803,7 @@ def test_to_excel_xlsxwriter(tmpdir):
     group = a3.c['c0,c2'] >> 'even'
     a3[group].to_excel(fpath, group, engine='xlsxwriter')
     # group with name containing special characters (replaced by _)
-    group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
+    group = a3.c['c0,c2'] >> r':name?with*special/\[char]'
     a3[group].to_excel(fpath, group, engine='xlsxwriter')
 
 
@@ -3893,7 +3893,7 @@ def test_to_excel_xlwings(tmpdir):
     group = a3.c['c0,c2'] >> 'even'
     a3[group].to_excel(fpath, group, engine='xlwings')
     # group with name containing special characters (replaced by _)
-    group = a3.c['c0,c2'] >> ':name?with*special/\[char]'
+    group = a3.c['c0,c2'] >> r':name?with*special/\[char]'
     a3[group].to_excel(fpath, group, engine='xlwings')
     # checks sheet names
     sheet_names = sorted(open_excel(fpath).sheet_names())
@@ -4293,7 +4293,7 @@ def test_matmul():
     # different axes
     a1 = ndtest('a=a0..a1;b=b0..b2')
     a2 = ndtest('b=b0..b2;c=c0..c3')
-    res = from_lists([['a\c', 'c0', 'c1', 'c2', 'c3'],
+    res = from_lists([[r'a\c', 'c0', 'c1', 'c2', 'c3'],
                       ['a0', 20, 23, 26, 29],
                       ['a1', 56, 68, 80, 92]])
     assert_array_equal(a1.__matmul__(a2), res)
@@ -4543,7 +4543,7 @@ def test_split_axes():
     assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
 
     # regex
-    res = combined.split_axes('b_d', names=['b', 'd'], regex='(\w+)_(\w+)')
+    res = combined.split_axes('b_d', names=['b', 'd'], regex=r'(\w+)_(\w+)')
     assert res.axes.names == ['a', 'b', 'd', 'c']
     assert res.shape == (2, 3, 5, 4)
     assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
@@ -4597,7 +4597,7 @@ def test_split_axes():
 
     # using regex
     arr = ndtest('ab=a0b0..a1b2; c=c0..c3; d=d0..d3; ef=e0f0..e2f1')
-    res = arr.split_axes({'ab': ('a', 'b'), 'ef': ('e', 'f')}, regex='(\w{2})(\w{2})')
+    res = arr.split_axes({'ab': ('a', 'b'), 'ef': ('e', 'f')}, regex=r'(\w{2})(\w{2})')
     assert res.axes.names == ['a', 'b', 'c', 'd', 'e', 'f']
     assert res.size == arr.size
     assert res.shape == (2, 3, 4, 4, 3, 2)

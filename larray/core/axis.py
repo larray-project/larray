@@ -2648,7 +2648,7 @@ class AxisCollection(object):
 
     @property
     def display_names(self):
-        """
+        r"""
         Returns the list of (display) names of the axes.
 
         Returns
