@@ -178,3 +178,6 @@ Fixes
 -----
 
 * fixed LArray.divnot0 being slow when the divisor has many axes and many zeros (closes :issue:`705`).
+
+* fixed maximum length of sheet names (31 characters instead of 30 characters) when adding a new sheet
+  to an Excel Workbook (closes :issue:`713`).

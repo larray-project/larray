@@ -657,7 +657,7 @@ def _translate_sheet_name(sheet_name):
         sheet_name = str(_to_tick(sheet_name))
     if isinstance(sheet_name, basestring):
         sheet_name = _sheet_name_pattern.sub('_', sheet_name)
-        if len(sheet_name) > 30:
+        if len(sheet_name) > 31:
             raise ValueError("Sheet names cannot exceed 31 characters")
     return sheet_name
 
