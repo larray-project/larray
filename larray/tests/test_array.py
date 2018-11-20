@@ -3870,6 +3870,12 @@ def test_to_excel_xlwings(tmpdir):
     assert sheet_names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0__2', 'even',
                                   '_name_with_special___char_'])
 
+    # sheet name of 31 characters (= maximum authorized length)
+    a3.to_excel(fpath, "sheetname_of_exactly_31_chars__", engine='xlwings')
+    # sheet name longer than 31 characters
+    with pytest.raises(ValueError, message="Sheet names cannot exceed 31 characters"):
+        a3.to_excel(fpath, "sheetname_longer_than_31_characters", engine='xlwings')
+
 
 def test_as_table():
     res = list(ndtest(3).as_table(wide=False, value_name='data'))
