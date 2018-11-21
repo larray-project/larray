@@ -444,17 +444,6 @@ Miscellaneous
    LArray.shift
    LArray.diff
    LArray.to_clipboard
-   round
-   floor
-   ceil
-   trunc
-   sqrt
-   absolute
-   fabs
-   where
-   isnan
-   isinf
-   nan_to_num
 
 .. _la_to_pandas:
 
@@ -476,6 +465,136 @@ Plotting
    :toctree: _generated/
 
    LArray.plot
+
+.. _api-ufuncs:
+
+Utility Functions
+=================
+
+* :ref:`ufuncs_misc`
+* :ref:`ufuncs_rounding`
+* :ref:`ufuncs_exp_log`
+* :ref:`ufuncs_trigo`
+* :ref:`ufuncs_hyper`
+* :ref:`ufuncs_complex`
+* :ref:`ufuncs_floating`
+
+.. _ufuncs_misc:
+
+Miscellaneous
+-------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   where
+   maximum
+   minimum
+   inverse
+   interp
+   convolve
+   absolute
+   fabs
+   isnan
+   isinf
+   nan_to_num
+   sqrt
+   i0
+   sinc
+
+.. _ufuncs_rounding:
+
+Rounding
+--------
+
+.. autosummary::
+   :toctree: _generated/
+
+   round
+   floor
+   ceil
+   trunc
+   rint
+   fix
+
+.. _ufuncs_exp_log:
+
+Exponents And Logarithms
+------------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+    exp
+    expm1
+    exp2
+    log
+    log10
+    log2
+    log1p
+    logaddexp
+    logaddexp2
+
+.. _ufuncs_trigo:
+
+Trigonometric functions
+-----------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+    sin
+    cos
+    tan
+    arcsin
+    arccos
+    arctan
+    hypot
+    arctan2
+    degrees
+    radians
+    unwrap
+
+.. _ufuncs_hyper:
+
+Hyperbolic functions
+--------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   sinh
+   cosh
+   tanh
+   arcsinh
+   arccosh
+   arctanh
+
+.. _ufuncs_complex:
+
+Complex Numbers
+---------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   angle
+   real
+   imag
+   conj
+
+.. _ufuncs_floating:
+
+Floating Point Routines
+-----------------------
+
+.. autosummary::
+   :toctree: _generated/
+
+   signbit
+   copysign
+   frexp
+   ldexp
 
 .. _api-metadata:
 

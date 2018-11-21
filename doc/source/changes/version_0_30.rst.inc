@@ -219,3 +219,6 @@ Fixes
 
 * fixed maximum length of sheet names (31 characters instead of 30 characters) when adding a new sheet
   to an Excel Workbook (closes :issue:`713`).
+
+* fixed missing documentation of many functions in :ref:`Utility Functions <api-ufuncs>` section
+  of the API Reference (closes :issue:`698`).
