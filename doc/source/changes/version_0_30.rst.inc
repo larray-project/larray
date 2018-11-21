@@ -1,4 +1,6 @@
-﻿Syntax changes
+﻿.. py:currentmodule:: larray
+
+Syntax changes
 --------------
 
 * new syntax
@@ -210,6 +212,9 @@ Miscellaneous improvements
                  UK   6   8
 
   Closes :issue:`671`.
+
+* added documentation and examples for :py:obj:`where()`, :py:obj:`maximum()`
+  and :py:obj:`minimum()` functions (closes :issue:`700`)
 
 
 Fixes

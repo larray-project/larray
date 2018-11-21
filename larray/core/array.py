@@ -5335,7 +5335,7 @@ class LArray(ABCLArray):
             if not nans_equal:
                 return self == other
             else:
-                from larray.core.ufuncs import isnan
+                from larray.core import isnan
 
                 def general_isnan(a):
                     if np.issubclass_(a.dtype.type, np.inexact):
@@ -6049,7 +6049,7 @@ class LArray(ABCLArray):
         -----
         If `a_min` and/or `a_max` are array_like, broadcast will occur between self, `a_min` and `a_max`.
         """
-        from larray.core.ufuncs import clip
+        from larray.core import clip
         return clip(self, a_min, a_max, out)
 
     @deprecate_kwarg('transpose', 'wide')
