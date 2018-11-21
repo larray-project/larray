@@ -5,46 +5,9 @@ import numpy as np
 
 from larray.core.array import LArray, raw_broadcastable
 
-__all__ = [
-    # Trigonometric functions
-    'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'hypot', 'arctan2', 'degrees', 'radians', 'unwrap',
-    # 'deg2rad', 'rad2deg',
 
-    # Hyperbolic functions
-    'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+__all__ = ['maximum', 'minimum', 'where']
 
-    # Rounding
-    'round', 'around', 'round_', 'rint', 'fix', 'floor', 'ceil', 'trunc',
-
-    # Sums, products, differences
-    # 'prod', 'sum', 'nansum', 'cumprod', 'cumsum',
-
-    # cannot use a simple wrapped ufunc because those ufuncs do not preserve shape or dimensions so labels are wrong
-    # 'diff', 'ediff1d', 'gradient', 'cross', 'trapz',
-
-    # Exponents and logarithms
-    'exp', 'expm1', 'exp2', 'log', 'log10', 'log2', 'log1p', 'logaddexp', 'logaddexp2',
-
-    # Other special functions
-    'i0', 'sinc',
-
-    # Floating point routines
-    'signbit', 'copysign', 'frexp', 'ldexp',
-
-    # Arithmetic operations
-    # 'add', 'reciprocal', 'negative', 'multiply', 'divide', 'power', 'subtract', 'true_divide', 'floor_divide',
-    # 'fmod', 'mod', 'modf', 'remainder',
-
-    # Handling complex numbers
-    'angle', 'real', 'imag', 'conj',
-
-    # Miscellaneous
-    'convolve', 'clip', 'sqrt',
-    # 'square',
-    'absolute', 'fabs', 'sign', 'maximum', 'minimum', 'fmax', 'fmin', 'nan_to_num', 'real_if_close',
-    'interp', 'where', 'isnan', 'isinf',
-    'inverse',
-]
 
 def broadcastify(func):
     # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
@@ -72,131 +35,224 @@ def broadcastify(func):
             return res_data
     # copy meaningful attributes (numpy ufuncs do not have __annotations__ nor __qualname__)
     wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
+    # update documentation by inserting a warning message after the short description of the numpy function
+    # (otherwise the description of ufuncs given in the corresponding API 'autosummary' tables will always
+    #  start with 'larray specific variant of ...' without giving a meaningful description of what does the ufunc)
+    if func.__doc__.startswith('\n'):
+        # docstring starts with short description
+        end_signature = 1
+        end_short_desc = func.__doc__.find('\n\n')
+    else:
+        # docstring starts with signature
+        end_signature = func.__doc__.find('\n\n') + 2
+        end_short_desc = func.__doc__.find('\n\n', end_signature)
+    short_desc = func.__doc__[:end_short_desc]
+    numpy_doc = func.__doc__[end_short_desc:]
+    ident = ' ' * (len(short_desc[end_signature:]) - len(short_desc[end_signature:].lstrip()))
+    wrapper.__doc__ = '{short_desc}' \
+                      '\n\n{ident}larray specific variant of ``numpy.{fname}``.' \
+                      '\n\n{ident}Documentation from numpy:' \
+                      '{numpy_doc}'.format(short_desc=short_desc, ident=ident, fname=func.__name__, numpy_doc=numpy_doc)
     # set __qualname__ explicitly (all these functions are supposed to be top-level function in the ufuncs module)
     wrapper.__qualname__ = func.__name__
     # we should not copy __module__
     return wrapper
 
 
-# Trigonometric functions
-
-sin = broadcastify(np.sin)
-cos = broadcastify(np.cos)
-tan = broadcastify(np.tan)
-arcsin = broadcastify(np.arcsin)
-arccos = broadcastify(np.arccos)
-arctan = broadcastify(np.arctan)
-hypot = broadcastify(np.hypot)
-arctan2 = broadcastify(np.arctan2)
-degrees = broadcastify(np.degrees)
-radians = broadcastify(np.radians)
-unwrap = broadcastify(np.unwrap)
-# deg2rad = broadcastify(np.deg2rad)
-# rad2deg = broadcastify(np.rad2deg)
-
-# Hyperbolic functions
-
-sinh = broadcastify(np.sinh)
-cosh = broadcastify(np.cosh)
-tanh = broadcastify(np.tanh)
-arcsinh = broadcastify(np.arcsinh)
-arccosh = broadcastify(np.arccosh)
-arctanh = broadcastify(np.arctanh)
-
-# Rounding
-
-# all 3 are equivalent, I am unsure I should support around and round_
-round = broadcastify(np.round)
-around = broadcastify(np.around)
-round_ = broadcastify(np.round_)
-rint = broadcastify(np.rint)
-fix = broadcastify(np.fix)
-floor = broadcastify(np.floor)
-ceil = broadcastify(np.ceil)
-trunc = broadcastify(np.trunc)
-
-# Sums, products, differences
-
-# prod = broadcastify(np.prod)
-# sum = broadcastify(np.sum)
-# nansum = broadcastify(np.nansum)
-# cumprod = broadcastify(np.cumprod)
-# cumsum = broadcastify(np.cumsum)
-
-# cannot use a simple wrapped ufunc because those ufuncs do not preserve
-# shape or dimensions so labels are wrong
-# diff = broadcastify(np.diff)
-# ediff1d = broadcastify(np.ediff1d)
-# gradient = broadcastify(np.gradient)
-# cross = broadcastify(np.cross)
-# trapz = broadcastify(np.trapz)
-
-# Exponents and logarithms
-
-exp = broadcastify(np.exp)
-expm1 = broadcastify(np.expm1)
-exp2 = broadcastify(np.exp2)
-log = broadcastify(np.log)
-log10 = broadcastify(np.log10)
-log2 = broadcastify(np.log2)
-log1p = broadcastify(np.log1p)
-logaddexp = broadcastify(np.logaddexp)
-logaddexp2 = broadcastify(np.logaddexp2)
-
-# Other special functions
-
-i0 = broadcastify(np.i0)
-sinc = broadcastify(np.sinc)
-
-# Floating point routines
-
-signbit = broadcastify(np.signbit)
-copysign = broadcastify(np.copysign)
-frexp = broadcastify(np.frexp)
-ldexp = broadcastify(np.ldexp)
-
-# Arithmetic operations
-
-# add = broadcastify(np.add)
-# reciprocal = broadcastify(np.reciprocal)
-# negative = broadcastify(np.negative)
-# multiply = broadcastify(np.multiply)
-# divide = broadcastify(np.divide)
-# power = broadcastify(np.power)
-# subtract = broadcastify(np.subtract)
-# true_divide = broadcastify(np.true_divide)
-# floor_divide = broadcastify(np.floor_divide)
-# fmod = broadcastify(np.fmod)
-# mod = broadcastify(np.mod)
-# modf = broadcastify(np.modf)
-# remainder = broadcastify(np.remainder)
-
-# Handling complex numbers
-
-angle = broadcastify(np.angle)
-real = broadcastify(np.real)
-imag = broadcastify(np.imag)
-conj = broadcastify(np.conj)
-
-# Miscellaneous
-
-convolve = broadcastify(np.convolve)
-clip = broadcastify(np.clip)
-sqrt = broadcastify(np.sqrt)
-# square = broadcastify(np.square)
-absolute = broadcastify(np.absolute)
-fabs = broadcastify(np.fabs)
-sign = broadcastify(np.sign)
-maximum = broadcastify(np.maximum)
-minimum = broadcastify(np.minimum)
-fmax = broadcastify(np.fmax)
-fmin = broadcastify(np.fmin)
-nan_to_num = broadcastify(np.nan_to_num)
-real_if_close = broadcastify(np.real_if_close)
-interp = broadcastify(np.interp)
 where = broadcastify(np.where)
-isnan = broadcastify(np.isnan)
-isinf = broadcastify(np.isinf)
+where.__doc__ = r"""
+where(condition, x, y)
 
-inverse = broadcastify(np.linalg.inv)
+    Return elements, either from `x` or `y`, depending on `condition`.
+
+    Parameters
+    ----------
+    condition : boolean LArray
+        When True, yield `x`, otherwise yield `y`.
+    x, y : LArray
+        Values from which to choose.
+
+    Returns
+    -------
+    out : LArray
+        If both `x` and `y` are specified, the output array contains
+        elements of `x` where `condition` is True, and elements from
+        `y` elsewhere.
+
+    Examples
+    --------
+    >>> from larray import LArray
+    >>> arr = LArray([[10, 7, 5, 9],
+    ...               [5, 8, 3, 7],
+    ...               [6, 2, 0, 9],
+    ...               [9, 10, 5, 6]], "a=a0..a3;b=b0..b3")
+    >>> arr
+    a\b  b0  b1  b2  b3
+     a0  10   7   5   9
+     a1   5   8   3   7
+     a2   6   2   0   9
+     a3   9  10   5   6
+
+    Simple use
+
+    >>> where(arr <= 5, 0, arr)
+    a\b  b0  b1  b2  b3
+     a0  10   7   0   9
+     a1   0   8   0   7
+     a2   6   0   0   9
+     a3   9  10   0   6
+
+    With broadcasting
+
+    >>> mean_by_col = arr.mean('a')
+    >>> mean_by_col
+    b   b0    b1    b2    b3
+       7.5  6.75  3.25  7.75
+    >>> # for each column, set values below the mean value to the mean value
+    >>> where(arr < mean_by_col, mean_by_col, arr)
+    a\b    b0    b1    b2    b3
+     a0  10.0   7.0   5.0   9.0
+     a1   7.5   8.0  3.25  7.75
+     a2   7.5  6.75  3.25   9.0
+     a3   9.0  10.0   5.0  7.75
+"""
+
+maximum = broadcastify(np.maximum)
+maximum.__doc__ = r"""
+maximum(x1, x2, out=None, dtype=None)
+
+    Element-wise maximum of array elements.
+
+    Compare two arrays and returns a new array containing the element-wise
+    maxima. If one of the elements being compared is a NaN, then that
+    element is returned. If both elements are NaNs then the first is
+    returned. The latter distinction is important for complex NaNs, which
+    are defined as at least one of the real or imaginary parts being a NaN.
+    The net effect is that NaNs are propagated.
+
+    Parameters
+    ----------
+    x1, x2 : LArray
+        The arrays holding the elements to be compared.
+    out : LArray, optional
+        An array into which the result is stored.
+    dtype : data-type, optional
+        Overrides the dtype of the output array.
+
+    Returns
+    -------
+    y : LArray or scalar
+        The maximum of `x1` and `x2`, element-wise.
+        This is a scalar if both `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    minimum :
+        Element-wise minimum of two arrays, propagates NaNs.
+
+    Notes
+    -----
+    The maximum is equivalent to ``where(x1 >= x2, x1, x2)`` when
+    neither x1 nor x2 are nans, but it is faster.
+
+    Examples
+    --------
+    >>> from larray import LArray
+    >>> arr1 = LArray([[10, 7, 5, 9],
+    ...                [5, 8, 3, 7]], "a=a0,a1;b=b0..b3")
+    >>> arr2 = LArray([[6, 2, 9, 0],
+    ...                [9, 10, 5, 6]], "a=a0,a1;b=b0..b3")
+    >>> arr1
+    a\b  b0  b1  b2  b3
+     a0  10   7   5   9
+     a1   5   8   3   7
+    >>> arr2
+    a\b  b0  b1  b2  b3
+     a0   6   2   9   0
+     a1   9  10   5   6
+
+    >>> maximum(arr1, arr2)
+    a\b  b0  b1  b2  b3
+     a0  10   7   9   9
+     a1   9  10   5   7
+
+    With broadcasting
+
+    >>> arr2['a0']
+    b  b0  b1  b2  b3
+        6   2   9   0
+    >>> maximum(arr1, arr2['a0'])
+    a\b  b0  b1  b2  b3
+     a0  10   7   9   9
+     a1   6   8   9   7
+"""
+
+minimum = broadcastify(np.minimum)
+minimum.__doc__ = r"""
+minimum(x1, x2, out=None, dtype=None)
+
+    Element-wise minimum of array elements.
+
+    Compare two arrays and returns a new array containing the element-wise
+    minima. If one of the elements being compared is a NaN, then that
+    element is returned. If both elements are NaNs then the first is
+    returned. The latter distinction is important for complex NaNs, which
+    are defined as at least one of the real or imaginary parts being a NaN.
+    The net effect is that NaNs are propagated.
+
+    Parameters
+    ----------
+    x1, x2 : LArray
+        The arrays holding the elements to be compared.
+    out : LArray, optional
+        An array into which the result is stored.
+    dtype : data-type, optional
+        Overrides the dtype of the output array.
+
+    Returns
+    -------
+    y : LArray or scalar
+        The minimum of `x1` and `x2`, element-wise.
+        This is a scalar if both `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    maximum :
+        Element-wise maximum of two arrays, propagates NaNs.
+
+    Notes
+    -----
+    The minimum is equivalent to ``where(x1 <= x2, x1, x2)`` when
+    neither x1 nor x2 are NaNs, but it is faster.
+
+    Examples
+    --------
+    >>> from larray import LArray
+    >>> arr1 = LArray([[10, 7, 5, 9],
+    ...                [5, 8, 3, 7]], "a=a0,a1;b=b0..b3")
+    >>> arr2 = LArray([[6, 2, 9, 0],
+    ...                [9, 10, 5, 6]], "a=a0,a1;b=b0..b3")
+    >>> arr1
+    a\b  b0  b1  b2  b3
+     a0  10   7   5   9
+     a1   5   8   3   7
+    >>> arr2
+    a\b  b0  b1  b2  b3
+     a0   6   2   9   0
+     a1   9  10   5   6
+
+    >>> minimum(arr1, arr2)
+    a\b  b0  b1  b2  b3
+     a0   6   2   5   0
+     a1   5   8   3   6
+
+    With broadcasting
+
+    >>> arr2['a0']
+    b  b0  b1  b2  b3
+        6   2   9   0
+    >>> minimum(arr1, arr2['a0'])
+    a\b  b0  b1  b2  b3
+     a0   6   2   5   0
+     a1   5   2   3   0
+"""
