@@ -284,6 +284,7 @@ To create a session, you need to pass a list of pairs (array_name, array):
 One of the main interests of using sessions is to save and load many arrays at once:
 
 .. ipython:: python
+    :okwarning:
 
     ses.save("my_session.h5")
     ses = Session("my_session.h5")
