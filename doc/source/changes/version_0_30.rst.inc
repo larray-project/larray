@@ -1,4 +1,4 @@
-﻿Syntax changes
+Syntax changes
 --------------
 
 * new syntax
@@ -96,7 +96,12 @@ New features
 * added a feature (see the :ref:`miscellaneous section <misc>` for details).
 
 
-.. _misc:
+* implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
+
+    >>> sex = Axis('sex=MALE,FEMALE')
+    >>> sex.apply(str.capitalize)
+    Axis(['Male', 'Female'], 'sex')
+
 
 Miscellaneous improvements
 --------------------------
