@@ -6570,16 +6570,17 @@ class LArray(ABCLArray):
     FO  2  3
     """
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
-        """Replaces the labels of an axis of array.
+        r"""Replaces the labels of an axis of array.
 
         Parameters
         ----------
         axis : string or Axis or dict
             Axis for which we want to replace labels, or mapping {axis: changes} where changes can either be the
-            complete list of labels or a mapping {old_label: new_label}.
-        labels : int, str, iterable or mapping, optional
+            complete list of labels, a mapping {old_label: new_label} or a function to transform labels.
+        labels : int, str, iterable or mapping or function, optional
             Integer or list of values usable as the collection of labels for an Axis. If this is mapping, it must be
-            {old_label: new_label}. This argument must not be used if axis is a mapping.
+            {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
+            label) and returning a single value. This argument must not be used if axis is a mapping.
         inplace : bool, optional
             Whether or not to modify the original object or return a new array and leave the original intact.
             Defaults to False.
@@ -6595,48 +6596,55 @@ class LArray(ABCLArray):
         --------
         >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FO  2  3
-        >>> a.set_labels(X.sex, ['Men', 'Women'])
-        nat\\sex  Men  Women
+        >>> a.set_labels('sex', ['Men', 'Women'])
+        nat\sex  Men  Women
              BE    0      1
              FO    2      3
 
         when passing a single string as labels, it will be interpreted to create the list of labels, so that one can
         use the same syntax than during axis creation.
 
-        >>> a.set_labels(X.sex, 'Men,Women')
-        nat\\sex  Men  Women
+        >>> a.set_labels('sex', 'Men,Women')
+        nat\sex  Men  Women
              BE    0      1
              FO    2      3
 
         to replace only some labels, one must give a mapping giving the new label for each label to replace
 
-        >>> a.set_labels(X.sex, {'M': 'Men'})
-        nat\\sex  Men  F
+        >>> a.set_labels('sex', {'M': 'Men'})
+        nat\sex  Men  F
              BE    0  1
              FO    2  3
+
+        to transform labels by a function, use any function accepting and returning a single argument:
+
+        >>> a.set_labels('nat', str.lower)
+        nat\sex  M  F
+             be  0  1
+             fo  2  3
 
         to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
         changed axis
 
         >>> a.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
-          nat\\sex  Men  Women
+          nat\sex  Men  Women
           Belgian    0      1
         Foreigner    2      3
 
         or use keyword arguments
 
         >>> a.set_labels(sex='Men,Women', nat='Belgian,Foreigner')
-          nat\\sex  Men  Women
+          nat\sex  Men  Women
           Belgian    0      1
         Foreigner    2      3
 
         one can also replace some labels in several axes by giving a mapping of mappings
 
         >>> a.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
-        nat\\sex  Men  F
+        nat\sex  Men  F
         Belgian    0  1
              FO    2  3
         """
@@ -6656,6 +6664,8 @@ class LArray(ABCLArray):
             real_axis = self.axes[old_axis]
             if isinstance(axis_changes, dict):
                 new_axis = real_axis.replace(axis_changes)
+            elif callable(axis_changes):
+                new_axis = real_axis.apply(axis_changes)
             else:
                 new_axis = Axis(axis_changes, real_axis.name)
             new_axes.append((old_axis, new_axis))

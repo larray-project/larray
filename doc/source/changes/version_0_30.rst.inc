@@ -1,4 +1,4 @@
-Syntax changes
+﻿Syntax changes
 --------------
 
 * new syntax
@@ -138,6 +138,18 @@ Miscellaneous improvements
 
     >>> people.matching(pattern='[AB]*')
     people['Bruce Wayne', 'Bruce Willis', 'Arthur Dent']
+
+* :py:obj:`LArray.set_labels()` can now take functions to transform axes labels (closes :issue:`536`).
+
+    >>> arr = ndtest((2, 2))
+    >>> arr
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> arr.set_labels('a', str.upper)
+    a\b  b0  b1
+     A0   0   1
+     A1   2   3
 
 * added option ``exact`` to ``join`` argument of :py:obj:`Axis.align()` and :py:obj:`LArray.align()` methods.
   Instead of aligning, passing ``join='exact'`` to the ``align`` method will raise an error when axes are not equal.
