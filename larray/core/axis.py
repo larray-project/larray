@@ -1055,6 +1055,28 @@ class Axis(ABCAxis):
         labels[indices] = new
         return Axis(labels, self.name)
 
+    def apply(self, func):
+        """
+        Returns a new axis with the labels transformed by func.
+
+        Parameters
+        ----------
+        func : callable
+            A callable which takes a single argument and returns a single value.
+
+        Returns
+        -------
+        Axis
+            a new Axis with the transformed labels.
+
+        Examples
+        --------
+        >>> sex = Axis('sex=MALE,FEMALE')
+        >>> sex.apply(str.capitalize)
+        Axis(['Male', 'Female'], 'sex')
+        """
+        return Axis(map(func, self.labels), self.name)
+
     # XXX: rename to named like Group?
     def rename(self, name):
         """

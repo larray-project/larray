@@ -64,6 +64,7 @@ Modifying/Selecting
    Axis.extend
    Axis.insert
    Axis.replace
+   Axis.apply
    Axis.union
    Axis.intersection
    Axis.difference
