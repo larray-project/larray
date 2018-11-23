@@ -190,11 +190,29 @@ Miscellaneous improvements
 
   Closes :issue:`671`.
 
+* made ``pattern`` argument of :py:obj:`Session.filter()` working as ``pattern``
+  argument of :py:obj:`Group.matching()`:
+
+    >>> axis = Axis('a=a0..a2')
+    >>> group = axis['a0,a1'] >> 'a01'
+    >>> test1, zero1 = ndtest((2, 2)), zeros((3, 2))
+    >>> s = Session([('test1', test1), ('zero1', zero1), ('axis', axis), ('group', group)])
+
+    >>> # get all items with names ending with '1'
+    >>> s.filter(pattern='*1').names
+    ['test1', 'zero1']
+
+    >>> # get all items with names starting with letter in range a-k
+    >>> s.filter(pattern='[a-k]*').names
+    ['axis', 'group']
+
+  Closes :issue:`703`.
+
 
 Fixes
 -----
 
-* fixed LArray.divnot0 being slow when the divisor has many axes and many zeros (closes :issue:`705`).
+* fixed :py:obj:`LArray.divnot0()` being slow when the divisor has many axes and many zeros (closes :issue:`705`).
 
 * fixed maximum length of sheet names (31 characters instead of 30 characters) when adding a new sheet
   to an Excel Workbook (closes :issue:`713`).

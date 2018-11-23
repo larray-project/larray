@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import re
+import fnmatch
 import warnings
 from collections import OrderedDict
 
@@ -15,10 +17,6 @@ from larray.core.constants import nan
 from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
-
-
-def check_pattern(k, pattern):
-    return k.startswith(pattern)
 
 
 # XXX: inherit from OrderedDict or LArray?
@@ -646,6 +644,11 @@ class Session(object):
         ----------
         pattern : str, optional
             Only keep arrays whose key match `pattern`.
+            * `?`     matches any single character
+            * `*`     matches any number of characters
+            * [seq]   matches any character in seq
+            * [!seq]  matches any character not in seq
+
         kind : (tuple of) type, optional
             Only keep objects which are instances of type(s) `kind`.
 
@@ -663,8 +666,13 @@ class Session(object):
 
         Filter using a pattern argument
 
-        >>> s.filter(pattern='test').names
-        ['test1']
+        >>> # get all items with names ending with '1'
+        >>> s.filter(pattern='*1').names
+        ['test1', 'zero1']
+
+        >>> # get all items with names starting with letter in range a-k
+        >>> s.filter(pattern='[a-k]*').names
+        ['axis', 'group']
 
         Filter using kind argument
 
@@ -675,7 +683,9 @@ class Session(object):
         """
         items = self._objects.items()
         if pattern is not None:
-            items = [(k, v) for k, v in items if check_pattern(k, pattern)]
+            regex = fnmatch.translate(pattern)
+            match = re.compile(regex).match
+            items = [(k, v) for k, v in items if match(k)]
         if kind is not None:
             items = [(k, v) for k, v in items if isinstance(v, kind)]
         return Session(items)
