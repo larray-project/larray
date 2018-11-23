@@ -182,7 +182,7 @@ class Axis(ABCAxis):
     @labels.setter
     def labels(self, labels):
         if labels is None:
-            raise TypeError("labels should be a sequence or a single int")
+            raise TypeError("labels should be a sequence or a single int, not None")
         if isinstance(labels, (int, long, np.integer)):
             length = labels
             labels = np.arange(length)
@@ -2473,7 +2473,7 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axis for axis, axis_key in key_items))
         if dupe_axes:
             dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-            raise ValueError("key has several values for axis: %s" % dupe_axes)
+            raise ValueError("key has several values for axis: %s\n%s" % (dupe_axes, key_items))
         key = dict(key_items)
         # dict -> tuple (complete and order key)
         assert all(isinstance(k, Axis) for k in key)
