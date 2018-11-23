@@ -577,6 +577,8 @@ class LArray(ABCLArray):
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+    dtype : type, optional
+        Datatype for the array. Defaults to None (inferred from the data).
 
     Attributes
     ----------
@@ -655,8 +657,8 @@ class LArray(ABCLArray):
           F  10  11  12
     """
 
-    def __init__(self, data, axes=None, title=None, meta=None):
-        data = np.asarray(data)
+    def __init__(self, data, axes=None, title=None, meta=None, dtype=None):
+        data = np.asarray(data, dtype=dtype)
         ndim = data.ndim
         if axes is None:
             axes = AxisCollection(data.shape)
@@ -8145,7 +8147,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 #       ('DE', 'M'): 4, ('DE', 'F'): 5})
 
 
-def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
+def stack(elements=None, axis=None, title=None, meta=None, dtype=None, **kwargs):
     r"""
     Combines several arrays or sessions along an axis.
 
@@ -8165,6 +8167,8 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+    dtype : type, optional
+        Output dtype. Defaults to None (inspect all output values to infer it automatically).
 
     Returns
     -------
@@ -8342,7 +8346,9 @@ def stack(elements=None, axis=None, title=None, meta=None, **kwargs):
                   for v in values]
         result_axes = AxisCollection.union(*[get_axes(v) for v in values])
         result_axes.append(axis)
-        result = empty(result_axes, dtype=common_type(values), meta=meta)
+        if dtype is None:
+            dtype = common_type(values)
+        result = empty(result_axes, dtype=dtype, meta=meta)
         for k, v in zip(axis, values):
             result[k] = v
         return result
