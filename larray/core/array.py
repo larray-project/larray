@@ -2693,9 +2693,8 @@ class LArray(ABCLArray):
             res = func(op, axes, keepaxes=keepaxes, out=out, **extra_kwargs)
         return res
 
-    # op=sum does not parse correctly
     def with_total(self, *args, **kwargs):
-        """with_total(*args, op='sum', label='total', **kwargs)
+        r"""with_total(*args, op=sum, label='total', **kwargs)
 
         Add aggregated values (sum by default) along each axis.
         A user defined label can be given to specified the computed values.
@@ -2706,7 +2705,8 @@ class LArray(ABCLArray):
             Axes or groups along which to compute the aggregates. Passed groups should be named.
             Defaults to aggregate over the whole array.
         op : aggregate function, optional
-            Defaults to `sum`.
+            Available aggregate functions are: `sum`, `prod`, `min`, `max`, `mean`, `ptp`, `var`, `std`,
+            `median` and `percentile`. Defaults to `sum`.
         label : scalar value, optional
             Label to use for the total. Applies only to aggregated axes, not groups. Defaults to "total".
         **kwargs : int or str or Group or any combination of those, optional
@@ -2718,30 +2718,43 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> arr = ndtest((3, 3))
+        >>> arr = ndtest("gender=M,F;time=2013..2016")
         >>> arr
-        a\\b  b0  b1  b2
-         a0   0   1   2
-         a1   3   4   5
-         a2   6   7   8
+        gender\time  2013  2014  2015  2016
+                  M     0     1     2     3
+                  F     4     5     6     7
         >>> arr.with_total()
-          a\\b  b0  b1  b2  total
-           a0   0   1   2      3
-           a1   3   4   5     12
-           a2   6   7   8     21
-        total   9  12  15     36
-        >>> arr.with_total('a', 'b0,b1 >> total_01')
-          a\\b  b0  b1  b2  total_01
-           a0   0   1   2         1
-           a1   3   4   5         7
-           a2   6   7   8        13
-        total   9  12  15        21
-        >>> arr.with_total(op=prod, label='product')
-            a\\b  b0  b1  b2  product
-             a0   0   1   2        0
-             a1   3   4   5       60
-             a2   6   7   8      336
-        product   0  28  80        0
+        gender\time  2013  2014  2015  2016  total
+                  M     0     1     2     3      6
+                  F     4     5     6     7     22
+              total     4     6     8    10     28
+
+       Using another function and label
+
+        >>> arr.with_total(op=mean, label='mean')
+        gender\time  2013  2014  2015  2016  mean
+                  M   0.0   1.0   2.0   3.0   1.5
+                  F   4.0   5.0   6.0   7.0   5.5
+               mean   2.0   3.0   4.0   5.0   3.5
+
+        Specifying an axis and a label
+
+        >>> arr.with_total('gender', label='U')
+        gender\time  2013  2014  2015  2016
+                  M     0     1     2     3
+                  F     4     5     6     7
+                  U     4     6     8    10
+
+        Using groups
+
+        >>> time_groups = (arr.time[:2014] >> 'before_2015',
+        ...                arr.time[2015:] >> 'after_2015')
+        >>> arr.with_total(time_groups)
+        gender\time  2013  2014  2015  2016  before_2015  after_2015
+                  M     0     1     2     3            1           5
+                  F     4     5     6     7            9          13
+        >>> # or equivalently
+        >>> # arr.with_total('time[:2014] >> before_2015; time[2015:] >> after_2015')
         """
         # TODO: default to op.__name__
         label = kwargs.pop('label', 'total')
