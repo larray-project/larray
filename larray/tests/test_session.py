@@ -138,10 +138,10 @@ def test_iter(session):
 def test_filter(session):
     session.ax = 'ax'
     assertObjListEqual(session.filter(), [b, b12, a, a01, 'c', {}, e, g, f, 'ax'])
-    assertObjListEqual(session.filter('a'), [a, a01, 'ax'])
-    assert list(session.filter('a', dict)) == []
-    assert list(session.filter('a', str)) == ['ax']
-    assert list(session.filter('a', Axis)) == [a]
+    assertObjListEqual(session.filter('a*'), [a, a01, 'ax'])
+    assert list(session.filter('a*', dict)) == []
+    assert list(session.filter('a*', str)) == ['ax']
+    assert list(session.filter('a*', Axis)) == [a]
     assert list(session.filter(kind=Axis)) == [b, a]
     assert list(session.filter('a01', Group)) == [a01]
     assert list(session.filter(kind=Group)) == [b12, a01]

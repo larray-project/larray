@@ -73,6 +73,27 @@ Backward incompatible changes
     >>> arr3.equals(arr4, check_axes=True)
     False
 
+* modified the behavior of the ``pattern`` argument of :py:obj:`Session.filter()` to work as the ``pattern``
+  argument of :py:obj:`Group.matching()`:
+
+    >>> axis = Axis('a=a0..a2')
+    >>> group = axis['a0,a1'] >> 'a01'
+    >>> test1, zero1 = ndtest((2, 2)), zeros((3, 2))
+    >>> s = Session([('test1', test1), ('zero1', zero1), ('axis', axis), ('group', group)])
+
+    >>> # get all items with names ending with '1'
+    >>> s.filter(pattern='*1').names
+    ['test1', 'zero1']
+
+    >>> # get all items with names starting with letter in range a-k
+    >>> s.filter(pattern='[a-k]*').names
+    ['axis', 'group']
+
+  Warning: to retrieve the previous behavior, add the character ``*`` to your pattern
+  (e.g. ``s.filter('test')`` becomes ``s.filter('test*')``).
+
+  Closes :issue:`703`.
+
 
 New features
 ------------
@@ -194,7 +215,7 @@ Miscellaneous improvements
 Fixes
 -----
 
-* fixed LArray.divnot0 being slow when the divisor has many axes and many zeros (closes :issue:`705`).
+* fixed :py:obj:`LArray.divnot0()` being slow when the divisor has many axes and many zeros (closes :issue:`705`).
 
 * fixed maximum length of sheet names (31 characters instead of 30 characters) when adding a new sheet
   to an Excel Workbook (closes :issue:`713`).
