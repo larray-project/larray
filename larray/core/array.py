@@ -8541,6 +8541,18 @@ def raw_broadcastable(values, min_axes=None):
     return raw, res_axes
 
 
+def make_args_broadcastable(args, kwargs=None, min_axes=None):
+    """
+    Make args and kwargs (NumPy) broadcastable between them.
+    """
+    values = (args + tuple(kwargs.values())) if kwargs is not None else args
+    first_kw = len(args)
+    raw_bcast_values, res_axes = raw_broadcastable(values, min_axes=min_axes)
+    raw_bcast_args = raw_bcast_values[:first_kw]
+    raw_bcast_kwargs = dict(zip(kwargs.keys(), raw_bcast_values[first_kw:]))
+    return raw_bcast_args, raw_bcast_kwargs, res_axes
+
+
 _default_float_error_handler = float_error_handler_factory(3)
 
 

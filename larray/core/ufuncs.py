@@ -3,15 +3,13 @@
 
 import numpy as np
 
-from larray.core.array import LArray, raw_broadcastable
+from larray.core.array import LArray, make_args_broadcastable
 
 
 def broadcastify(func):
     # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
     def wrapper(*args, **kwargs):
-        # TODO: normalize args/kwargs like in LIAM2 so that we can also broadcast if args are given via kwargs
-        #       (eg out=)
-        raw_args, combined_axes = raw_broadcastable(args)
+        raw_bcast_args, raw_bcast_kwargs, res_axes = make_args_broadcastable(args, kwargs)
 
         # We pass only raw numpy arrays to the ufuncs even though numpy is normally meant to handle those cases itself
         # via __array_wrap__
@@ -25,9 +23,9 @@ def broadcastify(func):
         # It fails on "np.minimum(ndarray, LArray)" because it calls __array_wrap__(high, result) which cannot work if
         # there was broadcasting involved (high has potentially less labels than result).
         # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
-        res_data = func(*raw_args, **kwargs)
-        if combined_axes:
-            return LArray(res_data, combined_axes)
+        res_data = func(*raw_bcast_args, **raw_bcast_kwargs)
+        if res_axes:
+            return LArray(res_data, res_axes)
         else:
             return res_data
     # copy meaningful attributes (numpy ufuncs do not have __annotations__ nor __qualname__)
