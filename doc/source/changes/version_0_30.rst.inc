@@ -89,6 +89,9 @@ Backward incompatible changes
     >>> s.filter(pattern='[a-k]*').names
     ['axis', 'group']
 
+  Warning: to retrieve the previous behavior, add the character ``*`` to your pattern
+  (e.g. ``s.filter('test')`` becomes ``s.filter('test*')``).
+
   Closes :issue:`703`.
 
 
