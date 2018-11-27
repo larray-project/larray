@@ -123,6 +123,9 @@ New features
 * implemented :py:obj:`LArray.keys()`, :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
   methods to respectively loop on an array labels, values or (key, value) pairs.
 
+* implemented :py:obj:`LArray.unique()` method to compute unique values (or sub-arrays) for an array,
+  optionally along axes.
+
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 
     >>> sex = Axis('sex=MALE,FEMALE')
