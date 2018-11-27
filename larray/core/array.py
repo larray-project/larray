@@ -3511,6 +3511,100 @@ class LArray(ABCLArray):
         """
         return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta)
 
+    # XXX: we might want to implement this using .groupby().first()
+    def unique(self, axes=None, sort=False, sep='_'):
+        r"""Returns unique values (optionally along axes)
+
+        Parameters
+        ----------
+        axes : axis reference (int, str, Axis) or sequence of them, optional
+            Axis or axes along which to compute unique values. Defaults to None (all axes).
+        sort : bool, optional
+            Whether or not to sort unique values. Defaults to False. Sorting is not implemented yet for unique() along
+            multiple axes.
+        sep : str, optional
+            Separator when several labels need to be combined. Defaults to '_'.
+
+        Returns
+        -------
+        LArray
+            array with unique values
+
+        Examples
+        --------
+        >>> arr = LArray([[0, 2, 0, 0],
+        ...               [1, 1, 1, 0]], 'a=a0,a1;b=b0..b3')
+        >>> arr
+        a\b  b0  b1  b2  b3
+         a0   0   2   0   0
+         a1   1   1   1   0
+
+        By default unique() returns the first occurrence of each unique value in the order it appears:
+
+        >>> arr.unique()
+        a_b  a0_b0  a0_b1  a1_b0
+                 0      2      1
+
+        To sort the unique values, use the sort argument:
+
+        >>> arr.unique(sort=True)
+        a_b  a0_b0  a1_b0  a0_b1
+                 0      1      2
+
+        One can also compute unique sub-arrays (i.e. combination of values) along axes. In our example the a0=0, a1=1
+        combination appears twice along the 'b' axis, so 'b2' is not returned:
+
+        >>> arr.unique('b')
+        a\b  b0  b1  b3
+         a0   0   2   0
+         a1   1   1   0
+        >>> arr.unique('b', sort=True)
+        a\b  b3  b0  b1
+         a0   0   0   2
+         a1   0   1   1
+        """
+        if axes is not None:
+            axes = self.axes[axes]
+
+        assert axes is None or isinstance(axes, (Axis, AxisCollection))
+
+        if not isinstance(axes, AxisCollection):
+            axis_idx = self.axes.index(axes) if axes is not None else None
+            # axis needs np >= 1.13
+            _, unq_index = np.unique(self, axis=axis_idx, return_index=True)
+            if not sort:
+                unq_index = np.sort(unq_index)
+            if axes is None:
+                return self.iflat.__getitem__(unq_index, sep=sep)
+            else:
+                return self[axes.i[unq_index]]
+        else:
+            if sort:
+                raise NotImplementedError('sort=True is not implemented for unique along multiple axes')
+            unq_list = []
+            seen = set()
+            list_append = unq_list.append
+            seen_add = seen.add
+            sep_join = sep.join
+            axis_name = sep_join(a.name for a in axes)
+            first_axis_idx = self.axes.index(axes[0])
+            # XXX: use combine_axes(axes).items() instead?
+            for labels, value in self.items(axes):
+                hashable_value = value.data.tobytes() if isinstance(value, LArray) else value
+                if hashable_value not in seen:
+                    list_append((sep_join(str(l) for l in labels), value))
+                    seen_add(hashable_value)
+            res_arr = stack(unq_list, axis_name)
+            # transpose the combined axis at the position where the first of the combined axes was
+            # TODO: use res_arr.transpose(res_arr.axes.move_axis(-1, first_axis_idx)) once #564 is implemented:
+            #       https://github.com/larray-project/larray/issues/564
+            # stack adds the stacked axes at the end
+            combined_axis = res_arr.axes[-1]
+            assert combined_axis.name == axis_name
+            new_axes_order = res_arr.axes - combined_axis
+            new_axes_order.insert(first_axis_idx, combined_axis)
+            return res_arr.transpose(new_axes_order)
+
     @property
     def info(self):
         """Describes a LArray (metadata + shape and labels for each axis).
