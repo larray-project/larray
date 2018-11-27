@@ -644,10 +644,11 @@ class Session(object):
         ----------
         pattern : str, optional
             Only keep arrays whose key match `pattern`.
-            * `?`     matches any single character
-            * `*`     matches any number of characters
-            * [seq]   matches any character in seq
-            * [!seq]  matches any character not in seq
+
+            - `?`     matches any single character
+            - `*`     matches any number of characters
+            - [seq]   matches any character in seq
+            - [!seq]  matches any character not in seq
 
         kind : (tuple of) type, optional
             Only keep objects which are instances of type(s) `kind`.
