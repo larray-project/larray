@@ -314,6 +314,7 @@ Modifying/Selecting
    LArray.i
    LArray.points
    LArray.ipoints
+   LArray.iflat
    LArray.set
    LArray.drop
    LArray.ignore_labels

@@ -388,6 +388,87 @@ class LArrayPointsIndexer(object):
         self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
+# TODO: add support for slices
+#     To select the first 4 values across all axes:
+#
+#     >>> arr.iflat[:4]
+#     a_b  a0_b0  a0_b1  a0_b2  a1_b0
+#              0     10     20     30
+class LArrayFlatIndicesIndexer(object):
+    r"""
+    Access the array by index as if it was flat (one dimensional) and all its axes were combined.
+
+    Notes
+    -----
+    In general arr.iflat[key] should be equivalent to (but much faster than) arr.combine_axes().i[key]
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3)) * 10
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0  10  20
+     a1  30  40  50
+
+    To select the first, second, fourth and fifth values across all axes:
+
+    >>> arr.combine_axes().i[[0, 1, 3, 4]]
+    a_b  a0_b0  a0_b1  a1_b0  a1_b1
+             0     10     30     40
+    >>> arr.iflat[[0, 1, 3, 4]]
+    a_b  a0_b0  a0_b1  a1_b0  a1_b1
+             0     10     30     40
+
+    Set the first and sixth values to 42
+
+    >>> arr.iflat[[0, 5]] = 42
+    >>> arr
+    a\b  b0  b1  b2
+     a0  42  10  20
+     a1  30  40  42
+
+    When the key is an LArray, the result will have the axes of the key
+
+    >>> key = LArray([0, 3], 'c=c0,c1')
+    >>> key
+    c  c0  c1
+        0   3
+    >>> arr.iflat[key]
+    c  c0  c1
+       42  30
+    """
+    __slots__ = ('array',)
+
+    def __init__(self, array):
+        self.array = array
+
+    def __getitem__(self, flat_key, sep='_'):
+        if isinstance(flat_key, ABCLArray):
+            flat_np_key = flat_key.data
+            res_axes = flat_key.axes
+        else:
+            flat_np_key = np.asarray(flat_key)
+            axes = self.array.axes
+            nd_key = np.unravel_index(flat_np_key, axes.shape)
+            # the following lines are equivalent to (but faster than) "return array.ipoints[nd_key]"
+
+            # TODO: extract a function which only computes the combined axes because we do not use the actual LArrays
+            #       produced here, which is wasteful. AxisCollection._flat_lookup seems related (but not usable as-is).
+            la_key = axes._adv_keys_to_combined_axis_la_keys(nd_key, sep=sep)
+            first_axis_key_axes = la_key[0].axes
+            assert all(isinstance(axis_key, ABCLArray) and axis_key.axes is first_axis_key_axes
+                       for axis_key in la_key[1:])
+            res_axes = first_axis_key_axes
+        return LArray(self.array.data.flat[flat_np_key], res_axes)
+
+    def __setitem__(self, flat_key, value):
+        # np.ndarray.flat is a flatiter object but it is indexable despite the name
+        self.array.data.flat[flat_key] = value
+
+    def __len__(self):
+        return self.array.size
+
+
 # TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
     __slots__ = ('array',)
@@ -3419,6 +3500,11 @@ class LArray(ABCLArray):
         3
         """
         return SequenceZip((self.keys(axes, ascending=ascending), self.values(axes, ascending=ascending)))
+
+    @lazy_attribute
+    def iflat(self):
+        return LArrayFlatIndicesIndexer(self)
+    iflat.__doc__ = LArrayFlatIndicesIndexer.__doc__
 
     def copy(self):
         """Returns a copy of the array.
