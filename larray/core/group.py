@@ -1301,10 +1301,11 @@ class Group(object):
         ----------
         pattern : str or Group
             Pattern to match.
-            * `?`     matches any single character
-            * `*`     matches any number of characters
-            * [seq]   matches any character in seq
-            * [!seq]  matches any character not in seq
+
+            - `?`     matches any single character
+            - `*`     matches any number of characters
+            - [seq]   matches any character in seq
+            - [!seq]  matches any character not in seq
 
             To match any of the special characters above, wrap the character in brackets. For example, `[?]` matches
             the character `?`.
