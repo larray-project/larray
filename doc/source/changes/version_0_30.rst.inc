@@ -134,6 +134,40 @@ New features
     a_b  a0_b1  a1_b2
              1      5
 
+* implemented :py:obj:`LArray.unique()` method to compute unique values for an array, optionally
+  along axes.
+
+    >>> arr = LArray([[0, 2, 0, 0],
+    ...               [1, 1, 1, 0]], 'a=a0,a1;b=b0..b3')
+    >>> arr
+    a\b  b0  b1  b2  b3
+     a0   0   2   0   0
+     a1   1   1   1   0
+
+    By default unique() returns the first occurrence of each unique value in the order it appears:
+
+    >>> arr.unique()
+    a_b  a0_b0  a0_b1  a1_b0
+             0      2      1
+
+    To sort the unique values, use the sort argument:
+
+    >>> arr.unique(sort=True)
+    a_b  a0_b0  a1_b0  a0_b1
+             0      1      2
+
+    One can also compute unique sub-arrays (i.e. combination of values) along axes. In our example the a0=0, a1=1
+    combination appears twice along the 'b' axis, so 'b2' is not returned:
+
+    >>> arr.unique('b')
+    a\b  b0  b1  b3
+     a0   0   2   0
+     a1   1   1   0
+    >>> arr.unique('b', sort=True)
+    a\b  b3  b0  b1
+     a0   0   0   2
+     a1   0   1   1
+
 * implemented :py:obj:`LArray.keys()` :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
   methods to iterate (loop) on an array labels (keys), values or (key, value) pairs.
 

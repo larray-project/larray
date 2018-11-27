@@ -2849,6 +2849,22 @@ def test_shift_axis(small_array):
     l2.axes.lipro.labels = lipro.labels[1:]
 
 
+def test_unique():
+    arr = LArray([[[0, 2, 0, 0],
+                   [1, 1, 1, 0]],
+                  [[0, 2, 0, 0],
+                   [2, 1, 2, 0]]], 'a=a0,a1;b=b0,b1;c=c0..c3')
+    assert_array_equal(arr.unique('a'), arr)
+    assert_array_equal(arr.unique('b'), arr)
+    assert_array_equal(arr.unique('c'), arr['c0,c1,c3'])
+    expected = from_string("""\
+a_b\\c  c0  c1  c2  c3
+a0_b0   0   2   0   0
+a0_b1   1   1   1   0
+a1_b1   2   1   2   0""")
+    assert_array_equal(arr.unique(('a', 'b')), expected)
+
+
 def test_extend(small_array):
     sex, lipro = small_array.axes
 

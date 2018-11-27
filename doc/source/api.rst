@@ -456,6 +456,7 @@ Miscellaneous
    LArray.clip
    LArray.shift
    LArray.diff
+   LArray.unique
    LArray.to_clipboard
 
 .. _la_to_pandas:
