@@ -99,10 +99,6 @@ cells:
     
     A ``LArray`` object represents a multidimensional array with labeled axes.
     
-    See the [LArray](../api.rst#larray) section of the API Reference to explore all methods of LArray objects.
-    
-    To know how to save and load arrays in CSV, Excel or HDF format, please refer to the [Loading and Dumping Arrays](tutorial_IO.ipynb#Loading-and-Dumping-Arrays) section of the tutorial.
-    
     ### Create an array from scratch
     
     To create an array from scratch, you need to provide the data and a list
@@ -151,7 +147,7 @@ cells:
 - markdown: |
     ### Array creation functions
     
-    Arrays can also be generated in an easier way through creation functions (#ref needed):
+    Arrays can also be generated in an easier way through [creation functions](../api.rst#array-creation-functions):
     
     -  `ndtest` : creates a test array with increasing numbers as data
     -  `empty` : creates an array but leaves its allocated memory
@@ -291,16 +287,18 @@ cells:
 
 
 - markdown: |
+    ### More on LArray objects
+    
+    To know how to save and load arrays in CSV, Excel or HDF format, please refer to the [Loading and Dumping Arrays](tutorial_IO.ipynb#Loading-and-Dumping-Arrays) section of the tutorial.
+    
+    See the [LArray](../api.rst#larray) section of the API Reference to explore all methods of LArray objects.
+
+
+- markdown: |
     ## Session
     
     A ``Session`` object is a dictionary-like object used to gather several arrays, axes and groups. 
     A session is particularly adapted to gather all input objects of a model or to gather the output arrays from different scenarios. Like with arrays, it is possible to associate metadata to sessions.
-    
-    See the [Session](../api.rst#session) section of the API Reference to explore all methods of Session objects.
-    
-    To know how to save and load sessions in CSV, Excel or HDF format, please refer to the [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) section of the tutorial.
-    
-    To see how to work with sessions, please read the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
 
 
 - markdown: |
@@ -326,7 +324,7 @@ cells:
     
     # add metadata after creation
     s_pop.meta.title = 'Demographic Model of Belgium'
-    s_pop.meta.description = 'Modelize the demography of Belgium'
+    s_pop.meta.description = 'Models the demography of Belgium'
     
     # print content of the session
     print(s_pop.summary())
@@ -368,6 +366,16 @@ cells:
       </ul>
     
     </div>
+
+
+- markdown: |
+    ### More on Session objects
+    
+    To know how to save and load sessions in CSV, Excel or HDF format, please refer to the [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) section of the tutorial.
+    
+    To see how to work with sessions, please read the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
+    
+    Finally, see the [Session](../api.rst#session) section of the API Reference to explore all methods of Session objects.
 
 
 # The lines below here may be deleted if you do not need them.

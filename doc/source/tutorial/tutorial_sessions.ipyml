@@ -9,7 +9,6 @@ cells:
     import warnings
     warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
 
-  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -20,7 +19,6 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
 
 - markdown: |
     Check the version of LArray:
@@ -30,95 +28,251 @@ cells:
     from larray import __version__
     __version__
 
-  id: 2
 
 - markdown: |
-    Create test sessions:
-
-
-- code: |
-    s1 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
+    ### Before To Continue
     
-    # same as s1
-    s2 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
-    
-    # modify elements of the first array
-    s3 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))), ('arr3', ndtest((2, 4)))])
-    s3.arr1['a0', 'b1':] = 0
-    
-    # add a new array
-    s4 = Session([('arr1', ndtest((3, 3))), ('arr2', ndtest((4, 2))),
-                  ('arr3', ndtest((2, 4))), ('arr4', ndtest((3, 3)))])
+    If you not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) and [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) sections of the tutorial before going further.  
 
-  id: 3
 
 - markdown: |
-    Use ``equals`` and ``element_equals`` to compare arrays between two sessions:
+    ### Exploring Content
+    
+    To get the list of items names of a session, use the [names](../_generated/larray.Session.names.rst#larray.Session.names) shortcut (be careful that the list is sorted alphabetically and does not follow the internal order!):
 
 
 - code: |
-    # 'equals' returns True if all arrays of two sessions have exactly the same arrays
-    s1.equals(s2)
+    # load a session representing the results of a demographic model
+    filepath_hdf = get_example_filepath('population_session.h5')
+    s_pop = Session(filepath_hdf)
+    
+    # print the content of the session
+    print(s_pop.names)
 
-  id: 4
+
+- markdown: |
+    To get more information of items of a session, the [summary](../_generated/larray.Session.summary.rst#larray.Session.summary)  will provide not only the names of items but also the list of labels in the case of axes or groups and the list of axes, the shape and the dtype in the case of arrays:
+
 
 - code: |
-    s1.equals(s3)
+    # print the content of the session
+    print(s_pop.summary())
 
-  id: 5
+
+- markdown: |
+    ### Selecting And Filtering Items
+    
+    To select an item, simply use the syntax ``<session_var>.<item_name>``:
+
 
 - code: |
-    s1.equals(s4)
+    s_pop.pop
 
-  id: 6
+
+- markdown: |
+    To return a new session with selected items, use the syntax ``<session_var>[list, of, item, names]``:
+
+
+- code: |
+    s_pop_new = s_pop['pop', 'births', 'deaths']
+    
+    s_pop_new.names
+
+
+- markdown: |
+    The [filter](../_generated/larray.Session.filter.rst#larray.Session.filter) method allows you to select all items of the same kind (i.e. all axes, or groups or arrays) or all items with names satisfying a given pattern:
+
+
+- code: |
+    # select only arrays of a session
+    s_pop.filter(kind=LArray)
+
+
+- code: |
+    # selection all items with a name starting with a letter between a and k
+    s_pop.filter(pattern='[a-k]*')
+
+
+- markdown: |
+    ### Arithmetic Operations On Sessions
+    
+    Session objects accept binary operations with a scalar:
+
+
+- code: |
+    # get population, births and deaths in millions
+    s_pop_div = s_pop / 1e6
+    
+    s_pop_div.pop
+
+
+- markdown: |
+    with an array (please read the documentation of the [random.choice](../_generated/larray.random.choice.rst#larray.random.choice) function first if you don't know it):
+
+
+- code: |
+    from larray import random
+    random_multiplicator = random.choice([0.98, 1.0, 1.02], p=[0.15, 0.7, 0.15], axes=s_pop.pop.axes)
+    random_multiplicator
+
+
+- code: |
+    # multiply all variables of a session by a common array
+    s_pop_rand = s_pop * random_multiplicator
+    
+    s_pop_rand.pop
+
+
+- markdown: |
+    with another session:
+
+
+- code: |
+    # compute the difference between each array of the two sessions
+    s_diff = s_pop - s_pop_rand
+    
+    s_diff.births
+
+
+- markdown: |
+    ### Applying Functions On All Arrays
+    
+    In addition to the classical arithmetic operations, the [apply](../_generated/larray.Session.apply.rst#larray.Session.apply) method can be used to apply the same function on all arrays. This function should take a single element argument and return a single value:
+
+
+- code: |
+    # force conversion to type int
+    def as_type_int(array):
+        return array.astype(int)
+    
+    s_pop_rand_int = s_pop_rand.apply(as_type_int)
+    
+    print('pop array before calling apply:')
+    print(s_pop_rand.pop)
+    print()
+    print('pop array after calling apply:')
+    print(s_pop_rand_int.pop)
+
+
+- markdown: |
+    It is possible to pass a function with additional arguments:
+
+
+- code: |
+    # passing the LArray.astype method directly with argument 
+    # dtype defined as int
+    s_pop_rand_int = s_pop_rand.apply(LArray.astype, dtype=int)
+    
+    print('pop array before calling apply:')
+    print(s_pop_rand.pop)
+    print()
+    print('pop array after calling apply:')
+    print(s_pop_rand_int.pop)
+
+
+- markdown: |
+    It is also possible to apply a function on non-LArray objects of a session. Please refer the documentation of the [apply](../_generated/larray.Session.apply.rst#larray.Session.apply) method.
+
+
+- markdown: |
+    ### Comparing Sessions
+    
+    Being able to compare two sessions may be useful when you want to compare two different models expected to give the same results or when you have updated your model and want to see what are the consequences of the recent changes.
+
+
+- markdown: |
+    [Session objects](../api.rst#session) provide the two methods to compare two sessions: [equals](../_generated/larray.Session.equals.rst#larray.Session.equals) and [element_equals](../_generated/larray.Session.element_equals.rst#larray.Session.element_equals).
+    
+    The ``equals`` method will return True if **all items** from both sessions are identical, False otherwise:
+
+
+- code: |
+    # load a session representing the results of a demographic model
+    filepath_hdf = get_example_filepath('population_session.h5')
+    s_pop = Session(filepath_hdf)
+    
+    # create a copy of the original session
+    s_pop_copy = Session(filepath_hdf)
+    
+    # 'equals' returns True if all items of the two sessions have exactly the same items
+    s_pop.equals(s_pop_copy)
+
+
+- code: |
+    # create a copy of the original session but with the array
+    # 'births' slightly modified for some labels combination
+    s_pop_alternative = Session(filepath_hdf)
+    s_pop_alternative.births *= random_multiplicator
+    
+    # 'equals' returns False if at least on item of the two sessions are different in values or axes
+    s_pop.equals(s_pop_alternative)
+
+
+- code: |
+    # add an array to the session
+    s_pop_new_output = Session(filepath_hdf)
+    s_pop_new_output.gender_ratio = s_pop_new_output.pop.ratio('gender')
+    
+    # 'equals' returns False if at least on item is not present in the two sessions
+    s_pop.equals(s_pop_new_output)
+
+
+- markdown: |
+    The ``element_equals`` method will compare items of two sessions one by one and return an array of boolean values:
+
 
 - code: |
     # 'element_equals' compare arrays one by one
-    s1.element_equals(s2)
+    s_pop.element_equals(s_pop_copy)
 
-  id: 7
-
-- code: |
-    s1.element_equals(s3)
-
-  id: 8
 
 - code: |
-    s1.element_equals(s4)
+    # array 'births' is different between the two sessions
+    s_pop.element_equals(s_pop_alternative)
 
-  id: 9
 
 - markdown: |
-    The ``==`` and ``!=`` operators return a new session with boolean arrays: 
+    The ``==`` operator return a new session with boolean arrays with elements compared element-wise: 
 
 
 - code: |
-    diff = s1 != s2
+    s_same_values = s_pop == s_pop_alternative
     
-    diff.arr1
+    s_same_values.births
 
-  id: 10
-
-- code: |
-    diff = s1 != s3
-    
-    diff.arr1
-
-  id: 11
-
-- code: |
-    diff = s1 != s4
-    
-    diff.arr4
-
-  id: 12
 
 - markdown: |
-    Use the function ``compare`` to compare sessions (this a bit experimental but can be useful nonetheless (open a graphical interface)). Session must have the same list of arrays:
+    This also works for axes and groups:
+
+
+- code: |
+    s_same_values.country
+
+
+- markdown: |
+    The ``!=`` operator does the opposite of ``==`` operator: 
+
+
+- code: |
+    s_different_values = s_pop != s_pop_alternative
+    
+    s_different_values.births 
+
+
+- markdown: |
+    A more visual way is to use the [compare](../_generated/larray.compare.rst#larray.compare) function which will open the ``Editor``.
     
     ```python
-    compare(s1, s2, s3)
+    compare(s_pop, s_pop_alternative, names=['baseline', 'lower_birth_rate'])
     ```
+    
+    ![compare two sessions](../_static/compare_tutorial.png)
+
+
+- markdown: |
+    ### Session API
+    
+    Please go to the [Session](../api.rst#session) section of the API Reference to get the list of all methods of Session objects.
 
 
 # The lines below here may be deleted if you do not need them.
@@ -144,13 +298,4 @@ metadata:
     scroll: true
 nbformat: 4
 nbformat_minor: 2
-
-# ---------------------------------------------------------------------------
-data:
-  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}]
 

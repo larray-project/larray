@@ -216,6 +216,8 @@ Miscellaneous improvements
 * added documentation and examples for :py:obj:`where()`, :py:obj:`maximum()`
   and :py:obj:`minimum()` functions (closes :issue:`700`)
 
+* updated the ``Working With Sessions`` section of the tutorial (closes :issue:`568`).
+
 
 Fixes
 -----
