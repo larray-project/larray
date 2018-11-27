@@ -386,6 +386,26 @@ class LArrayPointsIndexer(object):
         self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
+class LArrayFlatIndexer(object):
+    __slots__ = ('array',)
+
+    def __init__(self, array):
+        self.array = array
+
+    def __getitem__(self, flat_key, sep='_'):
+        axes = self.array.axes
+        key = np.unravel_index(flat_key, axes.shape)
+        la_key = axes._adv_keys_to_combined_axis_la_keys(key, sep=sep)
+        return self.array.__getitem__(la_key, translate_key=False)
+
+    def __setitem__(self, flat_key, value):
+        # np.ndarray.flat is a flatiter object but it is indexable despite the name
+        self.array.data.flat[flat_key] = value
+
+    def __len__(self):
+        return self.array.size
+
+
 # TODO: rename to LArrayIndexPointsIndexer or something like that
 class LArrayPositionalPointsIndexer(object):
     __slots__ = ('array',)
@@ -3375,6 +3395,35 @@ class LArray(ABCLArray):
             1   3
         """
         return SequenceZip((self.keys(axes, ascending=ascending), self.values(axes, ascending=ascending)))
+
+    # XXX: rename to iflat instead?
+    @lazy_attribute
+    def flat(self):
+        r"""Access the array by index as if it was flattened (all its axes were combined)
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 3)) * 10
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0  10  20
+         a1  30  40  50
+
+        To select the first, second, fourth and fifth values across all axes:
+
+        >>> arr.flat[[0, 1, 3, 4]]
+        a_b  a0_b0  a0_b1  a1_b0  a1_b1
+                 0     10     30     40
+
+        Set the first and sixth values to 42
+
+        >>> arr.flat[[0, 5]] = 42
+        >>> arr
+        a\b  b0  b1  b2
+         a0  42  10  20
+         a1  30  40  42
+        """
+        return LArrayFlatIndexer(self)
 
     def copy(self):
         """Returns a copy of the array.
