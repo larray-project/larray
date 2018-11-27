@@ -3378,10 +3378,11 @@ class AxisCollection(object):
                 sepjoin = sep.join
                 combined_labels = [sepjoin(comb) for comb in zip(*axes_labels)]
             combined_axis = Axis(combined_labels, combined_name)
+        combined_axes = AxisCollection(combined_axis)
 
         # 2) transform all advanced non-LArray keys to LArray with the combined axis
         # ==========================================================================
-        return tuple(axis_key if isinstance(axis_key, ignored_types) else LArray(axis_key, combined_axis)
+        return tuple(axis_key if isinstance(axis_key, ignored_types) else LArray(axis_key, combined_axes)
                      for axis_key in key)
 
 
