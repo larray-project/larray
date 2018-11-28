@@ -3141,6 +3141,285 @@ class LArray(ABCLArray):
 
     posargsort = renamed_to(indicesofsorted, 'posargsort')
 
+    # TODO: implement keys_by
+    # XXX: implement expand=True? Unsure it is necessary now that we have zip_array_*
+    def keys(self, axes=None, ascending=True):
+        r"""Returns a view on the array labels along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position to get the Nth label along axes.
+
+        Examples
+        --------
+        First, define a small helper function to make the following examples more readable.
+
+        >>> def str_key(key):
+        ...     return tuple(str(k) for k in key)
+
+        Then create a test array:
+
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> for key in arr.keys():
+        ...     # print both the actual key object, and a (nicer) string representation
+        ...     print(key, "->", str_key(key))
+        (a.i[0], b.i[0]) -> ('a0', 'b0')
+        (a.i[0], b.i[1]) -> ('a0', 'b1')
+        (a.i[1], b.i[0]) -> ('a1', 'b0')
+        (a.i[1], b.i[1]) -> ('a1', 'b1')
+        >>> for key in arr.keys(ascending=False):
+        ...     print(str_key(key))
+        ('a1', 'b1')
+        ('a1', 'b0')
+        ('a0', 'b1')
+        ('a0', 'b0')
+
+        but you can specify another axis order:
+
+        >>> for key in arr.keys(('b', 'a')):
+        ...     print(str_key(key))
+        ('b0', 'a0')
+        ('b0', 'a1')
+        ('b1', 'a0')
+        ('b1', 'a1')
+
+        One can specify less axes than the array has:
+
+        >>> # iterate on the "b" axis, that is return each label along the "b" axis
+        ... for key in arr.keys('b'):
+        ...     print(str_key(key))
+        ('b0',)
+        ('b1',)
+
+        One can also access elements of the key sequence directly, instead of iterating over it. Say we want to
+        retrieve the first and last keys of our array, we could write:
+
+        >>> keys = arr.keys()
+        >>> first_key = keys[0]
+        >>> str_key(first_key)
+        ('a0', 'b0')
+        >>> last_key = keys[-1]
+        >>> str_key(last_key)
+        ('a1', 'b1')
+        """
+        return self.axes.iter_labels(axes, ascending=ascending)
+
+    # TODO: implement values_by
+    def values(self, axes=None, ascending=True, expand=False):
+        r"""Returns a view on the values of the array along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        expand : bool, optional
+            Whether or not to expand array using axes. This allows one to iterate on axes which do not exist in
+            the array, which is useful when iterating on several arrays with different axes. Defaults to False.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> for value in arr.values():
+        ...     print(value)
+        0
+        1
+        2
+        3
+        >>> for value in arr.values(ascending=False):
+        ...     print(value)
+        3
+        2
+        1
+        0
+
+        but you can specify another axis order:
+
+        >>> for value in arr.values(('b', 'a')):
+        ...     print(value)
+        0
+        2
+        1
+        3
+
+        When you specify less axes than the array has, you get arrays back:
+
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for value in arr.values('b'):
+        ...     print(value)
+        a  a0  a1
+            0   2
+        a  a0  a1
+            1   3
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for value in arr.values('b', ascending=False):
+        ...     print(value)
+        a  a0  a1
+            1   3
+        a  a0  a1
+            0   2
+        >>> # iterate on the "c" axis, which does not exist in arr, that is return arr for each label along the "c" axis
+        ... for value in arr.values('c=c0,c1', expand=True):
+        ...     print(value)
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        One can also access elements of the value sequence directly, instead of iterating over it. Say we want to
+        retrieve the first and last values of our array, we could write:
+
+        >>> values = arr.values()
+        >>> values[0]
+        0
+        >>> values[-1]
+        3
+        """
+        if axes is None:
+            combined = np.ravel(self.data)
+            # combined[::-1] *is* indexable
+            return combined if ascending else combined[::-1]
+
+        if not isinstance(axes, (tuple, AxisCollection)):
+            axes = (axes,)
+
+        def get_axis(a):
+            if isinstance(a, basestring):
+                return Axis(a) if '=' in a else self.axes[a]
+            elif isinstance(a, int):
+                return self.axes[a]
+            else:
+                assert isinstance(a, Axis)
+                return a
+        axes = [get_axis(a) for a in axes]
+        array = self.expand(axes, readonly=True) if expand else self
+        axes = array.axes[axes]
+        # move axes in front
+        transposed = array.transpose(axes)
+        # combine axes if necessary
+        combined = transposed.combine_axes(axes, wildcard=True) if len(axes) > 1 else transposed
+        # trailing .i is to support the case where axis < self.axes (ie the elements of the result are arrays)
+        return combined.i if ascending else combined.i[::-1].i
+
+    # TODO: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing.
+    #       if we returned an NDGroup in all cases, it would solve the problem
+    # TODO: implement expand=True
+    def items(self, axes=None, ascending=True):
+        r"""Returns a (label, value) view of the array along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position to get the Nth (label, value) couple along axes.
+
+        Examples
+        --------
+        First, define a small helper function to make the following examples more readable.
+
+        >>> def str_key(key):
+        ...     return tuple(str(k) for k in key)
+
+        Then create a test array:
+
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> for key, value in arr.items():
+        ...     print(str_key(key), "->", value)
+        ('a0', 'b0') -> 0
+        ('a0', 'b1') -> 1
+        ('a1', 'b0') -> 2
+        ('a1', 'b1') -> 3
+        >>> for key, value in arr.items(ascending=False):
+        ...     print(str_key(key), "->", value)
+        ('a1', 'b1') -> 3
+        ('a1', 'b0') -> 2
+        ('a0', 'b1') -> 1
+        ('a0', 'b0') -> 0
+
+        but you can specify another axis order:
+
+        >>> for key, value in arr.items(('b', 'a')):
+        ...     print(str_key(key), "->", value)
+        ('b0', 'a0') -> 0
+        ('b0', 'a1') -> 2
+        ('b1', 'a0') -> 1
+        ('b1', 'a1') -> 3
+
+        When you specify less axes than the array has, you get arrays back:
+
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for key, value in arr.items('b'):
+        ...     print(str_key(key), value, sep="\n")
+        ('b0',)
+        a  a0  a1
+            0   2
+        ('b1',)
+        a  a0  a1
+            1   3
+
+        One can also access elements of the items sequence directly, instead of iterating over it. Say we want to
+        retrieve the first and last key-value pairs of our array, we could write:
+
+        >>> items = arr.items()
+        >>> first_key, first_value = items[0]
+        >>> str_key(first_key)
+        ('a0', 'b0')
+        >>> first_value
+        0
+        >>> last_key, last_value = items[-1]
+        >>> str_key(last_key)
+        ('a1', 'b1')
+        >>> last_value
+        3
+        """
+        return SequenceZip((self.keys(axes, ascending=ascending), self.values(axes, ascending=ascending)))
+
     def copy(self):
         """Returns a copy of the array.
         """
@@ -6713,6 +6992,7 @@ class LArray(ABCLArray):
 
     __array_priority__ = 100
 
+    # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
         r"""Replaces the labels of an axis of array.
 

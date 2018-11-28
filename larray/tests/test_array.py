@@ -14,7 +14,8 @@ except ImportError:
     xw = None
 
 from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
-                                 tmp_path, meta, needs_xlwings, needs_python35, needs_python36, needs_python37)
+                                 tmp_path, meta, needs_xlwings, needs_python35, needs_python36, needs_python37,
+                                 assert_larray_equal)
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
@@ -241,6 +242,143 @@ def test_iter(small_array):
     l = list(small_array)
     assert_array_equal(l[0], small_array['M'])
     assert_array_equal(l[1], small_array['F'])
+
+
+def test_keys():
+    arr = ndtest((2, 2))
+    a, b = arr.axes
+
+    keys = arr.keys()
+    assert list(keys) == [(a.i[0], b.i[0]), (a.i[0], b.i[1]), (a.i[1], b.i[0]), (a.i[1], b.i[1])]
+    assert keys[0] == (a.i[0], b.i[0])
+    assert keys[-1] == (a.i[1], b.i[1])
+
+    keys = arr.keys(ascending=False)
+    assert list(keys) == [(a.i[1], b.i[1]), (a.i[1], b.i[0]), (a.i[0], b.i[1]), (a.i[0], b.i[0])]
+    assert keys[0] == (a.i[1], b.i[1])
+    assert keys[-1] == (a.i[0], b.i[0])
+
+    keys = arr.keys(('b', 'a'))
+    assert list(keys) == [(b.i[0], a.i[0]), (b.i[0], a.i[1]), (b.i[1], a.i[0]), (b.i[1], a.i[1])]
+    assert keys[1] == (b.i[0], a.i[1])
+    assert keys[2] == (b.i[1], a.i[0])
+
+    keys = arr.keys(('b', 'a'), ascending=False)
+    assert list(keys) == [(b.i[1], a.i[1]), (b.i[1], a.i[0]), (b.i[0], a.i[1]), (b.i[0], a.i[0])]
+    assert keys[1] == (b.i[1], a.i[0])
+    assert keys[2] == (b.i[0], a.i[1])
+
+    keys = arr.keys('b')
+    assert list(keys) == [(b.i[0],), (b.i[1],)]
+    assert keys[0] == (b.i[0],)
+    assert keys[-1] == (b.i[1],)
+
+    keys = arr.keys('b', ascending=False)
+    assert list(keys) == [(b.i[1],), (b.i[0],)]
+    assert keys[0] == (b.i[1],)
+    assert keys[-1] == (b.i[0],)
+
+
+def test_values():
+    arr = ndtest((2, 2))
+    a, b = arr.axes
+
+    values = arr.values()
+    assert list(values) == [0, 1, 2, 3]
+    assert values[0] == 0
+    assert values[-1] == 3
+
+    values = arr.values(ascending=False)
+    assert list(values) == [3, 2, 1, 0]
+    assert values[0] == 3
+    assert values[-1] == 0
+
+    values = arr.values(('b', 'a'))
+    assert list(values) == [0, 2, 1, 3]
+    assert values[1] == 2
+    assert values[2] == 1
+
+    values = arr.values(('b', 'a'), ascending=False)
+    assert list(values) == [3, 1, 2, 0]
+    assert values[1] == 1
+    assert values[2] == 2
+
+    values = arr.values('b')
+    res = list(values)
+    assert_larray_equal(res[0], arr['b0'])
+    assert_larray_equal(res[1], arr['b1'])
+    assert_larray_equal(values[0], arr['b0'])
+    assert_larray_equal(values[-1], arr['b1'])
+
+    values = arr.values('b', ascending=False)
+    res = list(values)
+    assert_larray_equal(res[0], arr['b1'])
+    assert_larray_equal(res[1], arr['b0'])
+    assert_larray_equal(values[0], arr['b1'])
+    assert_larray_equal(values[-1], arr['b0'])
+
+
+def test_items():
+    arr = ndtest((2, 2))
+    a, b = arr.axes
+
+    items = arr.items()
+    assert list(items) == [((a.i[0], b.i[0]), 0), ((a.i[0], b.i[1]), 1), ((a.i[1], b.i[0]), 2), ((a.i[1], b.i[1]), 3)]
+    assert items[0] == ((a.i[0], b.i[0]), 0)
+    assert items[-1] == ((a.i[1], b.i[1]), 3)
+
+    items = arr.items(ascending=False)
+    assert list(items) == [((a.i[1], b.i[1]), 3), ((a.i[1], b.i[0]), 2), ((a.i[0], b.i[1]), 1), ((a.i[0], b.i[0]), 0)]
+    assert items[0] == ((a.i[1], b.i[1]), 3)
+    assert items[-1] == ((a.i[0], b.i[0]), 0)
+
+    items = arr.items(('b', 'a'))
+    assert list(items) == [((b.i[0], a.i[0]), 0), ((b.i[0], a.i[1]), 2), ((b.i[1], a.i[0]), 1), ((b.i[1], a.i[1]), 3)]
+    assert items[1] == ((b.i[0], a.i[1]), 2)
+    assert items[2] == ((b.i[1], a.i[0]), 1)
+
+    items = arr.items(('b', 'a'), ascending=False)
+    assert list(items) == [((b.i[1], a.i[1]), 3), ((b.i[1], a.i[0]), 1), ((b.i[0], a.i[1]), 2), ((b.i[0], a.i[0]), 0)]
+    assert items[1] == ((b.i[1], a.i[0]), 1)
+    assert items[2] == ((b.i[0], a.i[1]), 2)
+
+    items = arr.items('b')
+    items_list = list(items)
+
+    key, value = items[0]
+    assert key == (b.i[0],)
+    assert_larray_equal(value, arr['b0'])
+
+    key, value = items_list[0]
+    assert key == (b.i[0],)
+    assert_larray_equal(value, arr['b0'])
+
+    key, value = items[-1]
+    assert key == (b.i[1],)
+    assert_larray_equal(value, arr['b1'])
+
+    key, value = items_list[-1]
+    assert key == (b.i[1],)
+    assert_larray_equal(value, arr['b1'])
+
+    items = arr.items('b', ascending=False)
+    items_list = list(items)
+
+    key, value = items[0]
+    assert key == (b.i[1],)
+    assert_larray_equal(value, arr['b1'])
+
+    key, value = items_list[0]
+    assert key == (b.i[1],)
+    assert_larray_equal(value, arr['b1'])
+
+    key, value = items[-1]
+    assert key == (b.i[0],)
+    assert_larray_equal(value, arr['b0'])
+
+    key, value = items_list[-1]
+    assert key == (b.i[0],)
+    assert_larray_equal(value, arr['b0'])
 
 
 def test_rename(array):
