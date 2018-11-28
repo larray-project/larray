@@ -120,6 +120,9 @@ New features
     a_b  a0_b1  a1_b2
              1      5
 
+* implemented :py:obj:`LArray.keys()`, :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
+  methods to respectively loop on an array labels, values or (key, value) pairs.
+
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 
     >>> sex = Axis('sex=MALE,FEMALE')
