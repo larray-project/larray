@@ -365,25 +365,26 @@ def test_to_globals(session):
     e[:] = backup_value
 
 
-def test_array_equals(session):
-    sess = session.filter(kind=LArray)
-    expected = Session([('e', e), ('f', f), ('g', g)])
+def test_element_equals(session):
+    sess = session.filter(kind=(Axis, Group, LArray))
+    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
+                        ('e', e), ('g', g), ('f', f)])
     assert all(sess.element_equals(expected))
 
-    other = Session({'e': e, 'f': f})
+    other = Session({'a': a, 'a01': a01, 'e': e, 'f': f})
     res = sess.element_equals(other)
     assert res.ndim == 1
     assert res.axes.names == ['name']
-    assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
-    assert list(res) == [True, False, True]
+    assert np.array_equal(res.axes.labels[0], ['b', 'b12', 'a', 'a01', 'e', 'g', 'f'])
+    assert list(res) == [False, False, True, True, True, False, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session({'e': e2, 'f': f})
+    other = Session({'a': a, 'a01': a01, 'e': e2, 'f': f})
     res = sess.element_equals(other)
     assert res.axes.names == ['name']
-    assert np.array_equal(res.axes.labels[0], ['e', 'g', 'f'])
-    assert list(res) == [False, False, True]
+    assert np.array_equal(res.axes.labels[0], ['b', 'b12', 'a', 'a01', 'e', 'g', 'f'])
+    assert list(res) == [False, False, True, True, False, False, True]
 
 
 def test_eq(session):
