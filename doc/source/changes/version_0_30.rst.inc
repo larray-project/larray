@@ -227,3 +227,5 @@ Fixes
 
 * fixed missing documentation of many functions in :ref:`Utility Functions <api-ufuncs>` section
   of the API Reference (closes :issue:`698`).
+
+* fixed arithmetic operations between two sessions returning a nan value for each axis and group (closes :issue:`725`).

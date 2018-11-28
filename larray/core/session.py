@@ -820,7 +820,7 @@ class Session(object):
         return len(self._objects)
 
     # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
-    def _binop(opname):
+    def _binop(opname, arrays_only=True):
         opfullname = '__%s__' % opname
 
         def opmethod(self, other):
@@ -831,21 +831,24 @@ class Session(object):
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for name in all_keys:
-                    self_array = self.get(name, nan)
+                    self_item = self.get(name, nan)
                     other_operand = other.get(name, nan) if hasattr(other, 'get') else other
-                    try:
-                        res_array = getattr(self_array, opfullname)(other_operand)
-                    # TypeError for str arrays, ValueError for incompatible axes, ...
-                    except Exception:
-                        res_array = nan
-                    # this should only ever happen when self_array is a non Array (eg. nan)
-                    if res_array is NotImplemented:
+                    if arrays_only and not isinstance(self_item, LArray):
+                        res_item = self_item
+                    else:
                         try:
-                            res_array = getattr(other_operand, '__%s__' % inverseop(opname))(self_array)
+                            res_item = getattr(self_item, opfullname)(other_operand)
                         # TypeError for str arrays, ValueError for incompatible axes, ...
                         except Exception:
-                            res_array = nan
-                    res.append((name, res_array))
+                            res_item = nan
+                        # this should only ever happen when self_array is a non Array (eg. nan)
+                        if res_item is NotImplemented:
+                            try:
+                                res_item = getattr(other_operand, '__%s__' % inverseop(opname))(self_item)
+                            # TypeError for str arrays, ValueError for incompatible axes, ...
+                            except Exception:
+                                res_item = nan
+                    res.append((name, res_item))
             return Session(res)
         opmethod.__name__ = opfullname
         return opmethod
@@ -859,8 +862,8 @@ class Session(object):
     __truediv__ = _binop('truediv')
     __rtruediv__ = _binop('rtruediv')
 
-    __eq__ = _binop('eq')
-    __ne__ = _binop('ne')
+    __eq__ = _binop('eq', arrays_only=False)
+    __ne__ = _binop('ne', arrays_only=False)
 
     # element-wise method factory
     # unary operations are (also) dispatched element-wise to all arrays
