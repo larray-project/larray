@@ -9,7 +9,7 @@ import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta
 from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like,
-                    local_arrays, global_arrays, arrays)
+                    local_arrays, global_arrays, arrays, nan)
 from larray.util.misc import pickle
 
 try:
@@ -388,40 +388,49 @@ def test_element_equals(session):
 
 
 def test_eq(session):
-    sess = session.filter(kind=LArray)
-    expected = Session([('e', e), ('f', f), ('g', g)])
-    assert all([array.all() for array in (sess == expected).values()])
+    sess = session.filter(kind=(Axis, Group, LArray))
+    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
+                        ('e', e), ('g', g), ('f', f)])
+    assert all([item.all() if isinstance(item, LArray) else item
+                for item in (sess == expected).values()])
 
-    other = Session([('e', e), ('f', f)])
+    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
     res = sess == other
-    assert list(res.keys()) == ['e', 'g', 'f']
-    assert [arr.all() for arr in res.values()] == [True, False, True]
+    assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
+    assert [item.all() if isinstance(item, LArray) else item
+            for item in res.values()] == [True, True, True, True, True, False, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session([('e', e2), ('f', f)])
+    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
     res = sess == other
-    assert [arr.all() for arr in res.values()] == [False, False, True]
+    assert [item.all() if isinstance(item, LArray) else item
+            for item in res.values()] == [True, True, True, True, False, False, True]
 
 
 def test_ne(session):
-    sess = session.filter(kind=LArray)
-    expected = Session([('e', e), ('f', f), ('g', g)])
-    assert ([(~array).all() for array in (sess != expected).values()])
+    sess = session.filter(kind=(Axis, Group, LArray))
+    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
+                        ('e', e), ('g', g), ('f', f)])
+    assert ([(~item).all() if isinstance(item, LArray) else not item
+             for item in (sess != expected).values()])
 
-    other = Session([('e', e), ('f', f)])
+    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
     res = sess != other
-    assert [(~arr).all() for arr in res.values()] == [True, False, True]
+    assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
+    assert [(~item).all() if isinstance(item, LArray) else not item
+            for item in res.values()] == [True, True, True, True, True, False, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session([('e', e2), ('f', f)])
+    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
     res = sess != other
-    assert [(~arr).all() for arr in res.values()] == [False, False, True]
+    assert [(~item).all() if isinstance(item, LArray) else not item
+            for item in res.values()] == [True, True, True, True, False, False, True]
 
 
 def test_sub(session):
-    sess = session.filter(kind=LArray)
+    sess = session
 
     # session - session
     other = Session({'e': e - 1, 'f': ones_like(f)})
@@ -429,12 +438,18 @@ def test_sub(session):
     assert_array_nan_equal(diff['e'], np.full((2, 3), 1, dtype=np.int32))
     assert_array_nan_equal(diff['f'], f - ones_like(f))
     assert isnan(diff['g']).all()
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
 
     # session - scalar
     diff = sess - 2
     assert_array_nan_equal(diff['e'], e - 2)
     assert_array_nan_equal(diff['f'], f - 2)
     assert_array_nan_equal(diff['g'], g - 2)
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
 
     # session - dict(LArray and scalar)
     other = {'e': ones_like(e), 'f': 1}
@@ -442,16 +457,22 @@ def test_sub(session):
     assert_array_nan_equal(diff['e'], e - ones_like(e))
     assert_array_nan_equal(diff['f'], f - 1)
     assert isnan(diff['g']).all()
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
 
 
 def test_rsub(session):
-    sess = session.filter(kind=LArray)
+    sess = session
 
     # scalar - session
     diff = 2 - sess
     assert_array_nan_equal(diff['e'], 2 - e)
     assert_array_nan_equal(diff['f'], 2 - f)
     assert_array_nan_equal(diff['g'], 2 - g)
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
 
     # dict(LArray and scalar) - session
     other = {'e': ones_like(e), 'f': 1}
@@ -459,10 +480,13 @@ def test_rsub(session):
     assert_array_nan_equal(diff['e'], ones_like(e) - e)
     assert_array_nan_equal(diff['f'], 1 - f)
     assert isnan(diff['g']).all()
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
 
 
 def test_div(session):
-    sess = session.filter(kind=LArray)
+    sess = session
     other = Session({'e': e - 1, 'f': f + 1})
 
     with pytest.warns(RuntimeWarning) as caught_warnings:
@@ -481,19 +505,25 @@ def test_div(session):
 
 
 def test_rdiv(session):
-    sess = session.filter(kind=LArray)
+    sess = session
 
     # scalar / session
     res = 2 / sess
     assert_array_nan_equal(res['e'], 2 / e)
     assert_array_nan_equal(res['f'], 2 / f)
     assert_array_nan_equal(res['g'], 2 / g)
+    assert res.a is a
+    assert res.a01 is a01
+    assert res.c is c
 
     # dict(LArray and scalar) - session
     other = {'e': e, 'f': f}
     res = other / sess
     assert_array_nan_equal(res['e'], e / e)
     assert_array_nan_equal(res['f'], f / f)
+    assert res.a is a
+    assert res.a01 is a01
+    assert res.c is c
 
 
 def test_pickle_roundtrip(session, meta):
