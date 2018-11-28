@@ -230,6 +230,7 @@ LArray
 * :ref:`la_sorting`
 * :ref:`la_reshaping`
 * :ref:`la_testing`
+* :ref:`la_iter`
 * :ref:`la_op`
 * :ref:`la_misc`
 * :ref:`la_to_pandas`
@@ -421,6 +422,18 @@ Testing/Searching
    LArray.indexofmin
    LArray.labelofmax
    LArray.indexofmax
+
+.. _la_iter:
+
+Iterating
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
+   LArray.keys
+   LArray.values
+   LArray.items
 
 .. _la_op:
 

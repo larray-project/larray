@@ -134,8 +134,69 @@ New features
     a_b  a0_b1  a1_b2
              1      5
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
+* implemented :py:obj:`LArray.keys()` :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
+  methods to iterate (loop) on an array labels (keys), values or (key, value) pairs.
 
+    >>> arr = ndtest((2, 2))
+    >>> arr
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+
+    By default they iterates on all axes, in the order they are in the array.
+
+    >>> for value in arr.values():
+    ...     print(value)
+    0
+    1
+    2
+    3
+    >>> for key in arr.keys():
+    ...     print(key)
+    (a.i[0], b.i[0])
+    (a.i[0], b.i[1])
+    (a.i[1], b.i[0])
+    (a.i[1], b.i[1])
+    >>> for key, value in arr.items():
+    ...     print(key, "->", value)
+    (a.i[0], b.i[0]) -> 0
+    (a.i[0], b.i[1]) -> 1
+    (a.i[1], b.i[0]) -> 2
+    (a.i[1], b.i[1]) -> 3
+
+    You can iterate in reverse order.
+
+    >>> for value in arr.values(ascending=False):
+    ...     print(value)
+    3
+    2
+    1
+    0
+
+    or specify another axis order:
+
+    >>> for value in arr.values(('b', 'a')):
+    ...     print(value)
+    0
+    2
+    1
+    3
+
+    You can also iterate on less axes than the array has.
+
+    >>> # iterate on the "b" axis, that is, return each label along the "b" axis in turn
+    >>> for key in arr.keys('b'):
+    ...     print(key)
+    (b.i[0],)
+    (b.i[1],)
+    >>> # iterate on the array values along the "b" axis.
+    >>> # That is, for each label along the "b" axis, return the corresponding (sub)array
+    >>> for value in arr.values('b'):
+    ...     print(value)
+    a  a0  a1
+        0   2
+    a  a0  a1
+        1   3
 
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 

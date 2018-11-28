@@ -64,7 +64,7 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
+                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip)
 
 
 def all(values, axis=None):
@@ -3099,6 +3099,282 @@ class LArray(ABCLArray):
         return LArray(data, self.axes.replace(axis, new_axis))
 
     posargsort = renamed_to(indicesofsorted, 'posargsort')
+
+    # TODO: move some doctests to unit tests
+    # TODO: implement keys_by
+    # TODO: implement expand=True
+    def keys(self, axes=None, ascending=True):
+        r"""Returns a view on the array labels along axes.
+
+        This is an object you can iterate (loop) on or index to get to the Nth label along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position to get the Nth label along axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> arr.keys()[0]
+        (a.i[0], b.i[0])
+        >>> for key in arr.keys():
+        ...     print(key)
+        (a.i[0], b.i[0])
+        (a.i[0], b.i[1])
+        (a.i[1], b.i[0])
+        (a.i[1], b.i[1])
+        >>> arr.keys(ascending=False)[0]
+        (a.i[1], b.i[1])
+        >>> for key in arr.keys(ascending=False):
+        ...     print(key)
+        (a.i[1], b.i[1])
+        (a.i[1], b.i[0])
+        (a.i[0], b.i[1])
+        (a.i[0], b.i[0])
+
+        but you can specify another axis order:
+
+        >>> arr.keys(('b', 'a'))[0]
+        (b.i[0], a.i[0])
+        >>> for key in arr.keys(('b', 'a')):
+        ...     print(key)
+        (b.i[0], a.i[0])
+        (b.i[0], a.i[1])
+        (b.i[1], a.i[0])
+        (b.i[1], a.i[1])
+
+        One can specify less axes than the array has:
+
+        >>> arr.keys('b')[0]
+        (b.i[0],)
+        >>> # iterate on the "b" axis, that is return each label along the "b" axis
+        ... for key in arr.keys('b'):
+        ...     print(key)
+        (b.i[0],)
+        (b.i[1],)
+        """
+        return self.axes.iter_labels(axes, ascending=ascending)
+
+    # TODO: move many doctests to unit tests
+    # TODO: implement values_by
+    def values(self, axes=None, ascending=True, expand=False):
+        r"""Returns a view on the values of the array along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        expand : bool, optional
+            Whether or not to expand array using axes. This allows one to iterate on axes which do not exist in
+            the array, which is useful when iterating on several arrays with different axes. Defaults to False.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position. The precise type of which is considered an
+            implementation detail and should not be relied on.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> for value in arr.values():
+        ...     print(value)
+        0
+        1
+        2
+        3
+        >>> arr.values()[0]
+        0
+        >>> arr.values(ascending=False)[0]
+        3
+        >>> arr.values()[-1]
+        3
+        >>> arr.values(('b', 'a'))[1]
+        2
+        >>> arr.values('b')[0]
+        a  a0  a1
+            0   2
+        >>> arr.values('b', ascending=False)[0]
+        a  a0  a1
+            1   3
+        >>> arr[arr.b.i[-1]]
+        a  a0  a1
+            1   3
+        >>> arr['b.i[-1]']
+        a  a0  a1
+            1   3
+        >>> arr.values('b')[-1]
+        a  a0  a1
+            1   3
+        >>> for value in arr.values(ascending=False):
+        ...     print(value)
+        3
+        2
+        1
+        0
+
+        but you can specify another axis order:
+
+        >>> for value in arr.values(('b', 'a')):
+        ...     print(value)
+        0
+        2
+        1
+        3
+
+        When you specify less axes than the array has, you get arrays back:
+
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for value in arr.values('b'):
+        ...     print(value)
+        a  a0  a1
+            0   2
+        a  a0  a1
+            1   3
+        >>> # iterate on the "c" axis, which does not exist in arr, that is return arr for each label along the "c" axis
+        ... for value in arr.values('c=c0,c1', expand=True):
+        ...     print(value)
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for value in arr.values('b', ascending=False):
+        ...     print(value)
+        a  a0  a1
+            1   3
+        a  a0  a1
+            0   2
+        """
+        if axes is None:
+            combined = np.ravel(self.data)
+            return combined if ascending else combined[::-1]
+
+        if not isinstance(axes, (tuple, AxisCollection)):
+            axes = (axes,)
+
+        def get_axis(a):
+            if isinstance(a, basestring):
+                return Axis(a) if '=' in a else self.axes[a]
+            elif isinstance(a, int):
+                return self.axes[a]
+            else:
+                assert isinstance(a, Axis)
+                return a
+        axes = [get_axis(a) for a in axes]
+        array = self.expand(axes, readonly=True) if expand else self
+        axes = array.axes[axes]
+        # move axes in front
+        transposed = array.transpose(axes)
+        # combine axes if necessary
+        combined = transposed.combine_axes(axes, wildcard=True) if len(axes) > 1 else transposed
+        # trailing .i is to support the case where axis < self.axes (ie the elements of the result are arrays)
+        return combined.i if ascending else combined.i[::-1].i
+
+    # TODO: move some doctests to unit tests
+    # TODO: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing.
+    # if we returned an NDGroup in all cases, it would solve the problem
+    # TODO: implement expand=True
+    def items(self, axes=None, ascending=True):
+        r"""Returns a (label, value) view of the array along axes.
+
+        This is an object you can iterate (loop) on or index to get to (label, value) couples along axes.
+
+        Parameters
+        ----------
+        axes : int, str or Axis or tuple of them, optional
+            Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
+            in the array).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+        Returns
+        -------
+        Sequence
+            An object you can iterate (loop) on and index by position to get the Nth (label, value) couple along axes.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2))
+        >>> arr
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+
+        By default it iterates on all axes, in the order they are in the array.
+
+        >>> arr.items()[0]
+        ((a.i[0], b.i[0]), 0)
+        >>> for key, value in arr.items():
+        ...     print(key, "->", value)
+        (a.i[0], b.i[0]) -> 0
+        (a.i[0], b.i[1]) -> 1
+        (a.i[1], b.i[0]) -> 2
+        (a.i[1], b.i[1]) -> 3
+        >>> arr.items(ascending=False)[0]
+        ((a.i[1], b.i[1]), 3)
+        >>> for key, value in arr.items(ascending=False):
+        ...     print(key, "->", value)
+        (a.i[1], b.i[1]) -> 3
+        (a.i[1], b.i[0]) -> 2
+        (a.i[0], b.i[1]) -> 1
+        (a.i[0], b.i[0]) -> 0
+
+        but you can specify another axis order:
+
+        >>> arr.items(('b', 'a'))[0]
+        ((b.i[0], a.i[0]), 0)
+        >>> for key, value in arr.items(('b', 'a')):
+        ...     print(key, "->", value)
+        (b.i[0], a.i[0]) -> 0
+        (b.i[0], a.i[1]) -> 2
+        (b.i[1], a.i[0]) -> 1
+        (b.i[1], a.i[1]) -> 3
+
+        When you specify less axes than the array has, you get arrays back:
+
+        >>> arr.items('b')[0]
+        ((b.i[0],), a  a0  a1
+            0   2)
+        >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
+        ... for key, value in arr.items('b'):
+        ...     print(key, value, sep="\n")
+        (b.i[0],)
+        a  a0  a1
+            0   2
+        (b.i[1],)
+        a  a0  a1
+            1   3
+        """
+        return SequenceZip((self.keys(axes, ascending=ascending), self.values(axes, ascending=ascending)))
 
     def copy(self):
         """Returns a copy of the array.
