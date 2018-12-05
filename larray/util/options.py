@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, print_function
-
+from larray.util.misc import _positive_integer
 
 DISPLAY_PRECISION = 'display_precision'
 DISPLAY_WIDTH = 'display_width'
@@ -13,11 +13,6 @@ _OPTIONS = {
     DISPLAY_MAXLINES: 200,
     DISPLAY_EDGEITEMS: 5,
 }
-
-
-def _positive_integer(value):
-    if not (isinstance(value, int) and value > 0):
-        raise ValueError("Expected positive integer")
 
 
 def _integer_maxlines(value):

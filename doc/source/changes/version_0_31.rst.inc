@@ -18,30 +18,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
-  :ref:`api-group` objects.
-
-  Here is an example of the new feature:
-
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-
-  And it can also be used like this:
-
-    >>> arr = ndtest("a=a0..a2")
-    >>> arr
-    a  a0  a1  a2
-        0   1   2
-
-* added another feature in the editor (closes :editor_issue:`1`).
-
-  .. note::
-
-     - It works for foo bar !
-     - It does not work for foo baz !
+* added the :py:obj:`ExcelReport` class allowing to generate multiple graphs in an
+  Excel file at once (closes :issue:`676`).
 
 
 .. _misc:

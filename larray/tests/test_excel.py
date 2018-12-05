@@ -1,13 +1,15 @@
 from __future__ import absolute_import, division, print_function
 
 import re
+import os
 
 import pytest
 import numpy as np
 
-from larray.tests.common import needs_xlwings
-from larray import ndtest, open_excel, aslarray, Axis
+from larray.tests.common import needs_xlwings, TESTDATADIR
+from larray import ndtest, open_excel, aslarray, Axis, nan, ExcelReport
 from larray.inout import xw_excel
+from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
 
 @needs_xlwings
@@ -252,6 +254,145 @@ class TestRange(object):
 {0}*\\{1}*  0  1  2
         0  0  1  2
         1  3  4  5"""
+
+
+# ================ #
+# Test ExcelReport #
+# ================ #
+
+
+@needs_xlwings
+def test_excel_report_init():
+    # No argument
+    ExcelReport()
+    # with template dir
+    ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
+    # with graphs_per_row
+    ExcelReport(graphs_per_row=2)
+
+
+@needs_xlwings
+def test_excel_report_setting_template():
+    excel_report = ExcelReport()
+
+    # test setting template dir
+    # 1) wrong template dir
+    wrong_template_dir = r"C:\Wrong\Directory\Path"
+    msg = "Template directory {} could not been found".format(wrong_template_dir)
+    with pytest.raises(ValueError, message=msg):
+        excel_report.template_dir = wrong_template_dir
+    # 2) correct path
+    excel_report.template_dir = EXAMPLE_EXCEL_TEMPLATES_DIR
+    assert excel_report.template_dir == EXAMPLE_EXCEL_TEMPLATES_DIR
+
+    # test setting template file
+    # 1) wrong extension
+    template_file = 'wrong_extension.txt'
+    msg = "Extension for the template file must be '.crtx' instead of .txt"
+    with pytest.raises(ValueError, message=msg):
+        excel_report.template = template_file
+    # 2) add .crtx extension if no extension
+    template_name = 'Line'
+    excel_report.template = template_name
+    assert excel_report.template == os.path.join(EXAMPLE_EXCEL_TEMPLATES_DIR, template_name + '.crtx')
+
+
+@needs_xlwings
+def test_excel_report_sheets():
+    report = ExcelReport()
+    # test adding new sheets
+    sheet_pop = report.new_sheet('Pop')
+    sheet_births = report.new_sheet('Births')
+    sheet_deaths = report.new_sheet('Deaths')
+    # test warning if sheet already exists
+    with pytest.warns(UserWarning) as caught_warnings:
+        sheet_pop2 = report.new_sheet('Pop')
+    assert len(caught_warnings) == 1
+    warn_msg = "Sheet 'Pop' already exists in the report and will be reset"
+    assert caught_warnings[0].message.args[0] == warn_msg
+    # test sheet_names()
+    assert report.sheet_names() == ['Pop', 'Births', 'Deaths']
+
+
+@needs_xlwings
+def test_excel_report_titles():
+    excel_report = ExcelReport()
+
+    # test dumping titles
+    sheet_titles = excel_report.new_sheet('Titles')
+    # 1) default
+    sheet_titles.add_title('Default title')
+    # 2) specify width and height
+    width, height = 1100, 100
+    sheet_titles.add_title('Width = {} and Height = {}'.format(width, height),
+                           width=width, height=height)
+    # 3) specify fontsize
+    fontsize = 13
+    sheet_titles.add_title('Fontsize = {}'.format(fontsize), fontsize=fontsize)
+
+    # generate Excel file
+    fpath = 'test_excel_report_titles.xlsx'
+    excel_report.to_excel(fpath)
+
+
+@needs_xlwings
+def test_excel_report_arrays():
+    excel_report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
+    demo = load_example_data('demo')
+    pop = demo.pop
+    pop_be = pop['Belgium']
+    pop_be_nan = pop_be.astype(float)
+    pop_be_nan[2013] = nan
+
+    # test dumping arrays
+    sheet_graphs = excel_report.new_sheet('Graphs')
+    # 1) default
+    sheet_graphs.add_title('No template')
+    sheet_graphs.add_graph(pop_be['Female'], 'Pop Belgium Female')
+    sheet_graphs.add_graph(pop_be, 'Pop Belgium')
+    sheet_graphs.add_graph(pop_be_nan, 'Pop Belgium with nans')
+    # 2) no title
+    sheet_graphs.add_title('No title graph')
+    sheet_graphs.add_graph(pop_be)
+    # 3) specify width and height
+    sheet_graphs.add_title('Alternative Width and Height')
+    width, height = 500, 300
+    sheet_graphs.add_graph(pop_be, 'width = {} and Height = {}'.format(width, height), width=width, height=height)
+    # 4) specify template
+    template_name = 'Line_Marker'
+    sheet_graphs.add_title('Template = {}'.format(template_name))
+    sheet_graphs.add_graph(pop_be, 'Template = {}'.format(template_name), template_name)
+
+    # test setting default size
+    # 1) pass a not registered kind of item
+    type_item = 'unknown_item'
+    msg = "Type item {} is not registered. Please choose in " \
+          "list ['title', 'graph']".format(type_item)
+    with pytest.raises(ValueError, message=msg):
+        sheet_graphs.set_item_default_size(type_item, width, height)
+    # 2) update default size for graphs
+    sheet_graphs.set_item_default_size('graph', width, height)
+    sheet_graphs.add_title('Using Defined Sizes For All Graphs')
+    sheet_graphs.add_graph(pop_be, 'Pop Belgium')
+
+    # test setting default number of graphs per row
+    sheet_graphs = excel_report.new_sheet('Graphs2')
+    sheet_graphs.graphs_per_row = 2
+    sheet_graphs.add_title('graphs_per_row = 2')
+    for combined_labels, subset in pop.items(('time', 'gender')):
+        title = ' - '.join([str(label) for label in combined_labels])
+        sheet_graphs.add_graph(subset, title)
+
+    # testing add_graphs
+    sheet_graphs = excel_report.new_sheet('Graphs3')
+    sheet_graphs.add_title('add_graphs')
+    sheet_graphs.add_graphs({'Population of {gender} by country for the year {year}': pop},
+                            {'gender': pop.gender, 'year': pop.time},
+                            template='line', width=450, height=250, graphs_per_row=2)
+
+    # generate Excel file
+    fpath = 'test_excel_report_arrays.xlsx'
+    excel_report.to_excel(fpath)
 
 
 if __name__ == "__main__":

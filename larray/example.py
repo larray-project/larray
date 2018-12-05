@@ -2,11 +2,17 @@ import os
 import larray as la
 
 
-EXAMPLE_FILES_DIR = os.path.dirname(__file__) + '/tests/data/'
+_TEST_DIR = os.path.join(os.path.dirname(__file__), 'tests')
+
+EXAMPLE_FILES_DIR = os.path.join(_TEST_DIR, 'data')
+# TODO : replace 'demography.h5' by 'population_session.h5' and remove 'demo' ?
 AVAILABLE_EXAMPLE_DATA = {
+    'demo': os.path.join(EXAMPLE_FILES_DIR, 'population_session.h5'),
     'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5')
 }
 AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
+
+EXAMPLE_EXCEL_TEMPLATES_DIR = os.path.join(_TEST_DIR, 'excel_template')
 
 
 def get_example_filepath(fname):
