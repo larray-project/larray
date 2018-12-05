@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 import __main__
 import math
 import itertools
+import os
 import sys
 import operator
 import warnings
@@ -1014,3 +1015,17 @@ def ensure_no_numpy_type(array):
     if array.dtype.kind == 'O':
         array = _kill_np_types(array)
     return array.tolist()
+
+
+# ################# #
+#  validator funcs  #
+# ################# #
+
+def _positive_integer(value):
+    if not (isinstance(value, int) and value > 0):
+        raise ValueError("Expected positive integer")
+
+
+def _validate_dir(directory):
+    if not os.path.isdir(directory):
+        raise ValueError("The directory {} could not been found".format(directory))

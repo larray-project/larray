@@ -675,6 +675,37 @@ Excel
    Workbook.close
    Workbook.app
 
+ExcelReport
+===========
+
+.. autosummary::
+   :toctree: _generated/
+
+   ExcelReport
+   ExcelReport.template_dir
+   ExcelReport.template
+   ExcelReport.set_item_default_size
+   ExcelReport.graphs_per_row
+   ExcelReport.new_sheet
+   ExcelReport.sheet_names
+   ExcelReport.to_excel
+
+ReportSheet
+===========
+
+.. autosummary::
+   :toctree: _generated/
+
+   ReportSheet
+   ReportSheet.template_dir
+   ReportSheet.template
+   ReportSheet.set_item_default_size
+   ReportSheet.graphs_per_row
+   ReportSheet.add_title
+   ReportSheet.add_graph
+   ReportSheet.add_graphs
+   ReportSheet.newline
+
 .. _api-misc:
 
 Miscellaneous

@@ -1,2 +1,3 @@
 include COPYING
 recursive-include larray/tests/data *.csv *.xlsx *.h5
+recursive-include larray/tests/excel_template *.crtx

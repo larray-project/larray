@@ -30,6 +30,7 @@ from larray.inout.hdf import read_hdf
 from larray.inout.sas import read_sas
 from larray.inout.stata import read_stata
 from larray.inout.xw_excel import open_excel, Workbook
+from larray.inout.xw_reporting import ExcelReport
 
 # just make sure handlers for .pkl and .pickle are initialized
 import larray.inout.pickle as _pkl
@@ -41,7 +42,7 @@ from larray.viewer import view, edit, compare
 
 from larray.extra.ipfp import ipfp
 
-from larray.example import get_example_filepath, load_example_data
+from larray.example import get_example_filepath, load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
 import larray.random
 
@@ -75,7 +76,8 @@ __all__ = [
     'real_if_close', 'interp', 'isnan', 'isinf', 'inverse',
     # inout
     'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
-    'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'read_stata', 'open_excel', 'Workbook',
+    'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'read_stata',
+    'open_excel', 'Workbook', 'ExcelReport',
     # utils
     'get_options', 'set_options',
     # viewer
@@ -83,7 +85,7 @@ __all__ = [
     # ipfp
     'ipfp',
     # example
-    'get_example_filepath', 'load_example_data',
+    'get_example_filepath', 'load_example_data', 'EXAMPLE_EXCEL_TEMPLATES_DIR',
 ]
 
 
