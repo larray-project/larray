@@ -65,6 +65,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
+from larray.util.options import OPTIONS, DISPLAY_PRECISION, DISPLAY_WIDTH, MAXLINES, EDGEITEMS
 
 
 def all(values, axis=None):
@@ -2277,8 +2278,12 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            table = list(self.as_table(maxlines=200, edgeitems=5))
-            return table2str(table, 'nan', fullinfo=True, maxwidth=200, keepcols=self.ndim - 1)
+            maxlines = OPTIONS[MAXLINES] if OPTIONS[MAXLINES] is not None else 200
+            maxwidth = OPTIONS[DISPLAY_WIDTH]
+            precision = OPTIONS[DISPLAY_PRECISION]
+            table = list(self.as_table(maxlines))
+            return table2str(table, 'nan', fullinfo=True, maxwidth=maxwidth, keepcols=self.ndim - 1,
+                             precision=precision)
     __repr__ = __str__
 
     def __iter__(self):
@@ -2287,8 +2292,9 @@ class LArray(ABCLArray):
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
-    def as_table(self, maxlines=None, edgeitems=5, light=False, wide=True, value_name='value'):
-        """
+    def as_table(self, maxlines=None, edgeitems=None, light=False, wide=True, value_name='value'):
+        r"""as_table(maxlines=None, edgeitems=5, light=False, wide=True, value_name='value')
+
         Generator. Returns next line of the table representing an array.
 
         Parameters
@@ -2300,6 +2306,9 @@ class LArray(ABCLArray):
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not None.
             Equals to 5 by default.
+        light: bool, optional
+            Whether or not printing the array in the same way as a pandas DataFrame with a MultiIndex
+            (see example below). Defaults to False.
         wide : boolean, optional
             Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
@@ -2317,13 +2326,13 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 3))
         >>> list(arr.as_table())  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['a0', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
          ['a1', 'b1', 9, 10, 11]]
         >>> list(arr.as_table(light=True))  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
@@ -2345,6 +2354,12 @@ class LArray(ABCLArray):
         """
         if not self.ndim:
             return
+
+        # get default options
+        if maxlines is None:
+            maxlines = OPTIONS[MAXLINES]
+        if edgeitems is None:
+            edgeitems = OPTIONS[EDGEITEMS]
 
         # ert     unit  geo\time  2012    2011    2010
         # NEER27  I05   AT        101.41  101.63  101.63
@@ -2398,7 +2413,9 @@ class LArray(ABCLArray):
                 yield list(tick) + dataline.tolist()
 
     def dump(self, header=True, wide=True, value_name='value'):
-        """Dump array as a 2D nested list
+        """dump(header=True, wide=True, value_name='value')
+
+        Dump array as a 2D nested list
 
         Parameters
         ----------

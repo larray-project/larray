@@ -664,6 +664,7 @@ Miscellaneous
    from_frame
    from_series
    get_example_filepath
+   set_printoptions
    labels_array
    union
    stack
