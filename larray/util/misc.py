@@ -81,13 +81,15 @@ def prod(values):
     return reduce(operator.mul, values, 1)
 
 
-def format_value(value, missing, fullinfo=False):
-    if isinstance(value, float) and not fullinfo:
+def format_value(value, missing, precision=None):
+    if isinstance(value, float):
         # nans print as "-1.#J", let's use something nicer
         if value != value:
             return missing
+        elif precision is not None:
+            return '{:.{precision}f}'.format(value, precision=precision)
         else:
-            return '%2.f' % value
+            return str(value)
     elif isinstance(value, np.ndarray) and value.shape:
         # prevent numpy's default wrapping
         return str(list(value)).replace(',', '')
@@ -131,8 +133,8 @@ def get_min_width(table, index):
     return max(longest_word(row[index]) for row in table)
 
 
-def table2str(table, missing, fullinfo=False, summarize=True, maxwidth=80, numedges='auto', sep='  ', cont='...',
-              keepcols=0):
+def table2str(table, missing, summarize=True, maxwidth=200, numedges='auto', sep='  ', cont='...',
+              keepcols=0, precision=None):
     """
     table is a list of lists
     :type table: list of list
@@ -144,7 +146,7 @@ def table2str(table, missing, fullinfo=False, summarize=True, maxwidth=80, numed
     for row in table:
         if len(row) < numcol:
             row.extend([''] * (numcol - len(row)))
-    formatted = [[format_value(value, missing, fullinfo) for value in row]
+    formatted = [[format_value(value, missing, precision) for value in row]
                  for row in table]
     maxwidths = [get_col_width(formatted, i) for i in range(numcol)]
 

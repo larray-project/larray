@@ -65,6 +65,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
+from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
 def all(values, axis=None):
@@ -2277,8 +2278,9 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            table = list(self.as_table(maxlines=200, edgeitems=5))
-            return table2str(table, 'nan', fullinfo=True, maxwidth=200, keepcols=self.ndim - 1)
+            table = list(self.as_table(_OPTIONS[DISPLAY_MAXLINES], _OPTIONS[DISPLAY_EDGEITEMS]))
+            return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
+                             precision=_OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
 
     def __iter__(self):
@@ -2287,19 +2289,22 @@ class LArray(ABCLArray):
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
-    def as_table(self, maxlines=None, edgeitems=5, light=False, wide=True, value_name='value'):
-        """
+    def as_table(self, maxlines=-1, edgeitems=5, light=False, wide=True, value_name='value'):
+        r"""
         Generator. Returns next line of the table representing an array.
 
         Parameters
         ----------
         maxlines : int, optional
-            Maximum number of lines to show.
+            Maximum number of lines to show. Defaults to -1 (all lines are shown).
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
-            Only active if `maxlines` is not None.
-            Equals to 5 by default.
+            Only active if `maxlines` is not -1.
+            Defaults to 5.
+        light : bool, optional
+            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
+            previous one. Defaults to False.
         wide : boolean, optional
             Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
@@ -2317,13 +2322,13 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 3))
         >>> list(arr.as_table())  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['a0', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
          ['a1', 'b1', 9, 10, 11]]
         >>> list(arr.as_table(light=True))  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
@@ -2379,7 +2384,7 @@ class LArray(ABCLArray):
         other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
         yield axes_names + other_colnames
         # summary if needed
-        if maxlines is not None and height > maxlines:
+        if maxlines >= 0 and height > maxlines:
             # replace middle lines of the table by '...'.
             # We show only the first and last edgeitems lines.
             startticks = islice(ticks, edgeitems)
@@ -2398,7 +2403,8 @@ class LArray(ABCLArray):
                 yield list(tick) + dataline.tolist()
 
     def dump(self, header=True, wide=True, value_name='value'):
-        """Dump array as a 2D nested list
+        """
+        Dump array as a 2D nested list
 
         Parameters
         ----------
@@ -2420,7 +2426,7 @@ class LArray(ABCLArray):
             # flatten all dimensions except the last one
             return self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table(wide=wide, value_name=value_name))
+            return list(self.as_table(maxlines=-1, wide=wide, value_name=value_name))
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
