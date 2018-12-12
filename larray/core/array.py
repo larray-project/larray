@@ -2413,8 +2413,7 @@ class LArray(ABCLArray):
                 yield list(tick) + dataline.tolist()
 
     def dump(self, header=True, wide=True, value_name='value'):
-        """dump(header=True, wide=True, value_name='value')
-
+        """
         Dump array as a 2D nested list
 
         Parameters
