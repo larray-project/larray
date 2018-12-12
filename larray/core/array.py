@@ -2293,19 +2293,17 @@ class LArray(ABCLArray):
         return any(key in axis for axis in self.axes)
 
     def as_table(self, maxlines=None, edgeitems=None, light=False, wide=True, value_name='value'):
-        r"""as_table(maxlines=None, edgeitems=5, light=False, wide=True, value_name='value')
-
+        r"""
         Generator. Returns next line of the table representing an array.
 
         Parameters
         ----------
         maxlines : int, optional
-            Maximum number of lines to show.
+            Maximum number of lines to show. Default behavior shows all lines.
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not None.
-            Equals to 5 by default.
         light: bool, optional
             Whether or not printing the array in the same way as a pandas DataFrame with a MultiIndex
             (see example below). Defaults to False.
