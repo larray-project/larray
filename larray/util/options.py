@@ -14,7 +14,7 @@ EDGEITEMS = 'edgeitems'
 
 OPTIONS = {
     DISPLAY_PRECISION: None,
-    DISPLAY_WIDTH: 200,
+    DISPLAY_WIDTH: 80,
     MAXLINES: None,
     EDGEITEMS: 5,
 }
@@ -46,8 +46,8 @@ class set_printoptions(object):
 
     Currently supported options:
 
-    - ``precision``: number of digits of precision for floating point output. Defaults to 8.
-    - ``display_width``: maximum display width for ``repr`` on xarray objects. Defaults to 80.
+    - ``precision``: number of digits of precision for floating point output.
+    - ``display_width``: maximum display width for ``repr`` on larray objects. Defaults to 80.
     - ``maxlines``: Maximum number of lines to show. Default behavior shows all lines.
     - ``edgeitems`` : if number of lines to display is greater than ``maxlines``, only the first and last
       ``edgeitems`` lines are displayed. Only active if ``maxlines`` is not None. Defaults to 5.
