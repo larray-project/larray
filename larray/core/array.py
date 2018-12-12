@@ -2296,10 +2296,12 @@ class LArray(ABCLArray):
         ----------
         maxlines : int, optional
             Maximum number of lines to show. If 0 all lines are shown.
+            See :py:obj:`set_options` for default value.
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not None.
+            See :py:obj:`set_options` for default value.
         light: bool, optional
             Whether or not printing the array in the same way as a pandas DataFrame with a MultiIndex
             (see example below). Defaults to False.
