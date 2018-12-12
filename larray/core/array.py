@@ -2282,8 +2282,7 @@ class LArray(ABCLArray):
             maxwidth = OPTIONS[DISPLAY_WIDTH]
             precision = OPTIONS[DISPLAY_PRECISION]
             table = list(self.as_table(maxlines))
-            return table2str(table, 'nan', fullinfo=True, maxwidth=maxwidth, keepcols=self.ndim - 1,
-                             precision=precision)
+            return table2str(table, 'nan', maxwidth=maxwidth, keepcols=self.ndim - 1, precision=precision)
     __repr__ = __str__
 
     def __iter__(self):
