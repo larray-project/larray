@@ -87,7 +87,7 @@ def format_value(value, missing, precision=None):
         if value != value:
             return missing
         elif precision is not None:
-            return '{:.{precision}f}'.format(value, precision=precision).rstrip('0').rstrip('.')
+            return '{:.{precision}f}'.format(value, precision=precision)
         else:
             return str(value)
     elif isinstance(value, np.ndarray) and value.shape:
