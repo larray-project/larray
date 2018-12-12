@@ -7725,6 +7725,10 @@ class LArray(ABCLArray):
           a0  2  1  0
           a1  5  3  1
         """
+        # XXX: we could go one step further than vectorize and support a array of callables which would be broadcasted
+        #      with the other arguments. I don't know whether that would actually help because I think it always
+        #      possible to emulate that with a single callable with an extra argument (eg type) which dispatches to
+        #      potentially different callables. It might be more practical & efficient though.
         if axes is None:
             if isinstance(transform, abc.Mapping):
                 mapping = transform

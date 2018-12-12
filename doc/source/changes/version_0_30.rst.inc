@@ -168,6 +168,75 @@ New features
      a0   0   0   2
      a1   0   1   1
 
+* implemented :py:obj:`LArray.apply()` method to apply a python function or mapping to all
+  elements of an array or to all sub-arrays along some axes of an array and return the result. This is an extremely
+  versatile method as it can be used both with aggregating functions or element-wise functions.
+
+  First let us define a test array
+
+    >>> arr = LArray([[0, 2, 1],
+    ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   2   1
+     a1   3   1   5
+
+  Here is a simple function we would like to apply to each element of the array.
+  Note that this particular example should rather be written as: arr ** 2
+  as it is both more concise and much faster.
+
+    >>> def square(x):
+    ...     return x ** 2
+    >>> arr.apply(square)
+    a\b  b0  b1  b2
+     a0   0   4   1
+     a1   9   1  25
+
+  Now, assuming for a moment that the values of our test array above were in fact some numeric representation of
+  names and we had the correspondence to the actual names stored in a dictionary:
+
+    >>> code_to_names = {0: 'foo', 1: 'bar', 2: 'baz',
+    ...                  3: 'boo', 4: 'far', 5: 'faz'}
+
+  We could get back an array with the actual names by using:
+
+    >>> arr.apply(code_to_names)
+    a\b   b0   b1   b2
+     a0  foo  baz  bar
+     a1  boo  bar  faz
+
+  Functions can also be applied along some axes:
+
+    >>> # this is equivalent to (but much slower than): arr.sum_by('a')
+    ... arr.apply(sum, 'a')
+    a  a0  a1
+        3   9
+
+  Applying the function along some axes will return an array with the
+  union of those axes and the axes of the returned values. For example,
+  let us define a function which returns the k highest values of an array.
+
+    >>> def topk(a, k=2):
+    ...     return a.sort_values(ascending=False).ignore_labels().i[:k]
+    >>> arr.apply(topk, 'a')
+    a\b*  0  1
+      a0  2  1
+      a1  5  3
+
+  Other arguments can be passed to the function as a tuple in the "args" argument:
+
+    >>> arr.apply(topk, axes='a', args=(3,))
+    a\b*  0  1  2
+      a0  2  1  0
+      a1  5  3  1
+
+  or by using keyword arguments:
+
+    >>> arr.apply(topk, axes='a', k=3)
+    a\b*  0  1  2
+      a0  2  1  0
+      a1  5  3  1
+
 * implemented :py:obj:`LArray.keys()` :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
   methods to iterate (loop) on an array labels (keys), values or (key, value) pairs.
 
