@@ -2279,10 +2279,8 @@ class LArray(ABCLArray):
             return 'LArray([])'
         else:
             maxlines = OPTIONS[MAXLINES] if OPTIONS[MAXLINES] is not None else 200
-            maxwidth = OPTIONS[DISPLAY_WIDTH]
-            precision = OPTIONS[DISPLAY_PRECISION]
             table = list(self.as_table(maxlines))
-            return table2str(table, 'nan', maxwidth=maxwidth, keepcols=self.ndim - 1, precision=precision)
+            return table2str(table, 'nan', keepcols=self.ndim - 1)
     __repr__ = __str__
 
     def __iter__(self):
