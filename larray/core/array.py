@@ -28,8 +28,8 @@ Matrix class
 
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
-from collections import Iterable, Sequence, OrderedDict
-from itertools import product, chain, groupby, islice
+from collections import Iterable, Sequence, OrderedDict, abc
+from itertools import product, chain, groupby, islice, repeat
 import os
 import sys
 import functools
@@ -62,8 +62,8 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip)
-
+                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
+                              Repeater)
 
 def all(values, axis=None):
     """
@@ -3191,7 +3191,7 @@ class LArray(ABCLArray):
 
     # TODO: move many doctests to unit tests
     # TODO: implement values_by
-    def values(self, axes=None, ascending=True, expand=False):
+    def values(self, axes=None, ascending=True):
         r"""Returns a view on the values of the array along axes.
 
         Parameters
@@ -3201,9 +3201,6 @@ class LArray(ABCLArray):
             in the array).
         ascending : bool, optional
             Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
-        expand : bool, optional
-            Whether or not to expand array using axes. This allows one to iterate on axes which do not exist in
-            the array, which is useful when iterating on several arrays with different axes. Defaults to False.
 
         Returns
         -------
@@ -3275,15 +3272,6 @@ class LArray(ABCLArray):
             0   2
         a  a0  a1
             1   3
-        >>> # iterate on the "c" axis, which does not exist in arr, that is return arr for each label along the "c" axis
-        ... for value in arr.values('c=c0,c1', expand=True):
-        ...     print(value)
-        a\b  b0  b1
-         a0   0   1
-         a1   2   3
-        a\b  b0  b1
-         a0   0   1
-         a1   2   3
         >>> # iterate on the "b" axis, that is return the (sub)array for each label along the "b" axis
         ... for value in arr.values('b', ascending=False):
         ...     print(value)
@@ -3294,24 +3282,15 @@ class LArray(ABCLArray):
         """
         if axes is None:
             combined = np.ravel(self.data)
+            # contrary to what I thought, combined[::-1] *is* indexable
             return combined if ascending else combined[::-1]
 
-        if not isinstance(axes, (tuple, AxisCollection)):
+        if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
 
-        def get_axis(a):
-            if isinstance(a, basestring):
-                return Axis(a) if '=' in a else self.axes[a]
-            elif isinstance(a, int):
-                return self.axes[a]
-            else:
-                assert isinstance(a, Axis)
-                return a
-        axes = [get_axis(a) for a in axes]
-        array = self.expand(axes, readonly=True) if expand else self
-        axes = array.axes[axes]
+        axes = self.axes[axes]
         # move axes in front
-        transposed = array.transpose(axes)
+        transposed = self.transpose(axes)
         # combine axes if necessary
         combined = transposed.combine_axes(axes, wildcard=True) if len(axes) > 1 else transposed
         # trailing .i is to support the case where axis < self.axes (ie the elements of the result are arrays)
@@ -3320,7 +3299,6 @@ class LArray(ABCLArray):
     # TODO: move some doctests to unit tests
     # TODO: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing.
     # if we returned an NDGroup in all cases, it would solve the problem
-    # TODO: implement expand=True
     def items(self, axes=None, ascending=True):
         r"""Returns a (label, value) view of the array along axes.
 
@@ -7646,6 +7624,305 @@ class LArray(ABCLArray):
         return array
     split_axis = renamed_to(split_axes, 'split_axis')
 
+    # FIXME: implement apply_by (this might be this function) and apply
+    def apply(self, transform, axes=None, dtype=None, ascending=True, args=(), **kwargs):
+        r"""
+        Apply func to array elements along axes.
+
+        Parameters
+        ----------
+        transform : function or mapping
+            Function or mapping to apply to elements of the array.
+            The axes and dtype of all results must be the same. Functions will be called with the original value
+            as first argument and must return a single new value. A mapping (dict) must have the values to transform
+            as keys and the new values as values, that is: {<oldvalue1>: <newvalue1>, <oldvalue2>: <newvalue2>, ...}.
+        axes : str, int or Axis or tuple/list/AxisCollection of the them, optional
+            Axis or axes along which to operate. Defaults to None (all axes).
+            Using the axes argument only works with a function transform.
+        dtype : type, optional
+            Output dtype. Defaults to None (inspect all output values to infer it automatically).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        args : tuple, optional
+            Extra arguments to pass to the function. Defaults to ().
+        **kwargs
+            Extra keyword arguments are passed to the function (as keyword arguments).
+
+        Returns
+        -------
+        LArray or scalar
+            Axes will be the union of those in axis and those of values returned by the function.
+
+        Notes
+        -----
+        To apply a transformation given as an LArray (with current values as labels on one axis of
+        the array and desired values as the array values), you can use: ``mapping_arr[original_arr]``.
+
+        Examples
+        --------
+        First let us define a test array
+
+        >>> arr = LArray([[0, 2, 1],
+        ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   2   1
+         a1   3   1   5
+
+        Here is a simple function we would like to apply to each element of the array.
+        Note that this particular example should rather be written as: arr ** 2
+        as it is both more concise and much faster.
+
+        >>> def square(x):
+        ...     return x ** 2
+        >>> arr.apply(square)
+        a\b  b0  b1  b2
+         a0   0   4   1
+         a1   9   1  25
+
+        Now, assuming for a moment that the values of our test array above were in fact some numeric representation of
+        names and we had the correspondence to the actual names stored in a dictionary:
+
+        >>> code_to_names = {0: 'foo', 1: 'bar', 2: 'baz',
+        ...                  3: 'boo', 4: 'far', 5: 'faz'}
+
+        We could get back an array with the actual names by using:
+
+        >>> arr.apply(code_to_names)
+        a\b   b0   b1   b2
+         a0  foo  baz  bar
+         a1  boo  bar  faz
+
+        Functions can also be applied along some axes:
+
+        >>> # this is equivalent to (but much slower than): arr.sum_by('a')
+        ... arr.apply(sum, 'a')
+        a  a0  a1
+            3   9
+
+        Applying the function along some axes will return an array with the
+        union of those axes and the axes of the returned values. For example,
+        let us define a function which returns the k highest values of an array.
+
+        >>> def topk(a, k=2):
+        ...     return a.sort_values(ascending=False).ignore_labels().i[:k]
+        >>> arr.apply(topk, 'a')
+        a\b*  0  1
+          a0  2  1
+          a1  5  3
+
+        Other arguments can be passed to the function as a tuple in the "args" argument:
+
+        >>> arr.apply(topk, axes='a', args=(3,))
+        a\b*  0  1  2
+          a0  2  1  0
+          a1  5  3  1
+
+        or by using keyword arguments:
+
+        >>> arr.apply(topk, axes='a', k=3)
+        a\b*  0  1  2
+          a0  2  1  0
+          a1  5  3  1
+        """
+        if axes is None:
+            if isinstance(transform, abc.Mapping):
+                mapping = transform
+
+                def transform(v):
+                    return mapping.get(v, v)
+            if dtype is None:
+                vfunc = np.vectorize(transform)
+            else:
+                vfunc = np.vectorize(transform, otypes=[dtype])
+            return LArray(vfunc(self.data, *args, **kwargs), self.axes)
+        else:
+            if not callable(transform):
+                raise TypeError("using the 'axes' argument in LArray.apply() only works with a function 'transform'")
+            # this is necessary so that stack output is nice.
+            # XXX: when iter_labels returns NDGroups, this might not be necessary anymore
+            axes = self.axes[axes]
+            # TODO: implement res_axes argument in stack. I guess computing res_axes (by examining each value) takes a
+            # significant time of stack and here we can know it in advance in the usual case (ie each return value
+            # of func has the same axes)
+            values = (self,) + args + tuple(kwargs.values())
+            first_kw = 1 + len(args)
+            kwnames = tuple(kwargs.keys())
+            res_arr = stack([(k, transform(*a_and_kwa[:first_kw], **dict(zip(kwnames, a_and_kwa[first_kw:]))))
+                             for k, a_and_kwa in zip_array_items(values, axes, ascending)],
+                            axis=axes, dtype=dtype)
+
+            # transpose back axis where it was
+            return res_arr.transpose(self.axes & res_arr.axes)
+
+
+def zip_array_values(values, axes=None, ascending=True):
+    r"""
+
+    Parameters
+    ----------
+    axes : int, str or Axis or tuple of them, optional
+        Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
+        all arrays, in the order they are found).
+    ascending : bool, optional
+        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+    Returns
+    -------
+    Sequence
+
+    Examples
+    --------
+    >>> arr1 = ndtest('a=a0,a1;b=b1,b2')
+    >>> arr2 = ndtest('a=a0,a1;c=c1,c2')
+    >>> arr1
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    >>> arr2
+    a\c  c1  c2
+     a0   0   1
+     a1   2   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2), 'a'):
+    ...     print("==")
+    ...     print(a1)
+    ...     print(a2)
+    ==
+    b  b1  b2
+        0   1
+    c  c1  c2
+        0   1
+    ==
+    b  b1  b2
+        2   3
+    c  c1  c2
+        2   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2), arr2.c):
+    ...     print("==")
+    ...     print(a1)
+    ...     print(a2)
+    ==
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        0   2
+    ==
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        1   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2)):
+    ...     print("arr1: {}, arr2: {}".format(a1, a2))
+    arr1: 0, arr2: 0
+    arr1: 0, arr2: 1
+    arr1: 1, arr2: 0
+    arr1: 1, arr2: 1
+    arr1: 2, arr2: 2
+    arr1: 2, arr2: 3
+    arr1: 3, arr2: 2
+    arr1: 3, arr2: 3
+    """
+    def values_with_expand(value, axes, readonly=True, ascending=True):
+        if isinstance(value, LArray):
+            # an Axis axis is not necessarily in array.axes
+            expanded = value.expand(axes, readonly=readonly)
+            return expanded.values(axes, ascending=ascending)
+        else:
+            size = axes.size if axes.ndim else 0
+            return Repeater(value, size)
+
+    all_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    if axes is None:
+        axes = all_axes
+    else:
+        if not isinstance(axes, (tuple, list, AxisCollection)):
+            axes = (axes,)
+        # transform string axes definitions to objects
+        axes = [Axis(axis) if isinstance(axis, basestring) and '=' in axis else axis
+                for axis in axes]
+        axes = AxisCollection([axis if isinstance(axis, Axis) else all_axes[axis]
+                               for axis in axes])
+
+    # sequence of tuples (of scalar or arrays)
+    return SequenceZip([values_with_expand(v, axes, ascending=ascending) for v in values])
+
+
+def zip_array_items(values, axes=None, ascending=True):
+    r"""
+
+    Parameters
+    ----------
+    values : Iterable
+        arrays or values to combine.
+    axes : int, str or Axis or tuple of them, optional
+        Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
+        all arrays, in the order they are found).
+    ascending : bool, optional
+        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+    Returns
+    -------
+    Sequence
+
+    Examples
+    --------
+    >>> arr1 = ndtest('a=a0,a1;b=b0,b1')
+    >>> arr2 = ndtest('a=a0,a1;c=c0,c1')
+    >>> arr1
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> arr2
+    a\c  c0  c1
+     a0   0   1
+     a1   2   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2), 'a'):
+    ...     print("==", k[0], "==")
+    ...     print(a1)
+    ...     print(a2)
+    == a0 ==
+    b  b0  b1
+        0   1
+    c  c0  c1
+        0   1
+    == a1 ==
+    b  b0  b1
+        2   3
+    c  c0  c1
+        2   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2), arr2.c):
+    ...     print("==", k[0], "==")
+    ...     print(a1)
+    ...     print(a2)
+    == c0 ==
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        0   2
+    == c1 ==
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        1   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2)):
+    ...     print(k, "arr1: {}, arr2: {}".format(a1, a2))
+    (a.i[0], b.i[0], c.i[0]) arr1: 0, arr2: 0
+    (a.i[0], b.i[0], c.i[1]) arr1: 0, arr2: 1
+    (a.i[0], b.i[1], c.i[0]) arr1: 1, arr2: 0
+    (a.i[0], b.i[1], c.i[1]) arr1: 1, arr2: 1
+    (a.i[1], b.i[0], c.i[0]) arr1: 2, arr2: 2
+    (a.i[1], b.i[0], c.i[1]) arr1: 2, arr2: 3
+    (a.i[1], b.i[1], c.i[0]) arr1: 3, arr2: 2
+    (a.i[1], b.i[1], c.i[1]) arr1: 3, arr2: 3
+    """
+    res_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    return SequenceZip((res_axes.iter_labels(axes, ascending=ascending),
+                        zip_array_values(values, axes=axes, ascending=ascending)))
+
 
 def larray_equal(a1, a2):
     import warnings
@@ -9083,3 +9360,5 @@ original_float_error_handler = np.seterrcall(_default_float_error_handler)
 # - pyexcelerate: yet faster but also write only. Didn't check whether API is more featured than xlsxwriter or not.
 # - xlwings: wraps win32com & equivalent on mac, so can potentially do everything (I guess) but this is SLOW and needs
 #            a running excel instance, etc.
+
+zip_array_values((1, 2))
