@@ -6,13 +6,13 @@ from larray.util.options import OPTIONS
 
 def test_invalid_option_raises():
     with pytest.raises(ValueError):
-        larray.set_printoptions(not_a_valid_options=True)
+        larray.set_options(not_a_valid_options=True)
 
 
 def test_set_options_as_global():
     original_ops = OPTIONS.copy()
     arr = larray.ndtest((500, 100))
-    larray.set_printoptions(display_width=40, maxlines=10)
+    larray.set_options(display_width=40, display_maxlines=10)
     expected = """\
  a\\b     b0     b1  ...    b98    b99
   a0      0      1  ...     98     99
@@ -27,4 +27,4 @@ a497  49700  49701  ...  49798  49799
 a498  49800  49801  ...  49898  49899
 a499  49900  49901  ...  49998  49999"""
     assert str(arr) == expected
-    larray.set_printoptions(**original_ops)
+    larray.set_options(**original_ops)

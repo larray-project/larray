@@ -65,7 +65,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
-from larray.util.options import OPTIONS, DISPLAY_PRECISION, DISPLAY_WIDTH, MAXLINES, EDGEITEMS
+from larray.util.options import OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS
 
 
 def all(values, axis=None):
@@ -2278,7 +2278,7 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            maxlines = OPTIONS[MAXLINES] if OPTIONS[MAXLINES] is not None else 200
+            maxlines = OPTIONS[DISPLAY_MAXLINES] if OPTIONS[DISPLAY_MAXLINES] is not None else 200
             table = list(self.as_table(maxlines))
             return table2str(table, 'nan', keepcols=self.ndim - 1)
     __repr__ = __str__
@@ -2352,9 +2352,9 @@ class LArray(ABCLArray):
 
         # get default options
         if maxlines is None:
-            maxlines = OPTIONS[MAXLINES]
+            maxlines = OPTIONS[DISPLAY_MAXLINES]
         if edgeitems is None:
-            edgeitems = OPTIONS[EDGEITEMS]
+            edgeitems = OPTIONS[DISPLAY_EDGEITEMS]
 
         # ert     unit  geo\time  2012    2011    2010
         # NEER27  I05   AT        101.41  101.63  101.63
