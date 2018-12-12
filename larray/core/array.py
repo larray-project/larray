@@ -2278,8 +2278,7 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            maxlines = OPTIONS[DISPLAY_MAXLINES] if OPTIONS[DISPLAY_MAXLINES] is not None else 200
-            table = list(self.as_table(maxlines))
+            table = list(self.as_table())
             return table2str(table, 'nan', keepcols=self.ndim - 1)
     __repr__ = __str__
 
@@ -2296,7 +2295,7 @@ class LArray(ABCLArray):
         Parameters
         ----------
         maxlines : int, optional
-            Maximum number of lines to show. Default behavior shows all lines.
+            Maximum number of lines to show. If 0 all lines are shown.
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
@@ -2389,7 +2388,7 @@ class LArray(ABCLArray):
         other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
         yield axes_names + other_colnames
         # summary if needed
-        if maxlines is not None and height > maxlines:
+        if maxlines > 0 and height > maxlines:
             # replace middle lines of the table by '...'.
             # We show only the first and last edgeitems lines.
             startticks = islice(ticks, edgeitems)
@@ -2431,7 +2430,7 @@ class LArray(ABCLArray):
             # flatten all dimensions except the last one
             return self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table(wide=wide, value_name=value_name))
+            return list(self.as_table(maxlines=0, wide=wide, value_name=value_name))
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
