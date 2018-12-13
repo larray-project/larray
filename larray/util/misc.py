@@ -133,7 +133,7 @@ def get_min_width(table, index):
     return max(longest_word(row[index]) for row in table)
 
 
-def table2str(table, missing, summarize=True, maxwidth=None, numedges='auto', sep='  ', cont='...',
+def table2str(table, missing, summarize=True, maxwidth=200, numedges='auto', sep='  ', cont='...',
               keepcols=0, precision=None):
     """
     table is a list of lists
@@ -141,13 +141,6 @@ def table2str(table, missing, summarize=True, maxwidth=None, numedges='auto', se
     """
     if not table:
         return ''
-
-    from larray.util.options import OPTIONS, DISPLAY_WIDTH, DISPLAY_PRECISION
-    if maxwidth is None:
-        maxwidth = OPTIONS[DISPLAY_WIDTH]
-    if precision is None:
-        precision = OPTIONS[DISPLAY_PRECISION]
-
     numcol = max(len(row) for row in table)
     # pad rows that have too few columns
     for row in table:
