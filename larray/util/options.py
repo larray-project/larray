@@ -20,14 +20,14 @@ OPTIONS = {
 }
 
 
+def _integer(value):
+    if not isinstance(value, int):
+        raise ValueError("Expected integer")
+
+
 def _positive_integer(value):
     if not (isinstance(value, int) and value > 0):
         raise ValueError("Expected positive integer")
-
-
-def _non_negative_integer(value):
-    if not (isinstance(value, int) and value >= 0):
-        raise ValueError("Expected non-negative integer")
 
 
 def _positive_integer_or_none(value):
@@ -40,7 +40,7 @@ def _positive_integer_or_none(value):
 _VALIDATORS = {
     DISPLAY_PRECISION: _positive_integer_or_none,
     DISPLAY_WIDTH: _positive_integer,
-    DISPLAY_MAXLINES: _non_negative_integer,
+    DISPLAY_MAXLINES: _integer,
     DISPLAY_EDGEITEMS: _positive_integer,
 }
 

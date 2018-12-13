@@ -65,7 +65,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
-from larray.util.options import OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS
+from larray.util.options import OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
 def all(values, axis=None):
@@ -2278,8 +2278,9 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            table = list(self.as_table())
-            return table2str(table, 'nan', keepcols=self.ndim - 1)
+            table = list(self.as_table(OPTIONS[DISPLAY_MAXLINES], OPTIONS[DISPLAY_EDGEITEMS]))
+            return table2str(table, 'nan', maxwidth=OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
+                             precision=OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
 
     def __iter__(self):
@@ -2288,20 +2289,20 @@ class LArray(ABCLArray):
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
-    def as_table(self, maxlines=None, edgeitems=None, light=False, wide=True, value_name='value'):
+    def as_table(self, maxlines=-1, edgeitems=5, light=False, wide=True, value_name='value'):
         r"""
         Generator. Returns next line of the table representing an array.
 
         Parameters
         ----------
         maxlines : int, optional
-            Maximum number of lines to show. If 0 all lines are shown.
-            See :py:obj:`set_options` for default value.
+            Maximum number of lines to show. If negative all lines are shown.
+            Defaults to -1.
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
             Only active if `maxlines` is not 0.
-            See :py:obj:`set_options` for default value.
+            Defaults to 5.
         light: bool, optional
             Whether or not printing the array in the same way as a pandas DataFrame with a MultiIndex
             (see example below). Defaults to False.
@@ -2350,12 +2351,6 @@ class LArray(ABCLArray):
         """
         if not self.ndim:
             return
-
-        # get default options
-        if maxlines is None:
-            maxlines = OPTIONS[DISPLAY_MAXLINES]
-        if edgeitems is None:
-            edgeitems = OPTIONS[DISPLAY_EDGEITEMS]
 
         # ert     unit  geo\time  2012    2011    2010
         # NEER27  I05   AT        101.41  101.63  101.63
@@ -2432,7 +2427,7 @@ class LArray(ABCLArray):
             # flatten all dimensions except the last one
             return self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table(maxlines=0, wide=wide, value_name=value_name))
+            return list(self.as_table(maxlines=-1, wide=wide, value_name=value_name))
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
