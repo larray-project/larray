@@ -2666,6 +2666,19 @@ def test_reindex():
                                            a1   b2  -1"""))
 
 
+def test_expand():
+    country = Axis("country=BE,FR,DE")
+    arr = ndtest(country)
+
+    out1 = empty((sex, country))
+    arr.expand(out=out1)
+
+    out2 = empty((sex, country))
+    out2[:] = arr
+
+    assert_array_equal(out1, out2)
+
+
 def test_append(small_array):
     sex, lipro = small_array.axes
 

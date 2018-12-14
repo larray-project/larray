@@ -5494,7 +5494,8 @@ class LArray(ABCLArray):
             Self can contain axes not present in `target_axes`.
             The result axes will be: [self.axes not in target_axes] + target_axes
         out : LArray, optional
-            Output array, must have the correct shape
+            Output array, must have more axes than array. Defaults to a new array.
+            arr.expand(out=out) is equivalent to out[:] = arr
         readonly : bool, optional
             Whether returning a readonly view is acceptable or not (this is much faster)
 
@@ -5526,16 +5527,16 @@ class LArray(ABCLArray):
         a2   b1   2   2
         a2   b2   3   3
         """
-        if target_axes is None and out is None or target_axes is not None and out is not None:
-            raise ValueError("either target_axes or out must be defined (not both)")
+        if sum([target_axes is not None, out is not None]) != 1:
+            raise ValueError("exactly one of either `target_axes` or `out` must be defined (not both)")
+
         if out is not None:
-            target_axes = out.axes
+            out[:] = self
         else:
             if not isinstance(target_axes, AxisCollection):
                 target_axes = AxisCollection(target_axes)
             target_axes = (self.axes - target_axes) | target_axes
 
-        if out is None:
             # this is not strictly necessary but avoids doing this test twice if it is True
             if self.axes == target_axes:
                 return self
@@ -5548,9 +5549,9 @@ class LArray(ABCLArray):
             if readonly:
                 # requires numpy 1.10
                 return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
-            else:
-                out = empty(target_axes, dtype=self.dtype)
-        out[:] = broadcasted
+
+            out = empty(target_axes, dtype=self.dtype)
+            out[:] = broadcasted
         return out
 
     def append(self, axis, value, label=None):
