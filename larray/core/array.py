@@ -5509,6 +5509,8 @@ class LArray(ABCLArray):
                 return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
             else:
                 out = empty(target_axes, dtype=self.dtype)
+        else:
+            broadcasted = self
         out[:] = broadcasted
         return out
 
