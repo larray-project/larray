@@ -20,14 +20,14 @@ OPTIONS = {
 }
 
 
-def _integer(value):
-    if not isinstance(value, int):
-        raise ValueError("Expected integer")
-
-
 def _positive_integer(value):
     if not (isinstance(value, int) and value > 0):
         raise ValueError("Expected positive integer")
+
+
+def _integer_maxlines(value):
+    if not isinstance(value, int) and value >= -1:
+        raise ValueError("Expected integer")
 
 
 def _positive_integer_or_none(value):
@@ -40,7 +40,7 @@ def _positive_integer_or_none(value):
 _VALIDATORS = {
     DISPLAY_PRECISION: _positive_integer_or_none,
     DISPLAY_WIDTH: _positive_integer,
-    DISPLAY_MAXLINES: _integer,
+    DISPLAY_MAXLINES: _integer_maxlines,
     DISPLAY_EDGEITEMS: _positive_integer,
 }
 
@@ -53,11 +53,11 @@ class set_options(object):
 
     - ``display_precision``: number of digits of precision for floating point output.
     - ``display_width``: maximum display width for ``repr`` on larray objects. Defaults to 80.
-    - ``display_maxlines``: Maximum number of lines to show. If 0 all lines are shown.
+    - ``display_maxlines``: Maximum number of lines to show. All lines are shown if -1.
       Defaults to 200.
     - ``display_edgeitems`` : if number of lines to display is greater than ``display_maxlines``,
       only the first and last ``display_edgeitems`` lines are displayed.
-      Only active if ``display_maxlines`` is not 0. Defaults to 5.
+      Only active if ``display_maxlines`` is not -1. Defaults to 5.
 
     Examples
     --------
