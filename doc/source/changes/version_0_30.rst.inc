@@ -259,6 +259,7 @@ Miscellaneous improvements
 
   Closes :issue:`274`.
 
+
 Fixes
 -----
 

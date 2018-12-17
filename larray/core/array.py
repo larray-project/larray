@@ -2296,14 +2296,13 @@ class LArray(ABCLArray):
         Parameters
         ----------
         maxlines : int, optional
-            Maximum number of lines to show. If negative all lines are shown.
-            Defaults to -1.
+            Maximum number of lines to show. Defaults to -1 (all lines are shown).
         edgeitems : int, optional
             If number of lines to display is greater than `maxlines`,
             only the first and last `edgeitems` lines are displayed.
-            Only active if `maxlines` is not 0.
+            Only active if `maxlines` is not -1.
             Defaults to 5.
-        light: bool, optional
+        light : bool, optional
             Whether or not printing the array in the same way as a pandas DataFrame with a MultiIndex
             (see example below). Defaults to False.
         wide : boolean, optional
@@ -2385,7 +2384,7 @@ class LArray(ABCLArray):
         other_colnames = self.axes[-1].labels.tolist() if wide else [value_name]
         yield axes_names + other_colnames
         # summary if needed
-        if maxlines > 0 and height > maxlines:
+        if maxlines >= 0 and height > maxlines:
             # replace middle lines of the table by '...'.
             # We show only the first and last edgeitems lines.
             startticks = islice(ticks, edgeitems)
