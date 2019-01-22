@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 from larray.util.misc import basestring
 
 
-__all__ = ['set_options']
+__all__ = ['set_options', 'get_options']
 
 
 DISPLAY_PRECISION = 'display_precision'
@@ -12,7 +12,7 @@ DISPLAY_MAXLINES = 'display_maxlines'
 DISPLAY_EDGEITEMS = 'display_edgeitems'
 
 
-OPTIONS = {
+_OPTIONS = {
     DISPLAY_PRECISION: None,
     DISPLAY_WIDTH: 80,
     DISPLAY_MAXLINES: 200,
@@ -96,15 +96,42 @@ class set_options(object):
     def __init__(self, **kwargs):
         self.old = {}
         for k, v in kwargs.items():
-            if k not in OPTIONS:
-                raise ValueError('Argument {} is not in the set of valid options {}'.format(k, set(OPTIONS)))
+            if k not in _OPTIONS:
+                raise ValueError('Argument {} is not in the set of valid options {}'.format(k, set(_OPTIONS)))
             if k in _VALIDATORS:
                 _VALIDATORS[k](v)
-            self.old[k] = OPTIONS[k]
-        OPTIONS.update(kwargs)
+            self.old[k] = _OPTIONS[k]
+        _OPTIONS.update(kwargs)
 
     def __enter__(self):
         return
 
     def __exit__(self, type, value, traceback):
-        OPTIONS.update(self.old)
+        _OPTIONS.update(self.old)
+
+
+def get_options():
+    """
+    Return the current options.
+
+    Returns
+    -------
+    Dictionary of current print options with keys
+
+        - display_precision: int
+        - display_width: int
+        - display_maxlines: int
+        - display_edgeitems : int
+
+    For a full description of these options, see :py:obj:`set_options`.
+
+    See Also
+    --------
+    set_options
+
+    Examples
+    --------
+    >>> get_options()
+    {'display_precision': None, 'display_width': 80, 'display_maxlines': 200, 'display_edgeitems': 5}
+    """
+    return _OPTIONS.copy()

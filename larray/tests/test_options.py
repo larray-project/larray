@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import pytest
 import larray
-from larray.util.options import OPTIONS
 
 
 def test_invalid_option_raises():
@@ -10,7 +9,7 @@ def test_invalid_option_raises():
 
 
 def test_set_options_as_global():
-    original_ops = OPTIONS.copy()
+    original_ops = larray.get_options()
     arr = larray.ndtest((500, 100))
     larray.set_options(display_width=40, display_maxlines=10)
     expected = """\
