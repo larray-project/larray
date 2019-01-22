@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-from larray.util.misc import basestring
-
 
 __all__ = ['set_options', 'get_options']
 
@@ -52,6 +50,7 @@ class set_options(object):
     Currently supported options:
 
     - ``display_precision``: number of digits of precision for floating point output.
+      Print as many digits as necessary to uniquely specify the value by default (None).
     - ``display_width``: maximum display width for ``repr`` on larray objects. Defaults to 80.
     - ``display_maxlines``: Maximum number of lines to show. All lines are shown if -1.
       Defaults to 200.
@@ -91,6 +90,11 @@ class set_options(object):
     a497  49700.12  49701.12  49702.12  ...  49797.12  49798.12  49799.12
     a498  49800.12  49801.12  49802.12  ...  49897.12  49898.12  49899.12
     a499  49900.12  49901.12  49902.12  ...  49997.12  49998.12  49999.12
+
+    To put back the default options, you can use:
+
+    >>> set_options(display_precision=None, display_width=80, display_maxlines=200, display_edgeitems=5)
+    ... # doctest: +SKIP
     """
 
     def __init__(self, **kwargs):
@@ -118,7 +122,7 @@ def get_options():
     -------
     Dictionary of current print options with keys
 
-        - display_precision: int
+        - display_precision: int or None
         - display_width: int
         - display_maxlines: int
         - display_edgeitems : int
