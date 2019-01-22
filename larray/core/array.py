@@ -65,7 +65,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
-from larray.util.options import OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
+from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
 def all(values, axis=None):
@@ -2278,9 +2278,9 @@ class LArray(ABCLArray):
         elif not len(self):
             return 'LArray([])'
         else:
-            table = list(self.as_table(OPTIONS[DISPLAY_MAXLINES], OPTIONS[DISPLAY_EDGEITEMS]))
-            return table2str(table, 'nan', maxwidth=OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
-                             precision=OPTIONS[DISPLAY_PRECISION])
+            table = list(self.as_table(_OPTIONS[DISPLAY_MAXLINES], _OPTIONS[DISPLAY_EDGEITEMS]))
+            return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
+                             precision=_OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
 
     def __iter__(self):
