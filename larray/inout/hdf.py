@@ -17,9 +17,6 @@ from larray.inout.pandas import df_aslarray
 from larray.example import get_example_filepath
 
 
-__all__ = ['read_hdf']
-
-
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
     """Reads an axis or group or array named key from a HDF5 file in filepath (path+name)

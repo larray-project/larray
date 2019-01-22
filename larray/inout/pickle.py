@@ -12,9 +12,6 @@ from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
 
 
-__all__ = []
-
-
 @register_file_handler('pickle', ['pkl', 'pickle'])
 class PickleHandler(FileHandler):
     def _open_for_read(self):

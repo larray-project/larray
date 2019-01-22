@@ -67,15 +67,6 @@ from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, R
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute)
 
 
-_deprecated = ['create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal']
-
-__all__ = [
-    'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full', 'full_like', 'sequence',
-    'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye', 'all', 'any', 'sum', 'prod', 'cumsum',
-    'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std', 'median', 'percentile', 'stack',
-] + _deprecated
-
-
 def all(values, axis=None):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -5335,7 +5326,7 @@ class LArray(ABCLArray):
             if not nans_equal:
                 return self == other
             else:
-                from larray.core import isnan
+                from larray.core.npufuncs import isnan
 
                 def general_isnan(a):
                     if np.issubclass_(a.dtype.type, np.inexact):
@@ -6049,7 +6040,7 @@ class LArray(ABCLArray):
         -----
         If `a_min` and/or `a_max` are array_like, broadcast will occur between self, `a_min` and `a_max`.
         """
-        from larray.core import clip
+        from larray.core.npufuncs import clip
         return clip(self, a_min, a_max, out)
 
     @deprecate_kwarg('transpose', 'wide')

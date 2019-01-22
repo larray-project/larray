@@ -1,7 +1,6 @@
 import os
 import larray as la
 
-__all__ = ['get_example_filepath', 'load_example_data']
 
 EXAMPLE_FILES_DIR = os.path.dirname(__file__) + '/tests/data/'
 AVAILABLE_EXAMPLE_DATA = {

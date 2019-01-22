@@ -19,9 +19,6 @@ from larray.inout.misc import from_lists
 from larray.util.misc import PY2, deprecate_kwarg
 
 
-__all__ = ['open_excel', 'Workbook']
-
-
 string_types = (str,)
 
 

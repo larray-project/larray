@@ -10,9 +10,6 @@ from larray.inout.pandas import df_aslarray
 from larray.inout.csv import read_csv
 
 
-__all__ = ['from_lists', 'from_string']
-
-
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False, wide=True):
     """

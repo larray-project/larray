@@ -18,10 +18,6 @@ from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
                               renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice)
 
-_deprecated = ['x']
-
-__all__ = ['Axis', 'AxisCollection', 'X'] + _deprecated
-
 
 class Axis(ABCAxis):
     """

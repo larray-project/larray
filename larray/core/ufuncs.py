@@ -6,9 +6,6 @@ import numpy as np
 from larray.core.array import LArray, raw_broadcastable
 
 
-__all__ = ['maximum', 'minimum', 'where']
-
-
 def broadcastify(func):
     # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
     def wrapper(*args, **kwargs):
