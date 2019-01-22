@@ -21,9 +21,6 @@ from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_t
 from larray.example import get_example_filepath
 
 
-__all__ = ['read_csv', 'read_tsv', 'read_eurostat']
-
-
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=nan,
              na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):

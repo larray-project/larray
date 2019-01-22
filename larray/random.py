@@ -25,9 +25,11 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
-from larray.core import Axis, AxisCollection, LArray, aslarray, stack, ndtest
+from larray.core.axis import Axis, AxisCollection
+from larray.core.array import LArray, aslarray, stack, ndtest
 from larray.core.array import raw_broadcastable
 import larray as la
+
 
 __all__ = ['randint', 'normal', 'uniform', 'permutation', 'choice']
 

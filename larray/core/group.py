@@ -15,10 +15,6 @@ from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
                               renamed_to, LHDFStore)
 
-_deprecated = ['PGroup']
-
-__all__ = ['Group', 'LGroup', 'LSet', 'IGroup', 'union'] + _deprecated
-
 
 def _slice_to_str(key, repr_func=str):
     """

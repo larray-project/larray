@@ -13,9 +13,6 @@ from larray.core.constants import nan
 from larray.util.misc import basestring, decode, unique
 
 
-__all__ = ['from_frame', 'from_series']
-
-
 def parse(s):
     """
     Used to parse the "folded" axis ticks (usually periods).

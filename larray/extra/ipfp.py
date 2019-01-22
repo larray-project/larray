@@ -4,8 +4,6 @@ from collections import deque
 from larray.core.array import LArray, aslarray, ones, any
 import numpy as np
 
-__all__ = ['ipfp']
-
 
 def badvalues(a, bad_filter):
     bad_values = a[bad_filter]

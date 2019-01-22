@@ -1,11 +1,97 @@
 from __future__ import absolute_import, division, print_function
 
-from larray.core import *
-from larray.inout import *
-from larray.util import *
-from larray.example import *
-from larray.extra import *
-from larray.viewer import *
+__version__ = '0.30-dev'
+
+
+from larray.core.axis import Axis, AxisCollection, X
+from larray.core.group import Group, LGroup, LSet, IGroup, union
+from larray.core.array import (LArray, zeros, zeros_like, ones, ones_like, empty, empty_like, full,
+                               full_like, sequence, labels_array, ndtest, aslarray, identity, diag,
+                               eye, all, any, sum, prod, cumsum, cumprod, min, max, mean, ptp, var,
+                               std, median, percentile, stack)
+from larray.core.session import Session, local_arrays, global_arrays, arrays
+from larray.core.constants import nan, inf, pi, e, euler_gamma
+from larray.core.metadata import Metadata
+from larray.core.ufuncs import maximum, minimum, where
+from larray.core.npufuncs import (sin, cos, tan, arcsin, arccos, arctan, hypot, arctan2, degrees,
+                                  radians, unwrap, sinh, cosh, tanh, arcsinh, arccosh, arctanh,
+                                  angle, real, imag, conj,
+                                  round, around, round_, rint, fix, floor, ceil, trunc,
+                                  exp, expm1, exp2, log, log10, log2, log1p, logaddexp, logaddexp2,
+                                  i0, sinc, signbit, copysign, frexp, ldexp,
+                                  convolve, clip, sqrt, absolute, fabs, sign, fmax, fmin, nan_to_num,
+                                  real_if_close, interp, isnan, isinf, inverse)
+
+from larray.inout.misc import from_lists, from_string
+from larray.inout.pandas import from_frame, from_series
+from larray.inout.csv import read_csv, read_tsv, read_eurostat
+from larray.inout.excel import read_excel
+from larray.inout.hdf import read_hdf
+from larray.inout.sas import read_sas
+from larray.inout.xw_excel import open_excel, Workbook
+
+from larray.viewer import view, edit, compare
+
+from larray.extra.ipfp import ipfp
+
+from larray.example import get_example_filepath, load_example_data
+
 import larray.random
 
-__version__ = '0.30-dev'
+
+__all__ = [
+    # axis
+    'Axis', 'AxisCollection', 'X',
+    # group
+    'Group', 'LGroup', 'LSet', 'IGroup', 'union',
+    # array
+    'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full',
+    'full_like', 'sequence', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
+    'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std',
+    'median', 'percentile', 'stack',
+    # session
+    'Session', 'local_arrays', 'global_arrays', 'arrays',
+    # constants
+    'nan', 'inf', 'pi', 'e', 'euler_gamma',
+    # metadata
+    'Metadata',
+    # ufuncs
+    'maximum', 'minimum', 'where',
+    'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'hypot', 'arctan2', 'degrees', 'radians',
+    'unwrap', 'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+    'angle', 'real', 'imag', 'conj',
+    'round', 'around', 'round_', 'rint', 'fix', 'floor', 'ceil', 'trunc',
+    'exp', 'expm1', 'exp2', 'log', 'log10', 'log2', 'log1p', 'logaddexp', 'logaddexp2',
+    'i0', 'sinc', 'signbit', 'copysign', 'frexp', 'ldexp',
+    'convolve', 'clip', 'sqrt', 'absolute', 'fabs', 'sign', 'fmax', 'fmin', 'nan_to_num',
+    'real_if_close', 'interp', 'isnan', 'isinf', 'inverse',
+    # inout
+    'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
+    'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'open_excel', 'Workbook',
+    # viewer
+    'view', 'edit', 'compare',
+    # ipfp
+    'ipfp',
+    # example
+    'get_example_filepath', 'load_example_data',
+]
+
+
+# ==== DEPRECATED API ====
+
+from larray.core.axis import x
+from larray.core.group import PGroup
+from larray.core.array import (create_sequential, ndrange, larray_equal, larray_nan_equal,
+                               nan_equal, element_equal)
+
+
+_deprecated = [
+    # axis
+    'x',
+    # group
+    'PGroup',
+    # array
+    'create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal',
+]
+
+__all__ += _deprecated

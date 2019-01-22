@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-__all__ = ['nan', 'inf', 'pi', 'e', 'euler_gamma']
 
 nan = np.nan
 r"NaN (Not a Number)"

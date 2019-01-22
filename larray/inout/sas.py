@@ -10,9 +10,6 @@ from larray.inout.pandas import df_aslarray
 from larray.util.misc import deprecate_kwarg
 
 
-__all__ = ['read_sas']
-
-
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_sas(filepath, nb_axes=None, index_col=None, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              **kwargs):

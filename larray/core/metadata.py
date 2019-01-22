@@ -5,9 +5,6 @@ from collections import OrderedDict
 from larray.util.misc import PY2, basestring
 
 
-__all__ = ['Metadata']
-
-
 if PY2:
     class AttributeDict(object):
         def __init__(self, *args, **kwargs):
