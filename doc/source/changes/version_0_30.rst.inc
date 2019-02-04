@@ -285,3 +285,7 @@ Fixes
   of the API Reference (closes :issue:`698`).
 
 * fixed arithmetic operations between two sessions returning a nan value for each axis and group (closes :issue:`725`).
+
+* fixed dumping sessions with metadata in HDF format (closes :issue:`702`).
+
+* fixed minimum version of pandas to install. The minimum version is now 0.20.0.
