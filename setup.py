@@ -16,7 +16,7 @@ DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
 SETUP_REQUIRES = []
 # excludes numpy 1.16.* because it is incompatible with pytables < 3.5
-INSTALL_REQUIRES = ['numpy >= 1.13, != 1.16.*', 'pandas >= 0.13.1']
+INSTALL_REQUIRES = ['numpy >= 1.13, != 1.16.*', 'pandas >= 0.20.0']
 TESTS_REQUIRE = ['pytest', 'pytest-pep8']
 
 LICENSE = 'GPLv3'

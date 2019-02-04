@@ -143,11 +143,13 @@ class PandasHDFHandler(FileHandler):
             raise TypeError()
 
     def _read_metadata(self):
-        attrs = self.handle.get_node('')._v_attrs
-        return attrs.metadata if 'metadata' in attrs else Metadata()
+        metadata = Metadata.from_hdf(self.handle)
+        if metadata is None:
+            metadata = Metadata()
+        return metadata
 
     def _dump_metadata(self, metadata):
-        self.handle.get_node('')._v_attrs.metadata = metadata
+        metadata.to_hdf(self.handle)
 
     def close(self):
         self.handle.close()
