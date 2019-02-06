@@ -135,7 +135,7 @@ def get_options():
 
     Examples
     --------
-    >>> get_options()
+    >>> get_options() # doctest: +SKIP
     {'display_precision': None, 'display_width': 80, 'display_maxlines': 200, 'display_edgeitems': 5}
     """
     return _OPTIONS.copy()
