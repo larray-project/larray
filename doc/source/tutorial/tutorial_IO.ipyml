@@ -13,7 +13,6 @@ cells:
     import warnings
     warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
 
-  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -21,7 +20,6 @@ cells:
     # first of all, import the LArray library
     from larray import *
 
-  id: 1
 
 - markdown: |
     Check the version of LArray:
@@ -31,7 +29,6 @@ cells:
     from larray import __version__
     __version__
 
-  id: 2
 
 - markdown: |
     ## Loading and Dumping Arrays
@@ -51,7 +48,6 @@ cells:
     pop = read_csv(csv_dir + '/pop.csv')
     pop
 
-  id: 3
 
 - markdown: |
     To read an array from a sheet of an Excel file, you can use the ``read_excel`` function:
@@ -65,7 +61,6 @@ cells:
     births = read_excel(filepath_excel, 'births')
     births
 
-  id: 4
 
 - markdown: |
     The ``open_excel`` function in combination with the ``load`` method allows you to load several arrays from the same Workbook without opening and closing it several times:
@@ -108,7 +103,6 @@ cells:
     deaths = read_hdf(filepath_hdf, 'deaths')
     deaths
 
-  id: 5
 
 - markdown: |
     ### Dumping Arrays - Basic Usage (CSV, Excel, HDF5)
@@ -120,7 +114,6 @@ cells:
     # save the array pop in the file 'pop.csv'
     pop.to_csv('pop.csv')
 
-  id: 6
 
 - markdown: |
     To write an array to a sheet of an Excel file, you can use the ``to_excel`` method:
@@ -130,7 +123,6 @@ cells:
     # save the array pop in the sheet 'pop' of the Excel file 'population.xlsx' 
     pop.to_excel('population.xlsx', 'pop')
 
-  id: 7
 
 - markdown: |
     Note that ``to_excel`` create a new Excel file if it does not exist yet. 
@@ -141,7 +133,6 @@ cells:
     # add a new sheet 'births' to the file 'population.xlsx' and save the array births in it
     births.to_excel('population.xlsx', 'births')
 
-  id: 8
 
 - markdown: |
     To reset an Excel file, you simply need to set the `overwrite_file` argument as True:
@@ -152,7 +143,6 @@ cells:
     # 2. create a sheet 'pop' and save the array pop in it
     pop.to_excel('population.xlsx', 'pop', overwrite_file=True)
 
-  id: 9
 
 - markdown: |
     The ``open_excel`` function in combination with the ``dump()`` method allows you to open a Workbook and to export several arrays at once. If the Excel file doesn't exist, the ``overwrite_file`` argument must be set to True.
@@ -180,14 +170,13 @@ cells:
 
 
 - markdown: |
-    To write an array in an HDF5 file, you must use the ``read_hdf`` function and provide the key that will be associated with the array:
+    To write an array in an HDF5 file, you must use the ``to_hdf`` function and provide the key that will be associated with the array:
 
 
 - code: |
     # save the array pop in the file 'population.h5' and associate it with the key 'pop'
     pop.to_hdf('population.h5', 'pop')
 
-  id: 10
 
 - markdown: |
     ### Specifying Wide VS Narrow format (CSV, Excel)
@@ -216,14 +205,12 @@ cells:
     pop_BE_FR = read_csv(csv_dir + '/pop_narrow_format.csv', wide=False)
     pop_BE_FR
 
-  id: 11
 
 - code: |
     # same for the read_excel function
     pop_BE_FR = read_excel(filepath_excel, sheet='pop_narrow_format', wide=False)
     pop_BE_FR
 
-  id: 12
 
 - markdown: |
     By default, writing functions will set the name of the column containing the data to 'value'. You can choose the name of this column by using the ``value_name`` argument. For example, using ``value_name='population'`` you can export the previous array as:
@@ -246,13 +233,11 @@ cells:
     # same but replace 'value' by 'population'
     pop_BE_FR.to_csv('pop_narrow_format.csv', wide=False, value_name='population')
 
-  id: 13
 
 - code: |
     # same for the to_excel method
     pop_BE_FR.to_excel('population.xlsx', 'pop_narrow_format', wide=False, value_name='population')
 
-  id: 14
 
 - markdown: |
     Like with the ``to_excel`` method, it is possible to export arrays in a ``narrow`` format using ``open_excel``. 
@@ -468,7 +453,6 @@ cells:
     # shape and data type of the output array are not what we expected
     pop.info
 
-  id: 15
 
 - code: |
     # by setting the 'nb_axes' argument, you can indicate to read_csv the number of axes of the output array
@@ -480,7 +464,6 @@ cells:
     # shape and data type of the output array are what we expected
     pop.info
 
-  id: 16
 
 - code: |
     # same for the read_excel function
@@ -488,7 +471,6 @@ cells:
     pop = pop.rename(-1, 'time')
     pop.info
 
-  id: 17
 
 - markdown: |
     ### NaNs and Missing Data Handling at Reading (CSV, Excel)
@@ -511,7 +493,6 @@ cells:
     # In that case, the output array is converted to a float array
     read_csv(csv_dir + '/pop_missing_values.csv')
 
-  id: 18
 
 - markdown: |
     However, it is possible to choose which value to use to fill missing cells using the ``fill_value`` argument:
@@ -520,13 +501,11 @@ cells:
 - code: |
     read_csv(csv_dir + '/pop_missing_values.csv', fill_value=0)
 
-  id: 19
 
 - code: |
     # same for the read_excel function
     read_excel(filepath_excel, sheet='pop_missing_values', fill_value=0)
 
-  id: 20
 
 - markdown: |
     ### Sorting Axes at Reading (CSV, Excel, HDF5)
@@ -538,17 +517,14 @@ cells:
     # sort labels at reading --> Male and Female labels are inverted
     read_csv(csv_dir + '/pop.csv', sort_rows=True)
 
-  id: 21
 
 - code: |
     read_excel(filepath_excel, sheet='births', sort_rows=True)
 
-  id: 22
 
 - code: |
     read_hdf(filepath_hdf, key='deaths', sort_rows=True)
 
-  id: 23
 
 - markdown: |
     ### Metadata (HDF5)
@@ -562,7 +538,6 @@ cells:
     
     pop.info
 
-  id: 24
 
 - markdown: |
     These metadata are automatically saved and loaded when working with the HDF5 file format:  
@@ -574,7 +549,6 @@ cells:
     new_pop = read_hdf('population.h5', 'pop')
     new_pop.info
 
-  id: 25
 
 - markdown: |
     <div class="alert alert-warning">
@@ -615,7 +589,6 @@ cells:
     
     print(session.summary())
 
-  id: 26
 
 - markdown: |
     2) Call the ``load`` method on an existing session and pass the path to the Excel/HDF5 file or to the directory containing CSV files as first argument:
@@ -628,7 +601,6 @@ cells:
     
     print(session.summary())
 
-  id: 27
 
 - code: |
     # call the load method on the previous session and add the 'births' and 'deaths' arrays to it
@@ -637,7 +609,6 @@ cells:
     
     print(session.summary())
 
-  id: 28
 
 - markdown: |
     The ``load`` method offers some options:
@@ -653,7 +624,6 @@ cells:
     
     print(session.summary())
 
-  id: 29
 
 - markdown: |
     2) Setting the ``display`` argument to True, the ``load`` method will print a message each time a new item is loaded:  
@@ -666,7 +636,6 @@ cells:
     # each time a new item is loaded
     session.load(filepath_hdf, display=True)
 
-  id: 30
 
 - markdown: |
     ### Dumping Sessions (CSV, Excel, HDF5)
@@ -688,15 +657,14 @@ cells:
     # load session saved in 'population.h5' to see its content
     Session('population.h5')
 
-  id: 31
 
 - markdown: |
     <div class="alert alert-info">
-      **Note:** Concerning the CSV and Excel formats:  
+      Note: Concerning the CSV and Excel formats:  
       
-      - all Axis objects are saved together in the same Excel sheet (CSV file) named __axes__(.csv)  
-      - all Group objects are saved together in the same Excel sheet (CSV file) named __groups__(.csv)  
-      - metadata is saved in one Excel sheet (CSV file) named __metadata__(.csv)  
+      - all Axis objects are saved together in the same Excel sheet (CSV file) named `__axes__(.csv)`  
+      - all Group objects are saved together in the same Excel sheet (CSV file) named `__groups__(.csv)`  
+      - metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`  
       
       These sheet (CSV file) names cannot be changed. 
     </div>
@@ -715,7 +683,6 @@ cells:
     # load session saved in 'population.h5' to see its content
     Session('population.h5')
 
-  id: 32
 
 - markdown: |
     2) By default, dumping a session to an Excel or HDF5 file will overwrite it. By setting the ``overwrite`` argument to False, you can choose to update the existing Excel or HDF5 file: 
@@ -733,7 +700,6 @@ cells:
     # load session saved in 'population.h5' to see its content
     Session('population.h5')
 
-  id: 33
 
 - markdown: |
     3) Setting the ``display`` argument to True, the ``save`` method will print a message each time an item is dumped:  
@@ -744,7 +710,6 @@ cells:
     # each time an item is dumped
     session.save('population.h5', display=True)
 
-  id: 34
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -763,27 +728,10 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.6.8
   livereveal:
     autolaunch: false
     scroll: true
 nbformat: 4
 nbformat_minor: 2
-
-# ---------------------------------------------------------------------------
-data:
-  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
 
