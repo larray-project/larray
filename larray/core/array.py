@@ -895,6 +895,7 @@ class LArray(ABCLArray):
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
 
+    # TODO: the first slice in example below should be documented
     @lazy_attribute
     def i(self):
         """
@@ -912,7 +913,6 @@ class LArray(ABCLArray):
         a1   b1  16  17  18  19
         a1   b2  20  21  22  23
 
-        # TODO: the first slice here should be documented
         >>> arr.i[:, 0:2, [0, 2]]
          a  b\\c  c0  c2
         a0   b0   0   2
@@ -956,6 +956,9 @@ class LArray(ABCLArray):
         """
         return LArrayPointsIndexer(self)
 
+    # TODO: show that we need to use a "full slice" for leaving the dimension alone
+    # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
+    # (except at the end)
     @lazy_attribute
     def ipoints(self):
         """
@@ -976,9 +979,6 @@ class LArray(ABCLArray):
         To select the two points with index coordinates
         [0, 0, 0] and [1, 2, 2], you must do:
 
-        # TODO: show that we need to use a "full slice" for leaving the dimension alone
-        # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
-        # (except at the end)
         >>> arr.ipoints[[0,1], [0,2], [0,2]]
         a_b_c  a0_b0_c0  a1_b2_c2
                       0        22
