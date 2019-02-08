@@ -697,6 +697,7 @@ class lazy_attribute(object):
     """
     def __init__(self, func):
         self.func = func
+        self.__doc__ = self.func.__doc__
 
     # descriptor protocol
     # see https://docs.python.org/3/reference/datamodel.html#implementing-descriptors
