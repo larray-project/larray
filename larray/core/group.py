@@ -668,6 +668,7 @@ def _translate_group_key_hdf(key):
     return key
 
 
+# TODO: kill this function
 def union(*args):
     # TODO: add support for LGroup and lists
     """
@@ -1613,7 +1614,7 @@ class LSet(LGroup):
 
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
-        if isinstance(key, LGroup):
+        if isinstance(key, Group):
             if name is None:
                 name = key.name
             if axis is None:
