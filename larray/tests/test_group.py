@@ -4,8 +4,8 @@ import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal
-from larray import Axis, LGroup, LSet, ndtest, read_hdf
-
+from larray import Axis, IGroup, LGroup, LSet, ndtest, read_hdf
+from larray.util.oset import OrderedSet
 
 age = Axis('age=0..10')
 lipro = Axis('lipro=P01..P05')
@@ -164,6 +164,24 @@ def test_to_int_lgroup():
 def test_to_float_lgroup():
     a = Axis(['42'], 'a')
     assert float(a['42']) == 42.0
+
+
+def test_to_lset_lgroup():
+    alpha = Axis('alpha=a,b,c,d')
+
+    # list key
+    lg = LGroup(['a', 'a', 'c'], axis=alpha)
+    res = lg.set()
+    assert isinstance(res, LSet)
+    assert res.axis is alpha
+    assert res.key == OrderedSet(['a', 'c'])
+
+    # scalar key
+    lg = LGroup('c', axis=alpha)
+    res = lg.set()
+    assert isinstance(res, LSet)
+    assert res.axis is alpha
+    assert res.key == OrderedSet(['c'])
 
 
 def test_h5_io_lgroup(tmpdir):
@@ -381,6 +399,24 @@ def test_to_int_igroup():
 def test_to_float_igroup():
     a = Axis(['42'], 'a')
     assert float(a.i[0]) == 42.0
+
+
+def test_to_lset_igroup():
+    alpha = Axis('alpha=a,b,c,d')
+
+    # list key
+    ig = IGroup([0, 0, 2], axis=alpha)
+    res = ig.set()
+    assert isinstance(res, LSet)
+    assert res.axis is alpha
+    assert res.key == OrderedSet(['a', 'c'])
+
+    # scalar key
+    ig = IGroup(2, axis=alpha)
+    res = ig.set()
+    assert isinstance(res, LSet)
+    assert res.axis is alpha
+    assert res.key == OrderedSet(['c'])
 
 
 def test_h5_io_igroup(tmpdir):
