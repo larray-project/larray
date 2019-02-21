@@ -310,3 +310,9 @@ Fixes
 * fixed minimum version of pandas to install. The minimum version is now 0.20.0.
 
 * fixed from_frame for dataframes with non string index names.
+
+* fixed creating an LSet from an IGroup with a (single) scalar key
+
+    >>> a = Axis('a=a0,a1,a2')
+    >>> a.i[1].set()
+    a['a1'].set()
