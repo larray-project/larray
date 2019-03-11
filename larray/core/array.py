@@ -2458,7 +2458,9 @@ class LArray(ABCLArray):
                 # returns next line (labels of N-1 first axes + data)
                 yield list(tick) + dataline.tolist()
 
-    def dump(self, header=True, wide=True, value_name='value', light=False):
+    # TODO: merge with as_table
+    # XXX: dump as a 2D LArray with row & col dims?
+    def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is'):
         """Dump array as a 2D nested list
 
         Parameters
@@ -2475,6 +2477,13 @@ class LArray(ABCLArray):
         light : bool, optional
             Whether or not to hide repeated labels. In other words, only show a label if it is different from the
             previous one. Defaults to False.
+        axes_names : bool or 'except_last', optional
+            Assuming header is True, whether or not to include axes names. Defaults to True. If axes_names is
+            'except_last', all axes names will be included except the last.
+            last_axis : bool, optional
+            Whether or not to include the last axis name preceded by a '\'. Defaults to True.
+        na_repr : any scalar, optional
+            Replace missing values (NaN floats) by this value. Default to 'as_is' (do not do any replacement).
 
         Returns
         -------
@@ -2482,9 +2491,15 @@ class LArray(ABCLArray):
         """
         if not header:
             # flatten all dimensions except the last one
-            return self.data.reshape(-1, self.shape[-1]).tolist()
+            res2d = self.data.reshape(-1, self.shape[-1]).tolist()
         else:
-            return list(self.as_table(wide=wide, value_name=value_name, light=light))
+            res2d = list(self.as_table(wide=wide, value_name=value_name, light=light, axes_names=axes_names))
+        if na_repr != 'as_is':
+            # isnan is
+            res2d = [[na_repr if value != value else value
+                      for value in line]
+                     for line in res2d]
+        return res2d
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
