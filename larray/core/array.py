@@ -2337,8 +2337,8 @@ class LArray(ABCLArray):
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
-    def as_table(self, maxlines=None, edgeitems=5, light=False, wide=True, value_name='value'):
-        """
+    def as_table(self, maxlines=None, edgeitems=5, light=False, wide=True, value_name='value', axes_names=True):
+        r"""
         Generator. Returns next line of the table representing an array.
 
         Parameters
@@ -2360,6 +2360,8 @@ class LArray(ABCLArray):
         value_name : str, optional
             Name of the column containing the values (last column) when `wide=False` (see above).
             Defaults to 'value'.
+        axes_names : bool or 'except_last', optional
+            Whether or not to include the last axis name preceded by a '\'. Defaults to True.
 
         Returns
         -------
@@ -2370,13 +2372,13 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 3))
         >>> list(arr.as_table())  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['a0', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
          ['a1', 'b1', 9, 10, 11]]
         >>> list(arr.as_table(light=True))  # doctest: +NORMALIZE_WHITESPACE
-        [['a', 'b\\\\c', 'c0', 'c1', 'c2'],
+        [['a', 'b\\c', 'c0', 'c1', 'c2'],
          ['a0', 'b0', 0, 1, 2],
          ['', 'b1', 3, 4, 5],
          ['a1', 'b0', 6, 7, 8],
@@ -2409,13 +2411,19 @@ class LArray(ABCLArray):
             width = 1
             height = int(np.prod(self.shape))
         data = np.asarray(self).reshape(height, width)
+        display_axes_names = axes_names
 
         # get list of names of axes
         axes_names = self.axes.display_names[:]
         # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
         if wide and len(axes_names) > 1:
-            axes_names[-2] = '\\'.join(axes_names[-2:])
-            axes_names.pop()
+            if display_axes_names is True:
+                axes_names[-2] = '\\'.join(axes_names[-2:])
+                axes_names.pop()
+            elif display_axes_names == 'except_last':
+                axes_names = axes_names[:-1]
+            else:
+                axes_names = [''] * (len(axes_names) - 1)
         axes = self.axes[:-1] if wide else self.axes
         # get list of labels for each axis (except the last one if wide=True)
         labels = [axis.labels.tolist() for axis in axes]
