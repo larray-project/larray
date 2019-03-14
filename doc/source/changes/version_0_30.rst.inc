@@ -218,6 +218,9 @@ Miscellaneous improvements
 
 * updated the ``Working With Sessions`` section of the tutorial (closes :issue:`568`).
 
+* renamed `a_min` and `a_max` arguments of :py:obj:`LArray.clip()` as `minval` and `maxval` respectively
+  and made them optional (closes :issue:`747`).
+
 
 Fixes
 -----
