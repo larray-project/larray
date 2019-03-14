@@ -6014,8 +6014,8 @@ class LArray(ABCLArray):
         return LArray(self.data.transpose(axes_indices), self.axes[axes_indices])
     T = property(transpose)
 
-    def clip(self, a_min, a_max, out=None):
-        """Clip (limit) the values in an array.
+    def clip(self, minval=None, maxval=None, out=None):
+        r"""Clip (limit) the values in an array.
 
         Given an interval, values outside the interval are clipped to the interval edges.
         For example, if an interval of [0, 1] is specified, values smaller than 0 become 0,
@@ -6023,10 +6023,14 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        a_min : scalar or array-like
-            Minimum value.
-        a_max : scalar or array-like
-            Maximum value.
+        minval : scalar or array-like, optional
+            Minimum value. If None, clipping is not performed on lower interval edge.
+            Not more than one of `minval` and `maxval` may be None.
+            Defaults to None.
+        maxval : scalar or array-like, optional
+            Maximum value. If None, clipping is not performed on upper interval edge.
+            Not more than one of `minval` and `maxval` may be None.
+            Defaults to None.
         out : LArray, optional
             The results will be placed in this array.
 
@@ -6034,14 +6038,44 @@ class LArray(ABCLArray):
         -------
         LArray
             An array with the elements of the current array,
-            but where values < `a_min` are replaced with `a_min`, and those > `a_max` with `a_max`.
+            but where values < `minval` are replaced with `minval`, and those > `maxval` with `maxval`.
 
         Notes
         -----
-        If `a_min` and/or `a_max` are array_like, broadcast will occur between self, `a_min` and `a_max`.
+        If `minval` and/or `maxval` are array_like, broadcast will occur between self, `minval` and `maxval`.
+
+        Examples
+        --------
+        >>> arr = ndtest((3, 3)) - 3
+        >>> arr
+        a\b  b0  b1  b2
+         a0  -3  -2  -1
+         a1   0   1   2
+         a2   3   4   5
+        >>> arr.clip(0, 2)
+        a\b  b0  b1  b2
+         a0   0   0   0
+         a1   0   1   2
+         a2   2   2   2
+
+        Clipping on lower interval edge only
+
+        >>> arr.clip(0)
+        a\b  b0  b1  b2
+         a0   0   0   0
+         a1   0   1   2
+         a2   3   4   5
+
+        Clipping on upper interval edge only
+
+        >>> arr.clip(maxval=2)
+        a\b  b0  b1  b2
+         a0  -3  -2  -1
+         a1   0   1   2
+         a2   2   2   2
         """
         from larray.core.npufuncs import clip
-        return clip(self, a_min, a_max, out)
+        return clip(self, minval, maxval, out)
 
     @deprecate_kwarg('transpose', 'wide')
     def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None,
