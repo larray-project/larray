@@ -2425,6 +2425,7 @@ class LArray(ABCLArray):
             else:
                 axes_names = [''] * (len(axes_names) - 1)
         axes = self.axes[:-1] if wide else self.axes
+        # MEGA-FIXME: ensure that it will work in xlwings (see dump below)
         # get list of labels for each axis (except the last one if wide=True)
         labels = [axis.labels.tolist() for axis in axes]
         # creates vertical lines (ticks is a list of list)
@@ -2490,7 +2491,13 @@ class LArray(ABCLArray):
         2D nested list
         """
         if not header:
+            # MEGA-FIXME: ensure that either
+            # * we have no numpy types left here (this can be the case with tolist if we have a numpy array with
+            #   object dtype with numpy types in some of its cells (this is the 65535 dc2019 bug)!)
+            # * xlwings accepts those
+            # Unsure where this should be fixed. In np.array.tolist, in xlwings or in larray.
             # flatten all dimensions except the last one
+            # same fix should be applies in as_table above (it uses tolist too)
             res2d = self.data.reshape(-1, self.shape[-1]).tolist()
         else:
             res2d = list(self.as_table(wide=wide, value_name=value_name, light=light, axes_names=axes_names))
