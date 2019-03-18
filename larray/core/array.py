@@ -6017,22 +6017,24 @@ class LArray(ABCLArray):
     def clip(self, minval=None, maxval=None, out=None):
         r"""Clip (limit) the values in an array.
 
-        Given an interval, values outside the interval are clipped to the interval edges.
+        Given an interval, values outside the interval are clipped to the interval bounds.
         For example, if an interval of [0, 1] is specified, values smaller than 0 become 0,
         and values larger than 1 become 1.
 
         Parameters
         ----------
         minval : scalar or array-like, optional
-            Minimum value. If None, clipping is not performed on lower interval edge.
-            Not more than one of `minval` and `maxval` may be None.
+            Minimum value. If None, clipping is not performed on lower bound.
             Defaults to None.
         maxval : scalar or array-like, optional
-            Maximum value. If None, clipping is not performed on upper interval edge.
-            Not more than one of `minval` and `maxval` may be None.
+            Maximum value. If None, clipping is not performed on upper bound.
             Defaults to None.
         out : LArray, optional
             The results will be placed in this array.
+
+        Notes
+        -----
+        At least either `minval` or `maxval` must be defined.
 
         Returns
         -------
@@ -6058,7 +6060,7 @@ class LArray(ABCLArray):
          a1   0   1   2
          a2   2   2   2
 
-        Clipping on lower interval edge only
+        Clipping on lower bound only
 
         >>> arr.clip(0)
         a\b  b0  b1  b2
@@ -6066,7 +6068,7 @@ class LArray(ABCLArray):
          a1   0   1   2
          a2   3   4   5
 
-        Clipping on upper interval edge only
+        Clipping on upper bound only
 
         >>> arr.clip(maxval=2)
         a\b  b0  b1  b2
