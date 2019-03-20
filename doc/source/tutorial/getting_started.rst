@@ -3,7 +3,14 @@
 Getting Started
 ===============
 
-To use the LArray library, the first thing to do is to import it
+The purpose of the present **Getting Started** section is to give a quick overview
+of the main objects and features of the LArray library.
+To get a more detailed presentation of all capabilities of LArray, read the
+next sections of the tutorial.
+The :ref:`API Reference <start_api>` section of the documentation give you the list
+of all objects, methods and functions with their individual documentation and examples.
+
+To use the LArray library, the first thing to do is to import it:
 
 .. ipython:: python
 
@@ -12,14 +19,23 @@ To use the LArray library, the first thing to do is to import it
 Create an array
 ---------------
 
-Working with the larray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
-They represent N-dimensional labelled arrays and are composed of data (numpy ndarray), :ref:`axes <api-axis>`
-and optionally some metadata. An axis contains a list of labels and may have a name (if not given, the axis is
-anonymous).
+Working with the LArray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
+They represent N-dimensional labelled arrays and are composed of raw data (NumPy ndarray), :ref:`axes <api-axis>`
+and optionally some metadata.
 
-TODO: this section needs more explanation / presentation of the objects.
+An axis represents a dimension of an array. It contains a list of labels and has a name:
 
-You can create an array from scratch by supplying data, axes and optionally some metadata:
+.. ipython:: python
+
+    # define some axes to be used later
+    age = Axis(['0-9', '10-17', '18-66', '67+'], 'age')
+    sex = Axis(['F', 'M'], 'sex')
+    year = Axis([2015, 2016, 2017], 'year')
+
+The labels allow to select subsets and to manipulate the data without working with the positions
+of array elements directly.
+
+To create an array from scratch, you need to supply data and axes:
 
 .. ipython:: python
 
@@ -33,86 +49,78 @@ You can create an array from scratch by supplying data, axes and optionally some
             [[1023, 1038, 1053],
              [756, 775, 793]]]
 
-    # define axes
-    age = Axis(["0-9", "10-17", "18-66", "67+"], "age")
-    sex = Axis(["F", "M"], "sex")
-    year = Axis([2015, 2016, 2017], "year")
-
-    # create LArray object
-    pop = LArray(data, [age, sex, year], meta=[("title", "population by age, sex and year")])
+    # create an LArray object
+    pop = LArray(data, axes=[age, sex, year])
     pop
 
-Here are the key properties for an array:
+You can optionally attach some metadata to an array:
 
-* Array summary : dimensions + description of axes
+.. ipython:: python
 
-    .. ipython:: python
+    # attach some metadata to the pop array
+    pop.meta.title = 'population by age, sex and year'
+    pop.meta.source = 'Eurostat'
 
-        pop.info
+    # display metadata
+    pop.meta
 
-# TODO: move this in a section of the tutorial (inspecting arrays)
+To get a short summary an array, type:
 
-* number of dimensions
+.. ipython:: python
 
-    .. ipython:: python
+    # Array summary: metadata + dimensions + description of axes
+    pop.info
 
-        pop.ndim
 
-* length of each dimension
+Create an array filled with predefined values
+---------------------------------------------
 
-    .. ipython:: python
+Arrays filled with predefined values can be generated through dedicated functions:
 
-        pop.shape
-
-* total number of elements of the array
-
-    .. ipython:: python
-
-        pop.size
-
-* size in memory of the array
-
-    .. ipython:: python
-
-        pop.memory_used
-
-* type of the data of the array
-
-    .. ipython:: python
-
-        pop.dtype
-
-TODO: this section needs more explanation!!!
-
-Arrays can be generated through dedicated functions:
-
-* :py:func:`zeros` : fills an array with 0
-* :py:func:`ones` : fills an array with 1
-* :py:func:`full` : fills an array with a given
-* :py:func:`eye` : identity matrix
-* :py:func:`ndtest` : creates a test array with increasing numbers as data
-* :py:func:`sequence` : creates an array by sequentially applying modifications to the array along axis.
+* :py:func:`zeros` : creates an array filled with 0
 
 .. ipython:: python
 
    zeros([age, sex])
 
-   ndtest((3, 3))
+* :py:func:`ones` : creates an array filled with 1
+
+.. ipython:: python
+
+   ones([age, sex])
+
+* :py:func:`full` : creates an array filled with a given value
+
+.. ipython:: python
+
+   full([age, sex], fill_value=10.0)
+
+* :py:func:`sequence` : creates an array by sequentially applying modifications to the array along axis.
+
+.. ipython:: python
+
+   sequence(age)
+
+* :py:func:`ndtest` : creates a test array with increasing numbers as data
+
+.. ipython:: python
+
+   ndtest([age, sex])
+
 
 Save/Load an array
 ------------------
 
 The LArray library offers many I/O functions to read and write arrays in various formats
-(CSV, Excel, HDF5, pickle). For example, to save an array in a CSV file, call the method
+(CSV, Excel, HDF5). For example, to save an array in a CSV file, call the method
 :py:meth:`~LArray.to_csv`:
-
-For example, to save our ``pop`` array to a ``.csv`` file
 
 .. ipython:: python
 
+    # save our pop array to a CSV file
     pop.to_csv('belgium_pop.csv')
 
-The content of 'belgium_pop.csv' is then::
+The content of the CSV file is then::
 
     age,sex\time,2015,2016,2017
     0-9,F,633,635,634
@@ -140,8 +148,8 @@ Other input/output functions are described in the :ref:`corresponding section <a
 Selecting a subset
 ------------------
 
-To select an element or a subset of an array, use brackets [ ]. In Python we usually use the term *indexing* for this
-operation.
+To select an element or a subset of an array, use brackets [ ].
+In Python we usually use the term *indexing* for this operation.
 
 Let us start by selecting a single element:
 
@@ -149,13 +157,13 @@ Let us start by selecting a single element:
 
     pop['67+', 'F', 2017]
 
-Labels can be given in arbitrary order
+Labels can be given in arbitrary order:
 
 .. ipython:: python
 
     pop[2017, 'F', '67+']
 
-When selecting a larger subset the result is an array
+When selecting a larger subset the result is an array:
 
 .. ipython:: python
 
@@ -170,21 +178,19 @@ When selecting several labels for the same axis, they must be given as a list (e
 
 You can also select *slices*, which are all labels between two bounds (we usually call them the `start` and `stop`
 bounds). Specifying the `start` and `stop` bounds of a slice is optional: when not given, `start` is the first label
-of the corresponding axis, `stop` the last one.
-
-.. note::
-    Contrary to slices on normal Python lists, the ``stop`` bound **is** included in the selection.
-
-TODO: need some text here (it s ugly to have code just after the note)
+of the corresponding axis, `stop` the last one:
 
 .. ipython:: python
 
-    # in this case "10-17":"67+" is equivalent to ["10-17", "18-66", "67+"]
-    pop["F", "10-17":"67+"]
+    # in this case '10-17':'67+' is equivalent to ['10-17', '18-66', '67+']
+    pop['F', '10-17':'67+']
 
-    # :"18-66" selects all labels between the first one and "18-66"
+    # :'18-66' selects all labels between the first one and '18-66'
     # 2017: selects all labels between 2017 and the last one
-    pop[:"18-66", 2017:]
+    pop[:'18-66', 2017:]
+
+.. note::
+    Contrary to slices on normal Python lists, the ``stop`` bound **is** included in the selection.
 
 .. warning::
 
@@ -194,11 +200,11 @@ TODO: need some text here (it s ugly to have code just after the note)
     ValueError: <somelabel> is ambiguous (valid in <axis1>, <axis2>).
 
 For example, let us create a test array with an ambiguous label. We first create an axis (some kind of status code)
-with an "F" label (remember we already have an "F" label on the sex axis).
+with an 'F' label (remember we already have an 'F' label on the sex axis).
 
 .. ipython:: python
 
-    status = Axis(["A", "C", "F"], "status")
+    status = Axis(['A', 'C', 'F'], 'status')
 
 Then create a test array using both axes
 
@@ -207,13 +213,13 @@ Then create a test array using both axes
     ambiguous_arr = ndtest([sex, status, year])
     ambiguous_arr
 
-If we try to get the subset of our array concerning women (represented by the "F" label in our array), we might
+If we try to get the subset of our array concerning women (represented by the 'F' label in our array), we might
 try something like:
 
 .. ipython:: python
     :verbatim:
 
-    ambiguous_arr[2017, "F"]
+    ambiguous_arr[2017, 'F']
 
 ... but we receive back a volley of insults ::
 
@@ -221,11 +227,11 @@ try something like:
     [...]
     ValueError: F is ambiguous (valid in sex, status)
 
-In that case, we have to specify explicitly which axis the "F" label we want to select belongs to:
+In that case, we have to specify explicitly which axis the 'F' label we want to select belongs to:
 
 .. ipython:: python
 
-    ambiguous_arr[2017, sex["F"]]
+    ambiguous_arr[2017, sex['F']]
 
 
 Aggregation
@@ -239,24 +245,24 @@ For example, assuming we still have an array in the ``pop`` variable:
 
     pop
 
-We can sum along the "sex" axis using:
+We can sum along the 'sex' axis using:
 
 .. ipython:: python
 
-    pop.sum("sex")
+    pop.sum('sex')
 
-Or sum along both "age" and "sex":
+Or sum along both 'age' and 'sex':
 
 .. ipython:: python
 
-    pop.sum("age", "sex")
+    pop.sum('age', 'sex')
 
 It is sometimes more convenient to aggregate along all axes **except** some. In that case, use the aggregation
 methods ending with `_by`. For example:
 
 .. ipython:: python
 
-    pop.sum_by("year")
+    pop.sum_by('year')
 
 See :ref:`here <la_agg>` to get the list of all available aggregation methods.
 
@@ -268,17 +274,17 @@ A :ref:`Group <api-group>` represents a subset of labels or positions of an axis
 
 .. ipython:: python
 
-    children = age["0-9", "10-17"]
+    children = age['0-9', '10-17']
     children
 
 It is often useful to attach them an explicit name using the ``>>`` operator:
 
 .. ipython:: python
 
-    working = age["10-17"] >> "working"
+    working = age['10-17'] >> 'working'
     working
 
-    nonworking = age["0-9", "10-17", "67+"] >> "nonworking"
+    nonworking = age['0-9', '10-17', '67+'] >> 'nonworking'
     nonworking
 
 Still using the same ``pop`` array:
@@ -321,15 +327,15 @@ To create a session, you need to pass a list of pairs (array_name, array):
     arr1 = ndtest((2, 4))
     arr2 = ndtest((4, 2))
 
-    arrays = [("arr0", arr0), ("arr1", arr1), ("arr2", arr2)]
+    arrays = [('arr0', arr0), ('arr1', arr1), ('arr2', arr2)]
     ses = Session(arrays)
 
     # displays names of arrays contained in the session
     ses.names
     # get an array
-    ses["arr0"]
+    ses['arr0']
     # add/modify an array
-    ses["arr3"] = ndtest((2, 2, 2))
+    ses['arr3'] = ndtest((2, 2, 2))
 
 .. warning::
 
@@ -343,8 +349,8 @@ One of the main interests of using sessions is to save and load many arrays at o
 .. ipython:: python
     :okwarning:
 
-    ses.save("my_session.h5")
-    ses = Session("my_session.h5")
+    ses.save('my_session.h5')
+    ses = Session('my_session.h5')
 
 
 Graphical User Interface (viewer)
@@ -365,7 +371,7 @@ To explore the content of arrays in read-only mode, import ``larray-editor`` and
     view(ses)
 
     # the session may be directly loaded from a file
-    view("my_session.h5")
+    view('my_session.h5')
 
     # creates a session with all existing arrays from the current namespace
     # and shows its content
@@ -385,7 +391,7 @@ Finally, you can also visually compare two arrays or sessions using the :py:func
 
     arr0 = ndtest((3, 3))
     arr1 = ndtest((3, 3))
-    arr1[["a1", "a2"]] = -arr1[["a1", "a2"]]
+    arr1[['a1', 'a2']] = -arr1[['a1', 'a2']]
     compare(arr0, arr1)
 
 .. image:: _static/compare.png
