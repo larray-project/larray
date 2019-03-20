@@ -64,7 +64,7 @@ You can optionally attach some metadata to an array:
     # display metadata
     pop.meta
 
-To get a short summary an array, type:
+To get a short summary of an array, type:
 
 .. ipython:: python
 
@@ -143,7 +143,7 @@ To load a saved array, call the function :py:meth:`read_csv`:
     pop = read_csv('belgium_pop.csv')
     pop
 
-Other input/output functions are described in the :ref:`corresponding section <api-IO>` of the API documentation.
+Other input/output functions are described in the :ref:`Input/Output <api-IO>` section of the API documentation.
 
 Selecting a subset
 ------------------
@@ -206,7 +206,7 @@ with an 'F' label (remember we already have an 'F' label on the sex axis).
 
     status = Axis(['A', 'C', 'F'], 'status')
 
-Then create a test array using both axes
+Then create a test array using both axes 'sex' and 'status':
 
 .. ipython:: python
 
@@ -237,7 +237,7 @@ In that case, we have to specify explicitly which axis the 'F' label we want to 
 Aggregation
 -----------
 
-The LArray library includes many aggregations methods: sum, mean, min, max, std, var, ...
+The LArray library includes many :ref:`aggregations methods <la_agg>`: sum, mean, min, max, std, var, ...
 
 For example, assuming we still have an array in the ``pop`` variable:
 
@@ -249,22 +249,20 @@ We can sum along the 'sex' axis using:
 
 .. ipython:: python
 
-    pop.sum('sex')
+    pop.sum(sex)
 
 Or sum along both 'age' and 'sex':
 
 .. ipython:: python
 
-    pop.sum('age', 'sex')
+    pop.sum(age, sex)
 
 It is sometimes more convenient to aggregate along all axes **except** some. In that case, use the aggregation
 methods ending with `_by`. For example:
 
 .. ipython:: python
 
-    pop.sum_by('year')
-
-See :ref:`here <la_agg>` to get the list of all available aggregation methods.
+    pop.sum_by(year)
 
 
 Groups
