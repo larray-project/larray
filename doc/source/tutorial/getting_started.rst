@@ -322,34 +322,36 @@ To create a session, you need to pass a list of pairs (array_name, array):
 
 .. ipython:: python
 
-    arr0 = ndtest((3, 3))
-    arr1 = ndtest((2, 4))
-    arr2 = ndtest((4, 2))
+    pop = zeros([age, sex, year])
+    births = zeros([age, sex, year])
+    deaths = zeros([age, sex, year])
 
-    arrays = [('arr0', arr0), ('arr1', arr1), ('arr2', arr2)]
-    ses = Session(arrays)
+    # create a session containing the three arrays 'pop', 'births' and 'deaths'
+    demo = Session(pop=pop, births=births, deaths=deaths)
 
     # displays names of arrays contained in the session
-    ses.names
+    demo.names
     # get an array
-    ses['arr0']
+    demo['pop']
     # add/modify an array
-    ses['arr3'] = ndtest((2, 2, 2))
+    demo['foreigners'] = zeros([age, sex, year])
 
 .. warning::
 
-    You can also pass a dictionary to the Session's constructor but since elements of a dict object are
-    not ordered by default, you may lose the order. If you are using python 3.6 or later, using keyword
-    arguments is a nice alternative which keeps ordering. For example, the session above can be defined
-    using: `ses = Session(arr0=arr0, arr1=arr1, arr2=arr2)`.
+    If you are using a Python version previous to 3.6, you will have to pass a list of pairs
+    to the Session constructor otherwise the arrays will be stored in an arbitrary order in
+    the new session. For example, the session above must be created using the syntax:
+    `demo=Session([('pop', pop), ('births', births), ('deaths', deaths)])`.
 
 One of the main interests of using sessions is to save and load many arrays at once:
 
 .. ipython:: python
     :okwarning:
 
-    ses.save('my_session.h5')
-    ses = Session('my_session.h5')
+    # dump all arrays contained in the session 'demo' in one HDF5 file
+    demo.save('demo.h5')
+    # load all arrays saved in the HDF5 file 'demo.h5' and store them in the session 'demo'
+    demo = Session('demo.h5')
 
 
 Graphical User Interface (viewer)
