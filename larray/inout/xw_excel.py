@@ -25,6 +25,7 @@ string_types = (str,)
 if xw is not None:
     from xlwings.conversion.pandas_conv import PandasDataFrameConverter
 
+    from xlwings.constants import FileFormat
     global_app = None
 
 
@@ -257,12 +258,32 @@ if xw is not None:
         def sheet_names(self):
             return [s.name for s in self]
 
-        def save(self, path=None):
+        def save(self, path=None, password=None):
+            r"""Save Workbook to file.
+
+            Parameters
+            ----------
+            path : str, optional
+                Path to save the file to. Defaults to None (use the path used when opening the workbook).
+            password : str, optional
+                Password to protect the file. Defaults to None (no password).
+            """
             # saved_path = self.xw_wkb.api.Path
             # was_saved = saved_path != ''
             if path is None and self.delayed_filepath is not None:
                 path = self.delayed_filepath
-            self.xw_wkb.save(path=path)
+
+            if password is not None:
+                if path is None:
+                    raise ValueError("saving a Workbook with a password is only supported for workbooks with an "
+                                     "explicit path (given either when opening the workbook or here as the path "
+                                     "argument)")
+                realpath = os.path.realpath(path)
+                # XXX: this is probably Windows only
+                # using Password as keyword argument does not work !
+                self.xw_wkb.api.SaveAs(realpath, FileFormat.xlOpenXMLWorkbook, password)
+            else:
+                self.xw_wkb.save(path=path)
 
         def close(self):
             # Close the workbook in Excel.
