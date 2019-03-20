@@ -338,7 +338,7 @@ To create a session, you need to pass a list of pairs (array_name, array):
 
 .. warning::
 
-    If you are using a Python version previous to 3.6, you will have to pass a list of pairs
+    If you are using a Python version prior to 3.6, you will have to pass a list of pairs
     to the Session constructor otherwise the arrays will be stored in an arbitrary order in
     the new session. For example, the session above must be created using the syntax:
     `demo=Session([('pop', pop), ('births', births), ('deaths', deaths)])`.
@@ -358,8 +358,8 @@ Graphical User Interface (viewer)
 ---------------------------------
 
 The LArray project provides an optional package called :ref:`larray-editor <start-dependencies-gui>`
-allowing users to explore and edit arrays using a graphical interface.
-This package is automatically installed with **larrayenv**.
+allowing users to explore and edit arrays through a graphical interface.
+The larray-editor tool is automatically available when installing the **larrayenv** metapackage from conda.
 
 To explore the content of arrays in read-only mode, import ``larray-editor`` and call :py:func:`view`
 
