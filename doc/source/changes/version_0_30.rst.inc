@@ -359,6 +359,8 @@ Miscellaneous improvements
   - light : to output axes labels only when they change instead of repeating them on each line
   - na_repr : to specify how to represent N/A (NaN) values
 
+* added password argument to :py:obj:`Workbook.save()` to allow protecting Excel files with a password.
+
 * substantially improved performance of creating, iterating, and doing a few other operations over larray objects.
   This solves a few pathological cases of slow operations, especially those involving many small-ish arrays but sadly
   the overall performance improvement is negligible over most of the real-world models using larray that we tested these
