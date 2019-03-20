@@ -270,6 +270,7 @@ Groups
 
 A :ref:`Group <api-group>` represents a subset of labels or positions of an axis:
 
+
 .. ipython:: python
 
     children = age['0-9', '10-17']
@@ -279,7 +280,7 @@ It is often useful to attach them an explicit name using the ``>>`` operator:
 
 .. ipython:: python
 
-    working = age['10-17'] >> 'working'
+    working = age['18-66'] >> 'working'
     working
 
     nonworking = age['0-9', '10-17', '67+'] >> 'nonworking'
@@ -295,14 +296,14 @@ Groups can be used in selections:
 
 .. ipython:: python
 
-    pop[children]
+    pop[working]
     pop[nonworking]
 
 or aggregations:
 
 .. ipython:: python
 
-    pop.sum(children)
+    pop.sum(nonworking)
 
 When aggregating several groups, the names we set above using ``>>`` determines the label on the aggregated axis.
 Since we did not give a name for the children group, the resulting label is generated automatically :
