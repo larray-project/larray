@@ -230,7 +230,7 @@ cells:
 
 
 - markdown: |
-    Get array summary : dimensions + description of axes
+    Get array summary : metadata + dimensions + description of axes + dtype + size in memory
 
 
 - code: |
@@ -246,7 +246,15 @@ cells:
 
 
 - markdown: |
-    Get array dimensions
+    Get number of dimensions
+
+
+- code: |
+    arr.ndim
+
+
+- markdown: |
+    Get length of each dimension
 
 
 - code: |
@@ -254,11 +262,19 @@ cells:
 
 
 - markdown: |
-    Get number of elements
+    Get total number of elements of the array
 
 
 - code: |
     arr.size
+
+
+- markdown: |
+    Get type of internal data (int, float, ...)
+
+
+- code: |
+    arr.dtype
 
 
 - markdown: |
@@ -395,7 +411,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.6.8
   livereveal:
     autolaunch: false
     scroll: true

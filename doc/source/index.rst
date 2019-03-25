@@ -36,7 +36,6 @@ Contents
    :maxdepth: 2
 
    install
-   getting_started
    tutorial
    api
 
