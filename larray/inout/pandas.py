@@ -141,7 +141,7 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
-               fill_value=nan, meta=None, **kwargs):
+               fill_value=nan, meta=None, cartesian_prod=True, **kwargs):
     r"""
     Converts Pandas DataFrame into LArray.
 
@@ -151,9 +151,12 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         Input dataframe. By default, name and labels of the last axis are defined by the name and labels of the
         columns Index of the dataframe unless argument unfold_last_axis_name is set to True.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
+        Must be False if `cartesian_prod` is set to True.
+        Defaults to False.
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     parse_header : bool, optional
         Whether or not to parse columns labels. Pandas treats column labels as strings.
@@ -167,6 +170,11 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+    cartesian_prod : bool, optional
+        Whether or not to expand the dataframe to a cartesian product dataframe as needed by LArray.
+        This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
+        well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
+        Defaults to True.
 
     Returns
     -------
@@ -223,8 +231,14 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     else:
         axes_names += [df.columns.name]
 
-    df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                                           fill_value=fill_value, **kwargs)
+    if cartesian_prod:
+        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns,
+                                               fill_value=fill_value, **kwargs)
+    else:
+        if sort_rows or sort_columns:
+            raise ValueError('sort_rows and sort_columns cannot not be used when cartesian_prod is set to False. '
+                             'Please call the method sort_axes on the returned array to sort rows or columns')
+        axes_labels = index_to_labels(df.index, sort=False)
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values
     last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
@@ -237,7 +251,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     return LArray(data, axes, meta=meta)
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, **kwargs):
+def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
+                **kwargs):
     """
     Prepare Pandas DataFrame and then convert it into LArray.
 
@@ -246,9 +261,12 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     df : Pandas DataFrame
         Input dataframe.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
+        Must be False if `cartesian_prod` is set to True.
+        Defaults to False.
     sort_columns : bool, optional
         Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     raw : bool, optional
         Whether or not to consider the input dataframe as a raw dataframe, i.e. read without index at all.
@@ -259,6 +277,11 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     wide : bool, optional
         Whether or not to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
+        Defaults to True.
+    cartesian_prod : bool, optional
+        Whether or not to expand the dataframe to a cartesian product dataframe as needed by LArray.
+        This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
+        well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
 
     Returns
@@ -306,7 +329,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
         axes_names = [decode(name, 'utf8') for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
         return from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
-                          unfold_last_axis_name=unfold_last_axis_name, **kwargs)
+                          unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
 
 
 # #################################### #
