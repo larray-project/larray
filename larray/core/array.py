@@ -6194,7 +6194,9 @@ class LArray(ABCLArray):
         key = _translate_group_key_hdf(key)
         with LHDFStore(filepath) as store:
             store.put(key, self.to_frame())
-            store.get_storer(key).attrs.type = 'Array'
+            attrs = store.get_storer(key).attrs
+            attrs.type = 'Array'
+            attrs.writer = 'LArray'
             self.meta.to_hdf(store, key)
 
     @deprecate_kwarg('sheet_name', 'sheet')

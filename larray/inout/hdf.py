@@ -31,9 +31,12 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+        Whether or not to sort the rows alphabetically.
+        Must be False if the read array has been dumped with an larray version >= 0.30.
+        Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Whether or not to sort the columns alphabetically.
+        Must be False if the read array has been dumped with an larray version >= 0.30.
         Defaults to False.
     name : str, optional
         Name of the axis or group to return. If None, name is set to passed key.
@@ -69,12 +72,15 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
     with LHDFStore(filepath_or_buffer) as store:
         pd_obj = store.get(key)
         attrs = store.get_storer(key).attrs
+        writer = attrs.writer if 'writer' in attrs else None
         # for backward compatibility but any object read from an hdf file should have an attribute 'type'
         _type = attrs.type if 'type' in attrs else 'Array'
         _meta = attrs.metadata if 'metadata' in attrs else None
         if _type == 'Array':
+            # cartesian product is not necessary if the array was written by LArray
+            cartesian_prod = writer != 'LArray'
             res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
-                              parse_header=False)
+                              parse_header=False, cartesian_prod=cartesian_prod)
             if _meta is not None:
                 res.meta = _meta
         elif _type == 'Axis':

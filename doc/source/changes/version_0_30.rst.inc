@@ -223,7 +223,6 @@ Miscellaneous improvements
 
 * implemented :py:obj:`LArray.reverse()` method to reverse one or several axes of an array (closes :issue:`631`).
 
-
 * added :py:obj:`set_options` allowing to set options for larray within a ``with`` block or globally:
 
     >>> from larray import *
@@ -271,6 +270,10 @@ Miscellaneous improvements
     {'display_precision': None, 'display_width': 80, 'display_maxlines': 200, 'display_edgeitems': 5}
 
   Closes :issue:`274`.
+
+* improved speed of :py:obj:`read_hdf()` function when reading a stored LArray object dumped with
+  the current and future version of larray. To get benefit of the speedup of reading arrays dumped
+  with older versions of larray, please read and re-dump them. Closes :issue:`563`.
 
 
 Fixes
