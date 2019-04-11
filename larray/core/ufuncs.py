@@ -199,7 +199,7 @@ maximum(x1, x2, out=None, dtype=None)
     Notes
     -----
     The maximum is equivalent to ``where(x1 >= x2, x1, x2)`` when
-    neither x1 nor x2 are nans, but it is faster.
+    neither x1 nor x2 are NaNs, but it is faster.
 
     Examples
     --------
