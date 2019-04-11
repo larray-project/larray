@@ -1211,7 +1211,7 @@ class LArray(ABCLArray):
             b2    5.0
         Name: my_name, dtype: float64
 
-        Drop nan values
+        Drop NaN values
 
         >>> arr['b1'] = nan
         >>> arr
@@ -5615,9 +5615,9 @@ class LArray(ABCLArray):
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
-            Whether or not to consider nan values at the same positions in the two arrays as equal.
-            By default, an array containing nan values is never equal to another array, even if that other array
-            also contains nan values at the same positions. The reason is that a nan value is different from
+            Whether or not to consider NaN values at the same positions in the two arrays as equal.
+            By default, an array containing NaN values is never equal to another array, even if that other array
+            also contains NaN values at the same positions. The reason is that a NaN value is different from
             *anything*, including itself. Defaults to False.
         check_axes : boolean, optional
             Whether or not to check that the set of axes and their order is the same on both sides. Defaults to False.
@@ -5677,7 +5677,7 @@ class LArray(ABCLArray):
         >>> arr2.equals(arr1, rtol=0.01)
         True
 
-        Arrays with nan values
+        Arrays with NaN values
 
         >>> arr1 = ndtest((2, 3), dtype=float)
         >>> arr1['a1', 'b1'] = nan
@@ -5686,9 +5686,9 @@ class LArray(ABCLArray):
          a0  0.0  1.0  2.0
          a1  3.0  nan  5.0
         >>> arr2 = arr1.copy()
-        >>> # By default, an array containing nan values is never equal to another array,
-        >>> # even if that other array also contains nan values at the same positions.
-        >>> # The reason is that a nan value is different from *anything*, including itself.
+        >>> # By default, an array containing NaN values is never equal to another array,
+        >>> # even if that other array also contains NaN values at the same positions.
+        >>> # The reason is that a NaN value is different from *anything*, including itself.
         >>> arr2.equals(arr1)
         False
         >>> # set flag nans_equal to True to overwrite this behavior
@@ -5747,16 +5747,16 @@ class LArray(ABCLArray):
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
-            Whether or not to consider nan values at the same positions in the two arrays as equal.
-            By default, an array containing nan values is never equal to another array, even if that other array
-            also contains nan values at the same positions. The reason is that a nan value is different from
+            Whether or not to consider Nan values at the same positions in the two arrays as equal.
+            By default, an array containing NaN values is never equal to another array, even if that other array
+            also contains NaN values at the same positions. The reason is that a NaN value is different from
             *anything*, including itself. Defaults to False.
 
         Returns
         -------
         LArray
             Boolean array where each cell tells whether corresponding elements of self and other are equal
-            within a tolerance range if given. If nans_equal=True, corresponding elements with nan values
+            within a tolerance range if given. If nans_equal=True, corresponding elements with NaN values
             will be considered as equal.
 
         See Also
