@@ -329,6 +329,7 @@ Changing Axes or Labels
    LArray.set_labels
    LArray.combine_axes
    LArray.split_axes
+   LArray.reverse
 
 .. _la_agg:
 

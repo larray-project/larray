@@ -221,6 +221,8 @@ Miscellaneous improvements
 * renamed `a_min` and `a_max` arguments of :py:obj:`LArray.clip()` as `minval` and `maxval` respectively
   and made them optional (closes :issue:`747`).
 
+* implemented :py:obj:`LArray.reverse()` method to reverse one or several axes of an array (closes :issue:`631`).
+
 
 Fixes
 -----
