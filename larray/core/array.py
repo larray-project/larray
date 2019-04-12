@@ -7144,6 +7144,66 @@ class LArray(ABCLArray):
         return array
     split_axis = renamed_to(split_axes, 'split_axis')
 
+    def reverse(self, axes=None):
+        r"""
+        Reverse axes of an array
+
+        Parameters
+        ----------
+        axes : int, str, Axis or any combination of those
+            axes to reverse. If None, all axes are reversed. Defaults to None.
+
+        Returns
+        -------
+        LArray
+            Array with passed `axes` reversed.
+
+        Examples
+        --------
+        >>> arr = ndtest((2, 2, 2))
+        >>> arr
+         a  b\c  c0  c1
+        a0   b0   0   1
+        a0   b1   2   3
+        a1   b0   4   5
+        a1   b1   6   7
+
+        Reverse one axis
+
+        >>> arr.reverse('c')
+         a  b\c  c1  c0
+        a0   b0   1   0
+        a0   b1   3   2
+        a1   b0   5   4
+        a1   b1   7   6
+
+        Reverse several axes
+
+        >>> arr.reverse(('a', 'c'))
+         a  b\c  c1  c0
+        a1   b0   5   4
+        a1   b1   7   6
+        a0   b0   1   0
+        a0   b1   3   2
+
+        Reverse all axes
+
+        >>> arr.reverse()
+         a  b\c  c1  c0
+        a1   b1   7   6
+        a1   b0   5   4
+        a0   b1   3   2
+        a0   b0   1   0
+        """
+        if axes is None:
+            axes = self.axes
+        else:
+            axes = self.axes[axes]
+        if not isinstance(axes, AxisCollection):
+            axes = AxisCollection(axes)
+        reversed_axes = tuple(axis[::-1] for axis in axes)
+        return self[reversed_axes]
+
 
 def larray_equal(a1, a2):
     import warnings
