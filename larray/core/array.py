@@ -6038,10 +6038,6 @@ class LArray(ABCLArray):
         out : LArray, optional
             The results will be placed in this array.
 
-        Notes
-        -----
-        At least either `minval` or `maxval` must be defined.
-
         Returns
         -------
         LArray
@@ -6050,7 +6046,8 @@ class LArray(ABCLArray):
 
         Notes
         -----
-        If `minval` and/or `maxval` are array_like, broadcast will occur between self, `minval` and `maxval`.
+        * At least either `minval` or `maxval` must be defined.
+        * If `minval` and/or `maxval` are array_like, broadcast will occur between self, `minval` and `maxval`.
 
         Examples
         --------
