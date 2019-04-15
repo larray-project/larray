@@ -16,7 +16,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi, Product)
+                              renamed_to, common_type, lazy_attribute, _isnoneslice, unique_multi, Product)
 
 
 np_frompyfunc = np.frompyfunc
@@ -1344,19 +1344,13 @@ class Axis(ABCAxis):
 
         >>> a.to_hdf('test.h5', 'axes/a')  # doctest: +SKIP
         """
+        from larray.inout.hdf import LHDFStore
         if key is None:
             if self.name is None:
                 raise ValueError("Argument key must be provided explicitly in case of anonymous axis")
             key = self.name
-        key = _translate_group_key_hdf(key)
-        dtype_kind = self.labels.dtype.kind
-        data = np.char.encode(self.labels, 'utf-8') if dtype_kind == 'U' else self.labels
-        s = pd.Series(data=data, name=self.name)
         with LHDFStore(filepath) as store:
-            store.put(key, s)
-            store.get_storer(key).attrs.type = 'Axis'
-            store.get_storer(key).attrs.dtype_kind = dtype_kind
-            store.get_storer(key).attrs.wildcard = self.iswildcard
+            store.put(key, self)
 
     @property
     def dtype(self):

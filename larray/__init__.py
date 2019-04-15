@@ -26,7 +26,7 @@ from larray.inout.misc import from_lists, from_string
 from larray.inout.pandas import from_frame, from_series
 from larray.inout.csv import read_csv, read_tsv, read_eurostat
 from larray.inout.excel import read_excel
-from larray.inout.hdf import read_hdf
+from larray.inout.hdf import read_hdf, LHDFStore
 from larray.inout.sas import read_sas
 from larray.inout.stata import read_stata
 from larray.inout.xw_excel import open_excel, Workbook
@@ -78,6 +78,7 @@ __all__ = [
     'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
     'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'read_stata',
     'open_excel', 'Workbook', 'ExcelReport', 'ReportSheet',
+    'LHDFStore',
     # utils
     'get_options', 'set_options',
     # viewer

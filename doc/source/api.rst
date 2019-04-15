@@ -706,6 +706,25 @@ ReportSheet
    ReportSheet.add_graphs
    ReportSheet.newline
 
+HDF
+===
+
+.. autosummary::
+   :toctree: _generated/
+
+   LHDFStore
+
+.. autosummary::
+   :toctree: _generated/
+
+    LHDFStore.filename
+    LHDFStore.is_open
+    LHDFStore.keys
+    LHDFStore.items
+    LHDFStore.summary
+    LHDFStore.close
+
+
 .. _api-misc:
 
 Miscellaneous

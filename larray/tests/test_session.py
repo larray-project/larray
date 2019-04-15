@@ -153,13 +153,13 @@ def test_names(session):
     assert session.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 
 
-def test_h5_io(tmpdir, session, meta):
+def test_h5_pandas_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.h5')
     session.meta = meta
-    session.save(fpath)
+    session.save(fpath, engine='pandas_hdf')
 
     s = Session()
-    s.load(fpath)
+    s.load(fpath, engine='pandas_hdf')
     # HDF does *not* keep ordering (ie, keys are always sorted +
     # read Axis objects, then Groups objects and finally LArray objects)
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
@@ -169,9 +169,9 @@ def test_h5_io(tmpdir, session, meta):
     a2 = Axis('a=0..2')
     a2_01 = a2['0,1'] >> 'a01'
     e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False)
+    Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False, engine='pandas_hdf')
     s = Session()
-    s.load(fpath)
+    s.load(fpath, engine='pandas_hdf')
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
     assert s['a'].equals(a2)
     assert all(s['a01'] == a2_01)
@@ -180,7 +180,39 @@ def test_h5_io(tmpdir, session, meta):
 
     # load only some objects
     s = Session()
-    s.load(fpath, names=['a', 'a01', 'e', 'f'])
+    s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pandas_hdf')
+    assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+    assert s.meta == meta
+
+
+def test_h5_tables_io(tmpdir, session, meta):
+    fpath = tmp_path(tmpdir, 'test_session.h5')
+    session.meta = meta
+    session.save(fpath, engine='tables_hdf')
+
+    s = Session()
+    s.load(fpath, engine='tables_hdf')
+    # HDF does *not* keep ordering (ie, keys are always sorted +
+    # read Axis objects, then Groups objects and finally LArray objects)
+    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+    assert s.meta == meta
+
+    # update a Group + an Axis + an array (overwrite=False)
+    a2 = Axis('a=0..2')
+    a2_01 = a2['0,1'] >> 'a01'
+    e2 = ndtest((a2, 'b=b0..b2'))
+    Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False, engine='tables_hdf')
+    s = Session()
+    s.load(fpath, engine='tables_hdf')
+    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+    assert s['a'].equals(a2)
+    assert all(s['a01'] == a2_01)
+    assert_array_nan_equal(s['e'], e2)
+    assert s.meta == meta
+
+    # load only some objects
+    s = Session()
+    s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='tables_hdf')
     assert list(s.keys()) == ['a', 'a01', 'e', 'f']
     assert s.meta == meta
 

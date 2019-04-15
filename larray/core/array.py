@@ -62,7 +62,7 @@ from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
 from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
                               float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
-                              renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
+                              renamed_to, deprecate_kwarg, lazy_attribute, unique_multi, SequenceZip,
                               Repeater, Product, ensure_no_numpy_type, PY2)
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
@@ -6734,13 +6734,9 @@ class LArray(ABCLArray):
 
         >>> a.to_hdf('test.h5', 'arrays/a')  # doctest: +SKIP
         """
-        key = _translate_group_key_hdf(key)
+        from larray.inout.hdf import LHDFStore
         with LHDFStore(filepath) as store:
-            store.put(key, self.to_frame())
-            attrs = store.get_storer(key).attrs
-            attrs.type = 'Array'
-            attrs.writer = 'LArray'
-            self.meta.to_hdf(store, key)
+            store.put(key, self)
 
     def to_stata(self, filepath_or_buffer, **kwargs):
         r"""

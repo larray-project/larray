@@ -13,7 +13,7 @@ import pandas as pd
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
-                              renamed_to, LHDFStore)
+                              renamed_to)
 
 
 def _slice_to_str(key, repr_func=str):
@@ -1453,27 +1453,13 @@ class Group(object):
         >>> # save both the group 'b01' and the associated axis 'b'
         >>> b01.to_hdf('test.h5')                   # doctest: +SKIP
         """
+        from larray.inout.hdf import LHDFStore
         if key is None:
             if self.name is None:
                 raise ValueError("Argument key must be provided explicitly in case of anonymous group")
             key = self.name
-        key = _translate_group_key_hdf(key)
-        if axis_key is None:
-            if self.axis.name is None:
-                raise ValueError("Argument axis_key must be provided explicitly if the associated axis is anonymous")
-            axis_key = self.axis.name
-        data = self.eval()
-        dtype_kind = data.dtype.kind if isinstance(data, np.ndarray) else ''
-        if dtype_kind == 'U':
-            data = np.char.encode(data, 'utf-8')
-        s = pd.Series(data=data, name=self.name)
         with LHDFStore(filepath) as store:
-            store.put(key, s)
-            store.get_storer(key).attrs.type = 'Group'
-            store.get_storer(key).attrs.dtype_kind = dtype_kind
-            if axis_key not in store:
-                self.axis.to_hdf(store, key=axis_key)
-            store.get_storer(key).attrs.axis_key = axis_key
+            store.put(key, self, axis_key=axis_key)
 
     # this makes range(LGroup(int)) possible
     def __index__(self):

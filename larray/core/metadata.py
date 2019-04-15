@@ -162,17 +162,3 @@ class Metadata(AttributeDict):
             return value
 
         return Metadata([(key, _convert_value(value)) for key, value in zip(array.axes.labels[0], array.data)])
-
-    # ---------- IO methods ----------
-    def to_hdf(self, hdfstore, key=None):
-        if len(self):
-            attrs = hdfstore.get_storer(key).attrs if key is not None else hdfstore.root._v_attrs
-            attrs.metadata = self
-
-    @classmethod
-    def from_hdf(cls, hdfstore, key=None):
-        attrs = hdfstore.get_storer(key).attrs if key is not None else hdfstore.root._v_attrs
-        if 'metadata' in attrs:
-            return attrs.metadata
-        else:
-            return None

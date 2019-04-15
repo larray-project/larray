@@ -23,7 +23,8 @@ from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empt
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
-from larray.util.misc import StringIO, LHDFStore
+from larray.util.misc import StringIO
+from larray.inout.hdf import LHDFStore
 from larray.core.metadata import Metadata
 
 
@@ -119,11 +120,9 @@ def test_read_set_update_delete_metadata(meta, tmpdir):
 def test_metadata_hdf(meta, tmpdir):
     key = 'meta'
     fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
-    with LHDFStore(fname) as store:
-        ndtest(3).to_hdf(store, key)
-        meta.to_hdf(store, key)
-        meta2 = Metadata.from_hdf(store, key)
-        assert meta2 == meta
+    ndtest(3, meta=meta).to_hdf(fname, key)
+    arr = read_hdf(fname, key)
+    assert arr.meta == meta
 
 
 def test_meta_arg_array_creation(array):
