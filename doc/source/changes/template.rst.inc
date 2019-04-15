@@ -1,7 +1,8 @@
 ﻿.. py:currentmodule:: larray
 
+
 Syntax changes
---------------
+^^^^^^^^^^^^^^
 
 * renamed ``LArray.old_method_name()`` to :py:obj:`LArray.new_method_name()` (closes :issue:`1`).
 
@@ -9,13 +10,13 @@ Syntax changes
 
 
 Backward incompatible changes
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * other backward incompatible changes
 
 
 New features
-------------
+^^^^^^^^^^^^
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
@@ -46,12 +47,12 @@ New features
 .. _misc:
 
 Miscellaneous improvements
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * improved something.
 
 
 Fixes
------
+^^^^^
 
 * fixed something (closes :issue:`1`).

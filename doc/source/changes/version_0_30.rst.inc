@@ -1,13 +1,14 @@
 ﻿.. py:currentmodule:: larray
 
+
 Syntax changes
---------------
+^^^^^^^^^^^^^^
 
 * new syntax
 
 
 Backward incompatible changes
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * :py:obj:`LArray.equals()` now returns True for arrays even when axes are in a different order or some axes are
   missing on either side (but the data is constant over that axis on the other side). To get back the old behavior, use
@@ -98,7 +99,7 @@ Backward incompatible changes
 
 
 New features
-------------
+^^^^^^^^^^^^
 
 * added :py:obj:`LArray.isin()` method to check whether each element of an array is contained in a list (or array) of
   values.
@@ -127,7 +128,7 @@ New features
 
 
 Miscellaneous improvements
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * implemented a simpler pattern language in :py:obj:`Axis.matching()` and :py:obj:`Group.matching()`. In addition to
   regular expressions (which now require using the ``regexp`` argument), the two methods support the following simpler
@@ -277,7 +278,7 @@ Miscellaneous improvements
 
 
 Fixes
------
+^^^^^
 
 * fixed :py:obj:`LArray.divnot0()` being slow when the divisor has many axes and many zeros (closes :issue:`705`).
 
