@@ -8,12 +8,11 @@ from __future__ import print_function, unicode_literals
 
 import sys
 from os.path import abspath, dirname, join
-
 from subprocess import check_call
-from releaser import make_release, update_feedstock, short, no, chdir, doechocall, set_config
+
+from releaser import make_release, update_feedstock, short, no, chdir, set_config, insert_step_func
 from releaser.make_release import steps_funcs as make_release_steps
 from releaser.update_feedstock import steps_funcs as update_feedstock_steps
-
 
 TMP_PATH = r"c:\tmp\larray_new_release"
 TMP_PATH_CONDA = r"c:\tmp\larray_conda_new_release"
@@ -43,6 +42,19 @@ def update_metapackage(context):
     check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', fill('larray =={version}'),
                 fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
                 'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'xlsxwriter', 'xlrd', 'openpyxl', 'xlwings'])
+
+
+def merge_changelogs(config):
+    if config['src_documentation'] is not None:
+        chdir(join(config['build_dir'], config['src_documentation']))
+
+        if not config['public_release']:
+            return
+
+        check_call(['python', 'merge_changelogs.py', config['release_name']])
+
+
+insert_step_func(merge_changelogs, msg='append changelogs from larray-editor project', before='update_changelog')
 
 
 # TODO : move to larrayenv project
@@ -78,14 +90,14 @@ if __name__ == '__main__':
         print("update conda-forge feedstock steps:", ', '.join(f.__name__ for f, _ in update_feedstock_steps))
         print("or")
         print("Usage: {} -a|--announce release_name".format(argv[0]))
-        print("Usage: {} -m release_name".format(argv[0]))
+        print("Usage: {} -m|--meta release_name".format(argv[0]))
         sys.exit()
 
     local_repository = abspath(dirname(__file__))
-    if argv[1] == '-m':
-        config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, argv[2], branch='master',
-                            src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
-        update_metapackage(config)
+    if argv[1] == '-m' or argv[1] == '--meta':
+        local_config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, argv[2], branch='master',
+                                  src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
+        update_metapackage(local_config)
     elif argv[1] == '-a' or argv[1] == '--announce':
         no("Is metapackage larrayenv updated?")
         announce_new_release(argv[2])
