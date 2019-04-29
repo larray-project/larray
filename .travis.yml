@@ -37,7 +37,7 @@ install:
     # might want to avoid the later by installing all dependencies manually
     # except scipy and install pandas with --no-deps
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
-            numpy!=1.16.* pandas pytables matplotlib xlrd openpyxl
+            "numpy>=1.13,!=1.16.*" pandas pytables matplotlib xlrd openpyxl
             xlsxwriter pytest pytest-pep8
     - source activate travisci
 
