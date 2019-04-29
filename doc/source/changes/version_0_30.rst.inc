@@ -276,6 +276,18 @@ Miscellaneous improvements
   the current and future version of larray. To get benefit of the speedup of reading arrays dumped
   with older versions of larray, please read and re-dump them. Closes :issue:`563`.
 
+* allowed to not specifiy the axes in :py:obj:`LArray.set_labels()` (closes :issue:`634`):
+
+    >>> a = ndtest('nat=BE,FO;sex=M,F')
+    >>> a
+    nat\sex  M  F
+         BE  0  1
+         FO  2  3
+    >>> a.set_labels({'M': 'Men', 'BE': 'Belgian'})
+    nat\sex  Men  F
+    Belgian    0  1
+         FO    2  3
+
 
 Fixes
 ^^^^^

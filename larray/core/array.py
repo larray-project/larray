@@ -6592,28 +6592,6 @@ class LArray(ABCLArray):
 
     __array_priority__ = 100
 
-    # XXX: implement guess axis?
-    """
-    # guessing each axis
-    >>> a.set_labels({'M': 'Men', 'BE': 'Belgian'})
-    nat\\sex  Men  Women
-    BE  0  1
-    FO  2  3
-
-    # we have to choose which one to support because it is probably not a good idea to simultaneously support the
-    # following syntax (even though we *could* support both if we split values on , before we determine if the key is
-    # an axis or a label by looking if the value is a list or a single string.
-    >>> a.set_labels({'sex': 'Men,Women', 'BE': 'Belgian'})
-    nat\\sex  Men  Women
-    BE  0  1
-    FO  2  3
-    # this is shorter but I do not like it because string are both quoted and not quoted and you cannot have int
-    # labels
-    >>> a.set_labels(M='Men', BE='Belgian')
-    nat\\sex  Men  Women
-    BE  0  1
-    FO  2  3
-    """
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
         r"""Replaces the labels of an axis of array.
 
@@ -6622,6 +6600,8 @@ class LArray(ABCLArray):
         axis : string or Axis or dict
             Axis for which we want to replace labels, or mapping {axis: changes} where changes can either be the
             complete list of labels, a mapping {old_label: new_label} or a function to transform labels.
+            If there is no ambiguity (two or more axes have the same labels), `axis` can be a direct mapping
+            {old_label: new_label}.
         labels : int, str, iterable or mapping or function, optional
             Integer or list of values usable as the collection of labels for an Axis. If this is mapping, it must be
             {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
@@ -6692,6 +6672,14 @@ class LArray(ABCLArray):
         nat\sex  Men  F
         Belgian    0  1
              FO    2  3
+
+        when there is no ambiguity (two or more axes have the same labels), it is possible to give a mapping
+        between old and new labels
+
+        >>> a.set_labels({'M': 'Men', 'BE': 'Belgian'})
+        nat\sex  Men  F
+        Belgian    0  1
+             FO    2  3
         """
         if axis is None:
             changes = {}
@@ -6706,14 +6694,18 @@ class LArray(ABCLArray):
         # new_axes = [self.axes[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
         new_axes = []
         for old_axis, axis_changes in changes.items():
-            real_axis = self.axes[old_axis]
+            try:
+                real_axis = self.axes[old_axis]
+            except KeyError:
+                axis_changes = {old_axis: axis_changes}
+                real_axis = self._guess_axis(old_axis).axis
             if isinstance(axis_changes, dict):
                 new_axis = real_axis.replace(axis_changes)
             elif callable(axis_changes):
                 new_axis = real_axis.apply(axis_changes)
             else:
                 new_axis = Axis(axis_changes, real_axis.name)
-            new_axes.append((old_axis, new_axis))
+            new_axes.append((real_axis, new_axis))
         axes = self.axes.replace(new_axes)
 
         if inplace:
