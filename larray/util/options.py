@@ -1,9 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
 
-__all__ = ['set_options', 'get_options']
-
-
 DISPLAY_PRECISION = 'display_precision'
 DISPLAY_WIDTH = 'display_width'
 DISPLAY_MAXLINES = 'display_maxlines'

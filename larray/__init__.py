@@ -30,6 +30,8 @@ from larray.inout.hdf import read_hdf
 from larray.inout.sas import read_sas
 from larray.inout.xw_excel import open_excel, Workbook
 
+from larray.util.options import get_options, set_options
+
 from larray.viewer import view, edit, compare
 
 from larray.extra.ipfp import ipfp
@@ -68,6 +70,8 @@ __all__ = [
     # inout
     'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
     'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'open_excel', 'Workbook',
+    # utils
+    'get_options', 'set_options',
     # viewer
     'view', 'edit', 'compare',
     # ipfp
