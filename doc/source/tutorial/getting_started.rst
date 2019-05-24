@@ -380,7 +380,7 @@ To explore the content of arrays in read-only mode, import ``larray-editor`` and
 
 To open the user interface in edit mode, call :py:func:`edit` instead.
 
-.. image:: _static/editor.png
+.. image:: ../_static/editor.png
     :align: center
 
 Once open, you can save and load any session using the `File` menu.
@@ -395,7 +395,7 @@ Finally, you can also visually compare two arrays or sessions using the :py:func
     arr1[['a1', 'a2']] = -arr1[['a1', 'a2']]
     compare(arr0, arr1)
 
-.. image:: _static/compare.png
+.. image:: ../_static/compare.png
     :align: center
 
 In case of two arrays, they must have compatible axes.
@@ -410,10 +410,10 @@ Windows Start Menu. This menu contains:
   * a shortcut to open the graphical interface in edit mode.
   * a shortcut to update `larrayenv`.
 
-.. image:: _static/menu_windows.png
+.. image:: ../_static/menu_windows.png
     :align: center
 
-.. image:: _static/editor_new.png
+.. image:: ../_static/editor_new.png
     :align: center
 
 Once the graphical interface is open, all LArray objects and functions are directly accessible.

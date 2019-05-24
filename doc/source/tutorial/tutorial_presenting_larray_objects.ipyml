@@ -59,7 +59,7 @@ cells:
     ## Groups
     
     A ``Group`` represents a selection of labels from an Axis. It can optionally have a name (using operator ``>>``). 
-    Groups can be used when selecting a subset (#ref needed) of an array and in aggregations (#ref needed). 
+    Groups can be used when selecting a subset of an array and in aggregations. 
     
     Group objects are created as follow:
 
