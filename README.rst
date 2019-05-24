@@ -86,6 +86,9 @@ For IO (HDF, Excel)
 
 - `pytables <http://www.pytables.org/>`__:
   for working with files in HDF5 format.
+- `xlwings <https://www.xlwings.org/>`__:
+  recommended package to get benefit of all Excel features of LArray.
+  Only available on Windows and Mac platforms.
 - `xlrd <http://www.python-excel.org/>`__:
   for reading data and formatting information from older Excel files (ie: .xls)
 - `openpyxl <http://www.python-excel.org/>`__:
