@@ -41,11 +41,15 @@ before_install:
 
 install:
     # Setup environment
-    # pandas will bring dateutil numpy pytz setuptools six and scipy, we
-    # might want to avoid the later by installing all dependencies manually
-    # except scipy and install pandas with --no-deps
+    # - pandas will bring dateutil numpy pytz setuptools six and scipy, we
+    #   might want to avoid the later by installing all dependencies manually
+    #   except scipy and install pandas with --no-deps
+    # - fixed versions of numpy and pytables because of incompatibilities
+    #   between pytables <= 3.5 and numpy >= 1.16
+    # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
+    #   (issue 702 : fixed bug when writing metadata using HDF format)
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
-            "numpy>=1.13,!=1.16.*" "pandas>=0.20" "pytables>=3.4" matplotlib xlrd openpyxl
+            "numpy==1.15.2" "pandas>=0.20" "pytables==3.4.4" matplotlib xlrd openpyxl
             xlsxwriter pytest pytest-pep8
     - source activate travisci
 
@@ -55,6 +59,5 @@ script:
 notifications:
     on_success: "change"
     on_failure: "always"
-
 # use container-based infrastructure
 sudo: false
