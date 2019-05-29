@@ -39,10 +39,14 @@ def update_metapackage(context):
 
     # TODO: this should be echocall(redirect_stdout=False)
     print(fill('Updating larrayenv metapackage to version {version}'))
+    # - fixed versions of numpy and pytables because of incompatibilities
+    #   between pytables <= 3.5 and numpy >= 1.16
+    # - excluded versions 5.0 and 5.1 of ipykernel because these versions make the console useless after any exception
+    #   https://github.com/larray-project/larray-editor/issues/166
     check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', fill('larray =={version}'),
                 fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
-                "qtconsole", "matplotlib", "'pyqt >=5.6'", "qtpy", "'pytables >=3.4'",
-                "xlsxwriter", "xlrd", "openpyxl", "'xlwings >=0.11'", "'ipykernel !=5.0,!=5.1'",
+                "qtconsole", "matplotlib", "pyqt", "qtpy", "'numpy ==1.15.2'", "'pytables ==3.4.4'",
+                "xlsxwriter", "xlrd", "openpyxl", "xlwings", "'ipykernel !=5.0,!=5.1'",
                 '--home', 'http://github.com/larray-project/larray',
                 '--license', 'GPL-3.0',
                 '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
