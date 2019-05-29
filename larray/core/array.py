@@ -2916,8 +2916,6 @@ class LArray(ABCLArray):
         gender\time  2013  2014  2015  2016  before_2015  after_2015
                   M     0     1     2     3            1           5
                   F     4     5     6     7            9          13
-        >>> # or equivalently
-        >>> # arr.with_total('time[:2014] >> before_2015; time[2015:] >> after_2015')
         """
         # TODO: default to op.__name__
         label = kwargs.pop('label', 'total')
@@ -3864,8 +3862,6 @@ class LArray(ABCLArray):
         >>> barr.all(['a0', 'a1'])
         b    b0    b1     b2     b3
            True  True  False  False
-        >>> # or equivalently
-        >>> # barr.all('a0,a1')
 
         Split an axis in several parts
 
@@ -3873,8 +3869,6 @@ class LArray(ABCLArray):
           a\b     b0     b1     b2     b3
         a0,a1   True   True  False  False
         a2,a3  False  False  False  False
-        >>> # or equivalently
-        >>> # barr.all('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -3882,8 +3876,6 @@ class LArray(ABCLArray):
         a\b     b0     b1     b2     b3
         a01   True   True  False  False
         a23  False  False  False  False
-        >>> # or equivalently
-        >>> # barr.all('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -3934,24 +3926,18 @@ class LArray(ABCLArray):
 
         >>> barr.all_by(['a0', 'a1'])
         False
-        >>> # or equivalently
-        >>> # barr.all_by('a0,a1')
 
         Split an axis in several parts
 
         >>> barr.all_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
            False  False
-        >>> # or equivalently
-        >>> # barr.all_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.all_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a    a01    a23
            False  False
-        >>> # or equivalently
-        >>> # barr.all_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4003,8 +3989,6 @@ class LArray(ABCLArray):
         >>> barr.any(['a0', 'a1'])
         b    b0    b1    b2    b3
            True  True  True  True
-        >>> # or equivalently
-        >>> # barr.any('a0,a1')
 
         Split an axis in several parts
 
@@ -4012,8 +3996,6 @@ class LArray(ABCLArray):
           a\b     b0     b1     b2     b3
         a0,a1   True   True   True   True
         a2,a3  False  False  False  False
-        >>> # or equivalently
-        >>> # barr.any('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4021,8 +4003,6 @@ class LArray(ABCLArray):
         a\b     b0     b1     b2     b3
         a01   True   True   True   True
         a23  False  False  False  False
-        >>> # or equivalently
-        >>> # barr.any('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4073,24 +4053,18 @@ class LArray(ABCLArray):
 
         >>> barr.any_by(['a0', 'a1'])
         True
-        >>> # or equivalently
-        >>> # barr.any_by('a0,a1')
 
         Split an axis in several parts
 
         >>> barr.any_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
             True  False
-        >>> # or equivalently
-        >>> # barr.any_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> barr.any_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a   a01    a23
            True  False
-        >>> # or equivalently
-        >>> # barr.any_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4138,8 +4112,6 @@ class LArray(ABCLArray):
         >>> arr.sum(['a0', 'a1'])
         b  b0  b1  b2  b3
             4   6   8  10
-        >>> # or equivalently
-        >>> # arr.sum('a0,a1')
 
         Split an axis in several parts
 
@@ -4147,8 +4119,6 @@ class LArray(ABCLArray):
           a\b  b0  b1  b2  b3
         a0,a1   4   6   8  10
         a2,a3  20  22  24  26
-        >>> # or equivalently
-        >>> # arr.sum('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4156,8 +4126,6 @@ class LArray(ABCLArray):
         a\b  b0  b1  b2  b3
         a01   4   6   8  10
         a23  20  22  24  26
-        >>> # or equivalently
-        >>> # arr.sum('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4202,24 +4170,18 @@ class LArray(ABCLArray):
 
         >>> arr.sum_by(['a0', 'a1'])
         28
-        >>> # or equivalently
-        >>> # arr.sum_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.sum_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
               28     92
-        >>> # or equivalently
-        >>> # arr.sum_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.sum_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
             28   92
-        >>> # or equivalently
-        >>> # arr.sum_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4266,8 +4228,6 @@ class LArray(ABCLArray):
         >>> arr.prod(['a0', 'a1'])
         b  b0  b1  b2  b3
             0   5  12  21
-        >>> # or equivalently
-        >>> # arr.prod('a0,a1')
 
         Split an axis in several parts
 
@@ -4275,8 +4235,6 @@ class LArray(ABCLArray):
           a\b  b0   b1   b2   b3
         a0,a1   0    5   12   21
         a2,a3  96  117  140  165
-        >>> # or equivalently
-        >>> # arr.prod('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4284,8 +4242,6 @@ class LArray(ABCLArray):
         a\b  b0   b1   b2   b3
         a01   0    5   12   21
         a23  96  117  140  165
-        >>> # or equivalently
-        >>> # arr.prod('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4331,24 +4287,18 @@ class LArray(ABCLArray):
 
         >>> arr.prod_by(['a0', 'a1'])
         0
-        >>> # or equivalently
-        >>> # arr.prod_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.prod_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1      a2,a3
                0  259459200
-        >>> # or equivalently
-        >>> # arr.prod_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.prod_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01        a23
              0  259459200
-        >>> # or equivalently
-        >>> # arr.prod_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4393,8 +4343,6 @@ class LArray(ABCLArray):
         >>> arr.min(['a0', 'a1'])
         b  b0  b1  b2  b3
             0   1   2   3
-        >>> # or equivalently
-        >>> # arr.min('a0,a1')
 
         Split an axis in several parts
 
@@ -4402,8 +4350,6 @@ class LArray(ABCLArray):
           a\b  b0  b1  b2  b3
         a0,a1   0   1   2   3
         a2,a3   8   9  10  11
-        >>> # or equivalently
-        >>> # arr.min('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4411,8 +4357,6 @@ class LArray(ABCLArray):
         a\b  b0  b1  b2  b3
         a01   0   1   2   3
         a23   8   9  10  11
-        >>> # or equivalently
-        >>> # arr.min('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4456,24 +4400,18 @@ class LArray(ABCLArray):
 
         >>> arr.min_by(['a0', 'a1'])
         0
-        >>> # or equivalently
-        >>> # arr.min_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.min_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
                0      8
-        >>> # or equivalently
-        >>> # arr.min_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.min_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
              0    8
-        >>> # or equivalently
-        >>> # arr.min_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4518,8 +4456,6 @@ class LArray(ABCLArray):
         >>> arr.max(['a0', 'a1'])
         b  b0  b1  b2  b3
             4   5   6   7
-        >>> # or equivalently
-        >>> # arr.max('a0,a1')
 
         Split an axis in several parts
 
@@ -4527,8 +4463,6 @@ class LArray(ABCLArray):
           a\b  b0  b1  b2  b3
         a0,a1   4   5   6   7
         a2,a3  12  13  14  15
-        >>> # or equivalently
-        >>> # arr.max('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4536,8 +4470,6 @@ class LArray(ABCLArray):
         a\b  b0  b1  b2  b3
         a01   4   5   6   7
         a23  12  13  14  15
-        >>> # or equivalently
-        >>> # arr.max('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4581,24 +4513,18 @@ class LArray(ABCLArray):
 
         >>> arr.max_by(['a0', 'a1'])
         7
-        >>> # or equivalently
-        >>> # arr.max_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.max_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
                7     15
-        >>> # or equivalently
-        >>> # arr.max_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.max_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01  a23
              7   15
-        >>> # or equivalently
-        >>> # arr.max_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4645,8 +4571,6 @@ class LArray(ABCLArray):
         >>> arr.mean(['a0', 'a1'])
         b   b0   b1   b2   b3
            2.0  3.0  4.0  5.0
-        >>> # or equivalently
-        >>> # arr.mean('a0,a1')
 
         Split an axis in several parts
 
@@ -4654,8 +4578,6 @@ class LArray(ABCLArray):
           a\b    b0    b1    b2    b3
         a0,a1   2.0   3.0   4.0   5.0
         a2,a3  10.0  11.0  12.0  13.0
-        >>> # or equivalently
-        >>> # arr.mean('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4663,8 +4585,6 @@ class LArray(ABCLArray):
         a\b    b0    b1    b2    b3
         a01   2.0   3.0   4.0   5.0
         a23  10.0  11.0  12.0  13.0
-        >>> # or equivalently
-        >>> # arr.mean('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4710,24 +4630,18 @@ class LArray(ABCLArray):
 
         >>> arr.mean_by(['a0', 'a1'])
         3.5
-        >>> # or equivalently
-        >>> # arr.mean_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.mean_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
              3.5   11.5
-        >>> # or equivalently
-        >>> # arr.mean_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.mean_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01   a23
            3.5  11.5
-        >>> # or equivalently
-        >>> # arr.mean_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4778,8 +4692,6 @@ class LArray(ABCLArray):
         >>> arr.median(['a0', 'a1'])
         b   b0   b1   b2   b3
            7.5  7.5  4.0  8.0
-        >>> # or equivalently
-        >>> # arr.median('a0,a1')
 
         Split an axis in several parts
 
@@ -4787,8 +4699,6 @@ class LArray(ABCLArray):
           a\b   b0   b1   b2   b3
         a0,a1  7.5  7.5  4.0  8.0
         a2,a3  7.5  6.0  2.5  7.5
-        >>> # or equivalently
-        >>> # arr.median('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4796,8 +4706,6 @@ class LArray(ABCLArray):
         a\b   b0   b1   b2   b3
         a01  7.5  7.5  4.0  8.0
         a23  7.5  6.0  2.5  7.5
-        >>> # or equivalently
-        >>> # arr.median('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4847,24 +4755,18 @@ class LArray(ABCLArray):
 
         >>> arr.median_by(['a0', 'a1'])
         7.0
-        >>> # or equivalently
-        >>> # arr.median_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.median_by((['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
              7.0   5.75
-        >>> # or equivalently
-        >>> # arr.median_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.median_by((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a  a01   a23
            7.0  5.75
-        >>> # or equivalently
-        >>> # arr.median_by('a0,a1>>a01;a2,a3>>a23')
         """
         pass
 
@@ -4921,8 +4823,6 @@ class LArray(ABCLArray):
         >>> arr.percentile(25, ['a0', 'a1'])
         b   b0   b1   b2   b3
            1.0  2.0  3.0  4.0
-        >>> # or equivalently
-        >>> # arr.percentile(25, 'a0,a1')
 
         Split an axis in several parts
 
@@ -4930,8 +4830,6 @@ class LArray(ABCLArray):
           a\b   b0    b1    b2    b3
         a0,a1  1.0   2.0   3.0   4.0
         a2,a3  9.0  10.0  11.0  12.0
-        >>> # or equivalently
-        >>> # arr.percentile(25, 'a0,a1;a2,a3')
 
         Same with renaming
 
@@ -4939,8 +4837,6 @@ class LArray(ABCLArray):
         a\b   b0    b1    b2    b3
         a01  1.0   2.0   3.0   4.0
         a23  9.0  10.0  11.0  12.0
-        >>> # or equivalently
-        >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
         """
         keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
         skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
@@ -5008,24 +4904,18 @@ class LArray(ABCLArray):
 
         >>> arr.percentile_by(25, ['a0', 'a1'])
         1.75
-        >>> # or equivalently
-        >>> # arr.percentile_by('a0,a1')
 
         Split an axis in several parts
 
         >>> arr.percentile_by(25, (['a0', 'a1'], ['a2', 'a3']))
         a  a0,a1  a2,a3
             1.75   9.75
-        >>> # or equivalently
-        >>> # arr.percentile_by('a0,a1;a2,a3')
 
         Same with renaming
 
         >>> arr.percentile_by(25, (X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
         a   a01   a23
            1.75  9.75
-        >>> # or equivalently
-        >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
         """
         keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
         skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
@@ -5085,8 +4975,6 @@ class LArray(ABCLArray):
         >>> arr.ptp(['a0', 'a1'])
         b  b0  b1  b2  b3
             4   4   4   4
-        >>> # or equivalently
-        >>> # arr.ptp('a0,a1')
 
         Split an axis in several parts
 
@@ -5094,8 +4982,6 @@ class LArray(ABCLArray):
           a\b  b0  b1  b2  b3
         a0,a1   4   4   4   4
         a2,a3   4   4   4   4
-        >>> # or equivalently
-        >>> # arr.ptp('a0,a1;a2,a3')
 
         Same with renaming
 
@@ -5103,8 +4989,6 @@ class LArray(ABCLArray):
         a\b  b0  b1  b2  b3
         a01   4   4   4   4
         a23   4   4   4   4
-        >>> # or equivalently
-        >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """
         out = kwargs.pop('out', _kwarg_agg['out']['value'])
         return self._aggregate(np.ptp, args, kwargs, out=out)
@@ -5152,8 +5036,6 @@ class LArray(ABCLArray):
         >>> arr.var(['b0', 'b1', 'b3'])
         a   a0   a1
            9.0  4.0
-        >>> # or equivalently
-        >>> # arr.var('b0,b1,b3')
 
         Split an axis in several parts
 
@@ -5161,8 +5043,6 @@ class LArray(ABCLArray):
         a\b  b0,b1,b3  b5:
          a0       9.0  1.0
          a1       4.0  1.0
-        >>> # or equivalently
-        >>> # arr.var('b0,b1,b3;b5:')
 
         Same with renaming
 
@@ -5170,8 +5050,6 @@ class LArray(ABCLArray):
         a\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
-        >>> # or equivalently
-        >>> # arr.var('b0,b1,b3>>b013;b5:>>b567')
         """
         pass
 
@@ -5216,8 +5094,6 @@ class LArray(ABCLArray):
         >>> arr.var_by('a', ['b0','b1','b3'])
         a   a0   a1
            9.0  4.0
-        >>> # or equivalently
-        >>> # arr.var_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
@@ -5225,8 +5101,6 @@ class LArray(ABCLArray):
         a\b  b0,b1,b3  b5:
          a0       9.0  1.0
          a1       4.0  1.0
-        >>> # or equivalently
-        >>> # arr.var_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
@@ -5234,8 +5108,6 @@ class LArray(ABCLArray):
         a\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
-        >>> # or equivalently
-        >>> # arr.var_by('a','b0,b1,b3>>b013;b5:>>b567')
         """
         pass
 
@@ -5280,8 +5152,6 @@ class LArray(ABCLArray):
         >>> arr.std(['b0', 'b1', 'b3'])
         a   a0   a1
            3.0  2.0
-        >>> # or equivalently
-        >>> # arr.std('b0,b1,b3')
 
         Split an axis in several parts
 
@@ -5289,8 +5159,6 @@ class LArray(ABCLArray):
         a\b  b0,b1,b3  b5:
          a0       3.0  1.0
          a1       2.0  1.0
-        >>> # or equivalently
-        >>> # arr.std('b0,b1,b3;b5:')
 
         Same with renaming
 
@@ -5298,8 +5166,6 @@ class LArray(ABCLArray):
         a\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
-        >>> # or equivalently
-        >>> # arr.std('b0,b1,b3>>b013;b5:>>b567')
         """
         pass
 
@@ -5345,8 +5211,6 @@ class LArray(ABCLArray):
         >>> arr.std_by('a', ['b0','b1','b3'])
         a   a0   a1
            3.0  2.0
-        >>> # or equivalently
-        >>> # arr.std_by('a','b0,b1,b3')
 
         Split an axis in several parts
 
@@ -5354,8 +5218,6 @@ class LArray(ABCLArray):
         a\b  b0,b1,b3  b5:
          a0       3.0  1.0
          a1       2.0  1.0
-        >>> # or equivalently
-        >>> # arr.std_by('a','b0,b1,b3;b5:')
 
         Same with renaming
 
@@ -5363,8 +5225,6 @@ class LArray(ABCLArray):
         a\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
-        >>> # or equivalently
-        >>> # arr.std_by('a','b0,b1,b3>>b013;b5:>>b567')
         """
         pass
 
