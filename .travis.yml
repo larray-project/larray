@@ -45,7 +45,7 @@ install:
     #   might want to avoid the later by installing all dependencies manually
     #   except scipy and install pandas with --no-deps
     # - fixed versions of numpy and pytables because of incompatibilities
-    #   between pytables <= 3.5 and numpy >= 1.16
+    #   between pytables <= 3.4 and numpy >= 1.16
     # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
     #   (issue 702 : fixed bug when writing metadata using HDF format)
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
