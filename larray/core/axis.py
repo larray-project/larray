@@ -578,7 +578,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        pattern : str or Group
+        pattern : str or Group, optional
             Pattern to match.
             * `?`     matches any single character
             * `*`     matches any number of characters
@@ -587,7 +587,7 @@ class Axis(ABCAxis):
 
             To match any of the special characters above, wrap the character in brackets. For example, `[?]` matches
             the character `?`.
-        regex : str or Group
+        regex : str or Group, optional
             Regular expression pattern to match. Regular expressions are more powerful than what the simple patterns
             supported by the `pattern` argument but are also more complex to write.
             See `Regular Expression <https://docs.python.org/3/library/re.html>`_ for more details about how to build
@@ -3230,7 +3230,7 @@ class AxisCollection(object):
         names : str or list of str, optional
             names of resulting axes. Defaults to None.
         regex : str, optional
-            use regex instead of delimiter to split labels. Defaults to None.
+            use the `regex` regular expression to split labels instead of the `sep` delimiter. Defaults to None.
 
         See Also
         --------
@@ -3260,7 +3260,7 @@ class AxisCollection(object):
             Axis(['b0', 'b1', 'b2'], 'b')
         ])
 
-        Split labels using regex
+        Split labels using a regular expression
 
         >>> combined = AxisCollection('a_b = a0b0..a1b2')
         >>> combined

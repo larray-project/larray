@@ -1582,7 +1582,7 @@ class LGroup(Group):
             bound = self.key
         if isinstance(self.axis, ABCAxis):
             pos = self.axis.index(bound)
-            return pos + int(stop) if np.isscalar(pos) else pos
+            return (pos + int(stop)) if np.isscalar(pos) else pos
         else:
             raise ValueError("Cannot translate an LGroup without axis")
 
