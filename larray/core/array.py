@@ -2664,8 +2664,8 @@ class Array(ABCArray):
         return Array(op(np.asarray(self), axis=self.axes.index(axis)),
                      self.axes)
 
-    # TODO: now that items is never a (k, v), it should be renamed to
-    # something else: args? (groups would be misleading because each "item" can contain several groups)
+    # TODO: now that items is never a (k, v), it should be renamed to something else: args?
+    #       (groups would be misleading because each "item" can contain several groups)
     # TODO: experiment implementing this using ufunc.reduceat
     # http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.ufunc.reduceat.html
     # XXX: rename keepaxes to label=value? For group_aggregates we might want to keep the LGroup label if any
