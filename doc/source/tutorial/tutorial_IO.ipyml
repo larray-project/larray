@@ -574,17 +574,17 @@ cells:
 - code: |
     # create a new Session object and load all arrays, axes, groups and metadata 
     # from all CSV files located in the passed directory
-    csv_dir = get_example_filepath('population_session')
+    csv_dir = get_example_filepath('demography_eurostat')
     session = Session(csv_dir)
     
     # create a new Session object and load all arrays, axes, groups and metadata
     # stored in the passed Excel file
-    filepath_excel = get_example_filepath('population_session.xlsx')
+    filepath_excel = get_example_filepath('demography_eurostat.xlsx')
     session = Session(filepath_excel)
     
     # create a new Session object and load all arrays, axes, groups and metadata
     # stored in the passed HDF5 file
-    filepath_hdf = get_example_filepath('population_session.h5')
+    filepath_hdf = get_example_filepath('demography_eurostat.h5')
     session = Session(filepath_hdf)
     
     print(session.summary())

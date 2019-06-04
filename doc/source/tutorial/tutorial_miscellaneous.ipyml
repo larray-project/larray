@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Miscellaneous (other interesting array functions)
+    # Some Useful Functions
 
 
 - code: |
@@ -9,7 +9,6 @@ cells:
     import warnings
     warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
 
-  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -20,7 +19,6 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
 
 - markdown: |
     Check the version of LArray:
@@ -30,120 +28,114 @@ cells:
     from larray import __version__
     __version__
 
-  id: 2
-
-- markdown: |
-    Import a subset of the test array ``pop``:
-
 
 - code: |
-    # import a 6 x 2 x 2 subset of the 'pop' example array
-    pop = load_example_data('demography').pop[2016, 'BruCap', 100:105]
+    # load 'demography_eurostat' dataset
+    demo_eurostat = load_example_data('demography_eurostat')
+    
+    # extract the 'pop' array from the dataset 
+    pop = demo_eurostat.pop
     pop
 
-  id: 3
 
 - markdown: |
     ### with total
     
-    Add totals to one axis
+    Add totals to one or several axes:
 
 
 - code: |
-    pop.with_total('sex', label='B')
+    pop.with_total('gender', label='Total')
 
-  id: 4
 
 - markdown: |
-    Add totals to all axes at once
+    See [with_total](../_generated/larray.LArray.with_total.rst#larray.LArray.with_total) for more details and examples.
 
-
-- code: |
-    # by default label is 'total'
-    pop.with_total()
-
-  id: 5
 
 - markdown: |
     ### where
     
-    where can be used to apply some computation depending on a condition
+    The ``where`` function can be used to apply some computation depending on a condition:
 
 
 - code: |
     # where(condition, value if true, value if false)
-    where(pop < 10, 0, -pop)
+    where(pop < pop.mean('time'), -pop, pop)
 
-  id: 6
+
+- markdown: |
+    See [where](../_generated/larray.where.rst#larray.where) for more details and examples.
+
 
 - markdown: |
     ### clip
     
-    Set all data between a certain range
+    Set all data between a certain range:
 
 
 - code: |
-    # clip(min, max)
-    # values below 10 are set to 10 and values above 50 are set to 50
-    pop.clip(10, 50)
+    # values below 10 millions are set to 10 millions
+    pop.clip(minval=10**7)
 
-  id: 7
+
+- code: |
+    # values above 40 millions are set to 40 millions
+    pop.clip(maxval=4*10**7)
+
+
+- code: |
+    # values below 10 millions are set to 10 millions and 
+    # values above 40 millions are set to 40 millions
+    pop.clip(10**7, 4*10**7)
+
+
+- markdown: |
+    See [clip](../_generated/larray.LArray.clip.rst#larray.LArray.clip) for more details and examples.
+
 
 - markdown: |
     ### divnot0
     
-    Replace division by 0 to 0
+    Replace division by 0 by 0:
 
 
 - code: |
-    pop['BE'] / pop['FO']
+    divisor = ones(pop.axes, dtype=int)
+    divisor['Male'] = 0
+    divisor
 
-  id: 8
 
 - code: |
-    # divnot0 replaces results of division by 0 by 0.
-    # Using it should be done with care though
-    # because it can hide a real error in your data.
-    pop['BE'].divnot0(pop['FO'])
+    pop / divisor
 
-  id: 9
+
+- code: |
+    # we use astype(int) since the divnot0 method 
+    # returns a float array in this case while 
+    # we want an integer array
+    pop.divnot0(divisor).astype(int)
+
 
 - markdown: |
-    ### diff
-    
-    The ``diff`` method calculates the n-th order discrete difference along a given axis.
-    The first order difference is given by out[n+1] = in[n + 1] - in[n] along the given axis.
+    See [divnot0](../_generated/larray.LArray.divnot0.rst#larray.LArray.divnot0) for more details and examples.
 
-
-- code: |
-    pop = load_example_data('demography').pop[2005:2015, 'BruCap', 50]
-    pop
-
-  id: 10
-
-- code: |
-    # calculates 'pop[year+1] - pop[year]'
-    pop.diff('time')
-
-  id: 11
-
-- code: |
-    # calculates 'pop[year+2] - pop[year]'
-    pop.diff('time', d=2)
-
-  id: 12
 
 - markdown: |
     ### ratio
+    
+    The ``ratio`` (``rationot0``) method returns an array with all values divided by the sum of values along given axes:
 
 
 - code: |
-    pop.ratio('nat')
+    pop.ratio('gender')
     
     # which is equivalent to
-    pop / pop.sum('nat')
+    pop / pop.sum('gender')
 
-  id: 13
+
+- markdown: |
+    See [ratio](../_generated/larray.LArray.ratio.rst#larray.LArray.ratio) and [rationot0](../_generated/larray.LArray.rationot0.rst#larray.LArray.rationot0) for more details and examples.
+
 
 - markdown: |
     ### percents
@@ -151,20 +143,55 @@ cells:
 
 - code: |
     # or, if you want the previous ratios in percents
-    pop.percent('nat')
+    pop.percent('gender')
 
-  id: 14
+
+- markdown: |
+    See [percent](../_generated/larray.LArray.percent.rst#larray.LArray.percent) for more details and examples.
+
+
+- markdown: |
+    ### diff
+    
+    The ``diff`` method calculates the n-th order discrete difference along a given axis.
+    
+    The first order difference is given by ``out[n+1] = in[n+1] - in[n]`` along the given axis.
+
+
+- code: |
+    # calculates 'diff[year+1] = pop[year+1] - pop[year]'
+    pop.diff('time')
+
+
+- code: |
+    # calculates 'diff[year+2] = pop[year+2] - pop[year]'
+    pop.diff('time', d=2)
+
+
+- code: |
+    # calculates 'diff[year] = pop[year+1] - pop[year]'
+    pop.diff('time', label='lower')
+
+
+- markdown: |
+    See [diff](../_generated/larray.LArray.diff.rst#larray.LArray.diff) for more details and examples.
+
 
 - markdown: |
     ### growth\_rate
     
-    using the same principle than `diff`
+    The ``growth_rate`` method calculates the growth along a given axis.
+        
+    It is roughly equivalent to ``a.diff(axis, d, label) / a[axis.i[:-d]]``:
 
 
 - code: |
     pop.growth_rate('time')
 
-  id: 15
+
+- markdown: |
+    See [growth_rate](../_generated/larray.LArray.growth_rate.rst#larray.LArray.growth_rate) for more details and examples.
+
 
 - markdown: |
     ### shift
@@ -175,32 +202,22 @@ cells:
 - code: |
     pop.shift('time')
 
-  id: 16
 
 - code: |
     # when shift is applied on an (increasing) time axis,
     # it effectively brings "past" data into the future
-    pop.shift('time').ignore_labels('time') == pop[2005:2014].ignore_labels('time')
+    pop_shifted = pop.shift('time')
+    stack({'pop_shifted_2014': pop_shifted[2014], 'pop_2013': pop[2013]}, 'array')
 
-  id: 17
-
-- code: |
-    # this is mostly useful when you want to do operations between the past and now
-    # as an example, here is an alternative implementation of the .diff method seen above:
-    pop.i[1:] - pop.shift('time')
-
-  id: 18
 
 - markdown: |
-    ### Misc other interesting functions
+    See [shift](../_generated/larray.LArray.shift.rst#larray.LArray.shift) for more details and examples.
+
+
+- markdown: |
+    ### Other interesting functions
     
-    There are a lot more interesting functions available:
-    
-    - round, floor, ceil, trunc,
-    - exp, log, log10,
-    - sqrt, absolute, nan_to_num, isnan, isinf, inverse,
-    - sin, cos, tan, arcsin, arccos, arctan
-    - and many many more...
+    There are a lot more interesting functions that you can find in the API reference in sections [Aggregation Functions](../api.rst#aggregation-functions), [Miscellaneous](../api.rst#miscellaneous) and [Utility Functions](../api.rst#utility-functions).
 
 
 # The lines below here may be deleted if you do not need them.
@@ -220,21 +237,10 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.7.3
   livereveal:
     autolaunch: false
     scroll: true
 nbformat: 4
 nbformat_minor: 2
-
-# ---------------------------------------------------------------------------
-data:
-  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}]
 

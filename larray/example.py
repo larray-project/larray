@@ -5,10 +5,9 @@ import larray as la
 _TEST_DIR = os.path.join(os.path.dirname(__file__), 'tests')
 
 EXAMPLE_FILES_DIR = os.path.join(_TEST_DIR, 'data')
-# TODO : replace 'demography.h5' by 'population_session.h5' and remove 'demo' ?
 AVAILABLE_EXAMPLE_DATA = {
-    'demo': os.path.join(EXAMPLE_FILES_DIR, 'population_session.h5'),
-    'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5')
+    'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5'),
+    'demography_eurostat': os.path.join(EXAMPLE_FILES_DIR, 'demography_eurostat.h5')
 }
 AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
 
@@ -43,6 +42,7 @@ def get_example_filepath(fname):
     return fpath
 
 
+# TODO : replace # doctest: +SKIP by # doctest: +NORMALIZE_WHITESPACE once Python 2 has been dropped
 def load_example_data(name):
     r"""Load arrays used in the tutorial so that all examples in it can be reproduced.
 
@@ -52,29 +52,37 @@ def load_example_data(name):
         Example data to load. Available example datasets are:
 
         - demography
+        - demography_eurostat
 
     Returns
     -------
     Session
-        Session containing one or several arrays
+        Session containing one or several arrays.
 
     Examples
     --------
     >>> demo = load_example_data('demography')
-    >>> demo.pop.info # doctest: +SKIP
-    26 x 3 x 121 x 2 x 2
-     time [26]: 1991 1992 1993 ... 2014 2015 2016
-     geo [3]: 'BruCap' 'Fla' 'Wal'
-     age [121]: 0 1 2 ... 118 119 120
-     sex [2]: 'M' 'F'
-     nat [2]: 'BE' 'FO'
-    >>> demo.qx.info # doctest: +SKIP
-    26 x 3 x 121 x 2 x 2
-     time [26]: 1991 1992 1993 ... 2014 2015 2016
-     geo [3]: 'BruCap' 'Fla' 'Wal'
-     age [121]: 0 1 2 ... 118 119 120
-     sex [2]: 'M' 'F'
-     nat [2]: 'BE' 'FO'
+    >>> print(demo.summary())   # doctest: +NORMALIZE_WHITESPACE
+    hh: time, geo, hh_type (26 x 3 x 7) [int64]
+    pop: time, geo, age, sex, nat (26 x 3 x 121 x 2 x 2) [int64]
+    qx: time, geo, age, sex, nat (26 x 3 x 121 x 2 x 2) [float64]
+    >>> demo = load_example_data('demography_eurostat')  # doctest: +SKIP
+    >>> print(demo.summary())   # doctest: +SKIP
+    Metadata:
+       title: Demographic datasets for a small selection of countries in Europe
+       source: demo_jpan, demo_fasec, demo_magec and migr_imm1ctz tables from Eurostat
+    gender: gender ['Male' 'Female'] (2)
+    country: country ['Belgium' 'France' 'Germany'] (3)
+    country_benelux: country_benelux ['Belgium' 'Luxembourg' 'Netherlands'] (3)
+    citizenship: citizenship ['Belgium' 'Luxembourg' 'Netherlands'] (3)
+    time: time [2013 2014 2015 2016 2017] (5)
+    even_years: time[2014 2016] >> even_years (2)
+    odd_years: time[2013 2015 2017] >> odd_years (3)
+    births: country, gender, time (3 x 2 x 5) [int32]
+    deaths: country, gender, time (3 x 2 x 5) [int32]
+    immigration: country, citizenship, gender, time (3 x 3 x 2 x 5) [int32]
+    pop: country, gender, time (3 x 2 x 5) [int32]
+    pop_benelux: country, gender, time (3 x 2 x 5) [int32]
     """
     if name is None:
         name = 'demography'

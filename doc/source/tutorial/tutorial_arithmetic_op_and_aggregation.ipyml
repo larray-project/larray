@@ -9,7 +9,6 @@ cells:
     import warnings
     warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
 
-  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -20,7 +19,6 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
 
 - markdown: |
     Check the version of LArray:
@@ -30,22 +28,15 @@ cells:
     from larray import __version__
     __version__
 
-  id: 2
 
 - markdown: |
     ## Arithmetic operations
 
 
-- markdown: |
-    Import a subset of the test array ``pop``:
-
-
 - code: |
-    # import a 6 x 2 x 2 subset of the 'pop' example array
-    pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
-    pop
+    arr = ndtest((3, 3))
+    arr
 
-  id: 3
 
 - markdown: |
     One can do all usual arithmetic operations on an array, it will apply the operation to all elements individually
@@ -53,142 +44,86 @@ cells:
 
 - code: |
     # addition
-    pop + 200
+    arr + 10
 
-  id: 4
 
 - code: |
     # multiplication
-    pop * 2
+    arr * 2
 
-  id: 5
 
 - code: |
-    # ** means raising to the power (squaring in this case)
-    pop ** 2
+    # 'true' division
+    arr / 2
 
-  id: 6
+
+- code: |
+    # 'floor' division
+    arr // 2
+
+
+- markdown: |
+    <div class="alert alert-warning">
+    **Warning:** Python has two different division operators: 
+    
+    - the 'true' division (/) always returns a float.
+    - the 'floor' division (//) returns an integer result (discarding any fractional result).
+    </div>
+
 
 - code: |
     # % means modulo (aka remainder of division)
-    pop % 10
-
-  id: 7
-
-- markdown: |
-    More interestingly, it also works between two arrays
+    arr % 5
 
 
 - code: |
-    # load mortality equivalent array
-    mortality = load_example_data('demography').qx[2016, 'BruCap', 90:95]
-    
-    # compute number of deaths
-    death = pop * mortality
-    death
+    # ** means raising to the power
+    arr ** 3
 
-  id: 8
+
+- markdown: |
+    More interestingly, binary operators as above also works between two arrays:
+
+
+- code: |
+    # load the 'demography_eurostat' dataset
+    demo_eurostat = load_example_data('demography_eurostat')
+    
+    # extract the 'pop' array
+    pop = demo_eurostat.pop
+    pop
+
+
+- code: |
+    aggregation_matrix = LArray([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), pop.country))
+    aggregation_matrix
+
+
+- code: |
+    # @ means matrix product
+    aggregation_matrix @ pop['Male']
+
 
 - markdown: |
     <div class="alert alert-info">
     **Note:** Be careful when mixing different data types.
-    You can use the method ``astype`` to change the data type of an array.
+    You can use the method [astype](../_generated/larray.LArray.astype.rst#larray.LArray.astype) to change the data type of an array.
     </div>
 
 
 - code: |
-    # to be sure to get number of deaths as integers
-    # one can use .astype() method
-    death = (pop * mortality).astype(int)
-    death
-
-  id: 9
-
-- markdown: |
-    <div class="alert alert-warning">
-    **Warning:** Operations between two arrays only works when they have compatible axes (i.e. same labels).
-    However, it can be override but at your own risk.
-    In that case only the position on the axis is used and not the labels.
-    </div>
+    aggregation_matrix = LArray([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), pop.country))
+    aggregation_matrix
 
 
 - code: |
-    pop[90:92] * mortality[93:95]
-
-  id: 10
-
-- code: |
-    pop[90:92] * mortality[93:95].ignore_labels('age')
-
-  id: 11
-
-- markdown: |
-    ### Boolean Operations
+    aggregation_matrix @ pop['Male']
 
 
 - code: |
-    pop2 = pop.copy()
-    pop2['F'] = -pop2['F']
-    pop2
+    # force the resulting matrix to be an integer matrix
+    (aggregation_matrix @ pop['Male']).astype(int)
 
-  id: 12
-
-- code: |
-    # testing for equality is done using == (a single = assigns the value)
-    pop == pop2
-
-  id: 13
-
-- code: |
-    # testing for inequality
-    pop != pop2
-
-  id: 14
-
-- code: |
-    # what was our original array like again?
-    pop
-
-  id: 15
-
-- code: |
-    # & means (boolean array) and
-    (pop >= 500) & (pop <= 1000)
-
-  id: 16
-
-- code: |
-    # | means (boolean array) or
-    (pop < 500) | (pop > 1000)
-
-  id: 17
-
-- markdown: |
-    ### Arithmetic operations with missing axes
-
-
-- code: |
-    pop.sum('age')
-
-  id: 18
-
-- code: |
-    # arr has 3 dimensions
-    pop.info
-
-  id: 19
-
-- code: |
-    # and arr.sum(age) has two
-    pop.sum('age').info
-
-  id: 20
-
-- code: |
-    # you can do operation with missing axes so this works
-    pop / pop.sum('age')
-
-  id: 21
 
 - markdown: |
     ### Axis order does not matter much (except for output)
@@ -198,92 +133,215 @@ cells:
 
 
 - code: |
-    pop
+    # extract the 'births' array
+    births = demo_eurostat.births
+    
+    # let's change the order of axes of the 'births' array
+    births_transposed = births.transpose()
+    births_transposed
 
-  id: 22
-
-- code: |
-    # let us change the order of axes
-    pop_transposed = pop.T
-    pop_transposed
-
-  id: 23
 
 - code: |
-    # mind blowing
-    pop_transposed + pop
+    # LArray doesn't care of axes order when performing 
+    # arithmetic operations between arrays
+    pop + births_transposed
 
-  id: 24
+
+- markdown: |
+    ### Axes must be compatible
+    
+    Arithmetic operations between two arrays only works when they have compatible axes (i.e. same labels).
+
+
+- code: |
+    # the 'pop' and 'births' have compatible axes
+    pop + births
+
+
+- code: |
+    # Now, let's replace the country names by the country codes
+    births_codes = births.set_labels('country', ['BE', 'FR', 'DE'])
+    births_codes
+
+
+- code: |
+    # arithmetic operations between arrays 
+    # having incompatible axes raise an error
+    try:
+        pop + births_codes
+    except Exception as e:
+        print(type(e).__name__, e)
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        **Warning:** Operations between two arrays only works when they have compatible axes (i.e. same labels) but this behavior can be override via the [ignore_labels](../_generated/larray.LArray.ignore_labels.rst#larray.LArray.ignore_labels) method.
+    In that case only the position on the axis is used and not the labels.
+    Using this method is done at your own risk.
+    </div>
+
+
+- code: |
+    # use the .ignore_labels() method on axis 'country'
+    # to avoid the incompatible axes error (risky)
+    pop + births_codes.ignore_labels('country')
+
+  metadata:
+    scrolled: true
+
+- markdown: |
+    ### Extra Or Missing Axes (Broadcasting)
+
+
+- markdown: |
+    The condition that axes must be compatible only applies on common axes. 
+    Arithmetic operations between two arrays can be performed even if the second array has extra or missing axes compared to the first one:
+
+
+- code: |
+    # let's define a 'multiplicator' vector with 
+    # one value defined for each gender
+    multiplicator = LArray([-1, 1], axes=pop.gender)
+    multiplicator
+
+
+- code: |
+    # the multiplication below has been propagated to the 
+    # 'country' and 'time' axes.
+    # This behavior is called broadcasting
+    pop * multiplicator
+
+
+- markdown: |
+    ### Boolean Operations
+    
+    Python comparison operators are: 
+    
+    | Operator  | Meaning                 |
+    |-----------|-------------------------|
+    |``==``     | equal                   | 
+    |``!=``     | not equal               | 
+    |``>``      | greater than            | 
+    |``>=``     | greater than or equal   | 
+    |``<``      | less than               | 
+    |``<=``     | less than or equal      |
+    
+    Applying a comparison operator on an array returns a boolean array:
+
+
+- code: |
+    # test which values are greater than 10 millions
+    pop > 10e6
+
+
+- markdown: |
+    Comparison operations can be combined using Python bitwise operators:
+    
+    | Operator | Meaning                              |
+    |----------|------------------------------------- |
+    |  &       | and                                  |
+    |  \|      | or                                   |
+    |  ~       | not                                  |
+
+
+- code: |
+    # test which values are greater than 10 millions and less than 40 millions
+    (pop > 10e6) & (pop < 40e6)
+
+
+- code: |
+    # test which values are less than 10 millions or greater than 40 millions
+    (pop < 10e6) | (pop > 40e6)
+
+
+- code: |
+    # test which values are not less than 10 millions
+    ~(pop < 10e6)
+
+
+- markdown: |
+    The returned boolean array can then be used in selections and assignments:
+
+
+- code: |
+    pop_copy = pop.copy()
+    
+    # set all values greater than 40 millions to 40 millions
+    pop_copy[pop_copy > 40e6] = 40e6
+    pop_copy
+
+
+- markdown: |
+    Boolean operations can be made between arrays:
+
+
+- code: |
+    # test where the two arrays have the same values
+    pop == pop_copy
+
+
+- markdown: |
+    To test if all values between are equals, use the [equals](../_generated/larray.LArray.equals.rst#larray.LArray.equals) method:
+
+
+- code: |
+    pop.equals(pop_copy)
+
 
 - markdown: |
     ## Aggregates
     
+    LArray provides many aggregation functions. The list is given in the [Aggregation Functions](../api.rst#aggregation-functions) subsection of the [API Reference](../api.rst) page.
+    
+    Aggregation operations can be performed on axes or groups. Axes and groups can be mixed. 
+    
+    The main rules are: 
+    
+    -  Axes are separated by commas ``,``
+    -  Groups belonging to the same axis are grouped inside parentheses ()
+
+
+- markdown: |
     Calculate the sum along an axis:
 
 
 - code: |
-    pop = load_example_data('demography').pop[2016, 'BruCap']
-    pop.sum('age')
+    pop.sum('gender')
 
-  id: 25
 
 - markdown: |
-    or along all axes except one by appending `_by` to the aggregation function
+    or several axes (axes are separated by commas ``,``):
 
 
 - code: |
-    pop[90:95].sum_by('age')
-    # is equivalent to
-    pop[90:95].sum('sex', 'nat')
+    pop.sum('country', 'gender')
 
-  id: 26
 
 - markdown: |
-    Calculate the sum along one group:
+    Calculate the sum along all axes except one by appending `_by` to the aggregation function:
 
 
 - code: |
-    teens = pop.age[10:20]
+    pop.sum_by('time')
+
+
+- markdown: |
+    Calculate the sum along groups (the groups belonging to the same axis must grouped inside parentheses ()):
+
+
+- code: |
+    even_years = pop.time[2014::2] >> 'even_years'
+    odd_years = pop.time[2013::2] >> 'odd_years'
     
-    pop.sum(teens)
+    pop.sum((odd_years, even_years))
 
-  id: 27
-
-- markdown: |
-    Calculate the sum along two groups:
-
-
-- code: |
-    pensioners = pop.age[67:]
-    
-    # groups from the same axis must be grouped in a tuple
-    pop.sum((teens, pensioners))
-
-  id: 28
 
 - markdown: |
     Mixing axes and groups in aggregations:
 
 
 - code: |
-    pop.sum((teens, pensioners), 'nat')
-
-  id: 29
-
-- markdown: |
-    ### More On Aggregations
-
-
-- markdown: |
-    There are many other aggregation functions:
-    
-    -  mean, min, max, median, percentile, var (variance), std (standard
-       deviation)
-    -  labelofmin, labelofmax (label indirect minimum/maxium -- labels where the
-       value is minimum/maximum)
-    -  indexofmin, indexofmax (positional indirect minimum/maxium -- position
-       along axis where the value is minimum/maximum)
-    -  cumsum, cumprod (cumulative sum, cumulative product)
+    pop.sum('gender', (odd_years, even_years))
 
 
 # The lines below here may be deleted if you do not need them.
@@ -303,25 +361,10 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.7.3
   livereveal:
     autolaunch: false
     scroll: true
 nbformat: 4
 nbformat_minor: 2
-
-# ---------------------------------------------------------------------------
-data:
-  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
 

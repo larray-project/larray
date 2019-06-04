@@ -57,8 +57,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
-     France         Male  31772665  31936596  32175328
-     France       Female  33827685  34005671  34280951
+     France         Male  31772665  32045129  32174258
+     France       Female  33827685  34120851  34283895
     Germany         Male  39380976  39556923  39835457
     Germany       Female  41142770  41210540  41362080
     """

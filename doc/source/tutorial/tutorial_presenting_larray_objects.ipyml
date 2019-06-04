@@ -330,7 +330,7 @@ cells:
     # add axes to the session
     gender = Axis("gender=Male,Female")
     s_pop.gender = gender
-    time = Axis("time=2013,2014,2015")
+    time = Axis("time=2013..2017")
     s_pop.time = time
     
     # add arrays to the session
@@ -352,7 +352,7 @@ cells:
 
 - code: |
     gender = Axis("gender=Male,Female")
-    time = Axis("time=2013,2014,2015")
+    time = Axis("time=2013..2017")
     
     # create and populate a new session in one step
     # Python <= 3.5
@@ -411,7 +411,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.8
+    version: 3.7.3
   livereveal:
     autolaunch: false
     scroll: true

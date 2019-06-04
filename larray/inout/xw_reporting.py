@@ -79,7 +79,7 @@ class AbstractReportItem(object):
 
         Examples
         --------
-        >>> demo = load_example_data('demo')
+        >>> demo = load_example_data('demography_eurostat')
 
         Passing the name of the template (only if a template directory has been set)
 
@@ -245,7 +245,7 @@ class AbstractReportSheet(AbstractReportItem):
 
         Examples
         --------
-        >>> demo = load_example_data('demo')
+        >>> demo = load_example_data('demography_eurostat')
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
 
         >>> sheet_be = report.new_sheet('Belgium')
@@ -300,7 +300,7 @@ class AbstractReportSheet(AbstractReportItem):
 
         Examples
         --------
-        >>> demo = load_example_data('demo')
+        >>> demo = load_example_data('demography_eurostat')
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
 
         >>> sheet_pop = report.new_sheet('Population')
@@ -353,7 +353,7 @@ class AbstractExcelReport(AbstractReportItem):
 
     Examples
     --------
-    >>> demo = load_example_data('demo')
+    >>> demo = load_example_data('demography_eurostat')
     >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
 
     Set a new destination sheet
@@ -428,7 +428,7 @@ class AbstractExcelReport(AbstractReportItem):
 
         Examples
         --------
-        >>> demo = load_example_data('demo')
+        >>> demo = load_example_data('demography_eurostat')
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
 
         >>> # prepare new output sheet named 'Belgium'
@@ -471,7 +471,7 @@ class AbstractExcelReport(AbstractReportItem):
 
         Examples
         --------
-        >>> demo = load_example_data('demo')
+        >>> demo = load_example_data('demography_eurostat')
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
         >>> report.template = 'Line_Marker'
 

@@ -43,7 +43,7 @@ cells:
 
 - code: |
     # load a session representing the results of a demographic model
-    filepath_hdf = get_example_filepath('population_session.h5')
+    filepath_hdf = get_example_filepath('demography_eurostat.h5')
     s_pop = Session(filepath_hdf)
     
     # print the content of the session
@@ -62,11 +62,25 @@ cells:
 - markdown: |
     ### Selecting And Filtering Items
     
-    To select an item, simply use the syntax ``<session_var>.<item_name>``:
+    Session objects work like ordinary ``dict`` Python objects. To select an item, use the usual syntax ``<session_var>['<item_name>']``: 
+
+
+- code: |
+    s_pop['pop']
+
+
+- markdown: |
+    A simpler way consists in the use the syntax ``<session_var>.<item_name>``:
 
 
 - code: |
     s_pop.pop
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        **Warning:** The syntax ``session_var.item_name`` will work as long as you don't use any special character like ``, ; :`` in the item's name.
+    </div>
 
 
 - markdown: |
@@ -94,6 +108,39 @@ cells:
 
 
 - markdown: |
+    ### Iterating over Items
+    
+    Like the built-in Python ``dict`` objects, Session objects provide methods to iterate over items:  
+
+
+- code: |
+    # iterate over item names
+    for key in s_pop.keys():
+        print(key)
+
+
+- code: |
+    # iterate over items
+    for value in s_pop.values():
+        if isinstance(value, LArray):
+            print(value.info)
+        else:
+            print(repr(value))
+        print()
+
+
+- code: |
+    # iterate over names and items
+    for key, value in s_pop.items():
+        if isinstance(value, LArray):
+            print(key, ':')
+            print(value.info)
+        else:
+            print(key, ':', repr(value))
+        print()
+
+
+- markdown: |
     ### Arithmetic Operations On Sessions
     
     Session objects accept binary operations with a scalar:
@@ -112,13 +159,13 @@ cells:
 
 - code: |
     from larray import random
-    random_multiplicator = random.choice([0.98, 1.0, 1.02], p=[0.15, 0.7, 0.15], axes=s_pop.pop.axes)
-    random_multiplicator
+    random_increment = random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3], axes=s_pop.pop.axes) * 1000
+    random_increment
 
 
 - code: |
-    # multiply all variables of a session by a common array
-    s_pop_rand = s_pop * random_multiplicator
+    # add some variables of a session by a common array
+    s_pop_rand = s_pop['pop', 'births', 'deaths'] + random_increment
     
     s_pop_rand.pop
 
@@ -141,17 +188,21 @@ cells:
 
 
 - code: |
-    # force conversion to type int
-    def as_type_int(array):
-        return array.astype(int)
+    # add the next year to all arrays
+    def add_next_year(array):
+        if 'time' in array.axes.names:
+            last_year = array.time.i[-1] 
+            return array.append('time', 0, last_year + 1)
+        else:
+            return array
     
-    s_pop_rand_int = s_pop_rand.apply(as_type_int)
+    s_pop_with_next_year = s_pop.apply(add_next_year)
     
     print('pop array before calling apply:')
-    print(s_pop_rand.pop)
+    print(s_pop.pop)
     print()
     print('pop array after calling apply:')
-    print(s_pop_rand_int.pop)
+    print(s_pop_with_next_year.pop)
 
 
 - markdown: |
@@ -159,15 +210,24 @@ cells:
 
 
 - code: |
-    # passing the LArray.astype method directly with argument 
-    # dtype defined as int
-    s_pop_rand_int = s_pop_rand.apply(LArray.astype, dtype=int)
+    # add the next year to all arrays.
+    # Use the 'copy_values_from_last_year flag' to indicate 
+    # whether or not to copy values from the last year
+    def add_next_year(array, copy_values_from_last_year):
+        if 'time' in array.axes.names:
+            last_year = array.time.i[-1]
+            value = array[last_year] if copy_values_from_last_year else 0
+            return array.append('time', value, last_year + 1)
+        else:
+            return array
+    
+    s_pop_with_next_year = s_pop.apply(add_next_year, True)
     
     print('pop array before calling apply:')
-    print(s_pop_rand.pop)
+    print(s_pop.pop)
     print()
     print('pop array after calling apply:')
-    print(s_pop_rand_int.pop)
+    print(s_pop_with_next_year.pop)
 
 
 - markdown: |
@@ -181,44 +241,19 @@ cells:
 
 
 - markdown: |
-    [Session objects](../api.rst#session) provide the two methods to compare two sessions: [equals](../_generated/larray.Session.equals.rst#larray.Session.equals) and [element_equals](../_generated/larray.Session.element_equals.rst#larray.Session.element_equals).
+    [Session objects](../api.rst#session) provide the two methods to compare two sessions: [equals](../_generated/larray.Session.equals.rst#larray.Session.equals) and [element_equals](../_generated/larray.Session.element_equals.rst#larray.Session.element_equals):
     
-    The ``equals`` method will return True if **all items** from both sessions are identical, False otherwise:
+    -  The ``equals`` method will return True if **all items** from both sessions are identical, False otherwise.
+    -  The ``element_equals`` method will compare items of two sessions one by one and return an array of boolean values.
 
 
 - code: |
     # load a session representing the results of a demographic model
-    filepath_hdf = get_example_filepath('population_session.h5')
+    filepath_hdf = get_example_filepath('demography_eurostat.h5')
     s_pop = Session(filepath_hdf)
     
     # create a copy of the original session
-    s_pop_copy = Session(filepath_hdf)
-    
-    # 'equals' returns True if all items of the two sessions have exactly the same items
-    s_pop.equals(s_pop_copy)
-
-
-- code: |
-    # create a copy of the original session but with the array
-    # 'births' slightly modified for some labels combination
-    s_pop_alternative = Session(filepath_hdf)
-    s_pop_alternative.births *= random_multiplicator
-    
-    # 'equals' returns False if at least on item of the two sessions are different in values or axes
-    s_pop.equals(s_pop_alternative)
-
-
-- code: |
-    # add an array to the session
-    s_pop_new_output = Session(filepath_hdf)
-    s_pop_new_output.gender_ratio = s_pop_new_output.pop.ratio('gender')
-    
-    # 'equals' returns False if at least on item is not present in the two sessions
-    s_pop.equals(s_pop_new_output)
-
-
-- markdown: |
-    The ``element_equals`` method will compare items of two sessions one by one and return an array of boolean values:
+    s_pop_copy = s_pop.copy()
 
 
 - code: |
@@ -227,8 +262,41 @@ cells:
 
 
 - code: |
-    # array 'births' is different between the two sessions
-    s_pop.element_equals(s_pop_alternative)
+    # 'equals' returns True if all items of the two sessions have exactly the same items
+    s_pop.equals(s_pop_copy)
+
+
+- code: |
+    # slightly modify the 'pop' array for some labels combination
+    s_pop_copy.pop += random_increment 
+
+
+- code: |
+    # the 'pop' array is different between the two sessions
+    s_pop.element_equals(s_pop_copy)
+
+
+- code: |
+    # 'equals' returns False if at least one item of the two sessions are different in values or axes
+    s_pop.equals(s_pop_copy)
+
+
+- code: |
+    # reset the 'copy' session as a copy of the original session
+    s_pop_copy = s_pop.copy()
+    
+    # add an array to the 'copy' session
+    s_pop_copy.gender_ratio = s_pop_copy.pop.ratio('gender')
+
+
+- code: |
+    # the 'gender_ratio' array is not present in the original session
+    s_pop.element_equals(s_pop_copy)
+
+
+- code: |
+    # 'equals' returns False if at least one item is not present in the two sessions
+    s_pop.equals(s_pop_copy)
 
 
 - markdown: |
@@ -236,9 +304,17 @@ cells:
 
 
 - code: |
-    s_same_values = s_pop == s_pop_alternative
+    # reset the 'copy' session as a copy of the original session
+    s_pop_copy = s_pop.copy()
     
-    s_same_values.births
+    # slightly modify the 'pop' array for some labels combination
+    s_pop_copy.pop += random_increment
+
+
+- code: |
+    s_check_same_values = s_pop == s_pop_copy
+    
+    s_check_same_values.pop
 
 
 - markdown: |
@@ -246,7 +322,7 @@ cells:
 
 
 - code: |
-    s_same_values.country
+    s_check_same_values.time
 
 
 - markdown: |
@@ -254,9 +330,9 @@ cells:
 
 
 - code: |
-    s_different_values = s_pop != s_pop_alternative
+    s_check_different_values = s_pop != s_pop_copy
     
-    s_different_values.births 
+    s_check_different_values.pop
 
 
 - markdown: |
@@ -292,7 +368,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.7.3
   livereveal:
     autolaunch: false
     scroll: true

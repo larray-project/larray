@@ -1,0 +1,162 @@
+cells:
+
+- markdown: |
+    # Pythonic VS String Syntax
+
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+
+- markdown: |
+    Check the version of LArray:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+
+- markdown: |
+    LArray offers two syntaxes to build axes and make selections and aggregations.
+    The first one is more ``Pythonic`` (uses Python structures) 
+    For example, you can create an *age_category* axis as follows:
+
+
+- code: |
+    age_category = Axis(["0-9", "10-17", "18-66", "67+"], "age_category")
+    age_category
+
+
+- markdown: |
+    The second one consists of using ``strings`` that are parsed.
+    It is shorter to type. The same *age_category* axis could have been generated as follows:
+
+
+- code: |
+    age_category = Axis("age_category=0-9,10-17,18-66,67+")
+    age_category
+
+
+- markdown: |
+    <div class="alert alert-warning">
+      **Warning:** The drawback of the string syntax is that some characters such as `, ; = : .. [ ] >>`
+    have a special meaning and cannot be used with the ``String`` syntax. 
+    If you need to work with labels containing such special characters (when importing data from an external source for example), you have to use the ``Pythonic`` syntax which allows to use any character in labels.
+    </div>
+
+
+- markdown: |
+    ## String Syntax
+
+
+- markdown: |
+    ### Axes And Arrays creation
+    
+    The string syntax allows to easily create axes.
+    
+    When creating one axis, the labels are separated using ``,``:
+
+
+- code: |
+    a = Axis('a=a0,a1,a2,a3')
+    a
+
+
+- markdown: |
+    The special syntax ``start..stop`` generates a sequence of labels:
+
+
+- code: |
+    a = Axis('a=a0..a3')
+    a
+
+
+- markdown: |
+    When creating an array, it is possible to define several axes in the same string using ``;``
+
+
+- code: |
+    arr = zeros("a=a0..a2; b=b0,b1; c=c0..c5")
+    arr
+
+
+- markdown: |
+    ### Selection
+    
+    Starting from the array: 
+
+
+- code: |
+    immigration = load_example_data('demography_eurostat').immigration
+    immigration.info
+
+
+- markdown: |
+    an example of a selection using the ``Pythonic`` syntax is:
+
+
+- code: |
+    # since the labels 'Belgium' and 'Netherlands' also exists in the 'citizenship' axis, 
+    # we need to explicitly specify that we want to make a selection over the 'country' axis
+    immigration_subset = immigration[X.country['Belgium', 'Netherlands'], 'Female', 2015:]
+    immigration_subset
+
+
+- markdown: |
+    Using the ``String`` syntax, the same selection becomes:
+
+
+- code: |
+    immigration_subset = immigration['country[Belgium,Netherlands]', 'Female', 2015:]
+    immigration_subset
+
+
+- markdown: |
+    ### Aggregation
+
+
+- markdown: |
+    An example of an aggregation using the ``Pythonic`` syntax is:
+
+
+- code: |
+    immigration.sum((X.time[2014::2] >> 'even_years', X.time[::2] >> 'odd_years'), 'citizenship')
+
+
+- markdown: |
+    Using the ``String`` syntax, the same aggregation becomes:
+
+
+- code: |
+    immigration.sum('time[2014::2] >> even_years; time[::2] >> odd_years', 'citizenship')
+
+
+- markdown: |
+    where we used ``;`` to separate groups of labels from the same axis.
+
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.7.3
+nbformat: 4
+nbformat_minor: 2
+
