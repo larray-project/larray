@@ -18,6 +18,7 @@ It is mainly dedicated to help new users to familiarize with it and others to re
    ./tutorial/tutorial_transforming.ipynb
    ./tutorial/tutorial_indexing.ipynb
    ./tutorial/tutorial_arithmetic_op_and_aggregation.ipynb
+   ./tutorial/tutorial_string_syntax.ipynb
    ./tutorial/tutorial_plotting.ipynb
    ./tutorial/tutorial_miscellaneous.ipynb
    ./tutorial/tutorial_sessions.ipynb

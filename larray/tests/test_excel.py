@@ -338,7 +338,7 @@ def test_excel_report_titles():
 @needs_xlwings
 def test_excel_report_arrays():
     excel_report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
-    demo = load_example_data('demo')
+    demo = load_example_data('demography_eurostat')
     pop = demo.pop
     pop_be = pop['Belgium']
     pop_be_nan = pop_be.astype(float)

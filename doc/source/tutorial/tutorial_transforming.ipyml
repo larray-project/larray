@@ -9,7 +9,6 @@ cells:
     import warnings
     warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
 
-  id: 0
   metadata:
     nbsphinx: hidden
 
@@ -20,7 +19,6 @@ cells:
 - code: |
     from larray import *
 
-  id: 1
 
 - markdown: |
     Check the version of LArray:
@@ -30,66 +28,109 @@ cells:
     from larray import __version__
     __version__
 
-  id: 2
 
-- markdown: |
-    ## Manipulating axes
+- code: |
+    # load the 'demography_eurostat' dataset
+    demo_eurostat = load_example_data('demography_eurostat')
 
 
 - code: |
-    # let's start with
-    pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
+    # get a copy of the 'pop' array from the 'demography_eurostat' dataset
+    pop = demo_eurostat.pop.copy()
     pop
 
-  id: 3
+
+- markdown: |
+    ## Manipulating axes
+    
+    
+    LArray offers several methods to manipulate the axes and labels of an array:
+    
+    - [set_labels](../_generated/larray.LArray.set_labels.rst#larray.LArray.set_labels): to replace all or some labels of one or several axes.
+    - [rename](../_generated/larray.LArray.rename.rst#larray.LArray.rename): to replace one or several axis names.
+    - [set_axes](../_generated/larray.LArray.set_axes.rst#larray.LArray.set_axes): to replace one or several axes.
+    - [transpose](../_generated/larray.LArray.transpose.rst#larray.LArray.transpose): to modify the order of axes.
+    - [drop](../_generated/larray.LArray.drop.rst#larray.LArray.drop): to remove one or several labels.
+    - [combine_axes](../_generated/larray.LArray.combine_axes.rst#larray.LArray.combine_axes): to combine axes.
+    - [split_axes](../_generated/larray.LArray.split_axes.rst#larray.LArray.split_axes): to split one or several axes by splitting their labels and names.
+    - [reindex](../_generated/larray.LArray.reindex.rst#larray.LArray.reindex): to reorder, add and remove labels of one or several axes.
+    - [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert): to insert a label at a given position.
+
 
 - markdown: |
     ### Relabeling
     
-    Replace all labels of one axis
+    Replace some labels of an axis:
 
 
 - code: |
-    # returns a copy by default
-    pop_new_labels = pop.set_labels('sex', ['Men', 'Women'])
+    # replace all labels of the 'gender' axis by passing the list of all new labels
+    pop_new_labels = pop.set_labels('gender', ['Men', 'Women'])
     pop_new_labels
 
-  id: 4
 
 - code: |
-    # inplace flag avoids to create a copy
-    pop.set_labels('sex', ['M', 'F'], inplace=True)
+    # set all labels of the 'country' axis to uppercase by passing the function str.upper()
+    pop_new_labels = pop.set_labels('country', str.upper)
+    pop_new_labels
 
-  id: 5
+
+- code: |
+    # replace only one label of the 'gender' axis by passing a dict
+    pop_new_labels = pop.set_labels('gender', {'Male': 'Men'})
+    pop_new_labels
+
+
+- markdown: |
+    See [set_labels](../_generated/larray.LArray.set_labels.rst#larray.LArray.set_labels) for more details and examples.
+
 
 - markdown: |
     ### Renaming axes
     
-    Rename one axis
+    Rename one axis:
 
-
-- code: |
-    pop.info
-
-  id: 6
 
 - code: |
     # 'rename' returns a copy of the array
-    pop2 = pop.rename('sex', 'gender')
-    pop2
+    pop_new_names = pop.rename('time', 'year')
+    pop_new_names
 
-  id: 7
 
 - markdown: |
-    Rename several axes at once
+    Rename several axes at once:
 
 
 - code: |
-    # No x. here because sex and nat are keywords and not actual axes
-    pop2 = pop.rename(sex='gender', nat='nationality')
-    pop2
+    pop_new_names = pop.rename({'gender': 'sex', 'time': 'year'})
+    pop_new_names
 
-  id: 8
+
+- markdown: |
+    See [rename](../_generated/larray.LArray.rename.rst#larray.LArray.rename) for more details and examples.
+
+
+- markdown: |
+    ### Replacing Axes
+    
+    Replace one axis:
+
+
+- code: |
+    new_gender = Axis('sex=Men,Women')
+    pop_new_axis = pop.set_axes('gender', new_gender)
+    pop_new_axis
+
+
+- markdown: |
+    Replace several axes at once:
+
+
+- code: |
+    new_country = Axis('country_codes=BE,FR,DE') 
+    pop_new_axes = pop.set_axes({'country': new_country, 'gender': new_gender})
+    pop_new_axes
+
 
 - markdown: |
     ### Reordering axes
@@ -101,75 +142,238 @@ cells:
 
 
 - code: |
-    # starting order : age, sex, nat
+    # starting order : country, gender, time
     pop
 
-  id: 9
 
 - code: |
-    # no argument --> reverse axes
-    pop.transpose()
+    # no argument --> reverse all axes
+    pop_transposed = pop.transpose()
     
     # .T is a shortcut for .transpose()
-    pop.T
+    pop_transposed = pop.T
+    
+    pop_transposed
 
-  id: 10
 
 - code: |
     # reorder according to list
-    pop.transpose('age', 'nat', 'sex')
+    pop_transposed = pop.transpose('gender', 'country', 'time')
+    pop_transposed
 
-  id: 11
 
 - code: |
-    # axes not mentioned come after those which are mentioned (and keep their relative order)
-    pop.transpose('sex')
+    # move 'time' axis at first place
+    # not mentioned axes come after those which are mentioned (and keep their relative order)
+    pop_transposed = pop.transpose('time')
+    pop_transposed
 
-  id: 12
+
+- code: |
+    # move 'gender' axis at last place
+    # not mentioned axes come before those which are mentioned (and keep their relative order)
+    pop_transposed = pop.transpose(..., 'gender')
+    pop_transposed
+
+
+- markdown: |
+    See [transpose](../_generated/larray.LArray.transpose.rst#larray.LArray.transpose) for more details and examples.
+
+
+- markdown: |
+    ### Dropping Labels
+
+
+- code: |
+    pop_labels_dropped = pop.drop([2014, 2016])
+    pop_labels_dropped
+
+
+- markdown: |
+    See [drop](../_generated/larray.LArray.drop.rst#larray.LArray.drop) for more details and examples.
+
+
+- markdown: |
+    ### Combine And Split Axes
+    
+    Combine two axes:
+
+
+- code: |
+    pop_combined_axes = pop.combine_axes(('country', 'gender'))
+    pop_combined_axes
+
+
+- markdown: |
+    Split an axis:
+
+
+- code: |
+    pop_split_axes = pop_combined_axes.split_axes('country_gender')
+    pop_split_axes
+
+
+- markdown: |
+    See [combine_axes](../_generated/larray.LArray.combine_axes.rst#larray.LArray.combine_axes) and [split_axes](../_generated/larray.LArray.split_axes.rst#larray.LArray.split_axes) for more details and examples.
+
+
+- markdown: |
+    ### Reordering, adding and removing labels
+    
+    The ``reindex`` method allows to reorder, add and remove labels along one axis:
+
+
+- code: |
+    # reverse years + remove 2013 + add 2018 + copy data for 2017 to 2018
+    pop_new_time = pop.reindex('time', '2018..2014', fill_value=pop[2017])
+    pop_new_time
+
+
+- markdown: |
+    or several axes:
+
+
+- code: |
+    pop_new = pop.reindex({'country': 'country=Luxembourg,Belgium,France,Germany', 
+                           'time': 'time=2018..2014'}, fill_value=0)
+    pop_new
+
+
+- markdown: |
+    See [reindex](../_generated/larray.LArray.reindex.rst#larray.LArray.reindex) for more details and examples.
+
+
+- markdown: |
+    Another way to insert new labels is to use the ``insert`` method:
+
+
+- code: |
+    # insert a new country before 'France' with all values set to 0
+    pop_new_country = pop.insert(0, before='France', label='Luxembourg')
+    # or equivalently
+    pop_new_country = pop.insert(0, after='Belgium', label='Luxembourg')
+    
+    pop_new_country
+
+
+- markdown: |
+    See [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert) for more details and examples.
+
+
+- markdown: |
+    ## Sorting
+    
+    
+    - [sort_axes](../_generated/larray.LArray.sort_axes.rst#larray.LArray.sort_axes): sort the labels of an axis.
+    - [labelsofsorted](../_generated/larray.LArray.labelsofsorted.rst#larray.LArray.labelsofsorted): give labels which would sort an axis. 
+    - [sort_values](../_generated/larray.LArray.sort_values.rst#larray.LArray.sort_values): sort axes according to values
+
+
+- code: |
+    # get a copy of the 'pop_benelux' array
+    pop_benelux = demo_eurostat.pop_benelux.copy()
+    pop_benelux
+
+
+- markdown: |
+    Sort an axis (alphabetically if labels are strings)
+
+
+- code: |
+    pop_sorted = pop_benelux.sort_axes('gender')
+    pop_sorted
+
+
+- markdown: |
+    Give labels which would sort the axis
+
+
+- code: |
+    pop_benelux.labelsofsorted('country')
+
+
+- markdown: |
+    Sort according to values
+
+
+- code: |
+    pop_sorted = pop_benelux.sort_values(('Male', 2017))
+    pop_sorted
+
 
 - markdown: |
     ## Combining arrays
     
-    ### Append/Prepend
+    LArray offers several methods to combine arrays:
     
-    Append/prepend one element to an axis of an array
+    - [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert): inserts an array in another array along an axis
+    - [append](../_generated/larray.LArray.append.rst#larray.LArray.append): adds an array at the end of an axis.
+    - [prepend](../_generated/larray.LArray.prepend.rst#larray.LArray.prepend): adds an array at the beginning of an axis.
+    - [extend](../_generated/larray.LArray.extend.rst#larray.LArray.extend): extends an array along an axis.
+    - [stack](../_generated/larray.stack.rst#larray.stack): combines several arrays along an axis.
 
-
-- code: |
-    pop = load_example_data('demography').pop[2016, 'BruCap', 90:95]
-    
-    # imagine that you have now acces to the number of non-EU foreigners
-    data = [[25, 54], [15, 33], [12, 28], [11, 37], [5, 21], [7, 19]]
-    pop_non_eu = LArray(data, pop['FO'].axes)
-    
-    # you can do something like this
-    pop = pop.append('nat', pop_non_eu, 'NEU')
-    pop
-
-  id: 13
-
-- code: |
-    # you can also add something at the start of an axis
-    pop = pop.prepend('sex', pop.sum('sex'), 'B')
-    pop
-
-  id: 14
 
 - markdown: |
-    The value being appended/prepended can have missing (or even extra) axes as long as common axes are compatible
+    ### Insert
 
 
 - code: |
-    aliens = zeros(pop.axes['sex'])
-    aliens
+    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), pop.gender, pop.time), dtype=int)
+    
+    # insert new countries before 'France'
+    pop_new_countries = pop.insert(other_countries, before='France')
+    pop_new_countries
 
-  id: 15
+
+- markdown: |
+    See [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert) for more details and examples.
+
+
+- markdown: |
+    ### Append
+    
+    Append one element to an axis of an array:
+
 
 - code: |
-    pop = pop.append('nat', aliens, 'AL')
-    pop
+    # append data for 'Luxembourg'
+    pop_new = pop.append('country', pop_benelux['Luxembourg'], 'Luxembourg')
+    pop_new
 
-  id: 16
+
+- markdown: |
+    The value being appended can have missing (or even extra) axes as long as common axes are compatible:
+
+
+- code: |
+    pop_lux = LArray([-1, 1], pop.gender)
+    pop_lux
+
+
+- code: |
+    pop_new = pop.append('country', pop_lux, 'Luxembourg')
+    pop_new
+
+
+- markdown: |
+    See [append](../_generated/larray.LArray.append.rst#larray.LArray.append) for more details and examples.
+
+
+- markdown: |
+    ### Prepend
+    
+    Prepend one element to an axis of an array:
+
+
+- code: |
+    # append data for 'Luxembourg'
+    pop_new = pop.prepend('country', pop_benelux['Luxembourg'], 'Luxembourg')
+    pop_new
+
+
+- markdown: |
+    See [prepend](../_generated/larray.LArray.prepend.rst#larray.LArray.prepend) for more details and examples.
+
 
 - markdown: |
     ### Extend
@@ -178,14 +382,13 @@ cells:
 
 
 - code: |
-    _pop = load_example_data('demography').pop
-    pop = _pop[2016, 'BruCap', 90:95]
-    pop_next = _pop[2016, 'BruCap', 96:100]
-    
-    # concatenate along age axis
-    pop.extend('age', pop_next)
+    pop_extended = pop.extend('country', pop_benelux[['Luxembourg', 'Netherlands']])
+    pop_extended
 
-  id: 17
+
+- markdown: |
+    See [extend](../_generated/larray.LArray.extend.rst#larray.LArray.extend) for more details and examples.
+
 
 - markdown: |
     ### Stack
@@ -194,49 +397,62 @@ cells:
 
 
 - code: |
-    # imagine you have loaded data for each nationality in different arrays (e.g. loaded from different Excel sheets)
-    pop_be, pop_fo = pop['BE'], pop['FO']
+    # imagine you have loaded data for each country in different arrays 
+    # (e.g. loaded from different Excel sheets)
+    pop_be = pop['Belgium']
+    pop_fr = pop['France']
+    pop_de = pop['Germany']
     
-    # first way to stack them
-    nat = Axis('nat=BE,FO,NEU')
-    pop = stack([pop_be, pop_fo, pop_non_eu], nat)
-    
-    # second way
-    pop = stack([('BE', pop_be), ('FO', pop_fo), ('NEU', pop_non_eu)], 'nat')
-    
-    pop
+    pop_stacked = stack({'Belgium': pop_be, 'France': pop_fr, 'Germany': pop_de}, 'country')
+    pop_stacked
 
-  id: 18
 
 - markdown: |
-    ## Sorting
+    See [stack](../_generated/larray.stack.rst#larray.stack) for more details and examples.
+
+
+- markdown: |
+    ## Aligning Arrays
     
-    Sort an axis (alphabetically if labels are strings)
+    The ``align`` method align two arrays on their axes with a specified join method.
+    In other words, it ensure all common axes are compatible.
 
 
 - code: |
-    pop_sorted = pop.sort_axes('nat')
-    pop_sorted
-
-  id: 19
-
-- markdown: |
-    Give labels which would sort the axis
+    # get a copy of the 'births' array
+    births = demo_eurostat.births.copy()
+    
+    # align the two arrays with the 'inner' join method
+    pop_aligned, births_aligned = pop_benelux.align(births, join='inner')
 
 
 - code: |
-    pop_sorted.labelsofsorted('sex')
-
-  id: 20
-
-- markdown: |
-    Sort according to values
+    print('pop_benelux before align:')
+    print(pop_benelux)
+    print()
+    print('pop_benelux after align:')
+    print(pop_aligned)
 
 
 - code: |
-    pop_sorted.sort_values((90, 'F'))
+    print('births before align:')
+    print(births)
+    print()
+    print('births after align:')
+    print(births_aligned)
 
-  id: 21
+
+- markdown: |
+    Aligned arrays can then be used in arithmetic operations:
+
+
+- code: |
+    pop_aligned - births_aligned
+
+
+- markdown: |
+    See [align](../_generated/larray.LArray.align.rst#larray.LArray.align) for more details and examples.
+
 
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
@@ -255,22 +471,10 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.6.4
+    version: 3.7.3
   livereveal:
     autolaunch: false
     scroll: true
 nbformat: 4
 nbformat_minor: 2
-
-# ---------------------------------------------------------------------------
-data:
-  [{execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}, {execution_count: null,
-      outputs: []}, {execution_count: null, outputs: []}, {execution_count: null, outputs: []},
-    {execution_count: null, outputs: []}, {execution_count: null, outputs: []}]
 
