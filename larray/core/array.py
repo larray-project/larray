@@ -578,6 +578,8 @@ class LArray(ABCLArray):
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+    dtype : type, optional
+        Datatype for the array. Defaults to None (inferred from the data).
 
     Attributes
     ----------
@@ -656,8 +658,8 @@ class LArray(ABCLArray):
           F  10  11  12
     """
 
-    def __init__(self, data, axes=None, title=None, meta=None):
-        data = np.asarray(data)
+    def __init__(self, data, axes=None, title=None, meta=None, dtype=None):
+        data = np.asarray(data, dtype=dtype)
         ndim = data.ndim
         if axes is None:
             axes = AxisCollection(data.shape)
