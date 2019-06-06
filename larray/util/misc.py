@@ -835,6 +835,78 @@ class SequenceZip(object):
         return 'SequenceZip({})'.format(self.sequences)
 
 
+class Repeater(object):
+    """
+    Returns a virtual sequence with value repeated n times.
+    The sequence is never actually created in memory.
+
+    Parameters
+    ----------
+    value : any
+        Value to repeat.
+    n : int
+        Number of times to repeat value.
+
+    Notes
+    -----
+    This is very similar to itertools.repeat except this version returns a Sequence instead of an iterator,
+    meaning it has a length and can be indexed.
+
+    Examples
+    --------
+    >>> r = Repeater('a', 3)
+    >>> list(r)
+    ['a', 'a', 'a']
+    >>> r[0]
+    'a'
+    >>> r[2]
+    'a'
+    >>> r[3]
+    Traceback (most recent call last):
+    ...
+    IndexError: index out of range
+    >>> r[-1]
+    'a'
+    >>> r[-3]
+    'a'
+    >>> r[-4]
+    Traceback (most recent call last):
+    ...
+    IndexError: index out of range
+    >>> len(r)
+    3
+    >>> list(r[1:])
+    ['a', 'a']
+    >>> list(r[:2])
+    ['a', 'a']
+    >>> list(r[10:])
+    []
+    """
+    def __init__(self, value, n):
+        self.value = value
+        self.n = n
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, np.integer)):
+            if key >= self.n or key < -self.n:
+                raise IndexError('index out of range')
+            return self.value
+        else:
+            assert isinstance(key, slice), "key (%s) has invalid type (%s)" % (key, type(key))
+            start, stop, step = key.indices(self.n)
+            # XXX: unsure // step is correct
+            return Repeater(self.value, (stop - start) // step)
+
+    def __iter__(self):
+        return itertools.repeat(self.value, self.n)
+
+    def __repr__(self):
+        return 'Repeater({}, {})'.format(self.value, self.n)
+
+
 # TODO: remove Product from larray_editor.utils (it is almost identical)
 class Product(object):
     """
