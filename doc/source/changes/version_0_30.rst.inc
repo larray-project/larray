@@ -224,6 +224,8 @@ Miscellaneous improvements
 
 * added dtype argument to LArray to set the type of the array explicitly instead of relying on auto-detection.
 
+* added dtype argument to stack to set the type of the resulting array explicitly instead of relying on auto-detection.
+
 * implemented :py:obj:`LArray.reverse()` method to reverse one or several axes of an array (closes :issue:`631`).
 
 * added :py:obj:`set_options` allowing to set options for larray within a ``with`` block or globally:
