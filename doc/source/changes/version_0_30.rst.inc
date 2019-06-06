@@ -1,4 +1,4 @@
-﻿.. py:currentmodule:: larray
+.. py:currentmodule:: larray
 
 
 Syntax changes
@@ -221,6 +221,8 @@ Miscellaneous improvements
 
 * renamed `a_min` and `a_max` arguments of :py:obj:`LArray.clip()` as `minval` and `maxval` respectively
   and made them optional (closes :issue:`747`).
+
+* added dtype argument to LArray to set the type of the array explicitly instead of relying on auto-detection.
 
 * implemented :py:obj:`LArray.reverse()` method to reverse one or several axes of an array (closes :issue:`631`).
 
