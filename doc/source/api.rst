@@ -673,6 +673,7 @@ Miscellaneous
    diag
    eye
    ipfp
+   wrap_elementwise_array_func
 
 .. _api-session:
 

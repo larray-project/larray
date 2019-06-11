@@ -126,6 +126,9 @@ New features
 * added :py:obj:`Session.update()` method to add and modify items from an existing session by passing
   either another session or a dict-like object or an iterable object with (key, value) pairs (closes :issue:`754`).
 
+* implemented :py:obj:`wrap_elementwise_array_func()` function to make a function defined in another library work with
+  LArray arguments instead of with numpy arrays.
+
 
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
