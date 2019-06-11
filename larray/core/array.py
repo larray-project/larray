@@ -6757,7 +6757,7 @@ class LArray(ABCLArray):
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1):
-        """Shifts the cells of the array n-times to the left along axis.
+        r"""Shifts the cells of the array n-times to the right along axis.
 
         Parameters
         ----------
@@ -6772,19 +6772,19 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> a = ndtest('sex=M,F;type=type1,type2,type3')
-        >>> a
-        sex\\type  type1  type2  type3
-               M      0      1      2
-               F      3      4      5
-        >>> a.shift('type')
-        sex\\type  type2  type3
-               M      0      1
-               F      3      4
-        >>> a.shift('type', n=-1)
-        sex\\type  type1  type2
-               M      1      2
-               F      4      5
+        >>> arr = ndtest('sex=M,F;year=2019..2021')
+        >>> arr
+        sex\year  2019  2020  2021
+               M     0     1     2
+               F     3     4     5
+        >>> arr.shift('year')
+        sex\year  2020  2021
+               M     0     1
+               F     3     4
+        >>> arr.shift('year', n=-1)
+        sex\year  2019  2020
+               M     1     2
+               F     4     5
         """
         axis = self.axes[axis]
         if n > 0:
