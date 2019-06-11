@@ -6,8 +6,49 @@ import numpy as np
 from larray.core.array import LArray, make_args_broadcastable
 
 
-def broadcastify(func):
-    # intentionally not using functools.wraps, because it does not work for wrapping a function from another module
+def wrap_elementwise_array_func(func):
+    r"""
+    Wrap a function using numpy arrays to work with LArray arrays instead.
+
+    Parameters
+    ----------
+    func : function
+        A function taking numpy arrays as arguments and returning numpy arrays of the same shape. If the function
+        takes several arguments, this wrapping code assumes the result will have the combination of all axes present.
+        In numpy talk, arguments will be broadcasted to each other.
+
+    Returns
+    -------
+    function
+        A function taking LArray arguments and returning LArrays.
+
+    Examples
+    --------
+    For example, if we want to apply the Hodrick-Prescott filter from statsmodels we can use this:
+
+    >>> from statsmodels.tsa.filters.hp_filter import hpfilter         # doctest: +SKIP
+    >>> hpfilter = wrap_elementwise_array_func(hpfilter)               # doctest: +SKIP
+
+    hpfilter is now a function taking a one dimensional LArray as input and returning a one dimensional LArray as output
+
+    Now let us suppose we have a ND array such as:
+
+    >>> from larray.random import normal
+    >>> arr = normal(axes="sex=M,F;year=2016..2018")                   # doctest: +SKIP
+    >>> arr                                                            # doctest: +SKIP
+    sex\year   2016   2017   2018
+           M  -1.15   0.56  -1.06
+           F  -0.48  -0.39  -0.98
+
+    We can apply an Hodrick-Prescott filter to it by using:
+
+    >>> # 6.25 is the recommended smoothing value for annual data
+    >>> cycle, trend = arr.apply(hpfilter, 6.25, axes="year")          # doctest: +SKIP
+    >>> trend                                                          # doctest: +SKIP
+    sex\year   2016   2017   2018
+           M  -0.61  -0.52  -0.52
+           F  -0.37  -0.61  -0.87
+    """
     def wrapper(*args, **kwargs):
         raw_bcast_args, raw_bcast_kwargs, res_axes = make_args_broadcastable(args, kwargs)
 
@@ -25,11 +66,21 @@ def broadcastify(func):
         # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
         res_data = func(*raw_bcast_args, **raw_bcast_kwargs)
         if res_axes:
-            return LArray(res_data, res_axes)
+            if isinstance(res_data, tuple):
+                return tuple(LArray(res_arr, res_axes) for res_arr in res_data)
+            else:
+                return LArray(res_data, res_axes)
         else:
             return res_data
-    # copy meaningful attributes (numpy ufuncs do not have __annotations__ nor __qualname__)
+    # copy function name. We are intentionally not using functools.wraps, because it does not work for wrapping a
+    # function from another module
     wrapper.__name__ = func.__name__
+    return wrapper
+
+
+# TODO: rename to wrap_numpy_func
+def broadcastify(func):
+    wrapper = wrap_elementwise_array_func(func)
     # update documentation by inserting a warning message after the short description of the numpy function
     # (otherwise the description of ufuncs given in the corresponding API 'autosummary' tables will always
     #  start with 'larray specific variant of ...' without giving a meaningful description of what does the ufunc)
