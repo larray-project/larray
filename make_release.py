@@ -47,7 +47,7 @@ def update_metapackage(context):
     check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', fill('larray =={version}'),
                 fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
                 "qtconsole", "matplotlib", "pyqt", "qtpy", "numpy ==1.15.2", "pytables ==3.4.4",
-                "xlsxwriter", "xlrd", "openpyxl", "xlwings", "ipykernel !=5.0,!=5.1",
+                "xlsxwriter", "xlrd", "openpyxl", "xlwings", "ipykernel !=5.0,!=5.1.0",
                 '--home', 'http://github.com/larray-project/larray',
                 '--license', 'GPL-3.0',
                 '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
