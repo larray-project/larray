@@ -732,6 +732,7 @@ Modifying
    :toctree: _generated/
 
    Session.add
+   Session.update
    Session.get
    Session.apply
    Session.transpose

@@ -115,7 +115,7 @@ class Session(object):
         *args : list of object
             Objects to add. Objects must have an attribute 'name'.
         **kwargs : dict of {str: object}
-            Objects to add written as 'name'=array, ...
+            Objects to add written as name=array, ...
 
         Examples
         --------
@@ -129,6 +129,103 @@ class Session(object):
         """
         for arg in args:
             self[arg.name] = arg
+        for k, v in kwargs.items():
+            self[k] = v
+
+    def update(self, other=None, **kwargs):
+        r"""
+        Update the session with the key/value pairs from other or passed keyword arguments, overwriting existing keys.
+        Note that the session is updated inplace and no new Session object is returned.
+
+        Parameters
+        ----------
+        other: Session or dict-like object or iterable with key/value pairs
+            Object containing key/value pairs to add or modify.
+        **kwargs:
+            If keyword arguments are specified, the session is then updated with those key/value pairs
+            (e.g.: ses.update(pop=pop, births=births, deaths=deaths)).
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> x, y = Axis('x=x0..x2'), Axis('y=y0..y3')
+        >>> arr1, arr2 = ndtest((x, y)), ndtest(x)
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
+        x: x ['x0' 'x1' 'x2'] (3)
+        y: y ['y0' 'y1' 'y2' 'y3'] (4)
+        arr1: x, y (3 x 4) [int32]
+        arr2: x (3) [int32]
+        >>> # new axis and array
+        >>> z = Axis('z=z0..z2')
+        >>> arr3 = ndtest((x, z))
+        >>> # arr2 is modified
+        >>> arr2 = arr2.set_axes('x', z)
+
+        Passing another session
+
+        >>> s2 = Session(z=z, arr2=arr2, arr3=arr3)
+        >>> s.update(s2)
+        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
+        x: x ['x0' 'x1' 'x2'] (3)
+        y: y ['y0' 'y1' 'y2' 'y3'] (4)
+        arr1: x, y (3 x 4) [int32]
+        arr2: z (3) [int32]
+        z: z ['z0' 'z1' 'z2'] (3)
+        arr3: x, z (3 x 3) [int32]
+
+        Passing a dictionary
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> d = {'z': z, 'arr2': arr2, 'arr3': arr3}
+        >>> s.update(d)
+        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
+        x: x ['x0' 'x1' 'x2'] (3)
+        y: y ['y0' 'y1' 'y2' 'y3'] (4)
+        arr1: x, y (3 x 4) [int32]
+        arr2: z (3) [int32]
+        z: z ['z0' 'z1' 'z2'] (3)
+        arr3: x, z (3 x 3) [int32]
+
+        Passing an iterable with key/value pairs
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> i = [('z', z), ('arr2', arr2), ('arr3', arr3)]
+        >>> s.update(i)
+        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
+        x: x ['x0' 'x1' 'x2'] (3)
+        y: y ['y0' 'y1' 'y2' 'y3'] (4)
+        arr1: x, y (3 x 4) [int32]
+        arr2: z (3) [int32]
+        z: z ['z0' 'z1' 'z2'] (3)
+        arr3: x, z (3 x 3) [int32]
+
+        Passing keyword arguments
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> s.update(z=z, arr2=arr2, arr3=arr3)
+        >>> print(s.summary())      # doctest: +NORMALIZE_WHITESPACE
+        x: x ['x0' 'x1' 'x2'] (3)
+        y: y ['y0' 'y1' 'y2' 'y3'] (4)
+        arr1: x, y (3 x 4) [int32]
+        arr2: z (3) [int32]
+        z: z ['z0' 'z1' 'z2'] (3)
+        arr3: x, z (3 x 3) [int32]
+        """
+        if other is None:
+            pass
+        elif hasattr(other, 'items'):
+            for k, v in other.items():
+                self[k] = v
+        elif hasattr(other, '__getitem__'):
+            for k, v in other:
+                self[k] = v
+        else:
+            raise ValueError("Expected Session, dict-like or iterable object for 'other' argument. "
+                             "Got {}.".format(type(other).__name__))
         for k, v in kwargs.items():
             self[k] = v
 
