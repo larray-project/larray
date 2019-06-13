@@ -6,7 +6,8 @@ import sys
 import re
 import fnmatch
 import warnings
-from collections import OrderedDict
+from builtins import isinstance
+from collections import OrderedDict, Iterable
 
 import numpy as np
 
@@ -220,7 +221,7 @@ class Session(object):
         elif hasattr(other, 'items'):
             for k, v in other.items():
                 self[k] = v
-        elif hasattr(other, '__getitem__'):
+        elif isinstance(other, Iterable):
             for k, v in other:
                 self[k] = v
         else:
