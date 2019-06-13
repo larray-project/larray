@@ -6,7 +6,7 @@ import sys
 import re
 import fnmatch
 import warnings
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import numpy as np
 
@@ -115,7 +115,7 @@ class Session(object):
         *args : list of object
             Objects to add. Objects must have an attribute 'name'.
         **kwargs : dict of {str: object}
-            Objects to add written as 'name'=array, ...
+            Objects to add written as name=array, ...
 
         Examples
         --------
@@ -129,6 +129,116 @@ class Session(object):
         """
         for arg in args:
             self[arg.name] = arg
+        for k, v in kwargs.items():
+            self[k] = v
+
+    def update(self, other=None, **kwargs):
+        r"""
+        Update the session with the key/value pairs from other or passed keyword arguments, overwriting existing keys.
+        Note that the session is updated inplace and no new Session object is returned.
+
+        Parameters
+        ----------
+        other: Session or dict-like object or iterable with key/value pairs
+            Object containing key/value pairs to add or modify.
+        **kwargs:
+            If keyword arguments are specified, the session is then updated with those key/value pairs
+            (e.g.: ses.update(pop=pop, births=births, deaths=deaths)).
+
+        Examples
+        --------
+        >>> x, y = Axis('x=x0..x2'), Axis('y=y0..y3')
+        >>> arr1 = ndtest((x, y))
+        >>> arr2 = ndtest(x)
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> # print item's names in sorted order
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+
+        >>> # new axis and array
+        >>> z = Axis('z=z0..z2')
+        >>> arr3 = ndtest((x, z))
+        >>> # arr2 is modified
+        >>> arr2_modified = arr2.set_axes('x', z)
+
+        Passing another session
+
+        >>> s2 = Session(z=z, arr2=arr2_modified, arr3=arr3)
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> s.update(s2)
+        >>> # new items have been added to the session 's'
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> # and array 'arr2' has been updated
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
+
+        Passing a dictionary
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> d = {'z': z, 'arr2': arr2_modified, 'arr3': arr3}
+        >>> s.update(d)
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
+
+        Passing an iterable with key/value pairs
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> i = [('z', z), ('arr2', arr2_modified), ('arr3', arr3)]
+        >>> s.update(i)
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
+
+        Passing keyword arguments
+
+        >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> s.update(z=z, arr2=arr2_modified, arr3=arr3)
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
+        """
+        if other is None:
+            pass
+        elif hasattr(other, 'items'):
+            for k, v in other.items():
+                self[k] = v
+        elif isinstance(other, Iterable):
+            for k, v in other:
+                self[k] = v
+        else:
+            raise ValueError("Expected Session, dict-like or iterable object for 'other' argument. "
+                             "Got {}.".format(type(other).__name__))
         for k, v in kwargs.items():
             self[k] = v
 

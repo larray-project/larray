@@ -117,14 +117,14 @@ New features
     a_b  a0_b1  a1_b2
              1      5
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details).
-
-
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 
     >>> sex = Axis('sex=MALE,FEMALE')
     >>> sex.apply(str.capitalize)
     Axis(['Male', 'Female'], 'sex')
+
+* added :py:obj:`Session.update()` method to add and modify items from an existing session by passing
+  either another session or a dict-like object or an iterable object with (key, value) pairs (closes :issue:`754`).
 
 
 Miscellaneous improvements
