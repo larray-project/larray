@@ -149,69 +149,85 @@ class Session(object):
         Examples
         --------
         >>> x, y = Axis('x=x0..x2'), Axis('y=y0..y3')
-        >>> arr1 = ndtest((x, y), dtype=np.int64)
-        >>> arr2 = ndtest(x, dtype=np.int64)
+        >>> arr1 = ndtest((x, y))
+        >>> arr2 = ndtest(x)
         >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
-        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
-        x: x ['x0' 'x1' 'x2'] (3)
-        y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int64]
-        arr2: x (3) [int64]
+        >>> # print item's names in sorted order
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+
         >>> # new axis and array
         >>> z = Axis('z=z0..z2')
-        >>> arr3 = ndtest((x, z), dtype=np.int64)
+        >>> arr3 = ndtest((x, z))
         >>> # arr2 is modified
-        >>> arr2 = arr2.set_axes('x', z)
+        >>> arr2_modified = arr2.set_axes('x', z)
 
         Passing another session
 
-        >>> s2 = Session(z=z, arr2=arr2, arr3=arr3)
+        >>> s2 = Session(z=z, arr2=arr2_modified, arr3=arr3)
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
         >>> s.update(s2)
-        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
-        x: x ['x0' 'x1' 'x2'] (3)
-        y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int64]
-        arr2: z (3) [int64]
-        z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int64]
+        >>> # new items have been added to the session 's'
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> # and array 'arr2' has been updated
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
 
         Passing a dictionary
 
         >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
-        >>> d = {'z': z, 'arr2': arr2, 'arr3': arr3}
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> d = {'z': z, 'arr2': arr2_modified, 'arr3': arr3}
         >>> s.update(d)
-        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
-        x: x ['x0' 'x1' 'x2'] (3)
-        y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int64]
-        arr2: z (3) [int64]
-        z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int64]
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
 
         Passing an iterable with key/value pairs
 
         >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
-        >>> i = [('z', z), ('arr2', arr2), ('arr3', arr3)]
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> i = [('z', z), ('arr2', arr2_modified), ('arr3', arr3)]
         >>> s.update(i)
-        >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
-        x: x ['x0' 'x1' 'x2'] (3)
-        y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int64]
-        arr2: z (3) [int64]
-        z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int64]
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
 
         Passing keyword arguments
 
         >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
-        >>> s.update(z=z, arr2=arr2, arr3=arr3)
-        >>> print(s.summary())      # doctest: +NORMALIZE_WHITESPACE
-        x: x ['x0' 'x1' 'x2'] (3)
-        y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int64]
-        arr2: z (3) [int64]
-        z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int64]
+        >>> s.names
+        ['arr1', 'arr2', 'x', 'y']
+        >>> s.arr2
+        x  x0  x1  x2
+            0   1   2
+        >>> s.update(z=z, arr2=arr2_modified, arr3=arr3)
+        >>> s.names
+        ['arr1', 'arr2', 'arr3', 'x', 'y', 'z']
+        >>> s.arr2
+        z  z0  z1  z2
+            0   1   2
         """
         if other is None:
             pass
