@@ -124,7 +124,7 @@ New features
     Axis(['Male', 'Female'], 'sex')
 
 * added :py:obj:`Session.update()` method to add and modify items from an existing session by passing
-  either another session or a dict-like object or an iterable with (key, value) pairs (closes :issue:`754`).
+  either another session or a dict-like object or an iterable object with (key, value) pairs (closes :issue:`754`).
 
 
 Miscellaneous improvements
