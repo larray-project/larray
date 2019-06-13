@@ -219,7 +219,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     a1   b0   4   5
     a1   b1   6   7
     """
-    axes_names = [decode(name, 'utf8') for name in df.index.names]
+    axes_names = [decode(name, 'utf8') if isinstance(name, basestring) else name
+                  for name in df.index.names]
 
     # handle 2 or more dimensions with the last axis name given using \
     if unfold_last_axis_name:
@@ -326,7 +327,8 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
             raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
         return from_series(series, sort_rows=sort_columns)
     else:
-        axes_names = [decode(name, 'utf8') for name in df.index.names]
+        axes_names = [decode(name, 'utf8') if isinstance(name, basestring) else name
+                      for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
         return from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
                           unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
