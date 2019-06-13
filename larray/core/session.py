@@ -149,16 +149,17 @@ class Session(object):
         Examples
         --------
         >>> x, y = Axis('x=x0..x2'), Axis('y=y0..y3')
-        >>> arr1, arr2 = ndtest((x, y)), ndtest(x)
+        >>> arr1 = ndtest((x, y), dtype=np.int64)
+        >>> arr2 = ndtest(x, dtype=np.int64)
         >>> s = Session(x=x, y=y, arr1=arr1, arr2=arr2)
         >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
         x: x ['x0' 'x1' 'x2'] (3)
         y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int32]
-        arr2: x (3) [int32]
+        arr1: x, y (3 x 4) [int64]
+        arr2: x (3) [int64]
         >>> # new axis and array
         >>> z = Axis('z=z0..z2')
-        >>> arr3 = ndtest((x, z))
+        >>> arr3 = ndtest((x, z), dtype=np.int64)
         >>> # arr2 is modified
         >>> arr2 = arr2.set_axes('x', z)
 
@@ -169,10 +170,10 @@ class Session(object):
         >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
         x: x ['x0' 'x1' 'x2'] (3)
         y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int32]
-        arr2: z (3) [int32]
+        arr1: x, y (3 x 4) [int64]
+        arr2: z (3) [int64]
         z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int32]
+        arr3: x, z (3 x 3) [int64]
 
         Passing a dictionary
 
@@ -182,10 +183,10 @@ class Session(object):
         >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
         x: x ['x0' 'x1' 'x2'] (3)
         y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int32]
-        arr2: z (3) [int32]
+        arr1: x, y (3 x 4) [int64]
+        arr2: z (3) [int64]
         z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int32]
+        arr3: x, z (3 x 3) [int64]
 
         Passing an iterable with key/value pairs
 
@@ -195,10 +196,10 @@ class Session(object):
         >>> print(s.summary())     # doctest: +NORMALIZE_WHITESPACE
         x: x ['x0' 'x1' 'x2'] (3)
         y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int32]
-        arr2: z (3) [int32]
+        arr1: x, y (3 x 4) [int64]
+        arr2: z (3) [int64]
         z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int32]
+        arr3: x, z (3 x 3) [int64]
 
         Passing keyword arguments
 
@@ -207,10 +208,10 @@ class Session(object):
         >>> print(s.summary())      # doctest: +NORMALIZE_WHITESPACE
         x: x ['x0' 'x1' 'x2'] (3)
         y: y ['y0' 'y1' 'y2' 'y3'] (4)
-        arr1: x, y (3 x 4) [int32]
-        arr2: z (3) [int32]
+        arr1: x, y (3 x 4) [int64]
+        arr2: z (3) [int64]
         z: z ['z0' 'z1' 'z2'] (3)
-        arr3: x, z (3 x 3) [int32]
+        arr3: x, z (3 x 3) [int64]
         """
         if other is None:
             pass
