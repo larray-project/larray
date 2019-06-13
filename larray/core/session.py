@@ -146,10 +146,6 @@ class Session(object):
             If keyword arguments are specified, the session is then updated with those key/value pairs
             (e.g.: ses.update(pop=pop, births=births, deaths=deaths)).
 
-        Returns
-        -------
-        None
-
         Examples
         --------
         >>> x, y = Axis('x=x0..x2'), Axis('y=y0..y3')
