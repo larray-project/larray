@@ -308,3 +308,5 @@ Fixes
 * fixed dumping sessions with metadata in HDF format (closes :issue:`702`).
 
 * fixed minimum version of pandas to install. The minimum version is now 0.20.0.
+
+* fixed from_frame for dataframes with non string index names.

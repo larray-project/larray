@@ -3282,6 +3282,25 @@ def test_from_frame():
     expected_la = LArray(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
     assert_array_equal(la, expected_la)
 
+    # anonymous columns/non string row axis name
+    # input dataframe:
+    # ----------------
+    #        c0
+    # 0
+    # i0     10
+    # output LArray:
+    # --------------
+    # 0\{1}  c0
+    #    i0  10
+    df = pd.DataFrame([10], index=pd.Index(['i0'], name=0), columns=['c0'])
+    res = from_frame(df)
+    assert res.ndim == 2
+    assert res.shape == (1, 1)
+    assert res.axes.names == ['0', None]
+    assert list(res.axes[0].labels) == ['i0']
+    assert list(res.axes[1].labels) == ['c0']
+    assert_array_equal(res, LArray([[10]], "0=i0;c0,"))
+
     # anonymous index
     # input dataframe:
     # ----------------
