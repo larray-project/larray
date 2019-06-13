@@ -6,7 +6,6 @@ import sys
 import re
 import fnmatch
 import warnings
-from builtins import isinstance
 from collections import OrderedDict, Iterable
 
 import numpy as np
