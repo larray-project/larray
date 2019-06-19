@@ -1393,6 +1393,10 @@ class LArray(ABCLArray):
         a\\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
+        >>> arr.reindex(b='b=b0..b2', fill_value=-1)
+        a\\b  b0  b1  b2
+         a0   0   1  -1
+         a1   2   3  -1
 
         Reindex using an axis from another array
 
@@ -1418,6 +1422,10 @@ class LArray(ABCLArray):
         a\\b  b1  b0
          a1   3   2
          a2  -1  -1
+        >>> arr.reindex(a=arr2.a, b=arr2.b, fill_value=-1)
+        a\\b  b2  b1  b0
+         a1  -1   3   2
+         a2  -1  -1  -1
 
         Reindex by passing a collection of axes
 
