@@ -2078,6 +2078,67 @@ class AxisCollection(object):
         """
         return self[:]
 
+    def rename(self, renames=None, to=None, **kwargs):
+        r"""Renames axes of the collection.
+
+        Parameters
+        ----------
+        renames : axis ref or dict {axis ref: str} or list of tuple (axis ref, str), optional
+            Renames to apply. If a single axis reference is given, the `to` argument must be used.
+        to : str or Axis, optional
+            New name if `renames` contains a single axis reference.
+        **kwargs : str or Axis
+            New name for each axis given as a keyword argument.
+
+        Returns
+        -------
+        AxisCollection
+            collection with axes renamed.
+
+        Examples
+        --------
+        >>> nat = Axis('nat=BE,FO')
+        >>> sex = Axis('sex=M,F')
+        >>> axes = AxisCollection([nat, sex])
+        >>> axes
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['M', 'F'], 'sex')
+        ])
+        >>> axes.rename(nat, 'nat2')
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat2'),
+            Axis(['M', 'F'], 'sex')
+        ])
+        >>> axes.rename(nat='nat2', sex='sex2')
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat2'),
+            Axis(['M', 'F'], 'sex2')
+        ])
+        >>> axes.rename([('nat', 'nat2'), ('sex', 'sex2')])
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat2'),
+            Axis(['M', 'F'], 'sex2')
+        ])
+        >>> axes.rename({'nat': 'nat2', 'sex': 'sex2'})
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat2'),
+            Axis(['M', 'F'], 'sex2')
+        ])
+        """
+        if isinstance(renames, dict):
+            items = list(renames.items())
+        elif isinstance(renames, list):
+            items = renames[:]
+        elif isinstance(renames, (str, Axis, int)):
+            items = [(renames, to)]
+        else:
+            items = []
+        items += kwargs.items()
+        renames = {self[k]: v for k, v in items}
+        return AxisCollection([a.rename(renames[a]) if a in renames else a
+                               for a in self])
+
     # XXX: what's the point in supporting a list of Axis or AxisCollection in axes_to_replace?
     #      it is used in LArray.set_axes but if it is only there, shouldn't the support for that be
     #      moved there?

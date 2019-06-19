@@ -1291,7 +1291,6 @@ class LArray(ABCLArray):
     # Python 2
     __nonzero__ = __bool__
 
-    # TODO: this should be a thin wrapper around a method in AxisCollection
     # TODO: either support a list (of axes names) as first argument here (and set_labels)
     #       or don't support that in set_axes
     def rename(self, renames=None, to=None, inplace=False, **kwargs):
@@ -1341,18 +1340,7 @@ class LArray(ABCLArray):
                BE  0  1
                FO  2  3
         """
-        if isinstance(renames, dict):
-            items = list(renames.items())
-        elif isinstance(renames, list):
-            items = renames[:]
-        elif isinstance(renames, (str, Axis, int)):
-            items = [(renames, to)]
-        else:
-            items = []
-        items += kwargs.items()
-        renames = {self.axes[k]: v for k, v in items}
-        axes = AxisCollection([a.rename(renames[a]) if a in renames else a
-                               for a in self.axes])
+        axes = self.axes.rename(renames, to, **kwargs)
         if inplace:
             self.axes = axes
             return self

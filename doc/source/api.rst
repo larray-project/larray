@@ -200,6 +200,7 @@ Modifying/Selecting
    AxisCollection.append
    AxisCollection.extend
    AxisCollection.insert
+   AxisCollection.rename
    AxisCollection.replace
    AxisCollection.without
    AxisCollection.combine_axes
