@@ -288,6 +288,9 @@ Miscellaneous improvements
     Belgian    0  1
          FO    2  3
 
+* allowed to pass a single axis or group as ``axes_to_reindex`` argument
+  of the :py:obj:`LArray.reindex()` method (closes :issue:`712`).
+
 
 Fixes
 ^^^^^

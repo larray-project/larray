@@ -1339,15 +1339,17 @@ class LArray(ABCLArray):
             return LArray(self.data, axes)
 
     def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=nan, inplace=False, **kwargs):
-        """Reorder and/or add new labels in axes.
+        r"""Reorder and/or add new labels in axes.
 
         Place NaN or given `fill_value` in locations having no value previously.
 
         Parameters
         ----------
-        axes_to_reindex : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
-                          or list of Axis or AxisCollection
-            Axes to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
+        axes_to_reindex : axis ref or str or Group or Axis or dict {axis ref: axis} or \
+                          list of tuple (axis ref, axis) or list of Axis or AxisCollection
+            Axis(es) to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
+            If string or Group or Axis object, the corresponding axis is reindexed if found among existing,
+            otherwise a new axis is added.
             If a list of Axis or an AxisCollection is given, existing axes are reindexed while missing ones are added.
         new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_reindex` contains a single axis reference.
@@ -1374,63 +1376,78 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2))
         >>> arr
-        a\\b  b0  b1
+        a\b  b0  b1
          a0   0   1
          a1   2   3
         >>> arr2 = ndtest('a=a1,a2;c=c0;b=b2..b0')
         >>> arr2
-         a  c\\b  b2  b1  b0
+         a  c\b  b2  b1  b0
         a1   c0   0   1   2
         a2   c0   3   4   5
 
         Reindex an axis by passing labels (list or string)
 
         >>> arr.reindex('b', ['b1', 'b2', 'b0'])
-        a\\b   b1   b2   b0
+        a\b   b1   b2   b0
          a0  1.0  nan  0.0
          a1  3.0  nan  2.0
         >>> arr.reindex('b', 'b0..b2', fill_value=-1)
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
         >>> arr.reindex(b='b=b0..b2', fill_value=-1)
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1  -1
          a1   2   3  -1
 
         Reindex using an axis from another array
 
         >>> arr.reindex('b', arr2.b, fill_value=-1)
-        a\\b  b2  b1  b0
+        a\b  b2  b1  b0
          a0  -1   1   0
          a1  -1   3   2
 
         Reindex using a subset of an axis
 
         >>> arr.reindex('b', arr2.b['b1':], fill_value=-1)
-        a\\b  b1  b0
+        a\b  b1  b0
+         a0   1   0
+         a1   3   2
+
+        Reindex by passing an axis or a group
+
+        >>> arr.reindex('b=b2..b0', fill_value=-1)
+        a\b  b2  b1  b0
+         a0  -1   1   0
+         a1  -1   3   2
+        >>> arr.reindex(arr2.b, fill_value=-1)
+        a\b  b2  b1  b0
+         a0  -1   1   0
+         a1  -1   3   2
+        >>> arr.reindex(arr2.b['b1':], fill_value=-1)
+        a\b  b1  b0
          a0   1   0
          a1   3   2
 
         Reindex several axes
 
         >>> arr.reindex({'a': arr2.a, 'b': arr2.b}, fill_value=-1)
-        a\\b  b2  b1  b0
+        a\b  b2  b1  b0
          a1  -1   3   2
          a2  -1  -1  -1
         >>> arr.reindex({'a': arr2.a, 'b': arr2.b['b1':]}, fill_value=-1)
-        a\\b  b1  b0
+        a\b  b1  b0
          a1   3   2
          a2  -1  -1
         >>> arr.reindex(a=arr2.a, b=arr2.b, fill_value=-1)
-        a\\b  b2  b1  b0
+        a\b  b2  b1  b0
          a1  -1   3   2
          a2  -1  -1  -1
 
         Reindex by passing a collection of axes
 
         >>> arr.reindex(arr2.axes, fill_value=-1)
-         a  b\\c  c0
+         a  b\c  c0
         a1   b2  -1
         a1   b1   3
         a1   b0   2
@@ -1438,15 +1455,25 @@ class LArray(ABCLArray):
         a2   b1  -1
         a2   b0  -1
         >>> arr2.reindex(arr.axes, fill_value=-1)
-         a  c\\b  b0  b1
+         a  c\b  b0  b1
         a0   c0  -1  -1
         a1   c0   2   1
         """
         # XXX: can't we move this to AxisCollection.replace?
+        if isinstance(axes_to_reindex, basestring):
+            try:
+                axes_to_reindex = Axis(axes_to_reindex)
+            except:
+                pass
+        if isinstance(axes_to_reindex, (Group, Axis)) and not isinstance(axes_to_reindex, AxisReference):
+            new_axis = axes_to_reindex if isinstance(axes_to_reindex, Axis) else Axis(axes_to_reindex)
+            axes_to_reindex = self.axes[new_axis]
+
         if new_axis is not None and not isinstance(new_axis, Axis):
             new_axis = Axis(new_axis, self.axes[axes_to_reindex].name)
         elif isinstance(new_axis, Axis):
             new_axis = new_axis.rename(self.axes[axes_to_reindex].name)
+
         if isinstance(axes_to_reindex, (list, tuple)) and all([isinstance(axis, Axis) for axis in axes_to_reindex]):
             axes_to_reindex = AxisCollection(axes_to_reindex)
         if isinstance(axes_to_reindex, AxisCollection):
