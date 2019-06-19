@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 
 def view(obj=None, title='', depth=0):
-    """
+    r"""
     Opens a new viewer window. Arrays are loaded in readonly mode and their content cannot be modified.
 
     Parameters
@@ -35,7 +35,7 @@ def view(obj=None, title='', depth=0):
 
 
 def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth=0):
-    """
+    r"""
     Opens a new editor window.
 
     Parameters
@@ -76,7 +76,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
 
 def compare(*args, **kwargs):
-    """
+    r"""
     Opens a new comparator window, comparing arrays or sessions.
 
     Parameters

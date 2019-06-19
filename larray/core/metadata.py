@@ -109,7 +109,7 @@ else:
 
 
 class Metadata(AttributeDict):
-    """
+    r"""
     An ordered dictionary allowing key-values accessibly using attribute notation (AttributeDict.attribute)
     instead of key notation (Dict["key"]).
 

@@ -238,7 +238,7 @@ def read_tsv(filepath_or_buffer, **kwargs):
 
 
 def read_eurostat(filepath_or_buffer, **kwargs):
-    """Reads EUROSTAT TSV (tab-separated) file into an array.
+    r"""Reads EUROSTAT TSV (tab-separated) file into an array.
 
     EUROSTAT TSV files are special because they use tabs as data separators but comas to separate headers.
 

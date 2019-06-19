@@ -22,7 +22,7 @@ def _get_index_col(nb_axes=None, index_col=None, wide=True):
 
 
 class FileHandler(object):
-    """
+    r"""
     Abstract class defining the methods for "file handler" subclasses.
 
     Parameters
@@ -47,35 +47,35 @@ class FileHandler(object):
         raise NotImplementedError()
 
     def list_items(self):
-        """
+        r"""
         Return list containing pairs (name, type) for all stored objects
         """
         raise NotImplementedError()
 
     def _read_item(self, key, type, *args, **kwargs):
-        """Read item"""
+        r"""Read item"""
         raise NotImplementedError()
 
     def _read_metadata(self):
-        """Read metadata"""
+        r"""Read metadata"""
         raise NotImplementedError()
 
     def _dump_item(self, key, value, *args, **kwargs):
-        """Dump item. Raises an TypeError if type not taken into account by the FileHandler subclass."""
+        r"""Dump item. Raises an TypeError if type not taken into account by the FileHandler subclass."""
         raise NotImplementedError()
 
     def _dump_metadata(self, metadata):
-        """Dump metadata"""
+        r"""Dump metadata"""
         raise NotImplementedError()
 
     def save(self):
-        """
+        r"""
         Saves items in file.
         """
         pass
 
     def close(self):
-        """
+        r"""
         Closes file.
         """
         raise NotImplementedError()
@@ -91,7 +91,7 @@ class FileHandler(object):
             os.rename(self.fname, self.original_file_name)
 
     def read(self, keys, *args, **kwargs):
-        """
+        r"""
         Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 
         Parameters
@@ -137,7 +137,7 @@ class FileHandler(object):
         return metadata, res
 
     def dump(self, metadata, key_values, *args, **kwargs):
-        """
+        r"""
         Dumps objects corresponding to keys in file in HDF, Excel, CSV, ... format
 
         Parameters

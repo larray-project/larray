@@ -21,7 +21,7 @@ from larray.inout.session import ext_default_engine, get_file_handler
 
 # XXX: inherit from OrderedDict or LArray?
 class Session(object):
-    """
+    r"""
     Groups several objects together.
 
     Parameters
@@ -105,7 +105,7 @@ class Session(object):
         return iter(self.values())
 
     def add(self, *args, **kwargs):
-        """
+        r"""
         Adds objects to the current session.
 
         Parameters
@@ -260,7 +260,7 @@ class Session(object):
             return self._objects[key]
 
     def get(self, key, default=None):
-        """
+        r"""
         Returns the object corresponding to the key.
         If the key doesn't correspond to any object, a default one can be returned.
 
@@ -287,13 +287,13 @@ class Session(object):
         >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])
         >>> arr = s.get('arr1')
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
          a2   6   7   8
         >>> arr = s.get('arr4', zeros('a=a0,a1;b=b0,b1', dtype=int))
         >>> arr
-        a\\b  b0  b1
+        a\b  b0  b1
          a0   0   0
          a1   0   0
         """
@@ -343,7 +343,7 @@ class Session(object):
         object.__setattr__(self, '__dict__', d)
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
-        """
+        r"""
         Load LArray, Axis and Group objects from a file, or several .csv files.
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
@@ -430,7 +430,7 @@ class Session(object):
         self.meta = metadata
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
-        """
+        r"""
         Dumps LArray, Axis and Group objects from the current session to a file.
 
         Parameters
@@ -499,7 +499,7 @@ class Session(object):
         handler.dump(meta, items, display=display, **kwargs)
 
     def to_globals(self, names=None, depth=0, warn=True, inplace=False):
-        """
+        r"""
         Create global variables out of objects in the session.
 
         Parameters
@@ -533,7 +533,7 @@ class Session(object):
         a  a0  a1  a2
             0   1   2
         >>> arr2
-        a\\b  b0  b1
+        a\b  b0  b1
          a0   0   1
          a1   2   3
         """
@@ -564,7 +564,7 @@ class Session(object):
                 d[k] = v
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
-        """
+        r"""
         Dumps LArray, Axis and Group objects from the current session to a file using pickle.
 
         WARNING: never load a pickle file (.pkl or .pickle) from an untrusted source, as it can lead to arbitrary code
@@ -609,7 +609,7 @@ class Session(object):
     dump = renamed_to(save, 'dump')
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
-        """
+        r"""
         Dumps LArray, Axis and Group objects from the current session to an HDF file.
 
         Parameters
@@ -651,7 +651,7 @@ class Session(object):
     dump_hdf = renamed_to(to_hdf, 'dump_hdf')
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
-        """
+        r"""
         Dumps LArray, Axis and Group objects from the current session to an Excel file.
 
         Parameters
@@ -699,7 +699,7 @@ class Session(object):
     dump_excel = renamed_to(to_excel, 'dump_excel')
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
-        """
+        r"""
         Dumps LArray, Axis and Group objects from the current session to CSV files.
 
         Parameters
@@ -745,7 +745,7 @@ class Session(object):
     dump_csv = renamed_to(to_csv, 'dump_csv')
 
     def filter(self, pattern=None, kind=None):
-        """
+        r"""
         Returns a new session with objects which match some criteria.
 
         Parameters
@@ -801,7 +801,7 @@ class Session(object):
 
     @property
     def names(self):
-        """
+        r"""
         Returns the list of names of the objects in the session.
         The list is sorted alphabetically and does not follow the internal order.
 
@@ -830,13 +830,13 @@ class Session(object):
         return sorted(self._objects.keys())
 
     def copy(self):
-        """Returns a copy of the session.
+        r"""Returns a copy of the session.
         """
         # this actually *does* a copy of the internal mapping (the mapping is not reused-as is)
         return Session(self._objects)
 
     def keys(self):
-        """
+        r"""
         Returns a view on the session's keys.
 
         Returns
@@ -864,7 +864,7 @@ class Session(object):
         return self._objects.keys()
 
     def values(self):
-        """
+        r"""
         Returns a view on the session's values.
 
         Returns
@@ -882,7 +882,7 @@ class Session(object):
         >>> # otherwise, prefer the following syntax
         >>> arr1, arr2, axis1, group1 = s['arr1', 'arr2', 'axis1', 'group1']
         >>> arr1
-        a\\b  b0  b1
+        a\b  b0  b1
          a0   0   1
          a1   2   3
         >>> axis1
@@ -891,7 +891,7 @@ class Session(object):
         return self._objects.values()
 
     def items(self):
-        """
+        r"""
         Returns a view of the session’s items ((key, value) pairs).
 
         Returns
@@ -998,7 +998,7 @@ class Session(object):
     __invert__ = _unaryop('invert')
 
     def element_equals(self, other):
-        """Test if each element (group, axis and array) of the current session equals
+        r"""Test if each element (group, axis and array) of the current session equals
         the corresponding element of another session.
 
         For arrays, it is equivalent to apply :py:meth:`LArray.equals` with flag nans_equal=True
@@ -1076,7 +1076,7 @@ class Session(object):
     array_equals = renamed_to(element_equals, 'array_equals')
 
     def equals(self, other):
-        """Test if all elements (groups, axes and arrays) of the current session are equal
+        r"""Test if all elements (groups, axes and arrays) of the current session are equal
         to those of another session.
 
         Parameters
@@ -1131,7 +1131,7 @@ class Session(object):
         return all(self.element_equals(other))
 
     def transpose(self, *args):
-        """Reorder axes of arrays in session, ignoring missing axes for each array.
+        r"""Reorder axes of arrays in session, ignoring missing axes for each array.
 
         Parameters
         ----------
@@ -1185,7 +1185,7 @@ class Session(object):
         return self.apply(lenient_transpose, args)
 
     def compact(self, display=False):
-        """
+        r"""
         Detects and removes "useless" axes (ie axes for which values are constant over the whole axis) for all array
         objects in session
 
@@ -1203,7 +1203,7 @@ class Session(object):
         --------
         >>> arr1 = sequence('b=b0..b2', ndtest(3), zeros_like(ndtest(3)))
         >>> arr1
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   0   0
          a1   1   1   1
          a2   2   2   2
@@ -1222,7 +1222,7 @@ class Session(object):
         return Session(new_items)
 
     def apply(self, func, *args, **kwargs):
-        """
+        r"""
         Apply function `func` on elements of the session and return a new session.
 
         Parameters
@@ -1402,7 +1402,7 @@ def _exclude_private_vars(vars_dict):
 
 
 def local_arrays(depth=0, include_private=False, meta=None):
-    """
+    r"""
     Returns a session containing all local arrays sorted in alphabetical order.
 
     Parameters
@@ -1427,7 +1427,7 @@ def local_arrays(depth=0, include_private=False, meta=None):
 
 
 def global_arrays(depth=0, include_private=False, meta=None):
-    """
+    r"""
     Returns a session containing all global arrays sorted in alphabetical order.
 
     Parameters
@@ -1452,7 +1452,7 @@ def global_arrays(depth=0, include_private=False, meta=None):
 
 
 def arrays(depth=0, include_private=False, meta=None):
-    """
+    r"""
     Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
     alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
     and a global variable, the local array will be returned).
