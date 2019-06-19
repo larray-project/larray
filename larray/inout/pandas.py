@@ -14,7 +14,7 @@ from larray.util.misc import basestring, decode, unique
 
 
 def parse(s):
-    """
+    r"""
     Used to parse the "folded" axis ticks (usually periods).
     """
     # parameters can be strings or numbers
@@ -37,7 +37,7 @@ def parse(s):
 
 
 def index_to_labels(idx, sort=True):
-    """
+    r"""
     Returns unique labels for each dimension.
     """
     if isinstance(idx, pd.core.index.MultiIndex):
@@ -254,7 +254,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
                 **kwargs):
-    """
+    r"""
     Prepare Pandas DataFrame and then convert it into LArray.
 
     Parameters

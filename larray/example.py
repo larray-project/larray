@@ -10,7 +10,7 @@ AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
 
 
 def get_example_filepath(fname):
-    """Return absolute path to an example file if exist.
+    r"""Return absolute path to an example file if exist.
 
     Parameters
     ----------
@@ -38,7 +38,7 @@ def get_example_filepath(fname):
 
 
 def load_example_data(name):
-    """Load arrays used in the tutorial so that all examples in it can be reproduced.
+    r"""Load arrays used in the tutorial so that all examples in it can be reproduced.
 
     Parameters
     ----------

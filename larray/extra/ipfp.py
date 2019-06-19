@@ -12,7 +12,7 @@ def badvalues(a, bad_filter):
 
 
 def f2str(f, threshold=2):
-    """Return string representation of floating point number f.
+    r"""Return string representation of floating point number f.
     Use scientific notation if f would have more than threshold decimal digits, otherwise use threshold as precision.
 
     Parameters
@@ -45,7 +45,7 @@ def warn_or_raise(what, msg):
 
 def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10, nzvzs='raise',
          no_convergence='raise', display_progress=False):
-    """Apply Iterative Proportional Fitting Procedure (also known as bi-proportional fitting in statistics,
+    r"""Apply Iterative Proportional Fitting Procedure (also known as bi-proportional fitting in statistics,
     RAS algorithm in economics) to array a, with target_sums as targets.
 
     Parameters
@@ -90,7 +90,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     >>> b = Axis('b=b0,b1')
     >>> initial = LArray([[2, 1], [1, 2]], [a, b])
     >>> initial
-    a\\b  b0  b1
+    a\b  b0  b1
      a0   2   1
      a1   1   2
     >>> target_sum_along_a = LArray([2, 1], b)
@@ -104,7 +104,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     >>> result = ipfp([target_sum_along_a, target_sum_along_b], initial, threshold=0.01)
     >>> # round result so that its display is nicer
     ... round(result, 2)
-    a\\b    b0    b1
+    a\b    b0    b1
      a0  0.85  0.15
      a1  1.15  0.85
 

@@ -112,7 +112,7 @@ class set_options(object):
 
 
 def get_options():
-    """
+    r"""
     Return the current options.
 
     Returns

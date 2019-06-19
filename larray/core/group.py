@@ -17,7 +17,7 @@ from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_
 
 
 def _slice_to_str(key, repr_func=str):
-    """
+    r"""
     Converts a slice to a string
 
     Examples
@@ -40,7 +40,7 @@ def _slice_to_str(key, repr_func=str):
 
 
 def irange(start, stop, step=None):
-    """Create a range, with inclusive stop bound and automatic sign for step.
+    r"""Create a range, with inclusive stop bound and automatic sign for step.
 
     Parameters
     ----------
@@ -81,7 +81,7 @@ _range_bound_pattern = re.compile('([0-9]+|[a-zA-Z]+)')
 
 
 def generalized_range(start, stop, step=1):
-    """Create a range, with inclusive stop bound and automatic sign for step. Bounds can be strings.
+    r"""Create a range, with inclusive stop bound and automatic sign for step. Bounds can be strings.
 
     Parameters
     ----------
@@ -199,7 +199,7 @@ _range_str_pattern = re.compile(r'(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)
 
 
 def _range_str_to_range(s, stack_depth=1):
-    """
+    r"""
     Converts a range string to a range (of values).
     The end point is included.
 
@@ -247,7 +247,7 @@ def _range_str_to_range(s, stack_depth=1):
 
 
 def _range_to_slice(seq, length=None):
-    """
+    r"""
     Returns a slice if possible (including for sequences of 1 element) otherwise returns the input sequence itself
 
     Parameters
@@ -331,7 +331,7 @@ def _seq_group_to_name(seq):
 
 
 def _to_tick(v):
-    """
+    r"""
     Converts any value to a tick (ie makes it hashable, and acceptable as an ndarray element)
 
     scalar -> not modified
@@ -374,7 +374,7 @@ def _to_tick(v):
 
 # TODO: remove the conversion to list in doctests once Python 2 is dropped
 def _to_ticks(s, parse_single_int=False):
-    """
+    r"""
     Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
 
     Strip strings, split them on ',' and translate "range strings" to list of values **including the end point** !
@@ -438,7 +438,7 @@ _axis_name_pattern = re.compile(r'\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
 
 
 def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
-    """
+    r"""
     Converts a sequence string to its sequence (or scalar)
 
     Parameters
@@ -481,7 +481,7 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
 
 
 def _to_key(v, stack_depth=1, parse_single_int=False):
-    """
+    r"""
     Converts a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
 
@@ -584,7 +584,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
 
 
 def _to_keys(value, stack_depth=1):
-    """
+    r"""
     Converts a (collection of) group(s) to a structure usable for indexing.
 
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
@@ -670,7 +670,7 @@ def _translate_group_key_hdf(key):
 # TODO: kill this function
 def union(*args):
     # TODO: add support for LGroup and lists
-    """
+    r"""
     Returns the union of several "value strings" as a list.
 
     Parameters
@@ -694,7 +694,7 @@ def union(*args):
 
 
 class IGroupMaker(object):
-    """
+    r"""
     Generates a new instance of IGroup for a given axis and key.
 
     Attributes
@@ -786,7 +786,7 @@ class Group(object):
 
     # TODO: rename to "to_positional"
     def translate(self, bound=None, stop=False):
-        """
+        r"""
         Translate key to a position if it is not already
 
         Parameters
@@ -801,7 +801,7 @@ class Group(object):
         raise NotImplementedError()
 
     def eval(self):
-        """
+        r"""
         Translate key to labels, if it is not already, expanding slices in the process.
 
         Returns
@@ -811,7 +811,7 @@ class Group(object):
         raise NotImplementedError()
 
     def to_label(self):
-        """
+        r"""
         Translate key to labels, if it is not already
 
         Returns
@@ -821,7 +821,7 @@ class Group(object):
         raise NotImplementedError()
 
     def retarget_to(self, target_axis):
-        """Retarget group to another axis.
+        r"""Retarget group to another axis.
 
         It will be translated to an LGroup using its former axis, if necessary.
 
@@ -877,7 +877,7 @@ class Group(object):
         return iter([LGroup(v, axis=axis) for v in self.eval()])
 
     def named(self, name):
-        """Returns group with a different name.
+        r"""Returns group with a different name.
 
         Parameters
         ----------
@@ -892,7 +892,7 @@ class Group(object):
     __rshift__ = named
 
     def with_axis(self, axis):
-        """Returns group with a different axis.
+        r"""Returns group with a different axis.
 
         Parameters
         ----------
@@ -906,7 +906,7 @@ class Group(object):
         return self.__class__(self.key, self.name, axis)
 
     def by(self, length, step=None, template=None):
-        """Split group into several groups of specified length.
+        r"""Split group into several groups of specified length.
 
         Parameters
         ----------
@@ -964,7 +964,7 @@ class Group(object):
     # IGroup.i[] => IGroup
     # LGroup.i[] => IGroup
     def __getitem__(self, key):
-        """
+        r"""
 
         Parameters
         ----------
@@ -1083,7 +1083,7 @@ class Group(object):
     __eq__ = _binop('eq')
 
     def equals(self, other):
-        """
+        r"""
         Checks if this group is equal to another group.
         Two groups are equal if they have the same group and axis names and correspond to the same labels.
 
@@ -1146,7 +1146,7 @@ class Group(object):
         return res if isinstance(res, bool) else all(res)
 
     def set(self):
-        """Creates LSet from this group
+        r"""Creates LSet from this group
 
         Returns
         -------
@@ -1155,7 +1155,7 @@ class Group(object):
         return LSet(self.eval(), self.name, self.axis)
 
     def union(self, other):
-        """Returns (set) union of this label group and other.
+        r"""Returns (set) union of this label group and other.
 
         Labels relative order will be kept intact, but only unique labels will be returned. Labels from this group will
         be before labels from other.
@@ -1183,7 +1183,7 @@ class Group(object):
         return self.set().union(other)
 
     def intersection(self, other):
-        """Returns (set) intersection of this label group and other.
+        r"""Returns (set) intersection of this label group and other.
 
         In other words, this will return labels from this group which are also in other. Labels relative order will be
         kept intact, but only unique labels will be returned.
@@ -1211,7 +1211,7 @@ class Group(object):
         return self.set().intersection(other)
 
     def difference(self, other):
-        """Returns (set) difference of this label group and other.
+        r"""Returns (set) difference of this label group and other.
 
         In other words, this will return labels from this group without those in other. Labels relative order will be
         kept intact, but only unique labels will be returned.
@@ -1244,7 +1244,7 @@ class Group(object):
         return item in self.eval()
 
     def startingwith(self, prefix):
-        """
+        r"""
         Returns a group with the labels starting with the specified string.
 
         Parameters
@@ -1272,7 +1272,7 @@ class Group(object):
         return LGroup([v for v in self.eval() if v.startswith(prefix)], axis=self.axis)
 
     def endingwith(self, suffix):
-        """
+        r"""
         Returns a group with the labels ending with the specified string.
 
         Parameters
@@ -1300,7 +1300,7 @@ class Group(object):
         return LGroup([v for v in self.eval() if v.endswith(suffix)], axis=self.axis)
 
     def matching(self, deprecated=None, pattern=None, regex=None):
-        """
+        r"""
         Returns a group with all the labels matching the specified pattern or regular expression.
 
         Parameters
@@ -1369,7 +1369,7 @@ class Group(object):
         return LGroup([v for v in self.eval() if match(v)], axis=self.axis)
 
     def containing(self, substring):
-        """
+        r"""
         Returns a group with all the labels containing the specified substring.
 
         Parameters
@@ -1397,7 +1397,7 @@ class Group(object):
         return LGroup([v for v in self.eval() if substring in v], axis=self.axis)
 
     def to_hdf(self, filepath, key=None, axis_key=None):
-        """
+        r"""
         Writes group to a HDF file.
 
         A HDF file can contain multiple groups.
@@ -1537,7 +1537,7 @@ def remove_nested_groups(key):
 
 
 class LGroup(Group):
-    """Label group.
+    r"""Label group.
 
     Represents a subset of labels of an axis.
 
@@ -1570,7 +1570,7 @@ class LGroup(Group):
 
     # XXX: return IGroup instead?
     def translate(self, bound=None, stop=False):
-        """
+        r"""
         compute position(s) of group
         """
         if bound is None:
@@ -1598,7 +1598,7 @@ class LGroup(Group):
 
 
 class LSet(LGroup):
-    """Label set.
+    r"""Label set.
 
     Represents a set of (unique) labels of an axis.
 
@@ -1670,7 +1670,7 @@ class LSet(LGroup):
 
 
 class IGroup(Group):
-    """Index Group.
+    r"""Index Group.
 
     Represents a subset of indices of an axis.
 
@@ -1688,7 +1688,7 @@ class IGroup(Group):
     format_string = "{axis}.i[{key}]"
 
     def translate(self, bound=None, stop=False):
-        """
+        r"""
         compute position(s) of group
         """
         if bound is not None:

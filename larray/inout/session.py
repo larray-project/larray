@@ -7,7 +7,7 @@ ext_default_engine = {}
 
 
 def register_file_handler(engine, extensions=None):
-    """Class decorator to register new file handler class
+    r"""Class decorator to register new file handler class
 
     Parameters
     ----------

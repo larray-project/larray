@@ -68,7 +68,7 @@ from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, D
 
 
 def all(values, axis=None):
-    """
+    r"""
     Test whether all array elements along a given axis evaluate to True.
 
     See Also
@@ -82,7 +82,7 @@ def all(values, axis=None):
 
 
 def any(values, axis=None):
-    """
+    r"""
     Test whether any array elements along a given axis evaluate to True.
 
     See Also
@@ -97,7 +97,7 @@ def any(values, axis=None):
 
 # commutative modulo float precision errors
 def sum(array, *args, **kwargs):
-    """
+    r"""
     Sum of array elements.
 
     See Also
@@ -115,7 +115,7 @@ def sum(array, *args, **kwargs):
 
 
 def prod(array, *args, **kwargs):
-    """
+    r"""
     Product of array elements.
 
     See Also
@@ -126,7 +126,7 @@ def prod(array, *args, **kwargs):
 
 
 def cumsum(array, *args, **kwargs):
-    """
+    r"""
     Returns the cumulative sum of array elements.
 
     See Also
@@ -137,7 +137,7 @@ def cumsum(array, *args, **kwargs):
 
 
 def cumprod(array, *args, **kwargs):
-    """
+    r"""
     Returns the cumulative product of array elements.
 
     See Also
@@ -148,7 +148,7 @@ def cumprod(array, *args, **kwargs):
 
 
 def min(array, *args, **kwargs):
-    """
+    r"""
     Minimum of array elements.
 
     See Also
@@ -162,7 +162,7 @@ def min(array, *args, **kwargs):
 
 
 def max(array, *args, **kwargs):
-    """
+    r"""
     Maximum of array elements.
 
     See Also
@@ -176,7 +176,7 @@ def max(array, *args, **kwargs):
 
 
 def mean(array, *args, **kwargs):
-    """
+    r"""
     Computes the arithmetic mean.
 
     See Also
@@ -187,7 +187,7 @@ def mean(array, *args, **kwargs):
 
 
 def median(array, *args, **kwargs):
-    """
+    r"""
     Computes the median.
 
     See Also
@@ -198,7 +198,7 @@ def median(array, *args, **kwargs):
 
 
 def percentile(array, *args, **kwargs):
-    """
+    r"""
     Computes the qth percentile of the data along the specified axis.
 
     See Also
@@ -210,7 +210,7 @@ def percentile(array, *args, **kwargs):
 
 # not commutative
 def ptp(array, *args, **kwargs):
-    """
+    r"""
     Returns the range of values (maximum - minimum).
 
     See Also
@@ -221,7 +221,7 @@ def ptp(array, *args, **kwargs):
 
 
 def var(array, *args, **kwargs):
-    """
+    r"""
     Computes the variance.
 
     See Also
@@ -232,7 +232,7 @@ def var(array, *args, **kwargs):
 
 
 def std(array, *args, **kwargs):
-    """
+    r"""
     Computes the standard deviation.
 
     See Also
@@ -243,7 +243,7 @@ def std(array, *args, **kwargs):
 
 
 def concat(arrays, axis=0, dtype=None):
-    """Concatenate arrays along axis
+    r"""Concatenate arrays along axis
 
     Parameters
     ----------
@@ -262,12 +262,12 @@ def concat(arrays, axis=0, dtype=None):
     --------
     >>> arr1 = ndtest((2, 3))
     >>> arr1
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   0   1   2
      a1   3   4   5
     >>> arr2 = ndtest('a=a0,a1;b=b3')
     >>> arr2
-    a\\b  b3
+    a\b  b3
      a0   0
      a1   1
     >>> arr3 = ndtest('b=b4,b5')
@@ -275,7 +275,7 @@ def concat(arrays, axis=0, dtype=None):
     b  b4  b5
         0   1
     >>> concat((arr1, arr2, arr3), 'b')
-    a\\b  b0  b1  b2  b3  b4  b5
+    a\b  b0  b1  b2  b3  b4  b5
      a0   0   1   2   0   0   1
      a1   3   4   5   1   0   1
     """
@@ -342,7 +342,7 @@ class LArrayPositionalIndexer(object):
         self.array = array
 
     def _translate_key(self, key):
-        """
+        r"""
         Translates key into tuple of IGroup, i.e.
         tuple of collections of labels.
         """
@@ -657,7 +657,7 @@ def _handle_meta(meta, title):
 
 
 class LArray(ABCLArray):
-    """
+    r"""
     A LArray object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
 
     The function :func:`aslarray` can be used to convert a NumPy array or Pandas DataFrame into a LArray.
@@ -710,7 +710,7 @@ class LArray(ABCLArray):
     >>> data = np.zeros((len(axes), len(sex), len(time)))
 
     >>> LArray(data, axes)
-    age  sex\\time  2007  2008  2009
+    age  sex\time  2007  2008  2009
      10         M   0.0   0.0   0.0
      10         F   0.0   0.0   0.0
      11         M   0.0   0.0   0.0
@@ -725,7 +725,7 @@ class LArray(ABCLArray):
     Array creation functions
 
     >>> full(axes, 10.0)
-    age  sex\\time  2007  2008  2009
+    age  sex\time  2007  2008  2009
      10         M  10.0  10.0  10.0
      10         F  10.0  10.0  10.0
      11         M  10.0  10.0  10.0
@@ -736,7 +736,7 @@ class LArray(ABCLArray):
     >>> arr['F'] = 1.0
     >>> arr['M'] = -1.0
     >>> arr
-    age  sex\\time  2007  2008  2009
+    age  sex\time  2007  2008  2009
      10         M  -1.0  -1.0  -1.0
      10         F   1.0   1.0   1.0
      11         M  -1.0  -1.0  -1.0
@@ -748,7 +748,7 @@ class LArray(ABCLArray):
     sex   M  F
          -1  1
     >>> sequence(age, initial=10, inc=bysex)
-    sex\\age  10  11  12
+    sex\age  10  11  12
           M  10   9   8
           F  10  11  12
     """
@@ -792,7 +792,7 @@ class LArray(ABCLArray):
 
     @property
     def meta(self):
-        """Returns metadata of the array.
+        r"""Returns metadata of the array.
 
         Returns
         -------
@@ -891,7 +891,7 @@ class LArray(ABCLArray):
         return tuple(IGroup(axis_key, axis=axis) for axis_key, axis in zip(la_key, self.axes))
 
     def set_axes(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
-        """
+        r"""
         Replace one, several or all axes of the array.
 
         Parameters
@@ -922,7 +922,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> row = Axis(['r0', 'r1'], 'row')
@@ -931,7 +931,7 @@ class LArray(ABCLArray):
         Replace one axis (second argument `new_axis` must be provided)
 
         >>> arr.set_axes('a', row)
-        row\\b  b0  b1  b2
+        row\b  b0  b1  b2
            r0   0   1   2
            r1   3   4   5
 
@@ -942,19 +942,19 @@ class LArray(ABCLArray):
         >>> arr.set_axes([('a', row), ('b', column)]) # doctest: +SKIP
         >>> # or
         >>> arr.set_axes({'a': row, 'b': column})
-        row\\column  c0  c1  c2
+        row\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
 
         Replace all axes (list of axes or AxisCollection)
 
         >>> arr.set_axes([row, column])
-        row\\column  c0  c1  c2
+        row\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
         >>> arr2 = ndtest([row, column])
         >>> arr.set_axes(arr2.axes)
-        row\\column  c0  c1  c2
+        row\column  c0  c1  c2
                 r0   0   1   2
                 r1   3   4   5
         """
@@ -997,14 +997,14 @@ class LArray(ABCLArray):
     # TODO: the first slice in example below should be documented
     @lazy_attribute
     def i(self):
-        """
+        r"""
         Allows selection of a subset using indices of labels.
 
         Examples
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a  b\\c  c0  c1  c2  c3
+         a  b\c  c0  c1  c2  c3
         a0   b0   0   1   2   3
         a0   b1   4   5   6   7
         a0   b2   8   9  10  11
@@ -1013,7 +1013,7 @@ class LArray(ABCLArray):
         a1   b2  20  21  22  23
 
         >>> arr.i[:, 0:2, [0, 2]]
-         a  b\\c  c0  c2
+         a  b\c  c0  c2
         a0   b0   0   2
         a0   b1   4   6
         a1   b0  12  14
@@ -1023,7 +1023,7 @@ class LArray(ABCLArray):
 
     @lazy_attribute
     def points(self):
-        """
+        r"""
         Allows selection of arbitrary items in the array
         based on their N-dimensional label index.
 
@@ -1031,7 +1031,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a  b\\c  c0  c1  c2  c3
+         a  b\c  c0  c1  c2  c3
         a0   b0   0   1   2   3
         a0   b1   4   5   6   7
         a0   b2   8   9  10  11
@@ -1060,14 +1060,14 @@ class LArray(ABCLArray):
     # (except at the end)
     @lazy_attribute
     def ipoints(self):
-        """
+        r"""
         Allows selection of arbitrary items in the array based on their N-dimensional index.
 
         Examples
         --------
         >>> arr = ndtest((2, 3, 4))
         >>> arr
-         a  b\\c  c0  c1  c2  c3
+         a  b\c  c0  c1  c2  c3
         a0   b0   0   1   2   3
         a0   b1   4   5   6   7
         a0   b2   8   9  10  11
@@ -1092,7 +1092,7 @@ class LArray(ABCLArray):
         return LArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
-        """
+        r"""
         Converts LArray into Pandas DataFrame.
 
         Parameters
@@ -1100,6 +1100,7 @@ class LArray(ABCLArray):
         fold_last_axis_name : bool, optional
             Defaults to False.
         dropna : {'any', 'all', None}, optional
+
             * any : if any NA values are present, drop that label
             * all : if all values are NA, drop that label
             * None by default.
@@ -1117,7 +1118,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 2))
         >>> arr
-         a  b\\c  c0  c1
+         a  b\c  c0  c1
         a0   b0   0   1
         a0   b1   2   3
         a1   b0   4   5
@@ -1131,7 +1132,7 @@ class LArray(ABCLArray):
            b1   6   7
         >>> arr.to_frame(fold_last_axis_name=True)                                     # doctest: +NORMALIZE_WHITESPACE
                 c0  c1
-        a  b\\c
+        a  b\c
         a0 b0    0   1
            b1    2   3
         a1 b0    4   5
@@ -1163,7 +1164,7 @@ class LArray(ABCLArray):
     df = property(to_frame)
 
     def to_series(self, name=None, dropna=False):
-        """
+        r"""
         Converts LArray into Pandas Series.
 
         Parameters
@@ -1186,7 +1187,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 3), dtype=float)
         >>> arr
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  1.0  2.0
          a1  3.0  4.0  5.0
         >>> arr.to_series() # doctest: +NORMALIZE_WHITESPACE
@@ -1215,7 +1216,7 @@ class LArray(ABCLArray):
 
         >>> arr['b1'] = nan
         >>> arr
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.0  nan  2.0
          a1  3.0  nan  5.0
         >>> arr.to_series(dropna=True) # doctest: +NORMALIZE_WHITESPACE
@@ -1241,7 +1242,7 @@ class LArray(ABCLArray):
     series = property(to_series)
 
     def describe(self, *args, **kwargs):
-        """
+        r"""
         Descriptive summary statistics, excluding NaN values.
 
         By default, it includes the number of non-NaN values, the mean, standard deviation, minimum, maximum and
@@ -1358,7 +1359,7 @@ class LArray(ABCLArray):
     #     return np.ndarray.__array_prepare__(self.data, arr, context)
 
     def __array_wrap__(self, out_arr, context=None):
-        """
+        r"""
         Called after numpy ufuncs. This is never called during our wrapped
         ufuncs, but if somebody uses raw numpy function, this works in some
         cases.
@@ -1374,7 +1375,7 @@ class LArray(ABCLArray):
     # TODO: either support a list (of axes names) as first argument here (and set_labels)
     #       or don't support that in set_axes
     def rename(self, renames=None, to=None, inplace=False, **kwargs):
-        """Renames axes of the array.
+        r"""Renames axes of the array.
 
         Parameters
         ----------
@@ -1400,23 +1401,23 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> arr = ndtest([nat, sex])
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FO  2  3
         >>> arr.rename(nat, 'nat2')
-        nat2\\sex  M  F
+        nat2\sex  M  F
               BE  0  1
               FO  2  3
         >>> arr.rename(nat='nat2', sex='sex2')
-        nat2\\sex2  M  F
+        nat2\sex2  M  F
                BE  0  1
                FO  2  3
         >>> arr.rename([('nat', 'nat2'), ('sex', 'sex2')])
-        nat2\\sex2  M  F
+        nat2\sex2  M  F
                BE  0  1
                FO  2  3
         >>> arr.rename({'nat': 'nat2', 'sex': 'sex2'})
-        nat2\\sex2  M  F
+        nat2\sex2  M  F
                BE  0  1
                FO  2  3
         """
@@ -1775,7 +1776,7 @@ class LArray(ABCLArray):
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True):
-        """Sorts values of the array.
+        r"""Sorts values of the array.
 
         Parameters
         ----------
@@ -1808,7 +1809,7 @@ class LArray(ABCLArray):
             2   4  10
         >>> arr_2D = LArray([[10, 2, 4], [3, 7, 1]], 'a=a0,a1; b=b0..b2')
         >>> arr_2D
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0  10   2   4
          a1   3   7   1
         >>> # if the array has more than one dimension, sort array with all axes combined
@@ -1820,24 +1821,24 @@ class LArray(ABCLArray):
 
         >>> # sort columns according to the values of the row associated with the label 'a1'
         >>> arr_2D.sort_values('a1')
-        a\\b  b2  b0  b1
+        a\b  b2  b0  b1
          a0   4  10   2
          a1   1   3   7
         >>> arr_2D.sort_values('a1', ascending=False)
-        a\\b  b1  b0  b2
+        a\b  b1  b0  b2
          a0   2  10   4
          a1   7   3   1
         >>> arr_3D = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
         ...            'a=a0,a1; b=b0,b1; c=c0..c2')
         >>> arr_3D
-         a  b\\c  c0  c1  c2
+         a  b\c  c0  c1  c2
         a0   b0  10   2   4
         a0   b1   3   7   1
         a1   b0   5   1   6
         a1   b1   2   8   9
         >>> # sort columns according to the values of the row associated with the labels 'a0' and 'b1'
         >>> arr_3D.sort_values(('a0', 'b1'))
-         a  b\\c  c2  c0  c1
+         a  b\c  c2  c0  c1
         a0   b0   4  10   2
         a0   b1   1   3   7
         a1   b0   6   5   1
@@ -1846,19 +1847,19 @@ class LArray(ABCLArray):
         Sort along an axis
 
         >>> arr_2D
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0  10   2   4
          a1   3   7   1
         >>> # sort values along axis 'a'
         >>> # equivalent to sorting the values of each column of the array
         >>> arr_2D.sort_values(axis='a')
-        a*\\b  b0  b1  b2
+        a*\b  b0  b1  b2
            0   3   2   1
            1  10   7   4
         >>> # sort values along axis 'b'
         >>> # equivalent to sorting the values of each row of the array
         >>> arr_2D.sort_values(axis='b')
-        a\\b*  0  1   2
+        a\b*  0  1   2
           a0  2  4  10
           a1  1  3   7
         """
@@ -1898,7 +1899,7 @@ class LArray(ABCLArray):
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_axes(self, axes=None, ascending=True):
-        """Sorts axes of the array.
+        r"""Sorts axes of the array.
 
         Parameters
         ----------
@@ -1916,27 +1917,27 @@ class LArray(ABCLArray):
         --------
         >>> a = ndtest("nat=EU,FO,BE; sex=M,F")
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              EU  0  1
              FO  2  3
              BE  4  5
         >>> a.sort_axes('sex')
-        nat\\sex  F  M
+        nat\sex  F  M
              EU  1  0
              FO  3  2
              BE  5  4
         >>> a.sort_axes()
-        nat\\sex  F  M
+        nat\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
         >>> a.sort_axes(('sex', 'nat'))
-        nat\\sex  F  M
+        nat\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
         >>> a.sort_axes(ascending=False)
-        nat\\sex  M  F
+        nat\sex  M  F
              FO  2  3
              EU  0  1
              BE  4  5
@@ -2130,7 +2131,7 @@ class LArray(ABCLArray):
         # axis, we get combined dimensions out of it.
 
     def set(self, value, **kwargs):
-        """
+        r"""
         Sets a subset of array to value.
 
         * all common axes must be either of length 1 or the same length
@@ -2145,19 +2146,19 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((3, 3))
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
          a2   6   7   8
         >>> arr['a1:', 'b1:'].set(10)
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3  10  10
          a2   6  10  10
         >>> arr['a1:', 'b1:'].set(ndtest("a=a1,a2;b=b1,b2"))
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   0   1
          a2   6   2   3
@@ -2166,7 +2167,7 @@ class LArray(ABCLArray):
 
     # TODO: this should be a private method
     def reshape(self, target_axes):
-        """
+        r"""
         Given a list of new axes, changes the shape of the array.
         The size of the array (= number of elements) must be equal
         to the product of length of target axes.
@@ -2186,7 +2187,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 2))
         >>> arr
-         a  b\\c  c0  c1
+         a  b\c  c0  c1
         a0   b0   0   1
         a0   b1   2   3
         a1   b0   4   5
@@ -2194,7 +2195,7 @@ class LArray(ABCLArray):
         >>> new_arr = arr.reshape([Axis('a=a0,a1'),
         ... Axis(['b0c0', 'b0c1', 'b1c0', 'b1c1'], 'bc')])
         >>> new_arr
-        a\\bc  b0c0  b0c1  b1c0  b1c1
+        a\bc  b0c0  b0c1  b1c0  b1c1
           a0     0     1     2     3
           a1     4     5     6     7
         """
@@ -2216,7 +2217,7 @@ class LArray(ABCLArray):
 
     # TODO: this should be a private method
     def reshape_like(self, target):
-        """
+        r"""
         Same as reshape but with an array as input.
         Total size (= number of stored data) of the two arrays must be equal.
 
@@ -2228,21 +2229,21 @@ class LArray(ABCLArray):
         --------
         >>> arr = zeros((2, 2, 2), dtype=int)
         >>> arr
-        {0}*  {1}*\\{2}*  0  1
+        {0}*  {1}*\{2}*  0  1
            0          0  0  0
            0          1  0  0
            1          0  0  0
            1          1  0  0
         >>> new_arr = arr.reshape_like(ndtest((2, 4)))
         >>> new_arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   0   0   0
          a1   0   0   0   0
         """
         return self.reshape(target.axes)
 
     def broadcast_with(self, target):
-        """
+        r"""
         Returns an array that is (NumPy) broadcastable with target.
 
         * all common axes must be either of length 1 or the same length
@@ -2293,7 +2294,7 @@ class LArray(ABCLArray):
     # wonder if there would be a risk of wildcard axes inadvertently leaking.
     # plus it might be confusing if incompatible labels "work".
     def ignore_labels(self, axes=None):
-        """Ignore labels from axes (replace those axes by "wildcard" axes).
+        r"""Ignore labels from axes (replace those axes by "wildcard" axes).
 
         Useful when you want to apply operations between two arrays
         or subarrays with same shape but incompatible axes
@@ -2319,20 +2320,20 @@ class LArray(ABCLArray):
         >>> b2 = Axis('b=b2,b3')
         >>> arr1 = ndtest([a, b])
         >>> arr1
-        a\\b  b1  b2
+        a\b  b1  b2
          a1   0   1
          a2   2   3
         >>> arr1.ignore_labels(b)
-        a\\b*  0  1
+        a\b*  0  1
           a1  0  1
           a2  2  3
         >>> arr1.ignore_labels([a, b])
-        a*\\b*  0  1
+        a*\b*  0  1
             0  0  1
             1  2  3
         >>> arr2 = ndtest([a, b2])
         >>> arr2
-        a\\b  b2  b3
+        a\b  b2  b3
          a1   0   1
          a2   2   3
         >>> arr1 * arr2
@@ -2343,15 +2344,15 @@ class LArray(ABCLArray):
         vs
         Axis(['b1', 'b2'], 'b')
         >>> arr1 * arr2.ignore_labels()
-        a\\b  b1  b2
+        a\b  b1  b2
          a1   0   1
          a2   4   9
         >>> arr1.ignore_labels() * arr2
-        a\\b  b2  b3
+        a\b  b2  b3
          a1   0   1
          a2   4   9
         >>> arr1.ignore_labels('a') * arr2.ignore_labels('b')
-        a\\b  b1  b2
+        a\b  b1  b2
          a1   0   1
          a2   4   9
         """
@@ -2554,7 +2555,7 @@ class LArray(ABCLArray):
     # defaults to 'auto' (ie collapse by default), can be set to False to
     # force a copy and to True to raise an exception if a view is not possible.
     def filter(self, collapse=False, **kwargs):
-        """Filters the array along the axes given as keyword arguments.
+        r"""Filters the array along the axes given as keyword arguments.
 
         The *collapse* argument determines whether consecutive ranges should
         be collapsed to slices, which is more efficient and returns a view
@@ -2567,7 +2568,7 @@ class LArray(ABCLArray):
         return self.__getitem__(kwargs, collapse)
 
     def _axis_aggregate(self, op, axes=(), keepaxes=False, out=None, **kwargs):
-        """
+        r"""
         Parameters
         ----------
         op : function
@@ -2611,7 +2612,7 @@ class LArray(ABCLArray):
             return LArray(res_data, res_axes)
 
     def _cum_aggregate(self, op, axis):
-        """
+        r"""
         op is a numpy cumulative aggregate function: func(arr, axis=0).
         axis is an Axis object, a str or an int. Contrary to other aggregate functions this only supports one axis at a
         time.
@@ -2712,7 +2713,7 @@ class LArray(ABCLArray):
         return res
 
     def _prepare_aggregate(self, op, args, kwargs=None, commutative=False, stack_depth=1):
-        """converts args to keys & LGroup and kwargs to LGroup"""
+        r"""converts args to keys & LGroup and kwargs to LGroup"""
 
         if kwargs is None:
             kwargs_items = []
@@ -2918,7 +2919,7 @@ class LArray(ABCLArray):
     # for the case where axis is None, we should return an NDGroup
     # so that arr[arr.labelofmin()] works even if the minimum is on ambiguous labels
     def labelofmin(self, axis=None):
-        """Returns labels of the minimum values along a given axis.
+        r"""Returns labels of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -2940,7 +2941,7 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
@@ -2961,7 +2962,7 @@ class LArray(ABCLArray):
     argmin = renamed_to(labelofmin, 'argmin')
 
     def indexofmin(self, axis=None):
-        """Returns indices of the minimum values along a given axis.
+        r"""Returns indices of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -2983,7 +2984,7 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
@@ -3002,7 +3003,7 @@ class LArray(ABCLArray):
     posargmin = renamed_to(indexofmin, 'posargmin')
 
     def labelofmax(self, axis=None):
-        """Returns labels of the maximum values along a given axis.
+        r"""Returns labels of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3024,7 +3025,7 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
@@ -3045,7 +3046,7 @@ class LArray(ABCLArray):
     argmax = renamed_to(labelofmax, 'argmax')
 
     def indexofmax(self, axis=None):
-        """Returns indices of the maximum values along a given axis.
+        r"""Returns indices of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3067,7 +3068,7 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
@@ -3086,7 +3087,7 @@ class LArray(ABCLArray):
     posargmax = renamed_to(indexofmax, 'posargmax')
 
     def labelsofsorted(self, axis=None, ascending=True, kind='quicksort'):
-        """Returns the labels that would sort this array.
+        r"""Returns the labels that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
         an array of labels of the same shape as `a` that index data along the given axis in sorted order.
@@ -3108,17 +3109,17 @@ class LArray(ABCLArray):
         --------
         >>> arr = LArray([[0, 1], [3, 2], [2, 5]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FR  3  2
              IT  2  5
         >>> arr.labelsofsorted('sex')
-        nat\\sex  0  1
+        nat\sex  0  1
              BE  M  F
              FR  F  M
              IT  M  F
         >>> arr.labelsofsorted('sex', ascending=False)
-        nat\\sex  0  1
+        nat\sex  0  1
              BE  F  M
              FR  M  F
              IT  F  M
@@ -3134,7 +3135,7 @@ class LArray(ABCLArray):
     argsort = renamed_to(labelsofsorted, 'argsort')
 
     def indicesofsorted(self, axis=None, ascending=True, kind='quicksort'):
-        """Returns the indices that would sort this array.
+        r"""Returns the indices that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
         an array of indices with the same axes as `a` that index data along the given axis in sorted order.
@@ -3156,17 +3157,17 @@ class LArray(ABCLArray):
         --------
         >>> arr = LArray([[1, 5], [3, 2], [0, 4]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  1  5
              FR  3  2
              IT  0  4
         >>> arr.indicesofsorted('nat')
-        nat\\sex  M  F
+        nat\sex  M  F
               0  2  1
               1  0  2
               2  1  0
         >>> arr.indicesofsorted('nat', ascending=False)
-        nat\\sex  M  F
+        nat\sex  M  F
               0  1  0
               1  0  2
               2  2  1
@@ -3448,8 +3449,7 @@ class LArray(ABCLArray):
     iflat.__doc__ = LArrayFlatIndicesIndexer.__doc__
 
     def copy(self):
-        """Returns a copy of the array.
-        """
+        r"""Returns a copy of the array. """
         return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta)
 
     # XXX: we might want to implement this using .groupby().first()
@@ -3548,7 +3548,7 @@ class LArray(ABCLArray):
 
     @property
     def info(self):
-        """Describes a LArray (metadata + shape and labels for each axis).
+        r"""Describes a LArray (metadata + shape and labels for each axis).
 
         Returns
         -------
@@ -3580,7 +3580,7 @@ class LArray(ABCLArray):
         return ReprString(str_info)
 
     def ratio(self, *axes):
-        """Returns an array with all values divided by the sum of values along given axes.
+        r"""Returns an array with all values divided by the sum of values along given axes.
 
         Parameters
         ----------
@@ -3597,21 +3597,21 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  4  6
              FO  2  8
         >>> a.sum()
         20
         >>> a.ratio()
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  0.2  0.3
              FO  0.1  0.4
         >>> a.ratio('sex')
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  0.4  0.6
              FO  0.2  0.8
         >>> a.ratio('M')
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  1.0  1.5
              FO  1.0  4.0
         """
@@ -3630,7 +3630,7 @@ class LArray(ABCLArray):
         #      1.0  0.6  0.555555555556
         # OR (current meaning)
         # >>> a / a.sum('F')
-        # age\\sex               M    F
+        # age\sex               M    F
         #       0             0.0  1.0
         #       1  0.666666666667  1.0
         #       2             0.8  1.0
@@ -3655,23 +3655,23 @@ class LArray(ABCLArray):
         #   [0 1]  2  4
         #   [1 2]  6  8
         # >>> b / b.sum(X.age)
-        # age\\sex     M               F
+        # age\sex     M               F
         #   [0 1]  0.25  0.333333333333
         #   [1 2]  0.75  0.666666666667
         # >>> b / a.sum(X.age)
-        # age\\sex               M               F
+        # age\sex               M               F
         #   [0 1]  0.333333333333  0.444444444444
         #   [1 2]             1.0  0.888888888889
         # # >>> a.ratio([0, 1], [2])
         # # >>> a.ratio(X.age[[0, 1]], X.age[2])
         # >>> a.ratio((X.age[[0, 1]], X.age[2]))
-        # nat\\sex             M    F
+        # nat\sex             M    F
         #      BE           0.0  1.0
         #      FO  0.6666666666  1.0
         return self / self.sum(*axes)
 
     def rationot0(self, *axes):
-        """Returns a LArray with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
+        r"""Returns a LArray with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
 
         Parameters
         ----------
@@ -3689,31 +3689,31 @@ class LArray(ABCLArray):
         >>> arr = LArray([[6, 0, 2],
         ...               [4, 0, 8]], [a, b])
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   6   0   2
          a1   4   0   8
         >>> arr.sum()
         20
         >>> arr.rationot0()
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.3  0.0  0.1
          a1  0.2  0.0  0.4
         >>> arr.rationot0('a')
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.6  0.0  0.2
          a1  0.4  0.0  0.8
 
         for reference, the normal ratio method would return:
 
         >>> arr.ratio('a')
-        a\\b   b0   b1   b2
+        a\b   b0   b1   b2
          a0  0.6  nan  0.2
          a1  0.4  nan  0.8
         """
         return self.divnot0(self.sum(*axes))
 
     def percent(self, *axes):
-        """Returns an array with values given as percent of the total of all values along given axes.
+        r"""Returns an array with values given as percent of the total of all values along given axes.
 
         Parameters
         ----------
@@ -3730,15 +3730,15 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  4  6
              FO  2  8
         >>> a.percent()
-        nat\\sex     M     F
+        nat\sex     M     F
              BE  20.0  30.0
              FO  10.0  40.0
         >>> a.percent('sex')
-        nat\\sex     M     F
+        nat\sex     M     F
              BE  40.0  60.0
              FO  20.0  80.0
         """
@@ -3771,7 +3771,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.all, commutative=True, long_name="AND reduction")
     def all(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Test whether all selected elements evaluate to True.
 
@@ -3789,14 +3789,14 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
          a0   True   True   True   True
          a1   True   True  False  False
          a2  False  False  False  False
@@ -3823,7 +3823,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> barr.all((['a0', 'a1'], ['a2', 'a3']))
-          a\\b     b0     b1     b2     b3
+          a\b     b0     b1     b2     b3
         a0,a1   True   True  False  False
         a2,a3  False  False  False  False
         >>> # or equivalently
@@ -3832,7 +3832,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> barr.all((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
         a01   True   True  False  False
         a23  False  False  False  False
         >>> # or equivalently
@@ -3842,7 +3842,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.all, commutative=True, by_agg=True, long_name="AND reduction")
     def all_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Test whether all selected elements evaluate to True.
 
@@ -3860,14 +3860,14 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
          a0   True   True   True   True
          a1   True   True  False  False
          a2  False  False  False  False
@@ -3910,7 +3910,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.any, commutative=True, long_name="OR reduction")
     def any(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Test whether any selected elements evaluate to True.
 
@@ -3928,14 +3928,14 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
          a0   True   True   True   True
          a1   True   True  False  False
          a2  False  False  False  False
@@ -3962,7 +3962,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> barr.any((['a0', 'a1'], ['a2', 'a3']))
-          a\\b     b0     b1     b2     b3
+          a\b     b0     b1     b2     b3
         a0,a1   True   True   True   True
         a2,a3  False  False  False  False
         >>> # or equivalently
@@ -3971,7 +3971,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> barr.any((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
         a01   True   True   True   True
         a23  False  False  False  False
         >>> # or equivalently
@@ -3981,7 +3981,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.any, commutative=True, by_agg=True, long_name="OR reduction")
     def any_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Test whether any selected elements evaluate to True.
 
@@ -3999,14 +3999,14 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> barr = arr < 6
         >>> barr
-        a\\b     b0     b1     b2     b3
+        a\b     b0     b1     b2     b3
          a0   True   True   True   True
          a1   True   True  False  False
          a2  False  False  False  False
@@ -4051,7 +4051,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.sum, np.nansum, commutative=True, extra_kwargs=['dtype'])
     def sum(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the sum of array elements along given axes/groups.
 
@@ -4070,7 +4070,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4097,7 +4097,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.sum((['a0', 'a1'], ['a2', 'a3']))
-          a\\b  b0  b1  b2  b3
+          a\b  b0  b1  b2  b3
         a0,a1   4   6   8  10
         a2,a3  20  22  24  26
         >>> # or equivalently
@@ -4106,7 +4106,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.sum((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
         a01   4   6   8  10
         a23  20  22  24  26
         >>> # or equivalently
@@ -4116,7 +4116,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.sum, np.nansum, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="sum")
     def sum_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the sum of array elements for the given axes/groups.
 
@@ -4135,7 +4135,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4179,7 +4179,7 @@ class LArray(ABCLArray):
     # nanprod needs numpy 1.10
     @_decorate_agg_method(np.prod, np_nanprod, commutative=True, extra_kwargs=['dtype'], long_name="product")
     def prod(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the product of array elements along given axes/groups.
 
@@ -4198,7 +4198,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4225,7 +4225,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.prod((['a0', 'a1'], ['a2', 'a3']))
-          a\\b  b0   b1   b2   b3
+          a\b  b0   b1   b2   b3
         a0,a1   0    5   12   21
         a2,a3  96  117  140  165
         >>> # or equivalently
@@ -4234,7 +4234,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.prod((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b  b0   b1   b2   b3
+        a\b  b0   b1   b2   b3
         a01   0    5   12   21
         a23  96  117  140  165
         >>> # or equivalently
@@ -4245,7 +4245,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.prod, np_nanprod, commutative=True, by_agg=True, extra_kwargs=['dtype'],
                           long_name="product")
     def prod_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the product of array elements for the given axes/groups.
 
@@ -4264,7 +4264,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4307,7 +4307,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.min, np.nanmin, commutative=True, long_name="minimum", action_verb="search")
     def min(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Get minimum of array elements along given axes/groups.
 
@@ -4325,7 +4325,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4352,7 +4352,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.min((['a0', 'a1'], ['a2', 'a3']))
-          a\\b  b0  b1  b2  b3
+          a\b  b0  b1  b2  b3
         a0,a1   0   1   2   3
         a2,a3   8   9  10  11
         >>> # or equivalently
@@ -4361,7 +4361,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.min((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
         a01   0   1   2   3
         a23   8   9  10  11
         >>> # or equivalently
@@ -4371,7 +4371,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.min, np.nanmin, commutative=True, by_agg=True, long_name="minimum", action_verb="search")
     def min_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Get minimum of array elements for the given axes/groups.
 
@@ -4389,7 +4389,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4432,7 +4432,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.max, np.nanmax, commutative=True, long_name="maximum", action_verb="search")
     def max(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Get maximum of array elements along given axes/groups.
 
@@ -4450,7 +4450,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4477,7 +4477,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.max((['a0', 'a1'], ['a2', 'a3']))
-          a\\b  b0  b1  b2  b3
+          a\b  b0  b1  b2  b3
         a0,a1   4   5   6   7
         a2,a3  12  13  14  15
         >>> # or equivalently
@@ -4486,7 +4486,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.max((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
         a01   4   5   6   7
         a23  12  13  14  15
         >>> # or equivalently
@@ -4496,7 +4496,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.max, np.nanmax, commutative=True, by_agg=True, long_name="maximum", action_verb="search")
     def max_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Get maximum of array elements for the given axes/groups.
 
@@ -4514,7 +4514,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4557,7 +4557,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.mean, np.nanmean, commutative=True, extra_kwargs=['dtype'])
     def mean(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the arithmetic mean.
 
@@ -4577,7 +4577,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4604,7 +4604,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.mean((['a0', 'a1'], ['a2', 'a3']))
-          a\\b    b0    b1    b2    b3
+          a\b    b0    b1    b2    b3
         a0,a1   2.0   3.0   4.0   5.0
         a2,a3  10.0  11.0  12.0  13.0
         >>> # or equivalently
@@ -4613,7 +4613,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.mean((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b    b0    b1    b2    b3
+        a\b    b0    b1    b2    b3
         a01   2.0   3.0   4.0   5.0
         a23  10.0  11.0  12.0  13.0
         >>> # or equivalently
@@ -4623,7 +4623,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.mean, np.nanmean, commutative=True, by_agg=True, extra_kwargs=['dtype'], long_name="mean")
     def mean_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the arithmetic mean.
 
@@ -4643,7 +4643,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4686,7 +4686,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.median, np.nanmedian, commutative=True)
     def median(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the arithmetic median.
 
@@ -4705,12 +4705,12 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> arr = ndtest((4, 4))
-        >>> arr[:,:] = [[10, 7, 5, 9], \
-                        [5, 8, 3, 7], \
-                        [6, 2, 0, 9], \
-                        [9, 10, 5, 6]]
+        >>> arr[:,:] = [[10, 7, 5, 9],
+        ...             [5, 8, 3, 7],
+        ...             [6, 2, 0, 9],
+        ...             [9, 10, 5, 6]]
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0  10   7   5   9
          a1   5   8   3   7
          a2   6   2   0   9
@@ -4737,7 +4737,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.median((['a0', 'a1'], ['a2', 'a3']))
-          a\\b   b0   b1   b2   b3
+          a\b   b0   b1   b2   b3
         a0,a1  7.5  7.5  4.0  8.0
         a2,a3  7.5  6.0  2.5  7.5
         >>> # or equivalently
@@ -4746,7 +4746,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.median((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b   b0   b1   b2   b3
+        a\b   b0   b1   b2   b3
         a01  7.5  7.5  4.0  8.0
         a23  7.5  6.0  2.5  7.5
         >>> # or equivalently
@@ -4756,7 +4756,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.median, np.nanmedian, commutative=True, by_agg=True, long_name="mediane")
     def median_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the arithmetic median.
 
@@ -4775,12 +4775,12 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> arr = ndtest((4, 4))
-        >>> arr[:,:] = [[10, 7, 5, 9], \
-                        [5, 8, 3, 7], \
-                        [6, 2, 0, 9], \
-                        [9, 10, 5, 6]]
+        >>> arr[:,:] = [[10, 7, 5, 9],
+        ...             [5, 8, 3, 7],
+        ...             [6, 2, 0, 9],
+        ...             [9, 10, 5, 6]]
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0  10   7   5   9
          a1   5   8   3   7
          a2   6   2   0   9
@@ -4827,7 +4827,7 @@ class LArray(ABCLArray):
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
     def percentile(self, q, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the qth percentile of the data along the specified axis.
 
@@ -4847,7 +4847,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4864,7 +4864,7 @@ class LArray(ABCLArray):
            0.75  4.75  8.75  12.75
         >>> # several percentile values
         >>> arr.percentile([25, 50, 75], 'b')
-        percentile\\a    a0    a1     a2     a3
+        percentile\a    a0    a1     a2     a3
                   25  0.75  4.75   8.75  12.75
                   50   1.5   5.5    9.5   13.5
                   75  2.25  6.25  10.25  14.25
@@ -4880,7 +4880,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.percentile(25, (['a0', 'a1'], ['a2', 'a3']))
-          a\\b   b0    b1    b2    b3
+          a\b   b0    b1    b2    b3
         a0,a1  1.0   2.0   3.0   4.0
         a2,a3  9.0  10.0  11.0  12.0
         >>> # or equivalently
@@ -4889,7 +4889,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.percentile(25, (X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b   b0    b1    b2    b3
+        a\b   b0    b1    b2    b3
         a01  1.0   2.0   3.0   4.0
         a23  9.0  10.0  11.0  12.0
         >>> # or equivalently
@@ -4915,7 +4915,7 @@ class LArray(ABCLArray):
                     kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
 
     def percentile_by(self, q, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the qth percentile of the data for the specified axis.
 
@@ -4935,7 +4935,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -4952,7 +4952,7 @@ class LArray(ABCLArray):
            3.0  4.0  5.0  6.0
         >>> # several percentile values
         >>> arr.percentile_by([25, 50, 75], 'b')
-        percentile\\b   b0    b1    b2    b3
+        percentile\b   b0    b1    b2    b3
                   25  3.0   4.0   5.0   6.0
                   50  6.0   7.0   8.0   9.0
                   75  9.0  10.0  11.0  12.0
@@ -5001,7 +5001,7 @@ class LArray(ABCLArray):
     # not commutative
 
     def ptp(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Returns the range of values (maximum - minimum).
 
@@ -5017,7 +5017,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
@@ -5044,7 +5044,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.ptp((['a0', 'a1'], ['a2', 'a3']))
-          a\\b  b0  b1  b2  b3
+          a\b  b0  b1  b2  b3
         a0,a1   4   4   4   4
         a2,a3   4   4   4   4
         >>> # or equivalently
@@ -5053,7 +5053,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.ptp((X.a['a0', 'a1'] >> 'a01', X.a['a2', 'a3'] >> 'a23'))
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
         a01   4   4   4   4
         a23   4   4   4   4
         >>> # or equivalently
@@ -5066,7 +5066,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.var, np.nanvar, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the unbiased variance.
 
@@ -5087,10 +5087,10 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> arr = ndtest((2, 8), dtype=float)
-        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
-                        [7, 3, 2, 5, 8, 5, 6, 4]]
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3],
+        ...             [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+        a\b   b0   b1   b2   b3   b4   b5   b6   b7
          a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
          a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.var()
@@ -5111,7 +5111,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.var((['b0', 'b1', 'b3'], 'b5:'))
-        a\\b  b0,b1,b3  b5:
+        a\b  b0,b1,b3  b5:
          a0       9.0  1.0
          a1       4.0  1.0
         >>> # or equivalently
@@ -5120,7 +5120,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.var((X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
-        a\\b  b013  b567
+        a\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
         >>> # or equivalently
@@ -5130,7 +5130,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.var, np.nanvar, by_agg=True, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the unbiased variance.
 
@@ -5151,10 +5151,10 @@ class LArray(ABCLArray):
         Examples
         --------
         >>> arr = ndtest((2, 8), dtype=float)
-        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3], \
-                        [7, 3, 2, 5, 8, 5, 6, 4]]
+        >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3],
+        ...             [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+        a\b   b0   b1   b2   b3   b4   b5   b6   b7
          a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
          a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.var_by()
@@ -5175,7 +5175,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.var_by('a', (['b0', 'b1', 'b3'], 'b5:'))
-        a\\b  b0,b1,b3  b5:
+        a\b  b0,b1,b3  b5:
          a0       9.0  1.0
          a1       4.0  1.0
         >>> # or equivalently
@@ -5184,7 +5184,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.var_by('a', (X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
-        a\\b  b013  b567
+        a\b  b013  b567
          a0   9.0   1.0
          a1   4.0   1.0
         >>> # or equivalently
@@ -5194,7 +5194,7 @@ class LArray(ABCLArray):
 
     @_decorate_agg_method(np.std, np.nanstd, extra_kwargs=['dtype', 'ddof'], long_name="standard deviation")
     def std(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the sample standard deviation.
 
@@ -5218,7 +5218,7 @@ class LArray(ABCLArray):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3],
         ...             [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+        a\b   b0   b1   b2   b3   b4   b5   b6   b7
          a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
          a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.std()
@@ -5239,7 +5239,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.std((['b0', 'b1', 'b3'], 'b5:'))
-        a\\b  b0,b1,b3  b5:
+        a\b  b0,b1,b3  b5:
          a0       3.0  1.0
          a1       2.0  1.0
         >>> # or equivalently
@@ -5248,7 +5248,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.std((X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
-        a\\b  b013  b567
+        a\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
         >>> # or equivalently
@@ -5259,7 +5259,7 @@ class LArray(ABCLArray):
     @_decorate_agg_method(np.std, np.nanstd, by_agg=True, extra_kwargs=['dtype', 'ddof'],
                           long_name="standard deviation")
     def std_by(self, *args, **kwargs):
-        """{signature}
+        r"""{signature}
 
         Computes the sample standard deviation.
 
@@ -5283,7 +5283,7 @@ class LArray(ABCLArray):
         >>> arr[:,:] = [[0, 3, 5, 6, 4, 2, 1, 3],
         ...             [7, 3, 2, 5, 8, 5, 6, 4]]
         >>> arr
-        a\\b   b0   b1   b2   b3   b4   b5   b6   b7
+        a\b   b0   b1   b2   b3   b4   b5   b6   b7
          a0  0.0  3.0  5.0  6.0  4.0  2.0  1.0  3.0
          a1  7.0  3.0  2.0  5.0  8.0  5.0  6.0  4.0
         >>> arr.std_by()
@@ -5304,7 +5304,7 @@ class LArray(ABCLArray):
         Split an axis in several parts
 
         >>> arr.std_by('a', (['b0', 'b1', 'b3'], 'b5:'))
-        a\\b  b0,b1,b3  b5:
+        a\b  b0,b1,b3  b5:
          a0       3.0  1.0
          a1       2.0  1.0
         >>> # or equivalently
@@ -5313,7 +5313,7 @@ class LArray(ABCLArray):
         Same with renaming
 
         >>> arr.std_by('a', (X.b['b0', 'b1', 'b3'] >> 'b013', X.b['b5:'] >> 'b567'))
-        a\\b  b013  b567
+        a\b  b013  b567
          a0   3.0   1.0
          a1   2.0   1.0
         >>> # or equivalently
@@ -5323,7 +5323,7 @@ class LArray(ABCLArray):
 
     # cumulative aggregates
     def cumsum(self, axis=-1):
-        """
+        r"""
         Returns the cumulative sum of array elements along an axis.
 
         Parameters
@@ -5350,19 +5350,19 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> arr.cumsum()
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   3   6
          a1   4   9  15  22
          a2   8  17  27  38
          a3  12  25  39  54
         >>> arr.cumsum('a')
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   6   8  10
          a2  12  15  18  21
@@ -5371,7 +5371,7 @@ class LArray(ABCLArray):
         return self._cum_aggregate(np.cumsum, axis)
 
     def cumprod(self, axis=-1):
-        """
+        r"""
         Returns the cumulative product of array elements.
 
         Parameters
@@ -5398,19 +5398,19 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((4, 4))
         >>> arr
-        a\\b  b0  b1  b2  b3
+        a\b  b0  b1  b2  b3
          a0   0   1   2   3
          a1   4   5   6   7
          a2   8   9  10  11
          a3  12  13  14  15
         >>> arr.cumprod()
-        a\\b  b0   b1    b2     b3
+        a\b  b0   b1    b2     b3
          a0   0    0     0      0
          a1   4   20   120    840
          a2   8   72   720   7920
          a3  12  156  2184  32760
         >>> arr.cumprod('a')
-        a\\b  b0   b1    b2    b3
+        a\b  b0   b1    b2    b3
          a0   0    1     2     3
          a1   0    5    12    21
          a2   0   45   120   231
@@ -5481,7 +5481,7 @@ class LArray(ABCLArray):
     __ror__ = _binop('ror')
 
     def __matmul__(self, other):
-        """
+        r"""
         Overrides operator @ for matrix multiplication.
 
         Notes
@@ -5496,7 +5496,7 @@ class LArray(ABCLArray):
             0   1   2
         >>> arr2d = ndtest((3, 3))
         >>> arr2d
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
          a2   6   7   8
@@ -5510,17 +5510,17 @@ class LArray(ABCLArray):
             5  14  23
         >>> arr3d = ndtest('c=c0..c2;d=d0..d2;e=e0..e2')
         >>> arr1d @ arr3d # doctest: +SKIP
-        c\\e  e0  e1  e2
+        c\e  e0  e1  e2
          c0  15  18  21
          c1  42  45  48
          c2  69  72  75
         >>> arr3d @ arr1d # doctest: +SKIP
-        c\\d  d0  d1  d2
+        c\d  d0  d1  d2
          c0   5  14  23
          c1  32  41  50
          c2  59  68  77
         >>> arr3d @ arr3d # doctest: +SKIP
-         c  d\\e    e0    e1    e2
+         c  d\e    e0    e1    e2
         c0   d0    15    18    21
         c0   d1    42    54    66
         c0   d2    69    90   111
@@ -5866,7 +5866,7 @@ class LArray(ABCLArray):
         return LArray(np.isin(self.data, test_values, assume_unique=assume_unique, invert=invert), self.axes)
 
     def divnot0(self, other):
-        """Divides array by other, but returns 0.0 where other is 0.
+        r"""Divides array by other, but returns 0.0 where other is 0.
 
         Parameters
         ----------
@@ -5884,7 +5884,7 @@ class LArray(ABCLArray):
         >>> sex = Axis('sex=M,F')
         >>> a = ndtest((nat, sex))
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FO  2  3
         >>> b = ndtest(sex)
@@ -5892,11 +5892,11 @@ class LArray(ABCLArray):
         sex  M  F
              0  1
         >>> a / b
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  nan  1.0
              FO  inf  3.0
         >>> a.divnot0(b)
-        nat\\sex    M    F
+        nat\sex    M    F
              BE  0.0  1.0
              FO  0.0  3.0
         """
@@ -6109,7 +6109,7 @@ class LArray(ABCLArray):
         return self.insert(value, before=IGroup(0, axis=axis), label=label)
 
     def extend(self, axis, other):
-        """Adds an array to self along an axis.
+        r"""Adds an array to self along an axis.
 
         The two arrays must have compatible axes.
 
@@ -6133,24 +6133,24 @@ class LArray(ABCLArray):
         >>> xtype = Axis('type=type1,type2')
         >>> arr1 = ones([sex, xtype])
         >>> arr1
-        sex\\type  type1  type2
+        sex\type  type1  type2
                M    1.0    1.0
                F    1.0    1.0
         >>> arr2 = zeros([sex2, xtype])
         >>> arr2
-        sex\\type  type1  type2
+        sex\type  type1  type2
                U    0.0    0.0
         >>> arr1.extend('sex', arr2)
-        sex\\type  type1  type2
+        sex\type  type1  type2
                M    1.0    1.0
                F    1.0    1.0
                U    0.0    0.0
         >>> arr3 = zeros([sex2, nat])
         >>> arr3
-        sex\\nat   BE   FO
+        sex\nat   BE   FO
               U  0.0  0.0
         >>> arr1.extend('sex', arr3)
-        sex  type\\nat   BE   FO
+        sex  type\nat   BE   FO
           M     type1  1.0  1.0
           M     type2  1.0  1.0
           F     type1  1.0  1.0
@@ -6447,7 +6447,7 @@ class LArray(ABCLArray):
         return LArray(np.delete(self.data, indices, axis_idx), new_axes)
 
     def transpose(self, *args):
-        """Reorder axes.
+        r"""Reorder axes.
 
         By default, reverse axes, otherwise permute the axes according to the list given as argument.
 
@@ -6466,31 +6466,31 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 2, 2))
         >>> arr
-         a  b\\c  c0  c1
+         a  b\c  c0  c1
         a0   b0   0   1
         a0   b1   2   3
         a1   b0   4   5
         a1   b1   6   7
         >>> arr.transpose('b', 'c', 'a')
-         b  c\\a  a0  a1
+         b  c\a  a0  a1
         b0   c0   0   4
         b0   c1   1   5
         b1   c0   2   6
         b1   c1   3   7
         >>> arr.transpose('b')
-         b  a\\c  c0  c1
+         b  a\c  c0  c1
         b0   a0   0   1
         b0   a1   4   5
         b1   a0   2   3
         b1   a1   6   7
         >>> arr.transpose(..., 'a')  # doctest: +SKIP
-         b  c\\a  a0  a1
+         b  c\a  a0  a1
         b0   c0   0   4
         b0   c1   1   5
         b1   c0   2   6
         b1   c1   3   7
         >>> arr.transpose('c', ..., 'a')  # doctest: +SKIP
-         c  b\\a  a0  a1
+         c  b\a  a0  a1
         c0   b0   0   4
         c0   b1   2   6
         c1   b0   1   5
@@ -6577,7 +6577,7 @@ class LArray(ABCLArray):
     @deprecate_kwarg('transpose', 'wide')
     def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None,
                dialect='default', **kwargs):
-        """
+        r"""
         Writes array to a csv file.
 
         Parameters
@@ -6607,13 +6607,13 @@ class LArray(ABCLArray):
         >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
         >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a
-        nat\\sex  M  F
+        nat\sex  M  F
              BE  0  1
              FO  2  3
         >>> a.to_csv(fname)
         >>> with open(fname) as f:
         ...     print(f.read().strip())
-        nat\\sex,M,F
+        nat\sex,M,F
         BE,0,1
         FO,2,3
         >>> a.to_csv(fname, sep=';', wide=False)
@@ -6648,7 +6648,7 @@ class LArray(ABCLArray):
             series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True, **kwargs)
 
     def to_hdf(self, filepath, key):
-        """
+        r"""
         Writes array to a HDF file.
 
         A HDF file can contain multiple arrays.
@@ -6723,7 +6723,7 @@ class LArray(ABCLArray):
     @deprecate_kwarg('sheet_name', 'sheet')
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs):
-        """
+        r"""
         Writes array in the specified sheet of specified excel workbook.
 
         Parameters
@@ -6827,7 +6827,7 @@ class LArray(ABCLArray):
             pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
-        """Sends the content of the array to clipboard.
+        r"""Sends the content of the array to clipboard.
 
         Using to_clipboard() makes it possible to paste the content of the array into a file (Excel, ascii file,...).
 
@@ -6946,7 +6946,7 @@ class LArray(ABCLArray):
             Error bars on x axis
         stacked : boolean, default False in line and bar plots, and True in area plot.
             If True, create stacked plot.
-        \**kwargs : keywords
+        **kwargs : keywords
             Options to pass to matplotlib plotting method
 
         Returns
@@ -7001,7 +7001,7 @@ class LArray(ABCLArray):
 
     @property
     def shape(self):
-        """Returns the shape of the array as a tuple.
+        r"""Returns the shape of the array as a tuple.
 
         Returns
         -------
@@ -7018,7 +7018,7 @@ class LArray(ABCLArray):
 
     @property
     def ndim(self):
-        """Returns the number of dimensions of the array.
+        r"""Returns the number of dimensions of the array.
 
         Returns
         -------
@@ -7035,7 +7035,7 @@ class LArray(ABCLArray):
 
     @property
     def size(self):
-        """Returns the number of elements in array.
+        r"""Returns the number of elements in array.
 
         Returns
         -------
@@ -7052,7 +7052,7 @@ class LArray(ABCLArray):
 
     @property
     def nbytes(self):
-        """Returns the number of bytes used to store the array in memory.
+        r"""Returns the number of bytes used to store the array in memory.
 
         Returns
         -------
@@ -7069,7 +7069,7 @@ class LArray(ABCLArray):
 
     @property
     def memory_used(self):
-        """Returns the memory consumed by the array in human readable form.
+        r"""Returns the memory consumed by the array in human readable form.
 
         Returns
         -------
@@ -7086,7 +7086,7 @@ class LArray(ABCLArray):
 
     @property
     def dtype(self):
-        """Returns the type of the data of the array.
+        r"""Returns the type of the data of the array.
 
         Returns
         -------
@@ -7321,7 +7321,7 @@ class LArray(ABCLArray):
     # TODO: add support for groups as axis (like aggregates)
     # eg a.diff(X.year[2018:]) instead of a[2018:].diff(X.year)
     def diff(self, axis=-1, d=1, n=1, label='upper'):
-        """Calculates the n-th order discrete difference along a given axis.
+        r"""Calculates the n-th order discrete difference along a given axis.
 
         The first order difference is given by out[n] = a[n + 1] - a[n] along the given axis, higher order differences
         are calculated by using diff recursively.
@@ -7348,22 +7348,22 @@ class LArray(ABCLArray):
         --------
         >>> a = ndtest('sex=M,F;type=type1,type2,type3').cumsum('type')
         >>> a
-        sex\\type  type1  type2  type3
+        sex\type  type1  type2  type3
                M      0      1      3
                F      3      7     12
         >>> a.diff()
-        sex\\type  type2  type3
+        sex\type  type2  type3
                M      1      2
                F      4      5
         >>> a.diff(n=2)
-        sex\\type  type3
+        sex\type  type3
                M      1
                F      1
         >>> a.diff('sex')
-        sex\\type  type1  type2  type3
+        sex\type  type1  type2  type3
                F      3      6      9
         >>> a.diff(a.type['type2':])
-        sex\\type  type3
+        sex\type  type3
                M      2
                F      5
         """
@@ -7386,7 +7386,7 @@ class LArray(ABCLArray):
     # XXX: this is called pct_change in Pandas (but returns the same results, not results * 100, which I find silly).
     # Maybe change_rate would be better (because growth is not always positive)?
     def growth_rate(self, axis=-1, d=1, label='upper'):
-        """Calculates the growth along a given axis.
+        r"""Calculates the growth along a given axis.
 
         Roughly equivalent to a.diff(axis, d, label) / a[axis.i[:-d]]
 
@@ -7410,26 +7410,26 @@ class LArray(ABCLArray):
         >>> data = [[2, 4, 5, 4, 6], [4, 6, 3, 6, 9]]
         >>> a = LArray(data, "sex=M,F; year=2016..2020")
         >>> a
-        sex\\year  2016  2017  2018  2019  2020
+        sex\year  2016  2017  2018  2019  2020
                M     2     4     5     4     6
                F     4     6     3     6     9
         >>> a.growth_rate()
-        sex\\year  2017  2018  2019  2020
+        sex\year  2017  2018  2019  2020
                M   1.0  0.25  -0.2   0.5
                F   0.5  -0.5   1.0   0.5
         >>> a.growth_rate(label='lower')
-        sex\\year  2016  2017  2018  2019
+        sex\year  2016  2017  2018  2019
                M   1.0  0.25  -0.2   0.5
                F   0.5  -0.5   1.0   0.5
         >>> a.growth_rate(d=2)
-        sex\\year   2018  2019  2020
+        sex\year   2018  2019  2020
                M    1.5   0.0   0.2
                F  -0.25   0.0   2.0
         >>> a.growth_rate('sex')
-        sex\\year  2016  2017  2018  2019  2020
+        sex\year  2016  2017  2018  2019  2020
                F   1.0   0.5  -0.4   0.5   0.5
         >>> a.growth_rate(a.year[2017:])
-        sex\\year  2018  2019  2020
+        sex\year  2018  2019  2020
                M  0.25  -0.2   0.5
                F  -0.5   1.0   0.5
         """
@@ -7443,7 +7443,7 @@ class LArray(ABCLArray):
         return diff / array[axis.i[:-d]].ignore_labels(axis)
 
     def compact(self):
-        """Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
+        r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
 
         Returns
         -------
@@ -7455,7 +7455,7 @@ class LArray(ABCLArray):
         >>> a = LArray([[1, 2],
         ...             [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
         >>> a
-        sex\\nat  BE  FO
+        sex\nat  BE  FO
               M   1   2
               F   1   2
         >>> a.compact()
@@ -7469,7 +7469,7 @@ class LArray(ABCLArray):
         return res
 
     def combine_axes(self, axes=None, sep='_', wildcard=False):
-        """Combine several axes into one.
+        r"""Combine several axes into one.
 
         Parameters
         ----------
@@ -7492,7 +7492,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> arr.combine_axes()
@@ -7503,7 +7503,7 @@ class LArray(ABCLArray):
                  0      1      2      3      4      5
         >>> arr = ndtest((2, 2, 2, 2))
         >>> arr
-         a   b  c\\d  d0  d1
+         a   b  c\d  d0  d1
         a0  b0   c0   0   1
         a0  b0   c1   2   3
         a0  b1   c0   4   5
@@ -7513,7 +7513,7 @@ class LArray(ABCLArray):
         a1  b1   c0  12  13
         a1  b1   c1  14  15
         >>> arr.combine_axes(('a', 'c'))
-          a_c  b\\d  d0  d1
+          a_c  b\d  d0  d1
         a0_c0   b0   0   1
         a0_c0   b1   4   5
         a0_c1   b0   2   3
@@ -7523,7 +7523,7 @@ class LArray(ABCLArray):
         a1_c1   b0  10  11
         a1_c1   b1  14  15
         >>> arr.combine_axes({('a', 'c'): 'ac'})
-           ac  b\\d  d0  d1
+           ac  b\d  d0  d1
         a0_c0   b0   0   1
         a0_c0   b1   4   5
         a0_c1   b0   2   3
@@ -7536,13 +7536,13 @@ class LArray(ABCLArray):
         # make several combinations at once
 
         >>> arr.combine_axes([('a', 'c'), ('b', 'd')])
-        a_c\\b_d  b0_d0  b0_d1  b1_d0  b1_d1
+        a_c\b_d  b0_d0  b0_d1  b1_d0  b1_d1
           a0_c0      0      1      4      5
           a0_c1      2      3      6      7
           a1_c0      8      9     12     13
           a1_c1     10     11     14     15
         >>> arr.combine_axes({('a', 'c'): 'ac', ('b', 'd'): 'bd'})
-        ac\\bd  b0_d0  b0_d1  b1_d0  b1_d1
+        ac\bd  b0_d0  b0_d1  b1_d0  b1_d1
         a0_c0      0      1      4      5
         a0_c1      2      3      6      7
         a1_c0      8      9     12     13
@@ -7575,7 +7575,7 @@ class LArray(ABCLArray):
         return transposed.reshape(new_axes)
 
     def split_axes(self, axes=None, sep='_', names=None, regex=None, sort=False, fill_value=nan):
-        """Split axes and returns a new array
+        r"""Split axes and returns a new array
 
         Parameters
         ----------
@@ -7606,7 +7606,7 @@ class LArray(ABCLArray):
         --------
         >>> arr = ndtest((2, 3))
         >>> arr
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
         >>> combined = arr.combine_axes()
@@ -7614,7 +7614,7 @@ class LArray(ABCLArray):
         a_b  a0_b0  a0_b1  a0_b2  a1_b0  a1_b1  a1_b2
                  0      1      2      3      4      5
         >>> combined.split_axes()
-        a\\b  b0  b1  b2
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
 
@@ -7624,8 +7624,8 @@ class LArray(ABCLArray):
         >>> combined
         a_b  a0b0  a0b1  a0b2  a1b0  a1b1  a1b2
                 0     1     2     3     4     5
-        >>> combined.split_axes('a_b', regex='(\\\\w{2})(\\\\w{2})')
-        a\\b  b0  b1  b2
+        >>> combined.split_axes('a_b', regex=r'(\w{2})(\w{2})')
+        a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
 
@@ -7633,14 +7633,14 @@ class LArray(ABCLArray):
 
         >>> combined = ndtest('a_b=a0_b0..a1_b1; c_d=c0_d0..c1_d1')
         >>> combined
-        a_b\\c_d  c0_d0  c0_d1  c1_d0  c1_d1
+        a_b\c_d  c0_d0  c0_d1  c1_d0  c1_d1
           a0_b0      0      1      2      3
           a0_b1      4      5      6      7
           a1_b0      8      9     10     11
           a1_b1     12     13     14     15
         >>> # equivalent to combined.split_axes() which split all axes whose name contains the `sep` delimiter.
         >>> combined.split_axes(['a_b', 'c_d'])
-         a   b  c\\d  d0  d1
+         a   b  c\d  d0  d1
         a0  b0   c0   0   1
         a0  b0   c1   2   3
         a0  b1   c0   4   5
@@ -7650,7 +7650,7 @@ class LArray(ABCLArray):
         a1  b1   c0  12  13
         a1  b1   c1  14  15
         >>> combined.split_axes({'a_b': ('A', 'B'), 'c_d': ('C', 'D')})
-         A   B  C\\D  d0  d1
+         A   B  C\D  d0  d1
         a0  b0   c0   0   1
         a0  b0   c1   2   3
         a0  b1   c0   4   5
@@ -8107,7 +8107,7 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None):
 
 
 def zeros_like(array, title=None, dtype=None, order='K', meta=None):
-    """Returns an array with the same axes as array and filled with zeros.
+    r"""Returns an array with the same axes as array and filled with zeros.
 
     Parameters
     ----------
@@ -8133,7 +8133,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
     --------
     >>> a = ndtest((2, 3))
     >>> zeros_like(a)
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   0   0   0
      a1   0   0   0
     """
@@ -8143,7 +8143,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
 
 @_check_axes_argument
 def ones(axes, title=None, dtype=float, order='C', meta=None):
-    """Returns an array with the specified axes and filled with ones.
+    r"""Returns an array with the specified axes and filled with ones.
 
     Parameters
     ----------
@@ -8169,7 +8169,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> ones([nat, sex])
-    nat\\sex    M    F
+    nat\sex    M    F
          BE  1.0  1.0
          FO  1.0  1.0
     """
@@ -8179,7 +8179,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
 
 
 def ones_like(array, title=None, dtype=None, order='K', meta=None):
-    """Returns an array with the same axes as array and filled with ones.
+    r"""Returns an array with the same axes as array and filled with ones.
 
     Parameters
     ----------
@@ -8205,7 +8205,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
     --------
     >>> a = ndtest((2, 3))
     >>> ones_like(a)
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   1   1   1
      a1   1   1   1
     """
@@ -8216,7 +8216,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
 
 @_check_axes_argument
 def empty(axes, title=None, dtype=float, order='C', meta=None):
-    """Returns an array with the specified axes and uninitialized (arbitrary) data.
+    r"""Returns an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
     ----------
@@ -8242,7 +8242,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> empty([nat, sex])  # doctest: +SKIP
-    nat\\sex                   M                   F
+    nat\sex                   M                   F
          BE  2.47311483356e-315  2.47498446195e-315
          FO                 0.0  6.07684618082e-31
     """
@@ -8252,7 +8252,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
 
 
 def empty_like(array, title=None, dtype=None, order='K', meta=None):
-    """Returns an array with the same axes as array and uninitialized (arbitrary) data.
+    r"""Returns an array with the same axes as array and uninitialized (arbitrary) data.
 
     Parameters
     ----------
@@ -8278,7 +8278,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
     --------
     >>> a = ndtest((3, 2))
     >>> empty_like(a)   # doctest: +SKIP
-    a\\b                  b0                  b1
+    a\b                  b0                  b1
      a0  2.12199579097e-314  6.36598737388e-314
      a1  1.06099789568e-313  1.48539705397e-313
      a2  1.90979621226e-313  2.33419537056e-313
@@ -8290,7 +8290,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
 
 # We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
 def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
-    """Returns an array with the specified axes and filled with fill_value.
+    r"""Returns an array with the specified axes and filled with fill_value.
 
     Parameters
     ----------
@@ -8318,7 +8318,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
     >>> nat = Axis('nat=BE,FO')
     >>> sex = Axis('sex=M,F')
     >>> full([nat, sex], 42.0)
-    nat\\sex     M     F
+    nat\sex     M     F
          BE  42.0  42.0
          FO  42.0  42.0
     >>> initial_value = ndtest([sex])
@@ -8326,7 +8326,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
     sex  M  F
          0  1
     >>> full([nat, sex], initial_value)
-    nat\\sex  M  F
+    nat\sex  M  F
          BE  0  1
          FO  0  1
     """
@@ -8342,7 +8342,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
 
 
 def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
-    """Returns an array with the same axes and type as input array and filled with fill_value.
+    r"""Returns an array with the same axes and type as input array and filled with fill_value.
 
     Parameters
     ----------
@@ -8370,7 +8370,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
     --------
     >>> a = ndtest((2, 3))
     >>> full_like(a, 5)
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   5   5   5
      a1   5   5   5
     """
@@ -8384,7 +8384,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
 
 # XXX: would it be possible to generalize to multiple axes?
 def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None, meta=None):
-    """
+    r"""
     Creates an array by sequentially applying modifications to the array along axis.
 
     The value for each label in axis will be given by sequentially transforming the value for the previous label.
@@ -8434,7 +8434,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     sex  M  F
          1  2
     >>> sequence(year, 1.0, inc)
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M   1.0   2.0   3.0   4.0
            F   1.0   3.0   5.0   7.0
     >>> mult = LArray([2, 3], [sex])
@@ -8442,7 +8442,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     sex  M  F
          2  3
     >>> sequence(year, 1.0, mult=mult)
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M   1.0   2.0   4.0   8.0
            F   1.0   3.0   9.0  27.0
     >>> initial = LArray([3, 4], [sex])
@@ -8450,15 +8450,15 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     sex  M  F
          3  4
     >>> sequence(year, initial, 1)
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M     3     4     5     6
            F     4     5     6     7
     >>> sequence(year, initial, mult=2)
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M     3     6    12    24
            F     4     8    16    32
     >>> sequence(year, initial, inc, mult)
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M     3     7    15    31
            F     4    14    44   134
     >>> def modify(prev_value):
@@ -8470,7 +8470,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     {0}*  0  1  2
           0  1  2
     >>> sequence('year', axes=(sex, year))
-    sex\\year  2016  2017  2018  2019
+    sex\year  2016  2017  2018  2019
            M     0     1     2     3
            F     0     1     2     3
 
@@ -8620,7 +8620,7 @@ def ndrange(axes, start=0, title=None, dtype=int):
 
 @_check_axes_argument
 def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=None):
-    """Returns test array with given shape.
+    r"""Returns test array with given shape.
 
     Axes are named by single letters starting from 'a'.
     Axes labels are constructed using a '{axis_name}{label_pos}' pattern (e.g. 'a0').
@@ -8656,32 +8656,32 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
     a  a0  a1  a2  a3  a4  a5
         0   1   2   3   4   5
     >>> ndtest((2, 3))
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   0   1   2
      a1   3   4   5
     >>> ndtest((2, 3), label_start=1)
-    a\\b  b1  b2  b3
+    a\b  b1  b2  b3
      a1   0   1   2
      a2   3   4   5
     >>> ndtest((2, 3), start=2)
-    a\\b  b0  b1  b2
+    a\b  b0  b1  b2
      a0   2   3   4
      a1   5   6   7
     >>> ndtest((2, 3), dtype=float)
-    a\\b   b0   b1   b2
+    a\b   b0   b1   b2
      a0  0.0  1.0  2.0
      a1  3.0  4.0  5.0
 
     Create test array by passing axes
 
     >>> ndtest("nat=BE,FO;sex=M,F")
-    nat\\sex  M  F
+    nat\sex  M  F
          BE  0  1
          FO  2  3
     >>> nat = Axis("nat=BE,FO")
     >>> sex = Axis("sex=M,F")
     >>> ndtest([nat, sex])
-    nat\\sex  M  F
+    nat\sex  M  F
          BE  0  1
          FO  2  3
     """
@@ -8720,7 +8720,7 @@ def kth_diag_indices(shape, k):
 
 
 def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
-    """
+    r"""
     Extracts a diagonal or construct a diagonal array.
 
     Parameters
@@ -8749,7 +8749,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     >>> sex = Axis('sex=M,F')
     >>> a = ndtest([nat, sex], start=1)
     >>> a
-    nat\\sex  M  F
+    nat\sex  M  F
          BE  1  2
          FO  3  4
     >>> d = diag(a)
@@ -8757,7 +8757,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     nat_sex  BE_M  FO_F
                 1     4
     >>> diag(d)
-    nat\\sex  M  F
+    nat\sex  M  F
          BE  1  0
          FO  0  4
     >>> a = ndtest(sex, start=1)
@@ -8765,7 +8765,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
     sex  M  F
          1  2
     >>> diag(a)
-    sex\\sex  M  F
+    sex\sex  M  F
           M  1  0
           F  0  2
     """
@@ -8802,7 +8802,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
 
 @_check_axes_argument
 def labels_array(axes, title=None, meta=None):
-    """Returns an array with specified axes and the combination of
+    r"""Returns an array with specified axes and the combination of
     corresponding labels as values.
 
     Parameters
@@ -8826,14 +8826,14 @@ def labels_array(axes, title=None, meta=None):
     sex  M  F
          M  F
     >>> labels_array((nat, sex))
-    nat  sex\\axis  nat  sex
+    nat  sex\axis  nat  sex
      BE         M   BE    M
      BE         F   BE    F
      FO         M   FO    M
      FO         F   FO    F
     """
     # >>> labels_array((nat, sex))
-    # nat\\sex     M     F
+    # nat\sex     M     F
     #      BE  BE,M  BE,F
     #      FO  FO,M  FO,F
     meta = _handle_meta(meta, title)
@@ -8859,7 +8859,7 @@ def identity(axis):
 
 
 def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
-    """Returns a 2-D array with ones on the diagonal and zeros elsewhere.
+    r"""Returns a 2-D array with ones on the diagonal and zeros elsewhere.
 
     Parameters
     ----------
@@ -8886,22 +8886,22 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
     Examples
     --------
     >>> eye(2, dtype=int)
-    {0}*\\{1}*  0  1
+    {0}*\{1}*  0  1
             0  1  0
             1  0  1
     >>> sex = Axis('sex=M,F')
     >>> eye(sex)
-    sex\\sex    M    F
+    sex\sex    M    F
           M  1.0  0.0
           F  0.0  1.0
     >>> age = Axis('age=0..2')
     >>> eye(age, sex)
-    age\\sex    M    F
+    age\sex    M    F
           0  1.0  0.0
           1  0.0  1.0
           2  0.0  0.0
     >>> eye(3, k=1)
-    {0}*\\{1}*    0    1    2
+    {0}*\{1}*    0    1    2
             0  0.0  1.0  0.0
             1  0.0  0.0  1.0
             2  0.0  0.0  0.0
@@ -9319,7 +9319,7 @@ def _equal_modulo_len1(shape1, shape2):
 # a[ones(a.axes[axes], dtype=bool)]
 # but if we had assigned axes names from the start (without dropping them) this wouldn't be a problem.
 def make_numpy_broadcastable(values, min_axes=None):
-    """
+    r"""
     Returns values where LArrays are (NumPy) broadcastable between them.
     For that to be possible, all common axes must be compatible (see Axis class documentation).
     Extra axes (in any array) can have any length.
@@ -9359,7 +9359,7 @@ def make_numpy_broadcastable(values, min_axes=None):
 
 
 def raw_broadcastable(values, min_axes=None):
-    """
+    r"""
     same as make_numpy_broadcastable but returns numpy arrays
     """
     arrays, res_axes = make_numpy_broadcastable(values, min_axes=min_axes)

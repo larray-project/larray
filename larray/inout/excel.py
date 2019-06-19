@@ -226,7 +226,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
 @register_file_handler('pandas_excel', ['xls', 'xlsx'] if xw is None else None)
 class PandasExcelHandler(FileHandler):
-    """
+    r"""
     Handler for Excel files using Pandas.
     """
     def __init__(self, fname, overwrite_file=False):
@@ -328,7 +328,7 @@ class PandasExcelHandler(FileHandler):
 
 @register_file_handler('xlwings_excel', ['xls', 'xlsx'] if xw is not None else None)
 class XLWingsHandler(FileHandler):
-    """
+    r"""
     Handler for Excel files using XLWings.
     """
     def __init__(self, fname, overwrite_file=False):

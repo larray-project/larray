@@ -19,7 +19,7 @@ from larray.example import get_example_filepath
 
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
-    """Reads an axis or group or array named key from a HDF5 file in filepath (path+name)
+    r"""Reads an axis or group or array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
@@ -54,7 +54,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_hdf(fname, 'pop')
-    country  gender\\time      2013      2014      2015
+    country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
      France         Male  31772665  31936596  32175328
@@ -102,7 +102,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
 @register_file_handler('pandas_hdf', ['h5', 'hdf'])
 class PandasHDFHandler(FileHandler):
-    """
+    r"""
     Handler for HDF5 files using Pandas.
     """
     def _open_for_read(self):

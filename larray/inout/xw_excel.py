@@ -327,7 +327,7 @@ if xw is not None:
 
 
     def _fill_slice(s, length):
-        """
+        r"""
         replaces a slice None bounds by actual bounds.
 
         Parameters
@@ -345,7 +345,7 @@ if xw is not None:
 
 
     def _concrete_key(key, obj, ndim=2):
-        """Expand key to ndim and replace None in slices start/stop bounds by 0 or obj.shape[corresponding_dim]
+        r"""Expand key to ndim and replace None in slices start/stop bounds by 0 or obj.shape[corresponding_dim]
         respectively.
 
         Parameters
@@ -403,7 +403,7 @@ if xw is not None:
 
         @property
         def shape(self):
-            """
+            r"""
             shape of sheet including top-left empty rows/columns but excluding bottom-right ones.
             """
             from xlwings.constants import Direction as xldir
@@ -485,7 +485,7 @@ if xw is not None:
 
         # TODO: generalize to more than 2 dimensions or scrap it
         def array(self, data, row_labels=None, column_labels=None, names=None):
-            """
+            r"""
 
             Parameters
             ----------
@@ -649,7 +649,7 @@ else:
 
 # We define Workbook and open_excel documentation here since Readthedocs runs on Linux
 if not PY2:
-    Workbook.__doc__ = """
+    Workbook.__doc__ = r"""
 Excel Workbook.
 
 See Also
@@ -657,7 +657,7 @@ See Also
 open_excel
 """
 
-    Workbook.sheet_names.__doc__ = """
+    Workbook.sheet_names.__doc__ = r"""
 Returns the names of the Excel sheets.
 
 Examples
@@ -673,7 +673,7 @@ Examples
 ['arr', 'arr2', 'arr3']
 """
 
-    Workbook.save.__doc__ = """
+    Workbook.save.__doc__ = r"""
 Saves the Workbook.
 
 If a path is being provided, this works like SaveAs() in Excel.
@@ -696,7 +696,7 @@ Examples
 ...     wb.save()
 """
 
-    Workbook.close.__doc__ = """
+    Workbook.close.__doc__ = r"""
 Close the workbook in Excel.
 
 Need to be called if the workbook has been opened without the `with` statement.
@@ -712,11 +712,11 @@ Examples
 >>> wb.close()                                                    # doctest: +SKIP
 """
 
-    Workbook.app.__doc__ = """
+    Workbook.app.__doc__ = r"""
 Return the Excel instance this workbook is attached to.
 """
 
-open_excel.__doc__ = """
+open_excel.__doc__ = r"""
 Open an Excel workbook
 
 Parameters
@@ -750,7 +750,7 @@ Examples
 --------
 >>> arr = ndtest((3, 3))
 >>> arr
-a\\b  b0  b1  b2
+a\b  b0  b1  b2
  a0   0   1   2
  a1   3   4   5
  a2   6   7   8
@@ -767,7 +767,7 @@ read array from an Excel file
 >>> with open_excel('excel_file.xlsx') as wb:    # doctest: +SKIP
 ...     arr2 = wb['arr'].load()
 >>> arr2    # doctest: +SKIP
-a\\b  b0  b1  b2
+a\b  b0  b1  b2
  a0   0   1   2
  a1   3   4   5
  a2   6   7   8

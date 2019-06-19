@@ -12,7 +12,7 @@ from larray.inout.csv import read_csv
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False, wide=True):
-    """
+    r"""
     initialize array from a list of lists (lines)
 
     Parameters
@@ -49,30 +49,30 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
     ...             ['',      0,   1]])
     sex  M  F
          0  1
-    >>> from_lists([['sex\\\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex\\year', 1991, 1992, 1993],
     ...             [ 'M',           0,    1,    2],
     ...             [ 'F',           3,    4,    5]])
-    sex\\year  1991  1992  1993
+    sex\year  1991  1992  1993
            M     0     1     2
            F     3     4     5
 
     Read array with missing values + `fill_value` argument
 
-    >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
     ...             [  'F', 'BE',           0,    0,    1]])
-    sex  nat\\year  1991  1992  1993
+    sex  nat\year  1991  1992  1993
       M        BE   1.0   0.0   0.0
       M        FO   2.0   0.0   0.0
       F        BE   0.0   0.0   1.0
       F        FO   nan   nan   nan
 
-    >>> from_lists([['sex', 'nat\\\\year', 1991, 1992, 1993],
+    >>> from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
     ...             [  'M', 'BE',           1,    0,    0],
     ...             [  'M', 'FO',           2,    0,    0],
     ...             [  'F', 'BE',           0,    0,    1]], fill_value=42)
-    sex  nat\\year  1991  1992  1993
+    sex  nat\year  1991  1992  1993
       M        BE     1     0     0
       M        FO     2     0     0
       F        BE     0     0     1
@@ -84,7 +84,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
     ...             [  'M', 'BE',     1,    0,    0],
     ...             [  'M', 'FO',     2,    0,    0],
     ...             [  'F', 'BE',     0,    0,    1]], nb_axes=3)
-    sex  nat\\{2}  1991  1992  1993
+    sex  nat\{2}  1991  1992  1993
       M       BE   1.0   0.0   0.0
       M       FO   2.0   0.0   0.0
       F       BE   0.0   0.0   1.0
@@ -102,7 +102,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
     ...             [  'F', 'BE',  1991,    0     ],
     ...             [  'F', 'BE',  1992,    0     ],
     ...             [  'F', 'BE',  1993,    1     ]], wide=False)
-    sex  nat\\year  1991  1992  1993
+    sex  nat\year  1991  1992  1993
       M        BE   1.0   0.0   0.0
       M        FO   2.0   0.0   0.0
       F        BE   0.0   0.0   1.0
@@ -139,7 +139,7 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
         Whether or not to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
-    \**kwargs
+    **kwargs
         See arguments of Pandas read_csv function.
 
     Returns
