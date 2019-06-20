@@ -7,15 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta
+from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta, needs_xlwings
 from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like,
-                    local_arrays, global_arrays, arrays, nan)
+                    local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
-
-try:
-    import xlwings as xw
-except ImportError:
-    xw = None
 
 
 def equal(o1, o2):
@@ -222,7 +217,7 @@ def test_xlsx_pandas_io(tmpdir, session, meta):
     assert s.meta == meta
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 def test_xlsx_xlwings_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session_xw.xlsx')
     session.meta = meta

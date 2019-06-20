@@ -1,10 +1,17 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
+
 import pytest
 import datetime as dt
 import numpy as np
 import pandas as pd
+try:
+    import xlwings as xw
+except ImportError:
+    xw = None
+
 from larray import LArray, isnan, aslarray, Metadata
 
 
@@ -124,3 +131,9 @@ def meta():
     return Metadata([('title', title), ('description', description), ('author', author),
                      ('location', location), ('office_number', office_number),
                      ('score', score), ('date', date)])
+
+
+needs_xlwings = pytest.mark.skipif(xw is None, reason="xlwings is required for this test")
+needs_python35 = pytest.mark.skipif(sys.version_info < (3, 5), reason="Python 3.5 is required for this test")
+needs_python36 = pytest.mark.skipif(sys.version_info < (3, 6), reason="Python 3.6 is required for this test")
+needs_python37 = pytest.mark.skipif(sys.version_info < (3, 7), reason="Python 3.7 is required for this test")

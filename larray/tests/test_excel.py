@@ -5,16 +5,12 @@ import re
 import pytest
 import numpy as np
 
-try:
-    import xlwings as xw
-except ImportError:
-    xw = None
-
+from larray.tests.common import needs_xlwings
 from larray import ndtest, larray_equal, open_excel, aslarray, Axis
 from larray.inout import xw_excel
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 class TestWorkbook(object):
     def test_open_excel(self):
         # not using context manager because we call .quit manually
@@ -106,7 +102,7 @@ class TestWorkbook(object):
             assert wb.sheet_names() == ['renamed']
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 class TestSheet(object):
     def test_get_and_set_item(self):
         arr = ndtest((2, 3))
@@ -170,7 +166,7 @@ class TestSheet(object):
             assert re.match('<larray.inout.xw_excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 class TestRange(object):
     def test_scalar_convert(self):
         with open_excel(visible=False) as wb:

@@ -14,10 +14,10 @@ except ImportError:
     xw = None
 
 from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
-                                 tmp_path, meta)
+                                 tmp_path, meta, needs_xlwings, needs_python35, needs_python36, needs_python37)
 from larray import (LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan, nan_equal, IGroup)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import StringIO, LHDFStore
@@ -3013,7 +3013,7 @@ def test_read_eurostat():
                        [3722, 3395, 3347])
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 def test_read_excel_xlwings():
     arr = read_excel(inputpath('test.xlsx'), '1d')
     assert_array_equal(arr, io_1d)
@@ -3807,7 +3807,7 @@ def test_to_excel_xlsxwriter(tmpdir):
     a3[group].to_excel(fpath, group, engine='xlsxwriter')
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 def test_to_excel_xlwings(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlwings.xlsx')
 
@@ -3915,11 +3915,11 @@ def test_as_table():
                    ['a2', 2]]
 
 
-@pytest.mark.skipif(xw is None, reason="xlwings is not available")
+@needs_xlwings
 def test_open_excel(tmpdir):
     # 1) Create new file
     # ==================
-    fpath = inputpath('should_not_extist.xlsx')
+    fpath = inputpath('should_not_exist.xlsx')
     # overwrite_file must be set to True to create a new file
     with pytest.raises(ValueError):
         open_excel(fpath)
@@ -4239,7 +4239,7 @@ def test_diag():
     assert d.i[1] == 1.0
 
 
-@pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
+@needs_python35
 def test_matmul():
     # 2D / anonymous axes
     a1 = ndtest([Axis(3), Axis(3)])
@@ -4398,7 +4398,7 @@ def test_matmul():
     assert_array_equal(arr2d.__matmul__(arr4d), res)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 5), reason="@ unavailable (Python < 3.5)")
+@needs_python35
 def test_rmatmul():
     a1 = eye(3) * 2
     a2 = ndtest([Axis(3), Axis(3)])
