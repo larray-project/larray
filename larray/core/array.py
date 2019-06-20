@@ -28,7 +28,7 @@ Matrix class
 
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
-from collections import Iterable, Sequence, OrderedDict, abc
+from collections import Iterable, Sequence, OrderedDict
 from itertools import product, chain, groupby, islice, repeat
 import os
 import sys
@@ -7977,6 +7977,57 @@ class LArray(ABCLArray):
 
                 # transpose back axis where it was
                 return res_arr.transpose(self.axes & res_arr.axes)
+
+    def apply_map(self, mapping, dtype=None):
+        r"""
+        Apply a transformation mapping to array elements.
+
+        Parameters
+        ----------
+        mapping : mapping (dict)
+            Mapping to apply to values of the array.
+            A mapping (dict) must have the values to transform as keys and the new values as values, that is:
+            {<oldvalue1>: <newvalue1>, <oldvalue2>: <newvalue2>, ...}.
+        dtype : type, optional
+            Output dtype. Defaults to None (inspect all output values to infer it automatically).
+
+        Returns
+        -------
+        LArray
+            Axes will be the same as the original array axes.
+
+        Notes
+        -----
+        To apply a transformation given as an LArray (with current values as labels on one axis of
+        the array and desired values as the array values), you can use: ``mapping_arr[original_arr]``.
+
+        Examples
+        --------
+        First let us define a test array
+
+        >>> arr = LArray([[0, 2, 1],
+        ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   2   1
+         a1   3   1   5
+
+        Now, assuming for a moment that the values of our test array above were in fact some numeric representation of
+        names and we had the correspondence to the actual names stored in a dictionary:
+
+        >>> code_to_names = {0: 'foo', 1: 'bar', 2: 'baz',
+        ...                  3: 'boo', 4: 'far', 5: 'faz'}
+
+        We could get back an array with the actual names by using:
+
+        >>> arr.apply_map(code_to_names)
+        a\b   b0   b1   b2
+         a0  foo  baz  bar
+         a1  boo  bar  faz
+        """
+        def transform(v):
+            return mapping.get(v, v)
+        return self.apply(transform, dtype=dtype)
 
 
 def larray_equal(a1, a2):

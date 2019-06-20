@@ -1,4 +1,4 @@
-﻿.. py:currentmodule:: larray
+.. py:currentmodule:: larray
 
 
 Syntax changes
@@ -198,6 +198,9 @@ New features
     a\b    b0    b1   b2
      a0  -1.0   1.0  0.0
      a1   0.0  -2.0  2.0
+
+* implemented :py:obj:`LArray.apply_map()` method to apply a transformation mapping to array elements. For example, this
+  can be used to transform some numeric codes to labels.
 
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 

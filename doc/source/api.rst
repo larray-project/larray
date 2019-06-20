@@ -320,6 +320,7 @@ Modifying/Selecting
    LArray.ignore_labels
    LArray.filter
    LArray.apply
+   LArray.apply_map
 
 .. _la_axes_labels:
 
