@@ -30,6 +30,10 @@ from larray.inout.hdf import read_hdf
 from larray.inout.sas import read_sas
 from larray.inout.xw_excel import open_excel, Workbook
 
+# just make sure handlers for .pkl and .pickle are initialized
+import larray.inout.pickle as _pkl
+del _pkl
+
 from larray.util.options import get_options, set_options
 
 from larray.viewer import view, edit, compare
