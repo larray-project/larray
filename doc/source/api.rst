@@ -695,6 +695,8 @@ Miscellaneous
    eye
    ipfp
    wrap_elementwise_array_func
+   zip_array_values
+   zip_array_items
 
 .. _api-session:
 

@@ -8,7 +8,7 @@ from larray.core.group import Group, LGroup, LSet, IGroup, union
 from larray.core.array import (LArray, zeros, zeros_like, ones, ones_like, empty, empty_like, full,
                                full_like, sequence, labels_array, ndtest, aslarray, identity, diag,
                                eye, all, any, sum, prod, cumsum, cumprod, min, max, mean, ptp, var,
-                               std, median, percentile, stack)
+                               std, median, percentile, stack, zip_array_values, zip_array_items)
 from larray.core.session import Session, local_arrays, global_arrays, arrays
 from larray.core.constants import nan, inf, pi, e, euler_gamma
 from larray.core.metadata import Metadata
