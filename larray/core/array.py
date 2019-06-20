@@ -29,7 +29,7 @@ Matrix class
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
 from collections import Iterable, Sequence, OrderedDict, abc
-from itertools import product, chain, groupby, islice
+from itertools import product, chain, groupby, islice, repeat
 import os
 import sys
 import functools
@@ -3300,7 +3300,7 @@ class LArray(ABCLArray):
         return self.axes.iter_labels(axes, ascending=ascending)
 
     # TODO: implement values_by
-    def values(self, axes=None, ascending=True, expand=False):
+    def values(self, axes=None, ascending=True):
         r"""Returns a view on the values of the array along axes.
 
         Parameters
@@ -3310,9 +3310,6 @@ class LArray(ABCLArray):
             in the array).
         ascending : bool, optional
             Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
-        expand : bool, optional
-            Whether or not to expand array using axes. This allows one to iterate on axes which do not exist in
-            the array, which is useful when iterating on several arrays with different axes. Defaults to False.
 
         Returns
         -------
@@ -3367,15 +3364,6 @@ class LArray(ABCLArray):
             1   3
         a  a0  a1
             0   2
-        >>> # iterate on the "c" axis, which does not exist in arr, that is return arr for each label along the "c" axis
-        ... for value in arr.values('c=c0,c1', expand=True):
-        ...     print(value)
-        a\b  b0  b1
-         a0   0   1
-         a1   2   3
-        a\b  b0  b1
-         a0   0   1
-         a1   2   3
 
         One can also access elements of the value sequence directly, instead of iterating over it. Say we want to
         retrieve the first and last values of our array, we could write:
@@ -3391,22 +3379,12 @@ class LArray(ABCLArray):
             # combined[::-1] *is* indexable
             return combined if ascending else combined[::-1]
 
-        if not isinstance(axes, (tuple, AxisCollection)):
+        if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
 
-        def get_axis(a):
-            if isinstance(a, basestring):
-                return Axis(a) if '=' in a else self.axes[a]
-            elif isinstance(a, int):
-                return self.axes[a]
-            else:
-                assert isinstance(a, Axis)
-                return a
-        axes = [get_axis(a) for a in axes]
-        array = self.expand(axes, readonly=True) if expand else self
-        axes = array.axes[axes]
+        axes = self.axes[axes]
         # move axes in front
-        transposed = array.transpose(axes)
+        transposed = self.transpose(axes)
         # combine axes if necessary
         combined = transposed.combine_axes(axes, wildcard=True) if len(axes) > 1 else transposed
         # trailing .i is to support the case where axis < self.axes (ie the elements of the result are arrays)
@@ -3414,7 +3392,6 @@ class LArray(ABCLArray):
 
     # TODO: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing.
     #       if we returned an NDGroup in all cases, it would solve the problem
-    # TODO: implement expand=True
     def items(self, axes=None, ascending=True):
         r"""Returns a (label, value) view of the array along axes.
 
@@ -9247,6 +9224,177 @@ def make_args_broadcastable(args, kwargs=None, min_axes=None):
     raw_bcast_args = raw_bcast_values[:first_kw]
     raw_bcast_kwargs = dict(zip(kwargs.keys(), raw_bcast_values[first_kw:]))
     return raw_bcast_args, raw_bcast_kwargs, res_axes
+
+
+def zip_array_values(values, axes=None, ascending=True):
+    r"""Returns a sequence as if simultaneously iterating on several arrays.
+
+    Parameters
+    ----------
+    axes : int, str or Axis or tuple of them, optional
+        Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
+        all arrays, in the order they are found).
+    ascending : bool, optional
+        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+    Returns
+    -------
+    Sequence
+
+    Examples
+    --------
+    >>> arr1 = ndtest('a=a0,a1;b=b1,b2')
+    >>> arr2 = ndtest('a=a0,a1;c=c1,c2')
+    >>> arr1
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    >>> arr2
+    a\c  c1  c2
+     a0   0   1
+     a1   2   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2), 'a'):
+    ...     print("==")
+    ...     print(a1)
+    ...     print(a2)
+    ==
+    b  b1  b2
+        0   1
+    c  c1  c2
+        0   1
+    ==
+    b  b1  b2
+        2   3
+    c  c1  c2
+        2   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2), arr2.c):
+    ...     print("==")
+    ...     print(a1)
+    ...     print(a2)
+    ==
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        0   2
+    ==
+    a\b  b1  b2
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        1   3
+    >>> for a1, a2 in zip_array_values((arr1, arr2)):
+    ...     print("arr1: {}, arr2: {}".format(a1, a2))
+    arr1: 0, arr2: 0
+    arr1: 0, arr2: 1
+    arr1: 1, arr2: 0
+    arr1: 1, arr2: 1
+    arr1: 2, arr2: 2
+    arr1: 2, arr2: 3
+    arr1: 3, arr2: 2
+    arr1: 3, arr2: 3
+    """
+    def values_with_expand(value, axes, readonly=True, ascending=True):
+        if isinstance(value, LArray):
+            # an Axis axis is not necessarily in array.axes
+            expanded = value.expand(axes, readonly=readonly)
+            return expanded.values(axes, ascending=ascending)
+        else:
+            size = axes.size if axes.ndim else 0
+            return Repeater(value, size)
+
+    all_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    if axes is None:
+        axes = all_axes
+    else:
+        if not isinstance(axes, (tuple, list, AxisCollection)):
+            axes = (axes,)
+        # transform string axes definitions to objects
+        axes = [Axis(axis) if isinstance(axis, basestring) and '=' in axis else axis
+                for axis in axes]
+        # transform string axes references to objects
+        axes = AxisCollection([axis if isinstance(axis, Axis) else all_axes[axis]
+                               for axis in axes])
+
+    # sequence of tuples (of scalar or arrays)
+    return SequenceZip([values_with_expand(v, axes, ascending=ascending) for v in values])
+
+
+def zip_array_items(values, axes=None, ascending=True):
+    r"""Returns a sequence as if simultaneously iterating on several arrays as well as the current iteration "key".
+
+    Broadcasts all values against each other. Scalars are simply repeated.
+
+    Parameters
+    ----------
+    values : Iterable
+        arrays to iterate on.
+    axes : int, str or Axis or tuple of them, optional
+        Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
+        all arrays, in the order they are found).
+    ascending : bool, optional
+        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+
+    Returns
+    -------
+    Sequence
+
+    Examples
+    --------
+    >>> arr1 = ndtest('a=a0,a1;b=b0,b1')
+    >>> arr2 = ndtest('a=a0,a1;c=c0,c1')
+    >>> arr1
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    >>> arr2
+    a\c  c0  c1
+     a0   0   1
+     a1   2   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2), 'a'):
+    ...     print("==", k[0], "==")
+    ...     print(a1)
+    ...     print(a2)
+    == a0 ==
+    b  b0  b1
+        0   1
+    c  c0  c1
+        0   1
+    == a1 ==
+    b  b0  b1
+        2   3
+    c  c0  c1
+        2   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2), arr2.c):
+    ...     print("==", k[0], "==")
+    ...     print(a1)
+    ...     print(a2)
+    == c0 ==
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        0   2
+    == c1 ==
+    a\b  b0  b1
+     a0   0   1
+     a1   2   3
+    a  a0  a1
+        1   3
+    >>> for k, (a1, a2) in zip_array_items((arr1, arr2)):
+    ...     print(k, "arr1: {}, arr2: {}".format(a1, a2))
+    (a.i[0], b.i[0], c.i[0]) arr1: 0, arr2: 0
+    (a.i[0], b.i[0], c.i[1]) arr1: 0, arr2: 1
+    (a.i[0], b.i[1], c.i[0]) arr1: 1, arr2: 0
+    (a.i[0], b.i[1], c.i[1]) arr1: 1, arr2: 1
+    (a.i[1], b.i[0], c.i[0]) arr1: 2, arr2: 2
+    (a.i[1], b.i[0], c.i[1]) arr1: 2, arr2: 3
+    (a.i[1], b.i[1], c.i[0]) arr1: 3, arr2: 2
+    (a.i[1], b.i[1], c.i[1]) arr1: 3, arr2: 3
+    """
+    res_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    return SequenceZip((res_axes.iter_labels(axes, ascending=ascending),
+                        zip_array_values(values, axes=axes, ascending=ascending)))
 
 
 _default_float_error_handler = float_error_handler_factory(3)
