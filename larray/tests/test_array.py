@@ -608,29 +608,29 @@ def test_getitem_guess_axis(array):
     assert_array_equal(array[g], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, message="key has several values for axis: age"):
+    with pytest.raises(ValueError, match="key has several values for axis: age"):
         array[[1, 2], [3, 4]]
 
     # key with invalid label (ie label not found on any axis)
-    with pytest.raises(ValueError, message="999 is not a valid label for any axis"):
+    with pytest.raises(ValueError, match="999 is not a valid label for any axis"):
         array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
-    with pytest.raises(ValueError, message=r"\[998, 999\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, match=r"\[998, 999\] is not a valid label for any axis"):
         array[[1, 2], [998, 999]]
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
     # FIXME: the message should be the same as for 999, 4 (ie it should NOT mention age).
-    with pytest.raises(ValueError, message=r"age\[3, 999\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, match=r"age\[3, 999\] is not a valid label for any axis"):
         array[[1, 2], [3, 999]]
 
-    with pytest.raises(ValueError, message=r"\[999, 4\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, match=r"\[999, 4\] is not a valid label for any axis"):
         array[[1, 2], [999, 4]]
 
     # ambiguous key
     arr = ndtest("a=l0,l1;b=l1,l2")
-    with pytest.raises(ValueError, message=r"l1 is ambiguous \(valid in a, b\)"):
+    with pytest.raises(ValueError, match=r"l1 is ambiguous \(valid in a, b\)"):
         arr['l1']
 
     # ambiguous key disambiguated via string
@@ -671,7 +671,7 @@ def test_getitem_positional_group(array):
     assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, message="key has several values for axis: age"):
+    with pytest.raises(ValueError, match="key has several values for axis: age"):
         array[age.i[1, 2], age.i[3, 4]]
 
 
@@ -716,7 +716,7 @@ def test_getitem_abstract_positional(array):
     assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, message="key has several values for axis: age"):
+    with pytest.raises(ValueError, match="key has several values for axis: age"):
         array[X.age.i[2, 3], X.age.i[1, 5]]
 
 
@@ -2319,7 +2319,7 @@ def test_sum_with_groups_from_other_axis(small_array):
     # use a group (from another axis) which is incompatible with the axis of
     # the same name in the array
     lipro4 = Axis('lipro=P01,P03,P16')
-    with pytest.raises(ValueError, message=r"lipro\['P01', 'P16'\] is not a valid label for any axis"):
+    with pytest.raises(ValueError, match=r"lipro\['P01', 'P16'\] is not a valid label for any axis"):
         small_array.sum(lipro4['P01,P16'])
 
 
@@ -3237,8 +3237,8 @@ def test_read_excel_xlwings():
     #  invalid keyword argument  #
     ##############################
 
-    with pytest.raises(TypeError, message="'dtype' is an invalid keyword argument for this function "
-                                          "when using the xlwings backend"):
+    with pytest.raises(TypeError, match="'dtype' is an invalid keyword argument for this function "
+                                        "when using the xlwings backend"):
         read_excel(inputpath('test.xlsx'), engine='xlwings', dtype=float)
 
     #################
@@ -4064,7 +4064,7 @@ def test_to_excel_xlwings(tmpdir):
     # sheet name of 31 characters (= maximum authorized length)
     a3.to_excel(fpath, "sheetname_of_exactly_31_chars__", engine='xlwings')
     # sheet name longer than 31 characters
-    with pytest.raises(ValueError, message="Sheet names cannot exceed 31 characters"):
+    with pytest.raises(ValueError, match="Sheet names cannot exceed 31 characters"):
         a3.to_excel(fpath, "sheetname_longer_than_31_characters", engine='xlwings')
 
 
