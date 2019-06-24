@@ -19,6 +19,9 @@ from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_
                               renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi, Product)
 
 
+np_frompyfunc = np.frompyfunc
+
+
 class Axis(ABCAxis):
     """
     Represents an axis. It consists of a name and a list of labels.
@@ -1105,7 +1108,7 @@ class Axis(ABCAxis):
         >>> sex.apply(str.capitalize)
         Axis(['Male', 'Female'], 'sex')
         """
-        return Axis(map(func, self.labels), self.name)
+        return Axis(np_frompyfunc(func, 1, 1)(self.labels), self.name)
 
     # XXX: rename to named like Group?
     def rename(self, name):
