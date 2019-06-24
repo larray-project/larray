@@ -403,7 +403,7 @@ def test_h5_io(tmpdir):
     lipro2 = read_hdf(fpath, key=lipro.name)
     assert lipro.equals(lipro2)
     # anonymous axis
-    with pytest.raises(ValueError, message="Argument key must be provided explicitly in case of anonymous axis"):
+    with pytest.raises(ValueError, match="Argument key must be provided explicitly in case of anonymous axis"):
         anonymous.to_hdf(fpath)
     # wildcard axis
     wildcard.to_hdf(fpath)
