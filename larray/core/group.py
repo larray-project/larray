@@ -840,7 +840,7 @@ class Group(object):
             axis_name = self.axis.name if isinstance(self.axis, ABCAxisReference) else self.axis
             if axis_name != target_axis.name:
                 raise ValueError('cannot retarget a Group defined without a real axis object (e.g. using '
-                                 'an AxisReference (x.)) to an axis with a different name')
+                                 'an AxisReference (X.)) to an axis with a different name')
             return self.__class__(self.key, self.name, target_axis)
         elif isinstance(self.axis, int) or self.axis.equals(target_axis):
             # in the case of isinstance(self.axis, int), we can only hope the axis corresponds. This is the
