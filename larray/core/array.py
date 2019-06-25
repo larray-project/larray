@@ -1960,7 +1960,7 @@ class LArray(ABCLArray):
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
 
-    def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
+    def _translate_axis_key_chunk(self, axis_key):
         """
         Translates axis(es) key into axis(es) position(s).
 
@@ -1968,8 +1968,6 @@ class LArray(ABCLArray):
         ----------
         axis_key : any kind of key
             Key to select axis(es).
-        bool_passthrough : bool, optional
-            True by default.
 
         Returns
         -------
@@ -2002,7 +2000,7 @@ class LArray(ABCLArray):
             try:
                 real_axis = self.axes[axis_key.axis]
                 try:
-                    axis_pos_key = real_axis.index(axis_key, bool_passthrough)
+                    axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
                     raise ValueError("%r is not a valid label for any axis" % axis_key)
                 return real_axis.i[axis_pos_key]
@@ -2021,7 +2019,7 @@ class LArray(ABCLArray):
         # TODO: use axis_key dtype to only check compatible axes
         for axis in self.axes:
             try:
-                axis_pos_key = axis.index(axis_key, bool_passthrough)
+                axis_pos_key = axis.index(axis_key)
                 valid_axes.append(axis)
             except KeyError:
                 continue
@@ -2035,7 +2033,7 @@ class LArray(ABCLArray):
             raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
         return valid_axes[0].i[axis_pos_key]
 
-    def _translate_axis_key(self, axis_key, bool_passthrough=True):
+    def _translate_axis_key(self, axis_key):
         """Same as chunk.
 
         Returns
@@ -2067,7 +2065,7 @@ class LArray(ABCLArray):
                 # TODO: do not recheck already checked elements
                 key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
                 try:
-                    tkey = self._translate_axis_key_chunk(key_chunk, bool_passthrough)
+                    tkey = self._translate_axis_key_chunk(key_chunk)
                     axis = tkey.axis
                     break
                 except ValueError:
@@ -2081,9 +2079,9 @@ class LArray(ABCLArray):
                 # wrap key in LGroup
                 axis_key = axis[axis_key]
                 # XXX: reuse tkey chunks and only translate the rest?
-            return self._translate_axis_key_chunk(axis_key, bool_passthrough)
+            return self._translate_axis_key_chunk(axis_key)
         else:
-            return self._translate_axis_key_chunk(axis_key, bool_passthrough)
+            return self._translate_axis_key_chunk(axis_key)
 
     def _guess_axis(self, axis_key):
         if isinstance(axis_key, Group):

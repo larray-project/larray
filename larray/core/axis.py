@@ -810,7 +810,7 @@ class Axis(ABCAxis):
         # object kind can match anything
         return key_kind == label_kind or key_kind == 'O' or label_kind == 'O' or py2_str_match
 
-    def index(self, key, bool_passthrough=True):
+    def index(self, key):
         """
         Translates a label key to its numerical index counterpart.
 
@@ -818,8 +818,6 @@ class Axis(ABCAxis):
         ----------
         key : key
             Everything usable as a key.
-        bool_passthrough : bool, optional
-            If set to True and key is a boolean vector, it is returned as it.
 
         Returns
         -------
@@ -890,7 +888,7 @@ class Axis(ABCAxis):
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
         # XXX: bool LArray do not pass through???
-        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b' and bool_passthrough:
+        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
             return key
         elif isinstance(key, (tuple, list, OrderedSet)):
             # TODO: the result should be cached
@@ -2391,21 +2389,19 @@ class AxisCollection(object):
         # -1 in to_remove are not a problem since enumerate starts at 0
         return AxisCollection([axis for i, axis in enumerate(self) if i not in to_remove])
 
-    def _translate_axis_key_chunk(self, axis_key, bool_passthrough=True):
+    def _translate_axis_key_chunk(self, axis_key):
         """
-        Translates axis(es) key into axis(es) position(s).
+        Translates *single axis* label-based key to an IGroup
 
         Parameters
         ----------
         axis_key : any kind of key
-            Key to select axis(es).
-        bool_passthrough : bool, optional
-            True by default.
+            Key to select axis.
 
         Returns
         -------
         IGroup
-            Positional group with valid axes (from self)
+            Indices group with a valid axis (from self)
         """
         axis_key = remove_nested_groups(axis_key)
 
@@ -2433,7 +2429,7 @@ class AxisCollection(object):
             try:
                 real_axis = self[axis_key.axis]
                 try:
-                    axis_pos_key = real_axis.index(axis_key, bool_passthrough)
+                    axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
                     raise ValueError("%r is not a valid label for any axis" % axis_key)
                 return real_axis.i[axis_pos_key]
@@ -2444,15 +2440,13 @@ class AxisCollection(object):
                 axis_key = axis_key.to_label()
 
         # otherwise we need to guess the axis
-        # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or LArray):
-        # label -> (axis, index)
-        # but for Pandas, this wouldn't work, we'd need label -> axis
+        # TODO: instead of checking all axes, we should have a big mapping (in AxisCollection):
+        #       label -> (axis, index) but for sparse/multi-index, this would not work, we'd need label -> axis
         valid_axes = []
         # TODO: use axis_key dtype to only check compatible axes
         for axis in self:
             try:
-                axis_pos_key = axis.index(axis_key, bool_passthrough)
+                axis_pos_key = axis.index(axis_key)
                 valid_axes.append(axis)
             except KeyError:
                 continue
@@ -2466,14 +2460,22 @@ class AxisCollection(object):
             raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
         return valid_axes[0].i[axis_pos_key]
 
-    def _translate_axis_key(self, axis_key, bool_passthrough=True):
-        """Same as chunk.
+    def _translate_axis_key(self, axis_key):
+        """
+        Translates single axis label-based key to IGroup
+
+        Parameters
+        ----------
+        axis_key : any valid key
+            Key to select axis.
 
         Returns
         -------
         IGroup
-            Indices group with valid axes (from self)
+            Indices group with a valid axis (from self)
         """
+        # called from _key_to_igroups
+
         from .array import LArray
 
         # Need to convert string keys to groups otherwise command like
@@ -2485,11 +2487,12 @@ class AxisCollection(object):
                 axis_key = key
 
         if isinstance(axis_key, ExprNode):
+            # FIXME: it is still possible to get here if we use a dict key in getitem !
             raise Exception('yada')
             axis_key = axis_key.evaluate(self)
 
         # XXX: this is probably not necessary anymore
-        if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_) and bool_passthrough:
+        if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
             raise Exception('yada')
             if len(axis_key.axes) > 1:
                 raise ValueError("mixing ND boolean filters with other filters in getitem is not currently supported")
@@ -2517,7 +2520,7 @@ class AxisCollection(object):
                 # TODO: do not recheck already checked elements
                 key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
                 try:
-                    tkey = self._translate_axis_key_chunk(key_chunk, bool_passthrough)
+                    tkey = self._translate_axis_key_chunk(key_chunk)
                     axis = tkey.axis
                     break
                 # TODO: we should only continue when ValueError is caused by an ambiguous key, otherwise we only delay
@@ -2533,9 +2536,9 @@ class AxisCollection(object):
                 # wrap key in LGroup
                 axis_key = axis[axis_key]
                 # XXX: reuse tkey chunks and only translate the rest?
-            return self._translate_axis_key_chunk(axis_key, bool_passthrough)
+            return self._translate_axis_key_chunk(axis_key)
         else:
-            return self._translate_axis_key_chunk(axis_key, bool_passthrough)
+            return self._translate_axis_key_chunk(axis_key)
 
     def _key_to_igroups(self, key):
         """
@@ -2593,7 +2596,6 @@ class AxisCollection(object):
 
             # translate all keys to IGroup
             return tuple(self._translate_axis_key(axis_key) for axis_key in key)
-
         else:
             assert isinstance(key, dict)
 
