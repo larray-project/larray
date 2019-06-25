@@ -596,7 +596,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
             * its index (integer). Index can be a negative integer, in which case it counts from the last to the
               first axis.
             * its name (str or AxisReference). You can use either a simple string ('axis_name') or the special
-              variable x (x.axis_name).
+              variable X (X.axis_name).
             * a variable (Axis). If the axis has been defined previously and assigned to a variable, you can pass it as
               argument.
 
@@ -606,7 +606,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
             * (['a1', 'a3', 'a5'], 'b1, b3, b5') : labels separated by commas in a list or a string
             * ('a1:a5:2') : select labels using a slice (general syntax is 'start:end:step' where is 'step' is
               optional and 1 by default).
-            * (a='a1, a2, a3', x.b['b1, b2, b3']) : in case of possible ambiguity, i.e. if labels can belong to more
+            * (a='a1, a2, a3', X.b['b1, b2, b3']) : in case of possible ambiguity, i.e. if labels can belong to more
               than one axis, you must precise the axis.
             * ('a1:a3; a5:a7', b='b0,b2; b1,b3') : create several groups with semicolons.
               Names are simply given by the concatenation of labels (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
@@ -2939,10 +2939,10 @@ class LArray(ABCLArray):
         return res
 
     # TODO: make sure we can do
-    # arr[x.sex.i[arr.indexofmin(x.sex)]] <- fails
+    # arr[X.sex.i[arr.indexofmin(X.sex)]] <- fails
     # and
-    # arr[arr.labelofmin(x.sex)] <- fails
-    # should both be equal to arr.min(x.sex)
+    # arr[arr.labelofmin(X.sex)] <- fails
+    # should both be equal to arr.min(X.sex)
     # the versions where axis is None already work as expected in the simple
     # case (no ambiguous labels):
     # arr.i[arr.indexofmin()]
@@ -3651,13 +3651,13 @@ class LArray(ABCLArray):
         # # >>> a.sum(age[[0, 1]], age[2]) / a.sum(age)
         # >>> a.sum(([0, 1], 2)) / a.sum(age)
         # # >>> a / a.sum(([0, 1], 2))
-        # >>> a.sum(x.sex)
-        # >>> a.sum(x.age)
-        # >>> a.sum(x.sex) / a.sum(x.age)
+        # >>> a.sum(X.sex)
+        # >>> a.sum(X.age)
+        # >>> a.sum(X.sex) / a.sum(X.age)
         # >>> a.ratio('F')
         # could mean
         # >>> a.sum('F') / a.sum(a.get_axis('F'))
-        # >>> a.sum('F') / a.sum(x.sex)
+        # >>> a.sum('F') / a.sum(X.sex)
         # age    0    1               2
         #      1.0  0.6  0.555555555556
         # OR (current meaning)
@@ -3667,36 +3667,36 @@ class LArray(ABCLArray):
         #       1  0.666666666667  1.0
         #       2             0.8  1.0
         # One solution is to add an argument
-        # >>> a.ratio(what='F', by=x.sex)
+        # >>> a.ratio(what='F', by=X.sex)
         # age    0    1               2
         #      1.0  0.6  0.555555555556
-        # >>> a.sum('F') / a.sum(x.sex)
+        # >>> a.sum('F') / a.sum(X.sex)
 
         # >>> a.sum((age[[0, 1]], age[[1, 2]])) / a.sum(age)
         # >>> a.ratio((age[[0, 1]], age[[1, 2]]), by=age)
 
-        # >>> a.sum((x.age[[0, 1]], x.age[[1, 2]])) / a.sum(x.age)
-        # >>> a.ratio((x.age[[0, 1]], x.age[[1, 2]], by=x.age)
+        # >>> a.sum((X.age[[0, 1]], X.age[[1, 2]])) / a.sum(X.age)
+        # >>> a.ratio((X.age[[0, 1]], X.age[[1, 2]], by=X.age)
 
-        # >>> lalala.sum(([0, 1], [1, 2])) / lalala.sum(x.age)
-        # >>> lalala.ratio(([0, 1], [1, 2]), by=x.age)
+        # >>> lalala.sum(([0, 1], [1, 2])) / lalala.sum(X.age)
+        # >>> lalala.ratio(([0, 1], [1, 2]), by=X.age)
 
         # >>> b = a.sum((age[[0, 1]], age[[1, 2]]))
         # >>> b
         # age\sex  M  F
         #   [0 1]  2  4
         #   [1 2]  6  8
-        # >>> b / b.sum(x.age)
+        # >>> b / b.sum(X.age)
         # age\\sex     M               F
         #   [0 1]  0.25  0.333333333333
         #   [1 2]  0.75  0.666666666667
-        # >>> b / a.sum(x.age)
+        # >>> b / a.sum(X.age)
         # age\\sex               M               F
         #   [0 1]  0.333333333333  0.444444444444
         #   [1 2]             1.0  0.888888888889
         # # >>> a.ratio([0, 1], [2])
-        # # >>> a.ratio(x.age[[0, 1]], x.age[2])
-        # >>> a.ratio((x.age[[0, 1]], x.age[2]))
+        # # >>> a.ratio(X.age[[0, 1]], X.age[2])
+        # >>> a.ratio((X.age[[0, 1]], X.age[2]))
         # nat\\sex             M    F
         #      BE           0.0  1.0
         #      FO  0.6666666666  1.0
@@ -7373,7 +7373,7 @@ class LArray(ABCLArray):
             return self[axis.i[(seq - n) % len(axis)]]
 
     # TODO: add support for groups as axis (like aggregates)
-    # eg a.diff(x.year[2018:]) instead of a[2018:].diff(x.year)
+    # eg a.diff(X.year[2018:]) instead of a[2018:].diff(X.year)
     def diff(self, axis=-1, d=1, n=1, label='upper'):
         """Calculates the n-th order discrete difference along a given axis.
 

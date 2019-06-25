@@ -2073,7 +2073,7 @@ def test_group_agg_on_bool_array():
     assert_array_equal(b.sum('b1:'), expected)
 
 
-# TODO: fix this (and add other tests for references (x.) to anonymous axes
+# TODO: fix this (and add other tests for references (X.) to anonymous axes
 # def test_group_agg_anonymous_axis_ref():
 #     la = ndtest([Axis(2), Axis(3)])
 #     raw = np.asarray(la)
