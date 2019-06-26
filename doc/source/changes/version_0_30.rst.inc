@@ -1,4 +1,4 @@
-.. py:currentmodule:: larray
+﻿.. py:currentmodule:: larray
 
 
 Syntax changes
@@ -128,6 +128,10 @@ New features
 
 * implemented :py:obj:`LArray.unique()` method to compute unique values (or sub-arrays) for an array,
   optionally along axes.
+
+* implemented :py:obj:`LArray.apply()` method to apply a python function to all values of an array or to all sub-arrays
+  along some axes of an array and return the result. This is an extremely versatile method as it can be used both with
+  aggregating functions or element-wise functions.
 
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 
