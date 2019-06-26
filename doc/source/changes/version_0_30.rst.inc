@@ -78,6 +78,8 @@ New features
 
 * implemented :py:obj:`AxisCollection.rename()` to rename axes of an AxisCollection, independently of any array.
 
+* implemented :py:obj:`AxisCollection.set_labels()` (closes :issue:`782`).
+
 * implemented :py:obj:`wrap_elementwise_array_func()` function to make a function defined in another library work with
   LArray arguments instead of with numpy arrays.
 

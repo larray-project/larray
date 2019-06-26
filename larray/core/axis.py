@@ -2324,6 +2324,163 @@ class AxisCollection(object):
         else:
             return AxisCollection(axes)
 
+    def _guess_axis(self, axis_key):
+        if isinstance(axis_key, Group):
+            group_axis = axis_key.axis
+            if group_axis is not None:
+                # we have axis information but not necessarily an Axis object from self.axes
+                real_axis = self[group_axis]
+                if group_axis is not real_axis:
+                    axis_key = axis_key.with_axis(real_axis)
+                return axis_key
+
+        # TODO: instead of checking all axes, we should have a big mapping
+        # (in AxisCollection or LArray):
+        # label -> (axis, index)
+        # or possibly (for ambiguous labels)
+        # label -> {axis: index}
+        # but for Pandas, this wouldn't work, we'd need label -> axis
+        valid_axes = []
+        for axis in self:
+            try:
+                axis.index(axis_key)
+                valid_axes.append(axis)
+            except KeyError:
+                continue
+        if not valid_axes:
+            raise ValueError("%s is not a valid label for any axis" % axis_key)
+        elif len(valid_axes) > 1:
+            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
+                                   for a in valid_axes)
+            raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
+        return valid_axes[0][axis_key]
+
+    def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
+        r"""Replaces the labels of one or several axes.
+
+        Parameters
+        ----------
+        axis : string or Axis or dict
+            Axis for which we want to replace labels, or mapping {axis: changes} where changes can either be the
+            complete list of labels, a mapping {old_label: new_label} or a function to transform labels.
+            If there is no ambiguity (two or more axes have the same labels), `axis` can be a direct mapping
+            {old_label: new_label}.
+        labels : int, str, iterable or mapping or function, optional
+            Integer or list of values usable as the collection of labels for an Axis. If this is mapping, it must be
+            {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
+            label) and returning a single value. This argument must not be used if axis is a mapping.
+        inplace : bool, optional
+            Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
+            Defaults to False.
+        **kwargs :
+            `axis`=`labels` for each axis you want to set labels.
+
+        Returns
+        -------
+        AxisCollection
+            AxisCollection with modified labels.
+
+        Examples
+        --------
+        >>> from larray import ndtest
+        >>> axes = AxisCollection('nat=BE,FO;sex=M,F')
+        >>> axes
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['M', 'F'], 'sex')
+        ])
+        >>> axes.set_labels('sex', ['Men', 'Women'])
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['Men', 'Women'], 'sex')
+        ])
+
+        when passing a single string as labels, it will be interpreted to create the list of labels, so that one can
+        use the same syntax than during axis creation.
+
+        >>> axes.set_labels('sex', 'Men,Women')
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['Men', 'Women'], 'sex')
+        ])
+
+        to replace only some labels, one must give a mapping giving the new label for each label to replace
+
+        >>> axes.set_labels('sex', {'M': 'Men'})
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['Men', 'F'], 'sex')
+        ])
+
+        to transform labels by a function, use any function accepting and returning a single argument:
+
+        >>> axes.set_labels('nat', str.lower)
+        AxisCollection([
+            Axis(['be', 'fo'], 'nat'),
+            Axis(['M', 'F'], 'sex')
+        ])
+
+        to replace labels for several axes at the same time, one should give a mapping giving the new labels for each
+        changed axis
+
+        >>> axes.set_labels({'sex': 'Men,Women', 'nat': 'Belgian,Foreigner'})
+        AxisCollection([
+            Axis(['Belgian', 'Foreigner'], 'nat'),
+            Axis(['Men', 'Women'], 'sex')
+        ])
+
+        or use keyword arguments
+
+        >>> axes.set_labels(sex='Men,Women', nat='Belgian,Foreigner')
+        AxisCollection([
+            Axis(['Belgian', 'Foreigner'], 'nat'),
+            Axis(['Men', 'Women'], 'sex')
+        ])
+
+        one can also replace some labels in several axes by giving a mapping of mappings
+
+        >>> axes.set_labels({'sex': {'M': 'Men'}, 'nat': {'BE': 'Belgian'}})
+        AxisCollection([
+            Axis(['Belgian', 'FO'], 'nat'),
+            Axis(['Men', 'F'], 'sex')
+        ])
+
+        when there is no ambiguity (two or more axes have the same labels), it is possible to give a mapping
+        between old and new labels
+
+        >>> axes.set_labels({'M': 'Men', 'BE': 'Belgian'})
+        AxisCollection([
+            Axis(['Belgian', 'FO'], 'nat'),
+            Axis(['Men', 'F'], 'sex')
+        ])
+        """
+        if axis is None:
+            changes = {}
+        elif isinstance(axis, dict):
+            changes = axis
+        elif isinstance(axis, (basestring, Axis, int)):
+            changes = {axis: labels}
+        else:
+            raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
+        changes.update(kwargs)
+        # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
+        # new_axes = [self[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
+        new_axes = []
+        for old_axis, axis_changes in changes.items():
+            try:
+                real_axis = self[old_axis]
+            except KeyError:
+                axis_changes = {old_axis: axis_changes}
+                real_axis = self._guess_axis(old_axis).axis
+            if isinstance(axis_changes, dict):
+                new_axis = real_axis.replace(axis_changes)
+            elif callable(axis_changes):
+                new_axis = real_axis.apply(axis_changes)
+            else:
+                new_axis = Axis(axis_changes, real_axis.name)
+            new_axes.append((real_axis, new_axis))
+        return self.replace(new_axes, inplace=inplace)
+
     # TODO: deprecate method (should use __sub__ instead)
     def without(self, axes):
         """

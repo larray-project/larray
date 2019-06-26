@@ -2082,37 +2082,6 @@ class LArray(ABCLArray):
         else:
             return self._translate_axis_key_chunk(axis_key)
 
-    def _guess_axis(self, axis_key):
-        if isinstance(axis_key, Group):
-            group_axis = axis_key.axis
-            if group_axis is not None:
-                # we have axis information but not necessarily an Axis object from self.axes
-                real_axis = self.axes[group_axis]
-                if group_axis is not real_axis:
-                    axis_key = axis_key.with_axis(real_axis)
-                return axis_key
-
-        # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or LArray):
-        # label -> (axis, index)
-        # or possibly (for ambiguous labels)
-        # label -> {axis: index}
-        # but for Pandas, this wouldn't work, we'd need label -> axis
-        valid_axes = []
-        for axis in self.axes:
-            try:
-                axis.index(axis_key)
-                valid_axes.append(axis)
-            except KeyError:
-                continue
-        if not valid_axes:
-            raise ValueError("%s is not a valid label for any axis" % axis_key)
-        elif len(valid_axes) > 1:
-            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
-                                   for a in valid_axes)
-            raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
-        return valid_axes[0][axis_key]
-
     def __getitem__(self, key, collapse_slices=False, translate_key=True):
         data = self.data
         # FIXME: I have a huge problem with boolean axis labels + non points
@@ -2788,13 +2757,13 @@ class LArray(ABCLArray):
                 # new axis, and igroups are not the same that LGroups in this regard (I wonder if ideally it shouldn't
                 # be the same???)
                 # groups = tuple(self._translate_axis_key(k) for k in key)
-                groups = tuple(self._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
+                groups = tuple(self.axes._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
                 axis = groups[0].axis
                 if not all(g.axis.equals(axis) for g in groups[1:]):
                     raise ValueError("group with different axes: %s" % str(key))
                 return groups
             if isinstance(key, (Group, int, basestring, list, slice)):
-                return self._guess_axis(key)
+                return self.axes._guess_axis(key)
             else:
                 raise NotImplementedError("%s has invalid type (%s) for a group aggregate key"
                                           % (key, type(key).__name__))
@@ -7146,7 +7115,7 @@ class LArray(ABCLArray):
 
     # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
-        r"""Replaces the labels of an axis of array.
+        r"""Replaces the labels of one or several axes of the array.
 
         Parameters
         ----------
@@ -7169,6 +7138,10 @@ class LArray(ABCLArray):
         -------
         LArray
             Array with modified labels.
+
+        See Also
+        --------
+        AxisCollection.set_labels
 
         Examples
         --------
@@ -7234,33 +7207,7 @@ class LArray(ABCLArray):
         Belgian    0  1
              FO    2  3
         """
-        if axis is None:
-            changes = {}
-        elif isinstance(axis, dict):
-            changes = axis
-        elif isinstance(axis, (basestring, Axis, int)):
-            changes = {axis: labels}
-        else:
-            raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
-        changes.update(kwargs)
-        # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
-        # new_axes = [self.axes[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
-        new_axes = []
-        for old_axis, axis_changes in changes.items():
-            try:
-                real_axis = self.axes[old_axis]
-            except KeyError:
-                axis_changes = {old_axis: axis_changes}
-                real_axis = self._guess_axis(old_axis).axis
-            if isinstance(axis_changes, dict):
-                new_axis = real_axis.replace(axis_changes)
-            elif callable(axis_changes):
-                new_axis = real_axis.apply(axis_changes)
-            else:
-                new_axis = Axis(axis_changes, real_axis.name)
-            new_axes.append((real_axis, new_axis))
-        axes = self.axes.replace(new_axes)
-
+        axes = self.axes.set_labels(axis, labels, **kwargs)
         if inplace:
             self.axes = axes
             return self
