@@ -2370,7 +2370,7 @@ class AxisCollection(object):
             {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
             label) and returning a single value. This argument must not be used if axis is a mapping.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new array and leave the original intact.
+            Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
             Defaults to False.
         **kwargs :
             `axis`=`labels` for each axis you want to set labels.
@@ -2383,7 +2383,7 @@ class AxisCollection(object):
         Examples
         --------
         >>> from larray import ndtest
-        >>> axes = ndtest('nat=BE,FO;sex=M,F').axes
+        >>> axes = AxisCollection('nat=BE,FO;sex=M,F')
         >>> axes
         AxisCollection([
             Axis(['BE', 'FO'], 'nat'),
@@ -2479,13 +2479,7 @@ class AxisCollection(object):
             else:
                 new_axis = Axis(axis_changes, real_axis.name)
             new_axes.append((real_axis, new_axis))
-        axes = self.replace(new_axes)
-
-        if inplace:
-            self[:] = axes
-            return self
-        else:
-            return axes
+        return self.replace(new_axes, inplace=inplace)
 
     # TODO: deprecate method (should use __sub__ instead)
     def without(self, axes):
