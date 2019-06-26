@@ -110,19 +110,6 @@ New features
 * added :py:obj:`LArray.isin()` method to check whether each element of an array is contained in a list (or array) of
   values.
 
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-    >>> arr.isin([1, 5, 7])
-    a\b     b0     b1     b2
-     a0  False   True  False
-     a1  False  False   True
-    >>> arr[arr.isin([1, 5, 7])]
-    a_b  a0_b1  a1_b2
-             1      5
-
 * implemented :py:obj:`LArray.keys()`, :py:obj:`LArray.values()` and :py:obj:`LArray.items()`
   methods to respectively loop on an array labels, values or (key, value) pairs.
 
@@ -160,38 +147,8 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* implemented a simpler pattern language in :py:obj:`Axis.matching()` and :py:obj:`Group.matching()`. In addition to
-  regular expressions (which now require using the ``regexp`` argument), the two methods support the following simpler
-  patterns:
-
-    * `?`     matches any single character
-    * `*`     matches any number of characters
-    * [seq]   matches any character in seq
-    * [!seq]  matches any character not in seq
-
-  For example, assuming the following axis:
-
-    >>> people = Axis(['Bruce Wayne', 'Bruce Willis', 'Waldo', 'Arthur Dent', 'Harvey Dent'], 'people')
-
-  All labels starting with "A" and ending with "t" are given by:
-
-    >>> people.matching(pattern='A*t')
-    people['Arthur Dent']
-
-  All labels containing "W" and ending with "s":
-
-    >>> people.matching(pattern='*W*s')
-    people['Bruce Willis']
-
-  All labels with exactly 5 characters:
-
-    >>> people.matching(pattern='?????')
-    people['Waldo']
-
-  All labels starting with either "A" or "B":
-
-    >>> people.matching(pattern='[AB]*')
-    people['Bruce Wayne', 'Bruce Willis', 'Arthur Dent']
+* implemented the same "simpler pattern language" in :py:obj:`Axis.matching()` and :py:obj:`Group.matching()` than in
+  :py:obj:`Session.filter()`, in addition to regular expressions (which now require using the ``regexp`` argument).
 
 * :py:obj:`LArray.set_labels()` can now take functions to transform axes labels (closes :issue:`536`).
 
@@ -284,49 +241,7 @@ Miscellaneous improvements
 
 * added :py:obj:`set_options` allowing to set options for larray within a ``with`` block or globally:
 
-    >>> from larray import *
-    >>> arr = ndtest((500, 100), dtype=float) + 0.123456
-
-    You can use ``set_options`` either as a context manager:
-
-    >>> # display_width defines the maximum display width when printing an array
-    >>> # display_edgeitems defines the number of lines of the header and tail to display
-    >>> with set_options(display_width=100, display_edgeitems=2):
-    ...     print(arr)
-     a\b            b0            b1            b2  ...           b97           b98           b99
-      a0      0.123456      1.123456      2.123456  ...     97.123456     98.123456     99.123456
-      a1    100.123456    101.123456    102.123456  ...    197.123456    198.123456    199.123456
-     ...           ...           ...           ...  ...           ...           ...           ...
-    a498  49800.123456  49801.123456  49802.123456  ...  49897.123456  49898.123456  49899.123456
-    a499  49900.123456  49901.123456  49902.123456  ...  49997.123456  49998.123456  49999.123456
-
-    Or to set global options:
-
-    >>> # display_maxlines defines the maximum number of lines to show
-    >>> # display_precision defines the number of digits of precision for floating point output
-    >>> set_options(display_maxlines=10, display_precision=2)
-    >>> print(arr)
-     a\b        b0        b1        b2  ...       b97       b98       b99
-      a0      0.12      1.12      2.12  ...     97.12     98.12     99.12
-      a1    100.12    101.12    102.12  ...    197.12    198.12    199.12
-      a2    200.12    201.12    202.12  ...    297.12    298.12    299.12
-      a3    300.12    301.12    302.12  ...    397.12    398.12    399.12
-      a4    400.12    401.12    402.12  ...    497.12    498.12    499.12
-     ...       ...       ...       ...  ...       ...       ...       ...
-    a495  49500.12  49501.12  49502.12  ...  49597.12  49598.12  49599.12
-    a496  49600.12  49601.12  49602.12  ...  49697.12  49698.12  49699.12
-    a497  49700.12  49701.12  49702.12  ...  49797.12  49798.12  49799.12
-    a498  49800.12  49801.12  49802.12  ...  49897.12  49898.12  49899.12
-    a499  49900.12  49901.12  49902.12  ...  49997.12  49998.12  49999.12
-
-    To put back the default options, you can use:
-
-    >>> set_options(display_precision=None, display_width=80, display_maxlines=200, display_edgeitems=5)
-
   The :py:obj:`get_options` function returns a view of the current options as a dictionary:
-
-    >>> get_options()
-    {'display_precision': None, 'display_width': 80, 'display_maxlines': 200, 'display_edgeitems': 5}
 
   Closes :issue:`274`.
 
