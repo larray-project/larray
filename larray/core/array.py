@@ -1434,10 +1434,9 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        axes_to_reindex : axis ref or str or Group or Axis or dict {axis ref: axis} or \
-                          list of tuple (axis ref, axis) or list of Axis or AxisCollection
+        axes_to_reindex : axis ref or dict {axis ref: axis} or list of (axis ref, axis) or sequence of Axis
             Axis(es) to reindex. If a single axis reference is given, the `new_axis` argument must be provided.
-            If string or Group or Axis object, the corresponding axis is reindexed if found among existing,
+            If string, Group or Axis object, the corresponding axis is reindexed if found among existing,
             otherwise a new axis is added.
             If a list of Axis or an AxisCollection is given, existing axes are reindexed while missing ones are added.
         new_axis : int, str, list/tuple/array of str, Group or Axis, optional
@@ -2856,7 +2855,7 @@ class LArray(ABCLArray):
             `median` and `percentile`. Defaults to `sum`.
         label : scalar value, optional
             Label to use for the total. Applies only to aggregated axes, not groups. Defaults to "total".
-        **kwargs : int or str or Group or any combination of those, optional
+        \**kwargs : int or str or Group or any combination of those, optional
             Axes or groups along which to compute the aggregates.
 
         Returns
@@ -2876,7 +2875,7 @@ class LArray(ABCLArray):
                   F     4     5     6     7     22
               total     4     6     8    10     28
 
-       Using another function and label
+        Using another function and label
 
         >>> arr.with_total(op=mean, label='mean')
         gender\time  2013  2014  2015  2016  mean
