@@ -2486,19 +2486,6 @@ class AxisCollection(object):
             if isinstance(key, Group):
                 axis_key = key
 
-        if isinstance(axis_key, ExprNode):
-            # FIXME: it is still possible to get here if we use a dict key in getitem !
-            raise Exception('yada')
-            axis_key = axis_key.evaluate(self)
-
-        # XXX: this is probably not necessary anymore
-        if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
-            raise Exception('yada')
-            if len(axis_key.axes) > 1:
-                raise ValueError("mixing ND boolean filters with other filters in getitem is not currently supported")
-            else:
-                return IGroup(axis_key.nonzero()[0], axis=axis_key.axes[0])
-
         # translate Axis keys to LGroup keys
         # FIXME: this should be simply:
         # if isinstance(axis_key, Axis):
@@ -2561,47 +2548,44 @@ class AxisCollection(object):
         """
         from .array import LArray
 
-        # convert scalar keys to 1D keys
-        if not isinstance(key, (tuple, dict)):
+        if isinstance(key, dict):
+            # key axes could be strings or axis references and we want real axes
+            key = tuple(self[axis][axis_key] for axis, axis_key in key.items())
+        elif not isinstance(key, tuple):
+            # convert scalar keys to 1D keys
             key = (key,)
 
-        # always the case except if key is a dict
-        if isinstance(key, tuple):
-            key = tuple(axis_key.evaluate(self) if isinstance(axis_key, ExprNode) else axis_key
-                        for axis_key in key)
+        # handle ExprNode
+        key = tuple(axis_key.evaluate(self) if isinstance(axis_key, ExprNode) else axis_key
+                    for axis_key in key)
 
-            nonboolkey = []
-            for axis_key in key:
-                if isinstance(axis_key, np.ndarray) and np.issubdtype(axis_key.dtype, np.bool_):
-                    if axis_key.shape != self.shape:
-                        raise ValueError("boolean key with a different shape ({}) than array ({})"
-                                         .format(axis_key.shape, self.shape))
-                    axis_key = LArray(axis_key, self)
+        nonboolkey = []
+        for axis_key in key:
+            if isinstance(axis_key, np.ndarray) and np.issubdtype(axis_key.dtype, np.bool_):
+                if axis_key.shape != self.shape:
+                    raise ValueError("boolean key with a different shape ({}) than array ({})"
+                                     .format(axis_key.shape, self.shape))
+                axis_key = LArray(axis_key, self)
 
-                if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
-                    extra_key_axes = axis_key.axes - self
-                    if extra_key_axes:
-                        raise ValueError("subset key contains more axes ({}) than array ({})"
-                                         .format(axis_key.axes, self))
-                    nonboolkey.extend(axis_key.nonzero())
-                else:
-                    nonboolkey.append(axis_key)
-            key = tuple(nonboolkey)
+            if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
+                extra_key_axes = axis_key.axes - self
+                if extra_key_axes:
+                    raise ValueError("subset key contains more axes ({}) than array ({})"
+                                     .format(axis_key.axes, self))
+                # nonzero (currently) returns a tuple of IGroups containing 1D LArrays (one IGroup per axis)
+                nonboolkey.extend(axis_key.nonzero())
+            else:
+                nonboolkey.append(axis_key)
+        key = tuple(nonboolkey)
 
-            # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
-            # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
-            #      a single slice(None) a[:], I don't think there is any point.
-            key = [axis_key for axis_key in key
-                   if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
+        # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
+        # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
+        #      a single slice(None) a[:], I don't think there is any point.
+        key = [axis_key for axis_key in key
+               if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
-            # translate all keys to IGroup
-            return tuple(self._translate_axis_key(axis_key) for axis_key in key)
-        else:
-            assert isinstance(key, dict)
-
-            # key axes could be strings or axis references and we want real axes
-            return tuple(self._translate_axis_key(self[axis][axis_key])
-                         for axis, axis_key in key.items())
+        # translate all keys to IGroup
+        return tuple(self._translate_axis_key(axis_key) for axis_key in key)
 
     def _translated_key(self, key):
         """
