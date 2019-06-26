@@ -319,6 +319,7 @@ Modifying/Selecting
    LArray.drop
    LArray.ignore_labels
    LArray.filter
+   LArray.apply
 
 .. _la_axes_labels:
 

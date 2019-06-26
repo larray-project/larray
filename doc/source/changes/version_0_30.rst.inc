@@ -1,4 +1,4 @@
-.. py:currentmodule:: larray
+﻿.. py:currentmodule:: larray
 
 
 Syntax changes
@@ -128,6 +128,76 @@ New features
 
 * implemented :py:obj:`LArray.unique()` method to compute unique values (or sub-arrays) for an array,
   optionally along axes.
+
+* implemented :py:obj:`LArray.apply()` method to apply a python function to all values of an array or to all sub-arrays
+  along some axes of an array and return the result. This is an extremely versatile method as it can be used both with
+  aggregating functions or element-wise functions.
+
+  First let us define a test array
+
+    >>> arr = LArray([[0, 2, 1],
+    ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   2   1
+     a1   3   1   5
+
+  Here is a simple function we would like to apply to each element of the array. Note that this particular example
+  should rather be written as: arr ** 2 as it is both more concise and much faster.
+
+    >>> def square(x):
+    ...     return x ** 2
+    >>> arr.apply(square)
+    a\b  b0  b1  b2
+     a0   0   4   1
+     a1   9   1  25
+
+  Functions can also be applied along some axes:
+
+    >>> # this is equivalent to (but much slower than): arr.sum_by('a')
+    ... arr.apply(sum, by='a')
+    a  a0  a1
+        3   9
+
+  Applying the function along some axes will return an array with the
+  union of those axes and the axes of the returned values. For example,
+  let us define a function which returns the k highest values of an array.
+
+    >>> def topk(a, k=2):
+    ...     return a.sort_values(ascending=False).ignore_labels().i[:k]
+    >>> arr.apply(topk, by='a')
+    a\b*  0  1
+      a0  2  1
+      a1  5  3
+
+  Extra positional arguments given to apply are passed to the function:
+
+    >>> arr.apply(topk, 3, by='a')
+    a\b*  0  1  2
+      a0  2  1  0
+      a1  5  3  1
+
+  as well as (unknown) keyword arguments:
+
+    >>> arr.apply(topk, by='a', k=3)
+    a\b*  0  1  2
+      a0  2  1  0
+      a1  5  3  1
+
+  If the function returns several values (as a tuple), the result will be a tuple of arrays. For example,
+  let use define a function which decompose an array in its mean and the difference to that mean :
+
+    >>> def mean_decompose(a):
+    ...     mean = a.mean()
+    ...     return mean, a - mean
+    >>> mean_by_a, diff_to_mean = arr.apply(mean_decompose, by='a')
+    >>> mean_by_a
+    a   a0   a1
+       1.0  3.0
+    >>> diff_to_mean
+    a\b    b0    b1   b2
+     a0  -1.0   1.0  0.0
+     a1   0.0  -2.0  2.0
 
 * implemented :py:obj:`Axis.apply()` method to transform an axis labels by a function and return a new Axis.
 
