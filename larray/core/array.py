@@ -7819,6 +7819,165 @@ class LArray(ABCLArray):
         reversed_axes = tuple(axis[::-1] for axis in axes)
         return self[reversed_axes]
 
+    # TODO: add excluded argument (to pass to vectorize but we must also compute res_axes / broadcasted arguments
+    #       accordingly and handle it when axes is not None)
+    #     excluded : set, optional
+    #         Set of strings or integers representing the positional or keyword arguments for which the function
+    #         will not be vectorized. These will be passed directly to the `transform` function unmodified.
+    def apply(self, transform, *args, **kwargs):
+        r"""
+        Apply a transformation function to array elements.
+
+        Parameters
+        ----------
+        transform : function
+            Function to apply. This function will be called in turn with each element of the array as the first
+            argument and must return an LArray, scalar or tuple.
+            If returning arrays the axes of those arrays must be the same for all calls to the function.
+        *args
+            Extra arguments to pass to the function.
+        by : str, int or Axis or tuple/list/AxisCollection of the them, optional
+            Axis or axes along which to iterate. The function will thus be called with arrays having all axes not
+            mentioned. Defaults to None (all axes). Mutually exclusive with the `axes` argument.
+        axes : str, int or Axis or tuple/list/AxisCollection of the them, optional
+            Axis or axes the arrays passed to the function will have. Defaults to None (the function is given
+            scalars). Mutually exclusive with the `by` argument.
+        dtype : type or list of types, optional
+            Output(s) data type(s). Defaults to None (inspect all output values to infer it automatically).
+        ascending : bool, optional
+            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        **kwargs
+            Extra keyword arguments are passed to the function (as keyword arguments).
+
+        Returns
+        -------
+        LArray or scalar, or tuple of them
+            Axes will be the union of those in axis and those of values returned by the function.
+
+        Examples
+        --------
+        First let us define a test array
+
+        >>> arr = LArray([[0, 2, 1],
+        ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+        >>> arr
+        a\b  b0  b1  b2
+         a0   0   2   1
+         a1   3   1   5
+
+        Here is a simple function we would like to apply to each element of the array.
+        Note that this particular example should rather be written as: arr ** 2
+        as it is both more concise and much faster.
+
+        >>> def square(x):
+        ...     return x ** 2
+        >>> arr.apply(square)
+        a\b  b0  b1  b2
+         a0   0   4   1
+         a1   9   1  25
+
+        Functions can also be applied along some axes:
+
+        >>> # this is equivalent to (but much slower than): arr.sum('a')
+        ... arr.apply(sum, axes='a')
+        b  b0  b1  b2
+            3   3   6
+        >>> # this is equivalent to (but much slower than): arr.sum_by('a')
+        ... arr.apply(sum, by='a')
+        a  a0  a1
+            3   9
+
+        Applying the function along some axes will return an array with the
+        union of those axes and the axes of the returned values. For example,
+        let us define a function which returns the k highest values of an array.
+
+        >>> def topk(a, k=2):
+        ...     return a.sort_values(ascending=False).ignore_labels().i[:k]
+        >>> arr.apply(topk, by='a')
+        a\b*  0  1
+          a0  2  1
+          a1  5  3
+
+        Other arguments can be passed to the function:
+
+        >>> arr.apply(topk, 3, by='a')
+        a\b*  0  1  2
+          a0  2  1  0
+          a1  5  3  1
+
+        or by using keyword arguments:
+
+        >>> arr.apply(topk, by='a', k=3)
+        a\b*  0  1  2
+          a0  2  1  0
+          a1  5  3  1
+
+        If the function returns several values (as a tuple), the result will be a tuple of arrays. For example,
+        let use define a function which decompose an array in its mean and the difference to that mean :
+
+        >>> def mean_decompose(a):
+        ...     mean = a.mean()
+        ...     return mean, a - mean
+        >>> mean_by_a, diff_to_mean = arr.apply(mean_decompose, by='a')
+        >>> mean_by_a
+        a   a0   a1
+           1.0  3.0
+        >>> diff_to_mean
+        a\b    b0    b1   b2
+         a0  -1.0   1.0  0.0
+         a1   0.0  -2.0  2.0
+        """
+        # keyword only arguments
+        by = kwargs.pop('by', None)
+        axes = kwargs.pop('axes', None)
+        dtype = kwargs.pop('dtype', None)
+        ascending = kwargs.pop('ascending', True)
+        # excluded = kwargs.pop('excluded', None)
+
+        if axes is not None:
+            if by is not None:
+                raise ValueError("cannot specify both `by` and `axes` arguments in LArray.apply")
+            by = self.axes - axes
+
+        # XXX: we could go one step further than vectorize and support a array of callables which would be broadcasted
+        #      with the other arguments. I don't know whether that would actually help because I think it always
+        #      possible to emulate that with a single callable with an extra argument (eg type) which dispatches to
+        #      potentially different callables. It might be more practical & efficient though.
+        if by is None:
+            otypes = [dtype] if isinstance(dtype, type) else dtype
+            vfunc = np.vectorize(transform, otypes=otypes)
+            # XXX: we should probably handle excluded here
+            # raw_bcast_args, raw_bcast_kwargs, res_axes = make_args_broadcastable((self,) + args, kwargs)
+            raw_bcast_args, raw_bcast_kwargs, res_axes = ((self,) + args, kwargs, self.axes)
+            res_data = vfunc(*raw_bcast_args, **raw_bcast_kwargs)
+            if isinstance(res_data, tuple):
+                return tuple(LArray(res_arr, res_axes) for res_arr in res_data)
+            else:
+                return LArray(res_data, res_axes)
+        else:
+            by = self.axes[by]
+
+            values = (self,) + args + tuple(kwargs.values())
+            first_kw = 1 + len(args)
+            kwnames = tuple(kwargs.keys())
+            key_values = [(k, transform(*a_and_kwa[:first_kw], **dict(zip(kwnames, a_and_kwa[first_kw:]))))
+                          for k, a_and_kwa in zip_array_items(values, by, ascending)]
+            first_key, first_value = key_values[0]
+            if isinstance(first_value, tuple):
+                # assume all other values are the same shape
+                tuple_length = len(first_value)
+                # TODO: compute res_axes (potentially different for each return value) in this case too
+                res_arrays = [stack([(key, value[i]) for key, value in key_values], axes=by, dtype=dtype)
+                              for i in range(tuple_length)]
+                # transpose back axis where it was
+                return tuple(res_arr.transpose(self.axes & res_arr.axes) for res_arr in res_arrays)
+            else:
+                res_axes = get_axes(first_value).union(by)
+                res_arr = stack(key_values, axes=by, dtype=dtype, res_axes=res_axes)
+
+                # transpose back axis where it was
+                return res_arr.transpose(self.axes & res_arr.axes)
+
 
 def larray_equal(a1, a2):
     import warnings
