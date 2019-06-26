@@ -309,6 +309,8 @@ Miscellaneous improvements
   the overall performance improvement is negligible over most of the real-world models using larray that we tested these
   changes on.
 
+* implemented :py:obj:`AxisCollection.set_labels()` (closes :issue:`782`).
+
 
 Fixes
 ^^^^^
