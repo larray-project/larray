@@ -4,7 +4,7 @@
 Version 0.30
 ============
 
-In development.
+Released on 2019-06-27.
 
 .. include:: ./changes/version_0_30.rst.inc
 
