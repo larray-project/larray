@@ -127,7 +127,7 @@ Miscellaneous improvements
 * implemented the same "simpler pattern language" in :py:obj:`Axis.matching()` and :py:obj:`Group.matching()` than in
   :py:obj:`Session.filter()`, in addition to regular expressions (which now require using the ``regexp`` argument).
 
-* py:obj:`stack()` can now stack along several axes at once (closes :issue:`56`).
+* :py:obj:`stack()` can now stack along several axes at once (closes :issue:`56`).
 
     >>> country = Axis('country=BE,FR,DE')
     >>> gender = Axis('gender=M,F')
@@ -143,11 +143,11 @@ Miscellaneous improvements
                 FR  2  3
                 DE  4  5
 
-* py:obj:`stack()` using a dictionary as elements can now use a simple axis name instead of requiring a full axis
+* :py:obj:`stack()` using a dictionary as elements can now use a simple axis name instead of requiring a full axis
   object. This will print a warning on Python < 3.7 though because the ordering of labels is not guaranteed in
   that case. Closes :issue:`755` and :issue:`581`.
 
-* py:obj:`stack()` using keyword arguments can now use a simple axis name instead of requiring a full axis
+* :py:obj:`stack()` using keyword arguments can now use a simple axis name instead of requiring a full axis
   object, even on Python < 3.6. This will print a warning though because the ordering of labels is not guaranteed in
   that case.
 
