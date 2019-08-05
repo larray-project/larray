@@ -1463,14 +1463,14 @@ class Group(object):
                 raise ValueError("Argument axis_key must be provided explicitly if the associated axis is anonymous")
             axis_key = self.axis.name
         data = self.eval()
-        kind = data.dtype.kind if isinstance(data, np.ndarray) else ''
-        if kind == 'U':
+        dtype_kind = data.dtype.kind if isinstance(data, np.ndarray) else ''
+        if dtype_kind == 'U':
             data = np.char.encode(data, 'utf-8')
         s = pd.Series(data=data, name=self.name)
         with LHDFStore(filepath) as store:
             store.put(key, s)
             store.get_storer(key).attrs.type = 'Group'
-            store.get_storer(key).attrs.kind = kind
+            store.get_storer(key).attrs.dtype_kind = dtype_kind
             if axis_key not in store:
                 self.axis.to_hdf(store, key=axis_key)
             store.get_storer(key).attrs.axis_key = axis_key

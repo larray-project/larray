@@ -89,7 +89,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
             if name == 'None':
                 name = None
             labels = pd_obj.values
-            if 'kind' in attrs and attrs['kind'] == 'U':
+            if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
                 labels = np.char.decode(labels, 'utf-8')
             res = Axis(labels=labels, name=name)
             res._iswildcard = attrs['wildcard']
@@ -99,7 +99,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
             if name == 'None':
                 name = None
             key = pd_obj.values
-            if 'kind' in attrs and attrs['kind'] == 'U':
+            if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
                 key = np.char.decode(key, 'utf-8')
             axis = read_hdf(filepath_or_buffer, attrs['axis_key'])
             res = LGroup(key=key, name=name, axis=axis)

@@ -1349,13 +1349,13 @@ class Axis(ABCAxis):
                 raise ValueError("Argument key must be provided explicitly in case of anonymous axis")
             key = self.name
         key = _translate_group_key_hdf(key)
-        kind = self.labels.dtype.kind
-        data = np.char.encode(self.labels, 'utf-8') if kind == 'U' else self.labels
+        dtype_kind = self.labels.dtype.kind
+        data = np.char.encode(self.labels, 'utf-8') if dtype_kind == 'U' else self.labels
         s = pd.Series(data=data, name=self.name)
         with LHDFStore(filepath) as store:
             store.put(key, s)
             store.get_storer(key).attrs.type = 'Axis'
-            store.get_storer(key).attrs.kind = kind
+            store.get_storer(key).attrs.dtype_kind = dtype_kind
             store.get_storer(key).attrs.wildcard = self.iswildcard
 
     @property
