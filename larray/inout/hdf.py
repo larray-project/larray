@@ -88,15 +88,21 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 name = str(pd_obj.name)
             if name == 'None':
                 name = None
-            res = Axis(labels=pd_obj.values, name=name)
+            labels = pd_obj.values
+            if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
+                labels = np.char.decode(labels, 'utf-8')
+            res = Axis(labels=labels, name=name)
             res._iswildcard = attrs['wildcard']
         elif _type == 'Group':
             if name is None:
                 name = str(pd_obj.name)
             if name == 'None':
                 name = None
+            key = pd_obj.values
+            if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
+                key = np.char.decode(key, 'utf-8')
             axis = read_hdf(filepath_or_buffer, attrs['axis_key'])
-            res = LGroup(key=pd_obj.values, name=name, axis=axis)
+            res = LGroup(key=key, name=name, axis=axis)
     return res
 
 

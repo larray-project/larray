@@ -1,4 +1,6 @@
+# -*- coding: utf8 -*-
 from __future__ import absolute_import, division, print_function
+
 import pytest
 import os.path
 import numpy as np
@@ -391,6 +393,7 @@ def test_h5_io(tmpdir):
     lipro = Axis('lipro=P01..P05')
     anonymous = Axis(range(3))
     wildcard = Axis(3, 'wildcard')
+    string_axis = Axis(['@!àéè&%µ$~', '/*-+_§()><', 'another label'], 'string_axis')
     fpath = os.path.join(str(tmpdir), 'axes.h5')
 
     # ---- default behavior ----
@@ -410,6 +413,10 @@ def test_h5_io(tmpdir):
     wildcard2 = read_hdf(fpath, key=wildcard.name)
     assert wildcard2.iswildcard
     assert wildcard.equals(wildcard2)
+    # string axis
+    string_axis.to_hdf(fpath)
+    string_axis2 = read_hdf(fpath, string_axis.name)
+    assert string_axis.equals(string_axis2)
 
     # ---- specific key ----
     # int axis
