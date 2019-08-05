@@ -192,6 +192,7 @@ def test_h5_io_lgroup(tmpdir):
     named_axis_not_in_file = lipro['P01,P03,P05'] >> 'P_odd'
     anonymous = age[':5']
     wildcard = age_wildcard[':5'] >> 'age_w_05'
+    string_group = Axis(['@!àéè&%µ$~', '/*-+_§()><', 'another label'], 'string_axis')[:] >> 'string_group'
 
     # ---- default behavior ----
     # named group
@@ -209,6 +210,10 @@ def test_h5_io_lgroup(tmpdir):
     named_axis_not_in_file.to_hdf(fpath)
     named2 = read_hdf(fpath, key=named_axis_not_in_file.name)
     assert all(named_axis_not_in_file == named2)
+    # string group
+    string_group.to_hdf(fpath)
+    string_group2 = read_hdf(fpath, key=string_group.name)
+    assert all(string_group == string_group2)
 
     # ---- specific hdf group + key ----
     hdf_group = 'my_groups'
