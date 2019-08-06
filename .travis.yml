@@ -1,20 +1,13 @@
 # References
 # - https://gist.github.com/dan-blanchard/7045057
 # - https://github.com/numba/numba/blob/master/.travis.yml
+dist: xenial         # required for Python >= 3.7
 language: python
 
 python:
     - "2.7"
-    - "3.5"
     - "3.6"
-
-# Work-around to enable python 3.7 without globally enabling sudo and dist: xenial for other build jobs
-# see https://github.com/travis-ci/travis-ci/issues/9815
-matrix:
-  include:
-    - python: 3.7
-      dist: xenial
-      sudo: true
+    - "3.7"
 
 branches:
     only:
@@ -44,12 +37,10 @@ install:
     # - pandas will bring dateutil numpy pytz setuptools six and scipy, we
     #   might want to avoid the later by installing all dependencies manually
     #   except scipy and install pandas with --no-deps
-    # - fixed versions of numpy and pytables because of incompatibilities
-    #   between pytables <= 3.4 and numpy >= 1.16
     # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
     #   (issue 702 : fixed bug when writing metadata using HDF format)
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
-            "numpy==1.15.2" "pandas>=0.20" "pytables==3.4.4" matplotlib xlrd openpyxl
+            "numpy>=1.13" "pandas>=0.20" pytables matplotlib xlrd openpyxl
             xlsxwriter pytest pytest-pep8
     - source activate travisci
 
