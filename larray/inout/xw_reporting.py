@@ -151,7 +151,7 @@ class AbstractReportItem(object):
 
         See Also
         --------
-        SheetReport.newline
+        ReportSheet.newline
         """
         return self._graphs_per_row
 
