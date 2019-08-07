@@ -30,7 +30,7 @@ from larray.inout.hdf import read_hdf
 from larray.inout.sas import read_sas
 from larray.inout.stata import read_stata
 from larray.inout.xw_excel import open_excel, Workbook
-from larray.inout.xw_reporting import ExcelReport
+from larray.inout.xw_reporting import ExcelReport, ReportSheet
 
 # just make sure handlers for .pkl and .pickle are initialized
 import larray.inout.pickle as _pkl
@@ -77,7 +77,7 @@ __all__ = [
     # inout
     'from_lists', 'from_string', 'from_frame', 'from_series', 'read_csv', 'read_tsv',
     'read_eurostat', 'read_excel', 'read_hdf', 'read_sas', 'read_stata',
-    'open_excel', 'Workbook', 'ExcelReport',
+    'open_excel', 'Workbook', 'ExcelReport', 'ReportSheet',
     # utils
     'get_options', 'set_options',
     # viewer
