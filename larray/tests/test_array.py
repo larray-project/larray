@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import re
 import sys
 
 import pytest
@@ -29,6 +30,7 @@ from larray.core.metadata import Metadata
 # ================== #
 # Test Value Strings #
 # ================== #
+
 
 def test_value_string_split():
     assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
@@ -721,7 +723,7 @@ def test_getitem_abstract_positional(array):
         array[X.age.i[2, 3], X.age.i[1, 5]]
 
 
-def test_getitem_bool_larray_key():
+def test_getitem_bool_larray_key_arr_whout_bool_axis():
     arr = ndtest((3, 2, 4))
     raw = arr.data
 
@@ -732,8 +734,8 @@ def test_getitem_bool_larray_key():
     assert_array_equal(res, raw[raw < 5])
 
     # missing dimension
-    filt = arr['b1'] % 5 == 0
-    res = arr[filt]
+    filter_ = arr['b1'] % 5 == 0
+    res = arr[filter_]
     assert isinstance(res, LArray)
     assert res.ndim == 2
     assert res.shape == (3, 2)
@@ -750,6 +752,26 @@ def test_getitem_bool_larray_key():
     # using an AxisReference (ExprNode)
     res = arr[X.b < 2]
     assert_array_equal(res, raw[:, :2])
+
+
+def test_getitem_bool_larray_key_arr_wh_bool_axis():
+    gender = Axis([False, True], 'gender')
+    arr = LArray([0.1, 0.2], gender)
+    id_axis = Axis('id=0..3')
+    key = LArray([True, False, True, True], id_axis)
+    expected = LArray([0.2, 0.1, 0.2, 0.2], id_axis)
+
+    # LGroup using the real axis
+    assert_larray_equal(arr[gender[key]], expected)
+
+    # LGroup using an AxisReference
+    assert_larray_equal(arr[X.gender[key]], expected)
+
+    # this test checks that the current behavior does not change unintentionally...
+    # ... but I am unsure the current behavior is what we actually want
+    msg = re.escape("boolean subset key contains more axes ({id}) than array ({gender})")
+    with pytest.raises(ValueError, match=msg):
+        arr[key]
 
 
 def test_getitem_bool_larray_and_group_key():
@@ -769,12 +791,32 @@ def test_getitem_bool_larray_and_group_key():
     assert_array_equal(res, expected)
 
 
-def test_getitem_bool_ndarray_key(array):
+def test_getitem_bool_ndarray_key_arr_whout_bool_axis(array):
     raw = array.data
     res = array[raw < 5]
     assert isinstance(res, LArray)
     assert res.ndim == 1
     assert_array_equal(res, raw[raw < 5])
+
+
+def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
+    gender = Axis([False, True], 'gender')
+    arr = LArray([0.1, 0.2], gender)
+    key = np.array([True, False, True, True])
+    expected = arr.i[[1, 0, 1, 1]]
+
+    # LGroup using the real axis
+    assert_larray_equal(arr[gender[key]], expected)
+
+    # LGroup using an AxisReference
+    assert_larray_equal(arr[X.gender[key]], expected)
+
+    # raw key => ???
+    # this test checks that the current behavior does not change unintentionally...
+    # ... but I am unsure the current behavior is what we actually want
+    msg = re.escape("boolean key with a different shape ((4,)) than array ((2,))")
+    with pytest.raises(ValueError, match=msg):
+        arr[key]
 
 
 def test_getitem_bool_anonymous_axes():
