@@ -309,27 +309,42 @@ def concat(arrays, axis=0, dtype=None):
     return result
 
 
-class LArrayIterator(object):
-    __slots__ = ('nextfunc', 'axes')
+if PY2:
+    class LArrayIterator(object):
+        __slots__ = ('next',)
 
-    def __init__(self, array):
-        data_iter = iter(array.data)
-        self.nextfunc = data_iter.next if PY2 else data_iter.__next__
-        self.axes = array.axes[1:]
+        def __init__(self, array):
+            data_iter = iter(array.data)
+            next_data_func = data_iter.next
+            res_axes = array.axes[1:]
+            # this case should not happen (handled by the fastpath in LArray.__iter__)
+            assert len(res_axes) > 0
 
-    def __iter__(self):
-        return self
+            def next_func():
+                return LArray(next_data_func(), res_axes)
 
-    def __next__(self):
-        data = self.nextfunc()
-        axes = self.axes
-        if len(axes):
-            return LArray(data, axes)
-        else:
-            return data
+            self.next = next_func
 
-    # Python 2
-    next = __next__
+        def __iter__(self):
+            return self
+else:
+    class LArrayIterator(object):
+        __slots__ = ('__next__',)
+
+        def __init__(self, array):
+            data_iter = iter(array.data)
+            next_data_func = data_iter.__next__
+            res_axes = array.axes[1:]
+            # this case should not happen (handled by the fastpath in LArray.__iter__)
+            assert len(res_axes) > 0
+
+            def next_func():
+                return LArray(next_data_func(), res_axes)
+
+            self.__next__ = next_func
+
+        def __iter__(self):
+            return self
 
 
 # TODO: rename to LArrayIndexIndexer or something like that
@@ -355,13 +370,40 @@ class LArrayPositionalIndexer(object):
                      for axis_key, axis in zip(key, self.array.axes))
 
     def __getitem__(self, key):
-        return self.array[self._translate_key(key)]
+        ndim = self.array.ndim
+        full_scalar_key = (
+            (isinstance(key, (int, np.integer)) and ndim == 1) or
+            (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
+        )
+        # fast path when the result is a scalar
+        if full_scalar_key:
+            return self.array.data[key]
+        else:
+            return self.array[self._translate_key(key)]
 
     def __setitem__(self, key, value):
-        self.array[self._translate_key(key)] = value
+        array = self.array
+        ndim = array.ndim
+        full_scalar_key = (
+            (isinstance(key, (int, np.integer)) and ndim == 1) or
+            (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
+        )
+        # fast path when setting a single cell
+        if full_scalar_key:
+            array.data[key] = value
+        else:
+            array[self._translate_key(key)] = value
 
     def __len__(self):
         return len(self.array)
+
+    def __iter__(self):
+        array = self.array
+        # fast path for 1D arrays (where we return scalars)
+        if array.ndim <= 1:
+            return iter(array.data)
+        else:
+            return LArrayIterator(array)
 
 
 class LArrayPointsIndexer(object):
@@ -2696,6 +2738,7 @@ class LArray(ABCLArray):
                 arr = np.asarray(arr)
                 op(arr, axis=axis_idx, out=out, **kwargs)
                 del arr
+
             if killaxis:
                 assert group_idx[axis_idx] == 0
                 res_data = res_data[idx]

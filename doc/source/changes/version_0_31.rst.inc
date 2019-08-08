@@ -27,7 +27,7 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* improved the performance of a few LArray methods.
 
 
 Fixes
