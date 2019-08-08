@@ -1028,4 +1028,4 @@ def _positive_integer(value):
 
 def _validate_dir(directory):
     if not os.path.isdir(directory):
-        raise ValueError("The directory {} could not been found".format(directory))
+        raise ValueError("The directory {} could not be found".format(directory))
