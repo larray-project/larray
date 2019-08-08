@@ -7910,8 +7910,8 @@ class LArray(ABCLArray):
             if isinstance(first_value, tuple):
                 # assume all other values are the same shape
                 tuple_length = len(first_value)
-                # TODO: compute res_axes (potentially different for each return value) in this case too
-                res_arrays = [stack([(key, value[i]) for key, value in key_values], axes=by, dtype=dtype)
+                res_arrays = [stack([(key, value[i]) for key, value in key_values], axes=by, dtype=dtype,
+                                    res_axes=get_axes(first_value[i]).union(by))
                               for i in range(tuple_length)]
                 # transpose back axis where it was
                 return tuple(res_arr.transpose(self.axes & res_arr.axes) for res_arr in res_arrays)
