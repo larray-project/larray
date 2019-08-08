@@ -887,9 +887,6 @@ class Axis(ABCAxis):
             # stop is inclusive in the input key and exclusive in the output !
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
-        # XXX: bool LArray do not pass through???
-        elif isinstance(key, np.ndarray) and key.dtype.kind is 'b':
-            return key
         elif isinstance(key, (tuple, list, OrderedSet)):
             # TODO: the result should be cached
             # Note that this is faster than array_lookup(np.array(key), mapping)
@@ -2730,7 +2727,7 @@ class AxisCollection(object):
             if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
                 extra_key_axes = axis_key.axes - self
                 if extra_key_axes:
-                    raise ValueError("subset key contains more axes ({}) than array ({})"
+                    raise ValueError("boolean subset key contains more axes ({}) than array ({})"
                                      .format(axis_key.axes, self))
                 # nonzero (currently) returns a tuple of IGroups containing 1D LArrays (one IGroup per axis)
                 nonboolkey.extend(axis_key.nonzero())
