@@ -278,8 +278,8 @@ def test_excel_report_setting_template():
     # test setting template dir
     # 1) wrong template dir
     wrong_template_dir = r"C:\Wrong\Directory\Path"
-    msg = "Template directory {} could not been found".format(wrong_template_dir)
-    with pytest.raises(ValueError, message=msg):
+    msg = "The directory {} could not be found".format(wrong_template_dir)
+    with pytest.raises(ValueError, match=re.escape(msg)):
         excel_report.template_dir = wrong_template_dir
     # 2) correct path
     excel_report.template_dir = EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -288,8 +288,8 @@ def test_excel_report_setting_template():
     # test setting template file
     # 1) wrong extension
     template_file = 'wrong_extension.txt'
-    msg = "Extension for the template file must be '.crtx' instead of .txt"
-    with pytest.raises(ValueError, message=msg):
+    msg = "Extension for the excel template file must be '.crtx' instead of .txt"
+    with pytest.raises(ValueError, match=re.escape(msg)):
         excel_report.template = template_file
     # 2) add .crtx extension if no extension
     template_name = 'Line'
@@ -365,11 +365,11 @@ def test_excel_report_arrays():
 
     # test setting default size
     # 1) pass a not registered kind of item
-    type_item = 'unknown_item'
-    msg = "Type item {} is not registered. Please choose in " \
-          "list ['title', 'graph']".format(type_item)
-    with pytest.raises(ValueError, message=msg):
-        sheet_graphs.set_item_default_size(type_item, width, height)
+    item_type = 'unknown_item'
+    msg = "Item type {} is not registered. Please choose in " \
+          "list ['title', 'graph']".format(item_type)
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        sheet_graphs.set_item_default_size(item_type, width, height)
     # 2) update default size for graphs
     sheet_graphs.set_item_default_size('graph', width, height)
     sheet_graphs.add_title('Using Defined Sizes For All Graphs')
