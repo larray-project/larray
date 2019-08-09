@@ -6,7 +6,8 @@ import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal, assert_nparray_equal
-from larray import Axis, LGroup, IGroup, read_hdf
+from larray import Axis, LGroup, IGroup, read_hdf, X
+from larray.core.axis import AxisReference
 
 
 def test_init():
@@ -98,7 +99,7 @@ def test_translate():
 
 def test_getitem_lgroup_keys():
     def group_equal(g1, g2):
-        return (g1.key == g2.key and g1.name == g2.name and g1.axis is g2.axis)
+        return g1.key == g2.key and g1.name == g2.name and g1.axis is g2.axis
 
     age = Axis(range(100), 'age')
     ages = [1, 5, 9]
@@ -119,93 +120,125 @@ def test_getitem_lgroup_keys():
 def test_getitem_group_keys():
     a = Axis('a=a0..a2')
     alt_a = Axis('a=a1..a3')
+
     key = a['a1']
+
     g = a[key]
     assert g.key == 'a1'
     assert g.axis is a
+
     g = alt_a[key]
     assert g.key == 'a1'
     assert g.axis is alt_a
+
     key = a['a1':'a2']
+
     g = a[key]
     assert g.key == slice('a1', 'a2')
     assert g.axis is a
+
     g = alt_a[key]
     assert g.key == slice('a1', 'a2')
     assert g.axis is alt_a
+
     key = a[['a1', 'a2']]
+
     g = a[key]
     assert g.key == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert g.key == ['a1', 'a2']
     assert g.axis is alt_a
+
     key = a.i[1]
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == 'a1'
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == 'a1'
     assert g.axis is alt_a
+
     key = a.i[1:3]
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is alt_a
+
     key = a.i[[1, 2]]
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert list(g.key) == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert list(g.key) == ['a1', 'a2']
     assert g.axis is alt_a
+
     lg_a1 = a['a1']
     lg_a2 = a['a2']
+
     g = a[lg_a1:lg_a2]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is a
+
     g = alt_a[lg_a1:lg_a2]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is alt_a
+
     pg_a1 = a.i[1]
     pg_a2 = a.i[2]
+
     g = a[pg_a1:pg_a2]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is a
+
     g = alt_a[pg_a1:pg_a2]
     assert isinstance(g, LGroup)
     assert g.key == slice('a1', 'a2')
     assert g.axis is alt_a
+
     key = [a['a1'], a['a2']]
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is alt_a
+
     key = [a.i[1], a.i[2]]
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is alt_a
+
     key = [a['a1', 'a2'], a['a2', 'a1']]
+
     g = a[key]
     assert isinstance(g, list)
     assert isinstance(g[0], LGroup)
@@ -214,6 +247,7 @@ def test_getitem_group_keys():
     assert g[1].key == ['a2', 'a1']
     assert g[0].axis is a
     assert g[1].axis is a
+
     g = alt_a[key]
     assert isinstance(g, list)
     assert isinstance(g[0], LGroup)
@@ -222,7 +256,9 @@ def test_getitem_group_keys():
     assert g[1].key == ['a2', 'a1']
     assert g[0].axis is alt_a
     assert g[1].axis is alt_a
+
     key = (a.i[1, 2], a.i[2, 1])
+
     g = a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -231,6 +267,7 @@ def test_getitem_group_keys():
     assert list(g[1].key) == ['a2', 'a1']
     assert g[0].axis is a
     assert g[1].axis is a
+
     g = alt_a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -239,25 +276,33 @@ def test_getitem_group_keys():
     assert list(g[1].key) == ['a2', 'a1']
     assert g[0].axis is alt_a
     assert g[1].axis is alt_a
+
     key = (a['a1'], a['a2'])
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is alt_a
+
     key = (a.i[1], a.i[2])
+
     g = a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is a
+
     g = alt_a[key]
     assert isinstance(g, LGroup)
     assert g.key == ['a1', 'a2']
     assert g.axis is alt_a
+
     key = (a['a1', 'a2'], a['a2', 'a1'])
+
     g = a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -266,6 +311,7 @@ def test_getitem_group_keys():
     assert g[1].key == ['a2', 'a1']
     assert g[0].axis is a
     assert g[1].axis is a
+
     g = alt_a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -274,7 +320,9 @@ def test_getitem_group_keys():
     assert g[1].key == ['a2', 'a1']
     assert g[0].axis is alt_a
     assert g[1].axis is alt_a
+
     key = (a.i[1, 2], a.i[2, 1])
+
     g = a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -283,6 +331,7 @@ def test_getitem_group_keys():
     assert list(g[1].key) == ['a2', 'a1']
     assert g[0].axis is a
     assert g[1].axis is a
+
     g = alt_a[key]
     assert isinstance(g, tuple)
     assert isinstance(g[0], LGroup)
@@ -291,6 +340,55 @@ def test_getitem_group_keys():
     assert list(g[1].key) == ['a2', 'a1']
     assert g[0].axis is alt_a
     assert g[1].axis is alt_a
+
+
+def test_axis_ref_getitem_group_keys():
+    # test that we can retarget a key to another axis using an axis ref
+
+    # a) when the name of the axis is different
+    axis1 = Axis('axis1=a0..a2')
+
+    g = X.axis2[axis1['a1']]
+    assert isinstance(g.key, str) and g.key == 'a1'
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis2'
+
+    g = X.axis2[axis1['a1'], axis1['a2']]
+    assert isinstance(g.key, list) and g.key == ['a1', 'a2']
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis2'
+
+    g = X.axis2[[axis1['a1'], axis1['a2']]]
+    assert isinstance(g.key, list) and g.key == ['a1', 'a2']
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis2'
+
+    g = X.axis2[axis1['a1':'a2']]
+    assert isinstance(g.key, slice) and g.key == slice('a1', 'a2')
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis2'
+
+    # b) when the name of the axis is the same (i.e. when the retarget is useless)
+    #    this is what issue #787 was all about
+    g = X.axis1[axis1['a1']]
+    assert isinstance(g.key, str) and g.key == 'a1'
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis1'
+
+    g = X.axis1[axis1['a1'], axis1['a2']]
+    assert isinstance(g.key, list) and g.key == ['a1', 'a2']
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis1'
+
+    g = X.axis1[[axis1['a1'], axis1['a2']]]
+    assert isinstance(g.key, list) and g.key == ['a1', 'a2']
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis1'
+
+    g = X.axis1[axis1['a1':'a2']]
+    assert isinstance(g.key, slice) and g.key == slice('a1', 'a2')
+    assert isinstance(g.axis, AxisReference)
+    assert g.axis.name == 'axis1'
 
 
 def test_init_from_group():
