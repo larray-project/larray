@@ -325,10 +325,34 @@ class ArrayIterator(object):
 
 
 # TODO: rename to ArrayIndexIndexer or something like that
+# TODO: the first slice in the example below should be documented
 class ArrayPositionalIndexer(object):
-    """
-    equivalent to numpy indexing when indexing along a single axis *but* indexes the cross product of multiple axes
-    instead of points
+    r"""
+    Allows selection of a subset using indices of labels.
+
+    Notes
+    -----
+    Using .i[] is equivalent to numpy indexing when indexing along a single axis. However, when indexing along multiple
+    axes this indexes the cross product instead of points.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3, 4))
+    >>> arr
+     a  b\c  c0  c1  c2  c3
+    a0   b0   0   1   2   3
+    a0   b1   4   5   6   7
+    a0   b2   8   9  10  11
+    a1   b0  12  13  14  15
+    a1   b1  16  17  18  19
+    a1   b2  20  21  22  23
+
+    >>> arr.i[:, 0:2, [0, 2]]
+     a  b\c  c0  c2
+    a0   b0   0   2
+    a0   b1   4   6
+    a1   b0  12  14
+    a1   b1  16  18
     """
     __slots__ = ('array',)
 
@@ -386,6 +410,38 @@ class ArrayPositionalIndexer(object):
 
 
 class ArrayPointsIndexer(object):
+    r"""
+    Allows selection of arbitrary items in the array based on their N-dimensional label index.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3, 4))
+    >>> arr
+     a  b\c  c0  c1  c2  c3
+    a0   b0   0   1   2   3
+    a0   b1   4   5   6   7
+    a0   b2   8   9  10  11
+    a1   b0  12  13  14  15
+    a1   b1  16  17  18  19
+    a1   b2  20  21  22  23
+
+    To select the two points with label coordinates
+    [a0, b0, c0] and [a1, b2, c2], you must do:
+
+    >>> arr.points[['a0', 'a1'], ['b0', 'b2'], ['c0', 'c2']]
+    a_b_c  a0_b0_c0  a1_b2_c2
+                  0        22
+    >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
+    a_b_c  a0_b0_c0  a1_b2_c2
+                  0        22
+
+    The number of label(s) on each dimension must be equal:
+
+    >>> arr.points['a0,a1', 'b0,b2', 'c0,c1,c2']  # doctest: +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        ...
+    ValueError: all combined keys should have the same length
+    """
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -489,11 +545,41 @@ class ArrayFlatIndicesIndexer(object):
 
 
 # TODO: rename to ArrayIndexPointsIndexer or something like that
+# TODO: show that we need to use a "full slice" for leaving the dimension alone
+# TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
+# (except at the end)
 class ArrayPositionalPointsIndexer(object):
+    r"""
+    Allows selection of arbitrary items in the array based on their N-dimensional index.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3, 4))
+    >>> arr
+     a  b\c  c0  c1  c2  c3
+    a0   b0   0   1   2   3
+    a0   b1   4   5   6   7
+    a0   b2   8   9  10  11
+    a1   b0  12  13  14  15
+    a1   b1  16  17  18  19
+    a1   b2  20  21  22  23
+
+    To select the two points with index coordinates
+    [0, 0, 0] and [1, 2, 2], you must do:
+
+    >>> arr.ipoints[[0,1], [0,2], [0,2]]
+    a_b_c  a0_b0_c0  a1_b2_c2
+                  0        22
+
+    The number of index(es) on each dimension must be equal:
+
+    >>> arr.ipoints[[0,1], [0,2], [0,1,2]]  # doctest: +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        ...
+    ValueError: all combined keys should have the same length
+    """
     __slots__ = ('array',)
-    """
-    the closest to numpy indexing we get, but not 100% the same.
-    """
+
     def __init__(self, array):
         self.array = array
 
@@ -1013,104 +1099,20 @@ class Array(ABCArray):
     def _ipython_key_completions_(self):
         return list(chain(*[list(labels) for labels in self.axes.labels]))
 
-    # TODO: the first slice in example below should be documented
     @lazy_attribute
     def i(self):
-        r"""
-        Allows selection of a subset using indices of labels.
-
-        Examples
-        --------
-        >>> arr = ndtest((2, 3, 4))
-        >>> arr
-         a  b\c  c0  c1  c2  c3
-        a0   b0   0   1   2   3
-        a0   b1   4   5   6   7
-        a0   b2   8   9  10  11
-        a1   b0  12  13  14  15
-        a1   b1  16  17  18  19
-        a1   b2  20  21  22  23
-
-        >>> arr.i[:, 0:2, [0, 2]]
-         a  b\c  c0  c2
-        a0   b0   0   2
-        a0   b1   4   6
-        a1   b0  12  14
-        a1   b1  16  18
-        """
         return ArrayPositionalIndexer(self)
+    i.__doc__ = ArrayPositionalIndexer.__doc__
 
     @lazy_attribute
     def points(self):
-        r"""
-        Allows selection of arbitrary items in the array based on their N-dimensional label index.
-
-        Examples
-        --------
-        >>> arr = ndtest((2, 3, 4))
-        >>> arr
-         a  b\c  c0  c1  c2  c3
-        a0   b0   0   1   2   3
-        a0   b1   4   5   6   7
-        a0   b2   8   9  10  11
-        a1   b0  12  13  14  15
-        a1   b1  16  17  18  19
-        a1   b2  20  21  22  23
-
-        To select the two points with label coordinates
-        [a0, b0, c0] and [a1, b2, c2], you must do:
-
-        >>> arr.points[['a0', 'a1'], ['b0', 'b2'], ['c0', 'c2']]
-        a_b_c  a0_b0_c0  a1_b2_c2
-                      0        22
-        >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
-        a_b_c  a0_b0_c0  a1_b2_c2
-                      0        22
-
-        The number of label(s) on each dimension must be equal:
-
-        >>> arr.points['a0,a1', 'b0,b2', 'c0,c1,c2'] # doctest: +NORMALIZE_WHITESPACE
-        Traceback (most recent call last):
-            ...
-        IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
-        """
         return ArrayPointsIndexer(self)
+    points.__doc__ = ArrayPointsIndexer.__doc__
 
-    # TODO: show that we need to use a "full slice" for leaving the dimension alone
-    # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
-    # (except at the end)
     @lazy_attribute
     def ipoints(self):
-        r"""
-        Allows selection of arbitrary items in the array based on their N-dimensional index.
-
-        Examples
-        --------
-        >>> arr = ndtest((2, 3, 4))
-        >>> arr
-         a  b\c  c0  c1  c2  c3
-        a0   b0   0   1   2   3
-        a0   b1   4   5   6   7
-        a0   b2   8   9  10  11
-        a1   b0  12  13  14  15
-        a1   b1  16  17  18  19
-        a1   b2  20  21  22  23
-
-        To select the two points with index coordinates
-        [0, 0, 0] and [1, 2, 2], you must do:
-
-        >>> arr.ipoints[[0,1], [0,2], [0,2]]
-        a_b_c  a0_b0_c0  a1_b2_c2
-                      0        22
-
-        The number of index(es) on each dimension must be equal:
-
-        >>> arr.ipoints[[0,1], [0,2], [0,1,2]] # doctest: +NORMALIZE_WHITESPACE
-        Traceback (most recent call last):
-            ...
-        IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
-        """
         return ArrayPositionalPointsIndexer(self)
+    ipoints.__doc__ = ArrayPositionalPointsIndexer.__doc__
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
         r"""
