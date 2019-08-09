@@ -5476,6 +5476,13 @@ class LArray(ABCLArray):
             if isinstance(other, ExprNode):
                 other = other.evaluate(self.axes)
 
+            # XXX: unsure what happens for non scalar Groups.
+            #      we might want to be more general than this and .eval all Groups?
+            #      or (and I think it's better) define __larray__ on Group
+            #      so that a non scalar Group acts like an Axis in this situation.
+            if isinstance(other, Group) and np.isscalar(other.key):
+                other = other.eval()
+
             # we could pass scalars through aslarray too but it is too costly performance-wise for only suppressing one
             # isscalar test and an if statement.
             # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but

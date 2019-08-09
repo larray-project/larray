@@ -33,6 +33,9 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed binary operations (+, -, *, etc.) between an LArray and a (scalar) Group which silently gave a wrong
+  result (closes :issue:`797`).
+
 * fixed taking a subset of an array with boolean labels for an axis if the user explicitly specify the axis
   (closes :issue:`735`). When the user does not specify the axis, it currently fails but it is unclear what to do in
   that case (see :issue:`794`).
