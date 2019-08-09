@@ -827,6 +827,7 @@ Editor
    view
    edit
    compare
+   run_editor_on_exception
 
 Random
 ======

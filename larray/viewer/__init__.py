@@ -105,3 +105,27 @@ def compare(*args, **kwargs):
         compare(*args, depth=depth + 1, **kwargs)
     except ImportError:
         raise Exception('compare() is not available because the larray_editor package is not installed')
+
+
+def run_editor_on_exception(root_path=None, usercode_traceback=True):
+    r"""
+    Runs the editor when an unhandled exception (a fatal error) happens.
+
+    Parameters
+    ----------
+    root_path : str, optional
+        Defaults to None (the directory of the main script).
+    usercode_traceback : bool, optional
+        Whether or not to show only the part of the traceback (error log) which corresponds to the user code.
+        Otherwise, it will show the complete traceback, including code inside libraries. Defaults to True.
+
+    Notes
+    -----
+    sets sys.excepthook
+    """
+    try:
+        from larray_editor import run_editor_on_exception
+
+        run_editor_on_exception(root_path=root_path, usercode_traceback=usercode_traceback)
+    except ImportError:
+        raise Exception('run_editor_on_exception() is not available because the larray_editor package is not installed')
