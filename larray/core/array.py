@@ -349,10 +349,12 @@ else:
 
 # TODO: rename to LArrayIndexIndexer or something like that
 class LArrayPositionalIndexer(object):
+    """
+    equivalent to numpy indexing when indexing along a single axis *but* indexes the cross product of multiple axes
+    instead of points
+    """
     __slots__ = ('array',)
-    """
-    numpy indexing *except* we index the cross product
-    """
+
     def __init__(self, array):
         self.array = array
 
@@ -1066,8 +1068,7 @@ class LArray(ABCLArray):
     @lazy_attribute
     def points(self):
         r"""
-        Allows selection of arbitrary items in the array
-        based on their N-dimensional label index.
+        Allows selection of arbitrary items in the array based on their N-dimensional label index.
 
         Examples
         --------
@@ -1084,6 +1085,9 @@ class LArray(ABCLArray):
         To select the two points with label coordinates
         [a0, b0, c0] and [a1, b2, c2], you must do:
 
+        >>> arr.points[['a0', 'a1'], ['b0', 'b2'], ['c0', 'c2']]
+        a_b_c  a0_b0_c0  a1_b2_c2
+                      0        22
         >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
         a_b_c  a0_b0_c0  a1_b2_c2
                       0        22
