@@ -2733,6 +2733,14 @@ def test_broadcasting_no_name():
         np.asarray(a) * np.asarray(c)
 
 
+def test_binary_ops_with_scalar_group():
+    time = Axis('time=2015..2019')
+    arr = ndtest(3)
+    expected = arr + 2015
+    assert_larray_equal(time.i[0] + arr, expected)
+    assert_larray_equal(arr + time.i[0], expected)
+
+
 def test_unary_ops(small_array):
     raw = small_array.data
 
