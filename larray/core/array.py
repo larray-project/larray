@@ -409,6 +409,38 @@ class LArrayPositionalIndexer(object):
 
 
 class LArrayPointsIndexer(object):
+    """
+    Allows selection of arbitrary items in the array based on their N-dimensional label index.
+
+    Examples
+    --------
+    >>> arr = ndtest((2, 3, 4))
+    >>> arr
+     a  b\\c  c0  c1  c2  c3
+    a0   b0   0   1   2   3
+    a0   b1   4   5   6   7
+    a0   b2   8   9  10  11
+    a1   b0  12  13  14  15
+    a1   b1  16  17  18  19
+    a1   b2  20  21  22  23
+
+    To select the two points with label coordinates
+    [a0, b0, c0] and [a1, b2, c2], you must do:
+
+    >>> arr.points[['a0', 'a1'], ['b0', 'b2'], ['c0', 'c2']]
+    a_b_c  a0_b0_c0  a1_b2_c2
+                  0        22
+    >>> arr.points['a0,a1', 'b0,b2', 'c0,c2']
+    a_b_c  a0_b0_c0  a1_b2_c2
+                  0        22
+
+    The number of label(s) on each dimension must be equal:
+
+    >>> arr.points['a0,a1', 'b0,b2', 'c0,c1,c2']  # doctest: +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        ...
+    ValueError: all combined keys should have the same length
+    """
     __slots__ = ('array',)
 
     def __init__(self, array):
