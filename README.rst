@@ -73,9 +73,9 @@ Once you have satisfied the requirements detailed below, simply run::
 Required Dependencies
 ---------------------
 
-- Python 2.7, 3.5, or 3.6
-- `numpy <http://www.numpy.org/>`__ (1.10.0 or later)
-- `pandas <http://pandas.pydata.org/>`__ (0.13.1 or later)
+- Python 2.7, 3.6 or 3.7
+- `numpy <http://www.numpy.org/>`__ (1.13 or later)
+- `pandas <http://pandas.pydata.org/>`__ (0.20 or later)
 
 
 Optional Dependencies
