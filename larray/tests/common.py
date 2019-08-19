@@ -12,8 +12,6 @@ try:
 except ImportError:
     xw = None
 
-from larray import LArray, isnan, aslarray, Metadata
-
 
 TESTDATADIR = os.path.dirname(__file__)
 
@@ -38,6 +36,7 @@ def inputpath(relpath):
 
 def assert_equal_factory(test_func):
     def assert_equal(a, b):
+        from larray.core.array import LArray
         if isinstance(a, LArray) and isinstance(b, LArray) and a.axes != b.axes:
             raise AssertionError("axes differ:\n%s\n\nvs\n\n%s" % (a.axes.info, b.axes.info))
         if not isinstance(a, (np.ndarray, LArray)):
@@ -57,6 +56,7 @@ def assert_equal_factory(test_func):
 
 def assert_larray_equal_factory(test_func, convert=True, check_axes=False):
     def assert_equal(a, b):
+        from larray.core.array import aslarray
         if convert:
             a = aslarray(a)
             b = aslarray(b)
@@ -88,6 +88,7 @@ def equal(a, b):
 
 
 def nan_equal(a, b):
+    from larray.core.ufuncs import isnan
     return (a == b) | (isnan(a) & isnan(b))
 
 
@@ -121,6 +122,7 @@ def tmp_path(tmpdir, fname):
 
 @pytest.fixture
 def meta():
+    from larray.core.metadata import Metadata
     title = 'test array'
     description = 'Array used for testing'
     author = 'John Cleese'
