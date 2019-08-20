@@ -49,7 +49,7 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* made it possible to pass LArray objects to Numpy ufuncs directly (e.g. np.sqrt(ndtest(3)), closes :issue:`234`).
 
 
 Fixes

@@ -57,6 +57,7 @@ from larray.core.abstractbases import ABCLArray
 from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
+from larray.core.ufuncs import SupportsNumpyUfuncs
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
@@ -700,7 +701,7 @@ def _handle_meta(meta, title):
     return Metadata(meta)
 
 
-class LArray(ABCLArray):
+class LArray(ABCLArray, SupportsNumpyUfuncs):
     r"""
     A LArray object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
 
@@ -5862,7 +5863,7 @@ class LArray(ABCLArray):
             if not nans_equal:
                 return self == other
             else:
-                from larray.core.npufuncs import isnan
+                from larray.core.ufuncs import isnan
 
                 def general_isnan(a):
                     if np.issubclass_(a.dtype.type, np.inexact):
@@ -6625,7 +6626,7 @@ class LArray(ABCLArray):
          a1   0   1   2
          a2   2   2   2
         """
-        from larray.core.npufuncs import clip
+        from larray.core.ufuncs import clip
         return clip(self, minval, maxval, out)
 
     @deprecate_kwarg('transpose', 'wide')
