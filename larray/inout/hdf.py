@@ -372,7 +372,33 @@ class LHDFStore(object):
 
     Examples
     --------
-    # TODO : write examples
+    >>> from larray import ndtest
+    >>> with LHDFStore('hdf_file.h5') as s:
+    ...     # dump and read an axis
+    ...     s['a'] = Axis("a=a0..a2")
+    ...     a = s['a']
+    ...     # dump and read a group
+    ...     s['a01'] = a['a0,a1'] >> 'a01'
+    ...     a01 = s['a01']
+    ...     # dump and read an array
+    ...     s['arr'] = ndtest((3, 3))
+    ...     arr = s['arr']
+    ...     # add and read top level metadata
+    ...     s.meta.author = 'John Smith'
+    ...     metadata = s.meta
+    ...     # get filepath
+    ...     s.filename
+    ...     # display list of items stored in the hdf file
+    ...     s.keys()
+    ...     # display list of items and their type
+    ...     print(s.summary())
+    'hdf_file.h5'
+    ['/a', '/a01', '/arr', '/arr/axis_a', '/arr/axis_b']
+    /a: Axis
+    /a01: Group
+    /arr: Array
+    /arr/axis_a: Axis
+    /arr/axis_b: Axis
     """
     def __init__(self, filepath, mode=None, complevel=None, complib=None,
                  fletcher32=False, engine='auto', **kwargs):
@@ -475,6 +501,10 @@ class LHDFStore(object):
         Return a (potentially unordered) list of the keys corresponding to the
         objects stored in the HDFStore. These are ABSOLUTE path-names (e.g.
         have the leading '/'
+
+        See Also
+        --------
+        LHDFStore
         """
         return [n._v_pathname for n in self._storer.groups()]
 
@@ -494,16 +524,13 @@ class LHDFStore(object):
         """
         Return a list of LArray stored in the HDF5 file.
 
-        Examples
+        See Also
         --------
-        TODO: write examples
+        LHDFStore
         """
         if self.is_open:
-            res = ""
-            for name, group in self.items():
-                _type = getattr(group._v_attrs, 'type', 'Unknown')
-                res += "{}: {}\n".format(name, _type)
-            return res
+            return '\n'.join(["{}: {}".format(name, getattr(group._v_attrs, 'type', 'Unknown'))
+                              for name, group in self.items()])
         else:
             return "File {} is CLOSED".format(self.filename)
 
