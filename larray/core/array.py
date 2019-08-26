@@ -6701,7 +6701,7 @@ class LArray(ABCLArray):
             series = self.to_series(value_name, dropna is not None)
             series.to_csv(filepath, sep=sep, na_rep=na_rep, header=True, **kwargs)
 
-    def to_hdf(self, filepath, key):
+    def to_hdf(self, filepath, key, engine='auto'):
         r"""
         Writes array to a HDF file.
 
@@ -6714,6 +6714,9 @@ class LArray(ABCLArray):
             Path where the hdf file has to be written.
         key : str or Group
             Key (path) of the array within the HDF file (see Notes below).
+        engine: {'auto', 'tables', 'pandas'}, optional
+            Dump using `engine`. Use 'pandas' to update an HDF file generated with a LArray version previous to 0.31.
+            Defaults to 'auto' (use default engine if you don't know the LArray version used to produced the HDF file).
 
         Notes
         -----
@@ -6735,7 +6738,7 @@ class LArray(ABCLArray):
         >>> a.to_hdf('test.h5', 'arrays/a')  # doctest: +SKIP
         """
         from larray.inout.hdf import LHDFStore
-        with LHDFStore(filepath) as store:
+        with LHDFStore(filepath, engine=engine) as store:
             store.put(key, self)
 
     def to_stata(self, filepath_or_buffer, **kwargs):

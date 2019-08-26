@@ -1304,7 +1304,7 @@ class Axis(ABCAxis):
             else:
                 return self
 
-    def to_hdf(self, filepath, key=None):
+    def to_hdf(self, filepath, key=None, engine='auto'):
         r"""
         Writes axis to a HDF file.
 
@@ -1319,6 +1319,9 @@ class Axis(ABCAxis):
             Key (path) of the axis within the HDF file (see Notes below).
             If None, the name of the axis is used.
             Defaults to None.
+        engine: {'auto', 'tables', 'pandas'}, optional
+            Dump using `engine`. Use 'pandas' to update an HDF file generated with a LArray version previous to 0.31.
+            Defaults to 'auto' (use default engine if you don't know the LArray version used to produced the HDF file).
 
         Notes
         -----
@@ -1349,7 +1352,7 @@ class Axis(ABCAxis):
             if self.name is None:
                 raise ValueError("Argument key must be provided explicitly in case of anonymous axis")
             key = self.name
-        with LHDFStore(filepath) as store:
+        with LHDFStore(filepath, engine=engine) as store:
             store.put(key, self)
 
     @property

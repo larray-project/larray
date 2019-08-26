@@ -1396,7 +1396,7 @@ class Group(object):
             substring = substring.eval()
         return LGroup([v for v in self.eval() if substring in v], axis=self.axis)
 
-    def to_hdf(self, filepath, key=None, axis_key=None):
+    def to_hdf(self, filepath, key=None, axis_key=None, engine='auto'):
         r"""
         Writes group to a HDF file.
 
@@ -1417,6 +1417,9 @@ class Group(object):
             Key (path) of the associated axis in the HDF file (see Notes below).
             If None, the name of the axis associated with the group is used.
             Defaults to None.
+        engine: {'auto', 'tables', 'pandas'}, optional
+            Dump using `engine`. Use 'pandas' to update an HDF file generated with a LArray version previous to 0.31.
+            Defaults to 'auto' (use default engine if you don't know the LArray version used to produced the HDF file).
 
         Notes
         -----
@@ -1458,7 +1461,7 @@ class Group(object):
             if self.name is None:
                 raise ValueError("Argument key must be provided explicitly in case of anonymous group")
             key = self.name
-        with LHDFStore(filepath) as store:
+        with LHDFStore(filepath, engine=engine) as store:
             store.put(key, self, axis_key=axis_key)
 
     # this makes range(LGroup(int)) possible

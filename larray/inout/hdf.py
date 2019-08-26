@@ -346,7 +346,7 @@ class LHDFStore(object):
     Parameters
     ----------
     filepath : str or PathLike object
-        File path to HDF5 file
+        File path to HDF5 file.
     mode : {'a', 'w', 'r', 'r+'}, default 'a'
 
         ``'r'``
@@ -562,13 +562,13 @@ class LHDFStore(object):
 
 
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
-             name=None, **kwargs):
+             name=None, engine='auto', **kwargs):
     r"""Reads an axis or group or array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
-    filepath_or_buffer : str or LArrayHDFStore
-        Path and name where the HDF5 file is stored or a HDFStore object.
+    filepath_or_buffer : str or PathLike object
+        Path and name where the HDF5 file is stored.
     key : str or Group
         Name of the object to read.
     fill_value : scalar or LArray, optional
@@ -585,6 +585,9 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
     name : str, optional
         Name of the axis or group to return. If None, name is set to passed key.
         Defaults to None.
+    engine: {'auto', 'tables', 'pandas'}, optional
+        Load using `engine`. Use 'pandas' to read an HDF file generated with a LArray version previous to 0.31.
+        Defaults to 'auto' (use default engine if you don't know the LArray version used to produced the HDF file).
 
     Returns
     -------
@@ -610,7 +613,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         fill_value = na
         warnings.warn("read_hdf `na` argument has been renamed to `fill_value`. Please use that instead.",
                       FutureWarning, stacklevel=2)
-    with LHDFStore(filepath_or_buffer, **kwargs) as store:
+    with LHDFStore(filepath_or_buffer, engine=engine, **kwargs) as store:
         res = store.get(key, fill_value=fill_value, sort_rows=sort_rows, sort_columns=sort_columns, name=name)
     return res
 
