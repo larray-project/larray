@@ -360,12 +360,12 @@ class LHDFStore(object):
         ``'r+'``
             It is similar to ``'a'``, but the file must already exist.
     complevel : int, 0-9, default None
-            Specifies a compression level for data.
-            A value of 0 disables compression.
+        Specifies a compression level for data.
+        A value of 0 disables compression.
     complib : {'zlib', 'lzo', 'bzip2', 'blosc'}, default 'zlib'
-            Specifies the compression library to be used.
+        Specifies the compression library to be used.
     fletcher32 : bool, default False
-            If applying compression use the fletcher32 checksum
+        If applying compression use the fletcher32 checksum
     engine: {'auto', 'tables', 'pandas'}, optional
         Load using `engine`. Use 'pandas' to read an HDF file generated with a LArray version previous to 0.31.
         Defaults to 'auto' (use default engine if you don't know the LArray version used to produced the HDF file).
