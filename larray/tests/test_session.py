@@ -29,27 +29,30 @@ def assertObjListEqual(got, expected):
 
 
 a = Axis('a=a0..a2')
+a2 = Axis('a=a0..a4')
+anonymous = Axis(4)
 a01 = a['a0,a1'] >> 'a01'
-b = Axis('b=b0..b2')
-b12 = b['b1,b2'] >> 'b12'
+ano01 = a['a0,a1']
+b = Axis('b=0..4')
+b024 = b[[0, 2, 4]] >> 'b024'
 c = 'c'
 d = {}
-e = ndtest([(2, 'a0'), (3, 'a1')])
+e = ndtest([(2, 'a'), (3, 'b')])
 _e = ndtest((3, 3))
-e2 = ndtest(('a=a0..a2', 'b=b0..b2'))
-f = ndtest([(3, 'a0'), (2, 'a1')])
-g = ndtest([(2, 'a0'), (4, 'a1')])
+f = ndtest((Axis(3), Axis(2)))
+g = ndtest([(2, 'a'), (4, 'b')])
+h = ndtest(('a=a0..a2', 'b=b0..b4'))
 
 
 @pytest.fixture()
 def session():
-    return Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
-                    ('c', c), ('d', d), ('e', e), ('g', g), ('f', f)])
+    return Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                    ('a01', a01), ('ano01', ano01), ('c', c), ('d', d), ('e', e), ('g', g), ('f', f), ('h', h)])
 
 
 def test_init_session(meta):
-    s = Session(b, b12, a, a01, c=c, d=d, e=e, f=f, g=g)
-    assert s.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g']
+    s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h)
+    assert s.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024', 'c', 'd', 'e', 'f', 'g', 'h']
 
     s = Session(inputpath('test_session.h5'))
     assert s.names == ['e', 'f', 'g']
@@ -63,24 +66,31 @@ def test_init_session(meta):
     # assertEqual(s.names, ['e', 'f', 'g'])
 
     # metadata
-    s = Session(b, b12, a, a01, c=c, d=d, e=e, f=f, g=g, meta=meta)
+    s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h, meta=meta)
     assert s.meta == meta
 
 
 def test_getitem(session):
     assert session['a'] is a
+    assert session['a2'] is a2
+    assert session['anonymous'] is anonymous
     assert session['b'] is b
     assert session['a01'] is a01
-    assert session['b12'] is b12
+    assert session['ano01'] is ano01
+    assert session['b024'] is b024
     assert session['c'] == 'c'
     assert session['d'] == {}
+    assert equal(session['e'], e)
+    assert equal(session['h'], h)
 
 
 def test_getitem_list(session):
     assert list(session[[]]) == []
     assert list(session[['b', 'a']]) == [b, a]
     assert list(session[['a', 'b']]) == [a, b]
-    assert list(session[['b12', 'a']]) == [b12, a]
+    assert list(session[['a', 'a2']]) == [a, a2]
+    assert list(session[['anonymous', 'ano01']]) == [anonymous, ano01]
+    assert list(session[['b024', 'a']]) == [b024, a]
     assert list(session[['e', 'a01']]) == [e, a01]
     assert list(session[['a', 'e', 'g']]) == [a, e, g]
     assert list(session[['g', 'a', 'e']]) == [g, a, e]
@@ -92,7 +102,7 @@ def test_getitem_larray(session):
     res_eq = s1[s1.element_equals(s2)]
     res_neq = s1[~(s1.element_equals(s2))]
     assert list(res_eq) == [f]
-    assert list(res_neq) == [e, g]
+    assert list(res_neq) == [e, g, h]
 
 
 def test_setitem(session):
@@ -103,173 +113,138 @@ def test_setitem(session):
 
 def test_getattr(session):
     assert session.a is a
+    assert session.a2 is a2
+    assert session.anonymous is anonymous
     assert session.b is b
     assert session.a01 is a01
-    assert session.b12 is b12
+    assert session.ano01 is ano01
+    assert session.b024 is b024
     assert session.c == 'c'
     assert session.d == {}
 
 
 def test_setattr(session):
     s = session.copy()
-    s.h = 'h'
-    assert s.h == 'h'
+    s.i = 'i'
+    assert s.i == 'i'
 
 
 def test_add(session):
-    h = Axis('h=h0..h2')
-    h01 = h['h0,h1'] >> 'h01'
-    session.add(h, h01, i='i')
-    assert h.equals(session.h)
-    assert h01 == session.h01
-    assert session.i == 'i'
+    i = Axis('i=i0..i2')
+    i01 = i['i0,i1'] >> 'i01'
+    session.add(i, i01, j='j')
+    assert i.equals(session.i)
+    assert i01 == session.i01
+    assert session.j == 'j'
 
 
 def test_iter(session):
-    expected = [b, b12, a, a01, c, d, e, g, f]
+    expected = [b, b024, a, a2, anonymous, a01, ano01, c, d, e, g, f, h]
     assertObjListEqual(session, expected)
 
 
 def test_filter(session):
     session.ax = 'ax'
-    assertObjListEqual(session.filter(), [b, b12, a, a01, 'c', {}, e, g, f, 'ax'])
-    assertObjListEqual(session.filter('a*'), [a, a01, 'ax'])
+    assertObjListEqual(session.filter(), [b, b024, a, a2, anonymous, a01, ano01, 'c', {}, e, g, f, h, 'ax'])
+    assertObjListEqual(session.filter('a*'), [a, a2, anonymous, a01, ano01, 'ax'])
     assert list(session.filter('a*', dict)) == []
     assert list(session.filter('a*', str)) == ['ax']
-    assert list(session.filter('a*', Axis)) == [a]
-    assert list(session.filter(kind=Axis)) == [b, a]
+    assert list(session.filter('a*', Axis)) == [a, a2, anonymous]
+    assert list(session.filter(kind=Axis)) == [b, a, a2, anonymous]
     assert list(session.filter('a01', Group)) == [a01]
-    assert list(session.filter(kind=Group)) == [b12, a01]
-    assertObjListEqual(session.filter(kind=LArray), [e, g, f])
+    assert list(session.filter(kind=Group)) == [b024, a01, ano01]
+    assertObjListEqual(session.filter(kind=LArray), [e, g, f, h])
     assert list(session.filter(kind=dict)) == [{}]
-    assert list(session.filter(kind=(Axis, Group))) == [b, b12, a, a01]
+    assert list(session.filter(kind=(Axis, Group))) == [b, b024, a, a2, anonymous, a01, ano01]
 
 
 def test_names(session):
-    assert session.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g']
+    assert session.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024',
+                             'c', 'd', 'e', 'f', 'g', 'h']
     # add them in the "wrong" order
     session.add(i='i')
-    session.add(h='h')
-    assert session.names == ['a', 'a01', 'b', 'b12', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+    session.add(j='j')
+    assert session.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024',
+                             'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+
+
+def _test_io(fpath, session, meta, engine='auto'):
+    session.meta = meta
+    names = session.filter(kind=(Axis, Group, LArray)).names
+
+    # save and load
+    session.save(fpath, engine=engine)
+    s = Session()
+    s.load(fpath, engine=engine)
+    # use Session.names instead of Session.keys because CSV, Excel and HDF do *not* keep ordering
+    assert s.names == names
+    assert s.equals(session)
+    for key in s.filter(kind=(Axis, LArray)).keys():
+        assert s[key].dtype.kind == session[key].dtype.kind
+    if engine != 'pandas_excel':
+        assert s.meta == meta
+
+    # update a Group + an Axis + an array (overwrite=False)
+    a3 = Axis('a=0..3')
+    a3_01 = a3['0,1'] >> 'a01'
+    e2 = ndtest((a3, 'b=b0..b2'))
+    Session(a=a3, a01=a3_01, e=e2).save(fpath, overwrite=False, engine=engine)
+    s = Session()
+    s.load(fpath, engine=engine)
+    if 'csv' in fpath:
+        # Session.to_csv() always overwrite the __axes__.csv and __groups__.csv files
+        new_names = ['a', 'a01', 'e', 'f', 'g', 'h']
+    elif engine == 'pandas_excel':
+        # Session.save() via engine='pandas_excel' always overwrite the output Excel files
+        new_names = ['a', 'a01', 'e']
+    else:
+        new_names = names
+    assert s.names == new_names
+    assert s['a'].equals(a3)
+    if 'pkl' in fpath:
+        assert s['a01'].eval() == a3_01.eval()
+    else:
+        assert all(s['a01'] == a3_01)
+    assert_array_nan_equal(s['e'], e2)
+    if engine != 'pandas_excel':
+        assert s.meta == meta
+
+    # load only some objects
+    session.save(fpath, engine=engine)
+    s = Session()
+    s.load(fpath, names=['a', 'a2', 'anonymous', 'a01', 'e', 'f'], engine=engine)
+    assert s.names == ['a', 'a01', 'a2', 'anonymous', 'e', 'f']
+    if engine != 'pandas_excel':
+        assert s.meta == meta
 
 
 def test_h5_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.h5')
-    session.meta = meta
-    session.save(fpath)
-
-    s = Session()
-    s.load(fpath)
-    # HDF does *not* keep ordering (ie, keys are always sorted +
-    # read Axis objects, then Groups objects and finally LArray objects)
-    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
-    assert s.meta == meta
-
-    # update a Group + an Axis + an array (overwrite=False)
-    a2 = Axis('a=0..2')
-    a2_01 = a2['0,1'] >> 'a01'
-    e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False)
-    s = Session()
-    s.load(fpath)
-    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
-    assert s['a'].equals(a2)
-    assert all(s['a01'] == a2_01)
-    assert_array_nan_equal(s['e'], e2)
-    assert s.meta == meta
-
-    # load only some objects
-    s = Session()
-    s.load(fpath, names=['a', 'a01', 'e', 'f'])
-    assert list(s.keys()) == ['a', 'a01', 'e', 'f']
-    assert s.meta == meta
+    _test_io(fpath, session, meta)
 
 
 def test_xlsx_pandas_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.xlsx')
-    session.meta = meta
-    session.save(fpath, engine='pandas_excel')
-
-    s = Session()
-    s.load(fpath, engine='pandas_excel')
-    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
-    assert s.meta == meta
-
-    # update a Group + an Axis + an array
-    # XXX: overwrite is not taken into account by the pandas_excel engine
-    a2 = Axis('a=0..2')
-    a2_01 = a2['0,1'] >> 'a01'
-    e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2, meta=meta).save(fpath, engine='pandas_excel')
-    s = Session()
-    s.load(fpath, engine='pandas_excel')
-    assert list(s.keys()) == ['a', 'a01', 'e']
-    assert s['a'].equals(a2)
-    assert all(s['a01'] == a2_01)
-    assert_array_nan_equal(s['e'], e2)
-    assert s.meta == meta
-
-    # load only some objects
-    session.save(fpath, engine='pandas_excel')
-    s = Session()
-    s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pandas_excel')
-    assert list(s.keys()) == ['a', 'a01', 'e', 'f']
-    assert s.meta == meta
+    _test_io(fpath, session, meta, engine='pandas_excel')
 
 
 @needs_xlwings
 def test_xlsx_xlwings_io(tmpdir, session, meta):
-    fpath = tmp_path(tmpdir, 'test_session_xw.xlsx')
-    session.meta = meta
-    # test save when Excel file does not exist
-    session.save(fpath, engine='xlwings_excel')
-
-    s = Session()
-    s.load(fpath, engine='xlwings_excel')
-    # ordering is only kept if the file did not exist previously (otherwise the ordering is left intact)
-    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
-    assert s.meta == meta
-
-    # update a Group + an Axis + an array (overwrite=False)
-    a2 = Axis('a=0..2')
-    a2_01 = a2['0,1'] >> 'a01'
-    e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2).save(fpath, engine='xlwings_excel', overwrite=False)
-    s = Session()
-    s.load(fpath, engine='xlwings_excel')
-    assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'g', 'f']
-    assert s['a'].equals(a2)
-    assert all(s['a01'] == a2_01)
-    assert_array_nan_equal(s['e'], e2)
-    assert s.meta == meta
-
-    # load only some objects
-    s = Session()
-    s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='xlwings_excel')
-    assert list(s.keys()) == ['a', 'a01', 'e', 'f']
-    assert s.meta == meta
+    fpath = tmp_path(tmpdir, 'test_session.xlsx')
+    _test_io(fpath, session, meta, engine='xlwings_excel')
 
 
 def test_csv_io(tmpdir, session, meta):
+    fpath = tmp_path(tmpdir, 'test_session_csv')
     try:
-        fpath = tmp_path(tmpdir, 'test_session_csv')
-        session.meta = meta
-        session.to_csv(fpath)
+        _test_io(fpath, session, meta)
 
-        # test loading a directory
-        s = Session()
-        s.load(fpath, engine='pandas_csv')
-        # CSV cannot keep ordering (so we always sort keys)
-        # Also, Axis objects are read first, then Groups objects and finally LArray objects
-        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
-        assert s.meta == meta
+        names = session.filter(kind=(Axis, Group, LArray)).names
 
         # test loading with a pattern
         pattern = os.path.join(fpath, '*.csv')
         s = Session(pattern)
-        # s = Session()
-        # s.load(pattern)
-        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
+        assert s.names == names
         assert s.meta == meta
 
         # create an invalid .csv file
@@ -284,13 +259,7 @@ def test_csv_io(tmpdir, session, meta):
         # test loading a pattern, ignoring invalid/unsupported files
         s = Session()
         s.load(pattern, ignore_exceptions=True)
-        assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
-        assert s.meta == meta
-
-        # load only some objects
-        s = Session()
-        s.load(fpath, names=['a', 'a01', 'e', 'f'])
-        assert list(s.keys()) == ['a', 'a01', 'e', 'f']
+        assert s.names == names
         assert s.meta == meta
     finally:
         shutil.rmtree(fpath)
@@ -298,34 +267,7 @@ def test_csv_io(tmpdir, session, meta):
 
 def test_pickle_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.pkl')
-    session.meta = meta
-    session.save(fpath)
-
-    s = Session()
-    s.load(fpath, engine='pickle')
-    assert list(s.keys()) == ['b', 'a', 'b12', 'a01', 'e', 'g', 'f']
-    assert s.meta == meta
-
-    # update a Group + an Axis + an array (overwrite=False)
-    a2 = Axis('a=0..2')
-    a2_01 = a2['0,1'] >> 'a01'
-    e2 = ndtest((a2, 'b=b0..b2'))
-    Session(a=a2, a01=a2_01, e=e2).save(fpath, overwrite=False)
-    s = Session()
-    s.load(fpath, engine='pickle')
-    assert list(s.keys()) == ['b', 'a', 'b12', 'a01', 'e', 'g', 'f']
-    assert s['a'].equals(a2)
-    assert isinstance(a2_01, Group)
-    assert isinstance(s['a01'], Group)
-    assert s['a01'].eval() == a2_01.eval()
-    assert_array_nan_equal(s['e'], e2)
-    assert s.meta == meta
-
-    # load only some objects
-    s = Session()
-    s.load(fpath, names=['a', 'a01', 'e', 'f'], engine='pickle')
-    assert list(s.keys()) == ['a', 'a01', 'e', 'f']
-    assert s.meta == meta
+    _test_io(fpath, session, meta)
 
 
 def test_to_globals(session):
@@ -362,66 +304,76 @@ def test_to_globals(session):
 
 def test_element_equals(session):
     sess = session.filter(kind=(Axis, Group, LArray))
-    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
-                        ('e', e), ('g', g), ('f', f)])
+    expected = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                        ('a01', a01), ('ano01', ano01), ('e', e), ('g', g), ('f', f), ('h', h)])
     assert all(sess.element_equals(expected))
 
-    other = Session({'a': a, 'a01': a01, 'e': e, 'f': f})
+    other = Session([('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e), ('f', f), ('h', h)])
     res = sess.element_equals(other)
     assert res.ndim == 1
     assert res.axes.names == ['name']
-    assert np.array_equal(res.axes.labels[0], ['b', 'b12', 'a', 'a01', 'e', 'g', 'f'])
-    assert list(res) == [False, False, True, True, True, False, True]
+    assert np.array_equal(res.axes.labels[0], ['b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01',
+                                               'e', 'g', 'f', 'h'])
+    assert list(res) == [False, False, True, True, True, True, True, True, False, True, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session({'a': a, 'a01': a01, 'e': e2, 'f': f})
+    other = Session([('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e2), ('f', f), ('h', h)])
     res = sess.element_equals(other)
     assert res.axes.names == ['name']
-    assert np.array_equal(res.axes.labels[0], ['b', 'b12', 'a', 'a01', 'e', 'g', 'f'])
-    assert list(res) == [False, False, True, True, False, False, True]
+    assert np.array_equal(res.axes.labels[0], ['b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01',
+                                               'e', 'g', 'f', 'h'])
+    assert list(res) == [False, False, True, True, True, True, True, False, False, True, True]
 
 
 def test_eq(session):
     sess = session.filter(kind=(Axis, Group, LArray))
-    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
-                        ('e', e), ('g', g), ('f', f)])
+    expected = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                        ('a01', a01), ('ano01', ano01), ('e', e), ('g', g), ('f', f), ('h', h)])
     assert all([item.all() if isinstance(item, LArray) else item
                 for item in (sess == expected).values()])
 
-    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
+    other = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e), ('f', f), ('h', h)])
     res = sess == other
-    assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
+    assert list(res.keys()) == ['b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01',
+                                'e', 'g', 'f', 'h']
     assert [item.all() if isinstance(item, LArray) else item
-            for item in res.values()] == [True, True, True, True, True, False, True]
+            for item in res.values()] == [True, True, True, True, True, True, True, True, False, True, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
+    other = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e2), ('f', f), ('h', h)])
     res = sess == other
     assert [item.all() if isinstance(item, LArray) else item
-            for item in res.values()] == [True, True, True, True, False, False, True]
+            for item in res.values()] == [True, True, True, True, True, True, True, False, False, True, True]
 
 
 def test_ne(session):
     sess = session.filter(kind=(Axis, Group, LArray))
-    expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
-                        ('e', e), ('g', g), ('f', f)])
+    expected = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                        ('a01', a01), ('ano01', ano01), ('e', e), ('g', g), ('f', f), ('h', h)])
     assert ([(~item).all() if isinstance(item, LArray) else not item
              for item in (sess != expected).values()])
 
-    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
+    other = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e), ('f', f), ('h', h)])
     res = sess != other
-    assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
+    assert list(res.keys()) == ['b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01',
+                                'e', 'g', 'f', 'h']
     assert [(~item).all() if isinstance(item, LArray) else not item
-            for item in res.values()] == [True, True, True, True, True, False, True]
+            for item in res.values()] == [True, True, True, True, True, True, True, True, False, True, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
-    other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
+    other = Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
+                     ('a01', a01), ('ano01', ano01), ('e', e2), ('f', f), ('h', h)])
     res = sess != other
     assert [(~item).all() if isinstance(item, LArray) else not item
-            for item in res.values()] == [True, True, True, True, False, False, True]
+            for item in res.values()] == [True, True, True, True, True, True, True, False, False, True, True]
 
 
 def test_sub(session):
@@ -548,27 +500,27 @@ def test_local_arrays():
 def test_global_arrays():
     # exclude private global arrays
     s = global_arrays()
-    s_expected = Session([('e', e), ('e2', e2), ('f', f), ('g', g)])
+    s_expected = Session([('e', e), ('f', f), ('g', g), ('h', h)])
     assert s.equals(s_expected)
 
     # all global arrays
     s = global_arrays(include_private=True)
-    s_expected = Session([('e', e), ('_e', _e), ('e2', e2), ('f', f), ('g', g)])
+    s_expected = Session([('e', e), ('_e', _e), ('f', f), ('g', g), ('h', h)])
     assert s.equals(s_expected)
 
 
 def test_arrays():
-    h = ndtest(2)
-    _h = ndtest(3)
+    i = ndtest(2)
+    _i = ndtest(3)
 
     # exclude private arrays
     s = arrays()
-    s_expected = Session([('e', e), ('e2', e2), ('f', f), ('g', g), ('h', h)])
+    s_expected = Session([('e', e), ('f', f), ('g', g), ('h', h), ('i', i)])
     assert s.equals(s_expected)
 
     # all arrays
     s = arrays(include_private=True)
-    s_expected = Session([('_e', _e), ('_h', _h), ('e', e), ('e2', e2), ('f', f), ('g', g), ('h', h)])
+    s_expected = Session([('_e', _e), ('_i', _i), ('e', e), ('f', f), ('g', g), ('h', h), ('i', i)])
     assert s.equals(s_expected)
 
 
