@@ -55,4 +55,5 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed reading/exporting sessions containing two or more axes/groups
+  with the same name (or anonymous) from/to CSV, Excel and HDF files (closes :issue:`803`).

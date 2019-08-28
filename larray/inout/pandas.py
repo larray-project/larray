@@ -338,25 +338,35 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
 #    SERIES <--> AXIS, GROUP, META     #
 # #################################### #
 
-def _axis_to_series(axis, dtype=None):
-    return pd.Series(data=axis.labels, name=str(axis), dtype=dtype)
+def _axis_to_series(key, axis, dtype=None):
+    name = '{}:{}'.format(key, axis.name)
+    return pd.Series(data=axis.labels, name=name, dtype=dtype)
 
 
 def _series_to_axis(series):
-    return Axis(labels=series.values, name=series.name)
+    name = str(series.name)
+    if ':' in name:
+        key, axis_name = name.split(':')
+    else:
+        # for backward compatibility
+        key = axis_name = name
+    return key, Axis(labels=series.values, name=axis_name)
 
 
-def _group_to_series(group, dtype=None):
-    name = group.name if group.name is not None else '{?}'
+def _group_to_series(key, group, dtype=None):
     if group.axis.name is None:
         raise ValueError("Cannot save a group with an anonymous associated axis")
-    name += '@{}'.format(group.axis.name)
+    name = '{}:{}@{}'.format(key, group.name, group.axis.name)
     return pd.Series(data=group.eval(), name=name, dtype=dtype)
 
 
-def _series_to_group(series, axis):
-    name = series.name.split('@')[0]
-    return LGroup(key=series.values, name=name, axis=axis)
+def _series_to_group(series, axes):
+    key, name = str(series.name).split(':')
+    group_name, axis_name = name.split('@')
+    if group_name == 'None':
+        group_name = None
+    axis = axes[axis_name]
+    return key, LGroup(key=series.values, name=group_name, axis=axis)
 
 
 # ######################################## #
@@ -364,25 +374,20 @@ def _series_to_group(series, axis):
 # ######################################## #
 
 def _df_to_axes(df):
-    return OrderedDict([(col_name, _series_to_axis(df[col_name])) for col_name in df.columns.values])
+    return OrderedDict([_series_to_axis(df[col_name]) for col_name in df.columns.values])
 
 
 def _axes_to_df(axes):
     # set dtype to np.object otherwise pd.concat below may convert an int row/column as float
     # if trailing NaN need to be added
-    return pd.concat([_axis_to_series(axis, dtype=np.object) for axis in axes], axis=1)
+    return pd.concat([_axis_to_series(key, axis, dtype=np.object) for key, axis in axes.items()], axis=1)
 
 
 def _df_to_groups(df, axes):
-    groups = OrderedDict()
-    for name, values in df.iteritems():
-        group_name, axis_name = name.split('@')
-        axis = axes[axis_name]
-        groups[group_name] = _series_to_group(values, axis)
-    return groups
+    return OrderedDict([_series_to_group(df[col_name], axes) for col_name in df.columns.values])
 
 
 def _groups_to_df(groups):
     # set dtype to np.object otherwise pd.concat below may convert an int row/column as float
     # if trailing NaN need to be added
-    return pd.concat([_group_to_series(group, dtype=np.object) for group in groups], axis=1)
+    return pd.concat([_group_to_series(key, group, dtype=np.object) for key, group in groups.items()], axis=1)

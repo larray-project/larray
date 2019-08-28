@@ -329,15 +329,15 @@ class PandasCSVHandler(FileHandler):
             pass
         try:
             fnames.remove('__axes__')
-            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+            items = [(key, 'Axis') for key in sorted(self.axes.keys())]
         except:
             pass
         try:
             fnames.remove('__groups__')
-            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+            items += [(key, 'Group') for key in sorted(self.groups.keys())]
         except:
             pass
-        items += [(name, 'Array') for name in fnames]
+        items += [(key, 'Array') for key in fnames]
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
@@ -375,10 +375,10 @@ class PandasCSVHandler(FileHandler):
 
     def save(self):
         if len(self.axes) > 0:
-            df = _axes_to_df(self.axes.values())
+            df = _axes_to_df(self.axes)
             df.to_csv(self._to_filepath('__axes__'), sep=self.sep, index=False)
         if len(self.groups) > 0:
-            df = _groups_to_df(self.groups.values())
+            df = _groups_to_df(self.groups)
             df.to_csv(self._to_filepath('__groups__'), sep=self.sep, index=False)
 
     def close(self):

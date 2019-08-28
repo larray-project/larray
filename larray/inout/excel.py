@@ -268,15 +268,15 @@ class PandasExcelHandler(FileHandler):
             pass
         try:
             sheet_names.remove('__axes__')
-            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+            items = [(key, 'Axis') for key in sorted(self.axes.keys())]
         except:
             pass
         try:
             sheet_names.remove('__groups__')
-            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+            items += [(key, 'Group') for key in sorted(self.groups.keys())]
         except:
             pass
-        items += [(name, 'Array') for name in sheet_names]
+        items += [(key, 'Array') for key in sheet_names]
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
@@ -316,10 +316,10 @@ class PandasExcelHandler(FileHandler):
 
     def save(self):
         if len(self.axes) > 0:
-            df = _axes_to_df(self.axes.values())
+            df = _axes_to_df(self.axes)
             df.to_excel(self.handle, '__axes__', index=False, engine='xlsxwriter')
         if len(self.groups) > 0:
-            df = _groups_to_df(self.groups.values())
+            df = _groups_to_df(self.groups)
             df.to_excel(self.handle, '__groups__', index=False, engine='xlsxwriter')
 
     def close(self):
@@ -373,15 +373,15 @@ class XLWingsHandler(FileHandler):
             pass
         try:
             sheet_names.remove('__axes__')
-            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
+            items = [(key, 'Axis') for key in sorted(self.axes.keys())]
         except:
             pass
         try:
             sheet_names.remove('__groups__')
-            items += [(name, 'Group') for name in sorted(self.groups.keys())]
+            items += [(key, 'Group') for key in sorted(self.groups.keys())]
         except:
             pass
-        items += [(name, 'Array') for name in sheet_names]
+        items += [(key, 'Array') for key in sheet_names]
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
@@ -419,11 +419,11 @@ class XLWingsHandler(FileHandler):
 
     def save(self):
         if len(self.axes) > 0:
-            df = _axes_to_df(self.axes.values())
+            df = _axes_to_df(self.axes)
             self.handle['__axes__'] = ''
             self.handle['__axes__'][:].options(pd.DataFrame, index=False).value = df
         if len(self.groups) > 0:
-            df = _groups_to_df(self.groups.values())
+            df = _groups_to_df(self.groups)
             self.handle['__groups__'] = ''
             self.handle['__groups__'][:].options(pd.DataFrame, index=False).value = df
         self.handle.save()
