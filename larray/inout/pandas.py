@@ -338,6 +338,24 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
 #    SERIES <--> AXIS, GROUP, META     #
 # #################################### #
 
+def _extract_labels_from_series(series):
+    # remove trailing NaN or None values
+    # (multiple Axis or Group objects of different lengths
+    # are stored in the same DataFrame leading to trailing
+    # NaNs or None values when split into series)
+    series = series.loc[:series.last_valid_index()]
+
+    labels = np.asarray(series.values)
+    # integer labels of axes or groups may have been converted to float values
+    # because of trailing NaNs
+    if labels.dtype.kind == 'f' and all([label.is_integer() for label in labels]):
+        labels = labels.astype(int)
+    # if dtype is still object, we assume values are strings
+    if labels.dtype.kind == 'O':
+        labels = labels.astype(str)
+    return labels
+
+
 def _axis_to_series(key, axis, dtype=None):
     name = '{}:{}'.format(key, axis.name)
     return pd.Series(data=axis.labels, name=name, dtype=dtype)
@@ -345,12 +363,13 @@ def _axis_to_series(key, axis, dtype=None):
 
 def _series_to_axis(series):
     name = str(series.name)
+    labels = _extract_labels_from_series(series)
     if ':' in name:
         key, axis_name = name.split(':')
     else:
         # for backward compatibility
         key = axis_name = name
-    return key, Axis(labels=series.values, name=axis_name)
+    return key, Axis(labels=labels, name=axis_name)
 
 
 def _group_to_series(key, group, dtype=None):
@@ -366,7 +385,8 @@ def _series_to_group(series, axes):
     if group_name == 'None':
         group_name = None
     axis = axes[axis_name]
-    return key, LGroup(key=series.values, name=group_name, axis=axis)
+    group_key = _extract_labels_from_series(series)
+    return key, LGroup(key=group_key, name=group_name, axis=axis)
 
 
 # ######################################## #

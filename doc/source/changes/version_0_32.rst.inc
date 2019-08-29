@@ -57,3 +57,6 @@ Fixes
 
 * fixed reading/exporting sessions containing two or more axes/groups
   with the same name (or anonymous) from/to CSV, Excel and HDF files (closes :issue:`803`).
+
+* fixed NaNs and None labels appearing in axes and groups when reading/exporting sessions
+  from/to CSV and Excel files (closes :issue:`804`).
