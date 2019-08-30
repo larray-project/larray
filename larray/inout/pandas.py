@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import re
 from itertools import product
 from collections import OrderedDict
 
@@ -138,6 +139,9 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
         if sort_rows:
             s = s.sort_index()
         return LArray(s.values, Axis(s.index.values, name), meta=meta)
+
+
+_anonymous_axis_pattern = re.compile(r'\{(\d+|\??)\}\*?')
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
@@ -357,8 +361,9 @@ def _extract_labels_from_series(series):
 
 
 def _axis_to_series(key, axis, dtype=None):
-    name = '{}:{}'.format(key, axis.name)
-    return pd.Series(data=axis.labels, name=name, dtype=dtype)
+    name = '{}:{}'.format(key, str(axis))
+    labels = len(axis) if axis.iswildcard else axis.labels
+    return pd.Series(data=labels, name=name, dtype=dtype)
 
 
 def _series_to_axis(series):
@@ -366,6 +371,10 @@ def _series_to_axis(series):
     labels = _extract_labels_from_series(series)
     if ':' in name:
         key, axis_name = name.split(':')
+        if axis_name[-1] == '*':
+            labels = labels[0]
+        if _anonymous_axis_pattern.match(axis_name):
+            axis_name = None
     else:
         # for backward compatibility
         key = axis_name = name
