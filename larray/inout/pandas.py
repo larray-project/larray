@@ -251,7 +251,16 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     axes_names = [str(name) if name is not None else name
                   for name in axes_names]
 
-    axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
+    def _to_axis(labels, name):
+        if name is not None:
+            if name[-1] == '*':
+                labels = len(labels)
+                name = name[:-1]
+            if _anonymous_axis_pattern.match(name):
+                name = None
+        return Axis(labels, name)
+
+    axes = AxisCollection([_to_axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.values.reshape(axes.shape)
     return LArray(data, axes, meta=meta)
 

@@ -3827,6 +3827,18 @@ def test_from_frame():
     assert la.axes.names == ['age', 'sex', 'time']
     assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
 
+    # 3C) 3 anonymous axes
+    # ====================
+    arr = ndtest((Axis(2), Axis(2), Axis(2)))
+    df = arr.to_frame()
+
+    la = from_frame(df)
+    assert la.ndim == 3
+    assert la.shape == (2, 2, 2)
+    for axis in la.axes:
+        assert axis.name is None
+        assert axis.iswildcard
+
     # 4) test sort_rows and sort_columns arguments
     # ============================================
     age = Axis('age=2,0,1,3')
