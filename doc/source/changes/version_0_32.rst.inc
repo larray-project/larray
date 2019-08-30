@@ -60,3 +60,6 @@ Fixes
 
 * fixed NaNs and None labels appearing in axes and groups when reading/exporting sessions
   from/to CSV and Excel files (closes :issue:`804`).
+
+* fixed importing/exporting anonymous and/or wildcard axes to CSV and Excel files
+  (closes :issue:`805`).
