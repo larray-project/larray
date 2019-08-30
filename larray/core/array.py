@@ -1185,22 +1185,21 @@ class LArray(ABCLArray):
            b1    6   7
         """
         columns = pd.Index(self.axes[-1].labels)
+        axes_names = self.axes.display_names[:]
         if not fold_last_axis_name:
-            columns.name = self.axes[-1].name
+            columns.name = axes_names[-1]
         if self.ndim > 1:
-            axes_names = self.axes.names[:-1]
+            _axes_names = axes_names[:-1]
             if fold_last_axis_name:
-                tmp = axes_names[-1] if axes_names[-1] is not None else ''
-                if self.axes[-1].name:
-                    axes_names[-1] = "{}\\{}".format(tmp, self.axes[-1].name)
+                _axes_names[-1] = "{}\\{}".format(_axes_names[-1], axes_names[-1])
             if self.ndim == 2:
-                index = pd.Index(data=self.axes[0].labels, name=axes_names[0])
+                index = pd.Index(data=self.axes[0].labels, name=_axes_names[0])
             else:
-                index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=axes_names)
+                index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=_axes_names)
         else:
             index = pd.Index([''])
             if fold_last_axis_name:
-                index.name = self.axes.names[-1]
+                index.name = axes_names[-1]
         data = np.asarray(self).reshape(len(index), len(columns))
         df = pd.DataFrame(data, index, columns)
         if dropna is not None:

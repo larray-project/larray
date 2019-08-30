@@ -3454,6 +3454,17 @@ def test_from_series():
     assert_array_equal(res, expected)
 
 
+def test_to_frame():
+    # array containing anonymous axes
+    arr = ndtest((Axis(2), Axis(2), Axis(2)))
+    df = arr.to_frame()
+    assert df.index.name is None
+    assert df.index.names == ['{0}*', '{1}*']
+    assert df.columns.name == '{2}*'
+    assert list(df.index.values) == [(0, 0), (0, 1), (1, 0), (1, 1)]
+    assert list(df.columns.values) == [0, 1]
+
+
 def test_from_frame():
     # 1) data = scalar
     # ================
