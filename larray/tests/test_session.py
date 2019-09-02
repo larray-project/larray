@@ -10,7 +10,7 @@ import pytest
 from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta, needs_xlwings
 from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like,
                     local_arrays, global_arrays, arrays)
-from larray.util.misc import pickle
+from larray.util.misc import pickle, PY2
 
 
 def equal(o1, o2):
@@ -179,8 +179,9 @@ def _test_io(fpath, session, meta, engine='auto'):
     # use Session.names instead of Session.keys because CSV, Excel and HDF do *not* keep ordering
     assert s.names == names
     assert s.equals(session)
-    for key in s.filter(kind=(Axis, LArray)).keys():
-        assert s[key].dtype.kind == session[key].dtype.kind
+    if not PY2:
+        for key in s.filter(kind=(Axis, LArray)).keys():
+            assert s[key].dtype.kind == session[key].dtype.kind
     if engine != 'pandas_excel':
         assert s.meta == meta
 
