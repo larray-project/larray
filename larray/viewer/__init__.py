@@ -90,6 +90,24 @@ def compare(*args, **kwargs):
         namespace which correspond to the passed objects.
     depth : int, optional
         Stack depth where to look for variables. Defaults to 0 (where this function was called).
+    display_caller_info: bool, optional
+        Whether or not to display the filename and line number where the Editor has been called.
+        Defaults to True.
+    rtol : float or int, optional
+        The relative tolerance parameter (see Notes). Defaults to 0.
+    atol : float or int, optional
+        The absolute tolerance parameter (see Notes). Defaults to 0.
+    nans_equal : boolean, optional
+        Whether or not to consider NaN values at the same positions in the two arrays as equal.
+        By default, an array containing NaN values is never equal to another array, even if that other array
+        also contains NaN values at the same positions. The reason is that a NaN value is different from
+        *anything*, including itself. Defaults to True.
+
+    Notes
+    -----
+    For finite values, the following equation is used to test whether two values are equal:
+
+        absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
     Examples
     --------
