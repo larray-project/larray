@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta, needs_xlwings
-from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like,
+from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
 
@@ -452,6 +452,18 @@ def test_sub(session):
     assert_array_nan_equal(diff['e'], e - ones_like(e))
     assert_array_nan_equal(diff['f'], f - 1)
     assert isnan(diff['g']).all()
+    assert diff.a is a
+    assert diff.a01 is a01
+    assert diff.c is c
+
+    # session - array
+    axes = [a, b]
+    sess = Session([('a', a), ('a01', a01), ('c', c), ('e', ndtest(axes)),
+                    ('f', full(axes, fill_value=3)), ('g', ndtest('c=c0..c2'))])
+    diff = sess - ones(axes)
+    assert_array_nan_equal(diff['e'], sess['e'] - ones(axes))
+    assert_array_nan_equal(diff['f'], sess['f'] - ones(axes))
+    assert_array_nan_equal(diff['g'], sess['g'] - ones(axes))
     assert diff.a is a
     assert diff.a01 is a01
     assert diff.c is c
