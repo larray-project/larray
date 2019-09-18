@@ -935,7 +935,7 @@ class Session(object):
         def opmethod(self, other):
             self_keys = set(self.keys())
             all_keys = list(self.keys())
-            if hasattr(other, 'keys'):
+            if not isinstance(other, LArray) and hasattr(other, 'keys'):
                 all_keys += [n for n in other.keys() if n not in self_keys]
             with np.errstate(call=_session_float_error_handler):
                 res = []

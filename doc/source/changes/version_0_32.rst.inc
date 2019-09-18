@@ -55,4 +55,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed binary operations between a session and an array object (closes :issue:`807`).
