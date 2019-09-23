@@ -77,7 +77,7 @@ def irange(start, stop, step=None):
     return range(start, stop, step)
 
 
-_range_bound_pattern = re.compile('([0-9]+|[a-zA-Z]+)')
+_range_bound_pattern = re.compile(r'([0-9]+|[a-zA-Z]+)')
 
 
 def generalized_range(start, stop, step=1):
