@@ -54,6 +54,9 @@ class PickleHandler(FileHandler):
     def _dump_metadata(self, metadata):
         self.data['__metadata__'] = metadata
 
-    def close(self):
+    def save(self):
         with open(self.fname, 'wb') as f:
             pickle.dump(self.data, f)
+
+    def close(self):
+        pass
