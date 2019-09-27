@@ -3789,8 +3789,7 @@ class LArray(ABCLArray):
              BE  40.0  60.0
              FO  20.0  80.0
         """
-        # dividing by self.sum(*axes) * 0.01 would be faster in many cases but I suspect it loose more precision.
-        return self * 100 / self.sum(*axes)
+        return self * 100.0 / self.sum(*axes)
 
     # aggregate method decorator
     def _decorate_agg_method(npfunc, nanfunc=None, commutative=False, by_agg=False, extra_kwargs=[],
