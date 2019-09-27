@@ -2484,15 +2484,15 @@ def test_percent(array):
     reg = array.sum(age, sex, regions)
 
     percent = reg.percent()
-    assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
+    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo, lipro)))
     assert percent.shape == (3, 15)
 
     percent = reg.percent(geo)
-    assert_array_equal(percent, reg * 100 / reg.sum(geo))
+    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo)))
     assert percent.shape == (3, 15)
 
     percent = reg.percent(geo, lipro)
-    assert_array_equal(percent, reg * 100 / reg.sum(geo, lipro))
+    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo, lipro)))
     assert percent.shape == (3, 15)
     assert round(abs(percent.sum() - 100.0), 7) == 0
 
