@@ -45,6 +45,7 @@ def update_metapackage(context):
                 fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
                 "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables",
                 "xlsxwriter", "xlrd", "openpyxl", "xlwings", "ipykernel !=5.0,!=5.1.0",
+                '--user', 'larray-project',
                 '--home', 'http://github.com/larray-project/larray',
                 '--license', 'GPL-3.0',
                 '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
