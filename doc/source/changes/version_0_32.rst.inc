@@ -49,7 +49,8 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* conda channel to install or update the larray, larray-editor, larray-eurostat and larrayenv packages
+  switched from ``gdementen`` to ``larray-project`` (closes :issue:`560`).
 
 
 Fixes
