@@ -232,7 +232,7 @@ class TestRange(object):
             assert res1.equals(arr1)
             assert res1.dtype == arr1.dtype
 
-    # this tests Range.__getattr__ with an LArray attribute
+    # this tests Range.__getattr__ with an Array attribute
     def test_aggregate(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]

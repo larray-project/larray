@@ -49,7 +49,7 @@ cells:
 
 
 - markdown: |
-    See [with_total](../_generated/larray.LArray.with_total.rst#larray.LArray.with_total) for more details and examples.
+    See [with_total](../_generated/larray.Array.with_total.rst#larray.Array.with_total) for more details and examples.
 
 
 - markdown: |
@@ -90,7 +90,7 @@ cells:
 
 
 - markdown: |
-    See [clip](../_generated/larray.LArray.clip.rst#larray.LArray.clip) for more details and examples.
+    See [clip](../_generated/larray.Array.clip.rst#larray.Array.clip) for more details and examples.
 
 
 - markdown: |
@@ -117,7 +117,7 @@ cells:
 
 
 - markdown: |
-    See [divnot0](../_generated/larray.LArray.divnot0.rst#larray.LArray.divnot0) for more details and examples.
+    See [divnot0](../_generated/larray.Array.divnot0.rst#larray.Array.divnot0) for more details and examples.
 
 
 - markdown: |
@@ -134,7 +134,7 @@ cells:
 
 
 - markdown: |
-    See [ratio](../_generated/larray.LArray.ratio.rst#larray.LArray.ratio) and [rationot0](../_generated/larray.LArray.rationot0.rst#larray.LArray.rationot0) for more details and examples.
+    See [ratio](../_generated/larray.Array.ratio.rst#larray.Array.ratio) and [rationot0](../_generated/larray.Array.rationot0.rst#larray.Array.rationot0) for more details and examples.
 
 
 - markdown: |
@@ -147,7 +147,7 @@ cells:
 
 
 - markdown: |
-    See [percent](../_generated/larray.LArray.percent.rst#larray.LArray.percent) for more details and examples.
+    See [percent](../_generated/larray.Array.percent.rst#larray.Array.percent) for more details and examples.
 
 
 - markdown: |
@@ -174,7 +174,7 @@ cells:
 
 
 - markdown: |
-    See [diff](../_generated/larray.LArray.diff.rst#larray.LArray.diff) for more details and examples.
+    See [diff](../_generated/larray.Array.diff.rst#larray.Array.diff) for more details and examples.
 
 
 - markdown: |
@@ -190,7 +190,7 @@ cells:
 
 
 - markdown: |
-    See [growth_rate](../_generated/larray.LArray.growth_rate.rst#larray.LArray.growth_rate) for more details and examples.
+    See [growth_rate](../_generated/larray.Array.growth_rate.rst#larray.Array.growth_rate) for more details and examples.
 
 
 - markdown: |
@@ -211,7 +211,7 @@ cells:
 
 
 - markdown: |
-    See [shift](../_generated/larray.LArray.shift.rst#larray.LArray.shift) for more details and examples.
+    See [shift](../_generated/larray.Array.shift.rst#larray.Array.shift) for more details and examples.
 
 
 - markdown: |

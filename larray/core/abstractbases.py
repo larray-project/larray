@@ -14,5 +14,5 @@ class ABCAxisReference(ABCAxis):
     __metaclass__ = ABCMeta
 
 
-class ABCLArray(object):
+class ABCArray(object):
     __metaclass__ = ABCMeta

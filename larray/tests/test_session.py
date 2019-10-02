@@ -8,13 +8,13 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta, needs_xlwings
-from larray import (Session, Axis, LArray, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
+from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle
 
 
 def equal(o1, o2):
-    if isinstance(o1, LArray) or isinstance(o2, LArray):
+    if isinstance(o1, Array) or isinstance(o2, Array):
         return o1.equals(o2)
     elif isinstance(o1, Axis) or isinstance(o2, Axis):
         return o1.equals(o2)
@@ -87,7 +87,7 @@ def test_getitem_list(session):
 
 
 def test_getitem_larray(session):
-    s1 = session.filter(kind=LArray)
+    s1 = session.filter(kind=Array)
     s2 = Session({'e': e + 1, 'f': f})
     res_eq = s1[s1.element_equals(s2)]
     res_neq = s1[~(s1.element_equals(s2))]
@@ -140,7 +140,7 @@ def test_filter(session):
     assert list(session.filter(kind=Axis)) == [b, a]
     assert list(session.filter('a01', Group)) == [a01]
     assert list(session.filter(kind=Group)) == [b12, a01]
-    assertObjListEqual(session.filter(kind=LArray), [e, g, f])
+    assertObjListEqual(session.filter(kind=Array), [e, g, f])
     assert list(session.filter(kind=dict)) == [{}]
     assert list(session.filter(kind=(Axis, Group))) == [b, b12, a, a01]
 
@@ -161,7 +161,7 @@ def test_h5_io(tmpdir, session, meta):
     s = Session()
     s.load(fpath)
     # HDF does *not* keep ordering (ie, keys are always sorted +
-    # read Axis objects, then Groups objects and finally LArray objects)
+    # read Axis objects, then Groups objects and finally Array objects)
     assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
     assert s.meta == meta
 
@@ -260,7 +260,7 @@ def test_csv_io(tmpdir, session, meta):
         s = Session()
         s.load(fpath, engine='pandas_csv')
         # CSV cannot keep ordering (so we always sort keys)
-        # Also, Axis objects are read first, then Groups objects and finally LArray objects
+        # Also, Axis objects are read first, then Groups objects and finally Array objects
         assert list(s.keys()) == ['a', 'b', 'a01', 'b12', 'e', 'f', 'g']
         assert s.meta == meta
 
@@ -361,7 +361,7 @@ def test_to_globals(session):
 
 
 def test_element_equals(session):
-    sess = session.filter(kind=(Axis, Group, LArray))
+    sess = session.filter(kind=(Axis, Group, Array))
     expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
                         ('e', e), ('g', g), ('f', f)])
     assert all(sess.element_equals(expected))
@@ -383,44 +383,44 @@ def test_element_equals(session):
 
 
 def test_eq(session):
-    sess = session.filter(kind=(Axis, Group, LArray))
+    sess = session.filter(kind=(Axis, Group, Array))
     expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
                         ('e', e), ('g', g), ('f', f)])
-    assert all([item.all() if isinstance(item, LArray) else item
+    assert all([item.all() if isinstance(item, Array) else item
                 for item in (sess == expected).values()])
 
     other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
     res = sess == other
     assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
-    assert [item.all() if isinstance(item, LArray) else item
+    assert [item.all() if isinstance(item, Array) else item
             for item in res.values()] == [True, True, True, True, True, False, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
     other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
     res = sess == other
-    assert [item.all() if isinstance(item, LArray) else item
+    assert [item.all() if isinstance(item, Array) else item
             for item in res.values()] == [True, True, True, True, False, False, True]
 
 
 def test_ne(session):
-    sess = session.filter(kind=(Axis, Group, LArray))
+    sess = session.filter(kind=(Axis, Group, Array))
     expected = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01),
                         ('e', e), ('g', g), ('f', f)])
-    assert ([(~item).all() if isinstance(item, LArray) else not item
+    assert ([(~item).all() if isinstance(item, Array) else not item
              for item in (sess != expected).values()])
 
     other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e), ('f', f)])
     res = sess != other
     assert list(res.keys()) == ['b', 'b12', 'a', 'a01', 'e', 'g', 'f']
-    assert [(~item).all() if isinstance(item, LArray) else not item
+    assert [(~item).all() if isinstance(item, Array) else not item
             for item in res.values()] == [True, True, True, True, True, False, True]
 
     e2 = e.copy()
     e2.i[1, 1] = 42
     other = Session([('b', b), ('b12', b12), ('a', a), ('a01', a01), ('e', e2), ('f', f)])
     res = sess != other
-    assert [(~item).all() if isinstance(item, LArray) else not item
+    assert [(~item).all() if isinstance(item, Array) else not item
             for item in res.values()] == [True, True, True, True, False, False, True]
 
 
@@ -446,7 +446,7 @@ def test_sub(session):
     assert diff.a01 is a01
     assert diff.c is c
 
-    # session - dict(LArray and scalar)
+    # session - dict(Array and scalar)
     other = {'e': ones_like(e), 'f': 1}
     diff = sess - other
     assert_array_nan_equal(diff['e'], e - ones_like(e))
@@ -481,7 +481,7 @@ def test_rsub(session):
     assert diff.a01 is a01
     assert diff.c is c
 
-    # dict(LArray and scalar) - session
+    # dict(Array and scalar) - session
     other = {'e': ones_like(e), 'f': 1}
     diff = other - sess
     assert_array_nan_equal(diff['e'], ones_like(e) - e)
@@ -523,7 +523,7 @@ def test_rdiv(session):
     assert res.a01 is a01
     assert res.c is c
 
-    # dict(LArray and scalar) - session
+    # dict(Array and scalar) - session
     other = {'e': e, 'f': f}
     res = other / sess
     assert_array_nan_equal(res['e'], e / e)
@@ -534,7 +534,7 @@ def test_rdiv(session):
 
 
 def test_pickle_roundtrip(session, meta):
-    original = session.filter(kind=LArray)
+    original = session.filter(kind=Array)
     original.meta = meta
     s = pickle.dumps(original)
     res = pickle.loads(s)

@@ -10,7 +10,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.array import LArray, ndtest
+from larray.core.array import Array, ndtest
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import _translate_sheet_name
@@ -50,8 +50,8 @@ if xw is not None:
             global_app = None
 
 
-    class LArrayConverter(PandasDataFrameConverter):
-        writes_types = LArray
+    class ArrayConverter(PandasDataFrameConverter):
+        writes_types = Array
 
         @classmethod
         def read_value(cls, value, options):
@@ -63,7 +63,7 @@ if xw is not None:
             df = value.to_frame(fold_last_axis_name=True)
             return PandasDataFrameConverter.write_value(df, options)
 
-    LArrayConverter.register(LArray)
+    ArrayConverter.register(Array)
 
     def _disable_screen_updates(app):
         xl_app = app.api
@@ -397,7 +397,7 @@ if xw is not None:
                 return Range(self, (row + 1, col + 1))
 
         def __setitem__(self, key, value):
-            if isinstance(value, LArray):
+            if isinstance(value, Array):
                 value = value.dump(header=False)
             self[key].xw_range.value = value
 
@@ -499,7 +499,7 @@ if xw is not None:
 
             Returns
             -------
-            LArray
+            Array
             """
             if row_labels is not None:
                 row_labels = np.asarray(self[row_labels])
@@ -511,7 +511,7 @@ if xw is not None:
             else:
                 axes = (row_labels, column_labels)
             # _converted_value is used implicitly via Range.__array__
-            return LArray(np.asarray(self[data]), axes)
+            return Array(np.asarray(self[data]), axes)
 
         def __repr__(self):
             cls = self.__class__
@@ -585,13 +585,13 @@ if xw is not None:
             return np.array(self._converted_value(), dtype=dtype)
 
         def __larray__(self):
-            return LArray(self._converted_value())
+            return Array(self._converted_value())
 
         def __dir__(self):
             return list(set(dir(self.__class__)) | set(dir(self.xw_range)))
 
         def __getattr__(self, key):
-            if hasattr(LArray, key):
+            if hasattr(Array, key):
                 return getattr(self.__larray__(), key)
             else:
                 return getattr(self.xw_range, key)
@@ -611,7 +611,7 @@ if xw is not None:
         def load(self, header=True, convert_float=True, nb_axes=None, index_col=None, fill_value=nan,
                  sort_rows=False, sort_columns=False, wide=True):
             if not self.ndim:
-                return LArray([])
+                return Array([])
 
             list_data = self._converted_value(convert_float=convert_float)
 
@@ -619,7 +619,7 @@ if xw is not None:
                 return from_lists(list_data, nb_axes=nb_axes, index_col=index_col, fill_value=fill_value,
                                   sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
             else:
-                return LArray(list_data)
+                return Array(list_data)
 
 
     # XXX: deprecate this function?

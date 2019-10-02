@@ -95,7 +95,7 @@ cells:
 
 
 - code: |
-    aggregation_matrix = LArray([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), pop.country))
+    aggregation_matrix = Array([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), pop.country))
     aggregation_matrix
 
 
@@ -107,12 +107,12 @@ cells:
 - markdown: |
     <div class="alert alert-info">
     **Note:** Be careful when mixing different data types.
-    You can use the method [astype](../_generated/larray.LArray.astype.rst#larray.LArray.astype) to change the data type of an array.
+    You can use the method [astype](../_generated/larray.Array.astype.rst#larray.Array.astype) to change the data type of an array.
     </div>
 
 
 - code: |
-    aggregation_matrix = LArray([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), pop.country))
+    aggregation_matrix = Array([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), pop.country))
     aggregation_matrix
 
 
@@ -175,7 +175,7 @@ cells:
 
 - markdown: |
     <div class="alert alert-warning">
-        **Warning:** Operations between two arrays only works when they have compatible axes (i.e. same labels) but this behavior can be override via the [ignore_labels](../_generated/larray.LArray.ignore_labels.rst#larray.LArray.ignore_labels) method.
+        **Warning:** Operations between two arrays only works when they have compatible axes (i.e. same labels) but this behavior can be override via the [ignore_labels](../_generated/larray.Array.ignore_labels.rst#larray.Array.ignore_labels) method.
     In that case only the position on the axis is used and not the labels.
     Using this method is done at your own risk.
     </div>
@@ -201,7 +201,7 @@ cells:
 - code: |
     # let's define a 'multiplicator' vector with 
     # one value defined for each gender
-    multiplicator = LArray([-1, 1], axes=pop.gender)
+    multiplicator = Array([-1, 1], axes=pop.gender)
     multiplicator
 
 
@@ -281,7 +281,7 @@ cells:
 
 
 - markdown: |
-    To test if all values between are equals, use the [equals](../_generated/larray.LArray.equals.rst#larray.LArray.equals) method:
+    To test if all values between are equals, use the [equals](../_generated/larray.Array.equals.rst#larray.Array.equals) method:
 
 
 - code: |
@@ -291,7 +291,7 @@ cells:
 - markdown: |
     ## Aggregates
     
-    LArray provides many aggregation functions. The list is given in the [Aggregation Functions](../api.rst#aggregation-functions) subsection of the [API Reference](../api.rst) page.
+    The LArray library provides many aggregation functions. The list is given in the [Aggregation Functions](../api.rst#aggregation-functions) subsection of the [API Reference](../api.rst) page.
     
     Aggregation operations can be performed on axes or groups. Axes and groups can be mixed. 
     

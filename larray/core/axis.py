@@ -10,7 +10,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
-from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
+from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
@@ -461,7 +461,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        key : int, or collection (list, slice, array, LArray) of them
+        key : int, or collection (list, slice, array, Array) of them
             Indices of labels to use for the new axis.
         name : str, optional
             Name of the subaxis. Defaults to the name of the parent axis.
@@ -470,7 +470,7 @@ class Axis(ABCAxis):
         -------
         Axis
             Subaxis. If key is a None slice and name is None, the original Axis is returned.
-            If key is a LArray, the list of axes is returned.
+            If key is an Array, the list of axes is returned.
 
         Examples
         --------
@@ -484,7 +484,7 @@ class Axis(ABCAxis):
         # one because the original name is probably what users will want to use to filter
         if name is None:
             name = self.name
-        if isinstance(key, ABCLArray):
+        if isinstance(key, ABCArray):
             return key.axes
         # TODO: compute length for wildcard axes more efficiently
         labels = len(self.labels[key]) if self.iswildcard else self.labels[key]
@@ -916,9 +916,9 @@ class Axis(ABCAxis):
                 return array_lookup2(_seq_group_to_name(key), self._sorted_keys, self._sorted_values)
             except KeyError:
                 return array_lookup2(key, self._sorted_keys, self._sorted_values)
-        elif isinstance(key, ABCLArray):
-            from .array import LArray
-            return LArray(self.index(key.data), key.axes)
+        elif isinstance(key, ABCArray):
+            from .array import Array
+            return Array(self.index(key.data), key.axes)
         else:
             # the first mapping[key] above will cover most cases.
             # This code path is only used if the key was given in "non normalized form"
@@ -1021,7 +1021,7 @@ class Axis(ABCAxis):
 
     def __larray__(self):
         r"""
-        Returns axis as LArray.
+        Returns axis as Array.
         """
         from .array import labels_array
         return labels_array(self)
@@ -1266,7 +1266,7 @@ class Axis(ABCAxis):
 
         See Also
         --------
-        LArray.align
+        Array.align
 
         Examples
         --------
@@ -2115,7 +2115,7 @@ class AxisCollection(object):
                         if item.iscompatible(axis):
                             return i
                 else:
-                    # We cannot use self._list.index because it use Axis.__eq__ which produces an LArray
+                    # We cannot use self._list.index because it use Axis.__eq__ which produces an Array
                     for i, item in enumerate(self._list):
                         if item.equals(axis):
                             return i
@@ -2225,7 +2225,7 @@ class AxisCollection(object):
                                for a in self])
 
     # XXX: what's the point in supporting a list of Axis or AxisCollection in axes_to_replace?
-    #      it is used in LArray.set_axes but if it is only there, shouldn't the support for that be
+    #      it is used in Array.set_axes but if it is only there, shouldn't the support for that be
     #      moved there?
     def replace(self, axes_to_replace=None, new_axis=None, inplace=False, **kwargs):
         r"""Replace one, several or all axes of the collection.
@@ -2338,7 +2338,7 @@ class AxisCollection(object):
                 return axis_key
 
         # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or LArray):
+        # (in AxisCollection or Array):
         # label -> (axis, index)
         # or possibly (for ambiguous labels)
         # label -> {axis: index}
@@ -2636,7 +2636,7 @@ class AxisCollection(object):
         """
         # called from _key_to_igroups
 
-        from .array import LArray
+        from .array import Array
 
         # Need to convert string keys to groups otherwise command like
         # >>> ndtest((5, 5)).drop('1[a0]')
@@ -2659,13 +2659,13 @@ class AxisCollection(object):
                 axis_key = axis_key.labels
 
         # TODO: do it for Group without axis too
-        if isinstance(axis_key, (tuple, list, np.ndarray, LArray)):
+        if isinstance(axis_key, (tuple, list, np.ndarray, Array)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is useful, and estimate which numbers to use
             # FIXME: check that size is < than key size
             for size in (1, 10, 100, 1000):
                 # TODO: do not recheck already checked elements
-                key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
+                key_chunk = axis_key.i[:size] if isinstance(axis_key, Array) else axis_key[:size]
                 try:
                     tkey = self._translate_axis_key_chunk(key_chunk)
                     axis = tkey.axis
@@ -2694,7 +2694,7 @@ class AxisCollection(object):
         Parameters
         ----------
         key : scalar, list/array of scalars, Group or tuple or dict of them
-            any key supported by LArray.__get|setitem__
+            any key supported by Array.__get|setitem__
 
         Returns
         -------
@@ -2706,7 +2706,7 @@ class AxisCollection(object):
         --------
         Axis.index
         """
-        from .array import LArray
+        from .array import Array
 
         if isinstance(key, dict):
             # key axes could be strings or axis references and we want real axes
@@ -2725,14 +2725,14 @@ class AxisCollection(object):
                 if axis_key.shape != self.shape:
                     raise ValueError("boolean key with a different shape ({}) than array ({})"
                                      .format(axis_key.shape, self.shape))
-                axis_key = LArray(axis_key, self)
+                axis_key = Array(axis_key, self)
 
-            if isinstance(axis_key, LArray) and np.issubdtype(axis_key.dtype, np.bool_):
+            if isinstance(axis_key, Array) and np.issubdtype(axis_key.dtype, np.bool_):
                 extra_key_axes = axis_key.axes - self
                 if extra_key_axes:
                     raise ValueError("boolean subset key contains more axes ({}) than array ({})"
                                      .format(axis_key.axes, self))
-                # nonzero (currently) returns a tuple of IGroups containing 1D LArrays (one IGroup per axis)
+                # nonzero (currently) returns a tuple of IGroups containing 1D Arrays (one IGroup per axis)
                 nonboolkey.extend(axis_key.nonzero())
             else:
                 nonboolkey.append(axis_key)
@@ -2749,19 +2749,19 @@ class AxisCollection(object):
 
     def _translated_key(self, key):
         """
-        Transforms any key (from LArray.__get|setitem__) to a complete indices-based key.
+        Transforms any key (from Array.__get|setitem__) to a complete indices-based key.
 
         Parameters
         ----------
         key : scalar, list/array of scalars, Group or tuple or dict of them
-            any key supported by LArray.__get|setitem__
+            any key supported by Array.__get|setitem__
 
         Returns
         -------
         tuple
             len(tuple) == self.ndim
 
-            This key is not yet usable as is in a numpy array as it can still contain LArray parts and the advanced key
+            This key is not yet usable as is in a numpy array as it can still contain Array parts and the advanced key
             parts are not broadcasted together yet.
         """
         # any key -> (IGroup, IGroup, ...)
@@ -2788,13 +2788,13 @@ class AxisCollection(object):
 
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True):
         r"""
-        Transforms any key (from LArray.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
+        Transforms any key (from Array.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
         of indices to transpose axes back to where they were.
 
         Parameters
         ----------
         key : scalar, list/array of scalars, Group or tuple or dict of them
-            any key supported by LArray.__getitem__
+            any key supported by Array.__getitem__
         collapse_slices : bool, optional
             Whether or not to convert ranges to slices. Defaults to False.
 
@@ -2802,7 +2802,7 @@ class AxisCollection(object):
         -------
         raw_key, res_axes, transposed_indices
         """
-        from .array import make_numpy_broadcastable, LArray, sequence
+        from .array import make_numpy_broadcastable, Array, sequence
 
         if translate_key:
             key = self._translated_key(key)
@@ -2816,29 +2816,29 @@ class AxisCollection(object):
         if collapse_slices:
             # isinstance(np.ndarray, collections.Sequence) is False but it behaves like one
             seq_types = (tuple, list, np.ndarray)
-            # TODO: we should only do this if there are no LArray key (with axes corresponding to the range)
+            # TODO: we should only do this if there are no Array key (with axes corresponding to the range)
             # otherwise we will be translating them back to a range afterwards
             key = [_range_to_slice(axis_key, len(axis)) if isinstance(axis_key, seq_types) else axis_key
                    for axis_key, axis in zip(key, self)]
 
-        # transform non-LArray advanced keys (list and ndarray) to LArray
+        # transform non-Array advanced keys (list and ndarray) to Array
         def to_la_ikey(axis, axis_key):
-            if isinstance(axis_key, (int, np.integer, slice, LArray)):
+            if isinstance(axis_key, (int, np.integer, slice, Array)):
                 return axis_key
             else:
                 assert isinstance(axis_key, (list, np.ndarray))
                 res_axis = axis.subaxis(axis_key)
-                # TODO: for perf reasons, we should bypass creating an actual LArray by returning axes and key_data
+                # TODO: for perf reasons, we should bypass creating an actual Array by returning axes and key_data
                 # but then we will need to implement a function similar to make_numpy_broadcastable which works on axes
                 # and rawdata instead of arrays
-                return LArray(axis_key, res_axis)
+                return Array(axis_key, res_axis)
 
         key = tuple(to_la_ikey(axis, axis_key) for axis, axis_key in zip(self, key))
 
-        # transform slice keys to LArray too IF they refer to axes present in advanced key (so that those axes
+        # transform slice keys to Array too IF they refer to axes present in advanced key (so that those axes
         # broadcast together instead of being duplicated, which is not what we want)
         def get_axes(value):
-            return value.axes if isinstance(value, LArray) else AxisCollection([])
+            return value.axes if isinstance(value, Array) else AxisCollection([])
 
         def slice_to_sequence(axis, axis_key):
             if isinstance(axis_key, slice) and axis in la_key_axes:
@@ -2907,7 +2907,7 @@ class AxisCollection(object):
             res_axes[adv_key_subspace_pos:adv_key_subspace_pos] = adv_key_dest_axes
 
         # transform to raw numpy arrays
-        raw_broadcasted_key = tuple(k.data if isinstance(k, LArray) else k
+        raw_broadcasted_key = tuple(k.data if isinstance(k, Array) else k
                                     for k in bcasted_adv_keys)
         return raw_broadcasted_key, res_axes, transpose_indices
 
@@ -3235,7 +3235,7 @@ class AxisCollection(object):
         See Also
         --------
         Axis.split
-        LArray.split_axes
+        Array.split_axes
 
         Returns
         -------
@@ -3340,7 +3340,7 @@ class AxisCollection(object):
 
         See Also
         --------
-        LArray.align
+        Array.align
 
         Examples
         --------
@@ -3435,13 +3435,13 @@ class AxisCollection(object):
 
         Examples
         --------
-        >>> from larray import ndtest, LArray
+        >>> from larray import ndtest, Array
         >>> arr = ndtest((2, 3))
         >>> arr
         a\b  b0  b1  b2
          a0   0   1   2
          a1   3   4   5
-        >>> indices = LArray([2, 5, 0], 'draw=d0..d2')
+        >>> indices = Array([2, 5, 0], 'draw=d0..d2')
         >>> indices
         draw  d0  d1  d2
                2   5   0
@@ -3451,21 +3451,21 @@ class AxisCollection(object):
                d1  a1  b2
                d2  a0  b0
         """
-        from larray.core.array import aslarray, LArray, stack
+        from larray.core.array import aslarray, Array, stack
 
         flat_indices = aslarray(flat_indices)
         axes_indices = np.unravel_index(flat_indices, self.shape)
-        # This could return an LArray with object dtype because axes labels can have different types (but not length)
+        # This could return an Array with object dtype because axes labels can have different types (but not length)
         # TODO: this should be:
         # return stack([(axis.name, axis.i[inds]) for axis, inds in zip(axes, axes_indices)], axis='axis')
         flat_axes = flat_indices.axes
-        return stack([(axis.name, LArray(axis.labels[inds], flat_axes)) for axis, inds in zip(self, axes_indices)],
+        return stack([(axis.name, Array(axis.labels[inds], flat_axes)) for axis, inds in zip(self, axes_indices)],
                      axes='axis')
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
         r"""
-        Returns key with the non-LArray "advanced indexing" key parts transformed to LArrays with a combined axis.
-        Scalar, slice and LArray key parts are just left as is.
+        Returns key with the non-Array "advanced indexing" key parts transformed to Arrays with a combined axis.
+        Scalar, slice and Array key parts are just left as is.
 
         Parameters
         ----------
@@ -3480,7 +3480,7 @@ class AxisCollection(object):
         -------
         tuple
         """
-        from larray.core.array import LArray
+        from larray.core.array import Array
 
         assert isinstance(key, tuple) and len(key) == self.ndim
 
@@ -3489,7 +3489,7 @@ class AxisCollection(object):
 
         # TODO: use/factorize with AxisCollection.combine_axes. The problem is that it uses product(*axes_labels)
         #       while here we need zip(*axes_labels)
-        ignored_types = (int, np.integer, slice, LArray)
+        ignored_types = (int, np.integer, slice, Array)
         adv_keys = [(axis_key, axis) for axis_key, axis in zip(key, self)
                     if not isinstance(axis_key, ignored_types)]
         if not adv_keys:
@@ -3535,9 +3535,9 @@ class AxisCollection(object):
             combined_axis = Axis(combined_labels, combined_name)
         combined_axes = AxisCollection(combined_axis)
 
-        # 2) transform all advanced non-LArray keys to LArray with the combined axis
-        # ==========================================================================
-        return tuple(axis_key if isinstance(axis_key, ignored_types) else LArray(axis_key, combined_axes)
+        # 2) transform all advanced non-Array keys to Array with the combined axis
+        # ========================================================================
+        return tuple(axis_key if isinstance(axis_key, ignored_types) else Array(axis_key, combined_axes)
                      for axis_key in key)
 
 

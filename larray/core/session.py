@@ -14,12 +14,12 @@ from larray.core.metadata import Metadata
 from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
-from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
+from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
-# XXX: inherit from OrderedDict or LArray?
+# XXX: inherit from OrderedDict or Array?
 class Session(object):
     r"""
     Groups several objects together.
@@ -247,7 +247,7 @@ class Session(object):
         if isinstance(key, int):
             keys = list(self.keys())
             return self._objects[keys[key]]
-        elif isinstance(key, LArray):
+        elif isinstance(key, Array):
             assert np.issubdtype(key.dtype, np.bool_)
             assert key.ndim == 1
             # only keep True values
@@ -344,7 +344,7 @@ class Session(object):
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         r"""
-        Load LArray, Axis and Group objects from a file, or several .csv files.
+        Load Array, Axis and Group objects from a file, or several .csv files.
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
         to arbitrary code execution.
@@ -431,7 +431,7 @@ class Session(object):
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         r"""
-        Dumps LArray, Axis and Group objects from the current session to a file.
+        Dumps Array, Axis and Group objects from the current session to a file.
 
         Parameters
         ----------
@@ -439,7 +439,7 @@ class Session(object):
             Path of the file for the dump.
             If objects are saved in CSV files, the path corresponds to a directory.
         names : list of str or None, optional
-            List of names of LArray/Axis/Group objects to dump.
+            List of names of Array/Axis/Group objects to dump.
             If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
@@ -552,7 +552,7 @@ class Session(object):
                 if k not in d:
                     raise ValueError("'{}' not found in current namespace. Session.to_globals(inplace=True) requires "
                                      "all arrays to already exist.".format(k))
-                if not isinstance(v, LArray):
+                if not isinstance(v, Array):
                     continue
                 if not d[k].axes == v.axes:
                     raise ValueError("Session.to_globals(inplace=True) requires the existing (destination) arrays "
@@ -565,7 +565,7 @@ class Session(object):
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
         r"""
-        Dumps LArray, Axis and Group objects from the current session to a file using pickle.
+        Dumps Array, Axis and Group objects from the current session to a file using pickle.
 
         WARNING: never load a pickle file (.pkl or .pickle) from an untrusted source, as it can lead to arbitrary code
         execution.
@@ -575,7 +575,7 @@ class Session(object):
         fname : str
             Path for the dump.
         names : list of str or None, optional
-            Names of LArray/Axis/Group objects to dump.
+            Names of Array/Axis/Group objects to dump.
             Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
@@ -610,14 +610,14 @@ class Session(object):
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
         r"""
-        Dumps LArray, Axis and Group objects from the current session to an HDF file.
+        Dumps Array, Axis and Group objects from the current session to an HDF file.
 
         Parameters
         ----------
         fname : str
             Path of the file for the dump.
         names : list of str or None, optional
-            Names of LArray/Axis/Group objects to dump.
+            Names of Array/Axis/Group objects to dump.
             Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any.
@@ -652,14 +652,14 @@ class Session(object):
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         r"""
-        Dumps LArray, Axis and Group objects from the current session to an Excel file.
+        Dumps Array, Axis and Group objects from the current session to an Excel file.
 
         Parameters
         ----------
         fname : str
             Path of the file for the dump.
         names : list of str or None, optional
-            Names of LArray/Axis/Group objects to dump.
+            Names of Array/Axis/Group objects to dump.
             Defaults to all objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any. If False, file is updated. Defaults to True.
@@ -700,14 +700,14 @@ class Session(object):
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
         r"""
-        Dumps LArray, Axis and Group objects from the current session to CSV files.
+        Dumps Array, Axis and Group objects from the current session to CSV files.
 
         Parameters
         ----------
         fname : str
             Path for the directory that will contain CSV files.
         names : list of str or None, optional
-            Names of LArray/Axis/Group objects to dump.
+            Names of Array/Axis/Group objects to dump.
             Defaults to all objects present in the Session.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -907,7 +907,7 @@ class Session(object):
         >>> arr1, arr2 = arr1.astype(np.int64), arr2.astype(np.int64)
         >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
         >>> for k, v in s.items():
-        ...     print("{}: {}".format(k, v.info if isinstance(v, LArray) else repr(v)))
+        ...     print("{}: {}".format(k, v.info if isinstance(v, Array) else repr(v)))
         arr2: 4
          a [4]: 'a0' 'a1' 'a2' 'a3'
         dtype: int64
@@ -935,14 +935,14 @@ class Session(object):
         def opmethod(self, other):
             self_keys = set(self.keys())
             all_keys = list(self.keys())
-            if not isinstance(other, LArray) and hasattr(other, 'keys'):
+            if not isinstance(other, Array) and hasattr(other, 'keys'):
                 all_keys += [n for n in other.keys() if n not in self_keys]
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for name in all_keys:
                     self_item = self.get(name, nan)
                     other_operand = other.get(name, nan) if hasattr(other, 'get') else other
-                    if arrays_only and not isinstance(self_item, LArray):
+                    if arrays_only and not isinstance(self_item, Array):
                         res_item = self_item
                     else:
                         try:
@@ -1001,7 +1001,7 @@ class Session(object):
         r"""Test if each element (group, axis and array) of the current session equals
         the corresponding element of another session.
 
-        For arrays, it is equivalent to apply :py:meth:`LArray.equals` with flag nans_equal=True
+        For arrays, it is equivalent to apply :py:meth:`Array.equals` with flag nans_equal=True
         to all arrays from two sessions.
 
         Parameters
@@ -1011,7 +1011,7 @@ class Session(object):
 
         Returns
         -------
-        Boolean LArray
+        Boolean Array
 
         Notes
         -----
@@ -1057,7 +1057,7 @@ class Session(object):
         name      a   a01   arr1   arr2   arr3
               False  True  False  False  False
         """
-        supported_objects = (Axis, Group, LArray)
+        supported_objects = (Axis, Group, Array)
         self_keys = [k for k, v in self.items() if isinstance(v, supported_objects)]
         other_keys = [k for k, v in other.items() if isinstance(v, supported_objects) and k not in self_keys]
         all_keys = self_keys + other_keys
@@ -1071,7 +1071,7 @@ class Session(object):
                 return e1.equals(e2, nans_equal=True)
 
         res = [elem_equal(self.get(key), other.get(key)) for key in all_keys]
-        return LArray(res, [Axis(all_keys, 'name')])
+        return Array(res, [Axis(all_keys, 'name')])
 
     array_equals = renamed_to(element_equals, 'array_equals')
 
@@ -1146,7 +1146,7 @@ class Session(object):
 
         See Also
         --------
-        LArray.transpose
+        Array.transpose
 
         Examples
         --------
@@ -1156,7 +1156,7 @@ class Session(object):
         >>> arr2 = ndtest((2, 2))
         >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
         >>> def print_summary(s):
-        ...     print(s.summary({LArray: "{key} -> {axes_names}"}))
+        ...     print(s.summary({Array: "{key} -> {axes_names}"}))
         >>> print_summary(sess)
         arr1 -> a, b, c
         arr2 -> a, b
@@ -1234,7 +1234,7 @@ class Session(object):
             Any extra arguments are passed to the function
         kind : type or tuple of types, optional
             Type(s) of elements `func` will be applied to. Other elements will be left intact. Use ´kind=object´ to
-            apply to all kinds of objects. Defaults to LArray.
+            apply to all kinds of objects. Defaults to Array.
         **kwargs : any
             Any extra keyword arguments are passed to the function
 
@@ -1279,7 +1279,7 @@ class Session(object):
         a  a0  a1  a2
             4   6   8
         """
-        kind = kwargs.pop('kind', LArray)
+        kind = kwargs.pop('kind', Array)
         return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
 
     def summary(self, template=None):
@@ -1338,7 +1338,7 @@ class Session(object):
         ...                                                                 array.meta.title, array.dtype)
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
         ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
-        ...             LArray: print_array,
+        ...             Array: print_array,
         ...             Metadata: "\\t{key} -> {value}"}
         >>> print(s.summary(template))   # doctest: +NORMALIZE_WHITESPACE
         Metadata:
@@ -1362,8 +1362,8 @@ class Session(object):
             template[Axis] = "{key}: {name} [{labels}] ({length})"
         if Group not in template:
             template[Group] = "{key}: {axis_name}{labels} >> {name} ({length})"
-        if LArray not in template:
-            template[LArray] = "{key}: {axes_names} ({shape}) [{dtype}]"
+        if Array not in template:
+            template[Array] = "{key}: {axes_names} ({shape}) [{dtype}]"
         if Metadata not in template:
             template[Metadata] = "\t{key}: {value}"
 
@@ -1381,7 +1381,7 @@ class Session(object):
                     return tmpl.format(key=k, name=v.name, labels=v.labels_summary(), length=len(v))
                 elif isinstance(v, Group):
                     return tmpl.format(key=k, name=v.name, axis_name=v.axis.name, labels=v.key, length=len(v))
-                elif isinstance(v, LArray):
+                elif isinstance(v, Array):
                     return tmpl.format(key=k, axes_names=', '.join(v.axes.display_names),
                                        shape=' x '.join(str(i) for i in v.shape), dtype=v.dtype)
                 else:
@@ -1423,7 +1423,7 @@ def local_arrays(depth=0, include_private=False, meta=None):
     d = sys._getframe(depth + 1).f_locals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray)], meta=meta)
+    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
 
 
 def global_arrays(depth=0, include_private=False, meta=None):
@@ -1448,7 +1448,7 @@ def global_arrays(depth=0, include_private=False, meta=None):
     d = sys._getframe(depth + 1).f_globals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], LArray)], meta=meta)
+    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
 
 
 def arrays(depth=0, include_private=False, meta=None):
@@ -1485,7 +1485,7 @@ def arrays(depth=0, include_private=False, meta=None):
     all_keys = sorted(set(global_vars.keys()) | set(local_vars.keys()))
     combined_vars = [(k, local_vars[k] if k in local_vars else global_vars[k])
                      for k in all_keys]
-    return Session([(k, v) for k, v in combined_vars if isinstance(v, LArray)], meta=meta)
+    return Session([(k, v) for k, v in combined_vars if isinstance(v, Array)], meta=meta)
 
 
 _session_float_error_handler = float_error_handler_factory(4)

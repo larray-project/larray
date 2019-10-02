@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function
 import os
 from collections import OrderedDict
 
-from larray.core.array import LArray
+from larray.core.array import Array
 
 
 def _get_index_col(nb_axes=None, index_col=None, wide=True):
@@ -112,7 +112,7 @@ class FileHandler(object):
         -------
         Metadata
             List of metadata to load.
-        OrderedDict(str, LArray/Axis/Group)
+        OrderedDict(str, Array/Axis/Group)
             Dictionary containing the loaded objects.
         """
         display = kwargs.pop('display', False)
@@ -144,7 +144,7 @@ class FileHandler(object):
         ----------
         metadata: Metadata
             List of metadata to dump.
-        key_values : list of (str, LArray/Axis/Group) pairs
+        key_values : list of (str, Array/Axis/Group) pairs
             Name and data of objects to dump.
         kwargs :
             * display: whether or not to display when the dump of each object is started/done.
@@ -155,7 +155,7 @@ class FileHandler(object):
         if metadata is not None:
             self._dump_metadata(metadata)
         for key, value in key_values:
-            if isinstance(value, LArray) and value.ndim == 0:
+            if isinstance(value, Array) and value.ndim == 0:
                 if display:
                     print('Cannot dump {}. Dumping 0D arrays is currently not supported.'.format(key))
                 continue

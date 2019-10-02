@@ -7,7 +7,7 @@ def view(obj=None, title='', depth=0):
 
     Parameters
     ----------
-    obj : np.ndarray, LArray, Session, dict or str, optional
+    obj : np.ndarray, Array, Session, dict or str, optional
         Object to visualize. If string, array(s) will be loaded from the file given as argument.
         Defaults to the collection of all local variables where the function was called.
     title : str, optional
@@ -40,7 +40,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
     Parameters
     ----------
-    obj : np.ndarray, LArray, Session, dict, str or REOPEN_LAST_FILE, optional
+    obj : np.ndarray, Array, Session, dict, str or REOPEN_LAST_FILE, optional
         Object to visualize. If string, array(s) will be loaded from the file given as argument.
         Passing the constant REOPEN_LAST_FILE loads the last opened file.
         Defaults to the collection of all local variables where the function was called.
@@ -81,7 +81,7 @@ def compare(*args, **kwargs):
 
     Parameters
     ----------
-    *args : LArrays or Sessions
+    *args : Arrays or Sessions
         Arrays or sessions to compare.
     title : str, optional
         Title for the window. Defaults to ''.

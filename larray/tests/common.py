@@ -12,7 +12,7 @@ try:
 except ImportError:
     xw = None
 
-from larray import LArray, isnan, aslarray, Metadata
+from larray import Array, isnan, aslarray, Metadata
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -38,11 +38,11 @@ def inputpath(relpath):
 
 def assert_equal_factory(test_func):
     def assert_equal(a, b):
-        if isinstance(a, LArray) and isinstance(b, LArray) and a.axes != b.axes:
+        if isinstance(a, Array) and isinstance(b, Array) and a.axes != b.axes:
             raise AssertionError("axes differ:\n%s\n\nvs\n\n%s" % (a.axes.info, b.axes.info))
-        if not isinstance(a, (np.ndarray, LArray)):
+        if not isinstance(a, (np.ndarray, Array)):
             a = np.asarray(a)
-        if not isinstance(b, (np.ndarray, LArray)):
+        if not isinstance(b, (np.ndarray, Array)):
             b = np.asarray(b)
         if a.shape != b.shape:
             raise AssertionError("shapes differ: %s != %s" % (a.shape, b.shape))

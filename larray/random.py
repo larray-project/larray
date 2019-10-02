@@ -26,7 +26,7 @@
 import numpy as np
 
 from larray.core.axis import Axis, AxisCollection
-from larray.core.array import LArray, aslarray
+from larray.core.array import Array, aslarray
 from larray.core.array import raw_broadcastable
 import larray as la
 
@@ -37,7 +37,7 @@ __all__ = ['randint', 'normal', 'uniform', 'permutation', 'choice']
 def generic_random(np_func, args, min_axes, meta):
     args, res_axes = raw_broadcastable(args, min_axes=min_axes)
     res_data = np_func(*args, size=res_axes.shape)
-    return LArray(res_data, res_axes, meta=meta)
+    return Array(res_data, res_axes, meta=meta)
 
 
 # We choose to place the axes argument in place of the numpy size argument, instead of having axes as the first
@@ -70,7 +70,7 @@ def randint(low, high=None, axes=None, dtype='l', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -100,7 +100,7 @@ def randint(low, high=None, axes=None, dtype='l', meta=None):
     # to do that, uncommenting the following code should be enough:
     # return generic_random(np.random.randint, (low, high), axes, meta)
     axes = AxisCollection(axes)
-    return LArray(np.random.randint(low, high, axes.shape, dtype), axes, meta=meta)
+    return Array(np.random.randint(low, high, axes.shape, dtype), axes, meta=meta)
 
 
 def normal(loc=0.0, scale=1.0, axes=None, meta=None):
@@ -127,7 +127,7 @@ def normal(loc=0.0, scale=1.0, axes=None, meta=None):
 
     Returns
     -------
-    LArray or scalar
+    Array or scalar
         Drawn samples from the parameterized normal distribution.
 
     Notes
@@ -238,7 +238,7 @@ def uniform(low=0.0, high=1.0, axes=None, meta=None):
 
     Returns
     -------
-    LArray or scalar
+    Array or scalar
         Drawn samples from the parameterized uniform distribution.
 
     See Also
@@ -330,7 +330,7 @@ def permutation(x, axis=0):
 
     Returns
     -------
-    LArray
+    Array
         Permuted sequence or array range.
 
     Examples
@@ -357,7 +357,7 @@ def permutation(x, axis=0):
      a2   7   8   6
     """
     if isinstance(x, (int, np.integer)):
-        return LArray(np.random.permutation(x))
+        return Array(np.random.permutation(x))
     else:
         x = aslarray(x)
         axis = x.axes[axis]
@@ -375,7 +375,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
         Values to choose from.
         If an array, a random sample is generated from its elements.
         If an int n, the random sample is generated as if choices was la.sequence(n)
-        If p is a 1-D LArray, choices are taken from its axis.
+        If p is a 1-D Array, choices are taken from its axis.
     axes : int, tuple of int, str, Axis or tuple/list/AxisCollection of Axis, optional
         Axes (or shape) of the resulting array. If ``axes`` is None (the default), a single value is returned.
         Otherwise, if the resulting axes have a shape of, e.g., ``(m, n, k)``, then ``m * n * k`` samples are drawn.
@@ -383,7 +383,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
         Whether the sample is with or without replacement.
     p : array-like, optional
         The probabilities associated with each entry in choices.
-        If p is a 1-D LArray, choices are taken from its axis labels. If p is an N-D LArray, each cell represents the
+        If p is a 1-D Array, choices are taken from its axis labels. If p is an N-D Array, each cell represents the
         probability that the combination of labels will occur.
         If not given the sample assumes a uniform distribution over all entries in choices.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
@@ -392,7 +392,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
 
     Returns
     -------
-    LArray or scalar
+    Array or scalar
         The generated random samples with given ``axes`` (or shape).
 
     Raises
@@ -426,9 +426,9 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
      a0  15  10  10
      a1  10   5  10
 
-    Same as above with labels and probabilities given as a one dimensional LArray
+    Same as above with labels and probabilities given as a one dimensional Array
 
-    >>> proba = LArray([0.3, 0.5, 0.2], Axis([5, 10, 15], 'outcome'))                   # doctest: +SKIP
+    >>> proba = Array([0.3, 0.5, 0.2], Axis([5, 10, 15], 'outcome'))                   # doctest: +SKIP
     >>> proba                                                                           # doctest: +SKIP
     outcome    5   10   15
              0.3  0.5  0.2
@@ -452,7 +452,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
 
     Using an N-dimensional array as probabilities:
 
-    >>> proba = LArray([[0.15, 0.25, 0.10],
+    >>> proba = Array([[0.15, 0.25, 0.10],
     ...                 [0.20, 0.10, 0.20]], 'a=a0,a1;b=b0..b2')                        # doctest: +SKIP
     >>> proba                                                                           # doctest: +SKIP
     a\b    b0    b1   b2
@@ -468,9 +468,9 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
            d5  a0  b1
     """
     axes = AxisCollection(axes)
-    if isinstance(p, LArray):
+    if isinstance(p, Array):
         if choices is not None:
-            raise ValueError("choices argument cannot be used when p argument is an LArray")
+            raise ValueError("choices argument cannot be used when p argument is an Array")
 
         if p.ndim > 1:
             flat_p = p.data.reshape(-1)
@@ -480,5 +480,5 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None):
             choices = p.axes[0].labels
             p = p.data
     if choices is None:
-        raise ValueError("choices argument must be provided unless p is an LArray")
-    return LArray(np.random.choice(choices, axes.shape, replace, p), axes, meta=meta)
+        raise ValueError("choices argument must be provided unless p is an Array")
+    return Array(np.random.choice(choices, axes.shape, replace, p), axes, meta=meta)

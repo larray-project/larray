@@ -42,7 +42,7 @@ cells:
 - markdown: |
     ## Selecting (Subsets)
     
-    LArray allows to select a subset of an array either by labels or indices (positions)
+    The ``Array`` class allows to select a subset either by labels or indices (positions)
 
 
 - markdown: |
@@ -254,7 +254,7 @@ cells:
 
 
 - code: |
-    start_year = LArray([2015, 2016, 2017], axes=pop.country)
+    start_year = Array([2015, 2016, 2017], axes=pop.country)
     start_year
 
 

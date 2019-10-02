@@ -9,7 +9,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-from larray.core.array import LArray, aslarray, ndtest
+from larray.core.array import Array, aslarray, ndtest
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group
@@ -42,7 +42,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         Separator.
     headersep : str or None, optional
         Separator for headers.
-    fill_value : scalar or LArray, optional
+    fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
@@ -61,7 +61,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Returns
     -------
-    LArray
+    Array
 
     Notes
     -----
@@ -251,7 +251,7 @@ def read_eurostat(filepath_or_buffer, **kwargs):
 
     Returns
     -------
-    LArray
+    Array
     """
     return read_csv(filepath_or_buffer, sep='\t', headersep=',', **kwargs)
 
@@ -351,7 +351,7 @@ class PandasCSVHandler(FileHandler):
             raise TypeError()
 
     def _dump_item(self, key, value, *args, **kwargs):
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             value.to_csv(self._to_filepath(key), *args, **kwargs)
         elif isinstance(value, Axis):
             self.axes[key] = value

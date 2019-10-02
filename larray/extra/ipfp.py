@@ -1,7 +1,7 @@
 import math
 from collections import deque
 
-from larray.core.array import LArray, aslarray, ones, any
+from larray.core.array import Array, aslarray, ones, any
 import numpy as np
 
 
@@ -81,23 +81,23 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
     >>> from larray import *
     >>> a = Axis('a=a0,a1')
     >>> b = Axis('b=b0,b1')
-    >>> initial = LArray([[2, 1], [1, 2]], [a, b])
+    >>> initial = Array([[2, 1], [1, 2]], [a, b])
     >>> initial
     a\b  b0  b1
      a0   2   1
      a1   1   2
-    >>> target_sum_along_a = LArray([2, 1], b)
+    >>> target_sum_along_a = Array([2, 1], b)
     >>> target_sum_along_a
     b  b0  b1
         2   1
-    >>> target_sum_along_b = LArray([1, 2], a)
+    >>> target_sum_along_b = Array([1, 2], a)
     >>> target_sum_along_b
     a  a0  a1
         1   2
@@ -186,7 +186,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     else:
         # TODO: only make a copy if there are actually any bad values, but I am unsure we should make a copy at all.
         # Either way, this should be documented.
-        if nzvzs in {'warn', 'fix'} and isinstance(a, LArray):
+        if nzvzs in {'warn', 'fix'} and isinstance(a, Array):
             a = a.copy()
         else:
             a = aslarray(a)

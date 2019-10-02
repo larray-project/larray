@@ -44,17 +44,17 @@ cells:
     ## Manipulating axes
     
     
-    LArray offers several methods to manipulate the axes and labels of an array:
+    The ``Array`` class offers several methods to manipulate the axes and labels of an array:
     
-    - [set_labels](../_generated/larray.LArray.set_labels.rst#larray.LArray.set_labels): to replace all or some labels of one or several axes.
-    - [rename](../_generated/larray.LArray.rename.rst#larray.LArray.rename): to replace one or several axis names.
-    - [set_axes](../_generated/larray.LArray.set_axes.rst#larray.LArray.set_axes): to replace one or several axes.
-    - [transpose](../_generated/larray.LArray.transpose.rst#larray.LArray.transpose): to modify the order of axes.
-    - [drop](../_generated/larray.LArray.drop.rst#larray.LArray.drop): to remove one or several labels.
-    - [combine_axes](../_generated/larray.LArray.combine_axes.rst#larray.LArray.combine_axes): to combine axes.
-    - [split_axes](../_generated/larray.LArray.split_axes.rst#larray.LArray.split_axes): to split one or several axes by splitting their labels and names.
-    - [reindex](../_generated/larray.LArray.reindex.rst#larray.LArray.reindex): to reorder, add and remove labels of one or several axes.
-    - [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert): to insert a label at a given position.
+    - [set_labels](../_generated/larray.Array.set_labels.rst#larray.Array.set_labels): to replace all or some labels of one or several axes.
+    - [rename](../_generated/larray.Array.rename.rst#larray.Array.rename): to replace one or several axis names.
+    - [set_axes](../_generated/larray.Array.set_axes.rst#larray.Array.set_axes): to replace one or several axes.
+    - [transpose](../_generated/larray.Array.transpose.rst#larray.Array.transpose): to modify the order of axes.
+    - [drop](../_generated/larray.Array.drop.rst#larray.Array.drop): to remove one or several labels.
+    - [combine_axes](../_generated/larray.Array.combine_axes.rst#larray.Array.combine_axes): to combine axes.
+    - [split_axes](../_generated/larray.Array.split_axes.rst#larray.Array.split_axes): to split one or several axes by splitting their labels and names.
+    - [reindex](../_generated/larray.Array.reindex.rst#larray.Array.reindex): to reorder, add and remove labels of one or several axes.
+    - [insert](../_generated/larray.Array.insert.rst#larray.Array.insert): to insert a label at a given position.
 
 
 - markdown: |
@@ -82,7 +82,7 @@ cells:
 
 
 - markdown: |
-    See [set_labels](../_generated/larray.LArray.set_labels.rst#larray.LArray.set_labels) for more details and examples.
+    See [set_labels](../_generated/larray.Array.set_labels.rst#larray.Array.set_labels) for more details and examples.
 
 
 - markdown: |
@@ -107,7 +107,7 @@ cells:
 
 
 - markdown: |
-    See [rename](../_generated/larray.LArray.rename.rst#larray.LArray.rename) for more details and examples.
+    See [rename](../_generated/larray.Array.rename.rst#larray.Array.rename) for more details and examples.
 
 
 - markdown: |
@@ -177,7 +177,7 @@ cells:
 
 
 - markdown: |
-    See [transpose](../_generated/larray.LArray.transpose.rst#larray.LArray.transpose) for more details and examples.
+    See [transpose](../_generated/larray.Array.transpose.rst#larray.Array.transpose) for more details and examples.
 
 
 - markdown: |
@@ -190,7 +190,7 @@ cells:
 
 
 - markdown: |
-    See [drop](../_generated/larray.LArray.drop.rst#larray.LArray.drop) for more details and examples.
+    See [drop](../_generated/larray.Array.drop.rst#larray.Array.drop) for more details and examples.
 
 
 - markdown: |
@@ -214,7 +214,7 @@ cells:
 
 
 - markdown: |
-    See [combine_axes](../_generated/larray.LArray.combine_axes.rst#larray.LArray.combine_axes) and [split_axes](../_generated/larray.LArray.split_axes.rst#larray.LArray.split_axes) for more details and examples.
+    See [combine_axes](../_generated/larray.Array.combine_axes.rst#larray.Array.combine_axes) and [split_axes](../_generated/larray.Array.split_axes.rst#larray.Array.split_axes) for more details and examples.
 
 
 - markdown: |
@@ -240,7 +240,7 @@ cells:
 
 
 - markdown: |
-    See [reindex](../_generated/larray.LArray.reindex.rst#larray.LArray.reindex) for more details and examples.
+    See [reindex](../_generated/larray.Array.reindex.rst#larray.Array.reindex) for more details and examples.
 
 
 - markdown: |
@@ -257,16 +257,16 @@ cells:
 
 
 - markdown: |
-    See [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert) for more details and examples.
+    See [insert](../_generated/larray.Array.insert.rst#larray.Array.insert) for more details and examples.
 
 
 - markdown: |
     ## Sorting
     
     
-    - [sort_axes](../_generated/larray.LArray.sort_axes.rst#larray.LArray.sort_axes): sort the labels of an axis.
-    - [labelsofsorted](../_generated/larray.LArray.labelsofsorted.rst#larray.LArray.labelsofsorted): give labels which would sort an axis. 
-    - [sort_values](../_generated/larray.LArray.sort_values.rst#larray.LArray.sort_values): sort axes according to values
+    - [sort_axes](../_generated/larray.Array.sort_axes.rst#larray.Array.sort_axes): sort the labels of an axis.
+    - [labelsofsorted](../_generated/larray.Array.labelsofsorted.rst#larray.Array.labelsofsorted): give labels which would sort an axis. 
+    - [sort_values](../_generated/larray.Array.sort_values.rst#larray.Array.sort_values): sort axes according to values
 
 
 - code: |
@@ -304,12 +304,12 @@ cells:
 - markdown: |
     ## Combining arrays
     
-    LArray offers several methods to combine arrays:
+    The LArray library offers several methods and functions to combine arrays:
     
-    - [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert): inserts an array in another array along an axis
-    - [append](../_generated/larray.LArray.append.rst#larray.LArray.append): adds an array at the end of an axis.
-    - [prepend](../_generated/larray.LArray.prepend.rst#larray.LArray.prepend): adds an array at the beginning of an axis.
-    - [extend](../_generated/larray.LArray.extend.rst#larray.LArray.extend): extends an array along an axis.
+    - [insert](../_generated/larray.Array.insert.rst#larray.Array.insert): inserts an array in another array along an axis
+    - [append](../_generated/larray.Array.append.rst#larray.Array.append): adds an array at the end of an axis.
+    - [prepend](../_generated/larray.Array.prepend.rst#larray.Array.prepend): adds an array at the beginning of an axis.
+    - [extend](../_generated/larray.Array.extend.rst#larray.Array.extend): extends an array along an axis.
     - [stack](../_generated/larray.stack.rst#larray.stack): combines several arrays along an axis.
 
 
@@ -326,7 +326,7 @@ cells:
 
 
 - markdown: |
-    See [insert](../_generated/larray.LArray.insert.rst#larray.LArray.insert) for more details and examples.
+    See [insert](../_generated/larray.Array.insert.rst#larray.Array.insert) for more details and examples.
 
 
 - markdown: |
@@ -346,7 +346,7 @@ cells:
 
 
 - code: |
-    pop_lux = LArray([-1, 1], pop.gender)
+    pop_lux = Array([-1, 1], pop.gender)
     pop_lux
 
 
@@ -356,7 +356,7 @@ cells:
 
 
 - markdown: |
-    See [append](../_generated/larray.LArray.append.rst#larray.LArray.append) for more details and examples.
+    See [append](../_generated/larray.Array.append.rst#larray.Array.append) for more details and examples.
 
 
 - markdown: |
@@ -372,7 +372,7 @@ cells:
 
 
 - markdown: |
-    See [prepend](../_generated/larray.LArray.prepend.rst#larray.LArray.prepend) for more details and examples.
+    See [prepend](../_generated/larray.Array.prepend.rst#larray.Array.prepend) for more details and examples.
 
 
 - markdown: |
@@ -387,7 +387,7 @@ cells:
 
 
 - markdown: |
-    See [extend](../_generated/larray.LArray.extend.rst#larray.LArray.extend) for more details and examples.
+    See [extend](../_generated/larray.Array.extend.rst#larray.Array.extend) for more details and examples.
 
 
 - markdown: |
@@ -451,7 +451,7 @@ cells:
 
 
 - markdown: |
-    See [align](../_generated/larray.LArray.align.rst#larray.LArray.align) for more details and examples.
+    See [align](../_generated/larray.Array.align.rst#larray.Array.align) for more details and examples.
 
 
 # The lines below here may be deleted if you do not need them.

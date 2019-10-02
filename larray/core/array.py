@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 """
-Matrix class
+Array class
 """
 
 # ? implement multi group in one axis getitem: lipro['P01,P02;P05'] <=> (lipro['P01,P02'], lipro['P05'])
@@ -53,7 +53,7 @@ try:
 except ImportError:
     np_nanprod = None
 
-from larray.core.abstractbases import ABCLArray
+from larray.core.abstractbases import ABCArray
 from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
@@ -73,9 +73,9 @@ def all(values, axis=None):
 
     See Also
     --------
-    LArray.all
+    Array.all
     """
-    if isinstance(values, LArray):
+    if isinstance(values, Array):
         return values.all(axis)
     else:
         return builtins.all(values)
@@ -87,9 +87,9 @@ def any(values, axis=None):
 
     See Also
     --------
-    LArray.any
+    Array.any
     """
-    if isinstance(values, LArray):
+    if isinstance(values, Array):
         return values.any(axis)
     else:
         return builtins.any(values)
@@ -102,13 +102,13 @@ def sum(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.sum
+    Array.sum
     """
     # XXX: we might want to be more aggressive here (more types to convert), however, generators should still be
     #      computed via the builtin.
     if isinstance(array, (np.ndarray, list)):
-        array = LArray(array)
-    if isinstance(array, LArray):
+        array = Array(array)
+    if isinstance(array, Array):
         return array.sum(*args, **kwargs)
     else:
         return builtins.sum(array, *args, **kwargs)
@@ -120,7 +120,7 @@ def prod(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.prod
+    Array.prod
     """
     return array.prod(*args, **kwargs)
 
@@ -131,7 +131,7 @@ def cumsum(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.cumsum
+    Array.cumsum
     """
     return array.cumsum(*args, **kwargs)
 
@@ -142,7 +142,7 @@ def cumprod(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.cumprod
+    Array.cumprod
     """
     return array.cumprod(*args, **kwargs)
 
@@ -153,9 +153,9 @@ def min(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.min
+    Array.min
     """
-    if isinstance(array, LArray):
+    if isinstance(array, Array):
         return array.min(*args, **kwargs)
     else:
         return builtins.min(array, *args, **kwargs)
@@ -167,9 +167,9 @@ def max(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.max
+    Array.max
     """
-    if isinstance(array, LArray):
+    if isinstance(array, Array):
         return array.max(*args, **kwargs)
     else:
         return builtins.max(array, *args, **kwargs)
@@ -181,7 +181,7 @@ def mean(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.mean
+    Array.mean
     """
     return array.mean(*args, **kwargs)
 
@@ -192,7 +192,7 @@ def median(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.median
+    Array.median
     """
     return array.median(*args, **kwargs)
 
@@ -203,7 +203,7 @@ def percentile(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.percentile
+    Array.percentile
     """
     return array.percentile(*args, **kwargs)
 
@@ -215,7 +215,7 @@ def ptp(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.ptp
+    Array.ptp
     """
     return array.ptp(*args, **kwargs)
 
@@ -226,7 +226,7 @@ def var(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.var
+    Array.var
     """
     return array.var(*args, **kwargs)
 
@@ -237,7 +237,7 @@ def std(array, *args, **kwargs):
 
     See Also
     --------
-    LArray.std
+    Array.std
     """
     return array.std(*args, **kwargs)
 
@@ -247,7 +247,7 @@ def concat(arrays, axis=0, dtype=None):
 
     Parameters
     ----------
-    arrays : tuple of LArray
+    arrays : tuple of Array
         Arrays to concatenate.
     axis : axis reference (int, str or Axis), optional
         Axis along which to concatenate. All arrays must have that axis. Defaults to the first axis.
@@ -256,7 +256,7 @@ def concat(arrays, axis=0, dtype=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -310,36 +310,36 @@ def concat(arrays, axis=0, dtype=None):
 
 
 if PY2:
-    class LArrayIterator(object):
+    class ArrayIterator(object):
         __slots__ = ('next',)
 
         def __init__(self, array):
             data_iter = iter(array.data)
             next_data_func = data_iter.next
             res_axes = array.axes[1:]
-            # this case should not happen (handled by the fastpath in LArray.__iter__)
+            # this case should not happen (handled by the fastpath in Array.__iter__)
             assert len(res_axes) > 0
 
             def next_func():
-                return LArray(next_data_func(), res_axes)
+                return Array(next_data_func(), res_axes)
 
             self.next = next_func
 
         def __iter__(self):
             return self
 else:
-    class LArrayIterator(object):
+    class ArrayIterator(object):
         __slots__ = ('__next__',)
 
         def __init__(self, array):
             data_iter = iter(array.data)
             next_data_func = data_iter.__next__
             res_axes = array.axes[1:]
-            # this case should not happen (handled by the fastpath in LArray.__iter__)
+            # this case should not happen (handled by the fastpath in Array.__iter__)
             assert len(res_axes) > 0
 
             def next_func():
-                return LArray(next_data_func(), res_axes)
+                return Array(next_data_func(), res_axes)
 
             self.__next__ = next_func
 
@@ -347,8 +347,8 @@ else:
             return self
 
 
-# TODO: rename to LArrayIndexIndexer or something like that
-class LArrayPositionalIndexer(object):
+# TODO: rename to ArrayIndexIndexer or something like that
+class ArrayPositionalIndexer(object):
     """
     equivalent to numpy indexing when indexing along a single axis *but* indexes the cross product of multiple axes
     instead of points
@@ -405,10 +405,10 @@ class LArrayPositionalIndexer(object):
         if array.ndim <= 1:
             return iter(array.data)
         else:
-            return LArrayIterator(array)
+            return ArrayIterator(array)
 
 
-class LArrayPointsIndexer(object):
+class ArrayPointsIndexer(object):
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -420,7 +420,7 @@ class LArrayPointsIndexer(object):
         #    the key we need to know which axis each key belongs to and to do that, we need to
         #    translate the key to indices)
         translated_key = axes._translated_key(key)
-        # 2) transform keys to IGroup and non-LArray advanced keys to LArray with a combined axis
+        # 2) transform keys to IGroup and non-Array advanced keys to Array with a combined axis
         return axes._adv_keys_to_combined_axis_la_keys(translated_key, wildcard)
 
     def __getitem__(self, key):
@@ -436,7 +436,7 @@ class LArrayPointsIndexer(object):
 #     >>> arr.iflat[:4]
 #     a_b  a0_b0  a0_b1  a0_b2  a1_b0
 #              0     10     20     30
-class LArrayFlatIndicesIndexer(object):
+class ArrayFlatIndicesIndexer(object):
     r"""
     Access the array by index as if it was flat (one dimensional) and all its axes were combined.
 
@@ -469,9 +469,9 @@ class LArrayFlatIndicesIndexer(object):
      a0  42  10  20
      a1  30  40  42
 
-    When the key is an LArray, the result will have the axes of the key
+    When the key is an Array, the result will have the axes of the key
 
-    >>> key = LArray([0, 3], 'c=c0,c1')
+    >>> key = Array([0, 3], 'c=c0,c1')
     >>> key
     c  c0  c1
         0   3
@@ -485,7 +485,7 @@ class LArrayFlatIndicesIndexer(object):
         self.array = array
 
     def __getitem__(self, flat_key, sep='_'):
-        if isinstance(flat_key, ABCLArray):
+        if isinstance(flat_key, ABCArray):
             flat_np_key = flat_key.data
             res_axes = flat_key.axes
         else:
@@ -494,14 +494,14 @@ class LArrayFlatIndicesIndexer(object):
             nd_key = np.unravel_index(flat_np_key, axes.shape)
             # the following lines are equivalent to (but faster than) "return array.ipoints[nd_key]"
 
-            # TODO: extract a function which only computes the combined axes because we do not use the actual LArrays
+            # TODO: extract a function which only computes the combined axes because we do not use the actual Arrays
             #       produced here, which is wasteful. AxisCollection._flat_lookup seems related (but not usable as-is).
             la_key = axes._adv_keys_to_combined_axis_la_keys(nd_key, sep=sep)
             first_axis_key_axes = la_key[0].axes
-            assert all(isinstance(axis_key, ABCLArray) and axis_key.axes is first_axis_key_axes
+            assert all(isinstance(axis_key, ABCArray) and axis_key.axes is first_axis_key_axes
                        for axis_key in la_key[1:])
             res_axes = first_axis_key_axes
-        return LArray(self.array.data.flat[flat_np_key], res_axes)
+        return Array(self.array.data.flat[flat_np_key], res_axes)
 
     def __setitem__(self, flat_key, value):
         # np.ndarray.flat is a flatiter object but it is indexable despite the name
@@ -511,8 +511,8 @@ class LArrayFlatIndicesIndexer(object):
         return self.array.size
 
 
-# TODO: rename to LArrayIndexPointsIndexer or something like that
-class LArrayPositionalPointsIndexer(object):
+# TODO: rename to ArrayIndexPointsIndexer or something like that
+class ArrayPositionalPointsIndexer(object):
     __slots__ = ('array',)
     """
     the closest to numpy indexing we get, but not 100% the same.
@@ -528,7 +528,7 @@ class LArrayPositionalPointsIndexer(object):
 
     def __setitem__(self, key, value):
         # we still need to prepare the key instead of letting numpy handle everything so that
-        # existing (integer)LArray keys are broadcasted correctly (using axes names).
+        # existing (integer)Array keys are broadcasted correctly (using axes names).
         self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
 
 
@@ -538,15 +538,15 @@ def get_axis(obj, i):
 
     Parameters
     ----------
-    obj : LArray or other array
-        Input LArray or any array object which has a shape attribute (NumPy or Pandas array).
+    obj : Array or other array
+        Input Array or any array object which has a shape attribute (NumPy or Pandas array).
     i : int
         index of the axis.
 
     Returns
     -------
     Axis
-        Axis corresponding to the given index if input `obj` is a LArray. A new anonymous Axis with the length of
+        Axis corresponding to the given index if input `obj` is an Array. A new anonymous Axis with the length of
         the ith dimension of the input `obj` otherwise.
 
     Examples
@@ -564,7 +564,7 @@ def get_axis(obj, i):
     >>> get_axis(np_arr, 1)
     Axis(2, None)
     """
-    return obj.axes[i] if isinstance(obj, LArray) else Axis(obj.shape[i])
+    return obj.axes[i] if isinstance(obj, Array) else Axis(obj.shape[i])
 
 
 _arg_agg = {
@@ -578,7 +578,7 @@ _kwarg_agg = {
         dtype : dtype, optional
             The data type of the returned array. Defaults to None (the dtype of the input array)."""},
     'out': {'value': None, 'doc': """
-        out : LArray, optional
+        out : Array, optional
             Alternate output array in which to place the result. It must have the same shape as the expected output and
             its type is preserved (e.g., if dtype(out) is float, the result will consist of 0.0’s and 1.0’s).
             Axes and labels can be different, only the shape matters. Defaults to None (create a new array)."""},
@@ -700,11 +700,11 @@ def _handle_meta(meta, title):
     return Metadata(meta)
 
 
-class LArray(ABCLArray):
+class Array(ABCArray):
     r"""
-    A LArray object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
+    An Array object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
 
-    The function :func:`aslarray` can be used to convert a NumPy array or Pandas DataFrame into a LArray.
+    The function :func:`aslarray` can be used to convert a NumPy array or Pandas DataFrame into an Array.
 
     Parameters
     ----------
@@ -731,12 +731,12 @@ class LArray(ABCLArray):
 
     See Also
     --------
-    sequence : Create a LArray by sequentially applying modifications to the array along axis.
-    ndtest : Create a test LArray with increasing elements.
-    zeros : Create a LArray, each element of which is zero.
-    ones : Create a LArray, each element of which is 1.
-    full : Create a LArray filled with a given value.
-    empty : Create a LArray, but leave its allocated memory unchanged (i.e., it contains “garbage”).
+    sequence : Create an Array by sequentially applying modifications to the array along axis.
+    ndtest : Create a test Array with increasing elements.
+    zeros : Create an Array, each element of which is zero.
+    ones : Create an Array, each element of which is 1.
+    full : Create an Array filled with a given value.
+    empty : Create an Array, but leave its allocated memory unchanged (i.e., it contains “garbage”).
 
     Warnings
     --------
@@ -753,7 +753,7 @@ class LArray(ABCLArray):
     >>> axes = [age, sex, time]
     >>> data = np.zeros((len(axes), len(sex), len(time)))
 
-    >>> LArray(data, axes)
+    >>> Array(data, axes)
     age  sex\time  2007  2008  2009
      10         M   0.0   0.0   0.0
      10         F   0.0   0.0   0.0
@@ -762,9 +762,9 @@ class LArray(ABCLArray):
      12         M   0.0   0.0   0.0
      12         F   0.0   0.0   0.0
     >>> # with metadata (Python <= 3.5)
-    >>> arr = LArray(data, axes, meta=[('title', 'my title'), ('author', 'John Smith')])
+    >>> arr = Array(data, axes, meta=[('title', 'my title'), ('author', 'John Smith')])
     >>> # with metadata (Python 3.6+)
-    >>> arr = LArray(data, axes, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
+    >>> arr = Array(data, axes, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
 
     Array creation functions
 
@@ -955,7 +955,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with axes replaced.
 
         See Also
@@ -1012,7 +1012,7 @@ class LArray(ABCLArray):
             self.axes = new_axes
             return self
         else:
-            return LArray(self.data, new_axes)
+            return Array(self.data, new_axes)
 
     with_axes = renamed_to(set_axes, 'with_axes')
 
@@ -1063,7 +1063,7 @@ class LArray(ABCLArray):
         a1   b0  12  14
         a1   b1  16  18
         """
-        return LArrayPositionalIndexer(self)
+        return ArrayPositionalIndexer(self)
 
     @lazy_attribute
     def points(self):
@@ -1099,7 +1099,7 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
-        return LArrayPointsIndexer(self)
+        return ArrayPointsIndexer(self)
 
     # TODO: show that we need to use a "full slice" for leaving the dimension alone
     # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
@@ -1135,11 +1135,11 @@ class LArray(ABCLArray):
             ...
         IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2,) (2,) (3,)
         """
-        return LArrayPositionalPointsIndexer(self)
+        return ArrayPositionalPointsIndexer(self)
 
     def to_frame(self, fold_last_axis_name=False, dropna=None):
         r"""
-        Converts LArray into Pandas DataFrame.
+        Converts an Array into a Pandas DataFrame.
 
         Parameters
         ----------
@@ -1211,7 +1211,7 @@ class LArray(ABCLArray):
 
     def to_series(self, name=None, dropna=False):
         r"""
-        Converts LArray into Pandas Series.
+        Converts an Array into a Pandas Series.
 
         Parameters
         ----------
@@ -1303,15 +1303,15 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         See Also
         --------
-        LArray.describe_by
+        Array.describe_by
 
         Examples
         --------
-        >>> arr = LArray([0, 6, 2, 5, 4, 3, 1, 3], 'year=2013..2020')
+        >>> arr = Array([0, 6, 2, 5, 4, 3, 1, 3], 'year=2013..2020')
         >>> arr
         year  2013  2014  2015  2016  2017  2018  2019  2020
                  0     6     2     5     4     3     1     3
@@ -1354,16 +1354,16 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         See Also
         --------
-        LArray.describe
+        Array.describe
 
         Examples
         --------
         >>> data = [[0, 6, 3, 5, 4, 2, 1, 3], [7, 5, 3, 2, 8, 5, 6, 4]]
-        >>> arr = LArray(data, 'gender=Male,Female;year=2013..2020').astype(float)
+        >>> arr = Array(data, 'gender=Male,Female;year=2013..2020').astype(float)
         >>> arr
         gender\year  2013  2014  2015  2016  2017  2018  2019  2020
                Male   0.0   6.0   3.0   5.0   4.0   2.0   1.0   3.0
@@ -1411,7 +1411,7 @@ class LArray(ABCLArray):
         cases.
         """
         data = np.ndarray.__array_wrap__(self.data, out_arr, context)
-        return LArray(data, self.axes)
+        return Array(data, self.axes)
 
     def __bool__(self):
         return bool(self.data)
@@ -1434,7 +1434,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with axes renamed.
 
         See Also
@@ -1472,7 +1472,7 @@ class LArray(ABCLArray):
             self.axes = axes
             return self
         else:
-            return LArray(self.data, axes)
+            return Array(self.data, axes)
 
     def reindex(self, axes_to_reindex=None, new_axis=None, fill_value=nan, inplace=False, **kwargs):
         r"""Reorder and/or add new labels in axes.
@@ -1488,7 +1488,7 @@ class LArray(ABCLArray):
             If a list of Axis or an AxisCollection is given, existing axes are reindexed while missing ones are added.
         new_axis : int, str, list/tuple/array of str, Group or Axis, optional
             List of new labels or new axis if `axes_to_reindex` contains a single axis reference.
-        fill_value : scalar or LArray, optional
+        fill_value : scalar or Array, optional
             Value used to fill cells corresponding to label combinations which were not present before reindexing.
             Defaults to NaN.
         inplace : bool, optional
@@ -1499,7 +1499,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with reindexed axes.
 
         Notes
@@ -1642,7 +1642,7 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        other : LArray-like
+        other : Array-like
         join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Join method. For each axis common to both arrays:
               - outer: will use a label if it is in either arrays axis (ordered like the first array).
@@ -1651,7 +1651,7 @@ class LArray(ABCLArray):
               - left: will use the first array axis labels.
               - right: will use the other array axis labels.
               - exact: instead of aligning, raise an error when axes to be aligned are not equal.
-        fill_value : scalar or LArray, optional
+        fill_value : scalar or Array, optional
             Value used to fill cells corresponding to label combinations which are not common to both arrays.
             Defaults to NaN.
         axes : AxisReference or sequence of them, optional
@@ -1660,7 +1660,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        (left, right) : (LArray, LArray)
+        (left, right) : (Array, Array)
             Aligned objects
 
         Notes
@@ -1813,7 +1813,7 @@ class LArray(ABCLArray):
         other = aslarray(other)
         # reindex does not currently support anonymous axes
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
-            raise ValueError("arrays with anonymous axes are currently not supported by LArray.align")
+            raise ValueError("arrays with anonymous axes are currently not supported by Array.align")
         try:
             left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
         except ValueError as e:
@@ -1839,21 +1839,21 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with sorted values.
 
         Examples
         --------
         sort the whole array (no key or axis given)
 
-        >>> arr_1D = LArray([10, 2, 4], 'a=a0..a2')
+        >>> arr_1D = Array([10, 2, 4], 'a=a0..a2')
         >>> arr_1D
         a  a0  a1  a2
            10   2   4
         >>> arr_1D.sort_values()
         a  a1  a2  a0
             2   4  10
-        >>> arr_2D = LArray([[10, 2, 4], [3, 7, 1]], 'a=a0,a1; b=b0..b2')
+        >>> arr_2D = Array([[10, 2, 4], [3, 7, 1]], 'a=a0,a1; b=b0..b2')
         >>> arr_2D
         a\b  b0  b1  b2
          a0  10   2   4
@@ -1874,7 +1874,7 @@ class LArray(ABCLArray):
         a\b  b1  b0  b2
          a0   2  10   4
          a1   7   3   1
-        >>> arr_3D = LArray([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
+        >>> arr_3D = Array([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
         ...            'a=a0,a1; b=b0,b1; c=c0..c2')
         >>> arr_3D
          a  b\c  c0  c1  c2
@@ -1916,7 +1916,7 @@ class LArray(ABCLArray):
             axis_idx = self.axes.index(axis)
             data = np.sort(self.data, axis_idx)
             new_axes = self.axes.replace(axis_idx, Axis(len(axis), axis.name))
-            res = LArray(data, new_axes)
+            res = Array(data, new_axes)
         elif key is not None:
             subset = self[key]
             if subset.ndim > 1:
@@ -1956,7 +1956,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with sorted axes.
 
         Examples
@@ -2058,7 +2058,7 @@ class LArray(ABCLArray):
 
         # otherwise we need to guess the axis
         # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or LArray):
+        # (in AxisCollection or Array):
         # label -> (axis, index)
         # but for Pandas, this wouldn't work, we'd need label -> axis
         valid_axes = []
@@ -2103,13 +2103,13 @@ class LArray(ABCLArray):
                 axis_key = axis_key.labels
 
         # TODO: do it for Group without axis too
-        if isinstance(axis_key, (tuple, list, np.ndarray, LArray)):
+        if isinstance(axis_key, (tuple, list, np.ndarray, Array)):
             axis = None
             # TODO: I should actually do some benchmarks to see if this is useful, and estimate which numbers to use
             # FIXME: check that size is < than key size
             for size in (1, 10, 100, 1000):
                 # TODO: do not recheck already checked elements
-                key_chunk = axis_key.i[:size] if isinstance(axis_key, LArray) else axis_key[:size]
+                key_chunk = axis_key.i[:size] if isinstance(axis_key, Array) else axis_key[:size]
                 try:
                     tkey = self._translate_axis_key_chunk(key_chunk)
                     axis = tkey.axis
@@ -2136,7 +2136,7 @@ class LArray(ABCLArray):
                                                                                           translate_key)
         res_data = data[raw_broadcasted_key]
         if res_axes:
-            res = LArray(res_data, res_axes)
+            res = Array(res_data, res_axes)
             # if some axes have been moved in front because of advanced indexing, we transpose them back to their
             # original position
             return res.transpose(transpose_indices) if transpose_indices is not None else res
@@ -2150,7 +2150,7 @@ class LArray(ABCLArray):
         # data = np.asarray(expanded.data)
         data = self.data
         raw_broadcasted_key, target_axes, _ = self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key)
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             # TODO: the check_compatible should be included in broadcast_with
             value = value.broadcast_with(target_axes)
             value.axes.check_compatible(target_axes)
@@ -2167,8 +2167,8 @@ class LArray(ABCLArray):
         data[raw_broadcasted_key] = value
 
         # concerning keys this can make sense in several cases:
-        # single bool LArray key with extra axes.
-        # tuple of bool LArray keys (eg one for each axis). each could have extra axes. Common axes between keys are
+        # single bool Array key with extra axes.
+        # tuple of bool Array keys (eg one for each axis). each could have extra axes. Common axes between keys are
         # not a problem, we can simply "and" them. Though we should avoid explicitly "and"ing them if there is no
         # common axis because that is less efficient than the implicit "and" that is done by numpy __getitem__ (and
         # the fact we need to combine dimensions when any key has more than 1 dim).
@@ -2186,7 +2186,7 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        value : scalar or LArray
+        value : scalar or Array
 
         Examples
         --------
@@ -2226,7 +2226,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             New array with new axes but same data.
 
         Examples
@@ -2259,7 +2259,7 @@ class LArray(ABCLArray):
         if not isinstance(target_axes, AxisCollection):
             target_axes = AxisCollection(target_axes)
         data = np.asarray(self).reshape(target_axes.shape)
-        return LArray(data, target_axes)
+        return Array(data, target_axes)
 
     # TODO: this should be a private method
     def reshape_like(self, target):
@@ -2269,7 +2269,7 @@ class LArray(ABCLArray):
 
         See Also
         --------
-        reshape : returns a LArray with a new shape given a list of axes.
+        reshape : returns an Array with a new shape given a list of axes.
 
         Examples
         --------
@@ -2303,13 +2303,13 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        target : LArray or collection of Axis
+        target : Array or collection of Axis
 
         Returns
         -------
-        LArray
+        Array
         """
-        if isinstance(target, LArray):
+        if isinstance(target, Array):
             target_axes = target.axes
         else:
             target_axes = target
@@ -2353,7 +2353,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Notes
         -----
@@ -2409,14 +2409,14 @@ class LArray(ABCLArray):
         else:
             axes = self.axes[axes]
         res_axes = self.axes.replace([(axis, axis.ignore_labels()) for axis in axes])
-        return LArray(self.data, res_axes)
+        return Array(self.data, res_axes)
     drop_labels = renamed_to(ignore_labels, 'drop_labels')
 
     def __str__(self):
         if not self.ndim:
             return str(np.asscalar(self))
         elif not len(self):
-            return 'LArray([])'
+            return 'Array([])'
         else:
             table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS])
             return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
@@ -2428,20 +2428,20 @@ class LArray(ABCLArray):
         if self.ndim <= 1:
             return iter(self.data)
         else:
-            return LArrayIterator(self)
+            return ArrayIterator(self)
 
     def __contains__(self, key):
         return any(key in axis for axis in self.axes)
 
     def as_table(self, maxlines=-1, edgeitems=5, light=False, wide=True, value_name='value'):
         r"""
-        Deprecated. Please use LArray.dump() instead.
+        Deprecated. Please use Array.dump() instead.
         """
-        warnings.warn("LArray.as_table() is deprecated. Please use LArray.dump() instead.", FutureWarning,
+        warnings.warn("Array.as_table() is deprecated. Please use Array.dump() instead.", FutureWarning,
                       stacklevel=2)
         return self.dump(maxlines=maxlines, edgeitems=edgeitems, light=light, wide=wide, value_name=value_name)
 
-    # XXX: dump as a 2D LArray with row & col dims?
+    # XXX: dump as a 2D Array with row & col dims?
     def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
              maxlines=-1, edgeitems=5):
         r"""
@@ -2621,14 +2621,14 @@ class LArray(ABCLArray):
             An aggregate function with this signature: func(a, axis=None, dtype=None, out=None, keepdims=False)
         axes : tuple of axes, optional
             Each axis can be an Axis object, str or int.
-        out : LArray, optional
+        out : Array, optional
             Alternative output array in which to place the result. It must have the same shape as the expected output.
         keepaxes : bool or scalar, optional
             If this is set to True, the axes which are reduced are left in the result as dimensions with size one.
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
         """
         src_data = np.asarray(self)
         axes = self.axes[list(axes)] if axes else self.axes
@@ -2641,7 +2641,7 @@ class LArray(ABCLArray):
         else:
             kwargs['keepdims'] = bool(keepaxes)
         if out is not None:
-            assert isinstance(out, LArray)
+            assert isinstance(out, Array)
             kwargs['out'] = out.data
         res_data = op(src_data, axis=axes_indices, **kwargs)
         if keepaxes:
@@ -2652,10 +2652,10 @@ class LArray(ABCLArray):
         else:
             res_axes = self.axes - axes
         if not res_axes:
-            # scalars don't need to be wrapped in LArray
+            # scalars don't need to be wrapped in Array
             return res_data
         else:
-            return LArray(res_data, res_axes)
+            return Array(res_data, res_axes)
 
     def _cum_aggregate(self, op, axis):
         r"""
@@ -2664,8 +2664,8 @@ class LArray(ABCLArray):
         time.
         """
         # TODO: accept a single group in axis, to filter & aggregate in one shot
-        return LArray(op(np.asarray(self), axis=self.axes.index(axis)),
-                      self.axes)
+        return Array(op(np.asarray(self), axis=self.axes.index(axis)),
+                     self.axes)
 
     # TODO: now that items is never a (k, v), it should be renamed to
     # something else: args? (groups would be misleading because each "item" can contain several groups)
@@ -2754,7 +2754,7 @@ class LArray(ABCLArray):
                 res_axes[axis_idx] = Axis(groups, axis.name)
 
             if isinstance(res_data, np.ndarray):
-                res = LArray(res_data, res_axes)
+                res = Array(res_data, res_axes)
             else:
                 res = res_data
         return res
@@ -2877,7 +2877,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Examples
         --------
@@ -2975,7 +2975,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Notes
         -----
@@ -2986,7 +2986,7 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FR,IT')
         >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = Array([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\sex  M  F
              BE  0  1
@@ -3001,7 +3001,7 @@ class LArray(ABCLArray):
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
             data = axis.labels[self.data.argmin(axis_idx)]
-            return LArray(data, self.axes - axis)
+            return Array(data, self.axes - axis)
         else:
             indices = np.unravel_index(self.data.argmin(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
@@ -3018,7 +3018,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Notes
         -----
@@ -3029,7 +3029,7 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FR,IT')
         >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = Array([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\sex  M  F
              BE  0  1
@@ -3043,7 +3043,7 @@ class LArray(ABCLArray):
         """
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
-            return LArray(self.data.argmin(axis_idx), self.axes - axis)
+            return Array(self.data.argmin(axis_idx), self.axes - axis)
         else:
             return np.unravel_index(self.data.argmin(), self.shape)
 
@@ -3059,7 +3059,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Notes
         -----
@@ -3070,7 +3070,7 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FR,IT')
         >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = Array([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\sex  M  F
              BE  0  1
@@ -3085,7 +3085,7 @@ class LArray(ABCLArray):
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
             data = axis.labels[self.data.argmax(axis_idx)]
-            return LArray(data, self.axes - axis)
+            return Array(data, self.axes - axis)
         else:
             indices = np.unravel_index(self.data.argmax(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
@@ -3102,7 +3102,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Notes
         -----
@@ -3113,7 +3113,7 @@ class LArray(ABCLArray):
         --------
         >>> nat = Axis('nat=BE,FR,IT')
         >>> sex = Axis('sex=M,F')
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], [nat, sex])
+        >>> arr = Array([[0, 1], [3, 2], [2, 5]], [nat, sex])
         >>> arr
         nat\sex  M  F
              BE  0  1
@@ -3127,7 +3127,7 @@ class LArray(ABCLArray):
         """
         if axis is not None:
             axis, axis_idx = self.axes[axis], self.axes.index(axis)
-            return LArray(self.data.argmax(axis_idx), self.axes - axis)
+            return Array(self.data.argmax(axis_idx), self.axes - axis)
         else:
             return np.unravel_index(self.data.argmax(), self.shape)
 
@@ -3150,11 +3150,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Examples
         --------
-        >>> arr = LArray([[0, 1], [3, 2], [2, 5]], "nat=BE,FR,IT; sex=M,F")
+        >>> arr = Array([[0, 1], [3, 2], [2, 5]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
         nat\sex  M  F
              BE  0  1
@@ -3177,7 +3177,7 @@ class LArray(ABCLArray):
             axis = self.axes[0]
         axis = self.axes[axis]
         pos = self.indicesofsorted(axis, ascending=ascending, kind=kind)
-        return LArray(axis.labels[pos.data], pos.axes)
+        return Array(axis.labels[pos.data], pos.axes)
 
     argsort = renamed_to(labelsofsorted, 'argsort')
 
@@ -3198,11 +3198,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Examples
         --------
-        >>> arr = LArray([[1, 5], [3, 2], [0, 4]], "nat=BE,FR,IT; sex=M,F")
+        >>> arr = Array([[1, 5], [3, 2], [0, 4]], "nat=BE,FR,IT; sex=M,F")
         >>> arr
         nat\sex  M  F
              BE  1  5
@@ -3230,7 +3230,7 @@ class LArray(ABCLArray):
                              for i in range(self.ndim))
             data = data[reverser]
         new_axis = Axis(np.arange(len(axis)), axis.name)
-        return LArray(data, self.axes.replace(axis, new_axis))
+        return Array(data, self.axes.replace(axis, new_axis))
 
     posargsort = renamed_to(indicesofsorted, 'posargsort')
 
@@ -3492,12 +3492,12 @@ class LArray(ABCLArray):
 
     @lazy_attribute
     def iflat(self):
-        return LArrayFlatIndicesIndexer(self)
-    iflat.__doc__ = LArrayFlatIndicesIndexer.__doc__
+        return ArrayFlatIndicesIndexer(self)
+    iflat.__doc__ = ArrayFlatIndicesIndexer.__doc__
 
     def copy(self):
         r"""Returns a copy of the array. """
-        return LArray(self.data.copy(), axes=self.axes[:], meta=self.meta)
+        return Array(self.data.copy(), axes=self.axes[:], meta=self.meta)
 
     # XXX: we might want to implement this using .groupby().first()
     def unique(self, axes=None, sort=False, sep='_'):
@@ -3515,12 +3515,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             array with unique values
 
         Examples
         --------
-        >>> arr = LArray([[0, 2, 0, 0],
+        >>> arr = Array([[0, 2, 0, 0],
         ...               [1, 1, 1, 0]], 'a=a0,a1;b=b0..b3')
         >>> arr
         a\b  b0  b1  b2  b3
@@ -3578,7 +3578,7 @@ class LArray(ABCLArray):
             first_axis_idx = self.axes.index(axes[0])
             # XXX: use combine_axes(axes).items() instead?
             for labels, value in self.items(axes):
-                hashable_value = value.data.tobytes() if isinstance(value, LArray) else value
+                hashable_value = value.data.tobytes() if isinstance(value, Array) else value
                 if hashable_value not in seen:
                     list_append((sep_join(str(l) for l in labels), value))
                     seen_add(hashable_value)
@@ -3595,7 +3595,7 @@ class LArray(ABCLArray):
 
     @property
     def info(self):
-        r"""Describes a LArray (metadata + shape and labels for each axis).
+        r"""Describes an Array (metadata + shape and labels for each axis).
 
         Returns
         -------
@@ -3604,7 +3604,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> mat0 = LArray([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M")
+        >>> mat0 = Array([[2.0, 5.0], [8.0, 6.0]], "nat=BE,FO; sex=F,M")
         >>> mat0.info
         2 x 2
          nat [2]: 'BE' 'FO'
@@ -3635,14 +3635,14 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             array / array.sum(axes)
 
         Examples
         --------
         >>> nat = Axis('nat=BE,FO')
         >>> sex = Axis('sex=M,F')
-        >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
+        >>> a = Array([[4, 6], [2, 8]], [nat, sex])
         >>> a
         nat\sex  M  F
              BE  4  6
@@ -3718,7 +3718,7 @@ class LArray(ABCLArray):
         return self / self.sum(*axes)
 
     def rationot0(self, *axes):
-        r"""Returns a LArray with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
+        r"""Returns an Array with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
 
         Parameters
         ----------
@@ -3726,14 +3726,14 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             array / array.sum(axes)
 
         Examples
         --------
         >>> a = Axis('a=a0,a1')
         >>> b = Axis('b=b0,b1,b2')
-        >>> arr = LArray([[6, 0, 2],
+        >>> arr = Array([[6, 0, 2],
         ...               [4, 0, 8]], [a, b])
         >>> arr
         a\b  b0  b1  b2
@@ -3768,14 +3768,14 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             array / array.sum(axes) * 100
 
         Examples
         --------
         >>> nat = Axis('nat=BE,FO')
         >>> sex = Axis('sex=M,F')
-        >>> a = LArray([[4, 6], [2, 8]], [nat, sex])
+        >>> a = Array([[4, 6], [2, 8]], [nat, sex])
         >>> a
         nat\sex  M  F
              BE  4  6
@@ -3825,11 +3825,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray of bool or bool
+        Array of bool or bool
 
         See Also
         --------
-        LArray.all_by, LArray.any, LArray.any_by
+        Array.all_by, Array.any, Array.any_by
 
         Examples
         --------
@@ -3896,11 +3896,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray of bool or bool
+        Array of bool or bool
 
         See Also
         --------
-        LArray.all, LArray.any, LArray.any_by
+        Array.all, Array.any, Array.any_by
 
         Examples
         --------
@@ -3964,11 +3964,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray of bool or bool
+        Array of bool or bool
 
         See Also
         --------
-        LArray.any_by, LArray.all, LArray.all_by
+        Array.any_by, Array.all, Array.all_by
 
         Examples
         --------
@@ -4035,11 +4035,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray of bool or bool
+        Array of bool or bool
 
         See Also
         --------
-        LArray.any, LArray.all, LArray.all_by
+        Array.any, Array.all, Array.all_by
 
         Examples
         --------
@@ -4105,12 +4105,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.sum_by, LArray.prod, LArray.prod_by,
-        LArray.cumsum, LArray.cumprod
+        Array.sum_by, Array.prod, Array.prod_by,
+        Array.cumsum, Array.cumprod
 
         Examples
         --------
@@ -4170,12 +4170,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.sum, LArray.prod, LArray.prod_by,
-        LArray.cumsum, LArray.cumprod
+        Array.sum, Array.prod, Array.prod_by,
+        Array.cumsum, Array.cumprod
 
         Examples
         --------
@@ -4233,12 +4233,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.prod_by, LArray.sum, LArray.sum_by,
-        LArray.cumsum, LArray.cumprod
+        Array.prod_by, Array.sum, Array.sum_by,
+        Array.cumsum, Array.cumprod
 
         Examples
         --------
@@ -4299,12 +4299,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.prod, LArray.sum, LArray.sum_by,
-        LArray.cumsum, LArray.cumprod
+        Array.prod, Array.sum, Array.sum_by,
+        Array.cumsum, Array.cumprod
 
         Examples
         --------
@@ -4361,11 +4361,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.min_by, LArray.max, LArray.max_by
+        Array.min_by, Array.max, Array.max_by
 
         Examples
         --------
@@ -4425,11 +4425,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.min, LArray.max, LArray.max_by
+        Array.min, Array.max, Array.max_by
 
         Examples
         --------
@@ -4486,11 +4486,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.max_by, LArray.min, LArray.min_by
+        Array.max_by, Array.min, Array.min_by
 
         Examples
         --------
@@ -4550,11 +4550,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.max, LArray.min, LArray.min_by
+        Array.max, Array.min, Array.min_by
 
         Examples
         --------
@@ -4611,13 +4611,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.mean_by, LArray.median, LArray.median_by,
-        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
-        LArray.percentile, LArray.percentile_by
+        Array.mean_by, Array.median, Array.median_by,
+        Array.var, Array.var_by, Array.std, Array.std_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -4677,13 +4677,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.mean, LArray.median, LArray.median_by,
-        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
-        LArray.percentile, LArray.percentile_by
+        Array.mean, Array.median, Array.median_by,
+        Array.var, Array.var_by, Array.std, Array.std_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -4740,13 +4740,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.median_by, LArray.mean, LArray.mean_by,
-        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
-        LArray.percentile, LArray.percentile_by
+        Array.median_by, Array.mean, Array.mean_by,
+        Array.var, Array.var_by, Array.std, Array.std_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -4810,13 +4810,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.median, LArray.mean, LArray.mean_by,
-        LArray.var, LArray.var_by, LArray.std, LArray.std_by,
-        LArray.percentile, LArray.percentile_by
+        Array.median, Array.mean, Array.mean_by,
+        Array.var, Array.var_by, Array.std, Array.std_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -4881,13 +4881,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.percentile_by, LArray.mean, LArray.mean_by,
-        LArray.median, LArray.median_by, LArray.var, LArray.var_by,
-        LArray.std, LArray.std_by
+        Array.percentile_by, Array.mean, Array.mean_by,
+        Array.median, Array.median_by, Array.var, Array.var_by,
+        Array.std, Array.std_by
 
         Examples
         --------
@@ -4969,13 +4969,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.percentile, LArray.mean, LArray.mean_by,
-        LArray.median, LArray.median_by, LArray.var, LArray.var_by,
-        LArray.std, LArray.std_by
+        Array.percentile, Array.mean, Array.mean_by,
+        Array.median, Array.median_by, Array.var, Array.var_by,
+        Array.std, Array.std_by
 
         Examples
         --------
@@ -5057,7 +5057,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         Examples
         --------
@@ -5122,13 +5122,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.var_by, LArray.std, LArray.std_by,
-        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
-        LArray.percentile, LArray.percentile_by
+        Array.var_by, Array.std, Array.std_by,
+        Array.mean, Array.mean_by, Array.median, Array.median_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -5186,13 +5186,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.var, LArray.std, LArray.std_by,
-        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
-        LArray.percentile, LArray.percentile_by
+        Array.var, Array.std, Array.std_by,
+        Array.mean, Array.mean_by, Array.median, Array.median_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -5250,13 +5250,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.std_by, LArray.var, LArray.var_by,
-        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
-        LArray.percentile, LArray.percentile_by
+        Array.std_by, Array.var, Array.var_by,
+        Array.mean, Array.mean_by, Array.median, Array.median_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -5315,13 +5315,13 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.std_by, LArray.var, LArray.var_by,
-        LArray.mean, LArray.mean_by, LArray.median, LArray.median_by,
-        LArray.percentile, LArray.percentile_by
+        Array.std_by, Array.var, Array.var_by,
+        Array.mean, Array.mean_by, Array.median, Array.median_by,
+        Array.percentile, Array.percentile_by
 
         Examples
         --------
@@ -5381,12 +5381,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.cumprod, LArray.sum, LArray.sum_by,
-        LArray.prod, LArray.prod_by
+        Array.cumprod, Array.sum, Array.sum_by,
+        Array.prod, Array.prod_by
 
         Notes
         -----
@@ -5429,12 +5429,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
 
         See Also
         --------
-        LArray.cumsum, LArray.sum, LArray.sum_by,
-        LArray.prod, LArray.prod_by
+        Array.cumsum, Array.sum, Array.sum_by,
+        Array.prod, Array.prod_by
 
         Notes
         -----
@@ -5486,14 +5486,14 @@ class LArray(ABCLArray):
             # isscalar test and an if statement.
             # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but
             # it makes some tests fail for some reason.
-            if not isinstance(other, (LArray, np.ndarray)) and not np.isscalar(other):
+            if not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
                 other = aslarray(other)
 
-            if isinstance(other, LArray):
+            if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
                 (self, other), res_axes = make_numpy_broadcastable([self, other])
                 other = other.data
-            return LArray(super_method(self.data, other), res_axes)
+            return Array(super_method(self.data, other), res_axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -5586,10 +5586,10 @@ class LArray(ABCLArray):
         """
         current = self[:]
         axes = self.axes
-        if not isinstance(other, (LArray, np.ndarray)):
+        if not isinstance(other, (Array, np.ndarray)):
             raise NotImplementedError("matrix multiplication not implemented for %s" % type(other))
         if isinstance(other, np.ndarray):
-            other = LArray(other)
+            other = Array(other)
         other_axes = other.axes
 
         combined_axes = axes[:-2] + other_axes[:-2]
@@ -5614,14 +5614,14 @@ class LArray(ABCLArray):
         if other.ndim > 1:
             res_axes += [other_axes[-1].copy()]
         if res_axes:
-            return LArray(res_data, res_axes)
+            return Array(res_data, res_axes)
         else:
             return res_data
 
     def __rmatmul__(self, other):
         if isinstance(other, np.ndarray):
-            other = LArray(other)
-        if not isinstance(other, LArray):
+            other = Array(other)
+        if not isinstance(other, Array):
             raise NotImplementedError("matrix multiplication not implemented for %s" % type(other))
         return other.__matmul__(self)
 
@@ -5631,7 +5631,7 @@ class LArray(ABCLArray):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self):
-            return LArray(super_method(self.data), self.axes)
+            return Array(super_method(self.data), self.axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -5661,8 +5661,8 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        other : LArray-like
-            Input array. aslarray() is used on a non-LArray input.
+        other : Array-like
+            Input array. aslarray() is used on a non-Array input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
@@ -5684,7 +5684,7 @@ class LArray(ABCLArray):
 
         See Also
         --------
-        LArray.eq
+        Array.eq
 
         Notes
         -----
@@ -5715,11 +5715,11 @@ class LArray(ABCLArray):
         Test equality between two arrays within a given tolerance range.
         Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
 
-        >>> arr1 = LArray([6., 8.], "a=a0,a1")
+        >>> arr1 = Array([6., 8.], "a=a0,a1")
         >>> arr1
         a   a0   a1
            6.0  8.0
-        >>> arr2 = LArray([5.999, 8.001], "a=a0,a1")
+        >>> arr2 = Array([5.999, 8.001], "a=a0,a1")
         >>> arr2
         a     a0     a1
            5.999  8.001
@@ -5793,8 +5793,8 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        other : LArray-like
-            Input array. aslarray() is used on a non-LArray input.
+        other : Array-like
+            Input array. aslarray() is used on a non-Array input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
@@ -5807,14 +5807,14 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Boolean array where each cell tells whether corresponding elements of self and other are equal
             within a tolerance range if given. If nans_equal=True, corresponding elements with NaN values
             will be considered as equal.
 
         See Also
         --------
-        LArray.equals
+        Array.equals
 
         Notes
         -----
@@ -5827,7 +5827,7 @@ class LArray(ABCLArray):
 
         Examples
         --------
-        >>> arr1 = LArray([6., np.nan, 8.], "a=a0..a2")
+        >>> arr1 = Array([6., np.nan, 8.], "a=a0..a2")
         >>> arr1
         a   a0   a1   a2
            6.0  nan  8.0
@@ -5841,7 +5841,7 @@ class LArray(ABCLArray):
         Test equality between two arrays within a given tolerance range.
         Return True if absolute(array1 - array2) <= (atol + rtol * absolute(array2)).
 
-        >>> arr2 = LArray([5.999, np.nan, 8.001], "a=a0..a2")
+        >>> arr2 = Array([5.999, np.nan, 8.001], "a=a0..a2")
         >>> arr2
         a     a0   a1     a2
            5.999  nan  8.001
@@ -5867,14 +5867,14 @@ class LArray(ABCLArray):
                     if np.issubclass_(a.dtype.type, np.inexact):
                         return isnan(a)
                     elif a.dtype.type is np.object_:
-                        return LArray(obj_isnan(a), a.axes)
+                        return Array(obj_isnan(a), a.axes)
                     else:
                         return False
 
                 return (self == other) | (general_isnan(self) & general_isnan(other))
         else:
             (a1, a2), res_axes = make_numpy_broadcastable([self, other])
-            return LArray(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
+            return Array(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
 
     def isin(self, test_values, assume_unique=False, invert=False):
         r"""
@@ -5895,7 +5895,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             boolean array of the same shape as this array that is True where the array element is in `test_values`
             and False otherwise.
 
@@ -5916,19 +5916,19 @@ class LArray(ABCLArray):
         """
         if isinstance(test_values, set):
             test_values = list(test_values)
-        return LArray(np.isin(self.data, test_values, assume_unique=assume_unique, invert=invert), self.axes)
+        return Array(np.isin(self.data, test_values, assume_unique=assume_unique, invert=invert), self.axes)
 
     def divnot0(self, other):
         r"""Divides array by other, but returns 0.0 where other is 0.
 
         Parameters
         ----------
-        other : scalar or LArray
+        other : scalar or Array
             What to divide by.
 
         Returns
         -------
-        LArray
+        Array
             Array divided by other, 0.0 where other is 0
 
         Examples
@@ -5968,7 +5968,7 @@ class LArray(ABCLArray):
             otherdata = np.where(other_eq0, 1, otherdata)
             res_data = self.data / otherdata
             res_data[np.broadcast_to(other_eq0, res_data.shape)] = 0.0
-            return LArray(res_data, res_axes)
+            return Array(res_data, res_axes)
 
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
@@ -5976,7 +5976,7 @@ class LArray(ABCLArray):
         r"""Expands array to target_axes.
 
         Target axes will be added to array if not present.
-        In most cases this function is not needed because LArray can do operations with arrays having different
+        In most cases this function is not needed because Array can do operations with arrays having different
         (compatible) axes.
 
         Parameters
@@ -5984,7 +5984,7 @@ class LArray(ABCLArray):
         target_axes : string, list of Axis or AxisCollection, optional
             Self can contain axes not present in `target_axes`.
             The result axes will be: [self.axes not in target_axes] + target_axes
-        out : LArray, optional
+        out : Array, optional
             Output array, must have more axes than array. Defaults to a new array.
             arr.expand(out=out) is equivalent to out[:] = arr
         readonly : bool, optional
@@ -5992,7 +5992,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Original array if possible (and out is None).
 
         Examples
@@ -6054,7 +6054,7 @@ class LArray(ABCLArray):
 
             if readonly:
                 # requires numpy 1.10
-                return LArray(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
+                return Array(np.broadcast_to(broadcasted, target_axes.shape), target_axes)
 
             out = empty(target_axes, dtype=self.dtype)
             out[:] = broadcasted
@@ -6069,14 +6069,14 @@ class LArray(ABCLArray):
         ----------
         axis : axis reference
             Axis along which to append `value`.
-        value : scalar or LArray
+        value : scalar or Array
             Scalar or array with compatible axes.
         label : scalar, optional
             Label for the new item in axis
 
         Returns
         -------
-        LArray
+        Array
             Array expanded with `value` along `axis`.
 
         Examples
@@ -6120,14 +6120,14 @@ class LArray(ABCLArray):
         ----------
         axis : axis reference
             Axis along which to prepend input array (`value`)
-        value : scalar or LArray
+        value : scalar or Array
             Scalar or array with compatible axes.
         label : str, optional
             Label for the new item in axis
 
         Returns
         -------
-        LArray
+        Array
             Array expanded with 'value' at the start of 'axis'.
 
         Examples
@@ -6170,12 +6170,12 @@ class LArray(ABCLArray):
         ----------
         axis : axis
             Axis along which to extend with input array (`other`)
-        other : LArray
+        other : Array
             Array with compatible axes
 
         Returns
         -------
-        LArray
+        Array
             Array expanded with 'other' along 'axis'.
 
         Examples
@@ -6218,8 +6218,8 @@ class LArray(ABCLArray):
 
         Parameters
         ----------
-        value : scalar or LArray
-            Value to insert. If an LArray, it must have compatible axes. If value already has the axis along which it
+        value : scalar or Array
+            Value to insert. If an Array, it must have compatible axes. If value already has the axis along which it
             is inserted, `label` should not be used.
         before : scalar or Group
             Label or group before which to insert `value`.
@@ -6230,7 +6230,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with `value` inserted along `axis`. The dtype of the returned array will be the "closest" type
             which can hold both the array values and the inserted values without loss of information. For example,
             when mixing numeric and string types, the dtype will be object.
@@ -6364,9 +6364,9 @@ class LArray(ABCLArray):
         # >>> arr1.insert([dict(value=8, before='b1', label='b0.5'),
         #                  dict(value=9, before='b2', label='b1.5')])
 
-        # It would be nice to somehow support easily inserting values defined using an LArray
+        # It would be nice to somehow support easily inserting values defined using an Array
 
-        # >>> toinsert = LArray([[8, 'b1', 'b0.5'],
+        # >>> toinsert = Array([[8, 'b1', 'b0.5'],
         # >>>                    [9, 'b2', 'b1.5']], "row=2;column=value,before,label")
         # >>> arr1.insert(toinsert)
         # >>> arr1.insert(value=toinsert['value'], before=toinsert['before'], label=toinsert['label'])
@@ -6390,7 +6390,7 @@ class LArray(ABCLArray):
             before_pos = axis.index(after) + 1
 
         def length(v):
-            if isinstance(v, LArray) and axis in v.axes:
+            if isinstance(v, Array) and axis in v.axes:
                 return len(v.axes[axis])
             else:
                 return len(v) if isinstance(v, (tuple, list, np.ndarray)) else 1
@@ -6401,12 +6401,12 @@ class LArray(ABCLArray):
         num_inserts = max(length(before_pos), length(label), length(value))
         stops = expand(before_pos, num_inserts)
 
-        if isinstance(value, LArray) and axis in value.axes:
+        if isinstance(value, Array) and axis in value.axes:
             # FIXME: when length(before_pos) == 1 and length(label) == 1, this is inefficient
             values = [value[[k]] for k in value.axes[axis]]
         else:
             values = expand(value, num_inserts)
-        values = [aslarray(v) if not isinstance(v, LArray) else v
+        values = [aslarray(v) if not isinstance(v, Array) else v
                   for v in values]
 
         if label is not None:
@@ -6432,7 +6432,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with `labels` removed along their axis.
 
         Examples
@@ -6497,7 +6497,7 @@ class LArray(ABCLArray):
         axis_idx = self.axes.index(axis)
         new_axis = Axis(np.delete(axis.labels, indices), axis.name)
         new_axes = self.axes.replace(axis, new_axis)
-        return LArray(np.delete(self.data, indices, axis_idx), new_axes)
+        return Array(np.delete(self.data, indices, axis_idx), new_axes)
 
     def transpose(self, *args):
         r"""Reorder axes.
@@ -6512,8 +6512,8 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
-            LArray with reordered axes.
+        Array
+            Array with reordered axes.
 
         Examples
         --------
@@ -6562,7 +6562,7 @@ class LArray(ABCLArray):
         indices_present = set(axes_indices)
         missing_indices = [i for i in range(len(self.axes)) if i not in indices_present]
         axes_indices = axes_indices + missing_indices
-        return LArray(self.data.transpose(axes_indices), self.axes[axes_indices])
+        return Array(self.data.transpose(axes_indices), self.axes[axes_indices])
     T = property(transpose)
 
     def clip(self, minval=None, maxval=None, out=None):
@@ -6580,12 +6580,12 @@ class LArray(ABCLArray):
         maxval : scalar or array-like, optional
             Maximum value. If None, clipping is not performed on upper bound.
             Defaults to None.
-        out : LArray, optional
+        out : Array, optional
             The results will be placed in this array.
 
         Returns
         -------
-        LArray
+        Array
             An array with the elements of the current array,
             but where values < `minval` are replaced with `minval`, and those > `maxval` with `maxval`.
 
@@ -6756,12 +6756,12 @@ class LArray(ABCLArray):
 
         Notes
         -----
-        The round trip to Stata (LArray.to_stata followed by read_stata) loose the name of the "column" axis.
+        The round trip to Stata (Array.to_stata followed by read_stata) loose the name of the "column" axis.
 
         Examples
         --------
         >>> axes = [Axis(3, 'row'), Axis('column=country,sex')]    # doctest: +SKIP
-        >>> arr = LArray([['BE', 'F'],
+        >>> arr = Array([['BE', 'F'],
         ...               ['FR', 'M'],
         ...               ['FR', 'F']], axes=axes)                 # doctest: +SKIP
         >>> arr                                                    # doctest: +SKIP
@@ -7076,7 +7076,7 @@ class LArray(ABCLArray):
         Returns
         -------
         int
-            Number of dimensions of a LArray.
+            Number of dimensions of an Array.
 
         Examples
         --------
@@ -7189,7 +7189,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with modified labels.
 
         See Also
@@ -7265,10 +7265,10 @@ class LArray(ABCLArray):
             self.axes = axes
             return self
         else:
-            return LArray(self.data, axes)
+            return Array(self.data, axes)
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True):
-        return LArray(self.data.astype(dtype, order, casting, subok, copy), self.axes)
+        return Array(self.data.astype(dtype, order, casting, subok, copy), self.axes)
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1):
@@ -7283,11 +7283,11 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         See Also
         --------
-        LArray.roll : cells which are pushed "outside of the axis" are reintroduced on the opposite side of the axis
+        Array.roll : cells which are pushed "outside of the axis" are reintroduced on the opposite side of the axis
                       instead of being dropped.
 
         Examples
@@ -7322,17 +7322,17 @@ class LArray(ABCLArray):
         ----------
         axis : int, str or Axis, optional
             Axis along which to roll. Defaults to None (all axes).
-        n : int or LArray, optional
+        n : int or Array, optional
             Number of positions to roll. Defaults to 1. Use a negative integers to roll left.
-            If n is an LArray the number of positions rolled can vary along the axes of n.
+            If n is an Array the number of positions rolled can vary along the axes of n.
 
         Returns
         -------
-        LArray
+        Array
 
         See Also
         --------
-        LArray.shift : cells which are pushed "outside of the axis" are dropped instead of being reintroduced on the
+        Array.shift : cells which are pushed "outside of the axis" are dropped instead of being reintroduced on the
                        opposite side of the axis.
 
         Examples
@@ -7361,12 +7361,12 @@ class LArray(ABCLArray):
         """
         if isinstance(n, (int, np.integer)):
             axis_idx = None if axis is None else self.axes.index(axis)
-            return LArray(np.roll(self.data, n, axis=axis_idx), self.axes)
+            return Array(np.roll(self.data, n, axis=axis_idx), self.axes)
         else:
-            if not isinstance(n, LArray):
-                raise TypeError("n should either be an integer or an LArray")
+            if not isinstance(n, Array):
+                raise TypeError("n should either be an integer or an Array")
             if axis is None:
-                raise TypeError("axis may not be None if n is an LArray")
+                raise TypeError("axis may not be None if n is an Array")
             axis = self.axes[axis]
             seq = sequence(axis)
             return self[axis.i[(seq - n) % len(axis)]]
@@ -7393,7 +7393,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             The n-th order differences. The shape of the output is the same as `a` except for `axis` which is smaller
             by `n` * `d`.
 
@@ -7456,12 +7456,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
 
         Examples
         --------
         >>> data = [[2, 4, 5, 4, 6], [4, 6, 3, 6, 9]]
-        >>> a = LArray(data, "sex=M,F; year=2016..2020")
+        >>> a = Array(data, "sex=M,F; year=2016..2020")
         >>> a
         sex\year  2016  2017  2018  2019  2020
                M     2     4     5     4     6
@@ -7500,12 +7500,12 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar
+        Array or scalar
             Array with constant axes removed.
 
         Examples
         --------
-        >>> a = LArray([[1, 2],
+        >>> a = Array([[1, 2],
         ...             [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
         >>> a
         sex\nat  BE  FO
@@ -7538,7 +7538,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with combined axes.
 
         Examples
@@ -7647,13 +7647,13 @@ class LArray(ABCLArray):
         sort : bool, optional
             Whether or not to sort the combined axis before splitting it. When all combinations of labels are present in
             the combined axis, sorting is faster than not sorting. Defaults to False.
-        fill_value : scalar or LArray, optional
+        fill_value : scalar or Array, optional
             Value to use for missing values when the combined axis does not contain all combination of labels.
             Defaults to NaN.
 
         Returns
         -------
-        LArray
+        Array
 
         Examples
         --------
@@ -7767,7 +7767,7 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Array with passed `axes` reversed.
 
         Examples
@@ -7829,7 +7829,7 @@ class LArray(ABCLArray):
         ----------
         transform : function
             Function to apply. This function will be called in turn with each element of the array as the first
-            argument and must return an LArray, scalar or tuple.
+            argument and must return an Array, scalar or tuple.
             If returning arrays the axes of those arrays must be the same for all calls to the function.
         *args
             Extra arguments to pass to the function.
@@ -7848,14 +7848,14 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray or scalar, or tuple of them
+        Array or scalar, or tuple of them
             Axes will be the union of those in axis and those of values returned by the function.
 
         Examples
         --------
         First let us define a test array
 
-        >>> arr = LArray([[0, 2, 1],
+        >>> arr = Array([[0, 2, 1],
         ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
         >>> arr
         a\b  b0  b1  b2
@@ -7933,7 +7933,7 @@ class LArray(ABCLArray):
 
         if axes is not None:
             if by is not None:
-                raise ValueError("cannot specify both `by` and `axes` arguments in LArray.apply")
+                raise ValueError("cannot specify both `by` and `axes` arguments in Array.apply")
             by = self.axes - axes
 
         # XXX: we could go one step further than vectorize and support a array of callables which would be broadcasted
@@ -7948,9 +7948,9 @@ class LArray(ABCLArray):
             raw_bcast_args, raw_bcast_kwargs, res_axes = ((self,) + args, kwargs, self.axes)
             res_data = vfunc(*raw_bcast_args, **raw_bcast_kwargs)
             if isinstance(res_data, tuple):
-                return tuple(LArray(res_arr, res_axes) for res_arr in res_data)
+                return tuple(Array(res_arr, res_axes) for res_arr in res_data)
             else:
-                return LArray(res_data, res_axes)
+                return Array(res_data, res_axes)
         else:
             by = self.axes[by]
 
@@ -7990,19 +7990,19 @@ class LArray(ABCLArray):
 
         Returns
         -------
-        LArray
+        Array
             Axes will be the same as the original array axes.
 
         Notes
         -----
-        To apply a transformation given as an LArray (with current values as labels on one axis of
+        To apply a transformation given as an Array (with current values as labels on one axis of
         the array and desired values as the array values), you can use: ``mapping_arr[original_arr]``.
 
         Examples
         --------
         First let us define a test array
 
-        >>> arr = LArray([[0, 2, 1],
+        >>> arr = Array([[0, 2, 1],
         ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
         >>> arr
         a\b  b0  b1  b2
@@ -8027,9 +8027,15 @@ class LArray(ABCLArray):
         return self.apply(transform, dtype=dtype)
 
 
+class LArray(Array):
+    def __init__(self, *args, **kwargs):
+        warnings.warn("LArray has been renamed as Array.", FutureWarning, stacklevel=2)
+        Array.__init__(self, *args, **kwargs)
+
+
 def larray_equal(a1, a2):
     import warnings
-    msg = "larray_equal() is deprecated. Use LArray.equals() instead."
+    msg = "larray_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
         a1 = aslarray(a1)
@@ -8040,7 +8046,7 @@ def larray_equal(a1, a2):
 
 def larray_nan_equal(a1, a2):
     import warnings
-    msg = "larray_nan_equal() is deprecated. Use LArray.equals() instead."
+    msg = "larray_nan_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
         a1 = aslarray(a1)
@@ -8051,19 +8057,19 @@ def larray_nan_equal(a1, a2):
 
 def aslarray(a, meta=None):
     r"""
-    Converts input as LArray if possible.
+    Converts input as Array if possible.
 
     Parameters
     ----------
     a : array-like
-        Input array to convert into a LArray.
+        Input array to convert into an Array.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8083,7 +8089,7 @@ def aslarray(a, meta=None):
           b     2.0      2.0
           c     3.0      1.0
     """
-    if isinstance(a, LArray):
+    if isinstance(a, Array):
         if meta is not None:
             res = a.copy()
             res.meta = meta
@@ -8099,7 +8105,7 @@ def aslarray(a, meta=None):
         from larray.inout.pandas import from_frame
         return from_frame(a, meta=meta)
     else:
-        return LArray(a, meta=meta)
+        return Array(a, meta=meta)
 
 
 def _check_axes_argument(func):
@@ -8133,7 +8139,7 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8156,7 +8162,7 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None):
     # FIXME: the error message is wrong (stackdepth is wrong) because of _check_axes_argument
     meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.zeros(axes.shape, dtype, order), axes, meta=meta)
+    return Array(np.zeros(axes.shape, dtype, order), axes, meta=meta)
 
 
 def zeros_like(array, title=None, dtype=None, order='K', meta=None):
@@ -8164,7 +8170,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
 
     Parameters
     ----------
-    array : LArray
+    array : Array
          Input array.
     title : str, optional
         Deprecated. See 'meta' below.
@@ -8180,7 +8186,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8191,7 +8197,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None):
      a1   0   0   0
     """
     meta = _handle_meta(meta, title)
-    return LArray(np.zeros_like(array, dtype, order), array.axes, meta=meta)
+    return Array(np.zeros_like(array, dtype, order), array.axes, meta=meta)
 
 
 @_check_axes_argument
@@ -8215,7 +8221,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8228,7 +8234,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None):
     """
     meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.ones(axes.shape, dtype, order), axes, meta=meta)
+    return Array(np.ones(axes.shape, dtype, order), axes, meta=meta)
 
 
 def ones_like(array, title=None, dtype=None, order='K', meta=None):
@@ -8236,7 +8242,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
 
     Parameters
     ----------
-    array : LArray
+    array : Array
         Input array.
     title : str, optional
         Deprecated. See 'meta' below.
@@ -8252,7 +8258,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8264,7 +8270,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None):
     """
     meta = _handle_meta(meta, title)
     axes = array.axes
-    return LArray(np.ones_like(array, dtype, order), axes, meta=meta)
+    return Array(np.ones_like(array, dtype, order), axes, meta=meta)
 
 
 @_check_axes_argument
@@ -8288,7 +8294,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8301,7 +8307,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None):
     """
     meta = _handle_meta(meta, title)
     axes = AxisCollection(axes)
-    return LArray(np.empty(axes.shape, dtype, order), axes, meta=meta)
+    return Array(np.empty(axes.shape, dtype, order), axes, meta=meta)
 
 
 def empty_like(array, title=None, dtype=None, order='K', meta=None):
@@ -8309,7 +8315,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
 
     Parameters
     ----------
-    array : LArray
+    array : Array
         Input array.
     title : str, optional
         Deprecated. See 'meta' below.
@@ -8325,7 +8331,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8338,7 +8344,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None):
     """
     meta = _handle_meta(meta, title)
     # cannot use empty() because order == 'K' is not understood
-    return LArray(np.empty_like(array.data, dtype, order), array.axes, meta=meta)
+    return Array(np.empty_like(array.data, dtype, order), array.axes, meta=meta)
 
 
 # We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
@@ -8349,7 +8355,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
     ----------
     axes : int, tuple of int, Axis or tuple/list/AxisCollection of Axis
         Collection of axes or a shape.
-    fill_value : scalar or LArray
+    fill_value : scalar or Array
         Value to fill the array
     title : str, optional
         Deprecated. See 'meta' below.
@@ -8364,7 +8370,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8399,9 +8405,9 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
 
     Parameters
     ----------
-    array : LArray
+    array : Array
         Input array.
-    fill_value : scalar or LArray
+    fill_value : scalar or Array
         Value to fill the array
     title : str, optional
         Deprecated. See 'meta' below.
@@ -8417,7 +8423,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8429,7 +8435,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
     """
     meta = _handle_meta(meta, title)
     # cannot use full() because order == 'K' is not understood
-    # cannot use np.full_like() because it would not handle LArray fill_value
+    # cannot use np.full_like() because it would not handle Array fill_value
     res = empty_like(array, dtype=dtype, meta=meta)
     res[:] = fill_value
     return res
@@ -8449,11 +8455,11 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     axis : axis definition (Axis, str, int)
         Axis along which to apply mod. An axis definition can be passed as a string. An int will be interpreted as the
         length for a new anonymous axis.
-    initial : scalar or LArray, optional
+    initial : scalar or Array, optional
         Value for the first label of axis. Defaults to 0.
-    inc : scalar, LArray, optional
+    inc : scalar, Array, optional
         Value to increment the previous value by. Defaults to 0 if mult is provided, 1 otherwise.
-    mult : scalar, LArray, optional
+    mult : scalar, Array, optional
         Value to multiply the previous value by. Defaults to 1.
     func : function/callable, optional
         Function to apply to the previous value. Defaults to None.
@@ -8482,7 +8488,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     >>> sequence(year, 1.0, mult=1.5)
     year  2016  2017  2018   2019
            1.0   1.5  2.25  3.375
-    >>> inc = LArray([1, 2], [sex])
+    >>> inc = Array([1, 2], [sex])
     >>> inc
     sex  M  F
          1  2
@@ -8490,7 +8496,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     sex\year  2016  2017  2018  2019
            M   1.0   2.0   3.0   4.0
            F   1.0   3.0   5.0   7.0
-    >>> mult = LArray([2, 3], [sex])
+    >>> mult = Array([2, 3], [sex])
     >>> mult
     sex  M  F
          2  3
@@ -8498,7 +8504,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     sex\year  2016  2017  2018  2019
            M   1.0   2.0   4.0   8.0
            F   1.0   3.0   9.0  27.0
-    >>> initial = LArray([3, 4], [sex])
+    >>> initial = Array([3, 4], [sex])
     >>> initial
     sex  M  F
          3  4
@@ -8529,7 +8535,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
 
     sequence can be used as the inverse of growth_rate:
 
-    >>> a = LArray([1.0, 2.0, 3.0, 3.0], year)
+    >>> a = Array([1.0, 2.0, 3.0, 3.0], year)
     >>> a
     year  2016  2017  2018  2019
            1.0   2.0   3.0   3.0
@@ -8553,7 +8559,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
         # stop is not included
         stop = initial + inc * len(axis)
         data = np.arange(initial, stop, inc)
-        return LArray(data, axis, meta=meta)
+        return Array(data, axis, meta=meta)
 
     if axes is None:
         if not isinstance(axis, Axis):
@@ -8572,7 +8578,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     res[axis.i[0]] = initial
 
     def has_axis(a, axis):
-        return isinstance(a, LArray) and axis in a.axes
+        return isinstance(a, Array) and axis in a.axes
     if func is not None:
         for i in range(1, len(axis)):
             res[axis.i[i]] = func(res[axis.i[i - 1]])
@@ -8603,7 +8609,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
 
         # a[1:] = initial * cumprod(mult[1:]) + ...
         def index_if_exists(a, axis, i):
-            if isinstance(a, LArray) and axis in a.axes:
+            if isinstance(a, Array) and axis in a.axes:
                 a_axis = a.axes[axis]
                 return a[a_axis[axis.labels[i]]]
             else:
@@ -8623,7 +8629,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
             dt = common_type((a, initial))
             r = empty((get_axes(a) - axis) | axis, dtype=dt)
             r[axis.i[0]] = initial
-            if isinstance(a, LArray) and axis in a.axes:
+            if isinstance(a, Array) and axis in a.axes:
                 # not using axis.i[1:] because a could have less ticks
                 # on axis than axis
                 r[axis.i[1:]] = a[axis[axis.labels[1]:]]
@@ -8631,7 +8637,7 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
                 r[axis.i[1:]] = a
             return r
 
-        if isinstance(initial, LArray) and np.isscalar(inc):
+        if isinstance(initial, Array) and np.isscalar(inc):
             inc = full_like(initial, inc)
 
         # inc only (integer scalar). Equivalent to fastpath above but with axes not None).
@@ -8639,13 +8645,13 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
             # stop is not included
             stop = initial + inc * len(axis)
             data = np.arange(initial, stop, inc)
-            res[:] = LArray(data, axis)
+            res[:] = Array(data, axis)
         # inc only (other scalar)
         elif np.isscalar(mult) and mult == 1 and np.isscalar(inc):
             # stop is included
             stop = initial + inc * (len(axis) - 1)
             data = np.linspace(initial, stop=stop, num=len(axis))
-            res[:] = LArray(data, axis)
+            res[:] = Array(data, axis)
         # inc only (array)
         elif np.isscalar(mult) and mult == 1:
             inc_array = array_or_full(inc, axis, initial)
@@ -8699,7 +8705,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8755,7 +8761,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
     else:
         axes = AxisCollection(shape_or_axes)
     data = np.arange(start, start + axes.size, dtype=dtype).reshape(axes.shape)
-    return LArray(data, axes, meta=meta)
+    return Array(data, axes, meta=meta)
 
 
 def kth_diag_indices(shape, k):
@@ -8778,7 +8784,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
 
     Parameters
     ----------
-    a : LArray
+    a : Array
         If `a` has 2 dimensions or more, return a copy of its `k`-th diagonal.
         If `a` has 1 dimension, return an array with `ndim` dimensions on the `k`-th diagonal.
     k : int, optional
@@ -8793,7 +8799,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True):
 
     Returns
     -------
-    LArray
+    Array
         The extracted diagonal or constructed diagonal array.
 
     Examples
@@ -8869,7 +8875,7 @@ def labels_array(axes, title=None, meta=None):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -8902,7 +8908,7 @@ def labels_array(axes, title=None, meta=None):
     else:
         res_axes = axes
         res_data = axes[0].labels
-    return LArray(res_data, res_axes, meta=meta)
+    return Array(res_data, res_axes, meta=meta)
 
 
 def identity(axis):
@@ -8933,7 +8939,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 
     Returns
     -------
-    LArray of shape (rows, columns)
+    Array of shape (rows, columns)
         An array where all elements are equal to zero, except for the k-th diagonal, whose values are equal to one.
 
     Examples
@@ -8965,7 +8971,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
     axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
-    return LArray(data, axes, meta=meta)
+    return Array(data, axes, meta=meta)
 
 
 # XXX: we could change the syntax to use *args
@@ -9123,7 +9129,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
     Returns
     -------
-    LArray
+    Array
         A single array combining arrays. The new (stacked) axes will be the last axes of the new array.
 
     Examples
@@ -9259,7 +9265,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
         elements = elements.items()
 
-    if isinstance(elements, LArray):
+    if isinstance(elements, Array):
         if axes is None:
             axes = -1
         axes = elements.axes[axes]
@@ -9330,7 +9336,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 #      or concat depending on whether or not the axis already exists.
                 #      this would be more convenient for users I think, but would mean one class of error we cannot
                 #      detect anymore: if a user unintentionally stacks an array with the axis already present.
-                #      (this is very similar to the debate about combining LArray.append and LArray.extend)
+                #      (this is very similar to the debate about combining Array.append and Array.extend)
                 all_axes = [get_axes(v) for v in values] + [axes]
                 res_axes = AxisCollection.union(*all_axes)
                 if kludge:
@@ -9356,7 +9362,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
 
 def get_axes(value):
-    return value.axes if isinstance(value, LArray) else AxisCollection([])
+    return value.axes if isinstance(value, Array) else AxisCollection([])
 
 
 def _strip_shape(shape):
@@ -9373,7 +9379,7 @@ def _equal_modulo_len1(shape1, shape2):
 # but if we had assigned axes names from the start (without dropping them) this wouldn't be a problem.
 def make_numpy_broadcastable(values, min_axes=None):
     r"""
-    Returns values where LArrays are (NumPy) broadcastable between them.
+    Returns values where Arrays are (NumPy) broadcastable between them.
     For that to be possible, all common axes must be compatible (see Axis class documentation).
     Extra axes (in any array) can have any length.
 
@@ -9407,7 +9413,7 @@ def make_numpy_broadcastable(values, min_axes=None):
         if not isinstance(min_axes, AxisCollection):
             min_axes = AxisCollection(min_axes)
         all_axes = min_axes | all_axes
-    return [v.broadcast_with(all_axes) if isinstance(v, LArray) else v
+    return [v.broadcast_with(all_axes) if isinstance(v, Array) else v
             for v in values], all_axes
 
 
@@ -9416,7 +9422,7 @@ def raw_broadcastable(values, min_axes=None):
     same as make_numpy_broadcastable but returns numpy arrays
     """
     arrays, res_axes = make_numpy_broadcastable(values, min_axes=min_axes)
-    raw = [a.data if isinstance(a, LArray) else a
+    raw = [a.data if isinstance(a, Array) else a
            for a in arrays]
     return raw, res_axes
 
@@ -9502,7 +9508,7 @@ def zip_array_values(values, axes=None, ascending=True):
     arr1: 3, arr2: 3
     """
     def values_with_expand(value, axes, readonly=True, ascending=True):
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             # an Axis axis is not necessarily in array.axes
             expanded = value.expand(axes, readonly=readonly)
             return expanded.values(axes, ascending=ascending)

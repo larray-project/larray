@@ -4,9 +4,7 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
-* renamed ``LArray.old_method_name()`` to :py:obj:`LArray.new_method_name()` (closes :issue:`1`).
-
-* renamed ``old_argument_name`` argument of :py:obj:`LArray.method_name()` to ``new_argument_name``.
+* renamed the ``LArray`` class to :py:obj:`Array` (closes :issue:`611`).
 
 
 Backward incompatible changes
