@@ -5,7 +5,7 @@ cells:
 
 
 - markdown: |
-    LArray provides methods and functions to load and dump LArray, Session, Axis Group objects to several formats such as Excel, CSV and HDF5. The HDF5 file format is designed to store and organize large amounts of data. It allows to read and write data much faster than when working with CSV and Excel files. 
+    The LArray library provides methods and functions to load and dump Array, Session, Axis Group objects to several formats such as Excel, CSV and HDF5. The HDF5 file format is designed to store and organize large amounts of data. It allows to read and write data much faster than when working with CSV and Excel files. 
 
 
 - code: |

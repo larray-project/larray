@@ -127,9 +127,9 @@ isnan = broadcastify(np.isnan)
 isinf = broadcastify(np.isinf)
 inverse = broadcastify(np.linalg.inv)
 
-# XXX: create a new LArray method instead ?
-# TODO: should appear in the API doc if it actually works with LArrays,
+# XXX: create a new Array method instead ?
+# TODO: should appear in the API doc if it actually works with Arrays,
 #       which I have never tested (and I doubt is the case).
 #       Might be worth having specific documentation if it works well.
-#       My guess is that we should rather make a new LArray method for that one.
+#       My guess is that we should rather make a new Array method for that one.
 interp = broadcastify(np.interp)

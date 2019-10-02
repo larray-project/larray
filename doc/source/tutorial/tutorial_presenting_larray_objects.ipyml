@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Presenting LArray objects (Axis, Groups, LArray, Session)
+    # Presenting LArray objects (Axis, Groups, Array, Session)
 
 
 - code: |
@@ -32,7 +32,7 @@ cells:
 - markdown: |
     ## Axis
     
-    An ``Axis`` represents a dimension of an LArray object.
+    An ``Axis`` represents a dimension of an Array object.
     It consists of a name and a list of labels. 
     
     They are several ways to create an axis:
@@ -95,14 +95,14 @@ cells:
 
 
 - markdown: |
-    ## LArray
+    ## Array
     
-    A ``LArray`` object represents a multidimensional array with labeled axes.
+    An ``Array`` object represents a multidimensional array with labeled axes.
     
     ### Create an array from scratch
     
-    To create an array from scratch, you need to provide the data and a list
-    of axes. Optionally, metadata (title, description, creation date, authors, ...) can be associated to the array:
+    To create an array from scratch, you need to provide the data and a list of axes. 
+    Optionally, metadata (title, description, creation date, authors, ...) can be associated to the array:
 
 
 - code: |
@@ -115,7 +115,7 @@ cells:
     # metadata
     meta = [('title', 'random array')]
     
-    arr = LArray(data, axes, meta=meta)
+    arr = Array(data, axes, meta=meta)
     arr
 
 
@@ -221,7 +221,7 @@ cells:
 
 
 - markdown: |
-    ### Inspecting LArray objects
+    ### Inspecting Array objects
 
 
 - code: |
@@ -303,11 +303,11 @@ cells:
 
 
 - markdown: |
-    ### More on LArray objects
+    ### More on Array objects
     
     To know how to save and load arrays in CSV, Excel or HDF format, please refer to the [Loading and Dumping Arrays](tutorial_IO.ipynb#Loading-and-Dumping-Arrays) section of the tutorial.
     
-    See the [LArray](../api.rst#larray) section of the API Reference to explore all methods of LArray objects.
+    See the [Array](../api.rst#array) section of the API Reference to explore all methods of Array objects.
 
 
 - markdown: |

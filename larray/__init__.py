@@ -5,7 +5,7 @@ __version__ = '0.32-dev'
 
 from larray.core.axis import Axis, AxisCollection, X
 from larray.core.group import Group, LGroup, LSet, IGroup, union
-from larray.core.array import (LArray, zeros, zeros_like, ones, ones_like, empty, empty_like, full,
+from larray.core.array import (Array, zeros, zeros_like, ones, ones_like, empty, empty_like, full,
                                full_like, sequence, labels_array, ndtest, aslarray, identity, diag,
                                eye, all, any, sum, prod, cumsum, cumprod, min, max, mean, ptp, var,
                                std, median, percentile, stack, zip_array_values, zip_array_items)
@@ -53,7 +53,7 @@ __all__ = [
     # group
     'Group', 'LGroup', 'LSet', 'IGroup', 'union',
     # array
-    'LArray', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full',
+    'Array', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full',
     'full_like', 'sequence', 'labels_array', 'ndtest', 'aslarray', 'identity', 'diag', 'eye',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std',
     'median', 'percentile', 'stack',
@@ -93,7 +93,7 @@ __all__ = [
 
 from larray.core.axis import x
 from larray.core.group import PGroup
-from larray.core.array import (create_sequential, ndrange, larray_equal, larray_nan_equal,
+from larray.core.array import (LArray, create_sequential, ndrange, larray_equal, larray_nan_equal,
                                nan_equal, element_equal)
 
 
@@ -103,7 +103,9 @@ _deprecated = [
     # group
     'PGroup',
     # array
-    'create_sequential', 'ndrange', 'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal',
+    'LArray',
+    'create_sequential', 'ndrange',
+    'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal',
 ]
 
 __all__ += _deprecated

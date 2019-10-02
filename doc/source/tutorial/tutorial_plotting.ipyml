@@ -59,7 +59,7 @@ cells:
 
 
 - markdown: |
-    See [plot](../_generated/larray.LArray.plot.rst#larray.LArray.plot) for more details and examples.
+    See [plot](../_generated/larray.Array.plot.rst#larray.Array.plot) for more details and examples.
 
 
 # The lines below here may be deleted if you do not need them.

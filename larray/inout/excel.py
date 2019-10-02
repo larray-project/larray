@@ -11,7 +11,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.array import LArray, aslarray
+from larray.core.array import Array, aslarray
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, _translate_sheet_name
@@ -33,7 +33,7 @@ __all__ = ['read_excel']
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
                sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs):
     r"""
-    Reads excel file from sheet name and returns an LArray with the contents
+    Reads excel file from sheet name and returns an Array with the contents
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         array is assumed to have one axis. Defaults to None.
     index_col : list, optional
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
-    fill_value : scalar or LArray, optional
+    fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
@@ -71,7 +71,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -292,7 +292,7 @@ class PandasExcelHandler(FileHandler):
 
     def _dump_item(self, key, value, *args, **kwargs):
         kwargs['engine'] = 'xlsxwriter'
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             value.to_excel(self.handle, key, *args, **kwargs)
         elif isinstance(value, Axis):
             self.axes[key] = value
@@ -395,7 +395,7 @@ class XLWingsHandler(FileHandler):
             raise TypeError()
 
     def _dump_item(self, key, value, *args, **kwargs):
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             self.handle[key] = value.dump(*args, **kwargs)
         elif isinstance(value, Axis):
             self.axes[key] = value

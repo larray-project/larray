@@ -217,10 +217,10 @@ Testing
    AxisCollection.isaxis
    AxisCollection.check_compatible
 
-.. _api-larray:
+.. _api-array:
 
-LArray
-======
+Array
+=====
 
 * :ref:`la_overview`
 * :ref:`la_creation_func`
@@ -247,7 +247,7 @@ Overview
 .. autosummary::
    :toctree: _generated/
 
-   LArray
+   Array
 
 .. _la_creation_func:
 
@@ -276,32 +276,32 @@ Copying
 .. autosummary::
    :toctree: _generated/
 
-   LArray.copy
-   LArray.astype
+   Array.copy
+   Array.astype
 
 .. _la_inspecting:
 
 Inspecting
 ----------
 
-=================== ==============================================================
-LArray.data         Data of the array (Numpy ndarray)
-------------------- --------------------------------------------------------------
-LArray.axes         Axes of the array (AxisCollection)
-------------------- --------------------------------------------------------------
-LArray.title        Title of the array (str)
-=================== ==============================================================
+================== ==============================================================
+Array.data         Data of the array (Numpy ndarray)
+------------------ --------------------------------------------------------------
+Array.axes         Axes of the array (AxisCollection)
+------------------ --------------------------------------------------------------
+Array.title        Title of the array (str)
+================== ==============================================================
 
 .. autosummary::
    :toctree: _generated/
 
-   LArray.info
-   LArray.shape
-   LArray.ndim
-   LArray.dtype
-   LArray.size
-   LArray.nbytes
-   LArray.memory_used
+   Array.info
+   Array.shape
+   Array.ndim
+   Array.dtype
+   Array.size
+   Array.nbytes
+   Array.memory_used
 
 .. _la_selecting:
 
@@ -311,16 +311,16 @@ Modifying/Selecting
 .. autosummary::
    :toctree: _generated/
 
-   LArray.i
-   LArray.points
-   LArray.ipoints
-   LArray.iflat
-   LArray.set
-   LArray.drop
-   LArray.ignore_labels
-   LArray.filter
-   LArray.apply
-   LArray.apply_map
+   Array.i
+   Array.points
+   Array.ipoints
+   Array.iflat
+   Array.set
+   Array.drop
+   Array.ignore_labels
+   Array.filter
+   Array.apply
+   Array.apply_map
 
 .. _la_axes_labels:
 
@@ -330,12 +330,12 @@ Changing Axes or Labels
 .. autosummary::
    :toctree: _generated/
 
-   LArray.set_axes
-   LArray.rename
-   LArray.set_labels
-   LArray.combine_axes
-   LArray.split_axes
-   LArray.reverse
+   Array.set_axes
+   Array.rename
+   Array.set_labels
+   Array.combine_axes
+   Array.split_axes
+   Array.reverse
 
 .. _la_agg:
 
@@ -345,30 +345,30 @@ Aggregation Functions
 .. autosummary::
    :toctree: _generated/
 
-   LArray.sum
-   LArray.sum_by
-   LArray.prod
-   LArray.prod_by
-   LArray.cumsum
-   LArray.cumprod
-   LArray.mean
-   LArray.mean_by
-   LArray.median
-   LArray.median_by
-   LArray.var
-   LArray.var_by
-   LArray.std
-   LArray.std_by
-   LArray.percentile
-   LArray.percentile_by
-   LArray.ptp
-   LArray.with_total
-   LArray.percent
-   LArray.ratio
-   LArray.rationot0
-   LArray.growth_rate
-   LArray.describe
-   LArray.describe_by
+   Array.sum
+   Array.sum_by
+   Array.prod
+   Array.prod_by
+   Array.cumsum
+   Array.cumprod
+   Array.mean
+   Array.mean_by
+   Array.median
+   Array.median_by
+   Array.var
+   Array.var_by
+   Array.std
+   Array.std_by
+   Array.percentile
+   Array.percentile_by
+   Array.ptp
+   Array.with_total
+   Array.percent
+   Array.ratio
+   Array.rationot0
+   Array.growth_rate
+   Array.describe
+   Array.describe_by
 
 .. _la_sorting:
 
@@ -378,10 +378,10 @@ Sorting
 .. autosummary::
    :toctree: _generated/
 
-   LArray.sort_axes
-   LArray.sort_values
-   LArray.labelsofsorted
-   LArray.indicesofsorted
+   Array.sort_axes
+   Array.sort_values
+   Array.labelsofsorted
+   Array.indicesofsorted
 
 .. _la_reshaping:
 
@@ -391,18 +391,18 @@ Reshaping/Extending/Reordering
 .. autosummary::
    :toctree: _generated/
 
-   LArray.reshape
-   LArray.reshape_like
-   LArray.compact
-   LArray.reindex
-   LArray.transpose
-   LArray.expand
-   LArray.prepend
-   LArray.append
-   LArray.extend
-   LArray.insert
-   LArray.broadcast_with
-   LArray.align
+   Array.reshape
+   Array.reshape_like
+   Array.compact
+   Array.reindex
+   Array.transpose
+   Array.expand
+   Array.prepend
+   Array.append
+   Array.extend
+   Array.insert
+   Array.broadcast_with
+   Array.align
 
 .. _la_testing:
 
@@ -412,22 +412,22 @@ Testing/Searching
 .. autosummary::
    :toctree: _generated/
 
-   LArray.equals
-   LArray.eq
-   LArray.isin
-   LArray.nonzero
-   LArray.all
-   LArray.all_by
-   LArray.any
-   LArray.any_by
-   LArray.min
-   LArray.min_by
-   LArray.max
-   LArray.max_by
-   LArray.labelofmin
-   LArray.indexofmin
-   LArray.labelofmax
-   LArray.indexofmax
+   Array.equals
+   Array.eq
+   Array.isin
+   Array.nonzero
+   Array.all
+   Array.all_by
+   Array.any
+   Array.any_by
+   Array.min
+   Array.min_by
+   Array.max
+   Array.max_by
+   Array.labelofmin
+   Array.indexofmin
+   Array.labelofmax
+   Array.indexofmax
 
 .. _la_iter:
 
@@ -437,18 +437,18 @@ Iterating
 .. autosummary::
    :toctree: _generated/
 
-   LArray.keys
-   LArray.values
-   LArray.items
+   Array.keys
+   Array.values
+   Array.items
 
 .. _la_op:
 
 Operators
 ---------
 
-=================================================== ==============================
-:py:meth:`@ <LArray.__matmul__>`                    Matrix multiplication
-=================================================== ==============================
+================================================== ==============================
+:py:meth:`@ <Array.__matmul__>`                    Matrix multiplication
+================================================== ==============================
 
 .. _la_misc:
 
@@ -458,13 +458,13 @@ Miscellaneous
 .. autosummary::
    :toctree: _generated/
 
-   LArray.divnot0
-   LArray.clip
-   LArray.shift
-   LArray.roll
-   LArray.diff
-   LArray.unique
-   LArray.to_clipboard
+   Array.divnot0
+   Array.clip
+   Array.shift
+   Array.roll
+   Array.diff
+   Array.unique
+   Array.to_clipboard
 
 .. _la_to_pandas:
 
@@ -474,8 +474,8 @@ Converting to Pandas objects
 .. autosummary::
    :toctree: _generated/
 
-   LArray.to_series
-   LArray.to_frame
+   Array.to_series
+   Array.to_frame
 
 .. _la_plotting:
 
@@ -485,7 +485,7 @@ Plotting
 .. autosummary::
    :toctree: _generated/
 
-   LArray.plot
+   Array.plot
 
 .. _api-ufuncs:
 
@@ -652,11 +652,11 @@ Write
 .. autosummary::
    :toctree: _generated/
 
-   LArray.to_csv
-   LArray.to_excel
-   LArray.to_hdf
-   LArray.to_stata
-   LArray.dump
+   Array.to_csv
+   Array.to_excel
+   Array.to_hdf
+   Array.to_stata
+   Array.dump
 
 Excel
 =====

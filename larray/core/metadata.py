@@ -151,7 +151,7 @@ class Metadata(AttributeDict):
         from larray.core.array import aslarray
         array = aslarray(array)
         if array.ndim != 1:
-            raise ValueError("Expected LArray object of dimension 1. Got array of dimension {}".format(array.ndim))
+            raise ValueError("Expected Array object of dimension 1. Got array of dimension {}".format(array.ndim))
 
         from pandas import to_numeric, to_datetime
 

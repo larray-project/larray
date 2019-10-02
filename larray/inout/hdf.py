@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from pandas import HDFStore
 
-from larray.core.array import LArray
+from larray.core.array import Array
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, LGroup, _translate_group_key_hdf
@@ -27,7 +27,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         Path and name where the HDF5 file is stored or a HDFStore object.
     key : str or Group
         Name of the array.
-    fill_value : scalar or LArray, optional
+    fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
@@ -44,7 +44,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -76,7 +76,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         # for backward compatibility but any object read from an hdf file should have an attribute 'type'
         _type = attrs.type if 'type' in attrs else 'Array'
         _meta = attrs.metadata if 'metadata' in attrs else None
-        if _type == 'Array':
+        if _type in ['Array', 'LArray']:
             # cartesian product is not necessary if the array was written by LArray
             cartesian_prod = writer != 'LArray'
             res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
@@ -141,7 +141,7 @@ class PandasHDFHandler(FileHandler):
         return read_hdf(self.handle, hdf_key, *args, **kwargs)
 
     def _dump_item(self, key, value, *args, **kwargs):
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             hdf_key = '/' + key
             value.to_hdf(self.handle, hdf_key, *args, **kwargs)
         elif isinstance(value, Axis):

@@ -10,7 +10,7 @@ from itertools import product, chain
 import numpy as np
 import pandas as pd
 
-from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCLArray
+from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.util.oset import *
 from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
                               renamed_to, LHDFStore)
@@ -487,7 +487,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
 
     Parameters
     ----------
-    v : int or basestring or tuple or list or slice or LArray or Group
+    v : int or basestring or tuple or list or slice or Array or Group
         value to convert into a key usable for indexing
 
     Returns
@@ -577,7 +577,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
             return cls(key, name=name, axis=axis)
         else:
             return _seq_str_to_seq(v, stack_depth + 1, parse_single_int=parse_single_int)
-    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCLArray, OrderedSet)):
+    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet)):
         return v
     else:
         raise TypeError("%s has an invalid type (%s) for a key" % (v, type(v).__name__))
@@ -591,7 +591,7 @@ def _to_keys(value, stack_depth=1):
 
     Parameters
     ----------
-    value : int or basestring or tuple or list or slice or LArray or Group
+    value : int or basestring or tuple or list or slice or Array or Group
         (collection of) value(s) to convert into key(s) usable for indexing
 
     Returns
@@ -857,7 +857,7 @@ class Group(object):
         # XXX: we probably want to_label instead of .eval (so that we do not expand slices)
         value = self.eval()
         # for some reason this breaks having LGroup ticks/labels on an axis
-        # if isinstance(value, (tuple, list, LArray, np.ndarray, str)):
+        # if isinstance(value, (tuple, list, Array, np.ndarray, str)):
         if hasattr(value, '__len__'):
             return len(value)
         elif isinstance(value, slice):
@@ -1002,7 +1002,7 @@ class Group(object):
                 return IGroup(orig_start_pos + key * orig_step, None, self.axis)
             elif isinstance(key, (tuple, list)):
                 return IGroup([orig_start_pos + k * orig_step for k in key], None, self.axis)
-        elif isinstance(orig_key, ABCLArray):
+        elif isinstance(orig_key, ABCArray):
             # XXX: why .i ?
             return cls(orig_key.i[key], None, self.axis)
         elif np.isscalar(orig_key):

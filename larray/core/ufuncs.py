@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from larray.core.array import LArray, make_args_broadcastable
+from larray.core.array import Array, make_args_broadcastable
 
 
 def wrap_elementwise_array_func(func):
@@ -20,7 +20,7 @@ def wrap_elementwise_array_func(func):
     Returns
     -------
     function
-        A function taking LArray arguments and returning LArrays.
+        A function taking LArray arrays arguments and returning LArray arrays.
 
     Examples
     --------
@@ -29,7 +29,7 @@ def wrap_elementwise_array_func(func):
     >>> from statsmodels.tsa.filters.hp_filter import hpfilter         # doctest: +SKIP
     >>> hpfilter = wrap_elementwise_array_func(hpfilter)               # doctest: +SKIP
 
-    hpfilter is now a function taking a one dimensional LArray as input and returning a one dimensional LArray as output
+    hpfilter is now a function taking a one dimensional Array as input and returning a one dimensional Array as output
 
     Now let us suppose we have a ND array such as:
 
@@ -61,15 +61,15 @@ def wrap_elementwise_array_func(func):
         # and then tries to get them back from high, where they are possibly
         # incomplete if broadcasting happened
 
-        # It fails on "np.minimum(ndarray, LArray)" because it calls __array_wrap__(high, result) which cannot work if
+        # It fails on "np.minimum(ndarray, Array)" because it calls __array_wrap__(high, result) which cannot work if
         # there was broadcasting involved (high has potentially less labels than result).
         # it does this because numpy calls __array_wrap__ on the argument with the highest __array_priority__
         res_data = func(*raw_bcast_args, **raw_bcast_kwargs)
         if res_axes:
             if isinstance(res_data, tuple):
-                return tuple(LArray(res_arr, res_axes) for res_arr in res_data)
+                return tuple(Array(res_arr, res_axes) for res_arr in res_data)
             else:
-                return LArray(res_data, res_axes)
+                return Array(res_data, res_axes)
         else:
             return res_data
     # copy function name. We are intentionally not using functools.wraps, because it does not work for wrapping a
@@ -113,22 +113,22 @@ where(condition, x, y)
 
     Parameters
     ----------
-    condition : boolean LArray
+    condition : boolean Array
         When True, yield `x`, otherwise yield `y`.
-    x, y : LArray
+    x, y : Array
         Values from which to choose.
 
     Returns
     -------
-    out : LArray
+    out : Array
         If both `x` and `y` are specified, the output array contains
         elements of `x` where `condition` is True, and elements from
         `y` elsewhere.
 
     Examples
     --------
-    >>> from larray import LArray
-    >>> arr = LArray([[10, 7, 5, 9],
+    >>> from larray import Array
+    >>> arr = Array([[10, 7, 5, 9],
     ...               [5, 8, 3, 7],
     ...               [6, 2, 0, 9],
     ...               [9, 10, 5, 6]], "a=a0..a3;b=b0..b3")
@@ -178,16 +178,16 @@ maximum(x1, x2, out=None, dtype=None)
 
     Parameters
     ----------
-    x1, x2 : LArray
+    x1, x2 : Array
         The arrays holding the elements to be compared.
-    out : LArray, optional
+    out : Array, optional
         An array into which the result is stored.
     dtype : data-type, optional
         Overrides the dtype of the output array.
 
     Returns
     -------
-    y : LArray or scalar
+    y : Array or scalar
         The maximum of `x1` and `x2`, element-wise.
         This is a scalar if both `x1` and `x2` are scalars.
 
@@ -203,10 +203,10 @@ maximum(x1, x2, out=None, dtype=None)
 
     Examples
     --------
-    >>> from larray import LArray
-    >>> arr1 = LArray([[10, 7, 5, 9],
+    >>> from larray import Array
+    >>> arr1 = Array([[10, 7, 5, 9],
     ...                [5, 8, 3, 7]], "a=a0,a1;b=b0..b3")
-    >>> arr2 = LArray([[6, 2, 9, 0],
+    >>> arr2 = Array([[6, 2, 9, 0],
     ...                [9, 10, 5, 6]], "a=a0,a1;b=b0..b3")
     >>> arr1
     a\b  b0  b1  b2  b3
@@ -248,16 +248,16 @@ minimum(x1, x2, out=None, dtype=None)
 
     Parameters
     ----------
-    x1, x2 : LArray
+    x1, x2 : Array
         The arrays holding the elements to be compared.
-    out : LArray, optional
+    out : Array, optional
         An array into which the result is stored.
     dtype : data-type, optional
         Overrides the dtype of the output array.
 
     Returns
     -------
-    y : LArray or scalar
+    y : Array or scalar
         The minimum of `x1` and `x2`, element-wise.
         This is a scalar if both `x1` and `x2` are scalars.
 
@@ -273,10 +273,10 @@ minimum(x1, x2, out=None, dtype=None)
 
     Examples
     --------
-    >>> from larray import LArray
-    >>> arr1 = LArray([[10, 7, 5, 9],
+    >>> from larray import Array
+    >>> arr1 = Array([[10, 7, 5, 9],
     ...                [5, 8, 3, 7]], "a=a0,a1;b=b0..b3")
-    >>> arr2 = LArray([[6, 2, 9, 0],
+    >>> arr2 = Array([[6, 2, 9, 0],
     ...                [9, 10, 5, 6]], "a=a0,a1;b=b0..b3")
     >>> arr1
     a\b  b0  b1  b2  b3

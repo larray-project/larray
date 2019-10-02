@@ -2,13 +2,13 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 from larray.tests.common import assert_array_equal
-from larray import Axis, LArray, ndtest, ipfp, X
+from larray import Axis, Array, ndtest, ipfp, X
 
 
 def test_ipfp():
     a = Axis('a=a0,a1')
     b = Axis('b=b0,b1')
-    initial = LArray([[2, 1], [1, 2]], [a, b])
+    initial = Array([[2, 1], [1, 2]], [a, b])
 
     # array sums already match target sums
     # [3, 3], [3, 3]
@@ -16,8 +16,8 @@ def test_ipfp():
     assert_array_equal(r, initial)
 
     # array sums do not match target sums (ie the usual case)
-    along_a = LArray([2, 1], b)
-    along_b = LArray([1, 2], a)
+    along_a = Array([2, 1], b)
+    along_b = Array([1, 2], a)
     r = ipfp([along_a, along_b], initial)
     assert_array_equal(r, [[0.8, 0.2], [1.0, 1.0]])
 
@@ -33,31 +33,31 @@ def test_ipfp():
         ipfp([along_b, along_a], initial)
 
     # different target sums totals
-    along_a = LArray([2, 1], b)
-    along_b = LArray([1, 3], a)
+    along_a = Array([2, 1], b)
+    along_b = Array([1, 3], a)
     with pytest.raises(ValueError, match=r"target sum along b \(axis 1\) is different than target sum along "
                                          r"a \(axis 0\): 4 vs 3"):
         ipfp([along_a, along_b], initial)
 
     # all zero values
-    initial = LArray([[0, 0], [1, 2]], [a, b])
-    along_a = LArray([2, 1], b)
-    along_b = LArray([1, 2], a)
+    initial = Array([[0, 0], [1, 2]], [a, b])
+    along_a = Array([2, 1], b)
+    along_b = Array([1, 2], a)
     with pytest.raises(ValueError, match="found all zero values sum along b \\(axis 1\\) but non zero target "
                                          "sum:\na0: 1"):
         ipfp([along_a, along_b], initial)
 
     # zero target sum
-    initial = LArray([[2, 1], [1, 2]], [a, b])
-    along_a = LArray([0, 1], b)
-    along_b = LArray([1, 0], a)
+    initial = Array([[2, 1], [1, 2]], [a, b])
+    along_a = Array([0, 1], b)
+    along_b = Array([1, 0], a)
     with pytest.raises(ValueError, match="found Non Zero Values but Zero target Sum \\(nzvzs\\) along a "
                                          "\\(axis 0\\), use nzvzs='warn' or 'fix' to set them to zero "
                                          "automatically:\nb0: 3"):
         ipfp([along_a, along_b], initial)
 
     # negative initial values
-    initial = LArray([[2, -1], [1, 2]], [a, b])
+    initial = Array([[2, -1], [1, 2]], [a, b])
     with pytest.raises(ValueError, match="negative value\\(s\\) found:\na0_b1: -1"):
         ipfp([along_a, along_b], initial)
 
@@ -150,8 +150,8 @@ def test_ipfp_no_values():
                            [2.0, 4.0, 6.0],
                            [3.0, 6.0, 9.0]])
 
-    along_a = LArray([2, 1], Axis(2, 'b'))
-    along_b = LArray([1, 2], Axis(2, 'a'))
+    along_a = Array([2, 1], Axis(2, 'b'))
+    along_b = Array([1, 2], Axis(2, 'a'))
     r = ipfp([along_a, along_b])
     assert_array_equal(r, [[2 / 3, 1 / 3],
                            [4 / 3, 2 / 3]])
@@ -169,7 +169,7 @@ def test_ipfp_no_values_no_name():
 
 
 def test_ipfp_no_name():
-    initial = LArray([[2, 1], [1, 2]])
+    initial = Array([[2, 1], [1, 2]])
 
     # sums already correct
     # [3, 3], [3, 3]
@@ -177,8 +177,8 @@ def test_ipfp_no_name():
     assert_array_equal(r, [[2, 1], [1, 2]])
 
     # different sums (ie the usual case)
-    along_a = LArray([2, 1])
-    along_b = LArray([1, 2])
+    along_a = Array([2, 1])
+    along_b = Array([1, 2])
     r = ipfp([along_a, along_b], initial)
     assert_array_equal(r, [[0.8, 0.2], [1.0, 1.0]])
 

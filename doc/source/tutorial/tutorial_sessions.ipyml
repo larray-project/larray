@@ -99,7 +99,7 @@ cells:
 
 - code: |
     # select only arrays of a session
-    s_pop.filter(kind=LArray)
+    s_pop.filter(kind=Array)
 
 
 - code: |
@@ -122,7 +122,7 @@ cells:
 - code: |
     # iterate over items
     for value in s_pop.values():
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             print(value.info)
         else:
             print(repr(value))
@@ -132,7 +132,7 @@ cells:
 - code: |
     # iterate over names and items
     for key, value in s_pop.items():
-        if isinstance(value, LArray):
+        if isinstance(value, Array):
             print(key, ':')
             print(value.info)
         else:
@@ -231,7 +231,7 @@ cells:
 
 
 - markdown: |
-    It is also possible to apply a function on non-LArray objects of a session. Please refer the documentation of the [apply](../_generated/larray.Session.apply.rst#larray.Session.apply) method.
+    It is also possible to apply a function on non-Array objects of a session. Please refer the documentation of the [apply](../_generated/larray.Session.apply.rst#larray.Session.apply) method.
 
 
 - markdown: |

@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 
-from larray.core.array import LArray
+from larray.core.array import Array
 from larray.core.axis import Axis, AxisCollection
 from larray.core.group import LGroup
 from larray.core.constants import nan
@@ -74,7 +74,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan
 
 def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
     r"""
-    Converts Pandas Series into LArray.
+    Converts Pandas Series into Array.
 
     Parameters
     ----------
@@ -91,11 +91,11 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
 
     Returns
     -------
-    LArray
+    Array
 
     See Also
     --------
-    LArray.to_series
+    Array.to_series
 
     Examples
     --------
@@ -137,13 +137,13 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
         name = decode(s.name, 'utf8') if s.name is not None else decode(s.index.name, 'utf8')
         if sort_rows:
             s = s.sort_index()
-        return LArray(s.values, Axis(s.index.values, name), meta=meta)
+        return Array(s.values, Axis(s.index.values, name), meta=meta)
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
                fill_value=nan, meta=None, cartesian_prod=True, **kwargs):
     r"""
-    Converts Pandas DataFrame into LArray.
+    Converts Pandas DataFrame into Array.
 
     Parameters
     ----------
@@ -171,18 +171,18 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
     cartesian_prod : bool, optional
-        Whether or not to expand the dataframe to a cartesian product dataframe as needed by LArray.
+        Whether or not to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
         well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
 
     Returns
     -------
-    LArray
+    Array
 
     See Also
     --------
-    LArray.to_frame
+    Array.to_frame
 
     Examples
     --------
@@ -249,13 +249,13 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
 
     axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.values.reshape(axes.shape)
-    return LArray(data, axes, meta=meta)
+    return Array(data, axes, meta=meta)
 
 
 def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
                 **kwargs):
     r"""
-    Prepare Pandas DataFrame and then convert it into LArray.
+    Prepare Pandas DataFrame and then convert it into Array.
 
     Parameters
     ----------
@@ -280,14 +280,14 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
     cartesian_prod : bool, optional
-        Whether or not to expand the dataframe to a cartesian product dataframe as needed by LArray.
+        Whether or not to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
         well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
 
     Returns
     -------
-    LArray
+    Array
     """
     # we could inline df_aslarray into the functions that use it, so that the original (non-cartesian) df is freed from
     # memory at this point, but it would be much uglier and would not lower the peak memory usage which happens during

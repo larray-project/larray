@@ -26,7 +26,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
         is assumed to have one axis. Defaults to None.
     index_col : list, optional
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
-    fill_value : scalar or LArray, optional
+    fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
@@ -41,7 +41,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------
@@ -144,7 +144,7 @@ def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
 
     Returns
     -------
-    LArray
+    Array
 
     Examples
     --------

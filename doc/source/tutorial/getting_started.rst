@@ -19,7 +19,7 @@ To use the LArray library, the first thing to do is to import it:
 Create an array
 ---------------
 
-Working with the LArray library mainly consists of manipulating :ref:`LArray <api-larray>` data structures.
+Working with the LArray library mainly consists of manipulating :ref:`Array <api-larray>` data structures.
 They represent N-dimensional labelled arrays and are composed of raw data (NumPy ndarray), :ref:`axes <api-axis>`
 and optionally some metadata.
 
@@ -49,8 +49,8 @@ To create an array from scratch, you need to supply data and axes:
             [[1023, 1038, 1053],
              [756, 775, 793]]]
 
-    # create an LArray object
-    pop = LArray(data, axes=[age, sex, year])
+    # create an Array object
+    pop = Array(data, axes=[age, sex, year])
     pop
 
 You can optionally attach some metadata to an array:
@@ -113,7 +113,7 @@ Save/Load an array
 
 The LArray library offers many I/O functions to read and write arrays in various formats
 (CSV, Excel, HDF5). For example, to save an array in a CSV file, call the method
-:py:meth:`~LArray.to_csv`:
+:py:meth:`~Array.to_csv`:
 
 .. ipython:: python
 
@@ -317,7 +317,7 @@ Grouping arrays in a Session
 ----------------------------
 
 Arrays may be grouped in :ref:`Session <api-session>` objects.
-A session is an ordered dict-like container of LArray objects with special I/O methods.
+A session is an ordered dict-like container of Array objects with special I/O methods.
 To create a session, you need to pass a list of pairs (array_name, array):
 
 .. ipython:: python

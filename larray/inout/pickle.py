@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from larray.core.axis import Axis
 from larray.core.group import Group
-from larray.core.array import LArray
+from larray.core.array import Array
 from larray.core.metadata import Metadata
 from larray.util.misc import pickle
 from larray.inout.session import register_file_handler
@@ -30,7 +30,7 @@ class PickleHandler(FileHandler):
         # groups
         items += [(key, 'Group') for key, value in self.data.items() if isinstance(value, Group)]
         # arrays
-        items += [(key, 'Array') for key, value in self.data.items() if isinstance(value, LArray)]
+        items += [(key, 'Array') for key, value in self.data.items() if isinstance(value, Array)]
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
@@ -40,7 +40,7 @@ class PickleHandler(FileHandler):
             raise TypeError()
 
     def _dump_item(self, key, value, *args, **kwargs):
-        if isinstance(value, (LArray, Axis, Group)):
+        if isinstance(value, (Array, Axis, Group)):
             self.data[key] = value
         else:
             raise TypeError()

@@ -20,7 +20,7 @@ Library Highlights
 
 * User interface with an IPython console for rapid exploration of data
 
-* Compatible with the pandas library: LArray objects can be converted into pandas DataFrame and vice versa.
+* Compatible with the pandas library: Array objects can be converted into pandas DataFrame and vice versa.
 
 .. _start-install:
 

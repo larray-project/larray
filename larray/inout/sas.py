@@ -14,7 +14,7 @@ from larray.util.misc import deprecate_kwarg
 def read_sas(filepath, nb_axes=None, index_col=None, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              **kwargs):
     r"""
-    Reads sas file and returns an LArray with the contents
+    Reads sas file and returns an Array with the contents
         nb_axes: number of axes of the output array
     or
         index_col: Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3])

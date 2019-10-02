@@ -9,7 +9,7 @@ __all__ = ['read_stata']
 
 def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns=False, **kwargs):
     r"""
-    Reads Stata .dta file and returns an LArray with the contents
+    Reads Stata .dta file and returns an Array with the contents
 
     Parameters
     ----------
@@ -26,15 +26,15 @@ def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns
 
     Returns
     -------
-    LArray
+    Array
 
     See Also
     --------
-    LArray.to_stata
+    Array.to_stata
 
     Notes
     -----
-    The round trip to Stata (LArray.to_stata followed by read_stata) loose the name of the "column" axis.
+    The round trip to Stata (Array.to_stata followed by read_stata) loose the name of the "column" axis.
 
     Examples
     --------
