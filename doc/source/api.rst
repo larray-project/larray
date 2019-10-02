@@ -706,6 +706,7 @@ ReportSheet
    ReportSheet.add_graphs
    ReportSheet.newline
 
+
 .. _api-misc:
 
 Miscellaneous

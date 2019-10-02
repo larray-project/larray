@@ -1,22 +1,41 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
-import os
-import sys
-import re
 import fnmatch
+import os
+import re
+import sys
 import warnings
 from collections import OrderedDict, Iterable
 
 import numpy as np
 
-from larray.core.metadata import Metadata
-from larray.core.group import Group
+from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence
 from larray.core.axis import Axis
 from larray.core.constants import nan
-from larray.core.array import LArray, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
+from larray.core.group import Group
+from larray.core.metadata import Metadata
 from larray.inout.session import ext_default_engine, get_file_handler
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
+
+
+def _get_handler(engine, fname, overwrite, **kwargs):
+    if engine == 'auto':
+        _, ext = os.path.splitext(fname)
+        ext = ext.strip('.') if '.' in ext else 'csv'
+        engine = ext_default_engine[ext]
+    if engine == 'hdf':
+        engine_hdf = 'auto'
+    if '_hdf' in engine:
+        engine_hdf, engine = engine.split('_')
+    handler_cls = get_file_handler(engine)
+    if engine == 'pandas_csv' and 'sep' in kwargs:
+        handler = handler_cls(fname, overwrite, kwargs['sep'])
+    elif engine == 'hdf':
+        handler = handler_cls(fname, overwrite, engine=engine_hdf)
+    else:
+        handler = handler_cls(fname, overwrite)
+    return handler
 
 
 # XXX: inherit from OrderedDict or LArray?
@@ -358,7 +377,7 @@ class Session(object):
             List of objects to load.
             If `fname` is None, list of paths to CSV files.
             Defaults to all valid objects present in the file/directory.
-        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'tables_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Load using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
@@ -415,15 +434,7 @@ class Session(object):
                 engine = ext_default_engine['csv']
             else:
                 raise ValueError("List of paths to only CSV files expected. Got {}".format(names))
-        if engine == 'auto':
-            _, ext = os.path.splitext(fname)
-            ext = ext.strip('.') if '.' in ext else 'csv'
-            engine = ext_default_engine[ext]
-        handler_cls = get_file_handler(engine)
-        if engine == 'pandas_csv' and 'sep' in kwargs:
-            handler = handler_cls(fname, kwargs['sep'])
-        else:
-            handler = handler_cls(fname)
+        handler = _get_handler(engine, fname, False, **kwargs)
         metadata, objects = handler.read(names, display=display, **kwargs)
         for k, v in objects.items():
             self[k] = v
@@ -442,7 +453,7 @@ class Session(object):
             List of names of LArray/Axis/Group objects to dump.
             If `fname` is None, list of paths to CSV files.
             Defaults to all objects present in the Session.
-        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
+        engine : {'auto', 'pandas_csv', 'pandas_hdf', 'tables_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any. Ignored for CSV files and 'pandas_excel' engine.
@@ -482,15 +493,7 @@ class Session(object):
         >>> # replace arr1 and add arr4 in file output.h5
         >>> s2.save('output.h5', overwrite=False)           # doctest: +SKIP
         """
-        if engine == 'auto':
-            _, ext = os.path.splitext(fname)
-            ext = ext.strip('.') if '.' in ext else 'csv'
-            engine = ext_default_engine[ext]
-        handler_cls = get_file_handler(engine)
-        if engine == 'pandas_csv' and 'sep' in kwargs:
-            handler = handler_cls(fname, overwrite, kwargs['sep'])
-        else:
-            handler = handler_cls(fname, overwrite)
+        handler = _get_handler(engine, fname, overwrite, **kwargs)
         meta = self.meta if overwrite else None
         items = self.items()
         if names is not None:
