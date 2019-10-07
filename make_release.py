@@ -21,6 +21,7 @@ SRC_CODE = "larray"
 SRC_DOC = join('doc', 'source')
 GITHUB_REP = "https://github.com/larray-project/larray"
 CONDA_FEEDSTOCK_REP = "https://github.com/larray-project/larray-feedstock.git"
+CONDA_BUILD_ARGS = {'--user': 'larray-project'}
 
 LARRAY_READTHEDOCS = "http://larray.readthedocs.io/en/stable/"
 LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
@@ -111,4 +112,5 @@ if __name__ == '__main__':
     elif argv[1] == '-c' or argv[1] == '--conda':
         update_feedstock(GITHUB_REP, CONDA_FEEDSTOCK_REP, SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
     else:
-        make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:], src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
+        make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:], src_documentation=SRC_DOC, tmp_dir=TMP_PATH,
+                     conda_build_args=CONDA_BUILD_ARGS)
