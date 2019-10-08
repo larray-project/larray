@@ -8,9 +8,9 @@ To convert an Array object into a pandas DataFrame, the method :py:meth:`~Array.
     df = pop.to_frame()
     df
 
-Inversely, to convert a DataFrame into an Array object, use the function :py:func:`aslarray`:
+Inversely, to convert a DataFrame into an Array object, use the function :py:func:`asarray`:
 
 .. ipython:: python
 
-    pop = aslarray(df)
+    pop = asarray(df)
     pop

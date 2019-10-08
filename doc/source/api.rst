@@ -714,7 +714,7 @@ Miscellaneous
 .. autosummary::
    :toctree: _generated/
 
-   aslarray
+   asarray
    from_frame
    from_series
    get_example_filepath

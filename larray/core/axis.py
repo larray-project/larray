@@ -3451,9 +3451,9 @@ class AxisCollection(object):
                d1  a1  b2
                d2  a0  b0
         """
-        from larray.core.array import aslarray, Array, stack
+        from larray.core.array import asarray, Array, stack
 
-        flat_indices = aslarray(flat_indices)
+        flat_indices = asarray(flat_indices)
         axes_indices = np.unravel_index(flat_indices, self.shape)
         # This could return an Array with object dtype because axes labels can have different types (but not length)
         # TODO: this should be:

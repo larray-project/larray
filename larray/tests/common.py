@@ -12,7 +12,7 @@ try:
 except ImportError:
     xw = None
 
-from larray import Array, isnan, aslarray, Metadata
+from larray import Array, isnan, asarray, Metadata
 
 
 TESTDATADIR = os.path.dirname(__file__)
@@ -58,8 +58,8 @@ def assert_equal_factory(test_func):
 def assert_larray_equal_factory(test_func, convert=True, check_axes=False):
     def assert_equal(a, b):
         if convert:
-            a = aslarray(a)
-            b = aslarray(b)
+            a = asarray(a)
+            b = asarray(b)
         if check_axes and a.axes != b.axes:
             raise AssertionError("axes differ:\n%s\n\nvs\n\n%s" % (a.axes.info, b.axes.info))
         equal = test_func(a, b)

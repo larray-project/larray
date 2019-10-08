@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 from larray.util.misc import PY2, _positive_integer, _validate_dir
 from larray.core.group import _translate_sheet_name
-from larray.core.array import aslarray, zip_array_items
+from larray.core.array import asarray, zip_array_items
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
 try:
@@ -577,7 +577,7 @@ if xw is not None:
             self.top = top
             self.left = left
             self.title = str(title) if title is not None else None
-            data = aslarray(data)
+            data = asarray(data)
             if not (1 <= data.ndim <= 2):
                 raise ValueError("Expected 1D or 2D array for data argument. "
                                  "Got array of dimensions {}".format(data.ndim))

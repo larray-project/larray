@@ -14,7 +14,7 @@ from larray.core.metadata import Metadata
 from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
-from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence, aslarray
+from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence, asarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
 from larray.inout.session import ext_default_engine, get_file_handler
 

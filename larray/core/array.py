@@ -671,7 +671,7 @@ def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
     import warnings
     warnings.warn("element_equal() is deprecated. Use array1.eq(array2, rtol, atol, nan_equals) instead.",
                   FutureWarning, stacklevel=2)
-    a1 = aslarray(a1)
+    a1 = asarray(a1)
     return a1.eq(a2, rtol, atol, nan_equals)
 
 
@@ -704,7 +704,7 @@ class Array(ABCArray):
     r"""
     An Array object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
 
-    The function :func:`aslarray` can be used to convert a NumPy array or Pandas DataFrame into an Array.
+    The function :func:`asarray` can be used to convert a NumPy array or Pandas DataFrame into an Array.
 
     Parameters
     ----------
@@ -1810,7 +1810,7 @@ class Array(ABCArray):
         ValueError: Both arrays are not aligned because align method with join='exact'
         expected Axis(['a0', 'a1'], 'a') to be equal to Axis(['a0', 'a1', 'a2'], 'a')
         """
-        other = aslarray(other)
+        other = asarray(other)
         # reindex does not currently support anonymous axes
         if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
             raise ValueError("arrays with anonymous axes are currently not supported by Array.align")
@@ -5482,12 +5482,12 @@ class Array(ABCArray):
             if isinstance(other, Group) and np.isscalar(other.key):
                 other = other.eval()
 
-            # we could pass scalars through aslarray too but it is too costly performance-wise for only suppressing one
+            # we could pass scalars through asarray too but it is too costly performance-wise for only suppressing one
             # isscalar test and an if statement.
             # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but
             # it makes some tests fail for some reason.
             if not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
-                other = aslarray(other)
+                other = asarray(other)
 
             if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
@@ -5662,7 +5662,7 @@ class Array(ABCArray):
         Parameters
         ----------
         other : Array-like
-            Input array. aslarray() is used on a non-Array input.
+            Input array. asarray() is used on a non-Array input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
@@ -5777,7 +5777,7 @@ class Array(ABCArray):
         False
         """
         try:
-            other = aslarray(other)
+            other = asarray(other)
         except Exception:
             return False
         try:
@@ -5794,7 +5794,7 @@ class Array(ABCArray):
         Parameters
         ----------
         other : Array-like
-            Input array. aslarray() is used on a non-Array input.
+            Input array. asarray() is used on a non-Array input.
         rtol : float or int, optional
             The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
@@ -5855,7 +5855,7 @@ class Array(ABCArray):
         a    a0    a1    a2
            True  True  True
         """
-        other = aslarray(other)
+        other = asarray(other)
 
         if rtol == 0 and atol == 0:
             if not nans_equal:
@@ -6406,7 +6406,7 @@ class Array(ABCArray):
             values = [value[[k]] for k in value.axes[axis]]
         else:
             values = expand(value, num_inserts)
-        values = [aslarray(v) if not isinstance(v, Array) else v
+        values = [asarray(v) if not isinstance(v, Array) else v
                   for v in values]
 
         if label is not None:
@@ -8038,7 +8038,7 @@ def larray_equal(a1, a2):
     msg = "larray_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
-        a1 = aslarray(a1)
+        a1 = asarray(a1)
     except Exception:
         return False
     return a1.equals(a2)
@@ -8049,13 +8049,13 @@ def larray_nan_equal(a1, a2):
     msg = "larray_nan_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
-        a1 = aslarray(a1)
+        a1 = asarray(a1)
     except Exception:
         return False
     return a1.equals(a2, nans_equal=True)
 
 
-def aslarray(a, meta=None):
+def asarray(a, meta=None):
     r"""
     Converts input as Array if possible.
 
@@ -8075,7 +8075,7 @@ def aslarray(a, meta=None):
     --------
     >>> # NumPy array
     >>> np_arr = np.arange(6).reshape((2,3))
-    >>> aslarray(np_arr)
+    >>> asarray(np_arr)
     {0}*\{1}*  0  1  2
             0  0  1  2
             1  3  4  5
@@ -8083,7 +8083,7 @@ def aslarray(a, meta=None):
     >>> data = {'normal'  : pd.Series([1., 2., 3.], index=['a', 'b', 'c']),
     ...         'reverse' : pd.Series([3., 2., 1.], index=['a', 'b', 'c'])}
     >>> df = pd.DataFrame(data)
-    >>> aslarray(df)
+    >>> asarray(df)
     {0}\{1}  normal  reverse
           a     1.0      3.0
           b     2.0      2.0
@@ -8106,6 +8106,9 @@ def aslarray(a, meta=None):
         return from_frame(a, meta=meta)
     else:
         return Array(a, meta=meta)
+
+
+aslarray = renamed_to(asarray, 'aslarray')
 
 
 def _check_axes_argument(func):
@@ -9319,7 +9322,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
         return Session([(array_name, stack_one(array_name)) for array_name in array_names], meta=meta)
     else:
         if res_axes is None or dtype is None:
-            values = [aslarray(v) if not np.isscalar(v) else v
+            values = [asarray(v) if not np.isscalar(v) else v
                       for k, v in items]
 
             if res_axes is None:
