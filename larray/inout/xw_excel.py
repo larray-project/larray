@@ -14,7 +14,7 @@ from larray.core.array import Array, ndtest
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import _translate_sheet_name
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_asarray
 from larray.inout.misc import from_lists
 from larray.util.misc import PY2, deprecate_kwarg
 
@@ -56,7 +56,7 @@ if xw is not None:
         @classmethod
         def read_value(cls, value, options):
             df = PandasDataFrameConverter.read_value(value, options)
-            return df_aslarray(df)
+            return df_asarray(df)
 
         @classmethod
         def write_value(cls, value, options):

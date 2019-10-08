@@ -13,7 +13,7 @@ from larray.core.metadata import Metadata
 from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_asarray
 from larray.example import get_example_filepath
 
 
@@ -79,8 +79,8 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         if _type in ['Array', 'LArray']:
             # cartesian product is not necessary if the array was written by LArray
             cartesian_prod = writer != 'LArray'
-            res = df_aslarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
-                              parse_header=False, cartesian_prod=cartesian_prod)
+            res = df_asarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
+                             parse_header=False, cartesian_prod=cartesian_prod)
             if _meta is not None:
                 res.meta = _meta
         elif _type == 'Axis':

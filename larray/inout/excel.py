@@ -19,7 +19,7 @@ from larray.core.metadata import Metadata
 from larray.util.misc import deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
-from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
+from larray.inout.pandas import df_asarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
 from larray.inout.xw_excel import open_excel
 from larray.example import get_example_filepath
 
@@ -220,8 +220,8 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     else:
         # TODO: add support for range argument (using usecols, skiprows and nrows arguments of pandas.read_excel)
         df = pd.read_excel(filepath, sheet, index_col=index_col, engine=engine, **kwargs)
-        return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
-                           fill_value=fill_value, wide=wide)
+        return df_asarray(df, sort_rows=sort_rows, sort_columns=sort_columns, raw=index_col is None,
+                          fill_value=fill_value, wide=wide)
 
 
 @register_file_handler('pandas_excel', ['xls', 'xlsx'] if xw is None else None)
@@ -282,7 +282,7 @@ class PandasExcelHandler(FileHandler):
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
             df = self.handle.parse(key, *args, **kwargs)
-            return df_aslarray(df, raw=True)
+            return df_asarray(df, raw=True)
         elif type == 'Axis':
             return self.axes[key]
         elif type == 'Group':

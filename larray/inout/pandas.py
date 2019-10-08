@@ -252,8 +252,8 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     return Array(data, axes, meta=meta)
 
 
-def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
-                **kwargs):
+def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
+               **kwargs):
     r"""
     Prepare Pandas DataFrame and then convert it into Array.
 
@@ -289,7 +289,7 @@ def df_aslarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header
     -------
     Array
     """
-    # we could inline df_aslarray into the functions that use it, so that the original (non-cartesian) df is freed from
+    # we could inline df_asarray into the functions that use it, so that the original (non-cartesian) df is freed from
     # memory at this point, but it would be much uglier and would not lower the peak memory usage which happens during
     # cartesian_product_df.reindex
 

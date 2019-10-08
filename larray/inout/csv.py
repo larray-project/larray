@@ -17,7 +17,7 @@ from larray.core.metadata import Metadata
 from larray.util.misc import skip_comment_cells, strip_rows, csv_open, deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
-from larray.inout.pandas import df_aslarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
+from larray.inout.pandas import df_asarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
 from larray.example import get_example_filepath
 
 
@@ -230,7 +230,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         df.index.names = combined_axes_names.split(headersep)
         raw = False
 
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw, wide=wide)
+    return df_asarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw, wide=wide)
 
 
 def read_tsv(filepath_or_buffer, **kwargs):
