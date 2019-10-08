@@ -11,7 +11,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.array import Array, aslarray
+from larray.core.array import Array, asarray
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, _translate_sheet_name
@@ -311,7 +311,7 @@ class PandasExcelHandler(FileHandler):
 
     def _dump_metadata(self, metadata):
         if len(metadata) > 0:
-            metadata = aslarray(metadata)
+            metadata = asarray(metadata)
             metadata.to_excel(self.handle, '__metadata__', engine='xlsxwriter', wide=False, value_name='')
 
     def save(self):
@@ -414,7 +414,7 @@ class XLWingsHandler(FileHandler):
 
     def _dump_metadata(self, metadata):
         if len(metadata) > 0:
-            metadata = aslarray(metadata)
+            metadata = asarray(metadata)
             self.handle['__metadata__'] = metadata.dump(wide=False, value_name='')
 
     def save(self):

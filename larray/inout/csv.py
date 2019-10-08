@@ -9,7 +9,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-from larray.core.array import Array, aslarray, ndtest
+from larray.core.array import Array, asarray, ndtest
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group
@@ -370,7 +370,7 @@ class PandasCSVHandler(FileHandler):
 
     def _dump_metadata(self, metadata):
         if len(metadata) > 0:
-            meta = aslarray(metadata)
+            meta = asarray(metadata)
             meta.to_csv(self._to_filepath('__metadata__'), sep=self.sep, wide=False, value_name='')
 
     def save(self):

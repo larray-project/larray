@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import needs_xlwings, TESTDATADIR
-from larray import ndtest, open_excel, aslarray, Axis, nan, ExcelReport
+from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
@@ -221,14 +221,14 @@ class TestRange(object):
             assert np.array_equal(res1, arr1.data)
             assert res1.dtype == arr1.dtype
 
-    def test_aslarray(self):
+    def test_asarray(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
 
             arr1 = ndtest([Axis(2), Axis(3)])
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
-            res1 = aslarray(sheet['A1:C2'])
+            res1 = asarray(sheet['A1:C2'])
             assert res1.equals(arr1)
             assert res1.dtype == arr1.dtype
 

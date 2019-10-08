@@ -26,7 +26,7 @@
 import numpy as np
 
 from larray.core.axis import Axis, AxisCollection
-from larray.core.array import Array, aslarray
+from larray.core.array import Array, asarray
 from larray.core.array import raw_broadcastable
 import larray as la
 
@@ -359,7 +359,7 @@ def permutation(x, axis=0):
     if isinstance(x, (int, np.integer)):
         return Array(np.random.permutation(x))
     else:
-        x = aslarray(x)
+        x = asarray(x)
         axis = x.axes[axis]
         g = axis.i[np.random.permutation(len(axis))]
         return x[g]

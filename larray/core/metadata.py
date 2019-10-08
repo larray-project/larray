@@ -148,8 +148,8 @@ class Metadata(AttributeDict):
 
     @classmethod
     def from_array(cls, array):
-        from larray.core.array import aslarray
-        array = aslarray(array)
+        from larray.core.array import asarray
+        array = asarray(array)
         if array.ndim != 1:
             raise ValueError("Expected Array object of dimension 1. Got array of dimension {}".format(array.ndim))
 

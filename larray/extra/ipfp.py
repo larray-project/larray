@@ -1,7 +1,7 @@
 import math
 from collections import deque
 
-from larray.core.array import Array, aslarray, ones, any
+from larray.core.array import Array, asarray, ones, any
 import numpy as np
 
 
@@ -142,7 +142,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     assert no_convergence in {'ignore', 'warn', 'raise'}
     assert isinstance(display_progress, bool) or display_progress == 'condensed'
 
-    target_sums = [aslarray(ts) for ts in target_sums]
+    target_sums = [asarray(ts) for ts in target_sums]
 
     n = len(target_sums)
 
@@ -189,7 +189,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         if nzvzs in {'warn', 'fix'} and isinstance(a, Array):
             a = a.copy()
         else:
-            a = aslarray(a)
+            a = asarray(a)
         # TODO: this should be a builtin op
         a = a.rename({i: name if name is not None else 'axis{}'.format(i)
                       for i, name in enumerate(a.axes.names)})
