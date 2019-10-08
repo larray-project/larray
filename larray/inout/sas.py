@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from larray.core.constants import nan
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_asarray
 from larray.util.misc import deprecate_kwarg
 
 
@@ -32,4 +32,4 @@ def read_sas(filepath, nb_axes=None, index_col=None, fill_value=nan, na=nan, sor
         index_col = [index_col]
 
     df = pd.read_sas(filepath, index=index_col, **kwargs)
-    return df_aslarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)
+    return df_asarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value)

@@ -6,7 +6,7 @@ from pandas import DataFrame
 from larray.core.constants import nan
 from larray.util.misc import StringIO, deprecate_kwarg
 from larray.inout.common import _get_index_col
-from larray.inout.pandas import df_aslarray
+from larray.inout.pandas import df_asarray
 from larray.inout.csv import read_csv
 
 
@@ -114,8 +114,8 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
     if index_col is not None:
         df.set_index([df.columns[c] for c in index_col], inplace=True)
 
-    return df_aslarray(df, raw=index_col is None, parse_header=False, sort_rows=sort_rows, sort_columns=sort_columns,
-                       fill_value=fill_value, wide=wide)
+    return df_asarray(df, raw=index_col is None, parse_header=False, sort_rows=sort_rows, sort_columns=sort_columns,
+                      fill_value=fill_value, wide=wide)
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
