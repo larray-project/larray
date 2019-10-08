@@ -454,41 +454,39 @@ class Axis(ABCAxis):
         raise NotImplementedError('Axis.all is deprecated. Use {}[:] >> {} instead.'
                                   .format(axis_name, repr(group_name)))
 
-    # TODO: make this method private and drop name argument (it is never used)
-    def subaxis(self, key, name=None):
+    # TODO: make this method private
+    def subaxis(self, key):
         r"""
         Returns an axis for a sub-array.
 
         Parameters
         ----------
         key : int, or collection (list, slice, array, Array) of them
-            Indices of labels to use for the new axis.
-        name : str, optional
-            Name of the subaxis. Defaults to the name of the parent axis.
+            Indices-based key to use for the new axis.
 
         Returns
         -------
         Axis
-            Subaxis. If key is a None slice and name is None, the original Axis is returned.
+            Subaxis. If key is a None slice, the original Axis is returned.
             If key is an Array, the list of axes is returned.
 
         Examples
         --------
         >>> age = Axis(range(100), 'age')
-        >>> age.subaxis(range(10, 19), 'teenagers')
-        Axis([10, 11, 12, 13, 14, 15, 16, 17, 18], 'teenagers')
+        >>> age.subaxis(range(10, 19))
+        Axis([10, 11, 12, 13, 14, 15, 16, 17, 18], 'age')
         """
-        if name is None and isinstance(key, slice) and key.start is None and key.stop is None and key.step is None:
+        if isinstance(key, slice) and key.start is None and key.stop is None and key.step is None:
             return self
-        # we must NOT modify the axis name, even though this creates a new axis that is independent from the original
-        # one because the original name is probably what users will want to use to filter
-        if name is None:
-            name = self.name
         if isinstance(key, ABCArray):
             return key.axes
+
         # TODO: compute length for wildcard axes more efficiently
         labels = len(self.labels[key]) if self.iswildcard else self.labels[key]
-        return Axis(labels, name)
+
+        # we must NOT modify the axis name, even though this creates a new axis that is independent from the original
+        # one because the original name is probably what users will want to use to filter
+        return Axis(labels, self.name)
 
     def iscompatible(self, other):
         r"""
