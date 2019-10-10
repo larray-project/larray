@@ -38,7 +38,7 @@ del _pkl
 
 from larray.util.options import get_options, set_options
 
-from larray.viewer import view, edit, compare, run_editor_on_exception
+from larray.viewer import view, edit, debug, compare, run_editor_on_exception
 
 from larray.extra.ipfp import ipfp
 
@@ -81,7 +81,7 @@ __all__ = [
     # utils
     'get_options', 'set_options',
     # viewer
-    'view', 'edit', 'compare', 'run_editor_on_exception',
+    'view', 'edit', 'debug', 'compare', 'run_editor_on_exception',
     # ipfp
     'ipfp',
     # example
