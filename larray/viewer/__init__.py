@@ -75,6 +75,23 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
         raise Exception('edit() is not available because the larray_editor package is not installed')
 
 
+def debug(depth=0):
+    r"""
+    Opens a new debug window.
+
+    Parameters
+    ----------
+    depth : int, optional
+        Stack depth where to look for variables. Defaults to 0 (where this function was called).
+    """
+    try:
+        from larray_editor import debug
+
+        debug(depth + 1)
+    except ImportError:
+        raise Exception('debug() is not available because the larray_editor package is not installed')
+
+
 def compare(*args, **kwargs):
     r"""
     Opens a new comparator window, comparing arrays or sessions.
@@ -125,7 +142,7 @@ def compare(*args, **kwargs):
         raise Exception('compare() is not available because the larray_editor package is not installed')
 
 
-def run_editor_on_exception(root_path=None, usercode_traceback=True):
+def run_editor_on_exception(root_path=None, usercode_traceback=True, usercode_frame=True):
     r"""
     Runs the editor when an unhandled exception (a fatal error) happens.
 
@@ -136,6 +153,9 @@ def run_editor_on_exception(root_path=None, usercode_traceback=True):
     usercode_traceback : bool, optional
         Whether or not to show only the part of the traceback (error log) which corresponds to the user code.
         Otherwise, it will show the complete traceback, including code inside libraries. Defaults to True.
+    usercode_frame : bool, optional
+        Whether or not to start the debug window in the frame corresponding to the user code.
+        This argument is ignored (it is always True) if usercode_traceback is True. Defaults to True.
 
     Notes
     -----
@@ -144,6 +164,7 @@ def run_editor_on_exception(root_path=None, usercode_traceback=True):
     try:
         from larray_editor import run_editor_on_exception
 
-        run_editor_on_exception(root_path=root_path, usercode_traceback=usercode_traceback)
+        run_editor_on_exception(root_path=root_path, usercode_traceback=usercode_traceback,
+                                usercode_frame=usercode_frame)
     except ImportError:
         raise Exception('run_editor_on_exception() is not available because the larray_editor package is not installed')

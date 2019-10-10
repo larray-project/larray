@@ -826,6 +826,7 @@ Editor
 
    view
    edit
+   debug
    compare
    run_editor_on_exception
 
