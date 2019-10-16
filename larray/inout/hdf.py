@@ -132,10 +132,8 @@ class PandasHDFHandler(FileHandler):
             hdf_key = '/' + key
         elif type == 'Axis':
             hdf_key = '__axes__/' + key
-            kwargs['name'] = key
         elif type == 'Group':
             hdf_key = '__groups__/' + key
-            kwargs['name'] = key
         else:
             raise TypeError()
         return read_hdf(self.handle, hdf_key, *args, **kwargs)
