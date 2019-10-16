@@ -61,3 +61,6 @@ Fixes
 
 * fixed :py:obj:`zip_array_values()` and :py:obj:`zip_array_items()` functions not available
   when importing the entire larray library as ``from larray import *`` (closes :issue:`816`).
+
+* fixed wrong axes and groups names when loading a session from an HDF file
+  (closes :issue:`803`).
