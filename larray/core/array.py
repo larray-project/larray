@@ -1595,11 +1595,8 @@ class Array(ABCArray):
         a1   c0   2   1
         """
         # XXX: can't we move this to AxisCollection.replace?
-        if isinstance(axes_to_reindex, basestring):
-            try:
-                axes_to_reindex = Axis(axes_to_reindex)
-            except:
-                pass
+        if isinstance(axes_to_reindex, basestring) and '=' in axes_to_reindex:
+            axes_to_reindex = Axis(axes_to_reindex)
         if isinstance(axes_to_reindex, (Group, Axis)) and not isinstance(axes_to_reindex, AxisReference):
             new_axis = axes_to_reindex if isinstance(axes_to_reindex, Axis) else Axis(axes_to_reindex)
             axes_to_reindex = self.axes[new_axis]
