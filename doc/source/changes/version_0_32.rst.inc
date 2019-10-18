@@ -57,4 +57,7 @@ Fixes
 * fixed binary operations between a session and an array object (closes :issue:`807`).
 
 * fixed the :py:obj:`Array.reindex()` printing a spurious warning message when the
-  `axes_to_reindex` argument is the name of the axis to reindex (closes :issue:`812`)
+  `axes_to_reindex` argument is the name of the axis to reindex (closes :issue:`812`).
+
+* fixed :py:obj:`zip_array_values()` and :py:obj:`zip_array_items()` functions not available
+  when importing the entire larray library as ``from larray import *`` (closes :issue:`816`).
