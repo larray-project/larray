@@ -240,7 +240,7 @@ def test_csv_io(tmpdir, session, meta):
     try:
         _test_io(fpath, session, meta, engine='pandas_csv')
 
-        names = session.filter(kind=(Axis, Group, Array)).names
+        names = session.filter(kind=Array).names
 
         # test loading with a pattern
         pattern = os.path.join(fpath, '*.csv')

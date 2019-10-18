@@ -660,13 +660,7 @@ cells:
 
 - markdown: |
     <div class="alert alert-info">
-      Note: Concerning the CSV and Excel formats:  
-      
-      - all Axis objects are saved together in the same Excel sheet (CSV file) named `__axes__(.csv)`  
-      - all Group objects are saved together in the same Excel sheet (CSV file) named `__groups__(.csv)`  
-      - metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`  
-      
-      These sheet (CSV file) names cannot be changed. 
+      Note: Concerning the CSV and Excel formats, the metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`. This sheet (CSV file) name cannot be changed. 
     </div>
 
 

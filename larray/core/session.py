@@ -344,7 +344,8 @@ class Session(object):
 
     def load(self, fname, names=None, engine='auto', display=False, **kwargs):
         r"""
-        Load Array, Axis and Group objects from a file, or several .csv files.
+        Load Array objects from a file, or several .csv files (all formats).
+        Load also Axis and Group objects from a file (HDF and pickle formats).
 
         WARNING: never load a file using the pickle engine (.pkl or .pickle) from an untrusted source, as it can lead
         to arbitrary code execution.
@@ -431,7 +432,8 @@ class Session(object):
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         r"""
-        Dumps Array, Axis and Group objects from the current session to a file.
+        Dumps Array objects from the current session to a file (all formats).
+        Dumps also Axis and Group objects from the current session to a file (HDF and pickle format).
 
         Parameters
         ----------
@@ -449,10 +451,6 @@ class Session(object):
             If False, file is updated. Defaults to True.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
-
-        Notes
-        -----
-        See Notes section from :py:meth:`~Session.to_csv` and :py:meth:`~Session.to_excel`.
 
         Examples
         --------
@@ -652,15 +650,15 @@ class Session(object):
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
         r"""
-        Dumps Array, Axis and Group objects from the current session to an Excel file.
+        Dumps Array objects from the current session to an Excel file.
 
         Parameters
         ----------
         fname : str
             Path of the file for the dump.
         names : list of str or None, optional
-            Names of Array/Axis/Group objects to dump.
-            Defaults to all objects present in the Session.
+            Names of Array objects to dump.
+            Defaults to all Array objects present in the Session.
         overwrite: bool, optional
             Whether or not to overwrite an existing file, if any. If False, file is updated. Defaults to True.
         display : bool, optional
@@ -669,8 +667,6 @@ class Session(object):
         Notes
         -----
         - each array is saved in a separate sheet
-        - all Axis objects are saved together in the same sheet named __axes__
-        - all Group objects are saved together in the same sheet named __groups__
         - all session metadata is saved in the same sheet named __metadata__
 
         Examples
@@ -700,23 +696,21 @@ class Session(object):
 
     def to_csv(self, fname, names=None, display=False, **kwargs):
         r"""
-        Dumps Array, Axis and Group objects from the current session to CSV files.
+        Dumps Array objects from the current session to CSV files.
 
         Parameters
         ----------
         fname : str
             Path for the directory that will contain CSV files.
         names : list of str or None, optional
-            Names of Array/Axis/Group objects to dump.
-            Defaults to all objects present in the Session.
+            Names of Array objects to dump.
+            Defaults to all Array objects present in the Session.
         display : bool, optional
             Whether or not to display which file is being worked on. Defaults to False.
 
         Notes
         -----
         - each array is saved in a separate file
-        - all Axis objects are saved together in the same CSV file named __axes__.csv
-        - all Group objects are saved together in the same CSV file named __groups__.csv
         - all session metadata is saved in the same CSV file named __metadata__.csv
 
         Examples
