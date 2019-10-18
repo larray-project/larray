@@ -19,7 +19,7 @@ from larray.core.metadata import Metadata
 from larray.util.misc import deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
-from larray.inout.pandas import df_asarray, _axes_to_df, _df_to_axes, _groups_to_df, _df_to_groups
+from larray.inout.pandas import df_asarray
 from larray.inout.xw_excel import open_excel
 from larray.example import get_example_filepath
 
@@ -231,49 +231,18 @@ class PandasExcelHandler(FileHandler):
     """
     def __init__(self, fname, overwrite_file=False):
         super(PandasExcelHandler, self).__init__(fname, overwrite_file)
-        self.axes = None
-        self.groups = None
-
-    def _load_axes_and_groups(self):
-        # load all axes
-        sheet_axes = '__axes__'
-        if sheet_axes in self.handle.sheet_names:
-            df = pd.read_excel(self.handle, sheet_axes, index_col=None)
-            self.axes = _df_to_axes(df)
-        else:
-            self.axes = OrderedDict()
-        # load all groups
-        sheet_groups = '__groups__'
-        if sheet_groups in self.handle.sheet_names:
-            df = pd.read_excel(self.handle, sheet_groups, index_col=None)
-            self.groups = _df_to_groups(df, self.axes)
-        else:
-            self.groups = OrderedDict()
 
     def _open_for_read(self):
         self.handle = pd.ExcelFile(self.fname)
-        self._load_axes_and_groups()
 
     def _open_for_write(self):
         self.handle = pd.ExcelWriter(self.fname)
-        self.axes = OrderedDict()
-        self.groups = OrderedDict()
 
     def list_items(self):
         sheet_names = self.handle.sheet_names
         items = []
         try:
             sheet_names.remove('__metadata__')
-        except:
-            pass
-        try:
-            sheet_names.remove('__axes__')
-            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
-        except:
-            pass
-        try:
-            sheet_names.remove('__groups__')
-            items += [(name, 'Group') for name in sorted(self.groups.keys())]
         except:
             pass
         items += [(name, 'Array') for name in sheet_names]
@@ -283,10 +252,6 @@ class PandasExcelHandler(FileHandler):
         if type == 'Array':
             df = self.handle.parse(key, *args, **kwargs)
             return df_asarray(df, raw=True)
-        elif type == 'Axis':
-            return self.axes[key]
-        elif type == 'Group':
-            return self.groups[key]
         else:
             raise TypeError()
 
@@ -294,10 +259,6 @@ class PandasExcelHandler(FileHandler):
         kwargs['engine'] = 'xlsxwriter'
         if isinstance(value, Array):
             value.to_excel(self.handle, key, *args, **kwargs)
-        elif isinstance(value, Axis):
-            self.axes[key] = value
-        elif isinstance(value, Group):
-            self.groups[key] = value
         else:
             raise TypeError()
 
@@ -315,12 +276,7 @@ class PandasExcelHandler(FileHandler):
             metadata.to_excel(self.handle, '__metadata__', engine='xlsxwriter', wide=False, value_name='')
 
     def save(self):
-        if len(self.axes) > 0:
-            df = _axes_to_df(self.axes.values())
-            df.to_excel(self.handle, '__axes__', index=False, engine='xlsxwriter')
-        if len(self.groups) > 0:
-            df = _groups_to_df(self.groups.values())
-            df.to_excel(self.handle, '__groups__', index=False, engine='xlsxwriter')
+        pass
 
     def close(self):
         self.handle.close()
@@ -333,36 +289,16 @@ class XLWingsHandler(FileHandler):
     """
     def __init__(self, fname, overwrite_file=False):
         super(XLWingsHandler, self).__init__(fname, overwrite_file)
-        self.axes = None
-        self.groups = None
 
     def _get_original_file_name(self):
         # for XLWingsHandler, no need to create a temporary file, the job is already done in the Workbook class
         pass
 
-    def _load_axes_and_groups(self):
-        # load all axes
-        sheet_axes = '__axes__'
-        if sheet_axes in self.handle:
-            df = self.handle[sheet_axes][:].options(pd.DataFrame, index=False).value
-            self.axes = _df_to_axes(df)
-        else:
-            self.axes = OrderedDict()
-        # load all groups
-        sheet_groups = '__groups__'
-        if sheet_groups in self.handle:
-            df = self.handle[sheet_groups][:].options(pd.DataFrame, index=False).value
-            self.groups = _df_to_groups(df, self.axes)
-        else:
-            self.groups = OrderedDict()
-
     def _open_for_read(self):
         self.handle = open_excel(self.fname)
-        self._load_axes_and_groups()
 
     def _open_for_write(self):
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
-        self._load_axes_and_groups()
 
     def list_items(self):
         sheet_names = self.handle.sheet_names()
@@ -371,36 +307,18 @@ class XLWingsHandler(FileHandler):
             sheet_names.remove('__metadata__')
         except:
             pass
-        try:
-            sheet_names.remove('__axes__')
-            items = [(name, 'Axis') for name in sorted(self.axes.keys())]
-        except:
-            pass
-        try:
-            sheet_names.remove('__groups__')
-            items += [(name, 'Group') for name in sorted(self.groups.keys())]
-        except:
-            pass
         items += [(name, 'Array') for name in sheet_names]
         return items
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
             return self.handle[key].load(*args, **kwargs)
-        elif type == 'Axis':
-            return self.axes[key]
-        elif type == 'Group':
-            return self.groups[key]
         else:
             raise TypeError()
 
     def _dump_item(self, key, value, *args, **kwargs):
         if isinstance(value, Array):
             self.handle[key] = value.dump(*args, **kwargs)
-        elif isinstance(value, Axis):
-            self.axes[key] = value
-        elif isinstance(value, Group):
-            self.groups[key] = value
         else:
             raise TypeError()
 
@@ -418,14 +336,6 @@ class XLWingsHandler(FileHandler):
             self.handle['__metadata__'] = metadata.dump(wide=False, value_name='')
 
     def save(self):
-        if len(self.axes) > 0:
-            df = _axes_to_df(self.axes.values())
-            self.handle['__axes__'] = ''
-            self.handle['__axes__'][:].options(pd.DataFrame, index=False).value = df
-        if len(self.groups) > 0:
-            df = _groups_to_df(self.groups.values())
-            self.handle['__groups__'] = ''
-            self.handle['__groups__'][:].options(pd.DataFrame, index=False).value = df
         self.handle.save()
 
     def close(self):

@@ -10,7 +10,12 @@ Syntax changes
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* other backward incompatible changes
+* Because it was broken, the possibility to dump and load Axis and Group objects
+  contained in a session has been removed for the CSV and Excel formats.
+  Fixing it would have taken too much time considering it is very rarely used
+  (no one complains it was broken) so the decision to remove it was taken.
+  However, this is still possible using the HDF format.
+  Closes :issue:`815`.
 
 
 New features
