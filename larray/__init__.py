@@ -56,7 +56,7 @@ __all__ = [
     'Array', 'zeros', 'zeros_like', 'ones', 'ones_like', 'empty', 'empty_like', 'full',
     'full_like', 'sequence', 'labels_array', 'ndtest', 'asarray', 'identity', 'diag', 'eye',
     'all', 'any', 'sum', 'prod', 'cumsum', 'cumprod', 'min', 'max', 'mean', 'ptp', 'var', 'std',
-    'median', 'percentile', 'stack',
+    'median', 'percentile', 'stack', 'zip_array_values', 'zip_array_items',
     # session
     'Session', 'local_arrays', 'global_arrays', 'arrays',
     # constants
