@@ -325,13 +325,18 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
         series.name = df.index.name
         if sort_rows:
             raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
-        return from_series(series, sort_rows=sort_columns)
+        res = from_series(series, sort_rows=sort_columns)
     else:
         axes_names = [decode(name, 'utf8') if isinstance(name, basestring) else name
                       for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
-        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
-                          unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
+        res = from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
+                         unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
+
+    # ugly hack to avoid anonymous axes converted as axes with name 'Unnamed: x' by pandas
+    # TODO : find a more robust and elegant solution
+    res = res.rename({axis: None for axis in res.axes if isinstance(axis.name, basestring) and 'Unnamed' in axis.name})
+    return res
 
 
 # #################################### #
