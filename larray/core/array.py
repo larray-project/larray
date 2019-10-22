@@ -2415,7 +2415,8 @@ class Array(ABCArray):
         elif not len(self):
             return 'Array([])'
         else:
-            table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS])
+            table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS],
+                              _axes_display_names=True)
             return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
                              precision=_OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
@@ -2436,12 +2437,15 @@ class Array(ABCArray):
         """
         warnings.warn("Array.as_table() is deprecated. Please use Array.dump() instead.", FutureWarning,
                       stacklevel=2)
-        return self.dump(maxlines=maxlines, edgeitems=edgeitems, light=light, wide=wide, value_name=value_name)
+        return self.dump(maxlines=maxlines, edgeitems=edgeitems, light=light, wide=wide, value_name=value_name,
+                         _axes_display_names=True)
 
     # XXX: dump as a 2D Array with row & col dims?
     def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
-             maxlines=-1, edgeitems=5):
-        r"""
+             maxlines=-1, edgeitems=5, _axes_display_names=False):
+        r"""dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
+             maxlines=-1, edgeitems=5)
+
         Dump array as a 2D nested list. This is especially useful when writing to an Excel sheet via open_excel().
 
         Parameters
@@ -2462,7 +2466,7 @@ class Array(ABCArray):
             Assuming header is True, whether or not to include axes names. If axes_names is 'except_last',
             all axes names will be included except the last. Defaults to True.
         na_repr : any scalar, optional
-            Replace missing values (NaN floats) by this value. Default to 'as_is' (do not do any replacement).
+            Replace missing values (NaN floats) by this value. Defaults to 'as_is' (do not do any replacement).
         maxlines : int, optional
             Maximum number of lines to show. Defaults to -1 (all lines are shown).
         edgeitems : int, optional
@@ -2516,7 +2520,11 @@ class Array(ABCArray):
          ['...',  '...', '...', '...'],
          ['a1',    'b1',     6,     7]]
         """
-        display_axes_names = axes_names
+        # _axes_display_names : bool, optional
+        #    Whether or not to get axes names using AxisCollection.display_names instead of
+        #    AxisCollection.names. Defaults to False.
+
+        dump_axes_names = axes_names
 
         if not header:
             # ensure_no_numpy_type is there mostly to avoid problems with xlwings, but I am unsure where that problem
@@ -2540,14 +2548,18 @@ class Array(ABCArray):
             data = self.data.reshape(height, width)
 
             # get list of names of axes
-            axes_names = self.axes.display_names[:]
+            if _axes_display_names:
+                axes_names = self.axes.display_names[:]
+            else:
+                axes_names = [axis_name if axis_name is not None else '' for axis_name in self.axes.names]
 
             # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
             if wide and len(axes_names) > 1:
-                if display_axes_names is True:
-                    axes_names[-2] = '\\'.join(axes_names[-2:])
+                if dump_axes_names is True:
+                    separator = '\\' if axes_names[-1] else ''
+                    axes_names[-2] = separator.join(axes_names[-2:])
                     axes_names.pop()
-                elif display_axes_names == 'except_last':
+                elif dump_axes_names == 'except_last':
                     axes_names = axes_names[:-1]
                 else:
                     axes_names = [''] * (len(axes_names) - 1)
