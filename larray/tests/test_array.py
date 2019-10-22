@@ -4128,11 +4128,22 @@ def test_to_excel_xlwings(tmpdir):
 
 
 def test_dump():
+    # narrow format
     res = list(ndtest(3).dump(wide=False, value_name='data'))
     assert res == [['a', 'data'],
                    ['a0', 0],
                    ['a1', 1],
                    ['a2', 2]]
+    # array with an anonymous axis and a wildcard axis
+    arr = ndtest((Axis('a0,a1'), Axis(2, 'b')))
+    res = arr.dump()
+    assert res == [['\\b', 0, 1],
+                   ['a0', 0, 1],
+                   ['a1', 2, 3]]
+    res = arr.dump(_axes_display_names=True)
+    assert res == [['{0}\\b*', 0, 1],
+                   ['a0', 0, 1],
+                   ['a1', 2, 3]]
 
 
 @needs_xlwings
@@ -4293,7 +4304,7 @@ def test_open_excel(tmpdir):
         assert_array_equal(res, a3.data.reshape((6, 4)))
 
     # 4) Blank cells
-    # ========================
+    # ==============
     # Excel sheet with blank cells on right/bottom border of the array to read
     fpath = inputpath('test_blank_cells.xlsx')
     with open_excel(fpath) as wb:
@@ -4309,7 +4320,16 @@ def test_open_excel(tmpdir):
     assert_array_equal(bad3, good2)
     assert_array_equal(bad4, good2)
 
-    # 5) crash test
+    # 5) anonymous and wilcard axes
+    # =============================
+    arr = ndtest((Axis('a0,a1'), Axis(2, 'b')))
+    fpath = tmp_path(tmpdir, 'anonymous_and_wildcard_axes.xlsx')
+    with open_excel(fpath, overwrite_file=True) as wb:
+        wb[0] = arr.dump()
+        res = wb[0].load()
+        assert arr.equals(res)
+
+    # 6) crash test
     # =============
     arr = ndtest((2, 2))
     fpath = tmp_path(tmpdir, 'temporary_test_file.xlsx')

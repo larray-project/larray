@@ -226,6 +226,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     if unfold_last_axis_name:
         if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
             last_axes = [name.strip() for name in axes_names[-1].split('\\')]
+            last_axes = [name if name else None for name in last_axes]
             axes_names = axes_names[:-1] + last_axes
         else:
             axes_names += [None]
@@ -327,8 +328,13 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
             raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
         res = from_series(series, sort_rows=sort_columns)
     else:
-        axes_names = [decode(name, 'utf8') if isinstance(name, basestring) else name
-                      for name in df.index.names]
+        def parse_axis_name(name):
+            if isinstance(name, basestring):
+                name = decode(name, 'utf8')
+            if not name:
+                name = None
+            return name
+        axes_names = [parse_axis_name(name) for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]
         res = from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
                          unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
