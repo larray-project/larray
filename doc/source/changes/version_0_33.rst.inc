@@ -51,7 +51,18 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* greatly improved :py:obj:`Array.plot()` method and "submethods" (:py:obj:`Array.plot.bar()`, etc.)
+
+  - support `x`, `y` and `by` arguments in plot functions where it make sense
+    When only some of them are specified, the other arguments pick from remaining
+    available axes. This means a lot of plots can now be expressed more intuitively and concisely
+    (you do not need to transpose your array to get the result you want, you just
+    specify the axes you want to use in 'x' or 'y'.
+  - `subplots` argument now accepts an axis (or tuple of them) in addition to a
+    boolean to specify *which* axes to use as subplots.
+  - support for *labels* (instead of axes) in x and y for line plot and scatter.
+  - support passing a dict as legend to customize the legend.
+  - many tweaks to make several plots look better out of the box.
 
 
 Fixes
