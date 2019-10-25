@@ -2127,11 +2127,9 @@ class Array(ABCArray):
             return self._translate_axis_key_chunk(axis_key)
 
     def __getitem__(self, key, collapse_slices=False, translate_key=True):
-        data = self.data
-        # FIXME: I have a huge problem with boolean axis labels + non points
         raw_broadcasted_key, res_axes, transpose_indices = self.axes._key_to_raw_and_axes(key, collapse_slices,
                                                                                           translate_key)
-        res_data = data[raw_broadcasted_key]
+        res_data = self.data[raw_broadcasted_key]
         if res_axes:
             res = Array(res_data, res_axes)
             # if some axes have been moved in front because of advanced indexing, we transpose them back to their
@@ -2145,7 +2143,6 @@ class Array(ABCArray):
         # total_axes = self.axes + key.axes + value.axes
         # expanded = self.expand(total_axes)
         # data = np.asarray(expanded.data)
-        data = self.data
         raw_broadcasted_key, target_axes, _ = self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key)
         if isinstance(value, Array):
             # TODO: the check_compatible should be included in broadcast_with
@@ -2161,7 +2158,7 @@ class Array(ABCArray):
                 text = 'axes are' if len(extra_axes) > 1 else 'axis is'
                 raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "
                                  "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
-        data[raw_broadcasted_key] = value
+        self.data[raw_broadcasted_key] = value
 
         # concerning keys this can make sense in several cases:
         # single bool Array key with extra axes.
