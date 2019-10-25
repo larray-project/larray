@@ -1811,8 +1811,12 @@ class AxisCollection(object):
         return "{%s}" % ', '.join(self.display_names)
 
     def __repr__(self):
-        axes_repr = (repr(axis) for axis in self._list)
-        return "AxisCollection([\n    %s\n])" % ',\n    '.join(axes_repr)
+        if len(self):
+            repr_per_axis = [repr(axis) for axis in self._list]
+            axes_repr = "\n    {}\n".format(',\n    '.join(repr_per_axis))
+        else:
+            axes_repr = ""
+        return "AxisCollection([{}])".format(axes_repr)
 
     # TODO: kill name argument (does not seem to be used anywhere
     def get(self, key, default=None, name=None):
