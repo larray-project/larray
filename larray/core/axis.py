@@ -2563,18 +2563,17 @@ class AxisCollection(object):
         """
         axis_key = remove_nested_groups(axis_key)
 
-        if isinstance(axis_key, Group) and axis_key.axis is not None:
+        if isinstance(axis_key, IGroup) and axis_key.axis is not None:
             # retarget to real axis, if needed
             # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
-            if isinstance(axis_key, IGroup):
-                if axis_key.axis in self:
-                    axis_key = axis_key.retarget_to(self[axis_key.axis])
-                else:
-                    # axis associated with axis_key may not belong to self.
-                    # In that case, we translate IGroup to labels and search for a compatible axis
-                    # (see end of this method)
-                    axis_key = axis_key.to_label()
+            if axis_key.axis in self:
+                axis_key = axis_key.retarget_to(self[axis_key.axis])
+            else:
+                # axis associated with axis_key may not belong to self.
+                # In that case, we translate IGroup to labels and search for a compatible axis
+                # (see end of this method)
+                axis_key = axis_key.to_label()
 
         # already positional
         if isinstance(axis_key, IGroup):
