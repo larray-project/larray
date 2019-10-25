@@ -2609,7 +2609,7 @@ class AxisCollection(object):
             except KeyError:
                 continue
         if not valid_axes:
-            raise ValueError("%s is not a valid label for any axis" % axis_key)
+            raise ValueError("%r is not a valid label for any axis" % axis_key)
         elif len(valid_axes) > 1:
             # TODO: make an AxisCollection.display_name(axis) method out of this
             # valid_axes = ', '.join(self.display_name(axis) for a in valid_axes)
