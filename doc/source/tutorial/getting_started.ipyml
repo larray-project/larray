@@ -1,0 +1,537 @@
+cells:
+
+- markdown: |
+    # Getting Started
+
+
+- markdown: |
+    The purpose of the present **Getting Started** section is to give a quick overview
+    of the main objects and features of the LArray library.
+    To get a more detailed presentation of all capabilities of LArray, read the next sections of the tutorial.
+    
+    The [API Reference](../api.rst#api-reference) section of the documentation give you the list of all objects, methods and functions with their individual documentation and examples.
+    
+    To use the LArray library, the first thing to do is to import it:
+
+
+- code: |
+    from larray import *
+
+
+- markdown: |
+    To know the version of the LArray library installed on your machine, type:
+
+
+- code: |
+    from larray import __version__
+    __version__
+
+
+- code: |
+    # run this cell to avoid annoying warnings
+    import warnings
+    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
+
+  metadata:
+    nbsphinx: hidden
+
+- markdown: |
+    ## Create an array
+
+
+- markdown: |
+    Working with the LArray library mainly consists of manipulating [Array](../api.rst#array) data structures.
+    They represent N-dimensional labelled arrays and are composed of raw data (NumPy ndarray), axes and optionally some metadata.
+    
+    An [Axis](../api.rst#axis) object represents a dimension of an array. It contains a list of labels and has a name:
+
+
+- code: |
+    # define some axes to be used later
+    age = Axis(['0-9', '10-17', '18-66', '67+'], 'age')
+    gender = Axis(['female', 'male'], 'gender')
+    time = Axis([2015, 2016, 2017], 'time')
+
+
+- markdown: |
+    The labels allow to select subsets and to manipulate the data without working with the positions
+    of array elements directly.
+    
+    To create an array from scratch, you need to supply data and axes:
+
+
+- code: |
+    # define some data. This is the belgian population (in thousands). Source: eurostat.
+    data = [[[633, 635, 634],
+             [663, 665, 664]],
+            [[484, 486, 491],
+             [505, 511, 516]],
+            [[3572, 3581, 3583],
+             [3600, 3618, 3616]],
+            [[1023, 1038, 1053],
+             [756, 775, 793]]]
+    
+    # create an Array object
+    pop = Array(data, axes=[age, gender, time])
+    pop
+
+
+- markdown: |
+    You can optionally attach some metadata to an array:
+
+
+- code: |
+    # attach some metadata to the pop array
+    pop.meta.title = 'population by age, sex and year'
+    pop.meta.source = 'Eurostat'
+    
+    # display metadata
+    pop.meta
+
+
+- markdown: |
+    To get a short summary of an array, type:
+
+
+- code: |
+    # Array summary: metadata + dimensions + description of axes
+    pop.info
+
+
+- markdown: |
+    ## Create an array filled with predefined values
+
+
+- markdown: |
+    Arrays filled with predefined values can be generated through [dedicated functions](../api.rst#array-creation-functions):
+    
+      - `zeros` : creates an array filled with 0
+      - `ones` : creates an array filled with 1
+      - `full` : creates an array filled with a given value
+      - `sequence` : creates an array by sequentially applying modifications to the array along axis.
+      - `ndtest` : creates a test array with increasing numbers as data
+
+
+- code: |
+    zeros([age, gender])
+
+
+- code: |
+    ones([age, gender])
+
+
+- code: |
+    full([age, gender], fill_value=10.0)
+
+
+- code: |
+    sequence(age)
+
+
+- code: |
+    ndtest([age, gender])
+
+
+- markdown: |
+    ## Save/Load an array
+
+
+- markdown: |
+    The LArray library offers many I/O functions to read and write arrays in various formats
+    (CSV, Excel, HDF5). For example, to save an array in a CSV file, call the method `to_csv`:
+
+
+- code: |
+    # save our pop array to a CSV file
+    pop.to_csv('belgium_pop.csv')
+
+
+- markdown: |
+    The content of the CSV file is then:
+    
+        age,gender\time,2015,2016,2017
+        0-9,female,633,635,634
+        0-9,male,663,665,664
+        10-17,female,484,486,491
+        10-17,male,505,511,516
+        18-66,female,3572,3581,3583
+        18-66,male,3600,3618,3616
+        67+,female,1023,1038,1053
+        67+,male,756,775,793  
+
+
+- markdown: |
+    <div class="alert alert-info">
+       Note: In CSV or Excel files, the last dimension is horizontal and the names of the
+       last two dimensions are separated by a backslash \.
+    </div>
+
+
+- markdown: |
+    To load a saved array, call the function `read_csv`:
+
+
+- code: |
+    pop = read_csv('belgium_pop.csv')
+    pop
+
+
+- markdown: |
+    Other input/output functions are described in the [Input/Output](../api.rst#input-output) section of the API documentation.
+
+
+- markdown: |
+    ## Selecting a subset
+
+
+- markdown: |
+    To select an element or a subset of an array, use brackets [ ].
+    In Python we usually use the term *indexing* for this operation.
+    
+    Let us start by selecting a single element:
+
+
+- code: |
+    pop['67+', 'female', 2017]
+
+
+- markdown: |
+    Labels can be given in arbitrary order:
+
+
+- code: |
+    pop[2017, 'female', '67+']
+
+
+- markdown: |
+    When selecting a larger subset the result is an array:
+
+
+- code: |
+    pop['female']
+
+
+- markdown: |
+    When selecting several labels for the same axis, they must be given as a list (enclosed by ``[ ]``)
+
+
+- code: |
+    pop['female', ['0-9', '10-17']]
+
+
+- markdown: |
+    You can also select *slices*, which are all labels between two bounds (we usually call them the `start` and `stop`
+    bounds). Specifying the `start` and `stop` bounds of a slice is optional: when not given, `start` is the first label
+    of the corresponding axis, `stop` the last one:
+
+
+- code: |
+    # in this case '10-17':'67+' is equivalent to ['10-17', '18-66', '67+']
+    pop['female', '10-17':'67+']
+
+
+- code: |
+    # :'18-66' selects all labels between the first one and '18-66'
+    # 2017: selects all labels between 2017 and the last one
+    pop[:'18-66', 2017:]
+
+
+- markdown: |
+    <div class="alert alert-info">
+       Note: Contrary to slices on normal Python lists, the stop bound is included in the selection.
+    </div>
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        Selecting by labels as above only works as long as there is no ambiguity.
+        When several axes have some labels in common and you do not specify explicitly
+        on which axis to work, it fails with an error ending with something like
+        
+        ValueError: <somelabel> is ambiguous (valid in <axis1>, <axis2>).
+    </div>
+
+
+- markdown: |
+    For example, imagine you need to work with an 'immigration' array containing two axes sharing some common labels:
+
+
+- code: |
+    country = Axis(['Belgium', 'Netherlands', 'Germany'], 'country')
+    citizenship = Axis(['Belgium', 'Netherlands', 'Germany'], 'citizenship')
+    
+    immigration = ndtest((country, citizenship, time))
+    
+    immigration
+
+
+- markdown: |
+    If we try to get the number of Belgians living in the Netherlands for the year 2017, we might try something like:
+
+
+- markdown: |
+    ```python
+        immigration['Netherlands', 'Belgium', 2017]
+    ```
+
+
+- markdown: |
+    ... but we receive back a volley of insults:
+
+
+- markdown: |
+    ```
+        [some long error message ending with the line below]
+        [...]
+        ValueError: Netherlands is ambiguous (valid in country, citizenship)
+    ```
+
+
+- markdown: |
+    In that case, we have to specify explicitly which axes the 'Netherlands' and 'Belgium' labels we want to select belong to:
+
+
+- code: |
+    immigration[country['Netherlands'], citizenship['Belgium'], 2017]
+
+
+- markdown: |
+    ## Aggregation
+
+
+- markdown: |
+    The LArray library includes many [aggregations methods](../api.rst#aggregation-functions): sum, mean, min, max, std, var, ...
+    
+    For example, assuming we still have an array in the ``pop`` variable:
+
+
+- code: |
+    pop
+
+
+- markdown: |
+    We can sum along the 'sex' axis using:
+
+
+- code: |
+    pop.sum(gender)
+
+
+- markdown: |
+    Or sum along both 'age' and 'sex':
+
+
+- code: |
+    pop.sum(age, gender)
+
+
+- markdown: |
+    It is sometimes more convenient to aggregate along all axes **except** some. In that case, use the aggregation
+    methods ending with `_by`. For example:
+
+
+- code: |
+    pop.sum_by(time)
+
+
+- markdown: |
+    ## Groups
+
+
+- markdown: |
+    A [Group](../api.rst#group) object represents a subset of labels or positions of an axis:
+
+
+- code: |
+    children = age['0-9', '10-17']
+    children
+
+
+- markdown: |
+    It is often useful to attach them an explicit name using the ``>>`` operator:
+
+
+- code: |
+    working = age['18-66'] >> 'working'
+    working
+
+
+- code: |
+    nonworking = age['0-9', '10-17', '67+'] >> 'nonworking'
+    nonworking
+
+
+- markdown: |
+    Still using the same ``pop`` array:
+
+
+- code: |
+    pop
+
+
+- markdown: |
+    Groups can be used in selections:
+
+
+- code: |
+    pop[working]
+
+
+- code: |
+    pop[nonworking]
+
+
+- markdown: |
+    or aggregations:
+
+
+- code: |
+    pop.sum(nonworking)
+
+
+- markdown: |
+    When aggregating several groups, the names we set above using ``>>`` determines the label on the aggregated axis.
+    Since we did not give a name for the children group, the resulting label is generated automatically :
+
+
+- code: |
+    pop.sum((children, working, nonworking))
+
+
+- markdown: |
+    ## Grouping arrays in a Session
+
+
+- markdown: |
+    Arrays may be grouped in [Session](../api.rst#session) objects.
+    A session is an ordered dict-like container of Array objects with special I/O methods.
+    To create a session, you need to pass a list of pairs (array_name, array):
+
+
+- code: |
+    pop = zeros([age, gender, time])
+    births = zeros([age, gender, time])
+    deaths = zeros([age, gender, time])
+    
+    # create a session containing the three arrays 'pop', 'births' and 'deaths'
+    demo = Session(pop=pop, births=births, deaths=deaths)
+    
+    # displays names of arrays contained in the session
+    demo.names
+    # get an array
+    demo['pop']
+    # add/modify an array
+    demo['foreigners'] = zeros([age, gender, time])
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        If you are using a Python version prior to 3.6, you will have to pass a list of pairs
+        to the Session constructor otherwise the arrays will be stored in an arbitrary order in
+        the new session. For example, the session above must be created using the syntax:
+        
+        `demo=Session([('pop', pop), ('births', births), ('deaths', deaths)])`.
+    </div>
+
+
+- markdown: |
+    One of the main interests of using sessions is to save and load many arrays at once:
+
+
+- code: |
+    # dump all arrays contained in the session 'demo' in one HDF5 file
+    demo.save('demo.h5')
+    # load all arrays saved in the HDF5 file 'demo.h5' and store them in the session 'demo'
+    demo = Session('demo.h5')
+
+
+- markdown: |
+    ## Graphical User Interface (viewer)
+
+
+- markdown: |
+    The LArray project provides an optional package called [larray-editor](../api.rst#editor) allowing users to explore and edit arrays through a graphical interface.
+    
+    The larray-editor tool is automatically available when installing the **larrayenv** metapackage from conda.
+    
+    To explore the content of arrays in read-only mode, call the `view` function:
+
+
+- markdown: |
+    ```python
+        # shows the arrays of a given session in a graphical user interface
+        view(demo)
+    
+        # the session may be directly loaded from a file
+        view('demo.h5')
+    
+        # creates a session with all existing arrays from the current namespace
+        # and shows its content
+        view()
+    ```
+
+
+- markdown: |
+    To open the user interface in edit mode, call the `edit` function instead.
+    
+    ![compare](../_static/editor.png)
+
+
+- markdown: |
+    Finally, you can also visually compare two arrays or sessions using the `compare` function:
+
+
+- markdown: |
+    ```python
+        arr0 = ndtest((3, 3))
+        arr1 = ndtest((3, 3))
+        arr1[['a1', 'a2']] = -arr1[['a1', 'a2']]
+        compare(arr0, arr1)
+    ```
+
+
+- markdown: |
+    ![compare](../_static/compare.png)
+
+
+- markdown: |
+    ### For Windows Users
+
+
+- markdown: |
+    Installing the ``larray-editor`` package on Windows will create a ``LArray`` menu in the
+    Windows Start Menu. This menu contains:
+    
+      * a shortcut to open the documentation of the last stable version of the library
+      * a shortcut to open the graphical interface in edit mode.
+      * a shortcut to update `larrayenv`.
+    
+    ![menu_windows](../_static/menu_windows.png)
+    
+    ![editor_new](../_static/editor_new.png)
+    
+    Once the graphical interface is open, all LArray objects and functions are directly accessible.
+    No need to start by `from larray import *`.
+
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  celltoolbar: Edit Metadata
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.7.3
+nbformat: 4
+nbformat_minor: 2
+
