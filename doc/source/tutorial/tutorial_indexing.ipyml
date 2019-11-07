@@ -4,14 +4,6 @@ cells:
     # Indexing, Selecting and Assigning
 
 
-- code: |
-    # run this cell to avoid annoying warnings
-    import warnings
-    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
-
-  metadata:
-    nbsphinx: hidden
-
 - markdown: |
     Import the LArray library:
 

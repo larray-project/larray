@@ -27,14 +27,6 @@ cells:
     __version__
 
 
-- code: |
-    # run this cell to avoid annoying warnings
-    import warnings
-    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
-
-  metadata:
-    nbsphinx: hidden
-
 - markdown: |
     ## Create an array
 

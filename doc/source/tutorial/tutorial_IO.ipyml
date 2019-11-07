@@ -9,14 +9,6 @@ cells:
 
 
 - code: |
-    # run this cell to avoid annoying warnings
-    import warnings
-    warnings.filterwarnings("ignore", message=r'.*numpy.dtype size changed*')
-
-  metadata:
-    nbsphinx: hidden
-
-- code: |
     # first of all, import the LArray library
     from larray import *
 
