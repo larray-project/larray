@@ -21,15 +21,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     ### Before To Continue
     
     If you not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) and [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) sections of the tutorial before going further.  

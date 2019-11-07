@@ -21,15 +21,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     To convert an Array object into a pandas DataFrame, the method [to_frame](../_generated/larray.Array.to_frame.rst#larray.Array.to_frame) can be used:
 
 
