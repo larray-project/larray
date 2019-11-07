@@ -22,4 +22,4 @@ It is mainly dedicated to help new users to familiarize with it and others to re
    ./tutorial/tutorial_plotting.ipynb
    ./tutorial/tutorial_miscellaneous.ipynb
    ./tutorial/tutorial_sessions.ipynb
-   ./tutorial/pandas.rst
+   ./tutorial/pandas.ipynb
