@@ -18,37 +18,6 @@ Backward incompatible changes
   Closes :issue:`815`.
 
 
-New features
-^^^^^^^^^^^^
-
-* added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
-  :ref:`api-group` objects.
-
-  Here is an example of the new feature:
-
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-
-  And it can also be used like this:
-
-    >>> arr = ndtest("a=a0..a2")
-    >>> arr
-    a  a0  a1  a2
-        0   1   2
-
-* added another feature in the editor (closes :editor_issue:`1`).
-
-  .. note::
-
-     - It works for foo bar !
-     - It does not work for foo baz !
-
-
-.. _misc:
-
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -61,8 +30,8 @@ Fixes
 
 * fixed binary operations between a session and an array object (closes :issue:`807`).
 
-* fixed the :py:obj:`Array.reindex()` printing a spurious warning message when the
-  `axes_to_reindex` argument is the name of the axis to reindex (closes :issue:`812`).
+* fixed :py:obj:`Array.reindex()` printing a spurious warning message when the
+  `axes_to_reindex` argument was the name of the axis to reindex (closes :issue:`812`).
 
 * fixed :py:obj:`zip_array_values()` and :py:obj:`zip_array_items()` functions not available
   when importing the entire larray library as ``from larray import *`` (closes :issue:`816`).
