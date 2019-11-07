@@ -13,15 +13,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     The LArray library offers two syntaxes to build axes and make selections and aggregations.
     The first one is more ``Pythonic`` (uses Python structures) 
     For example, you can create an *age_category* axis as follows:

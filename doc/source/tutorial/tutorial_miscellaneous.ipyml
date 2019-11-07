@@ -20,15 +20,6 @@ cells:
     from larray import *
 
 
-- markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
 - code: |
     # load 'demography_eurostat' dataset
     demo_eurostat = load_example_data('demography_eurostat')

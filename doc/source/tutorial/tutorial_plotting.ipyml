@@ -21,15 +21,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     Import a subset of the test array ``pop``:
 
 

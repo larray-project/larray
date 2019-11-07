@@ -21,15 +21,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     ## Axis
     
     An ``Axis`` represents a dimension of an Array object.

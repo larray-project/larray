@@ -22,15 +22,6 @@ cells:
 
 
 - markdown: |
-    Check the version of LArray:
-
-
-- code: |
-    from larray import __version__
-    __version__
-
-
-- markdown: |
     ## Loading and Dumping Arrays
 
 
