@@ -7,17 +7,18 @@ version: 2
 
 # Build documentation in the doc/ directory with Sphinx
 sphinx:
-  configuration: doc/source/conf.py
+    configuration: doc/source/conf.py
 
 # Optionally build your docs in additional formats such as PDF and ePub
-formats: all
+formats:
+    - pdf
 
 conda:
     environment: doc/environment.yml
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-   version: 3.6
-   install:
-      - method: setuptools
-        path: .
+    version: 3.6
+    install:
+        - method: setuptools
+          path: .
