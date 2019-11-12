@@ -1,11 +1,8 @@
 #!/usr/bin/python
-# coding=utf-8
 # Release script for LArray
 # Licence: GPLv3
 # Requires:
 # * git
-from __future__ import print_function, unicode_literals
-
 import sys
 from os.path import abspath, dirname, join
 from subprocess import check_call
@@ -35,15 +32,12 @@ def update_metapackage(context):
     chdir(context['repository'])
     version = short(context['release_name'])
 
-    def fill(s):
-        return s.format(version=version)
-
     # TODO: this should be echocall(redirect_stdout=False)
-    print(fill('Updating larrayenv metapackage to version {version}'))
+    print(f'Updating larrayenv metapackage to version {version}')
     # - excluded versions 5.0 and 5.1 of ipykernel because these versions make the console useless after any exception
     #   https://github.com/larray-project/larray-editor/issues/166
-    check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', fill('larray =={version}'),
-                fill('larray-editor =={version}'), fill('larray_eurostat =={version}'),
+    check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', f'larray =={version}',
+                f'larray-editor =={version}', f'larray_eurostat =={version}',
                 "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables",
                 "xlsxwriter", "xlrd", "openpyxl", "xlwings", "ipykernel !=5.0,!=5.1.0",
                 '--user', 'larray-project',
@@ -72,33 +66,44 @@ def announce_new_release(release_name):
     outlook = win32.Dispatch('outlook.application')
     mail = outlook.CreateItem(0)
     mail.To = LARRAY_ANNOUNCE_MAILING_LIST
-    mail.Subject = "LArray {} released".format(version)
-    mail.Body = """\
+    mail.Subject = f"LArray {version} released"
+    mail.Body = f"""\
 Hello all, 
 
 We are pleased to announce that version {version} of LArray is now available. 
 The complete description of changes including examples can be found at:
 
-{readthedocs}changes.html#version-{version_doc}
+{LARRAY_READTHEDOCS}changes.html#version-{version.replace('.', '-')}
 
 
 
 As always, *any* feedback is very welcome, preferably on the larray-users 
-mailing list: {larray_users_group} (you need to register to be able to post).
-""".format(version=version, readthedocs=LARRAY_READTHEDOCS, version_doc=version.replace('.', '-'),
-           larray_users_group=LARRAY_USERS_GROUP)
+mailing list: {LARRAY_USERS_GROUP} (you need to register to be able to post).
+"""
     mail.Display(True)
 
 
 if __name__ == '__main__':
     argv = sys.argv
     if len(argv) < 2:
-        print("Usage: {} [-c|--conda] release_name|dev [step|startstep:stopstep] [branch]".format(argv[0]))
-        print("make release steps:", ', '.join(f.__name__ for f, _ in make_release_steps))
-        print("update conda-forge feedstock steps:", ', '.join(f.__name__ for f, _ in update_feedstock_steps))
-        print("or")
-        print("Usage: {} -a|--announce release_name".format(argv[0]))
-        print("Usage: {} -m|--meta release_name".format(argv[0]))
+        print(f"""
+Usage:
+ * {argv[0]} release_name|dev [step|startstep:stopstep] [branch]
+   main release script
+
+   steps: {', '.join(f.__name__ for f, _ in make_release_steps)}
+
+ * {argv[0]} -c|--conda release_name
+   update conda-forge feedstock
+
+   steps: {', '.join(f.__name__ for f, _ in update_feedstock_steps)}
+
+ * {argv[0]} -a|--announce release_name
+   announce release
+
+ * {argv[0]} -m|--meta release_name
+   update metapackage
+""")
         sys.exit()
 
     local_repository = abspath(dirname(__file__))

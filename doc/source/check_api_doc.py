@@ -113,8 +113,8 @@ class ClassItem(AbstractItem):
 
     def diff(self, other):
         if not isinstance(other, ClassItem):
-            raise TypeError("Expect a {} instance as argument. "
-                            "Got a {} instance instead".format(ClassItem.__name__, type(other).__name__))
+            raise TypeError(f"Expect a {ClassItem.__name__} instance as argument. "
+                            f"Got a {type(other).__name__} instance instead")
         diff_item = ClassItem(self.class_)
         diff_item.attrs = {k: v for k, v in self.attrs.items() if k not in other.attrs}
         diff_item.methods = {k: v for k, v in self.methods.items() if k not in other.methods}
@@ -128,15 +128,15 @@ class ClassItem(AbstractItem):
             _write_header(ofile, self.name, '=', indent=indent)
             if self.attrs:
                 _write_header(ofile, 'Attributes', indent=indent)
-                ofile.writelines(indent + ' * {}\n'.format(attr) for attr in self.attrs.keys())
+                ofile.writelines(f'{indent} * {attr}\n' for attr in self.attrs.keys())
                 ofile.write('\n')
             if self.methods:
                 _write_header(ofile, 'Methods', indent=indent)
-                ofile.writelines(indent + ' * {}\n'.format(method) for method in self.methods.keys())
+                ofile.writelines(f'{indent} * {method}\n' for method in self.methods.keys())
                 ofile.write('\n')
             if self.deprecated_methods:
                 _write_header(ofile, 'Deprecated Methods', indent=indent)
-                ofile.writelines(indent + ' * {}\n'.format(method) for method in self.deprecated_methods.keys())
+                ofile.writelines(f'{indent} * {method}\n' for method in self.deprecated_methods.keys())
                 ofile.write('\n')
             ofile.write('\n')
 
@@ -182,6 +182,7 @@ class ModuleItem(AbstractItem):
                 self.funcs[name] = obj
         elif inspect.isclass(obj):
             if name in self.classes:
+                # FIXME: missing format or fstring
                 warnings.warn("Class '{}' was already present in '{}' module item and will be replaced")
             class_ = getattr(self.module, name)
             class_item = ClassItem(class_)
@@ -210,8 +211,8 @@ class ModuleItem(AbstractItem):
 
     def diff(self, other):
         if not isinstance(other, ModuleItem):
-            raise TypeError("Expect a {} instance as argument. "
-                            "Got a {} instance instead".format(ModuleItem.__name__, type(other).__name__))
+            raise TypeError(f"Expect a {ModuleItem.__name__} instance as argument. "
+                            f"Got a {type(other).__name__} instance instead")
         diff_item = ModuleItem(self.module)
         diff_item.others = {k: v for k, v in self.others.items() if k not in other.others}
         diff_item.funcs = {k: v for k, v in self.funcs.items() if k not in other.funcs}
@@ -227,15 +228,15 @@ class ModuleItem(AbstractItem):
             ofile.write('\n')
             if self.others:
                 _write_header(ofile, 'Miscellaneous', '=')
-                ofile.writelines(' * {}\n'.format(other) for other in self.others.keys())
+                ofile.writelines(f' * {other}\n' for other in self.others.keys())
                 ofile.write('\n')
             if self.funcs:
                 _write_header(ofile, 'Functions', '=')
-                ofile.writelines(' * {}\n'.format(func) for func in self.funcs.keys())
+                ofile.writelines(f' * {func}\n' for func in self.funcs.keys())
                 ofile.write('\n')
             if self.deprecated_items:
                 _write_header(ofile, 'Deprecated Functions or Classes', '=')
-                ofile.writelines(' * {}\n'.format(func) for func in self.deprecated_items.keys())
+                ofile.writelines(f' * {func}\n' for func in self.deprecated_items.keys())
                 ofile.write('\n')
             if self.classes:
                 _write_header(ofile, 'Classes', '=')
@@ -270,7 +271,7 @@ def get_public_api():
             module_item.auto_discovery()
             public_api[module_name] = module_item
         except ImportError as err:
-            print('module {} could not be imported: {}'.format(module_name, err))
+            print(f'module {module_name} could not be imported: {err}')
             public_api[module_name] = err
     return public_api
 
@@ -294,7 +295,7 @@ def get_autosummary_api():
             module_item = ModuleItem(module)
             autosummary_api[module_name] = module_item
         except ImportError as err:
-            print('module {} could not be imported: {}'.format(module_name, err))
+            print(f'module {module_name} could not be imported: {err}')
             autosummary_api[module_name] = err
 
     for generated_rst_file in os.listdir(output_dir):
@@ -327,7 +328,7 @@ def write_api(filepath, api, header='API', version=True):
     failed = []
     with open(output_file, 'w') as ofile:
         if version:
-            header = '{} [{}]'.format(header, __version__)
+            header = f'{header} [{__version__}]'
         _write_header(ofile, header, '~')
         ofile.write('\n')
         keys = sorted(api.keys())
@@ -341,7 +342,7 @@ def write_api(filepath, api, header='API', version=True):
 
         if failed:
             _write_header(ofile, 'Modules that failed to import')
-            ofile.writelines(' * {} -- {}\n'.format(module_name, error) for module_name, error in failed)
+            ofile.writelines(f' * {module_name} -- {error}\n' for module_name, error in failed)
 
 
 def get_items_from_api_doc():

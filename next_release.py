@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# encoding: utf-8
 # script to start a new release cycle
 # Licence: GPLv3
 from os.path import abspath, dirname
@@ -12,7 +11,7 @@ if __name__ == '__main__':
 
     argv = sys.argv
     if len(argv) < 2:
-        print("Usage: {} release_name [branch]".format(argv[0]))
+        print(f"Usage: {argv[0]} release_name [branch]")
         sys.exit()
 
     local_repository = abspath(dirname(__file__))
