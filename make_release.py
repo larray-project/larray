@@ -25,12 +25,12 @@ LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
 LARRAY_USERS_GROUP = "larray-users@googlegroups.com"
 
 
-def update_metapackage(context):
-    if not context['public_release']:
+def update_metapackage(public_release, repository, release_name, **extra_kwargs):
+    if not public_release:
         return
 
-    chdir(context['repository'])
-    version = short(context['release_name'])
+    chdir(repository)
+    version = short(release_name)
 
     # TODO: this should be echocall(redirect_stdout=False)
     print(f'Updating larrayenv metapackage to version {version}')
@@ -46,17 +46,27 @@ def update_metapackage(context):
                 '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
 
 
-def merge_changelogs(config):
-    if config['src_documentation'] is not None:
-        chdir(join(config['build_dir'], config['src_documentation']))
+def merge_changelogs(build_dir, src_documentation, release_name, public_release, **extra_kwargs):
+    chdir(join(build_dir, src_documentation))
 
-        if not config['public_release']:
-            return
+    if not public_release:
+        return
 
-        check_call(['python', 'merge_changelogs.py', config['release_name']])
+    check_call(['python', 'merge_changelogs.py', release_name])
 
 
 insert_step_func(merge_changelogs, msg='append changelogs from larray-editor project', before='update_changelog')
+
+
+# * the goal is to be able to fetch the editor changelog several times during development (manually) and automatically
+#   during release
+# * we need to commit either a merged changelog or changes.rst which includes both and a copy of the editor changelog
+#   because the doc is built on rtd
+# * the documentation must be buildable at any point (before a merge), so I need next_release to add an empty file
+
+# def merge_changelogs(release_name):
+#     include_changelog('CORE', release_name, LARRAY_GITHUB_REP, reset=True)
+#     include_changelog('EDITOR', release_name, EDITOR_GITHUB_REP)
 
 
 # TODO : move to larrayenv project
@@ -108,9 +118,9 @@ Usage:
 
     local_repository = abspath(dirname(__file__))
     if argv[1] == '-m' or argv[1] == '--meta':
-        local_config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, argv[2], branch='master',
+        local_config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, release_name=argv[2], branch='master',
                                   src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
-        update_metapackage(local_config)
+        update_metapackage(**local_config)
     elif argv[1] == '-a' or argv[1] == '--announce':
         no("Is metapackage larrayenv updated?")
         announce_new_release(argv[2])
