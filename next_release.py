@@ -6,6 +6,22 @@ from make_release import PACKAGE_NAME, SRC_CODE, SRC_DOC
 from releaser import add_release
 
 
+CHANGELOG_INDEX_TEMPLATE = """{title}
+{underline}
+
+In development.
+
+CORE
+----
+.. include:: ./changes/{fname}
+
+EDITOR
+------
+.. include:: ./changes/editor/{fname}
+
+
+"""
+
 if __name__ == '__main__':
     import sys
 
@@ -15,4 +31,5 @@ if __name__ == '__main__':
         sys.exit()
 
     local_repository = abspath(dirname(__file__))
-    add_release(local_repository, PACKAGE_NAME, SRC_CODE, release_name=argv[1], src_documentation=SRC_DOC)
+    add_release(local_repository, PACKAGE_NAME, SRC_CODE, release_name=argv[1], src_documentation=SRC_DOC,
+                changelog_index_template=CHANGELOG_INDEX_TEMPLATE)

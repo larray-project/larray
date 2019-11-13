@@ -6,7 +6,13 @@ Version 0.32
 
 In development.
 
+CORE
+----
 .. include:: ./changes/version_0_32.rst.inc
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_32.rst.inc
 
 
 Version 0.31
