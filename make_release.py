@@ -52,7 +52,7 @@ def merge_changelogs(build_dir, src_documentation, release_name, public_release,
     if not public_release:
         return
 
-    check_call(['python', 'merge_changelogs.py', release_name])
+    check_call(['python', 'fetch_changelogs.py', release_name])
 
 
 insert_step_func(merge_changelogs, msg='append changelogs from larray-editor project', before='update_changelog')

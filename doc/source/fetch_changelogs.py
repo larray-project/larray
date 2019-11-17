@@ -6,7 +6,8 @@ Fetch release notes from satellite projects of the larray-project constellation 
 from pathlib import Path
 
 import requests
-from releaser import relname2fname, doechocall, echocall, short, no, yes
+
+from releaser import relname2fname, doechocall, echocall, short, yes
 
 # TODO: add Eurostat project
 EDITOR_GITHUB_REP = "https://github.com/larray-project/larray-editor"
