@@ -6,7 +6,7 @@ import os
 import pytest
 import numpy as np
 
-from larray.tests.common import needs_xlwings, TESTDATADIR
+from larray.tests.common import needs_xlwings
 from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -379,16 +379,16 @@ def test_excel_report_arrays():
     sheet_graphs = excel_report.new_sheet('Graphs2')
     sheet_graphs.graphs_per_row = 2
     sheet_graphs.add_title('graphs_per_row = 2')
-    for combined_labels, subset in pop.items(('time', 'gender')):
+    for combined_labels, subset in pop.items(('country', 'gender')):
         title = ' - '.join([str(label) for label in combined_labels])
         sheet_graphs.add_graph(subset, title)
 
     # testing add_graphs
     sheet_graphs = excel_report.new_sheet('Graphs3')
     sheet_graphs.add_title('add_graphs')
-    sheet_graphs.add_graphs({'Population of {gender} by country for the year {year}': pop},
-                            {'gender': pop.gender, 'year': pop.time},
-                            template='line', width=450, height=250, graphs_per_row=2)
+    sheet_graphs.add_graphs({'Population for {country} - {gender}': pop},
+                            {'gender': pop.gender, 'country': pop.country},
+                            template='line', width=350, height=250, graphs_per_row=3)
 
     # generate Excel file
     fpath = 'test_excel_report_arrays.xlsx'
