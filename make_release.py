@@ -7,7 +7,7 @@ import sys
 from os.path import abspath, dirname, join
 from subprocess import check_call
 
-from releaser import make_release, update_feedstock, short, no, chdir, set_config, insert_step_func
+from releaser import make_release, update_feedstock, short, no, chdir, set_config, insert_step_func, yes
 from releaser.make_release import steps_funcs as make_release_steps
 from releaser.update_feedstock import steps_funcs as update_feedstock_steps
 
@@ -25,7 +25,7 @@ LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
 LARRAY_USERS_GROUP = "larray-users@googlegroups.com"
 
 
-def update_metapackage(public_release, local_repository, release_name, **extra_kwargs):
+def update_metapackage(local_repository, release_name, public_release=True, **extra_kwargs):
     if not public_release:
         return
 
@@ -118,12 +118,10 @@ Usage:
 
     local_repository = abspath(dirname(__file__))
     if argv[1] == '-m' or argv[1] == '--meta':
-        local_config = set_config(local_repository, PACKAGE_NAME, SRC_CODE, release_name=argv[2], branch='master',
-                                  src_documentation=SRC_DOC, tmp_dir=TMP_PATH)
-        update_metapackage(**local_config)
+        update_metapackage(local_repository, release_name=argv[2])
     elif argv[1] == '-a' or argv[1] == '--announce':
-        no("Is metapackage larrayenv updated?")
-        announce_new_release(argv[2])
+        if yes("Is metapackage larrayenv updated?", default='n'):
+            announce_new_release(argv[2])
     elif argv[1] == '-c' or argv[1] == '--conda':
         update_feedstock(GITHUB_REP, CONDA_FEEDSTOCK_REP, SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
     else:
