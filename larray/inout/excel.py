@@ -103,7 +103,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Missing label combinations
 
-    Let us take a look inside the sheet 'pop_missing_values'. Note the missing label combinations:
+    Let us take a look inside the sheet 'population_missing_values'. Note the missing label combinations:
     (Paris, male) and (New York, female): ::
 
         country  gender\time      2013      2014      2015
@@ -115,7 +115,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     By default, cells associated with missing label combinations are filled with NaN. In that case, an int array
     is converted to a float array.
 
-    >>> read_excel(fname, sheet='pop_missing_values')
+    >>> read_excel(fname, sheet='population_missing_values')
     country  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
@@ -126,7 +126,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Using the ``fill_value`` argument, you can choose another value to use to fill missing cells.
 
-    >>> read_excel(fname, sheet='pop_missing_values', fill_value=0)
+    >>> read_excel(fname, sheet='population_missing_values', fill_value=0)
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
@@ -147,8 +147,8 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         Germany    Male  39380976  39556923  39835457
         Germany  Female  41142770  41210540  41362080
 
-    >>> # read the array stored in the sheet 'pop_missing_axis_name' as is
-    >>> arr = read_excel(fname, sheet='pop_missing_axis_name')
+    >>> # read the array stored in the sheet 'population_missing_axis_name' as is
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name')
     >>> # we expected a 3 x 2 x 3 array with data of type int
     >>> # but we got a 6 x 4 array with data of type object
     >>> arr.info            # doctest: +SKIP
@@ -158,7 +158,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     dtype: object
     memory used: 192 bytes
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> arr = read_excel(fname, sheet='pop_missing_axis_name', nb_axes=3)
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name', nb_axes=3)
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
     >>> arr.info            # doctest: +SKIP
     3 x 2 x 3
@@ -170,7 +170,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Read array saved in "narrow" format (wide=False)
 
-    Let us take a look inside the sheet 'pop_narrow' where the data is stored in a 'narrow' format: ::
+    Let us take a look inside the sheet 'population_narrow' where the data is stored in a 'narrow' format: ::
 
         country  time     value
         Belgium  2013  11137974
@@ -181,14 +181,14 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
          France  2015  66458153
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
-    >>> read_excel(fname, 'pop_narrow_format', wide=False)
+    >>> read_excel(fname, 'population_narrow_format', wide=False)
     country\time      2013      2014      2015
          Belgium  11137974  11180840  11237274
           France  65600350  66165980  66458153
 
     Extract array from a given range (xlwings only)
 
-    >>> read_excel(fname, 'pop_births_deaths', range='A9:E15')     # doctest: +SKIP
+    >>> read_excel(fname, 'population_births_deaths', range='A9:E15')     # doctest: +SKIP
     country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713

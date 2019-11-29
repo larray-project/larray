@@ -86,16 +86,16 @@ class AbstractReportItem(object):
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
         >>> report.template = 'Line'
 
-        >>> sheet_pop = report.new_sheet('Population')
-        >>> sheet_pop.add_graph(demo.pop['Belgium'],'Belgium')
+        >>> sheet_population = report.new_sheet('Population')
+        >>> sheet_population.add_graph(demo.population['Belgium'],'Belgium')
 
         Passing the full path of the template file
 
         >>> # if no default template directory has been set
         >>> # or if the new template is located in another directory,
         >>> # you must provide the full path
-        >>> sheet_pop.template = r'C:\other_templates_dir\Line_Marker.crtx' # doctest: +SKIP
-        >>> sheet_pop.add_graph(demo.pop['Germany'],'Germany') # doctest: +SKIP
+        >>> sheet_population.template = r'C:\other_templates_dir\Line_Marker.crtx' # doctest: +SKIP
+        >>> sheet_population.add_graph(demo.population['Germany'],'Germany') # doctest: +SKIP
         """
         return self._template
 
@@ -252,7 +252,7 @@ class AbstractReportSheet(AbstractReportItem):
 
         Specifying the 'template'
 
-        >>> sheet_be.add_graph(demo.pop['Belgium'], 'Population', template='Line')
+        >>> sheet_be.add_graph(demo.population['Belgium'], 'Population', template='Line')
 
         Specifying the 'template', 'width' and 'height' values
 
@@ -303,13 +303,13 @@ class AbstractReportSheet(AbstractReportItem):
         >>> demo = load_example_data('demography_eurostat')
         >>> report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
 
-        >>> sheet_pop = report.new_sheet('Population')
-        >>> pop = demo.pop
+        >>> sheet_population = report.new_sheet('Population')
+        >>> population = demo.population
 
         Generate a new graph for each combination of gender and year
 
-        >>> sheet_pop.add_graphs({'Population of {gender} by country for the year {year}': pop},
-        ...                      {'gender': pop.gender, 'year': pop.time},
+        >>> sheet_population.add_graphs({'Population of {gender} by country for the year {year}': population},
+        ...                      {'gender': population.gender, 'year': population.time},
         ...                      template='line', width=450, height=250, graphs_per_row=2)
 
         >>> # do not forget to call 'to_excel' to create the report file
@@ -367,7 +367,7 @@ class AbstractExcelReport(AbstractReportItem):
     Add a new graph item (each new graph is placed right to previous one unless you use newline() or add_title())
 
     >>> # using default 'width' and 'height' values
-    >>> sheet_be.add_graph(demo.pop['Belgium'], 'Population', template='Line')
+    >>> sheet_be.add_graph(demo.population['Belgium'], 'Population', template='Line')
     >>> # specifying the 'width' and 'height' values
     >>> sheet_be.add_graph(demo.births['Belgium'], 'Births', template='Line', width=450, height=250)
 
@@ -384,15 +384,15 @@ class AbstractExcelReport(AbstractReportItem):
     >>> # otherwise, give the full path to the template file
     >>> sheet_be.template = r'C:\other_template_dir\Line_Marker.crtx' # doctest: +SKIP
     >>> # add a new graph with the default template
-    >>> sheet_be.add_graph(demo.pop['Belgium', 'Female'], 'Population - Female')
-    >>> sheet_be.add_graph(demo.pop['Belgium', 'Male'], 'Population - Male')
+    >>> sheet_be.add_graph(demo.population['Belgium', 'Female'], 'Population - Female')
+    >>> sheet_be.add_graph(demo.population['Belgium', 'Male'], 'Population - Male')
 
     Specify the number of graphs per row
 
     >>> sheet_countries = report.new_sheet('All countries')
 
     >>> sheet_countries.graphs_per_row = 2
-    >>> for combined_labels, subset in demo.pop.items(('time', 'gender')):
+    >>> for combined_labels, subset in demo.population.items(('time', 'gender')):
     ...    title = ' - '.join([str(label) for label in combined_labels])
     ...    sheet_countries.add_graph(subset, title)
 
@@ -402,8 +402,8 @@ class AbstractExcelReport(AbstractReportItem):
 
     Add multiple graphs at once (add a new graph for each combination of gender and year)
 
-    >>> sheet_countries.add_graphs({'Population of {gender} by country for the year {year}': pop},
-    ...                            {'gender': pop.gender, 'year': pop.time},
+    >>> sheet_countries.add_graphs({'Population of {gender} by country for the year {year}': population},
+    ...                            {'gender': population.gender, 'year': population.time},
     ...                            template='line', width=450, height=250, graphs_per_row=2)
 
     Generate the report Excel file
@@ -435,7 +435,7 @@ class AbstractExcelReport(AbstractReportItem):
         >>> sheet_be = report.new_sheet('Belgium')
 
         >>> # add graph to the output sheet 'Belgium'
-        >>> sheet_be.add_graph(demo.pop['Belgium'], 'Population', template='Line')
+        >>> sheet_be.add_graph(demo.population['Belgium'], 'Population', template='Line')
         """
         pass
 
@@ -446,7 +446,7 @@ class AbstractExcelReport(AbstractReportItem):
         Examples
         --------
         >>> report = ExcelReport()
-        >>> sheet_pop = report.new_sheet('Pop')
+        >>> sheet_population = report.new_sheet('Pop')
         >>> sheet_births = report.new_sheet('Births')
         >>> sheet_deaths = report.new_sheet('Deaths')
         >>> report.sheet_names()
@@ -477,7 +477,7 @@ class AbstractExcelReport(AbstractReportItem):
 
         >>> for c in demo.country:
         ...     sheet_country = report.new_sheet(c)
-        ...     sheet_country.add_graph(demo.pop[c], 'Population')
+        ...     sheet_country.add_graph(demo.population[c], 'Population')
         ...     sheet_country.add_graph(demo.births[c], 'Births')
         ...     sheet_country.add_graph(demo.deaths[c], 'Deaths')
 

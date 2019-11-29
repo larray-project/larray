@@ -13,16 +13,16 @@ cells:
 
 
 - markdown: |
-    Import a subset of the test array ``pop``:
+    Import a subset of the test array ``population``:
 
 
 - code: |
     # load 'demography_eurostat' dataset
-    demo_eurostat = load_example_data('demography_eurostat')
+    demography_eurostat = load_example_data('demography_eurostat')
     
-    # extract the 'pop' array from the dataset 
-    pop = demo_eurostat.pop
-    pop
+    # extract the 'population' array from the dataset 
+    population = demography_eurostat.population
+    population
 
 
 - markdown: |
@@ -38,7 +38,7 @@ cells:
 
 
 - code: |
-    pop.plot()
+    population.plot()
 
 
 - markdown: |

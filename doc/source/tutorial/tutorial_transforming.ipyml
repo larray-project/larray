@@ -14,13 +14,13 @@ cells:
 
 - code: |
     # load the 'demography_eurostat' dataset
-    demo_eurostat = load_example_data('demography_eurostat')
+    demography_eurostat = load_example_data('demography_eurostat')
 
 
 - code: |
-    # get a copy of the 'pop' array from the 'demography_eurostat' dataset
-    pop = demo_eurostat.pop.copy()
-    pop
+    # get a copy of the 'population' array from the 'demography_eurostat' dataset
+    population = demography_eurostat.population.copy()
+    population
 
 
 - markdown: |
@@ -48,20 +48,20 @@ cells:
 
 - code: |
     # replace all labels of the 'gender' axis by passing the list of all new labels
-    pop_new_labels = pop.set_labels('gender', ['Men', 'Women'])
-    pop_new_labels
+    population_new_labels = population.set_labels('gender', ['Men', 'Women'])
+    population_new_labels
 
 
 - code: |
     # set all labels of the 'country' axis to uppercase by passing the function str.upper()
-    pop_new_labels = pop.set_labels('country', str.upper)
-    pop_new_labels
+    population_new_labels = population.set_labels('country', str.upper)
+    population_new_labels
 
 
 - code: |
     # replace only one label of the 'gender' axis by passing a dict
-    pop_new_labels = pop.set_labels('gender', {'Male': 'Men'})
-    pop_new_labels
+    population_new_labels = population.set_labels('gender', {'Male': 'Men'})
+    population_new_labels
 
 
 - markdown: |
@@ -76,8 +76,8 @@ cells:
 
 - code: |
     # 'rename' returns a copy of the array
-    pop_new_names = pop.rename('time', 'year')
-    pop_new_names
+    population_new_names = population.rename('time', 'year')
+    population_new_names
 
 
 - markdown: |
@@ -85,8 +85,8 @@ cells:
 
 
 - code: |
-    pop_new_names = pop.rename({'gender': 'sex', 'time': 'year'})
-    pop_new_names
+    population_new_names = population.rename({'gender': 'sex', 'time': 'year'})
+    population_new_names
 
 
 - markdown: |
@@ -101,8 +101,8 @@ cells:
 
 - code: |
     new_gender = Axis('sex=Men,Women')
-    pop_new_axis = pop.set_axes('gender', new_gender)
-    pop_new_axis
+    population_new_axis = population.set_axes('gender', new_gender)
+    population_new_axis
 
 
 - markdown: |
@@ -111,8 +111,8 @@ cells:
 
 - code: |
     new_country = Axis('country_codes=BE,FR,DE') 
-    pop_new_axes = pop.set_axes({'country': new_country, 'gender': new_gender})
-    pop_new_axes
+    population_new_axes = population.set_axes({'country': new_country, 'gender': new_gender})
+    population_new_axes
 
 
 - markdown: |
@@ -126,37 +126,37 @@ cells:
 
 - code: |
     # starting order : country, gender, time
-    pop
+    population
 
 
 - code: |
     # no argument --> reverse all axes
-    pop_transposed = pop.transpose()
+    population_transposed = population.transpose()
     
     # .T is a shortcut for .transpose()
-    pop_transposed = pop.T
+    population_transposed = population.T
     
-    pop_transposed
+    population_transposed
 
 
 - code: |
     # reorder according to list
-    pop_transposed = pop.transpose('gender', 'country', 'time')
-    pop_transposed
+    population_transposed = population.transpose('gender', 'country', 'time')
+    population_transposed
 
 
 - code: |
     # move 'time' axis at first place
     # not mentioned axes come after those which are mentioned (and keep their relative order)
-    pop_transposed = pop.transpose('time')
-    pop_transposed
+    population_transposed = population.transpose('time')
+    population_transposed
 
 
 - code: |
     # move 'gender' axis at last place
     # not mentioned axes come before those which are mentioned (and keep their relative order)
-    pop_transposed = pop.transpose(..., 'gender')
-    pop_transposed
+    population_transposed = population.transpose(..., 'gender')
+    population_transposed
 
 
 - markdown: |
@@ -168,8 +168,8 @@ cells:
 
 
 - code: |
-    pop_labels_dropped = pop.drop([2014, 2016])
-    pop_labels_dropped
+    population_labels_dropped = population.drop([2014, 2016])
+    population_labels_dropped
 
 
 - markdown: |
@@ -183,8 +183,8 @@ cells:
 
 
 - code: |
-    pop_combined_axes = pop.combine_axes(('country', 'gender'))
-    pop_combined_axes
+    population_combined_axes = population.combine_axes(('country', 'gender'))
+    population_combined_axes
 
 
 - markdown: |
@@ -192,8 +192,8 @@ cells:
 
 
 - code: |
-    pop_split_axes = pop_combined_axes.split_axes('country_gender')
-    pop_split_axes
+    population_split_axes = population_combined_axes.split_axes('country_gender')
+    population_split_axes
 
 
 - markdown: |
@@ -208,8 +208,8 @@ cells:
 
 - code: |
     # reverse years + remove 2013 + add 2018 + copy data for 2017 to 2018
-    pop_new_time = pop.reindex('time', '2018..2014', fill_value=pop[2017])
-    pop_new_time
+    population_new_time = population.reindex('time', '2018..2014', fill_value=population[2017])
+    population_new_time
 
 
 - markdown: |
@@ -217,9 +217,9 @@ cells:
 
 
 - code: |
-    pop_new = pop.reindex({'country': 'country=Luxembourg,Belgium,France,Germany', 
+    population_new = population.reindex({'country': 'country=Luxembourg,Belgium,France,Germany', 
                            'time': 'time=2018..2014'}, fill_value=0)
-    pop_new
+    population_new
 
 
 - markdown: |
@@ -232,11 +232,11 @@ cells:
 
 - code: |
     # insert a new country before 'France' with all values set to 0
-    pop_new_country = pop.insert(0, before='France', label='Luxembourg')
+    population_new_country = population.insert(0, before='France', label='Luxembourg')
     # or equivalently
-    pop_new_country = pop.insert(0, after='Belgium', label='Luxembourg')
+    population_new_country = population.insert(0, after='Belgium', label='Luxembourg')
     
-    pop_new_country
+    population_new_country
 
 
 - markdown: |
@@ -253,9 +253,9 @@ cells:
 
 
 - code: |
-    # get a copy of the 'pop_benelux' array
-    pop_benelux = demo_eurostat.pop_benelux.copy()
-    pop_benelux
+    # get a copy of the 'population_benelux' array
+    population_benelux = demography_eurostat.population_benelux.copy()
+    population_benelux
 
 
 - markdown: |
@@ -263,8 +263,8 @@ cells:
 
 
 - code: |
-    pop_sorted = pop_benelux.sort_axes('gender')
-    pop_sorted
+    population_sorted = population_benelux.sort_axes('gender')
+    population_sorted
 
 
 - markdown: |
@@ -272,7 +272,7 @@ cells:
 
 
 - code: |
-    pop_benelux.labelsofsorted('country')
+    population_benelux.labelsofsorted('country')
 
 
 - markdown: |
@@ -280,8 +280,8 @@ cells:
 
 
 - code: |
-    pop_sorted = pop_benelux.sort_values(('Male', 2017))
-    pop_sorted
+    population_sorted = population_benelux.sort_values(('Male', 2017))
+    population_sorted
 
 
 - markdown: |
@@ -301,11 +301,11 @@ cells:
 
 
 - code: |
-    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), pop.gender, pop.time), dtype=int)
+    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), population.gender, population.time), dtype=int)
     
     # insert new countries before 'France'
-    pop_new_countries = pop.insert(other_countries, before='France')
-    pop_new_countries
+    population_new_countries = population.insert(other_countries, before='France')
+    population_new_countries
 
 
 - markdown: |
@@ -320,8 +320,8 @@ cells:
 
 - code: |
     # append data for 'Luxembourg'
-    pop_new = pop.append('country', pop_benelux['Luxembourg'], 'Luxembourg')
-    pop_new
+    population_new = population.append('country', population_benelux['Luxembourg'], 'Luxembourg')
+    population_new
 
 
 - markdown: |
@@ -329,13 +329,13 @@ cells:
 
 
 - code: |
-    pop_lux = Array([-1, 1], pop.gender)
-    pop_lux
+    population_lux = Array([-1, 1], population.gender)
+    population_lux
 
 
 - code: |
-    pop_new = pop.append('country', pop_lux, 'Luxembourg')
-    pop_new
+    population_new = population.append('country', population_lux, 'Luxembourg')
+    population_new
 
 
 - markdown: |
@@ -350,8 +350,8 @@ cells:
 
 - code: |
     # append data for 'Luxembourg'
-    pop_new = pop.prepend('country', pop_benelux['Luxembourg'], 'Luxembourg')
-    pop_new
+    population_new = population.prepend('country', population_benelux['Luxembourg'], 'Luxembourg')
+    population_new
 
 
 - markdown: |
@@ -365,8 +365,8 @@ cells:
 
 
 - code: |
-    pop_extended = pop.extend('country', pop_benelux[['Luxembourg', 'Netherlands']])
-    pop_extended
+    population_extended = population.extend('country', population_benelux[['Luxembourg', 'Netherlands']])
+    population_extended
 
 
 - markdown: |
@@ -382,12 +382,12 @@ cells:
 - code: |
     # imagine you have loaded data for each country in different arrays 
     # (e.g. loaded from different Excel sheets)
-    pop_be = pop['Belgium']
-    pop_fr = pop['France']
-    pop_de = pop['Germany']
+    population_be = population['Belgium']
+    population_fr = population['France']
+    population_de = population['Germany']
     
-    pop_stacked = stack({'Belgium': pop_be, 'France': pop_fr, 'Germany': pop_de}, 'country')
-    pop_stacked
+    population_stacked = stack({'Belgium': population_be, 'France': population_fr, 'Germany': population_de}, 'country')
+    population_stacked
 
 
 - markdown: |
@@ -403,18 +403,18 @@ cells:
 
 - code: |
     # get a copy of the 'births' array
-    births = demo_eurostat.births.copy()
+    births = demography_eurostat.births.copy()
     
     # align the two arrays with the 'inner' join method
-    pop_aligned, births_aligned = pop_benelux.align(births, join='inner')
+    population_aligned, births_aligned = population_benelux.align(births, join='inner')
 
 
 - code: |
-    print('pop_benelux before align:')
-    print(pop_benelux)
+    print('population_benelux before align:')
+    print(population_benelux)
     print()
-    print('pop_benelux after align:')
-    print(pop_aligned)
+    print('population_benelux after align:')
+    print(population_aligned)
 
 
 - code: |
@@ -430,7 +430,7 @@ cells:
 
 
 - code: |
-    pop_aligned - births_aligned
+    population_aligned - births_aligned
 
 
 - markdown: |

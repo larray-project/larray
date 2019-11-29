@@ -27,10 +27,10 @@ cells:
 - code: |
     # load a session representing the results of a demographic model
     filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    s_pop = Session(filepath_hdf)
+    demography_session = Session(filepath_hdf)
     
     # print the content of the session
-    print(s_pop.names)
+    print(demography_session.names)
 
 
 - markdown: |
@@ -39,7 +39,7 @@ cells:
 
 - code: |
     # print the content of the session
-    print(s_pop.summary())
+    print(demography_session.summary())
 
 
 - markdown: |
@@ -49,7 +49,7 @@ cells:
 
 
 - code: |
-    s_pop['pop']
+    demography_session['population']
 
 
 - markdown: |
@@ -57,7 +57,7 @@ cells:
 
 
 - code: |
-    s_pop.pop
+    demography_session.population
 
 
 - markdown: |
@@ -71,9 +71,9 @@ cells:
 
 
 - code: |
-    s_pop_new = s_pop['pop', 'births', 'deaths']
+    demography_session_new = demography_session['population', 'births', 'deaths']
     
-    s_pop_new.names
+    demography_session_new.names
 
 
 - markdown: |
@@ -82,12 +82,12 @@ cells:
 
 - code: |
     # select only arrays of a session
-    s_pop.filter(kind=Array)
+    demography_session.filter(kind=Array)
 
 
 - code: |
     # selection all items with a name starting with a letter between a and k
-    s_pop.filter(pattern='[a-k]*')
+    demography_session.filter(pattern='[a-k]*')
 
 
 - markdown: |
@@ -98,13 +98,13 @@ cells:
 
 - code: |
     # iterate over item names
-    for key in s_pop.keys():
+    for key in demography_session.keys():
         print(key)
 
 
 - code: |
     # iterate over items
-    for value in s_pop.values():
+    for value in demography_session.values():
         if isinstance(value, Array):
             print(value.info)
         else:
@@ -114,7 +114,7 @@ cells:
 
 - code: |
     # iterate over names and items
-    for key, value in s_pop.items():
+    for key, value in demography_session.items():
         if isinstance(value, Array):
             print(key, ':')
             print(value.info)
@@ -131,9 +131,9 @@ cells:
 
 - code: |
     # get population, births and deaths in millions
-    s_pop_div = s_pop / 1e6
+    demography_session_div = demography_session / 1e6
     
-    s_pop_div.pop
+    demography_session_div.population
 
 
 - markdown: |
@@ -142,15 +142,15 @@ cells:
 
 - code: |
     from larray import random
-    random_increment = random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3], axes=s_pop.pop.axes) * 1000
+    random_increment = random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3], axes=demography_session.population.axes) * 1000
     random_increment
 
 
 - code: |
     # add some variables of a session by a common array
-    s_pop_rand = s_pop['pop', 'births', 'deaths'] + random_increment
+    demography_session_rand = demography_session['population', 'births', 'deaths'] + random_increment
     
-    s_pop_rand.pop
+    demography_session_rand.population
 
 
 - markdown: |
@@ -159,7 +159,7 @@ cells:
 
 - code: |
     # compute the difference between each array of the two sessions
-    s_diff = s_pop - s_pop_rand
+    s_diff = demography_session - demography_session_rand
     
     s_diff.births
 
@@ -179,13 +179,13 @@ cells:
         else:
             return array
     
-    s_pop_with_next_year = s_pop.apply(add_next_year)
+    demography_session_with_next_year = demography_session.apply(add_next_year)
     
-    print('pop array before calling apply:')
-    print(s_pop.pop)
+    print('population array before calling apply:')
+    print(demography_session.population)
     print()
-    print('pop array after calling apply:')
-    print(s_pop_with_next_year.pop)
+    print('population array after calling apply:')
+    print(demography_session_with_next_year.population)
 
 
 - markdown: |
@@ -204,13 +204,13 @@ cells:
         else:
             return array
     
-    s_pop_with_next_year = s_pop.apply(add_next_year, True)
+    demography_session_with_next_year = demography_session.apply(add_next_year, True)
     
-    print('pop array before calling apply:')
-    print(s_pop.pop)
+    print('population array before calling apply:')
+    print(demography_session.population)
     print()
-    print('pop array after calling apply:')
-    print(s_pop_with_next_year.pop)
+    print('population array after calling apply:')
+    print(demography_session_with_next_year.population)
 
 
 - markdown: |
@@ -233,53 +233,53 @@ cells:
 - code: |
     # load a session representing the results of a demographic model
     filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    s_pop = Session(filepath_hdf)
+    demography_session = Session(filepath_hdf)
     
     # create a copy of the original session
-    s_pop_copy = s_pop.copy()
+    demography_session_copy = demography_session.copy()
 
 
 - code: |
     # 'element_equals' compare arrays one by one
-    s_pop.element_equals(s_pop_copy)
+    demography_session.element_equals(demography_session_copy)
 
 
 - code: |
     # 'equals' returns True if all items of the two sessions have exactly the same items
-    s_pop.equals(s_pop_copy)
+    demography_session.equals(demography_session_copy)
 
 
 - code: |
-    # slightly modify the 'pop' array for some labels combination
-    s_pop_copy.pop += random_increment 
+    # slightly modify the 'population' array for some labels combination
+    demography_session_copy.population += random_increment 
 
 
 - code: |
-    # the 'pop' array is different between the two sessions
-    s_pop.element_equals(s_pop_copy)
+    # the 'population' array is different between the two sessions
+    demography_session.element_equals(demography_session_copy)
 
 
 - code: |
     # 'equals' returns False if at least one item of the two sessions are different in values or axes
-    s_pop.equals(s_pop_copy)
+    demography_session.equals(demography_session_copy)
 
 
 - code: |
     # reset the 'copy' session as a copy of the original session
-    s_pop_copy = s_pop.copy()
+    demography_session_copy = demography_session.copy()
     
     # add an array to the 'copy' session
-    s_pop_copy.gender_ratio = s_pop_copy.pop.ratio('gender')
+    demography_session_copy.gender_ratio = demography_session_copy.population.ratio('gender')
 
 
 - code: |
     # the 'gender_ratio' array is not present in the original session
-    s_pop.element_equals(s_pop_copy)
+    demography_session.element_equals(demography_session_copy)
 
 
 - code: |
     # 'equals' returns False if at least one item is not present in the two sessions
-    s_pop.equals(s_pop_copy)
+    demography_session.equals(demography_session_copy)
 
 
 - markdown: |
@@ -288,16 +288,16 @@ cells:
 
 - code: |
     # reset the 'copy' session as a copy of the original session
-    s_pop_copy = s_pop.copy()
+    demography_session_copy = demography_session.copy()
     
-    # slightly modify the 'pop' array for some labels combination
-    s_pop_copy.pop += random_increment
+    # slightly modify the 'population' array for some labels combination
+    demography_session_copy.population += random_increment
 
 
 - code: |
-    s_check_same_values = s_pop == s_pop_copy
+    s_check_same_values = demography_session == demography_session_copy
     
-    s_check_same_values.pop
+    s_check_same_values.population
 
 
 - markdown: |
@@ -313,16 +313,16 @@ cells:
 
 
 - code: |
-    s_check_different_values = s_pop != s_pop_copy
+    s_check_different_values = demography_session != demography_session_copy
     
-    s_check_different_values.pop
+    s_check_different_values.population
 
 
 - markdown: |
     A more visual way is to use the [compare](../_generated/larray.compare.rst#larray.compare) function which will open the ``Editor``.
     
     ```python
-    compare(s_pop, s_pop_alternative, names=['baseline', 'lower_birth_rate'])
+    compare(demography_session, demography_session_alternative, names=['baseline', 'lower_birth_rate'])
     ```
     
     ![compare two sessions](../_static/compare_tutorial.png)

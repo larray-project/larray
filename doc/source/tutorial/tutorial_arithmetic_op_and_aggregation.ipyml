@@ -70,21 +70,21 @@ cells:
 
 - code: |
     # load the 'demography_eurostat' dataset
-    demo_eurostat = load_example_data('demography_eurostat')
+    demography_eurostat = load_example_data('demography_eurostat')
     
-    # extract the 'pop' array
-    pop = demo_eurostat.pop
-    pop
+    # extract the 'population' array
+    population = demography_eurostat.population
+    population
 
 
 - code: |
-    aggregation_matrix = Array([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), pop.country))
+    aggregation_matrix = Array([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), population.country))
     aggregation_matrix
 
 
 - code: |
     # @ means matrix product
-    aggregation_matrix @ pop['Male']
+    aggregation_matrix @ population['Male']
 
 
 - markdown: |
@@ -95,17 +95,17 @@ cells:
 
 
 - code: |
-    aggregation_matrix = Array([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), pop.country))
+    aggregation_matrix = Array([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), population.country))
     aggregation_matrix
 
 
 - code: |
-    aggregation_matrix @ pop['Male']
+    aggregation_matrix @ population['Male']
 
 
 - code: |
     # force the resulting matrix to be an integer matrix
-    (aggregation_matrix @ pop['Male']).astype(int)
+    (aggregation_matrix @ population['Male']).astype(int)
 
 
 - markdown: |
@@ -117,7 +117,7 @@ cells:
 
 - code: |
     # extract the 'births' array
-    births = demo_eurostat.births
+    births = demography_eurostat.births
     
     # let's change the order of axes of the 'births' array
     births_transposed = births.transpose()
@@ -127,7 +127,7 @@ cells:
 - code: |
     # LArray doesn't care of axes order when performing 
     # arithmetic operations between arrays
-    pop + births_transposed
+    population + births_transposed
 
 
 - markdown: |
@@ -137,8 +137,8 @@ cells:
 
 
 - code: |
-    # the 'pop' and 'births' have compatible axes
-    pop + births
+    # the 'population' and 'births' have compatible axes
+    population + births
 
 
 - code: |
@@ -151,7 +151,7 @@ cells:
     # arithmetic operations between arrays 
     # having incompatible axes raise an error
     try:
-        pop + births_codes
+        population + births_codes
     except Exception as e:
         print(type(e).__name__, e)
 
@@ -167,7 +167,7 @@ cells:
 - code: |
     # use the .ignore_labels() method on axis 'country'
     # to avoid the incompatible axes error (risky)
-    pop + births_codes.ignore_labels('country')
+    population + births_codes.ignore_labels('country')
 
   metadata:
     scrolled: true
@@ -184,7 +184,7 @@ cells:
 - code: |
     # let's define a 'multiplicator' vector with 
     # one value defined for each gender
-    multiplicator = Array([-1, 1], axes=pop.gender)
+    multiplicator = Array([-1, 1], axes=population.gender)
     multiplicator
 
 
@@ -192,7 +192,7 @@ cells:
     # the multiplication below has been propagated to the 
     # 'country' and 'time' axes.
     # This behavior is called broadcasting
-    pop * multiplicator
+    population * multiplicator
 
 
 - markdown: |
@@ -214,7 +214,7 @@ cells:
 
 - code: |
     # test which values are greater than 10 millions
-    pop > 10e6
+    population > 10e6
 
 
 - markdown: |
@@ -229,17 +229,17 @@ cells:
 
 - code: |
     # test which values are greater than 10 millions and less than 40 millions
-    (pop > 10e6) & (pop < 40e6)
+    (population > 10e6) & (population < 40e6)
 
 
 - code: |
     # test which values are less than 10 millions or greater than 40 millions
-    (pop < 10e6) | (pop > 40e6)
+    (population < 10e6) | (population > 40e6)
 
 
 - code: |
     # test which values are not less than 10 millions
-    ~(pop < 10e6)
+    ~(population < 10e6)
 
 
 - markdown: |
@@ -247,11 +247,11 @@ cells:
 
 
 - code: |
-    pop_copy = pop.copy()
+    population_copy = population.copy()
     
     # set all values greater than 40 millions to 40 millions
-    pop_copy[pop_copy > 40e6] = 40e6
-    pop_copy
+    population_copy[population_copy > 40e6] = 40e6
+    population_copy
 
 
 - markdown: |
@@ -260,7 +260,7 @@ cells:
 
 - code: |
     # test where the two arrays have the same values
-    pop == pop_copy
+    population == population_copy
 
 
 - markdown: |
@@ -268,7 +268,7 @@ cells:
 
 
 - code: |
-    pop.equals(pop_copy)
+    population.equals(population_copy)
 
 
 - markdown: |
@@ -289,7 +289,7 @@ cells:
 
 
 - code: |
-    pop.sum('gender')
+    population.sum('gender')
 
 
 - markdown: |
@@ -297,7 +297,7 @@ cells:
 
 
 - code: |
-    pop.sum('country', 'gender')
+    population.sum('country', 'gender')
 
 
 - markdown: |
@@ -305,7 +305,7 @@ cells:
 
 
 - code: |
-    pop.sum_by('time')
+    population.sum_by('time')
 
 
 - markdown: |
@@ -313,10 +313,10 @@ cells:
 
 
 - code: |
-    even_years = pop.time[2014::2] >> 'even_years'
-    odd_years = pop.time[2013::2] >> 'odd_years'
+    even_years = population.time[2014::2] >> 'even_years'
+    odd_years = population.time[2013::2] >> 'odd_years'
     
-    pop.sum((odd_years, even_years))
+    population.sum((odd_years, even_years))
 
 
 - markdown: |
@@ -324,7 +324,7 @@ cells:
 
 
 - code: |
-    pop.sum('gender', (odd_years, even_years))
+    population.sum('gender', (odd_years, even_years))
 
 
 # The lines below here may be deleted if you do not need them.
