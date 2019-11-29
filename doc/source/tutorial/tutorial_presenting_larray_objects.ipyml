@@ -27,11 +27,11 @@ cells:
     # labels given as a list
     time = Axis([2007, 2008, 2009], 'time')
     # create an axis using one string
-    sex = Axis('sex=M,F')
+    gender = Axis('gender=M,F')
     # labels generated using a special syntax
     other = Axis('other=A01..C03')
     
-    age, sex, time, other
+    age, gender, time, other
 
 
 - markdown: |
@@ -92,7 +92,7 @@ cells:
     import numpy as np
     
     # list of the axes
-    axes = [age, sex, time, other]
+    axes = [age, gender, time, other]
     # data (the shape of data array must match axes lengths)
     data = np.random.randint(100, size=[len(axis) for axis in axes])
     # metadata
@@ -119,7 +119,7 @@ cells:
       <ul>
         <li>Currently, only the HDF (.h5) file format supports saving and loading array metadata.</li>
         <li>Metadata is not kept when actions or methods are applied on an array
-            except for operations modifying the object in-place, such as `pop[age < 10] = 0`,
+            except for operations modifying the object in-place, such as `population[age < 10] = 0`,
             and when the method `copy()` is called. Do not add metadata to an array if you know
             you will apply actions or methods on it before dumping it.</li>
       </ul>
@@ -145,7 +145,7 @@ cells:
     
     -  as Axis objects
     -  as integers defining the lengths of auto-generated wildcard axes
-    -  as a string : 'sex=M,F;time=2007,2008,2009' (name is optional)
+    -  as a string : 'gender=M,F;time=2007,2008,2009' (name is optional)
     -  as pairs (name, labels)
     
     Optionally, the type of data stored by the array can be specified using argument dtype.
@@ -153,7 +153,7 @@ cells:
 
 - code: |
     # start defines the starting value of data
-    ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
+    ndtest(['age=0..2', 'gender=M,F', 'time=2007..2009'], start=-1)
 
 
 - code: |
@@ -169,7 +169,7 @@ cells:
     # of memory that is available, with whatever content is there.
     # Use it only if performance matters and make sure all data
     # will be overridden.
-    empty(['age=0..2', 'sex=M,F', 'time=2007..2009'])
+    empty(['age=0..2', 'gender=M,F', 'time=2007..2009'])
 
 
 - code: |
@@ -179,11 +179,11 @@ cells:
 
 - code: |
     # dtype=int forces to store int data instead of default float
-    ones(['age=0..2', 'sex=M,F', 'time=2007..2009'], dtype=int)
+    ones(['age=0..2', 'gender=M,F', 'time=2007..2009'], dtype=int)
 
 
 - code: |
-    full(['age=0..2', 'sex=M,F', 'time=2007..2009'], 1.23)
+    full(['age=0..2', 'gender=M,F', 'time=2007..2009'], 1.23)
 
 
 - markdown: |
@@ -200,7 +200,7 @@ cells:
 
 - code: |
     # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
-    sequence('sex=M,F', initial=1.0, inc=0.5)
+    sequence('gender=M,F', initial=1.0, inc=0.5)
 
 
 - markdown: |
@@ -209,7 +209,7 @@ cells:
 
 - code: |
     # create a test array
-    arr = ndtest([age, sex, time, other])
+    arr = ndtest([age, gender, time, other])
 
 
 - markdown: |
@@ -286,6 +286,20 @@ cells:
 
 
 - markdown: |
+    ### Extract an axis from an array
+
+
+- markdown: |
+    It is possible to extract an axis belonging to an array using its name:
+
+
+- code: |
+    # extract the 'time' axis belonging to the 'arr' array
+    time = arr.time
+    time
+
+
+- markdown: |
     ### More on Array objects
     
     To know how to save and load arrays in CSV, Excel or HDF format, please refer to the [Loading and Dumping Arrays](tutorial_IO.ipynb#Loading-and-Dumping-Arrays) section of the tutorial.
@@ -308,25 +322,25 @@ cells:
 
 - code: |
     # create an empty session
-    s_pop = Session()
+    demography_session = Session()
     
     # add axes to the session
     gender = Axis("gender=Male,Female")
-    s_pop.gender = gender
+    demography_session.gender = gender
     time = Axis("time=2013..2017")
-    s_pop.time = time
+    demography_session.time = time
     
     # add arrays to the session
-    s_pop.pop = zeros((gender, time))
-    s_pop.births = zeros((gender, time))
-    s_pop.deaths = zeros((gender, time))
+    demography_session.population = zeros((gender, time))
+    demography_session.births = zeros((gender, time))
+    demography_session.deaths = zeros((gender, time))
     
     # add metadata after creation
-    s_pop.meta.title = 'Demographic Model of Belgium'
-    s_pop.meta.description = 'Models the demography of Belgium'
+    demography_session.meta.title = 'Demographic Model of Belgium'
+    demography_session.meta.description = 'Models the demography of Belgium'
     
     # print content of the session
-    print(s_pop.summary())
+    print(demography_session.summary())
 
 
 - markdown: |
@@ -339,16 +353,16 @@ cells:
     
     # create and populate a new session in one step
     # Python <= 3.5
-    s_pop = Session([('gender', gender), ('time', time), ('pop', zeros((gender, time))), 
-                    ('births', zeros((gender, time))), ('deaths', zeros((gender, time)))], 
-                    meta=[('title', 'Demographic Model of Belgium'),('description', 'Modelize the demography of Belgium')])
+    demography_session = Session([('gender', gender), ('time', time), ('population', zeros((gender, time))), 
+                        ('births', zeros((gender, time))), ('deaths', zeros((gender, time)))], 
+                         meta=[('title', 'Demographic Model of Belgium'),('description', 'Modelize the demography of Belgium')])
     # Python 3.6+
-    s_pop = Session(gender=gender, time=time, pop=zeros((gender, time)), 
-                    births=zeros((gender, time)), deaths=zeros((gender, time)), 
-                    meta=Metadata(title='Demographic Model of Belgium', description='Modelize the demography of Belgium'))
+    demography_session = Session(gender=gender, time=time, population=zeros((gender, time)), 
+                         births=zeros((gender, time)), deaths=zeros((gender, time)), 
+                         meta=Metadata(title='Demographic Model of Belgium', description='Modelize the demography of Belgium'))
     
     # print content of the session
-    print(s_pop.summary())
+    print(demography_session.summary())
 
 
 - markdown: |
@@ -370,7 +384,7 @@ cells:
 - markdown: |
     ### More on Session objects
     
-    To know how to save and load sessions in CSV, Excel or HDF format, please refer to the [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) section of the tutorial.
+    To know how to save and load sessions in CSV, Excel or HDF format, please refer to the [Loading and Dumping Sessions](tutorial_sessions.ipynb#Loading-and-Dumping-Sessions) section of the tutorial.
     
     To see how to work with sessions, please read the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
     

@@ -13,26 +13,26 @@ cells:
 
 
 - markdown: |
-    To convert an Array object into a pandas DataFrame, the method [to_frame](../_generated/larray.Array.to_frame.rst#larray.Array.to_frame) can be used:
+    To convert an Array object into a pandas DataFrame, the method [to_frame()](../_generated/larray.Array.to_frame.rst#larray.Array.to_frame) can be used:
 
 
 - code: |
-    pop = load_example_data('demography_eurostat').pop
-    pop
+    population = load_example_data('demography_eurostat').population
+    population
 
 
 - code: |
-    df = pop.to_frame()
+    df = population.to_frame()
     df
 
 
 - markdown: |
-    Inversely, to convert a DataFrame into an Array object, use the function [asarray](../_generated/larray.asarray.rst#larray.asarray):
+    Inversely, to convert a DataFrame into an Array object, use the function [asarray()](../_generated/larray.asarray.rst#larray.asarray):
 
 
 - code: |
-    pop = asarray(df)
-    pop
+    population = asarray(df)
+    population
 
 
 # The lines below here may be deleted if you do not need them.

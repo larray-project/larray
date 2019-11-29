@@ -301,17 +301,17 @@ def test_excel_report_setting_template():
 def test_excel_report_sheets():
     report = ExcelReport()
     # test adding new sheets
-    sheet_pop = report.new_sheet('Pop')
+    sheet_population = report.new_sheet('Population')
     sheet_births = report.new_sheet('Births')
     sheet_deaths = report.new_sheet('Deaths')
     # test warning if sheet already exists
     with pytest.warns(UserWarning) as caught_warnings:
-        sheet_pop2 = report.new_sheet('Pop')
+        sheet_population2 = report.new_sheet('Population')
     assert len(caught_warnings) == 1
-    warn_msg = "Sheet 'Pop' already exists in the report and will be reset"
+    warn_msg = "Sheet 'Population' already exists in the report and will be reset"
     assert caught_warnings[0].message.args[0] == warn_msg
     # test sheet_names()
-    assert report.sheet_names() == ['Pop', 'Births', 'Deaths']
+    assert report.sheet_names() == ['Population', 'Births', 'Deaths']
 
 
 @needs_xlwings
@@ -339,29 +339,30 @@ def test_excel_report_titles():
 def test_excel_report_arrays():
     excel_report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
     demo = load_example_data('demography_eurostat')
-    pop = demo.pop
-    pop_be = pop['Belgium']
-    pop_be_nan = pop_be.astype(float)
-    pop_be_nan[2013] = nan
+    population = demo.population
+    population_be = population['Belgium']
+    population_be_nan = population_be.astype(float)
+    population_be_nan[2013] = nan
 
     # test dumping arrays
     sheet_graphs = excel_report.new_sheet('Graphs')
     # 1) default
     sheet_graphs.add_title('No template')
-    sheet_graphs.add_graph(pop_be['Female'], 'Pop Belgium Female')
-    sheet_graphs.add_graph(pop_be, 'Pop Belgium')
-    sheet_graphs.add_graph(pop_be_nan, 'Pop Belgium with nans')
+    sheet_graphs.add_graph(population_be['Female'], 'Pop Belgium Female')
+    sheet_graphs.add_graph(population_be, 'Pop Belgium')
+    sheet_graphs.add_graph(population_be_nan, 'Pop Belgium with nans')
     # 2) no title
     sheet_graphs.add_title('No title graph')
-    sheet_graphs.add_graph(pop_be)
+    sheet_graphs.add_graph(population_be)
     # 3) specify width and height
     sheet_graphs.add_title('Alternative Width and Height')
     width, height = 500, 300
-    sheet_graphs.add_graph(pop_be, 'width = {} and Height = {}'.format(width, height), width=width, height=height)
+    sheet_graphs.add_graph(population_be, 'width = {} and Height = {}'.format(width, height),
+                           width=width, height=height)
     # 4) specify template
     template_name = 'Line_Marker'
     sheet_graphs.add_title('Template = {}'.format(template_name))
-    sheet_graphs.add_graph(pop_be, 'Template = {}'.format(template_name), template_name)
+    sheet_graphs.add_graph(population_be, 'Template = {}'.format(template_name), template_name)
 
     # test setting default size
     # 1) pass a not registered kind of item
@@ -373,21 +374,21 @@ def test_excel_report_arrays():
     # 2) update default size for graphs
     sheet_graphs.set_item_default_size('graph', width, height)
     sheet_graphs.add_title('Using Defined Sizes For All Graphs')
-    sheet_graphs.add_graph(pop_be, 'Pop Belgium')
+    sheet_graphs.add_graph(population_be, 'Pop Belgium')
 
     # test setting default number of graphs per row
     sheet_graphs = excel_report.new_sheet('Graphs2')
     sheet_graphs.graphs_per_row = 2
     sheet_graphs.add_title('graphs_per_row = 2')
-    for combined_labels, subset in pop.items(('country', 'gender')):
+    for combined_labels, subset in population.items(('country', 'gender')):
         title = ' - '.join([str(label) for label in combined_labels])
         sheet_graphs.add_graph(subset, title)
 
     # testing add_graphs
     sheet_graphs = excel_report.new_sheet('Graphs3')
     sheet_graphs.add_title('add_graphs')
-    sheet_graphs.add_graphs({'Population for {country} - {gender}': pop},
-                            {'gender': pop.gender, 'country': pop.country},
+    sheet_graphs.add_graphs({'Population for {country} - {gender}': population},
+                            {'gender': population.gender, 'country': population.country},
                             template='line', width=350, height=250, graphs_per_row=3)
 
     # generate Excel file

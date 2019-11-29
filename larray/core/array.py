@@ -6629,6 +6629,16 @@ class Array(ABCArray):
          a0  -3  -2  -1
          a1   0   1   2
          a2   2   2   2
+
+        clipping using bounds which vary along an axis
+
+        >>> lower_bound = Array([-2, 0, 2], 'b=b0..b2')
+        >>> upper_bound = Array([0, 2, 4], 'b=b0..b2')
+        >>> arr.clip(lower_bound, upper_bound)
+        a\b  b0  b1  b2
+         a0  -2   0   2
+         a1   0   1   2
+         a2   0   2   4
         """
         from larray.core.npufuncs import clip
         return clip(self, minval, maxval, out)
@@ -7019,7 +7029,7 @@ class Array(ABCArray):
         Examples
         --------
         >>> import matplotlib.pyplot as plt # doctest: +SKIP
-        >>> a = ndtest('sex=M,F;age=0..20')
+        >>> a = ndtest('gender=M,F;age=0..20')
 
         Simple line plot
 
@@ -7197,6 +7207,11 @@ class Array(ABCArray):
         -------
         Array
             Array with modified labels.
+
+        Warnings
+        --------
+        Not passing a mapping but the complete list of new labels as the 'labels' argument must be done with caution.
+        Make sure that the order of new labels corresponds to the exact same order of previous labels.
 
         See Also
         --------

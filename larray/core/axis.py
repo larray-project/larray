@@ -2385,6 +2385,11 @@ class AxisCollection(object):
         AxisCollection
             AxisCollection with modified labels.
 
+        Warnings
+        --------
+        Not passing a mapping but the complete list of new labels as the 'labels' argument must be done with caution.
+        Make sure that the order of new labels corresponds to the exact same order of previous labels.
+
         Examples
         --------
         >>> from larray import ndtest

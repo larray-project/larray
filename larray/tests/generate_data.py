@@ -94,13 +94,17 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
     benelux = {'BE': 'Belgium', 'LU': 'Luxembourg', 'NL': 'Netherlands'}
 
     # Arrays
-    pop = prepare_eurostat_data('demo_pjan', countries)
-    pop.meta.title = 'Population on 1 January by age and sex'
-    pop.meta.source = 'table demo_pjan from Eurostat'
+    population = prepare_eurostat_data('demo_pjan', countries)
+    population.meta.title = 'Population on 1 January by age and sex'
+    population.meta.source = 'table demo_pjan from Eurostat'
     # ----
-    pop_benelux = prepare_eurostat_data('demo_pjan', benelux)
-    pop_benelux.meta.title = 'Population on 1 January by age and sex (Benelux)'
-    pop_benelux.meta.source = 'table demo_pjan from Eurostat'
+    population_benelux = prepare_eurostat_data('demo_pjan', benelux)
+    population_benelux.meta.title = 'Population on 1 January by age and sex (Benelux)'
+    population_benelux.meta.source = 'table demo_pjan from Eurostat'
+    # ----
+    population_5_countries = population.extend('country', population_benelux[['Luxembourg', 'Netherlands']])
+    population_5_countries.meta.title = 'Population on 1 January by age and sex (Benelux + France + Germany)'
+    population_5_countries.meta.source = 'table demo_pjan from Eurostat'
     # ----
     births = prepare_eurostat_data('demo_fasec', countries)
     births.meta.title = "Live births by mother's age and newborn's sex"
@@ -115,16 +119,17 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
     immigration.meta.source = 'table migr_imm1ctz from Eurostat'
 
     # Groups
-    even_years = pop.time[2014::2] >> 'even_years'
-    odd_years = pop.time[2013::2] >> 'odd_years'
+    even_years = population.time[2014::2] >> 'even_years'
+    odd_years = population.time[2013::2] >> 'odd_years'
 
     # Session
-    ses = Session({'country': pop.country, 'country_benelux': immigration.country,
+    ses = Session({'country': population.country, 'country_benelux': immigration.country,
                    'citizenship': immigration.citizenship,
-                   'gender': pop.gender, 'time': pop.time,
+                   'gender': population.gender, 'time': population.time,
                    'even_years': even_years, 'odd_years': odd_years,
-                   'pop': pop, 'pop_benelux': pop_benelux, 'births': births, 'deaths': deaths,
-                   'immigration': immigration})
+                   'population': population, 'population_benelux': population_benelux,
+                   'population_5_countries': population_5_countries,
+                   'births': births, 'deaths': deaths, 'immigration': immigration})
     ses.meta.title = 'Demographic datasets for a small selection of countries in Europe'
     ses.meta.source = 'demo_jpan, demo_fasec, demo_magec and migr_imm1ctz tables from Eurostat'
 
@@ -139,51 +144,51 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
 
     # EXAMPLE FILES
 
-    years = pop.time[2013:2015]
-    pop = pop[years]
-    pop_narrow = pop['Belgium,France'].sum('gender')
+    years = population.time[2013:2015]
+    population = population[years]
+    population_narrow = population['Belgium,France'].sum('gender')
     births = births[years]
     deaths = deaths[years]
     immigration = immigration[years]
 
     # Dataframes (for testing missing axis/values)
-    df_missing_axis_name = pop.to_frame(fold_last_axis_name=False)
-    df_missing_values = pop.to_frame(fold_last_axis_name=True)
+    df_missing_axis_name = population.to_frame(fold_last_axis_name=False)
+    df_missing_values = population.to_frame(fold_last_axis_name=True)
     df_missing_values.drop([('France', 'Male'), ('Germany', 'Female')], inplace=True)
 
     if csv:
         examples_dir = os.path.join(DATA_DIR, 'examples')
-        pop.to_csv(os.path.join(examples_dir, 'pop.csv'))
+        population.to_csv(os.path.join(examples_dir, 'population.csv'))
         births.to_csv(os.path.join(examples_dir, 'births.csv'))
         deaths.to_csv(os.path.join(examples_dir, 'deaths.csv'))
         immigration.to_csv(os.path.join(examples_dir, 'immigration.csv'))
-        df_missing_axis_name.to_csv(os.path.join(examples_dir, 'pop_missing_axis_name.csv'), sep=',', na_rep='')
-        df_missing_values.to_csv(os.path.join(examples_dir, 'pop_missing_values.csv'), sep=',', na_rep='')
-        pop_narrow.to_csv(os.path.join(examples_dir, 'pop_narrow_format.csv'), wide=False)
+        df_missing_axis_name.to_csv(os.path.join(examples_dir, 'population_missing_axis_name.csv'), sep=',', na_rep='')
+        df_missing_values.to_csv(os.path.join(examples_dir, 'population_missing_values.csv'), sep=',', na_rep='')
+        population_narrow.to_csv(os.path.join(examples_dir, 'population_narrow_format.csv'), wide=False)
 
     if excel:
         with open_excel(os.path.join(DATA_DIR, 'examples.xlsx'), overwrite_file=True) as wb:
-            wb['pop'] = pop.dump()
+            wb['population'] = population.dump()
             wb['births'] = births.dump()
             wb['deaths'] = deaths.dump()
             wb['immigration'] = immigration.dump()
-            wb['pop_births_deaths'] = pop.dump()
-            wb['pop_births_deaths']['A9'] = births.dump()
-            wb['pop_births_deaths']['A17'] = deaths.dump()
-            wb['pop_missing_axis_name'] = ''
-            wb['pop_missing_axis_name']['A1'].options().value = df_missing_axis_name
-            wb['pop_missing_values'] = ''
-            wb['pop_missing_values']['A1'].options().value = df_missing_values
-            # wb['pop_narrow_format'] = pop_narrow.dump(wide=False)
+            wb['population_births_deaths'] = population.dump()
+            wb['population_births_deaths']['A9'] = births.dump()
+            wb['population_births_deaths']['A17'] = deaths.dump()
+            wb['population_missing_axis_name'] = ''
+            wb['population_missing_axis_name']['A1'].options().value = df_missing_axis_name
+            wb['population_missing_values'] = ''
+            wb['population_missing_values']['A1'].options().value = df_missing_values
+            # wb['population_narrow_format'] = population_narrow.dump(wide=False)
             wb.save()
-        pop_narrow.to_excel(os.path.join(DATA_DIR, 'examples.xlsx'), 'pop_narrow_format', wide=False)
-        Session({'country': pop.country, 'gender': pop.gender, 'time': pop.time,
-                 'pop': pop}).save(os.path.join(DATA_DIR, 'pop_only.xlsx'))
+        population_narrow.to_excel(os.path.join(DATA_DIR, 'examples.xlsx'), 'population_narrow_format', wide=False)
+        Session({'country': population.country, 'gender': population.gender, 'time': population.time,
+                 'population': population}).save(os.path.join(DATA_DIR, 'population_only.xlsx'))
         Session({'births': births, 'deaths': deaths}).save(os.path.join(DATA_DIR, 'births_and_deaths.xlsx'))
 
     if hdf5:
         examples_h5_file = os.path.join(DATA_DIR, 'examples.h5')
-        pop.to_hdf(examples_h5_file, 'pop')
+        population.to_hdf(examples_h5_file, 'population')
         births.to_hdf(examples_h5_file, 'births')
         deaths.to_hdf(examples_h5_file, 'deaths')
         immigration.to_hdf(examples_h5_file, 'immigration')

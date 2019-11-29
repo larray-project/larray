@@ -14,11 +14,11 @@ cells:
 
 - code: |
     # load 'demography_eurostat' dataset
-    demo_eurostat = load_example_data('demography_eurostat')
+    demography_eurostat = load_example_data('demography_eurostat')
     
-    # extract the 'pop' array from the dataset 
-    pop = demo_eurostat.pop
-    pop
+    # extract the 'population' array from the dataset 
+    population = demography_eurostat.population
+    population
 
 
 - markdown: |
@@ -28,7 +28,7 @@ cells:
 
 
 - code: |
-    pop.with_total('gender', label='Total')
+    population.with_total('gender', label='Total')
 
 
 - markdown: |
@@ -43,7 +43,7 @@ cells:
 
 - code: |
     # where(condition, value if true, value if false)
-    where(pop < pop.mean('time'), -pop, pop)
+    where(population < population.mean('time'), -population, population)
 
 
 - markdown: |
@@ -58,18 +58,29 @@ cells:
 
 - code: |
     # values below 10 millions are set to 10 millions
-    pop.clip(minval=10**7)
+    population.clip(minval=10**7)
 
 
 - code: |
     # values above 40 millions are set to 40 millions
-    pop.clip(maxval=4*10**7)
+    population.clip(maxval=4*10**7)
 
 
 - code: |
     # values below 10 millions are set to 10 millions and 
     # values above 40 millions are set to 40 millions
-    pop.clip(10**7, 4*10**7)
+    population.clip(10**7, 4*10**7)
+
+
+- code: |
+    # Using vectors to define the lower and upper bounds
+    lower_bound = sequence(population.time, initial=5_500_000, inc=50_000)
+    upper_bound = sequence(population.time, 41_000_000, inc=100_000)
+    
+    print(lower_bound, '\n')
+    print(upper_bound, '\n')
+    
+    population.clip(lower_bound, upper_bound)
 
 
 - markdown: |
@@ -83,20 +94,20 @@ cells:
 
 
 - code: |
-    divisor = ones(pop.axes, dtype=int)
+    divisor = ones(population.axes, dtype=int)
     divisor['Male'] = 0
     divisor
 
 
 - code: |
-    pop / divisor
+    population / divisor
 
 
 - code: |
     # we use astype(int) since the divnot0 method 
     # returns a float array in this case while 
     # we want an integer array
-    pop.divnot0(divisor).astype(int)
+    population.divnot0(divisor).astype(int)
 
 
 - markdown: |
@@ -110,10 +121,10 @@ cells:
 
 
 - code: |
-    pop.ratio('gender')
+    population.ratio('gender')
     
     # which is equivalent to
-    pop / pop.sum('gender')
+    population / population.sum('gender')
 
 
 - markdown: |
@@ -126,7 +137,7 @@ cells:
 
 - code: |
     # or, if you want the previous ratios in percents
-    pop.percent('gender')
+    population.percent('gender')
 
 
 - markdown: |
@@ -142,18 +153,18 @@ cells:
 
 
 - code: |
-    # calculates 'diff[year+1] = pop[year+1] - pop[year]'
-    pop.diff('time')
+    # calculates 'diff[year+1] = population[year+1] - population[year]'
+    population.diff('time')
 
 
 - code: |
-    # calculates 'diff[year+2] = pop[year+2] - pop[year]'
-    pop.diff('time', d=2)
+    # calculates 'diff[year+2] = population[year+2] - population[year]'
+    population.diff('time', d=2)
 
 
 - code: |
-    # calculates 'diff[year] = pop[year+1] - pop[year]'
-    pop.diff('time', label='lower')
+    # calculates 'diff[year] = population[year+1] - population[year]'
+    population.diff('time', label='lower')
 
 
 - markdown: |
@@ -169,7 +180,7 @@ cells:
 
 
 - code: |
-    pop.growth_rate('time')
+    population.growth_rate('time')
 
 
 - markdown: |
@@ -183,14 +194,14 @@ cells:
 
 
 - code: |
-    pop.shift('time')
+    population.shift('time')
 
 
 - code: |
     # when shift is applied on an (increasing) time axis,
     # it effectively brings "past" data into the future
-    pop_shifted = pop.shift('time')
-    stack({'pop_shifted_2014': pop_shifted[2014], 'pop_2013': pop[2013]}, 'array')
+    population_shifted = population.shift('time')
+    stack({'population_shifted_2014': population_shifted[2014], 'population_2013': population[2013]}, 'array')
 
 
 - markdown: |

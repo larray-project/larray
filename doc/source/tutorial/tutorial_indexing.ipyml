@@ -13,13 +13,13 @@ cells:
 
 
 - markdown: |
-    Import the test array ``pop``:
+    Import the test array ``population``:
 
 
 - code: |
     # let's start with
-    pop = load_example_data('demography_eurostat').pop
-    pop
+    population = load_example_data('demography_eurostat').population
+    population
 
 
 - markdown: |
@@ -37,7 +37,7 @@ cells:
 
 
 - code: |
-    pop['Belgium', 'Female', 2017]
+    population['Belgium', 'Female', 2017]
 
 
 - markdown: |
@@ -47,7 +47,7 @@ cells:
 
 - code: |
     # order of index doesn't matter
-    pop['Female', 2017, 'Belgium']
+    population['Female', 2017, 'Belgium']
 
 
 - markdown: |
@@ -55,7 +55,7 @@ cells:
 
 
 - code: |
-    pop[['Belgium', 'Germany'], 2014:2016]
+    population[['Belgium', 'Germany'], 2014:2016]
 
 
 - markdown: |
@@ -65,12 +65,12 @@ cells:
 
 - code: |
     # select all years starting from 2015
-    pop[2015:]
+    population[2015:]
 
 
 - code: |
     # select all first years until 2015
-    pop[:2015]
+    population[:2015]
 
 
 - markdown: |
@@ -79,7 +79,7 @@ cells:
 
 - code: |
     # select all even years starting from 2014
-    pop[2014::2]
+    population[2014::2]
 
 
 - markdown: |
@@ -120,8 +120,8 @@ cells:
     When selecting, assigning or using aggregate functions, an axis can be
     referred via the special variable ``X``:
     
-    -  pop[X.time[2015:]]
-    -  pop.sum(X.time)
+    -  population[X.time[2015:]]
+    -  population.sum(X.time)
     
     This gives you access to axes of the array you are manipulating. The main
     drawback of using ``X`` is that you lose the autocompletion available from
@@ -151,17 +151,17 @@ cells:
 
 - code: |
     # select the last year
-    pop[X.time.i[-1]]
+    population[X.time.i[-1]]
 
 
 - code: |
     # same but for the last 3 years
-    pop[X.time.i[-3:]]
+    population[X.time.i[-3:]]
 
 
 - code: |
     # using a list of indices
-    pop[X.time.i[0, 2, 4]]
+    population[X.time.i[0, 2, 4]]
 
 
 - markdown: |
@@ -174,13 +174,13 @@ cells:
     year = 2015
     
     # with labels
-    pop[X.time[:year]]
+    population[X.time[:year]]
 
 
 - code: |
     # with indices (i.e. using the .i[indices] syntax)
-    index_year = pop.time.index(year)
-    pop[X.time.i[:index_year]]
+    index_year = population.time.index(year)
+    population[X.time.i[:index_year]]
 
 
 - markdown: |
@@ -190,7 +190,7 @@ cells:
 
 - code: |
     # select first country and last three years
-    pop.i[0, :, -3:]
+    population.i[0, :, -3:]
 
 
 - markdown: |
@@ -198,9 +198,9 @@ cells:
 
 
 - code: |
-    even_years = pop.time[2014::2]
+    even_years = population.time[2014::2]
     
-    pop[even_years]
+    population[even_years]
 
 
 - markdown: |
@@ -211,7 +211,7 @@ cells:
 
 - code: |
     # select even years
-    pop[X.time % 2 == 0]
+    population[X.time % 2 == 0]
 
 
 - markdown: |
@@ -220,10 +220,10 @@ cells:
 
 - code: |
     # select population for the year 2017
-    pop_2017 = pop[2017]
+    population_2017 = population[2017]
     
     # select all data with a value greater than 30 million
-    pop_2017[pop_2017 > 30e6]
+    population_2017[population_2017 > 30e6]
 
 
 - markdown: |
@@ -237,12 +237,23 @@ cells:
 
 
 - code: |
-    start_year = Array([2015, 2016, 2017], axes=pop.country)
+    start_year = Array([2015, 2016, 2017], axes=population.country)
     start_year
 
 
 - code: |
-    pop[X.time >= start_year]
+    population[X.time >= start_year]
+
+
+- markdown: |
+    ## Iterating over an axis
+    
+    Iterating over an axis is straightforward:
+
+
+- code: |
+    for year in population.time:
+        print(year)
 
 
 - markdown: |
@@ -254,8 +265,8 @@ cells:
 
 
 - code: |
-    pop[2017] = 0
-    pop
+    population[2017] = 0
+    population
 
 
 - markdown: |
@@ -264,16 +275,16 @@ cells:
 
 - code: |
     # store the data associated with the year 2016 in a new variable
-    pop_2016 = pop[2016]
-    pop_2016
+    population_2016 = population[2016]
+    population_2016
 
 
 - code: |
     # now, we modify the new variable
-    pop_2016['Belgium'] = 0
+    population_2016['Belgium'] = 0
     
     # and we can see that the original array has been also modified
-    pop
+    population
 
 
 - markdown: |
@@ -297,24 +308,24 @@ cells:
 
 
 - code: |
-    # reload the 'pop' array
-    pop = load_example_data('demography_eurostat').pop
+    # reload the 'population' array
+    population = load_example_data('demography_eurostat').population
     
-    # create a second 'pop2' variable
-    pop2 = pop
-    pop2
+    # create a second 'population2' variable
+    population2 = population
+    population2
 
 
 - code: |
     # set all data corresponding to the year 2017 to 0
-    pop2[2017] = 0
-    pop2
+    population2[2017] = 0
+    population2
 
 
 - code: |
-    # and now take a look of what happened to the original array 'pop'
-    # after modifying the 'pop2' array
-    pop
+    # and now take a look of what happened to the original array 'population'
+    # after modifying the 'population2' array
+    population
 
 
 - markdown: |
@@ -324,20 +335,20 @@ cells:
 
 
 - code: |
-    # reload the 'pop' array
-    pop = load_example_data('demography_eurostat').pop
+    # reload the 'population' array
+    population = load_example_data('demography_eurostat').population
     
-    # copy the 'pop' array and store the copy in a new variable
-    pop2 = pop.copy()
+    # copy the 'population' array and store the copy in a new variable
+    population2 = population.copy()
     
     # modify the copy
-    pop2[2017] = 0
-    pop2
+    population2[2017] = 0
+    population2
 
 
 - code: |
     # the data from the original array have not been modified
-    pop
+    population
 
 
 - markdown: |
@@ -350,12 +361,12 @@ cells:
 
 - code: |
     # select population for the year 2015
-    pop_2015 = pop[2015]
+    population_2015 = population[2015]
     
     # propagate population for the year 2015 to all next years
-    pop[2016:] = pop_2015
+    population[2016:] = population_2015
     
-    pop
+    population
 
 
 - markdown: |
@@ -366,15 +377,15 @@ cells:
 
 - code: |
     # replace 'Male' and 'Female' labels by 'M' and 'F'
-    pop_2015 = pop_2015.set_labels('gender', 'M,F')
-    pop_2015
+    population_2015 = population_2015.set_labels('gender', 'M,F')
+    population_2015
 
 
 - code: |
     # now let's try to repeat the assignement operation above with the new labels.
     # An error is raised because of incompatible axes
     try:
-        pop[2016:] = pop_2015
+        population[2016:] = population_2015
     except Exception as e:
         print(type(e).__name__, ':', e)
 

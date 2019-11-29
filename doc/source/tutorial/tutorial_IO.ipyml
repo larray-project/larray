@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Load And Dump Arrays, Sessions, Axes And Groups
+    # Load And Dump Arrays
 
 
 - markdown: |
@@ -14,11 +14,7 @@ cells:
 
 
 - markdown: |
-    ## Loading and Dumping Arrays
-
-
-- markdown: |
-    ### Loading Arrays - Basic Usage (CSV, Excel, HDF5)
+    ## Loading Arrays - Basic Usage (CSV, Excel, HDF5)
     
     To read an array from a CSV file, you must use the ``read_csv`` function:
 
@@ -26,10 +22,10 @@ cells:
 - code: |
     csv_dir = get_example_filepath('examples')
     
-    # read the array pop from the file 'pop.csv'.
+    # read the array population from the file 'population.csv'.
     # The data of the array below is derived from a subset of the demo_pjan table from Eurostat
-    pop = read_csv(csv_dir + '/pop.csv')
-    pop
+    population = read_csv(csv_dir + '/population.csv')
+    population
 
 
 - markdown: |
@@ -54,8 +50,8 @@ cells:
     # open the Excel file 'population.xlsx' and let it opened as long as you keep the indent.
     # The Python keyword ``with`` ensures that the Excel file is properly closed even if an error occurs
     with open_excel(filepath_excel) as wb:
-        # load the array 'pop' from the sheet 'pop' 
-        pop = wb['pop'].load()
+        # load the array 'population' from the sheet 'population' 
+        population = wb['population'].load()
         # load the array 'births' from the sheet 'births'
         births = wb['births'].load()
         # load the array 'deaths' from the sheet 'deaths'
@@ -88,14 +84,14 @@ cells:
 
 
 - markdown: |
-    ### Dumping Arrays - Basic Usage (CSV, Excel, HDF5)
+    ## Dumping Arrays - Basic Usage (CSV, Excel, HDF5)
     
     To write an array in a CSV file, you must use the ``to_csv`` method:
 
 
 - code: |
-    # save the array pop in the file 'pop.csv'
-    pop.to_csv('pop.csv')
+    # save the array population in the file 'population.csv'
+    population.to_csv('population.csv')
 
 
 - markdown: |
@@ -103,8 +99,8 @@ cells:
 
 
 - code: |
-    # save the array pop in the sheet 'pop' of the Excel file 'population.xlsx' 
-    pop.to_excel('population.xlsx', 'pop')
+    # save the array population in the sheet 'population' of the Excel file 'population.xlsx' 
+    population.to_excel('population.xlsx', 'population')
 
 
 - markdown: |
@@ -123,8 +119,8 @@ cells:
 
 - code: |
     # 1. reset the file 'population.xlsx' (all sheets are removed)
-    # 2. create a sheet 'pop' and save the array pop in it
-    pop.to_excel('population.xlsx', 'pop', overwrite_file=True)
+    # 2. create a sheet 'population' and save the array population in it
+    population.to_excel('population.xlsx', 'population', overwrite_file=True)
 
 
 - markdown: |
@@ -139,8 +135,8 @@ cells:
     ```python
     # to create a new Excel file, argument overwrite_file must be set to True
     with open_excel('population.xlsx', overwrite_file=True) as wb:
-        # add a new sheet 'pop' and dump the array pop in it 
-        wb['pop'] = pop.dump()
+        # add a new sheet 'population' and dump the array population in it 
+        wb['population'] = population.dump()
         # add a new sheet 'births' and dump the array births in it 
         wb['births'] = births.dump()
         # add a new sheet 'deaths' and dump the array deaths in it 
@@ -157,12 +153,12 @@ cells:
 
 
 - code: |
-    # save the array pop in the file 'population.h5' and associate it with the key 'pop'
-    pop.to_hdf('population.h5', 'pop')
+    # save the array population in the file 'population.h5' and associate it with the key 'population'
+    population.to_hdf('population.h5', 'population')
 
 
 - markdown: |
-    ### Specifying Wide VS Narrow format (CSV, Excel)
+    ## Specifying Wide VS Narrow format (CSV, Excel)
     
     By default, all reading functions assume that arrays are stored in the ``wide`` format, meaning that their last axis is represented horizontally:
     
@@ -185,14 +181,14 @@ cells:
 
 - code: |
     # set 'wide' argument to False to indicate that the array is stored in the 'narrow' format
-    pop_BE_FR = read_csv(csv_dir + '/pop_narrow_format.csv', wide=False)
-    pop_BE_FR
+    population_BE_FR = read_csv(csv_dir + '/population_narrow_format.csv', wide=False)
+    population_BE_FR
 
 
 - code: |
     # same for the read_excel function
-    pop_BE_FR = read_excel(filepath_excel, sheet='pop_narrow_format', wide=False)
-    pop_BE_FR
+    population_BE_FR = read_excel(filepath_excel, sheet='population_narrow_format', wide=False)
+    population_BE_FR
 
 
 - markdown: |
@@ -209,17 +205,17 @@ cells:
 
 
 - code: |
-    # dump the array pop_BE_FR in a narrow format (one column per axis plus one value column).
+    # dump the array population_BE_FR in a narrow format (one column per axis plus one value column).
     # By default, the name of the column containing data is set to 'value'
-    pop_BE_FR.to_csv('pop_narrow_format.csv', wide=False)
+    population_BE_FR.to_csv('population_narrow_format.csv', wide=False)
     
     # same but replace 'value' by 'population'
-    pop_BE_FR.to_csv('pop_narrow_format.csv', wide=False, value_name='population')
+    population_BE_FR.to_csv('population_narrow_format.csv', wide=False, value_name='population')
 
 
 - code: |
     # same for the to_excel method
-    pop_BE_FR.to_excel('population.xlsx', 'pop_narrow_format', wide=False, value_name='population')
+    population_BE_FR.to_excel('population.xlsx', 'population_narrow_format', wide=False, value_name='population')
 
 
 - markdown: |
@@ -230,15 +226,15 @@ cells:
 - markdown: |
     ```python
     with open_excel('population.xlsx') as wb:
-        # dump the array pop_BE_FR in a narrow format: 
+        # dump the array population_BE_FR in a narrow format: 
         # one column per axis plus one value column.
         # Argument value_name can be used to change the name of the 
         # column containing the data (default name is 'value')
-        wb['pop_narrow_format'] = pop_BE_FR.dump(wide=False, value_name='population')
+        wb['population_narrow_format'] = population_BE_FR.dump(wide=False, value_name='population')
         # don't forget to call save()
         wb.save()
     
-    # in the sheet 'pop_narrow_format', data is written as:
+    # in the sheet 'population_narrow_format', data is written as:
     # | country | time | value    |
     # | ------- | ---- | -------- |
     # | Belgium | 2013 | 11137974 |
@@ -251,7 +247,7 @@ cells:
 
 
 - markdown: |
-    ### Specifying Position in Sheet (Excel)
+    ## Specifying Position in Sheet (Excel)
     
     If you want to read an array from an Excel sheet which does not start at cell `A1` (when there is more than one array stored in the same sheet for example), you will need to use the ``range`` argument. 
     
@@ -264,7 +260,7 @@ cells:
     ```python
     # the 'range' argument must be used to load data not starting at cell A1.
     # This is useful when there is several arrays stored in the same sheet
-    births = read_excel(filepath_excel, sheet='pop_births_deaths', range='A9:E15')
+    births = read_excel(filepath_excel, sheet='population_births_deaths', range='A9:E15')
     ```
 
 
@@ -275,10 +271,10 @@ cells:
 - markdown: |
     ```python
     with open_excel(filepath_excel) as wb:
-        # store sheet 'pop_births_deaths' in a temporary variable sh
-        sh = wb['pop_births_deaths']
-        # load the array pop from range A1:E7
-        pop = sh['A1:E7'].load()
+        # store sheet 'population_births_deaths' in a temporary variable sh
+        sh = wb['population_births_deaths']
+        # load the array population from range A1:E7
+        population = sh['A1:E7'].load()
         # load the array births from range A9:E15
         births = sh['A9:E15'].load()
         # load the array deaths from range A17:E23
@@ -299,11 +295,11 @@ cells:
 - markdown: |
     ```python
     filename = 'population.xlsx'
-    sheetname = 'pop_births_deaths'
+    sheetname = 'population_births_deaths'
     
-    # save the arrays pop, births and deaths in the same sheet 'pop_births_and_deaths'.
+    # save the arrays population, births and deaths in the same sheet 'population_births_and_deaths'.
     # The 'position' argument is used to shift the location of the second and third arrays to be dumped
-    pop.to_excel(filename, sheetname)
+    population.to_excel(filename, sheetname)
     births.to_excel(filename, sheetname, position='A9')
     deaths.to_excel(filename, sheetname, position='A17')
     ```
@@ -316,20 +312,20 @@ cells:
 - markdown: |
     ```python
     with open_excel('population.xlsx') as wb:
-        # add a new sheet 'pop_births_deaths' and write 'population' in the first cell
+        # add a new sheet 'population_births_deaths' and write 'population' in the first cell
         # note: you can use wb['new_sheet_name'] = '' to create an empty sheet
-        wb['pop_births_deaths'] = 'population'
-        # store sheet 'pop_births_deaths' in a temporary variable sh
-        sh = wb['pop_births_deaths']
-        # dump the array pop in sheet 'pop_births_deaths' starting at cell A2
-        sh['A2'] = pop.dump()
+        wb['population_births_deaths'] = 'population'
+        # store sheet 'population_births_deaths' in a temporary variable sh
+        sh = wb['population_births_deaths']
+        # dump the array population in sheet 'population_births_deaths' starting at cell A2
+        sh['A2'] = population.dump()
         # add 'births' in cell A10
         sh['A10'] = 'births'
-        # dump the array births in sheet 'pop_births_deaths' starting at cell A11 
+        # dump the array births in sheet 'population_births_deaths' starting at cell A11 
         sh['A11'] = births.dump()
         # add 'deaths' in cell A19
         sh['A19'] = 'deaths'
-        # dump the array deaths in sheet 'pop_births_deaths' starting at cell A20
+        # dump the array deaths in sheet 'population_births_deaths' starting at cell A20
         sh['A20'] = deaths.dump()
         # don't forget to call save()
         wb.save()
@@ -339,7 +335,7 @@ cells:
 
 
 - markdown: |
-    ### Exporting data without headers (Excel)
+    ## Exporting data without headers (Excel)
     
     For some reasons, you may want to export only the data of an array without axes. For example, you may want to insert a new column containing extra information. As an exercise, let us consider we want to add the capital city for each country present in the array containing the total population by country:
     
@@ -362,10 +358,10 @@ cells:
 
 - markdown: |
     ```python
-    pop_by_country = pop.sum('gender')
+    population_by_country = population.sum('gender')
     
-    # export only the data of the array pop_by_country starting at cell C2
-    pop_by_country.to_excel('population.xlsx', 'pop_by_country', header=False, position='C2')
+    # export only the data of the array population_by_country starting at cell C2
+    population_by_country.to_excel('population.xlsx', 'population_by_country', header=False, position='C2')
     ```
 
 
@@ -376,23 +372,23 @@ cells:
 - markdown: |
     ```python
     with open_excel('population.xlsx') as wb:
-        # create new empty sheet 'pop_by_country'
-        wb['pop_by_country'] = ''
-        # store sheet 'pop_by_country' in a temporary variable sh
-        sh = wb['pop_by_country']
+        # create new empty sheet 'population_by_country'
+        wb['population_by_country'] = ''
+        # store sheet 'population_by_country' in a temporary variable sh
+        sh = wb['population_by_country']
         # write extra information (description)
         sh['A1'] = 'Population at 1st January by country'
         # export column names
         sh['A2'] = ['country', 'capital city']
-        sh['C2'] = pop_by_country.time.labels
+        sh['C2'] = population_by_country.time.labels
         # export countries as first column
-        sh['A3'].options(transpose=True).value = pop_by_country.country.labels
+        sh['A3'].options(transpose=True).value = population_by_country.country.labels
         # export capital cities as second column
         sh['B3'].options(transpose=True).value = ['Brussels', 'Paris', 'Berlin']
-        # export only data of pop_by_country
-        sh['C3'] = pop_by_country.dump(header=False)
+        # export only data of population_by_country
+        sh['C3'] = population_by_country.dump(header=False)
         # or equivalently
-        sh['C3'] = pop_by_country
+        sh['C3'] = population_by_country
         # don't forget to call save()
         wb.save()
         
@@ -401,7 +397,7 @@ cells:
 
 
 - markdown: |
-    ### Specifying the Number of Axes at Reading (CSV, Excel)
+    ## Specifying the Number of Axes at Reading (CSV, Excel)
     
     By default, ``read_csv`` and ``read_excel`` will search the position of the first cell containing the special character ``\`` in the header line in order to determine the number of axes of the array to read. The special character ``\`` is used to separate the name of the two last axes. If there is no special character ``\``, ``read_csv`` and ``read_excel`` will consider that the array to read has only one dimension. For an array stored as:
     
@@ -431,32 +427,32 @@ cells:
 
 
 - code: |
-    # read the 3 x 2 x 3 array stored in the file 'pop_missing_axis_name.csv' wihout using 'nb_axes' argument.
-    pop = read_csv(csv_dir + '/pop_missing_axis_name.csv')
+    # read the 3 x 2 x 3 array stored in the file 'population_missing_axis_name.csv' wihout using 'nb_axes' argument.
+    population = read_csv(csv_dir + '/population_missing_axis_name.csv')
     # shape and data type of the output array are not what we expected
-    pop.info
+    population.info
 
 
 - code: |
     # by setting the 'nb_axes' argument, you can indicate to read_csv the number of axes of the output array
-    pop = read_csv(csv_dir + '/pop_missing_axis_name.csv', nb_axes=3)
+    population = read_csv(csv_dir + '/population_missing_axis_name.csv', nb_axes=3)
     
     # give a name to the last axis
-    pop = pop.rename(-1, 'time')
+    population = population.rename(-1, 'time')
     
     # shape and data type of the output array are what we expected
-    pop.info
+    population.info
 
 
 - code: |
     # same for the read_excel function
-    pop = read_excel(filepath_excel, sheet='pop_missing_axis_name', nb_axes=3)
-    pop = pop.rename(-1, 'time')
-    pop.info
+    population = read_excel(filepath_excel, sheet='population_missing_axis_name', nb_axes=3)
+    population = population.rename(-1, 'time')
+    population.info
 
 
 - markdown: |
-    ### NaNs and Missing Data Handling at Reading (CSV, Excel)
+    ## NaNs and Missing Data Handling at Reading (CSV, Excel)
     
     Sometimes, there is no data available for some label combinations. In the example below, the rows corresponding to `France - Male` and `Germany - Female` are missing:
     
@@ -474,7 +470,7 @@ cells:
 - code: |
     # by default, cells associated will missing label combinations are filled with nans.
     # In that case, the output array is converted to a float array
-    read_csv(csv_dir + '/pop_missing_values.csv')
+    read_csv(csv_dir + '/population_missing_values.csv')
 
 
 - markdown: |
@@ -482,23 +478,23 @@ cells:
 
 
 - code: |
-    read_csv(csv_dir + '/pop_missing_values.csv', fill_value=0)
+    read_csv(csv_dir + '/population_missing_values.csv', fill_value=0)
 
 
 - code: |
     # same for the read_excel function
-    read_excel(filepath_excel, sheet='pop_missing_values', fill_value=0)
+    read_excel(filepath_excel, sheet='population_missing_values', fill_value=0)
 
 
 - markdown: |
-    ### Sorting Axes at Reading (CSV, Excel, HDF5)
+    ## Sorting Axes at Reading (CSV, Excel, HDF5)
     
     The ``sort_rows`` and ``sort_columns`` arguments of the reading functions allows you to sort rows and columns alphabetically:
 
 
 - code: |
     # sort labels at reading --> Male and Female labels are inverted
-    read_csv(csv_dir + '/pop.csv', sort_rows=True)
+    read_csv(csv_dir + '/population.csv', sort_rows=True)
 
 
 - code: |
@@ -510,16 +506,16 @@ cells:
 
 
 - markdown: |
-    ### Metadata (HDF5)
+    ## Metadata (HDF5)
     
     Since the version 0.29 of LArray, it is possible to add metadata to arrays:
 
 
 - code: |
-    pop.meta.title = 'Population at 1st January'
-    pop.meta.origin = 'Table demo_jpan from Eurostat'
+    population.meta.title = 'Population at 1st January'
+    population.meta.origin = 'Table demo_jpan from Eurostat'
     
-    pop.info
+    population.info
 
 
 - markdown: |
@@ -527,10 +523,10 @@ cells:
 
 
 - code: |
-    pop.to_hdf('population.h5', 'pop')
+    population.to_hdf('population.h5', 'population')
     
-    new_pop = read_hdf('population.h5', 'pop')
-    new_pop.info
+    new_population = read_hdf('population.h5', 'population')
+    new_population.info
 
 
 - markdown: |
@@ -538,154 +534,6 @@ cells:
       **Warning:** Currently, metadata associated with arrays cannot be saved and loaded when working with CSV and Excel files.
       This restriction does not apply however to metadata associated with sessions.
     </div>
-
-
-- markdown: |
-    ## Loading and Dumping Sessions
-    
-    One of the main advantages of grouping arrays, axes and groups in session objects is that you can load and save all of them in one shot. Like arrays, it is possible to associate metadata to a session. These can be saved and loaded in all file formats. 
-
-
-- markdown: |
-    ### Loading Sessions (CSV, Excel, HDF5)
-    
-    To load the items of a session, you have two options:
-    
-    1) Instantiate a new session and pass the path to the Excel/HDF5 file or to the directory containing CSV files to the Session constructor:
-
-
-- code: |
-    # create a new Session object and load all arrays, axes, groups and metadata 
-    # from all CSV files located in the passed directory
-    csv_dir = get_example_filepath('demography_eurostat')
-    session = Session(csv_dir)
-    
-    # create a new Session object and load all arrays, axes, groups and metadata
-    # stored in the passed Excel file
-    filepath_excel = get_example_filepath('demography_eurostat.xlsx')
-    session = Session(filepath_excel)
-    
-    # create a new Session object and load all arrays, axes, groups and metadata
-    # stored in the passed HDF5 file
-    filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    session = Session(filepath_hdf)
-    
-    print(session.summary())
-
-
-- markdown: |
-    2) Call the ``load`` method on an existing session and pass the path to the Excel/HDF5 file or to the directory containing CSV files as first argument:
-
-
-- code: |
-    # create a session containing 3 axes, 2 groups and one array 'pop'
-    filepath = get_example_filepath('pop_only.xlsx')
-    session = Session(filepath)
-    
-    print(session.summary())
-
-
-- code: |
-    # call the load method on the previous session and add the 'births' and 'deaths' arrays to it
-    filepath = get_example_filepath('births_and_deaths.xlsx')
-    session.load(filepath)
-    
-    print(session.summary())
-
-
-- markdown: |
-    The ``load`` method offers some options:
-    
-    1) Using the ``names`` argument, you can specify which items to load:
-
-
-- code: |
-    session = Session()
-    
-    # use the names argument to only load births and deaths arrays
-    session.load(filepath_hdf, names=['births', 'deaths'])
-    
-    print(session.summary())
-
-
-- markdown: |
-    2) Setting the ``display`` argument to True, the ``load`` method will print a message each time a new item is loaded:  
-
-
-- code: |
-    session = Session()
-    
-    # with display=True, the load method will print a message
-    # each time a new item is loaded
-    session.load(filepath_hdf, display=True)
-
-
-- markdown: |
-    ### Dumping Sessions (CSV, Excel, HDF5)
-    
-    To save a session, you need to call the ``save`` method. The first argument is the path to a Excel/HDF5 file or to a directory if items are saved to CSV files:
-
-
-- code: |
-    # save items of a session in CSV files.
-    # Here, the save method will create a 'population' directory in which CSV files will be written 
-    session.save('population')
-    
-    # save session to an HDF5 file
-    session.save('population.h5')
-    
-    # save session to an Excel file
-    session.save('population.xlsx')
-    
-    # load session saved in 'population.h5' to see its content
-    Session('population.h5')
-
-
-- markdown: |
-    <div class="alert alert-info">
-      Note: Concerning the CSV and Excel formats, the metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`. This sheet (CSV file) name cannot be changed. 
-    </div>
-
-
-- markdown: |
-    The ``save`` method has several arguments:
-    
-    1) Using the ``names`` argument, you can specify which items to save:
-
-
-- code: |
-    # use the names argument to only save births and deaths arrays
-    session.save('population.h5', names=['births', 'deaths'])
-    
-    # load session saved in 'population.h5' to see its content
-    Session('population.h5')
-
-
-- markdown: |
-    2) By default, dumping a session to an Excel or HDF5 file will overwrite it. By setting the ``overwrite`` argument to False, you can choose to update the existing Excel or HDF5 file: 
-
-
-- code: |
-    pop = read_csv('./population/pop.csv')
-    ses_pop = Session([('pop', pop)])
-    
-    # by setting overwrite to False, the destination file is updated instead of overwritten.
-    # The items already stored in the file but not present in the session are left intact. 
-    # On the contrary, the items that exist in both the file and the session are completely overwritten.
-    ses_pop.save('population.h5', overwrite=False)
-    
-    # load session saved in 'population.h5' to see its content
-    Session('population.h5')
-
-
-- markdown: |
-    3) Setting the ``display`` argument to True, the ``save`` method will print a message each time an item is dumped:  
-
-
-- code: |
-    # with display=True, the save method will print a message
-    # each time an item is dumped
-    session.save('population.h5', display=True)
 
 
 # The lines below here may be deleted if you do not need them.
