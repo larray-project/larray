@@ -5982,7 +5982,7 @@ class Array(ABCArray):
         r"""Expands array to target_axes.
 
         Target axes will be added to array if not present.
-        In most cases this function is not needed because Array can do operations with arrays having different
+        In most cases this function is not needed because LArray can do operations with arrays having different
         (compatible) axes.
 
         Parameters
