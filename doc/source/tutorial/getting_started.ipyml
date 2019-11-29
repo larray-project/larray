@@ -64,8 +64,8 @@ cells:
              [756, 775, 793]]]
     
     # create an Array object
-    pop = Array(data, axes=[age, gender, time])
-    pop
+    population = Array(data, axes=[age, gender, time])
+    population
 
 
 - markdown: |
@@ -73,12 +73,12 @@ cells:
 
 
 - code: |
-    # attach some metadata to the pop array
-    pop.meta.title = 'population by age, sex and year'
-    pop.meta.source = 'Eurostat'
+    # attach some metadata to the population array
+    population.meta.title = 'population by age, gender and year'
+    population.meta.source = 'Eurostat'
     
     # display metadata
-    pop.meta
+    population.meta
 
 
 - markdown: |
@@ -87,7 +87,7 @@ cells:
 
 - code: |
     # Array summary: metadata + dimensions + description of axes
-    pop.info
+    population.info
 
 
 - markdown: |
@@ -134,8 +134,8 @@ cells:
 
 
 - code: |
-    # save our pop array to a CSV file
-    pop.to_csv('belgium_pop.csv')
+    # save our population array to a CSV file
+    population.to_csv('population_belgium.csv')
 
 
 - markdown: |
@@ -164,8 +164,8 @@ cells:
 
 
 - code: |
-    pop = read_csv('belgium_pop.csv')
-    pop
+    population = read_csv('population_belgium.csv')
+    population
 
 
 - markdown: |
@@ -184,7 +184,7 @@ cells:
 
 
 - code: |
-    pop['67+', 'female', 2017]
+    population['67+', 'female', 2017]
 
 
 - markdown: |
@@ -192,7 +192,7 @@ cells:
 
 
 - code: |
-    pop[2017, 'female', '67+']
+    population[2017, 'female', '67+']
 
 
 - markdown: |
@@ -200,7 +200,7 @@ cells:
 
 
 - code: |
-    pop['female']
+    population['female']
 
 
 - markdown: |
@@ -208,7 +208,7 @@ cells:
 
 
 - code: |
-    pop['female', ['0-9', '10-17']]
+    population['female', ['0-9', '10-17']]
 
 
 - markdown: |
@@ -219,13 +219,13 @@ cells:
 
 - code: |
     # in this case '10-17':'67+' is equivalent to ['10-17', '18-66', '67+']
-    pop['female', '10-17':'67+']
+    population['female', '10-17':'67+']
 
 
 - code: |
     # :'18-66' selects all labels between the first one and '18-66'
     # 2017: selects all labels between 2017 and the last one
-    pop[:'18-66', 2017:]
+    population[:'18-66', 2017:]
 
 
 - markdown: |
@@ -288,33 +288,44 @@ cells:
 
 
 - markdown: |
+    ## Iterating over an axis
+    
+    To iterate over an axis, use the following syntax:
+
+
+- code: |
+    for year in time:
+        print(year)
+
+
+- markdown: |
     ## Aggregation
 
 
 - markdown: |
     The LArray library includes many [aggregations methods](../api.rst#aggregation-functions): sum, mean, min, max, std, var, ...
     
-    For example, assuming we still have an array in the ``pop`` variable:
+    For example, assuming we still have an array in the ``population`` variable:
 
 
 - code: |
-    pop
+    population
 
 
 - markdown: |
-    We can sum along the 'sex' axis using:
+    We can sum along the 'gender' axis using:
 
 
 - code: |
-    pop.sum(gender)
+    population.sum(gender)
 
 
 - markdown: |
-    Or sum along both 'age' and 'sex':
+    Or sum along both 'age' and 'gender':
 
 
 - code: |
-    pop.sum(age, gender)
+    population.sum(age, gender)
 
 
 - markdown: |
@@ -323,7 +334,7 @@ cells:
 
 
 - code: |
-    pop.sum_by(time)
+    population.sum_by(time)
 
 
 - markdown: |
@@ -354,11 +365,11 @@ cells:
 
 
 - markdown: |
-    Still using the same ``pop`` array:
+    Still using the same ``population`` array:
 
 
 - code: |
-    pop
+    population
 
 
 - markdown: |
@@ -366,11 +377,11 @@ cells:
 
 
 - code: |
-    pop[working]
+    population[working]
 
 
 - code: |
-    pop[nonworking]
+    population[nonworking]
 
 
 - markdown: |
@@ -378,7 +389,7 @@ cells:
 
 
 - code: |
-    pop.sum(nonworking)
+    population.sum(nonworking)
 
 
 - markdown: |
@@ -387,7 +398,7 @@ cells:
 
 
 - code: |
-    pop.sum((children, working, nonworking))
+    population.sum((children, working, nonworking))
 
 
 - markdown: |
@@ -401,19 +412,21 @@ cells:
 
 
 - code: |
-    pop = zeros([age, gender, time])
+    population = zeros([age, gender, time])
     births = zeros([age, gender, time])
     deaths = zeros([age, gender, time])
     
-    # create a session containing the three arrays 'pop', 'births' and 'deaths'
-    demo = Session(pop=pop, births=births, deaths=deaths)
+    # create a session containing the three arrays 'population', 'births' and 'deaths'
+    demography_session = Session(population=population, births=births, deaths=deaths)
     
     # displays names of arrays contained in the session
-    demo.names
-    # get an array
-    demo['pop']
+    demography_session.names
+    # get an array (option 1)
+    demography_session['population']
+    # get an array (option 2)
+    demography_session.births
     # add/modify an array
-    demo['foreigners'] = zeros([age, gender, time])
+    demography_session['foreigners'] = zeros([age, gender, time])
 
 
 - markdown: |
@@ -422,7 +435,7 @@ cells:
         to the Session constructor otherwise the arrays will be stored in an arbitrary order in
         the new session. For example, the session above must be created using the syntax:
         
-        `demo=Session([('pop', pop), ('births', births), ('deaths', deaths)])`.
+        `demography_session=Session([('population', population), ('births', births), ('deaths', deaths)])`.
     </div>
 
 
@@ -431,10 +444,10 @@ cells:
 
 
 - code: |
-    # dump all arrays contained in the session 'demo' in one HDF5 file
-    demo.save('demo.h5')
-    # load all arrays saved in the HDF5 file 'demo.h5' and store them in the session 'demo'
-    demo = Session('demo.h5')
+    # dump all arrays contained in demography_session in one HDF5 file
+    demography_session.save('demography.h5')
+    # load all arrays saved in the HDF5 file 'demography.h5' and store them in the 'demography_session' variable
+    demography_session = Session('demography.h5')
 
 
 - markdown: |
@@ -452,10 +465,10 @@ cells:
 - markdown: |
     ```python
         # shows the arrays of a given session in a graphical user interface
-        view(demo)
+        view(demography_session)
     
         # the session may be directly loaded from a file
-        view('demo.h5')
+        view('demography.h5')
     
         # creates a session with all existing arrays from the current namespace
         # and shows its content

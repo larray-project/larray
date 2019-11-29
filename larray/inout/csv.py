@@ -86,7 +86,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     Examples
     --------
     >>> csv_dir = get_example_filepath('examples')
-    >>> fname = csv_dir + '/pop.csv'
+    >>> fname = csv_dir + '/population.csv'
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_csv(fname)
@@ -100,7 +100,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Missing label combinations
 
-    >>> fname = csv_dir + '/pop_missing_values.csv'
+    >>> fname = csv_dir + '/population_missing_values.csv'
     >>> # let's take a look inside the CSV file.
     >>> # they are missing label combinations: (Paris, male) and (New York, female)
     >>> with open(fname) as f:
@@ -132,7 +132,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
-    >>> fname = csv_dir + '/pop_missing_axis_name.csv'
+    >>> fname = csv_dir + '/population_missing_axis_name.csv'
     >>> # let's take a look inside the CSV file.
     >>> # The name of the last axis is missing.
     >>> with open(fname) as f:
@@ -167,7 +167,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Read array saved in "narrow" format (wide=False)
 
-    >>> fname = csv_dir + '/pop_narrow_format.csv'
+    >>> fname = csv_dir + '/population_narrow_format.csv'
     >>> # let's take a look inside the CSV file.
     >>> # Here, data are stored in a 'narrow' format.
     >>> with open(fname) as f:

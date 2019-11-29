@@ -1,0 +1,153 @@
+cells:
+
+- markdown: |
+    # Combining arrays
+
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+
+- code: |
+    # load the 'demography_eurostat' dataset
+    demography_eurostat = load_example_data('demography_eurostat')
+
+
+- code: |
+    # load the 'population' array from the 'demography_eurostat' dataset
+    population = demography_eurostat.population
+    population
+
+
+- markdown: |
+    The LArray library offers several methods and functions to combine arrays:
+    
+    - [insert](../_generated/larray.Array.insert.rst#larray.Array.insert): inserts an array in another array along an axis
+    - [append](../_generated/larray.Array.append.rst#larray.Array.append): adds an array at the end of an axis.
+    - [prepend](../_generated/larray.Array.prepend.rst#larray.Array.prepend): adds an array at the beginning of an axis.
+    - [extend](../_generated/larray.Array.extend.rst#larray.Array.extend): extends an array along an axis.
+    - [stack](../_generated/larray.stack.rst#larray.stack): combines several arrays along a new axis.
+
+
+- markdown: |
+    ## Insert
+
+
+- code: |
+    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), population.gender, population.time), dtype=int)
+    
+    # insert new countries before 'France'
+    population_new_countries = population.insert(other_countries, before='France')
+    population_new_countries
+
+
+- markdown: |
+    See [insert](../_generated/larray.Array.insert.rst#larray.Array.insert) for more details and examples.
+
+
+- markdown: |
+    ## Append
+    
+    Append one element to an axis of an array:
+
+
+- code: |
+    # append data for 'Luxembourg'
+    population_new = population.append('country', population_benelux['Luxembourg'], 'Luxembourg')
+    population_new
+
+
+- markdown: |
+    The value being appended can have missing (or even extra) axes as long as common axes are compatible:
+
+
+- code: |
+    population_lux = Array([-1, 1], population.gender)
+    population_lux
+
+
+- code: |
+    population_new = population.append('country', population_lux, 'Luxembourg')
+    population_new
+
+
+- markdown: |
+    See [append](../_generated/larray.Array.append.rst#larray.Array.append) for more details and examples.
+
+
+- markdown: |
+    ## Prepend
+    
+    Prepend one element to an axis of an array:
+
+
+- code: |
+    # append data for 'Luxembourg'
+    population_new = population.prepend('country', population_benelux['Luxembourg'], 'Luxembourg')
+    population_new
+
+
+- markdown: |
+    See [prepend](../_generated/larray.Array.prepend.rst#larray.Array.prepend) for more details and examples.
+
+
+- markdown: |
+    ## Extend
+    
+    Extend an array along an axis with another array *with* that axis (but other labels)
+
+
+- code: |
+    population_extended = population.extend('country', population_benelux[['Luxembourg', 'Netherlands']])
+    population_extended
+
+
+- markdown: |
+    See [extend](../_generated/larray.Array.extend.rst#larray.Array.extend) for more details and examples.
+
+
+- markdown: |
+    ## Stack
+    
+    Stack several arrays together to create an entirely new dimension
+
+
+- code: |
+    # imagine you have loaded data for each country in different arrays 
+    # (e.g. loaded from different Excel sheets)
+    population_be = population['Belgium']
+    population_fr = population['France']
+    population_de = population['Germany']
+    
+    population_stacked = stack({'Belgium': population_be, 'France': population_fr, 'Germany': population_de}, 'country')
+    population_stacked
+
+
+- markdown: |
+    See [stack](../_generated/larray.stack.rst#larray.stack) for more details and examples.
+
+
+# The lines below here may be deleted if you do not need them.
+# ---------------------------------------------------------------------------
+metadata:
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+  language_info:
+    codemirror_mode:
+      name: ipython
+      version: 3
+    file_extension: .py
+    mimetype: text/x-python
+    name: python
+    nbconvert_exporter: python
+    pygments_lexer: ipython3
+    version: 3.7.3
+nbformat: 4
+nbformat_minor: 2
+
