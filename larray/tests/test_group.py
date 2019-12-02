@@ -5,7 +5,7 @@ import pytest
 import os.path
 import numpy as np
 
-from larray.tests.common import assert_array_equal
+from larray.tests.common import assert_array_equal, needs_pytables
 from larray import Axis, IGroup, LGroup, LSet, ndtest, read_hdf
 from larray.util.oset import OrderedSet
 
@@ -186,6 +186,7 @@ def test_to_lset_lgroup():
     assert res.key == OrderedSet(['c'])
 
 
+@needs_pytables
 def test_h5_io_lgroup(tmpdir):
     fpath = os.path.join(str(tmpdir), 'lgroups.h5')
     age.to_hdf(fpath)
@@ -426,6 +427,7 @@ def test_to_lset_igroup():
     assert res.key == OrderedSet(['c'])
 
 
+@needs_pytables
 def test_h5_io_igroup(tmpdir):
     fpath = os.path.join(str(tmpdir), 'igroups.h5')
     age.to_hdf(fpath)

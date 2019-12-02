@@ -10,14 +10,10 @@ import numpy as np
 import pandas as pd
 from collections import OrderedDict
 
-try:
-    import xlwings as xw
-except ImportError:
-    xw = None
-
-from larray.tests.common import (inputpath, assert_array_equal, assert_array_nan_equal, assert_larray_equiv,
-                                 tmp_path, meta, needs_xlwings, needs_python35, needs_python36, needs_python37,
-                                 assert_larray_equal)
+from larray.tests.common import (inputpath, tmp_path, meta,
+                                 assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_xlrd,
+                                 needs_python35, needs_python36, needs_python37)
 from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
@@ -116,6 +112,7 @@ def test_read_set_update_delete_metadata(meta, tmpdir):
     assert meta2 == meta
 
 
+@needs_pytables
 def test_metadata_hdf(meta, tmpdir):
     key = 'meta'
     fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
@@ -3092,6 +3089,7 @@ def test_extend(small_array):
     assert small_array.shape == (3, 16)
 
 
+@needs_pytables
 def test_hdf_roundtrip(tmpdir, meta):
     a = ndtest((2, 3), meta=meta)
     fpath = tmp_path(tmpdir, 'test.h5')
@@ -3336,6 +3334,7 @@ def test_read_excel_xlwings():
     assert_array_equal(bad4, good2)
 
 
+@needs_xlrd
 def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
     assert_array_equal(arr, io_1d)
@@ -3906,6 +3905,7 @@ def test_to_csv(tmpdir):
         assert f.readlines() == result
 
 
+@needs_xlsxwriter
 def test_to_excel_xlsxwriter(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlsxwriter.xlsx')
 
