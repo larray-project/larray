@@ -7026,7 +7026,7 @@ class Array(ABCArray):
         Examples
         --------
         >>> import matplotlib.pyplot as plt # doctest: +SKIP
-        >>> a = ndtest('sex=M,F;age=0..20')
+        >>> a = ndtest('gender=M,F;age=0..20')
 
         Simple line plot
 

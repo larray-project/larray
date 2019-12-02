@@ -21,7 +21,7 @@ cells:
     demography_eurostat = load_example_data('demography_eurostat')
     
     # extract the 'population' array from the dataset 
-    population = demography_eurostat.population
+    population = demography_eurostat.population / 1_000_000
     population
 
 
@@ -34,15 +34,116 @@ cells:
 
 
 - markdown: |
-    Create a plot (last axis define the different curves to draw):
+    In a Python script, add the following import on top of the script:
 
 
 - code: |
-    population.plot()
+    import matplotlib.pyplot as plt
+
+
+- markdown: |
+    Create and show a simple plot (last axis define the different curves to draw):
+
+
+- code: |
+    population['Belgium'].plot()
+    # shows the figure
+    plt.show()
+
+
+- markdown: |
+    - Create a Line plot with grid, title, label on y axis and user-defined xticks. 
+    - Save the plot as a png file (using `plt.savefig()`).
+    - Show the plot:
+
+
+- code: |
+    population['Belgium'].plot(grid=True, xticks=population.time, title='Belgium')
+    # add a label aling the y axis
+    plt.ylabel('population (millions)')
+    # saves figure in a file (see matplotlib.pyplot.savefig documentation for more details)
+    plt.savefig('Belgium_population.png')
+    # WARNING: show() reset the current figure after showing it! Do not call it before savefig
+    plt.show()
+
+
+- markdown: |
+    Specify line styles and width:
+
+
+- code: |
+    # line styles: '-' for solid line, '--' for dashed line, '-.' for dash-dotted line and ':' for dotted line
+    population['Male'].plot(style=['-', '--', '-.'], linewidth=2, xticks=population.time, title='Male')
+    plt.ylabel('population (millions)')
+    plt.show()
+
+
+- markdown: |
+    Move the legend inside the graph (using `plt.legend(loc='position')`):
+
+
+- code: |
+    population['Belgium'].plot(xticks=population.time, title='Male')
+    plt.ylabel('population (millions)')
+    # available values for loc are: 
+    # 'best' (default), 'upper right', 'upper left', 'lower left', 'lower right', 'right',
+    # center left', 'center right', 'lower center', 'upper center', 'center'
+    plt.legend(loc='lower right')
+    plt.show()
+
+
+- markdown: |
+    Put the legend outside the graph (using `plt.legend(bbox_to_anchor=(x, y))`):
+
+
+- code: |
+    population['Belgium'].plot(xticks=population.time, title='Male')
+    plt.ylabel('population (millions)')
+    plt.legend(bbox_to_anchor=(1.25, 0.6))
+    plt.show()
+
+
+- markdown: |
+    Create a Bar plot:
+
+
+- code: |
+    population['Belgium'].plot.bar(title='Belgium')
+    plt.ylabel('population (millions)')
+    plt.legend(bbox_to_anchor=(1.25, 0.6))
+    plt.show()
+
+
+- markdown: |
+    Create a _stacked_ Bar plot:
+
+
+- code: |
+    population['Belgium'].plot.bar(title='Belgium', stacked=True)
+    plt.ylabel('population (millions)')
+    plt.legend(bbox_to_anchor=(1.25, 0.6))
+    plt.show()
+
+
+- markdown: |
+    Create a multiplot figure (using `plt.subplot(nrows,ncols,index)`):
+
+
+- code: |
+    figure, axes = plt.subplots(nrows=len(population.country), ncols=1, sharex=True, figsize=(5, 15))
+    
+    for row, c in enumerate(population.country):  
+        population[c].plot(ax=axes[row], title=str(c))
+        plt.ylabel('population (millions)')
+        
+    plt.xticks(population.time)
+    plt.show()
 
 
 - markdown: |
     See [plot](../_generated/larray.Array.plot.rst#larray.Array.plot) for more details and examples.
+    
+    See [pyplot tutorial](https://matplotlib.org/tutorials/introductory/pyplot.html) for a short introduction to `matplotlib.pyplot`.
 
 
 # The lines below here may be deleted if you do not need them.
