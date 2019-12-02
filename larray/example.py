@@ -42,7 +42,9 @@ def get_example_filepath(fname):
     return fpath
 
 
-# TODO : replace # doctest: +SKIP by # doctest: +NORMALIZE_WHITESPACE once Python 2 has been dropped
+# Note that we skip doctests because they require pytables, which is only an optional dependency and its hard
+# to skip doctests selectively. The tests output is also different between Python 2 and Python 3.
+# CHECK: We might want to use .csv files for the example data, so that it can be loaded with any optional dependency.
 def load_example_data(name):
     r"""Load arrays used in the tutorial so that all examples in it can be reproduced.
 
@@ -61,13 +63,13 @@ def load_example_data(name):
 
     Examples
     --------
-    >>> demo = load_example_data('demography')
-    >>> print(demo.summary())   # doctest: +NORMALIZE_WHITESPACE
+    >>> demo = load_example_data('demography')           # doctest: +SKIP
+    >>> print(demo.summary())                            # doctest: +SKIP
     hh: time, geo, hh_type (26 x 3 x 7) [int64]
     pop: time, geo, age, sex, nat (26 x 3 x 121 x 2 x 2) [int64]
     qx: time, geo, age, sex, nat (26 x 3 x 121 x 2 x 2) [float64]
     >>> demo = load_example_data('demography_eurostat')  # doctest: +SKIP
-    >>> print(demo.summary())   # doctest: +SKIP
+    >>> print(demo.summary())                            # doctest: +SKIP
     Metadata:
        title: Demographic datasets for a small selection of countries in Europe
        source: demo_jpan, demo_fasec, demo_magec and migr_imm1ctz tables from Eurostat
