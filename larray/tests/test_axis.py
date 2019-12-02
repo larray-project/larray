@@ -5,7 +5,7 @@ import pytest
 import os.path
 import numpy as np
 
-from larray.tests.common import assert_array_equal, assert_nparray_equal
+from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables
 from larray import Axis, LGroup, IGroup, read_hdf, X
 from larray.core.axis import AxisReference
 
@@ -486,6 +486,7 @@ def test_contains():
     assert age[['2', '7']] not in agg
 
 
+@needs_pytables
 def test_h5_io(tmpdir):
     age = Axis('age=0..10')
     lipro = Axis('lipro=P01..P05')

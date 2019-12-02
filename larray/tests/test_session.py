@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import assert_array_nan_equal, inputpath, tmp_path, meta, needs_xlwings
+from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path, meta,
+                                 needs_xlwings, needs_pytables, needs_xlrd)
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
 from larray.util.misc import pickle, PY2
@@ -54,20 +55,25 @@ def test_init_session(meta):
     s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h)
     assert s.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024', 'c', 'd', 'e', 'f', 'g', 'h']
 
-    s = Session(inputpath('test_session.h5'))
-    assert s.names == ['e', 'f', 'g']
-
-    # this needs xlwings installed
-    # s = Session('test_session_ef.xlsx')
-    # assertEqual(s.names, ['e', 'f'])
-
     # TODO: format autodetection does not work in this case
     # s = Session('test_session_csv')
-    # assertEqual(s.names, ['e', 'f', 'g'])
+    # assert s.names == ['e', 'f', 'g']
 
     # metadata
     s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h, meta=meta)
     assert s.meta == meta
+
+
+@needs_xlwings
+def test_init_session_xlsx():
+    s = Session(inputpath('demography_eurostat.xlsx'))
+    assert s.names == ['births', 'deaths', 'immigration', 'pop', 'pop_benelux']
+
+
+@needs_pytables
+def test_init_session_hdf():
+    s = Session(inputpath('test_session.h5'))
+    assert s.names == ['e', 'f', 'g']
 
 
 def test_getitem(session):
@@ -219,11 +225,13 @@ def _test_io(fpath, session, meta, engine):
         assert s.meta == meta
 
 
+@needs_pytables
 def test_h5_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.h5')
     _test_io(fpath, session, meta, engine='pandas_hdf')
 
 
+@needs_xlrd
 def test_xlsx_pandas_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.xlsx')
     _test_io(fpath, session, meta, engine='pandas_excel')
