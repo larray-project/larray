@@ -47,20 +47,14 @@ cells:
 
 
 - code: |
-    # replace all labels of the 'gender' axis by passing the list of all new labels
-    population_new_labels = population.set_labels('gender', ['Men', 'Women'])
+    # replace only one label of the 'gender' axis by passing a dict
+    population_new_labels = population.set_labels('gender', {'Male': 'Men'})
     population_new_labels
 
 
 - code: |
     # set all labels of the 'country' axis to uppercase by passing the function str.upper()
     population_new_labels = population.set_labels('country', str.upper)
-    population_new_labels
-
-
-- code: |
-    # replace only one label of the 'gender' axis by passing a dict
-    population_new_labels = population.set_labels('gender', {'Male': 'Men'})
     population_new_labels
 
 
