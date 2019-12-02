@@ -72,6 +72,17 @@ cells:
     population.clip(10**7, 4*10**7)
 
 
+- code: |
+    # Using vectors to define the lower and upper bounds
+    lower_bound = sequence(population.time, initial=5_500_000, inc=50_000)
+    upper_bound = sequence(population.time, 41_000_000, inc=100_000)
+    
+    print(lower_bound, '\n')
+    print(upper_bound, '\n')
+    
+    population.clip(lower_bound, upper_bound)
+
+
 - markdown: |
     See [clip](../_generated/larray.Array.clip.rst#larray.Array.clip) for more details and examples.
 

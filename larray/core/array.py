@@ -6613,6 +6613,13 @@ class Array(ABCArray):
          a0   0   0   0
          a1   0   1   2
          a2   2   2   2
+        >>> lower_bound = Array([-2, 0, 2], 'b=b0..b2')
+        >>> upper_bound = Array([0, 2, 4], 'b=b0..b2')
+        >>> arr.clip(lower_bound, upper_bound)
+        a\b  b0  b1  b2
+         a0  -2   0   2
+         a1   0   1   2
+         a2   0   2   4
 
         Clipping on lower bound only
 
