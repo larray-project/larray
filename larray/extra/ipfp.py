@@ -274,7 +274,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
                 template = """iteration {}
  * max(abs(prev_cell - cell)): {}
  * max(abs(sum - target_sum)): {}
-   \- change since last iteration: {}
+   \\- change since last iteration: {}
 """
             print(template.format(i, f2str(stepcelldiff), f2str(max_sum_diff), f2str(step_sum_improvement)))
 
