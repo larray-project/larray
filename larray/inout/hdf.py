@@ -53,7 +53,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
     Read array by passing its identifier (key) inside the HDF file
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
-    >>> read_hdf(fname, 'pop')
+    >>> read_hdf(fname, 'pop')                     # doctest: +SKIP
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206

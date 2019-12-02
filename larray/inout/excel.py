@@ -27,7 +27,7 @@ from larray.example import get_example_filepath
 __all__ = ['read_excel']
 
 
-# TODO: remove '# doctest: +SKIP' next to arr.info when Python 2.7 will be dropped
+# We use "# doctest: +SKIP" for all tests because they work only if xlrd (an *optional* dependency) is installed
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
@@ -80,7 +80,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Read array from first sheet
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
-    >>> read_excel(fname)
+    >>> read_excel(fname)                                                             # doctest: +SKIP
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
@@ -92,7 +92,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Read array from a specific sheet
 
     >>> # The data below is derived from a subset of the demo_fasec table from Eurostat
-    >>> read_excel(fname, 'births')
+    >>> read_excel(fname, 'births')                                                   # doctest: +SKIP
     country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713
@@ -115,7 +115,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     By default, cells associated with missing label combinations are filled with NaN. In that case, an int array
     is converted to a float array.
 
-    >>> read_excel(fname, sheet='population_missing_values')
+    >>> read_excel(fname, sheet='population_missing_values')                          # doctest: +SKIP
     country  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
@@ -126,7 +126,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Using the ``fill_value`` argument, you can choose another value to use to fill missing cells.
 
-    >>> read_excel(fname, sheet='population_missing_values', fill_value=0)
+    >>> read_excel(fname, sheet='population_missing_values', fill_value=0)            # doctest: +SKIP
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
@@ -148,7 +148,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         Germany  Female  41142770  41210540  41362080
 
     >>> # read the array stored in the sheet 'population_missing_axis_name' as is
-    >>> arr = read_excel(fname, sheet='population_missing_axis_name')
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name')                 # doctest: +SKIP
     >>> # we expected a 3 x 2 x 3 array with data of type int
     >>> # but we got a 6 x 4 array with data of type object
     >>> arr.info            # doctest: +SKIP
@@ -158,7 +158,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     dtype: object
     memory used: 192 bytes
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> arr = read_excel(fname, sheet='population_missing_axis_name', nb_axes=3)
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name', nb_axes=3)      # doctest: +SKIP
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
     >>> arr.info            # doctest: +SKIP
     3 x 2 x 3
@@ -181,14 +181,14 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
          France  2015  66458153
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
-    >>> read_excel(fname, 'population_narrow_format', wide=False)
+    >>> read_excel(fname, 'population_narrow_format', wide=False)                     # doctest: +SKIP
     country\time      2013      2014      2015
          Belgium  11137974  11180840  11237274
           France  65600350  66165980  66458153
 
     Extract array from a given range (xlwings only)
 
-    >>> read_excel(fname, 'population_births_deaths', range='A9:E15')     # doctest: +SKIP
+    >>> read_excel(fname, 'population_births_deaths', range='A9:E15')                 # doctest: +SKIP
     country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713

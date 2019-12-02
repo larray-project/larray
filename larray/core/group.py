@@ -1429,14 +1429,14 @@ class Group(object):
         --------
         >>> from larray import Axis
         >>> a = Axis("a=a0..a2")
-        >>> a.to_hdf('test.h5')
+        >>> a.to_hdf('test.h5')                     # doctest: +SKIP
         >>> a01 = a['a0,a1'] >> 'a01'
 
         Save group
 
         >>> # by default, the key is the name of the group
         >>> # and axis_key the name of the associated axis
-        >>> a01.to_hdf('test.h5')                  # doctest: +SKIP
+        >>> a01.to_hdf('test.h5')                   # doctest: +SKIP
 
         Save group with a specific key
 
