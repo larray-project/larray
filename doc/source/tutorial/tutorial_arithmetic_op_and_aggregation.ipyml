@@ -17,8 +17,21 @@ cells:
 
 
 - code: |
-    arr = ndtest((3, 3))
-    arr
+    # load the 'demography_eurostat' dataset
+    demography_eurostat = load_example_data('demography_eurostat')
+    
+    # extract the 'population' array
+    population = demography_eurostat.population
+    
+    # show the 'population' array
+    population
+
+
+- code: |
+    # let us also imagine a constant growth rate of the population
+    constant_growth_rate = Array(data=[[1.011, 1.010], [1.013, 1.011], [1.010, 1.009]], 
+                                 axes=population.axes - population.time)
+    constant_growth_rate
 
 
 - markdown: |
@@ -26,23 +39,15 @@ cells:
 
 
 - code: |
-    # addition
-    arr + 10
-
-
-- code: |
-    # multiplication
-    arr * 2
-
-
-- code: |
     # 'true' division
-    arr / 2
+    population_in_millions = population / (10**6)
+    population_in_millions
 
 
 - code: |
     # 'floor' division
-    arr // 2
+    population_in_millions = population // (10**6)
+    population_in_millions
 
 
 - markdown: |
@@ -56,12 +61,12 @@ cells:
 
 - code: |
     # % means modulo (aka remainder of division)
-    arr % 5
+    population % (10**6)
 
 
 - code: |
     # ** means raising to the power
-    arr ** 3
+    constant_growth_rate ** 3
 
 
 - markdown: |
@@ -69,22 +74,15 @@ cells:
 
 
 - code: |
-    # load the 'demography_eurostat' dataset
-    demography_eurostat = load_example_data('demography_eurostat')
-    
-    # extract the 'population' array
-    population = demography_eurostat.population
-    population
+    # first, we store the population of the year 2017 in a new variable
+    population_2017 = population[2017]
+    population_2017
 
 
 - code: |
-    aggregation_matrix = Array([[1, 0, 0], [0, 1, 1]], axes=(Axis('country=Belgium,France+Germany'), population.country))
-    aggregation_matrix
-
-
-- code: |
-    # @ means matrix product
-    aggregation_matrix @ population['Male']
+    # perform an arithmetic operation between two arrays
+    population_2020 = population_2017 * (constant_growth_rate ** 3)
+    population_2020
 
 
 - markdown: |
@@ -95,17 +93,9 @@ cells:
 
 
 - code: |
-    aggregation_matrix = Array([[1, 0, 0], [0, 0.5, 0.5]], axes=(Axis('country=Belgium,France+Germany/2'), population.country))
-    aggregation_matrix
-
-
-- code: |
-    aggregation_matrix @ population['Male']
-
-
-- code: |
     # force the resulting matrix to be an integer matrix
-    (aggregation_matrix @ population['Male']).astype(int)
+    population_2020 = (population_2017 * (constant_growth_rate ** 3)).astype(int)
+    population_2020
 
 
 - markdown: |
@@ -116,58 +106,109 @@ cells:
 
 
 - code: |
-    # extract the 'births' array
-    births = demography_eurostat.births
+    # let's change the order of axes of the 'constant_growth_rate' array
+    transposed_growth_rate = constant_growth_rate.transpose()
     
-    # let's change the order of axes of the 'births' array
-    births_transposed = births.transpose()
-    births_transposed
+    # look at the order of the new 'transposed_growth_rate' array:
+    # 'gender' is the first axis while 'country' is the second
+    transposed_growth_rate
+
+
+- code: |
+    # look at the order of the 'population_2017' array:
+    # 'country' is the first axis while 'gender' is the second
+    population_2017
 
 
 - code: |
     # LArray doesn't care of axes order when performing 
     # arithmetic operations between arrays
-    population + births_transposed
+    population_2018 = population_2017 * transposed_growth_rate
+    population_2018
 
 
 - markdown: |
     ### Axes must be compatible
     
-    Arithmetic operations between two arrays only works when they have compatible axes (i.e. same labels).
+    Arithmetic operations between two arrays only works when they have compatible axes (i.e. same list of labels in the same order).
 
 
 - code: |
-    # the 'population' and 'births' have compatible axes
-    population + births
+    # show 'population_2017'
+    population_2017
+
+
+- markdown: |
+    #### Order of labels matter
 
 
 - code: |
-    # Now, let's replace the country names by the country codes
-    births_codes = births.set_labels('country', ['BE', 'FR', 'DE'])
-    births_codes
+    # let us imagine that the labels of the 'country' axis 
+    # of the 'constant_growth_rate' array are in a different order
+    # than in the 'population_2017' array
+    reordered_growth_rate = constant_growth_rate.reindex('country', ['Germany', 'Belgium', 'France'])
+    reordered_growth_rate
 
 
 - code: |
-    # arithmetic operations between arrays 
-    # having incompatible axes raise an error
+    # when doing arithmetic operations, 
+    # the order of labels counts
     try:
-        population + births_codes
+        population_2018 = population_2017 * reordered_growth_rate
     except Exception as e:
         print(type(e).__name__, e)
+
+
+- markdown: |
+    #### No extra or missing labels are permitted
+
+
+- code: |
+    # let us imagine that the 'country' axis of 
+    # the 'constant_growth_rate' array has an extra 
+    # label 'Netherlands' compared to the same axis of 
+    # the 'population_2017' array
+    growth_rate_Netherlands = Array([1.012, 1.], population.gender)
+    growth_rate_extra_country = constant_growth_rate.append('country', growth_rate_Netherlands, label='Netherlands')
+    growth_rate_extra_country
+
+
+- code: |
+    # when doing arithmetic operations, 
+    # no extra or missing labels are permitted 
+    try:
+        population_2018 = population_2017 * growth_rate_extra_country
+    except Exception as e:
+        print(type(e).__name__, e)
+
+
+- markdown: |
+    #### Ignoring labels (risky)
 
 
 - markdown: |
     <div class="alert alert-warning">
         **Warning:** Operations between two arrays only works when they have compatible axes (i.e. same labels) but this behavior can be override via the [ignore_labels](../_generated/larray.Array.ignore_labels.rst#larray.Array.ignore_labels) method.
     In that case only the position on the axis is used and not the labels.
-    Using this method is done at your own risk.
+    
+    Using this method is done at your own risk and SHOULD NEVER BEEN USED IN A MODEL. 
+    Use this method only for quick tests or rapid data exploration. 
     </div>
+
+
+- code: |
+    # let us imagine that the labels of the 'country' axis 
+    # of the 'constant_growth_rate' array are the 
+    # country codes instead of the country full names
+    growth_rate_country_codes = constant_growth_rate.set_labels('country', ['BE', 'FR', 'DE'])
+    growth_rate_country_codes
 
 
 - code: |
     # use the .ignore_labels() method on axis 'country'
     # to avoid the incompatible axes error (risky)
-    population + births_codes.ignore_labels('country')
+    population_2018 = population_2017 * growth_rate_country_codes.ignore_labels('country')
+    population_2018
 
   metadata:
     scrolled: true
