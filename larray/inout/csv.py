@@ -9,12 +9,11 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-from larray.core.array import Array, asarray, ndtest
-from larray.core.axis import Axis
+from larray.core.array import Array, asarray
 from larray.core.constants import nan
-from larray.core.group import Group
 from larray.core.metadata import Metadata
-from larray.util.misc import skip_comment_cells, strip_rows, csv_open, deprecate_kwarg
+from larray.util.misc import skip_comment_cells, strip_rows, deprecate_kwarg
+from larray.util.compat import csv_open
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
 from larray.inout.pandas import df_asarray

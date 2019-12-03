@@ -12,8 +12,8 @@ import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.util.oset import *
-from larray.util.misc import (basestring, PY2, unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
-                              renamed_to, LHDFStore)
+from larray.util.misc import (unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to, LHDFStore)
+from larray.util.compat import basestring, PY2
 
 
 def _slice_to_str(key, repr_func=str):

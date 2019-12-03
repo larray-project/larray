@@ -7,7 +7,7 @@ from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import Array
 from larray.core.metadata import Metadata
-from larray.util.misc import pickle
+from larray.util.compat import pickle
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler
 

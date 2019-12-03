@@ -28,17 +28,12 @@ Array class
 
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
-from collections import Iterable, Sequence, OrderedDict
+from collections import OrderedDict
 from itertools import product, chain, groupby, islice, repeat
 import os
 import sys
 import functools
 import warnings
-
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
 
 import numpy as np
 import pandas as pd
@@ -60,10 +55,11 @@ from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
-from larray.util.misc import (table2str, size2str, basestring, izip, rproduct, ReprString, duplicates,
-                              float_error_handler_factory, _isnoneslice, light_product, unique_list, common_type,
+from larray.util.misc import (table2str, size2str, ReprString,
+                              float_error_handler_factory, light_product, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
-                              Repeater, Product, ensure_no_numpy_type, PY2)
+                              Repeater, Product, ensure_no_numpy_type)
+from larray.util.compat import PY2, basestring, Iterable, Sequence, builtins
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
@@ -8466,7 +8462,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None):
 
 
 # XXX: would it be possible to generalize to multiple axes?
-def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None, meta=None):
+def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=None, meta=None):
     r"""
     Creates an array by sequentially applying modifications to the array along axis.
 
@@ -8482,9 +8478,10 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     initial : scalar or Array, optional
         Value for the first label of axis. Defaults to 0.
     inc : scalar, Array, optional
-        Value to increment the previous value by. Defaults to 0 if mult is provided, 1 otherwise.
+        Value to increment the previous value by. Defaults to 1 unless mult is provided (in which case it defaults
+        to 0).
     mult : scalar, Array, optional
-        Value to multiply the previous value by. Defaults to 1.
+        Value to multiply the previous value by. Defaults to None.
     func : function/callable, optional
         Function to apply to the previous value. Defaults to None.
         Note that this is much slower than using inc and/or mult.
@@ -8574,10 +8571,14 @@ def sequence(axis, initial=0, inc=None, mult=1, func=None, axes=None, title=None
     meta = _handle_meta(meta, title)
 
     if inc is None:
-        inc = 1 if mult is 1 else 0
+        inc = 1 if mult is None else 0
+    if mult is None:
+        mult = 1
 
     # fast path for the most common case
-    if (mult is 1 and isinstance(inc, (int, np.integer)) and isinstance(initial, (int, np.integer)) and
+    integer_types = (int, np.integer)
+    if (isinstance(mult, integer_types) and mult == 1 and
+            isinstance(inc, integer_types) and isinstance(initial, integer_types) and
             func is None and axes is None):
         axis = _make_axis(axis)
         # stop is not included

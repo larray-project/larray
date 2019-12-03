@@ -2,7 +2,8 @@ import os
 import warnings
 from collections import OrderedDict
 
-from larray.util.misc import PY2, _positive_integer, _validate_dir
+from larray.util.misc import _positive_integer, _validate_dir
+from larray.util.compat import PY2
 from larray.core.group import _translate_sheet_name
 from larray.core.array import asarray, zip_array_items
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
