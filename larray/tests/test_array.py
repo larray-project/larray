@@ -3423,6 +3423,46 @@ def test_read_excel_pandas():
 
 
 def test_from_lists():
+    simple_arr = ndtest((2, 2, 3))
+
+    # simple
+    arr_list = [['a', 'b\\c', 'c0', 'c1', 'c2'],
+                ['a0', 'b0', 0, 1, 2],
+                ['a0', 'b1', 3, 4, 5],
+                ['a1', 'b0', 6, 7, 8],
+                ['a1', 'b1', 9, 10, 11]]
+    res = from_lists(arr_list)
+    assert_array_equal(res, simple_arr)
+
+    # simple (using dump). This should be the same test than above.
+    # We just make sure dump() and from_lists() round-trip correctly.
+    arr_list = simple_arr.dump()
+    res = from_lists(arr_list)
+    assert_array_equal(res, simple_arr)
+
+    # with anonymous axes
+    arr_anon = simple_arr.rename({0: None, 1: None, 2: None})
+    arr_list = arr_anon.dump()
+    assert arr_list == [[None, None, 'c0', 'c1', 'c2'],
+                        ['a0', 'b0',    0,    1,    2],
+                        ['a0', 'b1',    3,    4,    5],
+                        ['a1', 'b0',    6,    7,    8],
+                        ['a1', 'b1',    9,   10,   11]]
+    res = from_lists(arr_list, nb_axes=3)
+    assert_array_equal(res, arr_anon)
+
+    # with empty ('') axes names
+    arr_empty_names = simple_arr.rename({0: '', 1: '', 2: ''})
+    arr_list = arr_empty_names.dump()
+    assert arr_list == [[  '',   '', 'c0', 'c1', 'c2'],
+                        ['a0', 'b0',    0,    1,    2],
+                        ['a0', 'b1',    3,    4,    5],
+                        ['a1', 'b0',    6,    7,    8],
+                        ['a1', 'b1',    9,   10,   11]]
+    res = from_lists(arr_list, nb_axes=3)
+    # this is purposefully NOT arr_empty_names because from_lists (via df_asarray) transforms '' axes to None
+    assert_array_equal(res, arr_anon)
+
     # sort_rows
     arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
                       ['F', 'BE', 0, 0, 1],
@@ -3549,12 +3589,11 @@ def test_from_frame():
     #    i0  10
     df = pd.DataFrame([10], index=pd.Index(['i0'], name=0), columns=['c0'])
     res = from_frame(df)
+    expected = Array([[10]], [Axis(['i0'], name=0), Axis(['c0'])])
     assert res.ndim == 2
     assert res.shape == (1, 1)
-    assert res.axes.names == ['0', None]
-    assert list(res.axes[0].labels) == ['i0']
-    assert list(res.axes[1].labels) == ['c0']
-    assert_array_equal(res, Array([[10]], "0=i0;c0,"))
+    assert res.axes.names == [0, None]
+    assert_array_equal(res, expected)
 
     # anonymous index
     # input dataframe:
@@ -3845,6 +3884,21 @@ def test_from_frame():
     assert la.shape == (4, 2, 3)
     assert la.axes.names == ['age', 'sex', 'time']
     assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+
+    # 3C) Dataframe with no axe names (names are None)
+    # ===============================
+    arr_no_names = ndtest("a0,a1;b0..b2;c0..c3")
+    df_no_names = arr_no_names.df
+    res = from_frame(df_no_names)
+    assert_array_equal(res, arr_no_names)
+
+    # 3D) Dataframe with empty axe names (names are '')
+    # ==================================
+    arr_empty_names = ndtest("=a0,a1;=b0..b2;=c0..c3")
+    assert arr_empty_names.axes.names == ['', '', '']
+    df_no_names = arr_empty_names.df
+    res = from_frame(df_no_names)
+    assert_array_equal(res, arr_empty_names)
 
     # 4) test sort_rows and sort_columns arguments
     # ============================================
@@ -4350,7 +4404,10 @@ def test_open_excel(tmpdir):
     with open_excel(fpath, overwrite_file=True) as wb:
         wb[0] = arr.dump()
         res = wb[0].load()
-        assert arr.equals(res)
+        # the result should be identical to the original array except we lost the information about
+        # the wildcard axis being a wildcard axis
+        expected = arr.set_axes('b', Axis([0, 1], 'b'))
+        assert_array_equal(res, expected)
 
     # 6) crash test
     # =============
