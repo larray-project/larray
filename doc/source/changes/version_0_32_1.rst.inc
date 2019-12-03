@@ -1,4 +1,4 @@
-.. py:currentmodule:: larray
+﻿.. py:currentmodule:: larray
 
 
 Miscellaneous improvements
@@ -10,4 +10,5 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed loading arrays with more than 2 dimensions but no axes names (even when specifying nb_axes explicitly). This
+  case mostly occurs when trying to load a specific range of an Excel file (closes :issue:`830` and :issue:`831`).

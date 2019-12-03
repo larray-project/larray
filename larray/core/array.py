@@ -2544,14 +2544,22 @@ class Array(ABCArray):
             if _axes_display_names:
                 axes_names = self.axes.display_names[:]
             else:
-                axes_names = [axis_name if axis_name is not None else '' for axis_name in self.axes.names]
+                axes_names = self.axes.names
 
             # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
             if wide and len(axes_names) > 1:
                 if dump_axes_names is True:
-                    separator = '\\' if axes_names[-1] else ''
-                    axes_names[-2] = separator.join(axes_names[-2:])
-                    axes_names.pop()
+                    # combine two last names
+                    last_name = axes_names.pop()
+                    prev_name = axes_names[-1]
+                    # do not combine if last_name is None or ''
+                    if last_name:
+                        prev_name = prev_name if prev_name is not None else ''
+                        combined_name = prev_name + '\\' + last_name
+                    else:
+                        # whether it is a string or None !
+                        combined_name = prev_name
+                    axes_names[-1] = combined_name
                 elif dump_axes_names == 'except_last':
                     axes_names = axes_names[:-1]
                 else:
@@ -8639,6 +8647,18 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
                 return a[a_axis[axis.labels[i]]]
             else:
                 return a
+        # CHECK: try something like:
+        # def index_if_exists(a, igroup):
+        #     axis = igroup.axis
+        #     if isinstance(a, Array) and axis in a.axes:
+        #         a_axis = a.axes[axis]
+        #         return a[a_axis[axis.labels[i]]]
+        #     else:
+        #         return a
+        # for i in axis.i[1:]:
+        #     i_mult = index_if_exists(mult, i)
+        #     i_inc = index_if_exists(inc, i)
+        #     res[i] = res[i - 1] * i_mult + i_inc
         for i in range(1, len(axis)):
             i_mult = index_if_exists(mult, axis, i)
             i_inc = index_if_exists(inc, axis, i)

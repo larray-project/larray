@@ -6,7 +6,7 @@ from larray.core.constants import nan
 from larray.util.misc import deprecate_kwarg
 from larray.util.compat import StringIO
 from larray.inout.common import _get_index_col
-from larray.inout.pandas import df_asarray
+from larray.inout.pandas import df_asarray, set_dataframe_index_by_position
 from larray.inout.csv import read_csv
 
 
@@ -112,7 +112,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
 
     df = DataFrame(data[1:], columns=data[0])
     if index_col is not None:
-        df.set_index([df.columns[c] for c in index_col], inplace=True)
+        df = set_dataframe_index_by_position(df, index_col)
 
     return df_asarray(df, raw=index_col is None, parse_header=False, sort_rows=sort_rows, sort_columns=sort_columns,
                       fill_value=fill_value, wide=wide)

@@ -43,7 +43,7 @@ def index_to_labels(idx, sort=True):
         if sort:
             return list(idx.levels)
         else:
-            return [list(unique(idx.get_level_values(l))) for l in idx.names]
+            return [list(unique(idx.get_level_values(l))) for l in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.core.index.Index)
         labels = list(idx.values)
@@ -225,7 +225,6 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     if unfold_last_axis_name:
         if isinstance(axes_names[-1], basestring) and '\\' in axes_names[-1]:
             last_axes = [name.strip() for name in axes_names[-1].split('\\')]
-            last_axes = [name if name else None for name in last_axes]
             axes_names = axes_names[:-1] + last_axes
         else:
             axes_names += [None]
@@ -244,12 +243,30 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     # Pandas treats column labels as column names (strings) so we need to convert them to values
     last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
     axes_labels.append(last_axis_labels)
-    axes_names = [str(name) if name is not None else name
-                  for name in axes_names]
 
     axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.values.reshape(axes.shape)
     return Array(data, axes, meta=meta)
+
+
+def set_dataframe_index_by_position(df, index_col_indices):
+    """
+    equivalent to Dataframe.set_index but with column indices, not column labels
+
+    This is necessary to support creating an index from columns without a name or with duplicate names.
+
+    Returns a new Dataframe
+    """
+    if not isinstance(index_col_indices, list):
+        index_col_indices = [index_col_indices]
+    index_col_indices_set = set(index_col_indices)
+    index_col_values = [df.iloc[:, i] for i in index_col_indices]
+    non_index_col_indices = [i for i in range(len(df.columns)) if i not in index_col_indices_set]
+    # drop the index columns from the "normal" columns of the dataframe
+    df = df.iloc[:, non_index_col_indices]
+    # add them back as index columns
+    df.set_index(index_col_values, inplace=True)
+    return df
 
 
 def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
@@ -307,12 +324,10 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
 
             # This is required to handle int column names (otherwise we can simply use column positions in set_index).
             # This is NOT the same as df.columns[list(range(...))] !
-            index_columns = [df.columns[i] for i in range(pos_last + 1)]
-            df.set_index(index_columns, inplace=True)
+            df = set_dataframe_index_by_position(df, list(range(pos_last + 1)))
         else:
-            index_columns = [df.columns[i] for i in range(len(df.columns) - 1)]
-            df.set_index(index_columns, inplace=True)
-            series = df[df.columns[-1]]
+            df = set_dataframe_index_by_position(df, list(range(len(df.columns) - 1)))
+            series = df.iloc[:, -1]
             series.name = df.index.name
             return from_series(series, sort_rows=sort_columns, **kwargs)
 
@@ -339,6 +354,10 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
                          unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
 
     # ugly hack to avoid anonymous axes converted as axes with name 'Unnamed: x' by pandas
+    # we also take the opportunity to change axes with empty name to real anonymous axes (name is None) to
+    # make them roundtrip correctly, based on the assumption that in an in-memory LArray an anonymouse axis is more
+    # likely and useful than an Axis with an empty name.
     # TODO : find a more robust and elegant solution
-    res = res.rename({axis: None for axis in res.axes if isinstance(axis.name, basestring) and 'Unnamed' in axis.name})
+    res = res.rename({axis: None for axis in res.axes if isinstance(axis.name, basestring) and
+                      (axis.name == '' or 'Unnamed:' in axis.name)})
     return res
