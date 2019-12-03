@@ -19,7 +19,8 @@ from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtes
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
-from larray.util.misc import StringIO, LHDFStore
+from larray.util.misc import LHDFStore
+from larray.util.compat import StringIO
 from larray.core.metadata import Metadata
 
 

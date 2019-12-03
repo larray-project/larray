@@ -15,8 +15,9 @@ from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import *
-from larray.util.misc import (basestring, PY2, unicode, long, duplicates, array_lookup2, ReprString, index_by_id,
-                              renamed_to, common_type, LHDFStore, lazy_attribute, _isnoneslice, unique_multi, Product)
+from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
+                              lazy_attribute, _isnoneslice, unique_multi, Product)
+from larray.util.compat import (basestring, PY2, unicode, long)
 
 
 np_frompyfunc = np.frompyfunc

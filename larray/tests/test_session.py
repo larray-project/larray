@@ -11,7 +11,7 @@ from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path, me
                                  needs_xlwings, needs_pytables, needs_xlrd)
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
-from larray.util.misc import pickle, PY2
+from larray.util.compat import pickle, PY2
 
 
 def equal(o1, o2):

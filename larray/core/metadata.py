@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
-from larray.util.misc import PY2, basestring
+from larray.util.compat import PY2, basestring
 
 
 if PY2:

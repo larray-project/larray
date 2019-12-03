@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
-from larray.util.misc import basestring
+
+from larray.util.compat import basestring
 
 
 handler_classes = {}

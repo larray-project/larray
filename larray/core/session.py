@@ -6,7 +6,7 @@ import sys
 import re
 import fnmatch
 import warnings
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
 
 import numpy as np
 
@@ -15,7 +15,8 @@ from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence, asarray
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, basestring
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
+from larray.util.compat import basestring, Iterable
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -310,7 +311,7 @@ class Session(object):
 
     # TODO: add a a meta property when Python 2.7 will be dropped
     def __getattr__(self, key):
-        if key is 'meta':
+        if key == 'meta':
             return self._meta
         elif key in self._objects:
             return self._objects[key]
@@ -319,7 +320,7 @@ class Session(object):
 
     # TODO: implement meta.setter when Python 2.7 will be dropped
     def __setattr__(self, key, value):
-        if key is 'meta':
+        if key == 'meta':
             if not isinstance(value, (list, dict, OrderedDict, Metadata)):
                 raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
                                 "instead of {}".format(type(value).__name__))

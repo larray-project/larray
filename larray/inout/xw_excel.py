@@ -16,7 +16,8 @@ from larray.core.constants import nan
 from larray.core.group import _translate_sheet_name
 from larray.inout.pandas import df_asarray
 from larray.inout.misc import from_lists
-from larray.util.misc import PY2, deprecate_kwarg
+from larray.util.misc import deprecate_kwarg
+from larray.util.compat import PY2
 
 
 string_types = (str,)

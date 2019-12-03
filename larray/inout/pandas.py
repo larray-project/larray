@@ -1,16 +1,15 @@
 from __future__ import absolute_import, print_function
 
 from itertools import product
-from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
 from larray.core.array import Array
 from larray.core.axis import Axis, AxisCollection
-from larray.core.group import LGroup
 from larray.core.constants import nan
-from larray.util.misc import basestring, decode, unique
+from larray.util.misc import unique
+from larray.util.compat import basestring, decode, bytes
 
 
 def parse(s):

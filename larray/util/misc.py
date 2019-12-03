@@ -15,41 +15,15 @@ from functools import reduce, wraps
 from itertools import product
 from collections import defaultdict
 
-try:
-    from itertools import izip
-except ImportError:
-    izip = zip
-
 import numpy as np
+import pandas as pd
+
+from larray.util.compat import PY2
+
 try:
     np.set_printoptions(legacy='1.13')
 except TypeError:
     pass
-
-import pandas as pd
-
-if sys.version_info[0] < 3:
-    basestring = basestring
-    bytes = str
-    unicode = unicode
-    long = long
-    PY2 = True
-else:
-    basestring = str
-    bytes = bytes
-    unicode = str
-    long = int
-    PY2 = False
-
-if PY2:
-    from StringIO import StringIO
-else:
-    from io import StringIO
-
-if PY2:
-    import cPickle as pickle
-else:
-    import pickle
 
 
 def is_interactive_interpreter():
@@ -60,22 +34,6 @@ def is_interactive_interpreter():
         return main_lacks_file or get_ipython().__class__.__name__ == 'InProcessInteractiveShell'
     except NameError:
         return hasattr(sys, 'ps1')
-
-
-def csv_open(filename, mode='r'):
-    assert 'b' not in mode and 't' not in mode
-    if PY2:
-        return open(filename, mode + 'b')
-    else:
-        return open(filename, mode, newline='', encoding='utf8')
-
-
-def decode(s, encoding='utf-8', errors='strict'):
-    if isinstance(s, bytes):
-        return s.decode(encoding, errors)
-    else:
-        assert s is None or isinstance(s, unicode), "unexpected " + str(type(s))
-        return s
 
 
 def prod(values):
