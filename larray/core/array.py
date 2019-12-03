@@ -2472,7 +2472,7 @@ class Array(ABCArray):
 
         Returns
         -------
-        2D nested list or None for 0d arrays
+        2D nested list of builtin Python values or None for 0d arrays
 
         Examples
         --------
@@ -3756,7 +3756,7 @@ class Array(ABCArray):
          a0  0.6  0.0  0.2
          a1  0.4  0.0  0.8
 
-        for reference, the normal ratio method would return:
+        for reference, the normal ratio method would produce a warning message and return:
 
         >>> arr.ratio('a')
         a\b   b0   b1   b2
