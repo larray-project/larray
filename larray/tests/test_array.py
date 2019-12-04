@@ -820,7 +820,8 @@ def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
     # raw key => ???
     # this test checks that the current behavior does not change unintentionally...
     # ... but I am unsure the current behavior is what we actually want
-    msg = re.escape("boolean key with a different shape ((4,)) than array ((2,))")
+    # L? is to account for Python2 where shape can be 'long' integers
+    msg = r"boolean key with a different shape \(\(4L?,\)\) than array \(\(2,\)\)"
     with pytest.raises(ValueError, match=msg):
         arr[key]
 
