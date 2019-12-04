@@ -134,7 +134,7 @@ class AbstractReportItem(object):
                              "Please provide one for at least 'width' or 'heigth'")
         if kind not in self.default_items_size:
             raise ValueError("Item type {} is not registered. Please choose in "
-                             "list {}".format(kind, list(self.default_items_size.keys())))
+                             "list {}".format(kind, sorted(self.default_items_size.keys())))
         if width is None:
             width = self.default_items_size[kind].width
         if height is None:

@@ -368,7 +368,7 @@ def test_excel_report_arrays():
     # 1) pass a not registered kind of item
     item_type = 'unknown_item'
     msg = "Item type {} is not registered. Please choose in " \
-          "list ['title', 'graph']".format(item_type)
+          "list ['graph', 'title']".format(item_type)
     with pytest.raises(ValueError, match=re.escape(msg)):
         sheet_graphs.set_item_default_size(item_type, width, height)
     # 2) update default size for graphs
