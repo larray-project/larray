@@ -90,7 +90,14 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 name = None
             labels = pd_obj.values
             if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
-                labels = np.char.decode(labels, 'utf-8')
+                # this check is there because there are cases where dtype_kind is 'U' but pandas returns
+                # an array with object dtype containing bytes instead of a string array, and in that case
+                # np.char.decode does not work
+                # this is at least the case for Python2 + Pandas 0.24.2 combination
+                if labels.dtype.kind == 'O':
+                    labels = np.array([l.decode('utf-8') for l in labels], dtype='U')
+                else:
+                    labels = np.char.decode(labels, 'utf-8')
             res = Axis(labels=labels, name=name)
             res._iswildcard = attrs['wildcard']
         elif _type == 'Group':
