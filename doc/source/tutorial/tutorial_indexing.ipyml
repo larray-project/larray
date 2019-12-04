@@ -246,6 +246,17 @@ cells:
 
 
 - markdown: |
+    ## Iterating over axes
+    
+    Iterating over an axis is straightforward:
+
+
+- code: |
+    for year in population.time:
+        print(year)
+
+
+- markdown: |
     ## Assigning subsets
     
     ### Assigning A Value
