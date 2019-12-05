@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Arithmetic Operations And Aggregations
+    # Arithmetic Operations
 
 
 - markdown: |
@@ -13,7 +13,7 @@ cells:
 
 
 - markdown: |
-    ## Arithmetic operations
+    Load the `population` array from the `demography_eurostat` dataset:
 
 
 - code: |
@@ -25,6 +25,10 @@ cells:
     
     # show the 'population' array
     population
+
+
+- markdown: |
+    ## Basics
 
 
 - code: |
@@ -99,7 +103,7 @@ cells:
 
 
 - markdown: |
-    ### Axis order does not matter much (except for output)
+    ## Axis order does not matter much (except for output)
     
     You can do operations between arrays having different axes order.
     The axis order of the result is the same as the left array
@@ -128,7 +132,7 @@ cells:
 
 
 - markdown: |
-    ### Axes must be compatible
+    ## Axes must be compatible
     
     Arithmetic operations between two arrays only works when they have compatible axes (i.e. same list of labels in the same order).
 
@@ -139,7 +143,7 @@ cells:
 
 
 - markdown: |
-    #### Order of labels matter
+    ### Order of labels matter
 
 
 - code: |
@@ -160,7 +164,7 @@ cells:
 
 
 - markdown: |
-    #### No extra or missing labels are permitted
+    ### No extra or missing labels are permitted
 
 
 - code: |
@@ -183,7 +187,7 @@ cells:
 
 
 - markdown: |
-    #### Ignoring labels (risky)
+    ### Ignoring labels (risky)
 
 
 - markdown: |
@@ -214,7 +218,7 @@ cells:
     scrolled: true
 
 - markdown: |
-    ### Extra Or Missing Axes (Broadcasting)
+    ## Extra Or Missing Axes (Broadcasting)
 
 
 - markdown: |
@@ -347,7 +351,7 @@ cells:
 
 
 - markdown: |
-    ### Boolean Operations
+    ## Boolean Operations
     
     Python comparison operators are: 
     
@@ -420,62 +424,6 @@ cells:
 
 - code: |
     population.equals(population_copy)
-
-
-- markdown: |
-    ## Aggregates
-    
-    The LArray library provides many aggregation functions. The list is given in the [Aggregation Functions](../api.rst#aggregation-functions) subsection of the [API Reference](../api.rst) page.
-    
-    Aggregation operations can be performed on axes or groups. Axes and groups can be mixed. 
-    
-    The main rules are: 
-    
-    -  Axes are separated by commas ``,``
-    -  Groups belonging to the same axis are grouped inside parentheses ()
-
-
-- markdown: |
-    Calculate the sum along an axis:
-
-
-- code: |
-    population.sum('gender')
-
-
-- markdown: |
-    or several axes (axes are separated by commas ``,``):
-
-
-- code: |
-    population.sum('country', 'gender')
-
-
-- markdown: |
-    Calculate the sum along all axes except one by appending `_by` to the aggregation function:
-
-
-- code: |
-    population.sum_by('time')
-
-
-- markdown: |
-    Calculate the sum along groups (the groups belonging to the same axis must grouped inside parentheses ()):
-
-
-- code: |
-    even_years = population.time[2014::2] >> 'even_years'
-    odd_years = population.time[2013::2] >> 'odd_years'
-    
-    population.sum((odd_years, even_years))
-
-
-- markdown: |
-    Mixing axes and groups in aggregations:
-
-
-- code: |
-    population.sum('gender', (odd_years, even_years))
 
 
 # The lines below here may be deleted if you do not need them.
