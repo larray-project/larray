@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    # Load And Dump Arrays, Sessions, Axes And Groups
+    # Load And Dump Arrays
 
 
 - markdown: |
@@ -14,11 +14,7 @@ cells:
 
 
 - markdown: |
-    ## Loading and Dumping Arrays
-
-
-- markdown: |
-    ### Loading Arrays - Basic Usage (CSV, Excel, HDF5)
+    ## Loading Arrays - Basic Usage (CSV, Excel, HDF5)
     
     To read an array from a CSV file, you must use the ``read_csv`` function:
 
@@ -88,7 +84,7 @@ cells:
 
 
 - markdown: |
-    ### Dumping Arrays - Basic Usage (CSV, Excel, HDF5)
+    ## Dumping Arrays - Basic Usage (CSV, Excel, HDF5)
     
     To write an array in a CSV file, you must use the ``to_csv`` method:
 
@@ -162,7 +158,7 @@ cells:
 
 
 - markdown: |
-    ### Specifying Wide VS Narrow format (CSV, Excel)
+    ## Specifying Wide VS Narrow format (CSV, Excel)
     
     By default, all reading functions assume that arrays are stored in the ``wide`` format, meaning that their last axis is represented horizontally:
     
@@ -251,7 +247,7 @@ cells:
 
 
 - markdown: |
-    ### Specifying Position in Sheet (Excel)
+    ## Specifying Position in Sheet (Excel)
     
     If you want to read an array from an Excel sheet which does not start at cell `A1` (when there is more than one array stored in the same sheet for example), you will need to use the ``range`` argument. 
     
@@ -339,7 +335,7 @@ cells:
 
 
 - markdown: |
-    ### Exporting data without headers (Excel)
+    ## Exporting data without headers (Excel)
     
     For some reasons, you may want to export only the data of an array without axes. For example, you may want to insert a new column containing extra information. As an exercise, let us consider we want to add the capital city for each country present in the array containing the total population by country:
     
@@ -401,7 +397,7 @@ cells:
 
 
 - markdown: |
-    ### Specifying the Number of Axes at Reading (CSV, Excel)
+    ## Specifying the Number of Axes at Reading (CSV, Excel)
     
     By default, ``read_csv`` and ``read_excel`` will search the position of the first cell containing the special character ``\`` in the header line in order to determine the number of axes of the array to read. The special character ``\`` is used to separate the name of the two last axes. If there is no special character ``\``, ``read_csv`` and ``read_excel`` will consider that the array to read has only one dimension. For an array stored as:
     
@@ -456,7 +452,7 @@ cells:
 
 
 - markdown: |
-    ### NaNs and Missing Data Handling at Reading (CSV, Excel)
+    ## NaNs and Missing Data Handling at Reading (CSV, Excel)
     
     Sometimes, there is no data available for some label combinations. In the example below, the rows corresponding to `France - Male` and `Germany - Female` are missing:
     
@@ -491,7 +487,7 @@ cells:
 
 
 - markdown: |
-    ### Sorting Axes at Reading (CSV, Excel, HDF5)
+    ## Sorting Axes at Reading (CSV, Excel, HDF5)
     
     The ``sort_rows`` and ``sort_columns`` arguments of the reading functions allows you to sort rows and columns alphabetically:
 
@@ -510,7 +506,7 @@ cells:
 
 
 - markdown: |
-    ### Metadata (HDF5)
+    ## Metadata (HDF5)
     
     Since the version 0.29 of LArray, it is possible to add metadata to arrays:
 
@@ -538,154 +534,6 @@ cells:
       **Warning:** Currently, metadata associated with arrays cannot be saved and loaded when working with CSV and Excel files.
       This restriction does not apply however to metadata associated with sessions.
     </div>
-
-
-- markdown: |
-    ## Loading and Dumping Sessions
-    
-    One of the main advantages of grouping arrays, axes and groups in session objects is that you can load and save all of them in one shot. Like arrays, it is possible to associate metadata to a session. These can be saved and loaded in all file formats. 
-
-
-- markdown: |
-    ### Loading Sessions (CSV, Excel, HDF5)
-    
-    To load the items of a session, you have two options:
-    
-    1) Instantiate a new session and pass the path to the Excel/HDF5 file or to the directory containing CSV files to the Session constructor:
-
-
-- code: |
-    # create a new Session object and load all arrays, axes, groups and metadata 
-    # from all CSV files located in the passed directory
-    csv_dir = get_example_filepath('demography_eurostat')
-    demography_session = Session(csv_dir)
-    
-    # create a new Session object and load all arrays, axes, groups and metadata
-    # stored in the passed Excel file
-    filepath_excel = get_example_filepath('demography_eurostat.xlsx')
-    demography_session = Session(filepath_excel)
-    
-    # create a new Session object and load all arrays, axes, groups and metadata
-    # stored in the passed HDF5 file
-    filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    demography_session = Session(filepath_hdf)
-    
-    print(demography_session.summary())
-
-
-- markdown: |
-    2) Call the ``load`` method on an existing session and pass the path to the Excel/HDF5 file or to the directory containing CSV files as first argument:
-
-
-- code: |
-    # create a session containing 3 axes, 2 groups and one array 'population'
-    filepath = get_example_filepath('population_only.xlsx')
-    demography_session = Session(filepath)
-    
-    print(demography_session.summary())
-
-
-- code: |
-    # call the load method on the previous session and add the 'births' and 'deaths' arrays to it
-    filepath = get_example_filepath('births_and_deaths.xlsx')
-    demography_session.load(filepath)
-    
-    print(demography_session.summary())
-
-
-- markdown: |
-    The ``load`` method offers some options:
-    
-    1) Using the ``names`` argument, you can specify which items to load:
-
-
-- code: |
-    births_and_deaths_session = Session()
-    
-    # use the names argument to only load births and deaths arrays
-    births_and_deaths_session.load(filepath_hdf, names=['births', 'deaths'])
-    
-    print(births_and_deaths_session.summary())
-
-
-- markdown: |
-    2) Setting the ``display`` argument to True, the ``load`` method will print a message each time a new item is loaded:  
-
-
-- code: |
-    demography_session = Session()
-    
-    # with display=True, the load method will print a message
-    # each time a new item is loaded
-    demography_session.load(filepath_hdf, display=True)
-
-
-- markdown: |
-    ### Dumping Sessions (CSV, Excel, HDF5)
-    
-    To save a session, you need to call the ``save`` method. The first argument is the path to a Excel/HDF5 file or to a directory if items are saved to CSV files:
-
-
-- code: |
-    # save items of a session in CSV files.
-    # Here, the save method will create a 'demography' directory in which CSV files will be written 
-    demography_session.save('demography')
-    
-    # save the session to an HDF5 file
-    demography_session.save('demography.h5')
-    
-    # save the session to an Excel file
-    demography_session.save('demography.xlsx')
-    
-    # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
-
-
-- markdown: |
-    <div class="alert alert-info">
-      Note: Concerning the CSV and Excel formats, the metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`. This sheet (CSV file) name cannot be changed. 
-    </div>
-
-
-- markdown: |
-    The ``save`` method has several arguments:
-    
-    1) Using the ``names`` argument, you can specify which items to save:
-
-
-- code: |
-    # use the names argument to only save births and deaths arrays
-    demography_session.save('demography.h5', names=['births', 'deaths'])
-    
-    # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
-
-
-- markdown: |
-    2) By default, dumping a session to an Excel or HDF5 file will overwrite it. By setting the ``overwrite`` argument to False, you can choose to update the existing Excel or HDF5 file: 
-
-
-- code: |
-    population = read_csv('./demography/population.csv')
-    population_session = Session([('population', population)])
-    
-    # by setting overwrite to False, the destination file is updated instead of overwritten.
-    # The items already stored in the file but not present in the session are left intact. 
-    # On the contrary, the items that exist in both the file and the session are completely overwritten.
-    population_session.save('demography.h5', overwrite=False)
-    
-    # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
-
-
-- markdown: |
-    3) Setting the ``display`` argument to True, the ``save`` method will print a message each time an item is dumped:  
-
-
-- code: |
-    # with display=True, the save method will print a message
-    # each time an item is dumped
-    demography_session.save('demography.h5', display=True)
 
 
 # The lines below here may be deleted if you do not need them.

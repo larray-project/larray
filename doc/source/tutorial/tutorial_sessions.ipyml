@@ -1,7 +1,7 @@
 cells:
 
 - markdown: |
-    ## Working With Sessions
+    # Working With Sessions
 
 
 - markdown: |
@@ -13,13 +13,161 @@ cells:
 
 
 - markdown: |
-    ### Before To Continue
+    ## Before To Continue
     
-    If you not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) and [Loading and Dumping Sessions](tutorial_IO.ipynb#Loading-and-Dumping-Sessions) sections of the tutorial before going further.  
+    If you not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) section of the tutorial before going further.  
 
 
 - markdown: |
-    ### Exploring Content
+    ## Loading and Dumping Sessions
+    
+    One of the main advantages of grouping arrays, axes and groups in session objects is that you can load and save all of them in one shot. Like arrays, it is possible to associate metadata to a session. These can be saved and loaded in all file formats. 
+
+
+- markdown: |
+    ### Loading Sessions (CSV, Excel, HDF5)
+    
+    To load the items of a session, you have two options:
+    
+    1) Instantiate a new session and pass the path to the Excel/HDF5 file or to the directory containing CSV files to the Session constructor:
+
+
+- code: |
+    # create a new Session object and load all arrays, axes, groups and metadata 
+    # from all CSV files located in the passed directory
+    csv_dir = get_example_filepath('demography_eurostat')
+    demography_session = Session(csv_dir)
+    
+    # create a new Session object and load all arrays, axes, groups and metadata
+    # stored in the passed Excel file
+    filepath_excel = get_example_filepath('demography_eurostat.xlsx')
+    demography_session = Session(filepath_excel)
+    
+    # create a new Session object and load all arrays, axes, groups and metadata
+    # stored in the passed HDF5 file
+    filepath_hdf = get_example_filepath('demography_eurostat.h5')
+    demography_session = Session(filepath_hdf)
+    
+    print(demography_session.summary())
+
+
+- markdown: |
+    2) Call the ``load`` method on an existing session and pass the path to the Excel/HDF5 file or to the directory containing CSV files as first argument:
+
+
+- code: |
+    # create a session containing 3 axes, 2 groups and one array 'population'
+    filepath = get_example_filepath('population_only.xlsx')
+    demography_session = Session(filepath)
+    
+    print(demography_session.summary())
+
+
+- code: |
+    # call the load method on the previous session and add the 'births' and 'deaths' arrays to it
+    filepath = get_example_filepath('births_and_deaths.xlsx')
+    demography_session.load(filepath)
+    
+    print(demography_session.summary())
+
+
+- markdown: |
+    The ``load`` method offers some options:
+    
+    1) Using the ``names`` argument, you can specify which items to load:
+
+
+- code: |
+    births_and_deaths_session = Session()
+    
+    # use the names argument to only load births and deaths arrays
+    births_and_deaths_session.load(filepath_hdf, names=['births', 'deaths'])
+    
+    print(births_and_deaths_session.summary())
+
+
+- markdown: |
+    2) Setting the ``display`` argument to True, the ``load`` method will print a message each time a new item is loaded:  
+
+
+- code: |
+    demography_session = Session()
+    
+    # with display=True, the load method will print a message
+    # each time a new item is loaded
+    demography_session.load(filepath_hdf, display=True)
+
+
+- markdown: |
+    ### Dumping Sessions (CSV, Excel, HDF5)
+    
+    To save a session, you need to call the ``save`` method. The first argument is the path to a Excel/HDF5 file or to a directory if items are saved to CSV files:
+
+
+- code: |
+    # save items of a session in CSV files.
+    # Here, the save method will create a 'demography' directory in which CSV files will be written 
+    demography_session.save('demography')
+    
+    # save the session to an HDF5 file
+    demography_session.save('demography.h5')
+    
+    # save the session to an Excel file
+    demography_session.save('demography.xlsx')
+    
+    # load session saved in 'demography.h5' to see its content
+    Session('demography.h5')
+
+
+- markdown: |
+    <div class="alert alert-info">
+      Note: Concerning the CSV and Excel formats, the metadata is saved in one Excel sheet (CSV file) named `__metadata__(.csv)`. This sheet (CSV file) name cannot be changed. 
+    </div>
+
+
+- markdown: |
+    The ``save`` method has several arguments:
+    
+    1) Using the ``names`` argument, you can specify which items to save:
+
+
+- code: |
+    # use the names argument to only save births and deaths arrays
+    demography_session.save('demography.h5', names=['births', 'deaths'])
+    
+    # load session saved in 'demography.h5' to see its content
+    Session('demography.h5')
+
+
+- markdown: |
+    2) By default, dumping a session to an Excel or HDF5 file will overwrite it. By setting the ``overwrite`` argument to False, you can choose to update the existing Excel or HDF5 file: 
+
+
+- code: |
+    population = read_csv('./demography/population.csv')
+    population_session = Session([('population', population)])
+    
+    # by setting overwrite to False, the destination file is updated instead of overwritten.
+    # The items already stored in the file but not present in the session are left intact. 
+    # On the contrary, the items that exist in both the file and the session are completely overwritten.
+    population_session.save('demography.h5', overwrite=False)
+    
+    # load session saved in 'demography.h5' to see its content
+    Session('demography.h5')
+
+
+- markdown: |
+    3) Setting the ``display`` argument to True, the ``save`` method will print a message each time an item is dumped:  
+
+
+- code: |
+    # with display=True, the save method will print a message
+    # each time an item is dumped
+    demography_session.save('demography.h5', display=True)
+
+
+- markdown: |
+    ## Exploring Content
     
     To get the list of items names of a session, use the [names](../_generated/larray.Session.names.rst#larray.Session.names) shortcut (be careful that the list is sorted alphabetically and does not follow the internal order!):
 
@@ -43,7 +191,7 @@ cells:
 
 
 - markdown: |
-    ### Selecting And Filtering Items
+    ## Selecting And Filtering Items
     
     Session objects work like ordinary ``dict`` Python objects. To select an item, use the usual syntax ``<session_var>['<item_name>']``: 
 
@@ -91,7 +239,7 @@ cells:
 
 
 - markdown: |
-    ### Iterating over Items
+    ## Iterating over Items
     
     Like the built-in Python ``dict`` objects, Session objects provide methods to iterate over items:  
 
@@ -124,7 +272,7 @@ cells:
 
 
 - markdown: |
-    ### Arithmetic Operations On Sessions
+    ## Arithmetic Operations On Sessions
     
     Session objects accept binary operations with a scalar:
 
@@ -165,7 +313,7 @@ cells:
 
 
 - markdown: |
-    ### Applying Functions On All Arrays
+    ## Applying Functions On All Arrays
     
     In addition to the classical arithmetic operations, the [apply](../_generated/larray.Session.apply.rst#larray.Session.apply) method can be used to apply the same function on all arrays. This function should take a single element argument and return a single value:
 
@@ -218,7 +366,7 @@ cells:
 
 
 - markdown: |
-    ### Comparing Sessions
+    ## Comparing Sessions
     
     Being able to compare two sessions may be useful when you want to compare two different models expected to give the same results or when you have updated your model and want to see what are the consequences of the recent changes.
 
@@ -329,7 +477,7 @@ cells:
 
 
 - markdown: |
-    ### Session API
+    ## Session API
     
     Please go to the [Session](../api.rst#session) section of the API Reference to get the list of all methods of Session objects.
 
