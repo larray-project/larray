@@ -2,7 +2,32 @@ cells:
 
 - markdown: |
     # Aggregations
+
+
+- markdown: |
+    Import the LArray library:
+
+
+- code: |
+    from larray import *
+
+
+- markdown: |
+    Load the `population` array from the `demography_eurostat` dataset:
+
+
+- code: |
+    # load the 'demography_eurostat' dataset
+    demography_eurostat = load_example_data('demography_eurostat')
     
+    # extract the 'population' array
+    population = demography_eurostat.population
+    
+    # show the 'population' array
+    population
+
+
+- markdown: |
     The LArray library provides many aggregation functions. The list is given in the [Aggregation Functions](../api.rst#aggregation-functions) subsection of the [API Reference](../api.rst) page.
     
     Aggregation operations can be performed on axes or groups. Axes and groups can be mixed. 
