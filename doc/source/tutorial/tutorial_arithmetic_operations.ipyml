@@ -20,6 +20,11 @@ cells:
     # load the 'demography_eurostat' dataset
     demography_eurostat = load_example_data('demography_eurostat')
     
+    # extract the 'country', 'gender' and 'time' axes
+    country = demography_eurostat.country
+    gender = demography_eurostat.gender
+    time = demography_eurostat.time
+    
     # extract the 'population' array
     population = demography_eurostat.population
     
@@ -31,26 +36,19 @@ cells:
     ## Basics
 
 
-- code: |
-    # let us also imagine a constant growth rate of the population
-    constant_growth_rate = Array(data=[[1.011, 1.010], [1.013, 1.011], [1.010, 1.009]], 
-                                 axes=population.axes - population.time)
-    constant_growth_rate
-
-
 - markdown: |
     One can do all usual arithmetic operations on an array, it will apply the operation to all elements individually
 
 
 - code: |
     # 'true' division
-    population_in_millions = population / (10**6)
+    population_in_millions = population / 1_000_000
     population_in_millions
 
 
 - code: |
     # 'floor' division
-    population_in_millions = population // (10**6)
+    population_in_millions = population // 1_000_000
     population_in_millions
 
 
@@ -65,28 +63,36 @@ cells:
 
 - code: |
     # % means modulo (aka remainder of division)
-    population % (10**6)
+    population % 1_000_000
 
 
 - code: |
     # ** means raising to the power
-    constant_growth_rate ** 3
+    print(ndtest(4))
+    ndtest(4) ** 3
 
 
 - markdown: |
-    More interestingly, binary operators as above also works between two arrays:
+    More interestingly, binary operators as above also works between two arrays.
+    
+    Let us imagine a rate of population growth which is constant over time but different by gender and country:
 
 
 - code: |
-    # first, we store the population of the year 2017 in a new variable
+    growth_rate = Array(data=[[1.011, 1.010], [1.013, 1.011], [1.010, 1.009]], axes=[country, gender])
+    growth_rate
+
+
+- code: |
+    # we store the population of the year 2017 in a new variable
     population_2017 = population[2017]
     population_2017
 
 
 - code: |
     # perform an arithmetic operation between two arrays
-    population_2020 = population_2017 * (constant_growth_rate ** 3)
-    population_2020
+    population_2018 = population_2017 * growth_rate
+    population_2018
 
 
 - markdown: |
@@ -98,8 +104,8 @@ cells:
 
 - code: |
     # force the resulting matrix to be an integer matrix
-    population_2020 = (population_2017 * (constant_growth_rate ** 3)).astype(int)
-    population_2020
+    population_2018 = (population_2017 * growth_rate).astype(int)
+    population_2018
 
 
 - markdown: |
@@ -111,7 +117,7 @@ cells:
 
 - code: |
     # let's change the order of axes of the 'constant_growth_rate' array
-    transposed_growth_rate = constant_growth_rate.transpose()
+    transposed_growth_rate = growth_rate.transpose()
     
     # look at the order of the new 'transposed_growth_rate' array:
     # 'gender' is the first axis while 'country' is the second
@@ -150,7 +156,7 @@ cells:
     # let us imagine that the labels of the 'country' axis 
     # of the 'constant_growth_rate' array are in a different order
     # than in the 'population_2017' array
-    reordered_growth_rate = constant_growth_rate.reindex('country', ['Germany', 'Belgium', 'France'])
+    reordered_growth_rate = growth_rate.reindex('country', ['Germany', 'Belgium', 'France'])
     reordered_growth_rate
 
 
@@ -172,8 +178,8 @@ cells:
     # the 'constant_growth_rate' array has an extra 
     # label 'Netherlands' compared to the same axis of 
     # the 'population_2017' array
-    growth_rate_Netherlands = Array([1.012, 1.], population.gender)
-    growth_rate_extra_country = constant_growth_rate.append('country', growth_rate_Netherlands, label='Netherlands')
+    growth_rate_netherlands = Array([1.012, 1.], population.gender)
+    growth_rate_extra_country = growth_rate.append('country', growth_rate_netherlands, label='Netherlands')
     growth_rate_extra_country
 
 
@@ -204,7 +210,7 @@ cells:
     # let us imagine that the labels of the 'country' axis 
     # of the 'constant_growth_rate' array are the 
     # country codes instead of the country full names
-    growth_rate_country_codes = constant_growth_rate.set_labels('country', ['BE', 'FR', 'DE'])
+    growth_rate_country_codes = growth_rate.set_labels('country', ['BE', 'FR', 'DE'])
     growth_rate_country_codes
 
 
@@ -240,7 +246,7 @@ cells:
 
 
 - code: |
-    gender_proportion = Array([0.49, 0.51], population.gender)
+    gender_proportion = Array([0.49, 0.51], gender)
     gender_proportion
 
 
@@ -250,11 +256,11 @@ cells:
 
 - code: |
     # define a new variable with both 'country' and 'gender' axes to store the result
-    population_by_country_and_gender = zeros([population_by_country.country, gender_proportion.gender], dtype=int)
+    population_by_country_and_gender = zeros([country, gender], dtype=int)
     
     # loop over the 'country' and 'gender' axes 
-    for c in population_by_country.country:
-        for g in gender_proportion.gender:
+    for c in country:
+        for g in gender:
             population_by_country_and_gender[c, g] = population_by_country[c] * gender_proportion[g]
     
     # display the result
@@ -287,7 +293,7 @@ cells:
 
 - code: |
     gender_proportion_by_year = Array([[0.49, 0.485, 0.495, 0.492, 0.498], 
-                                       [0.51, 0.515, 0.505, 0.508, 0.502]], [population.gender, population.time])
+                                       [0.51, 0.515, 0.505, 0.508, 0.502]], [gender, time])
     gender_proportion_by_year
 
 
@@ -302,8 +308,8 @@ cells:
     population_by_country_gender_year = zeros(axes_union, dtype=int)
     
     # loop over axes which are not in common 
-    for c in population_by_country_and_year.country:
-        for g in gender_proportion_by_year.gender:
+    for c in country:
+        for g in gender:
             # all subsets below have the same 'time' axis
             population_by_country_gender_year[c, g] = population_by_country_and_year[c] * gender_proportion_by_year[g]
             
