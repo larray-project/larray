@@ -25,9 +25,8 @@ cells:
     gender = demography_eurostat.gender
     time = demography_eurostat.time
     
-    # build 'population' array including 5 countries
-    population = demography_eurostat.population[['France', 'Germany']]
-    population = population.extend('country', demography_eurostat.population_benelux)
+    # extract the 'population_5_countries' array as 'population'
+    population = demography_eurostat.population_5_countries
     
     # show the 'population' array
     population
@@ -85,6 +84,10 @@ cells:
 
 - code: |
     population.sum(gender, (benelux, fr_de))
+
+
+- code: |
+
 
 
 # The lines below here may be deleted if you do not need them.
