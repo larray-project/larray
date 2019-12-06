@@ -18,8 +18,8 @@ cells:
 
 
 - code: |
-    # get a copy of the 'population' array from the 'demography_eurostat' dataset
-    population = demography_eurostat.population.copy()
+    # load the 'population' array from the 'demography_eurostat' dataset
+    population = demography_eurostat.population
     population
 
 
