@@ -74,7 +74,7 @@ cells:
 
 - code: |
     # attach some metadata to the population array
-    population.meta.title = 'population by age, sex and year'
+    population.meta.title = 'population by age, gender and year'
     population.meta.source = 'Eurostat'
     
     # display metadata
@@ -313,7 +313,7 @@ cells:
 
 
 - markdown: |
-    We can sum along the 'sex' axis using:
+    We can sum along the 'gender' axis using:
 
 
 - code: |
@@ -321,7 +321,7 @@ cells:
 
 
 - markdown: |
-    Or sum along both 'age' and 'sex':
+    Or sum along both 'age' and 'gender':
 
 
 - code: |

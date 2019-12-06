@@ -27,11 +27,11 @@ cells:
     # labels given as a list
     time = Axis([2007, 2008, 2009], 'time')
     # create an axis using one string
-    sex = Axis('sex=M,F')
+    gender = Axis('gender=M,F')
     # labels generated using a special syntax
     other = Axis('other=A01..C03')
     
-    age, sex, time, other
+    age, gender, time, other
 
 
 - markdown: |
@@ -92,7 +92,7 @@ cells:
     import numpy as np
     
     # list of the axes
-    axes = [age, sex, time, other]
+    axes = [age, gender, time, other]
     # data (the shape of data array must match axes lengths)
     data = np.random.randint(100, size=[len(axis) for axis in axes])
     # metadata
@@ -145,7 +145,7 @@ cells:
     
     -  as Axis objects
     -  as integers defining the lengths of auto-generated wildcard axes
-    -  as a string : 'sex=M,F;time=2007,2008,2009' (name is optional)
+    -  as a string : 'gender=M,F;time=2007,2008,2009' (name is optional)
     -  as pairs (name, labels)
     
     Optionally, the type of data stored by the array can be specified using argument dtype.
@@ -153,7 +153,7 @@ cells:
 
 - code: |
     # start defines the starting value of data
-    ndtest(['age=0..2', 'sex=M,F', 'time=2007..2009'], start=-1)
+    ndtest(['age=0..2', 'gender=M,F', 'time=2007..2009'], start=-1)
 
 
 - code: |
@@ -169,7 +169,7 @@ cells:
     # of memory that is available, with whatever content is there.
     # Use it only if performance matters and make sure all data
     # will be overridden.
-    empty(['age=0..2', 'sex=M,F', 'time=2007..2009'])
+    empty(['age=0..2', 'gender=M,F', 'time=2007..2009'])
 
 
 - code: |
@@ -179,11 +179,11 @@ cells:
 
 - code: |
     # dtype=int forces to store int data instead of default float
-    ones(['age=0..2', 'sex=M,F', 'time=2007..2009'], dtype=int)
+    ones(['age=0..2', 'gender=M,F', 'time=2007..2009'], dtype=int)
 
 
 - code: |
-    full(['age=0..2', 'sex=M,F', 'time=2007..2009'], 1.23)
+    full(['age=0..2', 'gender=M,F', 'time=2007..2009'], 1.23)
 
 
 - markdown: |
@@ -200,7 +200,7 @@ cells:
 
 - code: |
     # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
-    sequence('sex=M,F', initial=1.0, inc=0.5)
+    sequence('gender=M,F', initial=1.0, inc=0.5)
 
 
 - markdown: |
@@ -209,7 +209,7 @@ cells:
 
 - code: |
     # create a test array
-    arr = ndtest([age, sex, time, other])
+    arr = ndtest([age, gender, time, other])
 
 
 - markdown: |
