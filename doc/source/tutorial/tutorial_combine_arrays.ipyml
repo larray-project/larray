@@ -30,7 +30,7 @@ cells:
     - [append](../_generated/larray.Array.append.rst#larray.Array.append): adds an array at the end of an axis.
     - [prepend](../_generated/larray.Array.prepend.rst#larray.Array.prepend): adds an array at the beginning of an axis.
     - [extend](../_generated/larray.Array.extend.rst#larray.Array.extend): extends an array along an axis.
-    - [stack](../_generated/larray.stack.rst#larray.stack): combines several arrays along an axis.
+    - [stack](../_generated/larray.stack.rst#larray.stack): combines several arrays along a new axis.
 
 
 - markdown: |
