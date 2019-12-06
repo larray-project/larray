@@ -273,7 +273,7 @@ cells:
 
 - code: |
     # the outer product is done automatically.
-    # No need to use any loop -> save a lot of computation time
+    # No need to use any loop -> saves a lot of computation time
     population_by_country_and_gender = population_by_country * gender_proportion
     
     # display the result
@@ -302,12 +302,13 @@ cells:
 
 
 - code: |
-    # the union of the axes from two arrays is simple done using the '+' operator
-    axes_union = population_by_country_and_year.axes + gender_proportion_by_year.axes
-    # define a new variable with axes defined above to store the result
-    population_by_country_gender_year = zeros(axes_union, dtype=int)
+    # define a new variable to store the result.
+    # Its axes is the union of the axes of the two arrays 
+    # involved in the arithmetic operation
+    population_by_country_gender_year = zeros([country, gender, time], dtype=int)
     
-    # loop over axes which are not in common 
+    # loop over axes which are not present in both arrays
+    # involved in the arithmetic operation
     for c in country:
         for g in gender:
             # all subsets below have the same 'time' axis
@@ -321,7 +322,7 @@ cells:
 
 
 - code: |
-    # No need to use any loop -> save a lot of computation time
+    # No need to use any loop -> saves a lot of computation time
     population_by_country_gender_year = population_by_country_and_year * gender_proportion_by_year
     
     # display the result
@@ -334,7 +335,7 @@ cells:
         In particular, if axes which are supposed to be common are not, you will get a resulting array with extra axes you didn't want. 
     </div>
     
-    For example, image that the name of the `time` axis is `time` for the first array and `period` for the second:
+    For example, imagine that the name of the `time` axis is `time` for the first array but `period` for the second:
 
 
 - code: |
@@ -347,12 +348,11 @@ cells:
 
 
 - code: |
-    # the "time" axis of the 'population_by_country_and_year' and 'gender_proportion_by_year' 
-    # arrays below has two different names: 'time' and 'period'.
-    # LArray will treat them as two different axes
+    # the two arrays below have a "time" axis with two different names: 'time' and 'period'.
+    # LArray will treat the "time" axis of the two arrays as two different "time" axes
     population_by_country_gender_year = population_by_country_and_year * gender_proportion_by_year
     
-    # the result below is not what we expected
+    # as a consequence, the result of the multiplication of the two arrays is not what we expected
     population_by_country_gender_year.astype(int)
 
 
