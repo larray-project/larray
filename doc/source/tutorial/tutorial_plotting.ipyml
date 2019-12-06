@@ -13,15 +13,14 @@ cells:
 
 
 - markdown: |
-    Import a subset of the test array ``population``:
+    Import the test array `population` from the `demography_eurostat` dataset:
 
 
 - code: |
-    # load 'demography_eurostat' dataset
     demography_eurostat = load_example_data('demography_eurostat')
-    
-    # extract the 'population' array from the dataset 
     population = demography_eurostat.population / 1_000_000
+    
+    # show the 'population' array
     population
 
 
