@@ -13,7 +13,7 @@ cells:
 
 
 - markdown: |
-    Load the `population` array from the `demography_eurostat` dataset:
+    Load the `population` array and related axes from the `demography_eurostat` dataset:
 
 
 - code: |
@@ -84,10 +84,6 @@ cells:
 
 - code: |
     population.sum(gender, (benelux, fr_de))
-
-
-- code: |
-
 
 
 # The lines below here may be deleted if you do not need them.
