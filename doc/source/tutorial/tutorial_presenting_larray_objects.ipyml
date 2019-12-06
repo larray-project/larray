@@ -286,6 +286,20 @@ cells:
 
 
 - markdown: |
+    ### Extract an axis from an array
+
+
+- markdown: |
+    It is possible to extract an axis belonging to an array using its name:
+
+
+- code: |
+    # extract the 'time' axis belonging to the 'arr' array
+    time = arr.time
+    time
+
+
+- markdown: |
     ### More on Array objects
     
     To know how to save and load arrays in CSV, Excel or HDF format, please refer to the [Loading and Dumping Arrays](tutorial_IO.ipynb#Loading-and-Dumping-Arrays) section of the tutorial.

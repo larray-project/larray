@@ -288,36 +288,13 @@ cells:
 
 
 - markdown: |
-    ## Extract an axis from an array
-
-
-- markdown: |
-    It is possible to extract an axis belonging to an array using its name:
-
-
-- code: |
-    # extract the 'time' axis belonging to the 'population' array
-    time = population.time
-    time
-
-
-- markdown: |
-    ## Iterating over labels
+    ## Iterating over an axis
     
     To iterate over an axis, use the following syntax:
 
 
 - code: |
     for year in time:
-        print(year)
-
-
-- markdown: |
-    Or if the axis is not store in a dedicated variable but belongs to an array:
-
-
-- code: |
-    for year in population.time:
         print(year)
 
 

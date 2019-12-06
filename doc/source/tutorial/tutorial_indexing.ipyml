@@ -246,7 +246,7 @@ cells:
 
 
 - markdown: |
-    ## Iterating over axes
+    ## Iterating over an axis
     
     Iterating over an axis is straightforward:
 
