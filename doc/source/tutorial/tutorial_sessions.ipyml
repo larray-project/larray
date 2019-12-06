@@ -15,7 +15,7 @@ cells:
 - markdown: |
     ## Before To Continue
     
-    If you not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) section of the tutorial before going further.  
+    If you are not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) section of the tutorial before going further.  
 
 
 - markdown: |
