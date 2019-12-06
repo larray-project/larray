@@ -12,14 +12,15 @@ cells:
     from larray import *
 
 
+- markdown: |
+    Import the `population` array from the `demography_eurostat` dataset:
+
+
 - code: |
-    # load the 'demography_eurostat' dataset
     demography_eurostat = load_example_data('demography_eurostat')
-
-
-- code: |
-    # get a copy of the 'population' array from the 'demography_eurostat' dataset
-    population = demography_eurostat.population.copy()
+    population = demography_eurostat.population
+    
+    # display the 'population' array
     population
 
 
