@@ -20,8 +20,14 @@ cells:
     # load the 'demography_eurostat' dataset
     demography_eurostat = load_example_data('demography_eurostat')
     
-    # extract the 'population' array
-    population = demography_eurostat.population
+    # extract the 'country', 'gender' and 'time' axes
+    country = demography_eurostat.country
+    gender = demography_eurostat.gender
+    time = demography_eurostat.time
+    
+    # build 'population' array including 5 countries
+    population = demography_eurostat.population[['France', 'Germany']]
+    population = population.extend('country', demography_eurostat.population_benelux)
     
     # show the 'population' array
     population
@@ -43,7 +49,7 @@ cells:
 
 
 - code: |
-    population.sum('gender')
+    population.sum(gender)
 
 
 - markdown: |
@@ -51,7 +57,7 @@ cells:
 
 
 - code: |
-    population.sum('country', 'gender')
+    population.sum(country, gender)
 
 
 - markdown: |
@@ -59,7 +65,7 @@ cells:
 
 
 - code: |
-    population.sum_by('time')
+    population.sum_by(time)
 
 
 - markdown: |
@@ -67,10 +73,10 @@ cells:
 
 
 - code: |
-    even_years = population.time[2014::2] >> 'even_years'
-    odd_years = population.time[2013::2] >> 'odd_years'
+    benelux = population.country['Belgium', 'Netherlands', 'Luxembourg'] >> 'benelux'
+    fr_de = population.country['France', 'Germany'] >> 'FR+DE'
     
-    population.sum((odd_years, even_years))
+    population.sum((benelux, fr_de))
 
 
 - markdown: |
@@ -78,7 +84,7 @@ cells:
 
 
 - code: |
-    population.sum('gender', (odd_years, even_years))
+    population.sum(gender, (benelux, fr_de))
 
 
 # The lines below here may be deleted if you do not need them.
