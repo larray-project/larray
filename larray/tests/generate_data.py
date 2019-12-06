@@ -102,6 +102,10 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
     population_benelux.meta.title = 'Population on 1 January by age and sex (Benelux)'
     population_benelux.meta.source = 'table demo_pjan from Eurostat'
     # ----
+    population_5_countries = population.extend('country', population_benelux[['Luxembourg', 'Netherlands']])
+    population_5_countries.meta.title = 'Population on 1 January by age and sex (Benelux + France + Germany)'
+    population_5_countries.meta.source = 'table demo_pjan from Eurostat'
+    # ----
     births = prepare_eurostat_data('demo_fasec', countries)
     births.meta.title = "Live births by mother's age and newborn's sex"
     births.meta.source = 'table demo_fasec from Eurostat'
@@ -124,6 +128,7 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
                    'gender': population.gender, 'time': population.time,
                    'even_years': even_years, 'odd_years': odd_years,
                    'population': population, 'population_benelux': population_benelux,
+                   'population_5_countries': population_5_countries,
                    'births': births, 'deaths': deaths, 'immigration': immigration})
     ses.meta.title = 'Demographic datasets for a small selection of countries in Europe'
     ses.meta.source = 'demo_jpan, demo_fasec, demo_magec and migr_imm1ctz tables from Eurostat'
