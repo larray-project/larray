@@ -174,3 +174,17 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, check_num=Tr
             warning_path = caught_warnings[0].filename
             assert warning_path == caller_path, \
                 f"{warning_path} != {caller_path}"
+
+
+@contextmanager
+def must_raise(warn_cls=None, msg=None, match=None):
+    if msg is not None and match is not None:
+        raise ValueError("bad test: can't use both msg and match arguments")
+    elif msg is not None:
+        match = re.escape(msg)
+
+    try:
+        with pytest.raises(warn_cls, match=match) as error:
+            yield error
+    finally:
+        pass

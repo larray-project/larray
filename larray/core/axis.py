@@ -839,7 +839,7 @@ class Axis(ABCAxis):
         -----
         key is label-based (slice and fancy indexing are supported)
         """
-        # if isinstance(key, basestring):
+        # if isinstance(key, str):
         #     key = to_keys(key)
 
         def isscalar(k):
@@ -862,7 +862,7 @@ class Axis(ABCAxis):
             and key.name in self
         ):
             return LGroup(key.name, None, self)
-        # elif isinstance(key, basestring) and key in self:
+        # elif isinstance(key, str) and key in self:
             # TODO: this is an awful workaround to avoid the "processing" of string keys which exist as is in the axis
             #       (probably because the string was used in an aggregate function to create the label)
             # res = LGroup(slice(None), None, self)

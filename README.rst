@@ -129,6 +129,12 @@ For plotting
 - `matplotlib <http://matplotlib.org/>`__:
   required for plotting.
 
+Miscellaneous
+~~~~~~~~~~~~~
+
+- `pydantic <https://github.com/samuelcolvin/pydantic>`__:
+  required to use `CheckedSession`.
+
 .. _start-documentation:
 
 Documentation

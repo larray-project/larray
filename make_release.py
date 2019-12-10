@@ -39,9 +39,11 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
     print(f'Updating larrayenv metapackage to version {version}')
     # - excluded versions 5.0 and 5.1 of ipykernel because these versions make the console useless after any exception
     #   https://github.com/larray-project/larray-editor/issues/166
+    # - pydantic: cannot define numpy ndarray / pandas obj / LArray field with default value
+    #   since version 1.6
     check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', f'larray =={version}',
                 f'larray-editor =={version}', f'larray_eurostat =={version}',
-                "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables",
+                "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables", "pydantic <=1.5",
                 "xlsxwriter", "xlrd", "xlwt", "openpyxl", "xlwings", "ipykernel !=5.0,!=5.1.0",
                 '--user', 'larray-project',
                 '--home', 'http://github.com/larray-project/larray',
