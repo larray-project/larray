@@ -452,7 +452,7 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False):
 
     Parameters
     ----------
-    s : basestring
+    s : str
         string to parse
 
     Returns
@@ -496,7 +496,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
 
     Parameters
     ----------
-    v : int or basestring or tuple or list or slice or Array or Group
+    v : int or str or tuple or list or slice or Array or Group
         value to convert into a key usable for indexing
 
     Returns
@@ -598,7 +598,7 @@ def _to_keys(value, stack_depth=1):
 
     Parameters
     ----------
-    value : int or basestring or tuple or list or slice or Array or Group
+    value : int or str or tuple or list or slice or Array or Group
         (collection of) value(s) to convert into key(s) usable for indexing
 
     Returns

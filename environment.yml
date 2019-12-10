@@ -13,3 +13,4 @@ dependencies:
   - flake8
   - pip:
     - pytest-flake8
+    - pydantic==1.5

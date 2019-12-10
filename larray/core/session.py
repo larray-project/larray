@@ -85,6 +85,7 @@ class Session(object):
         self.meta = meta
 
         if len(args) == 1:
+            assert len(kwargs) == 0
             a0 = args[0]
             if isinstance(a0, str):
                 # assume a0 is a filename
@@ -915,7 +916,7 @@ class Session(object):
         r"""Returns a copy of the session.
         """
         # this actually *does* a copy of the internal mapping (the mapping is not reused-as is)
-        return Session(self._objects)
+        return self.__class__(self._objects)
 
     def keys(self):
         r"""
@@ -1042,7 +1043,12 @@ class Session(object):
                             except Exception:
                                 res_item = nan
                     res.append((name, res_item))
-            return Session(res)
+            try:
+                # XXX: print a warning?
+                ses = self.__class__(res)
+            except Exception:
+                ses = Session(res)
+            return ses
         opmethod.__name__ = opfullname
         return opmethod
 
@@ -1072,7 +1078,12 @@ class Session(object):
                     except Exception:
                         res_array = nan
                     res.append((k, res_array))
-            return Session(res)
+            try:
+                # XXX: print a warning?
+                ses = self.__class__(res)
+            except Exception:
+                ses = Session(res)
+            return ses
         opmethod.__name__ = opfullname
         return opmethod
 
