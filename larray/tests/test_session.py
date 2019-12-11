@@ -80,7 +80,7 @@ def test_init_session_xlsx():
 @needs_pytables
 def test_init_session_hdf():
     s = Session(inputpath('test_session.h5'))
-    assert s.names == ['e', 'f', 'g']
+    assert s.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024', 'e', 'f', 'g', 'h']
 
 
 def test_getitem(session):
