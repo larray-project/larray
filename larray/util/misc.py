@@ -904,14 +904,17 @@ class Product:
     [('b', 2), ('c', 1), ('c', 2)]
     >>> list(p)
     [('a', 1), ('a', 2), ('b', 1), ('b', 2), ('c', 1), ('c', 2)]
+    >>> list(Product([['a', 'b', 'c']]))
+    [('a',), ('b',), ('c',)]
+    >>> list(Product([]))
+    [()]
     """
     def __init__(self, sequences):
         self.sequences = sequences
-        assert len(sequences)
         shape = [len(a) for a in self.sequences]
         self._div_mod = [(int(np.prod(shape[i + 1:])), shape[i])
                          for i in range(len(shape))]
-        self._length = np.prod(shape)
+        self._length = np.prod(shape, dtype=int)
 
     def __len__(self):
         return self._length
