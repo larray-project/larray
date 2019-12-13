@@ -3241,14 +3241,21 @@ def test_read_excel_xlwings():
     arr = read_excel(inputpath('test.xlsx'), '2d')
     assert_array_equal(arr, io_2d)
 
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic')
+    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2)
+    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+
     arr = read_excel(inputpath('test.xlsx'), '3d')
     assert_array_equal(arr, io_3d)
 
+    # for > 2d, specifying nb_axes is required if there is no name for the horizontal axis
+    arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3)
+    assert_array_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
+
     arr = read_excel(inputpath('test.xlsx'), 'int_labels')
     assert_array_equal(arr, io_int_labels)
-
-    arr = read_excel(inputpath('test.xlsx'), '2d_classic')
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     # passing a Group as sheet arg
     axis = Axis('dim=1d,2d,3d,5d')
@@ -3256,10 +3263,18 @@ def test_read_excel_xlwings():
     arr = read_excel(inputpath('test.xlsx'), axis['1d'])
     assert_array_equal(arr, io_1d)
 
+    # missing rows, default fill_value
+    arr = read_excel(inputpath('test.xlsx'), 'missing_values')
+    expected = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
+    expected[2, 'b0'] = nan
+    expected[3, 'b1'] = nan
+    assert_array_nan_equal(arr, expected)
+
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
-    expected = io_missing_values.copy()
-    expected[isnan(expected)] = 42
+    expected = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
+    expected[2, 'b0'] = 42
+    expected[3, 'b1'] = 42
     assert_array_equal(arr, expected)
 
     # range
@@ -3325,11 +3340,17 @@ def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
     assert_array_equal(arr, io_1d)
 
+    arr = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
+    assert_array_equal(arr, io_2d)
+
     arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
     assert_array_equal(arr, io_2d)
 
-    arr = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
-    assert_array_equal(arr, io_2d)
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
+    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2, engine='xlrd')
+    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
     assert_array_equal(arr, io_3d)
@@ -3337,11 +3358,12 @@ def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
     assert_array_equal(arr, io_3d)
 
+    # for > 2d, specifying nb_axes is required if there is no name for the horizontal axis
+    arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3, engine='xlrd')
+    assert_array_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
+
     arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='xlrd')
     assert_array_equal(arr, io_int_labels)
-
-    arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     # passing a Group as sheet arg
     axis = Axis('dim=1d,2d,3d,5d')
@@ -3370,7 +3392,7 @@ def test_read_excel_pandas():
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
                      fill_value=42, wide=False, engine='xlrd')
-    expected = io_narrow_missing_values
+    expected = io_narrow_missing_values.copy()
     expected[isnan(expected)] = 42
     assert_array_equal(arr, expected)
 
