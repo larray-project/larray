@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import shutil
+from datetime import date, time, datetime
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ import pytest
 
 from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path, meta,
                                  needs_xlwings, needs_pytables, needs_xlrd)
+from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
 from larray.util.compat import pickle, PY2
@@ -178,7 +180,7 @@ def test_names(session):
 def _test_io(fpath, session, meta, engine):
     is_excel_or_csv = 'excel' in engine or 'csv' in engine
 
-    kind = Array if is_excel_or_csv else (Axis, Group, Array)
+    kind = Array if is_excel_or_csv else (Axis, Group, Array) + _supported_scalars_types
     session = session.filter(kind=kind)
 
     session.meta = meta
@@ -226,8 +228,21 @@ def _test_io(fpath, session, meta, engine):
         assert s.meta == meta
 
 
+def _add_scalars_to_session(s):
+    # 's' for scalar
+    s['s_int'] = 5
+    s['s_float'] = 5.5
+    s['s_bool'] = True
+    s['s_str'] = 'string'
+    s['s_date'] = date(2020, 1, 10)
+    s['s_time'] = time(11, 23, 54)
+    s['s_datetime'] = datetime(2020, 1, 10, 11, 23, 54)
+    return s
+
+
 @needs_pytables
 def test_h5_io(tmpdir, session, meta):
+    session = _add_scalars_to_session(session)
     fpath = tmp_path(tmpdir, 'test_session.h5')
     _test_io(fpath, session, meta, engine='pandas_hdf')
 
@@ -276,6 +291,7 @@ def test_csv_io(tmpdir, session, meta):
 
 
 def test_pickle_io(tmpdir, session, meta):
+    session = _add_scalars_to_session(session)
     fpath = tmp_path(tmpdir, 'test_session.pkl')
     _test_io(fpath, session, meta, engine='pickle')
 

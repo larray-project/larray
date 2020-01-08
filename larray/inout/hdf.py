@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 import warnings
 
 import numpy as np
+import pandas as pd
 from pandas import HDFStore
 
 from larray.core.array import Array
@@ -12,21 +13,27 @@ from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.core.metadata import Metadata
 from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
-from larray.inout.common import FileHandler
+from larray.inout.common import FileHandler, _supported_typenames, _supported_scalars_types
 from larray.inout.pandas import df_asarray
 from larray.example import get_example_filepath
 
 
+# for backward compatibility (larray < 0.29) but any object read from an hdf file should have
+# an attribute 'type'
+def _get_type_from_attrs(attrs):
+    return attrs.type if 'type' in attrs else 'Array'
+
+
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs):
-    r"""Reads an axis or group or array named key from a HDF5 file in filepath (path+name)
+    r"""Reads a scalar or an axis or group or array named key from a HDF5 file in filepath (path+name)
 
     Parameters
     ----------
     filepath_or_buffer : str or pandas.HDFStore
         Path and name where the HDF5 file is stored or a HDFStore object.
     key : str or Group
-        Name of the array.
+        Name of the scalar or axis or group or array.
     fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
@@ -70,11 +77,14 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
     key = _translate_group_key_hdf(key)
     res = None
     with LHDFStore(filepath_or_buffer) as store:
-        pd_obj = store.get(key)
+        try:
+            pd_obj = store.get(key)
+        except KeyError:
+            filepath = filepath_or_buffer if isinstance(filepath_or_buffer, HDFStore) else store.filename
+            raise KeyError('No item with name {} has been found in file {}'.format(key, filepath))
         attrs = store.get_storer(key).attrs
         writer = attrs.writer if 'writer' in attrs else None
-        # for backward compatibility but any object read from an hdf file should have an attribute 'type'
-        _type = attrs.type if 'type' in attrs else 'Array'
+        _type = _get_type_from_attrs(attrs)
         _meta = attrs.metadata if 'metadata' in attrs else None
         if _type == 'Array':
             # cartesian product is not necessary if the array was written by LArray
@@ -110,6 +120,10 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 key = np.char.decode(key, 'utf-8')
             axis = read_hdf(filepath_or_buffer, attrs['axis_key'])
             res = LGroup(key=key, name=name, axis=axis)
+        elif _type in _supported_typenames:
+            res = pd_obj.values
+            assert len(res) == 1
+            res = res[0]
     return res
 
 
@@ -126,36 +140,37 @@ class PandasHDFHandler(FileHandler):
 
     def list_items(self):
         keys = [key.strip('/') for key in self.handle.keys()]
+        items = [(key, _get_type_from_attrs(self.handle.get_storer(key).attrs)) for key in keys if '/' not in key]
+        # ---- for backward compatibility (LArray < 0.33) ----
         # axes
-        items = [(key.split('/')[-1], 'Axis') for key in keys if '__axes__' in key]
+        items += [(key.split('/')[-1], 'Axis_Backward_Comp') for key in keys if '__axes__' in key]
         # groups
-        items += [(key.split('/')[-1], 'Group') for key in keys if '__groups__' in key]
-        # arrays
-        items += [(key, 'Array') for key in keys if '/' not in key]
+        items += [(key.split('/')[-1], 'Group_Backward_Comp') for key in keys if '__groups__' in key]
         return items
 
-    def _read_item(self, key, type, *args, **kwargs):
-        if type == 'Array':
+    def _read_item(self, key, typename, *args, **kwargs):
+        if typename in _supported_typenames:
             hdf_key = '/' + key
-        elif type == 'Axis':
+        # ---- for backward compatibility (LArray < 0.33) ----
+        elif typename == 'Axis_Backward_Comp':
             hdf_key = '__axes__/' + key
-        elif type == 'Group':
+        elif typename == 'Group_Backward_Comp':
             hdf_key = '__groups__/' + key
         else:
             raise TypeError()
         return read_hdf(self.handle, hdf_key, *args, **kwargs)
 
     def _dump_item(self, key, value, *args, **kwargs):
-        if isinstance(value, Array):
-            hdf_key = '/' + key
-            value.to_hdf(self.handle, hdf_key, *args, **kwargs)
-        elif isinstance(value, Axis):
-            hdf_key = '__axes__/' + key
+        hdf_key = '/' + key
+        if isinstance(value, (Array, Axis)):
             value.to_hdf(self.handle, hdf_key, *args, **kwargs)
         elif isinstance(value, Group):
-            hdf_key = '__groups__/' + key
-            hdf_axis_key = '__axes__/' + value.axis.name
+            hdf_axis_key = '/' + value.axis.name
             value.to_hdf(self.handle, hdf_key, hdf_axis_key, *args, **kwargs)
+        elif isinstance(value, _supported_scalars_types):
+            s = pd.Series(data=value)
+            self.handle.put(hdf_key, s)
+            self.handle.get_storer(hdf_key).attrs.type = type(value).__name__
         else:
             raise TypeError()
 
