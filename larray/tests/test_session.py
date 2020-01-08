@@ -67,7 +67,8 @@ def test_init_session(meta):
 @needs_xlwings
 def test_init_session_xlsx():
     s = Session(inputpath('demography_eurostat.xlsx'))
-    assert s.names == ['births', 'deaths', 'immigration', 'pop', 'pop_benelux']
+    assert s.names == ['births', 'deaths', 'immigration', 'population',
+                       'population_5_countries', 'population_benelux']
 
 
 @needs_pytables
