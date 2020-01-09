@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-__version__ = '0.32.1'
+__version__ = '0.33-dev'
 
 
 from larray.core.axis import Axis, AxisCollection, X
