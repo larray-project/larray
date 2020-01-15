@@ -27,6 +27,10 @@ before_install:
     - hash -r
     - conda config --add channels conda-forge
     - conda config --set always_yes yes --set changeps1 no
+    # workaround for conda >= 4.8
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        pip install tqdm;
+      fi
     - conda update -q conda
 
     # Useful for debugging any issues with conda
