@@ -55,4 +55,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed using Pandas >= 1.0 (closes :issue:`845`).
