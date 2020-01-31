@@ -39,13 +39,13 @@ def index_to_labels(idx, sort=True):
     r"""
     Returns unique labels for each dimension.
     """
-    if isinstance(idx, pd.core.index.MultiIndex):
+    if isinstance(idx, pd.MultiIndex):
         if sort:
             return list(idx.levels)
         else:
             return [list(unique(idx.get_level_values(l))) for l in range(idx.nlevels)]
     else:
-        assert isinstance(idx, pd.core.index.Index)
+        assert isinstance(idx, pd.Index)
         labels = list(idx.values)
         return [sorted(labels) if sort else labels]
 
@@ -53,7 +53,7 @@ def index_to_labels(idx, sort=True):
 def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan, **kwargs):
     idx = df.index
     labels = index_to_labels(idx, sort=sort_rows)
-    if isinstance(idx, pd.core.index.MultiIndex):
+    if isinstance(idx, pd.MultiIndex):
         if sort_rows:
             new_index = pd.MultiIndex.from_product(labels)
         else:
@@ -118,14 +118,14 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
     a1   b0  4.0  5.0
     a1   b1  6.0  7.0
     """
-    if isinstance(s.index, pd.core.index.MultiIndex):
+    if isinstance(s.index, pd.MultiIndex):
         # TODO: use argument sort=False when it will be available
         # (see https://github.com/pandas-dev/pandas/issues/15105)
         df = s.unstack(level=-1, fill_value=fill_value)
         # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
         if not sort_rows:
             labels = index_to_labels(s.index, sort=False)
-            if isinstance(df.index, pd.core.index.MultiIndex):
+            if isinstance(df.index, pd.MultiIndex):
                 index = pd.MultiIndex.from_tuples(list(product(*labels[:-1])), names=s.index.names[:-1])
             else:
                 index = labels[0]
