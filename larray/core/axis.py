@@ -2830,7 +2830,7 @@ class AxisCollection(object):
 
         # transform non-Array advanced keys (list and ndarray) to Array
         def to_la_ikey(axis, axis_key):
-            if isinstance(axis_key, (int, np.integer, slice, Array)):
+            if isinstance(axis_key, (int, long, np.integer, slice, Array)):
                 return axis_key
             else:
                 assert isinstance(axis_key, (list, np.ndarray))
