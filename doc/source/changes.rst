@@ -15,6 +15,20 @@ EDITOR
 .. include:: ./changes/editor/version_0_33.rst.inc
 
 
+Version 0.32.2
+==============
+
+Released on 2020-04-03.
+
+CORE
+----
+.. include:: ./changes/version_0_32_2.rst.inc
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_32_2.rst.inc
+
+
 Version 0.32.1
 ==============
 
