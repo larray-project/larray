@@ -45,7 +45,7 @@ install:
     #   (issue 702 : fixed bug when writing metadata using HDF format)
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
             "numpy>=1.13" "pandas>=0.20" pytables matplotlib xlrd openpyxl
-            xlsxwriter pytest pytest-pep8
+            xlsxwriter "pytest>=3.5" pytest-pep8
     - source activate travisci
 
 script:
