@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 
 def view(obj=None, title='', depth=0):
     r"""

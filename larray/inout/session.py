@@ -1,7 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
-from larray.util.compat import basestring
-
 
 handler_classes = {}
 ext_default_engine = {}
@@ -22,7 +18,7 @@ def register_file_handler(engine, extensions=None):
             handler_classes[engine] = cls
         if extensions is None:
             exts = []
-        elif isinstance(extensions, basestring):
+        elif isinstance(extensions, str):
             exts = [extensions]
         else:
             exts = extensions

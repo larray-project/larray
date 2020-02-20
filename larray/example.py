@@ -43,7 +43,7 @@ def get_example_filepath(fname):
 
 
 # Note that we skip doctests because they require pytables, which is only an optional dependency and its hard
-# to skip doctests selectively. The tests output is also different between Python 2 and Python 3.
+# to skip doctests selectively.
 # CHECK: We might want to use .csv files for the example data, so that it can be loaded with any optional dependency.
 def load_example_data(name):
     r"""Load arrays used in the tutorial so that all examples in it can be reproduced.

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function
 from larray.util.misc import _positive_integer
 
 DISPLAY_PRECISION = 'display_precision'

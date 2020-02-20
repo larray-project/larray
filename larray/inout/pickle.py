@@ -1,5 +1,4 @@
-from __future__ import absolute_import, division, print_function
-
+import pickle
 import os.path
 from collections import OrderedDict
 
@@ -7,7 +6,6 @@ from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import Array
 from larray.core.metadata import Metadata
-from larray.util.compat import pickle
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler, _supported_types, _supported_typenames, _supported_scalars_types
 

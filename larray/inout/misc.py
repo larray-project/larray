@@ -1,10 +1,9 @@
-from __future__ import absolute_import, print_function
+from io import StringIO
 
 from pandas import DataFrame
 
 from larray.core.constants import nan
 from larray.util.misc import deprecate_kwarg
-from larray.util.compat import StringIO
 from larray.inout.common import _get_index_col
 from larray.inout.pandas import df_asarray, set_dataframe_index_by_position
 from larray.inout.csv import read_csv

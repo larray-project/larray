@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import warnings
 
 import larray.extra.ipfp as ipfp

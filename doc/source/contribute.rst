@@ -181,9 +181,6 @@ code conventions. Among others, this means:
 
 This summary should not prevent you from reading the PEP!
 
-LArray is currently compatible with both Python 2 and 3.
-So make sure your code is compatible with both versions.
-
 Step 3: Document your code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

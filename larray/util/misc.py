@@ -1,7 +1,6 @@
 """
 Misc tools
 """
-from __future__ import absolute_import, division, print_function
 
 import __main__
 import math
@@ -17,8 +16,6 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-
-from larray.util.compat import PY2
 
 try:
     np.set_printoptions(legacy='1.13')
@@ -799,7 +796,7 @@ class SequenceZip(object):
             return SequenceZip([seq[key] for seq in self.sequences])
 
     def __iter__(self):
-        return iter(zip(*self.sequences)) if PY2 else zip(*self.sequences)
+        return zip(*self.sequences)
 
     def __repr__(self):
         return 'SequenceZip({})'.format(self.sequences)

@@ -1,6 +1,3 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, division, print_function
-
 import fnmatch
 import re
 import sys
@@ -17,7 +14,6 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
 from larray.util.oset import *
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_multi, Product)
-from larray.util.compat import (basestring, PY2, unicode, long)
 
 
 np_frompyfunc = np.frompyfunc
@@ -87,7 +83,7 @@ class Axis(ABCAxis):
             name = labels.axis
         if isinstance(name, Axis):
             name = name.name
-        if isinstance(labels, basestring):
+        if isinstance(labels, str):
             if '=' in labels:
                 name, labels = [o.strip() for o in labels.split('=')]
             elif '..' not in labels and ',' not in labels:
@@ -98,10 +94,10 @@ class Axis(ABCAxis):
 
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
-        name_is_python_str = type(name) is unicode or type(name) is bytes
-        if isinstance(name, basestring) and not name_is_python_str:
-            name = unicode(name)
-        if name is not None and not isinstance(name, (int, basestring)):
+        name_is_python_str = type(name) is str or type(name) is bytes
+        if isinstance(name, str) and not name_is_python_str:
+            name = str(name)
+        if name is not None and not isinstance(name, (int, str)):
             raise TypeError("Axis name should be None, int or str but is: %s (%s)" % (name, type(name).__name__))
         self.name = name
         self._labels = None
@@ -189,7 +185,7 @@ class Axis(ABCAxis):
     def labels(self, labels):
         if labels is None:
             raise TypeError("labels should be a sequence or a single int, not None")
-        if isinstance(labels, (int, long, np.integer)):
+        if isinstance(labels, (int, np.integer)):
             length = labels
             labels = np.arange(length)
             iswildcard = True
@@ -783,34 +779,11 @@ class Axis(ABCAxis):
     def __hash__(self):
         return id(self)
 
-    # needed for Python 2 only (on Python2 all classes defining __slots__ need to define __getstate__/__setstate__ too)
-    def __getstate__(self):
-        return self.name, self._length if self._iswildcard else self._labels
-
-    # needed for Python 2 only
-    def __setstate__(self, state):
-        name, labels = state
-        self.name = name
-        self._labels = None
-        self._length = None
-        self._iswildcard = False
-
-        self.__mapping = None
-        self.__sorted_keys = None
-        self.__sorted_values = None
-        # set _labels, _length and _iswildcard via the property
-        self.labels = labels
-
     def _is_key_type_compatible(self, key):
         key_kind = np.dtype(type(key)).kind
         label_kind = self.labels.dtype.kind
-        # on Python2, ascii-only unicode string can match byte strings (and vice versa), so we shouldn't be more picky
-        # here than dict hashing
-        str_key = key_kind in ('S', 'U')
-        str_label = label_kind in ('S', 'U')
-        py2_str_match = PY2 and str_key and str_label
         # object kind can match anything
-        return key_kind == label_kind or key_kind == 'O' or label_kind == 'O' or py2_str_match
+        return key_kind == label_kind or key_kind == 'O' or label_kind == 'O'
 
     def index(self, key):
         r"""
@@ -853,7 +826,7 @@ class Axis(ABCAxis):
             except (KeyError, TypeError, IndexError):
                 pass
 
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             # try the key as-is to allow getting at ticks with special characters (",", ":", ...)
             try:
                 # avoid matching 0 against False or 0.0, note that Group keys have object dtype and so always pass this
@@ -868,11 +841,11 @@ class Axis(ABCAxis):
             # transform "specially formatted strings" for slices, lists, LGroup and IGroup to actual objects
             key = _to_key(key)
 
-        if not PY2 and isinstance(key, range):
+        if isinstance(key, range):
             key = list(key)
 
         # this can happen when key was passed as a string and converted to a Group via _to_key
-        if isinstance(key, Group) and isinstance(key.axis, basestring) and key.axis != self.name:
+        if isinstance(key, Group) and isinstance(key.axis, str) and key.axis != self.name:
             raise KeyError(key)
 
         if isinstance(key, IGroup):
@@ -1168,7 +1141,7 @@ class Axis(ABCAxis):
         >>> a.union(['a1', 'a2', 'a3'])
         Axis(['a0', 'a1', 'a2', 'a3'], 'a')
         """
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
             other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
@@ -1204,7 +1177,7 @@ class Axis(ABCAxis):
         >>> a.intersection(['a1', 'a2', 'a3'])
         Axis(['a1', 'a2'], 'a')
         """
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
             other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
@@ -1241,7 +1214,7 @@ class Axis(ABCAxis):
         >>> a.difference(['a1', 'a2', 'a3'])
         Axis(['a0'], 'a')
         """
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
             other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
         if isinstance(other, Axis):
@@ -1441,7 +1414,7 @@ class AxisCollection(object):
     def __init__(self, axes=None):
         if axes is None:
             axes = []
-        elif isinstance(axes, (int, long, Group, Axis)):
+        elif isinstance(axes, (int, Group, Axis)):
             axes = [axes]
         elif isinstance(axes, str):
             axes = [axis.strip() for axis in axes.split(';')]
@@ -1600,7 +1573,7 @@ class AxisCollection(object):
         elif key is None:
             raise KeyError("axis '%s' not found in %s" % (key, self))
         else:
-            assert isinstance(key, basestring), type(key)
+            assert isinstance(key, str), type(key)
             if key in self._map:
                 return self._map[key]
             else:
@@ -1792,7 +1765,7 @@ class AxisCollection(object):
         #    we could also provide an explicit kwarg (ie this would effectively forbid having an axis named "axis").
         #    arr.sum(axis=0). I think this is the sanest option. The error message in case we use it without the
         #    keyword needs to be clearer though.
-        return isinstance(value, Axis) or (isinstance(value, basestring) and value in self)
+        return isinstance(value, Axis) or (isinstance(value, str) and value in self)
         # 2) slightly inconsistent API: allow aggregate over single labels if they are string, but not int
         #    arr.sum(0) would sum on the first axis, but arr.sum('M') would
         #    sum a single tick. I don't like this option.
@@ -2303,7 +2276,7 @@ class AxisCollection(object):
             Axis(['c0', 'c1', 'c2'], 'column')
         ])
         """
-        if not PY2 and isinstance(axes_to_replace, zip):
+        if isinstance(axes_to_replace, zip):
             axes_to_replace = list(axes_to_replace)
 
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
@@ -2318,7 +2291,7 @@ class AxisCollection(object):
             elif isinstance(axes_to_replace, list):
                 assert all([isinstance(item, tuple) and len(item) == 2 for item in axes_to_replace])
                 items = axes_to_replace[:]
-            elif isinstance(axes_to_replace, (basestring, Axis, int)):
+            elif isinstance(axes_to_replace, (str, Axis, int)):
                 items = [(axes_to_replace, new_axis)]
             else:
                 items = []
@@ -2469,7 +2442,7 @@ class AxisCollection(object):
             changes = {}
         elif isinstance(axis, dict):
             changes = axis
-        elif isinstance(axis, (basestring, Axis, int)):
+        elif isinstance(axis, (str, Axis, int)):
             changes = {axis: labels}
         else:
             raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
@@ -2542,7 +2515,7 @@ class AxisCollection(object):
         --------
         without
         """
-        if isinstance(axes, basestring):
+        if isinstance(axes, str):
             axes = axes.split(',')
         elif isinstance(axes, (int, Axis)):
             axes = [axes]
@@ -2648,7 +2621,7 @@ class AxisCollection(object):
         # Need to convert string keys to groups otherwise command like
         # >>> ndtest((5, 5)).drop('1[a0]')
         # will work although it shouldn't
-        if isinstance(axis_key, basestring):
+        if isinstance(axis_key, str):
             key = _to_key(axis_key)
             if isinstance(key, Group):
                 axis_key = key
@@ -2830,7 +2803,7 @@ class AxisCollection(object):
 
         # transform non-Array advanced keys (list and ndarray) to Array
         def to_la_ikey(axis, axis_key):
-            if isinstance(axis_key, (int, long, np.integer, slice, Array)):
+            if isinstance(axis_key, (int, np.integer, slice, Array)):
                 return axis_key
             else:
                 assert isinstance(axis_key, (list, np.ndarray))
@@ -3307,10 +3280,10 @@ class AxisCollection(object):
         """
         if axes is None:
             axes = {axis: None for axis in self if sep in axis.name}
-        elif isinstance(axes, (int, basestring, Axis)):
+        elif isinstance(axes, (int, str, Axis)):
             axes = {axes: None}
         elif isinstance(axes, (list, tuple)):
-            if all(isinstance(axis, (int, basestring, Axis)) for axis in axes):
+            if all(isinstance(axis, (int, str, Axis)) for axis in axes):
                 axes = {axis: None for axis in axes}
             else:
                 raise ValueError("Expected tuple or list of int, string or Axis instances")

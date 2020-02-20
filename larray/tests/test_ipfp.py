@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import pytest
 from larray.tests.common import assert_array_equal
 from larray import Axis, Array, ndtest, ipfp, X

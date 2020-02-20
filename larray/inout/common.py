@@ -1,10 +1,7 @@
-from __future__ import absolute_import, print_function
-
 import os
 from datetime import date, time, datetime
 from collections import OrderedDict
 
-from larray.util.compat import bytes, unicode
 from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import Array
@@ -15,8 +12,7 @@ _supported_larray_types = (Axis, Group, Array)
 
 # only for HDF5 and pickle formats
 # support list, tuple and dict?
-# replace unicode by str when Python 2.7 will no longer be supported
-_supported_scalars_types = (int, float, bool, bytes, unicode, date, time, datetime)
+_supported_scalars_types = (int, float, bool, bytes, str, date, time, datetime)
 _supported_types = _supported_larray_types + _supported_scalars_types
 _supported_typenames = {cls.__name__ for cls in _supported_types}
 
