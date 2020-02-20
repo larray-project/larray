@@ -12,7 +12,7 @@ from collections import OrderedDict
 from larray.tests.common import (inputpath, tmp_path, meta,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_xlrd,
-                                 needs_python35, needs_python36, needs_python37)
+                                 needs_python37)
 from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
@@ -4557,7 +4557,6 @@ def test_diag():
     assert d.i[1] == 1.0
 
 
-@needs_python35
 def test_matmul():
     # 2D / anonymous axes
     a1 = ndtest([Axis(3), Axis(3)])
@@ -4712,7 +4711,6 @@ def test_matmul():
     assert_array_equal(arr2d @ arr4d, res)
 
 
-@needs_python35
 def test_rmatmul():
     a1 = eye(3) * 2
     a2 = ndtest([Axis(3), Axis(3)])
@@ -5070,7 +5068,6 @@ def test_stack():
     assert_array_equal(res, expected)
 
 
-@needs_python36
 def test_stack_kwargs_no_axis_labels():
     # these tests rely on kwargs ordering, hence python 3.6
 

@@ -57,11 +57,11 @@ class Session(object):
     >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
     ...                ('arr1', arr1), ('arr2', arr2)])
 
-    create a Session using keyword arguments (but you lose order on Python < 3.6)
+    create a Session using keyword arguments
 
     >>> ses = Session(i=i, s=s, a=a, b=b, a01=a01, arr1=arr1, arr2=arr2)
 
-    create a Session by passing a dictionary (but you lose order on Python < 3.6)
+    create a Session by passing a dictionary
 
     >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01, 'arr1': arr1, 'arr2': arr2})
 
@@ -71,13 +71,7 @@ class Session(object):
 
     create a session with metadata
 
-    >>> # Python 3.5-
-    >>> ses = Session([('arr1', arr1), ('arr2', arr2)], meta=[('title', 'my title'), ('author', 'John Smith')])
-    >>> ses.meta
-    title: my title
-    author: John Smith
-    >>> # Python 3.6+
-    >>> ses = Session(arr1=arr1, arr2=arr2, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
+    >>> ses = Session(arr1=arr1, arr2=arr2, meta=Metadata(title='my title', author='John Smith'))
     >>> ses.meta
     title: my title
     author: John Smith

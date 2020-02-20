@@ -148,6 +148,4 @@ needs_pytables = pytest.mark.skipif(tables is None, reason="pytables is required
 needs_xlrd = pytest.mark.skipif(xlrd is None, reason="xlrd is required for this test")
 needs_xlsxwriter = pytest.mark.skipif(xlsxwriter is None, reason="xlsxwriter is required for this test")
 
-needs_python35 = pytest.mark.skipif(sys.version_info < (3, 5), reason="Python 3.5 is required for this test")
-needs_python36 = pytest.mark.skipif(sys.version_info < (3, 6), reason="Python 3.6 is required for this test")
 needs_python37 = pytest.mark.skipif(sys.version_info < (3, 7), reason="Python 3.7 is required for this test")
