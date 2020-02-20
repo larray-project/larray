@@ -1,6 +1,3 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, division, print_function
-
 import fnmatch
 import re
 import sys
@@ -13,7 +10,6 @@ import pandas as pd
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.util.oset import *
 from larray.util.misc import (unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to, LHDFStore)
-from larray.util.compat import basestring, PY2
 
 
 def _slice_to_str(key, repr_func=str):
@@ -239,7 +235,7 @@ def _range_str_to_range(s, stack_depth=1):
     if stop is None:
         raise ValueError("no stop bound provided in range: %r" % s)
     stop = _parse_bound(stop, stack_depth + 1)
-    if isinstance(start, basestring) or isinstance(stop, basestring):
+    if isinstance(start, str) or isinstance(stop, str):
         start, stop = str(start), str(stop)
     # TODO: use parse_bound
     step = int(step) if step is not None else 1
@@ -372,7 +368,6 @@ def _to_tick(v):
         return str(v)
 
 
-# TODO: remove the conversion to list in doctests once Python 2 is dropped
 def _to_ticks(s, parse_single_int=False):
     r"""
     Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
@@ -390,18 +385,18 @@ def _to_ticks(s, parse_single_int=False):
 
     Examples
     --------
-    >>> list(_to_ticks('M , F'))
-    ['M', 'F']
-    >>> list(_to_ticks('A,C..E,F..G,Z'))
-    ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
-    >>> list(_to_ticks('U'))
-    ['U']
-    >>> list(_to_ticks('..3'))
-    [0, 1, 2, 3]
-    >>> list(_to_ticks('01..12'))
-    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    >>> list(_to_ticks('01,02,03,10,11,12'))
-    ['01', '02', '03', '10', '11', '12']
+    >>> _to_ticks('M , F')                      # doctest: +NORMALIZE_WHITESPACE
+    array(['M', 'F'], dtype='<U1')
+    >>> _to_ticks('A,C..E,F..G,Z')              # doctest: +NORMALIZE_WHITESPACE
+    array(['A', 'C', 'D', 'E', 'F', 'G', 'Z'], dtype='<U1')
+    >>> _to_ticks('U')                          # doctest: +NORMALIZE_WHITESPACE
+    array(['U'], dtype='<U1')
+    >>> _to_ticks('..3')                        # doctest: +NORMALIZE_WHITESPACE
+    array([0, 1, 2, 3])
+    >>> _to_ticks('01..12')                     # doctest: +NORMALIZE_WHITESPACE
+    array(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], dtype='<U2')
+    >>> _to_ticks('01,02,03,10,11,12')          # doctest: +NORMALIZE_WHITESPACE
+    array(['01', '02', '03', '10', '11', '12'], dtype='<U2')
     """
     if isinstance(s, ABCAxis):
         return s.labels
@@ -419,11 +414,11 @@ def _to_ticks(s, parse_single_int=False):
         ticks = [_to_tick(e) for e in s]
     elif sys.version >= '3' and isinstance(s, range):
         ticks = s
-    elif isinstance(s, basestring):
+    elif isinstance(s, str):
         seq = _seq_str_to_seq(s, parse_single_int=parse_single_int)
         if isinstance(seq, slice):
             raise ValueError("using : to define axes is deprecated, please use .. instead")
-        ticks = [seq] if isinstance(seq, (basestring, int)) else seq
+        ticks = [seq] if isinstance(seq, (str, int)) else seq
     elif hasattr(s, '__array__'):
         ticks = s.__array__()
     else:
@@ -529,30 +524,28 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     0['a0']
     >>> _to_key('0.i[a0]')
     0.i['a0']
-
-    # evaluated variables do not work on Python 2, probably because the stackdepth is different
-    # >>> ext = [1, 2, 3]
-    # >>> _to_key('{ext} >> ext')
-    # LGroup([1, 2, 3]) >> 'ext'
-    # >>> answer = 42
-    # >>> _to_key('{answer}')
-    # 42
-    # >>> _to_key('{answer} >> answer')
-    # LGroup(42) >> 'answer'
-    # >>> _to_key('10:{answer} >> answer')
-    # LGroup(slice(10, 42, None)) >> 'answer'
-    # >>> _to_key('4,{answer},2 >> answer')
-    # LGroup([4, 42, 2]) >> 'answer'
-    # >>> list(_to_key('40..{answer}'))
-    # [40, 41, 42]
-    # >>> _to_key('4,40..{answer},2')
-    # [4, 40, 41, 42, 2]
-    # >>> _to_key('4,40..{answer},2 >> answer')
-    # LGroup([4, 40, 41, 42, 2]) >> 'answer'
+    >>> ext = [1, 2, 3]
+    >>> _to_key('{ext} >> ext')
+    LGroup([1, 2, 3]) >> 'ext'
+    >>> answer = 42
+    >>> _to_key('{answer}')
+    42
+    >>> _to_key('{answer} >> answer')
+    LGroup(42) >> 'answer'
+    >>> _to_key('10:{answer} >> answer')
+    LGroup(slice(10, 42, None)) >> 'answer'
+    >>> _to_key('4,{answer},2 >> answer')
+    LGroup([4, 42, 2]) >> 'answer'
+    >>> list(_to_key('40..{answer}'))
+    [40, 41, 42]
+    >>> _to_key('4,40..{answer},2')
+    [4, 40, 41, 42, 2]
+    >>> _to_key('4,40..{answer},2 >> answer')
+    LGroup([4, 40, 41, 42, 2]) >> 'answer'
     """
     if isinstance(v, tuple):
         return list(v)
-    elif isinstance(v, basestring):
+    elif isinstance(v, str):
         # axis name
         m = _axis_name_pattern.match(v)
         _, axis, positional, key = m.groups()
@@ -608,12 +601,11 @@ def _to_keys(value, stack_depth=1):
     >>> _to_keys('P01;P02,P03;:')
     ('P01', ['P02', 'P03'], slice(None, None, None))
 
-    # evaluated variables do not work on Python 2, probably because the stack depth is different
-    # >>> ext = 'P03'
-    # >>> to_keys('P01,P02,{ext}')
-    # ['P01', 'P02', 'P03']
-    # >>> to_keys('P01;P02;{ext}')
-    # ('P01', 'P02', 'P03')
+    >>> ext = 'P03'
+    >>> _to_keys('P01,P02,{ext}')
+    ['P01', 'P02', 'P03']
+    >>> _to_keys('P01;P02;{ext}')
+    ('P01', 'P02', 'P03')
 
     >>> _to_keys('age[10:19] >> teens ; year.i[-1]')
     (age[10:19] >> 'teens', year.i[-1])
@@ -633,7 +625,7 @@ def _to_keys(value, stack_depth=1):
     >>> _to_keys((('P01',), ('P02',), ':'))
     (['P01'], ['P02'], slice(None, None, None))
     """
-    if isinstance(value, basestring) and ';' in value:
+    if isinstance(value, str) and ';' in value:
         value = tuple(value.split(';'))
 
     if isinstance(value, tuple):
@@ -650,7 +642,7 @@ _sheet_name_pattern = re.compile(r'[\\/?*\[\]:]')
 def _translate_sheet_name(sheet_name):
     if isinstance(sheet_name, Group):
         sheet_name = str(_to_tick(sheet_name))
-    if isinstance(sheet_name, basestring):
+    if isinstance(sheet_name, str):
         sheet_name = _sheet_name_pattern.sub('_', sheet_name)
         if len(sheet_name) > 31:
             raise ValueError("Sheet names cannot exceed 31 characters")
@@ -740,7 +732,7 @@ class Group(object):
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
         self.name = _to_tick(name) if name is not None else name
-        assert axis is None or isinstance(axis, (basestring, int, ABCAxis)), \
+        assert axis is None or isinstance(axis, (str, int, ABCAxis)), \
             "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
 
         # we could check the key is valid but this can be slow and could be useless
@@ -836,7 +828,7 @@ class Group(object):
         """
         if self.axis is target_axis:
             return self
-        elif isinstance(self.axis, basestring) or isinstance(self.axis, ABCAxisReference):
+        elif isinstance(self.axis, str) or isinstance(self.axis, ABCAxisReference):
             axis_name = self.axis.name if isinstance(self.axis, ABCAxisReference) else self.axis
             if axis_name != target_axis.name:
                 raise ValueError('cannot retarget a Group defined without a real axis object (e.g. using '
@@ -1020,26 +1012,9 @@ class Group(object):
         op_fullname = '__%s__' % opname
 
         # TODO: implement this in a delayed fashion for axes references
-        if PY2:
-            # workaround the fact slice objects do not have any __binop__ methods defined on Python2 (even though
-            # the actual operations work on them).
-            def opmethod(self, other):
-                self_value = self.eval()
-                other_value = other.eval() if isinstance(other, Group) else other
-                # this can only happen when self.axis is not an Axis instance
-                if isinstance(self_value, slice):
-                    if not isinstance(other_value, slice):
-                        # FIXME: we should raise a TypeError instead for all ops except == and !=
-                        # FIXME: we should return True for !=
-                        return False
-                    # FIXME: we should raise a TypeError instead of doing this for all ops except comparison ops
-                    self_value = (self_value.start, self_value.stop, self_value.step)
-                    other_value = (other_value.start, other_value.stop, other_value.step)
-                return getattr(self_value, op_fullname)(other_value)
-        else:
-            def opmethod(self, other):
-                other_value = other.eval() if isinstance(other, Group) else other
-                return getattr(self.eval(), op_fullname)(other_value)
+        def opmethod(self, other):
+            other_value = other.eval() if isinstance(other, Group) else other
+            return getattr(self.eval(), op_fullname)(other_value)
 
         opmethod.__name__ = op_fullname
         return opmethod

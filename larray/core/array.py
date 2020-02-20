@@ -1,6 +1,3 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, division, print_function
-
 """
 Array class
 """
@@ -30,6 +27,8 @@ Array class
 
 from collections import OrderedDict
 from itertools import product, chain, groupby, islice, repeat
+from collections.abc import Iterable, Sequence
+import builtins
 import os
 import sys
 import functools
@@ -59,7 +58,6 @@ from larray.util.misc import (table2str, size2str, ReprString,
                               float_error_handler_factory, light_product, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
                               Repeater, Product, ensure_no_numpy_type)
-from larray.util.compat import PY2, basestring, Iterable, Sequence, builtins
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
@@ -305,42 +303,23 @@ def concat(arrays, axis=0, dtype=None):
     return result
 
 
-if PY2:
-    class ArrayIterator(object):
-        __slots__ = ('next',)
+class ArrayIterator(object):
+    __slots__ = ('__next__',)
 
-        def __init__(self, array):
-            data_iter = iter(array.data)
-            next_data_func = data_iter.next
-            res_axes = array.axes[1:]
-            # this case should not happen (handled by the fastpath in Array.__iter__)
-            assert len(res_axes) > 0
+    def __init__(self, array):
+        data_iter = iter(array.data)
+        next_data_func = data_iter.__next__
+        res_axes = array.axes[1:]
+        # this case should not happen (handled by the fastpath in Array.__iter__)
+        assert len(res_axes) > 0
 
-            def next_func():
-                return Array(next_data_func(), res_axes)
+        def next_func():
+            return Array(next_data_func(), res_axes)
 
-            self.next = next_func
+        self.__next__ = next_func
 
-        def __iter__(self):
-            return self
-else:
-    class ArrayIterator(object):
-        __slots__ = ('__next__',)
-
-        def __init__(self, array):
-            data_iter = iter(array.data)
-            next_data_func = data_iter.__next__
-            res_axes = array.axes[1:]
-            # this case should not happen (handled by the fastpath in Array.__iter__)
-            assert len(res_axes) > 0
-
-            def next_func():
-                return Array(next_data_func(), res_axes)
-
-            self.__next__ = next_func
-
-        def __iter__(self):
-            return self
+    def __iter__(self):
+        return self
 
 
 # TODO: rename to ArrayIndexIndexer or something like that
@@ -826,7 +805,7 @@ class Array(ABCArray):
     def title(self, title):
         import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
-        if not isinstance(title, basestring):
+        if not isinstance(title, str):
             raise TypeError("Expected string value, got {}".format(type(title).__name__))
         self._meta.title = title
 
@@ -1411,8 +1390,6 @@ class Array(ABCArray):
 
     def __bool__(self):
         return bool(self.data)
-    # Python 2
-    __nonzero__ = __bool__
 
     # TODO: either support a list (of axes names) as first argument here (and set_labels)
     #       or don't support that in set_axes
@@ -1591,7 +1568,7 @@ class Array(ABCArray):
         a1   c0   2   1
         """
         # XXX: can't we move this to AxisCollection.replace?
-        if isinstance(axes_to_reindex, basestring) and '=' in axes_to_reindex:
+        if isinstance(axes_to_reindex, str) and '=' in axes_to_reindex:
             axes_to_reindex = Axis(axes_to_reindex)
         if isinstance(axes_to_reindex, (Group, Axis)) and not isinstance(axes_to_reindex, AxisReference):
             new_axis = axes_to_reindex if isinstance(axes_to_reindex, Axis) else Axis(axes_to_reindex)
@@ -2820,7 +2797,7 @@ class Array(ABCArray):
                 if not all(g.axis.equals(axis) for g in groups[1:]):
                     raise ValueError("group with different axes: %s" % str(key))
                 return groups
-            if isinstance(key, (Group, int, basestring, list, slice)):
+            if isinstance(key, (Group, int, str, list, slice)):
                 return self.axes._guess_axis(key)
             else:
                 raise NotImplementedError("%s has invalid type (%s) for a group aggregate key"
@@ -7744,10 +7721,10 @@ class Array(ABCArray):
         # * somehow factorize this code with AxisCollection.split_axes
         if axes is None:
             axes = {axis: None for axis in array.axes if axis.name is not None and sep in axis.name}
-        elif isinstance(axes, (int, basestring, Axis)):
+        elif isinstance(axes, (int, str, Axis)):
             axes = {axes: names}
         elif isinstance(axes, (list, tuple)):
-            if all(isinstance(axis, (int, basestring, Axis)) for axis in axes):
+            if all(isinstance(axis, (int, str, Axis)) for axis in axes):
                 axes = {axis: None for axis in axes}
             else:
                 raise ValueError("Expected tuple or list of int, string or Axis instances")
@@ -9288,12 +9265,12 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
     if elements is not None and kwargs:
         raise TypeError("stack() accepts either keyword arguments OR a collection of elements, not both")
 
-    if isinstance(axes, basestring) and '=' in axes:
+    if isinstance(axes, str) and '=' in axes:
         axes = Axis(axes)
     elif isinstance(axes, Group):
         axes = Axis(axes)
 
-    if axes is not None and not isinstance(axes, basestring):
+    if axes is not None and not isinstance(axes, str):
         axes = AxisCollection(axes)
 
     if kwargs:
@@ -9321,7 +9298,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
         if all(isinstance(e, tuple) for e in elements):
             assert all(len(e) == 2 for e in elements)
-            if axes is None or isinstance(axes, basestring):
+            if axes is None or isinstance(axes, str):
                 keys = [k for k, v in elements]
                 values = [v for k, v in elements]
                 # assert that all keys are indexers
@@ -9338,7 +9315,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 dict_elements = {translate_and_sort_key(key, axes): value for key, value in elements}
                 items = [(k, dict_elements[k]) for k in axes.iter_labels()]
         else:
-            if axes is None or isinstance(axes, basestring):
+            if axes is None or isinstance(axes, str):
                 axes = AxisCollection(Axis(len(elements), axes))
             else:
                 # TODO: add support for more than one axis here
@@ -9568,7 +9545,7 @@ def zip_array_values(values, axes=None, ascending=True):
         if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
         # transform string axes definitions to objects
-        axes = [Axis(axis) if isinstance(axis, basestring) and '=' in axis else axis
+        axes = [Axis(axis) if isinstance(axis, str) and '=' in axis else axis
                 for axis in axes]
         # transform string axes references to objects
         axes = AxisCollection([axis if isinstance(axis, Axis) else all_axes[axis]

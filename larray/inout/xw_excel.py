@@ -1,6 +1,3 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, print_function
-
 import os
 import atexit
 
@@ -17,7 +14,6 @@ from larray.core.group import _translate_sheet_name
 from larray.inout.pandas import df_asarray
 from larray.inout.misc import from_lists
 from larray.util.misc import deprecate_kwarg
-from larray.util.compat import PY2
 
 
 string_types = (str,)
@@ -649,8 +645,7 @@ else:
 
 
 # We define Workbook and open_excel documentation here since Readthedocs runs on Linux
-if not PY2:
-    Workbook.__doc__ = r"""
+Workbook.__doc__ = r"""
 Excel Workbook.
 
 See Also
@@ -658,7 +653,7 @@ See Also
 open_excel
 """
 
-    Workbook.sheet_names.__doc__ = r"""
+Workbook.sheet_names.__doc__ = r"""
 Returns the names of the Excel sheets.
 
 Examples
@@ -674,7 +669,7 @@ Examples
 ['arr', 'arr2', 'arr3']
 """
 
-    Workbook.save.__doc__ = r"""
+Workbook.save.__doc__ = r"""
 Saves the Workbook.
 
 If a path is being provided, this works like SaveAs() in Excel.
@@ -697,7 +692,7 @@ Examples
 ...     wb.save()
 """
 
-    Workbook.close.__doc__ = r"""
+Workbook.close.__doc__ = r"""
 Close the workbook in Excel.
 
 Need to be called if the workbook has been opened without the `with` statement.
@@ -713,7 +708,7 @@ Examples
 >>> wb.close()                                                    # doctest: +SKIP
 """
 
-    Workbook.app.__doc__ = r"""
+Workbook.app.__doc__ = r"""
 Return the Excel instance this workbook is attached to.
 """
 

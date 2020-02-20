@@ -1,6 +1,3 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, division, print_function
-
 import os
 import re
 import sys
@@ -8,6 +5,8 @@ import sys
 import pytest
 import numpy as np
 import pandas as pd
+
+from io import StringIO
 from collections import OrderedDict
 
 from larray.tests.common import (inputpath, tmp_path, meta,
@@ -20,7 +19,6 @@ from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtes
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import LHDFStore
-from larray.util.compat import StringIO
 from larray.core.metadata import Metadata
 
 
@@ -2553,10 +2551,9 @@ def test_transpose():
     res = arr.transpose('b')
     assert res.axes == [b, a, c]
 
-    # using Ellipsis instead of ... to avoid a syntax error on Python 2 (where ... is only available within [])
-    res = arr.transpose(Ellipsis, 'a')
+    res = arr.transpose(..., 'a')
     assert res.axes == [b, c, a]
-    res = arr.transpose('c', Ellipsis, 'a')
+    res = arr.transpose('c', ..., 'a')
     assert res.axes == [c, b, a]
 
 
@@ -4566,29 +4563,27 @@ def test_matmul():
     a1 = ndtest([Axis(3), Axis(3)])
     a2 = eye(3, 3) * 2
 
-    # Note that we cannot use @ because that is an invalid syntax in Python 2
-
     # Array value
-    assert_array_equal(a1.__matmul__(a2), ndtest([Axis(3), Axis(3)]) * 2)
+    assert_array_equal(a1 @ a2, ndtest([Axis(3), Axis(3)]) * 2)
 
     # ndarray value
-    assert_array_equal(a1.__matmul__(a2.data), ndtest([Axis(3), Axis(3)]) * 2)
+    assert_array_equal(a1 @ a2.data, ndtest([Axis(3), Axis(3)]) * 2)
 
     # non anonymous axes (N <= 2)
     arr1d = ndtest(3)
     arr2d = ndtest((3, 3))
 
     # 1D @ 1D
-    res = arr1d.__matmul__(arr1d)
+    res = arr1d @ arr1d
     assert isinstance(res, np.integer)
     assert res == 5
 
     # 1D @ 2D
-    assert_array_equal(arr1d.__matmul__(arr2d),
+    assert_array_equal(arr1d @ arr2d,
                        Array([15, 18, 21], 'b=b0..b2'))
 
     # 2D @ 1D
-    assert_array_equal(arr2d.__matmul__(arr1d),
+    assert_array_equal(arr2d @ arr1d,
                        Array([5, 14, 23], 'a=a0..a2'))
 
     # 2D(a,b) @ 2D(a,b) -> 2D(a,b)
@@ -4596,20 +4591,18 @@ def test_matmul():
                       ['a0', 15, 18, 21],
                       ['a1', 42, 54, 66],
                       ['a2', 69, 90, 111]])
-    assert_array_equal(arr2d.__matmul__(arr2d), res)
+    assert_array_equal(arr2d @ arr2d, res)
 
     # 2D(a,b) @ 2D(b,a) -> 2D(a,a)
     res = from_lists([['a\\a', 'a0', 'a1', 'a2'],
                       ['a0', 5, 14, 23],
                       ['a1', 14, 50, 86],
                       ['a2', 23, 86, 149]])
-    assert_array_equal(arr2d.__matmul__(arr2d.T), res)
+    assert_array_equal(arr2d @ arr2d.T, res)
 
     # ndarray value
-    assert_array_equal(arr1d.__matmul__(arr2d.data),
-                       Array([15, 18, 21]))
-    assert_array_equal(arr2d.data.__matmul__(arr2d.T.data),
-                       res.data)
+    assert_array_equal(arr1d @ arr2d.data, Array([15, 18, 21]))
+    assert_array_equal(arr2d.data @ arr2d.T.data, res.data)
 
     # different axes
     a1 = ndtest('a=a0..a1;b=b0..b2')
@@ -4617,7 +4610,7 @@ def test_matmul():
     res = from_lists([[r'a\c', 'c0', 'c1', 'c2', 'c3'],
                       ['a0', 20, 23, 26, 29],
                       ['a1', 56, 68, 80, 92]])
-    assert_array_equal(a1.__matmul__(a2), res)
+    assert_array_equal(a1 @ a2, res)
 
     # non anonymous axes (N >= 2)
     arr2d = ndtest((2, 2))
@@ -4646,7 +4639,7 @@ def test_matmul():
                       ['a1', 'b1', 'e0', 'c1', 30, 59],
                       ['a1', 'b1', 'e1', 'c0', 126, 151],
                       ['a1', 'b1', 'e1', 'c1', 146, 175]])
-    assert_array_equal(arr4d.__matmul__(arr3d), res)
+    assert_array_equal(arr4d @ arr3d, res)
 
     # 3D(e, d, f) @ 4D(a, b, c, d) -> 5D(e, a, b, d, d)
     res = from_lists([['e', 'a', 'b', 'd\\d', 'd0', 'd1'],
@@ -4666,7 +4659,7 @@ def test_matmul():
                       ['e1', 'a1', 'b0', 'd1', 118, 131],
                       ['e1', 'a1', 'b1', 'd0', 118, 127],
                       ['e1', 'a1', 'b1', 'd1', 170, 183]])
-    assert_array_equal(arr3d.__matmul__(arr4d), res)
+    assert_array_equal(arr3d @ arr4d, res)
 
     # 4D(a, b, c, d) @ 3D(b, d, f) -> 4D(a, b, c, f)
     arr3d = arr3d.set_axes([b, d, f])
@@ -4679,7 +4672,7 @@ def test_matmul():
                       ['a1', 'b0', 'c1', 22, 43],
                       ['a1', 'b1', 'c0', 126, 151],
                       ['a1', 'b1', 'c1', 146, 175]])
-    assert_array_equal(arr4d.__matmul__(arr3d), res)
+    assert_array_equal(arr4d @ arr3d, res)
 
     # 3D(b, d, f) @ 4D(a, b, c, d) -> 4D(b, a, d, d)
     res = from_lists([['b', 'a', 'd\\d', 'd0', 'd1'],
@@ -4691,7 +4684,7 @@ def test_matmul():
                       ['b1', 'a0', 'd1', 66, 79],
                       ['b1', 'a1', 'd0', 118, 127],
                       ['b1', 'a1', 'd1', 170, 183]])
-    assert_array_equal(arr3d.__matmul__(arr4d), res)
+    assert_array_equal(arr3d @ arr4d, res)
 
     # 4D(a, b, c, d) @ 2D(d, f) -> 5D(a, b, c, f)
     arr2d = arr2d.set_axes([d, f])
@@ -4704,7 +4697,7 @@ def test_matmul():
                       ['a1', 'b0', 'c1', 22, 43],
                       ['a1', 'b1', 'c0', 26, 51],
                       ['a1', 'b1', 'c1', 30, 59]])
-    assert_array_equal(arr4d.__matmul__(arr2d), res)
+    assert_array_equal(arr4d @ arr2d, res)
 
     # 2D(d, f) @ 4D(a, b, c, d) -> 5D(a, b, d, d)
     res = from_lists([['a', 'b', 'd\\d', 'd0', 'd1'],
@@ -4716,7 +4709,7 @@ def test_matmul():
                       ['a1', 'b0', 'd1', 46, 51],
                       ['a1', 'b1', 'd0', 14, 15],
                       ['a1', 'b1', 'd1', 66, 71]])
-    assert_array_equal(arr2d.__matmul__(arr4d), res)
+    assert_array_equal(arr2d @ arr4d, res)
 
 
 @needs_python35

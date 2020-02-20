@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-
 import os
 import csv
 import warnings
@@ -13,7 +11,6 @@ from larray.core.array import Array, asarray
 from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.util.misc import skip_comment_cells, strip_rows, deprecate_kwarg
-from larray.util.compat import csv_open
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
 from larray.inout.pandas import df_asarray
@@ -193,7 +190,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         # read axes names. This needs to be done separately instead of reading the whole file with Pandas then
         # manipulating the dataframe because the header line must be ignored for the column types to be inferred
         # correctly. Note that to read one line, this is faster than using Pandas reader.
-        with csv_open(filepath_or_buffer) as f:
+        with open(filepath_or_buffer, mode='r', newline='', encoding='utf8') as f:
             reader = csv.reader(f, delimiter=sep)
             line_stream = skip_comment_cells(strip_rows(reader))
             axes_names = next(line_stream)

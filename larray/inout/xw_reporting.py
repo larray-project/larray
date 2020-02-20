@@ -3,7 +3,6 @@ import warnings
 from collections import OrderedDict
 
 from larray.util.misc import _positive_integer, _validate_dir
-from larray.util.compat import PY2
 from larray.core.group import _translate_sheet_name
 from larray.core.array import asarray, zip_array_items
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -766,6 +765,5 @@ else:
             raise Exception("ExcelReport class cannot be instantiated because xlwings is not installed")
 
 
-if not PY2:
-    ExcelReport.__doc__ = AbstractExcelReport.__doc__
-    ReportSheet.__doc__ = AbstractReportSheet.__doc__
+ExcelReport.__doc__ = AbstractExcelReport.__doc__
+ReportSheet.__doc__ = AbstractReportSheet.__doc__

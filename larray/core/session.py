@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-
 import os
 import sys
 import re
 import fnmatch
 import warnings
 from collections import OrderedDict
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -16,7 +14,6 @@ from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence, asarray
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
-from larray.util.compat import basestring, Iterable
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -74,7 +71,7 @@ class Session(object):
 
     create a session with metadata
 
-    >>> # Python <= 3.5
+    >>> # Python 3.5-
     >>> ses = Session([('arr1', arr1), ('arr2', arr2)], meta=[('title', 'my title'), ('author', 'John Smith')])
     >>> ses.meta
     title: my title
@@ -103,6 +100,24 @@ class Session(object):
                 self.update(a0)
         else:
             self.add(*args, **kwargs)
+
+    @property
+    def meta(self):
+        r"""Returns metadata of the session.
+
+        Returns
+        -------
+        Metadata:
+            Metadata of the session.
+        """
+        return self._meta
+
+    @meta.setter
+    def meta(self, meta):
+        if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
+            raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
+                            "instead of {}".format(type(meta).__name__))
+        object.__setattr__(self, '_meta', meta if isinstance(meta, Metadata) else Metadata(meta))
 
     # XXX: behave like a dict and return keys instead?
     def __iter__(self):
@@ -312,22 +327,17 @@ class Session(object):
     def __delitem__(self, key):
         del self._objects[key]
 
-    # TODO: add a a meta property when Python 2.7 will be dropped
     def __getattr__(self, key):
-        if key == 'meta':
-            return self._meta
-        elif key in self._objects:
+        if key in self._objects:
             return self._objects[key]
         else:
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
 
-    # TODO: implement meta.setter when Python 2.7 will be dropped
     def __setattr__(self, key, value):
+        # the condition below is needed because, unlike __getattr__, __setattr__ is called before any property
+        # see https://stackoverflow.com/a/15751159
         if key == 'meta':
-            if not isinstance(value, (list, dict, OrderedDict, Metadata)):
-                raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
-                                "instead of {}".format(type(value).__name__))
-            object.__setattr__(self, '_meta', value if isinstance(value, Metadata) else Metadata(value))
+            super().__setattr__(key, value)
         else:
             self._objects[key] = value
 
@@ -1451,10 +1461,10 @@ class Session(object):
                 tmpl = template.get(t, "{key}: {value}")
             else:
                 tmpl = template[Metadata]
-            if not (isinstance(tmpl, basestring) or callable(tmpl)):
+            if not (isinstance(tmpl, str) or callable(tmpl)):
                 raise TypeError("Expected a string template or a function for type {}. "
                                 "Got {}".format(type(v), type(tmpl)))
-            if isinstance(tmpl, basestring):
+            if isinstance(tmpl, str):
                 if isinstance(v, Axis):
                     return tmpl.format(key=k, name=v.name, labels=v.labels_summary(), length=len(v))
                 elif isinstance(v, Group):

@@ -1,111 +1,24 @@
-# -*- coding: utf8 -*-
-from __future__ import absolute_import, division, print_function
-
 from collections import OrderedDict
-from larray.util.compat import PY2, basestring
 
 
-if PY2:
-    class AttributeDict(object):
-        def __init__(self, *args, **kwargs):
-            object.__setattr__(self, '__odict', OrderedDict(*args, **kwargs))
+class AttributeDict(OrderedDict):
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
 
-        def __getattr__(self, key):
-            od = object.__getattribute__(self, '__odict')
-            if hasattr(od, key):
-                return getattr(od, key)
-            else:
-                try:
-                    return od[key]
-                except KeyError:
-                    raise AttributeError(key)
+    def __setattr__(self, key, value):
+        self[key] = value
 
-        def __setattr__(self, key, value):
-            od = object.__getattribute__(self, '__odict')
-            od[key] = value
+    def __delattr__(self, key):
+        del self[key]
 
-        def __delattr__(self, key):
-            od = object.__getattribute__(self, '__odict')
-            del od[key]
+    def __dir__(self):
+        return list(set(super(AttributeDict, self).__dir__()) | set(self.keys()))
 
-        def __reduce__(self):
-            'Return state information for pickling'
-            od = object.__getattribute__(self, '__odict')
-            res = list(od.__reduce__())
-            res[0] = self.__class__
-            return tuple(res)
-
-        def __dir__(self):
-            od = object.__getattribute__(self, '__odict')
-            return list(set(dir(self.__class__)) | set(self.__dict__.keys()) | set(od.keys()))
-
-        def copy(self):
-            od = object.__getattribute__(self, '__odict')
-            return self.__class__(od)
-
-        def method_factory(name):
-            fullname = '__%s__' % name
-            odict_method = getattr(OrderedDict, fullname)
-
-            def method(self, *args, **kwargs):
-                od = object.__getattribute__(self, '__odict')
-                return odict_method(od, *args, **kwargs)
-            return method
-
-        __getitem__ = method_factory('getitem')
-        __setitem__ = method_factory('setitem')
-        __delitem__ = method_factory('delitem')
-        __contains__ = method_factory('contains')
-
-        __iter__ = method_factory('iter')
-        __len__ = method_factory('len')
-
-        __reversed__ = method_factory('reversed')
-
-        __sizeof__ = method_factory('sizeof')
-
-        def _binop(name):
-            fullname = '__%s__' % name
-            odict_method = getattr(OrderedDict, fullname)
-
-            def opmethod(self, other):
-                self_od = object.__getattribute__(self, '__odict')
-                if not isinstance(other, AttributeDict):
-                    return False
-                other_od = object.__getattribute__(other, '__odict')
-                return odict_method(self_od, other_od)
-            opmethod.__name__ = fullname
-            return opmethod
-
-        __eq__ = _binop('eq')
-        __ne__ = _binop('ne')
-        __ge__ = _binop('ge')
-        __gt__ = _binop('gt')
-        __le__ = _binop('le')
-        __lt__ = _binop('lt')
-
-        def __repr__(self):
-            return '\n'.join(['{}: {}'.format(k, v) for k, v in self.items()])
-
-else:
-    class AttributeDict(OrderedDict):
-        def __getattr__(self, key):
-            try:
-                return self[key]
-            except KeyError:
-                raise AttributeError(key)
-
-        def __setattr__(self, key, value):
-            self[key] = value
-
-        def __delattr__(self, key):
-            del self[key]
-
-        def __dir__(self):
-            return list(set(super(AttributeDict, self).__dir__()) | set(self.keys()))
-
-        def __repr__(self):
-            return '\n'.join(['{}: {}'.format(k, v) for k, v in self.items()])
+    def __repr__(self):
+        return '\n'.join(['{}: {}'.format(k, v) for k, v in self.items()])
 
 
 class Metadata(AttributeDict):
@@ -120,7 +33,7 @@ class Metadata(AttributeDict):
 
     Add metadata at array initialization
 
-    >>> # Python 2 or <= 3.5
+    >>> # Python 3.5-
     >>> arr = ndtest((3, 3), meta=[('title', 'the title'), ('author', 'John Smith')])
     >>> # Python 3.6+
     >>> arr = ndtest((3, 3), meta=Metadata(title='the title', author='John Smith'))  # doctest: +SKIP
@@ -157,7 +70,7 @@ class Metadata(AttributeDict):
 
         def _convert_value(value):
             value = to_numeric([value], errors='ignore')[0]
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = to_datetime(value, errors='ignore', infer_datetime_format=True)
             return value
 

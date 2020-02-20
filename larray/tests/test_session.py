@@ -1,7 +1,6 @@
-from __future__ import absolute_import, division, print_function
-
 import os
 import shutil
+import pickle
 from datetime import date, time, datetime
 
 import numpy as np
@@ -13,7 +12,6 @@ from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path, me
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
-from larray.util.compat import pickle, PY2
 
 
 def equal(o1, o2):
@@ -192,7 +190,7 @@ def _test_io(fpath, session, meta, engine):
     # use Session.names instead of Session.keys because CSV, Excel and HDF do *not* keep ordering
     assert s.names == session.names
     assert s.equals(session)
-    if not PY2 and not is_excel_or_csv:
+    if not is_excel_or_csv:
         for key in s.filter(kind=Axis).keys():
             assert s[key].dtype == session[key].dtype
     if engine != 'pandas_excel':
