@@ -33,10 +33,7 @@ class Metadata(AttributeDict):
 
     Add metadata at array initialization
 
-    >>> # Python 3.5-
-    >>> arr = ndtest((3, 3), meta=[('title', 'the title'), ('author', 'John Smith')])
-    >>> # Python 3.6+
-    >>> arr = ndtest((3, 3), meta=Metadata(title='the title', author='John Smith'))  # doctest: +SKIP
+    >>> arr = ndtest((3, 3), meta=Metadata(title='the title', author='John Smith'))
 
     Add metadata after array initialization
 
