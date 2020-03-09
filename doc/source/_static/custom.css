@@ -1,0 +1,13 @@
+.classifier {
+    font-style: oblique;
+}
+
+/*
+Workaround for an incompatibility between read the docs theme and sphinx 2.0+
+See: https://github.com/larray-project/larray/issues/849
+*/
+.classifier:before {
+    font-style: normal;
+    margin: 0.5em;
+    content: ":";
+}
