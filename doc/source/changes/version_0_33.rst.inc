@@ -55,6 +55,8 @@ Miscellaneous improvements
   - support passing a dict as legend to customize the legend.
   - many tweaks to make several plots look better out of the box.
 
+* :py:obj:`eye()` now supports an AxisCollection as argument, so you can use axes from another array by using
+  ``eye(other_array.axes)``.
 
 Fixes
 ^^^^^

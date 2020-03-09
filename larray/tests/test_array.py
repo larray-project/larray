@@ -14,9 +14,10 @@ from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37,
                                  must_warn)
-from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
+from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup,
+                    union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import LHDFStore
@@ -4506,6 +4507,37 @@ def test_ufuncs(small_array):
     small_float = small_array + 0.6
     rounded = round(small_float)
     assert_array_equal(rounded, np.round(raw + 0.6))
+
+
+def test_eye():
+    age = Axis('age=0..2')
+    sex = Axis('sex=M,F')
+
+    # using one Axis object
+    res = eye(sex)
+    expected = from_string(r'''
+sex\sex    M    F
+      M  1.0  0.0
+      F  0.0  1.0''')
+    assert_array_equal(res, expected)
+
+    # using an AxisCollection
+    res = eye(AxisCollection([age, sex]))
+    expected = from_string(r'''
+age\sex    M    F
+      0  1.0  0.0
+      1  0.0  1.0
+      2  0.0  0.0''')
+    assert_array_equal(res, expected)
+
+    # using a tuple of axes
+    res = eye((age, sex))
+    expected = from_string(r"""
+age\sex    M    F
+      0  1.0  0.0
+      1  0.0  1.0
+      2  0.0  0.0""")
+    assert_array_equal(res, expected)
 
 
 def test_diag():

@@ -9192,10 +9192,10 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 
     Parameters
     ----------
-    rows : int or Axis
-        Rows of the output.
+    rows : int or Axis or tuple or length 2 AxisCollection
+        Rows of the output (if int or Axis) or rows and columns (if tuple or AxisCollection).
     columns : int or Axis, optional
-        Columns of the output. If None, defaults to rows.
+        Columns of the output. Defaults to the value of `rows` if it is an int or Axis.
     k : int, optional
         Index of the diagonal: 0 (the default) refers to the main diagonal, a positive value refers to an upper
         diagonal, and a negative value to a lower diagonal.
@@ -9214,16 +9214,16 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
 
     Examples
     --------
+    >>> eye('sex=M,F')
+    sex\sex    M    F
+          M  1.0  0.0
+          F  0.0  1.0
     >>> eye(2, dtype=int)
     {0}*\{1}*  0  1
             0  1  0
             1  0  1
-    >>> sex = Axis('sex=M,F')
-    >>> eye(sex)
-    sex\sex    M    F
-          M  1.0  0.0
-          F  0.0  1.0
     >>> age = Axis('age=0..2')
+    >>> sex = Axis('sex=M,F')
     >>> eye(age, sex)
     age\sex    M    F
           0  1.0  0.0
@@ -9236,9 +9236,16 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None):
             2  0.0  0.0  0.0
     """
     meta = _handle_meta(meta, title)
-    if columns is None:
-        columns = rows.copy() if isinstance(rows, Axis) else rows
-    axes = AxisCollection([rows, columns])
+    if isinstance(rows, AxisCollection):
+        assert columns is None
+        axes = rows
+    elif isinstance(rows, (tuple, list)):
+        assert columns is None
+        axes = AxisCollection(rows)
+    else:
+        if columns is None:
+            columns = rows.copy() if isinstance(rows, Axis) else rows
+        axes = AxisCollection([rows, columns])
     shape = axes.shape
     data = np.eye(shape[0], shape[1], k, dtype)
     return Array(data, axes, meta=meta)
