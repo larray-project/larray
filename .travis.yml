@@ -13,6 +13,7 @@ python:
 branches:
     only:
         - master
+        - 0_32_2
 
 before_install:
     # Install Miniconda
