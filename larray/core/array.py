@@ -283,7 +283,7 @@ def concat(arrays, axis=0, dtype=None):
 
     # switch to object dtype if labels are of incompatible types, so that we do not implicitly convert numeric types to
     # strings (numpy should not do this in the first place but that is another story). This can happen for example when
-    # we want to add a "total" tick to a numeric axis (eg age).
+    # we want to add a "total" label to a numeric axis (eg age).
     combined_axis = Axis(concatenate_ndarrays(arrays_labels), name)
 
     # combine all axes (using labels from any side if any)
@@ -2147,7 +2147,7 @@ class Array(ABCArray):
             #              1   2   0, axis='nat')
             # which sorts the *data* correctly, but the labels on the nat axis are not sorted
             # (because the __getitem__ in that case reuse the key axis as-is -- like it should).
-            # Both use cases have value, but I think reordering the ticks should be the default.
+            # Both use cases have value, but I think reordering the labels should be the default.
             # Now, I am unsure where to change this. Probably in IGroupMaker.__getitem__,
             # but then how do I get the "not reordering labels" behavior that I have now?
             # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
@@ -2684,19 +2684,19 @@ class Array(ABCArray):
             # get list of labels for each axis (except the last one if wide=True)
             labels = [ensure_no_numpy_type(axis.labels) for axis in axes]
 
-            # creates vertical lines (ticks is a list of list)
+            # creates vertical lines (labels is a list of list)
             if self.ndim == 1 and wide:
                 if dump_axes_names is True:
                     # There is no vertical axis, so the axis name should not have
-                    # any "tick" below it and we add an empty "tick".
-                    ticks = [['']]
+                    # any "label" below it and we add an empty "label".
+                    labels = [['']]
                 else:
                     # There is no vertical axis but no axis name either
-                    ticks = [[]]
+                    labels = [[]]
             elif light:
-                ticks = light_product(*labels)
+                labels = light_product(*labels)
             else:
-                ticks = Product(labels)
+                labels = Product(labels)
 
             # computes the first line
             other_colnames = ensure_no_numpy_type(self.axes[-1].labels) if wide else [value_name]
@@ -2706,14 +2706,14 @@ class Array(ABCArray):
             if maxlines != -1 and height > maxlines:
                 # replace middle lines of the table by '...'.
                 # We show only the first and last edgeitems lines.
-                res2d.extend([list(tick) + dataline
-                              for tick, dataline in zip(ticks[:edgeitems], ensure_no_numpy_type(data[:edgeitems]))])
+                res2d.extend([list(label) + dataline
+                              for label, dataline in zip(labels[:edgeitems], ensure_no_numpy_type(data[:edgeitems]))])
                 res2d.append(["..."] * (self.ndim - 1 + width))
-                res2d.extend([list(tick) + dataline
-                              for tick, dataline in zip(ticks[-edgeitems:], ensure_no_numpy_type(data[-edgeitems:]))])
+                res2d.extend([list(label) + dataline
+                              for label, dataline in zip(labels[-edgeitems:], ensure_no_numpy_type(data[-edgeitems:]))])
             else:
                 # all other lines (labels of N-1 first axes + data)
-                res2d.extend([list(tick) + ensure_no_numpy_type(dataline) for tick, dataline in zip(ticks, data)])
+                res2d.extend([list(label) + ensure_no_numpy_type(dataline) for label, dataline in zip(labels, data)])
 
         if na_repr != 'as_is':
             res2d = [[na_repr if value != value else value
@@ -7513,7 +7513,6 @@ class Array(ABCArray):
 
     __array_priority__ = 100
 
-    # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'Array':
         r"""Replace the labels of one or several axes of the array.
 
@@ -7611,13 +7610,18 @@ class Array(ABCArray):
         nat\sex  Men  F
         Belgian    0  1
              FO    2  3
+
+        >>> a.set_labels({'M:F': str.lower, 'BE': 'Belgian', 'FO': 'Foreigner'})
+          nat\sex  m  f
+          Belgian  0  1
+        Foreigner  2  3
         """
-        axes = self.axes.set_labels(axis, labels, **kwargs)
+        new_axes = self.axes.set_labels(axis, labels, **kwargs)
         if inplace:
-            self.axes = axes
+            self.axes = new_axes
             return self
         else:
-            return Array(self.data, axes)
+            return Array(self.data, new_axes)
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True) -> 'Array':
         return Array(self.data.astype(dtype, order, casting, subok, copy), self.axes)

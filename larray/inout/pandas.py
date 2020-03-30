@@ -18,7 +18,7 @@ def decode(s, encoding='utf-8', errors='strict'):
 
 def parse(s):
     r"""
-    Used to parse the "folded" axis ticks (usually periods).
+    Used to parse the "folded" axis labels (usually periods).
     """
     # parameters can be strings or numbers
     if isinstance(s, str):

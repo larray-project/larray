@@ -11,8 +11,9 @@ import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
-                               _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
+from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_label, _to_labels, _to_key, _seq_summary,
+                               _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups,
+                               _to_label_or_labels)
 from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
@@ -115,15 +116,15 @@ _GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE = \
     "Using a Group object which was used to create an aggregate to " \
     "target its aggregated label is deprecated. " \
     "Please use the aggregated label directly instead. " \
-    "In this case, you should use {potential_tick!r} instead of " \
+    "In this case, you should use {potential_label!r} instead of " \
     "using {key!r}."
 
 
-def _group_as_aggregated_label_msg(key, potential_tick=None):
-    if potential_tick is None:
-        potential_tick = _to_tick(key)
+def _group_as_aggregated_label_msg(key, potential_label=None):
+    if potential_label is None:
+        potential_label = _to_label(key)
     return _GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE.format(
-        potential_tick=potential_tick,
+        potential_label=potential_label,
         key=key
     )
 
@@ -304,7 +305,7 @@ class Axis(ABCAxis):
             labels = np.arange(length)
             iswildcard = True
         else:
-            labels = _to_ticks(labels, parse_single_int=True)
+            labels = _to_labels(labels, parse_single_int=True)
             length = len(labels)
             iswildcard = False
 
@@ -975,8 +976,8 @@ class Axis(ABCAxis):
         return list(self.labels)
 
     def __contains__(self, key) -> bool:
-        # TODO: ideally, _to_tick shouldn't be necessary, the __hash__ and __eq__ of Group should include this
-        return _to_tick(key) in self._mapping
+        # TODO: ideally, _to_label shouldn't be necessary, the __hash__ and __eq__ of Group should include this
+        return _to_label(key) in self._mapping
 
     # use the default hash. We have to specify it explicitly because we define __eq__
     __hash__ = object.__hash__
@@ -1012,6 +1013,9 @@ class Axis(ABCAxis):
         3
         >>> people.index(people.containing('Bruce'))
         array([1, 2])
+        >>> a = Axis('a0..a5', 'a')
+        >>> a.index('a1,a3,a2..a4')
+        array([1, 3, 2, 3, 4])
         """
         mapping = self._mapping
 
@@ -1027,18 +1031,17 @@ class Axis(ABCAxis):
                     # TODO: remove this as it is potentially very expensive
                     #       if key.key is an array or list and should be tried
                     #       as a last resort
-                    potential_tick = _to_tick(key)
-
+                    potential_label = _to_label(key)
                     # avoid matching 0 against False or 0.0, note that None has
                     # object dtype and so always pass this test
-                    if self._is_key_type_compatible(potential_tick):
+                    if self._is_key_type_compatible(potential_label):
                         try:
-                            res_idx = mapping[potential_tick]
-                            if potential_tick != key.key:
+                            res_idx = mapping[potential_label]
+                            if potential_label != key.key:
                                 raise ValueError(
                                     _group_as_aggregated_label_msg(
                                         key,
-                                        potential_tick
+                                        potential_label
                                     )
                                 )
                             return res_idx
@@ -1050,7 +1053,7 @@ class Axis(ABCAxis):
                     pass
 
         if isinstance(key, str):
-            # try the key as-is to allow getting at ticks with special characters (",", ":", ...)
+            # try the key as-is to allow getting at labels with special characters (",", ":", ...)
             try:
                 # avoid matching 0 against False or 0.0, note that Group keys have object dtype and so always pass this
                 # test
@@ -1246,16 +1249,35 @@ class Axis(ABCAxis):
         new_axis.__sorted_values = self.__sorted_values
         return new_axis
 
-    def replace(self, old, new=None) -> 'Axis':
+    def set_labels(self, old_or_changes, new=None) -> 'Axis':
         r"""
-        Return a new axis with some labels replaced.
+        Return a new axis with some labels changed.
+
+        It supports three distinct syntax variants:
+
+        * Axis.set_labels(new_labels)                  -> replace all Axis labels by `new_labels`
+        * Axis.set_labels(label_selection, new_labels) -> replace selection of labels by `new_labels`
+        * Axis.set_labels({old1: new1, old2: new2})    -> replace each selection of labels by corresponding new labels
+
+        Additionally, new labels in any of the above forms can be a function which transforms the existing
+        labels to produce the actual new labels.
 
         Parameters
         ----------
-        old : any scalar (bool, int, str, ...), tuple/list/array of scalars, or a mapping.
-            the label(s) to be replaced. Old can be a mapping {old1: new1, old2: new2, ...}
-        new : any scalar (bool, int, str, ...) or tuple/list/array of scalars, optional
-            the new label(s). This is argument must not be used if old is a mapping.
+        old_or_changes : any scalar (bool, int, str, ...), tuple/list/array of scalars, Group, callable or mapping.
+            This can be either:
+
+            * A selection of label(s) to be replaced. This can take several forms:
+              - a single label (e.g. 'France')
+              - a list of labels (e.g. ['France', 'Germany'])
+              - a comma-separated string of labels (e.g. 'France,Germany')
+              - a Group (e.g. country['France'])
+            * A mapping {selection1: new_labels1, selection2: new_labels2, ...}
+            * New labels, in which case all the axis labels will be replaced by these new labels and
+              the `new` argument must not be used.
+        new : any scalar (bool, int, str, ...) or tuple/list/array of scalars or callable, optional
+            The new label(s) or function to apply to old labels to get the new labels. This is argument must not be
+            used if `old_or_changes` contains the new labels or if it is a mapping.
 
         Returns
         -------
@@ -1264,55 +1286,54 @@ class Axis(ABCAxis):
 
         Examples
         --------
-        >>> sex = Axis('sex=M,F')
-        >>> sex
-        Axis(['M', 'F'], 'sex')
-        >>> sex.replace('M', 'Male')
-        Axis(['Male', 'F'], 'sex')
-        >>> sex.replace({'M': 'Male', 'F': 'Female'})
-        Axis(['Male', 'Female'], 'sex')
-        >>> sex.replace(['M', 'F'], ['Male', 'Female'])
-        Axis(['Male', 'Female'], 'sex')
+        >>> country = Axis('country=be,de,fr')
+        >>> country
+        Axis(['be', 'de', 'fr'], 'country')
+        >>> country.set_labels('be', 'Belgium')
+        Axis(['Belgium', 'de', 'fr'], 'country')
+        >>> country.set_labels({'de': 'Germany', 'fr': 'France'})
+        Axis(['be', 'Germany', 'France'], 'country')
+        >>> country.set_labels(['be', 'fr'], ['Belgium', 'France'])
+        Axis(['Belgium', 'de', 'France'], 'country')
+        >>> country.set_labels('be,de', 'Belgium-Germany')
+        Axis(['Belgium-Germany', 'Belgium-Germany', 'fr'], 'country')
+        >>> country.set_labels('be,de', ['Belgium', 'Germany'])
+        Axis(['Belgium', 'Germany', 'fr'], 'country')
+        >>> country.set_labels(str.upper)
+        Axis(['BE', 'DE', 'FR'], 'country')
         """
-        if isinstance(old, dict):
-            new = list(old.values())
-            old = list(old.keys())
-        elif np.isscalar(old):
-            assert new is not None and np.isscalar(new), f"{new} is not a scalar but a {type(new).__name__}"
-            old = [old]
-            new = [new]
-        else:
-            seq = (tuple, list, np.ndarray)
-            assert isinstance(old, seq), f"{old} is not a sequence but a {type(old).__name__}"
-            assert isinstance(new, seq), f"{new} is not a sequence but a {type(new).__name__}"
-            assert len(old) == len(new)
-        # using object dtype because new labels length can be larger than the fixed str length in the self.labels array
+        # FIXME: compute max(length of new keys and old labels array) instead
+        # XXX: it might be easier to go via list to get the label type auto-detection
+        #      labels = self.labels.tolist()
+
+        # using object dtype because new labels length can be larger than the fixed str length in self.labels
         labels = self.labels.astype(object)
-        indices = self.index(old)
-        labels[indices] = new
+        get_indices = self.index
+
+        def apply_changes(selection, label_change):
+            old_indices = get_indices(selection)
+            if callable(label_change):
+                old_labels = labels[old_indices]
+                if isinstance(old_labels, np.ndarray):
+                    np_func = np_frompyfunc(label_change, 1, 1)
+                    new_labels = np_func(old_labels)
+                else:
+                    new_labels = label_change(old_labels)
+            else:
+                new_labels = _to_label_or_labels(label_change)
+            labels[old_indices] = new_labels
+
+        if new is None and not isinstance(old_or_changes, dict):
+            apply_changes(slice(None), old_or_changes)
+        elif new is not None:
+            apply_changes(old_or_changes, new)
+        else:
+            assert new is None and isinstance(old_or_changes, dict)
+            for old, new in old_or_changes.items():
+                apply_changes(old, new)
         return Axis(labels, self.name)
-
-    def apply(self, func) -> 'Axis':
-        r"""
-        Return a new axis with the labels transformed by func.
-
-        Parameters
-        ----------
-        func : callable
-            A callable which takes a single argument and returns a single value.
-
-        Returns
-        -------
-        Axis
-            a new Axis with the transformed labels.
-
-        Examples
-        --------
-        >>> sex = Axis('sex=MALE,FEMALE')
-        >>> sex.apply(str.capitalize)
-        Axis(['Male', 'Female'], 'sex')
-        """
-        return Axis(np_frompyfunc(func, 1, 1)(self.labels), self.name)
+    apply = renamed_to(set_labels, 'apply')
+    replace = renamed_to(set_labels, 'replace')
 
     # XXX: rename to named like Group?
     def rename(self, name) -> 'Axis':
@@ -1321,7 +1342,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        name : str
+        name : str, Axis
             the new name for the axis.
 
         Returns
@@ -1374,7 +1395,7 @@ class Axis(ABCAxis):
         Axis(['a0', 'a1', 'a2', 'a3'], 'a')
         """
         non_string_scalar = np.isscalar(other) and not isinstance(other, str)
-        other = [other] if non_string_scalar else _to_ticks(other)
+        other = [other] if non_string_scalar else _to_labels(other)
         return Axis(unique_multi((self.labels, other)), self.name)
 
     def intersection(self, other) -> 'Axis':
@@ -1409,7 +1430,7 @@ class Axis(ABCAxis):
         Axis(['a0', 'a1', 'a0'], 'a')
         """
         non_string_scalar = np.isscalar(other) and not isinstance(other, str)
-        other = [other] if non_string_scalar else _to_ticks(other)
+        other = [other] if non_string_scalar else _to_labels(other)
         to_keep = set(other)
         return Axis([label for label in self.labels if label in to_keep], self.name)
 
@@ -1443,7 +1464,7 @@ class Axis(ABCAxis):
         Axis(['a0'], 'a')
         """
         non_string_scalar = np.isscalar(other) and not isinstance(other, str)
-        other = [other] if non_string_scalar else _to_ticks(other)
+        other = [other] if non_string_scalar else _to_labels(other)
         to_drop = set(other)
         return Axis([label for label in self.labels if label not in to_drop], self.name)
 
@@ -2070,7 +2091,7 @@ class AxisCollection:
         >>> col.isaxis('c')
         False
         """
-        # this is tricky. 0 and 1 can be both axes indices and axes ticks.
+        # this is tricky. 0 and 1 can be both axes indices and axes labels.
         # not sure what's worse:
         # 1) disallow aggregates(axis_num): users could still use arr.sum(arr.axes[0])
         #    we could also provide an explicit kwarg (ie this would effectively forbid having an axis named "axis").
@@ -2079,13 +2100,13 @@ class AxisCollection:
         return isinstance(value, Axis) or (isinstance(value, str) and value in self)
         # 2) slightly inconsistent API: allow aggregate over single labels if they are string, but not int
         #    arr.sum(0) would sum on the first axis, but arr.sum('M') would
-        #    sum a single tick. I don't like this option.
-        # 3) disallow single tick aggregates. Single labels make little sense in the context of an aggregate,
+        #    sum a single label. I don't like this option.
+        # 3) disallow single label aggregates. Single labels make little sense in the context of an aggregate,
         #    but you don't always know/want to differenciate the code in that case anyway.
         #    It would be annoying for e.g. Brussels
         # 4) give priority to axes,
         #    arr.sum(0) would sum on the first axis but arr.sum(5) would
-        #    sum a single tick (assuming there is a int axis and less than six axes).
+        #    sum a single label (assuming there is a int axis and less than six axes).
         # return value in self
 
     def __len__(self) -> int:
@@ -2744,25 +2765,14 @@ class AxisCollection:
         # handle {label1: new_label1, label2: new_label2}
         if any(axis_ref not in self for axis_ref in changes.keys()):
             changes_per_axis = defaultdict(list)
-            for selection, new_labels in changes.items():
+            for selection, label_changes in changes.items():
                 group = self._guess_axis(selection)
                 axis = group.axis
-                changes_per_axis[axis].append((selection, new_labels))
+                changes_per_axis[axis].append((group, label_changes))
             changes = {axis: dict(axis_changes) for axis, axis_changes in changes_per_axis.items()}
 
-        new_axes = []
-        for old_axis, axis_changes in changes.items():
-            real_axis = self[old_axis]
-            if isinstance(axis_changes, dict):
-                new_axis = real_axis.replace(axis_changes)
-            # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
-            # new_axes = [self[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
-            elif callable(axis_changes):
-                new_axis = real_axis.apply(axis_changes)
-            else:
-                new_axis = Axis(axis_changes, real_axis.name)
-            new_axes.append((real_axis, new_axis))
-        return self.replace(new_axes, inplace=inplace)
+        return self.replace({old_axis: self[old_axis].set_labels(axis_changes) for old_axis, axis_changes in
+                             changes.items()}, inplace=inplace)
 
     # TODO: deprecate method (should use __sub__ instead)
     def without(self, axes) -> 'AxisCollection':
@@ -3745,6 +3755,7 @@ incompatible axes:
         See Also
         --------
         Array.align
+        Axis.align
 
         Examples
         --------

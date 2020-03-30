@@ -345,9 +345,9 @@ def _seq_group_to_name(seq) -> Sequence[Any]:
         return seq
 
 
-def _to_tick(v) -> Scalar:
+def _to_label(v) -> Scalar:
     r"""
-    Convert any value to a tick (ie makes it hashable, and acceptable as an ndarray element).
+    Convert any value to a label (ie make it hashable, and acceptable as an ndarray element).
 
     scalar -> not modified
     slice -> 'start:stop'
@@ -364,7 +364,7 @@ def _to_tick(v) -> Scalar:
     Returns
     -------
     any scalar
-        scalar representing the tick
+        scalar representing the label
     """
     # the fact that an "aggregated tick" is passed as a LGroup or as a string should be as irrelevant as possible.
     # The thing is that we cannot (currently) use the more elegant _to_tick(e.key) that means the LGroup is not
@@ -374,7 +374,7 @@ def _to_tick(v) -> Scalar:
     if np.isscalar(v):
         return v
     elif isinstance(v, Group):
-        return v.name if v.name is not None else _to_tick(v.to_label())
+        return v.name if v.name is not None else _to_label(v.to_label())
     elif isinstance(v, slice):
         return _slice_to_str(v)
     elif isinstance(v, (tuple, list)):
@@ -387,7 +387,41 @@ def _to_tick(v) -> Scalar:
         return str(v)
 
 
-def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
+def _to_label_or_labels(value, parse_single_int=False):
+    if isinstance(value, ABCAxis):
+        return value.labels
+    elif isinstance(value, Group):
+        # a single LGroup used for all ticks of an Axis
+        # XXX: unsure _to_ticks() is necessary as s.eval() should return existing labels
+        #      In fact, calling _to_ticks is only necessary because Group keys are not
+        #      checked enough, especially for groups without axis, or with
+        #      AxisReference/string axes
+        return _to_label_or_labels(value.eval())
+    elif isinstance(value, np.ndarray):
+        # we assume it has already been translated
+        # XXX: Is it a safe assumption?
+        return value
+    if isinstance(value, pd.Index):
+        return value.values
+    elif isinstance(value, (list, tuple)):
+        return [_to_label(v) for v in value]
+    elif isinstance(value, range):
+        return value
+    elif isinstance(value, str):
+        labels = _seq_str_to_seq(value, parse_single_int=parse_single_int)
+        if isinstance(labels, slice):
+            raise ValueError("using : to define axes is deprecated, please use .. instead")
+        return labels
+    elif hasattr(value, '__array__'):
+        return value.__array__()
+    else:
+        try:
+            return list(value)
+        except TypeError:
+            raise TypeError(f"ticks must be iterable ({type(value)} is not)")
+
+
+def _to_labels(value, parse_single_int=False) -> Iterable[Scalar]:
     r"""
     Make a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
 
@@ -395,7 +429,7 @@ def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
 
     Parameters
     ----------
-    s : iterable
+    value : str, list, tuple, range, pd.Index, Axis, Group,
         List of values usable as the collection of labels for an Axis.
 
     Returns
@@ -404,48 +438,23 @@ def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
 
     Examples
     --------
-    >>> list(_to_ticks('M , F'))                # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('M , F'))                # doctest: +NORMALIZE_WHITESPACE
     ['M', 'F']
-    >>> list(_to_ticks('A,C..E,F..G,Z'))        # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('A,C..E,F..G,Z'))        # doctest: +NORMALIZE_WHITESPACE
     ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
-    >>> list(_to_ticks('U'))                    # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('U'))                    # doctest: +NORMALIZE_WHITESPACE
     ['U']
-    >>> list(_to_ticks('..3'))                  # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('..3'))                  # doctest: +NORMALIZE_WHITESPACE
     [0, 1, 2, 3]
-    >>> list(_to_ticks('01..12'))               # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('01..12'))               # doctest: +NORMALIZE_WHITESPACE
     ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    >>> list(_to_ticks('01,02,03,10,11,12'))    # doctest: +NORMALIZE_WHITESPACE
+    >>> list(_to_labels('01,02,03,10,11,12'))    # doctest: +NORMALIZE_WHITESPACE
     ['01', '02', '03', '10', '11', '12']
     """
-    if isinstance(s, ABCAxis):
-        return s.labels
-    if isinstance(s, Group):
-        # a single LGroup used for all ticks of an Axis
-        return _to_ticks(s.eval())
-    elif isinstance(s, np.ndarray):
-        # we assume it has already been translated
-        # XXX: Is it a safe assumption?
-        return s
-
-    if isinstance(s, pd.Index):
-        ticks = s.values
-    elif isinstance(s, (list, tuple)):
-        ticks = [_to_tick(e) for e in s]
-    elif isinstance(s, range):
-        ticks = s
-    elif isinstance(s, str):
-        seq = _seq_str_to_seq(s, parse_single_int=parse_single_int)
-        if isinstance(seq, slice):
-            raise ValueError("using : to define axes is deprecated, please use .. instead")
-        ticks = [seq] if isinstance(seq, (str, int)) else seq
-    elif hasattr(s, '__array__'):
-        ticks = s.__array__()
-    else:
-        try:
-            ticks = list(s)
-        except TypeError:
-            raise TypeError(f"ticks must be iterable ({type(s)} is not)")
-    return np.asarray(ticks)
+    labels = _to_label_or_labels(value, parse_single_int=parse_single_int)
+    if np.isscalar(labels):
+        labels = [labels]
+    return np.asarray(labels)
 
 
 _axis_name_pattern = re.compile(r'\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
@@ -663,7 +672,7 @@ _sheet_name_pattern = re.compile(r'[\\/?*\[\]:]')
 
 def _translate_sheet_name(sheet_name) -> str:
     if isinstance(sheet_name, Group):
-        sheet_name = str(_to_tick(sheet_name))
+        sheet_name = str(_to_label(sheet_name))
     if isinstance(sheet_name, str):
         sheet_name = _sheet_name_pattern.sub('_', sheet_name)
         if len(sheet_name) > 31:
@@ -677,7 +686,7 @@ _key_hdf_pattern = re.compile(r'[\\/]')
 
 def _translate_group_key_hdf(key) -> str:
     if isinstance(key, Group):
-        key = _key_hdf_pattern.sub('_', str(_to_tick(key)))
+        key = _key_hdf_pattern.sub('_', str(_to_label(key)))
     return key
 
 
@@ -702,7 +711,7 @@ def union(*args) -> List[Any]:
     ['a', 'b', 'c', 'd', 'e', 'f', 0, 1, 2]
     """
     if args:
-        return unique_list(chain(*(_to_ticks(arg) for arg in args)))
+        return unique_list(chain(*(_to_labels(arg) for arg in args)))
     else:
         return []
 
@@ -762,7 +771,7 @@ class Group:
 
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
-        self.name = _to_tick(name) if name is not None else name
+        self.name = _to_label(name) if name is not None else name
         assert axis is None or isinstance(axis, (str, int, ABCAxis)), f"invalid axis '{axis}' ({type(axis).__name__})"
 
         # we could check the key is valid but this can be slow and could be useless
@@ -1528,7 +1537,7 @@ class Group:
         #      is a small price to pay if the performance impact is large.
         # the problem with using self.translate() is that we cannot compare groups without axis
         # return hash(_to_tick(self.translate()))
-        return hash(_to_tick(self.key))
+        return hash(_to_label(self.key))
 
 
 def remove_nested_groups(key) -> Any:
@@ -1749,7 +1758,7 @@ class IGroup(Group):
             raise ValueError("Cannot evaluate a positional group without axis")
 
     def __hash__(self):
-        return hash(('IGroup', _to_tick(self.key)))
+        return hash(('IGroup', _to_label(self.key)))
 
 
 PGroup = renamed_to(IGroup, 'PGroup', raise_error=True)

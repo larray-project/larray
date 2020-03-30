@@ -24,7 +24,7 @@ from larray import (
     zip_array_values, zip_array_items, nan_to_num
 )
 from larray.core.axis import (
-    _to_ticks, _to_key, _retarget_warn_msg, _group_as_aggregated_label_msg
+    _to_labels, _to_key, _retarget_warn_msg, _group_as_aggregated_label_msg
 )
 from larray.util.misc import LHDFStore
 
@@ -43,8 +43,8 @@ meta = meta
 
 
 def test_value_string_split():
-    assert_nparray_equal(_to_ticks('c0,c1'), np.asarray(['c0', 'c1']))
-    assert_nparray_equal(_to_ticks('c0, c1'), np.asarray(['c0', 'c1']))
+    assert_nparray_equal(_to_labels('c0,c1'), np.asarray(['c0', 'c1']))
+    assert_nparray_equal(_to_labels('c0, c1'), np.asarray(['c0', 'c1']))
 
 
 def test_value_string_union():
@@ -52,12 +52,12 @@ def test_value_string_union():
 
 
 def test_value_string_range():
-    assert_nparray_equal(_to_ticks('0..15'), np.arange(16))
-    assert_nparray_equal(_to_ticks('..15'), np.arange(16))
+    assert_nparray_equal(_to_labels('0..15'), np.arange(16))
+    assert_nparray_equal(_to_labels('..15'), np.arange(16))
     with must_raise(ValueError, "no stop bound provided in range: '10..'"):
-        _to_ticks('10..')
+        _to_labels('10..')
     with must_raise(ValueError, "no stop bound provided in range: '..'"):
-        _to_ticks('..')
+        _to_labels('..')
 
 
 # ================ #
