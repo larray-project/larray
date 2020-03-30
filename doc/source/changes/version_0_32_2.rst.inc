@@ -1,6 +1,12 @@
 ﻿.. py:currentmodule:: larray
 
 
+New features
+^^^^^^^^^^^^
+
+* added support for Python 3.8.
+
+
 Fixes
 ^^^^^
 
