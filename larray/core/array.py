@@ -2669,7 +2669,6 @@ class Array(ABCArray):
             # array is not of object dtype (the usual case).
 
             # flatten all dimensions except the last one
-            # same fix should be applies in as_table above (it uses tolist too)
             res2d = ensure_no_numpy_type(self.data.reshape(-1, self.shape[-1]))
         else:
             if not self.ndim:
