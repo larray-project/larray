@@ -7424,7 +7424,6 @@ class Array(ABCArray):
 
     __array_priority__ = 100
 
-    # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'Array':
         r"""Replaces the labels of one or several axes of the array.
 
@@ -7522,13 +7521,18 @@ class Array(ABCArray):
         nat\sex  Men  F
         Belgian    0  1
              FO    2  3
+
+        >>> a.set_labels({'M:F': str.lower, 'BE': 'Belgian', 'FO': 'Foreigner'})
+          nat\sex  m  f
+          Belgian  0  1
+        Foreigner  2  3
         """
-        axes = self.axes.set_labels(axis, labels, **kwargs)
+        new_axes = self.axes.set_labels(axis, labels, **kwargs)
         if inplace:
-            self.axes = axes
+            self.axes = new_axes
             return self
         else:
-            return Array(self.data, axes)
+            return Array(self.data, new_axes)
 
     def astype(self, dtype, order='K', casting='unsafe', subok=True, copy=True) -> 'Array':
         return Array(self.data.astype(dtype, order, casting, subok, copy), self.axes)

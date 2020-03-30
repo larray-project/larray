@@ -18,7 +18,7 @@ from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadat
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items)
-from larray.core.axis import _to_ticks, _to_key
+from larray.core.axis import _to_labels, _to_key
 from larray.util.misc import LHDFStore
 
 # avoid flake8 errors
@@ -35,8 +35,8 @@ meta = meta
 
 
 def test_value_string_split():
-    assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
-    assert_array_equal(_to_ticks('M, F'), np.asarray(['M', 'F']))
+    assert_array_equal(_to_labels('M,F'), np.asarray(['M', 'F']))
+    assert_array_equal(_to_labels('M, F'), np.asarray(['M', 'F']))
 
 
 def test_value_string_union():
@@ -44,12 +44,12 @@ def test_value_string_union():
 
 
 def test_value_string_range():
-    assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
-    assert_array_equal(_to_ticks('..115'), np.asarray(range(116)))
+    assert_array_equal(_to_labels('0..115'), np.asarray(range(116)))
+    assert_array_equal(_to_labels('..115'), np.asarray(range(116)))
     with pytest.raises(ValueError):
-        _to_ticks('10..')
+        _to_labels('10..')
     with pytest.raises(ValueError):
-        _to_ticks('..')
+        _to_labels('..')
 
 
 # ================ #
