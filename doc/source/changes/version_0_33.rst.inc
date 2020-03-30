@@ -18,6 +18,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* added support for Python 3.8 (closes :issue:`850`).
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
@@ -56,4 +58,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed using Pandas >= 1.0 (closes :issue:`845`).
+* fixed something (closes :issue:`000`).
