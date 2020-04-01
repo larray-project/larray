@@ -30,13 +30,13 @@ def fetch_changelog(section_name, release_name, github_rep, rel_changes_dir='/do
                ['git', 'commit', '-m', f'fetched {section_name} changelog for {short(release_name)}', str(fpath)])
 
 
-def fetch_changelogs(release_name):
-    fetch_changelog('editor', release_name, EDITOR_GITHUB_REP)
+def fetch_changelogs(release_name, branch='master'):
+    fetch_changelog('editor', release_name, EDITOR_GITHUB_REP, branch=branch)
 
-    print(echocall(['git', 'log', 'upstream/master..HEAD']))
+    print(echocall(['git', 'log', f'origin/{branch}..HEAD']))
     if yes('Are the above commits ready to be pushed?', default='n'):
         doechocall('Pushing changes to GitHub',
-                   ['git', 'push', 'upstream', 'master', '--follow-tags'])
+                   ['git', 'push', 'origin', branch, '--follow-tags'])
 
 
 if __name__ == '__main__':
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     argv = sys.argv
     if len(argv) < 2:
-        print(f"Usage: {argv[0]} release_name")
+        print(f"Usage: {argv[0]} release_name [branch]")
         sys.exit()
 
-    fetch_changelogs(argv[1])
+    fetch_changelogs(*argv[1:])

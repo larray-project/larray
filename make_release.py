@@ -46,13 +46,13 @@ def update_metapackage(public_release, repository, release_name, **extra_kwargs)
                 '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
 
 
-def merge_changelogs(build_dir, src_documentation, release_name, public_release, **extra_kwargs):
+def merge_changelogs(build_dir, src_documentation, release_name, public_release, branch='master', **extra_kwargs):
     chdir(join(build_dir, src_documentation))
 
     if not public_release:
         return
 
-    check_call(['python', 'fetch_changelogs.py', release_name])
+    check_call(['python', 'fetch_changelogs.py', release_name, branch])
 
 
 insert_step_func(merge_changelogs, msg='append changelogs from larray-editor project', before='update_changelog')
