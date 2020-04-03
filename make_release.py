@@ -25,11 +25,11 @@ LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
 LARRAY_USERS_GROUP = "larray-users@googlegroups.com"
 
 
-def update_metapackage(public_release, repository, release_name, **extra_kwargs):
+def update_metapackage(public_release, local_repository, release_name, **extra_kwargs):
     if not public_release:
         return
 
-    chdir(repository)
+    chdir(local_repository)
     version = short(release_name)
 
     # TODO: this should be echocall(redirect_stdout=False)
