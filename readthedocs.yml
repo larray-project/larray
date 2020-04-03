@@ -13,12 +13,17 @@ sphinx:
 formats:
     - pdf
 
-conda:
-    environment: doc/environment.yml
+# we do not use conda anymore because it consumes too much memory and thus crashes our builds
+# see:
+# - https://docs.readthedocs.io/en/stable/guides/build-using-too-many-resources.html#use-pip-when-possible
+# - https://github.com/readthedocs/readthedocs.org/issues/6692
+#conda:
+#    environment: doc/environment.yml
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-    version: 3.6
+    version: 3.7
     install:
-        - method: setuptools
+        - requirements: doc/requirements.txt
+        - method: pip
           path: .

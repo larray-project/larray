@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+tables  # ==pytables
+xlrd
+openpyxl
+sphinx
+numpydoc
+pandoc
+ipython
+ipykernel
+nbsphinx
