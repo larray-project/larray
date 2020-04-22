@@ -7,20 +7,17 @@ package:
 source:
   git_tag: {{ version }}
   git_url: https://github.com/larray-project/larray.git
-#  git_tag: master
-#  git_url: file://c:/Users/gdm/devel/larray/.git
 
 build:
   noarch: python
   # If this is a new build for the same version, increment the build number
   number: 0
-  # we can use this instead of explicit build scripts (bld.bat and build.sh)
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vvv"
+  script: "{{ PYTHON }} -m pip install . --no-deps -vv"
 
 requirements:
-  build:
-    - pip
+  host:
     - python
+    - pip
 
   run:
     - python
@@ -28,23 +25,21 @@ requirements:
     - pandas >=0.20
 
 test:
-#  requires:
-#    - pytest
-#    - pytables
+  requires:
+    - pytest
 
   imports:
     - larray
 
-#  commands:
-#    # You can also put a file called run_test.py in the recipe that will be run at test time.
-#    - pytest --pyargs larray
+  commands:
+    - pytest --pyargs larray
 
 about:
   home: http://github.com/larray-project/larray
-  license: GPL-3.0
+  license: GPL-3.0-only
   license_family: GPL
   license_file: LICENSE
-  summary: "Labeled N-dimensional array."
+  summary: "N-dimensional labelled arrays in Python"
   description: |
     LArray is an open source Python library that aims to provide tools for
     easy exploration and manipulation of N-dimensional labelled data structures.
@@ -55,7 +50,3 @@ extra:
   recipe-maintainers:
     - alixdamman
     - gdementen
-
-# See
-# https://conda.io/docs/user-guide/tasks/build-packages/index.html
-# for more information about meta.yaml
