@@ -5,7 +5,7 @@ LArray: N-dimensional labelled arrays
 
 .. _start-intro:
 
-LArray is open source Python library that aims to provide tools for easy exploration and manipulation of
+LArray is an open source Python library that aims to provide tools for easy exploration and manipulation of
 N-dimensional labelled data structures.
 
 Library Highlights
