@@ -43,7 +43,7 @@ about:
   home: http://github.com/larray-project/larray
   license: GPL-3.0
   license_family: GPL
-  license_file: COPYING
+  license_file: LICENSE
   summary: "Labeled N-dimensional array."
   description: |
     LArray is open source Python library that aims to provide tools for
