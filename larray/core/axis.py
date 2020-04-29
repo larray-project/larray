@@ -2902,7 +2902,8 @@ class AxisCollection:
             if isinstance(axis_key, (int, np.integer, slice, Array)):
                 return axis_key
             else:
-                assert isinstance(axis_key, (list, np.ndarray))
+                assert isinstance(axis_key, (list, np.ndarray)), \
+                    "unsupported key type: {} ({})".format(axis_key, type(axis_key))
                 res_axis = axis.subaxis(axis_key)
                 # TODO: for perf reasons, we should bypass creating an actual Array by returning axes and key_data
                 # but then we will need to implement a function similar to make_numpy_broadcastable which works on axes
