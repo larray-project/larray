@@ -14,15 +14,14 @@ from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37,
                                  must_warn)
-from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup,
-                    union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
-                    clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan,
+from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
+                    zeros, zeros_like, ndtest, empty, ones, eye, diag, stack, sequence,
+                    union, clip, exp, where, X, mean, nan, isnan, round,
+                    read_hdf, read_csv, read_eurostat, read_excel, open_excel,
+                    from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items)
-from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import LHDFStore
-from larray.core.metadata import Metadata
 
 # avoid flake8 errors
 meta = meta

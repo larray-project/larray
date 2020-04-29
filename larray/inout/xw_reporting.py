@@ -71,7 +71,7 @@ class AbstractReportItem:
 
         Parameters
         ----------
-        template_file : str
+        template : str
             Name of the template to be used as default template.
             The extension '.crtx' will be added if not given.
             The full path to the template file must be given if no template directory has been set.
@@ -175,9 +175,8 @@ class AbstractReportSheet(AbstractReportItem):
         The extension '.crtx' will be added if not given.
         The full path to the template file must be given if no template directory has been set.
         Defaults to None.
-    graphs_per_row: int, optional
-        Default number of graphs per row.
-        Defaults to 1.
+    graphs_per_row : int, optional
+        Default number of graphs per row. Defaults to 1.
 
     See Also
     --------
@@ -340,9 +339,10 @@ class AbstractReportSheet(AbstractReportItem):
 
         Generate a new graph for each combination of gender and year
 
-        >>> sheet_population.add_graphs({'Population of {gender} by country for the year {year}': population},
-        ...                      {'gender': population.gender, 'year': population.time},
-        ...                      template='line', width=450, height=250, graphs_per_row=2)
+        >>> sheet_population.add_graphs(
+        ...     {'Population of {gender} by country in {year}': population},
+        ...     {'gender': population.gender, 'year': population.time},
+        ...     template='line', width=450, height=250, graphs_per_row=2)
 
         Specify the mininum and maximum values for the Y axis
 
@@ -446,7 +446,7 @@ class AbstractExcelReport(AbstractReportItem):
 
     Add multiple graphs at once (add a new graph for each combination of gender and year)
 
-    >>> sheet_countries.add_graphs({'Population of {gender} by country for the year {year}': population},
+    >>> sheet_countries.add_graphs({'Population of {gender} by country in {year}': population},
     ...                            {'gender': population.gender, 'year': population.time},
     ...                            template='line', width=450, height=250, graphs_per_row=2)
 
@@ -468,7 +468,7 @@ class AbstractExcelReport(AbstractReportItem):
 
         Returns
         -------
-        sheet: SheetReport
+        sheet: ReportSheet
 
         Examples
         --------
@@ -585,8 +585,10 @@ if xw is not None:
 
         def dump(self, sheet, data_sheet, row):
             data_cells = data_sheet.Cells
+
             # add title in data sheet
             data_cells(row, 1).Value = self.text
+
             # generate title banner in destination sheet
             msoShapeRectangle = 1
             msoThemeColorBackground1 = 14
@@ -607,7 +609,7 @@ if xw is not None:
             frame.HorizontalAlignment = HAlign.xlHAlignLeft
             frame.VerticalAlignment = VAlign.xlVAlignCenter
             shp.SetShapesDefaultProperties()
-            # update and return current row position
+            # update and return current row position in data sheet (+1 for title +1 for blank line)
             return row + 2
 
     _default_items_size['title'] = ExcelTitleItem._default_size
@@ -641,9 +643,11 @@ if xw is not None:
         def dump(self, sheet, data_sheet, row):
             data_range = data_sheet.Range
             data_cells = data_sheet.Cells
+
             # write graph title in data sheet
             data_cells(row, 1).Value = self.title
             row += 1
+
             # dump data to make the graph in data sheet
             data = self.data
             nb_series = 1 if data.ndim == 1 else data.shape[0]
@@ -651,6 +655,7 @@ if xw is not None:
             last_row, last_col = row + nb_series, nb_xticks + 1
             data_range(data_cells(row, 1), data_cells(last_row, last_col)).Value = data.dump(na_repr=None)
             data_cells(row, 1).Value = ''
+
             # generate graph in destination sheet
             sheet_charts = sheet.ChartObjects()
             obj = sheet_charts.Add(self.left, self.top, self.width, self.height)
@@ -764,6 +769,7 @@ if xw is not None:
             # write destination sheet name in data sheet
             data_cells(data_row, 1).Value = self.name
             data_row += 2
+
             # create new empty sheet in workbook (will contain output graphical items)
             # Hack, since just specifying "After" is broken in certain environments
             # see: https://stackoverflow.com/questions/40179804/adding-excel-sheets-to-end-of-workbook
@@ -794,7 +800,7 @@ if xw is not None:
         # TODO : Do not implement __setitem__ and move code below to new_sheet()?
         def __setitem__(self, key, value, warn_stacklevel=2):
             if not isinstance(value, ReportSheet):
-                raise ValueError(f"Expected SheetReport object. Got {type(value).__name__} object instead.")
+                raise ValueError(f"Expected ReportSheet object. Got {type(value).__name__} object instead.")
             if key in self.sheet_names():
                 warnings.warn(f"Sheet '{key}' already exists in the report and will be reset",
                               stacklevel=warn_stacklevel)
@@ -830,7 +836,7 @@ if xw is not None:
 else:
     class ReportSheet(AbstractReportSheet):
         def __init__(self):
-            raise Exception("SheetReport class cannot be instantiated because xlwings is not installed")
+            raise Exception("ReportSheet class cannot be instantiated because xlwings is not installed")
 
     class ExcelReport(AbstractExcelReport):
         def __init__(self):
