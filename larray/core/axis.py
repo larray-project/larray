@@ -10,7 +10,7 @@ import pandas as pd
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
-                               _range_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
+                               _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import *
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_multi, Product)
@@ -2798,7 +2798,7 @@ class AxisCollection(object):
             seq_types = (tuple, list, np.ndarray)
             # TODO: we should only do this if there are no Array key (with axes corresponding to the range)
             # otherwise we will be translating them back to a range afterwards
-            key = [_range_to_slice(axis_key, len(axis)) if isinstance(axis_key, seq_types) else axis_key
+            key = [_idx_seq_to_slice(axis_key, len(axis)) if isinstance(axis_key, seq_types) else axis_key
                    for axis_key, axis in zip(key, self)]
 
         # transform non-Array advanced keys (list and ndarray) to Array

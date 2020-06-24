@@ -242,69 +242,83 @@ def _range_str_to_range(s, stack_depth=1):
     return generalized_range(start, stop, step)
 
 
-def _range_to_slice(seq, length=None):
+def _normalize_idx(idx, length):
+    if idx < - length:
+        return - length - 1
+    elif -length <= idx < 0:
+        return idx + length
+    elif 0 <= idx < length:
+        return idx
+    elif idx > length:
+        return length
+
+
+def _idx_seq_to_slice(seq, length):
     r"""
-    Returns a slice if possible (including for sequences of 1 element) otherwise returns the input sequence itself
+    Transform a sequence of indices into a slice if possible and normalize it.
+
+    If a constant step between indices of the sequence can be inferred (the sequence is something like
+    [start, start+step, start+2*step, ...]), a normalized (with has few negative indices as possible) slice is
+    returned, otherwise the sequence is returned unmodified.
 
     Parameters
     ----------
-    seq : sequence-like of int
-        List, tuple or ndarray of integers representing the range.
-        It should be something like [start, start+step, start+2*step, ...]
-    length : int, optional
-        length of sequence of positions. This is only useful when you must be able to transform decreasing sequences
-        which can stop at 0.
+    seq : sequence-like of integers
+        Sequence (list, tuple or ndarray) of indices.
+    length : int
+        Length of the sequence the indices refer to.
 
     Returns
     -------
     slice or sequence-like
-        return the input sequence if a slice cannot be defined
+        return the input sequence if a slice cannot be defined.
 
     Examples
     --------
-    >>> _range_to_slice([3, 4, 5])
+    >>> _idx_seq_to_slice([3, 4, 5], 10)
     slice(3, 6, None)
-    >>> _range_to_slice([3, 4, 6])
+    >>> _idx_seq_to_slice([3, 4, 6], 10)
     [3, 4, 6]
-    >>> _range_to_slice([3, 5, 7])
-    slice(3, 9, 2)
-    >>> _range_to_slice([-3, -2])
-    slice(-3, -1, None)
-    >>> _range_to_slice([-1, -2])
-    slice(-1, -3, -1)
-    >>> _range_to_slice([2, 1])
+    >>> _idx_seq_to_slice([3, 5, 7], 10)
+    slice(3, 8, 2)
+    >>> _idx_seq_to_slice([-3, -2], 10)
+    slice(7, 9, None)
+    >>> _idx_seq_to_slice([-1, -2], 10)
+    slice(9, 7, -1)
+    >>> _idx_seq_to_slice([2, 1], 10)
     slice(2, 0, -1)
-    >>> _range_to_slice([1, 0], 4)
-    slice(-3, -5, -1)
-    >>> _range_to_slice([1, 0])
-    [1, 0]
-    >>> _range_to_slice([1])
+    >>> _idx_seq_to_slice([1, 0], 10)
+    slice(1, -11, -1)
+    >>> _idx_seq_to_slice([1], 10)
     slice(1, 2, None)
-    >>> _range_to_slice([])
+    >>> _idx_seq_to_slice([], 10)
     []
+    >>> _idx_seq_to_slice([3, 1], 10)
+    slice(3, 0, -2)
     """
     if len(seq) < 1:
         return seq
-    start = seq[0]
+    first_idx = _normalize_idx(seq[0], length)
     if len(seq) == 1:
-        return slice(start, start + 1)
-    second = seq[1]
-    step = second - start
-    prev_value = second
-    for value in seq[2:]:
-        if value != prev_value + step:
+        return slice(first_idx, first_idx + 1)
+    second_idx = _normalize_idx(seq[1], length)
+    step = second_idx - first_idx
+    prev_idx = second_idx
+    for raw_idx in seq[2:]:
+        idx = _normalize_idx(raw_idx, length)
+        if idx != prev_idx + step:
             return seq
-        prev_value = value
-    stop = prev_value + step
-    if prev_value == 0 and step < 0:
-        if length is None:
-            return seq
-        else:
-            stop -= length
-            start -= length
+        prev_idx = idx
+    last_idx = prev_idx
+    step_sign = 1 if step > 0 else -1
+    # we stop just after last_idx instead of using a full "step" because for negative steps, it could get us a negative
+    # stop which isn't what we want
+    stop = last_idx + step_sign
+    if last_idx == 0 and step < 0:
+        stop -= length
     if step == 1:
         step = None
-    return slice(start, stop, step)
+    return slice(first_idx, stop, step)
 
 
 def _is_object_array(array):
