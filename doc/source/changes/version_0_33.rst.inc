@@ -58,4 +58,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`000`).
+* fixed an edge case for group aggregates and labels in reverse order (closes :issue:`868`).

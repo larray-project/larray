@@ -1887,6 +1887,10 @@ def test_group_agg_guess_axis(array):
     res = array.sum(age, sex).sum((vla, wal, bru, belgium))
     assert res.shape == (4, 15)
 
+    # issue #868: labels in reverse order with a "step" between them > index of last label
+    arr = ndtest(4)
+    assert arr.sum('a3,a1') == 4
+
 
 def test_group_agg_label_group(array):
     age, geo, sex, lipro = array.axes
