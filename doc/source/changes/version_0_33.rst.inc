@@ -61,6 +61,8 @@ Miscellaneous improvements
 
 * implemented :py:obj:`isscalar()` function (closes :issue:`872`).
 
+* implemented the :py:obj:`Array.allclose()` method (closes :issue:`871`).
+
 Fixes
 ^^^^^
 
