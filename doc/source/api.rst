@@ -71,6 +71,7 @@ Modifying/Selecting
    Axis.align
    Axis.split
    Axis.ignore_labels
+   Axis.astype
 
 Testing
 -------

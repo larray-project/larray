@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables
-from larray import Axis, LGroup, IGroup, read_hdf, X
+from larray import Axis, LGroup, IGroup, read_hdf, X, ndtest
 from larray.core.axis import AxisReference
 
 
@@ -92,6 +92,14 @@ def test_translate():
     a = Axis(np.array(["a0", "a1"], dtype=object), 'a')
     assert a.index('a1') == 1
     assert a.index('a1 >> A1') == 1
+
+
+def test_astype():
+    arr = ndtest(Axis('time=2015..2020,total')).drop('total')
+    time = arr.time
+    assert time.dtype.kind == 'U'
+    time = time.astype(int)
+    assert time.dtype.kind == 'i'
 
 
 def test_getitem_lgroup_keys():
