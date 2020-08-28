@@ -1,5 +1,6 @@
 # numpy ufuncs
 # http://docs.scipy.org/doc/numpy/reference/routines.math.html
+from typing import Any
 
 import numpy as np
 
