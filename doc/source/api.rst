@@ -49,6 +49,8 @@ Searching
    Axis.startingwith
    Axis.endingwith
    Axis.matching
+   Axis.min
+   Axis.max
 
 Modifying/Selecting
 -------------------
