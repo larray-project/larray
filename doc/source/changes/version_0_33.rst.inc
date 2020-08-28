@@ -63,6 +63,8 @@ Miscellaneous improvements
 
 * implemented the :py:obj:`Array.allclose()` method (closes :issue:`871`).
 
+* implemented :py:obj:`Axis.min()` and :py:obj:`Axis.max()` methods (closes :issue:`874`).
+
 Fixes
 ^^^^^
 

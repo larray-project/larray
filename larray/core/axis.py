@@ -4,7 +4,7 @@ import sys
 import warnings
 from itertools import product
 
-from typing import Union
+from typing import Union, Any
 
 import numpy as np
 import pandas as pd
@@ -613,6 +613,60 @@ class Axis(ABCAxis):
         # this might need to change if we ever support wildcard axes with real labels
         return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
             (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
+
+    def min(self) -> Any:
+        """
+        Get minimum of labels.
+
+        Returns
+        -------
+        label
+            Label with minimum value.
+
+        Warnings
+        --------
+        Fails on non-numeric labels.
+
+        Examples
+        --------
+        >>> time = Axis('time=1991..2020')
+        >>> time.min()
+        1991
+
+        >>> country = Axis('country=Belgium,France,Germany')
+        >>> country.min()
+        Traceback (most recent call last):
+        ...
+        TypeError: cannot perform reduce with flexible type
+        """
+        return np.nanmin(self.labels)
+
+    def max(self) -> Any:
+        """
+        Get maximum of labels.
+
+        Returns
+        -------
+        label
+            Label with maximum value.
+
+        Warnings
+        --------
+        Fails on non-numeric labels.
+
+        Examples
+        --------
+        >>> time = Axis('time=1991..2020')
+        >>> time.max()
+        2020
+
+        >>> country = Axis('country=Belgium,France,Germany')
+        >>> country.max()
+        Traceback (most recent call last):
+        ...
+        TypeError: cannot perform reduce with flexible type
+        """
+        return np.nanmax(self.labels)
 
     def matching(self, deprecated=None, pattern=None, regex=None):
         r"""
