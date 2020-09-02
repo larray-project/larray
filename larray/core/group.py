@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
-from larray.util.oset import *
+from larray.util.oset import OrderedSet
 from larray.util.misc import (unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to, LHDFStore)
 
 
@@ -867,7 +867,7 @@ class Group(object):
         if hasattr(value, '__len__'):
             return len(value)
         elif isinstance(value, slice):
-            start, stop, key_step = value.start, value.stop, value.step
+            start, stop = value.start, value.stop
             # not using stop - start because that does not work for string bounds
             # (and it is different for LGroup & IGroup)
             start_pos = self.translate(start)
@@ -1714,5 +1714,6 @@ class IGroup(Group):
 
     def __hash__(self):
         return hash(('IGroup', _to_tick(self.key)))
+
 
 PGroup = renamed_to(IGroup, 'PGroup')

@@ -25,10 +25,10 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
-from larray.core.axis import Axis, AxisCollection
+from larray.core.axis import Axis, AxisCollection       # noqa: F401
 from larray.core.array import Array, asarray
 from larray.core.array import raw_broadcastable
-import larray as la
+import larray as la                                     # noqa: F401
 
 
 __all__ = ['randint', 'normal', 'uniform', 'permutation', 'choice']

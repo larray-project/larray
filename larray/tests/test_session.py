@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path, meta,
+from larray.tests.common import meta            # noqa: F401
+from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
                                  needs_xlwings, needs_pytables, needs_xlrd)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
@@ -276,7 +277,7 @@ def test_csv_io(tmpdir, session, meta):
             f.write(',",')
 
         # try loading the directory with the invalid file
-        with pytest.raises(pd.errors.ParserError) as e_info:
+        with pytest.raises(pd.errors.ParserError):
             s = Session(pattern)
 
         # test loading a pattern, ignoring invalid/unsupported files

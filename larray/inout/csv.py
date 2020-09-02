@@ -2,7 +2,6 @@ import os
 import csv
 import warnings
 from glob import glob
-from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
@@ -14,7 +13,7 @@ from larray.util.misc import skip_comment_cells, strip_rows, deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
 from larray.inout.pandas import df_asarray
-from larray.example import get_example_filepath
+from larray.example import get_example_filepath         # noqa: F401
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)

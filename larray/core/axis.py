@@ -11,9 +11,9 @@ from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
-from larray.util.oset import *
+from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
-                              lazy_attribute, _isnoneslice, unique_multi, Product)
+                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product)
 
 
 np_frompyfunc = np.frompyfunc
@@ -321,7 +321,7 @@ class Axis(ABCAxis):
             split_labels = np.char.split(labels, sep)
         else:
             match = re.compile(regex).match
-            split_labels = [match(l).groups() for l in self.labels]
+            split_labels = [match(label).groups() for label in self.labels]
         if names is None:
             names = [None] * len(split_labels)
         indexing_labels = zip(*split_labels)
@@ -1183,7 +1183,7 @@ class Axis(ABCAxis):
         if isinstance(other, Axis):
             other = other.labels
         to_keep = set(other)
-        return Axis([l for l in self.labels if l in to_keep], self.name)
+        return Axis([label for label in self.labels if label in to_keep], self.name)
 
     def difference(self, other):
         r"""Returns axis with the (set) difference of this axis labels and other labels.
@@ -1220,7 +1220,7 @@ class Axis(ABCAxis):
         if isinstance(other, Axis):
             other = other.labels
         to_drop = set(other)
-        return Axis([l for l in self.labels if l not in to_drop], self.name)
+        return Axis([label for label in self.labels if label not in to_drop], self.name)
 
     def align(self, other, join='outer'):
         r"""Align axis with other object using specified join method.
@@ -3186,7 +3186,7 @@ class AxisCollection(object):
                     combined_labels = _axes[0].labels
                 else:
                     sepjoin = sep.join
-                    axes_labels = [np.array(l, np.str, copy=False) for l in _axes.labels]
+                    axes_labels = [np.array(label, np.str, copy=False) for label in _axes.labels]
                     combined_labels = [sepjoin(p) for p in product(*axes_labels)]
                 combined_axis = Axis(combined_labels, combined_name)
             new_axes = new_axes - _axes

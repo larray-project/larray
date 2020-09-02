@@ -9,7 +9,8 @@ import pandas as pd
 from io import StringIO
 from collections import OrderedDict
 
-from larray.tests.common import (inputpath, tmp_path, meta,
+from larray.tests.common import meta                        # noqa: F401
+from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_xlrd,
                                  needs_python37)
@@ -246,9 +247,9 @@ def test_bool():
 
 
 def test_iter(small_array):
-    l = list(small_array)
-    assert_array_equal(l[0], small_array['M'])
-    assert_array_equal(l[1], small_array['F'])
+    list_ = list(small_array)
+    assert_array_equal(list_[0], small_array['M'])
+    assert_array_equal(list_[1], small_array['F'])
 
 
 def test_keys():
@@ -1859,8 +1860,6 @@ def test_group_agg_guess_axis(array):
     res = array.sum('M >> men;M,F >> all')
     assert res.shape == (116, 44, 2, 15)
     assert 'sex' in res.axes
-    men = sex['M'].named('men')
-    all_ = sex['M,F'].named('all')
     assert_array_equal(res.axes.sex.labels, ['men', 'all'])
     assert_array_equal(res['men'], raw[:, :, 0, :])
     assert_array_equal(res['all'], raw.sum(2))
@@ -2655,8 +2654,8 @@ def test_binary_ops(small_array):
 def test_binary_ops_no_name_axes(small_array):
     raw = small_array.data
     raw2 = small_array.data + 1
-    la = ndtest([Axis(l) for l in small_array.shape])
-    la2 = ndtest([Axis(l) for l in small_array.shape]) + 1
+    la = ndtest([Axis(label) for label in small_array.shape])
+    la2 = ndtest([Axis(label) for label in small_array.shape]) + 1
 
     assert_array_equal(la + la2, raw + raw2)
     assert_array_equal(la + 1, raw + 1)
@@ -2802,7 +2801,7 @@ def test_set_labels(small_array):
 
 
 def test_set_axes(small_array):
-    lipro2 = Axis([l.replace('P', 'Q') for l in lipro.labels], 'lipro2')
+    lipro2 = Axis([label.replace('P', 'Q') for label in lipro.labels], 'lipro2')
     sex2 = Axis(['Man', 'Woman'], 'sex2')
 
     la = Array(small_array.data, axes=(sex, lipro2))
