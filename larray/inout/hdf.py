@@ -13,7 +13,7 @@ from larray.util.misc import LHDFStore
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler, _supported_typenames, _supported_scalars_types
 from larray.inout.pandas import df_asarray
-from larray.example import get_example_filepath
+from larray.example import get_example_filepath         # noqa: F401
 
 
 # for backward compatibility (larray < 0.29) but any object read from an hdf file should have
@@ -103,7 +103,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 # np.char.decode does not work
                 # this is at least the case for Python2 + Pandas 0.24.2 combination
                 if labels.dtype.kind == 'O':
-                    labels = np.array([l.decode('utf-8') for l in labels], dtype='U')
+                    labels = np.array([label.decode('utf-8') for label in labels], dtype='U')
                 else:
                     labels = np.char.decode(labels, 'utf-8')
             res = Axis(labels=labels, name=name)

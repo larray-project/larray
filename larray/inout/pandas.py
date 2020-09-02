@@ -48,7 +48,7 @@ def index_to_labels(idx, sort=True):
         if sort:
             return list(idx.levels)
         else:
-            return [list(unique(idx.get_level_values(l))) for l in range(idx.nlevels)]
+            return [list(unique(idx.get_level_values(label))) for label in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.Index)
         labels = list(idx.values)

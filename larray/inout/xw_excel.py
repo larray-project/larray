@@ -7,7 +7,7 @@ try:
 except ImportError:
     xw = None
 
-from larray.core.array import Array, ndtest
+from larray.core.array import Array, ndtest             # noqa: F401
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import _translate_sheet_name

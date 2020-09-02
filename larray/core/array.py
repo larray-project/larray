@@ -26,7 +26,7 @@ Array class
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
 from collections import OrderedDict
-from itertools import product, chain, groupby, islice, repeat
+from itertools import product, chain, groupby
 from collections.abc import Iterable, Sequence
 import builtins
 import os
@@ -53,7 +53,7 @@ from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
-from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis
+from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
 from larray.util.misc import (table2str, size2str, ReprString,
                               float_error_handler_factory, light_product, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
@@ -3567,7 +3567,7 @@ class Array(ABCArray):
             for labels, value in self.items(axes):
                 hashable_value = value.data.tobytes() if isinstance(value, Array) else value
                 if hashable_value not in seen:
-                    list_append((sep_join(str(l) for l in labels), value))
+                    list_append((sep_join(str(label) for label in labels), value))
                     seen_add(hashable_value)
             res_arr = stack(unq_list, axis_name)
             # transpose the combined axis at the position where the first of the combined axes was
@@ -8688,6 +8688,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
             cum_mult = mult_array.cumprod(axis)[axis.i[1:]]
             res[axis.i[1:]] = ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
     return res
+
 
 create_sequential = renamed_to(sequence, 'create_sequential')
 

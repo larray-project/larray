@@ -1,6 +1,4 @@
-import os
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -10,16 +8,15 @@ except ImportError:
     xw = None
 
 from larray.core.array import Array, asarray
-from larray.core.axis import Axis
 from larray.core.constants import nan
-from larray.core.group import Group, _translate_sheet_name
+from larray.core.group import _translate_sheet_name
 from larray.core.metadata import Metadata
 from larray.util.misc import deprecate_kwarg
 from larray.inout.session import register_file_handler
 from larray.inout.common import _get_index_col, FileHandler
 from larray.inout.pandas import df_asarray
 from larray.inout.xw_excel import open_excel
-from larray.example import get_example_filepath
+from larray.example import get_example_filepath             # noqa: F401
 
 
 __all__ = ['read_excel']

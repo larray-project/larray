@@ -219,10 +219,6 @@ class TestRange(object):
             assert np.array_equal(res1, arr1.data)
             assert res1.dtype == arr1.dtype
 
-    def test_asarray(self):
-        with open_excel(visible=False) as wb:
-            sheet = wb[0]
-
             arr1 = ndtest([Axis(2), Axis(3)])
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
@@ -299,12 +295,12 @@ def test_excel_report_setting_template():
 def test_excel_report_sheets():
     report = ExcelReport()
     # test adding new sheets
-    sheet_population = report.new_sheet('Population')
-    sheet_births = report.new_sheet('Births')
-    sheet_deaths = report.new_sheet('Deaths')
+    report.new_sheet('Population')
+    report.new_sheet('Births')
+    report.new_sheet('Deaths')
     # test warning if sheet already exists
     with pytest.warns(UserWarning) as caught_warnings:
-        sheet_population2 = report.new_sheet('Population')
+        sheet_population2 = report.new_sheet('Population')  # noqa: F841
     assert len(caught_warnings) == 1
     warn_msg = "Sheet 'Population' already exists in the report and will be reset"
     assert caught_warnings[0].message.args[0] == warn_msg
