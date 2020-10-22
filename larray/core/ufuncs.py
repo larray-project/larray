@@ -5,7 +5,7 @@ import numpy as np
 from larray.core.array import Array, make_args_broadcastable
 
 
-def wrap_elementwise_array_func(func):
+def wrap_elementwise_array_func(func, doc=None):
     r"""
     Wrap a function using numpy arrays to work with LArray arrays instead.
 
@@ -15,11 +15,14 @@ def wrap_elementwise_array_func(func):
         A function taking numpy arrays as arguments and returning numpy arrays of the same shape. If the function
         takes several arguments, this wrapping code assumes the result will have the combination of all axes present.
         In numpy talk, arguments will be broadcasted to each other.
+    doc : str, optional
+        The documentation (docstring) for the new function. Defaults to the documentation of the original function,
+        if any.
 
     Returns
     -------
     function
-        A function taking LArray arrays arguments and returning LArray arrays.
+        A function taking larray.Array arguments and returning larray.Arrays.
 
     Examples
     --------
@@ -74,12 +77,11 @@ def wrap_elementwise_array_func(func):
     # copy function name. We are intentionally not using functools.wraps, because it does not work for wrapping a
     # function from another module
     wrapper.__name__ = func.__name__
+    wrapper.__doc__ = func.__doc__ if doc is None else doc
     return wrapper
 
 
 def wrap_numpy_func(func, doc=None):
-    wrapper = wrap_elementwise_array_func(func)
-
     # update documentation by inserting a warning message after the short description of the numpy function
     # (otherwise the description of ufuncs given in the corresponding API 'autosummary' tables will always
     #  start with 'larray specific variant of ...' without giving a meaningful description of what does the ufunc)
@@ -97,7 +99,7 @@ def wrap_numpy_func(func, doc=None):
         ident = ' ' * (len(short_desc[end_signature:]) - len(short_desc[end_signature:].lstrip()))
         doc = f'{short_desc}\n\n{ident}larray specific variant of ``numpy.{func.__name__}``.\n\n' \
               f'{ident}Documentation from numpy:{numpy_doc}'
-    wrapper.__doc__ = doc
+    wrapper = wrap_elementwise_array_func(func, doc)
     # set __qualname__ explicitly (all these functions are supposed to be top-level function in the ufuncs module)
     wrapper.__qualname__ = func.__name__
     # we should not copy __module__
