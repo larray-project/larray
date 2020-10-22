@@ -77,33 +77,34 @@ def wrap_elementwise_array_func(func):
     return wrapper
 
 
-# TODO: rename to wrap_numpy_func
-def broadcastify(func):
+def wrap_numpy_func(func, doc=None):
     wrapper = wrap_elementwise_array_func(func)
+
     # update documentation by inserting a warning message after the short description of the numpy function
     # (otherwise the description of ufuncs given in the corresponding API 'autosummary' tables will always
     #  start with 'larray specific variant of ...' without giving a meaningful description of what does the ufunc)
-    if func.__doc__.startswith('\n'):
-        # docstring starts with short description
-        end_signature = 1
-        end_short_desc = func.__doc__.find('\n\n')
-    else:
-        # docstring starts with signature
-        end_signature = func.__doc__.find('\n\n') + 2
-        end_short_desc = func.__doc__.find('\n\n', end_signature)
-    short_desc = func.__doc__[:end_short_desc]
-    numpy_doc = func.__doc__[end_short_desc:]
-    ident = ' ' * (len(short_desc[end_signature:]) - len(short_desc[end_signature:].lstrip()))
-    wrapper.__doc__ = f'{short_desc}\n\n{ident}larray specific variant of ``numpy.{func.__name__}``.\n\n' \
-                      f'{ident}Documentation from numpy:{numpy_doc}'
+    if doc is None:
+        if func.__doc__.startswith('\n'):
+            # docstring starts with short description
+            end_signature = 1
+            end_short_desc = func.__doc__.find('\n\n')
+        else:
+            # docstring starts with signature
+            end_signature = func.__doc__.find('\n\n') + 2
+            end_short_desc = func.__doc__.find('\n\n', end_signature)
+        short_desc = func.__doc__[:end_short_desc]
+        numpy_doc = func.__doc__[end_short_desc:]
+        ident = ' ' * (len(short_desc[end_signature:]) - len(short_desc[end_signature:].lstrip()))
+        doc = f'{short_desc}\n\n{ident}larray specific variant of ``numpy.{func.__name__}``.\n\n' \
+              f'{ident}Documentation from numpy:{numpy_doc}'
+    wrapper.__doc__ = doc
     # set __qualname__ explicitly (all these functions are supposed to be top-level function in the ufuncs module)
     wrapper.__qualname__ = func.__name__
     # we should not copy __module__
     return wrapper
 
 
-where = broadcastify(np.where)
-where.__doc__ = r"""
+where = wrap_numpy_func(np.where, r"""
 where(condition, x, y)
 
     Return elements, either from `x` or `y`, depending on `condition`.
@@ -158,10 +159,9 @@ where(condition, x, y)
      a1   7.5   8.0  3.25  7.75
      a2   7.5  6.75  3.25   9.0
      a3   9.0  10.0   5.0  7.75
-"""
+""")
 
-maximum = broadcastify(np.maximum)
-maximum.__doc__ = r"""
+maximum = wrap_numpy_func(np.maximum, r"""
 maximum(x1, x2, out=None, dtype=None)
 
     Element-wise maximum of array elements.
@@ -228,10 +228,9 @@ maximum(x1, x2, out=None, dtype=None)
     a\b  b0  b1  b2  b3
      a0  10   7   9   9
      a1   6   8   9   7
-"""
+""")
 
-minimum = broadcastify(np.minimum)
-minimum.__doc__ = r"""
+minimum = wrap_numpy_func(np.minimum, r"""
 minimum(x1, x2, out=None, dtype=None)
 
     Element-wise minimum of array elements.
@@ -298,4 +297,4 @@ minimum(x1, x2, out=None, dtype=None)
     a\b  b0  b1  b2  b3
      a0   6   2   5   0
      a1   5   2   3   0
-"""
+""")
