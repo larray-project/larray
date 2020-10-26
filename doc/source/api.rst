@@ -372,6 +372,7 @@ Aggregation Functions
    Array.growth_rate
    Array.describe
    Array.describe_by
+   Array.value_counts
 
 .. _la_sorting:
 

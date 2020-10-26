@@ -1649,6 +1649,32 @@ class Array(ABCArray):
         args = self._by_args_to_normal_agg_args(args)
         return self.describe(*args, percentiles=percentiles)
 
+    def value_counts(self):
+        """
+        Count number of occurrences of each unique value in array.
+
+        Returns
+        -------
+        Array of ints
+            The number of occurrences of each unique value in the input array.
+
+        See Also
+        --------
+        Array.unique
+
+        Examples
+        --------
+        >>> arr = Array([5, 2, 5, 5, 2, 3, 7], "a=a0..a6")
+        >>> arr
+        a  a0  a1  a2  a3  a4  a5  a6
+            5   2   5   5   2   3   7
+        >>> arr.value_counts()
+        value  2  3  5  7
+               2  1  3  1
+        """
+        unq, counts = np.unique(self.data, return_counts=True)
+        return Array(counts, Axis(unq, 'value'))
+
     # noinspection PyAttributeOutsideInit
     # def __array_finalize__(self, obj):
     #     """
