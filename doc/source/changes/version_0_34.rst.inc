@@ -18,6 +18,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* implemented :py:obj:`Array.value_counts()`, which computes the number of occurrences of each unique value in an array.
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
