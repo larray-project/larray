@@ -56,6 +56,9 @@ Miscellaneous improvements
 
 * implemented :py:obj:`Axis.astype()` method (closes :issue:`880`).
 
+* added `min_y`, `max_y` and `xticks_spacing` keyword arguments to the :py:obj:`ReportSheet.add_graph()` and
+  :py:obj:`ReportSheet.add_graphs()` methods (closes :issue:`901`).
+
 Fixes
 ^^^^^
 
