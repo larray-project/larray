@@ -3045,7 +3045,8 @@ class AxisCollection:
         ['a', 'b*', '{2}', '{3}*']
         """
         def display_name(i, axis):
-            name = axis.name if axis.name is not None else f'{{{i}}}'
+            # str(axis.name) because name can be an integer
+            name = str(axis.name) if axis.name is not None else f'{{{i}}}'
             return (name + '*') if axis.iswildcard else name
 
         return [display_name(i, axis) for i, axis in enumerate(self._list)]
