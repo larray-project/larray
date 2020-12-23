@@ -2811,6 +2811,12 @@ class AxisCollection:
         """
         from .array import Array
 
+        if isinstance(key, str) and ';' in key:
+            # FIXME: it would be more logical to use _to_keys(key) instead but this breaks
+            # the "target an aggregate with its key" feature (test_getitem_on_group_agg).
+            # It might be a good thing though as it costs so much for so little use.
+            # key = _to_keys(key)
+            key = tuple(key.split(';'))
         if isinstance(key, dict):
             # key axes could be strings or axis references and we want real axes
             key = tuple(self[axis][axis_key] for axis, axis_key in key.items())
