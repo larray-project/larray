@@ -536,7 +536,9 @@ class Axis(ABCAxis):
         r"""
         Checks if self is compatible with another axis.
 
-        * Two non-wildcard axes are compatible if they have the same name and labels.
+        * two axes are compatible if they have compatible names and labels
+        * names are compatible if they are the same or missing
+        * non-wildcard labels are compatible if they are the same
         * A wildcard axis of length 1 is compatible with any other axis sharing the same name.
         * A wildcard axis of length > 1 is compatible with any axis of the same length or length 1 and sharing the
           same name.
@@ -572,6 +574,7 @@ class Axis(ABCAxis):
             return False
         if self.name is not None and other.name is not None and self.name != other.name:
             return False
+
         if self.iswildcard or other.iswildcard:
             # wildcard axes of length 1 match with anything
             # wildcard axes of length > 1 match with equal len or len 1
@@ -2843,6 +2846,8 @@ class AxisCollection:
             any key supported by Array.__getitem__
         collapse_slices : bool, optional
             Whether or not to convert ranges to slices. Defaults to False.
+        translate_key : bool, optional
+            Whether or not to consider key as label-based. Defaults to True.
 
         Returns
         -------
