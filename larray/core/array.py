@@ -1977,9 +1977,7 @@ class Array(ABCArray):
         raw_broadcasted_key, target_axes, _ = \
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=True)
         if isinstance(value, Array):
-            # TODO: the check_compatible should be included in broadcast_with
-            value = value.broadcast_with(target_axes)
-            value.axes.check_compatible(target_axes)
+            value = value.broadcast_with(target_axes, check_compatible=True)
 
             # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
@@ -2084,7 +2082,7 @@ class Array(ABCArray):
         #    4, 3, 2 -> 2, 2, 3, 2 is potentially ok (splitting dim)
         if not isinstance(target_axes, AxisCollection):
             target_axes = AxisCollection(target_axes)
-        data = np.asarray(self).reshape(target_axes.shape)
+        data = self.data.reshape(target_axes.shape)
         return Array(data, target_axes)
 
     # TODO: this should be a private method
@@ -2114,7 +2112,7 @@ class Array(ABCArray):
         """
         return self.reshape(target.axes)
 
-    def broadcast_with(self, target):
+    def broadcast_with(self, target, check_compatible=False):
         r"""
         Returns an array that is (NumPy) broadcastable with target.
 
@@ -2131,6 +2129,9 @@ class Array(ABCArray):
         ----------
         target : Array or collection of Axis
 
+        check_compatible : bool, optional
+            Whether or not to check that common axes are compatible. Defaults to False.
+
         Returns
         -------
         Array
@@ -2144,6 +2145,7 @@ class Array(ABCArray):
         if self.axes == target_axes:
             return self
         # determine real target order (= left_only then target_axes)
+        # (we will add length one axes to the left like numpy just below)
         target_axes = (self.axes - target_axes) | target_axes
 
         # XXX: this breaks la['1,5,9'] = la['2,7,3']
@@ -2154,7 +2156,10 @@ class Array(ABCArray):
         array = self.transpose(target_axes & self.axes)
 
         # 2) add length one axes
-        return array.reshape(array.axes.get_all(target_axes))
+        res_axes = array.axes.get_all(target_axes)
+        if check_compatible:
+            res_axes.check_compatible(target_axes)
+        return array.reshape(res_axes)
 
     # XXX: I wonder if effectively dropping the labels is necessary or not
     # we could perfectly only mark the axis as being a wildcard axis and keep
