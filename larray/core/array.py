@@ -53,7 +53,7 @@ from larray.core.abstractbases import ABCArray
 from larray.core.constants import nan
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
-from larray.core.group import (Group, IGroup, LGroup, remove_nested_groups, _to_key, _to_keys,
+from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
 from larray.util.misc import (table2str, size2str, ReprString,
@@ -1979,129 +1979,6 @@ class Array(ABCArray):
         return self[tuple(sort_key(axis) for axis in axes)]
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
-
-    def _translate_axis_key_chunk(self, axis_key):
-        """
-        Translates axis(es) key into axis(es) position(s).
-
-        Parameters
-        ----------
-        axis_key : any kind of key
-            Key to select axis(es).
-
-        Returns
-        -------
-        IGroup
-            Positional group with valid axes (from self.axes)
-        """
-        axis_key = remove_nested_groups(axis_key)
-
-        if isinstance(axis_key, Group) and axis_key.axis is not None:
-            # retarget to real axis, if needed
-            # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
-            # version of the group ONLY if key.axis is not real_axis (for performance reasons)
-            if isinstance(axis_key, IGroup):
-                if axis_key.axis in self.axes:
-                    axis_key = axis_key.retarget_to(self.axes[axis_key.axis])
-                else:
-                    # axis associated with axis_key may not belong to self.
-                    # In that case, we translate IGroup to labels and search for a compatible axis
-                    # (see end of this method)
-                    axis_key = axis_key.to_label()
-
-        # already positional
-        if isinstance(axis_key, IGroup):
-            if axis_key.axis is None:
-                raise ValueError("positional groups without axis are not supported")
-            return axis_key
-
-        # labels but known axis
-        if isinstance(axis_key, LGroup) and axis_key.axis is not None:
-            try:
-                real_axis = self.axes[axis_key.axis]
-                try:
-                    axis_pos_key = real_axis.index(axis_key)
-                except KeyError:
-                    raise ValueError("%r is not a valid label for any axis" % axis_key)
-                return real_axis.i[axis_pos_key]
-            except KeyError:
-                # axis associated with axis_key may not belong to self.
-                # In that case, we translate LGroup to labels and search for a compatible axis
-                # (see end of this method)
-                axis_key = axis_key.to_label()
-
-        # otherwise we need to guess the axis
-        # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or Array):
-        # label -> (axis, index)
-        # but for Pandas, this wouldn't work, we'd need label -> axis
-        valid_axes = []
-        # TODO: use axis_key dtype to only check compatible axes
-        for axis in self.axes:
-            try:
-                axis_pos_key = axis.index(axis_key)
-                valid_axes.append(axis)
-            except KeyError:
-                continue
-        if not valid_axes:
-            raise ValueError("%s is not a valid label for any axis" % axis_key)
-        elif len(valid_axes) > 1:
-            # TODO: make an AxisCollection.display_name(axis) method out of this
-            # valid_axes = ', '.join(self.axes.display_name(axis) for a in valid_axes)
-            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
-                                   for a in valid_axes)
-            raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
-        return valid_axes[0].i[axis_pos_key]
-
-    def _translate_axis_key(self, axis_key):
-        """Same as chunk.
-
-        Returns
-        -------
-        IGroup
-            Positional group with valid axes (from self.axes)
-        """
-        if isinstance(axis_key, ExprNode):
-            axis_key = axis_key.evaluate(self.axes)
-
-        # translate Axis keys to LGroup keys
-        # FIXME: this should be simply:
-        # if isinstance(axis_key, Axis):
-        #     axis_key = axis_key[:]
-        # but it does not work for some reason (the retarget does not seem to happen)
-        if isinstance(axis_key, Axis):
-            real_axis = self.axes[axis_key]
-            if isinstance(axis_key, AxisReference) or axis_key.equals(real_axis):
-                axis_key = real_axis[:]
-            else:
-                axis_key = axis_key.labels
-
-        # TODO: do it for Group without axis too
-        if isinstance(axis_key, (tuple, list, np.ndarray, Array)):
-            axis = None
-            # TODO: I should actually do some benchmarks to see if this is useful, and estimate which numbers to use
-            # FIXME: check that size is < than key size
-            for size in (1, 10, 100, 1000):
-                # TODO: do not recheck already checked elements
-                key_chunk = axis_key.i[:size] if isinstance(axis_key, Array) else axis_key[:size]
-                try:
-                    tkey = self._translate_axis_key_chunk(key_chunk)
-                    axis = tkey.axis
-                    break
-                except ValueError:
-                    continue
-            # the (start of the) key match a single axis
-            if axis is not None:
-                # make sure we have an Axis object
-                # TODO: we should make sure the tkey returned from _translate_axis_key_chunk always contains a
-                # real Axis (and thus kill this line)
-                axis = self.axes[axis]
-                # wrap key in LGroup
-                axis_key = axis[axis_key]
-                # XXX: reuse tkey chunks and only translate the rest?
-            return self._translate_axis_key_chunk(axis_key)
-        else:
-            return self._translate_axis_key_chunk(axis_key)
 
     def __getitem__(self, key, collapse_slices=False, translate_key=True):
         raw_broadcasted_key, res_axes, transpose_indices = self.axes._key_to_raw_and_axes(key, collapse_slices,
@@ -6447,11 +6324,11 @@ class Array(ABCArray):
             before = IGroup(pos, axis=axis)
 
         if before is not None:
-            before = self._translate_axis_key(before)
+            before = self.axes._translate_axis_key(before)
             axis = before.axis
             before_pos = axis.index(before)
         else:
-            after = self._translate_axis_key(after)
+            after = self.axes._translate_axis_key(after)
             axis = after.axis
             before_pos = axis.index(after) + 1
 
@@ -6557,7 +6434,7 @@ class Array(ABCArray):
         label0       0       1       2
         label2       6       7       8
         """
-        group = self._translate_axis_key(labels)
+        group = self.axes._translate_axis_key(labels)
         axis = group.axis
         indices = axis.index(group)
         axis_idx = self.axes.index(axis)
