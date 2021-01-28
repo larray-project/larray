@@ -2828,7 +2828,7 @@ class AxisCollection(object):
         # translate all keys to IGroup
         return tuple(self._translate_axis_key(axis_key) for axis_key in key)
 
-    def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True):
+    def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True, points=False, wildcard=False):
         r"""
         Transforms any key (from Array.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
         of indices to transpose axes back to where they were.
@@ -2873,6 +2873,10 @@ class AxisCollection(object):
                         for axis1 in self)
 
         assert isinstance(key, tuple) and len(key) == self.ndim
+
+        if points:
+            # transform keys to IGroup and non-Array advanced keys to Array with a combined axis
+            key = self._adv_keys_to_combined_axis_la_keys(key, wildcard=wildcard)
 
         # scalar array
         if not self.ndim:
