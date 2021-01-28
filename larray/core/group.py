@@ -842,6 +842,7 @@ class Group:
         -------
         Group with axis, raise ValueError if retargeting is not possible
         """
+        assert isinstance(target_axis, ABCAxis)
         if self.axis is target_axis:
             return self
         elif isinstance(self.axis, str) or isinstance(self.axis, ABCAxisReference):

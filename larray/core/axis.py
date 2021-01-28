@@ -2645,28 +2645,28 @@ class AxisCollection:
 
         Returns
         -------
-        IGroup
+        (axis, indices)
             Indices group with a valid axis (from self)
         """
         axis_key = remove_nested_groups(axis_key)
 
-        if isinstance(axis_key, IGroup) and axis_key.axis is not None:
+        if isinstance(axis_key, IGroup):
+            if axis_key.axis is None:
+                raise ValueError("positional groups without axis are not supported")
+
             # retarget to real axis, if needed
             # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
             if axis_key.axis in self:
                 axis_key = axis_key.retarget_to(self[axis_key.axis])
+                # already positional
+                if isinstance(axis_key, IGroup):
+                    return axis_key.axis, axis_key.key
             else:
                 # axis associated with axis_key may not belong to self.
                 # In that case, we translate IGroup to labels and search for a compatible axis
                 # (see end of this method)
                 axis_key = axis_key.to_label()
-
-        # already positional
-        if isinstance(axis_key, IGroup):
-            if axis_key.axis is None:
-                raise ValueError("positional groups without axis are not supported")
-            return axis_key
 
         # labels but known axis
         if isinstance(axis_key, LGroup) and axis_key.axis is not None:
@@ -2676,7 +2676,7 @@ class AxisCollection:
                     axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
                     raise ValueError(f"{axis_key!r} is not a valid label for any axis")
-                return real_axis.i[axis_pos_key]
+                return real_axis, axis_pos_key
             except KeyError:
                 # axis associated with axis_key may not belong to self.
                 # In that case, we translate LGroup to labels and search for a compatible axis
@@ -2702,7 +2702,8 @@ class AxisCollection:
             valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.index(a)}}}'
                                    for a in valid_axes)
             raise ValueError(f'{axis_key} is ambiguous (valid in {valid_axes})')
-        return valid_axes[0].i[axis_pos_key]
+        real_axis = valid_axes[0]
+        return real_axis, axis_pos_key
 
     def _translate_axis_key(self, axis_key):
         """
@@ -2715,7 +2716,7 @@ class AxisCollection:
 
         Returns
         -------
-        IGroup
+        (axis, indices)
             Indices group with a valid axis (from self)
         """
         # called from _key_to_igroups
@@ -2751,8 +2752,9 @@ class AxisCollection:
                 # TODO: do not recheck already checked elements
                 key_chunk = axis_key.i[:size] if isinstance(axis_key, Array) else axis_key[:size]
                 try:
-                    tkey = self._translate_axis_key_chunk(key_chunk)
-                    axis = tkey.axis
+                    axis, ikey = self._translate_axis_key_chunk(key_chunk)
+                    # if key is unambiguous (did not raise an exception), we know the axis
+                    # TODO: if len(axis_key) < size, we can return axis, ikey directly
                     break
                 # TODO: we should only continue when ValueError is caused by an ambiguous key, otherwise we only delay
                 #       an inevitable failure
@@ -2763,7 +2765,7 @@ class AxisCollection:
                 # make sure we have an Axis object
                 # TODO: we should make sure the tkey returned from _translate_axis_key_chunk always contains a
                 # real Axis (and thus kill this line)
-                axis = self[axis]
+                # axis = self[axis]
                 # wrap key in LGroup
                 axis_key = axis[axis_key]
                 # XXX: reuse tkey chunks and only translate the rest?
@@ -2771,9 +2773,9 @@ class AxisCollection:
         else:
             return self._translate_axis_key_chunk(axis_key)
 
-    def _key_to_igroups(self, key):
+    def _key_to_axis_and_indices(self, key):
         """
-        Translates any key to an IGroups tuple.
+        Translates any key to a tuple of (axis, indices) tuples.
 
         Parameters
         ----------
@@ -2783,8 +2785,8 @@ class AxisCollection:
         Returns
         -------
         tuple
-            tuple of IGroup, each IGroup having a real axis from this array.
-            The order of the IGroups is *not* guaranteed to be the same as the order of axes.
+            tuple of (axis, indices) pairs, with axis from this array.
+            The order of the pairs is *not* guaranteed to be the same as the order of axes.
 
         See Also
         --------
@@ -2827,7 +2829,7 @@ class AxisCollection:
         key = [axis_key for axis_key in key
                if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
 
-        # translate all keys to IGroup
+        # translate all keys to (axis, indices) pairs
         return tuple(self._translate_axis_key(axis_key) for axis_key in key)
 
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True, points=False, wildcard=False):
@@ -2853,21 +2855,18 @@ class AxisCollection:
             # the key we need to know which axis each key belongs to and to do that, we need to
             # translate the key to indices)
 
-            # any key -> (IGroup, IGroup, ...)
-            igroup_key = self._key_to_igroups(key)
-
-            # extract axis from Group keys
-            key_items = [(k1.axis, k1) for k1 in igroup_key]
+            # any key -> ((axis, indices), (axis, indices), ...)
+            key_items = self._key_to_axis_and_indices(key)
 
             # even keys given as dict can contain duplicates (if the same axis was
             # given under different forms, e.g. name and AxisReference).
-            dupe_axes = list(duplicates(axis1 for axis1, key1 in key_items))
+            dupe_axes = list(duplicates(axis for axis, key in key_items))
             if dupe_axes:
-                dupe_axes = ', '.join(str(axis1) for axis1 in dupe_axes)
+                dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
                 raise ValueError(f"key has several values for axis: {dupe_axes}\n{key_items}")
 
-            # IGroup -> raw positional
-            dict_key = {axis1: axis1.index(key1) for axis1, key1 in key_items}
+            # ((axis, indices), (axis, indices), ...) -> dict
+            dict_key = dict(key_items)
 
             # dict -> tuple (complete and order key)
             assert all(isinstance(k1, Axis) for k1 in dict_key)
