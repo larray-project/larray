@@ -6314,13 +6314,10 @@ class Array(ABCArray):
             before = IGroup(pos, axis=axis)
 
         if before is not None:
-            before = self.axes._translate_axis_key(before)
-            axis = before.axis
-            before_pos = axis.index(before)
+            axis, before_pos = self.axes._translate_axis_key(before)
         else:
-            after = self.axes._translate_axis_key(after)
-            axis = after.axis
-            before_pos = axis.index(after) + 1
+            axis, after_pos = self.axes._translate_axis_key(after)
+            before_pos = after_pos + 1
 
         def length(v):
             if isinstance(v, Array) and axis in v.axes:
@@ -6424,9 +6421,7 @@ class Array(ABCArray):
         label0       0       1       2
         label2       6       7       8
         """
-        group = self.axes._translate_axis_key(labels)
-        axis = group.axis
-        indices = axis.index(group)
+        axis, indices = self.axes._translate_axis_key(labels)
         axis_idx = self.axes.index(axis)
         new_axis = Axis(np.delete(axis.labels, indices), axis.name)
         new_axes = self.axes.replace(axis, new_axis)
@@ -9257,8 +9252,8 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 items = list(zip(axes[0], values))
             else:
                 def translate_and_sort_key(key, axes):
-                    dict_of_igroups = {k.axis: k for k in axes._key_to_igroups(key)}
-                    return tuple(dict_of_igroups[axis] for axis in axes)
+                    dict_of_indices = dict(axes._key_to_axis_and_indices(key))
+                    return tuple(IGroup(dict_of_indices[axis], axis=axis) for axis in axes)
 
                 # passing only via _key_to_igroup should be enough if we allow for partial axes
                 dict_elements = {translate_and_sort_key(key, axes): value for key, value in elements}
