@@ -447,20 +447,11 @@ class ArrayPointsIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    def _prepare_key(self, key, wildcard=False):
-        axes = self.array.axes
-        # 1) complete key & translate (those two cannot be dissociated because to complete
-        #    the key we need to know which axis each key belongs to and to do that, we need to
-        #    translate the key to indices)
-        translated_key = axes._translated_key(key)
-        # 2) transform keys to IGroup and non-Array advanced keys to Array with a combined axis
-        return axes._adv_keys_to_combined_axis_la_keys(translated_key, wildcard)
-
     def __getitem__(self, key):
-        return self.array.__getitem__(self._prepare_key(key), translate_key=False)
+        return self.array.__getitem__(key, points=True)
 
     def __setitem__(self, key, value):
-        self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
+        self.array.__setitem__(key, value, points=True)
 
 
 # TODO: add support for slices
@@ -583,16 +574,11 @@ class ArrayPositionalPointsIndexer(object):
     def __init__(self, array):
         self.array = array
 
-    def _prepare_key(self, key, wildcard=False):
-        return self.array.axes._adv_keys_to_combined_axis_la_keys(key, wildcard)
-
     def __getitem__(self, key):
-        return self.array.__getitem__(self._prepare_key(key), translate_key=False)
+        return self.array.__getitem__(key, translate_key=False, points=True)
 
     def __setitem__(self, key, value):
-        # we still need to prepare the key instead of letting numpy handle everything so that
-        # existing (integer)Array keys are broadcasted correctly (using axes names).
-        self.array.__setitem__(self._prepare_key(key, wildcard=True), value, translate_key=False)
+        self.array.__setitem__(key, value, translate_key=False, points=True)
 
 
 def get_axis(obj, i):
@@ -1980,9 +1966,9 @@ class Array(ABCArray):
 
     sort_axis = renamed_to(sort_axes, 'sort_axis')
 
-    def __getitem__(self, key, collapse_slices=False, translate_key=True):
-        raw_broadcasted_key, res_axes, transpose_indices = self.axes._key_to_raw_and_axes(key, collapse_slices,
-                                                                                          translate_key)
+    def __getitem__(self, key, collapse_slices=False, translate_key=True, points=False):
+        raw_broadcasted_key, res_axes, transpose_indices = \
+            self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=False)
         res_data = self.data[raw_broadcasted_key]
         if res_axes:
             res = Array(res_data, res_axes)
@@ -1992,12 +1978,13 @@ class Array(ABCArray):
         else:
             return res_data
 
-    def __setitem__(self, key, value, collapse_slices=True, translate_key=True):
+    def __setitem__(self, key, value, collapse_slices=True, translate_key=True, points=False):
         # TODO: if key or value has more axes than self, we could use
         # total_axes = self.axes + key.axes + value.axes
         # expanded = self.expand(total_axes)
         # data = np.asarray(expanded.data)
-        raw_broadcasted_key, target_axes, _ = self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key)
+        raw_broadcasted_key, target_axes, _ = \
+            self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=True)
         if isinstance(value, Array):
             # TODO: the check_compatible should be included in broadcast_with
             value = value.broadcast_with(target_axes)
