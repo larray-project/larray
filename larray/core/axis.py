@@ -3641,7 +3641,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         context : AxisCollection
             Use axes from this collection
         """
-        return context[self]
+        return context[self.name]
 
     # needed because ExprNode.__hash__ (which is object.__hash__) takes precedence over Axis.__hash__
     def __hash__(self):
