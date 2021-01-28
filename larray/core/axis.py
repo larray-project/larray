@@ -2891,7 +2891,7 @@ class AxisCollection(object):
 
         # scalar array
         if not self.ndim:
-            return key, AxisCollection([]), None
+            return key, None, None
 
         # transform ranges to slices if needed
         if collapse_slices:
