@@ -2828,45 +2828,6 @@ class AxisCollection(object):
         # translate all keys to IGroup
         return tuple(self._translate_axis_key(axis_key) for axis_key in key)
 
-    def _translated_key(self, key):
-        """
-        Transforms any key (from Array.__get|setitem__) to a complete indices-based key.
-
-        Parameters
-        ----------
-        key : scalar, list/array of scalars, Group or tuple or dict of them
-            any key supported by Array.__get|setitem__
-
-        Returns
-        -------
-        tuple
-            len(tuple) == self.ndim
-
-            This key is not yet usable as is in a numpy array as it can still contain Array parts and the advanced key
-            parts are not broadcasted together yet.
-        """
-        # any key -> (IGroup, IGroup, ...)
-        igroup_key = self._key_to_igroups(key)
-
-        # extract axis from Group keys
-        key_items = [(k.axis, k) for k in igroup_key]
-
-        # even keys given as dict can contain duplicates (if the same axis was
-        # given under different forms, e.g. name and AxisReference).
-        dupe_axes = list(duplicates(axis for axis, axis_key in key_items))
-        if dupe_axes:
-            dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-            raise ValueError(f"key has several values for axis: {dupe_axes}\n{key_items}")
-
-        # IGroup -> raw positional
-        dict_key = {axis: axis.index(axis_key) for axis, axis_key in key_items}
-
-        # dict -> tuple (complete and order key)
-        assert all(isinstance(k, Axis) for k in dict_key)
-
-        return tuple(dict_key[axis] if axis in dict_key else slice(None)
-                     for axis in self)
-
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True):
         r"""
         Transforms any key (from Array.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
@@ -2883,10 +2844,34 @@ class AxisCollection(object):
         -------
         raw_key, res_axes, transposed_indices
         """
-        from .array import make_numpy_broadcastable, Array, sequence
+        from .array import raw_broadcastable, Array, sequence
 
         if translate_key:
-            key = self._translated_key(key)
+            # complete key & translate (those two cannot be dissociated because to complete
+            # the key we need to know which axis each key belongs to and to do that, we need to
+            # translate the key to indices)
+
+            # any key -> (IGroup, IGroup, ...)
+            igroup_key = self._key_to_igroups(key)
+
+            # extract axis from Group keys
+            key_items = [(k1.axis, k1) for k1 in igroup_key]
+
+            # even keys given as dict can contain duplicates (if the same axis was
+            # given under different forms, e.g. name and AxisReference).
+            dupe_axes = list(duplicates(axis1 for axis1, key1 in key_items))
+            if dupe_axes:
+                dupe_axes = ', '.join(str(axis1) for axis1 in dupe_axes)
+                raise ValueError(f"key has several values for axis: {dupe_axes}\n{key_items}")
+
+            # IGroup -> raw positional
+            dict_key = {axis1: axis1.index(key1) for axis1, key1 in key_items}
+
+            # dict -> tuple (complete and order key)
+            assert all(isinstance(k1, Axis) for k1 in dict_key)
+            key = tuple(dict_key[axis1] if axis1 in dict_key else slice(None)
+                        for axis1 in self)
+
         assert isinstance(key, tuple) and len(key) == self.ndim
 
         # scalar array
@@ -2943,7 +2928,7 @@ class AxisCollection(object):
 
         # if there are only simple keys, do not bother going via the "advanced indexing" code path
         if all(isinstance(axis_key, (int, np.integer, slice)) for axis_key in key):
-            bcasted_adv_keys = key
+            raw_broadcasted_key = key
         else:
             # Now that we know advanced indexing comes into play, we need to compute were the subspace created by the
             # advanced indexes will be inserted. Note that there is only ever a SINGLE combined subspace (even if it
@@ -2982,14 +2967,11 @@ class AxisCollection(object):
                 adv_key_subspace_pos = adv_axes_indices[0]
 
             # scalar/slice keys are ignored by make_numpy_broadcastable, which is exactly what we need
-            bcasted_adv_keys, adv_key_dest_axes = make_numpy_broadcastable(key)
+            raw_broadcasted_key, adv_key_dest_axes = raw_broadcastable(key)
 
             # insert advanced indexing subspace
             res_axes[adv_key_subspace_pos:adv_key_subspace_pos] = adv_key_dest_axes
 
-        # transform to raw numpy arrays
-        raw_broadcasted_key = tuple(k.data if isinstance(k, Array) else k
-                                    for k in bcasted_adv_keys)
         return raw_broadcasted_key, res_axes, transpose_indices
 
     @property
