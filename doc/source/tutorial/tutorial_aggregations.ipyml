@@ -86,6 +86,35 @@ cells:
     population.sum(gender, (benelux, fr_de))
 
 
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:** Mixing slices and individual labels inside the `[ ]` will generate **several groups** (a tuple of groups) instead of a single group.<br>If you want to create a single group using both slices and individual labels, you need to use the `.union()` method (see below).
+      
+    </div>
+
+
+- code: |
+    # mixing slices and individual labels leads to the creation of several groups (a tuple of groups)
+    except_2016 = time[:2015, 2017]
+    except_2016
+
+
+- code: |
+    # leading to potentially unexpected results
+    population.sum(except_2016)
+
+
+- code: |
+    # the union() method allows to mix slices and individual labels to create a single group
+    except_2016 = time[:2015].union(time[2017])
+    except_2016
+
+
+- code: |
+    population.sum(except_2016)
+
+
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
 metadata:
@@ -102,7 +131,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.7.7
 nbformat: 4
 nbformat_minor: 2
 

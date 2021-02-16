@@ -15,12 +15,26 @@ cells:
 - code: |
     # load the 'demography_eurostat' dataset
     demography_eurostat = load_example_data('demography_eurostat')
+    
+    # load 'gender' and 'time' axes
+    gender = demography_eurostat.gender
+    time = demography_eurostat.time
 
 
 - code: |
     # load the 'population' array from the 'demography_eurostat' dataset
     population = demography_eurostat.population
+    
+    # show 'population' array 
     population
+
+
+- code: |
+    # load the 'population_benelux' array from the 'demography_eurostat' dataset
+    population_benelux = demography_eurostat.population_benelux
+    
+    # show 'population_benelux' array 
+    population_benelux
 
 
 - markdown: |
@@ -38,10 +52,16 @@ cells:
 
 
 - code: |
-    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), population.gender, population.time), dtype=int)
+    other_countries = zeros((Axis('country=Luxembourg,Netherlands'), gender, time), dtype=int)
     
     # insert new countries before 'France'
     population_new_countries = population.insert(other_countries, before='France')
+    population_new_countries
+
+
+- code: |
+    # insert new countries after 'France'
+    population_new_countries = population.insert(other_countries, after='France')
     population_new_countries
 
 
@@ -66,7 +86,7 @@ cells:
 
 
 - code: |
-    population_lux = Array([-1, 1], population.gender)
+    population_lux = Array([-1, 1], gender)
     population_lux
 
 
@@ -97,7 +117,7 @@ cells:
 
 - markdown: |
     ## Extend
-    
+        
     Extend an array along an axis with another array *with* that axis (but other labels)
 
 
@@ -123,6 +143,13 @@ cells:
     population_fr = population['France']
     population_de = population['Germany']
     
+    print(population_be)
+    print(population_fr)
+    print(population_de)
+
+
+- code: |
+    # create a new array with an extra axis 'country' by stacking the three arrays population_be/fr/de
     population_stacked = stack({'Belgium': population_be, 'France': population_fr, 'Germany': population_de}, 'country')
     population_stacked
 
@@ -147,7 +174,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.7.7
 nbformat: 4
 nbformat_minor: 2
 

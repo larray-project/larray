@@ -13,6 +13,34 @@ cells:
 
 
 - markdown: |
+    <div class="alert alert-warning">
+        
+    **Note:** 
+    The tutorial is generated from Jupyter notebooks which work in the "interactive" mode (like in the LArray Editor console). 
+    In the interactive mode, there is no need to use the print() function to display the content of a variable.
+    Simply writing its name is enough. The same remark applies for the returned value of an expression.<br><br>
+    In a Python script (file with .py extension), you always need to use the print() function to display the content of 
+    a variable or the value returned by a function or an expression.
+        
+    </div>
+
+
+- code: |
+    s = 1 + 2
+    
+    # In the interactive mode, there is no need to use the print() function 
+    # to display the content of the variable 's'.
+    # Simply typing 's' is enough
+    s
+
+
+- code: |
+    # In the interactive mode, there is no need to use the print() function 
+    # to display the result of an expression
+    1 + 2
+
+
+- markdown: |
     ## Axis
     
     An ``Axis`` represents a dimension of an Array object.
@@ -22,16 +50,38 @@ cells:
 
 
 - code: |
-    # create a wildcard axis
-    age = Axis(3, 'age')
     # labels given as a list
-    time = Axis([2007, 2008, 2009], 'time')
+    time = Axis([2007, 2008, 2009, 2010], 'time')
     # create an axis using one string
     gender = Axis('gender=M,F')
-    # labels generated using a special syntax
-    other = Axis('other=A01..C03')
+    # labels generated using the special syntax start..end
+    age = Axis('age=0..100')
     
-    age, gender, time, other
+    time, gender, age
+
+
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:**  
+      When using the string syntax `"axis_name=list,of,labels"` or `"axis_name=start..end"`, LArray will automatically infer the type of labels.<br>
+      For instance, the command line `age = Axis("age=0..100")` will create an age axis with labels of type `int`.<br><br>
+      Mixing special characters like `+` with numbers will lead to create an axis with labels of type `str` instead of `int`.
+      As a consequence, the command line `age = Axis("age=0..98,99+")` will create an age axis with labels of type `str` instead of `int`! 
+    
+    </div>
+
+
+- code: |
+    # When a string is passed to the Axis() constructor, LArray will automatically infer the type of the labels
+    age = Axis("age=0..5")
+    age
+
+
+- code: |
+    # Mixing special characters like + with numbers will lead to create an axis with labels of type str instead of int.
+    age = Axis("age=0..4,5+")
+    age
 
 
 - markdown: |
@@ -48,15 +98,17 @@ cells:
 
 
 - code: |
-    # define an Axis object 'age'
     age = Axis('age=0..100')
     
     # create an anonymous Group object 'teens'
-    teens = age[10:20]
+    teens = age[10:18]
+    teens
+
+
+- code: |
     # create a Group object 'pensioners' with a name 
     pensioners = age[67:] >> 'pensioners'
-    
-    teens
+    pensioners
 
 
 - markdown: |
@@ -71,6 +123,24 @@ cells:
     teens = teens >> 'teens'
     
     teens
+
+
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:** Mixing slices and individual labels inside the `[ ]` will generate **several groups** (a tuple of groups) instead of a single group.<br>If you want to create a single group using both slices and individual labels, you need to use the `.union()` method (see below).   
+      
+    </div>
+
+
+- code: |
+    # mixing slices and individual labels leads to the creation of several groups (a tuple of groups)
+    age[0:10, 20, 30, 40]
+
+
+- code: |
+    # the union() method allows to mix slices and individual labels to create a single group
+    age[0:10].union(age[20, 30, 40])
 
 
 - markdown: |
@@ -89,14 +159,25 @@ cells:
 
 
 - code: |
-    import numpy as np
-    
+    # define axes
+    age = Axis('age=0-9,10-17,18-66,67+')
+    gender = Axis('gender=female,male')
+    time = Axis('time=2015..2017')
     # list of the axes
-    axes = [age, gender, time, other]
-    # data (the shape of data array must match axes lengths)
-    data = np.random.randint(100, size=[len(axis) for axis in axes])
+    axes = [age, gender, time]
+    
+    # define some data. This is the belgian population (in thousands). Source: eurostat.
+    data = [[[633, 635, 634],
+             [663, 665, 664]],
+            [[484, 486, 491],
+             [505, 511, 516]],
+            [[3572, 3581, 3583],
+             [3600, 3618, 3616]],
+            [[1023, 1038, 1053],
+             [756, 775, 793]]]
+    
     # metadata
-    meta = [('title', 'random array')]
+    meta = {'title': 'random array'}
     
     arr = Array(data, axes, meta=meta)
     arr
@@ -153,7 +234,7 @@ cells:
 
 - code: |
     # start defines the starting value of data
-    ndtest(['age=0..2', 'gender=M,F', 'time=2007..2009'], start=-1)
+    ndtest((3, 3), start=-1)
 
 
 - code: |
@@ -169,21 +250,20 @@ cells:
     # of memory that is available, with whatever content is there.
     # Use it only if performance matters and make sure all data
     # will be overridden.
-    empty(['age=0..2', 'gender=M,F', 'time=2007..2009'])
+    empty([age, gender, time])
 
 
 - code: |
-    # example with anonymous axes
-    zeros(['0..2', 'M,F', '2007..2009'])
+    zeros([age, gender, time])
 
 
 - code: |
     # dtype=int forces to store int data instead of default float
-    ones(['age=0..2', 'gender=M,F', 'time=2007..2009'], dtype=int)
+    ones([age, gender, time], dtype=int)
 
 
 - code: |
-    full(['age=0..2', 'gender=M,F', 'time=2007..2009'], 1.23)
+    full([age, gender, time], fill_value=1.23)
 
 
 - markdown: |
@@ -200,7 +280,7 @@ cells:
 
 - code: |
     # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
-    sequence('gender=M,F', initial=1.0, inc=0.5)
+    sequence(age, initial=1.0, inc=0.5)
 
 
 - markdown: |
@@ -209,7 +289,7 @@ cells:
 
 - code: |
     # create a test array
-    arr = ndtest([age, gender, time, other])
+    ndtest([age, gender, time])
 
 
 - markdown: |
@@ -321,13 +401,14 @@ cells:
 
 
 - code: |
+    gender = Axis("gender=Male,Female")
+    time = Axis("time=2013..2017")
+    
     # create an empty session
     demography_session = Session()
     
     # add axes to the session
-    gender = Axis("gender=Male,Female")
     demography_session.gender = gender
-    time = Axis("time=2013..2017")
     demography_session.time = time
     
     # add arrays to the session
@@ -351,12 +432,6 @@ cells:
     gender = Axis("gender=Male,Female")
     time = Axis("time=2013..2017")
     
-    # create and populate a new session in one step
-    # Python <= 3.5
-    demography_session = Session([('gender', gender), ('time', time), ('population', zeros((gender, time))), 
-                        ('births', zeros((gender, time))), ('deaths', zeros((gender, time)))], 
-                         meta=[('title', 'Demographic Model of Belgium'),('description', 'Modelize the demography of Belgium')])
-    # Python 3.6+
     demography_session = Session(gender=gender, time=time, population=zeros((gender, time)), 
                          births=zeros((gender, time)), deaths=zeros((gender, time)), 
                          meta=Metadata(title='Demographic Model of Belgium', description='Modelize the demography of Belgium'))
@@ -408,7 +483,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.7.7
   livereveal:
     autolaunch: false
     scroll: true
