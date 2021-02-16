@@ -28,6 +28,35 @@ cells:
 
 
 - markdown: |
+    <div class="alert alert-warning">
+    
+    **Note:** 
+    The tutorial is generated from Jupyter notebooks which work in the "interactive" mode (like in the LArray Editor console). 
+    In the interactive mode, there is no need to use the print() function to display the content of a variable.
+    Simply writing its name is enough.
+    The same remark applies for the returned value of an expression.<br><br>
+    In a Python script (file with .py extension), you always need to use the print() function to display the content of 
+    a variable or the value returned by a function or an expression.
+        
+    </div>
+
+
+- code: |
+    s = 1 + 2
+    
+    # In the interactive mode, there is no need to use the print() function 
+    # to display the content of the variable 's'.
+    # Simply typing 's' is enough
+    s
+
+
+- code: |
+    # In the interactive mode, there is no need to use the print() function 
+    # to display the result of an expression
+    1 + 2
+
+
+- markdown: |
     ## Create an array
 
 
@@ -40,9 +69,9 @@ cells:
 
 - code: |
     # define some axes to be used later
-    age = Axis(['0-9', '10-17', '18-66', '67+'], 'age')
-    gender = Axis(['female', 'male'], 'gender')
-    time = Axis([2015, 2016, 2017], 'time')
+    age = Axis('age=0-9,10-17,18-66,67+')
+    gender = Axis('gender=female,male')
+    time = Axis('time=2015..2017')
 
 
 - markdown: |
@@ -430,16 +459,6 @@ cells:
 
 
 - markdown: |
-    <div class="alert alert-warning">
-        If you are using a Python version prior to 3.6, you will have to pass a list of pairs
-        to the Session constructor otherwise the arrays will be stored in an arbitrary order in
-        the new session. For example, the session above must be created using the syntax:
-        
-        `demography_session=Session([('population', population), ('births', births), ('deaths', deaths)])`.
-    </div>
-
-
-- markdown: |
     One of the main interests of using sessions is to save and load many arrays at once:
 
 
@@ -536,7 +555,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.7.7
 nbformat: 4
 nbformat_minor: 2
 
