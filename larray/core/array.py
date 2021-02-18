@@ -2832,7 +2832,9 @@ class Array(ABCArray):
     def _aggregate(self, op, args, kwargs=None, keepaxes=False, by_agg=False, commutative=False,
                    out=None, extra_kwargs={}):
         operations = self._prepare_aggregate(op, args, kwargs, commutative, stack_depth=3)
-        if by_agg and operations != self.axes:
+
+        total_len_args = len(args) + len(kwargs) if kwargs is not None else 0
+        if by_agg and total_len_args:
             operations = self._by_args_to_normal_agg_args(operations)
 
         res = self

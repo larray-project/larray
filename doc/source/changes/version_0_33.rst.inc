@@ -59,3 +59,6 @@ Fixes
 ^^^^^
 
 * fixed an edge case for group aggregates and labels in reverse order (closes :issue:`868`).
+
+* fixed *_by functions returning the same value as if no axis was passed when specifying all axes
+  (closes :issue:`913`)
