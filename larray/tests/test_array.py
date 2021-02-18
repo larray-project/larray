@@ -2397,6 +2397,10 @@ def test_agg_by(array):
     assert array.sum_by().shape == ()
     assert array.sum_by() == array.sum()
 
+    # all axes
+    assert array.sum_by(geo, age, lipro, sex).equals(array)
+    assert array.sum_by(age, geo, sex, lipro).equals(array)
+
     # a) group aggregate on a fresh array
 
     # a.1) one group
