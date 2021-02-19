@@ -1,4 +1,6 @@
 import warnings
+import sys
+import os
 
 import numpy as np
 import pandas as pd
@@ -6,6 +8,10 @@ try:
     import xlwings as xw
 except ImportError:
     xw = None
+try:
+    import xlsxwriter
+except ImportError:
+    xlsxwriter = None
 
 from larray.core.array import Array, asarray
 from larray.core.constants import nan
@@ -22,9 +28,9 @@ from larray.example import get_example_filepath             # noqa: F401
 __all__ = ['read_excel']
 
 
-# We use "# doctest: +SKIP" for all tests because they work only if xlrd (an *optional* dependency) is installed
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 @deprecate_kwarg('sheetname', 'sheet')
+# We use "# doctest: +SKIP" for all tests because they work only if openpyxl (an *optional* dependency) is installed
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
                sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs):
     r"""
@@ -56,9 +62,11 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         Whether or not to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
-    engine : {'xlrd', 'xlwings'}, optional
-        Engine to use to read the Excel file. If None (default), it will use 'xlwings' by default if the module is
-        installed and relies on Pandas default reader otherwise.
+    engine : {'xlwings', 'openpyxl', 'xlrd'}, optional
+        Engine to use to read the Excel file.
+        The 'xlrd' engine must be used to read Excel files with the old '.xls' extension.
+        Either 'xlwings' or 'openpyxl' can be used to read Excel files with the standard '.xlsx' extension.
+        Defaults to 'xlwings' if the module is installed, 'openpyxl' otherwise.
     range : str, optional
         Range to load the array from (only supported for the 'xlwings' engine). Defaults to slice(None) which loads
         the whole sheet, ignoring blank cells in the bottom right corner.
@@ -75,7 +83,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Read array from first sheet
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
-    >>> read_excel(fname)                                                             # doctest: +SKIP
+    >>> read_excel(fname)                                                               # doctest: +SKIP
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
@@ -87,7 +95,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     Read array from a specific sheet
 
     >>> # The data below is derived from a subset of the demo_fasec table from Eurostat
-    >>> read_excel(fname, 'births')                                                   # doctest: +SKIP
+    >>> read_excel(fname, 'births')                                                     # doctest: +SKIP
     country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713
@@ -110,7 +118,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     By default, cells associated with missing label combinations are filled with NaN. In that case, an int array
     is converted to a float array.
 
-    >>> read_excel(fname, sheet='population_missing_values')                          # doctest: +SKIP
+    >>> read_excel(fname, sheet='population_missing_values')                            # doctest: +SKIP
     country  gender\time        2013        2014        2015
     Belgium         Male   5472856.0   5493792.0   5524068.0
     Belgium       Female   5665118.0   5687048.0   5713206.0
@@ -121,7 +129,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Using the ``fill_value`` argument, you can choose another value to use to fill missing cells.
 
-    >>> read_excel(fname, sheet='population_missing_values', fill_value=0)            # doctest: +SKIP
+    >>> read_excel(fname, sheet='population_missing_values', fill_value=0)              # doctest: +SKIP
     country  gender\time      2013      2014      2015
     Belgium         Male   5472856   5493792   5524068
     Belgium       Female   5665118   5687048   5713206
@@ -143,19 +151,19 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         Germany  Female  41142770  41210540  41362080
 
     >>> # read the array stored in the sheet 'population_missing_axis_name' as is
-    >>> arr = read_excel(fname, sheet='population_missing_axis_name')                 # doctest: +SKIP
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name')                   # doctest: +SKIP
     >>> # we expected a 3 x 2 x 3 array with data of type int
     >>> # but we got a 6 x 4 array with data of type object
-    >>> arr.info            # doctest: +SKIP
+    >>> arr.info                                                                        # doctest: +SKIP
     6 x 4
      country [6]: 'Belgium' 'Belgium' 'France' 'France' 'Germany' 'Germany'
      {1} [4]: 'gender' '2013' '2014' '2015'
     dtype: object
     memory used: 192 bytes
     >>> # using argument 'nb_axes', you can force the number of axes of the output array
-    >>> arr = read_excel(fname, sheet='population_missing_axis_name', nb_axes=3)      # doctest: +SKIP
+    >>> arr = read_excel(fname, sheet='population_missing_axis_name', nb_axes=3)        # doctest: +SKIP
     >>> # as expected, we have a 3 x 2 x 3 array with data of type int
-    >>> arr.info            # doctest: +SKIP
+    >>> arr.info                                                                        # doctest: +SKIP
     3 x 2 x 3
      country [3]: 'Belgium' 'France' 'Germany'
      gender [2]: 'Male' 'Female'
@@ -176,14 +184,14 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
          France  2015  66458153
 
     >>> # to read arrays stored in 'narrow' format, you must pass wide=False to read_excel
-    >>> read_excel(fname, 'population_narrow_format', wide=False)                     # doctest: +SKIP
+    >>> read_excel(fname, 'population_narrow_format', wide=False)                       # doctest: +SKIP
     country\time      2013      2014      2015
          Belgium  11137974  11180840  11237274
           France  65600350  66165980  66458153
 
     Extract array from a given range (xlwings only)
 
-    >>> read_excel(fname, 'population_births_deaths', range='A9:E15')                 # doctest: +SKIP
+    >>> read_excel(fname, 'population_births_deaths', range='A9:E15')                   # doctest: +SKIP
     country  gender\time    2013    2014    2015
     Belgium         Male   64371   64173   62561
     Belgium       Female   61235   60841   59713
@@ -200,7 +208,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
     sheet = _translate_sheet_name(sheet)
 
     if engine is None:
-        engine = 'xlwings' if xw is not None else None
+        engine = 'xlwings' if xw is not None else 'openpyxl'
 
     index_col = _get_index_col(nb_axes, index_col, wide)
 
@@ -228,10 +236,13 @@ class PandasExcelHandler(FileHandler):
         super(PandasExcelHandler, self).__init__(fname, overwrite_file)
 
     def _open_for_read(self):
-        self.handle = pd.ExcelFile(self.fname)
+        engine = 'openpyxl' if sys.version_info < (3, 7) else None
+        self.handle = pd.ExcelFile(self.fname, engine=engine)
 
     def _open_for_write(self):
-        self.handle = pd.ExcelWriter(self.fname)
+        _, ext = os.path.splitext(self.fname)
+        engine = 'xlsxwriter' if ext == '.xlsx' and xlsxwriter is not None else None
+        self.handle = pd.ExcelWriter(self.fname, engine=engine)
 
     def list_items(self):
         sheet_names = self.handle.sheet_names
@@ -251,7 +262,7 @@ class PandasExcelHandler(FileHandler):
             raise TypeError()
 
     def _dump_item(self, key, value, *args, **kwargs):
-        kwargs['engine'] = 'xlsxwriter'
+        kwargs['engine'] = self.handle.engine
         if isinstance(value, Array):
             value.to_excel(self.handle, key, *args, **kwargs)
         else:
@@ -260,7 +271,7 @@ class PandasExcelHandler(FileHandler):
     def _read_metadata(self):
         sheet_meta = '__metadata__'
         if sheet_meta in self.handle.sheet_names:
-            meta = read_excel(self.handle, sheet_meta, engine='xlrd', wide=False)
+            meta = read_excel(self.handle, sheet_meta, engine=self.handle.engine, wide=False)
             return Metadata.from_array(meta)
         else:
             return Metadata()
@@ -268,7 +279,7 @@ class PandasExcelHandler(FileHandler):
     def _dump_metadata(self, metadata):
         if len(metadata) > 0:
             metadata = asarray(metadata)
-            metadata.to_excel(self.handle, '__metadata__', engine='xlsxwriter', wide=False, value_name='')
+            metadata.to_excel(self.handle, '__metadata__', engine=self.handle.engine, wide=False, value_name='')
 
     def save(self):
         pass

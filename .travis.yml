@@ -36,7 +36,7 @@ install:
     # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
     #   (issue 702 : fixed bug when writing metadata using HDF format)
     - conda create -n travisci --yes python=${TRAVIS_PYTHON_VERSION:0:3}
-            "numpy>=1.13" "pandas>=0.20" pytables matplotlib xlrd openpyxl
+            "numpy>=1.13" "pandas>=0.20" pytables matplotlib openpyxl
             xlsxwriter "pytest>=3.5"
     - source activate travisci
     - pip install pytest-flake8

@@ -12,8 +12,7 @@ from collections import OrderedDict
 from larray.tests.common import meta                        # noqa: F401
 from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_xlrd,
-                                 needs_python37)
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37)
 from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
@@ -3336,44 +3335,44 @@ def test_read_excel_xlwings():
     assert_array_equal(bad4, good2)
 
 
-@needs_xlrd
+@needs_openpyxl
 def test_read_excel_pandas():
-    arr = read_excel(inputpath('test.xlsx'), '1d', engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '1d', engine='openpyxl')
     assert_array_equal(arr, io_1d)
 
-    arr = read_excel(inputpath('test.xlsx'), '2d', engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '2d', engine='openpyxl')
     assert_array_equal(arr, io_2d)
 
-    arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='openpyxl')
     assert_array_equal(arr, io_2d)
 
-    arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='openpyxl')
     assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
-    arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2, engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2, engine='openpyxl')
     assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
-    arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='openpyxl')
     assert_array_equal(arr, io_3d)
 
-    arr = read_excel(inputpath('test.xlsx'), '3d', engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '3d', engine='openpyxl')
     assert_array_equal(arr, io_3d)
 
     # for > 2d, specifying nb_axes is required if there is no name for the horizontal axis
-    arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3, engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3, engine='openpyxl')
     assert_array_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
 
-    arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='openpyxl')
     assert_array_equal(arr, io_int_labels)
 
     # passing a Group as sheet arg
     axis = Axis('dim=1d,2d,3d,5d')
 
-    arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='openpyxl')
     assert_array_equal(arr, io_1d)
 
     # missing rows + fill_value argument
-    arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='xlrd')
+    arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='openpyxl')
     expected = io_missing_values.copy()
     expected[isnan(expected)] = 42
     assert_array_equal(arr, expected)
@@ -3381,46 +3380,25 @@ def test_read_excel_pandas():
     #################
     # narrow format #
     #################
-    arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='xlrd')
+    arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='openpyxl')
     assert_array_equal(arr, io_1d)
 
-    arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='xlrd')
+    arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='openpyxl')
     assert_array_equal(arr, io_2d)
 
-    arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='xlrd')
+    arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='openpyxl')
     assert_array_equal(arr, io_3d)
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
-                     fill_value=42, wide=False, engine='xlrd')
+                     fill_value=42, wide=False, engine='openpyxl')
     expected = io_narrow_missing_values.copy()
     expected[isnan(expected)] = 42
     assert_array_equal(arr, expected)
 
     # unsorted values
-    arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='xlrd')
+    arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='openpyxl')
     assert_array_equal(arr, io_unsorted)
-
-    #################
-    #  blank cells  #
-    #################
-
-    # Excel sheet with blank cells on right/bottom border of the array to read
-    fpath = inputpath('test_blank_cells.xlsx')
-    good1 = read_excel(fpath, 'good', engine='xlrd')
-    bad1 = read_excel(fpath, 'blanksafter_morerowsthancols', engine='xlrd')
-    bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows', engine='xlrd')
-    assert_array_equal(bad1, good1)
-    assert_array_equal(bad2, good1)
-
-    # with additional empty column in the middle of the array to read
-    good2 = ndtest('a=a0,a1;b=2003..2006').astype(float)
-    good2[2005] = nan
-    good2 = good2.set_axes('b', Axis([2003, 2004, 'Unnamed: 3', 2006], 'b'))
-    bad3 = read_excel(fpath, 'middleblankcol', engine='xlrd')
-    bad4 = read_excel(fpath, '16384col', engine='xlrd')
-    assert_array_nan_equal(bad3, good2)
-    assert_array_nan_equal(bad4, good2)
 
 
 def test_from_lists():
@@ -3962,6 +3940,7 @@ def test_to_csv(tmpdir):
 
 
 @needs_xlsxwriter
+@needs_openpyxl
 def test_to_excel_xlsxwriter(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlsxwriter.xlsx')
 
@@ -3970,18 +3949,18 @@ def test_to_excel_xlsxwriter(tmpdir):
 
     # fpath/Sheet1/A1
     a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
     assert_array_equal(res, stacked_a1)
 
@@ -3990,18 +3969,18 @@ def test_to_excel_xlsxwriter(tmpdir):
 
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a2)
 
     # fpath/Sheet1/A10
     # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
     # a2.to_excel('fpath', 'Sheet1', 'A10', engine='xlsxwriter')
-    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
+    # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=9)
     # assert_array_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlsxwriter')
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a2)
 
     # 3D
@@ -4011,18 +3990,18 @@ def test_to_excel_xlsxwriter(tmpdir):
     # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
     a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
     # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a3)
 
     # fpath/Sheet1/A20
     # TODO: implement position (see above)
     # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
-    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
+    # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=19)
     # assert_array_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a3)
 
     # 1D
@@ -4030,18 +4009,18 @@ def test_to_excel_xlsxwriter(tmpdir):
 
     # fpath/Sheet1/A1
     a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
     assert_array_equal(res, stacked_a1)
 
@@ -4050,18 +4029,18 @@ def test_to_excel_xlsxwriter(tmpdir):
 
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a2)
 
     # fpath/Sheet1/A10
     # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
     # a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlsxwriter')
-    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=9)
+    # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=9)
     # assert_array_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlsxwriter')
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a2)
 
     # 3D
@@ -4071,18 +4050,18 @@ def test_to_excel_xlsxwriter(tmpdir):
     # FIXME: merge_cells=False should be the default (until Pandas is fixed to read its format)
     a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
     # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a3)
 
     # fpath/Sheet1/A20
     # TODO: implement position (see above)
     # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
-    # res = read_excel('fpath', 'Sheet1', engine='xlrd', skiprows=19)
+    # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=19)
     # assert_array_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a3)
 
     # passing group as sheet_name
@@ -4106,6 +4085,7 @@ def test_to_excel_xlsxwriter(tmpdir):
 
 
 @needs_xlwings
+@needs_openpyxl
 def test_to_excel_xlwings(tmpdir):
     fpath = tmp_path(tmpdir, 'test_to_excel_xlwings.xlsx')
 
@@ -4119,19 +4099,19 @@ def test_to_excel_xlwings(tmpdir):
     if os.path.isfile(fpath):
         os.remove(fpath)
     a1.to_excel(fpath, engine='xlwings')
-    # we use xlrd to read back instead of xlwings even if that should work, to make the test faster
-    res = read_excel(fpath, engine='xlrd')
+    # we use openpyxl to read back instead of xlwings even if that should work, to make the test faster
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlwings')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlwings')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a1)
 
     # 2D
@@ -4139,22 +4119,22 @@ def test_to_excel_xlwings(tmpdir):
 
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlwings')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a2)
 
     # fpath/Sheet1/A10
     a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlwings')
-    res = read_excel(fpath, 'Sheet1', engine='xlrd', skiprows=9)
+    res = read_excel(fpath, 'Sheet1', engine='openpyxl', skiprows=9)
     assert_array_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlwings')
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a2)
 
     # transpose
     a2.to_excel(fpath, 'transpose', transpose=True, engine='xlwings')
-    res = read_excel(fpath, 'transpose', engine='xlrd')
+    res = read_excel(fpath, 'transpose', engine='openpyxl')
     assert_array_equal(res, a2.T)
 
     # 3D
@@ -4162,17 +4142,17 @@ def test_to_excel_xlwings(tmpdir):
 
     # fpath/Sheet1/A1
     a3.to_excel(fpath, overwrite_file=True, engine='xlwings')
-    res = read_excel(fpath, engine='xlrd')
+    res = read_excel(fpath, engine='openpyxl')
     assert_array_equal(res, a3)
 
     # fpath/Sheet1/A20
     a3.to_excel(fpath, 'Sheet1', 'A20', engine='xlwings')
-    res = read_excel(fpath, 'Sheet1', engine='xlrd', skiprows=19)
+    res = read_excel(fpath, 'Sheet1', engine='openpyxl', skiprows=19)
     assert_array_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlwings')
-    res = read_excel(fpath, 'other', engine='xlrd')
+    res = read_excel(fpath, 'other', engine='openpyxl')
     assert_array_equal(res, a3)
 
     # passing group as sheet_name
