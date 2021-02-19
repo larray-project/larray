@@ -9,7 +9,7 @@ import pytest
 
 from larray.tests.common import meta            # noqa: F401
 from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
-                                 needs_xlwings, needs_pytables, needs_xlrd)
+                                 needs_xlwings, needs_pytables, needs_openpyxl)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
@@ -246,7 +246,7 @@ def test_h5_io(tmpdir, session, meta):
     _test_io(fpath, session, meta, engine='pandas_hdf')
 
 
-@needs_xlrd
+@needs_openpyxl
 def test_xlsx_pandas_io(tmpdir, session, meta):
     fpath = tmp_path(tmpdir, 'test_session.xlsx')
     _test_io(fpath, session, meta, engine='pandas_excel')

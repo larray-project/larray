@@ -98,7 +98,7 @@ We'll now kick off a two-step process:
    conda config --add channels conda-forge
 
    # Create and activate the build environment
-   conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib xlrd openpyxl xlsxwriter pytest pytest-pep8
+   conda create -n larray_dev numpy pandas pytables pyqt qtpy matplotlib openpyxl xlsxwriter pytest pytest-pep8
    conda activate larray_dev
 
 This will create the new environment, and not touch any of your existing environments,
