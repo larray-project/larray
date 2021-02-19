@@ -250,7 +250,7 @@ def light_product(*iterables, **kwargs):
 
 
 def array_nan_equal(a, b):
-    if np.issubdtype(a.dtype, np.str) and np.issubdtype(b.dtype, np.str):
+    if np.issubdtype(a.dtype, str) and np.issubdtype(b.dtype, str):
         return np.array_equal(a, b)
     else:
         return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
