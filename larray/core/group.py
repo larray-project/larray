@@ -399,18 +399,18 @@ def _to_ticks(s, parse_single_int=False):
 
     Examples
     --------
-    >>> _to_ticks('M , F')                      # doctest: +NORMALIZE_WHITESPACE
-    array(['M', 'F'], dtype='<U1')
-    >>> _to_ticks('A,C..E,F..G,Z')              # doctest: +NORMALIZE_WHITESPACE
-    array(['A', 'C', 'D', 'E', 'F', 'G', 'Z'], dtype='<U1')
-    >>> _to_ticks('U')                          # doctest: +NORMALIZE_WHITESPACE
-    array(['U'], dtype='<U1')
-    >>> _to_ticks('..3')                        # doctest: +NORMALIZE_WHITESPACE
-    array([0, 1, 2, 3])
-    >>> _to_ticks('01..12')                     # doctest: +NORMALIZE_WHITESPACE
-    array(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], dtype='<U2')
-    >>> _to_ticks('01,02,03,10,11,12')          # doctest: +NORMALIZE_WHITESPACE
-    array(['01', '02', '03', '10', '11', '12'], dtype='<U2')
+    >>> list(_to_ticks('M , F'))                # doctest: +NORMALIZE_WHITESPACE
+    ['M', 'F']
+    >>> list(_to_ticks('A,C..E,F..G,Z'))        # doctest: +NORMALIZE_WHITESPACE
+    ['A', 'C', 'D', 'E', 'F', 'G', 'Z']
+    >>> list(_to_ticks('U'))                    # doctest: +NORMALIZE_WHITESPACE
+    ['U']
+    >>> list(_to_ticks('..3'))                  # doctest: +NORMALIZE_WHITESPACE
+    [0, 1, 2, 3]
+    >>> list(_to_ticks('01..12'))               # doctest: +NORMALIZE_WHITESPACE
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    >>> list(_to_ticks('01,02,03,10,11,12'))    # doctest: +NORMALIZE_WHITESPACE
+    ['01', '02', '03', '10', '11', '12']
     """
     if isinstance(s, ABCAxis):
         return s.labels

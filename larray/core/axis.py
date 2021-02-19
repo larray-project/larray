@@ -3186,7 +3186,7 @@ class AxisCollection(object):
                     combined_labels = _axes[0].labels
                 else:
                     sepjoin = sep.join
-                    axes_labels = [np.array(label, np.str, copy=False) for label in _axes.labels]
+                    axes_labels = [np.array(label, str, copy=False) for label in _axes.labels]
                     combined_labels = [sepjoin(p) for p in product(*axes_labels)]
                 combined_axis = Axis(combined_labels, combined_name)
             new_axes = new_axes - _axes
@@ -3508,7 +3508,7 @@ class AxisCollection(object):
                 #    wildcard axis (and axes_labels discarded?)
                 combined_labels = axes_labels[0]
             else:
-                axes_labels = [axis.labels.astype(np.str, copy=False)[axis_key].tolist()
+                axes_labels = [axis.labels.astype(str, copy=False)[axis_key].tolist()
                                for axis_key, axis in adv_keys]
                 sepjoin = sep.join
                 combined_labels = [sepjoin(comb) for comb in zip(*axes_labels)]
