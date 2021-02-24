@@ -203,6 +203,20 @@ def unique_multi(iterable_of_iterables):
     return res
 
 
+def has_duplicates(iterable):
+    """
+    Returns whether or not iterable contains any duplicated element.
+    """
+    # using a dict is faster than using a set (at least for Python <= 3.9)
+    seen = {}
+    for element in iterable:
+        if element in seen:
+            return True
+        else:
+            seen[element] = True
+    return False
+
+
 def duplicates(iterable):
     """
     List duplicated elements once, preserving order. Remember all elements ever seen.
