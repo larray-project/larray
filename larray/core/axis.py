@@ -1372,8 +1372,7 @@ class Axis(ABCAxis):
             return other
         elif join == 'exact':
             if not self.equals(other):
-                raise ValueError("align method with join='exact' "
-                                 "expected {!r} to be equal to {!r}".format(self, other))
+                raise ValueError(f"align method with join='exact' expected {self!r} to be equal to {other!r}")
             else:
                 return self
 
@@ -1537,7 +1536,7 @@ class AxisCollection(object):
         #     axis_dupes = list(duplicates(axis.labels))
         #     if axis_dupes:
         #         dupe_labels = ', '.join(str(l) for l in axis_dupes)
-        #         warnings.warn("duplicate labels found for axis %s: %s" % (axis.name, dupe_labels),
+        #         warnings.warn(f"duplicate labels found for axis {axis.name}: {dupe_labels}",
         #                       category=UserWarning, stacklevel=2)
         #
         # # check dupes between axes. Using unique to not spot the dupes within the same axis that we just displayed.
@@ -1547,8 +1546,8 @@ class AxisCollection(object):
         #     label_axes = [(label, ', '.join(display_name for axis, display_name in zip(axes, self.display_names)
         #                                     if label in axis))
         #                   for label in dupe_labels]
-        #     dupes = '\n'.join("{} is valid in {{{}}}".format(label, axes) for label, axes in label_axes)
-        #     warnings.warn("ambiguous labels found:\n%s" % dupes, category=UserWarning, stacklevel=5)
+        #     dupes = '\n'.join(f"{label} is valid in {{{axes}}}" for label, axes in label_axes)
+        #     warnings.warn(f"ambiguous labels found:\n{dupes}", category=UserWarning, stacklevel=5)
 
     def __dir__(self):
         # called by dir() and tab-completion at the interactive prompt, must return a list of any valid getattr key.
@@ -2857,7 +2856,7 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axis for axis, axis_key in key_items))
         if dupe_axes:
             dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-            raise ValueError("key has several values for axis: %s\n%s" % (dupe_axes, key_items))
+            raise ValueError(f"key has several values for axis: {dupe_axes}\n{key_items}")
 
         # IGroup -> raw positional
         dict_key = {axis: axis.index(axis_key) for axis, axis_key in key_items}

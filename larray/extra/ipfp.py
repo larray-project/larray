@@ -268,15 +268,18 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         stepcelldiff = abs(r - startr).max()
 
         if display_progress:
+            maxcelldiff = f2str(stepcelldiff)
+            maxdiff2target = f2str(max_sum_diff)
+            stepchange = f2str(step_sum_improvement)
             if display_progress == "condensed":
-                template = "it {} max cell diff {} max diff to target {} ({})"
+                print(f"it {i} max cell diff {maxcelldiff} max diff to target {maxdiff2target} "
+                      f"({stepchange})")
             else:
-                template = """iteration {}
- * max(abs(prev_cell - cell)): {}
- * max(abs(sum - target_sum)): {}
-   \\- change since last iteration: {}
-"""
-            print(template.format(i, f2str(stepcelldiff), f2str(max_sum_diff), f2str(step_sum_improvement)))
+                print(f"""iteration {i}
+ * max(abs(prev_cell - cell)): {maxcelldiff}
+ * max(abs(sum - target_sum)): {maxdiff2target}
+   \\- change since last iteration: {stepchange}
+""")
 
         if np.all(np.array(lastdiffs) == max_sum_diff):
             if no_convergence in {'warn', 'raise'}:
