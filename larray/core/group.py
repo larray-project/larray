@@ -32,7 +32,7 @@ def _slice_to_str(key, repr_func=str):
     start = repr_func(key.start) if key.start is not None else ''
     stop = repr_func(key.stop) if key.stop is not None else ''
     step = (":" + repr_func(key.step)) if key.step is not None else ''
-    return '%s:%s%s' % (start, stop, step)
+    return f'{start}:{stop}{step}'
 
 
 def irange(start, stop, step=None):
@@ -158,15 +158,15 @@ def generalized_range(start, stop, step=1):
             # real integers by now, and mixing negative int-like strings and letters yields some strange results.
             if start_part.isdigit():
                 if not stop_part.isdigit():
-                    raise ValueError("expected an integer for the stop bound (because the start bound is an integer) "
-                                     "but got '%s' instead" % stop_part)
+                    raise ValueError(f"expected an integer for the stop bound (because the start bound is an integer) "
+                                     f"but got '{stop_part}' instead")
                 rng = irange(int(start_part), int(stop_part))
                 start_pad = len(start_part) if start_part.startswith('0') else None
                 stop_pad = len(stop_part) if stop_part.startswith('0') else None
                 if start_pad is not None and stop_pad is not None and start_pad != stop_pad:
-                    raise ValueError("Inconsistent zero padding for start and stop ({} vs {}) of the numerical part. "
-                                     "Must be either the same on both sides or no padding on either side"
-                                     .format(start_pad, stop_pad))
+                    raise ValueError(f"Inconsistent zero padding for start and stop ({start_pad} vs {stop_pad}) of the "
+                                     f"numerical part. Must be either the same on both sides or no padding on either "
+                                     f"side")
                 elif start_pad is None and stop_pad is None:
                     r = [str(num) for num in rng]
                 else:
@@ -233,7 +233,7 @@ def _range_str_to_range(s, stack_depth=1):
     start, stop, step = groups['start'], groups['stop'], groups['step']
     start = _parse_bound(start, stack_depth + 1) if start is not None else 0
     if stop is None:
-        raise ValueError("no stop bound provided in range: %r" % s)
+        raise ValueError(f"no stop bound provided in range: {s!r}")
     stop = _parse_bound(stop, stack_depth + 1)
     if isinstance(start, str) or isinstance(stop, str):
         start, stop = str(start), str(stop)
@@ -439,7 +439,7 @@ def _to_ticks(s, parse_single_int=False):
         try:
             ticks = list(s)
         except TypeError:
-            raise TypeError("ticks must be iterable (%s is not)" % type(s))
+            raise TypeError(f"ticks must be iterable ({type(s)} is not)")
     return np.asarray(ticks)
 
 
@@ -587,7 +587,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False):
     elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet)):
         return v
     else:
-        raise TypeError("%s has an invalid type (%s) for a key" % (v, type(v).__name__))
+        raise TypeError(f"{v} has an invalid type ({type(v).__name__}) for a key")
 
 
 def _to_keys(value, stack_depth=1):
@@ -720,7 +720,7 @@ class IGroupMaker(object):
 
     def __getitem__(self, key):
         if isinstance(key, (int, np.integer)) and not isinstance(self.axis, ABCAxisReference) and key >= len(self.axis):
-            raise IndexError("{} is out of range for axis of length {}".format(key, len(self.axis)))
+            raise IndexError(f"{key} is out of range for axis of length {len(self.axis)}")
         return IGroup(key, None, self.axis)
 
     def __len__(self):
@@ -746,8 +746,7 @@ class Group(object):
         # we do NOT assign a name automatically when missing because that makes it impossible to know whether a name
         # was explicitly given or not
         self.name = _to_tick(name) if name is not None else name
-        assert axis is None or isinstance(axis, (str, int, ABCAxis)), \
-            "invalid axis '%s' (%s)" % (axis, type(axis).__name__)
+        assert axis is None or isinstance(axis, (str, int, ABCAxis)), f"invalid axis '{axis}' ({type(axis).__name__})"
 
         # we could check the key is valid but this can be slow and could be useless
         # TODO: for performance reasons, we should cache the result. This will need to be invalidated correctly
@@ -772,20 +771,22 @@ class Group(object):
 
         axis_name = self.axis.name if isinstance(self.axis, ABCAxis) else self.axis
         if axis_name is not None:
-            axis_name = 'X.{}'.format(axis_name) if isinstance(self.axis, ABCAxisReference) else axis_name
+            axis_name = f'X.{axis_name}' if isinstance(self.axis, ABCAxisReference) else axis_name
             s = self.format_string.format(axis=axis_name, key=key_repr)
         else:
             if self.axis is not None:
                 # anonymous axis
-                axis_ref = ', axis={}'.format(repr(self.axis))
+                axis_ref = f', axis={repr(self.axis)}'
             else:
                 axis_ref = ''
+
             if isinstance(key, slice):
                 key_repr = repr(key)
             elif isinstance(key, list):
-                key_repr = '[{}]'.format(key_repr)
-            s = '{}({}{})'.format(self.__class__.__name__, key_repr, axis_ref)
-        return "{} >> {}".format(s, repr(self.name)) if self.name is not None else s
+                key_repr = f'[{key_repr}]'
+
+            s = f'{self.__class__.__name__}({key_repr}{axis_ref})'
+        return f"{s} >> {repr(self.name)}" if self.name is not None else s
 
     def __str__(self):
         return str(self.eval())
@@ -874,7 +875,7 @@ class Group(object):
             stop_pos = self.translate(stop)
             return stop_pos - start_pos
         else:
-            raise TypeError('len() of unsized object ({})'.format(value))
+            raise TypeError(f'len() of unsized object ({value})')
 
     def __iter__(self):
         # XXX: use translate/IGroup instead, so that it works even in the presence of duplicate labels
@@ -1016,14 +1017,14 @@ class Group(object):
             value = self.eval()
             return value[key]
         else:
-            raise TypeError("cannot take a subset of {} because it has a '{}' key".format(self.key, type(self.key)))
+            raise TypeError(f"cannot take a subset of {self.key} because it has a '{type(self.key)}' key")
 
     def _ipython_key_completions_(self):
         return list(self.eval())
 
     # method factory
     def _binop(opname):
-        op_fullname = '__%s__' % opname
+        op_fullname = f'__{opname}__'
 
         # TODO: implement this in a delayed fashion for axes references
         def opmethod(self, other):
@@ -1634,7 +1635,7 @@ class LSet(LGroup):
 
     # method factory
     def _binop(opname, c):
-        op_fullname = '__%s__' % opname
+        op_fullname = f'__{opname}__'
 
         # TODO: implement this in a delayed fashion for reference axes
         def opmethod(self, other):
@@ -1644,7 +1645,7 @@ class LSet(LGroup):
 
             # setting a meaningful name is hard when either one has no name
             if self.name is not None and other.name is not None:
-                name = '%s %s %s' % (self.name, c, other.name)
+                name = f'{self.name} {c} {other.name}'
             else:
                 name = None
             # TODO: implement this in a more efficient way for ndarray keys which can be large

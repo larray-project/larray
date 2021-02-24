@@ -21,8 +21,7 @@ def _validate_template_filename(filename):
     if not ext:
         ext = '.crtx'
     if ext != '.crtx':
-        raise ValueError("Extension for the excel template file must be '.crtx' "
-                         "instead of {}".format(ext))
+        raise ValueError(f"Extension for the excel template file must be '.crtx' instead of {ext}")
     return filename + ext
 
 
@@ -132,8 +131,8 @@ class AbstractReportItem(object):
             raise ValueError("No value provided for both 'width' and 'heigth'. "
                              "Please provide one for at least 'width' or 'heigth'")
         if kind not in self.default_items_size:
-            raise ValueError("Item type {} is not registered. Please choose in "
-                             "list {}".format(kind, sorted(self.default_items_size.keys())))
+            item_types = sorted(self.default_items_size.keys())
+            raise ValueError(f"Item type {kind} is not registered. Please choose in list {item_types}")
         if width is None:
             width = self.default_items_size[kind].width
         if height is None:
@@ -579,11 +578,10 @@ if xw is not None:
             self.title = str(title) if title is not None else None
             data = asarray(data)
             if not (1 <= data.ndim <= 2):
-                raise ValueError("Expected 1D or 2D array for data argument. "
-                                 "Got array of dimensions {}".format(data.ndim))
+                raise ValueError(f"Expected 1D or 2D array for data argument. Got array of dimensions {data.ndim}")
             self.data = data
             if template is not None and not os.path.isfile(template):
-                raise ValueError("Could not find template file {}".format(template))
+                raise ValueError(f"Could not find template file {template}")
             self.template = template
 
         def dump(self, sheet, data_sheet, row):
@@ -722,17 +720,16 @@ if xw is not None:
         # TODO : Do not implement __setitem__ and move code below to new_sheet()?
         def __setitem__(self, key, value):
             if not isinstance(value, ReportSheet):
-                raise ValueError('Expected SheetReport object. '
-                                 'Got {} object instead.'.format(type(value).__name__))
+                raise ValueError(f"Expected SheetReport object. Got {type(value).__name__} object instead.")
             if key in self.sheet_names():
-                warnings.warn("Sheet '{}' already exists in the report and will be reset".format(key))
+                warnings.warn(f"Sheet '{key}' already exists in the report and will be reset")
             self.sheets[key] = value
 
         def __delitem__(self, key):
             del self.sheets[key]
 
         def __repr__(self):
-            return 'sheets: {}'.format(self.sheet_names())
+            return f'sheets: {self.sheet_names()}'
 
         def new_sheet(self, sheet_name):
             sheet = ReportSheet(self, sheet_name, self.template_dir, self.template, self.graphs_per_row)

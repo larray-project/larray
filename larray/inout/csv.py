@@ -275,13 +275,13 @@ class PandasCSVHandler(FileHandler):
 
     def _to_filepath(self, key):
         if self.directory is not None:
-            return os.path.join(self.directory, '{}.csv'.format(key))
+            return os.path.join(self.directory, f'{key}.csv')
         else:
             return key
 
     def _open_for_read(self):
         if self.directory and not os.path.isdir(self.directory):
-            raise ValueError("Directory '{}' does not exist".format(self.directory))
+            raise ValueError(f"Directory '{self.directory}' does not exist")
 
     def _open_for_write(self):
         if self.directory is not None:
@@ -289,7 +289,7 @@ class PandasCSVHandler(FileHandler):
                 os.makedirs(self.directory)
             except OSError:
                 if not os.path.isdir(self.directory):
-                    raise ValueError("Path {} must represent a directory".format(self.directory))
+                    raise ValueError(f"Path {self.directory} must represent a directory")
 
     def list_items(self):
         fnames = glob(self.pattern) if self.pattern is not None else []

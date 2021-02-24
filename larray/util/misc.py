@@ -43,7 +43,7 @@ def format_value(value, missing, precision=None):
         if value != value:
             return missing
         elif precision is not None:
-            return '{:.{precision}f}'.format(value, precision=precision)
+            return f'{value:.{precision}f}'
         else:
             return str(value)
     elif isinstance(value, np.ndarray) and value.shape:
@@ -394,8 +394,8 @@ def size2str(value):
     """
     units = ["bytes", "Kb", "Mb", "Gb", "Tb", "Pb"]
     scale = int(math.log(value, 1024)) if value else 0
-    fmt = "%.2f %s" if scale else "%d %s"
-    return fmt % (value / 1024.0 ** scale, units[scale])
+    scaled_value = value / 1024.0 ** scale
+    return f"{scaled_value:.2f} {units[scale]}" if scale > 0 else f"{int(scaled_value)} bytes"
 
 
 def find_closing_chr(s, start=0):
@@ -464,15 +464,14 @@ def find_closing_chr(s, start=0):
                 last_open.append(c)
             if c in closing_set:
                 if not last_open:
-                    raise ValueError("malformed expression: found '{}' before '{}'".format(c, match[c]))
+                    raise ValueError(f"malformed expression: found '{c}' before '{match[c]}'")
                 expected = match[last_open.pop()]
                 if c != expected:
-                    raise ValueError("malformed expression: expected '{}' but found '{}'".format(expected, c))
+                    raise ValueError(f"malformed expression: expected '{expected}' but found '{c}'")
                 if not last_open:
                     assert c == match[needle]
                     return pos
-    raise ValueError("malformed expression: reached end of string without finding the expected '{}'"
-                     .format(match[needle]))
+    raise ValueError(f"malformed expression: reached end of string without finding the expected '{match[needle]}'")
 
 
 def float_error_handler_factory(stacklevel):
@@ -482,7 +481,7 @@ def float_error_handler_factory(stacklevel):
             extra = ' (this is typically caused by a 0 / 0)'
         else:
             extra = ''
-        warnings.warn("{} encountered during operation{}".format(error, extra), RuntimeWarning, stacklevel=stacklevel)
+        warnings.warn(f"{error} encountered during operation{extra}", RuntimeWarning, stacklevel=stacklevel)
     return error_handler
 
 
@@ -616,13 +615,13 @@ def index_by_id(seq, value):
     for i, item in enumerate(seq):
         if item is value:
             return i
-    raise ValueError("%s is not in list" % value)
+    raise ValueError(f"{value} is not in list")
 
 
 def renamed_to(newfunc, old_name, stacklevel=2):
     def wrapper(*args, **kwargs):
-        msg = "{}() is deprecated. Use {}() instead.".format(old_name, newfunc.__name__)
-        warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
+        warnings.warn(f"{old_name}() is deprecated. Use {newfunc.__name__}() instead.",
+                      FutureWarning, stacklevel=stacklevel)
         return newfunc(*args, **kwargs)
     return wrapper
 
@@ -781,8 +780,8 @@ class SequenceZip(object):
         bad_length_seqs = [i for i, s in enumerate(sequences[1:], start=1) if len(s) != length]
         if bad_length_seqs:
             first_bad = bad_length_seqs[0]
-            raise ValueError("sequence {} has a length of {} which is different from the length of the "
-                             "first sequence ({})".format(first_bad, len(sequences[first_bad]), length))
+            raise ValueError(f"sequence {first_bad} has a length of {len(sequences[first_bad])} which is different "
+                             f"from the length of the first sequence ({length})")
         self._length = length
 
     def __len__(self):
@@ -792,14 +791,14 @@ class SequenceZip(object):
         if isinstance(key, (int, np.integer)):
             return tuple(seq[key] for seq in self.sequences)
         else:
-            assert isinstance(key, slice), "key (%s) has invalid type (%s)" % (key, type(key))
+            assert isinstance(key, slice), f"key ({key}) has invalid type ({type(key)})"
             return SequenceZip([seq[key] for seq in self.sequences])
 
     def __iter__(self):
         return zip(*self.sequences)
 
     def __repr__(self):
-        return 'SequenceZip({})'.format(self.sequences)
+        return f'SequenceZip({self.sequences})'
 
 
 class Repeater(object):
@@ -862,7 +861,7 @@ class Repeater(object):
                 raise IndexError('index out of range')
             return self.value
         else:
-            assert isinstance(key, slice), "key (%s) has invalid type (%s)" % (key, type(key))
+            assert isinstance(key, slice), f"key ({key}) has invalid type ({type(key)})"
             start, stop, step = key.indices(self.n)
             # XXX: unsure // step is correct
             return Repeater(self.value, (stop - start) // step)
@@ -871,7 +870,7 @@ class Repeater(object):
         return itertools.repeat(self.value, self.n)
 
     def __repr__(self):
-        return 'Repeater({}, {})'.format(self.value, self.n)
+        return f'Repeater({self.value}, {self.n})'
 
 
 # TODO: remove Product from larray_editor.utils (it is almost identical)
@@ -919,12 +918,12 @@ class Product(object):
     def __getitem__(self, key):
         if isinstance(key, (int, np.integer)):
             if key >= self._length:
-                raise IndexError("index %d out of range for Product of length %d" % (key, self._length))
+                raise IndexError(f"index {key} out of range for Product of length {self._length}")
             # this is similar to np.unravel_index but a tad faster for scalars
             return tuple(array[key // div % mod]
                          for array, (div, mod) in zip(self.sequences, self._div_mod))
         else:
-            assert isinstance(key, slice), "key (%s) has invalid type (%s)" % (key, type(key))
+            assert isinstance(key, slice), f"key ({key}) has invalid type ({type(key)})"
             start, stop, step = key.indices(self._length)
             div_mod = self._div_mod
             arrays = self.sequences
@@ -938,7 +937,7 @@ class Product(object):
         return product(*self.sequences)
 
     def __repr__(self):
-        return 'Product({})'.format(self.sequences)
+        return f'Product({self.sequences})'
 
 
 _np_generic = np.generic
@@ -983,4 +982,4 @@ def _positive_integer(value):
 
 def _validate_dir(directory):
     if not os.path.isdir(directory):
-        raise ValueError("The directory {} could not be found".format(directory))
+        raise ValueError(f"The directory {directory} could not be found")

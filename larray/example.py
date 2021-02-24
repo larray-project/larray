@@ -9,8 +9,6 @@ AVAILABLE_EXAMPLE_DATA = {
     'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5'),
     'demography_eurostat': os.path.join(EXAMPLE_FILES_DIR, 'demography_eurostat.h5')
 }
-AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
-
 EXAMPLE_EXCEL_TEMPLATES_DIR = os.path.join(_TEST_DIR, 'excel_template')
 
 
@@ -37,8 +35,9 @@ def get_example_filepath(fname):
     """
     fpath = os.path.abspath(os.path.join(EXAMPLE_FILES_DIR, fname))
     if not os.path.exists(fpath):
-        raise ValueError("Example file {} does not exist. "
-                         "Available example files are: {}".format(fname, AVAILABLE_EXAMPLE_FILES))
+        AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
+        raise ValueError(f"Example file {fname} does not exist. "
+                         f"Available example files are: {AVAILABLE_EXAMPLE_FILES}")
     return fpath
 
 
@@ -90,6 +89,7 @@ def load_example_data(name):
         name = 'demography'
     if not isinstance(name, str):
         raise TypeError("Expected string for argument example_data")
-    if name not in AVAILABLE_EXAMPLE_DATA.keys():
-        raise ValueError("example_data must be chosen from list {}".format(list(AVAILABLE_EXAMPLE_DATA.keys())))
+    if name not in AVAILABLE_EXAMPLE_DATA:
+        available_datasets = list(AVAILABLE_EXAMPLE_DATA.keys())
+        raise ValueError(f"example_data must be chosen from list {available_datasets}")
     return la.Session(AVAILABLE_EXAMPLE_DATA[name])

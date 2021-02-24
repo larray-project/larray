@@ -24,25 +24,25 @@ def generate_tests_files():
         if name == '2d_classic':
             df = arr.to_frame(fold_last_axis_name=False)
             # wide format
-            df.to_csv(os.path.join(DATA_DIR, 'test{}.csv'.format(name)), sep=',', na_rep='')
+            df.to_csv(os.path.join(DATA_DIR, f'test{name}.csv'), sep=',', na_rep='')
             wb[name] = ''
             wb[name]['A1'].options().value = df
             # narrow format
             df = arr.to_series(name='value')
-            df.to_csv(os.path.join(DATA_DIR, 'test{}_narrow.csv'.format(name)), sep=',', na_rep='', header=True)
+            df.to_csv(os.path.join(DATA_DIR, f'test{name}_narrow.csv'), sep=',', na_rep='', header=True)
             wb_narrow[name] = ''
             wb_narrow[name]['A1'].options().value = df
         elif name == 'missing_values':
             df = arr.to_frame(fold_last_axis_name=True)
             # wide format
             df = df.drop([(2, 'b0'), (3, 'b1')])
-            df.to_csv(os.path.join(DATA_DIR, 'test{}.csv'.format(name)), sep=',', na_rep='')
+            df.to_csv(os.path.join(DATA_DIR, f'test{name}.csv'), sep=',', na_rep='')
             wb[name] = ''
             wb[name]['A1'].options().value = df
             # narrow format
             df = arr.to_series(name='value')
             df = df.drop([(2, 'b0'), (2, 'b1', 'c1'), (3, 'b1')])
-            df.to_csv(os.path.join(DATA_DIR, 'test{}_narrow.csv'.format(name)), sep=',', na_rep='', header=True)
+            df.to_csv(os.path.join(DATA_DIR, f'test{name}_narrow.csv'), sep=',', na_rep='', header=True)
             wb_narrow[name] = ''
             wb_narrow[name]['A1'].options().value = df
         elif name == 'position':
@@ -54,10 +54,10 @@ def generate_tests_files():
             wb_narrow[name]['D3'] = arr.dump(wide=False)
         else:
             # wide format
-            arr.to_csv(os.path.join(DATA_DIR, 'test{}.csv'.format(name)))
+            arr.to_csv(os.path.join(DATA_DIR, f'test{name}.csv'))
             wb[name] = arr.dump()
             # narrow format
-            arr.to_csv(os.path.join(DATA_DIR, 'test{}_narrow.csv'.format(name)), wide=False)
+            arr.to_csv(os.path.join(DATA_DIR, f'test{name}_narrow.csv'), wide=False)
             wb_narrow[name] = arr.dump(wide=False)
 
     wb.save()

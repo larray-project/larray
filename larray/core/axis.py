@@ -100,7 +100,8 @@ class Axis(ABCAxis):
         if isinstance(name, str) and not name_is_python_str:
             name = str(name)
         if name is not None and not isinstance(name, (int, str)):
-            raise TypeError("Axis name should be None, int or str but is: %s (%s)" % (name, type(name).__name__))
+            nametype = type(name).__name__
+            raise TypeError(f"Axis name should be None, int or str but is: {name} ({nametype})")
         self.name = name
         self._labels = None
         self.__mapping = None
@@ -349,12 +350,12 @@ class Axis(ABCAxis):
             if self.name is None:
                 names = None
             elif sep not in self.name:
-                raise ValueError('{} not found in self name ({})'.format(sep, self.name))
+                raise ValueError(f'{sep} not found in self name ({self.name})')
             else:
                 names = self.name.split(sep)
         elif isinstance(names, str):
             if sep not in names:
-                raise ValueError('{} not found in names ({})'.format(sep, names))
+                raise ValueError(f'{sep} not found in names ({names})')
             else:
                 names = names.split(sep)
         else:
@@ -470,17 +471,19 @@ class Axis(ABCAxis):
         """
         name = kwargs.pop('name', None)
         if kwargs:
-            raise ValueError("invalid keyword argument(s): %s" % list(kwargs.keys()))
+            invalid_kwargs = list(kwargs.keys())
+            raise ValueError(f"invalid keyword argument(s): {invalid_kwargs}")
         key = args[0] if len(args) == 1 else args
         return self[key] >> name if name else self[key]
 
     def group(self, *args, **kwargs):
         group_name = kwargs.pop('name', None)
         key = args[0] if len(args) == 1 else args
-        syntax = '{}[{}]'.format(self.name if self.name else 'axis', key)
+        name = self.name if self.name else 'axis'
+        syntax = f'{name}[{key}]'
         if group_name is not None:
-            syntax += ' >> {}'.format(repr(group_name))
-        raise NotImplementedError('Axis.group is deprecated. Use {} instead.'.format(syntax))
+            syntax += f' >> {repr(group_name)}'
+        raise NotImplementedError(f'Axis.group is deprecated. Use {syntax} instead.')
 
     def all(self, name=None):
         r"""
@@ -493,8 +496,7 @@ class Axis(ABCAxis):
         """
         axis_name = self.name if self.name else 'axis'
         group_name = name if name else 'all'
-        raise NotImplementedError('Axis.all is deprecated. Use {}[:] >> {} instead.'
-                                  .format(axis_name, repr(group_name)))
+        raise NotImplementedError(f'Axis.all is deprecated. Use {axis_name}[:] >> {repr(group_name)} instead.')
 
     # TODO: make this method private
     def subaxis(self, key):
@@ -939,7 +941,7 @@ class Axis(ABCAxis):
         else:
             # the first mapping[key] above will cover most cases.
             # This code path is only used if the key was given in "non normalized form"
-            assert np.isscalar(key), "%s (%s) is not scalar" % (key, type(key))
+            assert np.isscalar(key), f"{key} ({type(key)}) is not scalar"
             # key is scalar (integer, float, string, ...)
             if self._is_key_type_compatible(key):
                 return mapping[key]
@@ -963,7 +965,7 @@ class Axis(ABCAxis):
 
     def __repr__(self):
         labels = len(self) if self.iswildcard else list(self.labels)
-        return 'Axis(%r, %r)' % (labels, self.name)
+        return f'Axis({labels!r}, {self.name!r})'
 
     def labels_summary(self):
         r"""
@@ -983,7 +985,7 @@ class Axis(ABCAxis):
         r"""
         Method factory to create binary operators special methods.
         """
-        fullname = '__%s__' % opname
+        fullname = f'__{opname}__'
 
         def opmethod(self, other):
             # give a chance to AxisCollection.__rXXX__ ops to trigger
@@ -1089,13 +1091,13 @@ class Axis(ABCAxis):
             new = list(old.values())
             old = list(old.keys())
         elif np.isscalar(old):
-            assert new is not None and np.isscalar(new), "%s is not a scalar but a %s" % (new, type(new).__name__)
+            assert new is not None and np.isscalar(new), f"{new} is not a scalar but a {type(new).__name__}"
             old = [old]
             new = [new]
         else:
             seq = (tuple, list, np.ndarray)
-            assert isinstance(old, seq), "%s is not a sequence but a %s" % (old, type(old).__name__)
-            assert isinstance(new, seq), "%s is not a sequence but a %s" % (new, type(new).__name__)
+            assert isinstance(old, seq), f"{old} is not a sequence but a {type(old).__name__}"
+            assert isinstance(new, seq), f"{new} is not a sequence but a {type(new).__name__}"
             assert len(old) == len(new)
         # using object dtype because new labels length can be larger than the fixed str length in the self.labels array
         labels = self.labels.astype(object)
@@ -1470,9 +1472,9 @@ class AxisCollection(object):
         dupe_axes = list(duplicates(axes))
         if dupe_axes:
             axis = dupe_axes[0]
-            raise ValueError("Cannot have multiple occurrences of the same axis object in a collection ('%s' -- %s "
-                             "with id %d). Several axes with the same name are allowed though (but not recommended)."
-                             % (axis.name, axis.labels_summary(), id(axis)))
+            raise ValueError(f"Cannot have multiple occurrences of the same axis object in a collection ('{axis.name}'"
+                             f" -- {axis.labels_summary()} with id {id(axis):d}). Several axes with the same name are "
+                             f"allowed though (but not recommended).")
         self._list = axes
         self._map = {axis.name: axis for axis in axes if axis.name is not None}
 
@@ -1592,7 +1594,7 @@ class AxisCollection(object):
             # transform ValueError to KeyError
             except ValueError:
                 if key.name is None:
-                    raise KeyError("axis '%s' not found in %s" % (key, self))
+                    raise KeyError(f"axis '{key}' not found in {self}")
                 else:
                     # we should NOT check that the object is the same, so that we can use AxisReference objects to
                     # target real axes
@@ -1616,13 +1618,13 @@ class AxisCollection(object):
         elif isinstance(key, slice):
             return AxisCollection(self._list[key])
         elif key is None:
-            raise KeyError("axis '%s' not found in %s" % (key, self))
+            raise KeyError(f"axis '{key}' not found in {self}")
         else:
             assert isinstance(key, str), type(key)
             if key in self._map:
                 return self._map[key]
             else:
-                raise KeyError("axis '%s' not found in %s" % (key, self))
+                raise KeyError(f"axis '{key}' not found in {self}")
 
     def _ipython_key_completions_(self):
         return list(self._map.keys())
@@ -1664,9 +1666,9 @@ class AxisCollection(object):
                     if res.iscompatible(key):
                         return res
                     else:
-                        raise ValueError("axis %s is not compatible with %s" % (res, key))
+                        raise ValueError(f"axis {res} is not compatible with {key}")
                 # XXX: KeyError instead?
-                raise ValueError("axis %s not found in %s" % (key, self))
+                raise ValueError(f"axis {key} not found in {self}")
         else:
             return self[key]
 
@@ -1827,15 +1829,17 @@ class AxisCollection(object):
     ndim = property(__len__)
 
     def __str__(self):
-        return "{%s}" % ', '.join(self.display_names)
+        names = ', '.join(self.display_names)
+        return f"{{{names}}}"
 
     def __repr__(self):
         if len(self):
             repr_per_axis = [repr(axis) for axis in self._list]
-            axes_repr = "\n    {}\n".format(',\n    '.join(repr_per_axis))
+            axes_repr = ',\n    '.join(repr_per_axis)
+            axes_repr = f"\n    {axes_repr}\n"
         else:
             axes_repr = ""
-        return "AxisCollection([{}])".format(axes_repr)
+        return f"AxisCollection([{axes_repr}])"
 
     # TODO: kill name argument (does not seem to be used anywhere
     def get(self, key, default=None, name=None):
@@ -2006,7 +2010,7 @@ class AxisCollection(object):
         for i, axis in enumerate(axes):
             local_axis = self.get_by_pos(axis, i)
             if not local_axis.iscompatible(axis):
-                raise ValueError("incompatible axes:\n{!r}\nvs\n{!r}".format(axis, local_axis))
+                raise ValueError(f"incompatible axes:\n{axis!r}\nvs\n{local_axis!r}")
 
     # XXX: deprecate method (functionality is duplicated in union)?
     #      I am not so sure anymore we need to actually deprecate the method: having both methods with the same
@@ -2046,7 +2050,7 @@ class AxisCollection(object):
         """
         # axes should be a sequence
         if not isinstance(axes, (tuple, list, AxisCollection)):
-            raise TypeError("AxisCollection can only be extended by a sequence of Axis, not %s" % type(axes).__name__)
+            raise TypeError(f"AxisCollection can only be extended by a sequence of Axis, not {type(axes).__name__}")
         # check that common axes are the same
         # if validate:
         #     self.check_compatible(axes)
@@ -2070,7 +2074,7 @@ class AxisCollection(object):
             else:
                 # check that common axes are the same
                 if validate and not old_axis.iscompatible(axis):
-                    raise ValueError("incompatible axes:\n%r\nvs\n%r" % (axis, old_axis))
+                    raise ValueError(f"incompatible axes:\n{axis!r}\nvs\n{old_axis!r}")
                 if replace_wildcards and old_axis.iswildcard:
                     self[old_axis] = axis
 
@@ -2115,7 +2119,7 @@ class AxisCollection(object):
             if -len(self) <= axis < len(self):
                 return axis
             else:
-                raise ValueError("axis %d is not in collection" % axis)
+                raise ValueError(f"axis {axis} is not in collection")
         elif isinstance(axis, Axis):
             try:
                 # 1) first look for that particular axis object
@@ -2146,7 +2150,7 @@ class AxisCollection(object):
         else:
             name = axis
         if name is None:
-            raise ValueError("%r is not in collection" % axis)
+            raise ValueError(f"{axis!r} is not in collection")
         return self.names.index(name)
 
     # XXX: we might want to return a new AxisCollection (same question for other inplace operations:
@@ -2327,7 +2331,7 @@ class AxisCollection(object):
         if isinstance(axes_to_replace, (list, AxisCollection)) and \
                 all([isinstance(axis, Axis) for axis in axes_to_replace]):
             if len(axes_to_replace) != len(self):
-                raise ValueError('{} axes given as argument, expected {}'.format(len(axes_to_replace), len(self)))
+                raise ValueError(f'{len(axes_to_replace)} axes given as argument, expected {len(self)}')
             axes = axes_to_replace
         else:
             axes = self if inplace else self[:]
@@ -2372,11 +2376,11 @@ class AxisCollection(object):
             except KeyError:
                 continue
         if not valid_axes:
-            raise ValueError("%s is not a valid label for any axis" % axis_key)
+            raise ValueError(f"{axis_key} is not a valid label for any axis")
         elif len(valid_axes) > 1:
-            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.axes.index(a))
+            valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.axes.index(a)}}}'
                                    for a in valid_axes)
-            raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
+            raise ValueError(f'{axis_key} is ambiguous (valid in {valid_axes})')
         return valid_axes[0][axis_key]
 
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs):
@@ -2616,7 +2620,7 @@ class AxisCollection(object):
                 try:
                     axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
-                    raise ValueError("%r is not a valid label for any axis" % axis_key)
+                    raise ValueError(f"{axis_key!r} is not a valid label for any axis")
                 return real_axis.i[axis_pos_key]
             except KeyError:
                 # axis associated with axis_key may not belong to self.
@@ -2636,13 +2640,13 @@ class AxisCollection(object):
             except KeyError:
                 continue
         if not valid_axes:
-            raise ValueError("%r is not a valid label for any axis" % axis_key)
+            raise ValueError(f"{axis_key!r} is not a valid label for any axis")
         elif len(valid_axes) > 1:
             # TODO: make an AxisCollection.display_name(axis) method out of this
             # valid_axes = ', '.join(self.display_name(axis) for a in valid_axes)
-            valid_axes = ', '.join(a.name if a.name is not None else '{{{}}}'.format(self.index(a))
+            valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.index(a)}}}'
                                    for a in valid_axes)
-            raise ValueError('%s is ambiguous (valid in %s)' % (axis_key, valid_axes))
+            raise ValueError(f'{axis_key} is ambiguous (valid in {valid_axes})')
         return valid_axes[0].i[axis_pos_key]
 
     def _translate_axis_key(self, axis_key):
@@ -2755,8 +2759,7 @@ class AxisCollection(object):
             if isinstance(axis_key, Array) and np.issubdtype(axis_key.dtype, np.bool_):
                 extra_key_axes = axis_key.axes - self
                 if extra_key_axes:
-                    raise ValueError("boolean subset key contains more axes ({}) than array ({})"
-                                     .format(axis_key.axes, self))
+                    raise ValueError(f"boolean subset key contains more axes ({axis_key.axes}) than array ({self})")
                 # nonzero (currently) returns a tuple of IGroups containing 1D Arrays (one IGroup per axis)
                 nonboolkey.extend(axis_key.nonzero())
             else:
@@ -2997,7 +3000,7 @@ class AxisCollection(object):
         ['a', 'b*', '{2}', '{3}*']
         """
         def display_name(i, axis):
-            name = axis.name if axis.name is not None else '{%d}' % i
+            name = axis.name if axis.name is not None else f'{{{i}}}'
             return (name + '*') if axis.iswildcard else name
 
         return [display_name(i, axis) for i, axis in enumerate(self._list)]
@@ -3114,7 +3117,7 @@ class AxisCollection(object):
          sex [2]: 'M' 'F'
          time [4]: 2007 2008 2009 2010
         """
-        lines = [" %s [%d]: %s" % (name, len(axis), axis.labels_summary())
+        lines = [f" {name} [{len(axis)}]: {axis.labels_summary()}"
                  for name, axis in zip(self.display_names, self._list)]
         shape = " x ".join(str(s) for s in self.shape)
         return ReprString('\n'.join([shape] + lines))
@@ -3576,7 +3579,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         raise NotImplementedError("an AxisReference (X.) cannot translate labels")
 
     def __repr__(self):
-        return 'AxisReference(%r)' % self.name
+        return f'AxisReference({self.name!r})'
 
     def evaluate(self, context):
         r"""
