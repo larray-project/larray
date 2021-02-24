@@ -15,7 +15,8 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
-                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, exactly_one)
+                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
+                              exactly_one)
 
 
 np_frompyfunc = np.frompyfunc
@@ -2779,9 +2780,9 @@ class AxisCollection:
         else:
             return self._translate_axis_key_chunk(axis_key)
 
-    def _key_to_axis_and_indices(self, key):
+    def _key_to_axis_indices_dict(self, key):
         """
-        Translates any key to a tuple of (axis, indices) tuples.
+        Translates any label-based key to an {axis: indices} dict.
 
         Parameters
         ----------
@@ -2790,9 +2791,9 @@ class AxisCollection:
 
         Returns
         -------
-        tuple
-            tuple of (axis, indices) pairs, with axis from this array.
-            The order of the pairs is *not* guaranteed to be the same as the order of axes.
+        dict
+            dict {axis: indices}, with axis from this array.
+            The order of the dict axes/keys is *not* guaranteed to be the same as the order of axes.
 
         See Also
         --------
@@ -2807,36 +2808,45 @@ class AxisCollection:
             # convert scalar keys to 1D keys
             key = (key,)
 
-        # handle ExprNode
-        key = tuple(axis_key.evaluate(self) if isinstance(axis_key, ExprNode) else axis_key
-                    for axis_key in key)
-
-        nonboolkey = []
+        filtered_key = []
         for axis_key in key:
+            # handle ExprNode
+            if isinstance(axis_key, ExprNode):
+                axis_key = axis_key.evaluate(self)
+
+            # handle boolean filter keys
             if isinstance(axis_key, np.ndarray) and np.issubdtype(axis_key.dtype, np.bool_):
                 if axis_key.shape != self.shape:
-                    raise ValueError("boolean key with a different shape ({}) than array ({})"
-                                     .format(axis_key.shape, self.shape))
-                axis_key = Array(axis_key, self)
-
-            if isinstance(axis_key, Array) and np.issubdtype(axis_key.dtype, np.bool_):
+                    raise ValueError(f"boolean key with a different shape ({axis_key.shape}) than array ({self.shape})")
+                filtered_key.extend(Array(axis_key, self).nonzero())
+            elif isinstance(axis_key, Array) and np.issubdtype(axis_key.dtype, np.bool_):
                 extra_key_axes = axis_key.axes - self
                 if extra_key_axes:
                     raise ValueError(f"boolean subset key contains more axes ({axis_key.axes}) than array ({self})")
                 # nonzero (currently) returns a tuple of IGroups containing 1D Arrays (one IGroup per axis)
-                nonboolkey.extend(axis_key.nonzero())
-            else:
-                nonboolkey.append(axis_key)
-        key = tuple(nonboolkey)
+                filtered_key.extend(axis_key.nonzero())
+            # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
+            # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
+            #      a single slice(None) a[:], I don't think there is any point.
+            elif not _isnoneslice(axis_key) and axis_key is not Ellipsis:
+                filtered_key.append(axis_key)
 
-        # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
-        # XXX: we might want to raise an exception when we find Ellipses or (most) slice(None) because except for
-        #      a single slice(None) a[:], I don't think there is any point.
-        key = [axis_key for axis_key in key
-               if not _isnoneslice(axis_key) and axis_key is not Ellipsis]
+        key = tuple(filtered_key)
 
         # translate all keys to (axis, indices) pairs
-        return tuple(self._translate_axis_key(axis_key) for axis_key in key)
+        key_items = tuple(self._translate_axis_key(axis_key) for axis_key in filtered_key)
+
+        assert all(isinstance(axis, Axis) for axis, axis_key in key_items)
+
+        # even keys given as dict can contain duplicates (if the same axis was
+        # given under different forms, e.g. name and AxisReference).
+        if has_duplicates(axis for axis, axis_key in key_items):
+            dupe_axes = duplicates(axis for axis, axis_key in key_items)
+            dupe_axes_str = ', '.join(str(axis) for axis in dupe_axes)
+            raise ValueError(f"key has several values for axis: {dupe_axes_str}\n{key}")
+
+        # ((axis, indices), (axis, indices), ...) -> dict
+        return dict(key_items)
 
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True, points=False, wildcard=False):
         r"""
@@ -2863,23 +2873,12 @@ class AxisCollection:
             # the key we need to know which axis each key belongs to and to do that, we need to
             # translate the key to indices)
 
-            # any key -> ((axis, indices), (axis, indices), ...)
-            key_items = self._key_to_axis_and_indices(key)
-
-            # even keys given as dict can contain duplicates (if the same axis was
-            # given under different forms, e.g. name and AxisReference).
-            dupe_axes = list(duplicates(axis for axis, key in key_items))
-            if dupe_axes:
-                dupe_axes = ', '.join(str(axis) for axis in dupe_axes)
-                raise ValueError(f"key has several values for axis: {dupe_axes}\n{key_items}")
-
-            # ((axis, indices), (axis, indices), ...) -> dict
-            dict_key = dict(key_items)
+            # any key -> {axis: indices, axis: indices, ...}
+            dict_key = self._key_to_axis_indices_dict(key)
 
             # dict -> tuple (complete and order key)
-            assert all(isinstance(k1, Axis) for k1 in dict_key)
-            key = tuple(dict_key[axis1] if axis1 in dict_key else slice(None)
-                        for axis1 in self)
+            key = tuple(dict_key[axis] if axis in dict_key else slice(None)
+                        for axis in self)
 
         assert isinstance(key, tuple) and len(key) == self.ndim
 

@@ -9610,7 +9610,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 items = list(zip(axes[0], values))
             else:
                 def translate_and_sort_key(key, axes):
-                    dict_of_indices = dict(axes._key_to_axis_and_indices(key))
+                    dict_of_indices = axes._key_to_axis_indices_dict(key)
                     return tuple(IGroup(dict_of_indices[axis], axis=axis) for axis in axes)
 
                 # passing only via _key_to_igroup should be enough if we allow for partial axes
