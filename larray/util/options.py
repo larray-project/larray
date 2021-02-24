@@ -92,7 +92,7 @@ class set_options(object):
         self.old = {}
         for k, v in kwargs.items():
             if k not in _OPTIONS:
-                raise ValueError('Argument {} is not in the set of valid options {}'.format(k, set(_OPTIONS)))
+                raise ValueError(f'Argument {k} is not in the set of valid options {set(_OPTIONS)}')
             if k in _VALIDATORS:
                 _VALIDATORS[k](v)
             self.old[k] = _OPTIONS[k]

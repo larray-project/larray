@@ -109,8 +109,8 @@ class Session(object):
     @meta.setter
     def meta(self, meta):
         if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
-            raise TypeError("Expected list of pairs or dict or OrderedDict or Metadata object "
-                            "instead of {}".format(type(meta).__name__))
+            raise TypeError(f"Expected list of pairs or dict or OrderedDict or Metadata object "
+                            f"instead of {type(meta).__name__}")
         object.__setattr__(self, '_meta', meta if isinstance(meta, Metadata) else Metadata(meta))
 
     # XXX: behave like a dict and return keys instead?
@@ -248,8 +248,8 @@ class Session(object):
             for k, v in other:
                 self[k] = v
         else:
-            raise ValueError("Expected Session, dict-like or iterable object for 'other' argument. "
-                             "Got {}.".format(type(other).__name__))
+            raise ValueError(f"Expected Session, dict-like or iterable object for 'other' argument. "
+                             f"Got {type(other).__name__}.")
         for k, v in kwargs.items():
             self[k] = v
 
@@ -325,7 +325,7 @@ class Session(object):
         if key in self._objects:
             return self._objects[key]
         else:
-            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
 
     def __setattr__(self, key, value):
         # the condition below is needed because, unlike __getattr__, __setattr__ is called before any property
@@ -434,7 +434,7 @@ class Session(object):
             if all([os.path.splitext(name)[1] == '.csv' for name in names]):
                 engine = ext_default_engine['csv']
             else:
-                raise ValueError("List of paths to only CSV files expected. Got {}".format(names))
+                raise ValueError(f"List of paths to only CSV files expected. Got {names}")
         if engine == 'auto':
             _, ext = os.path.splitext(fname)
             ext = ext.strip('.') if '.' in ext else 'csv'
@@ -584,14 +584,14 @@ class Session(object):
         if inplace:
             for k, v in items:
                 if k not in d:
-                    raise ValueError("'{}' not found in current namespace. Session.to_globals(inplace=True) requires "
-                                     "all arrays to already exist.".format(k))
+                    raise ValueError(f"'{k}' not found in current namespace. Session.to_globals(inplace=True) requires "
+                                     f"all arrays to already exist.")
                 if not isinstance(v, Array):
                     continue
                 if not d[k].axes == v.axes:
-                    raise ValueError("Session.to_globals(inplace=True) requires the existing (destination) arrays "
-                                     "to have the same axes than those stored in the session and this is not the case "
-                                     "for '{}'.\nexisting: {}\nsession: {}".format(k, d[k].info, v.info))
+                    raise ValueError(f"Session.to_globals(inplace=True) requires the existing (destination) arrays "
+                                     f"to have the same axes than those stored in the session and this is not the case "
+                                     f"for '{k}'.\nexisting: {d[k].info}\nsession: {v.info}")
                 d[k][:] = v
         else:
             for k, v in items:
@@ -1005,14 +1005,15 @@ class Session(object):
         return self._objects.items()
 
     def __repr__(self):
-        return 'Session({})'.format(', '.join(self.keys()))
+        keys = ", ".join(self.keys())
+        return f'Session({keys})'
 
     def __len__(self):
         return len(self._objects)
 
     # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
     def _binop(opname, arrays_only=True):
-        opfullname = '__%s__' % opname
+        opfullname = f'__{opname}__'
 
         def opmethod(self, other):
             self_keys = set(self.keys())
@@ -1034,8 +1035,9 @@ class Session(object):
                             res_item = nan
                         # this should only ever happen when self_array is a non Array (eg. nan)
                         if res_item is NotImplemented:
+                            inv_opname = f'__{inverseop(opname)}__'
                             try:
-                                res_item = getattr(other_operand, '__%s__' % inverseop(opname))(self_item)
+                                res_item = getattr(other_operand, inv_opname)(self_item)
                             # TypeError for str arrays, ValueError for incompatible axes, ...
                             except Exception:
                                 res_item = nan
@@ -1059,7 +1061,7 @@ class Session(object):
     # element-wise method factory
     # unary operations are (also) dispatched element-wise to all arrays
     def _unaryop(opname):
-        opfullname = '__%s__' % opname
+        opfullname = f'__{opname}__'
 
         def opmethod(self):
             with np.errstate(call=_session_float_error_handler):
@@ -1456,8 +1458,7 @@ class Session(object):
             else:
                 tmpl = template[Metadata]
             if not (isinstance(tmpl, str) or callable(tmpl)):
-                raise TypeError("Expected a string template or a function for type {}. "
-                                "Got {}".format(type(v), type(tmpl)))
+                raise TypeError(f"Expected a string template or a function for type {type(v)}. Got {type(tmpl)}")
             if isinstance(tmpl, str):
                 if isinstance(v, Axis):
                     return tmpl.format(key=k, name=v.name, labels=v.labels_summary(), length=len(v))

@@ -92,10 +92,10 @@ if xw is not None:
                     # XXX: we might want to be more precise than .xl* because I am unsure writing .xls
                     #     (or anything other than .xlsx and .xlsm) would work
                     if not ext.startswith('.xl'):
-                        raise ValueError("'%s' is not a supported file extension" % ext)
+                        raise ValueError(f"'{ext}' is not a supported file extension")
                     if not os.path.isfile(filepath) and not overwrite_file:
-                        raise ValueError("File {} does not exist. Please give the path to an existing file or set "
-                                         "overwrite_file argument to True".format(filepath))
+                        raise ValueError(f"File {filepath} does not exist. Please give the path to an existing file "
+                                         f"or set overwrite_file argument to True")
                     if os.path.isfile(filepath) and overwrite_file:
                         self.filepath = filepath
                         # we create a temporary file to work on. In case of crash, the original is not destroyed.
@@ -216,7 +216,7 @@ if xw is not None:
             if key in self:
                 return Sheet(self, key)
             else:
-                raise KeyError('Workbook has no sheet named {}'.format(key))
+                raise KeyError(f'Workbook has no sheet named {key}')
 
         def __setitem__(self, key, value):
             key = _translate_sheet_name(key)
@@ -320,7 +320,7 @@ if xw is not None:
 
         def __repr__(self):
             cls = self.__class__
-            return '<{}.{} [{}]>'.format(cls.__module__, cls.__name__, self.name)
+            return f'<{cls.__module__}.{cls.__name__} [{self.name}]>'
 
 
     def _fill_slice(s, length):
@@ -513,7 +513,7 @@ if xw is not None:
         def __repr__(self):
             cls = self.__class__
             xw_sheet = self.xw_sheet
-            return '<{}.{} [{}]{}>'.format(cls.__module__, cls.__name__, xw_sheet.book.name, xw_sheet.name)
+            return f'<{cls.__module__}.{cls.__name__} [{xw_sheet.book.name}]{xw_sheet.name}>'
 
 
     class Range(object):

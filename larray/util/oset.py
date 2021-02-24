@@ -48,7 +48,8 @@ class OrderedSet(set):
         return iter(self._list)
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self._list)
+        class_name = self.__class__.__name__
+        return f'{class_name}({self._list!r})'
 
     __str__ = __repr__
 

@@ -214,8 +214,9 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     if engine == 'xlwings':
         if kwargs:
-            raise TypeError("'{}' is an invalid keyword argument for this function when using the xlwings backend"
-                            .format(list(kwargs.keys())[0]))
+            first_kwarg = list(kwargs.keys())[0]
+            raise TypeError(f"'{first_kwarg}' is an invalid keyword argument for this function when using the xlwings "
+                            f"backend")
         from larray.inout.xw_excel import open_excel
         with open_excel(filepath) as wb:
             return wb[sheet][range].load(index_col=index_col, fill_value=fill_value, sort_rows=sort_rows,

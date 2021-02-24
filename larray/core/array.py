@@ -341,7 +341,7 @@ class ArrayPositionalIndexer(object):
         if not isinstance(key, tuple):
             key = (key,)
         if len(key) > self.array.ndim:
-            raise IndexError("key has too many indices (%d) for array with %d dimensions" % (len(key), self.array.ndim))
+            raise IndexError(f"key has too many indices ({len(key)}) for array with {self.array.ndim} dimensions")
         # no need to create a full nd key as that will be done later anyway
         return tuple(axis.i[axis_key]
                      for axis_key, axis in zip(key, self.array.axes))
@@ -591,9 +591,8 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
         long_name = func.__name__
 
     _args = ','.join(extra_args) + ', ' if len(extra_args) > 0 else ''
-    _kwargs = ', '.join(["{}={!r}".format(k, _kwarg_agg[k]['value']) for k in kwargs]) + ', ' if len(kwargs) > 0 else ''
-    signature = '{name}({args}*axes_and_groups, {kwargs}**explicit_axes)'.format(name=func.__name__,
-                                                                                 args=_args, kwargs=_kwargs)
+    _kwargs = ', '.join([f"{k}={_kwarg_agg[k]['value']!r}" for k in kwargs]) + ', ' if len(kwargs) > 0 else ''
+    signature = f'{func.__name__}({_args}*axes_and_groups, {_kwargs}**explicit_axes)'
 
     if by:
         specific_template = """The {long_name} is {action_verb}ed along all axes except the given one(s).
@@ -604,9 +603,9 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 
     doc_args = "".join(_arg_agg[arg] for arg in extra_args)
     doc_kwargs = "".join(_kwarg_agg[kw]['doc'] for kw in kwargs)
-    doc_varargs = r"""
+    doc_varargs = fr"""
         \*axes_and_groups : None or int or str or Axis or Group or any combination of those
-            {specific}
+            {doc_specific}
             The default (no axis or group) is to {action_verb} the {long_name} over all the dimensions of the input
             array.
 
@@ -629,10 +628,9 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
               than one axis, you must precise the axis.
             * ('a1:a3; a5:a7', b='b0,b2; b1,b3') : create several groups with semicolons.
               Names are simply given by the concatenation of labels (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
-            * ('a1:a3 >> a123', 'b[b0,b2] >> b12') : operator ' >> ' allows to rename groups."""\
-        .format(specific=doc_specific, action_verb=action_verb, long_name=long_name)
-    parameters = """Parameters
-        ----------{args}{varargs}{kwargs}""".format(args=doc_args, varargs=doc_varargs, kwargs=doc_kwargs)
+            * ('a1:a3 >> a123', 'b[b0,b2] >> b12') : operator ' >> ' allows to rename groups."""
+    parameters = f"""Parameters
+        ----------{doc_args}{doc_varargs}{doc_kwargs}"""
     func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters)
 
 
@@ -670,8 +668,8 @@ def _handle_meta(meta, title):
         return meta
     # XXX: move this test in Metadata.__init__?
     if not isinstance(meta, (list, dict, OrderedDict)):
-        raise TypeError("Expected None, list of pairs, dict, OrderedDict or Metadata object "
-                        "instead of {}".format(type(meta).__name__))
+        raise TypeError(f"Expected None, list of pairs, dict, OrderedDict or Metadata object "
+                        f"instead of {type(meta).__name__}")
     return Metadata(meta)
 
 
@@ -782,12 +780,11 @@ class Array(ABCArray):
             if not isinstance(axes, AxisCollection):
                 axes = AxisCollection(axes)
             if axes.ndim != ndim:
-                raise ValueError("number of axes (%d) does not match "
-                                 "number of dimensions of data (%d)"
-                                 % (axes.ndim, ndim))
+                raise ValueError(f"number of axes ({axes.ndim}) does not match "
+                                 f"number of dimensions of data ({ndim})")
             if axes.shape != data.shape:
-                raise ValueError("length of axes %s does not match "
-                                 "data shape %s" % (axes.shape, data.shape))
+                raise ValueError(f"length of axes {axes.shape} does not match "
+                                 f"data shape {data.shape}")
 
         self.data = data
         self.axes = axes
@@ -806,7 +803,7 @@ class Array(ABCArray):
         import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
         if not isinstance(title, str):
-            raise TypeError("Expected string value, got {}".format(type(title).__name__))
+            raise TypeError(f"Expected string value, got {type(title).__name__}")
         self._meta.title = title
 
     @property
@@ -980,10 +977,10 @@ class Array(ABCArray):
         new_axes = self.axes.replace(axes_to_replace, new_axis, **kwargs)
         if inplace:
             if new_axes.ndim != self.ndim:
-                raise ValueError("number of axes (%d) does not match number of dimensions of data (%d)"
-                                 % (new_axes.ndim, self.ndim))
+                raise ValueError(f"number of axes ({new_axes.ndim}) does not match number of dimensions "
+                                 f"of data ({self.ndim})")
             if new_axes.shape != self.data.shape:
-                raise ValueError("length of axes %s does not match data shape %s" % (new_axes.shape, self.data.shape))
+                raise ValueError(f"length of axes {new_axes.shape} does not match data shape {self.data.shape}")
             self.axes = new_axes
             return self
         else:
@@ -995,7 +992,8 @@ class Array(ABCArray):
         if key in self.axes:
             return self.axes[key]
         else:
-            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, key))
+            class_name = self.__class__.__name__
+            raise AttributeError(f"'{class_name}' object has no attribute '{key}'")
 
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before .axes exists, which leads to
     # an infinite recursion)
@@ -1167,7 +1165,7 @@ class Array(ABCArray):
             if fold_last_axis_name:
                 tmp = axes_names[-1] if axes_names[-1] is not None else ''
                 if self.axes[-1].name:
-                    axes_names[-1] = "{}\\{}".format(tmp, self.axes[-1].name)
+                    axes_names[-1] = f"{tmp}\\{self.axes[-1].name}"
             if self.ndim == 2:
                 index = pd.Index(data=self.axes[0].labels, name=axes_names[0])
             else:
@@ -1300,10 +1298,11 @@ class Array(ABCArray):
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
         if kwargs:
-            raise TypeError("describe() got an unexpected keyword argument '{}'".format(list(kwargs.keys())[0]))
+            first_kwarg = list(kwargs.keys())[0]
+            raise TypeError(f"describe() got an unexpected keyword argument '{first_kwarg}'")
         if percentiles is None:
             percentiles = [25, 50, 75]
-        plabels = ['{}%'.format(p) for p in percentiles]
+        plabels = [f'{p}%' for p in percentiles]
         labels = ['count', 'mean', 'std', 'min'] + plabels + ['max']
         percentiles = [0] + list(percentiles) + [100]
         # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
@@ -1361,7 +1360,8 @@ class Array(ABCArray):
         # retrieve kw-only arguments
         percentiles = kwargs.pop('percentiles', None)
         if kwargs:
-            raise TypeError("describe() got an unexpected keyword argument '{}'".format(list(kwargs.keys())[0]))
+            first_kwarg = list(kwargs.keys())[0]
+            raise TypeError(f"describe_by() got an unexpected keyword argument '{first_kwarg}'")
         args = self._prepare_aggregate(None, args)
         args = self._by_args_to_normal_agg_args(args)
         return self.describe(*args, percentiles=percentiles)
@@ -1787,7 +1787,7 @@ class Array(ABCArray):
         try:
             left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
         except ValueError as e:
-            raise ValueError("Both arrays are not aligned because {}".format(e))
+            raise ValueError(f"Both arrays are not aligned because {e}")
         return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
@@ -2129,8 +2129,8 @@ class Array(ABCArray):
                 extra_axes = AxisCollection(extra_axes)
                 axes = AxisCollection(target_axes)
                 text = 'axes are' if len(extra_axes) > 1 else 'axis is'
-                raise ValueError("Value {!s} {} not present in target subset {!s}. A value can only have the same axes "
-                                 "or fewer axes than the subset being targeted".format(extra_axes, text, axes))
+                raise ValueError(f"Value {extra_axes!s} {text} not present in target subset {axes!s}. A value can only "
+                                 f"have the same axes or fewer axes than the subset being targeted")
         self.data[raw_broadcasted_key] = value
 
         # concerning keys this can make sense in several cases:
@@ -2763,9 +2763,9 @@ class Array(ABCArray):
             kwargs_items = kwargs.items()
         if not commutative and len(kwargs_items) > 1:
             # TODO: lift this restriction for python3.6+
-            raise ValueError("grouping aggregates on multiple axes at the same time using keyword arguments is not "
-                             "supported for '%s' (because it is not a commutative operation and keyword arguments are "
-                             "*not* ordered in Python)" % op.__name__)
+            raise ValueError(f"grouping aggregates on multiple axes at the same time using keyword arguments is not "
+                             f"supported for '{op.__name__}' (because it is not a commutative operation and keyword "
+                             f"arguments are *not* ordered in Python)")
 
         # Sort kwargs by axis name so that we have consistent results between runs because otherwise rounding errors
         # could lead to slightly different results even for commutative operations.
@@ -2795,13 +2795,13 @@ class Array(ABCArray):
                 groups = tuple(self.axes._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
                 axis = groups[0].axis
                 if not all(g.axis.equals(axis) for g in groups[1:]):
-                    raise ValueError("group with different axes: %s" % str(key))
+                    raise ValueError(f"group with different axes: {key}")
                 return groups
             if isinstance(key, (Group, int, str, list, slice)):
                 return self.axes._guess_axis(key)
             else:
-                raise NotImplementedError("%s has invalid type (%s) for a group aggregate key"
-                                          % (key, type(key).__name__))
+                key_type = type(key).__name__
+                raise NotImplementedError(f"{key} has invalid type ({key_type}) for a group aggregate key")
 
         def standardise_arg(arg, stack_depth=1):
             if self.axes.isaxis(arg):
@@ -3611,8 +3611,8 @@ class Array(ABCArray):
         """
         str_info = ''
         if len(self.meta):
-            str_info += '{}\n'.format(self.meta)
-        str_info += '{}\ndtype: {}\nmemory used: {}'.format(self.axes.info, self.dtype.name, self.memory_used)
+            str_info += f'{self.meta}\n'
+        str_info += f'{self.axes.info}\ndtype: {self.dtype.name}\nmemory used: {self.memory_used}'
         return ReprString(str_info)
 
     def ratio(self, *axes):
@@ -3794,7 +3794,7 @@ class Array(ABCArray):
                 if skipna is None:
                     skipna = nanfunc is not None
                 if skipna and nanfunc is None:
-                    raise ValueError("skipna is not available for {}".format(func.__name__))
+                    raise ValueError(f"skipna is not available for {func.__name__}")
                 _npfunc = nanfunc if skipna else npfunc
                 _extra_kwargs = {}
                 for k in extra_kwargs:
@@ -5455,7 +5455,7 @@ class Array(ABCArray):
 
     # element-wise method factory
     def _binop(opname):
-        fullname = '__%s__' % opname
+        fullname = f'__{opname}__'
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self, other):
@@ -5576,7 +5576,7 @@ class Array(ABCArray):
         current = self[:]
         axes = self.axes
         if not isinstance(other, (Array, np.ndarray)):
-            raise NotImplementedError("matrix multiplication not implemented for %s" % type(other))
+            raise NotImplementedError(f"matrix multiplication not implemented for {type(other)}")
         if isinstance(other, np.ndarray):
             other = Array(other)
         other_axes = other.axes
@@ -5611,12 +5611,12 @@ class Array(ABCArray):
         if isinstance(other, np.ndarray):
             other = Array(other)
         if not isinstance(other, Array):
-            raise NotImplementedError("matrix multiplication not implemented for %s" % type(other))
+            raise NotImplementedError(f"matrix multiplication not implemented for {type(other)}")
         return other.__matmul__(self)
 
     # element-wise method factory
     def _unaryop(opname):
-        fullname = '__%s__' % opname
+        fullname = f'__{opname}__'
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self):
@@ -8119,8 +8119,8 @@ def _check_axes_argument(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if len(args) > 1 and isinstance(args[1], (int, Axis)):
-            raise ValueError("If you want to pass several axes or dimension lengths to {}, you must pass them as a "
-                             "list (using []) or tuple (using()).".format(func.__name__))
+            raise ValueError(f"If you want to pass several axes or dimension lengths to {func.__name__}, you must pass "
+                             f"them as a list (using []) or tuple (using()).")
         return func(*args, **kwargs)
     return wrapper
 
@@ -8779,7 +8779,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
         assert len(shape_or_axes) <= 26
         axes_names = [chr(ord('a') + i) for i in range(len(shape_or_axes))]
         label_ranges = [range(label_start, label_start + length) for length in shape_or_axes]
-        shape_or_axes = [Axis(['{}{}'.format(name, i) for i in label_range], name)
+        shape_or_axes = [Axis([f'{name}{i}' for i in label_range], name)
                          for name, label_range in zip(axes_names, label_ranges)]
     if isinstance(shape_or_axes, AxisCollection):
         axes = shape_or_axes
@@ -9325,7 +9325,8 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 assert axes.ndim == 1 and len(axes[0]) == len(elements)
             items = list(zip(axes[0], elements))
     else:
-        raise TypeError('unsupported type for arrays: %s' % type(elements).__name__)
+        elements_type = type(elements).__name__
+        raise TypeError(f'unsupported type for arrays: {elements_type}')
 
     if any(isinstance(v, Session) for k, v in items):
         if not all(isinstance(v, Session) for k, v in items):

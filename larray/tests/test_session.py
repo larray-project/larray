@@ -27,7 +27,7 @@ def equal(o1, o2):
 def assertObjListEqual(got, expected):
     assert len(got) == len(expected)
     for e1, e2 in zip(got, expected):
-        assert equal(e1, e2), "{} != {}".format(e1, e2)
+        assert equal(e1, e2), f"{e1} != {e2}"
 
 
 a = Axis('a=a0..a2')

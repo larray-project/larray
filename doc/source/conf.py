@@ -23,7 +23,7 @@ import os
 # sys.path.insert(0, os.path.abspath('../../'))
 
 import larray
-print("larray: {}, {}".format(larray.__version__, larray.__file__))
+print(f"larray: {larray.__version__}, {larray.__file__}")
 
 # -- General configuration ------------------------------------------------
 

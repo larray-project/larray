@@ -30,6 +30,6 @@ def register_file_handler(engine, extensions=None):
 
 def get_file_handler(engine):
     if engine not in handler_classes:
-        raise TypeError("Engine {} is currently not implemented".format(engine))
+        raise TypeError(f"Engine {engine} is currently not implemented")
     file_handler_cls = handler_classes[engine]
     return file_handler_cls

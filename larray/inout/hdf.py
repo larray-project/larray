@@ -79,7 +79,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
             pd_obj = store.get(key)
         except KeyError:
             filepath = filepath_or_buffer if isinstance(filepath_or_buffer, HDFStore) else store.filename
-            raise KeyError('No item with name {} has been found in file {}'.format(key, filepath))
+            raise KeyError(f'No item with name {key} has been found in file {filepath}')
         attrs = store.get_storer(key).attrs
         writer = attrs.writer if 'writer' in attrs else None
         _type = _get_type_from_attrs(attrs)

@@ -7,7 +7,7 @@ class ExprNode(object):
         def opmethod(self, other):
             return BinaryOp(opname, self, other)
 
-        opmethod.__name__ = '__{}__'.format(opname)
+        opmethod.__name__ = f'__{opname}__'
         return opmethod
 
     __matmul__ = _binop('matmul')
@@ -51,7 +51,7 @@ class ExprNode(object):
         def opmethod(self):
             return UnaryOp(opname, self)
 
-        opmethod.__name__ = '__{}__'.format(opname)
+        opmethod.__name__ = f'__{opname}__'
         return opmethod
 
     # unary ops do not need broadcasting so do not need to be overridden
@@ -71,7 +71,7 @@ def expr_eval(expr, context):
 
 class BinaryOp(ExprNode):
     def __init__(self, op, expr1, expr2):
-        self.op = op
+        self.opname = f'__{op}__'
         self.expr1 = expr1
         self.expr2 = expr2
 
@@ -79,15 +79,15 @@ class BinaryOp(ExprNode):
         # TODO: implement eval via numexpr
         expr1 = expr_eval(self.expr1, context)
         expr2 = expr_eval(self.expr2, context)
-        return getattr(expr1, '__{}__'.format(self.op))(expr2)
+        return getattr(expr1, self.opname)(expr2)
 
 
 class UnaryOp(ExprNode):
     def __init__(self, op, expr):
-        self.op = op
+        self.opname = f'__{op}__'
         self.expr = expr
 
     def evaluate(self, context):
         # TODO: implement eval via numexpr
         expr = expr_eval(self.expr, context)
-        return getattr(expr, '__{}__'.format(self.op))()
+        return getattr(expr, self.opname)()

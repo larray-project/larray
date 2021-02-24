@@ -8,7 +8,7 @@ import numpy as np
 def badvalues(a, bad_filter):
     bad_values = a[bad_filter]
     assert bad_values.ndim == 1
-    return '\n'.join('{}: {}'.format(k, v) for k, v in zip(bad_values.axes[0], bad_values))
+    return '\n'.join(f'{k}: {v}' for k, v in zip(bad_values.axes[0], bad_values))
 
 
 def f2str(f, threshold=2):
@@ -33,14 +33,14 @@ def f2str(f, threshold=2):
     '2.00e-03'
     """
     kind = "e" if f and math.log10(1 / abs(f)) > threshold else "f"
-    return "{:.{}{}}".format(f, threshold, kind)
+    return f"{f:.{threshold}{kind}}"
 
 
 def warn_or_raise(what, msg):
     if what == 'raise':
         raise ValueError(msg)
     else:
-        print("WARNING: {}".format(msg))
+        print(f"WARNING: {msg}")
 
 
 def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10, nzvzs='raise',
@@ -157,7 +157,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
             raise ValueError("ipfp does not support target sums with anonymous axes when using the axes argument with"
                              "non-integer (positional) axis references")
 
-        names_for_missing_axes = ['axis{}'.format(i) for i in axes]
+        names_for_missing_axes = [f'axis{i}' for i in axes]
         new_target_sums = []
         for i, target_sum in zip(axes, target_sums):
             ts_axes_names = names_for_missing_axes[:i] + names_for_missing_axes[i + 1:]
@@ -191,7 +191,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         else:
             a = asarray(a)
         # TODO: this should be a builtin op
-        a = a.rename({i: name if name is not None else 'axis{}'.format(i)
+        a = a.rename({i: name if name is not None else f'axis{i}'
                       for i, name in enumerate(a.axes.names)})
 
     axes = a.axes[axes]
@@ -200,38 +200,38 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     for axis, axis_target_sum in zip(axes, target_sums):
         expected_axes = a.axes - axis
         if axis_target_sum.axes != expected_axes:
-            raise ValueError("axes of target sum along {} (axis {}) do not match corresponding array axes: "
-                             "got {} but expected {}. Are the target sums in the correct order?"
-                             .format(axis.name, a.axes.index(axis), axis_target_sum.axes, expected_axes))
+            raise ValueError(f"axes of target sum along {axis.name} (axis {a.axes.index(axis)}) do not match "
+                             f"corresponding array axes: got {axis_target_sum.axes} but expected {expected_axes}. "
+                             f"Are the target sums in the correct order?")
 
     axis0_total = target_sums[0].sum()
     for axis, axis_target_sum in zip(axes[1:], target_sums[1:]):
         axis_total = axis_target_sum.sum()
         if str(axis_total) != str(axis0_total):
-            raise ValueError("target sum along {} (axis {}) is different than target sum along {} (axis {}): {} vs {}"
-                             .format(axis, a.axes.index(axis), axes[0], a.axes.index(axes[0]), axis_total, axis0_total))
+            raise ValueError(f"target sum along {axis} (axis {a.axes.index(axis)}) is different than target sum along "
+                             f"{axes[0]} (axis {a.axes.index(axes[0])}): {axis_total} vs {axis0_total}")
 
     negative = a < 0
     if any(negative):
-        raise ValueError("negative value(s) found:\n{}".format(badvalues(a, negative)))
+        raise ValueError(f"negative value(s) found:\n{badvalues(a, negative)}")
 
     for axis, axis_target_sum in zip(axes, target_sums):
         axis_idx = a.axes.index(axis)
         axis_sum = a.sum(axis)
         bad = (axis_sum == 0) & (axis_target_sum != 0)
         if any(bad):
-            raise ValueError("found all zero values sum along {} (axis {}) but non zero target sum:\n{}"
-                             .format(axis.name, axis_idx, badvalues(axis_target_sum, bad)))
+            raise ValueError(f"found all zero values sum along {axis.name} (axis {axis_idx}) but non zero target sum:\n"
+                             f"{badvalues(axis_target_sum, bad)}")
 
         bad = (axis_sum != 0) & (axis_target_sum == 0)
         if any(bad):
             if nzvzs in {'warn', 'raise'}:
-                msg = "found Non Zero Values but Zero target Sum (nzvzs) along {} (axis {})".format(axis.name, axis_idx)
+                msg = f"found Non Zero Values but Zero target Sum (nzvzs) along {axis.name} (axis {axis_idx})"
                 if nzvzs == 'raise':
-                    raise ValueError("{}, use nzvzs='warn' or 'fix' to set them to zero automatically:\n{}"
-                                     .format(msg, badvalues(axis_sum, bad)))
+                    raise ValueError(f"{msg}, use nzvzs='warn' or 'fix' to set them to zero automatically:\n"
+                                     f"{badvalues(axis_sum, bad)}")
                 else:
-                    print("WARNING: {}, setting them to zero:\n{}".format(msg, badvalues(axis_sum, bad)))
+                    print(f"WARNING: {msg}, setting them to zero:\n{badvalues(axis_sum, bad)}")
 
             a[bad] = 0
             # verify we did fix the problem
@@ -280,18 +280,18 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
 
         if np.all(np.array(lastdiffs) == max_sum_diff):
             if no_convergence in {'warn', 'raise'}:
-                warn_or_raise(no_convergence, "does not seem to converge (no improvement for {} consecutive steps), "
-                                              "stopping here.".format(stepstoabort))
+                warn_or_raise(no_convergence, f"does not seem to converge (no improvement for {stepstoabort} "
+                                              f"consecutive steps), stopping here.")
             return r
 
         if max_sum_diff < threshold:
             if display_progress:
-                print("acceptable max(abs(sum - target_sum)) found at iteration {}: {} < threshold ({})"
-                      .format(i, f2str(max_sum_diff), threshold))
+                print(f"acceptable max(abs(sum - target_sum)) found at iteration {i}: "
+                      f"{f2str(max_sum_diff)} < threshold ({threshold})")
             return r
 
         lastdiffs.append(max_sum_diff)
 
     if no_convergence in {'warn', 'raise'}:
-        warn_or_raise(no_convergence, "maximum iteration reached ({})".format(maxiter))
+        warn_or_raise(no_convergence, f"maximum iteration reached ({maxiter})")
     return r

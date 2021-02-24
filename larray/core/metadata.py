@@ -18,7 +18,7 @@ class AttributeDict(OrderedDict):
         return list(set(super(AttributeDict, self).__dir__()) | set(self.keys()))
 
     def __repr__(self):
-        return '\n'.join(['{}: {}'.format(k, v) for k, v in self.items()])
+        return '\n'.join([f'{k}: {v}' for k, v in self.items()])
 
 
 class Metadata(AttributeDict):
@@ -61,7 +61,7 @@ class Metadata(AttributeDict):
         from larray.core.array import asarray
         array = asarray(array)
         if array.ndim != 1:
-            raise ValueError("Expected Array object of dimension 1. Got array of dimension {}".format(array.ndim))
+            raise ValueError(f"Expected Array object of dimension 1. Got array of dimension {array.ndim}")
 
         from pandas import to_numeric, to_datetime
 

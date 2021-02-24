@@ -49,19 +49,19 @@ def inputpath(relpath):
 def assert_equal_factory(test_func):
     def assert_equal(a, b):
         if isinstance(a, Array) and isinstance(b, Array) and a.axes != b.axes:
-            raise AssertionError("axes differ:\n%s\n\nvs\n\n%s" % (a.axes.info, b.axes.info))
+            raise AssertionError(f"axes differ:\n{a.axes.info}\n\nvs\n\n{b.axes.info}")
         if not isinstance(a, (np.ndarray, Array)):
             a = np.asarray(a)
         if not isinstance(b, (np.ndarray, Array)):
             b = np.asarray(b)
         if a.shape != b.shape:
-            raise AssertionError("shapes differ: %s != %s" % (a.shape, b.shape))
+            raise AssertionError(f"shapes differ: {a.shape} != {b.shape}")
         equal = test_func(a, b)
         if not equal.all():
             # XXX: for some reason ndarray[bool_larray] does not work as we would like, so we cannot do b[~equal]
             #      directly. I should at least understand why this happens and fix this if possible.
             notequal = np.asarray(~equal)
-            raise AssertionError("\ngot:\n\n%s\n\nexpected:\n\n%s" % (a[notequal], b[notequal]))
+            raise AssertionError(f"\ngot:\n\n{a[notequal]}\n\nexpected:\n\n{b[notequal]}")
     return assert_equal
 
 
@@ -71,11 +71,11 @@ def assert_larray_equal_factory(test_func, convert=True, check_axes=False):
             a = asarray(a)
             b = asarray(b)
         if check_axes and a.axes != b.axes:
-            raise AssertionError("axes differ:\n%s\n\nvs\n\n%s" % (a.axes.info, b.axes.info))
+            raise AssertionError(f"axes differ:\n{a.axes.info}\n\nvs\n\n{b.axes.info}")
         equal = test_func(a, b)
         if not equal.all():
             notequal = ~equal
-            raise AssertionError("\ngot:\n\n%s\n\nexpected:\n\n%s" % (a[notequal], b[notequal]))
+            raise AssertionError(f"\ngot:\n\n{a[notequal]}\n\nexpected:\n\n{b[notequal]}")
     return assert_equal
 
 
@@ -85,11 +85,11 @@ def assert_nparray_equal_factory(test_func, convert=True, check_shape=False):
             a = np.asarray(a)
             b = np.asarray(b)
         if check_shape and a.shape != b.shape:
-            raise AssertionError("shapes differ: %s != %s" % (a.shape, b.shape))
+            raise AssertionError(f"shapes differ: {a.shape} != {b.shape}")
         equal = test_func(a, b)
         if not equal.all():
             notequal = ~equal
-            raise AssertionError("\ngot:\n\n%s\n\nexpected:\n\n%s" % (a[notequal], b[notequal]))
+            raise AssertionError(f"\ngot:\n\n{a[notequal]}\n\nexpected:\n\n{b[notequal]}")
     return assert_equal
 
 

@@ -272,7 +272,7 @@ def test_excel_report_setting_template():
     # test setting template dir
     # 1) wrong template dir
     wrong_template_dir = r"C:\Wrong\Directory\Path"
-    msg = "The directory {} could not be found".format(wrong_template_dir)
+    msg = f"The directory {wrong_template_dir} could not be found"
     with pytest.raises(ValueError, match=re.escape(msg)):
         excel_report.template_dir = wrong_template_dir
     # 2) correct path
@@ -318,11 +318,11 @@ def test_excel_report_titles():
     sheet_titles.add_title('Default title')
     # 2) specify width and height
     width, height = 1100, 100
-    sheet_titles.add_title('Width = {} and Height = {}'.format(width, height),
+    sheet_titles.add_title(f'Width = {width} and Height = {height}',
                            width=width, height=height)
     # 3) specify fontsize
     fontsize = 13
-    sheet_titles.add_title('Fontsize = {}'.format(fontsize), fontsize=fontsize)
+    sheet_titles.add_title(f'Fontsize = {fontsize}', fontsize=fontsize)
 
     # generate Excel file
     fpath = 'test_excel_report_titles.xlsx'
@@ -351,18 +351,17 @@ def test_excel_report_arrays():
     # 3) specify width and height
     sheet_graphs.add_title('Alternative Width and Height')
     width, height = 500, 300
-    sheet_graphs.add_graph(population_be, 'width = {} and Height = {}'.format(width, height),
+    sheet_graphs.add_graph(population_be, f'width = {width} and Height = {height}',
                            width=width, height=height)
     # 4) specify template
     template_name = 'Line_Marker'
-    sheet_graphs.add_title('Template = {}'.format(template_name))
-    sheet_graphs.add_graph(population_be, 'Template = {}'.format(template_name), template_name)
+    sheet_graphs.add_title(f'Template = {template_name}')
+    sheet_graphs.add_graph(population_be, f'Template = {template_name}', template_name)
 
     # test setting default size
     # 1) pass a not registered kind of item
     item_type = 'unknown_item'
-    msg = "Item type {} is not registered. Please choose in " \
-          "list ['graph', 'title']".format(item_type)
+    msg = f"Item type {item_type} is not registered. Please choose in list ['graph', 'title']"
     with pytest.raises(ValueError, match=re.escape(msg)):
         sheet_graphs.set_item_default_size(item_type, width, height)
     # 2) update default size for graphs
