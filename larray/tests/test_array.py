@@ -4908,7 +4908,7 @@ def test_split_axes():
 
     # labels with object dtype
     arr = ndtest((2, 2, 2)).combine_axes(('a', 'b'))
-    arr = arr.set_axes([Axis(a.labels.astype(object), a.name) for a in arr.axes])
+    arr = arr.set_axes([a.astype(object) for a in arr.axes])
 
     res = arr.split_axes()
     expected_kind = 'U' if sys.version_info[0] >= 3 else 'S'
