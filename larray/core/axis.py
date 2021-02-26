@@ -877,8 +877,8 @@ class Axis(ABCAxis):
         # TODO: ideally, _to_tick shouldn't be necessary, the __hash__ and __eq__ of Group should include this
         return _to_tick(key) in self._mapping
 
-    def __hash__(self):
-        return id(self)
+    # use the default hash. We have to specify it explicitly because we define __eq__
+    __hash__ = object.__hash__
 
     def _is_key_type_compatible(self, key):
         key_kind = np.dtype(type(key)).kind
@@ -3643,9 +3643,9 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         """
         return context[self.name]
 
-    # needed because ExprNode.__hash__ (which is object.__hash__) takes precedence over Axis.__hash__
-    def __hash__(self):
-        return id(self)
+    # Use the default hash. We have to specify it explicitly because we define __eq__ via ExprNode and
+    # ExprNode.__hash__ (which is not set explicitly) takes precedence over Axis.__hash__
+    __hash__ = object.__hash__
 
 
 class AxisReferenceFactory(object):
