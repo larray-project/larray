@@ -516,15 +516,7 @@ class ArrayFlatIndicesIndexer(object):
             flat_np_key = np.asarray(flat_key)
             axes = self.array.axes
             nd_key = np.unravel_index(flat_np_key, axes.shape)
-            # the following lines are equivalent to (but faster than) "return array.ipoints[nd_key]"
-
-            # TODO: extract a function which only computes the combined axes because we do not use the actual Arrays
-            #       produced here, which is wasteful. AxisCollection._flat_lookup seems related (but not usable as-is).
-            la_key = axes._adv_keys_to_combined_axis_la_keys(nd_key, sep=sep)
-            first_axis_key_axes = la_key[0].axes
-            assert all(isinstance(axis_key, ABCArray) and axis_key.axes is first_axis_key_axes
-                       for axis_key in la_key[1:])
-            res_axes = first_axis_key_axes
+            res_axes = axes._adv_keys_to_combined_axes(nd_key, sep=sep)
         return Array(self.array.data.flat[flat_np_key], res_axes)
 
     def __setitem__(self, flat_key, value):
