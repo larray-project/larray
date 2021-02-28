@@ -4,7 +4,7 @@ import os
 import pytest
 import numpy as np
 
-from larray.tests.common import needs_xlwings
+from larray.tests.common import needs_xlwings, needs_pytables
 from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -330,6 +330,7 @@ def test_excel_report_titles():
 
 
 @needs_xlwings
+@needs_pytables
 def test_excel_report_arrays():
     excel_report = ExcelReport(EXAMPLE_EXCEL_TEMPLATES_DIR)
     demo = load_example_data('demography_eurostat')
