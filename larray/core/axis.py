@@ -3548,19 +3548,53 @@ class AxisCollection(object):
         tuple
         """
         from larray.core.array import Array
+        combined_axes = self._adv_keys_to_combined_axes(key, wildcard=wildcard, sep=sep)
+        if combined_axes is None:
+            return key
+
+        # transform all advanced non-Array keys to Array with the combined axis
+        ignored_types = (int, np.integer, slice, Array)
+        return tuple(axis_key if isinstance(axis_key, ignored_types) else Array(axis_key, combined_axes)
+                     for axis_key in key)
+
+    def _adv_keys_to_combined_axes(self, key, wildcard=False, sep='_'):
+        r"""
+        Returns an AxisCollection corresponding to the combined axis of the non-Array "advanced indexing" key parts.
+        Scalar, slice and Array key parts are ignored.
+
+        Parameters
+        ----------
+        key : tuple
+            Complete (len(key) == self.ndim) indices-based key.
+        wildcard : bool, optional
+            Whether or not to produce a wildcard axis. Defaults to False.
+        sep : str, optional
+            Separator to use for creating combined axis name and labels (when wildcard is False). Defaults to '_'.
+
+        Returns
+        -------
+        AxisCollection or None
+        """
+        from larray.core.array import Array
 
         assert isinstance(key, tuple) and len(key) == self.ndim
 
-        # 1) first compute combined axis
-        # ==============================
+        # TODO: we should explicitly raise an error if we detect np.ndarray keys with ndim > 1 as this would
+        #       require more than one combined axis. Supporting that is impossible (because we cannot know what
+        #       the corresponding labels are) so we should either return wildcard axes in that case or raise an
+        #       explicit error. Given the probability our internal users ever use that is so close to 0, the easiest
+        #       solution should win. I am unsure which it is, but I guess an error should be easier. Note that there
+        #       is no such issue with ND Array keys because for those we know the labels already so nothing needs to
+        #       be done here.
 
+        # XXX: can we use/factorize with AxisCollection._flat_lookup????
         # TODO: use/factorize with AxisCollection.combine_axes. The problem is that it uses product(*axes_labels)
         #       while here we need zip(*axes_labels)
         ignored_types = (int, np.integer, slice, Array)
         adv_keys = [(axis_key, axis) for axis_key, axis in zip(key, self)
                     if not isinstance(axis_key, ignored_types)]
         if not adv_keys:
-            return key
+            return None
 
         # axes with a scalar key are not taken, since we want to kill them
 
@@ -3600,12 +3634,7 @@ class AxisCollection(object):
                 sepjoin = sep.join
                 combined_labels = [sepjoin(comb) for comb in zip(*axes_labels)]
             combined_axis = Axis(combined_labels, combined_name)
-        combined_axes = AxisCollection(combined_axis)
-
-        # 2) transform all advanced non-Array keys to Array with the combined axis
-        # ========================================================================
-        return tuple(axis_key if isinstance(axis_key, ignored_types) else Array(axis_key, combined_axes)
-                     for axis_key in key)
+        return AxisCollection(combined_axis)
 
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):
