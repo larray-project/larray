@@ -68,3 +68,6 @@ Fixes
 
 * fixed *_by functions returning the same value as if no axis was passed when specifying all axes
   (closes :issue:`913`)
+
+* fixed :py:obj:`Array.growth_rate()` returning nans when consecutive values are zeros
+  (closes :issue:`903`)

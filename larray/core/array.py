@@ -7497,7 +7497,7 @@ class Array(ABCArray):
             array = self
             axis = array.axes[axis]
         diff = array.diff(axis=axis, d=d, label=label)
-        return diff / array[axis.i[:-d]].ignore_labels(axis)
+        return diff.divnot0(array[axis.i[:-d]].ignore_labels(axis))
 
     def compact(self):
         r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)

@@ -2547,6 +2547,13 @@ def test_total(array):
     assert a4.shape == (116, 44, 2, 17)
 
 
+def test_growth_rate():
+    arr = Array(data=[1, 2, 0, 0, 0, 4, 5], axes='time=2014..2020')
+    res = arr.growth_rate('time')
+    expected_res = Array(data=[1.0, -1.0, 0.0, 0.0, 0.0, 0.25], axes='time=2015..2020')
+    assert_array_equal(res, expected_res)
+
+
 def test_transpose():
     arr = ndtest((2, 3, 4))
     a, b, c = arr.axes
