@@ -7497,7 +7497,10 @@ class Array(ABCArray):
             array = self
             axis = array.axes[axis]
         diff = array.diff(axis=axis, d=d, label=label)
-        return diff.divnot0(array[axis.i[:-d]].ignore_labels(axis))
+        res = diff / array[axis.i[:-d]].ignore_labels(axis)
+        # handles the case where consecutive zeros in the original array makes growth_rate() to return NaNs
+        res.data = np.where(diff.data != 0, res.data, 0)
+        return res
 
     def compact(self):
         r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
