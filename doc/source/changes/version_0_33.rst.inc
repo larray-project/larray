@@ -59,6 +59,8 @@ Miscellaneous improvements
 * added `min_y`, `max_y` and `xticks_spacing` keyword arguments to the :py:obj:`ReportSheet.add_graph()` and
   :py:obj:`ReportSheet.add_graphs()` methods (closes :issue:`901`).
 
+* implemented :py:obj:`isscalar()` function (closes :issue:`872`).
+
 Fixes
 ^^^^^
 

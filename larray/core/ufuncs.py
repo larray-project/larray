@@ -1,6 +1,5 @@
 # numpy ufuncs
 # http://docs.scipy.org/doc/numpy/reference/routines.math.html
-
 import numpy as np
 
 from larray.core.array import Array, make_args_broadcastable
