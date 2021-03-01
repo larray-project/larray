@@ -2,7 +2,7 @@ from typing import Any
 
 import numpy as np
 
-from larray.core.array import ndtest
+from larray.core.array import ndtest                # noqa: F401
 
 
 def isscalar(element: Any) -> bool:
