@@ -665,7 +665,7 @@ class lazy_attribute(object):
     """
     def __init__(self, func):
         self.func = func
-        self.__doc__ = self.func.__doc__
+        self.__doc__ = func.__doc__
 
     # descriptor protocol
     # see https://docs.python.org/3/reference/datamodel.html#implementing-descriptors
@@ -673,8 +673,9 @@ class lazy_attribute(object):
         if instance is None:
             return self
 
-        value = self.func(instance)
-        setattr(instance, self.func.__name__, value)
+        func = self.func
+        value = func(instance)
+        setattr(instance, func.__name__, value)
         return value
 
 
