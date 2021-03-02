@@ -2,8 +2,6 @@ from typing import Any
 
 import numpy as np
 
-from larray.core.array import ndtest                # noqa: F401
-
 
 def isscalar(element: Any) -> bool:
     r"""
@@ -21,6 +19,7 @@ def isscalar(element: Any) -> bool:
 
     Examples
     --------
+    >>> from larray import ndtest
     >>> isscalar(3.1)
     True
     >>> isscalar([3.1])
