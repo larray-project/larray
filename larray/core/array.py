@@ -305,7 +305,7 @@ def concat(arrays, axis=0, dtype=None):
     return result
 
 
-class ArrayIterator(object):
+class ArrayIterator:
     __slots__ = ('__next__',)
 
     def __init__(self, array):
@@ -326,7 +326,7 @@ class ArrayIterator(object):
 
 # TODO: rename to ArrayIndexIndexer or something like that
 # TODO: the first slice in the example below should be documented
-class ArrayPositionalIndexer(object):
+class ArrayPositionalIndexer:
     r"""
     Allows selection of a subset using indices of labels.
 
@@ -409,7 +409,7 @@ class ArrayPositionalIndexer(object):
             return ArrayIterator(array)
 
 
-class ArrayPointsIndexer(object):
+class ArrayPointsIndexer:
     r"""
     Allows selection of arbitrary items in the array based on their N-dimensional label index.
 
@@ -460,7 +460,7 @@ class ArrayPointsIndexer(object):
 #     >>> arr.iflat[:4]
 #     a_b  a0_b0  a0_b1  a0_b2  a1_b0
 #              0     10     20     30
-class ArrayFlatIndicesIndexer(object):
+class ArrayFlatIndicesIndexer:
     r"""
     Access the array by index as if it was flat (one dimensional) and all its axes were combined.
 
@@ -531,7 +531,7 @@ class ArrayFlatIndicesIndexer(object):
 # TODO: show that we need to use a "full slice" for leaving the dimension alone
 # TODO: document explicitly that axes should be in the correct order and missing axes should be slice None
 # (except at the end)
-class ArrayPositionalPointsIndexer(object):
+class ArrayPositionalPointsIndexer:
     r"""
     Allows selection of arbitrary items in the array based on their N-dimensional index.
 

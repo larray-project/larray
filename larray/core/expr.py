@@ -1,7 +1,7 @@
 import sys
 
 
-class ExprNode(object):
+class ExprNode:
     # method factory
     def _binop(opname):
         def opmethod(self, other):

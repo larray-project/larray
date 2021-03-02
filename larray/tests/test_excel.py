@@ -12,7 +12,7 @@ from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
 
 @needs_xlwings
-class TestWorkbook(object):
+class TestWorkbook:
     def test_open_excel(self):
         import pywintypes
 
@@ -118,7 +118,7 @@ class TestWorkbook(object):
 
 
 @needs_xlwings
-class TestSheet(object):
+class TestSheet:
     def test_get_and_set_item(self):
         arr = ndtest((2, 3))
 
@@ -197,7 +197,7 @@ class TestSheet(object):
 
 
 @needs_xlwings
-class TestRange(object):
+class TestRange:
     def test_scalar_convert(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]

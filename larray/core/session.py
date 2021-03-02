@@ -18,7 +18,7 @@ from larray.inout.session import ext_default_engine, get_file_handler
 
 
 # XXX: inherit from OrderedDict or Array?
-class Session(object):
+class Session:
     r"""
     Groups several objects together.
 

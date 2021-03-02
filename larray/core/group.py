@@ -700,7 +700,7 @@ def union(*args):
         return []
 
 
-class IGroupMaker(object):
+class IGroupMaker:
     r"""
     Generates a new instance of IGroup for a given axis and key.
 
@@ -730,7 +730,7 @@ class IGroupMaker(object):
 
 # We need a separate class for LGroup and cannot simply create a new Axis with a subset of values/ticks/labels:
 # the subset of ticks/labels of the LGroup need to correspond to its *Axis* indices
-class Group(object):
+class Group:
     """Abstract Group.
     """
     __slots__ = ('key', 'name', 'axis')

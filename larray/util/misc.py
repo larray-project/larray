@@ -658,7 +658,7 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None
     return _deprecate_kwarg
 
 
-class lazy_attribute(object):
+class lazy_attribute:
     """
     Decorate a method of a class and turn it into an attribute on the instance
     when first called. Should obviously only be used when the result of the method is constant.
@@ -727,7 +727,7 @@ def common_type(arrays):
         return object
 
 
-class LHDFStore(object):
+class LHDFStore:
     """Context manager for pandas HDFStore"""
     def __init__(self, filepath_or_buffer, **kwargs):
         if isinstance(filepath_or_buffer, pd.HDFStore):
@@ -747,7 +747,7 @@ class LHDFStore(object):
             self.store.close()
 
 
-class SequenceZip(object):
+class SequenceZip:
     """
     Represents the "combination" of several sequences.
 
@@ -802,7 +802,7 @@ class SequenceZip(object):
         return f'SequenceZip({self.sequences})'
 
 
-class Repeater(object):
+class Repeater:
     """
     Returns a virtual sequence with value repeated n times.
     The sequence is never actually created in memory.
@@ -875,7 +875,7 @@ class Repeater(object):
 
 
 # TODO: remove Product from larray_editor.utils (it is almost identical)
-class Product(object):
+class Product:
     """
     Represents the `cartesian product` of several sequences.
 

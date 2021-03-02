@@ -68,7 +68,7 @@ if xw is not None:
         # unsure we can safely do this
         # xl_app.EnableEvents = False
 
-    class Workbook(object):
+    class Workbook:
         # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
             global global_app
@@ -366,7 +366,7 @@ if xw is not None:
         return [_fill_slice(k, length) if isinstance(k, slice) else k
                 for k, length in zip(key, shape)]
 
-    class Sheet(object):
+    class Sheet:
         def __init__(self, workbook, key, xw_sheet=None):
             if xw_sheet is None:
                 xw_sheet = workbook.xw_wkb.sheets[key]
@@ -508,7 +508,7 @@ if xw is not None:
             xw_sheet = self.xw_sheet
             return f'<{cls.__module__}.{cls.__name__} [{xw_sheet.book.name}]{xw_sheet.name}>'
 
-    class Range(object):
+    class Range:
         def __init__(self, sheet, *args):
             xw_range = sheet.xw_sheet.range(*args)
 
@@ -615,7 +615,7 @@ if xw is not None:
         return Workbook(filepath, overwrite_file=overwrite_file, visible=visible, silent=silent, app=app,
                         load_addins=load_addins)
 else:
-    class Workbook(object):
+    class Workbook:
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
             raise Exception("Workbook class cannot be instantiated because xlwings is not installed")
 

@@ -25,7 +25,7 @@ def _validate_template_filename(filename):
     return filename + ext
 
 
-class AbstractReportItem(object):
+class AbstractReportItem:
     def __init__(self, template_dir=None, template=None, graphs_per_row=1):
         self.template_dir = template_dir
         self.template = template
@@ -547,7 +547,7 @@ if xw is not None:
     from xlwings.constants import LegendPosition, HAlign, VAlign, ChartType, RowCol, AxisType, Constants
     from larray.inout.xw_excel import open_excel
 
-    class ItemSize(object):
+    class ItemSize:
         def __init__(self, width, height):
             self.width = width
             self.height = height

@@ -1474,7 +1474,7 @@ def _make_axis(obj):
 # not using OrderedDict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
 # functionality than just a named tuple
-class AxisCollection(object):
+class AxisCollection:
     __slots__ = ('_list', '_map')
     r"""
     Represents a collection of axes.
@@ -3665,7 +3665,7 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
     __hash__ = object.__hash__
 
 
-class AxisReferenceFactory(object):
+class AxisReferenceFactory:
     # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__)
     def __getstate__(self):
         return self.__dict__
@@ -3683,7 +3683,7 @@ class AxisReferenceFactory(object):
 X = AxisReferenceFactory()
 
 
-class DeprecatedAxisReferenceFactory(object):
+class DeprecatedAxisReferenceFactory:
     # needed to make pickle work (because we have a __getattr__ which does not return AttributeError on __getstate__)
     def __getstate__(self):
         return self.__dict__
