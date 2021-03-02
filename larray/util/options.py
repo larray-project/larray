@@ -35,7 +35,7 @@ _VALIDATORS = {
 
 
 # idea taken from xarray. See xarray/core/options.py module for original implementation.
-class set_options(object):
+class set_options:
     r"""Set options for larray in a controlled context.
 
     Currently supported options:

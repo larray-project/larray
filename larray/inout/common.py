@@ -32,7 +32,7 @@ def _get_index_col(nb_axes=None, index_col=None, wide=True):
     return index_col
 
 
-class FileHandler(object):
+class FileHandler:
     r"""
     Abstract class defining the methods for "file handler" subclasses.
 
