@@ -15,7 +15,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
-                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product)
+                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort)
 
 
 np_frompyfunc = np.frompyfunc
@@ -2966,7 +2966,7 @@ class AxisCollection:
                         slice_axes_indices = [i for i, axis_key in enumerate(key)
                                               if isinstance(axis_key, slice)]
                         result_axes_indices = adv_axes_indices + slice_axes_indices
-                        transpose_indices = tuple(np.array(result_axes_indices).argsort())
+                        transpose_indices = argsort(result_axes_indices)
             else:
                 # the advanced indexing subspace keep its position (insert at position of first concerned axis)
                 adv_key_subspace_pos = adv_axes_indices[0]
