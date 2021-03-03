@@ -6,7 +6,7 @@ import pandas as pd
 from larray.core.array import Array
 from larray.core.axis import Axis, AxisCollection
 from larray.core.constants import nan
-from larray.util.misc import unique
+from larray.util.misc import unique_list
 
 
 def decode(s, encoding='utf-8', errors='strict'):
@@ -48,7 +48,7 @@ def index_to_labels(idx, sort=True):
         if sort:
             return list(idx.levels)
         else:
-            return [list(unique(idx.get_level_values(label))) for label in range(idx.nlevels)]
+            return [unique_list(idx.get_level_values(label)) for label in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.Index)
         labels = list(idx.values)

@@ -9,7 +9,8 @@ import pandas as pd
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.util.oset import OrderedSet
-from larray.util.misc import (unique, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to, LHDFStore)
+from larray.util.misc import (unique_list, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to,
+                              LHDFStore)
 
 
 def _slice_to_str(key, repr_func=str):
@@ -694,7 +695,7 @@ def union(*args):
     ['a', 'b', 'c', 'd', 'e', 'f', 0, 1, 2]
     """
     if args:
-        return list(unique(chain(*(_to_ticks(arg) for arg in args))))
+        return unique_list(chain(*(_to_ticks(arg) for arg in args)))
     else:
         return []
 
