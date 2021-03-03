@@ -984,3 +984,7 @@ def _positive_integer(value):
 def _validate_dir(directory):
     if not os.path.isdir(directory):
         raise ValueError(f"The directory {directory} could not be found")
+
+
+def argsort(seq):
+    return sorted(range(len(seq)), key=seq.__getitem__)
