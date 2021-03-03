@@ -1962,10 +1962,12 @@ class Array(ABCArray):
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=False)
         res_data = self.data[raw_broadcasted_key]
         if res_axes:
-            res = Array(res_data, res_axes)
             # if some axes have been moved in front because of advanced indexing, we transpose them back to their
-            # original position
-            return res.transpose(transpose_indices) if transpose_indices is not None else res
+            # original position. We do not use Array.transpose because that creates another Array object which is costly
+            if transpose_indices is not None:
+                res_data = res_data.transpose(transpose_indices)
+                res_axes = res_axes[transpose_indices]
+            return Array(res_data, res_axes)
         else:
             return res_data
 
