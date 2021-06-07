@@ -1,4 +1,4 @@
-{% set version = "0.33-dev" %}
+{% set version = "0.32.3-dev" %}
 
 package:
   name: larray
