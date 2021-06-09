@@ -250,6 +250,22 @@ class TestRange(object):
         1  3  4  5"""
 
 
+@needs_xlwings
+def test_make_plot():
+    demo = load_example_data('demography_eurostat')
+    population = demo.population
+    population_be = population['Belgium']
+    population_be_nan = population_be.astype(float)
+    population_be_nan[2013] = nan
+
+    with open_excel(filepath='test_make_plot.xlsx', visible=False, overwrite_file=True) as wb:
+        sheet = wb[0]
+        sheet["B2"] = population_be.dump()
+        sheet["B2"].make_plot("B8")
+        sheet["B2:F4"].make_plot("L8")
+        wb.save()
+
+
 # ================ #
 # Test ExcelReport #
 # ================ #

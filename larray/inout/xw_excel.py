@@ -1,6 +1,8 @@
 import os
 import atexit
 
+from typing import Union, Dict, Callable, Any
+
 import numpy as np
 try:
     import xlwings as xw
@@ -618,6 +620,67 @@ if xw is not None:
             else:
                 return Array(list_data)
 
+        def make_plot(self, position: str, width: int=427, height: int=230, title: str=None, template: str=None,
+                      min_y: Union[int, float]=None, max_y: Union[int, float]=None,
+                      xticks_spacing: Union[int, float]=None, customize_func: Callable=None,
+                      customize_kwargs: Dict[str, str]=None) -> Any:
+            from xlwings.constants import LegendPosition, ChartType, RowCol, AxisType, Constants, Direction
+            if customize_func is not None and not callable(customize_func):
+                raise TypeError(f"Expected a function for the argument 'customize_func'. "
+                                f"Got object of type {type(customize_func).__name__} instead.")
+            if template is not None and not os.path.isfile(template):
+                raise ValueError(f"Could not find template file {template}")
+            title = str(title) if title is not None else None
+            sheet = self.sheet.xw_sheet.api
+            data_range = self.xw_range.api
+            top_left_cell = data_range.Cells(1, 1)
+            # expand if current range is one cell
+            if data_range.Count == 1:
+                bottom_left_cell = data_range.End(Direction.xlDown)
+                bottom_right_cell = bottom_left_cell.End(Direction.xlToRight)
+                data_range = sheet.Range(top_left_cell, bottom_right_cell)
+            # horrible hack to make sure that Excel will consider the first column as the xticks
+            top_left_cell_value = top_left_cell.Value
+            top_left_cell.Value = ''
+            # start chart
+            sheet_charts = sheet.ChartObjects()
+            position = sheet.Range(position)
+            left, top = position.Left, position.Top
+            obj = sheet_charts.Add(left, top, width, height)
+            obj_chart = obj.Chart
+            source = data_range
+            obj_chart.SetSourceData(source)
+            obj_chart.ChartType = ChartType.xlLine
+            # title
+            if title is not None:
+                obj_chart.HasTitle = True
+                obj_chart.ChartTitle.Caption = title
+            # legend
+            obj_chart.Legend.Position = LegendPosition.xlLegendPositionBottom
+            # template
+            if template is not None:
+                obj_chart.ApplyChartTemplate(template)
+            # min - max on Y axis
+            if min_y is not None:
+                obj_chart.Axes(AxisType.xlValue).MinimumScale = min_y
+            if max_y is not None:
+                obj_chart.Axes(AxisType.xlValue).MaximumScale = max_y
+            # xticks_spacing
+            if xticks_spacing is not None:
+                obj_chart.Axes(AxisType.xlCategory).TickLabelSpacing = xticks_spacing
+                obj_chart.Axes(AxisType.xlCategory).TickMarkSpacing = xticks_spacing
+                obj_chart.Axes(AxisType.xlCategory).TickLabelPosition = Constants.xlLow
+            # user's function (to apply on remaining kwargs)
+            if customize_func is not None:
+                customize_func(obj_chart, **customize_kwargs)
+            # flagflip
+            nb_xticks = data_range.Rows.Count - 1
+            nb_series = data_range.Columns.Count - 1
+            if nb_series > 1 and nb_xticks == 1:
+                obj_chart.PlotBy = RowCol.xlRows
+            # see above
+            top_left_cell.Value = top_left_cell_value
+            return obj_chart
 
     # XXX: deprecate this function?
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
@@ -756,6 +819,7 @@ create a new Excel file and save an array
 >>> # to create a new Excel file, argument overwrite_file must be set to True
 >>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
 ...     wb['arr'] = arr.dump()
+...     wb['arr']['A1'].make_plot('A6', title='simple graph')
 ...     wb.save()
 
 read array from an Excel file
