@@ -2553,7 +2553,7 @@ class Array(ABCArray):
             #      will return given the input we are going to give it. My first search for this found nothing. One
             #      way to do this would be to create one big mapping: {(op, input dtype): res dtype}
             res_dtype = float if op in _always_return_float else res.dtype
-            if op in (np.sum, np.nansum) and res.dtype in (np.bool, np.bool_):
+            if op in (np.sum, np.nansum) and res.dtype in (bool, np.bool_):
                 res_dtype = int
             res_data = np.empty(res_shape, dtype=res_dtype)
 
@@ -9381,8 +9381,8 @@ def raw_broadcastable(values, min_axes=None):
     same as make_numpy_broadcastable but returns numpy arrays
     """
     arrays, res_axes = make_numpy_broadcastable(values, min_axes=min_axes)
-    raw = [a.data if isinstance(a, Array) else a
-           for a in arrays]
+    raw = tuple(a.data if isinstance(a, Array) else a
+                for a in arrays)
     return raw, res_axes
 
 
