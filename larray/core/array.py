@@ -3567,6 +3567,8 @@ class Array(ABCArray):
         return self / self.sum(*axes)
 
     def rationot0(self, *axes):
+        # part of the doctest is skipped because it produces a warning we do not want to have to handle within the
+        # doctest and cannot properly ignore
         r"""Returns an Array with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
 
         Parameters
@@ -3601,7 +3603,7 @@ class Array(ABCArray):
 
         for reference, the normal ratio method would produce a warning message and return:
 
-        >>> arr.ratio('a')
+        >>> arr.ratio('a')                                          # doctest: +SKIP
         a\b   b0   b1   b2
          a0  0.6  nan  0.2
          a1  0.4  nan  0.8
@@ -5841,6 +5843,8 @@ class Array(ABCArray):
         return Array(np.isin(self.data, test_values, assume_unique=assume_unique, invert=invert), self.axes)
 
     def divnot0(self, other):
+        # part of the doctest is skipped because it produces a warning we do not want to have to handle within the
+        # doctest and cannot properly ignore
         r"""Divides array by other, but returns 0.0 where other is 0.
 
         Parameters
@@ -5866,14 +5870,17 @@ class Array(ABCArray):
         >>> b
         sex  M  F
              0  1
-        >>> a / b
-        nat\sex    M    F
-             BE  nan  1.0
-             FO  inf  3.0
         >>> a.divnot0(b)
         nat\sex    M    F
              BE  0.0  1.0
              FO  0.0  3.0
+
+        Compare this to:
+
+        >>> a / b                                  # doctest: +SKIP
+        nat\sex    M    F
+             BE  nan  1.0
+             FO  inf  3.0
         """
         if np.isscalar(other):
             if other == 0:
