@@ -6699,16 +6699,16 @@ class Array(ABCArray):
 
         Examples
         --------
-        >>> axes = [Axis(3, 'row'), Axis('column=country,sex')]    # doctest: +SKIP
+        >>> axes = [Axis(3, 'row'), Axis('column=country,sex')]
         >>> arr = Array([['BE', 'F'],
         ...               ['FR', 'M'],
-        ...               ['FR', 'F']], axes=axes)                 # doctest: +SKIP
-        >>> arr                                                    # doctest: +SKIP
-        row*\column  age  sex
-                  0    5    F
-                  1   25    M
-                  2   30    F
-        >>> arr.to_stata('test.dta')                               # doctest: +SKIP
+        ...               ['FR', 'F']], axes=axes)
+        >>> arr
+        row*\column  country  sex
+                  0       BE    F
+                  1       FR    M
+                  2       FR    F
+        >>> arr.to_stata('test.dta')
         """
         self.to_frame().to_stata(filepath_or_buffer, **kwargs)
 
