@@ -3096,6 +3096,8 @@ def test_extend(small_array):
 
 @needs_pytables
 def test_hdf_roundtrip(tmpdir, meta):
+    import tables
+
     a = ndtest((2, 3), meta=meta)
     fpath = tmp_path(tmpdir, 'test.h5')
     a.to_hdf(fpath, 'a')
@@ -3122,21 +3124,29 @@ def test_hdf_roundtrip(tmpdir, meta):
     a3 = ndtest((4, 3, 4))
     fpath = tmp_path(tmpdir, 'test.h5')
     os.remove(fpath)
+
     # single element group
     for label in a3.a:
         a3[label].to_hdf(fpath, label)
+
     # unnamed group
     group = a3.c['c0,c2']
-    a3[group].to_hdf(fpath, group)
+    with pytest.warns(tables.NaturalNameWarning):
+        a3[group].to_hdf(fpath, group)
+
     # unnamed group + slice
     group = a3.c['c0::2']
-    a3[group].to_hdf(fpath, group)
+    with pytest.warns(tables.NaturalNameWarning):
+        a3[group].to_hdf(fpath, group)
+
     # named group
     group = a3.c['c0,c2'] >> 'even'
     a3[group].to_hdf(fpath, group)
+
     # group with name containing special characters (replaced by _)
     group = a3.c['c0,c2'] >> r':name?with*special/\[characters]'
-    a3[group].to_hdf(fpath, group)
+    with pytest.warns(tables.NaturalNameWarning):
+        a3[group].to_hdf(fpath, group)
 
     # passing group as key to read_hdf
     for label in a3.a:
