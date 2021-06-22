@@ -4985,12 +4985,12 @@ def test_stack():
                       [0, 1]], [a, b])
     assert_array_equal(res, expected)
 
-    # giving elements as on Array containing Arrays
+    # giving elements as an Array containing Arrays
     sex = Axis('sex=M,F')
     # not using the same length for nat and type, otherwise numpy gets confused :(
     arr1 = ones('nat=BE, FO')
     arr2 = zeros('type=1..3')
-    array_of_arrays = Array([arr1, arr2], sex)
+    array_of_arrays = Array([arr1, arr2], sex, dtype=object)
     res = stack(array_of_arrays, sex)
     expected = from_string(r"""nat  type\sex    M    F
                                 BE         1  1.0  0.0
