@@ -299,11 +299,8 @@ def test_excel_report_sheets():
     report.new_sheet('Births')
     report.new_sheet('Deaths')
     # test warning if sheet already exists
-    with pytest.warns(UserWarning) as caught_warnings:
+    with pytest.warns(UserWarning, match="Sheet 'Population' already exists in the report and will be reset"):
         sheet_population2 = report.new_sheet('Population')  # noqa: F841
-    assert len(caught_warnings) == 1
-    warn_msg = "Sheet 'Population' already exists in the report and will be reset"
-    assert caught_warnings[0].message.args[0] == warn_msg
     # test sheet_names()
     assert report.sheet_names() == ['Population', 'Births', 'Deaths']
 
