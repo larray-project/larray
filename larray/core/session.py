@@ -562,7 +562,7 @@ class Session(object):
         Examples
         --------
         >>> s = Session(arr1=ndtest(3), arr2=ndtest((2, 2)))
-        >>> s.to_globals()
+        >>> s.to_globals(warn=False)
         >>> arr1
         a  a0  a1  a2
             0   1   2
