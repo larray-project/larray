@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import pickle
 from datetime import date, time, datetime
@@ -243,7 +244,12 @@ def _add_scalars_to_session(s):
 def test_h5_io(tmpdir, session, meta):
     session = _add_scalars_to_session(session)
     fpath = tmp_path(tmpdir, 'test_session.h5')
-    _test_io(fpath, session, meta, engine='pandas_hdf')
+    # for some reason the PerformanceWarning is not detected as such, so this does not work:
+    # with pytest.warns(tables.PerformanceWarning):
+    with pytest.warns(Warning) as caught_warnings:
+        _test_io(fpath, session, meta, engine='pandas_hdf')
+    msg = "\nyour performance may suffer as PyTables will pickle object types"
+    assert caught_warnings[0].message.args[0].startswith(msg)
 
 
 @needs_openpyxl
@@ -492,19 +498,29 @@ def test_rdiv(session):
     sess = session
 
     # scalar / session
-    res = 2 / sess
-    assert_array_nan_equal(res['e'], 2 / e)
-    assert_array_nan_equal(res['f'], 2 / f)
-    assert_array_nan_equal(res['g'], 2 / g)
+    with pytest.warns(RuntimeWarning, match="divide by zero encountered during operation"):
+        res = 2 / sess
+    with np.errstate(divide='ignore'):
+        expected_e = 2 / e
+        expected_f = 2 / f
+        expected_g = 2 / g
+    assert_array_nan_equal(res['e'], expected_e)
+    assert_array_nan_equal(res['f'], expected_f)
+    assert_array_nan_equal(res['g'], expected_g)
     assert res.a is a
     assert res.a01 is a01
     assert res.c is c
 
     # dict(Array and scalar) - session
     other = {'e': e, 'f': f}
-    res = other / sess
-    assert_array_nan_equal(res['e'], e / e)
-    assert_array_nan_equal(res['f'], f / f)
+    msg = re.escape("invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)")
+    with pytest.warns(RuntimeWarning, match=msg):
+        res = other / sess
+    with np.errstate(invalid='ignore'):
+        expected_e = e / e
+        expected_f = f / f
+    assert_array_nan_equal(res['e'], expected_e)
+    assert_array_nan_equal(res['f'], expected_f)
     assert res.a is a
     assert res.a01 is a01
     assert res.c is c
