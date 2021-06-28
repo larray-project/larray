@@ -40,7 +40,7 @@ if xw is not None:
         if global_app is not None:
             if is_app_alive(global_app):
                 try:
-                    global_app.kill()
+                    global_app.quit()
                 except Exception:
                     pass
             del global_app
