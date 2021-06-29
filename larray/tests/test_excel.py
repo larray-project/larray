@@ -5,7 +5,7 @@ import faulthandler
 import pytest
 import numpy as np
 
-from larray.tests.common import needs_xlwings, needs_pytables
+from larray.tests.common import needs_xlwings, needs_pytables, must_warn
 from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -67,9 +67,8 @@ class TestWorkbook(object):
             assert isinstance(sheet, xw_excel.Sheet)
             assert sheet.name == 'Sheet1'
 
-            with pytest.raises(KeyError) as e_info:
+            with pytest.raises(KeyError, match="Workbook has no sheet named this_sheet_does_not_exist"):
                 wb['this_sheet_does_not_exist']
-            assert e_info.value.args[0] == "Workbook has no sheet named this_sheet_does_not_exist"
 
     def test_setitem(self):
         with open_excel(visible=False) as wb:
@@ -95,9 +94,8 @@ class TestWorkbook(object):
 
             with open_excel(visible=False, app="new") as wb2:
                 assert wb.app != wb2.app
-                with pytest.raises(ValueError) as e_info:
+                with pytest.raises(ValueError, match="cannot copy a sheet from one instance of Excel to another"):
                     wb2['sheet1'] = wb['sheet1']
-                assert e_info.value.args[0] == "cannot copy a sheet from one instance of Excel to another"
 
             # group key
             arr = ndtest((3, 3))
@@ -221,9 +219,8 @@ class TestRange(object):
             rng = sheet['A3']
             assert int(rng) == 1
             assert float(rng) == 1.5
-            with pytest.raises(TypeError) as e_info:
+            with pytest.raises(TypeError, match="only integer scalars can be converted to a scalar index"):
                 rng.__index__()
-            assert e_info.value.args[0] == "only integer scalars can be converted to a scalar index"
 
     def test_asarray(self):
         with open_excel(visible=False) as wb:
@@ -316,7 +313,7 @@ def test_excel_report_sheets():
     report.new_sheet('Births')
     report.new_sheet('Deaths')
     # test warning if sheet already exists
-    with pytest.warns(UserWarning, match="Sheet 'Population' already exists in the report and will be reset"):
+    with must_warn(UserWarning, msg="Sheet 'Population' already exists in the report and will be reset"):
         sheet_population2 = report.new_sheet('Population')  # noqa: F841
     # test sheet_names()
     assert report.sheet_names() == ['Population', 'Births', 'Deaths']
