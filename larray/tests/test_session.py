@@ -10,7 +10,7 @@ import pytest
 
 from larray.tests.common import meta            # noqa: F401
 from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
-                                 needs_xlwings, needs_pytables, needs_openpyxl)
+                                 needs_xlwings, needs_pytables, needs_openpyxl, must_warn)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
@@ -244,12 +244,14 @@ def _add_scalars_to_session(s):
 def test_h5_io(tmpdir, session, meta):
     session = _add_scalars_to_session(session)
     fpath = tmp_path(tmpdir, 'test_session.h5')
+
+    msg = "\nyour performance may suffer as PyTables will pickle object types"
+    regex = re.compile(msg, flags=re.MULTILINE)
+
     # for some reason the PerformanceWarning is not detected as such, so this does not work:
     # with pytest.warns(tables.PerformanceWarning):
-    with pytest.warns(Warning) as caught_warnings:
+    with pytest.warns(Warning, match=regex):
         _test_io(fpath, session, meta, engine='pandas_hdf')
-    msg = "\nyour performance may suffer as PyTables will pickle object types"
-    assert caught_warnings[0].message.args[0].startswith(msg)
 
 
 @needs_openpyxl
@@ -302,13 +304,10 @@ def test_pickle_io(tmpdir, session, meta):
 
 
 def test_to_globals(session):
-    with pytest.warns(RuntimeWarning) as caught_warnings:
+    msg = "Session.to_globals should usually only be used in interactive consoles and not in scripts. " \
+          "Use warn=False to deactivate this warning."
+    with must_warn(RuntimeWarning, msg=msg):
         session.to_globals()
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "Session.to_globals should usually only be used in interactive " \
-                                                 "consoles and not in scripts. Use warn=False to deactivate this " \
-                                                 "warning."
-    assert caught_warnings[0].filename == __file__
 
     assert a is session.a
     assert b is session.b
@@ -479,11 +478,8 @@ def test_div(session):
     sess = session
     other = Session({'e': e - 1, 'f': f + 1})
 
-    with pytest.warns(RuntimeWarning) as caught_warnings:
+    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation"):
         res = sess / other
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
-    assert caught_warnings[0].filename == __file__
 
     with np.errstate(divide='ignore', invalid='ignore'):
         flat_e = np.arange(6) / np.arange(-1, 5)
@@ -498,7 +494,7 @@ def test_rdiv(session):
     sess = session
 
     # scalar / session
-    with pytest.warns(RuntimeWarning, match="divide by zero encountered during operation"):
+    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation", check_num=False):
         res = 2 / sess
     with np.errstate(divide='ignore'):
         expected_e = 2 / e
@@ -513,8 +509,9 @@ def test_rdiv(session):
 
     # dict(Array and scalar) - session
     other = {'e': e, 'f': f}
-    msg = re.escape("invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)")
-    with pytest.warns(RuntimeWarning, match=msg):
+    with must_warn(RuntimeWarning,
+                   msg="invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)",
+                   check_num=False):
         res = other / sess
     with np.errstate(invalid='ignore'):
         expected_e = e / e

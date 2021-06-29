@@ -1,5 +1,8 @@
 import os
+import re
 import sys
+import inspect
+from contextlib import contextmanager
 
 import pytest
 import datetime as dt
@@ -151,3 +154,23 @@ needs_xlsxwriter = pytest.mark.skipif(SKIP_EXCEL_TESTS or xlsxwriter is None,
                                       reason="xlsxwriter is required for this test")
 
 needs_python37 = pytest.mark.skipif(sys.version_info < (3, 7), reason="Python 3.7 is required for this test")
+
+
+@contextmanager
+def must_warn(warn_cls=None, msg=None, match=None, check_file=True, check_num=True):
+    if msg is not None and match is not None:
+        raise ValueError("bad test: can't use both msg and match arguments")
+    elif msg is not None:
+        match = re.escape(msg)
+
+    try:
+        with pytest.warns(warn_cls, match=match) as caught_warnings:
+            yield caught_warnings
+    finally:
+        if check_num:
+            assert len(caught_warnings) == 1
+        if check_file:
+            caller_path = inspect.stack()[2].filename
+            warning_path = caught_warnings[0].filename
+            assert warning_path == caller_path, \
+                f"{warning_path} != {caller_path}"

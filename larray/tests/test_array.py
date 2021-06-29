@@ -12,7 +12,8 @@ from collections import OrderedDict
 from larray.tests.common import meta                        # noqa: F401
 from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37)
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37,
+                                 must_warn)
 from larray import (Array, LArray, Axis, LGroup, union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
                     from_lists, from_string, open_excel, from_frame, sequence, nan, IGroup)
@@ -179,11 +180,8 @@ io_narrow_missing_values[2, 'b1', 'c1'] = nan
 
 
 def test_larray_renamed_as_array():
-    with pytest.warns(FutureWarning) as caught_warnings:
+    with must_warn(FutureWarning, msg="LArray has been renamed as Array."):
         arr = LArray([0, 1, 2, 3], 'a=a0..a3')
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "LArray has been renamed as Array."
-    assert caught_warnings[0].filename == __file__
 
 
 def test_ndtest():
@@ -2607,24 +2605,19 @@ def test_binary_ops(small_array):
 
     with np.errstate(invalid='ignore'):
         raw_res = raw / raw
-    with pytest.warns(RuntimeWarning) as caught_warnings:
+
+    warn_msg = "invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)"
+    with must_warn(RuntimeWarning, msg=warn_msg):
         res = small_array / small_array
     assert_array_nan_equal(res, raw_res)
-    assert len(caught_warnings) == 1
-    warn_msg = "invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)"
-    assert caught_warnings[0].message.args[0] == warn_msg
-    assert caught_warnings[0].filename == __file__
 
     assert_array_equal(small_array / 2, raw / 2)
 
     with np.errstate(divide='ignore'):
         raw_res = 30 / raw
-    with pytest.warns(RuntimeWarning) as caught_warnings:
+    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation"):
         res = 30 / small_array
     assert_array_equal(res, raw_res)
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
-    assert caught_warnings[0].filename == __file__
 
     assert_array_equal(30 / (small_array + 1), 30 / (raw + 1))
 
@@ -2677,12 +2670,9 @@ def test_binary_ops_no_name_axes(small_array):
 
     with np.errstate(divide='ignore'):
         raw_res = 30 / raw
-    with pytest.warns(RuntimeWarning) as caught_warnings:
+    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation"):
         res = 30 / la
     assert_array_equal(res, raw_res)
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "divide by zero encountered during operation"
-    assert caught_warnings[0].filename == __file__
 
     assert_array_equal(30 / (la + 1), 30 / (raw + 1))
 
@@ -3131,12 +3121,12 @@ def test_hdf_roundtrip(tmpdir, meta):
 
     # unnamed group
     group = a3.c['c0,c2']
-    with pytest.warns(tables.NaturalNameWarning):
+    with must_warn(tables.NaturalNameWarning, check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # unnamed group + slice
     group = a3.c['c0::2']
-    with pytest.warns(tables.NaturalNameWarning):
+    with must_warn(tables.NaturalNameWarning, check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # named group
@@ -3145,7 +3135,7 @@ def test_hdf_roundtrip(tmpdir, meta):
 
     # group with name containing special characters (replaced by _)
     group = a3.c['c0,c2'] >> r':name?with*special/\[characters]'
-    with pytest.warns(tables.NaturalNameWarning):
+    with must_warn(tables.NaturalNameWarning, check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # passing group as key to read_hdf
@@ -5157,17 +5147,11 @@ def test_0darray_convert():
 
 
 def test_deprecated_methods():
-    with pytest.warns(FutureWarning) as caught_warnings:
+    with must_warn(FutureWarning, msg="with_axes() is deprecated. Use set_axes() instead."):
         ndtest((2, 2)).with_axes('a', 'd=d0,d1')
-    assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "with_axes() is deprecated. Use set_axes() instead."
-    assert caught_warnings[0].filename == __file__
 
-    with pytest.warns(FutureWarning) as caught_warnings:
+    with must_warn(FutureWarning, msg="split_axis() is deprecated. Use split_axes() instead."):
         ndtest((2, 2)).combine_axes().split_axis()
-    # assert len(caught_warnings) == 1
-    assert caught_warnings[0].message.args[0] == "split_axis() is deprecated. Use split_axes() instead."
-    assert caught_warnings[0].filename == __file__
 
 
 def test_eq():
