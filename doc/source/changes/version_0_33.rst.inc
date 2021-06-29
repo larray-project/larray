@@ -18,6 +18,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* added official support for Python 3.9 (0.32.3 already supports it even though it was not mentioned).
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
