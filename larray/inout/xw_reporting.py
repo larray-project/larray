@@ -792,11 +792,12 @@ if xw is not None:
             return self.sheets[key]
 
         # TODO : Do not implement __setitem__ and move code below to new_sheet()?
-        def __setitem__(self, key, value):
+        def __setitem__(self, key, value, warn_stacklevel=2):
             if not isinstance(value, ReportSheet):
                 raise ValueError(f"Expected SheetReport object. Got {type(value).__name__} object instead.")
             if key in self.sheet_names():
-                warnings.warn(f"Sheet '{key}' already exists in the report and will be reset")
+                warnings.warn(f"Sheet '{key}' already exists in the report and will be reset",
+                              stacklevel=warn_stacklevel)
             self.sheets[key] = value
 
         def __delitem__(self, key):
@@ -807,7 +808,7 @@ if xw is not None:
 
         def new_sheet(self, sheet_name):
             sheet = ReportSheet(self, sheet_name, self.template_dir, self.template, self.graphs_per_row)
-            self[sheet_name] = sheet
+            self.__setitem__(sheet_name, sheet, warn_stacklevel=3)
             return sheet
 
         def to_excel(self, filepath, data_sheet_name='__data__', overwrite=True):
