@@ -375,8 +375,8 @@ class ArrayPositionalIndexer(object):
     def __getitem__(self, key):
         ndim = self.array.ndim
         full_scalar_key = (
-            (isinstance(key, (int, np.integer)) and ndim == 1) or
-            (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
+            (isinstance(key, (int, np.integer)) and ndim == 1)
+            or (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
         )
         # fast path when the result is a scalar
         if full_scalar_key:
@@ -388,8 +388,8 @@ class ArrayPositionalIndexer(object):
         array = self.array
         ndim = array.ndim
         full_scalar_key = (
-            (isinstance(key, (int, np.integer)) and ndim == 1) or
-            (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
+            (isinstance(key, (int, np.integer)) and ndim == 1)
+            or (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
         )
         # fast path when setting a single cell
         if full_scalar_key:
@@ -652,7 +652,7 @@ _kwarg_agg = {
 }
 
 
-def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_args=[], kwargs=[]):
+def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_args=(), kwargs=()):
     if not long_name:
         long_name = func.__name__
 
@@ -800,10 +800,8 @@ class Array(ABCArray):
      11         F   0.0   0.0   0.0
      12         M   0.0   0.0   0.0
      12         F   0.0   0.0   0.0
-    >>> # with metadata (Python <= 3.5)
-    >>> arr = Array(data, axes, meta=[('title', 'my title'), ('author', 'John Smith')])
-    >>> # with metadata (Python 3.6+)
-    >>> arr = Array(data, axes, meta=Metadata(title='my title', author='John Smith'))  # doctest: +SKIP
+    >>> # with metadata
+    >>> arr = Array(data, axes, meta=Metadata(title='my title', author='John Smith'))
 
     Array creation functions
 
@@ -1291,8 +1289,9 @@ class Array(ABCArray):
         # when *args is not empty (see https://github.com/larray-project/larray/issues/192)
         # return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args),
         #               *self.percentile(percentiles, *args)], Axis(labels, 'stats'))
-        return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)] +
-                     [self.percentile(p, *args) for p in percentiles], Axis(labels, 'statistic'))
+        return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)]
+                     + [self.percentile(p, *args) for p in percentiles],
+                     Axis(labels, 'statistic'))
 
     def describe_by(self, *args, **kwargs):
         r"""
@@ -8504,9 +8503,11 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
 
     # fast path for the most common case
     integer_types = (int, np.integer)
-    if (isinstance(mult, integer_types) and mult == 1 and
-            isinstance(inc, integer_types) and isinstance(initial, integer_types) and
-            func is None and axes is None):
+    if (isinstance(mult, integer_types) and mult == 1
+            and isinstance(inc, integer_types)
+            and isinstance(initial, integer_types)
+            and func is None
+            and axes is None):
         axis = _make_axis(axis)
         # stop is not included
         stop = initial + inc * len(axis)

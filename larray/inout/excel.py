@@ -246,14 +246,7 @@ class PandasExcelHandler(FileHandler):
         self.handle = pd.ExcelWriter(self.fname, engine=engine)
 
     def list_items(self):
-        sheet_names = self.handle.sheet_names
-        items = []
-        try:
-            sheet_names.remove('__metadata__')
-        except:
-            pass
-        items += [(name, 'Array') for name in sheet_names]
-        return items
+        return [(name, 'Array') for name in self.handle.sheet_names if name != '__metadata__']
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':
@@ -308,14 +301,7 @@ class XLWingsHandler(FileHandler):
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
 
     def list_items(self):
-        sheet_names = self.handle.sheet_names()
-        items = []
-        try:
-            sheet_names.remove('__metadata__')
-        except:
-            pass
-        items += [(name, 'Array') for name in sheet_names]
-        return items
+        return [(name, 'Array') for name in self.handle.sheet_names() if name != '__metadata__']
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':

@@ -298,13 +298,7 @@ class PandasCSVHandler(FileHandler):
         # strip extension from files
         # XXX: unsure we should use sorted here
         fnames = sorted([os.path.splitext(fname)[0] for fname in fnames])
-        items = []
-        try:
-            fnames.remove('__metadata__')
-        except:
-            pass
-        items += [(name, 'Array') for name in fnames]
-        return items
+        return [(name, 'Array') for name in fnames if name != '__metadata__']
 
     def _read_item(self, key, type, *args, **kwargs):
         if type == 'Array':

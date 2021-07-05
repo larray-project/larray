@@ -337,8 +337,8 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
             return from_series(series, sort_rows=sort_columns, **kwargs)
 
     # handle 1D arrays
-    if len(df) == 1 and (pd.isnull(df.index.values[0]) or
-                         (isinstance(df.index.values[0], str) and df.index.values[0].strip() == '')):
+    if len(df) == 1 and (pd.isnull(df.index.values[0])
+                         or (isinstance(df.index.values[0], str) and df.index.values[0].strip() == '')):
         if parse_header:
             df.columns = pd.Index([parse(cell) for cell in df.columns.values], name=df.columns.name)
         series = df.iloc[0]
@@ -363,6 +363,6 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
     # make them roundtrip correctly, based on the assumption that in an in-memory LArray an anonymouse axis is more
     # likely and useful than an Axis with an empty name.
     # TODO : find a more robust and elegant solution
-    res = res.rename({axis: None for axis in res.axes if isinstance(axis.name, str) and
-                      (axis.name == '' or 'Unnamed:' in axis.name)})
+    res = res.rename({axis: None for axis in res.axes if (isinstance(axis.name, str)
+                                                          and (axis.name == '' or 'Unnamed:' in axis.name))})
     return res

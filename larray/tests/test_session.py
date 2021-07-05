@@ -8,12 +8,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import meta            # noqa: F401
+from larray.tests.common import meta
 from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
                                  needs_xlwings, needs_pytables, needs_openpyxl, must_warn)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like, ones, full,
                     local_arrays, global_arrays, arrays)
+
+
+# avoid flake8 errors
+meta = meta
 
 
 def equal(o1, o2):
@@ -25,7 +29,7 @@ def equal(o1, o2):
         return o1 == o2
 
 
-def assertObjListEqual(got, expected):
+def assert_seq_equal(got, expected):
     assert len(got) == len(expected)
     for e1, e2 in zip(got, expected):
         assert equal(e1, e2), f"{e1} != {e2}"
@@ -57,7 +61,7 @@ def test_init_session(meta):
     s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h)
     assert s.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024', 'c', 'd', 'e', 'f', 'g', 'h']
 
-    # TODO: format autodetection does not work in this case
+    # TODO: format auto-detection does not work in this case
     # s = Session('test_session_csv')
     # assert s.names == ['e', 'f', 'g']
 
@@ -149,20 +153,20 @@ def test_add(session):
 
 def test_iter(session):
     expected = [b, b024, a, a2, anonymous, a01, ano01, c, d, e, g, f, h]
-    assertObjListEqual(session, expected)
+    assert_seq_equal(session, expected)
 
 
 def test_filter(session):
     session.ax = 'ax'
-    assertObjListEqual(session.filter(), [b, b024, a, a2, anonymous, a01, ano01, 'c', {}, e, g, f, h, 'ax'])
-    assertObjListEqual(session.filter('a*'), [a, a2, anonymous, a01, ano01, 'ax'])
+    assert_seq_equal(session.filter(), [b, b024, a, a2, anonymous, a01, ano01, 'c', {}, e, g, f, h, 'ax'])
+    assert_seq_equal(session.filter('a*'), [a, a2, anonymous, a01, ano01, 'ax'])
     assert list(session.filter('a*', dict)) == []
     assert list(session.filter('a*', str)) == ['ax']
     assert list(session.filter('a*', Axis)) == [a, a2, anonymous]
     assert list(session.filter(kind=Axis)) == [b, a, a2, anonymous]
     assert list(session.filter('a01', Group)) == [a01]
     assert list(session.filter(kind=Group)) == [b024, a01, ano01]
-    assertObjListEqual(session.filter(kind=Array), [e, g, f, h])
+    assert_seq_equal(session.filter(kind=Array), [e, g, f, h])
     assert list(session.filter(kind=dict)) == [{}]
     assert list(session.filter(kind=(Axis, Group))) == [b, b024, a, a2, anonymous, a01, ano01]
 

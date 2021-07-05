@@ -25,14 +25,12 @@ if xw is not None:
     from xlwings.constants import FileFormat
     global_app = None
 
-
     def is_app_alive(app):
         try:
             app.books
             return True
         except Exception:
             return False
-
 
     def kill_global_app():
         global global_app
@@ -45,7 +43,6 @@ if xw is not None:
                     pass
             del global_app
             global_app = None
-
 
     class ArrayConverter(PandasDataFrameConverter):
         writes_types = Array
@@ -71,9 +68,8 @@ if xw is not None:
         # unsure we can safely do this
         # xl_app.EnableEvents = False
 
-
-    # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
     class Workbook(object):
+        # TODO: replace overwrite_file by mode='r'|'w'|'a' the day xlwings will support a read-only mode
         def __init__(self, filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):
             global global_app
 
@@ -322,7 +318,6 @@ if xw is not None:
             cls = self.__class__
             return f'<{cls.__module__}.{cls.__name__} [{self.name}]>'
 
-
     def _fill_slice(s, length):
         r"""
         replaces a slice None bounds by actual bounds.
@@ -339,7 +334,6 @@ if xw is not None:
         slice
         """
         return slice(s.start if s.start is not None else 0, s.stop if s.stop is not None else length, s.step)
-
 
     def _concrete_key(key, obj, ndim=2):
         r"""Expand key to ndim and replace None in slices start/stop bounds by 0 or obj.shape[corresponding_dim]
@@ -371,7 +365,6 @@ if xw is not None:
         # the length and we do NOT want to do that in this case (see issue #273).
         return [_fill_slice(k, length) if isinstance(k, slice) else k
                 for k, length in zip(key, shape)]
-
 
     class Sheet(object):
         def __init__(self, workbook, key, xw_sheet=None):
@@ -515,7 +508,6 @@ if xw is not None:
             xw_sheet = self.xw_sheet
             return f'<{cls.__module__}.{cls.__name__} [{xw_sheet.book.name}]{xw_sheet.name}>'
 
-
     class Range(object):
         def __init__(self, sheet, *args):
             xw_range = sheet.xw_sheet.range(*args)
@@ -617,7 +609,6 @@ if xw is not None:
                                   sort_rows=sort_rows, sort_columns=sort_columns, wide=wide)
             else:
                 return Array(list_data)
-
 
     # XXX: deprecate this function?
     def open_excel(filepath=None, overwrite_file=False, visible=None, silent=None, app=None, load_addins=None):

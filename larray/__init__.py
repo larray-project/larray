@@ -31,9 +31,8 @@ from larray.inout.stata import read_stata
 from larray.inout.xw_excel import open_excel, Workbook
 from larray.inout.xw_reporting import ExcelReport, ReportSheet
 
-# just make sure handlers for .pkl and .pickle are initialized
+# module is imported only to initialize handlers for .pkl and .pickle (we del _pkl at the end of this module)
 import larray.inout.pickle as _pkl
-del _pkl
 
 from larray.util.options import get_options, set_options
 
@@ -42,8 +41,6 @@ from larray.viewer import view, edit, debug, compare, run_editor_on_exception
 from larray.extra.ipfp import ipfp
 
 from larray.example import get_example_filepath, load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
-
-import larray.random
 
 
 __all__ = [
@@ -92,13 +89,13 @@ __all__ = [
 
 # ==== DEPRECATED API ====
 
-from larray.core.axis import x
-from larray.core.group import PGroup
-from larray.core.array import (LArray, aslarray, create_sequential, ndrange, larray_equal,
+# F401: imported item not used
+from larray.core.axis import x                                                              # noqa: F401
+from larray.core.group import PGroup                                                        # noqa: F401
+from larray.core.array import (LArray, aslarray, create_sequential, ndrange, larray_equal,  # noqa: F401
                                larray_nan_equal, nan_equal, element_equal)
 
-
-_deprecated = [
+_deprecated_names = [
     # axis
     'x',
     # group
@@ -109,4 +106,7 @@ _deprecated = [
     'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal',
 ]
 
-__all__ += _deprecated
+__all__ += _deprecated_names
+
+# cleanup namespace (module was imported only to initialize handlers for .pkl and .pickle)
+del _pkl
