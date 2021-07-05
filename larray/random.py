@@ -192,13 +192,11 @@ def normal(loc=0.0, scale=1.0, axes=None, meta=None):
 
     With varying loc and scale (each depending on a different axis)
 
-    >>> a = la.Axis('a=a0,a1')
-    >>> b = la.Axis('b=b0..b2')
-    >>> mu = la.sequence(a, initial=5, inc=5)
+    >>> mu = la.sequence('a=a0,a1', initial=5, inc=5)
     >>> mu
     a  a0  a1
         5  10
-    >>> sigma = la.sequence(b, initial=1)
+    >>> sigma = la.sequence('b=b0..b2', initial=1)
     >>> sigma
     b  b0  b1  b2
         1   2   3
@@ -299,13 +297,11 @@ def uniform(low=0.0, high=1.0, axes=None, meta=None):
 
     With varying low and high (each depending on a different axis)
 
-    >>> a = la.Axis('a=a0,a1')
-    >>> b = la.Axis('b=b0..b2')
-    >>> low = la.sequence(a)
+    >>> low = la.sequence('a=a0,a1')
     >>> low
     a  a0  a1
         0   1
-    >>> high = la.sequence(b, initial=1, inc=0.5)
+    >>> high = la.sequence('b=b0..b2', initial=1, inc=0.5)
     >>> high
     b   b0   b1   b2
        1.0  1.5  2.0
