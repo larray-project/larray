@@ -95,12 +95,31 @@ def randint(low, high=None, axes=None, dtype='l', meta=None):
     a\b  b0  b1  b2
      a0   0   3   1
      a1   4   0   1
+
+    With varying low and high (each depending on a different axis)
+
+    >>> low = la.sequence('a=a0,a1')
+    >>> low
+    a  a0  a1
+        0   1
+    >>> high = la.sequence('b=b0..b2', initial=3)
+    >>> high
+    b  b0  b1  b2
+        3   4   5
+
+    In other words, we want to generate values between low and high (high included) for each cell. Let's
+    note that low..high:
+
+    a\b    b0    b1    b2
+     a0  0..2  0..3  0..4
+     a1  1..2  1..3  1..4
+
+    >>> la.random.randint(low, high)                            # doctest: +SKIP
+    a\b  b0  b1  b2
+     a0   0   2   2
+     a1   2   3   4
     """
-    # TODO: support broadcasting arguments when np.randint supports it (https://github.com/numpy/numpy/issues/6745)
-    # to do that, uncommenting the following code should be enough:
-    # return generic_random(np.random.randint, (low, high), axes, meta)
-    axes = AxisCollection(axes)
-    return Array(np.random.randint(low, high, axes.shape, dtype), axes, meta=meta)
+    return generic_random(np.random.randint, (low, high), axes, meta)
 
 
 def normal(loc=0.0, scale=1.0, axes=None, meta=None):
