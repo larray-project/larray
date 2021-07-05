@@ -3,6 +3,12 @@ from larray.tests.common import assert_array_equal
 from larray import Axis, Array, ndtest, ipfp, X
 
 
+# Flake8 codes reference
+# ======================
+# E201: whitespace after '['
+# E241: multiple spaces after ','
+
+
 def test_ipfp():
     a = Axis('a=a0,a1')
     b = Axis('b=b0,b1')
@@ -78,7 +84,7 @@ def test_ipfp_3d():
     # array sums do not match target sums (ie the usual case)
     targets = [initial.sum(axis) + 1 for axis in initial.axes]
     r = ipfp(targets, initial)
-    assert_array_equal(r, [[[0.0,               2.0],
+    assert_array_equal(r, [[[0.0,               2.0],                  # noqa: E241
                             [2.688963210702341, 3.311036789297659]],
                            [[4.551453540217585, 5.448546459782415],
                             [6.450132391879964, 7.549867608120035]]])
@@ -86,7 +92,7 @@ def test_ipfp_3d():
 
     # same as above but using a more precise threshold
     r = ipfp(targets, initial, threshold=0.01)
-    assert_array_equal(r, [[[0.0,               1.9999999999999998],
+    assert_array_equal(r, [[[0.0,               1.9999999999999998],   # noqa: E241
                             [2.994320023433978, 3.0056799765660225]],
                            [[4.990248916408187, 5.009751083591813],
                             [6.009541632308118, 7.990458367691883]]])
@@ -115,9 +121,9 @@ def test_ipfp_3d_with_axes():
     axes = (X.a, X.b)
     targets = [initial.sum(axis) + 1 for axis in axes]
     r = ipfp(targets, initial, axes=axes)
-    assert_array_equal(r, [[[0.0,               1.3059701492537312],
-                            [3.0,               3.6940298507462686]],
-                           [[4.680851063829787, 5.603448275862069 ],
+    assert_array_equal(r, [[[0.0,               1.3059701492537312],   # noqa: E241
+                            [3.0,               3.6940298507462686]],  # noqa: E241
+                           [[4.680851063829787, 5.603448275862069 ],   # noqa: E202
                             [6.319148936170213, 7.3965517241379315]]])
     assert r.axes == initial_axes
     # check that the result is the same as N 2D ipfp calls
@@ -128,7 +134,7 @@ def test_ipfp_3d_with_axes():
     axes = (X.a, X.c)
     targets = [initial.sum(axis) + 1 for axis in axes]
     r = ipfp(targets, initial, axes=axes)
-    assert_array_equal(r, [[[0.0,               2.0              ],
+    assert_array_equal(r, [[[0.0,               2.0              ],    # noqa: E241,E202
                             [2.432432432432432, 3.567567567567567]],
                            [[4.615384615384615, 5.384615384615385],
                             [6.539792387543252, 7.460207612456748]]])

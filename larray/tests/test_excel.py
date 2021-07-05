@@ -53,7 +53,7 @@ class TestWorkbook(object):
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
-            assert re.match(r'<larray.inout.xw_excel.Workbook \[Book\d+\]>', repr(wb))
+            assert re.match(r'<larray.inout.xw_excel.Workbook \[Book\d+]>', repr(wb))
 
     def test_getitem(self):
         with open_excel(visible=False) as wb:
@@ -68,7 +68,7 @@ class TestWorkbook(object):
             assert sheet.name == 'Sheet1'
 
             with pytest.raises(KeyError, match="Workbook has no sheet named this_sheet_does_not_exist"):
-                wb['this_sheet_does_not_exist']
+                _ = wb['this_sheet_does_not_exist']
 
     def test_setitem(self):
         with open_excel(visible=False) as wb:
@@ -151,7 +151,7 @@ class TestSheet(object):
             # read them back
             assert sheet['A1'].value == 1.5
             assert sheet['A2'].value == 2
-            assert sheet['A3'].value == True
+            assert sheet['A3'].value is True
             assert sheet['A4'].value == 'toto'
             # array without header
             assert np.array_equal(sheet['A5:C6'].value, arr.data)
@@ -193,7 +193,7 @@ class TestSheet(object):
     def test_repr(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]
-            assert re.match(r'<larray.inout.xw_excel.Sheet \[Book\d+\]Sheet1>', repr(sheet))
+            assert re.match(r'<larray.inout.xw_excel.Sheet \[Book\d+]Sheet1>', repr(sheet))
 
 
 @needs_xlwings

@@ -9,7 +9,7 @@ import pandas as pd
 from io import StringIO
 from collections import OrderedDict
 
-from larray.tests.common import meta                        # noqa: F401
+from larray.tests.common import meta
 from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37,
@@ -22,6 +22,13 @@ from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import LHDFStore
 from larray.core.metadata import Metadata
 
+# avoid flake8 errors
+meta = meta
+
+# Flake8 codes reference (for noqa codes)
+# =======================================
+# E201: whitespace after '['
+# E241: multiple spaces after ','
 
 # ================== #
 # Test Value Strings #
@@ -157,13 +164,13 @@ geo = Axis(belgium, 'geo')
 # ARRAYS
 @pytest.fixture()
 def array():
-    data = np.arange(116 * 44 * 2 * 15).reshape(116, 44, 2, 15).astype(float)
+    data = np.arange(116 * 44 * 2 * 15).reshape((116, 44, 2, 15)).astype(float)
     return Array(data, axes=(age, geo, sex, lipro))
 
 
 @pytest.fixture()
 def small_array():
-    small_data = np.arange(30).reshape(2, 15)
+    small_data = np.arange(30).reshape((2, 15))
     return Array(small_data, axes=(sex, lipro))
 
 
@@ -181,7 +188,7 @@ io_narrow_missing_values[2, 'b1', 'c1'] = nan
 
 def test_larray_renamed_as_array():
     with must_warn(FutureWarning, msg="LArray has been renamed as Array."):
-        arr = LArray([0, 1, 2, 3], 'a=a0..a3')
+        _ = LArray([0, 1, 2, 3], 'a=a0..a3')
 
 
 def test_ndtest():
@@ -208,7 +215,7 @@ def test_getattr(array):
     assert type(array.geo) == Axis
     assert array.geo is geo
     with pytest.raises(AttributeError):
-        array.geom
+        _ = array.geom
 
 
 def test_zeros():
@@ -286,7 +293,6 @@ def test_keys():
 
 def test_values():
     arr = ndtest((2, 2))
-    a, b = arr.axes
 
     values = arr.values()
     assert list(values) == [0, 1, 2, 3]
@@ -519,12 +525,12 @@ def test_getitem(array):
 
     # key with duplicate axes
     with pytest.raises(ValueError):
-        array[age[1, 2], age[3, 4]]
+        _ = array[age[1, 2], age[3, 4]]
 
     # key with lgroup from another axis leading to duplicate axis
     bad = Axis(3, 'bad')
     with pytest.raises(ValueError):
-        array[bad[1, 2], age[3, 4]]
+        _ = array[bad[1, 2], age[3, 4]]
 
 
 def test_getitem_abstract_axes(array):
@@ -559,11 +565,11 @@ def test_getitem_abstract_axes(array):
 
     # key with duplicate axes
     with pytest.raises(ValueError):
-        array[X.age[1, 2], X.age[3]]
+        _ = array[X.age[1, 2], X.age[3]]
 
     # key with invalid axis
     with pytest.raises(ValueError):
-        array[X.bad[1, 2], X.age[3, 4]]
+        _ = array[X.bad[1, 2], X.age[3, 4]]
 
 
 def test_getitem_anonymous_axes():
@@ -614,29 +620,29 @@ def test_getitem_guess_axis(array):
 
     # key with duplicate axes
     with pytest.raises(ValueError, match="key has several values for axis: age"):
-        array[[1, 2], [3, 4]]
+        _ = array[[1, 2], [3, 4]]
 
     # key with invalid label (ie label not found on any axis)
     with pytest.raises(ValueError, match="999 is not a valid label for any axis"):
-        array[[1, 2], 999]
+        _ = array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
     with pytest.raises(ValueError, match=r"\[998, 999\] is not a valid label for any axis"):
-        array[[1, 2], [998, 999]]
+        _ = array[[1, 2], [998, 999]]
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
     # FIXME: the message should be the same as for 999, 4 (ie it should NOT mention age).
     with pytest.raises(ValueError, match=r"age\[3, 999\] is not a valid label for any axis"):
-        array[[1, 2], [3, 999]]
+        _ = array[[1, 2], [3, 999]]
 
     with pytest.raises(ValueError, match=r"\[999, 4\] is not a valid label for any axis"):
-        array[[1, 2], [999, 4]]
+        _ = array[[1, 2], [999, 4]]
 
     # ambiguous key
     arr = ndtest("a=l0,l1;b=l1,l2")
     with pytest.raises(ValueError, match=r"l1 is ambiguous \(valid in a, b\)"):
-        arr['l1']
+        _ = arr['l1']
 
     # ambiguous key disambiguated via string
     res = arr['b[l1]']
@@ -677,12 +683,11 @@ def test_getitem_positional_group(array):
 
     # key with duplicate axes
     with pytest.raises(ValueError, match="key has several values for axis: age"):
-        array[age.i[1, 2], age.i[3, 4]]
+        _ = array[age.i[1, 2], age.i[3, 4]]
 
 
 def test_getitem_str_positional_group():
     arr = ndtest('a=l0..l2;b=l0..l2')
-    a, b = arr.axes
     res = arr['b.i[1]']
     expected = Array([1, 4, 7], 'a=l0..l2')
     assert_array_equal(res, expected)
@@ -722,7 +727,7 @@ def test_getitem_abstract_positional(array):
 
     # key with duplicate axes
     with pytest.raises(ValueError, match="key has several values for axis: age"):
-        array[X.age.i[2, 3], X.age.i[1, 5]]
+        _ = array[X.age.i[2, 3], X.age.i[1, 5]]
 
 
 def test_getitem_bool_larray_key_arr_whout_bool_axis():
@@ -773,7 +778,7 @@ def test_getitem_bool_larray_key_arr_wh_bool_axis():
     # ... but I am unsure the current behavior is what we actually want
     msg = re.escape("boolean subset key contains more axes ({id}) than array ({gender})")
     with pytest.raises(ValueError, match=msg):
-        arr[key]
+        _ = arr[key]
 
 
 def test_getitem_bool_larray_and_group_key():
@@ -819,7 +824,7 @@ def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
     # L? is to account for Python2 where shape can be 'long' integers
     msg = r"boolean key with a different shape \(\(4L?,\)\) than array \(\(2,\)\)"
     with pytest.raises(ValueError, match=msg):
-        arr[key]
+        _ = arr[key]
 
 
 def test_getitem_bool_anonymous_axes():
@@ -850,12 +855,12 @@ def test_getitem_integer_string_axes():
     assert_array_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
     assert_array_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
     with pytest.raises(ValueError):
-        arr['1[a0, a2]']
+        _ = arr['1[a0, a2]']
 
     assert_array_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
     assert_array_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
     with pytest.raises(ValueError):
-        arr['3.i[0, 2]']
+        _ = arr['3.i[0, 2]']
 
 
 def test_getitem_int_larray_lgroup_key():
@@ -1140,7 +1145,7 @@ def test_positional_indexer_getitem(array):
         assert_array_equal(array.i[key], raw[key])
     assert_array_equal(array.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
     with pytest.raises(IndexError):
-        array.i[0, 0, 0, 0, 0]
+        _ = array.i[0, 0, 0, 0, 0]
 
 
 def test_positional_indexer_setitem(array):
@@ -1183,7 +1188,7 @@ def test_points_indexer_getitem():
 
     # XXX: we might want to raise KeyError or IndexError instead?
     with pytest.raises(ValueError):
-        arr.points['a0', 'b1', 'c2', 'd0']
+        _ = arr.points['a0', 'b1', 'c2', 'd0']
 
 
 def test_points_indexer_setitem():
@@ -2725,7 +2730,7 @@ def test_broadcasting_no_name():
     # it is unfortunate that the behavior is different from numpy (even though I find our behavior more intuitive)
     d = np.asarray(a) * np.asarray(b)
     assert d.shape == (2, 3)
-    assert np.array_equal(d, [[0, 1,  4],
+    assert np.array_equal(d, [[0, 1,  4],   # noqa: E241
                               [0, 4, 10]])
 
     with pytest.raises(ValueError):
@@ -2780,7 +2785,7 @@ def test_sort_values():
 
     # 3D arrays
     arr = Array([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
-                 'a=a0,a1; b=b0,b1; c=c0..c2')
+                'a=a0,a1; b=b0,b1; c=c0..c2')
     res = arr.sort_values(axis='c')
     expected = Array([[[2, 4, 10], [1, 3, 7]], [[1, 5, 6], [2, 8, 9]]],
                      [Axis('a=a0,a1'), Axis('b=b0,b1'), Axis(3, 'c')])
@@ -2899,77 +2904,83 @@ def test_insert():
 
     # insert at multiple places at once
 
-    # we cannot use from_string in these tests because it deduplicates ambiguous (column) labels automatically
+    # we cannot use from_string in these tests because it de-duplicates ambiguous (column) labels automatically
     res = arr1.insert([42, 43], before='b1', label='new')
-    assert_array_equal(res, from_lists([
-    ['a\\b', 'b0', 'new', 'new', 'b1', 'b2'],
-    ['a0',      0,    42,    43,    1,    2],
-    ['a1',      3,    42,    43,    4,    5]]))
+    expected = from_lists([['a\\b', 'b0', 'new', 'new', 'b1', 'b2'],
+                           [  'a0',    0,    42,    43,    1,    2],   # noqa: E201,E241
+                           [  'a1',    3,    42,    43,    4,    5]])  # noqa: E201,E241
+    assert_array_equal(res, expected)
 
     res = arr1.insert(42, before=['b1', 'b2'], label='new')
-    assert_array_equal(res, from_lists([
-    ['a\\b', 'b0', 'new', 'b1', 'new', 'b2'],
-    ['a0',      0,    42,    1,    42,    2],
-    ['a1',      3,    42,    4,    42,    5]]))
+    expected = from_lists([['a\\b', 'b0', 'new', 'b1', 'new', 'b2'],
+                           [  'a0',    0,    42,    1,    42,    2],   # noqa: E201,E241
+                           [  'a1',    3,    42,    4,    42,    5]])  # noqa: E201,E241
+    assert_array_equal(res, expected)
 
     res = arr1.insert(42, before='b1', label=['b0.1', 'b0.2'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.1  b0.2  b1  b2
      a0   0    42    42   1   2
-     a1   3    42    42   4   5"""))
+     a1   3    42    42   4   5""")
+    assert_array_equal(res, expected)
 
     res = arr1.insert(42, before=['b1', 'b2'], label=['b0.5', 'b1.5'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    42   2
-     a1   3    42   4    42   5"""))
+     a1   3    42   4    42   5""")
+    assert_array_equal(res, expected)
 
     res = arr1.insert([42, 43], before='b1', label=['b0.1', 'b0.2'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.1  b0.2  b1  b2
      a0   0    42    43   1   2
-     a1   3    42    43   4   5"""))
+     a1   3    42    43   4   5""")
+    assert_array_equal(res, expected)
 
     res = arr1.insert([42, 43], before=['b1', 'b2'], label='new')
-    assert_array_equal(res, from_lists([
-    ['a\\b', 'b0', 'new', 'b1', 'new', 'b2'],
-    [  'a0',    0,    42,    1,    43,    2],
-    [  'a1',    3,    42,    4,    43,    5]]))
+    expected = from_lists([['a\\b', 'b0', 'new', 'b1', 'new', 'b2'],
+                           [  'a0',    0,    42,    1,    43,    2],   # noqa: E201,E241
+                           [  'a1',    3,    42,    4,    43,    5]])  # noqa: E201,E241
+    assert_array_equal(res, expected)
 
     res = arr1.insert([42, 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
-     a1   3    42   4    43   5"""))
+     a1   3    42   4    43   5""")
+    assert_array_equal(res, expected)
 
     res = arr1.insert([42, 43], before='b1,b2', label=['b0.5', 'b1.5'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
-     a1   3    42   4    43   5"""))
+     a1   3    42   4    43   5""")
+    assert_array_equal(res, expected)
 
     arr2 = ndtest(2)
     res = arr1.insert([arr2 + 42, arr2 + 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
-     a1   3    43   4    44   5"""))
+     a1   3    43   4    44   5""")
+    assert_array_equal(res, expected)
 
     arr3 = ndtest('a=a0,a1;b=b0.1,b0.2') + 42
     res = arr1.insert(arr3, before='b1,b2')
-    assert_array_equal(res, from_string(r"""
+    expected = from_string(r"""
     a\b  b0  b0.1  b1  b0.2  b2
      a0   0    42   1    43   2
-     a1   3    44   4    45   5"""))
+     a1   3    44   4    45   5""")
+    assert_array_equal(res, expected)
 
     # with ambiguous labels
     arr4 = ndtest('a=v0,v1;b=v0,v1')
+    res = arr4.insert(42, before='b[v1]', label='v0.5')
     expected = from_string(r"""
     a\b  v0  v0.5  v1
      v0   0    42   1
      v1   2    42   3""")
-
-    res = arr4.insert(42, before='b[v1]', label='v0.5')
     assert_array_equal(res, expected)
 
     res = arr4.insert(42, before=X.b['v1'], label='v0.5')
@@ -3040,27 +3051,34 @@ def test_drop():
     label2       6       7       8"""))
 
 
-# the aim of this test is to drop the last value of an axis, but instead
-# of dropping the last axis tick/label, drop the first one.
+# the aim of this test is to drop the last *value* of an axis, but instead
+# of dropping the last axis *label*, drop the first one.
 def test_shift_axis(small_array):
     sex, lipro = small_array.axes
 
-    # TODO: check how awful the syntax is with an axis that is not last
-    # or first
-    l2 = Array(small_array[:, :'P14'], axes=[sex, Axis(lipro.labels[1:], 'lipro')])
-    l2 = Array(small_array[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
+    expected = from_string(r"""
+    sex\lipro  P02  P03  P04  P05  P06  P07  P08  P09  P10  P11  P12  P13  P14  P15
+            M    0    1    2    3    4    5    6    7    8    9   10   11   12   13
+            F   15   16   17   18   19   20   21   22   23   24   25   26   27   28""")
+
+    res = Array(small_array[:, :'P14'], axes=[sex, Axis(lipro.labels[1:], 'lipro')])
+    assert_array_equal(res, expected)
+
+    res = Array(small_array[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
+    assert_array_equal(res, expected)
 
     # We can also modify the axis in-place (dangerous!)
     # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
-    l2 = small_array[:, 'P02':]
-    l2.axes.lipro.labels = lipro.labels[1:]
+    res = small_array[:, :'P14']
+    res.axes.lipro.labels = lipro.labels[1:]
+    assert_array_equal(res, expected)
 
 
 def test_unique():
     arr = Array([[[0, 2, 0, 0],
                   [1, 1, 1, 0]],
                  [[0, 2, 0, 0],
-                   [2, 1, 2, 0]]], 'a=a0,a1;b=b0,b1;c=c0..c3')
+                  [2, 1, 2, 0]]], 'a=a0,a1;b=b0,b1;c=c0..c3')
     assert_array_equal(arr.unique('a'), arr)
     assert_array_equal(arr.unique('b'), arr)
     assert_array_equal(arr.unique('c'), arr['c0,c1,c3'])
@@ -3102,7 +3120,7 @@ def test_hdf_roundtrip(tmpdir, meta):
     # issue 72: int-like strings should not be parsed (should round-trip correctly)
     fpath = tmp_path(tmpdir, 'issue72.h5')
     a = from_lists([['axis', '10', '20'],
-                    ['',        0,    1]])
+                    [    '',    0,    1]])  # noqa: E201,E241
     a.to_hdf(fpath, 'a')
     res = read_hdf(fpath, 'a')
     assert res.ndim == 1
@@ -3427,21 +3445,21 @@ def test_from_lists():
     arr_anon = simple_arr.rename({0: None, 1: None, 2: None})
     arr_list = arr_anon.dump()
     assert arr_list == [[None, None, 'c0', 'c1', 'c2'],
-                        ['a0', 'b0',    0,    1,    2],
-                        ['a0', 'b1',    3,    4,    5],
-                        ['a1', 'b0',    6,    7,    8],
-                        ['a1', 'b1',    9,   10,   11]]
+                        ['a0', 'b0',    0,    1,    2],              # noqa: E241
+                        ['a0', 'b1',    3,    4,    5],              # noqa: E241
+                        ['a1', 'b0',    6,    7,    8],              # noqa: E241
+                        ['a1', 'b1',    9,   10,   11]]              # noqa: E241
     res = from_lists(arr_list, nb_axes=3)
     assert_array_equal(res, arr_anon)
 
     # with empty ('') axes names
     arr_empty_names = simple_arr.rename({0: '', 1: '', 2: ''})
     arr_list = arr_empty_names.dump()
-    assert arr_list == [[  '',   '', 'c0', 'c1', 'c2'],
-                        ['a0', 'b0',    0,    1,    2],
-                        ['a0', 'b1',    3,    4,    5],
-                        ['a1', 'b0',    6,    7,    8],
-                        ['a1', 'b1',    9,   10,   11]]
+    assert arr_list == [[  '',   '', 'c0', 'c1', 'c2'],              # noqa: E201,E241
+                        ['a0', 'b0',    0,    1,    2],              # noqa: E241
+                        ['a0', 'b1',    3,    4,    5],              # noqa: E241
+                        ['a1', 'b0',    6,    7,    8],              # noqa: E241
+                        ['a1', 'b1',    9,   10,   11]]              # noqa: E241
     res = from_lists(arr_list, nb_axes=3)
     # this is purposefully NOT arr_empty_names because from_lists (via df_asarray) transforms '' axes to None
     assert_array_equal(res, arr_anon)
@@ -4959,8 +4977,8 @@ def test_stack():
 
     res = stack((arr0, arr1), b)
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [a, b])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [a, b])                              # noqa: E241
     assert_array_equal(res, expected)
 
     # same but using a group as the stacking axis
@@ -4974,8 +4992,8 @@ def test_stack():
     arr1 = ndtest(axis0, start=-1)
     res = stack((arr0, arr1), b)
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [axis0, b])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [axis0, b])                          # noqa: E241
     assert_array_equal(res, expected)
 
     # using res_axes
@@ -5079,15 +5097,15 @@ def test_stack_kwargs_no_axis_labels():
     # a) with an axis name
     res = stack(b0=arr0, b1=arr1, axes='b')
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [a, 'b=b0,b1'])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [a, 'b=b0,b1'])                      # noqa: E241
     assert_array_equal(res, expected)
 
     # b) without an axis name
     res = stack(b0=arr0, b1=arr1)
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [a, 'b0,b1'])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [a, 'b0,b1'])                        # noqa: E241
     assert_array_equal(res, expected)
 
 
@@ -5116,15 +5134,15 @@ def test_stack_dict_no_axis_labels():
     # a) with an axis name
     res = stack({'b0': arr0, 'b1': arr1}, 'b')
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [a, 'b=b0,b1'])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [a, 'b=b0,b1'])                      # noqa: E241
     assert_array_equal(res, expected)
 
     # b) without an axis name
     res = stack({'b0': arr0, 'b1': arr1})
     expected = Array([[0, -1],
-                      [1,  0],
-                      [2,  1]], [a, 'b0,b1'])
+                      [1,  0],                                       # noqa: E241
+                      [2,  1]], [a, 'b0,b1'])                        # noqa: E241
     assert_array_equal(res, expected)
 
 

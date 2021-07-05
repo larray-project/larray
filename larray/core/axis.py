@@ -854,11 +854,13 @@ class Axis(ABCAxis):
             list_res = [self[k] for k in key]
             return list_res if isinstance(key, list) else tuple(list_res)
         # allow targeting a label from an aggregated axis with the group which created it
-        elif (not isinstance(self, AxisReference) and
-              isinstance(key, Group) and
-              isinstance(key.axis, Axis) and
-              key.axis.name == self.name and
-              key.name in self):
+        elif (
+            not isinstance(self, AxisReference)
+            and isinstance(key, Group)
+            and isinstance(key.axis, Axis)
+            and key.axis.name == self.name
+            and key.name in self
+        ):
             return LGroup(key.name, None, self)
         # elif isinstance(key, basestring) and key in self:
             # TODO: this is an awful workaround to avoid the "processing" of string keys which exist as is in the axis
