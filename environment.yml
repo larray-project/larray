@@ -1,9 +1,7 @@
-name: test-py38
+name: test
 channels:
-  - larray-project
   - defaults
 dependencies:
-  - python=3.8
   - pip
   - numpy>=1.13
   - pandas>=0.20
@@ -12,5 +10,6 @@ dependencies:
   - openpyxl
   - xlsxwriter
   - pytest>=3.5
+  - flake8
   - pip:
     - pytest-flake8
