@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import pytest
 import numpy as np
@@ -5029,9 +5028,8 @@ def test_split_axes():
     arr = arr.set_axes([a.astype(object) for a in arr.axes])
 
     res = arr.split_axes()
-    expected_kind = 'U' if sys.version_info[0] >= 3 else 'S'
-    assert res.a.labels.dtype.kind == expected_kind
-    assert res.b.labels.dtype.kind == expected_kind
+    assert res.a.labels.dtype.kind == 'U'
+    assert res.b.labels.dtype.kind == 'U'
     assert res.c.labels.dtype.kind == 'O'
     assert_array_equal(res, ndtest((2, 2, 2)))
 

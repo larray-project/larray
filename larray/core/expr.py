@@ -1,6 +1,3 @@
-import sys
-
-
 class ExprNode:
     # method factory
     def _binop(opname):
@@ -27,13 +24,11 @@ class ExprNode:
     __divmod__ = _binop('divmod')
     __rmod__ = _binop('rmod')
     __mod__ = _binop('mod')
+    # div and rdiv are not longer used on Python3+
     __rfloordiv__ = _binop('rfloordiv')
     __floordiv__ = _binop('floordiv')
     __rtruediv__ = _binop('rtruediv')
     __truediv__ = _binop('truediv')
-    if sys.version < '3':
-        __div__ = _binop('div')
-        __rdiv__ = _binop('rdiv')
     __rmul__ = _binop('rmul')
     __mul__ = _binop('mul')
     __rsub__ = _binop('rsub')
