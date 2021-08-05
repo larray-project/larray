@@ -1,6 +1,5 @@
 import fnmatch
 import re
-import sys
 import warnings
 from itertools import product, chain
 
@@ -427,7 +426,7 @@ def _to_ticks(s, parse_single_int=False):
         ticks = s.values
     elif isinstance(s, (list, tuple)):
         ticks = [_to_tick(e) for e in s]
-    elif sys.version >= '3' and isinstance(s, range):
+    elif isinstance(s, range):
         ticks = s
     elif isinstance(s, str):
         seq = _seq_str_to_seq(s, parse_single_int=parse_single_int)
@@ -1049,13 +1048,11 @@ class Group:
     __divmod__ = _binop('divmod')
     __rmod__ = _binop('rmod')
     __mod__ = _binop('mod')
+    # div and rdiv are not longer used on Python3+
     __rfloordiv__ = _binop('rfloordiv')
     __floordiv__ = _binop('floordiv')
     __rtruediv__ = _binop('rtruediv')
     __truediv__ = _binop('truediv')
-    if sys.version < '3':
-        __div__ = _binop('div')
-        __rdiv__ = _binop('rdiv')
     __rmul__ = _binop('rmul')
     __mul__ = _binop('mul')
     __rsub__ = _binop('rsub')

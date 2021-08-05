@@ -1,6 +1,5 @@
 import fnmatch
 import re
-import sys
 import warnings
 from itertools import product
 
@@ -1075,9 +1074,7 @@ class Axis(ABCAxis):
     __rsub__ = _binop('rsub')
     __mul__ = _binop('mul')
     __rmul__ = _binop('rmul')
-    if sys.version < '3':
-        __div__ = _binop('div')
-        __rdiv__ = _binop('rdiv')
+    # div and rdiv are not longer used on Python3+
     __truediv__ = _binop('truediv')
     __rtruediv__ = _binop('rtruediv')
     __floordiv__ = _binop('floordiv')
