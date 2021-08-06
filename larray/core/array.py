@@ -1454,7 +1454,7 @@ class Array(ABCArray):
             index = pd.Index([''])
             if fold_last_axis_name:
                 index.name = self.axes.names[-1]
-        data = np.asarray(self).reshape(len(index), len(columns))
+        data = np.asarray(self).reshape((len(index), len(columns)))
         df = pd.DataFrame(data, index, columns)
         if dropna is not None:
             dropna = dropna if dropna is not True else 'all'
@@ -2669,7 +2669,7 @@ class Array(ABCArray):
             # array is not of object dtype (the usual case).
 
             # flatten all dimensions except the last one
-            res2d = ensure_no_numpy_type(self.data.reshape(-1, self.shape[-1]))
+            res2d = ensure_no_numpy_type(self.data.reshape((-1, self.shape[-1])))
         else:
             if not self.ndim:
                 return None
@@ -2680,7 +2680,7 @@ class Array(ABCArray):
             else:
                 width = 1
                 height = int(np.prod(self.shape))
-            data = self.data.reshape(height, width)
+            data = self.data.reshape((height, width))
 
             # get list of names of axes
             if _axes_display_names:
