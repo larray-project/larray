@@ -3548,6 +3548,9 @@ class Array(ABCArray):
             combined = np.ravel(self.data)
             # combined[::-1] *is* indexable
             return combined if ascending else combined[::-1]
+        elif not axes:
+            # empty axes list
+            return [self]
 
         if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
@@ -9722,9 +9725,11 @@ def zip_array_values(values, axes=None, ascending=True):
 
     Parameters
     ----------
+    values : sequence of (scalar or Array)
+        Values to iterate on. Scalars are repeated as many times as necessary.
     axes : int, str or Axis or tuple of them, optional
-        Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
-        all arrays, in the order they are found).
+        Axis or axes along which to iterate and in which order. All those axes must be compatible (if present) between
+        the different values. Defaults to None (union of all axes present in all arrays, in the order they are found).
     ascending : bool, optional
         Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
 
@@ -9758,6 +9763,10 @@ def zip_array_values(values, axes=None, ascending=True):
         2   3
     c  c1  c2
         2   3
+
+    When the axis to iterate on (`c` in this case) is not present in one of the arrays (arr1), that array is repeated
+    for each label of that axis:
+
     >>> for a1, a2 in zip_array_values((arr1, arr2), arr2.c):
     ...     print("==")
     ...     print(a1)
@@ -9774,8 +9783,11 @@ def zip_array_values(values, axes=None, ascending=True):
      a1   2   3
     a  a0  a1
         1   3
+
+    When no `axes` are given, it iterates on the union of all compatible axes (a, b, and c in this case):
+
     >>> for a1, a2 in zip_array_values((arr1, arr2)):
-    ...     print("arr1: {}, arr2: {}".format(a1, a2))
+    ...     print(f"arr1: {a1}, arr2: {a2}")
     arr1: 0, arr2: 0
     arr1: 0, arr2: 1
     arr1: 1, arr2: 0
@@ -9794,21 +9806,26 @@ def zip_array_values(values, axes=None, ascending=True):
             size = axes.size if axes.ndim else 0
             return Repeater(value, size)
 
-    all_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    values_axes = [get_axes(v) for v in values]
+
     if axes is None:
-        axes = all_axes
+        all_iter_axes = values_axes
     else:
         if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
-        # transform string axes definitions to objects
+
+        # transform string axes _definitions_ to objects
         axes = [Axis(axis) if isinstance(axis, str) and '=' in axis else axis
                 for axis in axes]
-        # transform string axes references to objects
-        axes = AxisCollection([axis if isinstance(axis, Axis) else all_axes[axis]
-                               for axis in axes])
+
+        # get iter axes for all values and transform string axes _references_ to objects
+        all_iter_axes = [AxisCollection([value_axes[axis] for axis in axes if axis in value_axes])
+                         for value_axes in values_axes]
+
+    common_iter_axes = AxisCollection.union(*all_iter_axes)
 
     # sequence of tuples (of scalar or arrays)
-    return SequenceZip([values_with_expand(v, axes, ascending=ascending) for v in values])
+    return SequenceZip([values_with_expand(v, common_iter_axes, ascending=ascending) for v in values])
 
 
 def zip_array_items(values, axes=None, ascending=True):
