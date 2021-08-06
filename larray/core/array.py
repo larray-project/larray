@@ -5648,7 +5648,11 @@ class Array(ABCArray):
             # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but
             # it makes some tests fail for some reason.
             if not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
-                other = asarray(other)
+                if isinstance(other, list):
+                    other = asarray(other)
+                else:
+                    # support for inspect.signature
+                    return False
 
             if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
