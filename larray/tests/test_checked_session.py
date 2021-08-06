@@ -3,7 +3,7 @@ import pytest
 try:
     import pydantic         # noqa: F401
 except ImportError:
-    pytestmark = pytest.mark.skip("pydantic is required for testing Checked* classes")
+    pytest.skip("pydantic is required for testing Checked* classes", allow_module_level=True)
 
 import pickle
 import numpy as np
