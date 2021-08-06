@@ -17,7 +17,8 @@ from larray.tests.common import (inputpath, tmp_path,
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup,
                     union, zeros, zeros_like, ndtest, empty, ones, eye, diag, stack,
                     clip, exp, where, X, mean, isnan, round, read_hdf, read_csv, read_eurostat, read_excel,
-                    from_lists, from_string, open_excel, from_frame, sequence, nan)
+                    from_lists, from_string, open_excel, from_frame, sequence, nan,
+                    zip_array_values, zip_array_items)
 from larray.inout.pandas import from_series
 from larray.core.axis import _to_ticks, _to_key
 from larray.util.misc import LHDFStore
@@ -328,6 +329,10 @@ def test_values():
     assert_larray_equal(res[1], arr['b0'])
     assert_larray_equal(values[0], arr['b1'])
     assert_larray_equal(values[-1], arr['b0'])
+
+    values = arr.values(())
+    res = list(values)
+    assert_larray_equal(res[0], arr)
 
 
 def test_items():
@@ -5208,6 +5213,40 @@ def test_eq():
     a = ndtest((2, 3, 4))
     ao = a.astype(object)
     assert_array_equal(ao.eq(ao['c0'], nans_equal=True), a == a['c0'])
+
+
+def test_zip_array_values():
+    arr1 = ndtest((2, 3))
+    # b axis intentionally not the same on both arrays
+    arr2 = ndtest((2, 2, 2))
+
+    # 1) no axes => return input arrays themselves
+    res = list(zip_array_values((arr1, arr2), ()))
+    assert len(res) == 1 and len(res[0]) == 2
+    r0_arr1, r0_arr2 = res[0]
+    assert_larray_equal(r0_arr1, arr1)
+    assert_larray_equal(r0_arr2, arr2)
+
+    # 2) iterate on an axis not present on one of the arrays => the other array is repeated
+    res = list(zip_array_values((arr1, arr2), arr2.c))
+    assert len(res) == 2 and all(len(r) == 2 for r in res)
+    r0_arr1, r0_arr2 = res[0]
+    r1_arr1, r1_arr2 = res[1]
+    assert_larray_equal(r0_arr1, arr1)
+    assert_larray_equal(r0_arr2, arr2['c0'])
+    assert_larray_equal(r1_arr1, arr1)
+    assert_larray_equal(r1_arr2, arr2['c1'])
+
+
+def test_zip_array_items():
+    arr1 = ndtest('a=a0,a1;b=b0,b1')
+    arr2 = ndtest('a=a0,a1;c=c0,c1')
+    res = list(zip_array_items((arr1, arr2), axes=()))
+    assert len(res) == 1 and len(res[0]) == 2 and len(res[0][1]) == 2
+    r0_k, (r0_arr1, r0_arr2) = res[0]
+    assert r0_k == ()
+    assert_larray_equal(r0_arr1, arr1)
+    assert_larray_equal(r0_arr2, arr2)
 
 
 if __name__ == "__main__":
