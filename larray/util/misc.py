@@ -991,3 +991,8 @@ def _validate_dir(directory):
 
 def argsort(seq):
     return sorted(range(len(seq)), key=seq.__getitem__)
+
+
+def exactly_one(a: bool, b: bool, c: bool = False) -> bool:
+    """returns True if exactly one of a, b or c boolean arguments is True, False otherwise"""
+    return (a or b) and not (a and b) if not c else not (a or b)

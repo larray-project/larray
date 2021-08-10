@@ -59,7 +59,7 @@ from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis 
 from larray.util.misc import (table2str, size2str, ReprString,
                               float_error_handler_factory, light_product, common_type,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
-                              Repeater, Product, ensure_no_numpy_type)
+                              Repeater, Product, ensure_no_numpy_type, exactly_one)
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 
 
@@ -6276,7 +6276,7 @@ class Array(ABCArray):
         a2   c1   2   3
         a2   c2   2   3
         """
-        if sum([target_axes is not None, out is not None]) != 1:
+        if not exactly_one(target_axes is not None, out is not None):
             raise ValueError("exactly one of either `target_axes` or `out` must be defined (not both)")
 
         if out is not None:
@@ -6615,7 +6615,7 @@ class Array(ABCArray):
         # >>> arr1.insert(value=toinsert['value'], before=toinsert['before'], label=toinsert['label'])
         # >>> arr1.insert(**toinsert)
         # >>> arr1.insert(**toinsert.to_dict('column'))
-        if sum([before is not None, after is not None, pos is not None]) != 1:
+        if not exactly_one(before is not None, after is not None, pos is not None):
             raise ValueError("must specify exactly one of before, after or pos")
 
         if pos is not None or axis is not None:
