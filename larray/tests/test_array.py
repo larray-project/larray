@@ -2773,8 +2773,72 @@ def test_mean(small_array):
 
 
 def test_sequence():
-    res = sequence('b=b0..b2', ndtest(3) * 3, 1.0)
-    assert_array_equal(ndtest((3, 3), dtype=float), res)
+    # int initial, (default) int inc
+    res = sequence('a=a0..a2', initial=1)
+    assert_larray_equal(1 + ndtest(3), res)
+
+    # int initial, int inc, axes defined but str axis
+    res = sequence('a=a0..a2', initial=1, inc=2, axes='a=a0..a2;b=b0,b1')
+    expected = from_string(r"""
+    a\b  b0  b1
+     a0   1   1
+     a1   3   3
+     a2   5   5""")
+    assert_larray_equal(res, expected)
+
+    # int initial, float inc
+    res = sequence('a=a0..a2', initial=1, inc=1.5)
+    assert_larray_equal(1 + ndtest(3) * 1.5, res)
+
+    # array initial, (default) int inc
+    res = sequence('b=b0..b2', initial=ndtest(2) * 3)
+    assert_larray_equal(ndtest((2, 3)), res)
+
+    # array initial, float inc
+    res = sequence('b=b0..b2', initial=ndtest(2), inc=1.5)
+    expected = from_string(r"""
+    a\b   b0   b1   b2
+     a0  0.0  1.5  3.0
+     a1  1.0  2.5  4.0""")
+    assert_larray_equal(res, expected)
+
+    # array initial, float mult
+    res = sequence('b=b0..b2', initial=1 + ndtest(2), mult=1.5)
+    expected = from_string(r"""
+a\b   b0   b1    b2
+ a0  1.0  1.5  2.25
+ a1  2.0  3.0   4.5""")
+    assert_larray_equal(res, expected)
+
+    # array initial, int array mult
+    initial = from_string("""
+a  a0  a1
+\t  1   2""")
+    mult = from_string(r"""
+a\b b1 b2
+ a0  1  2
+ a1  2  1""")
+    res = sequence('b=b0..b2', initial=initial, mult=mult)
+    expected = from_string(r"""
+a\b b0 b1 b2
+ a0  1  1  2
+ a1  2  4  4""")
+    assert_larray_equal(res, expected)
+
+    # array initial, float array mult
+    initial = from_string("""
+a  a0  a1
+\t  1   2""")
+    mult = from_string(r"""
+a\b   b1   b2
+ a0  1.0  2.0
+ a1  2.0  1.0""")
+    res = sequence('b=b0..b2', initial=initial, mult=mult)
+    expected = from_string(r"""
+a\b   b0   b1   b2
+ a0  1.0  1.0  2.0
+ a1  2.0  4.0  4.0""")
+    assert_larray_equal(res, expected)
 
 
 def test_sort_values():

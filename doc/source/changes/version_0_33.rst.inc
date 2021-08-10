@@ -62,3 +62,5 @@ Fixes
 ^^^^^
 
 * fixed Array.values(), zip_array_values and zip_array_items when axes=() (closes :issue:`883`).
+
+* fixed several edge cases in :py:obj:`sequence()`.
