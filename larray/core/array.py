@@ -6787,20 +6787,29 @@ class Array(ABCArray):
         c1   b0   1   5
         c1   b1   3   7
         """
-        if len(args) == 1 and isinstance(args[0], (tuple, list, AxisCollection)):
-            axes = args[0]
-        elif len(args) == 0:
-            axes = self.axes[::-1]
+        axes = self.axes
+        data = self.data
+        if len(args) == 0:
+            return Array(data.T, axes[::-1])
+        elif len(args) == 1 and isinstance(args[0], (tuple, list, AxisCollection)):
+            target_axes = args[0]
         else:
-            axes = args
+            target_axes = args
 
-        axes = self.axes[axes]
-        axes_indices = [self.axes.index(axis) for axis in axes]
+        # TODO: this shouldn't be necessary in most cases (and is expensive compared to the numpy op itself)
+        #       but doing it only when ... is present breaks many tests => in which other cases is it necessary???
+        target_axes = axes[target_axes]
+        # if ... in target_axes:
+        #     target_axes = axes[target_axes]
+
+        # TODO: implement AxisCollection.index(sequence)
+        axes_indices = [axes.index(axis) for axis in target_axes]
         # this whole mumbo jumbo is required (for now) for anonymous axes
         indices_present = set(axes_indices)
-        missing_indices = [i for i in range(len(self.axes)) if i not in indices_present]
-        axes_indices = axes_indices + missing_indices
-        return Array(self.data.transpose(axes_indices), self.axes[axes_indices])
+        missing_indices = [i for i in range(data.ndim) if i not in indices_present]
+        axes_indices += missing_indices
+
+        return Array(data.transpose(axes_indices), axes[axes_indices])
     T = property(transpose)
 
     def clip(self, minval=None, maxval=None, out=None):
