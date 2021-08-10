@@ -15,6 +15,12 @@ cells:
 
 
 - code: |
+    %xmode Minimal
+
+  metadata:
+    nbsphinx: hidden
+
+- code: |
     from larray import *
 
 
@@ -435,9 +441,8 @@ cells:
 
 
 - markdown: |
-    Arrays may be grouped in [Session](../api.rst#session) objects.
-    A session is an ordered dict-like container of Array objects with special I/O methods.
-    To create a session, you need to pass a list of pairs (array_name, array):
+    Variables (arrays) may be grouped in [Session](../api.rst#session) objects.
+    A session is an ordered dict-like container with special I/O methods:
 
 
 - code: |
@@ -445,17 +450,24 @@ cells:
     births = zeros([age, gender, time])
     deaths = zeros([age, gender, time])
     
-    # create a session containing the three arrays 'population', 'births' and 'deaths'
+    # create a session containing the arrays of the model
     demography_session = Session(population=population, births=births, deaths=deaths)
     
-    # displays names of arrays contained in the session
-    demography_session.names
     # get an array (option 1)
     demography_session['population']
+    
     # get an array (option 2)
     demography_session.births
-    # add/modify an array
-    demography_session['foreigners'] = zeros([age, gender, time])
+    
+    # modify an array
+    demography_session.deaths['male'] = 1
+    
+    # add an array
+    demography_session.foreigners = zeros([age, gender, time])
+    
+    # displays names of arrays contained in the session
+    # (in alphabetical order)
+    demography_session.names
 
 
 - markdown: |
@@ -470,7 +482,18 @@ cells:
 
 
 - markdown: |
-    ## Graphical User Interface (viewer)
+    However, development tools like PyCharm do not provide *autocomplete* for objects in ``Session`` objects.
+    
+    *Autocomplete* is the feature in which development tools try to predict the variable or function a user intends to enter after only a few characters have been typed (like word completion in cell phones).
+    
+    Another way to group objects of a model is to use [CheckedSession](../api.rst#checkedsession). 
+    The ``CheckedSession`` provide the same methods than ``Session`` but enable the *autocomplete* feature on objects it contains.
+    
+    For more details about ``CheckedSession``, see the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
+
+
+- markdown: |
+    ## Graphical User Interface (Editor)
 
 
 - markdown: |
@@ -555,7 +578,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.7
+    version: 3.8.10
 nbformat: 4
 nbformat_minor: 2
 

@@ -9,13 +9,116 @@ cells:
 
 
 - code: |
+    %xmode Minimal
+
+  metadata:
+    nbsphinx: hidden
+
+- code: |
     from larray import *
 
 
 - markdown: |
-    ## Before To Continue
+    ## Three Kinds Of Sessions  
+
+
+- markdown: |
+    They are three ways to group objects in LArray:
     
-    If you are not yet comfortable with creating, saving and loading sessions, please read first the [Creating Sessions](tutorial_presenting_larray_objects.ipynb#Creating-Sessions) section of the tutorial before going further.  
+      * [Session](../api.rst#session): is an ordered dict-like container with special I/O methods. Although the *autocomplete*\* feature on the objects stored in the session is available in the larray-editor, it is not available in development tools like PyCharm making it cumbersome to use.
+      * [CheckedSession](../api.rst#checkedsession): provides the same methods as Session objects but are defined in a completely different way (see example below). The *autocomplete*\* feature is both available in the larray-editor and in development tools (PyCharm). In addition, the type of each stored object is protected. Optionally, it is possible to constrain the axes and dtype of arrays using ``CheckedArray``.
+      * [CheckedParameters](../api.rst#checkedparameters): is a special version of CheckedSession in which the value of all stored objects (parameters) is frozen after initialization.
+      
+     \* *Autocomplete* is the feature in which development tools try to predict the variable or function a user intends to enter after only a few characters have been typed (like word completion in cell phones).
+
+
+- markdown: |
+    ## Creating Sessions 
+
+
+- markdown: |
+    ### Session
+    
+    Create a session:
+
+
+- code: |
+    # define some scalars, axes and arrays
+    variant = 'baseline'
+    
+    country = Axis('country=Belgium,France,Germany')
+    gender = Axis('gender=Male,Female')
+    time = Axis('time=2013..2017')
+    
+    population = zeros([country, gender, time])
+    births = zeros([country, gender, time])
+    deaths = zeros([country, gender, time])
+
+
+- code: |
+    # create an empty session and objects one by one after
+    s = Session()
+    s.variant = variant
+    s.country = country
+    s.gender = gender
+    s.time = time
+    s.population = population
+    s.births = births
+    s.deaths = deaths
+    
+    print(s.summary())
+
+
+- code: |
+    # or create a session in one step by passing all objects to the constructor
+    s = Session(variant=variant, country=country, gender=gender, time=time, 
+                population=population, births=births, deaths=deaths)
+    
+    print(s.summary())
+
+
+- markdown: |
+    ### CheckedSession
+    
+    The syntax to define a checked-session is a bit specific:
+    
+    ```python
+    class MySession(CheckedSession):
+        # Variables can be declared in two ways:
+        # a) by specifying only the type of the variable (to be initialized later)
+        var1: Type
+        # b) by giving an initialization value.
+        #    In that case, the type is deduced from the initialization value
+        var2 = initialization value
+        # Additionally, axes and dtype of Array variables can be constrained 
+        # using the special type CheckedArray
+        arr1: CheckedArray([list, of, axes], dtype) = initialization value
+    ```
+    
+    Check the example below:
+
+
+- code: |
+    class Demography(CheckedSession):
+        # (convention is to declare parameters (read-only objects) in capital letters)
+        # Declare 'VARIANT' parameter as of type string.
+        # 'VARIANT' will be initialized when a 'Demography' session will be created
+        VARIANT: str
+        # declare variables with an initialization value.
+        # Their type is deduced from their initialization value. 
+        COUNTRY = Axis('country=Belgium,France,Germany')
+        GENDER = Axis('gender=Male,Female')
+        TIME = Axis('time=2013..2017')
+        population = zeros([COUNTRY, GENDER, TIME], dtype=int)
+        births = zeros([COUNTRY, GENDER, TIME], dtype=int)
+        # declare 'deaths' with constrained axes and dtype.
+        # Its type (Array), axes and dtype are not modifiable.
+        # It will be initialized with 0
+        deaths: CheckedArray([COUNTRY, GENDER, TIME], int) = 0
+    
+    d = Demography(VARIANT='baseline')
+    
+    print(d.summary())
 
 
 - markdown: |
@@ -36,19 +139,19 @@ cells:
     # create a new Session object and load all arrays, axes, groups and metadata 
     # from all CSV files located in the passed directory
     csv_dir = get_example_filepath('demography_eurostat')
-    demography_session = Session(csv_dir)
+    s = Session(csv_dir)
     
     # create a new Session object and load all arrays, axes, groups and metadata
     # stored in the passed Excel file
     filepath_excel = get_example_filepath('demography_eurostat.xlsx')
-    demography_session = Session(filepath_excel)
+    s = Session(filepath_excel)
     
     # create a new Session object and load all arrays, axes, groups and metadata
     # stored in the passed HDF5 file
     filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    demography_session = Session(filepath_hdf)
+    s = Session(filepath_hdf)
     
-    print(demography_session.summary())
+    print(s.summary())
 
 
 - markdown: |
@@ -58,17 +161,17 @@ cells:
 - code: |
     # create a session containing 3 axes, 2 groups and one array 'population'
     filepath = get_example_filepath('population_only.xlsx')
-    demography_session = Session(filepath)
+    s = Session(filepath)
     
-    print(demography_session.summary())
+    print(s.summary())
 
 
 - code: |
     # call the load method on the previous session and add the 'births' and 'deaths' arrays to it
     filepath = get_example_filepath('births_and_deaths.xlsx')
-    demography_session.load(filepath)
+    s.load(filepath)
     
-    print(demography_session.summary())
+    print(s.summary())
 
 
 - markdown: |
@@ -91,11 +194,11 @@ cells:
 
 
 - code: |
-    demography_session = Session()
+    s = Session()
     
     # with display=True, the load method will print a message
     # each time a new item is loaded
-    demography_session.load(filepath_hdf, display=True)
+    s.load(filepath_hdf, display=True)
 
 
 - markdown: |
@@ -107,16 +210,13 @@ cells:
 - code: |
     # save items of a session in CSV files.
     # Here, the save method will create a 'demography' directory in which CSV files will be written 
-    demography_session.save('demography')
+    s.save('demography')
     
     # save the session to an HDF5 file
-    demography_session.save('demography.h5')
+    s.save('demography.h5')
     
     # save the session to an Excel file
-    demography_session.save('demography.xlsx')
-    
-    # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
+    s.save('demography.xlsx')
 
 
 - markdown: |
@@ -133,10 +233,10 @@ cells:
 
 - code: |
     # use the names argument to only save births and deaths arrays
-    demography_session.save('demography.h5', names=['births', 'deaths'])
+    s.save('demography.h5', names=['births', 'deaths'])
     
     # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
+    Session('demography.h5').names
 
 
 - markdown: |
@@ -145,15 +245,15 @@ cells:
 
 - code: |
     population = read_csv('./demography/population.csv')
-    population_session = Session([('population', population)])
+    pop_ses = Session([('population', population)])
     
     # by setting overwrite to False, the destination file is updated instead of overwritten.
     # The items already stored in the file but not present in the session are left intact. 
     # On the contrary, the items that exist in both the file and the session are completely overwritten.
-    population_session.save('demography.h5', overwrite=False)
+    pop_ses.save('demography.h5', overwrite=False)
     
     # load session saved in 'demography.h5' to see its content
-    Session('demography.h5')
+    Session('demography.h5').names
 
 
 - markdown: |
@@ -163,7 +263,7 @@ cells:
 - code: |
     # with display=True, the save method will print a message
     # each time an item is dumped
-    demography_session.save('demography.h5', display=True)
+    s.save('demography.h5', display=True)
 
 
 - markdown: |
@@ -175,10 +275,10 @@ cells:
 - code: |
     # load a session representing the results of a demographic model
     filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    demography_session = Session(filepath_hdf)
+    s = Session(filepath_hdf)
     
     # print the content of the session
-    print(demography_session.names)
+    print(s.names)
 
 
 - markdown: |
@@ -187,7 +287,7 @@ cells:
 
 - code: |
     # print the content of the session
-    print(demography_session.summary())
+    print(s.summary())
 
 
 - markdown: |
@@ -197,7 +297,7 @@ cells:
 
 
 - code: |
-    demography_session['population']
+    s['population']
 
 
 - markdown: |
@@ -205,7 +305,7 @@ cells:
 
 
 - code: |
-    demography_session.population
+    s.population
 
 
 - markdown: |
@@ -219,9 +319,24 @@ cells:
 
 
 - code: |
-    demography_session_new = demography_session['population', 'births', 'deaths']
+    s_selected = s['population', 'births', 'deaths']
     
-    demography_session_new.names
+    s_selected.names
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        **Warning:** The same selection as above can be applied on a checked-session **but the returned object is a normal session and NOT a checked-session**. This means that you will loose all the benefits (autocomplete, protection on type, axes and dtype) of checked-sessions. 
+    </div>
+
+
+- code: |
+    d_selected = d['births', 'deaths']
+    
+    # test if v_selected is a checked-session
+    print('is still a check-session?', isinstance(d_selected, CheckedSession))
+    #test if v_selected is a normal session
+    print('is now a normal session?', isinstance(d_selected, Session))
 
 
 - markdown: |
@@ -230,12 +345,27 @@ cells:
 
 - code: |
     # select only arrays of a session
-    demography_session.filter(kind=Array)
+    s.filter(kind=Array)
 
 
 - code: |
     # selection all items with a name starting with a letter between a and k
-    demography_session.filter(pattern='[a-k]*')
+    s.filter(pattern='[a-k]*')
+
+
+- markdown: |
+    <div class="alert alert-warning">
+        **Warning:** Using the *filter()* method on a checked-session **will return a normal session and NOT a checked-session**. This means that you will loose all the benefits (autocomplete, protection on type, axes and dtype) of checked-sessions. 
+    </div>
+
+
+- code: |
+    d_filtered = d.filter(pattern='[a-k]*')
+    
+    # test if v_selected is a checked-session
+    print('is still a check-session?', isinstance(d_filtered, CheckedSession))
+    #test if v_selected is a normal session
+    print('is now a normal session?', isinstance(d_filtered, Session))
 
 
 - markdown: |
@@ -246,13 +376,13 @@ cells:
 
 - code: |
     # iterate over item names
-    for key in demography_session.keys():
+    for key in s.keys():
         print(key)
 
 
 - code: |
     # iterate over items
-    for value in demography_session.values():
+    for value in s.values():
         if isinstance(value, Array):
             print(value.info)
         else:
@@ -262,13 +392,82 @@ cells:
 
 - code: |
     # iterate over names and items
-    for key, value in demography_session.items():
+    for key, value in s.items():
         if isinstance(value, Array):
             print(key, ':')
             print(value.info)
         else:
             print(key, ':', repr(value))
         print()
+
+
+- markdown: |
+    ## Manipulating Checked Sessions
+    
+    **Note**: this section only concerns objects declared in checked-sessions.
+    
+    Let's create a simplified version of the *Demography* checked-session we have defined above:
+
+
+- code: |
+    class Demography(CheckedSession):
+        COUNTRY = Axis('country=Belgium,France,Germany')
+        GENDER = Axis('gender=Male,Female')
+        TIME = Axis('time=2013..2017')
+        population = zeros([COUNTRY, GENDER, TIME], dtype=int)
+        # declare the deaths array with constrained axes and dtype
+        deaths: CheckedArray([COUNTRY, GENDER, TIME], int) = 0
+    
+    d = Demography()
+    
+    print(d.summary())
+
+
+- markdown: |
+    One of the specificities of checked-sessions is that the type of the contained objects is protected (it cannot change). Any attempt to assign a value of different type will raise an error:
+
+
+- code: |
+    # The population variable was initialized with the zeros() function which returns an Array object.
+    # The declared type of the population variable is Array and is protected 
+    d.population = Axis('population=child,teenager,adult,elderly')
+
+
+- markdown: |
+    The *death* array has been declared as a [CheckedArray](../api.rst#checkedarray). 
+    As a consequence, its axes are protected. 
+    Trying to assign a value with incompatible axes raises an error:
+
+
+- code: |
+    AGE = Axis('age=0..100')
+    d.deaths = zeros([d.COUNTRY, AGE, d.GENDER, d.TIME])
+
+
+- markdown: |
+    The *deaths* array is also constrained by its declared dtype *int*. This means that if you try to assign a value of type *float* instead of *int*, the value will be converted to *int* if possible: 
+
+
+- code: |
+    d.deaths = 1.2
+    d.deaths
+
+
+- markdown: |
+    or raise an error: 
+
+
+- code: |
+    d.deaths = 'undead'
+
+
+- markdown: |
+    It is possible to add a new variable after the checked-session has been initialized but in that case, a warning message is printed (in case you misspelled the name of variable while trying to modify it):
+
+
+- code: |
+    # misspell population (forgot the 'a')
+    d.popultion = 0
 
 
 - markdown: |
@@ -279,9 +478,9 @@ cells:
 
 - code: |
     # get population, births and deaths in millions
-    demography_session_div = demography_session / 1e6
+    s_div = s / 1e6
     
-    demography_session_div.population
+    s_div.population
 
 
 - markdown: |
@@ -290,15 +489,15 @@ cells:
 
 - code: |
     from larray import random
-    random_increment = random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3], axes=demography_session.population.axes) * 1000
+    random_increment = random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3], axes=s.population.axes) * 1000
     random_increment
 
 
 - code: |
     # add some variables of a session by a common array
-    demography_session_rand = demography_session['population', 'births', 'deaths'] + random_increment
+    s_rand = s['population', 'births', 'deaths'] + random_increment
     
-    demography_session_rand.population
+    s_rand.population
 
 
 - markdown: |
@@ -307,7 +506,7 @@ cells:
 
 - code: |
     # compute the difference between each array of the two sessions
-    s_diff = demography_session - demography_session_rand
+    s_diff = s - s_rand
     
     s_diff.births
 
@@ -327,13 +526,13 @@ cells:
         else:
             return array
     
-    demography_session_with_next_year = demography_session.apply(add_next_year)
+    s_with_next_year = s.apply(add_next_year)
     
     print('population array before calling apply:')
-    print(demography_session.population)
+    print(s.population)
     print()
     print('population array after calling apply:')
-    print(demography_session_with_next_year.population)
+    print(s_with_next_year.population)
 
 
 - markdown: |
@@ -352,13 +551,13 @@ cells:
         else:
             return array
     
-    demography_session_with_next_year = demography_session.apply(add_next_year, True)
+    s_with_next_year = s.apply(add_next_year, True)
     
     print('population array before calling apply:')
-    print(demography_session.population)
+    print(s.population)
     print()
     print('population array after calling apply:')
-    print(demography_session_with_next_year.population)
+    print(s_with_next_year.population)
 
 
 - markdown: |
@@ -381,53 +580,53 @@ cells:
 - code: |
     # load a session representing the results of a demographic model
     filepath_hdf = get_example_filepath('demography_eurostat.h5')
-    demography_session = Session(filepath_hdf)
+    s = Session(filepath_hdf)
     
     # create a copy of the original session
-    demography_session_copy = demography_session.copy()
+    s_copy = s.copy()
 
 
 - code: |
     # 'element_equals' compare arrays one by one
-    demography_session.element_equals(demography_session_copy)
+    s.element_equals(s_copy)
 
 
 - code: |
     # 'equals' returns True if all items of the two sessions have exactly the same items
-    demography_session.equals(demography_session_copy)
+    s.equals(s_copy)
 
 
 - code: |
     # slightly modify the 'population' array for some labels combination
-    demography_session_copy.population += random_increment 
+    s_copy.population += random_increment 
 
 
 - code: |
     # the 'population' array is different between the two sessions
-    demography_session.element_equals(demography_session_copy)
+    s.element_equals(s_copy)
 
 
 - code: |
     # 'equals' returns False if at least one item of the two sessions are different in values or axes
-    demography_session.equals(demography_session_copy)
+    s.equals(s_copy)
 
 
 - code: |
     # reset the 'copy' session as a copy of the original session
-    demography_session_copy = demography_session.copy()
+    s_copy = s.copy()
     
     # add an array to the 'copy' session
-    demography_session_copy.gender_ratio = demography_session_copy.population.ratio('gender')
+    s_copy.gender_ratio = s_copy.population.ratio('gender')
 
 
 - code: |
     # the 'gender_ratio' array is not present in the original session
-    demography_session.element_equals(demography_session_copy)
+    s.element_equals(s_copy)
 
 
 - code: |
     # 'equals' returns False if at least one item is not present in the two sessions
-    demography_session.equals(demography_session_copy)
+    s.equals(s_copy)
 
 
 - markdown: |
@@ -436,14 +635,14 @@ cells:
 
 - code: |
     # reset the 'copy' session as a copy of the original session
-    demography_session_copy = demography_session.copy()
+    s_copy = s.copy()
     
     # slightly modify the 'population' array for some labels combination
-    demography_session_copy.population += random_increment
+    s_copy.population += random_increment
 
 
 - code: |
-    s_check_same_values = demography_session == demography_session_copy
+    s_check_same_values = s == s_copy
     
     s_check_same_values.population
 
@@ -461,7 +660,7 @@ cells:
 
 
 - code: |
-    s_check_different_values = demography_session != demography_session_copy
+    s_check_different_values = s != s_copy
     
     s_check_different_values.population
 
@@ -470,16 +669,10 @@ cells:
     A more visual way is to use the [compare](../_generated/larray.compare.rst#larray.compare) function which will open the ``Editor``.
     
     ```python
-    compare(demography_session, demography_session_alternative, names=['baseline', 'lower_birth_rate'])
+    compare(s, s_alternative, names=['baseline', 'lower_birth_rate'])
     ```
     
     ![compare two sessions](../_static/compare_tutorial.png)
-
-
-- markdown: |
-    ## Session API
-    
-    Please go to the [Session](../api.rst#session) section of the API Reference to get the list of all methods of Session objects.
 
 
 # The lines below here may be deleted if you do not need them.
@@ -499,7 +692,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.8.10
   livereveal:
     autolaunch: false
     scroll: true
