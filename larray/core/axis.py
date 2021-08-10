@@ -15,7 +15,7 @@ from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to
                                _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
-                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort)
+                              lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, exactly_one)
 
 
 np_frompyfunc = np.frompyfunc
@@ -419,7 +419,7 @@ class Axis(ABCAxis):
         >>> b.insert(c, before='b2')
         Axis(['b1', 'c1', 'c2', 'b2'], 'b')
         """
-        if sum([before is not None, after is not None]) != 1:
+        if not exactly_one(before is not None, after is not None):
             raise ValueError("must specify exactly one of before or after")
         if before is not None:
             before = self.index(before)
