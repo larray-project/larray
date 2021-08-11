@@ -43,6 +43,16 @@ def warn_or_raise(what, msg):
         print(f"WARNING: {msg}")
 
 
+def divnot0(a: np.ndarray, b: np.ndarray):
+    b_eq0 = b == 0
+    # numpy array division gets slower the more zeros you have in other, so we change it before the division
+    # happens. This is obviously slower than doing nothing if we have very few zeros but I think it's a win
+    # on average given that other is likely to contain zeros when using divnot0.
+    res = a / np.where(b_eq0, 1, b)
+    res[np.broadcast_to(b_eq0, res.shape)] = 0.0
+    return res
+
+
 def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabort=10, nzvzs='raise',
          no_convergence='raise', display_progress=False):
     r"""Apply Iterative Proportional Fitting Procedure (also known as bi-proportional fitting in statistics,
@@ -237,7 +247,6 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
             # verify we did fix the problem
             assert not any((a.sum(axis) != 0) & (axis_target_sum == 0))
 
-    r = a
     lastdiffs = deque([float('nan')], maxlen=stepstoabort)
 
     # Here is the nice version of the algorithm
@@ -245,27 +254,33 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     # for i in range(maxiter):
     #     startr = r
     #     for axis, axis_target in zip(axes, target_sums):
-    #         r = r * axis_target.divnot0(r.sum(axis))
+    #         r *= axis_target.divnot0(r.sum(axis))
     #     max_sum_diff = max(abs(r.sum(axis) - axis_target).max()
     #                        for axis, axis_target in zip(axes, target_sums))
     #     step_sum_improvement = ...
 
-    # Here is the ugly optimized version which avoids computing the sum for the first axis twice per iteration
-    # (saves ~10-15% running time).
-    axis0_sum = r.sum(axes[0])
-    for i in range(maxiter):
-        startr = r
-        r = r * target_sums[0].divnot0(axis0_sum)
-        for axis, axis_target in zip(axes[1:], target_sums[1:]):
-            r = r * axis_target.divnot0(r.sum(axis))
+    # Here is the ugly optimized version which use only numpy operations and avoids computing the sum for the first
+    # axis twice per iteration
+    target_sums = [axis_target.data for axis_target in target_sums]
+    res_data = a.data.astype(float)
+    axes_indices = [a.axes.index(axis) for axis in axes]
+    axis0_sum = res_data.sum(axes_indices[0])
 
-        axes_sum = [r.sum(axis) for axis in axes]
+    for i in range(maxiter):
+        startr = res_data.copy()
+        # r = r * target_sums[0].divnot0(axis0_sum)
+        res_data *= np.expand_dims(divnot0(target_sums[0], axis0_sum), axes_indices[0])
+        for axis_idx, axis_target in zip(axes_indices[1:], target_sums[1:]):
+            # r = r * axis_target.divnot0(r.sum(axis))
+            res_data *= np.expand_dims(divnot0(axis_target, res_data.sum(axis_idx)), axis_idx)
+
+        axes_sum = [res_data.sum(axis_idx) for axis_idx in axes_indices]
         max_sum_diff = max(abs(axis_sum - axis_target).max()
                            for axis_sum, axis_target in zip(axes_sum, target_sums))
         axis0_sum = axes_sum[0]
 
         step_sum_improvement = lastdiffs[-1] - max_sum_diff
-        stepcelldiff = abs(r - startr).max()
+        stepcelldiff = abs(res_data - startr).max()
 
         if display_progress:
             maxcelldiff = f2str(stepcelldiff)
@@ -285,16 +300,16 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
             if no_convergence in {'warn', 'raise'}:
                 warn_or_raise(no_convergence, f"does not seem to converge (no improvement for {stepstoabort} "
                                               f"consecutive steps), stopping here.")
-            return r
+            return Array(res_data, a.axes)
 
         if max_sum_diff < threshold:
             if display_progress:
                 print(f"acceptable max(abs(sum - target_sum)) found at iteration {i}: "
                       f"{f2str(max_sum_diff)} < threshold ({threshold})")
-            return r
+            return Array(res_data, a.axes)
 
         lastdiffs.append(max_sum_diff)
 
     if no_convergence in {'warn', 'raise'}:
         warn_or_raise(no_convergence, f"maximum iteration reached ({maxiter})")
-    return r
+    return Array(res_data, a.axes)
