@@ -1047,16 +1047,18 @@ class Axis(ABCAxis):
         fullname = f'__{opname}__'
 
         def opmethod(self, other):
+            if isinstance(other, (Axis, ABCArray)) or np.isscalar(other):
+                from .array import labels_array
+                self_array = labels_array(self)
+                if isinstance(other, Axis):
+                    other = labels_array(other)
+                return getattr(self_array, fullname)(other)
             # give a chance to AxisCollection.__rXXX__ ops to trigger
-            if isinstance(other, AxisCollection):
+            elif isinstance(other, AxisCollection):
                 # in this case it is indeed return NotImplemented, not raise NotImplementedError!
                 return NotImplemented
-
-            from .array import labels_array
-            self_array = labels_array(self)
-            if isinstance(other, Axis):
-                other = labels_array(other)
-            return getattr(self_array, fullname)(other)
+            else:
+                raise TypeError(f"{opname} not supported between instances of 'Axis' and '{type(other).__name__}'")
         opmethod.__name__ = fullname
         return opmethod
 
