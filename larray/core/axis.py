@@ -3120,7 +3120,8 @@ class AxisCollection:
         >>> AxisCollection([age, sex, time]).shape
         (20, 2, 4)
         """
-        return tuple(len(axis) for axis in self._list)
+        # axis._length is almost twice as fast as the nicer len(axis)
+        return tuple(axis._length for axis in self._list)
 
     @property
     def size(self):
