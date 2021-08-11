@@ -6282,13 +6282,13 @@ class Array(ABCArray):
         if out is not None:
             out[:] = self
         else:
-            if not isinstance(target_axes, AxisCollection):
-                target_axes = AxisCollection(target_axes)
-            target_axes = (self.axes - target_axes) | target_axes
-
             # this is not strictly necessary but avoids doing this test twice if it is True
             if self.axes == target_axes:
                 return self
+
+            if not isinstance(target_axes, (tuple, list, AxisCollection)):
+                target_axes = AxisCollection(target_axes)
+            target_axes = (self.axes - target_axes) | target_axes
 
             broadcasted = self.broadcast_with(target_axes)
             # this can only happen if only the order of axes differed and/or all extra axes have length 1
