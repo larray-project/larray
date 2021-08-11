@@ -1153,7 +1153,8 @@ class Array(ABCArray):
         self.data = data
         self.axes = axes
 
-        meta = _handle_meta(meta, title)
+        if meta is not None or title is not None:
+            meta = _handle_meta(meta, title)
         self._meta = meta
 
     @property
