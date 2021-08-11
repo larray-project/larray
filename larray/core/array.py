@@ -2442,7 +2442,7 @@ class Array(ABCArray):
             target_axes = target.axes
         else:
             target_axes = target
-            if not isinstance(target, AxisCollection):
+            if not isinstance(target_axes, (tuple, list, AxisCollection)):
                 target_axes = AxisCollection(target_axes)
         if self.axes == target_axes:
             return self
