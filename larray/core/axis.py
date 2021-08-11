@@ -1668,7 +1668,8 @@ class AxisCollection:
                 # going through lists (instead of doing self[key[:ellipsis_idx]] to avoid problems with anonymous axes
                 before_ellipsis = [self[k] for k in key[:ellipsis_idx]]
                 after_ellipsis = [self[k] for k in key[ellipsis_idx + 1:]]
-                ellipsis_axes = list(self - before_ellipsis - after_ellipsis)
+                selected_axes = set(before_ellipsis + after_ellipsis)
+                ellipsis_axes = [axis for axis in self._list if axis not in selected_axes]
                 return AxisCollection(before_ellipsis + ellipsis_axes + after_ellipsis)
             # XXX: also use get_by_pos if tuple/list of Axis?
             return AxisCollection([self[k] for k in key])
