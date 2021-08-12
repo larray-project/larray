@@ -2,6 +2,7 @@ import fnmatch
 import re
 import warnings
 from itertools import product
+from collections import defaultdict
 
 from typing import Union, Any
 
@@ -2545,6 +2546,11 @@ class AxisCollection:
             Axis(['Belgian', 'FO'], 'nat'),
             Axis(['Men', 'F'], 'sex')
         ])
+        >>> axes.set_labels({'M': 'Men', 'F': 'Women'})
+        AxisCollection([
+            Axis(['BE', 'FO'], 'nat'),
+            Axis(['Men', 'Women'], 'sex')
+        ])
         """
         if axis is None:
             changes = {}
@@ -2555,17 +2561,22 @@ class AxisCollection:
         else:
             raise ValueError("Expected None or a string/int/Axis/dict instance for axis argument")
         changes.update(kwargs)
-        # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
-        # new_axes = [self[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
+
+        # handle {label1: new_label1, label2: new_label2}
+        if any(axis_ref not in self for axis_ref in changes.keys()):
+            changes_per_axis = defaultdict(list)
+            for selection, new_labels in changes.items():
+                group = self._guess_axis(selection)
+                changes_per_axis[group.axis].append((selection, new_labels))
+            changes = {axis: dict(axis_changes) for axis, axis_changes in changes_per_axis.items()}
+
         new_axes = []
         for old_axis, axis_changes in changes.items():
-            try:
-                real_axis = self[old_axis]
-            except KeyError:
-                axis_changes = {old_axis: axis_changes}
-                real_axis = self._guess_axis(old_axis).axis
+            real_axis = self[old_axis]
             if isinstance(axis_changes, dict):
                 new_axis = real_axis.replace(axis_changes)
+            # TODO: we should implement the non-dict behavior in Axis.replace, so that we can simplify this code to:
+            # new_axes = [self[old_axis].replace(axis_changes) for old_axis, axis_changes in changes.items()]
             elif callable(axis_changes):
                 new_axis = real_axis.apply(axis_changes)
             else:
