@@ -1,6 +1,6 @@
 from io import StringIO
 
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 from larray.core.constants import nan
 from larray.util.misc import deprecate_kwarg
@@ -109,7 +109,12 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
     """
     index_col = _get_index_col(nb_axes, index_col, wide)
 
-    df = DataFrame(data[1:], columns=data[0])
+    columns = data[0]
+    # issue #950: avoid pandas interpreting [None, 0, 1] as a Float64Index([nan, 0.0, 1.0], dtype='float64')
+    if None in columns:
+        columns = Index(columns, dtype=object)
+
+    df = DataFrame(data[1:], columns=columns)
     if index_col is not None:
         df = set_dataframe_index_by_position(df, index_col)
 
