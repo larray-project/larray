@@ -1,14 +1,18 @@
 import re
 import os
 import faulthandler
+from pathlib import Path
 
 import pytest
 import numpy as np
 
 from larray.tests.common import needs_xlwings, needs_pytables, must_warn
-from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport
+from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport, read_excel
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
+
+
+TEST_DATA_PATH = Path(__file__).parent / 'data'
 
 
 @needs_xlwings
@@ -50,6 +54,32 @@ class TestWorkbook:
         # in any case, this should work
         with open_excel(visible=False) as wb:
             wb['test'] = 'content'
+
+    def test_links(self):
+        data_dir = TEST_DATA_PATH / 'excel_with_links'
+        fpath1 = data_dir / 'BookA.xlsx'
+        fpath2 = data_dir / 'BookB.xlsx'
+        fpath3 = data_dir / 'BookC.xlsx'
+        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
+        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
+        assert read_excel(fpath3).i[0, 0] == 3
+
+        with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
+            c[0]['B2'] = 41
+            a.save()
+            b.save()
+            c.save()
+        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 42
+        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 42
+        assert read_excel(fpath3).i[0, 0] == 41
+        with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
+            c[0]['B2'] = 3
+            a.save()
+            b.save()
+            c.save()
+        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
+        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
+        assert read_excel(fpath3).i[0, 0] == 3
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
