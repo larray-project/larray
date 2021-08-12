@@ -58,9 +58,12 @@ Miscellaneous improvements
 * :py:obj:`eye()` now supports an AxisCollection as argument, so you can use axes from another array by using
   ``eye(other_array.axes)``.
 
+
 Fixes
 ^^^^^
 
 * fixed Array.values(), zip_array_values and zip_array_items when axes=() (closes :issue:`883`).
 
 * fixed several edge cases in :py:obj:`sequence()`.
+
+* fixed set_labels(labels_dict) with several labels from the same axis (closes :issue:`851`).
