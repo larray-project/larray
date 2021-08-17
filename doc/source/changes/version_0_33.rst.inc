@@ -16,7 +16,7 @@ New features
   `CheckedParameters` is the same as `CheckedSession` but the declared variables cannot be
   modified after initialization.
 
-  The special :py:funct:`CheckedArray` type represents an Array object with fixed axes and/or dtype.
+  The special :py:obj:`CheckedArray` type represents an Array object with fixed axes and/or dtype.
   It is intended to be only used along with :py:class:`CheckedSession`.
 
   Closes :issue:`832`.
