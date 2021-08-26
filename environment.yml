@@ -11,6 +11,6 @@ dependencies:
   - xlsxwriter
   - pytest>=3.5
   - flake8
+  - pydantic
   - pip:
     - pytest-flake8
-    - pydantic==1.5
