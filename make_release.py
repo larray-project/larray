@@ -37,11 +37,9 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
 
     # TODO: this should be echocall(redirect_stdout=False)
     print(f'Updating larrayenv metapackage to version {version}')
-    # - pydantic: cannot define numpy ndarray / pandas obj / LArray field with default value
-    #   since version 1.6
     check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', f'larray =={version}',
                 f'larray-editor =={version}', f'larray_eurostat =={version}',
-                "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables", "pydantic <=1.5",
+                "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables", "pydantic",
                 "xlsxwriter", "xlrd", "xlwt", "openpyxl", "xlwings",
                 '--user', 'larray-project',
                 '--home', 'http://github.com/larray-project/larray',

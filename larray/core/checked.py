@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Type, Any, Dict, Set, List, no_type_check
 
 from larray.core.metadata import Metadata
 from larray.core.axis import AxisCollection
-from larray.core.group import Group
 from larray.core.array import Array, full
 from larray.core.session import Session
 
@@ -39,6 +38,7 @@ if not pydantic:
             raise NotImplementedError("CheckedParameters class cannot be instantiated "
                                       "because pydantic is not installed")
 else:
+    from pydantic.utils import Obj, IMMUTABLE_NON_COLLECTIONS_TYPES, BUILTIN_COLLECTIONS
     from pydantic.fields import ModelField
     from pydantic.class_validators import Validator
     from pydantic.main import BaseConfig
@@ -125,8 +125,32 @@ else:
     class AbstractCheckedSession:
         pass
 
+    # the original version of smart_deepcopy() (from pydantic) crashes when obj is of type of
+    # np.ndarray or Array because the second if is written as:
+    # elif not obj and obj_type in BUILTIN_COLLECTIONS:
+    # which throws the error:
+    # ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+    # see https://github.com/samuelcolvin/pydantic/issues/2923
+    def smart_deepcopy(obj: Obj) -> Obj:
+        """
+        Return type as is for immutable built-in types
+        Use obj.copy() for built-in empty collections
+        Use copy.deepcopy() for non-empty collections and unknown objects
+        """
+        obj_type = obj.__class__
+        if obj_type in IMMUTABLE_NON_COLLECTIONS_TYPES:
+            return obj  # fastest case: obj is immutable and not collection therefore will not be copied anyway
+        elif obj_type in BUILTIN_COLLECTIONS and not obj:
+            # faster way for empty collections, no need to copy its members
+            return obj if obj_type is tuple else obj.copy()  # type: ignore  # tuple doesn't have copy method
+        return deepcopy(obj)  # slowest way when we actually might need a deepcopy
+
+    class LModelField(ModelField):
+        def get_default(self) -> Any:
+            return smart_deepcopy(self.default) if self.default_factory is None else self.default_factory()
+
     # Simplified version of the ModelMetaclass class from pydantic:
-    # https://github.com/samuelcolvin/pydantic/blob/master/pydantic/main.py#L195
+    # https://github.com/samuelcolvin/pydantic/blob/master/pydantic/main.py
 
     class ModelMetaclass(ABCMeta):
         @no_type_check  # noqa C901
@@ -180,9 +204,9 @@ else:
                         if (isinstance(value, untouched_types) and ann_type != PyObject
                                 and not lenient_issubclass(getattr(ann_type, '__origin__', None), Type)):
                             continue
-                        fields[ann_name] = ModelField.infer(name=ann_name, value=value, annotation=ann_type,
-                                                            class_validators=validators.get(ann_name, []),
-                                                            config=config)
+                        fields[ann_name] = LModelField.infer(name=ann_name, value=value, annotation=ann_type,
+                                                             class_validators=validators.get(ann_name, []),
+                                                             config=config)
 
                 for var_name, value in namespace.items():
                     # 'var_name not in annotations' because namespace.items() contains annotated fields
@@ -191,11 +215,10 @@ else:
                     if (var_name not in annotations and not var_name.startswith('_')
                             and not isinstance(value, untouched_types) and var_name not in class_vars):
                         validate_field_name(bases, var_name)
-                        # the method ModelField.infer() fails to infer the type of Group objects
-                        # (which are interpreted as ndarray objects)
-                        annotation = type(value) if isinstance(value, Group) else annotations.get(var_name)
-                        inferred = ModelField.infer(name=var_name, value=value, annotation=annotation,
-                                                    class_validators=validators.get(var_name, []), config=config)
+                        # since pydantic 1.6, ModelField.infer() fails to infer the type (it is set to None)
+                        annotation = type(value)
+                        inferred = LModelField.infer(name=var_name, value=value, annotation=annotation,
+                                                     class_validators=validators.get(var_name, []), config=config)
                         if var_name in fields and inferred.type_ != fields[var_name].type_:
                             raise TypeError(f'The type of {name}.{var_name} differs from the new default value; '
                                             f'if you wish to change the type of this field, please use a type '

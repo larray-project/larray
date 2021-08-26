@@ -9,4 +9,4 @@ pandoc
 ipython
 ipykernel
 nbsphinx
-pydantic<=1.5
+pydantic
