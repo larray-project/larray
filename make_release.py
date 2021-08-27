@@ -37,14 +37,16 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
 
     # TODO: this should be echocall(redirect_stdout=False)
     print(f'Updating larrayenv metapackage to version {version}')
-    check_call(['conda', 'metapackage', 'larrayenv', version, '--dependencies', f'larray =={version}',
-                f'larray-editor =={version}', f'larray_eurostat =={version}',
-                "qtconsole", "matplotlib", "pyqt", "qtpy", "pytables", "pydantic",
-                "xlsxwriter", "xlrd", "xlwt", "openpyxl", "xlwings",
-                '--user', 'larray-project',
-                '--home', 'http://github.com/larray-project/larray',
-                '--license', 'GPL-3.0',
-                '--summary', "'Package installing larray and all sub-projects and optional dependencies'"])
+    args = ['conda', 'metapackage', 'larrayenv', version, '--dependencies', f'larray =={version}',
+            f'larray-editor =={version}', f'larray_eurostat =={version}', "qtconsole", "matplotlib",
+            "pyqt", "qtpy", "pytables", "pydantic", "xlsxwriter", "xlrd", "xlwt", "openpyxl", "xlwings"]
+    # required for pydantic
+    if sys.version_info < (3, 7):
+        args += ["dataclasses"]
+    args += ['--user', 'larray-project', '--home', 'http://github.com/larray-project/larray',
+             '--license', 'GPL-3.0',
+             '--summary', "'Package installing larray and all sub-projects and optional dependencies'"]
+    check_call(args)
 
 
 def merge_changelogs(build_dir, src_documentation, release_name, public_release, branch='master', **extra_kwargs):
