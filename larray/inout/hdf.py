@@ -23,7 +23,7 @@ def _get_type_from_attrs(attrs):
 
 
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
-             name=None, **kwargs):
+             name=None, **kwargs) -> Array:
     r"""Reads a scalar or an axis or group or array named key from a HDF5 file in filepath (path+name)
 
     Parameters

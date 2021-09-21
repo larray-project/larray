@@ -18,7 +18,7 @@ from larray.example import get_example_filepath         # noqa: F401
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=nan,
-             na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs):
+             na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs) -> Array:
     r"""
     Reads csv file and returns an array with the contents.
 
@@ -228,11 +228,11 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     return df_asarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw, wide=wide)
 
 
-def read_tsv(filepath_or_buffer, **kwargs):
+def read_tsv(filepath_or_buffer, **kwargs) -> Array:
     return read_csv(filepath_or_buffer, sep='\t', **kwargs)
 
 
-def read_eurostat(filepath_or_buffer, **kwargs):
+def read_eurostat(filepath_or_buffer, **kwargs) -> Array:
     r"""Reads EUROSTAT TSV (tab-separated) file into an array.
 
     EUROSTAT TSV files are special because they use tabs as data separators but comas to separate headers.
