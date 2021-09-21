@@ -453,10 +453,11 @@ else:
 
             # --- undeclared variables
             for name, value in input_data.items():
-                self.__setattr__(name, value, skip_allow_mutation=True)
+                self.__setattr__(name, value, skip_allow_mutation=True, stacklevel=2)
 
         # code of the method below has been partly borrowed from pydantic.BaseModel.__setattr__()
-        def _check_key_value(self, name: str, value: Any, skip_allow_mutation: bool, skip_validation: bool) -> Any:
+        def _check_key_value(self, name: str, value: Any, skip_allow_mutation: bool, skip_validation: bool,
+                             stacklevel: int) -> Any:
             config = self.__config__
             if not config.extra and name not in self.__fields__:
                 raise ValueError(f"Variable '{name}' is not declared in '{self.__class__.__name__}'. "
@@ -472,19 +473,21 @@ else:
                     if error_:
                         raise error_.exc
             else:
-                warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'", stacklevel=3)
+                warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'", stacklevel=stacklevel + 1)
             return value
 
-        def __setitem__(self, key, value, skip_allow_mutation=False, skip_validation=False):
+        def __setitem__(self, key, value, skip_allow_mutation=False, skip_validation=False, stacklevel=1):
             if key != 'meta':
-                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation)
+                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation,
+                                              stacklevel=stacklevel + 1)
                 # we need to keep the attribute in sync
                 object.__setattr__(self, key, value)
                 self._objects[key] = value
 
-        def __setattr__(self, key, value, skip_allow_mutation=False, skip_validation=False):
+        def __setattr__(self, key, value, skip_allow_mutation=False, skip_validation=False, stacklevel=1):
             if key != 'meta':
-                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation)
+                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation,
+                                              stacklevel=stacklevel + 1)
                 # we need to keep the attribute in sync
                 object.__setattr__(self, key, value)
             Session.__setattr__(self, key, value)
