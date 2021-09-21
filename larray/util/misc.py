@@ -17,6 +17,9 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 
+from larray.util.types import R
+from typing import Callable
+
 try:
     np.set_printoptions(legacy='1.13')
 except TypeError:
@@ -645,9 +648,9 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None
     if mapping is not None and not isinstance(mapping, dict):
         raise TypeError("mapping from old to new argument values must be dict!")
 
-    def _deprecate_kwarg(func):
+    def _deprecate_kwarg(func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> R:
             old_arg_value = kwargs.pop(old_arg_name, None)
             if old_arg_value is not None:
                 if mapping is not None:
