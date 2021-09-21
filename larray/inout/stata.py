@@ -1,11 +1,12 @@
 import pandas as pd
 
+from larray.core.array import Array
 from larray.inout.pandas import from_frame
 
 __all__ = ['read_stata']
 
 
-def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns=False, **kwargs):
+def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns=False, **kwargs) -> Array:
     r"""
     Reads Stata .dta file and returns an Array with the contents
 

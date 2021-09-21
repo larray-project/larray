@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from larray.core.array import Array
 from larray.core.constants import nan
 from larray.inout.pandas import df_asarray
 from larray.util.misc import deprecate_kwarg
@@ -10,7 +11,7 @@ from larray.util.misc import deprecate_kwarg
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
 def read_sas(filepath, nb_axes=None, index_col=None, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
-             **kwargs):
+             **kwargs) -> Array:
     r"""
     Reads sas file and returns an Array with the contents
         nb_axes: number of axes of the output array

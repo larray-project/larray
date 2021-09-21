@@ -76,7 +76,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan
     return df.reindex(index=new_index, columns=columns, fill_value=fill_value, **kwargs), labels
 
 
-def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
+def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Array:
     r"""
     Converts Pandas Series into Array.
 
@@ -145,7 +145,7 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs):
 
 
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
-               fill_value=nan, meta=None, cartesian_prod=True, **kwargs):
+               fill_value=nan, meta=None, cartesian_prod=True, **kwargs) -> Array:
     r"""
     Converts Pandas DataFrame into Array.
 
@@ -275,7 +275,7 @@ def set_dataframe_index_by_position(df, index_col_indices):
 
 
 def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
-               **kwargs):
+               **kwargs) -> Array:
     r"""
     Prepare Pandas DataFrame and then convert it into Array.
 

@@ -2,6 +2,7 @@ from io import StringIO
 
 from pandas import DataFrame, Index
 
+from larray.core.array import Array
 from larray.core.constants import nan
 from larray.util.misc import deprecate_kwarg
 from larray.inout.common import _get_index_col
@@ -10,7 +11,8 @@ from larray.inout.csv import read_csv
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False, wide=True):
+def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False,
+               wide=True) -> Array:
     r"""
     initialize array from a list of lists (lines)
 
@@ -123,7 +125,7 @@ def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=Fal
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs):
+def from_string(s, nb_axes=None, index_col=None, sep=' ', wide=True, **kwargs) -> Array:
     r"""Create an array from a multi-line string.
 
     Parameters

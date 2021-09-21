@@ -31,7 +31,7 @@ __all__ = ['read_excel']
 @deprecate_kwarg('sheetname', 'sheet')
 # We use "# doctest: +SKIP" for all tests because they work only if openpyxl (an *optional* dependency) is installed
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
-               sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs):
+               sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs) -> Array:
     r"""
     Reads excel file from sheet name and returns an Array with the contents
 
