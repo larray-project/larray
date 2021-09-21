@@ -2722,7 +2722,7 @@ class AxisCollection:
 
     def _translate_axis_key(self, axis_key):
         """
-        Translates single axis label-based key to IGroup
+        Translates single axis label-based key to (axis, indices)
 
         Parameters
         ----------
