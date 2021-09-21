@@ -19,3 +19,6 @@ Fixes
 
 * fixed wrong "source code line" in "field is not declared" warning in CheckedSession.__init__()
   (closes :issue:`968`).
+
+* fixed :py:obj:`Array.growth_rate()` returning nans instead of zeros when consecutive values are zeros
+  (closes :issue:`903`).

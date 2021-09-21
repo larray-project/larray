@@ -50,7 +50,7 @@ except ImportError:
     np_nanprod = None
 
 from larray.core.abstractbases import ABCArray
-from larray.core.constants import nan
+from larray.core.constants import nan, inf
 from larray.core.metadata import Metadata
 from larray.core.expr import ExprNode
 from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
@@ -7728,31 +7728,31 @@ class Array(ABCArray):
 
         Examples
         --------
-        >>> data = [[2, 4, 5, 4, 6], [4, 6, 3, 6, 9]]
-        >>> a = Array(data, "sex=M,F; year=2016..2020")
+        >>> data = [[4, 5, 4, 0, 0, 4, 6], [2, 4, 3, 6, 6, 3, 9]]
+        >>> a = Array(data, "sex=M,F; year=2015..2021")
         >>> a
-        sex\year  2016  2017  2018  2019  2020
-               M     2     4     5     4     6
-               F     4     6     3     6     9
+        sex\year  2015  2016  2017  2018  2019  2020  2021
+               M     4     5     4     0     0     4     6
+               F     2     4     3     6     6     3     9
         >>> a.growth_rate()
-        sex\year  2017  2018  2019  2020
-               M   1.0  0.25  -0.2   0.5
-               F   0.5  -0.5   1.0   0.5
+        sex\year  2016   2017  2018  2019  2020  2021
+               M  0.25   -0.2  -1.0   0.0   inf   0.5
+               F   1.0  -0.25   1.0   0.0  -0.5   2.0
         >>> a.growth_rate(label='lower')
-        sex\year  2016  2017  2018  2019
-               M   1.0  0.25  -0.2   0.5
-               F   0.5  -0.5   1.0   0.5
+        sex\year  2015   2016  2017  2018  2019  2020
+               M  0.25   -0.2  -1.0   0.0   inf   0.5
+               F   1.0  -0.25   1.0   0.0  -0.5   2.0
         >>> a.growth_rate(d=2)
-        sex\year   2018  2019  2020
-               M    1.5   0.0   0.2
-               F  -0.25   0.0   2.0
+        sex\year  2017  2018  2019  2020  2021
+               M   0.0  -1.0  -1.0   inf   inf
+               F   0.5   0.5   1.0  -0.5   0.5
         >>> a.growth_rate('sex')
-        sex\year  2016  2017  2018  2019  2020
-               F   1.0   0.5  -0.4   0.5   0.5
+        sex\year  2015  2016   2017  2018  2019   2020  2021
+               F  -0.5  -0.2  -0.25   inf   inf  -0.25   0.5
         >>> a.growth_rate(a.year[2017:])
-        sex\year  2018  2019  2020
-               M  0.25  -0.2   0.5
-               F  -0.5   1.0   0.5
+        sex\year  2018  2019  2020  2021
+               M  -1.0   0.0   inf   0.5
+               F   1.0   0.0  -0.5   2.0
         """
         if isinstance(axis, Group):
             array = self[axis]
@@ -7761,7 +7761,9 @@ class Array(ABCArray):
             array = self
             axis = array.axes[axis]
         diff = array.diff(axis=axis, d=d, label=label)
-        return diff / array[axis.i[:-d]].ignore_labels(axis)
+        # replace 0/0 by 0/inf to avoid a nan (and a warning)
+        shifted_array = np.where(diff.data == 0, inf, array.shift(axis, n=d).data)
+        return Array(diff.data / shifted_array, diff.axes)
 
     def compact(self) -> 'Array':
         r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)

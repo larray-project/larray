@@ -15,7 +15,7 @@ from larray.tests.common import (inputpath, tmp_path,
                                  must_warn)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
                     zeros, zeros_like, ndtest, empty, ones, eye, diag, stack, sequence,
-                    union, clip, exp, where, X, mean, nan, isnan, round,
+                    union, clip, exp, where, X, mean, inf, nan, isnan, round,
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items)
@@ -5308,6 +5308,13 @@ def test_zip_array_items():
     assert r0_k == ()
     assert_larray_equal(r0_arr1, arr1)
     assert_larray_equal(r0_arr2, arr2)
+
+
+def test_growth_rate():
+    arr = Array([1, 2, 0, 0, 0, 4, 5], axes='time=2014..2020')
+    res = arr.growth_rate('time')
+    expected_res = Array([1.0, -1.0, 0.0, 0.0, inf, 0.25], axes='time=2015..2020')
+    assert_array_equal(res, expected_res)
 
 
 if __name__ == "__main__":
