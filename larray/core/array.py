@@ -341,14 +341,15 @@ class PlotObject(object):
         label_axis = None
 
         if np.isscalar(x) and x not in axes:
-            x = axes._translate_axis_key(x)
-            label_axis = x.axis
+            label_axis, x_indices = axes._translate_axis_key(x)
+            x = IGroup(x_indices, axis=label_axis)
 
         if np.isscalar(y) and y not in axes:
-            y = axes._translate_axis_key(y)
-            if label_axis is not None and y.axis is not x.axis:
+            y_label_axis, y_indices = axes._translate_axis_key(y)
+            y = IGroup(y_indices, axis=y_label_axis)
+            if label_axis is not None and y_label_axis is not label_axis:
                 raise ValueError(f'{x} and {y} are labels from different axes')
-            label_axis = y.axis
+            label_axis = y_label_axis
 
         def handle_axes_arg(avail_axes, arg):
             if arg is not None:
