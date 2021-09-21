@@ -1,18 +1,18 @@
 ﻿Change log
 ##########
 
-Version 0.34
-============
+Version 0.33.1
+==============
 
 In development.
 
 CORE
 ----
-.. include:: ./changes/version_0_34.rst.inc
+.. include:: ./changes/version_0_33_1.rst.inc
 
 EDITOR
 ------
-.. include:: ./changes/editor/version_0_34.rst.inc
+.. include:: ./changes/editor/version_0_33_1.rst.inc
 
 
 Version 0.33
