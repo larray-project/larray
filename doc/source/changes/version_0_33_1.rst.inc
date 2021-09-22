@@ -4,7 +4,7 @@
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* added type hints for many Array methods (see :issue:`864`) which improves autocompletion in editors (such as PyCharm).
 
 
 Fixes
