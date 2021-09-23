@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import inspect
 from contextlib import contextmanager
 
@@ -152,8 +151,6 @@ needs_xlwings = pytest.mark.skipif(SKIP_EXCEL_TESTS or xw is None, reason="xlwin
 needs_openpyxl = pytest.mark.skipif(SKIP_EXCEL_TESTS or openpyxl is None, reason="openpyxl is required for this test")
 needs_xlsxwriter = pytest.mark.skipif(SKIP_EXCEL_TESTS or xlsxwriter is None,
                                       reason="xlsxwriter is required for this test")
-
-needs_python37 = pytest.mark.skipif(sys.version_info < (3, 7), reason="Python 3.7 is required for this test")
 
 
 @contextmanager

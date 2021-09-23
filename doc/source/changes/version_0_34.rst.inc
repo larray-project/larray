@@ -12,7 +12,7 @@ Syntax changes
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* other backward incompatible changes
+* dropped support for Python 3.6.
 
 
 New features

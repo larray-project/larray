@@ -237,8 +237,7 @@ class PandasExcelHandler(FileHandler):
         super(PandasExcelHandler, self).__init__(fname, overwrite_file)
 
     def _open_for_read(self):
-        engine = 'openpyxl' if sys.version_info < (3, 7) else None
-        self.handle = pd.ExcelFile(self.fname, engine=engine)
+        self.handle = pd.ExcelFile(self.fname)
 
     def _open_for_write(self):
         _, ext = os.path.splitext(self.fname)

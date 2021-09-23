@@ -11,8 +11,7 @@ from collections import OrderedDict
 from larray.tests.common import meta
 from larray.tests.common import (inputpath, tmp_path,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, needs_python37,
-                                 must_warn)
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
                     zeros, zeros_like, ndtest, empty, ones, eye, diag, stack, sequence,
                     union, clip, exp, where, X, mean, inf, nan, isnan, round,
@@ -5172,7 +5171,7 @@ def test_stack():
 
 
 def test_stack_kwargs_no_axis_labels():
-    # these tests rely on kwargs ordering, hence python 3.6
+    # these tests rely on kwargs ordering, hence python 3.6+
 
     # 1) using scalars
     # ----------------
@@ -5207,9 +5206,8 @@ def test_stack_kwargs_no_axis_labels():
     assert_array_equal(res, expected)
 
 
-@needs_python37
 def test_stack_dict_no_axis_labels():
-    # these tests rely on dict ordering, hence python 3.7
+    # these tests rely on dict ordering (hence require python 3.7+)
 
     # 1) dict of scalars
     # ------------------

@@ -279,7 +279,8 @@ G.clength.split[2, 5] == G.clength[2], G.clength[5]
 # minr_replica = [('benef_tot', [('men', 0.20), ('women', 0.57)])
 #                 ('prop_carr', [('men', 0.46), ('women', 0.65)])]
 
-# 3.6+ (nice but only string labels)
+# nice but only string labels
+
 # minr_replica = od(benef_tot=od(men=0.20, women=0.57),
 #                   prop_carr=od(men=0.46, women=0.65))
 

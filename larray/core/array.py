@@ -30,7 +30,6 @@ from itertools import product, chain, groupby
 from collections.abc import Iterable, Sequence
 import builtins
 import os
-import sys
 import functools
 import warnings
 
@@ -2932,11 +2931,6 @@ class Array(ABCArray):
                     assert isinstance(explicit_axis, AxisCollection)
                     args += tuple(explicit_axis)
             kwargs_items = kwargs.items()
-        if not commutative and len(kwargs_items) > 1:
-            # TODO: lift this restriction for python3.6+
-            raise ValueError(f"grouping aggregates on multiple axes at the same time using keyword arguments is not "
-                             f"supported for '{op.__name__}' (because it is not a commutative operation and keyword "
-                             f"arguments are *not* ordered in Python)")
 
         # Sort kwargs by axis name so that we have consistent results between runs because otherwise rounding errors
         # could lead to slightly different results even for commutative operations.
@@ -9312,7 +9306,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None) -> Array:
 # stack(('M', a1), ('F', a2), axis='sex')
 # stack(a1, a2, axis='sex')
 
-# on Python 3.6, we could do something like (it would make from_lists obsolete for 1D arrays):
+# we could do something like (it would make from_lists obsolete for 1D arrays):
 # stack('sex', M=1, F=2)
 
 # which is almost equivalent to:
@@ -9520,10 +9514,8 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
           M  1.0  0.0
           F  1.0  0.0
 
-    Without passing an explicit order for labels (or an axis object like above), it should only be used on Python 3.6
-    or later because keyword arguments are NOT ordered on earlier Python versions.
+    Without passing an explicit order for labels (or an axis object like above)
 
-    >>> # use this only on Python 3.6 and later
     >>> stack(BE=arr1, FO=arr2, axes='nat')   # doctest: +SKIP
     sex\nat   BE   FO
           M  1.0  0.0
@@ -9583,17 +9575,9 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
         axes = AxisCollection(axes)
 
     if kwargs:
-        if not isinstance(axes, AxisCollection) and sys.version_info[:2] < (3, 6):
-            warnings.warn("keyword arguments ordering is not guaranteed for Python < 3.6 so it is not "
-                          "recommended to use them in stack() without providing labels order in the axes argument")
         elements = kwargs.items()
 
     if isinstance(elements, dict):
-        if not isinstance(axes, AxisCollection) and sys.version_info[:2] < (3, 7):
-            # stacklevel=3 because of deprecate_kwarg
-            warnings.warn("dict ordering is not guaranteed for Python < 3.7 so it is not recommended to use "
-                          "them in stack() without providing labels order in the axes argument", stacklevel=3)
-
         elements = elements.items()
 
     if isinstance(elements, Array):
