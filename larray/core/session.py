@@ -139,10 +139,8 @@ class Session:
         >>> s.names
         ['arr1', 'arr2', 'arr3', 'x', 'y']
         """
-        for arg in args:
-            self[arg.name] = arg
-        for k, v in kwargs.items():
-            self[k] = v
+        self._update_from_iterable((arg.name, arg) for arg in args)
+        self._update_from_iterable(kwargs.items())
 
     def update(self, other=None, **kwargs):
         r"""
@@ -243,16 +241,13 @@ class Session:
         if other is None:
             pass
         elif hasattr(other, 'items'):
-            for k, v in other.items():
-                self[k] = v
+            self._update_from_iterable(other.items())
         elif isinstance(other, Iterable):
-            for k, v in other:
-                self[k] = v
+            self._update_from_iterable(other)
         else:
             raise ValueError(f"Expected Session, dict-like or iterable object for 'other' argument. "
                              f"Got {type(other).__name__}.")
-        for k, v in kwargs.items():
-            self[k] = v
+        self._update_from_iterable(kwargs.items())
 
     def _ipython_key_completions_(self):
         return list(self.keys())
@@ -446,9 +441,12 @@ class Session:
         else:
             handler = handler_cls(fname)
         metadata, objects = handler.read(names, display=display, **kwargs)
-        for k, v in objects.items():
-            self[k] = v
+        self._update_from_iterable(objects.items())
         self.meta = metadata
+
+    def _update_from_iterable(self, it):
+        for k, v in it:
+            self[k] = v
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
         r"""

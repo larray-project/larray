@@ -478,6 +478,10 @@ else:
                 warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'", stacklevel=stacklevel + 1)
             return value
 
+        def _update_from_iterable(self, it):
+            for k, v in it:
+                self.__setitem__(k, v, stacklevel=3)
+
         def __setitem__(self, key, value, skip_allow_mutation=False, skip_validation=False, stacklevel=1):
             if key != 'meta':
                 value = self._check_key_value(key, value, skip_allow_mutation, skip_validation,
