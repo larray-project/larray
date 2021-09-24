@@ -5310,7 +5310,8 @@ def test_zip_array_items():
 
 def test_growth_rate():
     arr = Array([1, 2, 0, 0, 0, 4, 5], axes='time=2014..2020')
-    res = arr.growth_rate('time')
+    with must_warn(RuntimeWarning, "divide by zero encountered during operation"):
+        res = arr.growth_rate('time')
     expected_res = Array([1.0, -1.0, 0.0, 0.0, inf, 0.25], axes='time=2015..2020')
     assert_array_equal(res, expected_res)
 
