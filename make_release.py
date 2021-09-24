@@ -2,10 +2,11 @@
 # Release script for LArray
 # Licence: GPLv3
 # Requires:
-# * git
+# * git with a Personal Access Token to access the Github repositories
 # * releaser
 # * conda-build
 # * anaconda-client
+# * twine (to upload packages to pypi)
 import sys
 from os.path import abspath, dirname, join
 from subprocess import check_call
