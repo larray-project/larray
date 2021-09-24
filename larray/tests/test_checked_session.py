@@ -24,7 +24,7 @@ from larray.core.checked import NotLoaded
 meta = meta
 
 
-class TestCheckedSession(CheckedSession):
+class CheckedSessionExample(CheckedSession):
     b = b
     b024 = b024
     a: Axis
@@ -42,7 +42,7 @@ class TestCheckedSession(CheckedSession):
 
 @pytest.fixture()
 def checkedsession():
-    return TestCheckedSession(a=a, a2=a2, a01=a01, e=e, g=g, f=f, h=h)
+    return CheckedSessionExample(a=a, a2=a2, a01=a01, e=e, g=g, f=f, h=h)
 
 
 def test_create_checkedsession_instance(meta):
@@ -53,7 +53,7 @@ def test_create_checkedsession_instance(meta):
     declared_variable_keys = ['a', 'a2', 'a01', 'c', 'e', 'g', 'f', 'h', 'b', 'b024', 'anonymous', 'ano01', 'd']
 
     # setting variables without default values
-    cs = TestCheckedSession(a, a01, a2=a2, e=e, f=f, g=g, h=h)
+    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h)
     assert list(cs.keys()) == declared_variable_keys
     assert cs.b.equals(b)
     assert cs.b024.equals(b024)
@@ -70,18 +70,19 @@ def test_create_checkedsession_instance(meta):
     assert cs.h.equals(h)
 
     # metadata
-    cs = TestCheckedSession(a, a01, a2=a2, e=e, f=f, g=g, h=h, meta=meta)
+    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h, meta=meta)
     assert cs.meta == meta
 
     # override default value
     b_alt = Axis('b=b0..b4')
-    cs = TestCheckedSession(a, a01, b=b_alt, a2=a2, e=e, f=f, g=g, h=h)
+    cs = CheckedSessionExample(a, a01, b=b_alt, a2=a2, e=e, f=f, g=g, h=h)
     assert cs.b is b_alt
 
     # test for "NOT_LOADED" variables
-    with must_warn(UserWarning, msg="No value passed for the declared variable 'a'", check_file=False):
-        TestCheckedSession(a01=a01, a2=a2, e=e, f=f, g=g, h=h)
-    cs = TestCheckedSession()
+    with must_warn(UserWarning, msg="No value passed for the declared variable 'a'"):
+        CheckedSessionExample(a01=a01, a2=a2, e=e, f=f, g=g, h=h)
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
     assert list(cs.keys()) == declared_variable_keys
     # --- variables with default values ---
     assert cs.b.equals(b)
@@ -100,17 +101,17 @@ def test_create_checkedsession_instance(meta):
     assert isinstance(cs.h, NotLoaded)
 
     # passing a scalar to set all elements a CheckedArray
-    cs = TestCheckedSession(a, a01, a2=a2, e=e, f=f, g=g, h=5)
+    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=5)
     assert cs.h.axes == AxisCollection((a3, b2))
     assert cs.h.equals(full(axes=(a3, b2), fill_value=5))
 
     # add the undeclared variable 'i'
-    with must_warn(UserWarning, f"'i' is not declared in '{cs.__class__.__name__}'", check_file=False):
-        cs = TestCheckedSession(a, a01, a2=a2, i=5, e=e, f=f, g=g, h=h)
+    with must_warn(UserWarning, f"'i' is not declared in '{cs.__class__.__name__}'"):
+        cs = CheckedSessionExample(a, a01, a2=a2, i=5, e=e, f=f, g=g, h=h)
     assert list(cs.keys()) == declared_variable_keys + ['i']
 
     # test inheritance between checked sessions
-    class TestInheritance(TestCheckedSession):
+    class TestInheritance(CheckedSessionExample):
         # override variables
         b = b2
         c: int = 5
@@ -145,7 +146,7 @@ def test_create_checkedsession_instance(meta):
 
 @needs_pytables
 def test_init_checkedsession_hdf():
-    cs = TestCheckedSession(inputpath('test_session.h5'))
+    cs = CheckedSessionExample(inputpath('test_session.h5'))
     assert set(cs.keys()) == {'b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01', 'c', 'd', 'e', 'g', 'f', 'h'}
 
 
@@ -260,7 +261,7 @@ def test_add_cs(checkedsession):
     test_add(cs)
 
     u = Axis('u=u0..u2')
-    with must_warn(UserWarning, msg=f"'u' is not declared in '{cs.__class__.__name__}'", check_file=False):
+    with must_warn(UserWarning, msg=f"'u' is not declared in '{cs.__class__.__name__}'"):
         cs.add(u)
 
 
@@ -276,7 +277,8 @@ def test_iter_cs(checkedsession):
 def test_filter_cs(checkedsession):
     # see comment in test_iter_cs() about fields ordering
     cs = checkedsession
-    cs.ax = 'ax'
+    with must_warn(UserWarning, msg="'ax' is not declared in 'CheckedSessionExample'"):
+        cs.ax = 'ax'
     assert_seq_equal(cs.filter(), [a, a2, a01, c, e, g, f, h, b, b024, anonymous, ano01, d, 'ax'])
     assert_seq_equal(cs.filter('a*'), [a, a2, a01, anonymous, ano01, 'ax'])
     assert list(cs.filter('a*', dict)) == []
@@ -306,9 +308,10 @@ def _test_io_cs(tmpdir, meta, engine, ext):
 
     # a) - all typed variables have a defined value
     #    - no extra variables are added
-    csession = TestCheckedSession(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
+    csession = CheckedSessionExample(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
     csession.save(fpath, engine=engine)
-    cs = TestCheckedSession()
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
     cs.load(fpath, engine=engine)
     # --- keys ---
     assert list(cs.keys()) == list(csession.keys())
@@ -343,12 +346,14 @@ def _test_io_cs(tmpdir, meta, engine, ext):
 
     # b) - not all typed variables have a defined value
     #    - no extra variables are added
-    csession = TestCheckedSession(a=a, d=d, e=e, h=h, meta=meta)
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=4):
+        csession = CheckedSessionExample(a=a, d=d, e=e, h=h, meta=meta)
     if 'csv' in engine:
         import shutil
         shutil.rmtree(fpath)
     csession.save(fpath, engine=engine)
-    cs = TestCheckedSession()
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
     cs.load(fpath, engine=engine)
     # --- keys ---
     assert list(cs.keys()) == list(csession.keys())
@@ -379,10 +384,27 @@ def _test_io_cs(tmpdir, meta, engine, ext):
     i = ndtest(6)
     j = ndtest((3, 3))
     k = ndtest((2, 2))
-    csession = TestCheckedSession(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, k=k, j=j, i=i, meta=meta)
+    with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'", num_expected=3):
+        csession = CheckedSessionExample(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, k=k, j=j, i=i, meta=meta)
     csession.save(fpath, engine=engine)
-    cs = TestCheckedSession()
-    cs.load(fpath, engine=engine)
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
+
+    # number of expected warnings is different depending on engine
+    expected_warnings = {
+        'pandas_excel': 3,
+        'xlwings_excel': 3,
+        'pandas_csv': 3,
+        'pandas_hdf': 47,  # FIXME: there is something fishy here
+        'pickle': 3,
+    }
+    num_expected = expected_warnings[engine]
+    # FIXME: we should try to fix the bad warning line instead of ignoring it
+    check_file = engine != 'pandas_hdf'
+    with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'",
+                   check_file=check_file, num_expected=num_expected):
+        cs.load(fpath, engine=engine)
+
     # --- names ---
     # we do not use keys() since order of undeclared variables
     # may not be preserved (at least for the HDF format)
@@ -394,15 +416,29 @@ def _test_io_cs(tmpdir, meta, engine, ext):
 
     # Update a Group + an Axis + an array (overwrite=False)
     # -----------------------------------------------------
-    csession = TestCheckedSession(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
+    csession = CheckedSessionExample(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
     csession.save(fpath, engine=engine)
     a4 = Axis('a=0..3')
     a4_01 = a3['0,1'] >> 'a01'
     e2 = ndtest((a4, 'b=b0..b2'))
     h2 = full_like(h, fill_value=10)
-    TestCheckedSession(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
-    cs = TestCheckedSession()
-    cs.load(fpath, engine=engine)
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=3):
+        CheckedSessionExample(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
+
+    # number of expected warnings is different depending on engine
+    expected_warnings = {
+        'pandas_excel': 0,
+        'xlwings_excel': 0,
+        'pandas_hdf': 0,
+        'pandas_csv': 3,
+        'pickle': 0,
+    }
+    num_expected = expected_warnings[engine]
+    with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'",
+                   num_expected=num_expected):
+        cs.load(fpath, engine=engine)
     # --- variables with default values ---
     assert cs.b.equals(b)
     assert cs.b024.equals(b024)
@@ -440,9 +476,10 @@ def _test_io_cs(tmpdir, meta, engine, ext):
 
     # Load only some objects
     # ----------------------
-    csession = TestCheckedSession(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
+    csession = CheckedSessionExample(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
     csession.save(fpath, engine=engine)
-    cs = TestCheckedSession()
+    with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
+        cs = CheckedSessionExample()
     names_to_load = ['e', 'h'] if is_excel_or_csv else ['a', 'a01', 'a2', 'e', 'h']
     cs.load(fpath, names=names_to_load, engine=engine)
     # --- keys ---

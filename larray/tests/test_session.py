@@ -13,7 +13,7 @@ from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
                                  needs_xlwings, needs_pytables, needs_openpyxl, must_warn)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like,
-                    ones, full, full_like, stack, local_arrays, global_arrays, arrays)
+                    ones, full, full_like, stack, local_arrays, global_arrays, arrays, CheckedSession)
 
 
 # avoid flake8 errors
@@ -152,7 +152,10 @@ def test_setattr(session):
 def test_add(session):
     i = Axis('i=i0..i2')
     i01 = i['i0,i1'] >> 'i01'
-    session.add(i, i01, j='j')
+    expected_warnings = 3 if isinstance(session, CheckedSession) else 0
+    with must_warn(UserWarning, match=r"'\w+' is not declared in 'CheckedSessionExample'",
+                   num_expected=expected_warnings):
+        session.add(i, i01, j='j')
     assert i.equals(session.i)
     assert i01 == session.i01
     assert session.j == 'j'
@@ -371,7 +374,10 @@ def test_element_equals(session):
         del other_session[deleted_key]
         expected_res[deleted_key] = False
     # add one item
-    other_session['k'] = k
+    expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
+    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+                   num_expected=expected_warnings):
+        other_session['k'] = k
     expected_res = expected_res.append('name', False, label='k')
 
     res = session.element_equals(other_session)
@@ -408,7 +414,10 @@ def test_eq(session):
     # ====== session with missing/extra items ======
     del other_session['g']
     expected_res['g'] = False
-    other_session['k'] = k
+    expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
+    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+                   num_expected=expected_warnings):
+        other_session['k'] = k
     expected_res = expected_res.append('name', False, label='k')
 
     res = session == other_session
@@ -448,7 +457,10 @@ def test_ne(session):
     # ====== session with missing/extra items ======
     del other_session['g']
     expected_res['g'] = True
-    other_session['k'] = k
+    expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
+    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+                   num_expected=expected_warnings):
+        other_session['k'] = k
     expected_res = expected_res.append('name', True, label='k')
 
     res = session != other_session
@@ -563,7 +575,7 @@ def test_rdiv(session):
     sess = session
 
     # scalar / session
-    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation", check_num=False):
+    with must_warn(RuntimeWarning, msg="divide by zero encountered during operation", num_expected=4):
         res = 2 / sess
     with np.errstate(divide='ignore'):
         expected_e = 2 / e
@@ -580,7 +592,7 @@ def test_rdiv(session):
     other = {'e': e, 'f': f}
     with must_warn(RuntimeWarning,
                    msg="invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)",
-                   check_num=False):
+                   num_expected=2):
         res = other / sess
     with np.errstate(invalid='ignore'):
         expected_e = e / e
