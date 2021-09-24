@@ -157,10 +157,10 @@ Get in touch
 
 .. end-readme-file
 
-.. |build-status| image:: https://travis-ci.org/larray-project/larray.svg?branch=master
+.. |build-status| image:: https://github.com/larray-project/larray/actions/workflows/python-package-conda.yml/badge.svg
     :alt: build status
     :scale: 100%
-    :target: https://travis-ci.org/larray-project/larray
+    :target: https://github.com/larray-project/larray/actions/workflows/python-package-conda.yml
 
 .. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=stable
     :alt: Documentation Status
