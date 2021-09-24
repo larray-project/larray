@@ -7722,31 +7722,37 @@ class Array(ABCArray):
 
         Examples
         --------
-        >>> data = [[4, 5, 4, 0, 0, 4, 6], [2, 4, 3, 6, 6, 3, 9]]
-        >>> a = Array(data, "sex=M,F; year=2015..2021")
+        >>> data = [[4, 5, 4, 6, 9], [2, 4, 3, 0, 0]]
+        >>> a = Array(data, "sex=F,M; year=2017..2021")
         >>> a
-        sex\year  2015  2016  2017  2018  2019  2020  2021
-               M     4     5     4     0     0     4     6
-               F     2     4     3     6     6     3     9
-        >>> a.growth_rate()
-        sex\year  2016   2017  2018  2019  2020  2021
-               M  0.25   -0.2  -1.0   0.0   inf   0.5
-               F   1.0  -0.25   1.0   0.0  -0.5   2.0
-        >>> a.growth_rate(label='lower')
-        sex\year  2015   2016  2017  2018  2019  2020
-               M  0.25   -0.2  -1.0   0.0   inf   0.5
-               F   1.0  -0.25   1.0   0.0  -0.5   2.0
-        >>> a.growth_rate(d=2)
         sex\year  2017  2018  2019  2020  2021
-               M   0.0  -1.0  -1.0   inf   inf
-               F   0.5   0.5   1.0  -0.5   0.5
+               F     4     5     4     6     9
+               M     2     4     3     0     0
+        >>> a.growth_rate()
+        sex\year  2018   2019  2020  2021
+               F  0.25   -0.2   0.5   0.5
+               M   1.0  -0.25  -1.0   0.0
+        >>> a.growth_rate(label='lower')
+        sex\year  2017   2018  2019  2020
+               F  0.25   -0.2   0.5   0.5
+               M   1.0  -0.25  -1.0   0.0
+        >>> a.growth_rate(d=2)
+        sex\year  2019  2020  2021
+               F   0.0   0.2  1.25
+               M   0.5  -1.0  -1.0
+
+        It works on any axis, not just time-based axes
+
         >>> a.growth_rate('sex')
-        sex\year  2015  2016   2017  2018  2019   2020  2021
-               F  -0.5  -0.2  -0.25   inf   inf  -0.25   0.5
+        sex\year  2017  2018   2019  2020  2021
+               M  -0.5  -0.2  -0.25  -1.0  -1.0
+
+        Or part of axes
+
         >>> a.growth_rate(a.year[2017:])
-        sex\year  2018  2019  2020  2021
-               M  -1.0   0.0   inf   0.5
-               F   1.0   0.0  -0.5   2.0
+        sex\year  2018   2019  2020  2021
+               F  0.25   -0.2   0.5   0.5
+               M   1.0  -0.25  -1.0   0.0
         """
         if isinstance(axis, Group):
             array = self[axis]
