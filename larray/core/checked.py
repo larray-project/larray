@@ -383,13 +383,15 @@ else:
         dtype: int32
         memory used: 968 bytes
 
-        >>> # note that it still possible to add undeclared variables to a checked session
-        >>> # but this must be done with caution.
-        >>> m.undeclared_var = 'undeclared_var'
+        It is possible to add undeclared variables to a checked session
+        but this will print a warning:
+
+        >>> m.undeclared_var = 'my_value'                   # doctest: +SKIP
+        UserWarning: 'undeclared_var' is not declared in 'ModelVariables'
 
         >>> # ==== output ====
         >>> # save all variables in an HDF5 file
-        >>> m.save(f'{variant_name}.h5', display=True)
+        >>> m.save(f'{variant_name}.h5', display=True)      # doctest: +SKIP
         dumping birth_rate ... done
         dumping births ... done
         dumping mortality_rate ... done
