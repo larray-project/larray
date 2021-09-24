@@ -501,11 +501,7 @@ else:
             object.__setattr__(self, '__dict__', state['__dict__'])
 
         def dict(self, exclude: Set[str] = None):
-            d = dict(self.items())
-            for name in exclude:
-                if name in d:
-                    del d[name]
-            return d
+            return {k: v for k, v in self.items() if k not in exclude}
 
     class CheckedParameters(CheckedSession):
         """
