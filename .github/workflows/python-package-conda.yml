@@ -28,8 +28,6 @@ jobs:
         auto-update-conda: true
         environment-file: environment.yml
         python-version: ${{ matrix.python-version }}
-    - run: pip install dataclasses
-      if: ${{ matrix.python-version == 3.6 }}
     - run: conda info
     - run: conda list
     - run: conda config --show
