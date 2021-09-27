@@ -1,5 +1,4 @@
 import re
-import os
 import faulthandler
 from pathlib import Path
 
@@ -332,7 +331,7 @@ def test_excel_report_setting_template():
     # 2) add .crtx extension if no extension
     template_name = 'Line'
     excel_report.template = template_name
-    assert excel_report.template == os.path.join(EXAMPLE_EXCEL_TEMPLATES_DIR, template_name + '.crtx')
+    assert excel_report.template == EXAMPLE_EXCEL_TEMPLATES_DIR / (template_name + '.crtx')
 
 
 @needs_xlwings

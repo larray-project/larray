@@ -1,7 +1,7 @@
 import os
 import csv
 import warnings
-from glob import glob
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -83,7 +83,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     Examples
     --------
     >>> csv_dir = get_example_filepath('examples')
-    >>> fname = csv_dir + '/population.csv'
+    >>> fname = csv_dir / 'population.csv'
 
     >>> # The data below is derived from a subset of the demo_pjan table from Eurostat
     >>> read_csv(fname)
@@ -97,7 +97,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Missing label combinations
 
-    >>> fname = csv_dir + '/population_missing_values.csv'
+    >>> fname = csv_dir / 'population_missing_values.csv'
     >>> # let's take a look inside the CSV file.
     >>> # they are missing label combinations: (Paris, male) and (New York, female)
     >>> with open(fname) as f:
@@ -129,7 +129,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Specify the number of axes of the output array (useful when the name of the last axis is implicit)
 
-    >>> fname = csv_dir + '/population_missing_axis_name.csv'
+    >>> fname = csv_dir / 'population_missing_axis_name.csv'
     >>> # let's take a look inside the CSV file.
     >>> # The name of the last axis is missing.
     >>> with open(fname) as f:
@@ -164,7 +164,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
 
     Read array saved in "narrow" format (wide=False)
 
-    >>> fname = csv_dir + '/population_narrow_format.csv'
+    >>> fname = csv_dir / 'population_narrow_format.csv'
     >>> # let's take a look inside the CSV file.
     >>> # Here, data are stored in a 'narrow' format.
     >>> with open(fname) as f:
@@ -260,29 +260,29 @@ class PandasCSVHandler(FileHandler):
         self.sep = sep
         self.axes = None
         self.groups = None
-        if fname is None:
+        if self.fname is None:
             self.pattern = None
             self.directory = None
-        elif '.csv' in fname or '*' in fname or '?' in fname:
-            self.pattern = fname
-            self.directory = os.path.dirname(fname)
+        elif self.fname.suffix == '.csv' or '*' in self.fname.name or '?' in self.fname.name:
+            self.pattern = self.fname.name
+            self.directory = fname.parent
         else:
             # assume fname is a directory.
-            # Not testing for os.path.isdir(fname) here because when writing, the directory might not exist.
-            self.pattern = os.path.join(fname, '*.csv')
-            self.directory = fname
+            # Not testing for fname.is_dir() here because when writing, the directory might not exist.
+            self.pattern = '*.csv'
+            self.directory = self.fname
 
     def _get_original_file_name(self):
         pass
 
-    def _to_filepath(self, key: str) -> str:
+    def _to_filepath(self, key) -> Path:
         if self.directory is not None:
-            return os.path.join(self.directory, f'{key}.csv')
+            return self.directory / f'{key}.csv'
         else:
-            return key
+            return Path(key)
 
     def _open_for_read(self):
-        if self.directory and not os.path.isdir(self.directory):
+        if self.directory and not self.directory.is_dir():
             raise ValueError(f"Directory '{self.directory}' does not exist")
 
     def _open_for_write(self):
@@ -290,16 +290,14 @@ class PandasCSVHandler(FileHandler):
             try:
                 os.makedirs(self.directory)
             except OSError:
-                if not os.path.isdir(self.directory):
+                if not self.directory.is_dir():
                     raise ValueError(f"Path {self.directory} must represent a directory")
 
     def list_items(self) -> List[Tuple[str, str]]:
-        fnames = glob(self.pattern) if self.pattern is not None else []
-        # drop directory
-        fnames = [os.path.basename(fname) for fname in fnames]
-        # strip extension from files
-        # XXX: unsure we should use sorted here
-        fnames = sorted([os.path.splitext(fname)[0] for fname in fnames])
+        fnames = self.directory.glob(self.pattern) if self.pattern is not None else []
+        # stem = filename without extension
+        # FIXME : not sure sorted is required here
+        fnames = sorted([fname.stem for fname in fnames])
         return [(name, 'Array') for name in fnames if name != '__metadata__']
 
     def _read_item(self, key, type, *args, **kwargs) -> Array:
@@ -316,7 +314,7 @@ class PandasCSVHandler(FileHandler):
 
     def _read_metadata(self) -> Metadata:
         filepath = self._to_filepath('__metadata__')
-        if os.path.isfile(filepath):
+        if filepath.is_file():
             meta = read_csv(filepath, wide=False)
             return Metadata.from_array(meta)
         else:

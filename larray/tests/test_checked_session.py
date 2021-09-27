@@ -10,7 +10,7 @@ import numpy as np
 
 from larray import (CheckedSession, CheckedArray, Axis, AxisCollection, Group, Array,
                     ndtest, full, full_like, zeros_like, ones, ones_like, isnan)
-from larray.tests.common import (inputpath, tmp_path, assert_array_nan_equal, meta,                 # noqa: F401
+from larray.tests.common import (inputpath, assert_array_nan_equal, meta,                           # noqa: F401
                                  needs_pytables, needs_openpyxl, needs_xlwings,
                                  must_warn, must_raise)
 from larray.tests.test_session import (a, a2, a3, anonymous, a01, ano01, b, b2, b024,               # noqa: F401
@@ -297,9 +297,9 @@ def test_names_cs(checkedsession):
                                     'c', 'd', 'e', 'f', 'g', 'h']
 
 
-def _test_io_cs(tmpdir, meta, engine, ext):
+def _test_io_cs(tmp_path, meta, engine, ext):
     filename = f"test_{engine}.{ext}" if 'csv' not in engine else f"test_{engine}{ext}"
-    fpath = tmp_path(tmpdir, filename)
+    fpath = tmp_path / filename
 
     is_excel_or_csv = 'excel' in engine or 'csv' in engine
 
@@ -510,26 +510,26 @@ def _test_io_cs(tmpdir, meta, engine, ext):
 
 
 @needs_pytables
-def test_h5_io_cs(tmpdir, meta):
-    _test_io_cs(tmpdir, meta, engine='pandas_hdf', ext='h5')
+def test_h5_io_cs(tmp_path, meta):
+    _test_io_cs(tmp_path, meta, engine='pandas_hdf', ext='h5')
 
 
 @needs_openpyxl
-def test_xlsx_pandas_io_cs(tmpdir, meta):
-    _test_io_cs(tmpdir, meta, engine='pandas_excel', ext='xlsx')
+def test_xlsx_pandas_io_cs(tmp_path, meta):
+    _test_io_cs(tmp_path, meta, engine='pandas_excel', ext='xlsx')
 
 
 @needs_xlwings
-def test_xlsx_xlwings_io_cs(tmpdir, meta):
-    _test_io_cs(tmpdir, meta, engine='xlwings_excel', ext='xlsx')
+def test_xlsx_xlwings_io_cs(tmp_path, meta):
+    _test_io_cs(tmp_path, meta, engine='xlwings_excel', ext='xlsx')
 
 
-def test_csv_io_cs(tmpdir, meta):
-    _test_io_cs(tmpdir, meta, engine='pandas_csv', ext='csv')
+def test_csv_io_cs(tmp_path, meta):
+    _test_io_cs(tmp_path, meta, engine='pandas_csv', ext='csv')
 
 
-def test_pickle_io_cs(tmpdir, meta):
-    _test_io_cs(tmpdir, meta, engine='pickle', ext='pkl')
+def test_pickle_io_cs(tmp_path, meta):
+    _test_io_cs(tmp_path, meta, engine='pickle', ext='pkl')
 
 
 def test_pickle_roundtrip_cs(checkedsession, meta):

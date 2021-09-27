@@ -9,7 +9,7 @@ from io import StringIO
 from collections import OrderedDict
 
 from larray.tests.common import meta
-from larray.tests.common import (inputpath, tmp_path,
+from larray.tests.common import (inputpath,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
@@ -80,7 +80,7 @@ def test_key_string_slice_strings():
 #    Test Metadata    #
 # =================== #
 
-def test_read_set_update_delete_metadata(meta, tmpdir):
+def test_read_set_update_delete_metadata(meta, tmp_path):
     # __eq__
     meta2 = meta.copy()
     assert meta2 == meta
@@ -110,7 +110,7 @@ def test_read_set_update_delete_metadata(meta, tmpdir):
 
     # __reduce__ and __reduce_ex__
     import pickle
-    fname = os.path.join(tmpdir.strpath, 'test_metadata.pkl')
+    fname = tmp_path / 'test_metadata.pkl'
     with open(fname, 'wb') as f:
         pickle.dump(meta, f)
     with open(fname, 'rb') as f:
@@ -119,9 +119,9 @@ def test_read_set_update_delete_metadata(meta, tmpdir):
 
 
 @needs_pytables
-def test_metadata_hdf(meta, tmpdir):
+def test_metadata_hdf(meta, tmp_path):
     key = 'meta'
-    fname = os.path.join(tmpdir.strpath, 'test_metadata.hdf')
+    fname = tmp_path / 'test_metadata.hdf'
     with LHDFStore(fname) as store:
         ndtest(3).to_hdf(store, key)
         meta.to_hdf(store, key)
@@ -3170,11 +3170,11 @@ def test_extend(small_array):
 
 
 @needs_pytables
-def test_hdf_roundtrip(tmpdir, meta):
+def test_hdf_roundtrip(tmp_path, meta):
     import tables
 
     a = ndtest((2, 3), meta=meta)
-    fpath = tmp_path(tmpdir, 'test.h5')
+    fpath = tmp_path / 'test.h5'
     a.to_hdf(fpath, 'a')
     res = read_hdf(fpath, 'a')
 
@@ -3185,7 +3185,7 @@ def test_hdf_roundtrip(tmpdir, meta):
     assert res.meta == a.meta
 
     # issue 72: int-like strings should not be parsed (should round-trip correctly)
-    fpath = tmp_path(tmpdir, 'issue72.h5')
+    fpath = tmp_path / 'issue72.h5'
     a = from_lists([['axis', '10', '20'],
                     [    '',    0,    1]])  # noqa: E201,E241
     a.to_hdf(fpath, 'a')
@@ -3197,7 +3197,7 @@ def test_hdf_roundtrip(tmpdir, meta):
 
     # passing group as key to to_hdf
     a3 = ndtest((4, 3, 4))
-    fpath = tmp_path(tmpdir, 'test.h5')
+    fpath = tmp_path / 'test.h5'
     os.remove(fpath)
 
     # single element group
@@ -4002,36 +4002,36 @@ def test_from_frame():
     assert_array_equal(res, expected)
 
 
-def test_to_csv(tmpdir):
+def test_to_csv(tmp_path):
     arr = io_3d.copy()
 
-    arr.to_csv(tmp_path(tmpdir, 'out.csv'))
+    arr.to_csv(tmp_path / 'out.csv')
     result = ['a,b\\c,c0,c1,c2\n',
               '1,b0,0,1,2\n',
               '1,b1,3,4,5\n']
-    with open(tmp_path(tmpdir, 'out.csv')) as f:
+    with open(tmp_path / 'out.csv') as f:
         assert f.readlines()[:3] == result
 
     # stacked data (one column containing all the values and another column listing the context of the value)
-    arr.to_csv(tmp_path(tmpdir, 'out.csv'), wide=False)
+    arr.to_csv(tmp_path / 'out.csv', wide=False)
     result = ['a,b,c,value\n',
               '1,b0,c0,0\n',
               '1,b0,c1,1\n']
-    with open(tmp_path(tmpdir, 'out.csv')) as f:
+    with open(tmp_path / 'out.csv') as f:
         assert f.readlines()[:3] == result
 
     arr = io_1d.copy()
-    arr.to_csv(tmp_path(tmpdir, 'test_out1d.csv'))
+    arr.to_csv(tmp_path / 'test_out1d.csv')
     result = ['a,a0,a1,a2\n',
               ',0,1,2\n']
-    with open(tmp_path(tmpdir, 'test_out1d.csv')) as f:
+    with open(tmp_path / 'test_out1d.csv') as f:
         assert f.readlines() == result
 
 
 @needs_xlsxwriter
 @needs_openpyxl
-def test_to_excel_xlsxwriter(tmpdir):
-    fpath = tmp_path(tmpdir, 'test_to_excel_xlsxwriter.xlsx')
+def test_to_excel_xlsxwriter(tmp_path):
+    fpath = tmp_path / 'test_to_excel_xlsxwriter.xlsx'
 
     # 1D
     a1 = ndtest(3)
@@ -4175,8 +4175,8 @@ def test_to_excel_xlsxwriter(tmpdir):
 
 @needs_xlwings
 @needs_openpyxl
-def test_to_excel_xlwings(tmpdir):
-    fpath = tmp_path(tmpdir, 'test_to_excel_xlwings.xlsx')
+def test_to_excel_xlwings(tmp_path):
+    fpath = tmp_path / 'test_to_excel_xlwings.xlsx'
 
     # 1D
     a1 = ndtest(3)
@@ -4185,7 +4185,7 @@ def test_to_excel_xlwings(tmpdir):
     # a1.to_excel()
 
     # fpath/Sheet1/A1 (create a new file if does not exist)
-    if os.path.isfile(fpath):
+    if fpath.is_file():
         os.remove(fpath)
     a1.to_excel(fpath, engine='xlwings')
     # we use openpyxl to read back instead of xlwings even if that should work, to make the test faster
@@ -4294,7 +4294,7 @@ def test_dump():
 
 
 @needs_xlwings
-def test_open_excel(tmpdir):
+def test_open_excel(tmp_path):
     # 1) Create new file
     # ==================
     fpath = inputpath('should_not_exist.xlsx')
@@ -4470,7 +4470,7 @@ def test_open_excel(tmpdir):
     # 5) anonymous and wilcard axes
     # =============================
     arr = ndtest((Axis('a0,a1'), Axis(2, 'b')))
-    fpath = tmp_path(tmpdir, 'anonymous_and_wildcard_axes.xlsx')
+    fpath = tmp_path / 'anonymous_and_wildcard_axes.xlsx'
     with open_excel(fpath, overwrite_file=True) as wb:
         wb[0] = arr.dump()
         res = wb[0].load()
@@ -4482,7 +4482,7 @@ def test_open_excel(tmpdir):
     # 6) crash test
     # =============
     arr = ndtest((2, 2))
-    fpath = tmp_path(tmpdir, 'temporary_test_file.xlsx')
+    fpath = tmp_path / 'temporary_test_file.xlsx'
     # create and save a test file
     with open_excel(fpath, overwrite_file=True) as wb:
         wb['arr'] = arr.dump()
@@ -4498,7 +4498,7 @@ def test_open_excel(tmpdir):
         assert wb.sheet_names() == ['arr']
         assert_array_equal(wb['arr'].load(), arr)
     # remove file
-    if os.path.exists(fpath):
+    if fpath.exists():
         os.remove(fpath)
 
 

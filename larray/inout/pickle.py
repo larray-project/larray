@@ -1,5 +1,4 @@
 import pickle
-import os.path
 from collections import OrderedDict
 
 from typing import List, Tuple, Union
@@ -15,12 +14,16 @@ from larray.util.types import Scalar
 
 @register_file_handler('pickle', ['pkl', 'pickle'])
 class PickleHandler(FileHandler):
+    def __init__(self, fname, overwrite_file=False):
+        assert fname is not None
+        super(PickleHandler, self).__init__(fname, overwrite_file)
+
     def _open_for_read(self):
         with open(self.fname, 'rb') as f:
             self.data = OrderedDict(pickle.load(f))
 
     def _open_for_write(self):
-        if not self.overwrite_file and os.path.isfile(self.fname):
+        if not self.overwrite_file and self.fname.is_file():
             self._open_for_read()
         else:
             self.data = OrderedDict()
