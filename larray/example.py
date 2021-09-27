@@ -1,18 +1,20 @@
 import os
+from pathlib import Path
+
 import larray as la
 
 
-_TEST_DIR = os.path.join(os.path.dirname(__file__), 'tests')
+_TEST_DIR = Path(__file__).parent / 'tests'
 
-EXAMPLE_FILES_DIR = os.path.join(_TEST_DIR, 'data')
+EXAMPLE_FILES_DIR = _TEST_DIR / 'data'
 AVAILABLE_EXAMPLE_DATA = {
-    'demography': os.path.join(EXAMPLE_FILES_DIR, 'demography.h5'),
-    'demography_eurostat': os.path.join(EXAMPLE_FILES_DIR, 'demography_eurostat.h5')
+    'demography': EXAMPLE_FILES_DIR / 'demography.h5',
+    'demography_eurostat': EXAMPLE_FILES_DIR / 'demography_eurostat.h5'
 }
-EXAMPLE_EXCEL_TEMPLATES_DIR = os.path.join(_TEST_DIR, 'excel_template')
+EXAMPLE_EXCEL_TEMPLATES_DIR = _TEST_DIR / 'excel_template'
 
 
-def get_example_filepath(fname):
+def get_example_filepath(fname) -> Path:
     r"""Return absolute path to an example file if exist.
 
     Parameters
@@ -33,8 +35,8 @@ def get_example_filepath(fname):
     --------
     >>> fpath = get_example_filepath('examples.xlsx')
     """
-    fpath = os.path.abspath(os.path.join(EXAMPLE_FILES_DIR, fname))
-    if not os.path.exists(fpath):
+    fpath = (EXAMPLE_FILES_DIR / fname).absolute()
+    if not fpath.exists():
         AVAILABLE_EXAMPLE_FILES = os.listdir(EXAMPLE_FILES_DIR)
         raise ValueError(f"Example file {fname} does not exist. "
                          f"Available example files are: {AVAILABLE_EXAMPLE_FILES}")
