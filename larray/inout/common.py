@@ -2,9 +2,12 @@ import os
 from datetime import date, time, datetime
 from collections import OrderedDict
 
+from typing import List, Tuple
+
 from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import Array
+from larray.core.metadata import Metadata
 
 
 # all formats
@@ -17,7 +20,7 @@ _supported_types = _supported_larray_types + _supported_scalars_types
 _supported_typenames = {cls.__name__ for cls in _supported_types}
 
 
-def _get_index_col(nb_axes=None, index_col=None, wide=True):
+def _get_index_col(nb_axes=None, index_col=None, wide=True) -> List[int]:
     if not wide:
         if nb_axes is not None or index_col is not None:
             raise ValueError("`nb_axes` or `index_col` argument cannot be used when `wide` argument is False")
@@ -57,7 +60,8 @@ class FileHandler:
     def _open_for_write(self):
         raise NotImplementedError()
 
-    def list_items(self):
+    # FIXME : return an ordinary dict instead (Python < 3.6 no longer supported)
+    def list_items(self) -> List[Tuple[str, str]]:
         r"""
         Return list containing pairs (name, type) for all stored objects
         """
@@ -67,7 +71,7 @@ class FileHandler:
         r"""Read item"""
         raise NotImplementedError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         r"""Read metadata"""
         raise NotImplementedError()
 
@@ -102,7 +106,8 @@ class FileHandler:
             os.remove(self.original_file_name)
             os.rename(self.fname, self.original_file_name)
 
-    def read(self, keys, *args, **kwargs):
+    # FIXME : replace OrderedDict by ordinary dict (Python < 3.6 no longer supported)
+    def read(self, keys, *args, **kwargs) -> Tuple[Metadata, OrderedDict]:
         r"""
         Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 

@@ -12,6 +12,8 @@ try:
 except ImportError:
     xlsxwriter = None
 
+from typing import List, Tuple
+
 from larray.core.array import Array, asarray
 from larray.core.constants import nan
 from larray.core.group import _translate_sheet_name
@@ -243,10 +245,10 @@ class PandasExcelHandler(FileHandler):
         engine = 'xlsxwriter' if ext == '.xlsx' and xlsxwriter is not None else None
         self.handle = pd.ExcelWriter(self.fname, engine=engine)
 
-    def list_items(self):
+    def list_items(self) -> List[Tuple[str, str]]:
         return [(name, 'Array') for name in self.handle.sheet_names if name != '__metadata__']
 
-    def _read_item(self, key, type, *args, **kwargs):
+    def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':
             df = self.handle.parse(key, *args, **kwargs)
             return df_asarray(df, raw=True)
@@ -260,7 +262,7 @@ class PandasExcelHandler(FileHandler):
         else:
             raise TypeError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         sheet_meta = '__metadata__'
         if sheet_meta in self.handle.sheet_names:
             meta = read_excel(self.handle, sheet_meta, engine=self.handle.engine, wide=False)
@@ -298,10 +300,10 @@ class XLWingsHandler(FileHandler):
     def _open_for_write(self):
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
 
-    def list_items(self):
+    def list_items(self) -> List[Tuple[str, str]]:
         return [(name, 'Array') for name in self.handle.sheet_names() if name != '__metadata__']
 
-    def _read_item(self, key, type, *args, **kwargs):
+    def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':
             return self.handle[key].load(*args, **kwargs)
         else:
@@ -313,7 +315,7 @@ class XLWingsHandler(FileHandler):
         else:
             raise TypeError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         sheet_meta = '__metadata__'
         if sheet_meta in self.handle:
             meta = self.handle[sheet_meta].load(wide=False)
