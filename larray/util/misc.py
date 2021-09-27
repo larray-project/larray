@@ -656,15 +656,10 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None
                     new_arg_value = arg_converter(old_arg_value)
                 else:
                     new_arg_value = old_arg_value
-                msg = "The {old_name}={old_val!r} keyword is deprecated, use {new_name}={new_val!r} instead"\
-                    .format(old_name=old_arg_name, old_val=old_arg_value, new_name=new_arg_name,
-                            new_val=new_arg_value)
-
-                warnings.warn(msg, FutureWarning, stacklevel=stacklevel)
+                warnings.warn(f"The {old_arg_name}={old_arg_value!r} keyword is deprecated, "
+                              f"use {new_arg_name}={new_arg_value!r} instead", FutureWarning, stacklevel=stacklevel)
                 if new_arg_name in kwargs:
-                    msg = "Can only specify '{old_name}' or '{new_name}', not both"\
-                        .format(old_name=old_arg_name, new_name=new_arg_name)
-                    raise ValueError(msg)
+                    raise ValueError(f"Can only specify '{old_arg_name}' or '{new_arg_name}', not both")
                 else:
                     kwargs[new_arg_name] = new_arg_value
             return func(*args, **kwargs)
