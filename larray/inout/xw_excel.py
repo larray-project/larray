@@ -1,5 +1,6 @@
 import os
 import atexit
+from pathlib import Path
 
 import numpy as np
 try:
@@ -83,21 +84,24 @@ if xw is not None:
                 self.new_workbook = True
 
             if isinstance(filepath, str):
-                basename, ext = os.path.splitext(filepath)
-                if ext:
+                filepath = Path(filepath)
+
+            if isinstance(filepath, Path):
+                suffix = filepath.suffix
+                if suffix:
                     # XXX: we might want to be more precise than .xl* because I am unsure writing .xls
                     #     (or anything other than .xlsx and .xlsm) would work
-                    if not ext.startswith('.xl'):
-                        raise ValueError(f"'{ext}' is not a supported file extension")
-                    if not os.path.isfile(filepath) and not overwrite_file:
+                    if not suffix.startswith('.xl'):
+                        raise ValueError(f"'{suffix}' is not a supported file extension")
+                    if not filepath.is_file() and not overwrite_file:
                         raise ValueError(f"File {filepath} does not exist. Please give the path to an existing file "
                                          f"or set overwrite_file argument to True")
-                    if os.path.isfile(filepath) and overwrite_file:
+                    if filepath.is_file() and overwrite_file:
                         self.filepath = filepath
                         # we create a temporary file to work on. In case of crash, the original is not destroyed.
                         # the temporary file is renamed as the original file at close.
-                        filepath = basename + '~' + ext
-                    if not os.path.isfile(filepath):
+                        filepath = filepath.parent / (filepath.stem + '~' + filepath.suffix)
+                    if not filepath.is_file():
                         self.new_workbook = True
                 else:
                     # try to target an open but unsaved workbook. We cannot use the same code path as for other options
@@ -178,7 +182,7 @@ if xw is not None:
                 xw_wkb = app.books.active
             elif xw_wkb is None:
                 # file already exists (and is a file)
-                if os.path.isfile(filepath):
+                if filepath.is_file():
                     xw_wkb = app.books.open(filepath)
                 else:
                     # let us remember the path
@@ -256,7 +260,7 @@ if xw is not None:
 
             Parameters
             ----------
-            path : str, optional
+            path : str or Path, optional
                 Path to save the file to. Defaults to None (use the path used when opening the workbook).
             password : str, optional
                 Password to protect the file. Defaults to None (no password).
@@ -670,7 +674,7 @@ Existing files are overwritten without prompting.
 
 Parameters
 ----------
-path : str, optional
+path : str or Path, optional
     Full path to the workbook. Defaults to None.
 
 Examples
@@ -708,7 +712,7 @@ Open an Excel workbook
 
 Parameters
 ----------
-filepath : None, int or str, optional
+filepath : None, int, str or Path, optional
     path to the Excel file. The file must exist if overwrite_file is False. Use None for a new blank workbook,
     -1 for the currently active workbook. Defaults to None.
 overwrite_file : bool, optional

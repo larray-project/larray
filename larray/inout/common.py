@@ -1,8 +1,9 @@
 import os
 from datetime import date, time, datetime
 from collections import OrderedDict
+from pathlib import Path
 
-from typing import List, Tuple
+from typing import Optional, Union, List, Tuple
 
 from larray.core.axis import Axis
 from larray.core.group import Group
@@ -41,15 +42,20 @@ class FileHandler:
 
     Parameters
     ----------
-    fname : str
+    fname : str or Path or None
         Filename.
 
     Attributes
     ----------
-    fname : str
+    fname : Path
         Filename.
     """
-    def __init__(self, fname, overwrite_file=False):
+    def __init__(self, fname: Optional[Union[str, Path]], overwrite_file: bool = False):
+        if isinstance(fname, str):
+            fname = Path(fname)
+        if fname is not None and not isinstance(fname, Path):
+            raise TypeError(f"Expected a string or a pathlib.Path object for the 'fname' argument. "
+                            f"Got an object of type {type(fname).__name__} instead.")
         self.fname = fname
         self.original_file_name = None
         self.overwrite_file = overwrite_file
@@ -96,13 +102,12 @@ class FileHandler:
         raise NotImplementedError()
 
     def _get_original_file_name(self):
-        if self.overwrite_file and os.path.isfile(self.fname):
+        if self.overwrite_file and self.fname.is_file():
             self.original_file_name = self.fname
-            fname, ext = os.path.splitext(self.fname)
-            self.fname = f'{fname}~{ext}'
+            self.fname = self.fname.parent / (self.fname.stem + '~' + self.fname.suffix)
 
     def _update_original_file(self):
-        if self.original_file_name is not None and os.path.isfile(self.fname):
+        if self.original_file_name is not None and self.fname.is_file():
             os.remove(self.original_file_name)
             os.rename(self.fname, self.original_file_name)
 

@@ -1,7 +1,7 @@
-import os
 import re
 import inspect
 from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 import datetime as dt
@@ -28,7 +28,7 @@ from larray import Array, isnan, asarray, Metadata
 
 
 SKIP_EXCEL_TESTS = False
-TESTDATADIR = os.path.dirname(__file__)
+TESTDATADIR = Path(__file__).parent
 
 
 def inputpath(relpath):
@@ -42,7 +42,7 @@ def inputpath(relpath):
     -------
     absolute path to input data file
     """
-    return os.path.join(TESTDATADIR, 'data', relpath)
+    return (TESTDATADIR / 'data' / relpath).absolute()
 
 
 # XXX: maybe we should force value groups to use tuple and families (group of groups to use lists, or vice versa, so
@@ -126,10 +126,6 @@ assert_nparray_nan_equiv = assert_nparray_equal_factory(nan_equal)
 
 def assert_axis_eq(axis1, axis2):
     assert axis1.equals(axis2)
-
-
-def tmp_path(tmpdir, fname):
-    return os.path.join(tmpdir.strpath, fname)
 
 
 @pytest.fixture

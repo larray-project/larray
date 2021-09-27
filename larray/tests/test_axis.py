@@ -1,5 +1,4 @@
 import pytest
-import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables
@@ -524,13 +523,13 @@ def test_contains():
 
 
 @needs_pytables
-def test_h5_io(tmpdir):
+def test_h5_io(tmp_path):
     age = Axis('age=0..10')
     lipro = Axis('lipro=P01..P05')
     anonymous = Axis(range(3))
     wildcard = Axis(3, 'wildcard')
     string_axis = Axis(['@!àéè&%µ$~', '/*-+_§()><', 'another label'], 'string_axis')
-    fpath = os.path.join(str(tmpdir), 'axes.h5')
+    fpath = tmp_path / 'axes.h5'
 
     # ---- default behavior ----
     # int axis

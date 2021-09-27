@@ -1,6 +1,8 @@
-import os
 import warnings
 from collections import OrderedDict
+from pathlib import Path
+
+from typing import Union
 
 from larray.util.misc import _positive_integer, _validate_dir
 from larray.core.group import _translate_sheet_name
@@ -16,13 +18,15 @@ except ImportError:
 _default_items_size = {}
 
 
-def _validate_template_filename(filename):
-    filename, ext = os.path.splitext(filename)
-    if not ext:
-        ext = '.crtx'
-    if ext != '.crtx':
-        raise ValueError(f"Extension for the excel template file must be '.crtx' instead of {ext}")
-    return filename + ext
+def _validate_template_filename(filename: Union[str, Path]) -> Path:
+    if isinstance(filename, str):
+        filename = Path(filename)
+    suffix = filename.suffix
+    if not suffix:
+        suffix = '.crtx'
+    if suffix != '.crtx':
+        raise ValueError(f"Extension for the excel template file must be '.crtx' instead of {suffix}")
+    return filename.with_suffix(suffix)
 
 
 class AbstractReportItem:
@@ -41,7 +45,7 @@ class AbstractReportItem:
 
         Parameters
         ----------
-        template_dir : str
+        template_dir : str or Path
             Path to the directory containing the Excel template files.
 
         See Also
@@ -60,8 +64,13 @@ class AbstractReportItem:
     @template_dir.setter
     def template_dir(self, template_dir):
         if template_dir is not None:
-            _validate_dir(template_dir)
-            template_dir = template_dir
+            if isinstance(template_dir, str):
+                template_dir = Path(template_dir)
+            if not isinstance(template_dir, Path):
+                raise TypeError(f"Expected a string or a pathlib.Path object. "
+                                f"Got an object of type {type(template_dir).__name__} instead.")
+            if not template_dir.is_dir():
+                raise ValueError(f"The directory {template_dir} could not be found.")
         self._template_dir = template_dir
 
     @property
@@ -71,7 +80,7 @@ class AbstractReportItem:
 
         Parameters
         ----------
-        template : str
+        template : str or Path
             Name of the template to be used as default template.
             The extension '.crtx' will be added if not given.
             The full path to the template file must be given if no template directory has been set.
@@ -102,9 +111,9 @@ class AbstractReportItem:
     def template(self, template):
         if template is not None:
             if self.template_dir is None:
-                raise RuntimeError("Please set template_dir first")
+                raise RuntimeError("Please set 'template_dir' first")
             filename = _validate_template_filename(template)
-            template = os.path.join(self.template_dir, filename)
+            template = self.template_dir / filename
         self._template = template
 
     def set_item_default_size(self, kind, width=None, height=None):
@@ -167,10 +176,10 @@ class AbstractReportSheet(AbstractReportItem):
 
     Parameters
     ----------
-    template_dir : str, optional
+    template_dir : str or Path, optional
         Path to the directory containing the Excel template files (with a '.crtx' extension).
         Defaults to None.
-    template : str, optional
+    template : str or Path, optional
         Name of the template to be used as default template.
         The extension '.crtx' will be added if not given.
         The full path to the template file must be given if no template directory has been set.
@@ -230,7 +239,7 @@ class AbstractReportSheet(AbstractReportItem):
             Each additional row represents a new series and must start with the name of the current series.
         title : str, optional
             title of the graph. Defaults to None.
-        template : str, optional
+        template : str or Path, optional
             name of the template to be used to generate the graph.
             The full path to the template file must be provided if no template directory has not been set
             or if the template file belongs to another directory.
@@ -303,7 +312,7 @@ class AbstractReportSheet(AbstractReportItem):
             dictionary containing pairs (title template, array).
         axis_per_loop_variable: dict
             dictionary containing pairs (variable used in the title template, axis).
-        template : str, optional
+        template : str or Path, optional
             name of the template to be used to generate the graph.
             The full path to the template file must be provided if no template directory has not been set
             or if the template file belongs to another directory.
@@ -379,10 +388,10 @@ class AbstractExcelReport(AbstractReportItem):
 
     Parameters
     ----------
-    template_dir : str, optional
+    template_dir : str or Path, optional
         Path to the directory containing the Excel template files (with a '.crtx' extension).
         Defaults to None.
-    template : str, optional
+    template : str or Path, optional
         Name of the template to be used as default template.
         The extension '.crtx' will be added if not given.
         The full path to the template file must be given if no template directory has been set.
@@ -504,7 +513,7 @@ class AbstractExcelReport(AbstractReportItem):
 
         Parameters
         ----------
-        filepath : str
+        filepath : str or Path
             Path of the report file for the dump.
         data_sheet_name : str, optional
             name of the Excel sheet where all data associated with items is dumped.
@@ -628,8 +637,10 @@ if xw is not None:
             if not (1 <= data.ndim <= 2):
                 raise ValueError(f"Expected 1D or 2D array for data argument. Got array of dimensions {data.ndim}")
             self.data = data
-            if template is not None and not os.path.isfile(template):
-                raise ValueError(f"Could not find template file {template}")
+            if template is not None:
+                template = Path(template)
+                if not template.is_file():
+                    raise ValueError(f"Could not find template file {template}")
             self.template = template
             self.min_y = min_y
             self.max_y = max_y

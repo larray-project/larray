@@ -49,7 +49,8 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* made all I/O functions/methods/constructors to accept either a string or a pathlib.Path object
+  for all arguments representing a path (closes :issue:`896`).
 
 
 Fixes

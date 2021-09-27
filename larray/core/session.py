@@ -1,10 +1,10 @@
-import os
 import sys
 import re
 import fnmatch
 import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
+from pathlib import Path
 
 import numpy as np
 
@@ -87,7 +87,7 @@ class Session:
         if len(args) == 1:
             assert len(kwargs) == 0
             a0 = args[0]
-            if isinstance(a0, str):
+            if isinstance(a0, (str, Path)):
                 # assume a0 is a filename
                 self.load(a0)
             else:
@@ -356,7 +356,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             This can be either the path to a single file, a path to a directory containing .csv files or a pattern
             representing several .csv files.
         names : list of str, optional
@@ -427,13 +427,18 @@ class Session:
         if display:
             print("opening", fname)
         if fname is None:
-            if all([os.path.splitext(name)[1] == '.csv' for name in names]):
+            if all([Path(name).suffix == '.csv' for name in names]):
                 engine = ext_default_engine['csv']
             else:
                 raise ValueError(f"List of paths to only CSV files expected. Got {names}")
+        elif isinstance(fname, str):
+            fname = Path(fname)
+        if not isinstance(fname, Path):
+            raise TypeError(f"Expected a string or a Path object for the 'fname' argument. "
+                            f"Got object of type '{type(fname).__name__}' instead.")
         if engine == 'auto':
-            _, ext = os.path.splitext(fname)
-            ext = ext.strip('.') if '.' in ext else 'csv'
+            ext = fname.suffix
+            ext = ext.strip('.') if ext else 'csv'
             engine = ext_default_engine[ext]
         handler_cls = get_file_handler(engine)
         if engine == 'pandas_csv' and 'sep' in kwargs:
@@ -455,7 +460,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             Path of the file for the dump.
             If objects are saved in CSV files, the path corresponds to a directory.
         names : list of str or None, optional
@@ -515,9 +520,14 @@ class Session:
         dumping arr1 ... done
         dumping arr4 ... done
         """
+        if isinstance(fname, str):
+            fname = Path(fname)
+        if not isinstance(fname, Path):
+            raise TypeError(f"Expected a string or a Path object for the 'fname' argument. "
+                            f"Got object of type '{type(fname).__name__}' instead.")
         if engine == 'auto':
-            _, ext = os.path.splitext(fname)
-            ext = ext.strip('.') if '.' in ext else 'csv'
+            ext = fname.suffix
+            ext = ext.strip('.') if ext else 'csv'
             engine = ext_default_engine[ext]
         handler_cls = get_file_handler(engine)
         if engine == 'pandas_csv' and 'sep' in kwargs:

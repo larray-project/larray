@@ -1,4 +1,3 @@
-import os
 import re
 import shutil
 import pickle
@@ -9,7 +8,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import meta
-from larray.tests.common import (assert_array_nan_equal, inputpath, tmp_path,
+from larray.tests.common import (assert_array_nan_equal, inputpath,
                                  needs_xlwings, needs_pytables, needs_openpyxl, must_warn)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like,
@@ -191,9 +190,9 @@ def test_names(session):
                              'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
 
 
-def _test_io(tmpdir, session, meta, engine, ext):
+def _test_io(tmp_path, session, meta, engine, ext):
     filename = f"test_{engine}.{ext}" if 'csv' not in engine else f"test_{engine}{ext}"
-    fpath = tmp_path(tmpdir, filename)
+    fpath = tmp_path / filename
 
     is_excel_or_csv = 'excel' in engine or 'csv' in engine
 
@@ -261,7 +260,7 @@ def _add_scalars_to_session(s):
 
 
 @needs_pytables
-def test_h5_io(tmpdir, session, meta):
+def test_h5_io(tmp_path, session, meta):
     session = _add_scalars_to_session(session)
 
     msg = "\nyour performance may suffer as PyTables will pickle object types"
@@ -270,33 +269,33 @@ def test_h5_io(tmpdir, session, meta):
     # for some reason the PerformanceWarning is not detected as such, so this does not work:
     # with pytest.warns(tables.PerformanceWarning):
     with pytest.warns(Warning, match=regex):
-        _test_io(tmpdir, session, meta, engine='pandas_hdf', ext='h5')
+        _test_io(tmp_path, session, meta, engine='pandas_hdf', ext='h5')
 
 
 @needs_openpyxl
-def test_xlsx_pandas_io(tmpdir, session, meta):
-    _test_io(tmpdir, session, meta, engine='pandas_excel', ext='xlsx')
+def test_xlsx_pandas_io(tmp_path, session, meta):
+    _test_io(tmp_path, session, meta, engine='pandas_excel', ext='xlsx')
 
 
 @needs_xlwings
-def test_xlsx_xlwings_io(tmpdir, session, meta):
-    _test_io(tmpdir, session, meta, engine='xlwings_excel', ext='xlsx')
+def test_xlsx_xlwings_io(tmp_path, session, meta):
+    _test_io(tmp_path, session, meta, engine='xlwings_excel', ext='xlsx')
 
 
-def test_csv_io(tmpdir, session, meta):
+def test_csv_io(tmp_path, session, meta):
     try:
-        fpath = _test_io(tmpdir, session, meta, engine='pandas_csv', ext='csv')
+        fpath = _test_io(tmp_path, session, meta, engine='pandas_csv', ext='csv')
 
         names = Session({k: v for k, v in session.items() if isinstance(v, Array)}).names
 
         # test loading with a pattern
-        pattern = os.path.join(fpath, '*.csv')
+        pattern = fpath / '*.csv'
         s = Session(pattern)
         assert s.names == names
         assert s.meta == meta
 
         # create an invalid .csv file
-        invalid_fpath = os.path.join(fpath, 'invalid.csv')
+        invalid_fpath = fpath / 'invalid.csv'
         with open(invalid_fpath, 'w') as f:
             f.write(',",')
 
@@ -313,9 +312,9 @@ def test_csv_io(tmpdir, session, meta):
         shutil.rmtree(fpath)
 
 
-def test_pickle_io(tmpdir, session, meta):
+def test_pickle_io(tmp_path, session, meta):
     session = _add_scalars_to_session(session)
-    _test_io(tmpdir, session, meta, engine='pickle', ext='pkl')
+    _test_io(tmp_path, session, meta, engine='pickle', ext='pkl')
 
 
 def test_pickle_roundtrip(session, meta):

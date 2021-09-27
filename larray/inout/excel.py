@@ -1,5 +1,4 @@
 import warnings
-import os
 
 import numpy as np
 import pandas as pd
@@ -39,7 +38,7 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
 
     Parameters
     ----------
-    filepath : str
+    filepath : str or Path
         Path where the Excel file has to be read or use -1 to refer to the currently active workbook.
     sheet : str, Group or int, optional
         Name or index of the Excel sheet containing the array to be read.
@@ -241,8 +240,7 @@ class PandasExcelHandler(FileHandler):
         self.handle = pd.ExcelFile(self.fname)
 
     def _open_for_write(self):
-        _, ext = os.path.splitext(self.fname)
-        engine = 'xlsxwriter' if ext == '.xlsx' and xlsxwriter is not None else None
+        engine = 'xlsxwriter' if (self.fname.suffix == '.xlsx' and xlsxwriter is not None) else None
         self.handle = pd.ExcelWriter(self.fname, engine=engine)
 
     def list_items(self) -> List[Tuple[str, str]]:

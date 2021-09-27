@@ -1,5 +1,4 @@
 import pytest
-import os.path
 import numpy as np
 
 from larray.tests.common import assert_array_equal, needs_pytables
@@ -184,8 +183,8 @@ def test_to_lset_lgroup():
 
 
 @needs_pytables
-def test_h5_io_lgroup(tmpdir):
-    fpath = os.path.join(str(tmpdir), 'lgroups.h5')
+def test_h5_io_lgroup(tmp_path):
+    fpath = tmp_path / 'lgroups.h5'
     age.to_hdf(fpath)
 
     named = age[':5'] >> 'age_05'
@@ -425,8 +424,8 @@ def test_to_lset_igroup():
 
 
 @needs_pytables
-def test_h5_io_igroup(tmpdir):
-    fpath = os.path.join(str(tmpdir), 'igroups.h5')
+def test_h5_io_igroup(tmp_path):
+    fpath = tmp_path / 'igroups.h5'
     age.to_hdf(fpath)
 
     named = age.i[:6] >> 'age_05'

@@ -31,7 +31,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
     Parameters
     ----------
-    filepath_or_buffer : str or pandas.HDFStore
+    filepath_or_buffer : str or Path or pandas.HDFStore
         Path and name where the HDF5 file is stored or a HDFStore object.
     key : str or Group
         Name of the scalar or axis or group or array.
@@ -133,6 +133,10 @@ class PandasHDFHandler(FileHandler):
     r"""
     Handler for HDF5 files using Pandas.
     """
+    def __init__(self, fname, overwrite_file=False):
+        assert fname is not None
+        super(PandasHDFHandler, self).__init__(fname, overwrite_file)
+
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 

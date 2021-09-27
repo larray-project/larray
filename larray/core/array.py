@@ -28,8 +28,8 @@ Array class
 from collections import OrderedDict
 from itertools import product, chain, groupby
 from collections.abc import Iterable, Sequence
+from pathlib import Path
 import builtins
-import os
 import functools
 import warnings
 
@@ -6891,7 +6891,7 @@ class Array(ABCArray):
 
         Parameters
         ----------
-        filepath : str
+        filepath : str or Path
             path where the csv file has to be written.
         sep : str, optional
             separator for the csv file. Defaults to `,`.
@@ -6912,8 +6912,8 @@ class Array(ABCArray):
 
         Examples
         --------
-        >>> tmpdir = getfixture('tmpdir')
-        >>> fname = os.path.join(tmpdir.strpath, 'test.csv')
+        >>> tmp_path = getfixture('tmp_path')
+        >>> fname = tmp_path / 'test.csv'
         >>> a = ndtest('nat=BE,FO;sex=M,F')
         >>> a
         nat\sex  M  F
@@ -6965,7 +6965,7 @@ class Array(ABCArray):
 
         Parameters
         ----------
-        filepath : str
+        filepath : str or Path
             Path where the hdf file has to be written.
         key : str or Group
             Key (path) of the array within the HDF file (see Notes below).
@@ -7037,7 +7037,7 @@ class Array(ABCArray):
 
         Parameters
         ----------
-        filepath : str or int or None, optional
+        filepath : str or Path or int or None, optional
             Path where the excel file has to be written. If None (default), creates a new Excel Workbook in a live Excel
             instance (Windows only). Use -1 to use the currently active Excel Workbook. Use a name without extension
             (.xlsx) to use any unsaved* workbook.
@@ -7092,6 +7092,9 @@ class Array(ABCArray):
         if engine is None:
             engine = 'xlwings' if xw is not None else None
 
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
+
         if engine == 'xlwings':
             from larray.inout.xw_excel import open_excel
 
@@ -7099,12 +7102,10 @@ class Array(ABCArray):
             new_workbook = False
             if filepath is None:
                 new_workbook = True
-            elif isinstance(filepath, str):
-                basename, ext = os.path.splitext(filepath)
-                if ext:
-                    if not os.path.isfile(filepath):
-                        new_workbook = True
-                    close = True
+            elif isinstance(filepath, Path) and filepath.suffix:
+                if not filepath.is_file():
+                    new_workbook = True
+                close = True
             if new_workbook or overwrite_file:
                 new_workbook = overwrite_file = True
 
