@@ -43,6 +43,8 @@ from larray.extra.ipfp import ipfp
 
 from larray.example import get_example_filepath, load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
+# this makes larray.random functions accessible as la.random.* without explicitly importing larray.random
+import larray.random as _rnd
 
 __all__ = [
     # axis
@@ -113,3 +115,4 @@ __all__ += _deprecated_names
 
 # cleanup namespace (module was imported only to initialize handlers for .pkl and .pickle)
 del _pkl
+del _rnd
