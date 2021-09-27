@@ -4,12 +4,15 @@ import numpy as np
 import pandas as pd
 from pandas import HDFStore
 
+from typing import List, Tuple, Union
+
 from larray.core.array import Array
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.core.metadata import Metadata
 from larray.util.misc import LHDFStore
+from larray.util.types import Scalar
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler, _supported_typenames, _supported_scalars_types
 from larray.inout.pandas import df_asarray
@@ -136,7 +139,7 @@ class PandasHDFHandler(FileHandler):
     def _open_for_write(self):
         self.handle = HDFStore(self.fname)
 
-    def list_items(self):
+    def list_items(self) -> List[Tuple[str, str]]:
         keys = [key.strip('/') for key in self.handle.keys()]
         items = [(key, _get_type_from_attrs(self.handle.get_storer(key).attrs)) for key in keys if '/' not in key]
         # ---- for backward compatibility (LArray < 0.33) ----
@@ -146,7 +149,7 @@ class PandasHDFHandler(FileHandler):
         items += [(key.split('/')[-1], 'Group_Backward_Comp') for key in keys if '__groups__' in key]
         return items
 
-    def _read_item(self, key, typename, *args, **kwargs):
+    def _read_item(self, key, typename, *args, **kwargs) -> Union[Array, Axis, Group, Scalar]:
         if typename in _supported_typenames:
             hdf_key = '/' + key
         # ---- for backward compatibility (LArray < 0.33) ----
@@ -172,7 +175,7 @@ class PandasHDFHandler(FileHandler):
         else:
             raise TypeError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         metadata = Metadata.from_hdf(self.handle)
         if metadata is None:
             metadata = Metadata()

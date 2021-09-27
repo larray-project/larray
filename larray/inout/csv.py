@@ -6,6 +6,8 @@ from glob import glob
 import pandas as pd
 import numpy as np
 
+from typing import List, Tuple
+
 from larray.core.array import Array, asarray
 from larray.core.constants import nan
 from larray.core.metadata import Metadata
@@ -273,7 +275,7 @@ class PandasCSVHandler(FileHandler):
     def _get_original_file_name(self):
         pass
 
-    def _to_filepath(self, key):
+    def _to_filepath(self, key: str) -> str:
         if self.directory is not None:
             return os.path.join(self.directory, f'{key}.csv')
         else:
@@ -291,7 +293,7 @@ class PandasCSVHandler(FileHandler):
                 if not os.path.isdir(self.directory):
                     raise ValueError(f"Path {self.directory} must represent a directory")
 
-    def list_items(self):
+    def list_items(self) -> List[Tuple[str, str]]:
         fnames = glob(self.pattern) if self.pattern is not None else []
         # drop directory
         fnames = [os.path.basename(fname) for fname in fnames]
@@ -300,7 +302,7 @@ class PandasCSVHandler(FileHandler):
         fnames = sorted([os.path.splitext(fname)[0] for fname in fnames])
         return [(name, 'Array') for name in fnames if name != '__metadata__']
 
-    def _read_item(self, key, type, *args, **kwargs):
+    def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':
             return read_csv(self._to_filepath(key), *args, **kwargs)
         else:
@@ -312,7 +314,7 @@ class PandasCSVHandler(FileHandler):
         else:
             raise TypeError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         filepath = self._to_filepath('__metadata__')
         if os.path.isfile(filepath):
             meta = read_csv(filepath, wide=False)

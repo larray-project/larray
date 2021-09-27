@@ -2,12 +2,15 @@ import pickle
 import os.path
 from collections import OrderedDict
 
+from typing import List, Tuple, Union
+
 from larray.core.axis import Axis
 from larray.core.group import Group
 from larray.core.array import Array
 from larray.core.metadata import Metadata
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler, _supported_types, _supported_typenames, _supported_scalars_types
+from larray.util.types import Scalar
 
 
 @register_file_handler('pickle', ['pkl', 'pickle'])
@@ -22,7 +25,7 @@ class PickleHandler(FileHandler):
         else:
             self.data = OrderedDict()
 
-    def list_items(self):
+    def list_items(self) -> List[Tuple[str, str]]:
         # scalar
         items = [(key, type(value).__name__) for key, value in self.data.items()
                  if isinstance(value, _supported_scalars_types)]
@@ -34,7 +37,7 @@ class PickleHandler(FileHandler):
         items += [(key, 'Array') for key, value in self.data.items() if isinstance(value, Array)]
         return items
 
-    def _read_item(self, key, typename, *args, **kwargs):
+    def _read_item(self, key, typename, *args, **kwargs) -> Union[Array, Axis, Group, Scalar]:
         if typename in _supported_typenames:
             return self.data[key]
         else:
@@ -46,7 +49,7 @@ class PickleHandler(FileHandler):
         else:
             raise TypeError()
 
-    def _read_metadata(self):
+    def _read_metadata(self) -> Metadata:
         if '__metadata__' in self.data:
             return self.data['__metadata__']
         else:
