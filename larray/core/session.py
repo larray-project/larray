@@ -988,7 +988,7 @@ class Session:
         >>> arr1, arr2 = arr1.astype(np.int64), arr2.astype(np.int64)
         >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
         >>> for k, v in s.items():
-        ...     print("{}: {}".format(k, v.info if isinstance(v, Array) else repr(v)))
+        ...     print(f"{k}: {v.info if isinstance(v, Array) else repr(v)}")
         arr2: 4
          a [4]: 'a0' 'a1' 'a2' 'a3'
         dtype: int64
@@ -1427,8 +1427,7 @@ class Session:
         >>> def print_array(key, array):
         ...     axes_names = ', '.join(array.axes.display_names)
         ...     shape = ' x '.join(str(i) for i in array.shape)
-        ...     return "{} -> {} ({})\\n  title = {}\\n  dtype = {}".format(key, axes_names, shape,
-        ...                                                                 array.meta.title, array.dtype)
+        ...     return f"{key} -> {axes_names} ({shape})\\n  title = {array.meta.title}\\n  dtype = {array.dtype}"
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
         ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
         ...             Array: print_array,
