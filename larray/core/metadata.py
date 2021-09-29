@@ -1,6 +1,9 @@
 from collections import OrderedDict
 
+from typing import List, Optional
 
+
+# FIXME : inherit from dict
 class AttributeDict(OrderedDict):
     def __getattr__(self, key):
         try:
@@ -14,10 +17,10 @@ class AttributeDict(OrderedDict):
     def __delattr__(self, key):
         del self[key]
 
-    def __dir__(self):
+    def __dir__(self) -> List[str]:
         return list(set(super(AttributeDict, self).__dir__()) | set(self.keys()))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '\n'.join([f'{k}: {v}' for k, v in self.items()])
 
 
@@ -57,7 +60,7 @@ class Metadata(AttributeDict):
         return stack(self.items(), axes='metadata')
 
     @classmethod
-    def from_array(cls, array):
+    def from_array(cls, array) -> 'Metadata':
         from larray.core.array import asarray
         array = asarray(array)
         if array.ndim != 1:
@@ -80,7 +83,7 @@ class Metadata(AttributeDict):
             attrs.metadata = self
 
     @classmethod
-    def from_hdf(cls, hdfstore, key=None):
+    def from_hdf(cls, hdfstore, key=None) -> Optional['Metadata']:
         attrs = hdfstore.get_storer(key).attrs if key is not None else hdfstore.root._v_attrs
         if 'metadata' in attrs:
             return attrs.metadata

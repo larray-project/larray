@@ -52,6 +52,8 @@ Miscellaneous improvements
 * made all I/O functions/methods/constructors to accept either a string or a pathlib.Path object
   for all arguments representing a path (closes :issue:`896`).
 
+* added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
+  Closes :issue:`864`.
 
 Fixes
 ^^^^^

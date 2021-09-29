@@ -3,10 +3,11 @@ import re
 import fnmatch
 import warnings
 from collections import OrderedDict
-from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
+
+from typing import Any, List, Union, KeysView, ValuesView, ItemsView, Dict, Iterable
 
 from larray.core.metadata import Metadata
 from larray.core.group import Group
@@ -77,6 +78,7 @@ class Session:
     author: John Smith
     """
     def __init__(self, *args, **kwargs):
+        # FIXME : use a dict instead of an OrderedDict
         object.__setattr__(self, '_objects', OrderedDict())
 
         meta = kwargs.pop('meta', None)
@@ -97,7 +99,7 @@ class Session:
             self.add(*args, **kwargs)
 
     @property
-    def meta(self):
+    def meta(self) -> Metadata:
         r"""Returns metadata of the session.
 
         Returns
@@ -108,17 +110,17 @@ class Session:
         return self._meta
 
     @meta.setter
-    def meta(self, meta):
+    def meta(self, meta) -> None:
         if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
             raise TypeError(f"Expected list of pairs or dict or OrderedDict or Metadata object "
                             f"instead of {type(meta).__name__}")
         object.__setattr__(self, '_meta', meta if isinstance(meta, Metadata) else Metadata(meta))
 
     # XXX: behave like a dict and return keys instead?
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Any]:
         return iter(self.values())
 
-    def add(self, *args, **kwargs):
+    def add(self, *args, **kwargs) -> None:
         r"""
         Adds objects to the current session.
 
@@ -142,7 +144,7 @@ class Session:
         self._update_from_iterable((arg.name, arg) for arg in args)
         self._update_from_iterable(kwargs.items())
 
-    def update(self, other=None, **kwargs):
+    def update(self, other=None, **kwargs) -> None:
         r"""
         Update the session with the key/value pairs from other or passed keyword arguments, overwriting existing keys.
         Note that the session is updated inplace and no new Session object is returned.
@@ -238,6 +240,7 @@ class Session:
         z  z0  z1  z2
             0   1   2
         """
+        from collections.abc import Iterable
         if other is None:
             pass
         elif hasattr(other, 'items'):
@@ -249,10 +252,10 @@ class Session:
                              f"Got {type(other).__name__}.")
         self._update_from_iterable(kwargs.items())
 
-    def _ipython_key_completions_(self):
+    def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Union[Any, 'Session']:
         if isinstance(key, int):
             keys = list(self.keys())
             return self._objects[keys[key]]
@@ -268,7 +271,7 @@ class Session:
         else:
             return self._objects[key]
 
-    def get(self, key, default=None):
+    def get(self, key, default=None) -> Any:
         r"""
         Returns the object corresponding to the key.
         If the key doesn't correspond to any object, a default one can be returned.
@@ -311,19 +314,19 @@ class Session:
         except KeyError:
             return default
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         self._objects[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key) -> None:
         del self._objects[key]
 
-    def __getattr__(self, key):
+    def __getattr__(self, key) -> Any:
         if key in self._objects:
             return self._objects[key]
         else:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key, value) -> None:
         # the condition below is needed because, unlike __getattr__, __setattr__ is called before any property
         # see https://stackoverflow.com/a/15751159
         if key == 'meta':
@@ -331,10 +334,10 @@ class Session:
         else:
             self._objects[key] = value
 
-    def __delattr__(self, key):
+    def __delattr__(self, key) -> None:
         del self._objects[key]
 
-    def __dir__(self):
+    def __dir__(self) -> List[str]:
         return list(set(dir(self.__class__)) | set(self.keys()))
 
     # needed to make *un*pickling work (because otherwise, __getattr__ is called before ._objects exists, which leads to
@@ -346,7 +349,7 @@ class Session:
         # equivalent to self.__dict__ = d (we need this form because __setattr__ is overridden)
         object.__setattr__(self, '__dict__', d)
 
-    def load(self, fname, names=None, engine='auto', display=False, **kwargs):
+    def load(self, fname, names=None, engine='auto', display=False, **kwargs) -> None:
         r"""
         Load objects from a file, or several .csv files.
         The Excel and CSV formats can only contain objects of Array type (plus metadata).
@@ -449,11 +452,11 @@ class Session:
         self._update_from_iterable(objects.items())
         self.meta = metadata
 
-    def _update_from_iterable(self, it):
+    def _update_from_iterable(self, it) -> None:
         for k, v in it:
             self[k] = v
 
-    def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs):
+    def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs) -> None:
         r"""
         Dumps objects from the current session to a file, or several .csv files.
         The Excel and CSV formats only dump objects of Array type (plus metadata).
@@ -541,7 +544,7 @@ class Session:
             items = [(k, v) for k, v in items if k in names_set]
         handler.dump(meta, items, display=display, **kwargs)
 
-    def to_globals(self, names=None, depth=0, warn=True, inplace=False):
+    def to_globals(self, names=None, depth=0, warn=True, inplace=False) -> None:
         r"""
         Create global variables out of objects in the session.
 
@@ -606,7 +609,7 @@ class Session:
             for k, v in items:
                 d[k] = v
 
-    def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs):
+    def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
         Dumps objects from the current session to a file using pickle.
 
@@ -666,7 +669,7 @@ class Session:
 
     dump = renamed_to(save, 'dump')
 
-    def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs):
+    def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
         Dumps objects from the current session to an HDF file.
 
@@ -723,7 +726,7 @@ class Session:
 
     dump_hdf = renamed_to(to_hdf, 'dump_hdf')
 
-    def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs):
+    def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
         Dumps Array objects from the current session to an Excel file.
 
@@ -780,7 +783,7 @@ class Session:
 
     dump_excel = renamed_to(to_excel, 'dump_excel')
 
-    def to_csv(self, fname, names=None, display=False, **kwargs):
+    def to_csv(self, fname, names=None, display=False, **kwargs) -> None:
         r"""
         Dumps Array objects from the current session to CSV files.
 
@@ -835,7 +838,7 @@ class Session:
 
     dump_csv = renamed_to(to_csv, 'dump_csv')
 
-    def filter(self, pattern=None, kind=None):
+    def filter(self, pattern=None, kind=None) -> 'Session':
         r"""
         Returns a new session with objects which match some criteria.
 
@@ -891,7 +894,7 @@ class Session:
         return Session(items)
 
     @property
-    def names(self):
+    def names(self) -> List[str]:
         r"""
         Returns the list of names of the objects in the session.
         The list is sorted alphabetically and does not follow the internal order.
@@ -920,13 +923,13 @@ class Session:
         """
         return sorted(self._objects.keys())
 
-    def copy(self):
+    def copy(self) -> 'Session':
         r"""Returns a copy of the session.
         """
         # this actually *does* a copy of the internal mapping (the mapping is not reused-as is)
         return self.__class__(self._objects)
 
-    def keys(self):
+    def keys(self) -> KeysView[str]:
         r"""
         Returns a view on the session's keys.
 
@@ -954,7 +957,7 @@ class Session:
         """
         return self._objects.keys()
 
-    def values(self):
+    def values(self) -> ValuesView[Any]:
         r"""
         Returns a view on the session's values.
 
@@ -981,7 +984,7 @@ class Session:
         """
         return self._objects.values()
 
-    def items(self):
+    def items(self) -> ItemsView[str, Any]:
         r"""
         Returns a view of the session’s items ((key, value) pairs).
 
@@ -1013,18 +1016,18 @@ class Session:
         """
         return self._objects.items()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         keys = ", ".join(self.keys())
         return f'Session({keys})'
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._objects)
 
     # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
     def _binop(opname, arrays_only=True):
         opfullname = f'__{opname}__'
 
-        def opmethod(self, other):
+        def opmethod(self, other) -> 'Session':
             self_keys = set(self.keys())
             all_keys = list(self.keys())
             if not isinstance(other, Array) and hasattr(other, 'keys'):
@@ -1077,7 +1080,7 @@ class Session:
     def _unaryop(opname):
         opfullname = f'__{opname}__'
 
-        def opmethod(self):
+        def opmethod(self) -> 'Session':
             with np.errstate(call=_session_float_error_handler):
                 res = []
                 for k, v in self.items():
@@ -1100,7 +1103,7 @@ class Session:
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
-    def element_equals(self, other):
+    def element_equals(self, other) -> Array:
         r"""Test if each element (group, axis and array) of the current session equals
         the corresponding element of another session.
 
@@ -1165,7 +1168,7 @@ class Session:
         other_keys = [k for k, v in other.items() if isinstance(v, supported_objects) and k not in self_keys]
         all_keys = self_keys + other_keys
 
-        def elem_equal(e1, e2):
+        def elem_equal(e1, e2) -> bool:
             if type(e1) is not type(e2):
                 return False
             if isinstance(e1, (Group, Axis)):
@@ -1178,7 +1181,7 @@ class Session:
 
     array_equals = renamed_to(element_equals, 'array_equals')
 
-    def equals(self, other):
+    def equals(self, other) -> bool:
         r"""Test if all elements (groups, axes and arrays) of the current session are equal
         to those of another session.
 
@@ -1233,7 +1236,7 @@ class Session:
         """
         return all(self.element_equals(other))
 
-    def transpose(self, *args):
+    def transpose(self, *args) -> 'Session':
         r"""Reorder axes of arrays in session, ignoring missing axes for each array.
 
         Parameters
@@ -1287,7 +1290,7 @@ class Session:
             return v.transpose([a for a in axes if a in v.axes or a is Ellipsis])
         return self.apply(lenient_transpose, args)
 
-    def compact(self, display=False):
+    def compact(self, display=False) -> 'Session':
         r"""
         Detects and removes "useless" axes (ie axes for which values are constant over the whole axis) for all array
         objects in session
@@ -1324,7 +1327,7 @@ class Session:
             new_items.append((k, compacted))
         return Session(new_items)
 
-    def apply(self, func, *args, **kwargs):
+    def apply(self, func, *args, **kwargs) -> 'Session':
         r"""
         Apply function `func` on elements of the session and return a new session.
 
@@ -1385,7 +1388,7 @@ class Session:
         kind = kwargs.pop('kind', Array)
         return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
 
-    def summary(self, template=None):
+    def summary(self, template=None) -> str:
         """
         Returns a summary of the content of the session.
 
@@ -1469,7 +1472,7 @@ class Session:
         if Metadata not in template:
             template[Metadata] = "\t{key}: {value}"
 
-        def display(k, v, is_metadata=False):
+        def display(k, v, is_metadata=False) -> str:
             if not is_metadata:
                 t = Group if isinstance(v, Group) else type(v)
                 tmpl = template.get(t, "{key}: {value}")
@@ -1498,11 +1501,11 @@ class Session:
         return res
 
 
-def _exclude_private_vars(vars_dict):
+def _exclude_private_vars(vars_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {k: v for k, v in vars_dict.items() if not k.startswith('_')}
 
 
-def local_arrays(depth=0, include_private=False, meta=None):
+def local_arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
     Returns a session containing all local arrays sorted in alphabetical order.
 
@@ -1527,7 +1530,7 @@ def local_arrays(depth=0, include_private=False, meta=None):
     return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
 
 
-def global_arrays(depth=0, include_private=False, meta=None):
+def global_arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
     Returns a session containing all global arrays sorted in alphabetical order.
 
@@ -1552,7 +1555,7 @@ def global_arrays(depth=0, include_private=False, meta=None):
     return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
 
 
-def arrays(depth=0, include_private=False, meta=None):
+def arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
     Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
     alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
