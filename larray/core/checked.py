@@ -58,7 +58,7 @@ else:
             yield cls.validate
 
         @classmethod
-        def validate(cls, value, field: ModelField):
+        def validate(cls, value, field: ModelField) -> Array:
             if not (isinstance(value, Array) or np.isscalar(value)):
                 raise TypeError(f"Expected object of type '{Array.__name__}' or a scalar for "
                                 f"the variable '{field.name}' but got object of type '{type(value).__name__}'")
@@ -504,7 +504,7 @@ else:
         def __setstate__(self, state: Dict[str, Any]) -> None:
             object.__setattr__(self, '__dict__', state['__dict__'])
 
-        def dict(self, exclude: Set[str] = None):
+        def dict(self, exclude: Set[str] = None) -> Dict[str, Any]:
             return {k: v for k, v in self.items() if k not in exclude}
 
     class CheckedParameters(CheckedSession):

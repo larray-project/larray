@@ -34,7 +34,7 @@ import larray as la                                     # noqa: F401
 __all__ = ['randint', 'normal', 'uniform', 'permutation', 'choice']
 
 
-def generic_random(np_func, args, min_axes, meta):
+def generic_random(np_func, args, min_axes, meta) -> Array:
     args, res_axes = raw_broadcastable(args, min_axes=min_axes)
     res_data = np_func(*args, size=res_axes.shape)
     return Array(res_data, res_axes, meta=meta)
@@ -43,7 +43,7 @@ def generic_random(np_func, args, min_axes, meta):
 # We choose to place the axes argument in place of the numpy size argument, instead of having axes as the first
 # argument, because that would make it ugly for scalars. As a consequence, it is slightly ugly when arguments
 # before axes are not required.
-def randint(low, high=None, axes=None, dtype='l', meta=None):
+def randint(low, high=None, axes=None, dtype='l', meta=None) -> Array:
     r"""Return random integers from `low` (inclusive) to `high` (exclusive).
 
     Return random integers from the "discrete uniform" distribution of the specified dtype in the "half-open" interval
@@ -122,7 +122,7 @@ def randint(low, high=None, axes=None, dtype='l', meta=None):
     return generic_random(np.random.randint, (low, high), axes, meta)
 
 
-def normal(loc=0.0, scale=1.0, axes=None, meta=None):
+def normal(loc=0.0, scale=1.0, axes=None, meta=None) -> Array:
     r"""
     Draw random samples from a normal (Gaussian) distribution.
 
@@ -229,7 +229,7 @@ def normal(loc=0.0, scale=1.0, axes=None, meta=None):
     return generic_random(np.random.normal, (loc, scale), axes, meta)
 
 
-def uniform(low=0.0, high=1.0, axes=None, meta=None):
+def uniform(low=0.0, high=1.0, axes=None, meta=None) -> Array:
     r"""
     Draw samples from a uniform distribution.
 
@@ -331,7 +331,7 @@ def uniform(low=0.0, high=1.0, axes=None, meta=None):
     return generic_random(np.random.uniform, (low, high), axes, meta)
 
 
-def permutation(x, axis=0):
+def permutation(x, axis=0) -> Array:
     r"""
     Randomly permute a sequence along an axis, or return a permuted range.
 
@@ -380,7 +380,7 @@ def permutation(x, axis=0):
         return x[g]
 
 
-def choice(choices=None, axes=None, replace=True, p=None, meta=None):
+def choice(choices=None, axes=None, replace=True, p=None, meta=None) -> Array:
     r"""
     Generates a random sample from given choices
 

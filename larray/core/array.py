@@ -5631,7 +5631,7 @@ class Array(ABCArray):
         fullname = f'__{opname}__'
         super_method = getattr(np.ndarray, fullname)
 
-        def opmethod(self, other):
+        def opmethod(self, other) -> 'Array':
             res_axes = self.axes
 
             if isinstance(other, ExprNode):
@@ -5794,7 +5794,7 @@ class Array(ABCArray):
         fullname = f'__{opname}__'
         super_method = getattr(np.ndarray, fullname)
 
-        def opmethod(self):
+        def opmethod(self) -> 'Array':
             return Array(super_method(self.data), self.axes)
         opmethod.__name__ = fullname
         return opmethod
