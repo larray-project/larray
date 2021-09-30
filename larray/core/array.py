@@ -5683,9 +5683,10 @@ class Array(ABCArray):
 
             if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
-                (self, other), res_axes = make_numpy_broadcastable([self, other])
-                other = other.data
-            return Array(super_method(self.data, other), res_axes)
+                (self_data, other_data), res_axes = raw_broadcastable([self, other])
+            else:
+                self_data, other_data = self.data, other
+            return Array(super_method(self_data, other_data), res_axes)
         opmethod.__name__ = fullname
         return opmethod
 
@@ -6136,8 +6137,8 @@ class Array(ABCArray):
 
                 return (self == other) | (general_isnan(self) & general_isnan(other))
         else:
-            (a1, a2), res_axes = make_numpy_broadcastable([self, other])
-            return Array(np.isclose(a1.data, a2.data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
+            (a1_data, a2_data), res_axes = raw_broadcastable([self, other])
+            return Array(np.isclose(a1_data, a2_data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
 
     def isin(self, test_values, assume_unique=False, invert=False) -> 'Array':
         r"""
@@ -6227,14 +6228,13 @@ class Array(ABCArray):
             else:
                 return self / other
         else:
-            (self, other), res_axes = make_numpy_broadcastable((self, other))
-            otherdata = other.data
-            other_eq0 = otherdata == 0
+            (self_data, other_data), res_axes = raw_broadcastable((self, other))
+            other_eq0 = other_data == 0
             # numpy array division gets slower the more zeros you have in other, so we change it before the division
             # happens. This is obviously slower than doing nothing if we have very few zeros but I think it's a win
             # on average given that other is likely to contain zeros when using divnot0.
-            otherdata = np.where(other_eq0, 1, otherdata)
-            res_data = self.data / otherdata
+            other_data = np.where(other_eq0, 1, other_data)
+            res_data = self_data / other_data
             res_data[np.broadcast_to(other_eq0, res_data.shape)] = 0.0
             return Array(res_data, res_axes)
 
