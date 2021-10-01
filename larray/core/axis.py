@@ -869,7 +869,7 @@ class Axis(ABCAxis):
 
         Returns
         -------
-        (array of) int
+        int, slice, np.ndarray or Arrray
             Numerical index(ices) of (all) label(s) represented by the key
 
         Notes
