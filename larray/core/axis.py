@@ -333,7 +333,7 @@ class Axis(ABCAxis):
             Names of resulting axes. Defaults to None.
         regex : str, optional
             Use regex instead of delimiter to split labels. Defaults to None.
-        labels : bool, optional
+        return_labels : bool, optional
             Whether or not split labels must be returned (as a tuple of tuples). These labels are suitable for indexing
             via array.points[labels]. Defaults to False.
 
