@@ -1719,4 +1719,4 @@ class IGroup(Group):
         return hash(('IGroup', _to_tick(self.key)))
 
 
-PGroup = renamed_to(IGroup, 'PGroup')
+PGroup = renamed_to(IGroup, 'PGroup', raise_error=True)

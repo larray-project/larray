@@ -667,7 +667,7 @@ class Session:
         """
         self.save(fname, names, ext_default_engine['pkl'], overwrite, display, **kwargs)
 
-    dump = renamed_to(save, 'dump')
+    dump = renamed_to(save, 'dump', raise_error=True)
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
@@ -724,7 +724,7 @@ class Session:
         """
         self.save(fname, names, ext_default_engine['hdf'], overwrite, display, **kwargs)
 
-    dump_hdf = renamed_to(to_hdf, 'dump_hdf')
+    dump_hdf = renamed_to(to_hdf, 'dump_hdf', raise_error=True)
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
@@ -781,7 +781,7 @@ class Session:
         """
         self.save(fname, names, ext_default_engine['xlsx'], overwrite, display, **kwargs)
 
-    dump_excel = renamed_to(to_excel, 'dump_excel')
+    dump_excel = renamed_to(to_excel, 'dump_excel', raise_error=True)
 
     def to_csv(self, fname, names=None, display=False, **kwargs) -> None:
         r"""
@@ -836,7 +836,7 @@ class Session:
         """
         self.save(fname, names, ext_default_engine['csv'], display=display, **kwargs)
 
-    dump_csv = renamed_to(to_csv, 'dump_csv')
+    dump_csv = renamed_to(to_csv, 'dump_csv', raise_error=True)
 
     def filter(self, pattern=None, kind=None) -> 'Session':
         r"""
@@ -1179,7 +1179,7 @@ class Session:
         res = [elem_equal(self.get(key), other.get(key)) for key in all_keys]
         return Array(res, [Axis(all_keys, 'name')])
 
-    array_equals = renamed_to(element_equals, 'array_equals')
+    array_equals = renamed_to(element_equals, 'array_equals', raise_error=True)
 
     def equals(self, other) -> bool:
         r"""Test if all elements (groups, axes and arrays) of the current session are equal

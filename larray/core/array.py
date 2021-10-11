@@ -1352,7 +1352,7 @@ class Array(ABCArray):
         else:
             return Array(self.data, new_axes)
 
-    with_axes = renamed_to(set_axes, 'with_axes')
+    with_axes = renamed_to(set_axes, 'with_axes', raise_error=True)
 
     def __getattr__(self, key) -> Axis:
         if key in self.axes:
@@ -2257,7 +2257,7 @@ class Array(ABCArray):
 
         return self[tuple(sort_key(axis) for axis in axes)]
 
-    sort_axis = renamed_to(sort_axes, 'sort_axis')
+    sort_axis = renamed_to(sort_axes, 'sort_axis', raise_error=True)
 
     # todo : set returned type to Union['Array', np.ndarray, Scalar] ?
     def __getitem__(self, key, collapse_slices=False, translate_key=True, points=False) -> Union['Array', Scalar]:
@@ -2546,7 +2546,7 @@ class Array(ABCArray):
             axes = self.axes[axes]
         res_axes = self.axes.replace([(axis, axis.ignore_labels()) for axis in axes])
         return Array(self.data, res_axes)
-    drop_labels = renamed_to(ignore_labels, 'drop_labels')
+    drop_labels = renamed_to(ignore_labels, 'drop_labels', raise_error=True)
 
     def __str__(self) -> str:
         if not self.ndim:
@@ -2569,15 +2569,6 @@ class Array(ABCArray):
 
     def __contains__(self, key) -> bool:
         return any(key in axis for axis in self.axes)
-
-    def as_table(self, maxlines=-1, edgeitems=5, light=False, wide=True, value_name='value'):
-        r"""
-        Deprecated. Please use Array.dump() instead.
-        """
-        warnings.warn("Array.as_table() is deprecated. Please use Array.dump() instead.", FutureWarning,
-                      stacklevel=2)
-        return self.dump(maxlines=maxlines, edgeitems=edgeitems, light=light, wide=wide, value_name=value_name,
-                         _axes_display_names=True)
 
     # XXX: dump as a 2D Array with row & col dims?
     def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
@@ -2747,6 +2738,9 @@ class Array(ABCArray):
                       for value in line]
                      for line in res2d]
         return res2d
+    # this is not 100% equivalent (the names of displayed axes is different) but it has been deprecated long enough
+    # (since 0.30) that we can afford slightly breaking backward compatibility.
+    as_table = renamed_to(dump, 'as_table')
 
     # XXX: should filter(geo=['W']) return a view by default? (collapse=True)
     # I think it would be dangerous to make it the default
@@ -3160,7 +3154,7 @@ class Array(ABCArray):
             indices = np.unravel_index(self.data.argmin(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    argmin = renamed_to(labelofmin, 'argmin')
+    argmin = renamed_to(labelofmin, 'argmin', raise_error=True)
 
     def indexofmin(self, axis=None) -> Union['Array', Tuple[int, ...]]:
         r"""Returns indices of the minimum values along a given axis.
@@ -3201,7 +3195,7 @@ class Array(ABCArray):
         else:
             return np.unravel_index(self.data.argmin(), self.shape)
 
-    posargmin = renamed_to(indexofmin, 'posargmin')
+    posargmin = renamed_to(indexofmin, 'posargmin', raise_error=True)
 
     def labelofmax(self, axis=None) -> Union['Array', Tuple[Scalar, ...]]:
         r"""Returns labels of the maximum values along a given axis.
@@ -3244,7 +3238,7 @@ class Array(ABCArray):
             indices = np.unravel_index(self.data.argmax(), self.shape)
             return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
 
-    argmax = renamed_to(labelofmax, 'argmax')
+    argmax = renamed_to(labelofmax, 'argmax', raise_error=True)
 
     def indexofmax(self, axis=None) -> Union['Array', Tuple[int, ...]]:
         r"""Returns indices of the maximum values along a given axis.
@@ -3285,7 +3279,7 @@ class Array(ABCArray):
         else:
             return np.unravel_index(self.data.argmax(), self.shape)
 
-    posargmax = renamed_to(indexofmax, 'posargmax')
+    posargmax = renamed_to(indexofmax, 'posargmax', raise_error=True)
 
     def labelsofsorted(self, axis=None, ascending=True, kind='quicksort') -> 'Array':
         r"""Returns the labels that would sort this array.
@@ -3333,7 +3327,7 @@ class Array(ABCArray):
         pos = self.indicesofsorted(axis, ascending=ascending, kind=kind)
         return Array(axis.labels[pos.data], pos.axes)
 
-    argsort = renamed_to(labelsofsorted, 'argsort')
+    argsort = renamed_to(labelsofsorted, 'argsort', raise_error=True)
 
     def indicesofsorted(self, axis=None, ascending=True, kind='quicksort') -> 'Array':
         r"""Returns the indices that would sort this array.
@@ -3386,7 +3380,7 @@ class Array(ABCArray):
         new_axis = Axis(np.arange(len(axis)), axis.name)
         return Array(data, self.axes.replace(axis, new_axis))
 
-    posargsort = renamed_to(indicesofsorted, 'posargsort')
+    posargsort = renamed_to(indicesofsorted, 'posargsort', raise_error=True)
 
     # TODO: implement keys_by
     # XXX: implement expand=True? Unsure it is necessary now that we have zip_array_*
@@ -8025,7 +8019,7 @@ class Array(ABCArray):
                 res.points[split_labels] = array
                 array = res
         return array
-    split_axis = renamed_to(split_axes, 'split_axis')
+    split_axis = renamed_to(split_axes, 'split_axis', raise_error=True)
 
     def reverse(self, axes=None) -> 'Array':
         r"""
@@ -8379,7 +8373,7 @@ def asarray(a, meta=None) -> Array:
         return Array(a, meta=meta)
 
 
-aslarray = renamed_to(asarray, 'aslarray')
+aslarray = renamed_to(asarray, 'aslarray', raise_error=True)
 
 
 def _check_axes_argument(func):
@@ -8991,7 +8985,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
     return res
 
 
-create_sequential = renamed_to(sequence, 'create_sequential')
+create_sequential = renamed_to(sequence, 'create_sequential', raise_error=True)
 
 
 @_check_axes_argument

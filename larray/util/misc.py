@@ -635,11 +635,15 @@ def index_by_id(seq, value):
     raise ValueError(f"{value} is not in list")
 
 
-def renamed_to(newfunc, old_name, stacklevel=2):
-    def wrapper(*args, **kwargs):
-        warnings.warn(f"{old_name}() is deprecated. Use {newfunc.__name__}() instead.",
-                      FutureWarning, stacklevel=stacklevel)
-        return newfunc(*args, **kwargs)
+def renamed_to(newfunc, old_name, stacklevel=2, raise_error=False):
+    if not raise_error:
+        def wrapper(*args, **kwargs):
+            warnings.warn(f"{old_name}() is deprecated. Use {newfunc.__name__}() instead.",
+                          FutureWarning, stacklevel=stacklevel)
+            return newfunc(*args, **kwargs)
+    else:
+        def wrapper(*args, **kwargs):
+            raise TypeError(f"{old_name}() is deprecated. Use {newfunc.__name__}() instead.")
     return wrapper
 
 
