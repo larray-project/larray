@@ -18,6 +18,9 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* implemented :py:obj:`Session.union()`, :py:obj:`Session.intersection()` and :py:obj:`Session.difference()` to combine
+  several sessions into one using set operations (closes :issue:`22`).
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 

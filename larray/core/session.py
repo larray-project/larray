@@ -1388,6 +1388,93 @@ class Session:
         kind = kwargs.pop('kind', Array)
         return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
 
+    def union(self, other):
+        """Returns session with the (set) union of this session objects with other objects.
+
+        In other words, the new session will contain objects from this session then those of other whose name is not
+        present in this session. Objects relative order will be kept intact, but only unique names will be kept.
+        Objects from this session will be before objects from other.
+
+        Parameters
+        ----------
+        other : Session
+            other session
+
+        Returns
+        -------
+        Session
+
+        Examples
+        --------
+        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(3), ndtest((3, 2))
+        >>> s1 = Session(arr1=arr1, arr2=arr2, arr3=arr3)
+        >>> s2 = Session(arr2=arr2 + 1, arr4=arr3 + 1)
+        >>> s1.union(s2)
+        Session(arr1, arr2, arr3, arr4)
+        >>> s2.union(s1)
+        Session(arr2, arr4, arr1, arr3)
+        """
+        self_keys = set(self.keys())
+        res = self.copy()
+        res._update_from_iterable([(k, v) for k, v in other.items() if k not in self_keys])
+        return res
+
+    def intersection(self, other):
+        """Returns session with the (set) intersection of this session objects with other objects.
+
+        In other words, the new session will contain objects from this session if there is an object with the same
+        name in other. Objects relative order will be kept intact, but only unique names will be kept.
+
+        Parameters
+        ----------
+        other : Session or sequence of names
+            other names
+
+        Returns
+        -------
+        Session
+
+        Examples
+        --------
+        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(3), ndtest((3, 2))
+        >>> s1 = Session(arr1=arr1, arr2=arr2, arr3=arr3)
+        >>> s2 = Session(arr2=arr2 + 1, arr3=arr3 + 1)
+        >>> s1.intersection(s2)
+        Session(arr2, arr3)
+        >>> s1.intersection(['arr2', 'arr1'])
+        Session(arr1, arr2)
+        """
+        other_keys = set(other.keys() if isinstance(other, Session) else other)
+        return self[[k for k in self.keys() if k in other_keys]]
+
+    def difference(self, other):
+        """Returns session with the (set) difference of this session objects and other objects.
+
+        In other words, the new session will contain objects from this session if there is no object with the same
+        name in other. Objects relative order will be kept intact, but only unique names will be kept.
+
+        Parameters
+        ----------
+        other : Session or sequence of names
+            other names
+
+        Returns
+        -------
+        Session
+
+        Examples
+        --------
+        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(3), ndtest((3, 2))
+        >>> s1 = Session(arr1=arr1, arr2=arr2, arr3=arr3)
+        >>> s2 = Session(arr2=arr2 + 1, arr3=arr3 + 1)
+        >>> s1.difference(s2)
+        Session(arr1)
+        >>> s1.difference(['arr2', 'arr1'])
+        Session(arr3)
+        """
+        other_keys = set(other.keys() if isinstance(other, Session) else other)
+        return self[[k for k in self.keys() if k not in other_keys]]
+
     def summary(self, template=None) -> str:
         """
         Returns a summary of the content of the session.

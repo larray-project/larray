@@ -762,6 +762,16 @@ Exploring
    Session.items
    Session.summary
 
+Combining
+---------
+
+.. autosummary::
+   :toctree: _generated/
+
+   Session.union()
+   Session.intersection()
+   Session.difference()
+
 Copying
 -------
 
