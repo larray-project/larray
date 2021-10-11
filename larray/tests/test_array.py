@@ -651,6 +651,14 @@ def test_getitem_guess_axis(array):
     res = arr['b[l1]']
     assert_array_equal(res, arr.data[:, 0])
 
+    # several axes in same string (guess axis)
+    res = arr['l0;l2']
+    assert res == 1
+
+    # several axes in same string (with axis information)
+    res = arr['a[l1];b[l2]']
+    assert res == 3
+
 
 def test_getitem_positional_group(array):
     raw = array.data

@@ -18,6 +18,17 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* allow ";" in __getitem__ and __setitem__ strings, making it possible to specify keys for several axes in a single
+  string (closes :issue:`904`). For example:
+
+    >>> arr = ndtest((2, 3))
+    >>> arr
+    a\b  b0  b1  b2
+     a0   0   1   2
+     a1   3   4   5
+    >>> arr['a1;b2']
+    5
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
