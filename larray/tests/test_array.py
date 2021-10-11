@@ -2968,9 +2968,25 @@ def test_insert():
     # simple tests are in the docstring
     arr1 = ndtest((2, 3))
 
+    # Insert value without label
+    res = arr1.insert(42, before='b1')
+    expected = from_string(r"""
+    a\b  b0  None  b1  b2
+     a0   0    42   1   2
+     a1   3    42   4   5""")
+    assert_array_equal(res, expected)
+
+    # Specify label if not in the value
+    res = arr1.insert(42, before='b1', label='new')
+    expected = from_string(r"""
+    a\b  b0  new  b1  b2
+     a0   0   42   1   2
+     a1   3   42   4   5""")
+    assert_array_equal(res, expected)
+
     # insert at multiple places at once
 
-    # we cannot use from_string in these tests because it de-duplicates ambiguous (column) labels automatically
+    # cannot use from_string in these tests because it de-duplicates ambiguous (column) labels automatically
     res = arr1.insert([42, 43], before='b1', label='new')
     expected = from_lists([['a\\b', 'b0', 'new', 'new', 'b1', 'b2'],
                            [  'a0',    0,    42,    43,    1,    2],   # noqa: E201,E241
@@ -3038,6 +3054,14 @@ def test_insert():
     a\b  b0  b0.1  b1  b0.2  b2
      a0   0    42   1    43   2
      a1   3    44   4    45   5""")
+    assert_array_equal(res, expected)
+
+    # Override array label
+    res = arr1.insert(arr3, before='b1', label='new')
+    # cannot use from_string in these tests because it de-duplicates ambiguous (column) labels automatically
+    expected = from_lists([['a\\b', 'b0', 'new', 'new', 'b1', 'b2'],
+                           [  'a0',    0,    42,    43,    1,    2],   # noqa: E201,E241
+                           [  'a1',    3,    44,    45,    4,    5]])  # noqa: E201,E241
     assert_array_equal(res, expected)
 
     # with ambiguous labels

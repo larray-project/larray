@@ -64,4 +64,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed Array.insert when no label is provided (closes :issue:`879`).
