@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables
+from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables, must_warn
 from larray import Axis, LGroup, IGroup, read_hdf, X, ndtest
 from larray.core.axis import AxisReference
 
@@ -609,6 +609,20 @@ def test_split():
     a, b = a_b.split()
     assert a.equals(Axis(['a0', 'a1']))
     assert b.equals(Axis(['b0', 'b1', 'b2']))
+
+
+def test_apply():
+    sex = Axis('sex=MALE,FEMALE')
+    with must_warn(FutureWarning, msg="apply() is deprecated. Use set_labels() instead."):
+        res = sex.apply(str.capitalize)
+    assert res.equals(Axis(['Male', 'Female'], 'sex'))
+
+
+def test_replace():
+    sex = Axis('sex=M,F')
+    with must_warn(FutureWarning, msg="replace() is deprecated. Use set_labels() instead."):
+        res = sex.replace('M', 'Male')
+    assert res.equals(Axis(['Male', 'F'], 'sex'))
 
 
 if __name__ == "__main__":
