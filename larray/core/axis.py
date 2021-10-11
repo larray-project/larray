@@ -716,7 +716,7 @@ class Axis(ABCAxis):
         match = re.compile(regex).match
         return LGroup([v for v in self.labels if match(v)], axis=self)
 
-    matches = renamed_to(matching, 'matches')
+    matches = renamed_to(matching, 'matches', raise_error=True)
 
     def startingwith(self, prefix) -> LGroup:
         r"""
@@ -742,7 +742,7 @@ class Axis(ABCAxis):
             prefix = prefix.eval()
         return LGroup([v for v in self.labels if v.startswith(prefix)], axis=self)
 
-    startswith = renamed_to(startingwith, 'startswith')
+    startswith = renamed_to(startingwith, 'startswith', raise_error=True)
 
     def endingwith(self, suffix) -> LGroup:
         r"""
@@ -768,7 +768,7 @@ class Axis(ABCAxis):
             suffix = suffix.eval()
         return LGroup([v for v in self.labels if v.endswith(suffix)], axis=self)
 
-    endswith = renamed_to(endingwith, 'endswith')
+    endswith = renamed_to(endingwith, 'endswith', raise_error=True)
 
     def containing(self, substring) -> LGroup:
         r"""
@@ -981,7 +981,7 @@ class Axis(ABCAxis):
                 # print("diff dtype", )
                 raise KeyError(key)
 
-    translate = renamed_to(index, 'translate')
+    translate = renamed_to(index, 'translate', raise_error=True)
 
     # FIXME: remove id
     @property
@@ -1187,9 +1187,7 @@ class Axis(ABCAxis):
             name = name.name
         res.name = name
         return res
-
-    def _rename(self, name):
-        raise TypeError("Axis._rename is deprecated, use Axis.rename instead")
+    _rename = renamed_to(rename, '_rename', raise_error=True)
 
     def union(self, other) -> 'Axis':
         r"""Returns axis with the union of this axis labels and other labels.
@@ -3371,7 +3369,7 @@ class AxisCollection:
             split_axes = axis.split(sep, names, regex)
             new_axes = new_axes[:axis_index] + split_axes + new_axes[axis_index + 1:]
         return new_axes
-    split_axis = renamed_to(split_axes, 'split_axis')
+    split_axis = renamed_to(split_axes, 'split_axis', raise_error=True)
 
     def align(self, other, join='outer', axes=None) -> Tuple['AxisCollection', 'AxisCollection']:
         r"""Align this axis collection with another.

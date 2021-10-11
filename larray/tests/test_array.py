@@ -7,10 +7,9 @@ import pandas as pd
 
 from io import StringIO
 
-from larray.tests.common import meta
-from larray.tests.common import (inputpath,
+from larray.tests.common import (meta, inputpath,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn)
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn, must_raise)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
                     zeros, zeros_like, ndtest, empty, ones, eye, diag, stack, sequence,
                     union, clip, exp, where, X, mean, inf, nan, isnan, round,
@@ -5260,10 +5259,10 @@ def test_0darray_convert():
 
 
 def test_deprecated_methods():
-    with must_warn(FutureWarning, msg="with_axes() is deprecated. Use set_axes() instead."):
+    with must_raise(TypeError, msg="with_axes() is deprecated. Use set_axes() instead."):
         ndtest((2, 2)).with_axes('a', 'd=d0,d1')
 
-    with must_warn(FutureWarning, msg="split_axis() is deprecated. Use split_axes() instead."):
+    with must_raise(TypeError, msg="split_axis() is deprecated. Use split_axes() instead."):
         ndtest((2, 2)).combine_axes().split_axis()
 
 

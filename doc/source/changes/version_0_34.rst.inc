@@ -14,6 +14,9 @@ Backward incompatible changes
 
 * dropped support for Python 3.6.
 
+* deprecations dating to version 0.29 or earlier (released more than 3 years ago) now raise errors instead of
+  printing a warning.
+
 
 New features
 ^^^^^^^^^^^^
