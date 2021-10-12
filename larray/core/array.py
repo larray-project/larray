@@ -6258,7 +6258,7 @@ class Array(ABCArray):
         a2   b1   2   2
         a2   b2   3   3
 
-        If you want to new axes to be inserted in a particular order, you have to give that order
+        If you want the new axes to be inserted in a particular order, you have to give that order
 
         >>> arr.expand([a, c, b])
          a  c\b  b1  b2
