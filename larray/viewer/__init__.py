@@ -51,7 +51,7 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
     maxvalue : scalar, optional
         Maximum value allowed.
     readonly : bool, optional
-        Whether or not editing array values is forbidden. Defaults to False.
+        Whether editing array values is forbidden. Defaults to False.
     depth : int, optional
         Stack depth where to look for variables. Defaults to 0 (where this function was called).
 
@@ -106,14 +106,14 @@ def compare(*args, **kwargs):
     depth : int, optional
         Stack depth where to look for variables. Defaults to 0 (where this function was called).
     display_caller_info: bool, optional
-        Whether or not to display the filename and line number where the Editor has been called.
+        Whether to display the filename and line number where the Editor has been called.
         Defaults to True.
     rtol : float or int, optional
         The relative tolerance parameter (see Notes). Defaults to 0.
     atol : float or int, optional
         The absolute tolerance parameter (see Notes). Defaults to 0.
     nans_equal : boolean, optional
-        Whether or not to consider NaN values at the same positions in the two arrays as equal.
+        Whether to consider NaN values at the same positions in the two arrays as equal.
         By default, an array containing NaN values is never equal to another array, even if that other array
         also contains NaN values at the same positions. The reason is that a NaN value is different from
         *anything*, including itself. Defaults to True.
@@ -149,10 +149,10 @@ def run_editor_on_exception(root_path=None, usercode_traceback=True, usercode_fr
     root_path : str, optional
         Defaults to None (the directory of the main script).
     usercode_traceback : bool, optional
-        Whether or not to show only the part of the traceback (error log) which corresponds to the user code.
+        Whether to show only the part of the traceback (error log) which corresponds to the user code.
         Otherwise, it will show the complete traceback, including code inside libraries. Defaults to True.
     usercode_frame : bool, optional
-        Whether or not to start the debug window in the frame corresponding to the user code.
+        Whether to start the debug window in the frame corresponding to the user code.
         This argument is ignored (it is always True) if usercode_traceback is True. Defaults to True.
 
     Notes

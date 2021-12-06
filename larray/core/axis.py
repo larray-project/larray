@@ -336,7 +336,7 @@ class Axis(ABCAxis):
         regex : str, optional
             Use regex instead of delimiter to split labels. Defaults to None.
         return_labels : bool, optional
-            Whether or not split labels must be returned (as a tuple of tuples). These labels are suitable for indexing
+            Whether split labels must be returned (as a tuple of tuples). These labels are suitable for indexing
             via array.points[labels]. Defaults to False.
 
         Returns
@@ -1576,7 +1576,7 @@ class AxisCollection:
             Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
             in the collection).
         ascending : bool, optional
-            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+            Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
         Returns
         -------
@@ -1585,7 +1585,6 @@ class AxisCollection:
 
         Examples
         --------
-
         >>> from larray import ndtest
         >>> axes = ndtest((2, 2)).axes
         >>> axes
@@ -2327,7 +2326,7 @@ class AxisCollection:
         new_axis : axis ref, optional
             New axis if `axes_to_replace` contains a single axis reference. Defaults to None.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
+            Whether to modify the original object or return a new AxisCollection and leave the original intact.
             Defaults to False.
         **kwargs : Axis
             New axis for each axis to replace given as a keyword argument.
@@ -2460,7 +2459,7 @@ class AxisCollection:
             {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
             label) and returning a single value. This argument must not be used if axis is a mapping.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new AxisCollection and leave the original intact.
+            Whether to modify the original object or return a new AxisCollection and leave the original intact.
             Defaults to False.
         **kwargs :
             `axis`=`labels` for each axis you want to set labels.
@@ -2868,9 +2867,9 @@ class AxisCollection:
         key : scalar, list/array of scalars, Group or tuple or dict of them
             any key supported by Array.__getitem__
         collapse_slices : bool, optional
-            Whether or not to convert ranges to slices. Defaults to False.
+            Whether to convert ranges to slices. Defaults to False.
         translate_key : bool, optional
-            Whether or not to consider key as label-based. Defaults to True.
+            Whether to consider key as label-based. Defaults to True.
 
         Returns
         -------
@@ -3195,10 +3194,10 @@ class AxisCollection:
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
-            whether or not to produce a wildcard axis even if the axes to combine are not.
+            whether to produce a wildcard axis even if the axes to combine are not.
             This is much faster, but loose axes labels.
         front_if_spread : bool, optional
-            whether or not to move the combined axis at the front (it will be the first axis) if the combined axes are
+            whether to move the combined axis at the front (it will be the first axis) if the combined axes are
             not next to each other.
 
         Returns
@@ -3559,7 +3558,7 @@ class AxisCollection:
         key : tuple
             Complete (len(key) == self.ndim) indices-based key.
         wildcard : bool, optional
-            Whether or not to produce a wildcard axis. Defaults to False.
+            Whether to produce a wildcard axis. Defaults to False.
         sep : str, optional
             Separator to use for creating combined axis name and labels (when wildcard is False). Defaults to '_'.
 
@@ -3587,7 +3586,7 @@ class AxisCollection:
         key : tuple
             Complete (len(key) == self.ndim) indices-based key.
         wildcard : bool, optional
-            Whether or not to produce a wildcard axis. Defaults to False.
+            Whether to produce a wildcard axis. Defaults to False.
         sep : str, optional
             Separator to use for creating combined axis name and labels (when wildcard is False). Defaults to '_'.
 

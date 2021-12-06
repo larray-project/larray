@@ -17,10 +17,10 @@ def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns
     index_col : str or None, optional
         Name of column to set as index. Defaults to None.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the rows alphabetically (sorting is more efficient than not sorting).
         This only makes sense in combination with index_col. Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
 
     Returns

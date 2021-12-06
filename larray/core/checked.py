@@ -277,7 +277,6 @@ else:
 
         Examples
         --------
-
         Content of file 'parameters.py'
 
         >>> from larray import *
@@ -420,7 +419,7 @@ else:
             extra = 'allow'
             # whether to perform validation on assignment to attributes
             validate_assignment = True
-            # whether or not models are faux-immutable, i.e. whether __setattr__ is allowed.
+            # whether models are faux-immutable, i.e. whether __setattr__ is allowed.
             # (default: True)
             allow_mutation = True
 
@@ -529,7 +528,6 @@ else:
 
         Examples
         --------
-
         Content of file 'parameters.py'
 
         >>> from larray import *
@@ -560,6 +558,6 @@ else:
         is immutable and does not support item assignment
         """
         class Config:
-            # whether or not models are faux-immutable, i.e. whether __setattr__ is allowed.
+            # whether models are faux-immutable, i.e. whether __setattr__ is allowed.
             # (default: True)
             allow_mutation = False

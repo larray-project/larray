@@ -803,7 +803,7 @@ act3 = table(['sub', '40+',   '-39',    '40+'],
 # multiple-slices-of-a-numpy-array-at-once
 
 # but the question is whether that syntax is unambiguous or not
-# (and if not, whether or not we can come up with a syntax that is both nice
+# (and if not, whether we can come up with a syntax that is both nice
 #  and not ambiguous)
 
 # m[X.clength[1:15, 16:25, 26:30, 31:35, 36:40, 41:50]] = [7, 20, 27, 32, 37, 42]

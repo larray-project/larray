@@ -716,12 +716,12 @@ filepath : None, int, str or Path, optional
     path to the Excel file. The file must exist if overwrite_file is False. Use None for a new blank workbook,
     -1 for the currently active workbook. Defaults to None.
 overwrite_file : bool, optional
-    whether or not to overwrite an existing file, if any. Defaults to False.
+    whether to overwrite an existing file, if any. Defaults to False.
 visible : None or bool, optional
-    whether or not Excel should be visible. Defaults to False for files, True for new/active workbooks and to None
+    whether Excel should be visible. Defaults to False for files, True for new/active workbooks and to None
     ("unchanged") for existing unsaved workbooks.
 silent : None or bool, optional
-    whether or not to show dialog boxes for updating links or when some links cannot be updated.
+    whether to show dialog boxes for updating links or when some links cannot be updated.
     Defaults to False if visible, True otherwise.
 app : None, "new", "active", "global" or xlwings.App, optional
     use "new" for opening a new Excel instance, "active" for the last active instance (including ones opened by the
@@ -731,7 +731,7 @@ app : None, "new", "active", "global" or xlwings.App, optional
     The "global" instance is a specific Excel instance for all input from/output to Excel from within a single Python
     program (and should not interact with instances manually opened by the user or another program).
 load_addins : None or bool, optional
-    whether or not to load Excel addins. Defaults to True if visible and app == "new", False otherwise.
+    whether to load Excel addins. Defaults to True if visible and app == "new", False otherwise.
 
 Returns
 -------

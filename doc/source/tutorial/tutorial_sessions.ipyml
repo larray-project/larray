@@ -542,7 +542,7 @@ cells:
 - code: |
     # add the next year to all arrays.
     # Use the 'copy_values_from_last_year flag' to indicate 
-    # whether or not to copy values from the last year
+    # whether to copy values from the last year
     def add_next_year(array, copy_values_from_last_year):
         if 'time' in array.axes.names:
             last_year = array.time.i[-1]

@@ -369,7 +369,7 @@ class Session:
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Load using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -473,10 +473,10 @@ class Session:
         engine : {'auto', 'pandas_csv', 'pandas_hdf', 'pandas_excel', 'xlwings_excel', 'pickle'}, optional
             Dump using `engine`. Defaults to 'auto' (use default engine for the format guessed from the file extension).
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. Ignored for CSV files and 'pandas_excel' engine.
+            Whether to overwrite an existing file, if any. Ignored for CSV files and 'pandas_excel' engine.
             If False, file is updated. Defaults to True.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -556,7 +556,7 @@ class Session:
             depth of call stack where to create the variables. 0 is where to_globals was called, 1 the caller of
             to_globals, etc. Defaults to 0.
         warn : bool, optional
-            Whether or not to warn the user that this method should only be used in an interactive console (see below).
+            Whether to warn the user that this method should only be used in an interactive console (see below).
             Defaults to True.
         inplace : bool, optional
             If True, to_globals will assume all arrays already exist and have the same axes and will replace their
@@ -624,10 +624,10 @@ class Session:
             Names of objects to dump.
             Defaults to all objects present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any.
+            Whether to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -681,10 +681,10 @@ class Session:
             Names of objects to dump.
             Defaults to all objects present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any.
+            Whether to overwrite an existing file, if any.
             If False, file is updated. Defaults to True.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Examples
         --------
@@ -738,9 +738,9 @@ class Session:
             Names of Array objects to dump.
             Defaults to all Array objects present in the Session.
         overwrite: bool, optional
-            Whether or not to overwrite an existing file, if any. If False, file is updated. Defaults to True.
+            Whether to overwrite an existing file, if any. If False, file is updated. Defaults to True.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Notes
         -----
@@ -795,7 +795,7 @@ class Session:
             Names of Array objects to dump.
             Defaults to all Array objects present in the Session.
         display : bool, optional
-            Whether or not to display which file is being worked on. Defaults to False.
+            Whether to display which file is being worked on. Defaults to False.
 
         Notes
         -----
@@ -1298,7 +1298,7 @@ class Session:
         Parameters
         ----------
         display : bool, optional
-            Whether or not to display a message for each array that is compacted
+            Whether to display a message for each array that is compacted
 
         Returns
         -------
@@ -1514,7 +1514,7 @@ def local_arrays(depth=0, include_private=False, meta=None) -> Session:
     depth: int
         depth of call frame to inspect. 0 is where `local_arrays` was called, 1 the caller of `local_arrays`, etc.
     include_private: boolean, optional
-        Whether or not to include private local arrays (i.e. arrays starting with `_`). Defaults to False.
+        Whether to include private local arrays (i.e. arrays starting with `_`). Defaults to False.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
@@ -1539,7 +1539,7 @@ def global_arrays(depth=0, include_private=False, meta=None) -> Session:
     depth: int
         depth of call frame to inspect. 0 is where `global_arrays` was called, 1 the caller of `global_arrays`, etc.
     include_private: boolean, optional
-        Whether or not to include private globals arrays (i.e. arrays starting with `_`). Defaults to False.
+        Whether to include private globals arrays (i.e. arrays starting with `_`). Defaults to False.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
@@ -1566,7 +1566,7 @@ def arrays(depth=0, include_private=False, meta=None) -> Session:
     depth: int
         depth of call frame to inspect. 0 is where `arrays` was called, 1 the caller of `arrays`, etc.
     include_private: boolean, optional
-        Whether or not to include private arrays (i.e. arrays starting with `_`). Defaults to False.
+        Whether to include private arrays (i.e. arrays starting with `_`). Defaults to False.
     meta : list of pairs or dict or OrderedDict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.

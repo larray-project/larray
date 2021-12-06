@@ -519,7 +519,7 @@ class AbstractExcelReport(AbstractReportItem):
             name of the Excel sheet where all data associated with items is dumped.
             Defaults to '__data__'.
         overwrite : bool, optional
-            whether or not to overwrite an existing report file.
+            whether to overwrite an existing report file.
             Defaults to True.
 
         Examples

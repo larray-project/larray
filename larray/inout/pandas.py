@@ -85,7 +85,7 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
     s : Pandas Series
         Input Pandas Series.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically. Defaults to False.
+        Whether to sort the rows alphabetically. Defaults to False.
     fill_value : scalar, optional
         Value used to fill cells corresponding to label combinations which are not present in the input Series.
         Defaults to NaN.
@@ -155,18 +155,18 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         Input dataframe. By default, name and labels of the last axis are defined by the name and labels of the
         columns Index of the dataframe unless argument unfold_last_axis_name is set to True.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the rows alphabetically (sorting is more efficient than not sorting).
         Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the columns alphabetically (sorting is more efficient than not sorting).
         Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     parse_header : bool, optional
-        Whether or not to parse columns labels. Pandas treats column labels as strings.
+        Whether to parse columns labels. Pandas treats column labels as strings.
         If True, column labels are converted into int, float or boolean when possible. Defaults to False.
     unfold_last_axis_name : bool, optional
-        Whether or not to extract the names of the last two axes by splitting the name of the last index column of the
+        Whether to extract the names of the last two axes by splitting the name of the last index column of the
         dataframe using ``\``. Defaults to False.
     fill_value : scalar, optional
         Value used to fill cells corresponding to label combinations which are not present in the input DataFrame.
@@ -175,7 +175,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
     cartesian_prod : bool, optional
-        Whether or not to expand the dataframe to a cartesian product dataframe as needed by Array.
+        Whether to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
         well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
@@ -284,25 +284,25 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
     df : Pandas DataFrame
         Input dataframe.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the rows alphabetically (sorting is more efficient than not sorting).
         Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the columns alphabetically (sorting is more efficient than not sorting).
         Must be False if `cartesian_prod` is set to True.
         Defaults to False.
     raw : bool, optional
-        Whether or not to consider the input dataframe as a raw dataframe, i.e. read without index at all.
+        Whether to consider the input dataframe as a raw dataframe, i.e. read without index at all.
         If True, build the first N-1 axes of the output array from the first N-1 dataframe columns. Defaults to False.
     parse_header : bool, optional
-        Whether or not to parse columns labels. Pandas treats column labels as strings.
+        Whether to parse columns labels. Pandas treats column labels as strings.
         If True, column labels are converted into int, float or boolean when possible. Defaults to True.
     wide : bool, optional
-        Whether or not to assume the array is stored in "wide" format.
+        Whether to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
     cartesian_prod : bool, optional
-        Whether or not to expand the dataframe to a cartesian product dataframe as needed by Array.
+        Whether to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
         well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
