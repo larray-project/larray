@@ -2366,7 +2366,7 @@ def test_sum_with_groups_from_other_axis(small_array):
     assert small_array.sum(lipro=lipro2['P01,P03']).shape == (2,)
 
     # use (compatible) group from another *incompatible* axis
-    # XXX: I am unsure whether or not this should be allowed. Maybe we
+    # XXX: I am unsure whether this should be allowed. Maybe we
     # should simply check that the group is valid in axis, but that
     # will trigger a pretty meaningful error anyway
     lipro3 = Axis('lipro=P01,P03,P05')

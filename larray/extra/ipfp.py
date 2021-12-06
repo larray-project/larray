@@ -86,7 +86,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
         'warn': return values computed up to that point and print a warning
         'raise': raise an exception (default)
     display_progress : False, True or 'condensed', optional
-        Whether or not to display progress. Defaults to False.
+        Whether to display progress. Defaults to False.
         If 'condensed' will display progress using a denser template (using one line per iteration).
 
     Returns

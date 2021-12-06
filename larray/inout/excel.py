@@ -54,12 +54,12 @@ def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, 
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
+        Whether to sort the rows alphabetically (sorting is more efficient than not sorting). Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically (sorting is more efficient than not sorting).
+        Whether to sort the columns alphabetically (sorting is more efficient than not sorting).
         Defaults to False.
     wide : bool, optional
-        Whether or not to assume the array is stored in "wide" format.
+        Whether to assume the array is stored in "wide" format.
         If False, the array is assumed to be stored in "narrow" format: one column per axis plus one value column.
         Defaults to True.
     engine : {'xlwings', 'openpyxl', 'xlrd'}, optional

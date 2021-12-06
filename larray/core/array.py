@@ -930,11 +930,11 @@ _kwarg_agg = {
             the number of elements. Defaults to 1."""},
     'skipna': {'value': None, 'doc': """
         skipna : bool, optional
-            Whether or not to skip NaN (null) values. If False, resulting cells will be NaN if any of the aggregated
+            Whether to skip NaN (null) values. If False, resulting cells will be NaN if any of the aggregated
             cells is NaN. Defaults to True."""},
     'keepaxes': {'value': False, 'doc': """
         keepaxes : bool or label-like, optional
-            Whether or not reduced axes are left in the result as dimensions with size one.
+            Whether reduced axes are left in the result as dimensions with size one.
             If True, reduced axes will contain a unique label representing the applied aggregation
             (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value
             (e.g. keepaxes='summation'). Defaults to False."""},
@@ -1286,7 +1286,7 @@ class Array(ABCArray):
         new_axis : Axis, optional
             New axis if `axes_to_replace` contains a single axis reference.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new array and leave the original intact.
+            Whether to modify the original object or return a new array and leave the original intact.
             Defaults to False.
         **kwargs : Axis
             New axis for each axis to replace given as a keyword argument.
@@ -1774,7 +1774,7 @@ class Array(ABCArray):
             Value used to fill cells corresponding to label combinations which were not present before reindexing.
             Defaults to NaN.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new array and leave the original intact.
+            Whether to modify the original object or return a new array and leave the original intact.
             Defaults to False.
         **kwargs : Axis
             New axis for each axis to reindex given as a keyword argument.
@@ -2461,7 +2461,7 @@ class Array(ABCArray):
         target : Array or collection of Axis
 
         check_compatible : bool, optional
-            Whether or not to check that common axes are compatible. Defaults to False.
+            Whether to check that common axes are compatible. Defaults to False.
 
         Returns
         -------
@@ -2616,19 +2616,19 @@ class Array(ABCArray):
         Parameters
         ----------
         header : bool
-            Whether or not to output axes names and labels.
+            Whether to output axes names and labels.
         wide : boolean, optional
-            Whether or not to write arrays in "wide" format. If True, arrays are exported with the last axis
+            Whether to write arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Not used if header=False. Defaults to True.
         value_name : str, optional
             Name of the column containing the values (last column) when `wide=False` (see above).
             Not used if header=False. Defaults to 'value'.
         light : bool, optional
-            Whether or not to hide repeated labels. In other words, only show a label if it is different from the
+            Whether to hide repeated labels. In other words, only show a label if it is different from the
             previous one. Defaults to False.
         axes_names : bool or 'except_last', optional
-            Assuming header is True, whether or not to include axes names. If axes_names is 'except_last',
+            Assuming header is True, whether to include axes names. If axes_names is 'except_last',
             all axes names will be included except the last. Defaults to True.
         na_repr : any scalar, optional
             Replace missing values (NaN floats) by this value. Defaults to 'as_is' (do not do any replacement).
@@ -2686,7 +2686,7 @@ class Array(ABCArray):
          ['a1',    'b1',     6,     7]]
         """
         # _axes_display_names : bool, optional
-        #    Whether or not to get axes names using AxisCollection.display_names instead of
+        #    Whether to get axes names using AxisCollection.display_names instead of
         #    AxisCollection.names. Defaults to False.
 
         dump_axes_names = axes_names
@@ -3426,7 +3426,7 @@ class Array(ABCArray):
             Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
             in the array).
         ascending : bool, optional
-            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+            Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
         Returns
         -------
@@ -3506,7 +3506,7 @@ class Array(ABCArray):
             Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
             in the array).
         ascending : bool, optional
-            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+            Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
         Returns
         -------
@@ -3601,7 +3601,7 @@ class Array(ABCArray):
             Axis or axes along which to iterate and in which order. Defaults to None (all axes in the order they are
             in the array).
         ascending : bool, optional
-            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+            Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
         Returns
         -------
@@ -3694,7 +3694,7 @@ class Array(ABCArray):
         axes : axis reference (int, str, Axis) or sequence of them, optional
             Axis or axes along which to compute unique values. Defaults to None (all axes).
         sort : bool, optional
-            Whether or not to sort unique values. Defaults to False. Sorting is not implemented yet for unique() along
+            Whether to sort unique values. Defaults to False. Sorting is not implemented yet for unique() along
             multiple axes.
         sep : str, optional
             Separator when several labels need to be combined. Defaults to '_'.
@@ -5859,12 +5859,12 @@ class Array(ABCArray):
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
-            Whether or not to consider NaN values at the same positions in the two arrays as equal.
+            Whether to consider NaN values at the same positions in the two arrays as equal.
             By default, an array containing NaN values is never equal to another array, even if that other array
             also contains NaN values at the same positions. The reason is that a NaN value is different from
             *anything*, including itself. Defaults to False.
         check_axes : boolean, optional
-            Whether or not to check that the set of axes and their order is the same on both sides. Defaults to False.
+            Whether to check that the set of axes and their order is the same on both sides. Defaults to False.
             If False, two arrays with compatible axes (and the same data) will compare equal, even if some axis is
             missing on either side or if the axes are in a different order.
 
@@ -5997,12 +5997,12 @@ class Array(ABCArray):
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 1e-08.
         nans_equal : boolean, optional
-            Whether or not to consider NaN values at the same positions in the two arrays as equal.
+            Whether to consider NaN values at the same positions in the two arrays as equal.
             By default, an array containing NaN values is never equal to another array, even if that other array
             also contains NaN values at the same positions. The reason is that a NaN value is different from
             *anything*, including itself. Defaults to True.
         check_axes : boolean, optional
-            Whether or not to check that the set of axes and their order is the same on both sides. Defaults to False.
+            Whether to check that the set of axes and their order is the same on both sides. Defaults to False.
             If False, two arrays with compatible axes (and the same data) will compare equal, even if some axis is
             missing on either side or if the axes are in a different order.
 
@@ -6064,7 +6064,7 @@ class Array(ABCArray):
         atol : float or int, optional
             The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
-            Whether or not to consider Nan values at the same positions in the two arrays as equal.
+            Whether to consider Nan values at the same positions in the two arrays as equal.
             By default, an array containing NaN values is never equal to another array, even if that other array
             also contains NaN values at the same positions. The reason is that a NaN value is different from
             *anything*, including itself. Defaults to False.
@@ -6924,14 +6924,14 @@ class Array(ABCArray):
         na_rep : str, optional
             replace NA values with na_rep. Defaults to ''.
         wide : boolean, optional
-            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            Whether writing arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Defaults to True.
         value_name : str, optional
             Name of the column containing the values (last column) in the csv file when `wide=False` (see above).
             Defaults to 'value'.
         dialect : 'default' | 'classic', optional
-            Whether or not to write the last axis name (using '\' ). Defaults to 'default'.
+            Whether to write the last axis name (using '\' ). Defaults to 'default'.
         dropna : None, 'all', 'any' or True, optional
             Drop lines if 'all' its values are NA, if 'any' value is NA or do not drop any line (default).
             True is equivalent to 'all'.
@@ -7074,16 +7074,16 @@ class Array(ABCArray):
         position : str or tuple of integers, optional
             Integer position (row, column) must be 1-based. Used only if engine is 'xlwings'. Defaults to 'A1'.
         overwrite_file : bool, optional
-            Whether or not to overwrite the existing file (or just modify the specified sheet). Defaults to False.
+            Whether to overwrite the existing file (or just modify the specified sheet). Defaults to False.
         clear_sheet : bool, optional
-            Whether or not to clear the existing sheet (if any) before writing. Defaults to False.
+            Whether to clear the existing sheet (if any) before writing. Defaults to False.
         header : bool, optional
-            Whether or not to write a header (axes names and labels). Defaults to True.
+            Whether to write a header (axes names and labels). Defaults to True.
         transpose : bool, optional
-            Whether or not to transpose the array over last axis.
+            Whether to transpose the array over last axis.
             This is equivalent to paste with option transpose in Excel. Defaults to False.
         wide : boolean, optional
-            Whether or not writing arrays in "wide" format. If True, arrays are exported with the last axis
+            Whether writing arrays in "wide" format. If True, arrays are exported with the last axis
             represented horizontally. If False, arrays are exported in "narrow" format: one column per axis plus one
             value column. Defaults to True.
         value_name : str, optional
@@ -7466,7 +7466,7 @@ class Array(ABCArray):
             {old_label: new_label}. If it is a function, it must be a function accepting a single argument (a
             label) and returning a single value. This argument must not be used if axis is a mapping.
         inplace : bool, optional
-            Whether or not to modify the original object or return a new array and leave the original intact.
+            Whether to modify the original object or return a new array and leave the original intact.
             Defaults to False.
         **kwargs :
             `axis`=`labels` for each axis you want to set labels.
@@ -7830,7 +7830,7 @@ class Array(ABCArray):
         sep : str, optional
             delimiter to use for combining. Defaults to '_'.
         wildcard : bool, optional
-            whether or not to produce a wildcard axis even if the axes to combine are not. This is much faster,
+            whether to produce a wildcard axis even if the axes to combine are not. This is much faster,
             but loose axes labels.
 
         Returns
@@ -7942,7 +7942,7 @@ class Array(ABCArray):
         regex : str, optional
             use regex instead of delimiter to split labels. Defaults to None.
         sort : bool, optional
-            Whether or not to sort the combined axis before splitting it. When all combinations of labels are present in
+            Whether to sort the combined axis before splitting it. When all combinations of labels are present in
             the combined axis, sorting is faster than not sorting. Defaults to False.
         fill_value : scalar or Array, optional
             Value to use for missing values when the combined axis does not contain all combination of labels.
@@ -8139,7 +8139,7 @@ class Array(ABCArray):
         dtype : type or list of types, optional
             Output(s) data type(s). Defaults to None (inspect all output values to infer it automatically).
         ascending : bool, optional
-            Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+            Whether to iterate the axes in ascending order (from start to end). Defaults to True.
         **kwargs
             Extra keyword arguments are passed to the function (as keyword arguments).
 
@@ -9145,7 +9145,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True) -> Array:
         Target number of dimensions when constructing a diagonal array from an array without axes names/labels.
         Defaults to 2.
     split : bool, optional
-        Whether or not to try to split the axis name and labels. Defaults to True.
+        Whether to try to split the axis name and labels. Defaults to True.
 
     Returns
     -------
@@ -9682,7 +9682,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
                 # XXX: with the current semantics of stack, we need to compute the union of axes for values but axis
                 #      needs to be added unconditionally. We *might* want to change the semantics to mean either stack
-                #      or concat depending on whether or not the axis already exists.
+                #      or concat depending on whether the axis already exists.
                 #      this would be more convenient for users I think, but would mean one class of error we cannot
                 #      detect anymore: if a user unintentionally stacks an array with the axis already present.
                 #      (this is very similar to the debate about combining Array.append and Array.extend)
@@ -9799,7 +9799,7 @@ def zip_array_values(values, axes=None, ascending=True) -> SequenceZip:
         Axis or axes along which to iterate and in which order. All those axes must be compatible (if present) between
         the different values. Defaults to None (union of all axes present in all arrays, in the order they are found).
     ascending : bool, optional
-        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
     Returns
     -------
@@ -9909,7 +9909,7 @@ def zip_array_items(values, axes=None, ascending=True) -> SequenceZip:
         Axis or axes along which to iterate and in which order. Defaults to None (union of all axes present in
         all arrays, in the order they are found).
     ascending : bool, optional
-        Whether or not to iterate the axes in ascending order (from start to end). Defaults to True.
+        Whether to iterate the axes in ascending order (from start to end). Defaults to True.
 
     Returns
     -------

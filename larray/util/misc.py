@@ -165,6 +165,7 @@ def table2str(table, missing, summarize=True, maxwidth=200, numedges='auto', sep
 def unique(iterable):
     """
     Yields all elements once, preserving order. Remember all elements ever seen.
+
     >>> list(unique('AAAABBBCCDAABBB'))
     ['A', 'B', 'C', 'D']
     """
@@ -179,6 +180,7 @@ def unique(iterable):
 def unique_list(iterable, res=None, seen=None):
     """
     Returns a list of all unique elements, preserving order. Remember all elements ever seen.
+
     >>> unique_list('AAAABBBCCDAABBB')
     ['A', 'B', 'C', 'D']
     """
@@ -208,7 +210,7 @@ def unique_multi(iterable_of_iterables):
 
 def has_duplicates(iterable):
     """
-    Returns whether or not iterable contains any duplicated element.
+    Returns whether iterable contains any duplicated element.
     """
     # using a dict is faster than using a set (at least for Python <= 3.9)
     seen = {}
@@ -244,7 +246,7 @@ def light_product(*iterables, **kwargs):
     *iterables : iterable
         Input iterables
     repeat : int, optional
-        Number of times to repeat (reuse) input iterables
+        Number of times to repeat (reuse) input iterables. Defaults to 1.
 
     Returns
     -------

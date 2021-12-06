@@ -39,11 +39,11 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
     sort_rows : bool, optional
-        Whether or not to sort the rows alphabetically.
+        Whether to sort the rows alphabetically.
         Must be False if the read array has been dumped with an larray version >= 0.30.
         Defaults to False.
     sort_columns : bool, optional
-        Whether or not to sort the columns alphabetically.
+        Whether to sort the columns alphabetically.
         Must be False if the read array has been dumped with an larray version >= 0.30.
         Defaults to False.
     name : str, optional

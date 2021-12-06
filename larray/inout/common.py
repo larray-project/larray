@@ -123,10 +123,10 @@ class FileHandler:
         *args : any
             Any other argument is passed through to the underlying read function.
         display : bool, optional
-            Whether or not the function should display a message when starting and ending to load each object.
+            Whether the function should display a message when starting and ending to load each object.
             Defaults to False.
         ignore_exceptions : bool, optional
-            Whether or not an exception should stop the function or be ignored. Defaults to False.
+            Whether an exception should stop the function or be ignored. Defaults to False.
         **kwargs : any
             Any other keyword argument is passed through to the underlying read function.
 
@@ -169,7 +169,7 @@ class FileHandler:
         key_values : list of (str, Array/Axis/Group) pairs
             Name and data of objects to dump.
         kwargs :
-            * display: whether or not to display when the dump of each object is started/done.
+            * display: whether to display when the dump of each object is started/done.
         """
         display = kwargs.pop('display', False)
         self._get_original_file_name()
