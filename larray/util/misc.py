@@ -713,21 +713,29 @@ _meta_kind = {k: 'str' for k in _string_kinds}
 _meta_kind.update({k: 'numeric' for k in _numeric_kinds})
 
 
-def common_type(arrays):
+def np_array_common_dtype(arrays) -> np.dtype:
     """
-    Returns a type which is common to the input arrays.
-    All input arrays can be safely cast to the returned dtype without loss of information.
+    Returns a dtype that all input numpy arrays can be safely cast to.
+
+    Parameters
+    ----------
+    arrays : Iterable of np.ndarray
+        Arrays to inspect.
+
+    Returns
+    -------
+    np.dtype
+        Data type which can hold the data from any input array.
 
     Notes
     -----
-    If list of arrays mixes 'numeric' and 'string' types, the function returns 'object' as common type.
+    If the arrays mixes 'numeric' and 'string' types, the function returns 'object' as common type.
     """
-    arrays = [np.asarray(a) for a in arrays]
     dtypes = [a.dtype for a in arrays]
     meta_kinds = [_meta_kind.get(dt.kind, 'other') for dt in dtypes]
     # mixing string and numeric => object
     if any(mk != meta_kinds[0] for mk in meta_kinds[1:]):
-        return object
+        return np.dtype(object)
     elif meta_kinds[0] == 'numeric':
         return np.find_common_type(dtypes, [])
     elif meta_kinds[0] == 'str':
@@ -737,7 +745,29 @@ def common_type(arrays):
                        for dt in dtypes)
         return np.dtype(('U' if need_unicode else 'S', max_size))
     else:
-        return object
+        return np.dtype(object)
+
+
+def common_dtype(arrays) -> np.dtype:
+    """
+    Returns a dtype that all input arrays can be safely cast to.
+
+    Parameters
+    ----------
+    arrays : Iterable of array-like
+        Arrays to inspect. Any type convertible to np.ndarray (Array, list, ...)
+
+    Returns
+    -------
+    np.dtype
+        Data type which can hold the data from any input array.
+
+    Notes
+    -----
+    If the arrays mixes 'numeric' and 'string' types, the function returns 'object' as common type.
+    """
+    arrays = [np.asarray(a) for a in arrays]
+    return np_array_common_dtype(arrays)
 
 
 class LHDFStore:
@@ -1009,3 +1039,13 @@ def argsort(seq):
 def exactly_one(a: bool, b: bool, c: bool = False) -> bool:
     """returns True if exactly one of a, b or c boolean arguments is True, False otherwise"""
     return (a or b) and not (a and b) if not c else not (a or b)
+
+
+def concatenate_ndarrays(arrays) -> np.ndarray:
+    """concatenate Sequence of np.ndarray, converting to object dtype if needed"""
+    dtype = np_array_common_dtype(arrays)
+    if dtype.kind == 'O':
+        # astype always copies, while asarray only copies if necessary
+        arrays = [np.asarray(labels, dtype=object) for labels in arrays]
+    # TODO: try using the new dtype argument to concatenate instead of converting labels explicitly as above
+    return np.concatenate(arrays)
