@@ -9594,6 +9594,8 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
     """
     from larray import Session
 
+    axes_to_anonymize = ()
+
     meta = _handle_meta(meta, title)
 
     if elements is not None and kwargs:
@@ -9629,9 +9631,24 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 values = [v for k, v in elements]
                 # assert that all keys are indexers
                 assert all(np.isscalar(k) or isinstance(k, (Group, tuple)) for k in keys)
+
+                # we need a kludge to support stacking along an anonymous axis because AxisCollection.extend
+                # (and thus AxisCollection.union) support for anonymous axes is kinda messy. This needs to happen
+                # *before* we compute items, otherwise the IGroups will be on the wrong axis, making result[k] = v
+                # a lot slower
+                stack_axis = Axis(keys, "___anonymous___" if axes is None else axes)
+                if axes is None:
+                    axes_to_anonymize = (stack_axis,)
+                # FIXME: if res_axes is not None, we should make sure it contains "axes" (with keys in the same order!!)
+                #        and extract axes from there, before we compute items, otherwise, we do not work on the
+                #        result axis objects, which makes results[k] = v a lot slower
+                #        and if keys are not in the same order (or maybe do it systematically?) we will need to
+                #        pass via dict like below (translate_and_sort_key) but it will break with duplicate labels,
+                #        unless keys are IGroups,
+                #        there ought to be a way to sort the k, v efficiently without breaking duplicate labels
                 # TODO: add support for more than one axis here
-                axes = AxisCollection(Axis(keys, axes))
-                items = list(zip(axes[0], values))
+                axes = AxisCollection(stack_axis)
+                items = list(zip(stack_axis, values))
             else:
                 def translate_and_sort_key(key, axes):
                     dict_of_indices = axes._key_to_axis_indices_dict(key)
@@ -9642,7 +9659,10 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 items = [(k, dict_elements[k]) for k in axes.iter_labels()]
         else:
             if axes is None or isinstance(axes, str):
-                axes = AxisCollection(Axis(len(elements), axes))
+                stack_axis = Axis(len(elements), "___anonymous___" if axes is None else axes)
+                if axes is None:
+                    axes_to_anonymize = (stack_axis,)
+                axes = AxisCollection(stack_axis)
             else:
                 # TODO: add support for more than one axis here
                 assert axes.ndim == 1 and len(axes[0]) == len(elements)
@@ -9672,14 +9692,6 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                       for k, v in items]
 
             if res_axes is None:
-                # we need a kludge to support stacking along an anonymous axis because AxisCollection.extend
-                # (and thus AxisCollection.union) support for anonymous axes is kinda messy.
-                if axes[0].name is None:
-                    axes = axes.rename(0, '__anonymous__')
-                    kludge = True
-                else:
-                    kludge = False
-
                 # XXX: with the current semantics of stack, we need to compute the union of axes for values but axis
                 #      needs to be added unconditionally. We *might* want to change the semantics to mean either stack
                 #      or concat depending on whether the axis already exists.
@@ -9688,8 +9700,6 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
                 #      (this is very similar to the debate about combining Array.append and Array.extend)
                 all_axes = [get_axes(v) for v in values] + [axes]
                 res_axes = AxisCollection.union(*all_axes)
-                if kludge:
-                    res_axes = res_axes.rename(axes[0], None)
             elif not isinstance(res_axes, AxisCollection):
                 res_axes = AxisCollection(res_axes)
 
@@ -9707,7 +9717,8 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
         # result.points[keys] = values
         for k, v in items:
             result[k] = v
-        return result
+
+        return result if not axes_to_anonymize else result.rename({a: None for a in axes_to_anonymize})
 
 
 def get_axes(value) -> AxisCollection:
