@@ -56,9 +56,9 @@ from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
 from larray.util.misc import (table2str, size2str, ReprString,
-                              float_error_handler_factory, light_product, common_type,
+                              float_error_handler_factory, light_product, common_dtype,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
-                              Repeater, Product, ensure_no_numpy_type, exactly_one)
+                              Repeater, Product, ensure_no_numpy_type, exactly_one, concatenate_ndarrays)
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 from larray.util.types import Scalar
 
@@ -283,18 +283,13 @@ def concat(arrays, axis=0, dtype=None):
     # switch to object dtype if labels are of incompatible types, so that we do not implicitly convert numeric types to
     # strings (numpy should not do this in the first place but that is another story). This can happen for example when
     # we want to add a "total" tick to a numeric axis (eg age).
-    labels_type = common_type(arrays_labels)
-    if labels_type is object:
-        # astype always copies, while asarray only copies if necessary
-        arrays_labels = [np.asarray(labels, dtype=object) for labels in arrays_labels]
-
-    combined_axis = Axis(np.concatenate(arrays_labels), name)
+    combined_axis = Axis(concatenate_ndarrays(arrays_labels), name)
 
     # combine all axes (using labels from any side if any)
     result_axes = arrays[0].axes.replace(axis, combined_axis).union(*[array.axes - axis for array in arrays[1:]])
 
     if dtype is None:
-        dtype = common_type(arrays)
+        dtype = common_dtype(arrays)
 
     result = empty(result_axes, dtype=dtype)
     start = 0
@@ -1882,7 +1877,7 @@ class Array(ABCArray):
             res_axes = AxisCollection([axes_to_reindex.get(axis, axis) for axis in self.axes]) | axes_to_reindex
         else:
             res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
-        res = full(res_axes, fill_value, dtype=common_type((self.data, fill_value)))
+        res = full(res_axes, fill_value, dtype=common_dtype((self.data, fill_value)))
 
         def get_labels(self_axis):
             res_axis = res_axes[self_axis]
@@ -8020,7 +8015,7 @@ class Array(ABCArray):
                 if all_combinations_present:
                     res = empty(new_axes, dtype=array.dtype)
                 else:
-                    res = full(new_axes, fill_value=fill_value, dtype=common_type((array, fill_value)))
+                    res = full(new_axes, fill_value=fill_value, dtype=common_dtype((array, fill_value)))
                 if axis.name is not None:
                     if names is None:
                         names = axis.name.split(sep)
@@ -8857,7 +8852,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
         return isinstance(a, Array) and axis in a.axes
 
     def array_or_full(a, axis, initial):
-        dt = common_type((a, initial))
+        dt = common_dtype((a, initial))
         r = empty(strip_axes(initial) | strip_axes(a) | axis, dtype=dt)
         r[axis.i[0]] = initial
         if isinstance(a, Array) and axis in a.axes:
@@ -8877,7 +8872,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
             axis = _make_axis(axis)
         axis = axes[axis]
 
-    res_dtype = np.dtype(common_type((initial, inc, mult)))
+    res_dtype = common_dtype((initial, inc, mult))
     res = empty(axes, dtype=res_dtype, meta=meta)
 
     if func is not None:
@@ -9680,7 +9675,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
             if dtype is None:
                 # dtype = common_type(values + [fill_value])
-                dtype = common_type(values)
+                dtype = common_dtype(values)
 
         # if needs_fill:
         #     result = full(res_axes, fill_value, dtype=dtype, meta=meta)

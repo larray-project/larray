@@ -14,9 +14,9 @@ from larray.core.expr import ExprNode
 from larray.core.group import (Group, LGroup, IGroup, IGroupMaker, _to_tick, _to_ticks, _to_key, _seq_summary,
                                _idx_seq_to_slice, _seq_group_to_name, _translate_group_key_hdf, remove_nested_groups)
 from larray.util.oset import OrderedSet
-from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, common_type, LHDFStore,
+from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
-                              exactly_one)
+                              exactly_one, concatenate_ndarrays)
 from larray.util.types import Scalar
 
 
@@ -434,21 +434,14 @@ class Axis(ABCAxis):
             new_labels = new_labels.labels
         elif isinstance(new_labels, Group):
             new_labels = new_labels.eval()
+            assert isinstance(new_labels, np.ndarray)
         else:
             if np.isscalar(new_labels):
                 new_labels = [new_labels]
             new_labels = np.asarray(new_labels)
 
-        current_labels = self.labels
-        labels_type = common_type((current_labels, new_labels))
-        if labels_type is object:
-            # astype always copies, while asarray only copies if necessary
-            current_labels = np.asarray(current_labels, dtype=object)
-            new_labels = np.asarray(new_labels, dtype=object)
-
-        # not using np.insert to avoid inserted string labels being truncated (because of current_labels.dtype)
-        res_labels = np.concatenate((current_labels[:before], new_labels, current_labels[before:]))
-        return Axis(res_labels, self.name)
+        # not using np.insert to avoid truncating inserted string labels (because of current_labels.dtype)
+        return Axis(concatenate_ndarrays((self.labels[:before], new_labels, self.labels[before:])), self.name)
 
     @property
     def iswildcard(self) -> bool:
