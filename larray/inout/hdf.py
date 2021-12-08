@@ -135,7 +135,7 @@ class PandasHDFHandler(FileHandler):
     """
     def __init__(self, fname, overwrite_file=False):
         assert fname is not None
-        super(PandasHDFHandler, self).__init__(fname, overwrite_file)
+        super().__init__(fname, overwrite_file)
 
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')

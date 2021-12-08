@@ -15,7 +15,7 @@ class AttributeDict(dict):
         del self[key]
 
     def __dir__(self) -> List[str]:
-        return list(set(super(AttributeDict, self).__dir__()) | set(self.keys()))
+        return list(set(super().__dir__()) | set(self.keys()))
 
     def __repr__(self) -> str:
         return '\n'.join([f'{k}: {v}' for k, v in self.items()])

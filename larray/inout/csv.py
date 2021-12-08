@@ -256,7 +256,7 @@ def read_eurostat(filepath_or_buffer, **kwargs) -> Array:
 @register_file_handler('pandas_csv', 'csv')
 class PandasCSVHandler(FileHandler):
     def __init__(self, fname, overwrite_file=False, sep=','):
-        super(PandasCSVHandler, self).__init__(fname, overwrite_file)
+        super().__init__(fname, overwrite_file)
         self.sep = sep
         self.axes = None
         self.groups = None

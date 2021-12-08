@@ -15,7 +15,7 @@ from larray.util.types import Scalar
 class PickleHandler(FileHandler):
     def __init__(self, fname, overwrite_file=False):
         assert fname is not None
-        super(PickleHandler, self).__init__(fname, overwrite_file)
+        super().__init__(fname, overwrite_file)
 
     def _open_for_read(self):
         with open(self.fname, 'rb') as f:
