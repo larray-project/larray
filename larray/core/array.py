@@ -548,8 +548,7 @@ class PlotObject(object):
         return self(kind='barh', x=x, y=y, **kwds)
 
     @_use_pandas_plot_docstring
-    def box(self, by=None, **kwds):
-        x = kwds.pop('x', None)
+    def box(self, by=None, x=None, **kwds):
         if x is None:
             x = by if by is not None else ()
         ax = self(kind='box', x=x, _x_axes_last=True, **kwds)
@@ -559,8 +558,7 @@ class PlotObject(object):
         return ax
 
     @_use_pandas_plot_docstring
-    def hist(self, by=None, bins=10, **kwds):
-        y = kwds.pop('y', None)
+    def hist(self, by=None, bins=10, y=None, **kwds):
         if y is None:
             if by is None:
                 y = self.array.axes
@@ -571,8 +569,7 @@ class PlotObject(object):
         return self(kind='hist', y=y, bins=bins, **kwds)
 
     @_use_pandas_plot_docstring
-    def kde(self, by=None, bw_method=None, ind=None, **kwds):
-        y = kwds.pop('y', None)
+    def kde(self, by=None, bw_method=None, ind=None, y=None, **kwds):
         if y is None:
             if by is None:
                 y = self.array.axes
@@ -1542,7 +1539,7 @@ class Array(ABCArray):
         return series
     series = property(to_series)
 
-    def describe(self, *args, **kwargs) -> 'Array':
+    def describe(self, *args, percentiles=None) -> 'Array':
         r"""
         Descriptive summary statistics, excluding NaN values.
 
@@ -1577,15 +1574,9 @@ class Array(ABCArray):
         statistic  count  mean  std  min  50%  90%  max
                      8.0   3.0  2.0  0.0  3.0  5.3  6.0
         """
-        # retrieve kw-only arguments
-        percentiles = kwargs.pop('percentiles', None)
-        if kwargs:
-            first_kwarg = list(kwargs.keys())[0]
-            raise TypeError(f"describe() got an unexpected keyword argument '{first_kwarg}'")
         if percentiles is None:
             percentiles = [25, 50, 75]
-        plabels = [f'{p}%' for p in percentiles]
-        labels = ['count', 'mean', 'std', 'min'] + plabels + ['max']
+        labels = ['count', 'mean', 'std', 'min'] + [f'{p}%' for p in percentiles] + ['max']
         percentiles = [0] + list(percentiles) + [100]
         # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
         # when *args is not empty (see https://github.com/larray-project/larray/issues/192)
@@ -1595,7 +1586,7 @@ class Array(ABCArray):
                      + [self.percentile(p, *args) for p in percentiles],
                      Axis(labels, 'statistic'))
 
-    def describe_by(self, *args, **kwargs) -> 'Array':
+    def describe_by(self, *args, percentiles=None) -> 'Array':
         r"""
         Descriptive summary statistics, excluding NaN values, along axes or for groups.
 
@@ -1640,11 +1631,6 @@ class Array(ABCArray):
                     Male    8.0   3.0  2.0  0.0  3.0  5.3  6.0
                   Female    8.0   5.0  2.0  2.0  5.0  7.3  8.0
         """
-        # retrieve kw-only arguments
-        percentiles = kwargs.pop('percentiles', None)
-        if kwargs:
-            first_kwarg = list(kwargs.keys())[0]
-            raise TypeError(f"describe_by() got an unexpected keyword argument '{first_kwarg}'")
         args = self._prepare_aggregate(None, args)
         args = self._by_args_to_normal_agg_args(args)
         return self.describe(*args, percentiles=percentiles)
@@ -3010,10 +2996,9 @@ class Array(ABCArray):
             res = func(op, axes, keepaxes=keepaxes, out=out, **extra_kwargs)
         return res
 
-    def with_total(self, *args, **kwargs) -> 'Array':
-        r"""with_total(*args, op=sum, label='total', **kwargs)
+    def with_total(self, *args, op=sum, label='total', **kwargs) -> 'Array':
+        r"""Add aggregated values (sum by default) along each axis.
 
-        Add aggregated values (sum by default) along each axis.
         A user defined label can be given to specified the computed values.
 
         Parameters
@@ -3073,9 +3058,7 @@ class Array(ABCArray):
         >>> # or equivalently
         >>> # arr.with_total('time[:2014] >> before_2015; time[2015:] >> after_2015')
         """
-        # TODO: default to op.__name__
-        label = kwargs.pop('label', 'total')
-        op = kwargs.pop('op', sum)
+        # TODO: make label default to op.__name__
         npop = {
             sum: np.sum,
             prod: np.prod,
@@ -3960,10 +3943,8 @@ class Array(ABCArray):
             _doc_agg_method(func, by_agg, long_name, action_verb, kwargs=extra_kwargs + ['out', 'skipna', 'keepaxes'])
 
             @functools.wraps(func)
-            def wrapper(self, *args, **kwargs):
-                keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
-                skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
-                out = kwargs.pop('out', _kwarg_agg['out']['value'])
+            def wrapper(self, *args, keepaxes=_kwarg_agg['keepaxes']['value'], skipna=_kwarg_agg['skipna']['value'],
+                        out=_kwarg_agg['out']['value'], **kwargs):
                 if skipna is None:
                     skipna = nanfunc is not None
                 if skipna and nanfunc is None:
@@ -5034,7 +5015,12 @@ class Array(ABCArray):
     #      since in this case np.percentile() may be called several times.
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
-    def percentile(self, q, *args, **kwargs) -> Union['Array', Scalar]:
+    def percentile(self, q, *args,
+                   out=_kwarg_agg['out']['value'],
+                   interpolation=_kwarg_agg['interpolation']['value'],
+                   skipna=_kwarg_agg['skipna']['value'],
+                   keepaxes=_kwarg_agg['keepaxes']['value'],
+                   **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
         Computes the qth percentile of the data along the specified axis.
@@ -5103,26 +5089,26 @@ class Array(ABCArray):
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
         """
-        keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
-        skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
-        out = kwargs.pop('out', _kwarg_agg['out']['value'])
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
-        interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
         if isinstance(q, (list, tuple)):
             res = stack([(v, self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
                           extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
             return res.transpose()
         else:
-            _extra_kwargs = {'q': q, 'interpolation': interpolation}
             return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes, commutative=True,
-                                   out=out, extra_kwargs=_extra_kwargs)
+                                   out=out, extra_kwargs={'q': q, 'interpolation': interpolation})
 
     _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
 
-    def percentile_by(self, q, *args, **kwargs) -> Union['Array', Scalar]:
+    def percentile_by(self, q, *args,
+                      out=_kwarg_agg['out']['value'],
+                      interpolation=_kwarg_agg['interpolation']['value'],
+                      skipna=_kwarg_agg['skipna']['value'],
+                      keepaxes=_kwarg_agg['keepaxes']['value'],
+                      **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
         Computes the qth percentile of the data for the specified axis.
@@ -5188,13 +5174,9 @@ class Array(ABCArray):
         >>> # or equivalently
         >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
         """
-        keepaxes = kwargs.pop('keepaxes', _kwarg_agg['keepaxes']['value'])
-        skipna = kwargs.pop('skipna', _kwarg_agg['skipna']['value'])
-        out = kwargs.pop('out', _kwarg_agg['out']['value'])
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
-        interpolation = kwargs.pop('interpolation', _kwarg_agg['interpolation']['value'])
         if isinstance(q, (list, tuple)):
             res = stack([(v, self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
                           extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
@@ -5208,7 +5190,7 @@ class Array(ABCArray):
 
     # not commutative
 
-    def ptp(self, *args, **kwargs) -> Union['Array', Scalar]:
+    def ptp(self, *args, out=_kwarg_agg['out']['value'], **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
         Returns the range of values (maximum - minimum).
@@ -5267,10 +5249,9 @@ class Array(ABCArray):
         >>> # or equivalently
         >>> # arr.ptp('a0,a1>>a01;a2,a3>>a23')
         """
-        out = kwargs.pop('out', _kwarg_agg['out']['value'])
         return self._aggregate(np.ptp, args, kwargs, out=out)
 
-    _doc_agg_method(ptp, False, kwargs=['out'])
+    _doc_agg_method(ptp, by=False, kwargs=['out'])
 
     @_decorate_agg_method(np.var, np.nanvar, extra_kwargs=['dtype', 'ddof'], long_name="variance")
     def var(self, *args, **kwargs) -> Union['Array', Scalar]:
@@ -8092,7 +8073,8 @@ class Array(ABCArray):
     #     excluded : set, optional
     #         Set of strings or integers representing the positional or keyword arguments for which the function
     #         will not be vectorized. These will be passed directly to the `transform` function unmodified.
-    def apply(self, transform, *args, **kwargs) -> Union['Array', Scalar, Tuple['Array', ...]]:
+    def apply(self, transform, *args, by=None, axes=None, dtype=None, ascending=True,
+              **kwargs) -> Union['Array', Scalar, Tuple['Array', ...]]:
         r"""
         Apply a transformation function to array elements.
 
@@ -8195,13 +8177,6 @@ class Array(ABCArray):
          a0  -1.0   1.0  0.0
          a1   0.0  -2.0  2.0
         """
-        # keyword only arguments
-        by = kwargs.pop('by', None)
-        axes = kwargs.pop('axes', None)
-        dtype = kwargs.pop('dtype', None)
-        ascending = kwargs.pop('ascending', True)
-        # excluded = kwargs.pop('excluded', None)
-
         if axes is not None:
             if by is not None:
                 raise ValueError("cannot specify both `by` and `axes` arguments in Array.apply")

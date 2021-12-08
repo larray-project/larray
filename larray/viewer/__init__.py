@@ -90,7 +90,7 @@ def debug(depth=0):
         raise Exception('debug() is not available because the larray_editor package is not installed')
 
 
-def compare(*args, **kwargs):
+def compare(*args, depth=0, **kwargs):
     r"""
     Opens a new comparator window, comparing arrays or sessions.
 
@@ -134,7 +134,6 @@ def compare(*args, **kwargs):
     try:
         from larray_editor import compare
 
-        depth = kwargs.pop('depth', 0)
         compare(*args, depth=depth + 1, **kwargs)
     except ImportError:
         raise Exception('compare() is not available because the larray_editor package is not installed')

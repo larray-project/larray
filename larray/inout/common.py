@@ -112,7 +112,7 @@ class FileHandler:
             os.rename(self.fname, self.original_file_name)
 
     # FIXME : replace OrderedDict by ordinary dict (Python < 3.6 no longer supported)
-    def read(self, keys, *args, **kwargs) -> Tuple[Metadata, OrderedDict]:
+    def read(self, keys, *args, display=False, ignore_exceptions=False, **kwargs) -> Tuple[Metadata, OrderedDict]:
         r"""
         Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 
@@ -137,8 +137,6 @@ class FileHandler:
         OrderedDict(str, Array/Axis/Group)
             Dictionary containing the loaded objects.
         """
-        display = kwargs.pop('display', False)
-        ignore_exceptions = kwargs.pop('ignore_exceptions', False)
         self._open_for_read()
         metadata = self._read_metadata()
         key_types = self.list_items()
@@ -158,7 +156,7 @@ class FileHandler:
         self.close()
         return metadata, res
 
-    def dump(self, metadata, key_values, *args, **kwargs):
+    def dump(self, metadata, key_values, *args, display=False, **kwargs):
         r"""
         Dumps objects corresponding to keys in file in HDF, Excel, CSV, ... format
 
@@ -168,10 +166,9 @@ class FileHandler:
             List of metadata to dump.
         key_values : list of (str, Array/Axis/Group) pairs
             Name and data of objects to dump.
-        kwargs :
-            * display: whether to display when the dump of each object is started/done.
+        display : bool, optional
+            Whether to display when the dump of each object is started/done. Defaults to False.
         """
-        display = kwargs.pop('display', False)
         self._get_original_file_name()
         self._open_for_write()
         if metadata is not None:

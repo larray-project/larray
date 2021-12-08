@@ -238,7 +238,7 @@ def rproduct(*i):
     return product(*[x[::-1] for x in i])
 
 
-def light_product(*iterables, **kwargs):
+def light_product(*iterables, repeat=1):
     """Cartesian product of input iterables, replacing repeated values by empty strings.
 
     Parameters
@@ -259,7 +259,6 @@ def light_product(*iterables, **kwargs):
     >>> list(light_product('ab', repeat=2))
     [('a', 'a'), ('', 'b'), ('b', 'a'), ('', 'b')]
     """
-    repeat = kwargs.pop('repeat', 1)
     p = product(*iterables, repeat=repeat)
     prev_t = (None,) * len(iterables) * repeat
     for t in p:
