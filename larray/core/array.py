@@ -323,7 +323,7 @@ def _use_pandas_plot_docstring(f):
     return f
 
 
-class PlotObject(object):
+class PlotObject:
     __slots__ = ('array',)
 
     def __init__(self, array):
