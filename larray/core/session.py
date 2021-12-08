@@ -2,7 +2,6 @@ import sys
 import re
 import fnmatch
 import warnings
-from collections import OrderedDict
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +17,7 @@ from larray.util.misc import float_error_handler_factory, is_interactive_interpr
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
-# XXX: inherit from OrderedDict or Array?
+# XXX: inherit from dict or Array?
 class Session:
     r"""
     Groups several objects together.
@@ -31,7 +30,7 @@ class Session:
     **kwargs : dict of {str: object}
 
         * Objects to add written as name=object
-        * meta : list of pairs or dict or OrderedDict or Metadata
+        * meta : list of pairs or dict or Metadata
             Metadata (title, description, author, creation_date, ...) associated with the array.
             Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -78,8 +77,7 @@ class Session:
     author: John Smith
     """
     def __init__(self, *args, meta=None, **kwargs):
-        # FIXME : use a dict instead of an OrderedDict
-        object.__setattr__(self, '_objects', OrderedDict())
+        object.__setattr__(self, '_objects', {})
         if meta is None:
             meta = Metadata()
         self.meta = meta
@@ -109,8 +107,8 @@ class Session:
 
     @meta.setter
     def meta(self, meta) -> None:
-        if not isinstance(meta, (list, dict, OrderedDict, Metadata)):
-            raise TypeError(f"Expected list of pairs or dict or OrderedDict or Metadata object "
+        if not isinstance(meta, (list, dict, Metadata)):
+            raise TypeError(f"Expected list of pairs or dict or Metadata object "
                             f"instead of {type(meta).__name__}")
         object.__setattr__(self, '_meta', meta if isinstance(meta, Metadata) else Metadata(meta))
 
@@ -1512,7 +1510,7 @@ def local_arrays(depth=0, include_private=False, meta=None) -> Session:
         depth of call frame to inspect. 0 is where `local_arrays` was called, 1 the caller of `local_arrays`, etc.
     include_private: boolean, optional
         Whether to include private local arrays (i.e. arrays starting with `_`). Defaults to False.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -1537,7 +1535,7 @@ def global_arrays(depth=0, include_private=False, meta=None) -> Session:
         depth of call frame to inspect. 0 is where `global_arrays` was called, 1 the caller of `global_arrays`, etc.
     include_private: boolean, optional
         Whether to include private globals arrays (i.e. arrays starting with `_`). Defaults to False.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -1564,7 +1562,7 @@ def arrays(depth=0, include_private=False, meta=None) -> Session:
         depth of call frame to inspect. 0 is where `arrays` was called, 1 the caller of `arrays`, etc.
     include_private: boolean, optional
         Whether to include private arrays (i.e. arrays starting with `_`). Defaults to False.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 

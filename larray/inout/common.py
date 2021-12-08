@@ -1,6 +1,5 @@
 import os
 from datetime import date, time, datetime
-from collections import OrderedDict
 from pathlib import Path
 
 from typing import Optional, Union, List, Tuple
@@ -111,8 +110,7 @@ class FileHandler:
             os.remove(self.original_file_name)
             os.rename(self.fname, self.original_file_name)
 
-    # FIXME : replace OrderedDict by ordinary dict (Python < 3.6 no longer supported)
-    def read(self, keys, *args, display=False, ignore_exceptions=False, **kwargs) -> Tuple[Metadata, OrderedDict]:
+    def read(self, keys, *args, display=False, ignore_exceptions=False, **kwargs) -> Tuple[Metadata, dict]:
         r"""
         Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 
@@ -134,7 +132,7 @@ class FileHandler:
         -------
         Metadata
             List of metadata to load.
-        OrderedDict(str, Array/Axis/Group)
+        dict(str, Array/Axis/Group)
             Dictionary containing the loaded objects.
         """
         self._open_for_read()
@@ -142,12 +140,12 @@ class FileHandler:
         key_types = self.list_items()
         if keys is not None:
             key_types = [(key, type) for key, type in key_types if key in keys]
-        res = OrderedDict()
-        for key, type in key_types:
+        res = {}
+        for key, type_ in key_types:
             if display:
-                print("loading", type, "object", key, "...", end=' ')
+                print("loading", type_, "object", key, "...", end=' ')
             try:
-                res[key] = self._read_item(key, type, *args, **kwargs)
+                res[key] = self._read_item(key, type_, *args, **kwargs)
             except Exception:
                 if not ignore_exceptions:
                     raise

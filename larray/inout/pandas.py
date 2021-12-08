@@ -89,7 +89,7 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
     fill_value : scalar, optional
         Value used to fill cells corresponding to label combinations which are not present in the input Series.
         Defaults to NaN.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -171,7 +171,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     fill_value : scalar, optional
         Value used to fill cells corresponding to label combinations which are not present in the input DataFrame.
         Defaults to NaN.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
     cartesian_prod : bool, optional

@@ -1,5 +1,4 @@
 import pickle
-from collections import OrderedDict
 
 from typing import List, Tuple, Union
 
@@ -20,13 +19,13 @@ class PickleHandler(FileHandler):
 
     def _open_for_read(self):
         with open(self.fname, 'rb') as f:
-            self.data = OrderedDict(pickle.load(f))
+            self.data = pickle.load(f)
 
     def _open_for_write(self):
         if not self.overwrite_file and self.fname.is_file():
             self._open_for_read()
         else:
-            self.data = OrderedDict()
+            self.data = {}
 
     def list_items(self) -> List[Tuple[str, str]]:
         # scalar

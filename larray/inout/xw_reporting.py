@@ -1,7 +1,5 @@
 import warnings
-from collections import OrderedDict
 from pathlib import Path
-
 from typing import Union
 
 from larray.util.misc import _positive_integer, _validate_dir
@@ -800,7 +798,7 @@ if xw is not None:
     class ExcelReport(AbstractExcelReport):
         def __init__(self, template_dir=None, template=None, graphs_per_row=1):
             AbstractExcelReport.__init__(self, template_dir, template, graphs_per_row)
-            self.sheets = OrderedDict()
+            self.sheets = {}
 
         def sheet_names(self):
             return [sheet_name for sheet_name in self.sheets.keys()]

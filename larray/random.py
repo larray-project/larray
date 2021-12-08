@@ -64,7 +64,7 @@ def randint(low, high=None, axes=None, dtype='l', meta=None) -> Array:
         Desired dtype of the result. All dtypes are determined by their name, i.e., 'int64', 'int', etc, so byteorder
         is not available and a specific precision may have different C types depending on the platform.
         The default value is 'np.int'.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -140,7 +140,7 @@ def normal(loc=0.0, scale=1.0, axes=None, meta=None) -> Array:
         those mentioned in ``axes`` and those of ``loc`` and ``scale``. If ``loc`` and ``scale`` are scalars and
         ``axes`` is None, a single value is returned. Otherwise, if the resulting axes have a shape of, e.g.,
         ``(m, n, k)``, then ``m * n * k`` samples are drawn.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -249,7 +249,7 @@ def uniform(low=0.0, high=1.0, axes=None, meta=None) -> Array:
         those mentioned in ``axes`` and those of ``low`` and ``high``. If ``low`` and ``high`` are scalars and
         ``axes`` is None, a single value is returned. Otherwise, if the resulting axes have a shape of, e.g.,
         ``(m, n, k)``, then ``m * n * k`` samples are drawn.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -401,7 +401,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None) -> Array:
         If p is a 1-D Array, choices are taken from its axis labels. If p is an N-D Array, each cell represents the
         probability that the combination of labels will occur.
         If not given the sample assumes a uniform distribution over all entries in choices.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
