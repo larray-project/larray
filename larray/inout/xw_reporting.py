@@ -2,15 +2,15 @@ import warnings
 from pathlib import Path
 from typing import Union
 
-from larray.util.misc import _positive_integer, _validate_dir
-from larray.core.group import _translate_sheet_name
-from larray.core.array import asarray, zip_array_items
-from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
-
 try:
     import xlwings as xw
 except ImportError:
     xw = None
+
+from larray.util.misc import _positive_integer
+from larray.core.group import _translate_sheet_name
+from larray.core.array import asarray, zip_array_items
+from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
 
 _default_items_size = {}
