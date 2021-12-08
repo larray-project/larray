@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from io import StringIO
-from collections import OrderedDict
 
 from larray.tests.common import meta
 from larray.tests.common import (inputpath,
@@ -137,8 +136,8 @@ def test_meta_arg_array_creation(array):
     # meta as list
     arr = Array(array.data, array.axes, meta=meta_list)
     assert arr.meta == meta
-    # meta as OrderedDict
-    arr = Array(array.data, array.axes, meta=OrderedDict(meta_list))
+    # meta as dict
+    arr = Array(array.data, array.axes, meta=dict(meta_list))
     assert arr.meta == meta
 
 

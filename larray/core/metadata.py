@@ -1,10 +1,7 @@
-from collections import OrderedDict
-
 from typing import List, Optional
 
 
-# FIXME : inherit from dict
-class AttributeDict(OrderedDict):
+class AttributeDict(dict):
     def __getattr__(self, key):
         try:
             return self[key]

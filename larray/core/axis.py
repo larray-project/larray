@@ -1447,7 +1447,7 @@ def _make_axis(obj) -> Axis:
         return Axis(obj)
 
 
-# not using OrderedDict because it does not support indices-based getitem
+# not using a dict because it does not support indices-based getitem
 # not using namedtuple because we have to know the fields in advance (it is a one-off class) and we need more
 # functionality than just a named tuple
 class AxisCollection:

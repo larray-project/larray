@@ -259,7 +259,7 @@ else:
         **kwargs : dict of {str: object}
 
             * Objects to add written as name=object
-            * meta : list of pairs or dict or OrderedDict or Metadata, optional
+            * meta : list of pairs or dict or Metadata, optional
                 Metadata (title, description, author, creation_date, ...) associated with the array.
                 Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -516,7 +516,7 @@ else:
         **kwargs : dict of {str: object}
 
             * Objects to add written as name=object
-            * meta : list of pairs or dict or OrderedDict or Metadata, optional
+            * meta : list of pairs or dict or Metadata, optional
                 Metadata (title, description, author, creation_date, ...) associated with the array.
                 Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 

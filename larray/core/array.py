@@ -25,7 +25,6 @@ Array class
 
 # * use larray "utils" in LIAM2 (to avoid duplicated code)
 
-from collections import OrderedDict
 from itertools import product, chain, groupby
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -1026,8 +1025,8 @@ def _handle_meta(meta, title):
     if meta is None or isinstance(meta, Metadata):
         return meta
     # XXX: move this test in Metadata.__init__?
-    if not isinstance(meta, (list, dict, OrderedDict)):
-        raise TypeError(f"Expected None, list of pairs, dict, OrderedDict or Metadata object "
+    if not isinstance(meta, (list, dict)):
+        raise TypeError(f"Expected None, list of pairs, dict or Metadata object "
                         f"instead of {type(meta).__name__}")
     return Metadata(meta)
 
@@ -1046,7 +1045,7 @@ class Array(ABCArray):
         Axes.
     title : str, optional
         Deprecated. See 'meta' below.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
     dtype : type, optional
@@ -8304,7 +8303,7 @@ def asarray(a, meta=None) -> Array:
     ----------
     a : array-like
         Input array to convert into an Array.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8377,7 +8376,7 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None) -> Array:
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8424,7 +8423,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8459,7 +8458,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None) -> Array:
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8496,7 +8495,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8532,7 +8531,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None) -> Array:
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8569,7 +8568,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8608,7 +8607,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None) -> Arra
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- (default) or Fortran-contiguous (row- or column-wise) order in
         memory.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8661,7 +8660,7 @@ def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None) -
         Overrides the memory layout of the result.
         'C' means C-order, 'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise.
         'K' (default) means match the layout of `a` as closely as possible.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8716,7 +8715,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
         Axes of the result. Defaults to the union of axes present in other arguments.
     title : str, optional
         Deprecated. See 'meta' below.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -8993,7 +8992,7 @@ def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=No
         Deprecated. See 'meta' below.
     dtype : type or np.dtype, optional
         Type of resulting array.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -9163,7 +9162,7 @@ def labels_array(axes, title=None, meta=None) -> Array:
     axes : Axis or collection of Axis
     title : str, optional
         Deprecated. See 'meta' below.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -9227,7 +9226,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None) -> Array:
         Deprecated. See 'meta' below.
     dtype : data-type, optional
         Data-type of the returned array. Defaults to float.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
 
@@ -9421,7 +9420,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
         Axes to create. If None, defaults to a range() axis.
     title : str, optional
         Deprecated. See 'meta' below.
-    meta : list of pairs or dict or OrderedDict or Metadata, optional
+    meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
     dtype : type, optional
