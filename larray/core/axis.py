@@ -455,37 +455,14 @@ class Axis(ABCAxis):
         return self._iswildcard
 
     def _group(self, *args, **kwargs):
-        r"""
-        Deprecated.
+        raise NotImplementedError('Axis._group is deprecated. Use "axis[key] >> group_name" instead.')
 
-        Parameters
-        ----------
-        *args
-            (collection of) selected label(s) to form a group.
-        **kwargs
-            name of the group. There is no other accepted keywords.
-
-        Examples
-        --------
-        >>> time = Axis([2007, 2008, 2009, 2010], 'time')
-        >>> odd_years = time._group([2007, 2009], name='odd_years')
-        >>> odd_years
-        time[2007, 2009] >> 'odd_years'
-        """
-        name = kwargs.pop('name', None)
-        if kwargs:
-            invalid_kwargs = list(kwargs.keys())
-            raise ValueError(f"invalid keyword argument(s): {invalid_kwargs}")
+    def group(self, *args, name=None):
         key = args[0] if len(args) == 1 else args
-        return self[key] >> name if name else self[key]
-
-    def group(self, *args, **kwargs):
-        group_name = kwargs.pop('name', None)
-        key = args[0] if len(args) == 1 else args
-        name = self.name if self.name else 'axis'
-        syntax = f'{name}[{key}]'
-        if group_name is not None:
-            syntax += f' >> {repr(group_name)}'
+        axis_name = self.name if self.name else 'axis'
+        syntax = f'{axis_name}[{key}]'
+        if name is not None:
+            syntax += f' >> {repr(name)}'
         raise NotImplementedError(f'Axis.group is deprecated. Use {syntax} instead.')
 
     def all(self, name=None):
@@ -1777,9 +1754,7 @@ class AxisCollection:
             if axis.name is not None:
                 del self._map[axis.name]
 
-    def union(self, *args, **kwargs) -> 'AxisCollection':
-        validate = kwargs.pop('validate', True)
-        replace_wildcards = kwargs.pop('replace_wildcards', True)
+    def union(self, *args, validate=True, replace_wildcards=True) -> 'AxisCollection':
         result = self[:]
         for a in args:
             if not isinstance(a, AxisCollection):

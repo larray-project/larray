@@ -77,11 +77,9 @@ class Session:
     title: my title
     author: John Smith
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, meta=None, **kwargs):
         # FIXME : use a dict instead of an OrderedDict
         object.__setattr__(self, '_objects', OrderedDict())
-
-        meta = kwargs.pop('meta', None)
         if meta is None:
             meta = Metadata()
         self.meta = meta
@@ -1327,7 +1325,7 @@ class Session:
             new_items.append((k, compacted))
         return Session(new_items)
 
-    def apply(self, func, *args, **kwargs) -> 'Session':
+    def apply(self, func, *args, kind=Array, **kwargs) -> 'Session':
         r"""
         Apply function `func` on elements of the session and return a new session.
 
@@ -1385,7 +1383,6 @@ class Session:
         a  a0  a1  a2
             4   6   8
         """
-        kind = kwargs.pop('kind', Array)
         return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
 
     def summary(self, template=None) -> str:

@@ -6,7 +6,6 @@ import numpy as np
 
 from typing import TYPE_CHECKING, Type, Any, Dict, Set, List, no_type_check
 
-from larray.core.metadata import Metadata
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
 from larray.core.session import Session
@@ -428,8 +427,7 @@ else:
         # will precede all fields without an annotation. Within their respective groups, fields remain in the
         # order they were defined.
         # See https://pydantic-docs.helpmanual.io/usage/models/#field-ordering
-        def __init__(self, *args, **kwargs):
-            meta = kwargs.pop('meta', Metadata())
+        def __init__(self, *args, meta=None, **kwargs):
             Session.__init__(self, meta=meta)
 
             # create an intermediate Session object to not call the __setattr__
