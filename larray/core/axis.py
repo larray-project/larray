@@ -348,14 +348,18 @@ class Axis(ABCAxis):
         >>> a_b = Axis('a_b=a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
         >>> a_b.split()
         [Axis(['a0', 'a1'], 'a'), Axis(['b0', 'b1', 'b2'], 'b')]
+        >>> ab = Axis('ab=a0_b0,a0_b1')
+        >>> ab.split(names=["a", "b"])
+        [Axis(['a0'], 'a'), Axis(['b0', 'b1'], 'b')]
         """
         if names is None:
             if self.name is None:
                 names = None
             elif sep not in self.name:
-                raise ValueError(f'{sep} not found in self name ({self.name})')
+                raise ValueError(f'{sep} not found in axis name ({self.name})')
             else:
                 names = self.name.split(sep)
+        # TODO: this is so ugly, I wonder if it should be allowed
         elif isinstance(names, str):
             if sep not in names:
                 raise ValueError(f'{sep} not found in names ({names})')
