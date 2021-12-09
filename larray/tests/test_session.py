@@ -64,7 +64,7 @@ def session():
 
 
 def test_init_session(meta):
-    s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, g=g, f=f, h=h)
+    s = Session(b=b, b024=b024, a=a, a01=a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, g=g, f=f, h=h)
     assert list(s.keys()) == ['b', 'b024', 'a', 'a01', 'a2', 'anonymous', 'ano01', 'c', 'd', 'e', 'g', 'f', 'h']
 
     # TODO: format auto-detection does not work in this case
@@ -72,7 +72,8 @@ def test_init_session(meta):
     # assert list(s.keys()) == ['e', 'f', 'g']
 
     # metadata
-    s = Session(b, b024, a, a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h, meta=meta)
+    s = Session(b=b, b024=b024, a=a, a01=a01, a2=a2, anonymous=anonymous, ano01=ano01, c=c, d=d, e=e, f=f, g=g, h=h,
+                meta=meta)
     assert s.meta == meta
 
 
@@ -151,10 +152,20 @@ def test_setattr(session):
 def test_add(session):
     i = Axis('i=i0..i2')
     i01 = i['i0,i1'] >> 'i01'
-    expected_warnings = 3 if isinstance(session, CheckedSession) else 0
-    with must_warn(UserWarning, match=r"'\w+' is not declared in 'CheckedSessionExample'",
-                   num_expected=expected_warnings):
+    with pytest.warns((UserWarning, FutureWarning)) as caught_warnings:
         session.add(i, i01, j='j')
+
+    future_warnings = [w for w in caught_warnings if w.category == FutureWarning]
+    assert len(future_warnings) == 1
+    # .message is the w object itself, .message.args[0] is the actual message
+    assert future_warnings[0].message.args[0] == "Session.add() is deprecated. Please use Session.update() instead."
+
+    if isinstance(session, CheckedSession):
+        user_warnings = [w for w in caught_warnings if w.category == UserWarning]
+        assert len(user_warnings) == 3
+        assert all(re.match(r"'\w+' is not declared in 'CheckedSessionExample'", w.message.args[0])
+                   for w in user_warnings)
+
     assert i.equals(session.i)
     assert i01 == session.i01
     assert session.j == 'j'
@@ -184,8 +195,8 @@ def test_names(session):
     assert session.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024',
                              'c', 'd', 'e', 'f', 'g', 'h']
     # add them in the "wrong" order
-    session.add(j='j')
-    session.add(i='i')
+    session['j'] = 'j'
+    session['i'] = 'i'
     assert session.names == ['a', 'a01', 'a2', 'ano01', 'anonymous', 'b', 'b024',
                              'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
 

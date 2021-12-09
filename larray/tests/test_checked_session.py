@@ -53,7 +53,7 @@ def test_create_checkedsession_instance(meta):
     declared_variable_keys = ['a', 'a2', 'a01', 'c', 'e', 'g', 'f', 'h', 'b', 'b024', 'anonymous', 'ano01', 'd']
 
     # setting variables without default values
-    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h)
+    cs = CheckedSessionExample(a=a, a01=a01, a2=a2, e=e, f=f, g=g, h=h)
     assert list(cs.keys()) == declared_variable_keys
     assert cs.b.equals(b)
     assert cs.b024.equals(b024)
@@ -70,12 +70,12 @@ def test_create_checkedsession_instance(meta):
     assert cs.h.equals(h)
 
     # metadata
-    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h, meta=meta)
+    cs = CheckedSessionExample(a=a, a01=a01, a2=a2, e=e, f=f, g=g, h=h, meta=meta)
     assert cs.meta == meta
 
     # override default value
     b_alt = Axis('b=b0..b4')
-    cs = CheckedSessionExample(a, a01, b=b_alt, a2=a2, e=e, f=f, g=g, h=h)
+    cs = CheckedSessionExample(a=a, a01=a01, b=b_alt, a2=a2, e=e, f=f, g=g, h=h)
     assert cs.b is b_alt
 
     # test for "NOT_LOADED" variables
@@ -101,13 +101,13 @@ def test_create_checkedsession_instance(meta):
     assert isinstance(cs.h, NotLoaded)
 
     # passing a scalar to set all elements a CheckedArray
-    cs = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=5)
+    cs = CheckedSessionExample(a=a, a01=a01, a2=a2, e=e, f=f, g=g, h=5)
     assert cs.h.axes == AxisCollection((a3, b2))
     assert cs.h.equals(full(axes=(a3, b2), fill_value=5))
 
     # add the undeclared variable 'i'
     with must_warn(UserWarning, f"'i' is not declared in '{cs.__class__.__name__}'"):
-        cs = CheckedSessionExample(a, a01, a2=a2, i=5, e=e, f=f, g=g, h=h)
+        cs = CheckedSessionExample(a=a, a01=a01, a2=a2, i=5, e=e, f=f, g=g, h=h)
     assert list(cs.keys()) == declared_variable_keys + ['i']
 
     # test inheritance between checked sessions
@@ -122,9 +122,9 @@ def test_create_checkedsession_instance(meta):
         n1: str
 
     declared_variable_keys += ['n1', 'n0']
-    cs = TestInheritance(a, a01, a2=a2, e=e, f=h, g=g, h=f, n1='second new var')
+    cs = TestInheritance(a=a, a01=a01, a2=a2, e=e, f=h, g=g, h=f, n1='second new var')
     assert list(cs.keys()) == declared_variable_keys
-    # --- overriden variables ---
+    # --- overridden variables ---
     assert cs.b.equals(b2)
     assert cs.c == 5
     assert cs.f.equals(h)
@@ -142,6 +142,12 @@ def test_create_checkedsession_instance(meta):
     assert cs.d == d
     assert cs.e.equals(e)
     assert cs.g.equals(g)
+
+    # test deprecated *args to Session
+    # no checkfile because it points to session.py instead of test_checked_session.py
+    with must_warn(FutureWarning, "Session(obj1, ...) is deprecated, please use Session(obj1name=obj1, ...) instead",
+                   check_file=False):
+        _ = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h)
 
 
 @needs_pytables
@@ -261,7 +267,9 @@ def test_add_cs(checkedsession):
     test_add(cs)
 
     u = Axis('u=u0..u2')
-    with must_warn(UserWarning, msg=f"'u' is not declared in '{cs.__class__.__name__}'"):
+    # second warning is because Session.add is deprecated
+    with must_warn(UserWarning, msg=f"'u' is not declared in '{cs.__class__.__name__}'",
+                   num_expected=2):
         cs.add(u)
 
 

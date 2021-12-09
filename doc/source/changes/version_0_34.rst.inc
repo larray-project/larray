@@ -4,6 +4,12 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
+* deprecated :py:obj:`Session.add()`. Please use :py:obj:`Session.update()` instead (closes :issue:`999`).
+
+* deprecated passing individual session elements as non-keyword arguments to :py:obj:`Session()`.
+  This means that, for example, ``Session(axis1, axis2, array1=array1)`` should be rewritten as
+  ``Session(axis1name=axis1, axis2name=axis2, array1=array1)`` instead. Closes :issue:`1024`.
+
 * renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
 * renamed ``old_argument_name`` argument of :py:obj:`Array.method_name()` to ``new_argument_name``.

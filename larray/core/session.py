@@ -82,17 +82,23 @@ class Session:
             meta = Metadata()
         self.meta = meta
 
-        if len(args) == 1:
-            assert len(kwargs) == 0
-            a0 = args[0]
-            if isinstance(a0, (str, Path)):
-                # assume a0 is a filename
-                self.load(a0)
-            else:
-                # iterable of tuple or dict-like
-                self.update(a0)
+        # When the deprecation period is over, this block can be removed after we replace *args by elements=None
+        if len(args) == 0:
+            elements = None
+        elif len(args) == 1:
+            elements = args[0]
         else:
-            self.add(*args, **kwargs)
+            warnings.warn("Session(obj1, ...) is deprecated, please use Session(obj1name=obj1, ...) instead",
+                          FutureWarning)
+            elements = {a.name: a for a in args}
+
+        if isinstance(elements, (str, Path)):
+            # assume elements is a filename
+            self.load(elements)
+            self.update(**kwargs)
+        else:
+            # iterable of tuple or dict-like
+            self.update(elements, **kwargs)
 
     @property
     def meta(self) -> Metadata:
@@ -118,27 +124,11 @@ class Session:
 
     def add(self, *args, **kwargs) -> None:
         r"""
-        Adds objects to the current session.
-
-        Parameters
-        ----------
-        *args : list of object
-            Objects to add. Objects must have an attribute 'name'.
-        **kwargs : dict of {str: object}
-            Objects to add written as name=array, ...
-
-        Examples
-        --------
-        >>> s = Session()
-        >>> axis1, axis2 = Axis('x=x0..x2'), Axis('y=y0..y2')
-        >>> arr1, arr2, arr3 = ndtest((2, 2)), ndtest(4), ndtest((3, 2))
-        >>> s.add(axis1, axis2, arr1=arr1, arr2=arr2, arr3=arr3)
-        >>> # print item's names in sorted order
-        >>> s.names
-        ['arr1', 'arr2', 'arr3', 'x', 'y']
+        Deprecated. Please use Session.update instead.
         """
-        self._update_from_iterable((arg.name, arg) for arg in args)
-        self._update_from_iterable(kwargs.items())
+        warnings.warn("Session.add() is deprecated. Please use Session.update() instead.",
+                      FutureWarning, stacklevel=2)
+        self.update({arg.name: arg for arg in args}, **kwargs)
 
     def update(self, other=None, **kwargs) -> None:
         r"""
