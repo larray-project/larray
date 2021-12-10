@@ -524,11 +524,11 @@ class Session:
         else:
             handler = handler_cls(fname, overwrite)
         meta = self.meta if overwrite else None
-        items = self.items()
+        objects = self._objects
         if names is not None:
             names_set = set(names)
-            items = [(k, v) for k, v in items if k in names_set]
-        handler.dump(meta, items, display=display, **kwargs)
+            objects = {k: v for k, v in objects.items() if k in names_set}
+        handler.dump(meta, objects, display=display, **kwargs)
 
     def to_globals(self, names=None, depth=0, warn=True, inplace=False) -> None:
         r"""
@@ -575,12 +575,13 @@ class Session:
                           "Use warn=False to deactivate this warning.",
                           RuntimeWarning, stacklevel=2)
         d = sys._getframe(depth + 1).f_globals
-        items = self.items()
+
+        objects = self._objects
         if names is not None:
             names_set = set(names)
-            items = [(k, v) for k, v in items if k in names_set]
+            objects = {k: v for k, v in objects.items() if k in names_set}
         if inplace:
-            for k, v in items:
+            for k, v in objects.items():
                 if k not in d:
                     raise ValueError(f"'{k}' not found in current namespace. Session.to_globals(inplace=True) requires "
                                      f"all arrays to already exist.")
@@ -592,7 +593,7 @@ class Session:
                                      f"for '{k}'.\nexisting: {d[k].info}\nsession: {v.info}")
                 d[k][:] = v
         else:
-            for k, v in items:
+            for k, v in objects.items():
                 d[k] = v
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:

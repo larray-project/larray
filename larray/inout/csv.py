@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from typing import List, Tuple
+from typing import Dict
 
 from larray.core.array import Array, asarray
 from larray.core.constants import nan
@@ -290,12 +290,12 @@ class PandasCSVHandler(FileHandler):
                 if not self.directory.is_dir():
                     raise ValueError(f"Path {self.directory} must represent a directory")
 
-    def list_items(self) -> List[Tuple[str, str]]:
+    def item_types(self) -> Dict[str, str]:
         fnames = self.directory.glob(self.pattern) if self.pattern is not None else []
         # stem = filename without extension
         # FIXME : not sure sorted is required here
         fnames = sorted([fname.stem for fname in fnames])
-        return [(name, 'Array') for name in fnames if name != '__metadata__']
+        return {name: 'Array' for name in fnames if name != '__metadata__'}
 
     def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':

@@ -1,6 +1,6 @@
 import pickle
 
-from typing import List, Tuple, Union
+from typing import Union, Dict
 
 from larray.core.axis import Axis
 from larray.core.group import Group
@@ -23,17 +23,17 @@ class PickleHandler(FileHandler):
         else:
             self.data = {}
 
-    def list_items(self) -> List[Tuple[str, str]]:
+    def item_types(self) -> Dict[str, str]:
         # scalar
-        items = [(key, type(value).__name__) for key, value in self.data.items()
-                 if isinstance(value, _supported_scalars_types)]
+        types = {key: type(value).__name__ for key, value in self.data.items()
+                 if isinstance(value, _supported_scalars_types)}
         # axes
-        items += [(key, 'Axis') for key, value in self.data.items() if isinstance(value, Axis)]
+        types.update((key, 'Axis') for key, value in self.data.items() if isinstance(value, Axis))
         # groups
-        items += [(key, 'Group') for key, value in self.data.items() if isinstance(value, Group)]
+        types.update((key, 'Group') for key, value in self.data.items() if isinstance(value, Group))
         # arrays
-        items += [(key, 'Array') for key, value in self.data.items() if isinstance(value, Array)]
-        return items
+        types.update((key, 'Array') for key, value in self.data.items() if isinstance(value, Array))
+        return types
 
     def _read_item(self, key, typename, *args, **kwargs) -> Union[Array, Axis, Group, Scalar]:
         if typename in _supported_typenames:
