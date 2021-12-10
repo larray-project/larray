@@ -5120,7 +5120,7 @@ class Array(ABCArray):
                         'percentile')
             return res.transpose()
         else:
-            return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes, commutative=True,
+            return self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
                                    out=out, extra_kwargs={'q': q, 'interpolation': interpolation})
 
     _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
@@ -5206,8 +5206,8 @@ class Array(ABCArray):
                         'percentile')
             return res.transpose()
         else:
-            return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True, out=out,
-                                   extra_kwargs={'q': q, 'interpolation': interpolation})
+            return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
+                                   out=out, extra_kwargs={'q': q, 'interpolation': interpolation})
 
     _doc_agg_method(percentile_by, True, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
