@@ -259,11 +259,11 @@ class Session:
             assert np.issubdtype(key.dtype, np.bool_)
             assert key.ndim == 1
             # only keep True values
-            truenames = key[key].axes[0].labels
-            return Session([(name, self[name]) for name in truenames])
+            true_keys = key[key].axes[0].labels
+            return Session({k: self[k] for k in true_keys})
         elif isinstance(key, (tuple, list)):
             assert all(isinstance(k, str) for k in key)
-            return Session([(k, self[k]) for k in key])
+            return Session({k: self[k] for k in key})
         else:
             return self._objects[key]
 
@@ -292,7 +292,7 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)
-        >>> s = Session([('a', a), ('b', b), ('a01', a01), ('arr1', arr1), ('arr2', arr2)])
+        >>> s = Session({'a': a, 'b': b, 'a01': a01, 'arr1': arr1, 'arr2': arr2})
         >>> arr = s.get('arr1')
         >>> arr
         a\b  b0  b1  b2
@@ -379,8 +379,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -484,8 +484,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -513,7 +513,7 @@ class Session:
         Update file
 
         >>> arr1, arr4 = ndtest((3, 3)), ndtest((2, 3))                             # doctest: +SKIP
-        >>> ses2 = Session([('arr1', arr1), ('arr4', arr4)])                        # doctest: +SKIP
+        >>> ses2 = Session({'arr1': arr1, 'arr4': arr4})                            # doctest: +SKIP
         >>> # replace arr1 and add arr4 in file output.h5
         >>> ses2.save('output.h5', overwrite=False, display=True)                   # doctest: +SKIP
         dumping arr1 ... done
@@ -635,8 +635,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -692,8 +692,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -753,8 +753,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -808,8 +808,8 @@ class Session:
         >>> a01 = a['a0,a1'] >> 'a01'                                               # doctest: +SKIP
         >>> # arrays
         >>> arr1, arr2 = ndtest((a, b)), ndtest(a)                                  # doctest: +SKIP
-        >>> ses = Session([('i', i), ('s', s), ('a', a), ('b', b), ('a01', a01),
-        ...                ('arr1', arr1), ('arr2', arr2)])                         # doctest: +SKIP
+        >>> ses = Session({'i': i, 's': s, 'a': a, 'b': b, 'a01': a01,
+        ...                'arr1': arr1, 'arr2': arr2})                             # doctest: +SKIP
         >>> # metadata
         >>> ses.meta.title = 'my title'                                             # doctest: +SKIP
         >>> ses.meta.author = 'John Smith'                                          # doctest: +SKIP
@@ -861,7 +861,7 @@ class Session:
         >>> axis = Axis('a=a0..a2')
         >>> group = axis['a0,a1'] >> 'a01'
         >>> test1, zero1 = ndtest((2, 2)), zeros((3, 2))
-        >>> s = Session([('test1', test1), ('zero1', zero1), ('axis', axis), ('group', group)])
+        >>> s = Session({'test1': test1, 'zero1': zero1, 'axis': axis, 'group': group})
 
         Filter using a pattern argument
 
@@ -880,14 +880,14 @@ class Session:
         >>> s.filter(kind=(Axis, Group)).names
         ['axis', 'group']
         """
-        items = self._objects.items()
+        objects = self._objects
         if pattern is not None:
             regex = fnmatch.translate(pattern)
             match = re.compile(regex).match
-            items = [(k, v) for k, v in items if match(k)]
+            objects = {k: v for k, v in objects.items() if match(k)}
         if kind is not None:
-            items = [(k, v) for k, v in items if isinstance(v, kind)]
-        return Session(items)
+            objects = {k: v for k, v in objects.items() if isinstance(v, kind)}
+        return Session(objects)
 
     @property
     def names(self) -> List[str]:
@@ -908,7 +908,7 @@ class Session:
         >>> axis1 = Axis("a=a0..a2")
         >>> group1 = axis1['a0,a1'] >> 'a01'
         >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
+        >>> s = Session({'arr2': arr2, 'arr1': arr1, 'group1': group1, 'axis1': axis1})
         >>> # print array's names in the alphabetical order
         >>> s.names
         ['arr1', 'arr2', 'axis1', 'group1']
@@ -942,7 +942,7 @@ class Session:
         >>> axis1 = Axis("a=a0..a2")
         >>> group1 = axis1['a0,a1'] >> 'a01'
         >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
+        >>> s = Session({'arr2': arr2, 'arr1': arr1, 'group1': group1, 'axis1': axis1})
         >>> # similar to names by follows the internal order
         >>> list(s.keys())
         ['arr2', 'arr1', 'group1', 'axis1']
@@ -966,7 +966,7 @@ class Session:
         >>> axis1 = Axis("a=a0..a2")
         >>> group1 = axis1['a0,a1'] >> 'a01'
         >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
+        >>> s = Session({'arr2': arr2, 'arr1': arr1, 'group1': group1, 'axis1': axis1})
         >>> # assuming you know the order of objects stored in the session
         >>> arr2, arr1, group1, axis1 = s.values()
         >>> # otherwise, prefer the following syntax
@@ -995,7 +995,7 @@ class Session:
         >>> arr1, arr2 = ndtest((2, 2)), ndtest(4)
         >>> # make the test pass on both Windows and Linux
         >>> arr1, arr2 = arr1.astype(np.int64), arr2.astype(np.int64)
-        >>> s = Session([('arr2', arr2), ('arr1', arr1), ('group1', group1), ('axis1', axis1)])
+        >>> s = Session({'arr2': arr2, 'arr1': arr1, 'group1': group1, 'axis1': axis1})
         >>> for k, v in s.items():
         ...     print(f"{k}: {v.info if isinstance(v, Array) else repr(v)}")
         arr2: 4
@@ -1140,8 +1140,8 @@ class Session:
         --------
         >>> a = Axis('a=a0..a2')
         >>> a01 = a['a0,a1'] >> 'a01'
-        >>> s1 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
-        >>> s2 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s1 = Session({'a': a, 'a01': a01, 'arr1': ndtest(2), 'arr2': ndtest((2, 2))})
+        >>> s2 = Session({'a': a, 'a01': a01, 'arr1': ndtest(2), 'arr2': ndtest((2, 2))})
 
         Identical sessions
 
@@ -1244,8 +1244,8 @@ class Session:
         --------
         >>> a = Axis('a=a0..a2')
         >>> a01 = a['a0,a1'] >> 'a01'
-        >>> s1 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
-        >>> s2 = Session([('a', a), ('a01', a01), ('arr1', ndtest(2)), ('arr2', ndtest((2, 2)))])
+        >>> s1 = Session({'a': a, 'a01': a01, 'arr1': ndtest(2), 'arr2': ndtest((2, 2))})
+        >>> s2 = Session({'a': a, 'a01': a01, 'arr1': ndtest(2), 'arr2': ndtest((2, 2))})
 
         Identical sessions
 
@@ -1311,7 +1311,7 @@ class Session:
 
         >>> arr1 = ndtest((2, 2, 2))
         >>> arr2 = ndtest((2, 2))
-        >>> sess = Session([('arr1', arr1), ('arr2', arr2)])
+        >>> sess = Session({'arr1': arr1, 'arr2': arr2})
         >>> def print_summary(s):
         ...     print(s.summary({Array: "{key} -> {axes_names}"}))
         >>> print_summary(sess)
@@ -1410,7 +1410,7 @@ class Session:
         >>> arr2
         a  a0  a1  a2
             0   1   2
-        >>> sess1 = Session([('arr1', arr1), ('arr2', arr2)])
+        >>> sess1 = Session({'arr1': arr1, 'arr2': arr2})
         >>> sess1
         Session(arr1, arr2)
         >>> def increment(array):
@@ -1436,7 +1436,7 @@ class Session:
         a  a0  a1  a2
             4   6   8
         """
-        return Session([(k, func(v, *args, **kwargs) if isinstance(v, kind) else v) for k, v in self.items()])
+        return Session({k: func(v, *args, **kwargs) if isinstance(v, kind) else v for k, v in self.items()})
 
     def summary(self, template=None) -> str:
         """
@@ -1466,10 +1466,10 @@ class Session:
         --------
         >>> axis1 = Axis("a=a0..a2")
         >>> group1 = axis1['a0,a1'] >> 'a01'
-        >>> arr1 = ndtest((2, 2), dtype=np.int64, meta=[('title', 'array 1')])
-        >>> arr2 = ndtest(4, dtype=np.int64, meta=[('title', 'array 2')])
-        >>> arr3 = ndtest((3, 2), dtype=np.int64, meta=[('title', 'array 3')])
-        >>> s = Session([('axis1', axis1), ('group1', group1), ('arr1', arr1), ('arr2', arr2), ('arr3', arr3)])
+        >>> arr1 = ndtest((2, 2), dtype=np.int64, meta={'title': 'array 1'})
+        >>> arr2 = ndtest(4, dtype=np.int64, meta={'title': 'array 2'})
+        >>> arr3 = ndtest((3, 2), dtype=np.int64, meta={'title': 'array 3'})
+        >>> s = Session({'axis1': axis1, 'group1': group1, 'arr1': arr1, 'arr2': arr2, 'arr3': arr3})
         >>> s.meta.title = 'my title'
         >>> s.meta.author = 'John Smith'
 
@@ -1577,7 +1577,7 @@ def local_arrays(depth=0, include_private=False, meta=None) -> Session:
     d = sys._getframe(depth + 1).f_locals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
+    return Session({k: d[k] for k in sorted(d.keys()) if isinstance(d[k], Array)}, meta=meta)
 
 
 def global_arrays(depth=0, include_private=False, meta=None) -> Session:
@@ -1602,7 +1602,7 @@ def global_arrays(depth=0, include_private=False, meta=None) -> Session:
     d = sys._getframe(depth + 1).f_globals
     if not include_private:
         d = _exclude_private_vars(d)
-    return Session([(k, d[k]) for k in sorted(d.keys()) if isinstance(d[k], Array)], meta=meta)
+    return Session({k: d[k] for k in sorted(d.keys()) if isinstance(d[k], Array)}, meta=meta)
 
 
 def arrays(depth=0, include_private=False, meta=None) -> Session:
@@ -1639,7 +1639,7 @@ def arrays(depth=0, include_private=False, meta=None) -> Session:
     all_keys = sorted(set(global_vars.keys()) | set(local_vars.keys()))
     combined_vars = [(k, local_vars[k] if k in local_vars else global_vars[k])
                      for k in all_keys]
-    return Session([(k, v) for k, v in combined_vars if isinstance(v, Array)], meta=meta)
+    return Session({k: v for k, v in combined_vars if isinstance(v, Array)}, meta=meta)
 
 
 _session_float_error_handler = float_error_handler_factory(4)

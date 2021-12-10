@@ -1570,15 +1570,22 @@ class Array(ABCArray):
         """
         if percentiles is None:
             percentiles = [25, 50, 75]
-        labels = ['count', 'mean', 'std', 'min'] + [f'{p}%' for p in percentiles] + ['max']
-        percentiles = [0] + list(percentiles) + [100]
-        # TODO: we should use the commented code using  *self.percentile(percentiles, *args) but this does not work
-        # when *args is not empty (see https://github.com/larray-project/larray/issues/192)
-        # return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args),
-        #               *self.percentile(percentiles, *args)], Axis(labels, 'stats'))
-        return stack([(~np.isnan(self)).sum(*args), self.mean(*args), self.std(*args)]
-                     + [self.percentile(p, *args) for p in percentiles],
-                     Axis(labels, 'statistic'))
+
+        # TODO: we should use the commented code below to compute all percentiles in one shot but this does not work
+        #       when *args is not empty (see https://github.com/larray-project/larray/issues/192)
+        # return stack({
+        #     ...,
+        #     **arr.percentile(percentiles, *args).set_labels({p: f'{p}%' for p in percentiles}),
+        #     ...
+        # }, 'statistic')
+        return stack({
+            'count': (~np.isnan(self)).sum(*args),
+            'mean': self.mean(*args),
+            'std': self.std(*args),
+            'min': self.min(*args),
+            **{f'{p}%': self.percentile(p, *args) for p in percentiles},
+            'max': self.max(*args)
+        }, 'statistic')
 
     def describe_by(self, *args, percentiles=None) -> 'Array':
         r"""
@@ -2551,7 +2558,7 @@ class Array(ABCArray):
             axes = self.axes[[axes]]
         else:
             axes = self.axes[axes]
-        res_axes = self.axes.replace([(axis, axis.ignore_labels()) for axis in axes])
+        res_axes = self.axes.replace({axis: axis.ignore_labels() for axis in axes})
         return Array(self.data, res_axes)
     drop_labels = renamed_to(ignore_labels, 'drop_labels', raise_error=True)
 
@@ -5108,8 +5115,9 @@ class Array(ABCArray):
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         if isinstance(q, (list, tuple)):
-            res = stack([(v, self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
-                          extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
+            res = stack({v: self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
+                                            extra_kwargs={'q': v, 'interpolation': interpolation}) for v in q},
+                        'percentile')
             return res.transpose()
         else:
             return self._aggregate(_npfunc, args, kwargs, by_agg=False, keepaxes=keepaxes, commutative=True,
@@ -5193,8 +5201,9 @@ class Array(ABCArray):
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         if isinstance(q, (list, tuple)):
-            res = stack([(v, self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
-                          extra_kwargs={'q': v, 'interpolation': interpolation})) for v in q], 'percentile')
+            res = stack({v: self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
+                                            extra_kwargs={'q': v, 'interpolation': interpolation}) for v in q},
+                        'percentile')
             return res.transpose()
         else:
             return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True, out=out,
@@ -8227,7 +8236,7 @@ class Array(ABCArray):
             if isinstance(first_value, tuple):
                 # assume all other values are the same shape
                 tuple_length = len(first_value)
-                res_arrays = [stack([(key, value[i]) for key, value in key_values], axes=by, dtype=dtype,
+                res_arrays = [stack({key: value[i] for key, value in key_values}, axes=by, dtype=dtype,
                                     res_axes=get_axes(first_value[i]).union(by))
                               for i in range(tuple_length)]
                 # transpose back axis where it was
@@ -9539,15 +9548,15 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
     of a baseline simulation:
 
     >>> from larray import Session
-    >>> baseline = Session([('arr1', arr1), ('arr2', arr2)])
+    >>> baseline = Session({'arr1': arr1, 'arr2': arr2})
 
     and another session with a variant (here we simply added 0.5 to each array)
 
-    >>> variant = Session([('arr1', arr1 + 0.5), ('arr2', arr2 + 0.5)])
+    >>> variant = Session({'arr1': arr1 + 0.5, 'arr2': arr2 + 0.5})
 
     then we stack them together
 
-    >>> stacked = stack([('baseline', baseline), ('variant', variant)], 'sessions')
+    >>> stacked = stack({'baseline': baseline, 'variant': variant}, 'sessions')
     >>> stacked
     Session(arr1, arr2)
     >>> stacked.arr1
@@ -9646,13 +9655,13 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
         def stack_one(array_name):
             try:
-                return stack([(sess_name, sess.get(array_name, nan))
-                              for sess_name, sess in items], axes=axes)
+                return stack({sess_name: sess.get(array_name, nan)
+                              for sess_name, sess in items}, axes=axes)
             # TypeError for str arrays, ValueError for incompatible axes, ...
             except Exception:
                 return nan
 
-        return Session([(array_name, stack_one(array_name)) for array_name in array_names], meta=meta)
+        return Session({array_name: stack_one(array_name) for array_name in array_names}, meta=meta)
     else:
         if res_axes is None or dtype is None:
             values = [asarray(v) if not np.isscalar(v) else v

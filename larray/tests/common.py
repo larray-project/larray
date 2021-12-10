@@ -130,16 +130,9 @@ def assert_axis_eq(axis1, axis2):
 
 @pytest.fixture
 def meta():
-    title = 'test array'
-    description = 'Array used for testing'
-    author = 'John Cleese'
-    location = 'Ministry of Silly Walks'
-    office_number = 42
-    score = 9.70
-    date = pd.Timestamp(dt.datetime(1970, 3, 21))
-    return Metadata([('title', title), ('description', description), ('author', author),
-                     ('location', location), ('office_number', office_number),
-                     ('score', score), ('date', date)])
+    return Metadata(title='test array', description='Array used for testing', author='John Cleese',
+                    location='Ministry of Silly Walks', office_number=42,
+                    score=9.70, date=pd.Timestamp(dt.datetime(1970, 3, 21)))
 
 
 needs_pytables = pytest.mark.skipif(tables is None, reason="pytables is required for this test")
