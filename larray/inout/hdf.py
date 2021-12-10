@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pandas import HDFStore
 
-from typing import List, Tuple, Union
+from typing import Union, Dict
 
 from larray.core.array import Array
 from larray.core.axis import Axis
@@ -139,15 +139,16 @@ class PandasHDFHandler(FileHandler):
     def _open_for_write(self):
         self.handle = HDFStore(self.fname)
 
-    def list_items(self) -> List[Tuple[str, str]]:
-        keys = [key.strip('/') for key in self.handle.keys()]
-        items = [(key, _get_type_from_attrs(self.handle.get_storer(key).attrs)) for key in keys if '/' not in key]
+    def item_types(self) -> Dict[str, str]:
+        handle = self.handle
+        keys = [key.strip('/') for key in handle.keys()]
+        types = {key: _get_type_from_attrs(handle.get_storer(key).attrs) for key in keys if '/' not in key}
         # ---- for backward compatibility (LArray < 0.33) ----
         # axes
-        items += [(key.split('/')[-1], 'Axis_Backward_Comp') for key in keys if '__axes__' in key]
+        types.update({key.split('/')[-1]: 'Axis_Backward_Comp' for key in keys if '__axes__' in key})
         # groups
-        items += [(key.split('/')[-1], 'Group_Backward_Comp') for key in keys if '__groups__' in key]
-        return items
+        types.update({key.split('/')[-1]: 'Group_Backward_Comp' for key in keys if '__groups__' in key})
+        return types
 
     def _read_item(self, key, typename, *args, **kwargs) -> Union[Array, Axis, Group, Scalar]:
         if typename in _supported_typenames:

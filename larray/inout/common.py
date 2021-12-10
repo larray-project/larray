@@ -2,7 +2,7 @@ import os
 from datetime import date, time, datetime
 from pathlib import Path
 
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Dict
 
 from larray.core.axis import Axis
 from larray.core.group import Group
@@ -66,10 +66,9 @@ class FileHandler:
     def _open_for_write(self):
         raise NotImplementedError()
 
-    # FIXME : return an ordinary dict instead (Python < 3.6 no longer supported)
-    def list_items(self) -> List[Tuple[str, str]]:
+    def item_types(self) -> Dict[str, str]:
         r"""
-        Return list containing pairs (name, type) for all stored objects
+        Return dict with type of each stored object
         """
         raise NotImplementedError()
 
@@ -138,11 +137,11 @@ class FileHandler:
         """
         self._open_for_read()
         metadata = self._read_metadata()
-        key_types = self.list_items()
+        item_types = self.item_types()
         if keys is not None:
-            key_types = [(key, type) for key, type in key_types if key in keys]
+            item_types = {key: type_ for key, type_ in item_types.items() if key in keys}
         res = {}
-        for key, type_ in key_types:
+        for key, type_ in item_types.items():
             if display:
                 print("loading", type_, "object", key, "...", end=' ')
             try:
@@ -155,7 +154,7 @@ class FileHandler:
         self.close()
         return metadata, res
 
-    def dump(self, metadata, key_values, *args, display=False, **kwargs):
+    def dump(self, metadata, values, *args, display=False, **kwargs):
         r"""
         Dumps objects corresponding to keys in file in HDF, Excel, CSV, ... format
 
@@ -163,8 +162,8 @@ class FileHandler:
         ----------
         metadata: Metadata
             List of metadata to dump.
-        key_values : list of (str, Array/Axis/Group) pairs
-            Name and data of objects to dump.
+        values : dict
+            Objects to dump as a {name: value} dict.
         display : bool, optional
             Whether to display when the dump of each object is started/done. Defaults to False.
         """
@@ -172,7 +171,7 @@ class FileHandler:
         self._open_for_write()
         if metadata is not None:
             self._dump_metadata(metadata)
-        for key, value in key_values:
+        for key, value in values.items():
             if isinstance(value, Array) and value.ndim == 0:
                 if display:
                     print(f'Cannot dump {key}. Dumping 0D arrays is currently not supported.')

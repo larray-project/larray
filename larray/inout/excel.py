@@ -11,7 +11,7 @@ try:
 except ImportError:
     xlsxwriter = None
 
-from typing import List, Tuple
+from typing import Dict
 
 from larray.core.array import Array, asarray
 from larray.core.constants import nan
@@ -240,8 +240,8 @@ class PandasExcelHandler(FileHandler):
         engine = 'xlsxwriter' if (self.fname.suffix == '.xlsx' and xlsxwriter is not None) else None
         self.handle = pd.ExcelWriter(self.fname, engine=engine)
 
-    def list_items(self) -> List[Tuple[str, str]]:
-        return [(name, 'Array') for name in self.handle.sheet_names if name != '__metadata__']
+    def item_types(self) -> Dict[str, str]:
+        return {name: 'Array' for name in self.handle.sheet_names if name != '__metadata__'}
 
     def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':
@@ -292,8 +292,8 @@ class XLWingsHandler(FileHandler):
     def _open_for_write(self):
         self.handle = open_excel(self.fname, overwrite_file=self.overwrite_file)
 
-    def list_items(self) -> List[Tuple[str, str]]:
-        return [(name, 'Array') for name in self.handle.sheet_names() if name != '__metadata__']
+    def item_types(self) -> Dict[str, str]:
+        return {name: 'Array' for name in self.handle.sheet_names() if name != '__metadata__'}
 
     def _read_item(self, key, type, *args, **kwargs) -> Array:
         if type == 'Array':
