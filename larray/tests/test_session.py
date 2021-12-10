@@ -59,8 +59,8 @@ k = ndtest((3, 3))
 
 @pytest.fixture()
 def session():
-    return Session([('b', b), ('b024', b024), ('a', a), ('a2', a2), ('anonymous', anonymous),
-                    ('a01', a01), ('ano01', ano01), ('c', c), ('d', d), ('e', e), ('g', g), ('f', f), ('h', h)])
+    return Session({'b': b, 'b024': b024, 'a': a, 'a2': a2, 'anonymous': anonymous,
+                    'a01': a01, 'ano01': ano01, 'c': c, 'd': d, 'e': e, 'g': g, 'f': f, 'h': h})
 
 
 def test_init_session(meta):
@@ -357,7 +357,7 @@ def test_to_globals(session):
 
 def test_element_equals(session):
     session_cls = session.__class__
-    other_session = session_cls([(key, value) for key, value in session.items()])
+    other_session = session_cls(session)
 
     keys = [key for key, value in session.items() if isinstance(value, (Axis, Group, Array))]
     expected_res = full(Axis(keys, 'name'), fill_value=True, dtype=bool)
@@ -401,7 +401,7 @@ def to_boolean_array_eq(res):
 
 def test_eq(session):
     session_cls = session.__class__
-    other_session = session_cls([(key, value) for key, value in session.items()])
+    other_session = session_cls(session)
     expected_res = full(Axis(list(session.keys()), 'name'), fill_value=True, dtype=bool)
 
     # ====== same sessions ======
@@ -516,8 +516,8 @@ def test_sub(session):
 
     # session - array
     axes = [a, b]
-    other = Session([('a', a), ('a01', a01), ('c', c), ('e', ndtest((a, b))),
-                     ('f', full((a, b), fill_value=3)), ('g', ndtest('c=c0..c2'))])
+    other = Session({'a': a, 'a01': a01, 'c': c, 'e': ndtest((a, b)),
+                     'f': full((a, b), fill_value=3), 'g': ndtest('c=c0..c2')})
     diff = other - ones(axes)
     assert_array_nan_equal(diff['e'], other['e'] - ones(axes))
     assert_array_nan_equal(diff['f'], other['f'] - ones(axes))
@@ -609,24 +609,24 @@ def test_local_arrays():
 
     # exclude private local arrays
     s = local_arrays()
-    s_expected = Session([('h', h)])
+    s_expected = Session({'h': h})
     assert s.equals(s_expected)
 
     # all local arrays
     s = local_arrays(include_private=True)
-    s_expected = Session([('h', h), ('_h', _h)])
+    s_expected = Session({'h': h, '_h': _h})
     assert s.equals(s_expected)
 
 
 def test_global_arrays():
     # exclude private global arrays
     s = global_arrays()
-    s_expected = Session([('e', e), ('f', f), ('g', g), ('h', h), ('k', k)])
+    s_expected = Session({'e': e, 'f': f, 'g': g, 'h': h, 'k': k})
     assert s.equals(s_expected)
 
     # all global arrays
     s = global_arrays(include_private=True)
-    s_expected = Session([('e', e), ('_e', _e), ('f', f), ('g', g), ('h', h), ('k', k)])
+    s_expected = Session({'e': e, '_e': _e, 'f': f, 'g': g, 'h': h, 'k': k})
     assert s.equals(s_expected)
 
 
@@ -636,12 +636,12 @@ def test_arrays():
 
     # exclude private arrays
     s = arrays()
-    s_expected = Session([('e', e), ('f', f), ('g', g), ('h', h), ('i', i), ('k', k)])
+    s_expected = Session({'e': e, 'f': f, 'g': g, 'h': h, 'i': i, 'k': k})
     assert s.equals(s_expected)
 
     # all arrays
     s = arrays(include_private=True)
-    s_expected = Session([('_e', _e), ('_i', _i), ('e', e), ('f', f), ('g', g), ('h', h), ('i', i), ('k', k)])
+    s_expected = Session({'_e': _e, '_i': _i, 'e': e, 'f': f, 'g': g, 'h': h, 'i': i, 'k': k})
     assert s.equals(s_expected)
 
 

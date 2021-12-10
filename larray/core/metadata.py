@@ -71,7 +71,7 @@ class Metadata(AttributeDict):
                 value = to_datetime(value, errors='ignore', infer_datetime_format=True)
             return value
 
-        return Metadata([(key, _convert_value(value)) for key, value in zip(array.axes.labels[0], array.data)])
+        return Metadata({key: _convert_value(value) for key, value in zip(array.axes.labels[0], array.data)})
 
     # ---------- IO methods ----------
     def to_hdf(self, hdfstore, key=None):
