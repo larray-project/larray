@@ -3311,7 +3311,8 @@ class AxisCollection:
         AxisCollection([
             Axis(['a0b0', 'a0b1', 'a0b2', 'a1b0', 'a1b1', 'a1b2'], 'a_b')
         ])
-        >>> combined.split_axes('a_b', regex=r'(\w{2})(\w{2})')
+        >>> # The pattern for each resulting axis should be enclosed in parentheses
+        >>> combined.split_axes('a_b', regex=r'(..)(..)')
         AxisCollection([
             Axis(['a0', 'a1'], 'a'),
             Axis(['b0', 'b1', 'b2'], 'b')
