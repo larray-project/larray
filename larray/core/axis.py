@@ -3308,13 +3308,13 @@ class AxisCollection:
 
         Split labels using a regular expression
 
-        >>> combined = AxisCollection('a_b = a0b0..a1b2')
+        >>> combined = AxisCollection('ab = a0b0..a1b2')
         >>> combined
         AxisCollection([
-            Axis(['a0b0', 'a0b1', 'a0b2', 'a1b0', 'a1b1', 'a1b2'], 'a_b')
+            Axis(['a0b0', 'a0b1', 'a0b2', 'a1b0', 'a1b1', 'a1b2'], 'ab')
         ])
         >>> # The pattern for each resulting axis should be enclosed in parentheses
-        >>> combined.split_axes('a_b', regex=r'(..)(..)')
+        >>> combined.split_axes('ab', names=['a', 'b'], regex=r'(..)(..)')
         AxisCollection([
             Axis(['a0', 'a1'], 'a'),
             Axis(['b0', 'b1', 'b2'], 'b')
@@ -3345,18 +3345,7 @@ class AxisCollection:
             Axis(['d0', 'd1'], 'D')
         ])
         """
-        if axes is None:
-            axes = {axis: None for axis in self if sep in axis.name}
-        elif isinstance(axes, (int, str, Axis)):
-            axes = {axes: None}
-        elif isinstance(axes, (list, tuple)):
-            if all(isinstance(axis, (int, str, Axis)) for axis in axes):
-                axes = {axis: None for axis in axes}
-            else:
-                raise ValueError("Expected tuple or list of int, string or Axis instances")
-        # axes should be a dict at this time
-        assert isinstance(axes, dict)
-
+        axes = self._prepare_split_axes(axes, names, sep)
         new_axes = self[:]
         for axis, names in axes.items():
             axis = new_axes[axis]
@@ -3364,6 +3353,27 @@ class AxisCollection:
             split_axes = axis.split(sep, names, regex)
             new_axes = new_axes[:axis_index] + split_axes + new_axes[axis_index + 1:]
         return new_axes
+
+    def _prepare_split_axes(self, axes, names, sep) -> dict:
+        if axes is None:
+            # use all axes where sep is present
+            axes = [axis for axis in self if axis.name is not None and sep in axis.name]
+        elif isinstance(axes, (int, str, Axis)):
+            axes = {axes: names}
+
+        if isinstance(axes, (list, tuple)):
+            if any(not isinstance(axis, (int, str, Axis)) for axis in axes):
+                raise TypeError("Expected tuple or list of int, string or Axis instances")
+
+            if names is None:
+                axes = {axis: None for axis in axes}
+            else:
+                axes = dict(zip(axes, names))
+
+        # axes should be a dict at this time
+        assert isinstance(axes, dict)
+        return axes
+
     split_axis = renamed_to(split_axes, 'split_axis', raise_error=True)
 
     def align(self, other, join='outer', axes=None) -> Tuple['AxisCollection', 'AxisCollection']:

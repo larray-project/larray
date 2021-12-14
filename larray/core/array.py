@@ -7993,20 +7993,8 @@ class Array(ABCArray):
         a1  b1   c1  14  15
         """
         array = self.sort_labels(axes) if sort else self
-        # TODO:
-        # * do multiple axes split in one go
-        # * somehow factorize this code with AxisCollection.split_axes
-        if axes is None:
-            axes = {axis: None for axis in array.axes if axis.name is not None and sep in axis.name}
-        elif isinstance(axes, (int, str, Axis)):
-            axes = {axes: names}
-        elif isinstance(axes, (list, tuple)):
-            if all(isinstance(axis, (int, str, Axis)) for axis in axes):
-                axes = {axis: None for axis in axes}
-            else:
-                raise ValueError("Expected tuple or list of int, string or Axis instances")
-        # axes should be a dict at this time
-        assert isinstance(axes, dict)
+        # TODO: do multiple axes split in one go
+        axes = array.axes._prepare_split_axes(axes, names, sep)
         for axis, names in axes.items():
             axis = array.axes[axis]
             split_axes, split_labels = axis.split(sep, names, regex, return_labels=True)

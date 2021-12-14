@@ -80,3 +80,8 @@ Fixes
   (closes :issue:`988`)
 
 * fixed binary operation between an Array and an Axis returning False.
+
+* fixed :py:obj:`AxisCollection.split_axes()` with anonymous axes.
+
+* fixed the ``names`` argument in :py:obj:`Array.split_axes` and :py:obj:`AxisCollection.split_axes` not working
+  in some cases.
