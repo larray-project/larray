@@ -813,11 +813,13 @@ class Axis(ABCAxis):
         def isscalar(k):
             return np.isscalar(k) or (isinstance(k, Group) and np.isscalar(k.key))
 
-        if isinstance(key, Axis):
+        if key is self:
+            key = slice(None)
+        elif isinstance(key, Axis):
             key = key.labels
-
-        # the not all(np.isscalar) part is necessary to support axis[a, b, c] and axis[[a, b, c]]
-        if isinstance(key, (tuple, list)) and not all(isscalar(k) for k in key):
+        # handle axis[several groups or sequences]
+        # the "not all(np.isscalar)" part is necessary to also support axis[a, b, c] and axis[[a, b, c]]
+        elif isinstance(key, (tuple, list)) and not all(isscalar(k) for k in key):
             # this creates a group for each key if it wasn't and retargets IGroup
             list_res = [self[k] for k in key]
             return list_res if isinstance(key, list) else tuple(list_res)
