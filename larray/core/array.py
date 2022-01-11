@@ -2376,7 +2376,7 @@ class Array(ABCArray):
         a1   b0   4   5
         a1   b1   6   7
         >>> new_arr = arr.reshape([Axis('a=a0,a1'),
-        ... Axis(['b0c0', 'b0c1', 'b1c0', 'b1c1'], 'bc')])
+        ...                        Axis(['b0c0', 'b0c1', 'b1c0', 'b1c1'], 'bc')])
         >>> new_arr
         a\bc  b0c0  b0c1  b1c0  b1c1
           a0     0     1     2     3
@@ -3678,7 +3678,7 @@ class Array(ABCArray):
         Examples
         --------
         >>> arr = Array([[0, 2, 0, 0],
-        ...               [1, 1, 1, 0]], 'a=a0,a1;b=b0..b3')
+        ...              [1, 1, 1, 0]], 'a=a0,a1;b=b0..b3')
         >>> arr
         a\b  b0  b1  b2  b3
          a0   0   2   0   0
@@ -3893,7 +3893,7 @@ class Array(ABCArray):
         >>> a = Axis('a=a0,a1')
         >>> b = Axis('b=b0,b1,b2')
         >>> arr = Array([[6, 0, 2],
-        ...               [4, 0, 8]], [a, b])
+        ...              [4, 0, 8]], [a, b])
         >>> arr
         a\b  b0  b1  b2
          a0   6   0   2
@@ -7018,8 +7018,8 @@ class Array(ABCArray):
         --------
         >>> axes = [Axis(3, 'row'), Axis('column=country,sex')]
         >>> arr = Array([['BE', 'F'],
-        ...               ['FR', 'M'],
-        ...               ['FR', 'F']], axes=axes)
+        ...              ['FR', 'M'],
+        ...              ['FR', 'F']], axes=axes)
         >>> arr
         row*\column  country  sex
                   0       BE    F
@@ -7784,7 +7784,7 @@ class Array(ABCArray):
         Examples
         --------
         >>> a = Array([[1, 2],
-        ...             [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
+        ...            [1, 2]], [Axis('sex=M,F'), Axis('nat=BE,FO')])
         >>> a
         sex\nat  BE  FO
               M   1   2
@@ -8128,7 +8128,7 @@ class Array(ABCArray):
         First let us define a test array
 
         >>> arr = Array([[0, 2, 1],
-        ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+        ...              [3, 1, 5]], 'a=a0,a1;b=b0..b2')
         >>> arr
         a\b  b0  b1  b2
          a0   0   2   1
@@ -8268,7 +8268,7 @@ class Array(ABCArray):
         First let us define a test array
 
         >>> arr = Array([[0, 2, 1],
-        ...               [3, 1, 5]], 'a=a0,a1;b=b0..b2')
+        ...              [3, 1, 5]], 'a=a0,a1;b=b0..b2')
         >>> arr
         a\b  b0  b1  b2
          a0   0   2   1
