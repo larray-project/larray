@@ -997,7 +997,6 @@ obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
 
 
 def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
-    import warnings
     warnings.warn("element_equal() is deprecated. Use array1.eq(array2, rtol, atol, nan_equals) instead.",
                   FutureWarning, stacklevel=2)
     a1 = asarray(a1)
@@ -1005,7 +1004,6 @@ def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
 
 
 def nan_equal(a1, a2):
-    import warnings
     warnings.warn("nan_equal() is deprecated. Use array1.eq(array2, nans_equal=True) instead.",
                   FutureWarning, stacklevel=2)
     return a1.eq(a2, nans_equal=True)
@@ -1149,13 +1147,11 @@ class Array(ABCArray):
 
     @property
     def title(self) -> str:
-        import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
         return self._meta.title if self._meta is not None and 'title' in self._meta else None
 
     @title.setter
     def title(self, title):
-        import warnings
         warnings.warn("title attribute is deprecated. Please use meta.title instead", FutureWarning, stacklevel=2)
         if not isinstance(title, str):
             raise TypeError(f"Expected string value, got {type(title).__name__}")
@@ -8303,7 +8299,6 @@ class LArray(Array):
 
 
 def larray_equal(a1, a2):
-    import warnings
     msg = "larray_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
@@ -8314,7 +8309,6 @@ def larray_equal(a1, a2):
 
 
 def larray_nan_equal(a1, a2):
-    import warnings
     msg = "larray_nan_equal() is deprecated. Use Array.equals() instead."
     warnings.warn(msg, FutureWarning, stacklevel=2)
     try:
@@ -8994,7 +8988,6 @@ create_sequential = renamed_to(sequence, 'create_sequential', raise_error=True)
 
 @_check_axes_argument
 def ndrange(axes, start=0, title=None, dtype=int):
-    import warnings
     warnings.warn("ndrange() is deprecated. Use sequence() or ndtest() instead.", FutureWarning, stacklevel=2)
     return ndtest(axes, start=start, title=title, dtype=dtype)
 
