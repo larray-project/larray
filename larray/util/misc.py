@@ -693,7 +693,8 @@ class lazy_attribute:
 
         func = self.func
         value = func(instance)
-        setattr(instance, func.__name__, value)
+        # do not use setattr() if instance is of a class with overridden __setattr__
+        object.__setattr__(instance, func.__name__, value)
         return value
 
 
