@@ -651,24 +651,6 @@ class ArrayPositionalIndexer:
     def __init__(self, array):
         self.array = array
 
-    def _translate_key(self, key):
-        r"""
-        Translates key into tuple of IGroup, i.e.
-        tuple of collections of labels.
-        """
-        if not isinstance(key, tuple):
-            key = (key,)
-        ndim = self.array.ndim
-        key_len = len(key)
-        if key_len < ndim:
-            # complete with slice(None)
-            return key + (slice(None),) * (ndim - key_len)
-        elif key_len == ndim:
-            return key
-        else:
-            # key_len > ndim
-            raise IndexError(f"key has too many indices ({key_len}) for array with {ndim} dimensions")
-
     def __getitem__(self, key):
         array = self.array
         ndim = array.ndim
@@ -680,7 +662,7 @@ class ArrayPositionalIndexer:
         if full_scalar_key:
             return array.data[key]
         else:
-            return array.__getitem__(self._translate_key(key), translate_key=False)
+            return array.__getitem__(key, translate_key=False)
 
     def __setitem__(self, key, value):
         array = self.array
@@ -693,7 +675,7 @@ class ArrayPositionalIndexer:
         if full_scalar_key:
             array.data[key] = value
         else:
-            array.__setitem__(self._translate_key(key), value, translate_key=False)
+            array.__setitem__(key, value, translate_key=False)
 
     def __len__(self):
         return len(self.array)
@@ -846,16 +828,21 @@ class ArrayPositionalPointsIndexer:
     To select the two points with index coordinates
     [0, 0, 0] and [1, 2, 2], you must do:
 
-    >>> arr.ipoints[[0,1], [0,2], [0,2]]
+    >>> arr.ipoints[[0, 1], [0, 2], [0, 2]]
     a_b_c  a0_b0_c0  a1_b2_c2
                   0        22
 
     The number of index(es) on each dimension must be equal:
 
-    >>> arr.ipoints[[0,1], [0,2], [0,1,2]]  # doctest: +NORMALIZE_WHITESPACE
+    >>> arr.ipoints[[0, 1], [0, 2], [0, 1, 2]]  # doctest: +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: all combined keys should have the same length
+
+    >>> arr.ipoints[[0, 1], [0, 2]]
+    a_b\c  c0  c1  c2  c3
+    a0_b0   0   1   2   3
+    a1_b2  20  21  22  23
     """
     __slots__ = ('array',)
 

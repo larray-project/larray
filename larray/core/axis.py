@@ -2885,6 +2885,7 @@ class AxisCollection:
         """
         from .array import raw_broadcastable, Array, sequence
 
+        ndim = self.ndim
         if translate_key:
             # complete key & translate (those two cannot be dissociated because to complete
             # the key we need to know which axis each key belongs to and to do that, we need to
@@ -2896,15 +2897,23 @@ class AxisCollection:
             # dict -> tuple (complete and order key)
             key = tuple(dict_key[axis] if axis in dict_key else slice(None)
                         for axis in self)
-
-        assert isinstance(key, tuple) and len(key) == self.ndim
+        else:
+            # if we do not translate the key, we still need to make sure it is complete
+            if not isinstance(key, tuple):
+                key = (key,)
+            key_len = len(key)
+            if key_len < ndim:
+                # complete with slice(None)
+                key = key + (slice(None),) * (ndim - key_len)
+            elif key_len > ndim:
+                raise IndexError(f"key is too long ({key_len}) for array with {ndim} dimensions")
 
         if points:
             # transform keys to IGroup and non-Array advanced keys to Array with a combined axis
             key = self._adv_keys_to_combined_axis_la_keys(key, wildcard=wildcard)
 
         # scalar array
-        if not self.ndim:
+        if not ndim:
             return key, None, None
 
         # transform ranges to slices if needed
