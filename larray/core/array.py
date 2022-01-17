@@ -658,23 +658,29 @@ class ArrayPositionalIndexer:
         """
         if not isinstance(key, tuple):
             key = (key,)
-        if len(key) > self.array.ndim:
-            raise IndexError(f"key has too many indices ({len(key)}) for array with {self.array.ndim} dimensions")
-        # no need to create a full nd key as that will be done later anyway
-        return tuple(axis.i[axis_key]
-                     for axis_key, axis in zip(key, self.array.axes))
+        ndim = self.array.ndim
+        key_len = len(key)
+        if key_len < ndim:
+            # complete with slice(None)
+            return key + (slice(None),) * (ndim - key_len)
+        elif key_len == ndim:
+            return key
+        else:
+            # key_len > ndim
+            raise IndexError(f"key has too many indices ({key_len}) for array with {ndim} dimensions")
 
     def __getitem__(self, key):
-        ndim = self.array.ndim
+        array = self.array
+        ndim = array.ndim
         full_scalar_key = (
             (isinstance(key, (int, np.integer)) and ndim == 1)
             or (isinstance(key, tuple) and len(key) == ndim and all(isinstance(k, (int, np.integer)) for k in key))
         )
         # fast path when the result is a scalar
         if full_scalar_key:
-            return self.array.data[key]
+            return array.data[key]
         else:
-            return self.array[self._translate_key(key)]
+            return array.__getitem__(self._translate_key(key), translate_key=False)
 
     def __setitem__(self, key, value):
         array = self.array
@@ -687,7 +693,7 @@ class ArrayPositionalIndexer:
         if full_scalar_key:
             array.data[key] = value
         else:
-            array[self._translate_key(key)] = value
+            array.__setitem__(self._translate_key(key), value, translate_key=False)
 
     def __len__(self):
         return len(self.array)
