@@ -85,6 +85,8 @@ Fixes
 
 * fixed binary operation between an :py:obj:`Array` and an :py:obj:`Axis` returning False.
 
+* fixed Array.ipoints[] when not all dimensions are given in the key.
+
 * fixed :py:obj:`AxisCollection.split_axes()` with anonymous axes.
 
 * fixed the ``names`` argument in :py:obj:`Array.split_axes` and :py:obj:`AxisCollection.split_axes` not working

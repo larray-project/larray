@@ -1219,7 +1219,7 @@ def test_points_indexer_setitem():
 
     arr = ndtest(2)
     # XXX: we might want to raise KeyError or IndexError instead?
-    with pytest.raises(ValueError):
+    with must_raise(ValueError, "'b1' is not a valid label for any axis"):
         arr.points['a0', 'b1'] = 42
 
     # test when broadcasting is involved
@@ -1228,6 +1228,56 @@ def test_points_indexer_setitem():
     raw_value = raw[:, 0, 0].reshape(2, 1)
     raw[:, [0, 1, 2], [0, 1, 2]] = raw_value
     arr.points['b0,b1,b2', 'c0,c1,c2'] = arr['b0', 'c0']
+    assert_array_equal(arr, raw)
+
+
+def test_ipoints_indexer_getitem():
+    arr = ndtest((2, 3, 3))
+    raw = arr.data
+
+    keys = [
+        0,
+        (0, slice(None), 2),
+        (0, 1, 2),
+        # key in the "correct" order
+        ([1, 0, 1, 0], 1, [1, 0, 1, 0]),
+        # advanced key with a missing dimension
+        ([1, 0, 1, 0], slice(None), [1, 0, 1, 0]),
+    ]
+    for index_key in keys:
+        assert_array_equal(arr.ipoints[index_key], raw[index_key])
+
+    with must_raise(IndexError, "key is too long (4) for array with 3 dimensions"):
+        _ = arr.ipoints[0, 1, 2, 0]
+
+
+def test_ipoints_indexer_setitem():
+    keys = [
+        0,
+        (0, slice(None), 2),
+        (0, 1, 2),
+        # key in the "correct" order
+        ([1, 0, 1, 0], 1, [1, 0, 1, 0]),
+        # advanced key with a missing dimension
+        ([1, 0, 1, 0], slice(None), [1, 0, 1, 0]),
+    ]
+    for index_key in keys:
+        arr = ndtest((2, 3, 3))
+        raw = arr.data.copy()
+        arr.ipoints[index_key] = 42
+        raw[index_key] = 42
+        assert_array_equal(arr, raw)
+
+    arr = ndtest(2)
+    with must_raise(IndexError, "key is too long (2) for array with 1 dimensions"):
+        arr.ipoints[0, 1] = 42
+
+    # test when broadcasting is involved
+    arr = ndtest((2, 3, 4))
+    raw = arr.data.copy()
+    raw_value = raw[:, 0, 0].reshape(2, 1)
+    raw[:, [0, 1, 2], [0, 1, 2]] = raw_value
+    arr.ipoints[:, [0, 1, 2], [0, 1, 2]] = arr['b0', 'c0']
     assert_array_equal(arr, raw)
 
 
