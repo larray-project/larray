@@ -2908,22 +2908,45 @@ class AxisCollection:
             elif key_len > ndim:
                 raise IndexError(f"key is too long ({key_len}) for array with {ndim} dimensions")
 
-        if points:
-            # transform keys to IGroup and non-Array advanced keys to Array with a combined axis
-            key = self._adv_keys_to_combined_axis_la_keys(key, wildcard=wildcard)
+        # TODO: check if we can move those to globals without a performance hit
+        INTEGER_TYPES = (np.integer, int)
+        SEQ_TYPES = (tuple, list, np.ndarray)
 
-        # scalar array
-        if not ndim:
+        # fastpath for indexing a single element or a scalar array (ideally this should not be needed)
+        num_ints = sum(isinstance(axis_key, INTEGER_TYPES) for axis_key in key)
+        if num_ints == ndim or not ndim:
             return key, None, None
+
+        # explicitly raise if we get an ndarray with ndim > 1 since we do not support them yet
+        if any(isinstance(axis_key, np.ndarray) and axis_key.ndim > 1 for axis_key in key):
+            raise NotImplementedError("ndarray keys with ndim > 1 are not supported yet")
+
+        if points:
+            # transform non-Array advanced keys to Array with a combined axis
+            key = self._adv_keys_to_combined_axis_la_keys(key, wildcard=wildcard)
 
         # transform ranges to slices if needed
         if collapse_slices:
-            # isinstance(np.ndarray, collections.Sequence) is False but it behaves like one
-            seq_types = (tuple, list, np.ndarray)
             # TODO: we should only do this if there are no Array key (with axes corresponding to the range)
-            # otherwise we will be translating them back to a range afterwards
-            key = [_idx_seq_to_slice(axis_key, len(axis)) if isinstance(axis_key, seq_types) else axis_key
-                   for axis_key, axis in zip(key, self)]
+            #       otherwise we will be translating them back to a range afterwards
+            key = tuple(_idx_seq_to_slice(axis_key, len(axis)) if isinstance(axis_key, SEQ_TYPES) else axis_key
+                        for axis_key, axis in zip(key, self))
+
+        # fastpath when no broadcasting is needed (ideally the "broadcasting path" should be fast enough to make this
+        # special case useless but we are not there yet)
+        num_arrays = sum(isinstance(axis_key, Array) for axis_key in key)
+        # TODO: ideally I think we should do this (but then the fastpath code needs to change)
+        # num_sequences = sum(isinstance(axis_key, (list, np.ndarray, Array)) for axis_key in key)
+        # need_broadcasting = (num_sequences == 1 and num_ints > 0) or (num_sequences > 1)
+        # 1D np.ndarray do not need broadcasting (can be considered sequences)
+        list_or_array = (list, np.ndarray)
+        num_sequences = sum(isinstance(axis_key, list_or_array) for axis_key in key)
+        need_broadcasting = (num_arrays > 0) or (num_sequences == 1 and num_ints > 0) or (num_sequences > 1)
+        if not need_broadcasting:
+            res_axes = AxisCollection([axis.subaxis(axis_key)
+                                       for axis, axis_key in zip(self, key)
+                                       if not isinstance(axis_key, INTEGER_TYPES)])
+            return key, res_axes, None
 
         # transform non-Array advanced keys (list and ndarray) to Array
         def to_la_ikey(axis, axis_key):
