@@ -67,11 +67,16 @@ Miscellaneous improvements
 * made all I/O functions/methods/constructors to accept either a string or a pathlib.Path object
   for all arguments representing a path (closes :issue:`896`).
 
+* added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
+  Closes :issue:`864`.
+
 * made :py:obj:`ipfp()` faster (the smaller the array, the larger the improvement)
   For example, for small arrays it is several times faster than before, for 1000x1000 arrays it is about 30% faster.
 
-* added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
-  Closes :issue:`864`.
+* made Array[] faster in the usual/simple cases.
+
+* made Array.i[] much faster.
+
 
 Fixes
 ^^^^^
