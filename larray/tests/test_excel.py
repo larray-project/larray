@@ -261,8 +261,8 @@ def test_make_plot():
     with open_excel(filepath='test_make_plot.xlsx', visible=False, overwrite_file=True) as wb:
         sheet = wb[0]
         sheet["B2"] = population_be.dump()
-        sheet["B2"].make_plot("B8")
-        sheet["B2:F4"].make_plot("L8")
+        sheet["B8"].make_plot("B2")
+        sheet["L8"].make_plot("B2:F4")
         wb.save()
 
 

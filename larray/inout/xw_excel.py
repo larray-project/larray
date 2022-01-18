@@ -620,7 +620,7 @@ if xw is not None:
             else:
                 return Array(list_data)
 
-        def make_plot(self, position: str, width: int=427, height: int=230, title: str=None, template: str=None,
+        def make_plot(self, data_source: str, width: int=427, height: int=230, title: str=None, template: str=None,
                       min_y: Union[int, float]=None, max_y: Union[int, float]=None,
                       xticks_spacing: Union[int, float]=None, customize_func: Callable=None,
                       customize_kwargs: Dict[str, str]=None) -> Any:
@@ -632,7 +632,7 @@ if xw is not None:
                 raise ValueError(f"Could not find template file {template}")
             title = str(title) if title is not None else None
             sheet = self.sheet.xw_sheet.api
-            data_range = self.xw_range.api
+            data_range = sheet.Range(data_source)
             top_left_cell = data_range.Cells(1, 1)
             # expand if current range is one cell
             if data_range.Count == 1:
@@ -644,12 +644,11 @@ if xw is not None:
             top_left_cell.Value = ''
             # start chart
             sheet_charts = sheet.ChartObjects()
-            position = sheet.Range(position)
-            left, top = position.Left, position.Top
+            range_chart = self.xw_range.api
+            left, top = range_chart.Left, range_chart.Top
             obj = sheet_charts.Add(left, top, width, height)
             obj_chart = obj.Chart
-            source = data_range
-            obj_chart.SetSourceData(source)
+            obj_chart.SetSourceData(data_range)
             obj_chart.ChartType = ChartType.xlLine
             # title
             if title is not None:
