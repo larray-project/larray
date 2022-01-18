@@ -251,6 +251,16 @@ class TestRange(object):
 
 
 @needs_xlwings
+def test_add_table():
+    arr = ndtest((3, 3))
+
+    with open_excel(filepath='test_add_table.xlsx', visible=False, overwrite_file=True) as wb:
+        sheet = wb[0]
+        sheet["B2"].add_table(arr)
+        wb.save()
+
+
+@needs_xlwings
 def test_add_plot():
     demo = load_example_data('demography_eurostat')
     population = demo.population

@@ -68,6 +68,8 @@ Miscellaneous improvements
 * implemented the :py:obj:`Range.add_plot()` method that allows to create graphs when using
   `open_excel()` (closes :issue:`900`).
 
+* implemented the :py:obj:`Range.add_table()` method.
+
 Fixes
 ^^^^^
 

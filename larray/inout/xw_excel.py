@@ -620,6 +620,9 @@ if xw is not None:
             else:
                 return Array(list_data)
 
+        def add_table(self, array: Array):
+            self.xw_range.value = array.dump()
+
         def add_plot(self, data_source: str, width: int=427, height: int=230, title: str=None, template: str=None,
                      min_y: Union[int, float]=None, max_y: Union[int, float]=None,
                      xticks_spacing: Union[int, float]=None, customize_func: Callable=None,
@@ -806,19 +809,15 @@ Excel workbook.
 
 Examples
 --------
->>> arr = ndtest((3, 3))
->>> arr
-a\b  b0  b1  b2
- a0   0   1   2
- a1   3   4   5
- a2   6   7   8
+>>> arr, arr2 = ndtest((3, 3)), ndtest((2, 2))
 
 create a new Excel file and save an array
 
 >>> # to create a new Excel file, argument overwrite_file must be set to True
 >>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
 ...     wb['arr'] = arr.dump()
-...     wb['arr']['A6'].add_plot('A1', title='simple graph')
+...     wb['arr']['A6'].add_table()
+...     wb['arr']['G1'].add_plot('A1', title='simple graph')
 ...     wb.save()
 
 read array from an Excel file
