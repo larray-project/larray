@@ -620,10 +620,10 @@ if xw is not None:
             else:
                 return Array(list_data)
 
-        def make_plot(self, data_source: str, width: int=427, height: int=230, title: str=None, template: str=None,
-                      min_y: Union[int, float]=None, max_y: Union[int, float]=None,
-                      xticks_spacing: Union[int, float]=None, customize_func: Callable=None,
-                      customize_kwargs: Dict[str, str]=None) -> Any:
+        def add_plot(self, data_source: str, width: int=427, height: int=230, title: str=None, template: str=None,
+                     min_y: Union[int, float]=None, max_y: Union[int, float]=None,
+                     xticks_spacing: Union[int, float]=None, customize_func: Callable=None,
+                     customize_kwargs: Dict[str, str]=None) -> Any:
             from xlwings.constants import LegendPosition, ChartType, RowCol, AxisType, Constants, Direction
             if customize_func is not None and not callable(customize_func):
                 raise TypeError(f"Expected a function for the argument 'customize_func'. "
@@ -818,7 +818,7 @@ create a new Excel file and save an array
 >>> # to create a new Excel file, argument overwrite_file must be set to True
 >>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
 ...     wb['arr'] = arr.dump()
-...     wb['arr']['A1'].make_plot('A6', title='simple graph')
+...     wb['arr']['A6'].add_plot('A1', title='simple graph')
 ...     wb.save()
 
 read array from an Excel file

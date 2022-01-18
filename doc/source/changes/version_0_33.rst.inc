@@ -65,7 +65,7 @@ Miscellaneous improvements
 
 * implemented :py:obj:`Axis.min()` and :py:obj:`Axis.max()` methods (closes :issue:`874`).
 
-* implemented the :py:obj:`Range.make_plot()` method that allows to create graphs when using
+* implemented the :py:obj:`Range.add_plot()` method that allows to create graphs when using
   `open_excel()` (closes :issue:`900`).
 
 Fixes
