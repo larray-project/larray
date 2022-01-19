@@ -3222,6 +3222,14 @@ def test_hdf_roundtrip(tmp_path, meta):
     fpath = tmp_path / 'test.h5'
     os.remove(fpath)
 
+    # opening read-only file
+    a.to_hdf(fpath, 'a')
+    from stat import S_IRUSR, S_IRGRP, S_IROTH, S_IWUSR, S_IWGRP, S_IWOTH
+    os.chmod(fpath, S_IRUSR | S_IRGRP | S_IROTH)
+    res = read_hdf(fpath, 'a')
+    os.chmod(fpath, S_IWUSR | S_IWGRP | S_IWOTH)
+    os.remove(fpath)
+
     # single element group
     for label in a3.a:
         a3[label].to_hdf(fpath, label)

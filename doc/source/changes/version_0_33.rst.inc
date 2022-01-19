@@ -54,3 +54,5 @@ Fixes
 * fixed set_labels(labels_dict) with several labels from the same axis (closes :issue:`851`).
 
 * fixed loading arrays with anonymous axes and numeric labels from Excel using Pandas 1.3+ (closes :issue:`950`).
+
+* fixed :py:obj:`read_hdf()` opening in RW mode instead of read mode (closes :issue:`980`).

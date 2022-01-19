@@ -77,7 +77,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
 
     key = _translate_group_key_hdf(key)
     res = None
-    with LHDFStore(filepath_or_buffer) as store:
+    with LHDFStore(filepath_or_buffer, mode='r') as store:
         try:
             pd_obj = store.get(key)
         except KeyError:
