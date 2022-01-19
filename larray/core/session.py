@@ -1099,7 +1099,7 @@ class Session:
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
 
-    def element_equals(self, other) -> Array:
+    def element_equals(self, other, rtol=0, atol=0, nans_equal=False) -> Array:
         r"""Test if each element (group, axis and array) of the current session equals
         the corresponding element of another session.
 
@@ -1110,6 +1110,15 @@ class Session:
         ----------
         other : Session
             Session to compare with.
+        rtol : float or int, optional
+            The relative tolerance parameter (see Notes). Defaults to 1e-05.
+        atol : float or int, optional
+            The absolute tolerance parameter (see Notes). Defaults to 1e-08.
+        nans_equal : boolean, optional
+            Whether to consider NaN values at the same positions in the two arrays as equal.
+            By default, an array containing NaN values is never equal to another array, even if that other array
+            also contains NaN values at the same positions. The reason is that a NaN value is different from
+            *anything*, including itself. Defaults to True.
 
         Returns
         -------
@@ -1118,6 +1127,10 @@ class Session:
         Notes
         -----
         Metadata is ignored.
+
+        For finite values, equals uses the following equation to test whether two arrays are equal:
+
+            absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
         See Also
         --------
@@ -1142,6 +1155,22 @@ class Session:
         >>> s1.element_equals(s2)
         name     a   a01   arr1  arr2
               True  True  False  True
+
+        Test equality between two arrays within a given tolerance range.
+        Return True if absolute(s1.arr1 - s2.arr1) <= (atol + rtol * absolute(s2.arr1)).
+
+        >>> s1.arr1 = Array([6., 8.], "a=a0,a1")
+        >>> s2.arr1 = Array([5.999, 8.001], "a=a0,a1")
+
+        >>> s1.element_equals(s2)
+        name     a   a01   arr1  arr2
+              True  True  False  True
+        >>> s1.element_equals(s2, atol=0.01)
+        name     a   a01  arr1  arr2
+              True  True  True  True
+        >>> s1.element_equals(s2, rtol=0.01)
+        name     a   a01  arr1  arr2
+              True  True  True  True
 
         Different label(s)
 
@@ -1170,14 +1199,14 @@ class Session:
             if isinstance(e1, (Group, Axis)):
                 return e1.equals(e2)
             else:
-                return e1.equals(e2, nans_equal=True)
+                return e1.equals(e2, rtol=rtol, atol=atol, nans_equal=nans_equal)
 
         res = [elem_equal(self.get(key), other.get(key)) for key in all_keys]
         return Array(res, [Axis(all_keys, 'name')])
 
     array_equals = renamed_to(element_equals, 'array_equals', raise_error=True)
 
-    def equals(self, other) -> bool:
+    def equals(self, other, rtol=0, atol=0, nans_equal=False) -> bool:
         r"""Test if all elements (groups, axes and arrays) of the current session are equal
         to those of another session.
 
@@ -1185,6 +1214,15 @@ class Session:
         ----------
         other : Session
             Session to compare with.
+        rtol : float or int, optional
+            The relative tolerance parameter (see Notes). Defaults to 1e-05.
+        atol : float or int, optional
+            The absolute tolerance parameter (see Notes). Defaults to 1e-08.
+        nans_equal : boolean, optional
+            Whether to consider NaN values at the same positions in the two arrays as equal.
+            By default, an array containing NaN values is never equal to another array, even if that other array
+            also contains NaN values at the same positions. The reason is that a NaN value is different from
+            *anything*, including itself. Defaults to True.
 
         Returns
         -------
@@ -1193,6 +1231,10 @@ class Session:
         Notes
         -----
         Metadata is ignored.
+
+        For finite values, equals uses the following equation to test whether two arrays are equal:
+
+            absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
         See Also
         --------
@@ -1216,6 +1258,19 @@ class Session:
         >>> s1.equals(s2)
         False
 
+        Test equality between two arrays within a given tolerance range.
+        Return True if absolute(s1.arr1 - s2.arr1) <= (atol + rtol * absolute(s2.arr1)).
+
+        >>> s1.arr1 = Array([6., 8.], "a=a0,a1")
+        >>> s2.arr1 = Array([5.999, 8.001], "a=a0,a1")
+
+        >>> s1.equals(s2)
+        False
+        >>> s1.equals(s2, atol=0.01)
+        True
+        >>> s1.equals(s2, rtol=0.01)
+        True
+
         Different label(s)
 
         >>> s2.arr2 = ndtest("b=b0,b1; a=a0,a1")
@@ -1230,7 +1285,7 @@ class Session:
         >>> s1.equals(s2)
         False
         """
-        return all(self.element_equals(other))
+        return all(self.element_equals(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
 
     def transpose(self, *args) -> 'Session':
         r"""Reorder axes of arrays in session, ignoring missing axes for each array.
