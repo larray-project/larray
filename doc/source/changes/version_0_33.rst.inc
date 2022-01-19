@@ -43,6 +43,9 @@ Miscellaneous improvements
 * :py:obj:`eye()` now supports an AxisCollection as argument, so you can use axes from another array by using
   ``eye(other_array.axes)``.
 
+* added arguments `rtol`, `atol` and `nans_equal` to the :py:obj:`Session.element_equals()` and
+  :py:obj:`Session.equals()` methods (closes :issue:`990`).
+
 
 Fixes
 ^^^^^
