@@ -67,3 +67,6 @@ Fixes
 ^^^^^
 
 * fixed Array.insert when no label is provided (closes :issue:`879`).
+
+* fixed comparison between Array and None returning False instead of an array of boolean values
+  (closes :issue:`988`)
