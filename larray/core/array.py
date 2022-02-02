@@ -5644,9 +5644,7 @@ class Array(ABCArray):
             # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but
             # it makes some tests fail for some reason.
             if not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
-                if other is None:
-                    other = full(self.axes, fill_value=None)
-                elif isinstance(other, (list, Axis)):
+                if isinstance(other, (list, Axis)) or other is None:
                     other = asarray(other)
                 else:
                     # support for inspect.signature
