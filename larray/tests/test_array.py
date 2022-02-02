@@ -2655,7 +2655,7 @@ def test_binary_ops(small_array):
     # arrays filled with None
     arr = full(small_array.axes, fill_value=None)
     res = arr == None                                                       # noqa: E711
-    assert_array_equal(res, full(small_array.axes, fill_value=True))
+    assert_array_equal(res, ones(small_array.axes, dtype=bool))
 
     # Array + Axis
     arr = ndtest('age=0..10')
