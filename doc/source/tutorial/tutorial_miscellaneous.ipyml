@@ -1,10 +1,6 @@
 cells:
 
 - markdown: |
-    # Some Useful Functions
-
-
-- markdown: |
     Import the LArray library:
 
 
@@ -19,6 +15,79 @@ cells:
     # extract the 'population' array from the dataset 
     population = demography_eurostat.population
     population
+
+
+- markdown: |
+    # Inspecting Array objects
+
+
+- markdown: |
+    Get array summary : metadata + dimensions + description of axes + dtype + size in memory
+
+
+- code: |
+    # Array summary: metadata + dimensions + description of axes
+    population.info
+
+
+- markdown: |
+    Get axes
+
+
+- code: |
+    population.axes
+
+
+- markdown: |
+    Get axis names
+
+
+- code: |
+    population.axes.names
+
+
+- markdown: |
+    Get number of dimensions
+
+
+- code: |
+    population.ndim
+
+
+- markdown: |
+    Get length of each dimension
+
+
+- code: |
+    population.shape
+
+
+- markdown: |
+    Get total number of elements of the array
+
+
+- code: |
+    population.size
+
+
+- markdown: |
+    Get type of internal data (int, float, ...)
+
+
+- code: |
+    population.dtype
+
+
+- markdown: |
+    Get size in memory
+
+
+- code: |
+    population.memory_used
+
+
+- markdown: |
+    # Some Useful Functions
 
 
 - markdown: |
@@ -219,7 +288,7 @@ cells:
 metadata:
   celltoolbar: Edit Metadata
   kernelspec:
-    display_name: Python 3
+    display_name: Python 3 (ipykernel)
     language: python
     name: python3
   language_info:
@@ -231,7 +300,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.9.5
   livereveal:
     autolaunch: false
     scroll: true

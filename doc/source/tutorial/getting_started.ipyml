@@ -70,14 +70,32 @@ cells:
     Working with the LArray library mainly consists of manipulating [Array](../api.rst#array) data structures.
     They represent N-dimensional labelled arrays and are composed of raw data (NumPy ndarray), axes and optionally some metadata.
     
-    An [Axis](../api.rst#axis) object represents a dimension of an array. It contains a list of labels and has a name:
+    An [Axis](../api.rst#axis) object represents a dimension of an array. 
+    It contains a list of labels and has a name.
+    They are several ways to create an axis:
 
 
 - code: |
-    # define some axes to be used later
+    # create an axis using one string
     age = Axis('age=0-9,10-17,18-66,67+')
-    gender = Axis('gender=female,male')
+    # labels generated using the special syntax start..end
     time = Axis('time=2015..2017')
+    # labels given as a list
+    gender = Axis(['female', 'male'], 'gender')
+    
+    age, gender, time
+
+
+- markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:**  
+      When using the string syntax `"axis_name=list,of,labels"` or `"axis_name=start..end"`, LArray will automatically infer the type of labels.<br>
+      For instance, the command line `age = Axis("age=0..100")` will create an age axis with labels of type `int`.<br><br>
+      Mixing special characters like `+` with numbers will lead to create an axis with labels of type `str` instead of `int`.<br>
+      As a consequence, the command line `age = Axis("age=0..98,99+")` will create an age axis with labels of type `str` instead of `int`! 
+    
+    </div>
 
 
 - markdown: |
@@ -126,6 +144,24 @@ cells:
 
 
 - markdown: |
+    To get the axes of an array, type:
+
+
+- code: |
+    population.axes
+
+
+- markdown: |
+    It is also possible to extract one axis belonging to an array using its name:
+
+
+- code: |
+    # extract the 'time' axis belonging to the 'population' array
+    time = population.time
+    time
+
+
+- markdown: |
     ## Create an array filled with predefined values
 
 
@@ -152,7 +188,8 @@ cells:
 
 
 - code: |
-    sequence(age)
+    # With initial=1.0 and inc=0.5, we generate the sequence 1.0, 1.5, 2.0, 2.5, 3.0, ...
+    sequence(age, initial=1.0, inc=0.5)
 
 
 - code: |
@@ -437,6 +474,27 @@ cells:
 
 
 - markdown: |
+    <div class="alert alert-warning">
+    
+    **Warning:** Mixing slices and individual labels inside the `[ ]` will generate **several groups** (a tuple of groups) instead of a single group.<br>
+        If you want to create a single group using both slices and individual labels, you need to use the `.union()` method (see below).   
+      
+    </div>
+
+
+- code: |
+    age_100 = Axis('age=0..100')
+    
+    # mixing slices and individual labels leads to the creation of several groups (a tuple of groups)
+    age_100[0:10, 20, 30, 40]
+
+
+- code: |
+    # the union() method allows to mix slices and individual labels to create a single group
+    age_100[0:10].union(age_100[20, 30, 40])
+
+
+- markdown: |
     ## Grouping arrays in a Session
 
 
@@ -489,7 +547,9 @@ cells:
     Another way to group objects of a model is to use [CheckedSession](../api.rst#checkedsession). 
     The ``CheckedSession`` provide the same methods than ``Session`` but enable the *autocomplete* feature on objects it contains.
     
-    For more details about ``CheckedSession``, see the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
+    For more details about ``Session`` and ``CheckedSession``, see the [Working With Sessions](tutorial_sessions.ipynb#Working-With-Sessions) section of the tutorial.
+    
+    To get the list of methods belonging to the ``Session`` and ``CheckedSession`` ojects, check the [corresponding section](../api.rst#session) in the API Reference.
 
 
 - markdown: |
@@ -499,23 +559,47 @@ cells:
 - markdown: |
     The LArray project provides an optional package called [larray-editor](../api.rst#editor) allowing users to explore and edit arrays through a graphical interface.
     
-    The larray-editor tool is automatically available when installing the **larrayenv** metapackage from conda.
-    
-    To explore the content of arrays in read-only mode, call the `view` function:
+    The function `view` displays the content of (an) array(s) in a graphical user interface in read-only mode. 
 
 
 - markdown: |
+    For instance, the statement
     ```python
-        # shows the arrays of a given session in a graphical user interface
-        view(demography_session)
-    
-        # the session may be directly loaded from a file
-        view('demography.h5')
-    
-        # creates a session with all existing arrays from the current namespace
-        # and shows its content
-        view()
+    view(population)
     ```
+    will open a new window showing the values and axes of the 'population' array. 
+
+
+- markdown: |
+    The statement
+    ```python
+    view(demography_session)
+    ```
+    will show all arrays contained in the 'demography_session'.
+
+
+- markdown: |
+    A session can be directly loaded from a file
+    ```python
+    view('demography.h5')
+    ```
+
+
+- markdown: |
+    Calling
+    ```python
+    view()
+    ```
+    with no passed argument creates a session with all existing arrays from the current namespace and shows its content.
+
+
+- markdown: |
+    <div class="alert alert-warning">
+    **Notes**: 
+    
+      - Calling `view` will block the execution of the rest of code until the graphical user interface is closed!
+      - The larray-editor tool is automatically available when installing the **larrayenv** metapackage from conda.
+    </div>
 
 
 - markdown: |
@@ -566,7 +650,7 @@ cells:
 metadata:
   celltoolbar: Edit Metadata
   kernelspec:
-    display_name: Python 3
+    display_name: Python 3 (ipykernel)
     language: python
     name: python3
   language_info:
@@ -578,7 +662,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.8.10
+    version: 3.9.5
 nbformat: 4
 nbformat_minor: 2
 

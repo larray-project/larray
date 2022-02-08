@@ -13,7 +13,6 @@ It is mainly dedicated to help new users to familiarize with it and others to re
    :maxdepth: 2
 
    ./tutorial/getting_started.ipynb
-   ./tutorial/tutorial_presenting_larray_objects.ipynb
    ./tutorial/tutorial_IO.ipynb
    ./tutorial/tutorial_transforming.ipynb
    ./tutorial/tutorial_combine_arrays.ipynb
