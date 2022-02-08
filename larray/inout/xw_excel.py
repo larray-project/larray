@@ -815,16 +815,28 @@ create a new Excel file and save an array
 
 >>> # to create a new Excel file, argument overwrite_file must be set to True
 >>> with open_excel('excel_file.xlsx', overwrite_file=True) as wb:   # doctest: +SKIP
+...     # create a new sheet 'arr' and dump the array 'arr' starting at cell A1
 ...     wb['arr'] = arr.dump()
-...     wb['arr']['A6'].add_table()
-...     wb['arr']['G1'].add_plot('A1', title='simple graph')
+...
+...     # dump array 'arr2' starting at cell F1
+...     wb['arr']['F1'].add_table(arr2)
+...
+...     # add a plot with left top corner anchored to cell A6 and 
+...     # using data in range A1:D4
+...     wb['arr']['A6'].add_plot('A1:D4', title='simple graph')
+...
+...     # add a plot with left top corner anchored to cell F6 and 
+...     # using data in range F1:H3 where H3 is deduced automatically
+...     wb['arr']['F6'].add_plot('F1', title='second simple graph')
+...
+...     save the workbook
 ...     wb.save()
 
 read array from an Excel file
 
 >>> with open_excel('excel_file.xlsx') as wb:    # doctest: +SKIP
-...     arr2 = wb['arr'].load()
->>> arr2    # doctest: +SKIP
+...     arr3 = wb['arr'].load()
+>>> arr3    # doctest: +SKIP
 a\b  b0  b1  b2
  a0   0   1   2
  a1   3   4   5
