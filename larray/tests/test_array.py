@@ -11,8 +11,8 @@ from larray.tests.common import (meta, inputpath,
                                  assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
                                  needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn, must_raise)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
-                    zeros, zeros_like, ndtest, empty, ones, eye, diag, stack, sequence,
-                    union, clip, exp, where, X, mean, inf, nan, isnan, round,
+                    zeros, zeros_like, ndtest, empty, ones, full, eye, diag, stack, sequence,
+                    asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items)
@@ -2651,6 +2651,16 @@ def test_binary_ops(small_array):
     raw2_ge_la = raw2 >= small_array
     assert raw2_ge_la.axes == small_array.axes
     assert_array_equal(raw2_ge_la, raw2 >= raw)
+
+    # arrays filled with None
+    arr = full(small_array.axes, fill_value=None)
+    res = arr == None                                                       # noqa: E711
+    assert_array_equal(res, ones(small_array.axes, dtype=bool))
+
+    # Array + Axis
+    arr = ndtest('age=0..10')
+    res = arr + arr.age
+    assert_array_equal(res, arr + asarray(arr.age))
 
 
 def test_binary_ops_no_name_axes(small_array):
