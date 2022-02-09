@@ -2203,6 +2203,8 @@ class AxisCollection:
                 return axis
             else:
                 raise ValueError(f"axis {axis} is not in collection")
+        elif isinstance(axis, AxisReference):
+            name = axis.name
         elif isinstance(axis, Axis):
             try:
                 # 1) first look for that particular axis object
