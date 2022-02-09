@@ -5646,7 +5646,12 @@ class Array(ABCArray):
 
             if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
-                (self_data, other_data), res_axes = raw_broadcastable([self, other])
+                if self.axes == other.axes:
+                    self_data = self.data
+                    other_data = other.data
+                    res_axes = self.axes
+                else:
+                    (self_data, other_data), res_axes = raw_broadcastable((self, other))
             else:
                 self_data, other_data = self.data, other
             return Array(super_method(self_data, other_data), res_axes)
