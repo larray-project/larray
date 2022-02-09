@@ -73,6 +73,8 @@ Miscellaneous improvements
 * made :py:obj:`ipfp()` faster (the smaller the array, the larger the improvement)
   For example, for small arrays it is several times faster than before, for 1000x1000 arrays it is about 30% faster.
 
+* made operations between two Arrays with the same axes much faster.
+
 * made Array[] faster in the usual/simple cases.
 
 * made Array.i[] much faster.
