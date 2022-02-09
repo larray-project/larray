@@ -23,6 +23,18 @@ from larray.util.types import Scalar
 np_frompyfunc = np.frompyfunc
 
 
+def array_equal(a1: np.ndarray, a2: np.ndarray):
+    if a1.shape != a2.shape:
+        return False
+    # fast path when we have the same simple dtype on both sides
+    # for object dtype the tobytes representation can be different
+    if a1.dtype == a2.dtype and a1.dtype != object:
+        return a1.data.tobytes() == a2.data.tobytes()
+    else:
+        # equivalent to np.array_equal, except we assume we already have numpy arrays
+        return bool((a1 == a2).all())
+
+
 class Axis(ABCAxis):
     r"""
     Represents an axis. It consists of a name and a list of labels.
@@ -591,8 +603,10 @@ class Axis(ABCAxis):
             return True
 
         # this might need to change if we ever support wildcard axes with real labels
-        return isinstance(other, Axis) and self.name == other.name and self.iswildcard == other.iswildcard and \
-            (len(self) == len(other) if self.iswildcard else np.array_equal(self.labels, other.labels))
+        return (isinstance(other, Axis)
+                and self.name == other.name
+                and self.iswildcard == other.iswildcard
+                and (len(self) == len(other) if self.iswildcard else array_equal(self.labels, other.labels)))
 
     def min(self) -> Scalar:
         """
