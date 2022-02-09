@@ -5622,8 +5622,6 @@ class Array(ABCArray):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self, other) -> 'Array':
-            res_axes = self.axes
-
             if isinstance(other, ExprNode):
                 other = other.evaluate(self.axes)
 
@@ -5654,6 +5652,7 @@ class Array(ABCArray):
                     (self_data, other_data), res_axes = raw_broadcastable((self, other))
             else:
                 self_data, other_data = self.data, other
+                res_axes = self.axes
             return Array(super_method(self_data, other_data), res_axes)
         opmethod.__name__ = fullname
         return opmethod
