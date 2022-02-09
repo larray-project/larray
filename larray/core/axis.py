@@ -4,7 +4,7 @@ import warnings
 from itertools import product
 from collections import defaultdict
 
-from typing import Union, Iterable, Tuple, List, Dict, Sequence, Optional
+from typing import Union, Iterable, Tuple, List, Dict, Sequence, Optional, Any
 
 import numpy as np
 import pandas as pd
@@ -1832,14 +1832,16 @@ class AxisCollection:
 
         return AxisCollection([axis for i, axis in enumerate(self) if contains(other, i, axis)])
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         r"""
         Other collection compares equal if all axes compare equal and in the same order. Works with a list.
         """
         if self is other:
             return True
-        if not isinstance(other, list):
-            other = list(other)
+        elif isinstance(other, AxisCollection):
+            other = other._list
+        elif not isinstance(other, (list, tuple)):
+            return False
         return len(self._list) == len(other) and all(a.equals(b) for a, b in zip(self._list, other))
 
     # for python2, we need to define it explicitly
