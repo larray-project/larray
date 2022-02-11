@@ -260,10 +260,7 @@ class PandasCSVHandler(FileHandler):
         self.sep = sep
         self.axes = None
         self.groups = None
-        if self.fname is None:
-            self.pattern = None
-            self.directory = None
-        elif self.fname.suffix == '.csv' or '*' in self.fname.name or '?' in self.fname.name:
+        if self.fname.suffix == '.csv' or '*' in self.fname.name or '?' in self.fname.name:
             self.pattern = self.fname.name
             self.directory = fname.parent
         else:

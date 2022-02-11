@@ -2,7 +2,7 @@ import os
 from datetime import date, time, datetime
 from pathlib import Path
 
-from typing import Optional, Union, List, Tuple
+from typing import Union, List, Tuple
 
 from larray.core.axis import Axis
 from larray.core.group import Group
@@ -41,7 +41,7 @@ class FileHandler:
 
     Parameters
     ----------
-    fname : str or Path or None
+    fname : str or Path
         Filename.
 
     Attributes
@@ -49,10 +49,11 @@ class FileHandler:
     fname : Path
         Filename.
     """
-    def __init__(self, fname: Optional[Union[str, Path]], overwrite_file: bool = False):
+    def __init__(self, fname: Union[str, Path], overwrite_file: bool = False):
+        assert fname is not None
         if isinstance(fname, str):
             fname = Path(fname)
-        if fname is not None and not isinstance(fname, Path):
+        if not isinstance(fname, Path):
             raise TypeError(f"Expected a string or a pathlib.Path object for the 'fname' argument. "
                             f"Got an object of type {type(fname).__name__} instead.")
         self.fname = fname

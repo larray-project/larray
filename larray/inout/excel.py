@@ -233,9 +233,6 @@ class PandasExcelHandler(FileHandler):
     r"""
     Handler for Excel files using Pandas.
     """
-    def __init__(self, fname, overwrite_file=False):
-        super().__init__(fname, overwrite_file)
-
     def _open_for_read(self):
         self.handle = pd.ExcelFile(self.fname)
 
@@ -285,9 +282,6 @@ class XLWingsHandler(FileHandler):
     r"""
     Handler for Excel files using XLWings.
     """
-    def __init__(self, fname, overwrite_file=False):
-        super().__init__(fname, overwrite_file)
-
     def _get_original_file_name(self):
         # for XLWingsHandler, no need to create a temporary file, the job is already done in the Workbook class
         pass

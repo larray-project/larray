@@ -133,10 +133,6 @@ class PandasHDFHandler(FileHandler):
     r"""
     Handler for HDF5 files using Pandas.
     """
-    def __init__(self, fname, overwrite_file=False):
-        assert fname is not None
-        super().__init__(fname, overwrite_file)
-
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 
