@@ -13,10 +13,6 @@ from larray.util.types import Scalar
 
 @register_file_handler('pickle', ['pkl', 'pickle'])
 class PickleHandler(FileHandler):
-    def __init__(self, fname, overwrite_file=False):
-        assert fname is not None
-        super().__init__(fname, overwrite_file)
-
     def _open_for_read(self):
         with open(self.fname, 'rb') as f:
             self.data = pickle.load(f)
