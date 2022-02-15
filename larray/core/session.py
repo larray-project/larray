@@ -1111,9 +1111,9 @@ class Session:
         other : Session
             Session to compare with.
         rtol : float or int, optional
-            The relative tolerance parameter (see Notes). Defaults to 1e-05.
+            The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
-            The absolute tolerance parameter (see Notes). Defaults to 1e-08.
+            The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
             Whether to consider NaN values at the same positions in the two arrays as equal.
             By default, an array containing NaN values is never equal to another array, even if that other array
@@ -1128,7 +1128,7 @@ class Session:
         -----
         Metadata is ignored.
 
-        For finite values, equals uses the following equation to test whether two arrays are equal:
+        For finite values, element_equals uses the following equation to test whether two arrays are equal:
 
             absolute(array1 - array2) <= (atol + rtol * absolute(array2))
 
@@ -1215,9 +1215,9 @@ class Session:
         other : Session
             Session to compare with.
         rtol : float or int, optional
-            The relative tolerance parameter (see Notes). Defaults to 1e-05.
+            The relative tolerance parameter (see Notes). Defaults to 0.
         atol : float or int, optional
-            The absolute tolerance parameter (see Notes). Defaults to 1e-08.
+            The absolute tolerance parameter (see Notes). Defaults to 0.
         nans_equal : boolean, optional
             Whether to consider NaN values at the same positions in the two arrays as equal.
             By default, an array containing NaN values is never equal to another array, even if that other array
