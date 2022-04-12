@@ -21,6 +21,15 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* Array.plot now has an ´animate´ argument to produce animated plots. The
+  argument takes an axis (it also supports several axes but that is rarely
+  useful) and will create an animation, with one image per label of that axis.
+  For example,
+
+    >>> arr.plot.bar(animate='year')
+
+  will create an animated bar plot with one frame per year.
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
