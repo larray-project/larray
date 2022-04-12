@@ -1,9 +1,12 @@
+from pathlib import Path
 import warnings
 
 import numpy as np
 import pandas as pd
 
-from larray import IGroup, Axis, AxisCollection, Group
+from larray.core.abstractbases import ABCArray
+from larray.core.axis import Axis, AxisCollection
+from larray.core.group import Group, IGroup
 from larray.util.misc import deprecate_kwarg
 
 
@@ -19,7 +22,7 @@ class PlotObject:
         self.array = array
 
     @staticmethod
-    def _handle_x_y_axes(axes, x, y, subplots):
+    def _handle_x_y_axes(axes, animate, subplots, x, y):
         label_axis = None
 
         if np.isscalar(x) and x not in axes:
@@ -37,15 +40,21 @@ class PlotObject:
         def handle_axes_arg(avail_axes, arg):
             if arg is not None:
                 arg = avail_axes[arg]
+                avail_axes = avail_axes - arg
                 if isinstance(arg, Axis):
                     arg = AxisCollection([arg])
-                avail_axes = avail_axes - arg
             return avail_axes, arg
 
-        if label_axis is not None:
-            available_axes = axes - label_axis
+        available_axes = axes
+        if animate:
+            available_axes, animate_axes = handle_axes_arg(available_axes, animate)
         else:
-            available_axes, x = handle_axes_arg(axes, x)
+            animate_axes = AxisCollection()
+
+        if label_axis is not None:
+            available_axes = available_axes - label_axis
+        else:
+            available_axes, x = handle_axes_arg(available_axes, x)
             available_axes, y = handle_axes_arg(available_axes, y)
 
         if subplots is True:
@@ -85,7 +94,7 @@ class PlotObject:
             assert isinstance(subplot_axes, AxisCollection)
             assert y is None
 
-        return subplot_axes, series_axes, x, y
+        return animate_axes, subplot_axes, x, y, series_axes
 
     @staticmethod
     def _to_pd_obj(array):
@@ -172,7 +181,7 @@ class PlotObject:
     @deprecate_kwarg('stacked', 'stack')
     def __call__(self, x=None, y=None, ax=None, subplots=False, layout=None, figsize=None,
                  sharex=None, sharey=False, tight_layout=None, constrained_layout=None, title=None, legend=None,
-                 **kwargs):
+                 animate=None, filepath=None, **kwargs):
         from matplotlib import pyplot as plt
 
         array = self.array
@@ -190,47 +199,56 @@ class PlotObject:
                               "stack=axis_name instead", FutureWarning)
             kwargs['stacked'] = True
 
-        subplot_axes, series_axes, x, y = PlotObject._handle_x_y_axes(array.axes, x, y, subplots)
+        animate_axes, subplot_axes, x, y, series_axes = PlotObject._handle_x_y_axes(array.axes, animate, subplots, x, y)
 
         if constrained_layout is None and tight_layout is None:
             constrained_layout = True
 
-        if subplots:
-            if ax is not None:
-                raise ValueError("ax cannot be used in combination with subplots argument")
+        if ax is None:
             fig = plt.figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
 
-            num_subplots = subplot_axes.size
-            if layout is None:
-                subplots_shape = subplot_axes.shape
-                if len(subplots_shape) > 2:
-                    # default to last axis horizontal, other axes combined vertically
-                    layout = np.prod(subplots_shape[:-1]), subplots_shape[-1]
-                else:
-                    layout = subplot_axes.shape
+            if subplots:
+                if layout is None:
+                    subplots_shape = subplot_axes.shape
+                    if len(subplots_shape) > 2:
+                        # default to last axis horizontal, other axes combined vertically
+                        layout = np.prod(subplots_shape[:-1]), subplots_shape[-1]
+                    else:
+                        layout = subplot_axes.shape
+                if sharex is None:
+                    sharex = True
+                ax = fig.subplots(*layout, sharex=sharex, sharey=sharey)
+            else:
+                ax = fig.add_subplot()
 
-            if sharex is None:
-                sharex = True
-            ax = fig.subplots(*layout, sharex=sharex, sharey=sharey)
-            # it is easier to always work with a flat array
-            flat_ax = ax.flat
-            # remove blank plot(s) at the end, if any
-            if len(flat_ax) > num_subplots:
-                for plot_ax in flat_ax[num_subplots:]:
-                    plot_ax.remove()
-                # this not strictly necessary but is cleaner in case we reuse flax_ax
-                flat_ax = flat_ax[:num_subplots]
-            if title is not None:
-                fig.suptitle(title)
-            for i, (ndkey, subarr) in enumerate(array.items(subplot_axes)):
-                title = ' '.join(str(ak) for ak in ndkey)
-                self._plot_array(subarr, x=x, y=y, series=series_axes, ax=flat_ax[i], legend=False, title=title,
-                                 **kwargs)
+        if animate:
+            import matplotlib.animation as animation
+
+            def run(t):
+                if subplots:
+                    for subplot_ax in ax.flat:
+                        subplot_ax.clear()
+                else:
+                    ax.clear()
+                self._plot_many(array[t], ax, kwargs, series_axes, subplot_axes, title, x, y)
+            # TODO: add support for interpolation between frames/labels
+            #  see https://github.com/julkaar9/pynimate for inspiration
+            ani = animation.FuncAnimation(fig, run, frames=animate_axes.iter_labels())
+            if not isinstance(filepath, Path):
+                filepath = Path(filepath)
+            print(f"Writing animation to {filepath} ...", end=' ', flush=True)
+            if '.htm' in filepath.suffix:
+                filepath.write_text(f'<html>{ani.to_html5_video()}</html>', encoding='utf8')
+            else:
+                # writer = self.writer
+                # if writer is None:
+                writer = 'pillow' if filepath.suffix == '.gif' else 'ffmpeg'
+                fps = 5
+                metadata = None
+                bitrate = None
+                ani.save(filepath, writer=writer, fps=fps, metadata=metadata, bitrate=bitrate)
         else:
-            if ax is None:
-                fig = plt.figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
-                ax = fig.subplots(1, 1)
-            self._plot_array(array, x=x, y=y, series=series_axes, ax=ax, legend=False, title=title, **kwargs)
+            self._plot_many(array, ax, kwargs, series_axes, subplot_axes, title, x, y)
 
         if legend or legend is None:
             first_ax = ax.flat[0] if subplots else ax
@@ -250,6 +268,29 @@ class PlotObject:
                 legend_parent = first_ax.figure if subplots else ax
                 legend_parent.legend(handles, labels, **legend_kwargs)
         return ax
+
+    def _plot_many(self, array, ax, kwargs, series_axes, subplot_axes, title, x, y):
+        if len(subplot_axes):
+            num_subplots = subplot_axes.size
+            if not isinstance(ax, (np.ndarray, ABCArray)) or ax.size < num_subplots:
+                raise ValueError(f"ax argument value is not compatible with subplot axes ({subplot_axes})")
+            # it is easier to always work with a flat array
+            flat_ax = ax.flat
+            if title is not None:
+                fig = flat_ax[0].figure
+                fig.suptitle(title)
+            # remove blank plot(s) at the end, if any
+            if len(flat_ax) > num_subplots:
+                for plot_ax in flat_ax[num_subplots:]:
+                    plot_ax.remove()
+                # this not strictly necessary but is cleaner in case we reuse flat_ax
+                flat_ax = flat_ax[:num_subplots]
+            for i, (ndkey, subarr) in enumerate(array.items(subplot_axes)):
+                subplot_title = ' '.join(str(ak) for ak in ndkey)
+                self._plot_array(subarr, x=x, y=y, series=series_axes, ax=flat_ax[i], legend=False, title=subplot_title,
+                                 **kwargs)
+        else:
+            self._plot_array(array, x=x, y=y, series=series_axes, ax=ax, legend=False, title=title, **kwargs)
 
     @deprecate_kwarg('stacked', 'stack')
     @_use_pandas_plot_docstring

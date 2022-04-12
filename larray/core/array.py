@@ -7197,6 +7197,28 @@ class Array(ABCArray):
             - if a tuple of Axis (or int or str), stack each combination of labels of those axes.
             - True is equivalent to all axes (not already used in other arguments) except the last.
             Defaults to False in line and bar plots, and True in area plot.
+        animate : Axis, int, str or tuple, optional
+            Make an animated plot.
+            - if an Axis (or int or str), animate that axis (create one image per label on that axis).
+              One would usually use a time-related axis.
+            - if a tuple of Axis (or int or str), animate each combination of labels of those axes.
+            Defaults to None.
+        anim_params: dict, optional
+            Optional parameters to control how animations are saved to file.
+            - writer : str, optional
+                Backend to use. Defaults to 'pillow' for images (.gif .png and
+                .tiff), 'ffmpeg' otherwise.
+            - fps : int, optional
+                Animation frame rate (per second). Defaults to 5.
+            - metadata : dict, optional
+                Dictionary of metadata to include in the output file.
+                Some keys that may be of use include: title, artist, genre,
+                subject, copyright, srcform, comment. Defaults to {}.
+            - bitrate : int, optional
+                The bitrate of the movie, in kilobits per second.  Higher values
+                means higher quality movies, but increase the file size.
+                A value of -1 lets the underlying movie encoder select the
+                bitrate.
         **kwargs : keywords
             Options to pass to matplotlib plotting method
 
@@ -7237,6 +7259,11 @@ class Array(ABCArray):
         A stacked bar plot (genders are stacked)
 
         >>> arr.plot.bar(stack='gender')
+
+        An animated bar chart (with two bars). We set explicit y bounds via ylim so that the
+        same boundaries are used for the whole animation.
+
+        >>> arr.plot.bar(animate='year', ylim=(0, 22))                         # doctest: +SKIP
 
         Create a figure containing 2 x 2 graphs
 
