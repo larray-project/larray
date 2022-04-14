@@ -498,6 +498,7 @@ def float_error_handler_factory(stacklevel):
             error = 'invalid value (NaN)'
             extra = ' (this is typically caused by a 0 / 0)'
         else:
+            # for division by 0, we use a specific error handler *just* to set the correct stacklevel
             extra = ''
         warnings.warn(f"{error} encountered during operation{extra}", RuntimeWarning, stacklevel=stacklevel)
     return error_handler
