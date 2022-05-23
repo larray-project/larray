@@ -33,6 +33,10 @@ cells:
 
 
 - markdown: |
+    ## Python Plot (matplotlib)
+
+
+- markdown: |
     In a Python script, add the following import on top of the script:
 
 
@@ -145,12 +149,50 @@ cells:
     See [pyplot tutorial](https://matplotlib.org/tutorials/introductory/pyplot.html) for a short introduction to `matplotlib.pyplot`.
 
 
+- markdown: |
+    ## Excel Plot
+
+
+- markdown: |
+    It is possible to dump arrays and to make plots in the same time in an Excel workbook:
+
+
+- markdown: |
+    ```python
+    # to create a new Excel file, argument overwrite_file must be set to True
+    with open_excel('workbook_with_plots.xlsx', overwrite_file=True) as wb:
+        # ---- dump data
+        # add a new sheet 'BFG' and dump the data for Belgium in it 
+        wb['BFG'] = population['Belgium'].dump()
+        # store the BFG sheet in a local variable
+        sh = wb['BFG']
+        # dump the data for France using the equivalent method add_table()
+        sh['A18'].add_table(population['France'])
+        # dump the data for Germany
+        sh['A35'].add_table(population['Germany'])
+        
+        # ---- use data to create plots
+        # basic plot anchored to cell H1 using data for Belgium
+        sh['H1'].add_plot('A1', title='Belgium population')
+        # basic plot anchored to cell H18 using data for the France for years 2013 to 2016
+        sh['H18'].add_plot('A18:E20', title='France population')
+        # plot with options anchored to cell H35 using data for Germany
+        sh["H35"].add_plot("A35", title="Germany population", width=500, height=300, 
+                           xticks_spacing=2, min_y=40_000_000, max_y=41_500_000)
+        
+        # actually write data and plots in the Workbook
+        wb.save()
+        
+    # the Workbook is automatically closed when getting out the block defined by the with statement
+    ```
+
+
 # The lines below here may be deleted if you do not need them.
 # ---------------------------------------------------------------------------
 metadata:
   celltoolbar: Edit Metadata
   kernelspec:
-    display_name: Python 3
+    display_name: Python 3 (ipykernel)
     language: python
     name: python3
   language_info:
@@ -162,7 +204,7 @@ metadata:
     name: python
     nbconvert_exporter: python
     pygments_lexer: ipython3
-    version: 3.7.3
+    version: 3.9.5
   livereveal:
     autolaunch: false
     scroll: true
