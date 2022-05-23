@@ -269,10 +269,18 @@ def test_add_plot():
     population_be_nan[2013] = nan
 
     with open_excel(filepath='test_add_plot.xlsx', visible=False, overwrite_file=True) as wb:
-        sheet = wb[0]
-        sheet["B2"] = population_be.dump()
-        sheet["B8"].add_plot("B2")
-        sheet["L8"].add_plot("B2:F4")
+        wb['BFG'] = population_be.dump()
+        sheet = wb['BFG']
+        sheet["H1"].add_plot("A1", title="Belgium")
+        sheet["R1"].add_plot("A1:F4")
+
+        sheet["A18"].add_table(population['France'])
+        sheet["H18"].add_plot("A18:E20", title="France")
+
+        sheet["A35"].add_table(population["Germany"])
+        sheet["H35"].add_plot("A35", title="Germany", width=500, height=300, xticks_spacing=2,
+                              min_y=40_000_000, max_y=41_500_000)
+
         wb.save()
 
 
