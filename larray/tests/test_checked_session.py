@@ -390,19 +390,7 @@ def _test_io_cs(tmp_path, meta, engine, ext):
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
         cs = CheckedSessionExample()
 
-    # number of expected warnings is different depending on engine
-    expected_warnings = {
-        'pandas_excel': 3,
-        'xlwings_excel': 3,
-        'pandas_csv': 3,
-        'pandas_hdf': 47,  # FIXME: there is something fishy here
-        'pickle': 3,
-    }
-    num_expected = expected_warnings[engine]
-    # FIXME: we should try to fix the bad warning line instead of ignoring it
-    check_file = engine != 'pandas_hdf'
-    with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'",
-                   check_file=check_file, num_expected=num_expected):
+    with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'", num_expected=3):
         cs.load(fpath, engine=engine)
 
     # --- names ---
