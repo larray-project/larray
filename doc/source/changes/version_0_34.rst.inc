@@ -29,6 +29,8 @@ New features
 
 * implemented :py:obj:`Array.value_counts()`, which computes the number of occurrences of each unique value in an array.
 
+* added :py:obj:`Session.nbytes` and added :py:obj:`Session.memory_used` attributes.
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
