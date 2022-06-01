@@ -7774,8 +7774,15 @@ class Array(ABCArray):
         shifted_array = np.where(diff.data == 0, inf, array.shift(axis, n=d).data)
         return Array(diff.data / shifted_array, diff.axes)
 
-    def compact(self) -> 'Array':
+    def compact(self, display=False, name='array') -> 'Array':
         r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
+
+        Parameters
+        ----------
+        display : bool, optional
+            Whether to display a message with the name of constant axes which were discarded. Defaults to False.
+        name : str, optional
+            Name to use in the message if `display` is True. Defaults to "array".
 
         Returns
         -------
@@ -7795,9 +7802,14 @@ class Array(ABCArray):
               1   2
         """
         res = self
+        compacted_axes = []
         for axis in res.axes:
-            if (res == res[axis.i[0]]).all():
-                res = res[axis.i[0]]
+            axis_first_value = res[axis.i[0]]
+            if (res == axis_first_value).all():
+                res = axis_first_value
+                compacted_axes.append(axis.name)
+        if display and compacted_axes:
+            print(f"{name} was constant over: {', '.join(compacted_axes)}")
         return res
 
     def combine_axes(self, axes=None, sep='_', wildcard=False) -> 'Array':
