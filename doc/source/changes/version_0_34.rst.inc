@@ -31,6 +31,8 @@ New features
 
 * added :py:obj:`Session.nbytes` and added :py:obj:`Session.memory_used` attributes.
 
+* added ``display`` argument to :py:obj:`Array.compact` to display a message if some axes were "compacted".
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 

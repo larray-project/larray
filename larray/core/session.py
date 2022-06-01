@@ -1356,18 +1356,12 @@ class Session:
          a1   1   1   1
          a2   2   2   2
         >>> compact_ses = Session(arr1=arr1).compact(display=True)
-        arr1 was constant over {b}
+        arr1 was constant over: b
         >>> compact_ses.arr1
         a  a0  a1  a2
             0   1   2
         """
-        new_items = []
-        for k, v in self._objects.items():
-            compacted = v.compact()
-            if compacted is not v and display:
-                print(k, "was constant over", get_axes(v) - get_axes(compacted))
-            new_items.append((k, compacted))
-        return Session(new_items)
+        return Session({k: v.compact(display=display, name=k) for k, v in self._objects.items()})
 
     def apply(self, func, *args, kind=Array, **kwargs) -> 'Session':
         r"""
