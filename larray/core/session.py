@@ -13,7 +13,7 @@ from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence      # noqa: F401
-from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop
+from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, size2str
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -1540,6 +1540,48 @@ class Session:
             res += '\n'.join(display(k, v, True) for k, v in self.meta.items()) + '\n'
         res += '\n'.join(display(k, v) for k, v in self.items())
         return res
+
+    @property
+    def nbytes(self) -> str:
+        r"""Returns the memory in bytes consumed by the session.
+
+        Returns
+        -------
+        int
+            Number of bytes of memory used by the session.
+
+        Notes
+        -----
+        This returns a lower bound. Some memory is not accounted for.
+
+        Examples
+        --------
+        >>> # specifying explicit type so that the test has the same result on Linux
+        >>> s = Session(test1=ndtest('sex=M,F', dtype=np.int32),
+        ...             test2=ndtest("age=0..100", dtype=np.int32))
+        >>> s.nbytes
+        412
+        """
+        return sum(v.nbytes for v in self.values() if hasattr(v, 'nbytes'))
+
+    @property
+    def memory_used(self) -> str:
+        r"""Returns the memory consumed by the session in human readable form.
+
+        Returns
+        -------
+        str
+            Memory used by the session.
+
+        Examples
+        --------
+        >>> # specifying explicit type so that the test has the same result on Linux
+        >>> s = Session(test1=ndtest('sex=M,F', dtype=np.int32),
+        ...             test2=ndtest("age=0..100", dtype=np.int32))
+        >>> s.memory_used
+        '412 bytes'
+        """
+        return size2str(self.nbytes)
 
 
 def _exclude_private_vars(vars_dict: Dict[str, Any]) -> Dict[str, Any]:
