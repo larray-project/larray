@@ -45,9 +45,9 @@ def warn_or_raise(what, msg):
 
 def divnot0(a: np.ndarray, b: np.ndarray):
     b_eq0 = b == 0
-    # numpy array division gets slower the more zeros you have in other, so we change it before the division
+    # numpy array division gets slower the more zeros you have in `b`, so we change them before the division
     # happens. This is obviously slower than doing nothing if we have very few zeros but I think it's a win
-    # on average given that other is likely to contain zeros when using divnot0.
+    # on average given that `b` is likely to contain zeros when using divnot0.
     res = a / np.where(b_eq0, 1, b)
     res[np.broadcast_to(b_eq0, res.shape)] = 0.0
     return res
@@ -252,7 +252,6 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     # Here is the nice version of the algorithm
 
     # for i in range(maxiter):
-    #     startr = r
     #     for axis, axis_target in zip(axes, target_sums):
     #         r *= axis_target.divnot0(r.sum(axis))
     #     max_sum_diff = max(abs(r.sum(axis) - axis_target).max()
@@ -274,15 +273,17 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
             # r = r * axis_target.divnot0(r.sum(axis))
             res_data *= np.expand_dims(divnot0(axis_target, res_data.sum(axis_idx)), axis_idx)
 
+        # XXX: can't we skip computing the sum and max_diff for the last axis which should be good for each
+        #      iteration???
         axes_sum = [res_data.sum(axis_idx) for axis_idx in axes_indices]
         max_sum_diff = max(abs(axis_sum - axis_target).max()
                            for axis_sum, axis_target in zip(axes_sum, target_sums))
         axis0_sum = axes_sum[0]
 
-        step_sum_improvement = lastdiffs[-1] - max_sum_diff
-        stepcelldiff = abs(res_data - startr).max()
-
         if display_progress:
+            step_sum_improvement = lastdiffs[-1] - max_sum_diff
+            stepcelldiff = abs(res_data - startr).max()
+
             maxcelldiff = f2str(stepcelldiff)
             maxdiff2target = f2str(max_sum_diff)
             stepchange = f2str(step_sum_improvement)
