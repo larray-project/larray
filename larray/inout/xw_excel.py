@@ -522,8 +522,8 @@ if xw is not None:
         def _range_key_to_sheet_key(self, key):
             # string keys does not make sense in this case
             assert not isinstance(key, string_types)
-            row_offset = self.xw_range.row1 - 1
-            col_offset = self.xw_range.col1 - 1
+            row_offset = self.xw_range.row - 1
+            col_offset = self.xw_range.column - 1
             row, col = _concrete_key(key, self.xw_range)
             row = slice(row.start + row_offset, row.stop + row_offset) if isinstance(row, slice) else row + row_offset
             col = slice(col.start + col_offset, col.stop + col_offset) if isinstance(col, slice) else col + col_offset
