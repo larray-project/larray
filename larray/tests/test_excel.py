@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import needs_xlwings, needs_pytables, must_warn
-from larray import ndtest, open_excel, asarray, Axis, nan, ExcelReport, read_excel
+from larray import ndtest, open_excel, asarray, Array, Axis, nan, ExcelReport, read_excel
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
 
@@ -227,6 +227,17 @@ class TestSheet:
 
 @needs_xlwings
 class TestRange:
+    def test_get_and_set_item(self):
+        arr = ndtest((4, 5))
+
+        with open_excel(visible=False) as wb:
+            sheet = wb[0]
+            sheet['A1'] = arr
+            rng = sheet['B1:D3']
+            sliced_rng = rng[1:3, :2]
+            assert sliced_rng.shape == (2, 2)
+            asarray(sliced_rng).equals(Array([[6, 7], [11, 12]]))
+
     def test_scalar_convert(self):
         with open_excel(visible=False) as wb:
             sheet = wb[0]

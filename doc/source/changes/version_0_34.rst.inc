@@ -98,3 +98,5 @@ Fixes
 
 * fixed the ``names`` argument in :py:obj:`Array.split_axes` and :py:obj:`AxisCollection.split_axes` not working
   in some cases.
+
+* fixed taking a subset of an Excel range (e.g. myworkbook['my_sheet']['A2:C5'][1:])
