@@ -3624,7 +3624,7 @@ def test_from_series():
     assert_array_equal(res, expected)
 
     res = from_series(s, sort_rows=True)
-    assert_array_equal(res, expected.sort_axes())
+    assert_array_equal(res, expected.sort_labels())
 
     expected[0, 'F'] = -1
     s = s.reset_index().drop([3, 4, 5]).set_index(['age', 'gender', 'time'])[0]
@@ -4021,7 +4021,7 @@ def test_from_frame():
     data = expected.data
     df = pd.DataFrame(data, index=index, columns=columns)
 
-    expected = expected.sort_axes()
+    expected = expected.sort_labels()
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_array_equal(res, expected)
 
@@ -4032,7 +4032,7 @@ def test_from_frame():
     df = pd.DataFrame(data, index=index, columns=columns)
 
     res = from_frame(df, sort_rows=True, sort_columns=True)
-    assert_array_equal(res, expected.sort_axes())
+    assert_array_equal(res, expected.sort_labels())
 
     # 5) test fill_value
     # ==================

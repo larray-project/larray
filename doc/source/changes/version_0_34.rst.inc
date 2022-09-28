@@ -4,7 +4,7 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
-* renamed ``Array.old_method_name()`` to :py:obj:`Array.new_method_name()` (closes :issue:`1`).
+* renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
 * renamed ``old_argument_name`` argument of :py:obj:`Array.method_name()` to ``new_argument_name``.
 
