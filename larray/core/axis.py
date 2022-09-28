@@ -3667,12 +3667,10 @@ class DeprecatedAxisReferenceFactory:
         self.__dict__ = d
 
     def __getattr__(self, key):
-        warnings.warn("Special variable 'x' is deprecated, use 'X' instead", FutureWarning, stacklevel=2)
-        return AxisReference(key)
+        raise AttributeError("variable 'x' is deprecated, please use 'X' instead")
 
     def __getitem__(self, key):
-        warnings.warn("Special variable 'x' is deprecated, use 'X' instead", FutureWarning, stacklevel=2)
-        return AxisReference(key)
+        raise KeyError("variable 'x' is deprecated, please use 'X' instead")
 
 
 x = DeprecatedAxisReferenceFactory()
