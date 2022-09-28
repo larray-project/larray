@@ -2203,20 +2203,20 @@ class Array(ABCArray):
         return res[axis[::-1]] if not ascending else res
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
-    def sort_axes(self, axes=None, ascending=True) -> 'Array':
-        r"""Sorts axes of the array.
+    def sort_labels(self, axes=None, ascending=True) -> 'Array':
+        r"""Sorts labels of axes of the array.
 
         Parameters
         ----------
         axes : axis reference (Axis, str, int) or list of them, optional
-            Axes to sort. Defaults to all axes.
+            Axes to sort the labels of. Defaults None (all axes).
         ascending : bool, optional
-            Sort axes in ascending order. Defaults to True.
+            Sort labels in ascending order. Defaults to True.
 
         Returns
         -------
         Array
-            Array with sorted axes.
+            Array with sorted labels.
 
         Examples
         --------
@@ -2226,22 +2226,22 @@ class Array(ABCArray):
              EU  0  1
              FO  2  3
              BE  4  5
-        >>> a.sort_axes('sex')
+        >>> a.sort_labels('sex')
         nat\sex  F  M
              EU  1  0
              FO  3  2
              BE  5  4
-        >>> a.sort_axes()
+        >>> a.sort_labels()
         nat\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axes(('sex', 'nat'))
+        >>> a.sort_labels(('sex', 'nat'))
         nat\sex  F  M
              BE  5  4
              EU  1  0
              FO  3  2
-        >>> a.sort_axes(ascending=False)
+        >>> a.sort_labels(ascending=False)
         nat\sex  M  F
              FO  2  3
              EU  0  1
@@ -2263,7 +2263,8 @@ class Array(ABCArray):
 
         return self[tuple(sort_key(axis) for axis in axes)]
 
-    sort_axis = renamed_to(sort_axes, 'sort_axis', raise_error=True)
+    sort_axis = renamed_to(sort_labels, 'sort_axis', raise_error=True)
+    sort_axes = renamed_to(sort_labels, 'sort_axes')
 
     # todo : set returned type to Union['Array', np.ndarray, Scalar] ?
     def __getitem__(self, key, collapse_slices=False, translate_key=True, points=False) -> Union['Array', Scalar]:
@@ -7982,7 +7983,7 @@ class Array(ABCArray):
         a1  b1   c0  12  13
         a1  b1   c1  14  15
         """
-        array = self.sort_axes(axes) if sort else self
+        array = self.sort_labels(axes) if sort else self
         # TODO:
         # * do multiple axes split in one go
         # * somehow factorize this code with AxisCollection.split_axes
