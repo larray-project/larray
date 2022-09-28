@@ -66,6 +66,8 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed displaying plots made via Array.plot outside of LArray editor (closes :issue:`1019`).
+
 * fixed Array.insert when no label is provided (closes :issue:`879`).
 
 * fixed comparison between Array and None returning False instead of an array of boolean values

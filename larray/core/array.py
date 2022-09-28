@@ -463,7 +463,7 @@ class PlotObject:
     def __call__(self, x=None, y=None, ax=None, subplots=False, layout=None, figsize=None,
                  sharex=None, sharey=False, tight_layout=None, constrained_layout=None, title=None, legend=None,
                  **kwargs):
-        from matplotlib.figure import Figure
+        from matplotlib import pyplot as plt
 
         array = self.array
         legend_kwargs = legend if isinstance(legend, dict) else {}
@@ -476,7 +476,7 @@ class PlotObject:
         if subplots:
             if ax is not None:
                 raise ValueError("ax cannot be used in combination with subplots argument")
-            fig = Figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
+            fig = plt.figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
 
             num_subplots = subplot_axes.size
             if layout is None:
@@ -506,7 +506,7 @@ class PlotObject:
                                  **kwargs)
         else:
             if ax is None:
-                fig = Figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
+                fig = plt.figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
                 ax = fig.subplots(1, 1)
             self._plot_array(array, x=x, y=y, series=series_axes, ax=ax, legend=False, title=title, **kwargs)
 
@@ -7294,7 +7294,7 @@ class Array(ABCArray):
         Create a figure containing 2 x 2 graphs
 
         >>> # see matplotlib.pyplot.subplots documentation for more details
-        >>> fig, ax = plt.subplots(2, 2, figsize=(15, 15))                     # doctest: +SKIP
+        >>> fig, ax = plt.subplots(2, 2, figsize=(10, 8), tight_layout=True)   # doctest: +SKIP
         >>> # line plot with 2 curves (Males and Females) in the top left corner (0, 0)
         >>> arr.plot(ax=ax[0, 0], title='line plot')                           # doctest: +SKIP
         >>> # bar plot with stacked values in the top right corner (0, 1)
