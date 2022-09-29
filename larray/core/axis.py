@@ -2395,7 +2395,7 @@ class AxisCollection:
             except KeyError:
                 continue
         if not valid_axes:
-            raise ValueError(f"{axis_key} is not a valid label for any axis")
+            raise ValueError(f"{axis_key} is not a valid label for any axis\n{self.info}")
         elif len(valid_axes) > 1:
             valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.axes.index(a)}}}'
                                    for a in valid_axes)
