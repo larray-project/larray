@@ -63,7 +63,7 @@ Miscellaneous improvements
 * made all I/O functions/methods/constructors to accept either a string or a pathlib.Path object
   for all arguments representing a path (closes :issue:`896`).
 
-* made ipfp faster (the smaller the array, the larger the improvement)
+* made :py:obj:`ipfp()` faster (the smaller the array, the larger the improvement)
   For example, for small arrays it is several times faster than before, for 1000x1000 arrays it is about 30% faster.
 
 * added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
@@ -72,14 +72,14 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed displaying plots made via Array.plot outside of LArray editor (closes :issue:`1019`).
+* fixed displaying plots made via :py:obj:`Array.plot()` outside of LArray editor (closes :issue:`1019`).
 
-* fixed Array.insert when no label is provided (closes :issue:`879`).
+* fixed :py:obj:`Array.insert()` when no label is provided (closes :issue:`879`).
 
-* fixed comparison between Array and None returning False instead of an array of boolean values
+* fixed comparison between :py:obj:`Array` and :py:obj:`None` returning False instead of an array of boolean values
   (closes :issue:`988`)
 
-* fixed binary operation between an Array and an Axis returning False.
+* fixed binary operation between an :py:obj:`Array` and an :py:obj:`Axis` returning False.
 
 * fixed :py:obj:`AxisCollection.split_axes()` with anonymous axes.
 
