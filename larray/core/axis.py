@@ -1594,6 +1594,54 @@ class AxisCollection:
             p = p[::-1]
         return p
 
+    def _combined_iflat(self, flat_key, sep='_'):
+        """return the combined axes AxisCollection indexed by flat_key
+
+        Parameters
+        ----------
+        flat_key : int or array of int
+            Indices-based key for indexing the combined axis.
+        sep : str, optional
+            Separator to use for creating combined axis name and labels. Defaults to '_'.
+
+        Returns
+        -------
+        AxisCollection
+
+        Examples
+        --------
+        >>> axes = AxisCollection("a=a0..a1;b=b0..b2")
+        >>> axes._combined_iflat([0, 2, 3])
+        AxisCollection([
+            Axis(['a0_b0', 'a0_b2', 'a1_b0'], 'a_b')
+        ])
+        """
+        nd_key = np.unravel_index(flat_key, self.shape)
+        return self._adv_keys_to_combined_axes(nd_key, sep=sep)
+
+    def _iflat(self, key):
+        """Returns labels for each axis corresponding to indexing an array with the AxisCollection axes
+
+        Parameters
+        ----------
+        key : int or array of int
+            Indices-based key for indexing the combined axis.
+
+        Returns
+        -------
+        tuple
+
+        Examples
+        --------
+        >>> axes = AxisCollection("a=a0..a1;b=b0..b2")
+        >>> axes._iflat([0, 2, 3])
+        (array(['a0', 'a0', 'a1'],
+              dtype='<U2'), array(['b0', 'b2', 'b0'],
+              dtype='<U2'))
+        """
+        axes_indices = np.unravel_index(key, self.shape)
+        return tuple(axis.labels[axis_indices] for axis_indices, axis in zip(axes_indices, self))
+
     def __getattr__(self, key) -> Axis:
         try:
             return self._map[key]
@@ -3481,7 +3529,7 @@ class AxisCollection:
         axes_changes = list(zip(join_axes, new_axes))
         return self.replace(axes_changes), other.replace(axes_changes)
 
-    # XXX: make this into a public method/property? axes_col.flat_labels[flat_indices]?
+    # XXX: make this into a public method/property? AxisCollection.flat_labels[flat_indices]?
     def _flat_lookup(self, flat_indices):
         r"""Return labels corresponding to indices into the flattened axes
 
@@ -3511,12 +3559,12 @@ class AxisCollection:
         from larray.core.array import asarray, Array, stack
 
         flat_indices = asarray(flat_indices)
-        axes_indices = np.unravel_index(flat_indices, self.shape)
         # This could return an Array with object dtype because axes labels can have different types (but not length)
         # TODO: this should be:
         # return stack({axis.name: axis.i[inds] for axis, inds in zip(axes, axes_indices)}, axis='axis')
         flat_axes = flat_indices.axes
-        return stack({axis.name: Array(axis.labels[inds], flat_axes) for axis, inds in zip(self, axes_indices)}, 'axis')
+        axes_labels = self._iflat(flat_indices)
+        return stack({axis.name: Array(axis_labels, flat_axes) for axis, axis_labels in zip(self, axes_labels)}, 'axis')
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
         r"""

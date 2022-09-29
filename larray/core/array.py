@@ -806,9 +806,7 @@ class ArrayFlatIndicesIndexer:
             res_axes = flat_key.axes
         else:
             flat_np_key = np.asarray(flat_key)
-            axes = self.array.axes
-            nd_key = np.unravel_index(flat_np_key, axes.shape)
-            res_axes = axes._adv_keys_to_combined_axes(nd_key, sep=sep)
+            res_axes = self.array.axes._combined_iflat(flat_np_key, sep=sep)
         return Array(self.array.data.flat[flat_np_key], res_axes)
 
     def __setitem__(self, flat_key, value):
@@ -3162,8 +3160,7 @@ class Array(ABCArray):
             data = axis.labels[self.data.argmin(axis_idx)]
             return Array(data, self.axes - axis)
         else:
-            indices = np.unravel_index(self.data.argmin(), self.shape)
-            return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
+            return self.axes._iflat(self.data.argmin())
 
     argmin = renamed_to(labelofmin, 'argmin', raise_error=True)
 
@@ -3246,8 +3243,7 @@ class Array(ABCArray):
             data = axis.labels[self.data.argmax(axis_idx)]
             return Array(data, self.axes - axis)
         else:
-            indices = np.unravel_index(self.data.argmax(), self.shape)
-            return tuple(axis.labels[i] for i, axis in zip(indices, self.axes))
+            return self.axes._iflat(self.data.argmax())
 
     argmax = renamed_to(labelofmax, 'argmax', raise_error=True)
 
