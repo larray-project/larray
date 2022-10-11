@@ -5,8 +5,8 @@ def view(obj=None, title='', depth=0):
 
     Parameters
     ----------
-    obj : np.ndarray, Array, Session, dict or str, optional
-        Object to visualize. If string, array(s) will be loaded from the file given as argument.
+    obj : np.ndarray, Array, Session, dict, str or Path, optional
+        Object to visualize. If string or Path, array(s) will be loaded from the file given as argument.
         Defaults to the collection of all local variables where the function was called.
     title : str, optional
         Title for the current object. Defaults to the name of the first object found in the caller namespace which
@@ -38,10 +38,10 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
 
     Parameters
     ----------
-    obj : np.ndarray, Array, Session, dict, str or REOPEN_LAST_FILE, optional
-        Object to visualize. If string, array(s) will be loaded from the file given as argument.
+    obj : np.ndarray, Array, Session, dict, str, Path, REOPEN_LAST_FILE or None, optional
+        Object to visualize. If string or Path, array(s) will be loaded from the file given as argument.
         Passing the constant REOPEN_LAST_FILE loads the last opened file.
-        Defaults to the collection of all local variables where the function was called.
+        Defaults to None, which gathers all variables (global and local) where the function was called.
     title : str, optional
         Title for the current object. Defaults to the name of the first object found in the caller namespace which
         corresponds to `obj` (it will use a combination of the 3 first names if several names correspond to the same
@@ -96,18 +96,13 @@ def compare(*args, depth=0, **kwargs):
 
     Parameters
     ----------
-    *args : Arrays or Sessions
-        Arrays or sessions to compare.
+    *args : Arrays, Sessions, str or Path.
+        Arrays or sessions to compare. Strings or Path will be loaded as Sessions from the corresponding files.
     title : str, optional
         Title for the window. Defaults to ''.
     names : list of str, optional
         Names for arrays or sessions being compared. Defaults to the name of the first objects found in the caller
         namespace which correspond to the passed objects.
-    depth : int, optional
-        Stack depth where to look for variables. Defaults to 0 (where this function was called).
-    display_caller_info: bool, optional
-        Whether to display the filename and line number where the Editor has been called.
-        Defaults to True.
     rtol : float or int, optional
         The relative tolerance parameter (see Notes). Defaults to 0.
     atol : float or int, optional
@@ -117,6 +112,8 @@ def compare(*args, depth=0, **kwargs):
         By default, an array containing NaN values is never equal to another array, even if that other array
         also contains NaN values at the same positions. The reason is that a NaN value is different from
         *anything*, including itself. Defaults to True.
+    depth : int, optional
+        Stack depth where to look for variables. Defaults to 0 (where this function was called).
 
     Notes
     -----
@@ -141,7 +138,7 @@ def compare(*args, depth=0, **kwargs):
 
 def run_editor_on_exception(root_path=None, usercode_traceback=True, usercode_frame=True):
     r"""
-    Runs the editor when an unhandled exception (a fatal error) happens.
+    Run the editor when an unhandled exception (a fatal error) happens.
 
     Parameters
     ----------
