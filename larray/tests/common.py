@@ -2,9 +2,9 @@ import re
 import inspect
 from contextlib import contextmanager
 from pathlib import Path
+import datetime as dt
 
 import pytest
-import datetime as dt
 import numpy as np
 import pandas as pd
 try:
@@ -150,7 +150,7 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
         if msg is not None and match is not None:
             raise ValueError("bad test: can't use both msg and match arguments")
         elif msg is not None:
-            match = re.escape(msg)
+            match = '^' + re.escape(msg) + '$'
         try:
             with pytest.warns(warn_cls, match=match) as caught_warnings:
                 yield caught_warnings
@@ -169,7 +169,7 @@ def must_raise(warn_cls=None, msg=None, match=None):
     if msg is not None and match is not None:
         raise ValueError("bad test: can't use both msg and match arguments")
     elif msg is not None:
-        match = re.escape(msg)
+        match = '^' + re.escape(msg) + '$'
 
     try:
         with pytest.raises(warn_cls, match=match) as error:
