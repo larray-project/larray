@@ -2439,37 +2439,6 @@ class AxisCollection:
         else:
             return AxisCollection(axes)
 
-    def _guess_axis(self, axis_key):
-        if isinstance(axis_key, Group):
-            group_axis = axis_key.axis
-            if group_axis is not None:
-                # we have axis information but not necessarily an Axis object from self.axes
-                real_axis = self[group_axis]
-                if group_axis is not real_axis:
-                    axis_key = axis_key.with_axis(real_axis)
-                return axis_key
-
-        # TODO: instead of checking all axes, we should have a big mapping
-        # (in AxisCollection or Array):
-        # label -> (axis, index)
-        # or possibly (for ambiguous labels)
-        # label -> {axis: index}
-        # but for Pandas, this wouldn't work, we'd need label -> axis
-        valid_axes = []
-        for axis in self:
-            try:
-                axis.index(axis_key)
-                valid_axes.append(axis)
-            except KeyError:
-                continue
-        if not valid_axes:
-            raise ValueError(f"{axis_key} is not a valid label for any axis\n{self.info}")
-        elif len(valid_axes) > 1:
-            valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.axes.index(a)}}}'
-                                   for a in valid_axes)
-            raise ValueError(f'{axis_key} is ambiguous (valid in {valid_axes})')
-        return valid_axes[0][axis_key]
-
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'AxisCollection':
         r"""Replaces the labels of one or several axes.
 
@@ -2676,9 +2645,44 @@ class AxisCollection:
         # -1 in to_remove are not a problem since enumerate starts at 0
         return AxisCollection([axis for i, axis in enumerate(self) if i not in to_remove])
 
+    def _translate_nice_key(self, axis_key):
+        # TODO: instead of checking all axes, we should have a big mapping (in AxisCollection):
+        #       label -> (axis, index) but for sparse/multi-index, this would not work, we'd need label -> axis
+        valid_axes = []
+        # TODO: use axis_key dtype to only check compatible axes
+        for axis in self:
+            try:
+                axis_pos_key = axis.index(axis_key)
+                valid_axes.append(axis)
+            except KeyError:
+                continue
+        if not valid_axes:
+            raise ValueError(f"{axis_key!r} is not a valid label for any axis:\n{self._axes_summary()}")
+        elif len(valid_axes) > 1:
+            raise ValueError(f'{axis_key!r} is ambiguous, it is valid in the following axes:\n'
+                             f'{self._axes_summary(valid_axes)}')
+        real_axis = valid_axes[0]
+        return real_axis, axis_pos_key
+
+    def _guess_axis(self, axis_key):
+        """
+        Translates any *single axis* key to an LGroup on the real axis.
+        """
+        if isinstance(axis_key, Group):
+            group_axis = axis_key.axis
+            if group_axis is not None:
+                # we have axis information but not necessarily an Axis object from self
+                real_axis = self[group_axis]
+                if group_axis is not real_axis:
+                    axis_key = axis_key.with_axis(real_axis)
+                return axis_key
+
+        real_axis, axis_pos_key = self._translate_nice_key(axis_key)
+        return real_axis[axis_key]
+
     def _translate_axis_key_chunk(self, axis_key):
         """
-        Translates *single axis* label-based key to an IGroup
+        Translates any *single axis* label-based key to an (axis, indices) pair.
 
         Parameters
         ----------
@@ -2717,7 +2721,8 @@ class AxisCollection:
                 try:
                     axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
-                    raise ValueError(f"{axis_key!r} is not a valid label for any axis")
+                    raise ValueError(f"{axis_key!r} is not a valid label for the {real_axis.name!r} axis "
+                                     f"with labels: {', '.join(repr(label) for label in real_axis.labels)}")
                 return real_axis, axis_pos_key
             except KeyError:
                 # axis associated with axis_key may not belong to self.
@@ -2726,26 +2731,7 @@ class AxisCollection:
                 axis_key = axis_key.to_label()
 
         # otherwise we need to guess the axis
-        # TODO: instead of checking all axes, we should have a big mapping (in AxisCollection):
-        #       label -> (axis, index) but for sparse/multi-index, this would not work, we'd need label -> axis
-        valid_axes = []
-        # TODO: use axis_key dtype to only check compatible axes
-        for axis in self:
-            try:
-                axis_pos_key = axis.index(axis_key)
-                valid_axes.append(axis)
-            except KeyError:
-                continue
-        if not valid_axes:
-            raise ValueError(f"{axis_key!r} is not a valid label for any axis")
-        elif len(valid_axes) > 1:
-            # TODO: make an AxisCollection.display_name(axis) method out of this
-            # valid_axes = ', '.join(self.display_name(axis) for a in valid_axes)
-            valid_axes = ', '.join(a.name if a.name is not None else f'{{{self.index(a)}}}'
-                                   for a in valid_axes)
-            raise ValueError(f'{axis_key} is ambiguous (valid in {valid_axes})')
-        real_axis = valid_axes[0]
-        return real_axis, axis_pos_key
+        return self._translate_nice_key(axis_key)
 
     def _translate_axis_key(self, axis_key):
         """
@@ -2878,7 +2864,7 @@ class AxisCollection:
         if has_duplicates(axis for axis, axis_key in key_items):
             dupe_axes = duplicates(axis for axis, axis_key in key_items)
             dupe_axes_str = ', '.join(str(axis) for axis in dupe_axes)
-            raise ValueError(f"key has several values for axis: {dupe_axes_str}\n{key}")
+            raise ValueError(f"key has several values for axis: {dupe_axes_str}\nkey: {key}")
 
         # ((axis, indices), (axis, indices), ...) -> dict
         return dict(key_items)
@@ -3093,6 +3079,27 @@ class AxisCollection:
         """
         return [axis.name for axis in self._list]
 
+    # providing idx is just an optimization to avoid the relatively expensive self.index(axis)
+    def _display_name(self, axis, idx=None):
+        if axis.name is None:
+            if idx is None:
+                idx = self.index(axis)
+            name = f'{{{idx}}}'
+        else:
+            # using str() because name can be an integer
+            name = str(axis.name)
+        return (name + '*') if axis.iswildcard else name
+
+    def _axes_summary(self, axes=None):
+        def axis_summary(axis, idx=None):
+            return f" {self._display_name(axis, idx)} [{len(axis)}]: {axis.labels_summary()}"
+
+        if axes is None:
+            parts = [axis_summary(axis, i) for i, axis in enumerate(self._list)]
+        else:
+            parts = [axis_summary(axis) for axis in axes]
+        return '\n'.join(parts)
+
     @property
     def display_names(self) -> List[str]:
         r"""
@@ -3113,12 +3120,7 @@ class AxisCollection:
         >>> AxisCollection([a, b, c, d]).display_names
         ['a', 'b*', '{2}', '{3}*']
         """
-        def display_name(i, axis):
-            # str(axis.name) because name can be an integer
-            name = str(axis.name) if axis.name is not None else f'{{{i}}}'
-            return (name + '*') if axis.iswildcard else name
-
-        return [display_name(i, axis) for i, axis in enumerate(self._list)]
+        return [self._display_name(axis, i) for i, axis in enumerate(self._list)]
 
     @property
     def ids(self) -> List[Union[str, int]]:
@@ -3233,10 +3235,8 @@ class AxisCollection:
          sex [2]: 'M' 'F'
          time [4]: 2007 2008 2009 2010
         """
-        lines = [f" {name} [{len(axis)}]: {axis.labels_summary()}"
-                 for name, axis in zip(self.display_names, self._list)]
-        shape = " x ".join(str(s) for s in self.shape)
-        return ReprString('\n'.join([shape] + lines))
+        shape_str = " x ".join(str(s) for s in self.shape)
+        return ReprString(f"{shape_str}\n{self._axes_summary()}")
 
     # XXX: instead of front_if_spread, we might want to require axes to be contiguous
     #      (ie the caller would have to transpose axes before calling this)

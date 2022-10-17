@@ -620,29 +620,49 @@ def test_getitem_guess_axis(array):
     assert_array_equal(array[g], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, match="key has several values for axis: age"):
+    with must_raise(ValueError, """key has several values for axis: age
+key: ([1, 2], [3, 4])"""):
         _ = array[[1, 2], [3, 4]]
 
     # key with invalid label (ie label not found on any axis)
-    with pytest.raises(ValueError, match="999 is not a valid label for any axis"):
+    with must_raise(ValueError, """999 is not a valid label for any axis:
+ age [116]: 0 1 2 ... 113 114 115
+ geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
+ sex [2]: 'M' 'F'
+ lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
         _ = array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
-    with pytest.raises(ValueError, match=r"\[998, 999\] is not a valid label for any axis"):
+    with must_raise(ValueError, """[998, 999] is not a valid label for any axis:
+ age [116]: 0 1 2 ... 113 114 115
+ geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
+ sex [2]: 'M' 'F'
+ lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
         _ = array[[1, 2], [998, 999]]
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
-    # FIXME: the message should be the same as for 999, 4 (ie it should NOT mention age).
-    with pytest.raises(ValueError, match=r"age\[3, 999\] is not a valid label for any axis"):
+    with must_raise(ValueError, "age[3, 999] is not a valid label for the 'age' axis with labels: 0, 1, 2, 3, 4, 5, 6, "
+                                "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, "
+                                "29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, "
+                                "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, "
+                                "71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, "
+                                "92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, "
+                                "110, 111, 112, 113, 114, 115"):
         _ = array[[1, 2], [3, 999]]
 
-    with pytest.raises(ValueError, match=r"\[999, 4\] is not a valid label for any axis"):
+    with must_raise(ValueError, """[999, 4] is not a valid label for any axis:
+ age [116]: 0 1 2 ... 113 114 115
+ geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
+ sex [2]: 'M' 'F'
+ lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
         _ = array[[1, 2], [999, 4]]
 
     # ambiguous key
     arr = ndtest("a=l0,l1;b=l1,l2")
-    with pytest.raises(ValueError, match=r"l1 is ambiguous \(valid in a, b\)"):
+    with must_raise(ValueError, """'l1' is ambiguous, it is valid in the following axes:
+ a [2]: 'l0' 'l1'
+ b [2]: 'l1' 'l2'"""):
         _ = arr['l1']
 
     # ambiguous key disambiguated via string
@@ -1219,7 +1239,7 @@ def test_points_indexer_setitem():
 
     arr = ndtest(2)
     # XXX: we might want to raise KeyError or IndexError instead?
-    with must_raise(ValueError, match="'b1' is not a valid label for any axis"):
+    with must_raise(ValueError, "'b1' is not a valid label for any axis:\n a [2]: 'a0' 'a1'"):
         arr.points['a0', 'b1'] = 42
 
     # test when broadcasting is involved
@@ -1943,6 +1963,14 @@ def test_group_agg_guess_axis(array):
     arr = ndtest(4)
     assert arr.sum('a3,a1') == 4
 
+    # ambiguous label and anonymous axes
+    arr = ndtest([Axis("b1,b2"), Axis("b0..b2")])
+    msg = """'b1' is ambiguous, it is valid in the following axes:
+ {0} [2]: 'b1' 'b2'
+ {1} [3]: 'b0' 'b1' 'b2'"""
+    with must_raise(ValueError, msg=msg):
+        arr.sum('b1;b0,b1')
+
 
 def test_group_agg_label_group(array):
     age, geo, sex, lipro = array.axes
@@ -2423,7 +2451,8 @@ def test_sum_with_groups_from_other_axis(small_array):
     # use a group (from another axis) which is incompatible with the axis of
     # the same name in the array
     lipro4 = Axis('lipro=P01,P03,P16')
-    with pytest.raises(ValueError, match=r"lipro\['P01', 'P16'\] is not a valid label for any axis"):
+    codes = "'P01', 'P02', 'P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15'"
+    with must_raise(ValueError, f"lipro['P01', 'P16'] is not a valid label for the 'lipro' axis with labels: {codes}"):
         small_array.sum(lipro4['P01,P16'])
 
 

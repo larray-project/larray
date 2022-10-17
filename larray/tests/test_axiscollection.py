@@ -370,5 +370,14 @@ def test_repr(col):
 ])"""
 
 
+def test_setlabels():
+    # test when the label is ambiguous AND the axes are anonymous
+    axes = AxisCollection([Axis("b1,b2"), Axis("b0..b2")])
+    with must_raise(ValueError, msg="""'b1' is ambiguous, it is valid in the following axes:
+ {0} [2]: 'b1' 'b2'
+ {1} [3]: 'b0' 'b1' 'b2'"""):
+        axes.set_labels({'b1': 'b_one'})
+
+
 if __name__ == "__main__":
     pytest.main()
