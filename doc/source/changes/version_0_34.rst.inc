@@ -44,6 +44,14 @@ Miscellaneous improvements
 * added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
   Closes :issue:`864`.
 
+* made several error message more useful when trying to get an invalid subset of an array (closes :issue:`875`).
+  - when a key is not valid on any axis, the error message includes the array axes
+  - when a key is not valid for the axis specified by the user, the error message includes that axis labels
+  - when a label is ambiguous (valid on several axes), the error message includes the axes labels in addition to the
+    axes names
+  - when several parts of a key seem to target the same axis, the error message includes the bad key in
+    addition to the axis.
+
 * made :py:obj:`ipfp()` faster (the smaller the array, the larger the improvement)
   For example, for small arrays it is several times faster than before, for 1000x1000 arrays it is about 30% faster.
 
