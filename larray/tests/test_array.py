@@ -1219,7 +1219,7 @@ def test_points_indexer_setitem():
 
     arr = ndtest(2)
     # XXX: we might want to raise KeyError or IndexError instead?
-    with must_raise(ValueError, "'b1' is not a valid label for any axis"):
+    with must_raise(ValueError, match="'b1' is not a valid label for any axis"):
         arr.points['a0', 'b1'] = 42
 
     # test when broadcasting is involved
