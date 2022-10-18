@@ -3074,11 +3074,11 @@ class Array(ABCArray):
                 # be the same???)
                 # groups = tuple(self._translate_axis_key(k) for k in key)
                 groups = tuple(self.axes._guess_axis(_to_key(k, stack_depth + 1)) for k in key)
-                axis = groups[0].axis
-                if not all(g.axis.equals(axis) for g in groups[1:]):
+                first_group_axis = groups[0].axis
+                if not all(g.axis.equals(first_group_axis) for g in groups[1:]):
                     raise ValueError(f"group with different axes: {key}")
                 return groups
-            if isinstance(key, (Group, int, str, list, slice)):
+            elif isinstance(key, (Group, int, str, list, slice)):
                 return self.axes._guess_axis(key)
             else:
                 key_type = type(key).__name__

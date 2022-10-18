@@ -2563,7 +2563,8 @@ class AxisCollection:
             changes_per_axis = defaultdict(list)
             for selection, new_labels in changes.items():
                 group = self._guess_axis(selection)
-                changes_per_axis[group.axis].append((selection, new_labels))
+                axis = group.axis
+                changes_per_axis[axis].append((selection, new_labels))
             changes = {axis: dict(axis_changes) for axis, axis_changes in changes_per_axis.items()}
 
         new_axes = []
@@ -2682,12 +2683,12 @@ class AxisCollection:
 
     def _translate_axis_key_chunk(self, axis_key):
         """
-        Translates any *single axis* label-based key to an (axis, indices) pair.
+        Translates any *single axis* key to an (axis, indices) pair.
 
         Parameters
         ----------
         axis_key : any kind of key
-            Key to select axis.
+            Key to select axis. Supports all kinds of label-based keys and IGroups.
 
         Returns
         -------
@@ -2704,8 +2705,9 @@ class AxisCollection:
             # only retarget IGroup and not LGroup to give the opportunity for axis.translate to try the "ticks"
             # version of the group ONLY if key.axis is not real_axis (for performance reasons)
             if axis_key.axis in self:
-                axis_key = axis_key.retarget_to(self[axis_key.axis])
-                # already positional
+                real_axis = self[axis_key.axis]
+                axis_key = axis_key.retarget_to(real_axis)
+                # still positional after retarget
                 if isinstance(axis_key, IGroup):
                     return axis_key.axis, axis_key.key
             else:
