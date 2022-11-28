@@ -1,5 +1,4 @@
 import os
-import re
 
 import pytest
 import numpy as np
@@ -44,9 +43,9 @@ def test_value_string_union():
 def test_value_string_range():
     assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
     assert_array_equal(_to_ticks('..115'), np.asarray(range(116)))
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _to_ticks('10..')
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _to_ticks('..')
 
 
@@ -211,7 +210,7 @@ def test_ndtest():
 def test_getattr(array):
     assert type(array.geo) == Axis
     assert array.geo is geo
-    with pytest.raises(AttributeError):
+    with must_raise(AttributeError):
         _ = array.geom
 
 
@@ -231,7 +230,7 @@ def test_bool():
     a = ones([2])
     # ValueError: The truth value of an array with more than one element
     #             is ambiguous. Use a.any() or a.all()
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         bool(a)
 
     a = ones([1])
@@ -525,12 +524,12 @@ def test_getitem(array):
     assert_array_equal(arr[pgroup], arr['a1'])
 
     # key with duplicate axes
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = array[age[1, 2], age[3, 4]]
 
     # key with lgroup from another axis leading to duplicate axis
     bad = Axis(3, 'bad')
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = array[bad[1, 2], age[3, 4]]
 
 
@@ -565,11 +564,11 @@ def test_getitem_abstract_axes(array):
     assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = array[X.age[1, 2], X.age[3]]
 
     # key with invalid axis
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = array[X.bad[1, 2], X.age[3, 4]]
 
 
@@ -703,7 +702,7 @@ def test_getitem_positional_group(array):
     assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, match="key has several values for axis: age"):
+    with must_raise(ValueError, "key has several values for axis: age\nkey: (age.i[1, 2], age.i[3, 4])"):
         _ = array[age.i[1, 2], age.i[3, 4]]
 
 
@@ -747,7 +746,7 @@ def test_getitem_abstract_positional(array):
     assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
 
     # key with duplicate axes
-    with pytest.raises(ValueError, match="key has several values for axis: age"):
+    with must_raise(ValueError, "key has several values for axis: age\nkey: (X.age.i[2, 3], X.age.i[1, 5])"):
         _ = array[X.age.i[2, 3], X.age.i[1, 5]]
 
 
@@ -797,8 +796,7 @@ def test_getitem_bool_larray_key_arr_wh_bool_axis():
 
     # this test checks that the current behavior does not change unintentionally...
     # ... but I am unsure the current behavior is what we actually want
-    msg = re.escape("boolean subset key contains more axes ({id}) than array ({gender})")
-    with pytest.raises(ValueError, match=msg):
+    with must_raise(ValueError, "boolean subset key contains more axes ({id}) than array ({gender})"):
         _ = arr[key]
 
 
@@ -844,7 +842,7 @@ def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
     # ... but I am unsure the current behavior is what we actually want
     # L? is to account for Python2 where shape can be 'long' integers
     msg = r"boolean key with a different shape \(\(4L?,\)\) than array \(\(2,\)\)"
-    with pytest.raises(ValueError, match=msg):
+    with must_raise(ValueError, match=msg):
         _ = arr[key]
 
 
@@ -875,12 +873,12 @@ def test_getitem_integer_string_axes():
 
     assert_array_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
     assert_array_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = arr['1[a0, a2]']
 
     assert_array_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
     assert_array_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = arr['3.i[0, 2]']
 
 
@@ -1165,7 +1163,7 @@ def test_positional_indexer_getitem(array):
     for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0], ([1, 0], 5)]:
         assert_array_equal(array.i[key], raw[key])
     assert_array_equal(array.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
-    with pytest.raises(IndexError):
+    with must_raise(IndexError):
         _ = array.i[0, 0, 0, 0, 0]
 
 
@@ -1208,7 +1206,7 @@ def test_points_indexer_getitem():
         assert_array_equal(arr.points[label_key], raw[index_key])
 
     # XXX: we might want to raise KeyError or IndexError instead?
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         _ = arr.points['a0', 'b1', 'c2', 'd0']
 
 
@@ -1393,19 +1391,22 @@ def test_setitem_larray(array, small_array):
     value = small_array.copy()
     expected_msg = f"Value {value.axes - subset_axes!s} axis is not present in target subset {subset_axes!s}. " \
                    f"A value can only have the same axes or fewer axes than the subset being targeted"
-    with pytest.raises(ValueError, match=expected_msg):
+    with must_raise(ValueError, expected_msg):
         arr['P01'] = value
 
     value = arr.rename('sex', 'gender')['P01']
     expected_msg = f"Value {value.axes - subset_axes!s} axis is not present in target subset {subset_axes!s}. " \
                    f"A value can only have the same axes or fewer axes than the subset being targeted"
-    with pytest.raises(ValueError, match=expected_msg):
+    with must_raise(ValueError, expected_msg):
         arr['P01'] = value
 
     # 7) incompatible labels
     sex2 = Axis('sex=F,M')
     la2 = Array(small_array.data, axes=(sex2, lipro))
-    with pytest.raises(ValueError, match="incompatible axes:"):
+    with must_raise(ValueError, """incompatible axes:
+Axis(['M', 'F'], 'c')
+vs
+Axis(['F', 'M'], 'c')"""):
         arr[:] = la2
 
     # key has multiple Arrays (this is used within .points indexing)
@@ -1540,7 +1541,7 @@ def test_setitem_bool_array_key(array):
     key = (arr < 5).expand([Axis(2, 'extra')])
     assert key.ndim == 5
     # TODO: make this work
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         arr[key] = 0
 
 
@@ -2802,7 +2803,7 @@ def test_broadcasting_no_name():
     b = ndtest(Axis(3))
     c = ndtest(Axis(2))
 
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         # ValueError: incompatible axes:
         # Axis(None, [0, 1, 2])
         # vs
@@ -2823,7 +2824,7 @@ def test_broadcasting_no_name():
     assert np.array_equal(d, [[0, 1,  4],   # noqa: E241
                               [0, 4, 10]])
 
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         # ValueError: operands could not be broadcast together with shapes (2,3) (2,)
         np.asarray(a) * np.asarray(c)
 
@@ -3518,8 +3519,8 @@ def test_read_excel_xlwings():
     #  invalid keyword argument  #
     ##############################
 
-    with pytest.raises(TypeError, match="'dtype' is an invalid keyword argument for this function "
-                                        "when using the xlwings backend"):
+    with must_raise(TypeError, "'dtype' is an invalid keyword argument for this function "
+                               "when using the xlwings backend"):
         read_excel(inputpath('test.xlsx'), engine='xlwings', dtype=float)
 
     #################
@@ -4389,7 +4390,7 @@ def test_to_excel_xlwings(tmp_path):
     # sheet name of 31 characters (= maximum authorized length)
     a3.to_excel(fpath, "sheetname_of_exactly_31_chars__", engine='xlwings')
     # sheet name longer than 31 characters
-    with pytest.raises(ValueError, match="Sheet names cannot exceed 31 characters"):
+    with must_raise(ValueError, "Sheet names cannot exceed 31 characters"):
         a3.to_excel(fpath, "sheetname_longer_than_31_characters", engine='xlwings')
 
 
@@ -4418,7 +4419,7 @@ def test_open_excel(tmp_path):
     # ==================
     fpath = inputpath('should_not_exist.xlsx')
     # overwrite_file must be set to True to create a new file
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         open_excel(fpath)
 
     # 2) with headers
@@ -5370,7 +5371,7 @@ def test_0darray_convert():
     float_arr = Array(1.0)
     assert int(float_arr) == 1
     assert float(float_arr) == 1.0
-    with pytest.raises(TypeError) as e_info:
+    with must_raise(TypeError) as e_info:
         float_arr.__index__()
 
     msg = e_info.value.args[0]
