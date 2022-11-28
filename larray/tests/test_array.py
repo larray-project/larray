@@ -32,17 +32,17 @@ meta = meta
 
 
 def test_value_string_split():
-    assert_array_equal(_to_ticks('M,F'), np.asarray(['M', 'F']))
-    assert_array_equal(_to_ticks('M, F'), np.asarray(['M', 'F']))
+    assert_array_equal(_to_ticks('c0,c1'), np.asarray(['c0', 'c1']))
+    assert_array_equal(_to_ticks('c0, c1'), np.asarray(['c0', 'c1']))
 
 
 def test_value_string_union():
-    assert union('A11,A22', 'A12,A22') == ['A11', 'A22', 'A12']
+    assert union('a1,a3', 'a2,a3') == ['a1', 'a3', 'a2']
 
 
 def test_value_string_range():
-    assert_array_equal(_to_ticks('0..115'), np.asarray(range(116)))
-    assert_array_equal(_to_ticks('..115'), np.asarray(range(116)))
+    assert_array_equal(_to_ticks('0..15'), np.arange(16))
+    assert_array_equal(_to_ticks('..15'), np.arange(16))
     with must_raise(ValueError):
         _to_ticks('10..')
     with must_raise(ValueError):
@@ -54,21 +54,21 @@ def test_value_string_range():
 # ================ #
 
 def test_key_string_nonstring():
-    assert _to_key(('M', 'F')) == ['M', 'F']
-    assert _to_key(['M', 'F']) == ['M', 'F']
+    assert _to_key(('c0', 'c1')) == ['c0', 'c1']
+    assert _to_key(['c0', 'c1']) == ['c0', 'c1']
 
 
 def test_key_string_split():
-    assert _to_key('M,F') == ['M', 'F']
-    assert _to_key('M, F') == ['M', 'F']
-    assert _to_key('M,') == ['M']
-    assert _to_key('M') == 'M'
+    assert _to_key('c0,c1') == ['c0', 'c1']
+    assert _to_key('c0, c1') == ['c0', 'c1']
+    assert _to_key('c0,') == ['c0']
+    assert _to_key('c0') == 'c0'
 
 
 def test_key_string_slice_strings():
     # these two examples have different results and this is fine because numeric axes do not necessarily start at 0
-    assert _to_key('0:115') == slice(0, 115)
-    assert _to_key(':115') == slice(115)
+    assert _to_key('0:16') == slice(0, 16)
+    assert _to_key(':16') == slice(16)
     assert _to_key('10:') == slice(10, None)
     assert _to_key(':') == slice(None)
 
@@ -144,30 +144,30 @@ def test_meta_arg_array_creation(array):
 # ================ #
 
 # AXES
-lipro = Axis([f'P{i:02d}' for i in range(1, 16)], 'lipro')
-age = Axis('age=0..115')
-sex = Axis('sex=M,F')
-vla = 'A11,A12,A13,A23,A24,A31,A32,A33,A34,A35,A36,A37,A38,A41,A42,A43,A44,A45,A46,A71,A72,A73'
-wal = 'A25,A51,A52,A53,A54,A55,A56,A57,A61,A62,A63,A64,A65,A81,A82,A83,A84,A85,A91,A92,A93'
-bru = 'A21'
-vla_str = vla
-wal_str = wal
-bru_str = bru
-belgium = union(vla, wal, bru)
-geo = Axis(belgium, 'geo')
+a = Axis('a=0..18')
+b_group1 = 'b0,b1,b2,b4,b5,b7,b8'
+b_group2 = 'b6,b9,b10,b11'
+b_group3 = 'b3'
+b_group1_str = b_group1
+b_group2_str = b_group2
+b_group3_str = b_group3
+b_groups = (b_group1, b_group2, b_group3)
+all_b = union(*b_groups)
+b_groups_all = (b_group1, b_group2, b_group3, all_b)
+b = Axis(all_b, 'b')
+c = Axis('c=c0,c1')
+d = Axis('d=d1..d6')
 
 
 # ARRAYS
 @pytest.fixture()
 def array():
-    data = np.arange(116 * 44 * 2 * 15).reshape((116, 44, 2, 15)).astype(float)
-    return Array(data, axes=(age, geo, sex, lipro))
+    return ndtest((a, b, c, d)).astype(float)
 
 
 @pytest.fixture()
 def small_array():
-    small_data = np.arange(30).reshape((2, 15))
-    return Array(small_data, axes=(sex, lipro))
+    return ndtest((c, d))
 
 
 io_1d = ndtest(3)
@@ -208,48 +208,48 @@ def test_ndtest():
 
 
 def test_getattr(array):
-    assert type(array.geo) == Axis
-    assert array.geo is geo
+    assert type(array.b) == Axis
+    assert array.b is b
     with must_raise(AttributeError):
-        _ = array.geom
+        _ = array.bm
 
 
 def test_zeros():
-    la = zeros((geo, age))
-    assert la.shape == (44, 116)
-    assert_array_equal(la, np.zeros((44, 116)))
+    la = zeros((b, a))
+    assert la.shape == (12, 19)
+    assert_array_equal(la, np.zeros((12, 19)))
 
 
 def test_zeros_like(array):
     la = zeros_like(array)
-    assert la.shape == (116, 44, 2, 15)
-    assert_array_equal(la, np.zeros((116, 44, 2, 15)))
+    assert la.shape == (19, 12, 2, 6)
+    assert_array_equal(la, np.zeros((19, 12, 2, 6)))
 
 
 def test_bool():
-    a = ones([2])
+    arr = ones([2])
     # ValueError: The truth value of an array with more than one element
-    #             is ambiguous. Use a.any() or a.all()
+    #             is ambiguous. Use arr.any() or arr.all()
     with must_raise(ValueError):
-        bool(a)
+        bool(arr)
 
-    a = ones([1])
-    assert bool(a)
+    arr = ones([1])
+    assert bool(arr)
 
-    a = zeros([1])
-    assert not bool(a)
+    arr = zeros([1])
+    assert not bool(arr)
 
-    a = Array(np.array(2), [])
-    assert bool(a)
+    arr = Array(np.array(2), [])
+    assert bool(arr)
 
-    a = Array(np.array(0), [])
-    assert not bool(a)
+    arr = Array(np.array(0), [])
+    assert not bool(arr)
 
 
 def test_iter(small_array):
     list_ = list(small_array)
-    assert_array_equal(list_[0], small_array['M'])
-    assert_array_equal(list_[1], small_array['F'])
+    assert_array_equal(list_[0], small_array['c0'])
+    assert_array_equal(list_[1], small_array['c1'])
 
 
 def test_keys():
@@ -393,15 +393,15 @@ def test_items():
 
 
 def test_rename(array):
-    new_array = array.rename('sex', 'gender')
+    new_array = array.rename('c', 'c2')
     # old array axes names not modified
-    assert array.axes.names == ['age', 'geo', 'sex', 'lipro']
-    assert new_array.axes.names == ['age', 'geo', 'gender', 'lipro']
+    assert array.axes.names == ['a', 'b', 'c', 'd']
+    assert new_array.axes.names == ['a', 'b', 'c2', 'd']
 
-    new_array = array.rename(sex, 'gender')
+    new_array = array.rename(c, 'c2')
     # old array axes names not modified
-    assert array.axes.names == ['age', 'geo', 'sex', 'lipro']
-    assert new_array.axes.names == ['age', 'geo', 'gender', 'lipro']
+    assert array.axes.names == ['a', 'b', 'c', 'd']
+    assert new_array.axes.names == ['a', 'b', 'c2', 'd']
 
 
 def test_info(array, meta):
@@ -414,88 +414,86 @@ location: Ministry of Silly Walks
 office_number: 42
 score: 9.7
 date: 1970-03-21 00:00:00
-116 x 44 x 2 x 15
- age [116]: 0 1 2 ... 113 114 115
- geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
- sex [2]: 'M' 'F'
- lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'
+19 x 12 x 2 x 6
+ a [19]: 0 1 2 ... 16 17 18
+ b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
+ c [2]: 'c0' 'c1'
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'
 dtype: float64
-memory used: 1.17 Mb"""
+memory used: 21.38 Kb"""
     assert array.info == expected
 
 
 def test_str(small_array, array):
-    lipro3 = lipro['P01:P03']
+    d3 = d['d1:d3']
 
     # zero dimension / scalar
-    assert str(small_array[lipro['P01'], sex['F']]) == "15"
+    assert str(small_array[d['d1'], c['c1']]) == "6"
 
     # empty / len 0 first dimension
-    assert str(small_array[sex[[]]]) == "Array([])"
+    assert str(small_array[c[[]]]) == "Array([])"
 
     # one dimension
-    assert str(small_array[lipro3, sex['M']]) == """\
-lipro  P01  P02  P03
-         0    1    2"""
+    assert str(small_array[d3, c['c0']]) == """\
+d  d1  d2  d3
+    0   1   2"""
 
     # two dimensions
-    assert str(small_array.filter(lipro=lipro3)) == """\
-sex\\lipro  P01  P02  P03
-        M    0    1    2
-        F   15   16   17"""
+    assert str(small_array.filter(d=d3)) == """\
+c\\d  d1  d2  d3
+ c0   0   1   2
+ c1   6   7   8"""
 
     # four dimensions (too many rows)
-    assert str(array.filter(lipro=lipro3)) == """\
-age  geo  sex\\lipro       P01       P02       P03
-  0  A11          M       0.0       1.0       2.0
-  0  A11          F      15.0      16.0      17.0
-  0  A12          M      30.0      31.0      32.0
-  0  A12          F      45.0      46.0      47.0
-  0  A13          M      60.0      61.0      62.0
-...  ...        ...       ...       ...       ...
-115  A92          F  153045.0  153046.0  153047.0
-115  A93          M  153060.0  153061.0  153062.0
-115  A93          F  153075.0  153076.0  153077.0
-115  A21          M  153090.0  153091.0  153092.0
-115  A21          F  153105.0  153106.0  153107.0"""
-
+    assert str(array.filter(d=d3)) == """\
+  a    b  c\\d      d1      d2      d3
+  0   b0   c0     0.0     1.0     2.0
+  0   b0   c1     6.0     7.0     8.0
+  0   b1   c0    12.0    13.0    14.0
+  0   b1   c1    18.0    19.0    20.0
+  0   b2   c0    24.0    25.0    26.0
+...  ...  ...     ...     ...     ...
+ 18  b10   c1  2706.0  2707.0  2708.0
+ 18  b11   c0  2712.0  2713.0  2714.0
+ 18  b11   c1  2718.0  2719.0  2720.0
+ 18   b3   c0  2724.0  2725.0  2726.0
+ 18   b3   c1  2730.0  2731.0  2732.0"""
     # too many columns
-    assert str(array['P01', 'A11', 'M']) == """\
-age    0       1       2  ...       112       113       114       115
-     0.0  1320.0  2640.0  ...  147840.0  149160.0  150480.0  151800.0"""
-
+    assert str(array['d1', 'b0', 'c0']) == """\
+a    0      1      2      3  ...      14      15      16      17      18
+   0.0  144.0  288.0  432.0  ...  2016.0  2160.0  2304.0  2448.0  2592.0"""
     arr = Array([0, ''], Axis(['a0', ''], 'a'))
     assert str(arr) == "a  a0  \n    0  "
 
 
 def test_getitem(array):
     raw = array.data
-    age, geo, sex, lipro = array.axes
-    age159 = age[[1, 5, 9]]
-    lipro159 = lipro['P01,P05,P09']
+    a, b, c, d = array.axes
+    a69 = a[[1, 5, 9]]
+    d124 = d['d1,d2,d4']
 
     # LGroup at "correct" place
-    subset = array[age159]
-    assert subset.axes[1:] == (geo, sex, lipro)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'age'))
+    subset = array[a69]
+    assert subset.axes[1:] == (b, c, d)
+    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
     assert_array_equal(subset, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    res = array[lipro159, age159]
-    assert res.axes.names == ['age', 'geo', 'sex', 'lipro']
-    assert_array_equal(res, raw[[1, 5, 9]][..., [0, 4, 8]])
+    res = array[d124, a69]
+    assert res.axes.names == ['a', 'b', 'c', 'd']
+    assert_array_equal(res, raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # LGroup key and scalar
-    res = array[lipro159, 5]
-    assert res.axes.names == ['geo', 'sex', 'lipro']
-    assert_array_equal(res, raw[..., [0, 4, 8]][5])
+    res = array[d124, 5]
+    assert res.axes.names == ['b', 'c', 'd']
+    assert_array_equal(res, raw[..., [0, 1, 3]][5])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], lipro159],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[[1, 5, 9], d124],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
     assert_array_equal(array[:], raw)
@@ -504,11 +502,11 @@ def test_getitem(array):
     assert_array_equal(array[...], raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
 
     # string 'int..int'
     assert_array_equal(array['10..13'], array['10,11,12,13'])
-    assert_array_equal(array['8, 10..13, 15'], array['8,10,11,12,13,15'])
+    assert_array_equal(array['8, 10..13, 6'], array['8,10,11,12,13,6'])
 
     # ambiguous label
     arr = ndtest("a=l0,l1;b=l1,l2")
@@ -525,34 +523,34 @@ def test_getitem(array):
 
     # key with duplicate axes
     with must_raise(ValueError):
-        _ = array[age[1, 2], age[3, 4]]
+        _ = array[a[1, 2], a[3, 4]]
 
     # key with lgroup from another axis leading to duplicate axis
     bad = Axis(3, 'bad')
     with must_raise(ValueError):
-        _ = array[bad[1, 2], age[3, 4]]
+        _ = array[bad[1, 2], a[3, 4]]
 
 
 def test_getitem_abstract_axes(array):
     raw = array.data
-    age, geo, sex, lipro = array.axes
-    age159 = X.age[1, 5, 9]
-    lipro159 = X.lipro['P01,P05,P09']
+    a, b, c, d = array.axes
+    a69 = X.a[1, 5, 9]
+    d124 = X.d['d1,d2,d4']
 
     # LGroup at "correct" place
-    subset = array[age159]
-    assert subset.axes[1:] == (geo, sex, lipro)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'age'))
+    subset = array[a69]
+    assert subset.axes[1:] == (b, c, d)
+    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
     assert_array_equal(subset, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[lipro159, age159], raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[d124, a69], raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], lipro159], raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[[1, 5, 9], d124], raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
     assert_array_equal(array[:], raw)
@@ -561,15 +559,15 @@ def test_getitem_abstract_axes(array):
     assert_array_equal(array[...], raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
 
     # key with duplicate axes
     with must_raise(ValueError):
-        _ = array[X.age[1, 2], X.age[3]]
+        _ = array[X.a[1, 2], X.a[3]]
 
     # key with invalid axis
     with must_raise(ValueError):
-        _ = array[X.bad[1, 2], X.age[3, 4]]
+        _ = array[X.bad[1, 2], X.a[3, 4]]
 
 
 def test_getitem_anonymous_axes():
@@ -583,26 +581,26 @@ def test_getitem_anonymous_axes():
 
 def test_getitem_guess_axis(array):
     raw = array.data
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
     # key at "correct" place
     assert_array_equal(array[[1, 5, 9]], raw[[1, 5, 9]])
     subset = array[[1, 5, 9]]
-    assert subset.axes[1:] == (geo, sex, lipro)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'age'))
+    assert subset.axes[1:] == (b, c, d)
+    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
     assert_array_equal(subset, raw[[1, 5, 9]])
 
     # key at "incorrect" place
-    assert_array_equal(array['P01,P05,P09'], raw[..., [0, 4, 8]])
-    assert_array_equal(array[['P01', 'P05', 'P09']], raw[..., [0, 4, 8]])
+    assert_array_equal(array['d1,d2,d4'], raw[..., [0, 1, 3]])
+    assert_array_equal(array[['d1', 'd2', 'd4']], raw[..., [0, 1, 3]])
 
     # multiple keys (in "incorrect" order)
-    assert_array_equal(array['P01,P05,P09', [1, 5, 9]],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array['d1,d2,d4', [1, 5, 9]],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/key
-    assert_array_equal(array[lipro['P01,P05,P09'], [1, 5, 9]],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[d['d1,d2,d4'], [1, 5, 9]],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
     assert_array_equal(array[:], raw)
@@ -611,50 +609,46 @@ def test_getitem_guess_axis(array):
     assert_array_equal(array[...], raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., 'P01,P05,P09'], raw[..., [0, 4, 8]])
-    assert_array_equal(array[..., ['P01', 'P05', 'P09']], raw[..., [0, 4, 8]])
+    assert_array_equal(array[..., 'd1,d2,d4'], raw[..., [0, 1, 3]])
+    assert_array_equal(array[..., ['d1', 'd2', 'd4']], raw[..., [0, 1, 3]])
 
     # LGroup without axis (which also needs to be guessed)
-    g = LGroup(['P01', 'P05', 'P09'])
-    assert_array_equal(array[g], raw[..., [0, 4, 8]])
+    g = LGroup(['d1', 'd2', 'd4'])
+    assert_array_equal(array[g], raw[..., [0, 1, 3]])
 
     # key with duplicate axes
-    with must_raise(ValueError, """key has several values for axis: age
+    with must_raise(ValueError, """key has several values for axis: a
 key: ([1, 2], [3, 4])"""):
         _ = array[[1, 2], [3, 4]]
 
     # key with invalid label (ie label not found on any axis)
     with must_raise(ValueError, """999 is not a valid label for any axis:
- age [116]: 0 1 2 ... 113 114 115
- geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
- sex [2]: 'M' 'F'
- lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
+ a [19]: 0 1 2 ... 16 17 18
+ b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
+ c [2]: 'c0' 'c1'
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'"""):
         _ = array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
     with must_raise(ValueError, """[998, 999] is not a valid label for any axis:
- age [116]: 0 1 2 ... 113 114 115
- geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
- sex [2]: 'M' 'F'
- lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
+ a [19]: 0 1 2 ... 16 17 18
+ b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
+ c [2]: 'c0' 'c1'
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'"""):
         _ = array[[1, 2], [998, 999]]
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
-    with must_raise(ValueError, "age[3, 999] is not a valid label for the 'age' axis with labels: 0, 1, 2, 3, 4, 5, 6, "
-                                "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, "
-                                "29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, "
-                                "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, "
-                                "71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, "
-                                "92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, "
-                                "110, 111, 112, 113, 114, 115"):
+    # FIXME: this should not mention the a axis specifically (this is due to the chunking code)
+    with must_raise(ValueError, "a[3, 999] is not a valid label for the 'a' axis with labels: 0, 1, 2, 3, 4, 5, 6, "
+                                "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18"):
         _ = array[[1, 2], [3, 999]]
 
     with must_raise(ValueError, """[999, 4] is not a valid label for any axis:
- age [116]: 0 1 2 ... 113 114 115
- geo [44]: 'A11' 'A12' 'A13' ... 'A92' 'A93' 'A21'
- sex [2]: 'M' 'F'
- lipro [15]: 'P01' 'P02' 'P03' ... 'P13' 'P14' 'P15'"""):
+ a [19]: 0 1 2 ... 16 17 18
+ b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
+ c [2]: 'c0' 'c1'
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'"""):
         _ = array[[1, 2], [999, 4]]
 
     # ambiguous key
@@ -671,26 +665,26 @@ key: ([1, 2], [3, 4])"""):
 
 def test_getitem_positional_group(array):
     raw = array.data
-    age, geo, sex, lipro = array.axes
-    age159 = age.i[1, 5, 9]
-    lipro159 = lipro.i[0, 4, 8]
+    a, b, c, d = array.axes
+    a69 = a.i[1, 5, 9]
+    d124 = d.i[0, 1, 3]
 
     # LGroup at "correct" place
-    subset = array[age159]
-    assert subset.axes[1:] == (geo, sex, lipro)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'age'))
+    subset = array[a69]
+    assert subset.axes[1:] == (b, c, d)
+    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
     assert_array_equal(subset, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[lipro159, age159],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[d124, a69],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], lipro159],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[[1, 5, 9], d124],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
     assert_array_equal(array[:], raw)
@@ -699,11 +693,11 @@ def test_getitem_positional_group(array):
     assert_array_equal(array[...], raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
 
     # key with duplicate axes
-    with must_raise(ValueError, "key has several values for axis: age\nkey: (age.i[1, 2], age.i[3, 4])"):
-        _ = array[age.i[1, 2], age.i[3, 4]]
+    with must_raise(ValueError, "key has several values for axis: a\nkey: (a.i[1, 2], a.i[3, 4])"):
+        _ = array[a.i[1, 2], a.i[3, 4]]
 
 
 def test_getitem_str_positional_group():
@@ -715,26 +709,26 @@ def test_getitem_str_positional_group():
 
 def test_getitem_abstract_positional(array):
     raw = array.data
-    age, geo, sex, lipro = array.axes
-    age159 = X.age.i[1, 5, 9]
-    lipro159 = X.lipro.i[0, 4, 8]
+    a, b, c, d = array.axes
+    a69 = X.a.i[1, 5, 9]
+    d124 = X.d.i[0, 1, 3]
 
     # LGroup at "correct" place
-    subset = array[age159]
-    assert subset.axes[1:] == (geo, sex, lipro)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'age'))
+    subset = array[a69]
+    assert subset.axes[1:] == (b, c, d)
+    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
     assert_array_equal(subset, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[lipro159, age159],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[d124, a69],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], lipro159],
-                       raw[[1, 5, 9]][..., [0, 4, 8]])
+    assert_array_equal(array[[1, 5, 9], d124],
+                       raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
     assert_array_equal(array[:], raw)
@@ -743,11 +737,11 @@ def test_getitem_abstract_positional(array):
     assert_array_equal(array[...], raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., lipro159], raw[..., [0, 4, 8]])
+    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
 
     # key with duplicate axes
-    with must_raise(ValueError, "key has several values for axis: age\nkey: (X.age.i[2, 3], X.age.i[1, 5])"):
-        _ = array[X.age.i[2, 3], X.age.i[1, 5]]
+    with must_raise(ValueError, "key has several values for axis: a\nkey: (X.a.i[2, 3], X.a.i[1, 5])"):
+        _ = array[X.a.i[2, 3], X.a.i[1, 5]]
 
 
 def test_getitem_bool_larray_key_arr_whout_bool_axis():
@@ -1098,11 +1092,11 @@ def test_getitem_multiple_larray_key_guess():
 
 def test_getitem_ndarray_key_guess(array):
     raw = array.data
-    keys = ['P04', 'P01', 'P03', 'P02']
+    keys = ['d4', 'd1', 'd3', 'd2']
     key = np.array(keys)
     res = array[key]
     assert isinstance(res, Array)
-    assert res.axes == array.axes.replace(X.lipro, Axis(keys, 'lipro'))
+    assert res.axes == array.axes.replace(X.d, Axis(keys, 'd'))
     assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
 
 
@@ -1303,22 +1297,22 @@ def test_setitem_larray(array, small_array):
     """
     tests Array.__setitem__(key, value) where value is an Array
     """
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
     # 1) using a LGroup key
-    ages1_5_9 = age[[1, 5, 9]]
+    as1_5_9 = a[[1, 5, 9]]
 
     # a) value has exactly the same shape as the target slice
     arr = array.copy()
     raw = array.data.copy()
 
-    arr[ages1_5_9] = arr[ages1_5_9] + 25.0
+    arr[as1_5_9] = arr[as1_5_9] + 25.0
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
     assert_array_equal(arr, raw)
 
     # b) value has exactly the same shape but LGroup at a "wrong" positions
     arr = array.copy()
-    arr[geo[:], ages1_5_9] = arr[ages1_5_9] + 25.0
+    arr[b[:], as1_5_9] = arr[as1_5_9] + 25.0
     # same raw as previous test
     assert_array_equal(arr, raw)
 
@@ -1328,9 +1322,9 @@ def test_setitem_larray(array, small_array):
 
     raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
     fake_axis = Axis(['label'], 'fake')
-    age_axis = arr[ages1_5_9].axes.age
-    value = Array(raw_value, axes=(age_axis, fake_axis, geo, sex, lipro))
-    arr[ages1_5_9] = value
+    a_axis = arr[as1_5_9].axes.a
+    value = Array(raw_value, axes=(a_axis, fake_axis, b, c, d))
+    arr[as1_5_9] = value
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
     assert_array_equal(arr, raw)
 
@@ -1338,13 +1332,13 @@ def test_setitem_larray(array, small_array):
     # arr = array.copy()
     # raw = array.data.copy()
     # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-    # arr[ages1_5_9] = arr[ages1_5_9].sum(geo=(geo.all(),))
+    # arr[as1_5_9] = arr[as1_5_9].sum(b=(b.all(),))
     # assert_array_equal(arr, raw)
 
     # e) value has a missing dimension
     arr = array.copy()
     raw = array.data.copy()
-    arr[ages1_5_9] = arr[ages1_5_9].sum(geo)
+    arr[as1_5_9] = arr[as1_5_9].sum(b)
     raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     assert_array_equal(arr, raw)
 
@@ -1355,8 +1349,8 @@ def test_setitem_larray(array, small_array):
     raw = array.data.copy()
 
     # using 1, 5, 8 and not 9 so that the list is not collapsed to slice
-    value = arr[age[1, 5, 8], sex['M']] + 25.0
-    arr[age[1, 5, 8], sex['M']] = value
+    value = arr[a[1, 5, 8], c['c0']] + 25.0
+    arr[a[1, 5, 8], c['c0']] = value
     raw[[1, 5, 8], :, 0] = raw[[1, 5, 8], :, 0] + 25.0
     assert_array_equal(arr, raw)
 
@@ -1376,8 +1370,8 @@ def test_setitem_larray(array, small_array):
     # Ellipsis and LGroup
     arr = array.copy()
     raw = array.data.copy()
-    arr[..., lipro['P01,P05,P09']] = 0
-    raw[..., [0, 4, 8]] = 0
+    arr[..., d['d1,d2,d4']] = 0
+    raw[..., [0, 1, 3]] = 0
     assert_array_equal(arr, raw)
 
     # 5) using a single slice(None) key
@@ -1387,26 +1381,26 @@ def test_setitem_larray(array, small_array):
 
     # 6) incompatible axes
     arr = small_array.copy()
-    subset_axes = arr['P01'].axes
+    subset_axes = arr['d1'].axes
     value = small_array.copy()
     expected_msg = f"Value {value.axes - subset_axes!s} axis is not present in target subset {subset_axes!s}. " \
                    f"A value can only have the same axes or fewer axes than the subset being targeted"
     with must_raise(ValueError, expected_msg):
-        arr['P01'] = value
+        arr['d1'] = value
 
-    value = arr.rename('sex', 'gender')['P01']
+    value = arr.rename('c', 'c_bis')['d1']
     expected_msg = f"Value {value.axes - subset_axes!s} axis is not present in target subset {subset_axes!s}. " \
                    f"A value can only have the same axes or fewer axes than the subset being targeted"
     with must_raise(ValueError, expected_msg):
-        arr['P01'] = value
+        arr['d1'] = value
 
     # 7) incompatible labels
-    sex2 = Axis('sex=F,M')
-    la2 = Array(small_array.data, axes=(sex2, lipro))
+    c_bis = Axis('c=c1,c0')
+    la2 = Array(small_array.data, axes=(c_bis, d))
     with must_raise(ValueError, """incompatible axes:
-Axis(['M', 'F'], 'c')
+Axis(['c0', 'c1'], 'c')
 vs
-Axis(['F', 'M'], 'c')"""):
+Axis(['c1', 'c0'], 'c')"""):
         arr[:] = la2
 
     # key has multiple Arrays (this is used within .points indexing)
@@ -1483,14 +1477,14 @@ def test_setitem_scalar(array):
     # b) full scalar key (ie set one cell)
     arr = array.copy()
     raw = array.data.copy()
-    arr[0, 'P02', 'A12', 'M'] = 42
+    arr[0, 'd2', 'b1', 'c0'] = 42
     raw[0, 1, 0, 1] = 42
     assert_array_equal(arr, raw)
 
 
 def test_setitem_bool_array_key(array):
     # XXX: this test is awfully slow (more than 1s)
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
     # Array key
     # a1) same shape, same order
@@ -1511,8 +1505,8 @@ def test_setitem_bool_array_key(array):
     # b) numpy-broadcastable shape
     # arr = array.copy()
     # raw = array.data.copy()
-    # key = arr[sex['F,']] < 5
-    # self.assertEqual(key.ndim, 4)
+    # key = arr[c['c1,']] < 5
+    # assert key.ndim == 4
     # arr[key] = 0
     # raw[raw[:, :, [1]] < 5] = 0
     # assert_array_equal(arr, raw)
@@ -1520,7 +1514,7 @@ def test_setitem_bool_array_key(array):
     # c) Array-broadcastable shape (missing axis)
     arr = array.copy()
     raw = array.data.copy()
-    key = arr[sex['M']] < 5
+    key = arr[c['c0']] < 5
     assert key.ndim == 3
     arr[key] = 0
 
@@ -1546,16 +1540,16 @@ def test_setitem_bool_array_key(array):
 
 
 def test_set(array):
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
     # 1) using a LGroup key
-    ages1_5_9 = age[[1, 5, 9]]
+    as1_5_9 = a[[1, 5, 9]]
 
     # a) value has exactly the same shape as the target slice
     arr = array.copy()
     raw = array.data.copy()
 
-    arr.set(arr[ages1_5_9] + 25.0, age=ages1_5_9)
+    arr.set(arr[as1_5_9] + 25.0, a=as1_5_9)
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
     assert_array_equal(arr, raw)
 
@@ -1565,9 +1559,9 @@ def test_set(array):
 
     raw_value = raw[[1, 5, 9], np.newaxis] + 26.0
     fake_axis = Axis(['label'], 'fake')
-    age_axis = arr[ages1_5_9].axes.age
-    value = Array(raw_value, axes=(age_axis, fake_axis, geo, sex, lipro))
-    arr.set(value, age=ages1_5_9)
+    a_axis = arr[as1_5_9].axes.a
+    value = Array(raw_value, axes=(a_axis, fake_axis, b, c, d))
+    arr.set(value, a=as1_5_9)
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
     assert_array_equal(arr, raw)
 
@@ -1575,109 +1569,109 @@ def test_set(array):
     # arr = array.copy()
     # raw = array.data.copy()
     # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-    # arr.set(arr[ages1_5_9].sum(geo=(geo.all(),)), age=ages1_5_9)
+    # arr.set(arr[as1_5_9].sum(b=(b.all(),)), a=as1_5_9)
     # assert_array_equal(arr, raw)
 
     # c) missing dimension
     arr = array.copy()
     raw = array.data.copy()
-    arr.set(arr[ages1_5_9].sum(geo), age=ages1_5_9)
+    arr.set(arr[as1_5_9].sum(b), a=as1_5_9)
     raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     assert_array_equal(arr, raw)
 
     # 2) using a raw key
     arr = array.copy()
     raw = array.data.copy()
-    arr.set(arr[[1, 5, 9]] + 27.0, age=[1, 5, 9])
+    arr.set(arr[[1, 5, 9]] + 27.0, a=[1, 5, 9])
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
     assert_array_equal(arr, raw)
 
 
 def test_filter(array):
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
-    ages1_5_9 = age[(1, 5, 9)]
-    ages11 = age[11]
+    as1_5_9 = a[(1, 5, 9)]
+    as11 = a[11]
 
     # with LGroup
-    assert array.filter(age=ages1_5_9).shape == (3, 44, 2, 15)
+    assert array.filter(a=as1_5_9).shape == (3, 12, 2, 6)
 
     # FIXME: this should raise a comprehensible error!
-    # self.assertEqual(array.filter(age=[ages1_5_9]).shape, (3, 44, 2, 15))
+    # assert array.filter(a=[as1_5_9]).shape == (3, 12, 2, 6)
 
     # LGroup with 1 value => collapse
-    assert array.filter(age=ages11).shape == (44, 2, 15)
+    assert array.filter(a=as11).shape == (12, 2, 6)
 
     # LGroup with a list of 1 value => do not collapse
-    assert array.filter(age=age[[11]]).shape == (1, 44, 2, 15)
+    assert array.filter(a=a[[11]]).shape == (1, 12, 2, 6)
 
     # LGroup with a list of 1 value defined as a string => do not collapse
-    assert array.filter(lipro=lipro['P01,']).shape == (116, 44, 2, 1)
+    assert array.filter(d=d['d1,']).shape == (19, 12, 2, 1)
 
     # LGroup with 1 value
     # XXX: this does not work. Do we want to make this work?
-    # filtered = array.filter(age=(ages11,))
-    # self.assertEqual(filtered.shape, (1, 44, 2, 15))
+    # filtered = array.filter(a=(as11,))
+    # assert filtered.shape == (1, 12, 2, 6)
 
     # list
-    assert array.filter(age=[1, 5, 9]).shape == (3, 44, 2, 15)
+    assert array.filter(a=[1, 5, 9]).shape == (3, 12, 2, 6)
 
     # string
-    assert array.filter(lipro='P01,P02').shape == (116, 44, 2, 2)
+    assert array.filter(d='d1,d2').shape == (19, 12, 2, 2)
 
     # multiple axes at once
-    assert array.filter(age=[1, 5, 9], lipro='P01,P02').shape == (3, 44, 2, 2)
+    assert array.filter(a=[1, 5, 9], d='d1,d2').shape == (3, 12, 2, 2)
 
     # multiple axes one after the other
-    assert array.filter(age=[1, 5, 9]).filter(lipro='P01,P02').shape == (3, 44, 2, 2)
+    assert array.filter(a=[1, 5, 9]).filter(d='d1,d2').shape == (3, 12, 2, 2)
 
     # a single value for one dimension => collapse the dimension
-    assert array.filter(sex='M').shape == (116, 44, 15)
+    assert array.filter(c='c0').shape == (19, 12, 6)
 
     # but a list with a single value for one dimension => do not collapse
-    assert array.filter(sex=['M']).shape == (116, 44, 1, 15)
+    assert array.filter(c=['c0']).shape == (19, 12, 1, 6)
 
-    assert array.filter(sex='M,').shape == (116, 44, 1, 15)
+    assert array.filter(c='c0,').shape == (19, 12, 1, 6)
 
     # with duplicate keys
     # XXX: do we want to support this? I don't see any value in that but I might be short-sighted.
-    # filtered = array.filter(lipro='P01,P02,P01')
+    # filtered = array.filter(d='d1,d2,d1')
 
     # XXX: we could abuse python to allow naming groups via Axis.__getitem__
     # (but I doubt it is a good idea).
-    # child = age[':17', 'child']
+    # child = a[':17', 'child']
 
     # slices
     # ------
 
     # LGroup slice
-    assert array.filter(age=age[:17]).shape == (18, 44, 2, 15)
+    assert array.filter(a=a[:17]).shape == (18, 12, 2, 6)
     # string slice
-    assert array.filter(lipro=':P03').shape == (116, 44, 2, 3)
+    assert array.filter(d=':d3').shape == (19, 12, 2, 3)
     # raw slice
-    assert array.filter(age=slice(17)).shape == (18, 44, 2, 15)
+    assert array.filter(a=slice(17)).shape == (18, 12, 2, 6)
 
     # filter chain with a slice
-    assert array.filter(age=slice(17)).filter(geo='A12,A13').shape == (18, 2, 2, 15)
+    assert array.filter(a=slice(17)).filter(b='b1,b2').shape == (18, 2, 2, 6)
 
 
 def test_filter_multiple_axes(array):
     # multiple values in each group
-    assert array.filter(age=[1, 5, 9], lipro='P01,P02').shape == (3, 44, 2, 2)
+    assert array.filter(a=[1, 5, 9], d='d1,d2').shape == (3, 12, 2, 2)
     # with a group of one value
-    assert array.filter(age=[1, 5, 9], sex='M,').shape == (3, 44, 1, 15)
+    assert array.filter(a=[1, 5, 9], c='c0,').shape == (3, 12, 1, 6)
 
     # with a discarded axis (there is a scalar in the key)
-    assert array.filter(age=[1, 5, 9], sex='M').shape == (3, 44, 15)
+    assert array.filter(a=[1, 5, 9], c='c0').shape == (3, 12, 6)
 
     # with a discarded axis that is not adjacent to the ix_array axis ie with a sliced axis between the scalar axis
-    # and the ix_array axis since our array has a axes: age, geo, sex, lipro, any of the following should be tested:
-    # age+sex / age+lipro / geo+lipro
-    # additionally, if the ix_array axis was first (ie ix_array on age), it worked even before the issue was fixed,
+    # and the ix_array axis since our array has a axes: a, b, c, d, any of the following should be tested:
+    # a+c / a+d / b+d
+    # additionally, if the ix_array axis was first (ie ix_array on a), it worked even before the issue was fixed,
     # since the "indexing" subspace is tacked-on to the beginning (as the first dimension)
-    assert array.filter(age=57, sex='M,F').shape == (44, 2, 15)
-    assert array.filter(age=57, lipro='P01,P05').shape == (44, 2, 2)
-    assert array.filter(geo='A57', lipro='P01,P05').shape == (116, 2, 2)
+    assert array.filter(a=11, c='c0,c1').shape == (12, 2, 6)
+    assert array.filter(a=11, d='d1,d4').shape == (12, 2, 2)
+    assert array.filter(b='b10', d='d1,d4').shape == (19, 2, 2)
 
 
 def test_nonzero():
@@ -1719,36 +1713,36 @@ def test_contains():
 
 
 def test_sum_full_axes(array):
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
 
     # everything
     assert array.sum() == np.asarray(array).sum()
 
     # using axes numbers
-    assert array.sum(axis=2).shape == (116, 44, 15)
-    assert array.sum(axis=(0, 2)).shape == (44, 15)
+    assert array.sum(axis=2).shape == (19, 12, 6)
+    assert array.sum(axis=(0, 2)).shape == (12, 6)
 
     # using Axis objects
-    assert array.sum(age).shape == (44, 2, 15)
-    assert array.sum(age, sex).shape == (44, 15)
+    assert array.sum(a).shape == (12, 2, 6)
+    assert array.sum(a, c).shape == (12, 6)
 
     # using axes names
-    assert array.sum('age', 'sex').shape == (44, 15)
+    assert array.sum('a', 'c').shape == (12, 6)
 
     # chained sum
-    assert array.sum(age, sex).sum(geo).shape == (15,)
-    assert array.sum(age, sex).sum(lipro, geo) == array.sum()
+    assert array.sum(a, c).sum(b).shape == (6,)
+    assert array.sum(a, c).sum(d, b) == array.sum()
 
     # getitem on aggregated
-    aggregated = array.sum(age, sex)
-    assert aggregated[vla_str].shape == (22, 15)
+    aggregated = array.sum(a, c)
+    assert aggregated[b_group1_str].shape == (7, 6)
 
     # filter on aggregated
-    assert aggregated.filter(geo=vla_str).shape == (22, 15)
+    assert aggregated.filter(b=b_group1_str).shape == (7, 6)
 
 
 def test_sum_full_axes_with_nan(array):
-    array['M', 'P02', 'A12', 0] = nan
+    array['c0', 'd2', 'b1', 0] = nan
     raw = array.data
 
     # everything
@@ -1756,11 +1750,11 @@ def test_sum_full_axes_with_nan(array):
     assert isnan(array.sum(skipna=False))
 
     # using Axis objects
-    assert_array_nan_equal(array.sum(X.age), np.nansum(raw, 0))
-    assert_array_nan_equal(array.sum(X.age, skipna=False), raw.sum(0))
+    assert_array_nan_equal(array.sum(X.a), np.nansum(raw, 0))
+    assert_array_nan_equal(array.sum(X.a, skipna=False), raw.sum(0))
 
-    assert_array_nan_equal(array.sum(X.age, X.sex), np.nansum(raw, (0, 2)))
-    assert_array_nan_equal(array.sum(X.age, X.sex, skipna=False), raw.sum((0, 2)))
+    assert_array_nan_equal(array.sum(X.a, X.c), np.nansum(raw, (0, 2)))
+    assert_array_nan_equal(array.sum(X.a, X.c, skipna=False), raw.sum((0, 2)))
 
 
 def test_sum_full_axes_keep_axes(array):
@@ -1779,15 +1773,15 @@ def test_mean_full_axes(array):
     raw = array.data
 
     assert array.mean() == np.mean(raw)
-    assert_array_nan_equal(array.mean(X.age), np.mean(raw, 0))
-    assert_array_nan_equal(array.mean(X.age, X.sex), np.mean(raw, (0, 2)))
+    assert_array_nan_equal(array.mean(X.a), np.mean(raw, 0))
+    assert_array_nan_equal(array.mean(X.a, X.c), np.mean(raw, (0, 2)))
 
 
 def test_mean_groups(array):
     # using int type to test that we get a float in return
     arr = array.astype(int)
     raw = array.data
-    res = arr.mean(X.geo['A11', 'A13', 'A24', 'A31'])
+    res = arr.mean(X.b['b0', 'b2', 'b5', 'b7'])
     assert_array_nan_equal(res, np.mean(raw[:, [0, 2, 4, 5]], 1))
 
 
@@ -1795,14 +1789,14 @@ def test_median_full_axes(array):
     raw = array.data
 
     assert array.median() == np.median(raw)
-    assert_array_nan_equal(array.median(X.age), np.median(raw, 0))
-    assert_array_nan_equal(array.median(X.age, X.sex), np.median(raw, (0, 2)))
+    assert_array_nan_equal(array.median(X.a), np.median(raw, 0))
+    assert_array_nan_equal(array.median(X.a, X.c), np.median(raw, (0, 2)))
 
 
 def test_median_groups(array):
     raw = array.data
-    res = array.median(X.geo['A11', 'A13', 'A24'])
-    assert res.shape == (116, 2, 15)
+    res = array.median(X.b['b0', 'b2', 'b5'])
+    assert res.shape == (19, 2, 6)
     assert_array_nan_equal(res, np.median(raw[:, [0, 2, 4]], 1))
 
 
@@ -1826,139 +1820,137 @@ def test_cumsum(array):
     raw = array.data
 
     # using Axis objects
-    assert_array_equal(array.cumsum(X.age), raw.cumsum(0))
-    assert_array_equal(array.cumsum(X.lipro), raw.cumsum(3))
+    assert_array_equal(array.cumsum(X.a), raw.cumsum(0))
+    assert_array_equal(array.cumsum(X.d), raw.cumsum(3))
 
     # using axes numbers
     assert_array_equal(array.cumsum(1), raw.cumsum(1))
 
     # using axes names
-    assert_array_equal(array.cumsum('sex'), raw.cumsum(2))
+    assert_array_equal(array.cumsum('c'), raw.cumsum(2))
 
 
 def test_group_agg_kwargs(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
 
     # a) group aggregate on a fresh array
 
     # a.1) one group => collapse dimension
-    assert array.sum(sex='M').shape == (116, 44, 15)
-    assert array.sum(sex='M,F').shape == (116, 44, 15)
-    assert array.sum(sex=sex['M']).shape == (116, 44, 15)
+    assert array.sum(c='c0').shape == (19, 12, 6)
+    assert array.sum(c='c0,c1').shape == (19, 12, 6)
+    assert array.sum(c=c['c0']).shape == (19, 12, 6)
 
-    assert array.sum(geo='A11,A21,A25').shape == (116, 2, 15)
-    assert array.sum(geo=['A11', 'A21', 'A25']).shape == (116, 2, 15)
-    assert array.sum(geo=geo['A11,A21,A25']).shape == (116, 2, 15)
+    assert array.sum(b='b0,b3,b6').shape == (19, 2, 6)
+    assert array.sum(b=['b0', 'b3', 'b6']).shape == (19, 2, 6)
+    assert array.sum(b=b['b0,b3,b6']).shape == (19, 2, 6)
 
-    assert array.sum(geo=':').shape == (116, 2, 15)
-    assert array.sum(geo=geo[:]).shape == (116, 2, 15)
-    assert array.sum(geo=geo[':']).shape == (116, 2, 15)
-    # Include everything between two labels. Since A11 is the first label
-    # and A21 is the last one, this should be equivalent to the previous
+    assert array.sum(b=':').shape == (19, 2, 6)
+    assert array.sum(b=b[:]).shape == (19, 2, 6)
+    assert array.sum(b=b[':']).shape == (19, 2, 6)
+    # Include everything between two labels. Since b0 is the first label
+    # and b3 is the last one, this should be equivalent to the previous
     # tests.
-    assert array.sum(geo='A11:A21').shape == (116, 2, 15)
-    assert_array_equal(array.sum(geo='A11:A21'), array.sum(geo=':'))
-    assert_array_equal(array.sum(geo=geo['A11:A21']), array.sum(geo=':'))
+    assert array.sum(b='b0:b3').shape == (19, 2, 6)
+    assert_array_equal(array.sum(b='b0:b3'), array.sum(b=':'))
+    assert_array_equal(array.sum(b=b['b0:b3']), array.sum(b=':'))
 
     # a.2) a tuple of one group => do not collapse dimension
-    assert array.sum(geo=(geo[:],)).shape == (116, 1, 2, 15)
+    assert array.sum(b=(b[:],)).shape == (19, 1, 2, 6)
 
     # a.3) several groups
     # string groups
-    assert array.sum(geo=(vla, wal, bru)).shape == (116, 3, 2, 15)
+    assert array.sum(b=b_groups).shape == (19, 3, 2, 6)
     # with one label in several groups
-    assert array.sum(sex=(['M'], ['M', 'F'])).shape == (116, 44, 2, 15)
-    assert array.sum(sex=('M', 'M,F')).shape == (116, 44, 2, 15)
-    assert array.sum(sex='M;M,F').shape == (116, 44, 2, 15)
+    assert array.sum(c=(['c0'], ['c0', 'c1'])).shape == (19, 12, 2, 6)
+    assert array.sum(c=('c0', 'c0,c1')).shape == (19, 12, 2, 6)
+    assert array.sum(c='c0;c0,c1').shape == (19, 12, 2, 6)
 
-    res = array.sum(geo=(vla, wal, bru, belgium))
-    assert res.shape == (116, 4, 2, 15)
+    res = array.sum(b=b_groups_all)
+    assert res.shape == (19, 4, 2, 6)
 
     # a.4) several dimensions at the same time
-    res = array.sum(lipro='P01,P03;P02,P05;:', geo=(vla, wal, bru, belgium))
-    assert res.shape == (116, 4, 2, 3)
+    res = array.sum(d='d1,d3;d2,d4;:', b=b_groups_all)
+    assert res.shape == (19, 4, 2, 3)
 
     # b) both axis aggregate and group aggregate at the same time
     # Note that you must list "full axes" aggregates first (Python does not allow non-kwargs after kwargs.
-    res = array.sum(age, sex, geo=(vla, wal, bru, belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c, b=b_groups_all)
+    assert res.shape == (4, 6)
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c).sum(b=b_groups_all)
+    assert res.shape == (4, 6)
 
 
 def test_group_agg_guess_axis(array):
     raw = array.data.copy()
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
 
     # a) group aggregate on a fresh array
 
     # a.1) one group => collapse dimension
     # not sure I should support groups with a single item in an aggregate
-    assert array.sum('M').shape == (116, 44, 15)
-    assert array.sum('M,').shape == (116, 44, 15)
-    assert array.sum('M,F').shape == (116, 44, 15)
+    assert array.sum('c0').shape == (19, 12, 6)
+    assert array.sum('c0,').shape == (19, 12, 6)
+    assert array.sum('c0,c1').shape == (19, 12, 6)
 
-    assert array.sum('A11,A21,A25').shape == (116, 2, 15)
+    assert array.sum('b0,b3,b6').shape == (19, 2, 6)
     # with a name
-    assert array.sum('A11,A21,A25 >> g1').shape == (116, 2, 15)
-    assert array.sum(['A11', 'A21', 'A25']).shape == (116, 2, 15)
+    assert array.sum('b0,b3,b6 >> g1').shape == (19, 2, 6)
+    assert array.sum(['b0', 'b3', 'b6']).shape == (19, 2, 6)
 
-    # Include everything between two labels. Since A11 is the first label
-    # and A21 is the last one, this should be equivalent to taking the
+    # Include everything between two labels. Since b0 is the first label
+    # and b3 is the last one, this should be equivalent to taking the
     # full axis.
-    assert array.sum('A11:A21').shape == (116, 2, 15)
-    assert_array_equal(array.sum('A11:A21'), array.sum(geo=':'))
-    assert_array_equal(array.sum('A11:A21'), array.sum(geo))
+    assert array.sum('b0:b3').shape == (19, 2, 6)
+    assert_array_equal(array.sum('b0:b3'), array.sum(b=':'))
+    assert_array_equal(array.sum('b0:b3'), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
-    assert array.sum((geo[:],)).shape == (116, 1, 2, 15)
+    assert array.sum((b[:],)).shape == (19, 1, 2, 6)
 
     # a.3) several groups
     # string groups
-    assert array.sum((vla, wal, bru)).shape == (116, 3, 2, 15)
+    assert array.sum(b_groups).shape == (19, 3, 2, 6)
 
     # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
-    # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
-    # aggregate on "wal", but there is no "geo" dimension anymore.
-    # self.assertEqual(array.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+    # axes into play. For now the error message is unclear because it first aggregates on "g1", then tries to
+    # aggregate on "g2", but there is no "b" dimension anymore.
+    # assert array.sum(g1, g2, g3).shape == (19, 3, 2, 6)
 
     # with one label in several groups
-    assert array.sum((['M'], ['M', 'F'])).shape == (116, 44, 2, 15)
-    assert array.sum(('M', 'M,F')).shape == (116, 44, 2, 15)
-    assert array.sum('M;M,F').shape == (116, 44, 2, 15)
+    assert array.sum((['c0'], ['c0', 'c1'])).shape == (19, 12, 2, 6)
+    assert array.sum(('c0', 'c0,c1')).shape == (19, 12, 2, 6)
+    assert array.sum('c0;c0,c1').shape == (19, 12, 2, 6)
     # with group names
-    res = array.sum('M >> men;M,F >> all')
-    assert res.shape == (116, 44, 2, 15)
-    assert 'sex' in res.axes
-    assert_array_equal(res.axes.sex.labels, ['men', 'all'])
-    assert_array_equal(res['men'], raw[:, :, 0, :])
+    res = array.sum('c0 >> first;c0,c1 >> all')
+    assert res.shape == (19, 12, 2, 6)
+    assert 'c' in res.axes
+    assert_array_equal(res.axes.c.labels, ['first', 'all'])
+    assert_array_equal(res['first'], raw[:, :, 0, :])
     assert_array_equal(res['all'], raw.sum(2))
 
-    res = array.sum(('M >> men', 'M,F >> all'))
-    assert res.shape == (116, 44, 2, 15)
-    assert 'sex' in res.axes
-    assert_array_equal(res.axes.sex.labels, ['men', 'all'])
-    assert_array_equal(res['men'], raw[:, :, 0, :])
+    res = array.sum(('c0 >> first', 'c0,c1 >> all'))
+    assert res.shape == (19, 12, 2, 6)
+    assert 'c' in res.axes
+    assert_array_equal(res.axes.c.labels, ['first', 'all'])
+    assert_array_equal(res['first'], raw[:, :, 0, :])
     assert_array_equal(res['all'], raw.sum(2))
 
-    res = array.sum((vla, wal, bru, belgium))
-    assert res.shape == (116, 4, 2, 15)
+    res = array.sum(b_groups_all)
+    assert res.shape == (19, 4, 2, 6)
 
     # a.4) several dimensions at the same time
-    res = array.sum('P01,P03;P02,P05;P01:', (vla, wal, bru, belgium))
-    assert res.shape == (116, 4, 2, 3)
+    res = array.sum('d1,d3;d2,d5;d1:', b_groups_all)
+    assert res.shape == (19, 4, 2, 3)
 
     # b) both axis aggregate and group aggregate at the same time
-    res = array.sum(age, sex, (vla, wal, bru, belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c, b_groups_all)
+    assert res.shape == (4, 6)
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum(age, sex).sum((vla, wal, bru, belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c).sum(b_groups_all)
+    assert res.shape == (4, 6)
 
     # issue #868: labels in reverse order with a "step" between them > index of last label
     arr = ndtest(4)
@@ -1974,195 +1966,194 @@ def test_group_agg_guess_axis(array):
 
 
 def test_group_agg_label_group(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = geo[vla_str], geo[wal_str], geo[bru_str]
-    lg_belgium = geo[belgium]
+    a, b, c, d = array.axes
+    g1, g2, g3 = b[b_group1_str], b[b_group2_str], b[b_group3_str]
+    g_all = b[all_b]
 
     # a) group aggregate on a fresh array
 
     # a.1) one group => collapse dimension
     # not sure I should support groups with a single item in an aggregate
-    men = sex.i[[0]]
-    assert array.sum(men).shape == (116, 44, 15)
-    assert array.sum(sex['M']).shape == (116, 44, 15)
-    assert array.sum(sex['M,']).shape == (116, 44, 15)
-    assert array.sum(sex['M,F']).shape == (116, 44, 15)
+    c0 = c.i[[0]]
+    assert array.sum(c0).shape == (19, 12, 6)
+    assert array.sum(c['c0']).shape == (19, 12, 6)
+    assert array.sum(c['c0,']).shape == (19, 12, 6)
+    assert array.sum(c['c0,c1']).shape == (19, 12, 6)
 
-    assert array.sum(geo['A11,A21,A25']).shape == (116, 2, 15)
-    assert array.sum(geo[['A11', 'A21', 'A25']]).shape == (116, 2, 15)
-    assert array.sum(geo['A11', 'A21', 'A25']).shape == (116, 2, 15)
-    assert array.sum(geo['A11,A21,A25']).shape == (116, 2, 15)
+    assert array.sum(b['b0,b3,b6']).shape == (19, 2, 6)
+    assert array.sum(b[['b0', 'b3', 'b6']]).shape == (19, 2, 6)
+    assert array.sum(b['b0', 'b3', 'b6']).shape == (19, 2, 6)
+    assert array.sum(b['b0,b3,b6']).shape == (19, 2, 6)
 
-    assert array.sum(geo[:]).shape == (116, 2, 15)
-    assert array.sum(geo[':']).shape == (116, 2, 15)
-    assert array.sum(geo[:]).shape == (116, 2, 15)
+    assert array.sum(b[:]).shape == (19, 2, 6)
+    assert array.sum(b[':']).shape == (19, 2, 6)
+    assert array.sum(b[:]).shape == (19, 2, 6)
 
-    # Include everything between two labels. Since A11 is the first label and A21 is the last one, this should be
+    # Include everything between two labels. Since b0 is the first label and b3 is the last one, this should be
     # equivalent to the previous tests.
-    assert array.sum(geo['A11:A21']).shape == (116, 2, 15)
-    assert_array_equal(array.sum(geo['A11:A21']), array.sum(geo))
-    assert_array_equal(array.sum(geo['A11':'A21']), array.sum(geo))
+    assert array.sum(b['b0:b3']).shape == (19, 2, 6)
+    assert_array_equal(array.sum(b['b0:b3']), array.sum(b))
+    assert_array_equal(array.sum(b['b0':'b3']), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
-    assert array.sum((geo[:],)).shape == (116, 1, 2, 15)
+    assert array.sum((b[:],)).shape == (19, 1, 2, 6)
 
     # a.3) several groups
     # string groups
-    assert array.sum((vla, wal, bru)).shape == (116, 3, 2, 15)
+    assert array.sum((g1, g2, g3)).shape == (19, 3, 2, 6)
 
     # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
-    # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
-    # aggregate on "wal", but there is no "geo" dimension anymore.
-    # self.assertEqual(array.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+    # axes into play. For now the error message is unclear because it first aggregates on "g1", then tries to
+    # aggregate on "g2", but there is no "b" dimension anymore.
+    # assert array.sum(g1, g2, g3).shape == (19, 3, 2, 6)
 
     # with one label in several groups
-    assert array.sum((sex['M'], sex[['M', 'F']])).shape == (116, 44, 2, 15)
-    assert array.sum((sex['M'], sex['M', 'F'])).shape == (116, 44, 2, 15)
-    assert array.sum((sex['M'], sex['M,F'])).shape == (116, 44, 2, 15)
+    assert array.sum((c['c0'], c[['c0', 'c1']])).shape == (19, 12, 2, 6)
+    assert array.sum((c['c0'], c['c0', 'c1'])).shape == (19, 12, 2, 6)
+    assert array.sum((c['c0'], c['c0,c1'])).shape == (19, 12, 2, 6)
     # XXX: do we want to support this?
-    # self.assertEqual(array.sum(sex['M;H,F']).shape, (116, 44, 2, 15))
+    # assert array.sum(c['c0;H,c1']).shape == (19, 12, 2, 6)
 
-    res = array.sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 15)
+    res = array.sum((g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 6)
 
     # a.4) several dimensions at the same time
-    # self.assertEqual(array.sum(lipro['P01,P03;P02,P05;P01:'], (vla, wal, bru, lg_belgium)).shape,
-    #                  (116, 4, 2, 3))
-    res = array.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]), (vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 3)
+    # res = array.sum(d['d1,d3;d2,d5;d1:'], (g1, g2, g3, g_all))
+    # assert res.shape == (19, 4, 2, 3)
+    res = array.sum((d['d1,d3'], d['d2,d5'], d[:]), (g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 3)
 
     # b) both axis aggregate and group aggregate at the same time
-    res = array.sum(age, sex, (vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c, (g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c).sum((g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
 
 def test_group_agg_label_group_no_axis(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = LGroup(vla_str), LGroup(wal_str), LGroup(bru_str)
-    lg_belgium = LGroup(belgium)
+    a, b, c, d = array.axes
+    g1, g2, g3 = LGroup(b_group1_str), LGroup(b_group2_str), LGroup(b_group3_str)
+    g_all = LGroup(all_b)
 
     # a) group aggregate on a fresh array
 
     # a.1) one group => collapse dimension
     # not sure I should support groups with a single item in an aggregate
-    assert array.sum(LGroup('M')).shape == (116, 44, 15)
-    assert array.sum(LGroup('M,')).shape == (116, 44, 15)
-    assert array.sum(LGroup('M,F')).shape == (116, 44, 15)
+    assert array.sum(LGroup('c0')).shape == (19, 12, 6)
+    assert array.sum(LGroup('c0,')).shape == (19, 12, 6)
+    assert array.sum(LGroup('c0,c1')).shape == (19, 12, 6)
 
-    assert array.sum(LGroup('A11,A21,A25')).shape == (116, 2, 15)
-    assert array.sum(LGroup(['A11', 'A21', 'A25'])).shape == (116, 2, 15)
+    assert array.sum(LGroup('b0,b3,b6')).shape == (19, 2, 6)
+    assert array.sum(LGroup(['b0', 'b3', 'b6'])).shape == (19, 2, 6)
 
-    # Include everything between two labels. Since A11 is the first label
-    # and A21 is the last one, this should be equivalent to the full axis.
-    assert array.sum(LGroup('A11:A21')).shape == (116, 2, 15)
-    assert_array_equal(array.sum(LGroup('A11:A21')), array.sum(geo))
-    assert_array_equal(array.sum(LGroup(slice('A11', 'A21'))), array.sum(geo))
+    # Include everything between two labels. Since b0 is the first label
+    # and b3 is the last one, this should be equivalent to the full axis.
+    assert array.sum(LGroup('b0:b3')).shape == (19, 2, 6)
+    assert_array_equal(array.sum(LGroup('b0:b3')), array.sum(b))
+    assert_array_equal(array.sum(LGroup(slice('b0', 'b3'))), array.sum(b))
 
     # a.3) several groups
     # string groups
-    assert array.sum((vla, wal, bru)).shape == (116, 3, 2, 15)
+    assert array.sum((g1, g2, g3)).shape == (19, 3, 2, 6)
 
     # XXX: do we also want to support this? I do not really like it because it gets tricky when we have some other
-    # axes into play. For now the error message is unclear because it first aggregates on "vla", then tries to
-    # aggregate on "wal", but there is no "geo" dimension anymore.
-    # self.assertEqual(array.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+    # axes into play. For now the error message is unclear because it first aggregates on "g1", then tries to
+    # aggregate on "g2", but there is no "b" dimension anymore.
+    # assert array.sum(g1, g2, g3).shape == (19, 3, 2, 6)
 
     # with one label in several groups
-    assert array.sum((LGroup('M'), LGroup(['M', 'F']))).shape == (116, 44, 2, 15)
-    assert array.sum((LGroup('M'), LGroup('M,F'))).shape == (116, 44, 2, 15)
+    assert array.sum((LGroup('c0'), LGroup(['c0', 'c1']))).shape == (19, 12, 2, 6)
+    assert array.sum((LGroup('c0'), LGroup('c0,c1'))).shape == (19, 12, 2, 6)
     # XXX: do we want to support this?
-    # self.assertEqual(array.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
+    # assert array.sum(c['c0;c0,c1']).shape == (19, 12, 2, 6)
 
-    res = array.sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 15)
+    res = array.sum((g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 6)
 
     # a.4) several dimensions at the same time
-    # self.assertEqual(array.sum(lipro['P01,P03;P02,P05;P01:'], (vla, wal, bru, lg_belgium)).shape,
-    #                  (116, 4, 2, 3))
-    res = array.sum((LGroup('P01,P03'), LGroup('P02,P05')), (vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 2)
+    # res = array.sum(d['d1,d3;d2,d5;d1:'], (g1, g2, g3, g_all))
+    # assert res.shape == (19, 4, 2, 3)
+    res = array.sum((LGroup('d1,d3'), LGroup('d2,d5')), (g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 2)
 
     # b) both axis aggregate and group aggregate at the same time
-    res = array.sum(age, sex, (vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c, (g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c).sum((g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
 
 def test_group_agg_axis_ref_label_group(array):
-    age, geo, sex, lipro = X.age, X.geo, X.sex, X.lipro
-    vla, wal, bru = geo[vla_str], geo[wal_str], geo[bru_str]
-    lg_belgium = geo[belgium]
+    a, b, c, d = X.a, X.b, X.c, X.d
+    g1, g2, g3 = b[b_group1_str], b[b_group2_str], b[b_group3_str]
+    g_all = b[all_b]
 
     # a) group aggregate on a fresh array
 
     # a.1) one group => collapse dimension
     # not sure I should support groups with a single item in an aggregate
-    men = sex.i[[0]]
-    assert array.sum(men).shape == (116, 44, 15)
-    assert array.sum(sex['M']).shape == (116, 44, 15)
-    assert array.sum(sex['M,']).shape == (116, 44, 15)
-    assert array.sum(sex['M,F']).shape == (116, 44, 15)
+    men = c.i[[0]]
+    assert array.sum(men).shape == (19, 12, 6)
+    assert array.sum(c['c0']).shape == (19, 12, 6)
+    assert array.sum(c['c0,']).shape == (19, 12, 6)
+    assert array.sum(c['c0,c1']).shape == (19, 12, 6)
 
-    assert array.sum(geo['A11,A21,A25']).shape == (116, 2, 15)
-    assert array.sum(geo[['A11', 'A21', 'A25']]).shape == (116, 2, 15)
-    assert array.sum(geo['A11', 'A21', 'A25']).shape == (116, 2, 15)
-    assert array.sum(geo['A11,A21,A25']).shape == (116, 2, 15)
+    assert array.sum(b['b0,b3,b6']).shape == (19, 2, 6)
+    assert array.sum(b[['b0', 'b3', 'b6']]).shape == (19, 2, 6)
+    assert array.sum(b['b0', 'b3', 'b6']).shape == (19, 2, 6)
+    assert array.sum(b['b0,b3,b6']).shape == (19, 2, 6)
 
-    assert array.sum(geo[:]).shape == (116, 2, 15)
-    assert array.sum(geo[':']).shape == (116, 2, 15)
-    assert array.sum(geo[:]).shape == (116, 2, 15)
+    assert array.sum(b[:]).shape == (19, 2, 6)
+    assert array.sum(b[':']).shape == (19, 2, 6)
+    assert array.sum(b[:]).shape == (19, 2, 6)
 
-    # Include everything between two labels. Since A11 is the first label
-    # and A21 is the last one, this should be equivalent to the previous
+    # Include everything between two labels. Since b0 is the first label
+    # and b3 is the last one, this should be equivalent to the previous
     # tests.
-    assert array.sum(geo['A11:A21']).shape == (116, 2, 15)
-    assert_array_equal(array.sum(geo['A11:A21']), array.sum(geo))
-    assert_array_equal(array.sum(geo['A11':'A21']), array.sum(geo))
+    assert array.sum(b['b0:b3']).shape == (19, 2, 6)
+    assert_array_equal(array.sum(b['b0:b3']), array.sum(b))
+    assert_array_equal(array.sum(b['b0':'b3']), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
-    assert array.sum((geo[:],)).shape == (116, 1, 2, 15)
+    assert array.sum((b[:],)).shape == (19, 1, 2, 6)
 
     # a.3) several groups
     # string groups
-    assert array.sum((vla, wal, bru)).shape == (116, 3, 2, 15)
+    assert array.sum((g1, g2, g3)).shape == (19, 3, 2, 6)
 
     # XXX: do we also want to support this? I do not really like it because
     # it gets tricky when we have some other axes into play. For now the
-    # error message is unclear because it first aggregates on "vla", then
-    # tries to aggregate on "wal", but there is no "geo" dimension anymore.
-    # self.assertEqual(array.sum(vla, wal, bru).shape, (116, 3, 2, 15))
+    # error message is unclear because it first aggregates on "g1", then
+    # tries to aggregate on "g2", but there is no "b" dimension anymore.
+    # assert array.sum(g1, g2, g3).shape == (19, 3, 2, 6)
 
     # with one label in several groups
-    assert array.sum((sex['M'], sex[['M', 'F']])).shape == (116, 44, 2, 15)
-    assert array.sum((sex['M'], sex['M', 'F'])).shape == (116, 44, 2, 15)
-    assert array.sum((sex['M'], sex['M,F'])).shape == (116, 44, 2, 15)
+    assert array.sum((c['c0'], c[['c0', 'c1']])).shape == (19, 12, 2, 6)
+    assert array.sum((c['c0'], c['c0', 'c1'])).shape == (19, 12, 2, 6)
+    assert array.sum((c['c0'], c['c0,c1'])).shape == (19, 12, 2, 6)
     # XXX: do we want to support this?
-    # self.assertEqual(array.sum(sex['M;M,F']).shape, (116, 44, 2, 15))
+    # assert array.sum(c['c0;c0,c1']).shape == (19, 12, 2, 6)
 
-    res = array.sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 15)
+    res = array.sum((g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 6)
 
     # a.4) several dimensions at the same time
-    # self.assertEqual(array.sum(lipro['P01,P03;P02,P05;P01:'],
-    #                         (vla, wal, bru, belgium)).shape,
-    #                  (116, 4, 2, 3))
-    res = array.sum((lipro['P01,P03'], lipro['P02,P05'], lipro[:]), (vla, wal, bru, lg_belgium))
-    assert res.shape == (116, 4, 2, 3)
+    # res = array.sum(d['d1,d3;d2,d5;d1:'], (g1, g2, g3, g_all))
+    # assert res.shape == (19, 4, 2, 3)
+    res = array.sum((d['d1,d3'], d['d2,d5'], d[:]), (g1, g2, g3, g_all))
+    assert res.shape == (19, 4, 2, 3)
 
     # b) both axis aggregate and group aggregate at the same time
-    res = array.sum(age, sex, (vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c, (g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum(age, sex).sum((vla, wal, bru, lg_belgium))
-    assert res.shape == (4, 15)
+    res = array.sum(a, c).sum((g1, g2, g3, g_all))
+    assert res.shape == (4, 6)
 
 
 def test_group_agg_one_axis():
@@ -2217,244 +2208,239 @@ def test_group_agg_on_bool_array():
 
 # group aggregates on a group-aggregated array
 def test_group_agg_on_group_agg(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
+    g1, g2, g3 = b_group1_str, b_group2_str, b_group3_str
 
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+    agg_arr = array.sum(a, c).sum(b=(g1, g2, g3, all_b))
 
     # 1) one group => collapse dimension
-    assert reg.sum(lipro='P01,P02').shape == (4,)
+    assert agg_arr.sum(d='d1,d2').shape == (4,)
 
     # 2) a tuple of one group => do not collapse dimension
-    assert reg.sum(lipro=('P01,P02',)).shape == (4, 1)
+    assert agg_arr.sum(d=('d1,d2',)).shape == (4, 1)
 
     # 3) several groups
-    assert reg.sum(lipro='P01;P02;:').shape == (4, 3)
+    assert agg_arr.sum(d='d1;d2;:').shape == (4, 3)
 
     # this is INVALID
     # TODO: raise a nice exception
-    # regsum = reg.sum(lipro='P01,P02,:')
+    # agg_sum = agg_arr.sum(d='d1,d2,:')
 
     # this is currently allowed even though it can be confusing:
-    # P01 and P02 are both groups with one element each.
-    assert reg.sum(lipro=('P01', 'P02', ':')).shape == (4, 3)
-    assert reg.sum(lipro=('P01', 'P02', lipro[:])).shape == (4, 3)
+    # d1 and d2 are both groups with one element each.
+    assert agg_arr.sum(d=('d1', 'd2', ':')).shape == (4, 3)
+    assert agg_arr.sum(d=('d1', 'd2', d[:])).shape == (4, 3)
 
     # explicit groups are better
-    assert reg.sum(lipro=('P01,', 'P02,', ':')).shape == (4, 3)
-    assert reg.sum(lipro=(['P01'], ['P02'], ':')).shape == (4, 3)
+    assert agg_arr.sum(d=('d1,', 'd2,', ':')).shape == (4, 3)
+    assert agg_arr.sum(d=(['d1'], ['d2'], ':')).shape == (4, 3)
 
     # 4) groups on the aggregated dimension
 
-    # self.assertEqual(reg.sum(geo=([vla, bru], [wal, bru])).shape, (2, 3))
-    # vla, wal, bru
+    # assert agg_arr.sum(b=([g1, g3], [g2, g3])).shape == (2, 3)
+    # g1, g2, g3
 
 
 # group aggregates on a group-aggregated array
 def test_group_agg_on_group_agg_nokw(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
+    g1, g2, g3 = b_group1_str, b_group2_str, b_group3_str
 
-    reg = array.sum(age, sex).sum((vla, wal, bru, belgium))
+    agg_arr = array.sum(a, c).sum((g1, g2, g3, all_b))
     # XXX: should this be supported too? (it currently fails)
-    # reg = array.sum(age, sex).sum(vla, wal, bru, belgium)
+    # agg_arr = array.sum(a, c).sum(g1, g2, g3, all_b)
 
     # 1) one group => collapse dimension
-    assert reg.sum('P01,P02').shape == (4,)
+    assert agg_arr.sum('d1,d2').shape == (4,)
 
     # 2) a tuple of one group => do not collapse dimension
-    assert reg.sum(('P01,P02',)).shape == (4, 1)
+    assert agg_arr.sum(('d1,d2',)).shape == (4, 1)
 
     # 3) several groups
     # : is ambiguous
-    # self.assertEqual(reg.sum('P01;P02;:').shape, (4, 3))
-    assert reg.sum('P01;P02;P01:').shape == (4, 3)
+    # assert agg_arr.sum('d1;d2;:').shape == (4, 3)
+    assert agg_arr.sum('d1;d2;d1:').shape == (4, 3)
 
     # this is INVALID
     # TODO: raise a nice exception
-    # regsum = reg.sum(lipro='P01,P02,:')
+    # agg_sum = agg_arr.sum(d='d1,d2,:')
 
     # this is currently allowed even though it can be confusing:
-    # P01 and P02 are both groups with one element each.
-    assert reg.sum(('P01', 'P02', 'P01:')).shape == (4, 3)
-    assert reg.sum(('P01', 'P02', lipro[:])).shape == (4, 3)
+    # d1 and d2 are both groups with one element each.
+    assert agg_arr.sum(('d1', 'd2', 'd1:')).shape == (4, 3)
+    assert agg_arr.sum(('d1', 'd2', d[:])).shape == (4, 3)
 
     # explicit groups are better
-    assert reg.sum(('P01,', 'P02,', 'P01:')).shape == (4, 3)
-    assert reg.sum((['P01'], ['P02'], 'P01:')).shape == (4, 3)
+    assert agg_arr.sum(('d1,', 'd2,', 'd1:')).shape == (4, 3)
+    assert agg_arr.sum((['d1'], ['d2'], 'd1:')).shape == (4, 3)
 
     # 4) groups on the aggregated dimension
 
-    # self.assertEqual(reg.sum(geo=([vla, bru], [wal, bru])).shape, (2, 3))
-    # vla, wal, bru
+    # assert agg_arr.sum(b=([g1, g3], [g2, g3])).shape == (2, 3)
+    # g1, g2, g3
 
 
 def test_getitem_on_group_agg(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
 
     # using a string
-    vla = vla_str
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+    agg_arr = array.sum(a, c).sum(b=b_groups_all)
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[b_group1].shape == (6,)
+    assert agg_arr[(b_group1,)].shape == (6,)
+    assert agg_arr[(b_group1, slice(None))].shape == (6,)
+    assert agg_arr[b_group1, slice(None)].shape == (6,)
+    assert agg_arr[b_group1, :].shape == (6,)
 
     # one more level...
-    assert reg[vla]['P03'] == 389049848.0
+    assert agg_arr[b_group1]['d3'] == 355642.0
 
     # using an anonymous LGroup
-    vla = geo[vla_str]
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+    lg1 = b[b_group1_str]
+    agg_arr = array.sum(a, c).sum(b=(lg1, b_group2, b_group2, all_b))
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[lg1].shape == (6,)
+    assert agg_arr[(lg1,)].shape == (6,)
+    assert agg_arr[(lg1, slice(None))].shape == (6,)
+    assert agg_arr[lg1, slice(None)].shape == (6,)
+    assert agg_arr[lg1, :].shape == (6,)
 
     # using a named LGroup
-    vla = geo[vla_str] >> 'Vlaanderen'
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
+    lg1 = b[b_group1_str] >> 'g1'
+    agg_arr = array.sum(a, c).sum(b=(lg1, b_group2, b_group2, all_b))
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[lg1].shape == (6,)
+    assert agg_arr[(lg1,)].shape == (6,)
+    assert agg_arr[(lg1, slice(None))].shape == (6,)
+    assert agg_arr[lg1, slice(None)].shape == (6,)
+    assert agg_arr[lg1, :].shape == (6,)
 
 
 def test_getitem_on_group_agg_nokw(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
 
     # using a string
-    vla = vla_str
-    reg = array.sum(age, sex).sum((vla, wal, bru, belgium))
+    agg_arr = array.sum(a, c).sum((b_group1, b_group2, b_group3, all_b))
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[b_group1].shape == (6,)
+    assert agg_arr[(b_group1,)].shape == (6,)
+    assert agg_arr[(b_group1, slice(None))].shape == (6,)
+    assert agg_arr[b_group1, slice(None)].shape == (6,)
+    assert agg_arr[b_group1, :].shape == (6,)
 
     # one more level...
-    assert reg[vla]['P03'] == 389049848.0
+    assert agg_arr[b_group1]['d3'] == 355642.0
 
     # using an anonymous LGroup
-    vla = geo[vla_str]
-    reg = array.sum(age, sex).sum((vla, wal, bru, belgium))
+    lg1 = b[b_group1_str]
+    agg_arr = array.sum(a, c).sum((lg1, b_group2, b_group3, all_b))
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[lg1].shape == (6,)
+    assert agg_arr[(lg1,)].shape == (6,)
+    assert agg_arr[(lg1, slice(None))].shape == (6,)
+    assert agg_arr[lg1, slice(None)].shape == (6,)
+    assert agg_arr[lg1, :].shape == (6,)
 
     # using a named LGroup
-    vla = geo[vla_str] >> 'Vlaanderen'
-    reg = array.sum(age, sex).sum((vla, wal, bru, belgium))
+    lg1 = b[b_group1_str] >> 'g1'
+    agg_arr = array.sum(a, c).sum((lg1, b_group2, b_group3, all_b))
     # the following are all equivalent
-    assert reg[vla].shape == (15,)
-    assert reg[(vla,)].shape == (15,)
-    assert reg[(vla, slice(None))].shape == (15,)
-    assert reg[vla, slice(None)].shape == (15,)
-    assert reg[vla, :].shape == (15,)
+    assert agg_arr[lg1].shape == (6,)
+    assert agg_arr[(lg1,)].shape == (6,)
+    assert agg_arr[(lg1, slice(None))].shape == (6,)
+    assert agg_arr[lg1, slice(None)].shape == (6,)
+    assert agg_arr[lg1, :].shape == (6,)
 
 
 def test_filter_on_group_agg(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
 
     # using a string
-    # vla = vla_str
-    # reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-    # assert reg.filter(geo=vla).shape == (15,)
+    # g1 = b_group1
+    # agg_arr = array.sum(a, c).sum(b=(g1, b_group2, b_group3, all_b))
+    # assert agg_arr.filter(b=g1).shape == (6,)
 
     # using a named LGroup
-    vla = geo[vla_str] >> 'Vlaanderen'
-    reg = array.sum(age, sex).sum(geo=(vla, wal, bru, belgium))
-    assert reg.filter(geo=vla).shape == (15,)
+    g1 = b[b_group1_str] >> 'g1'
+    agg_arr = array.sum(a, c).sum(b=(g1, b_group2, b_group3, all_b))
+    assert agg_arr.filter(b=g1).shape == (6,)
 
-    # Note that reg.filter(geo=(vla,)) does NOT work. It might be a
-    # little confusing for users, because reg[(vla,)] works but it is
-    # normal because reg.filter(geo=(vla,)) is equivalent to:
-    # reg[((vla,),)] or reg[(vla,), :]
+    # Note that agg_arr.filter(b=(g1,)) does NOT work. It might be a
+    # little confusing for users, because agg_arr[(g1,)] works but it is
+    # normal because agg_arr.filter(b=(g1,)) is equivalent to:
+    # agg_arr[((g1,),)] or agg_arr[(g1,), :]
 
     # mixed LGroup/string slices
-    child = age[:17]
-    child_named = age[:17] >> 'child'
-    working = age[18:64]
-    retired = age[65:]
+    a0to5 = a[:5]
+    a0to5_named = a[:5] >> 'a0to5'
+    a6to13 = a[6:13]
+    a14plus = a[14:]
 
-    byage = array.sum(age=(child, 5, working, retired))
-    assert byage.shape == (4, 44, 2, 15)
+    bya = array.sum(a=(a0to5, 5, a6to13, a14plus))
+    assert bya.shape == (4, 12, 2, 6)
 
-    byage = array.sum(age=(child, slice(5, 10), working, retired))
-    assert byage.shape == (4, 44, 2, 15)
+    bya = array.sum(a=(a0to5, slice(5, 10), a6to13, a14plus))
+    assert bya.shape == (4, 12, 2, 6)
 
     # filter on an aggregated larray created with mixed groups
-    # assert byage.filter(age=':17').shape == (44, 2, 15)
+    # assert bya.filter(a=':17').shape == (12, 2, 6)
 
-    byage = array.sum(age=(child_named, 5, working, retired))
-    assert byage.filter(age=child_named).shape == (44, 2, 15)
+    bya = array.sum(a=(a0to5_named, 5, a6to13, a14plus))
+    assert bya.filter(a=a0to5_named).shape == (12, 2, 6)
 
 
 def test_sum_several_lg_groups(array):
     # 1) aggregated array created using LGroups
     # -----------------------------------------
-    fla = geo[vla_str] >> 'Flanders'
-    wal = geo[wal_str] >> 'Wallonia'
-    bru = geo[bru_str] >> 'Brussels'
+    lg1 = b[b_group1_str] >> 'lg1'
+    lg2 = b[b_group2_str] >> 'lg2'
+    lg3 = b[b_group3_str] >> 'lg3'
 
-    reg = array.sum(geo=(fla, wal, bru))
-    assert reg.shape == (116, 3, 2, 15)
+    agg_arr = array.sum(b=(lg1, lg2, lg3))
+    assert agg_arr.shape == (19, 3, 2, 6)
 
     # the result is indexable
     # 1.a) by LGroup
-    assert reg.filter(geo=fla).shape == (116, 2, 15)
-    assert reg.filter(geo=(fla, wal)).shape == (116, 2, 2, 15)
+    assert agg_arr.filter(b=lg1).shape == (19, 2, 6)
+    assert agg_arr.filter(b=(lg1, lg2)).shape == (19, 2, 2, 6)
 
     # 1.b) by string (name of groups)
-    assert reg.filter(geo='Flanders').shape == (116, 2, 15)
-    assert reg.filter(geo='Flanders,Wallonia').shape == (116, 2, 2, 15)
+    assert agg_arr.filter(b='lg1').shape == (19, 2, 6)
+    assert agg_arr.filter(b='lg1,lg2').shape == (19, 2, 2, 6)
 
     # 2) aggregated array created using string groups
     # -----------------------------------------------
-    reg = array.sum(geo=(vla_str, wal_str, bru_str))
-    assert reg.shape == (116, 3, 2, 15)
+    agg_arr = array.sum(b=(b_group1_str, b_group2_str, b_group3_str))
+    assert agg_arr.shape == (19, 3, 2, 6)
 
     # the result is indexable
     # 2.a) by string (def)
-    # assert reg.filter(geo=vla_str).shape == (116, 2, 15)
-    assert reg.filter(geo=(vla_str, wal_str)).shape == (116, 2, 2, 15)
+    # assert agg_arr.filter(b=b_group1).shape == (19, 2, 6)
+    assert agg_arr.filter(b=(b_group1_str, b_group2_str)).shape == (19, 2, 2, 6)
 
     # 2.b) by LGroup
-    # assert reg.filter(geo=fla).shape == (116, 2, 15)
-    # assert reg.filter(geo=(fla, wal)).shape == (116, 2, 2, 15)
+    # assert agg_arr.filter(b=lg1).shape == (19, 2, 6)
+    # assert agg_arr.filter(b=(lg1, lg2)).shape == (19, 2, 2, 6)
 
 
 def test_sum_with_groups_from_other_axis(small_array):
     # use a group from another *compatible* axis
-    lipro2 = Axis('lipro=P01..P15')
-    assert small_array.sum(lipro=lipro2['P01,P03']).shape == (2,)
+    d2 = Axis('d=d1..d6')
+    assert small_array.sum(d=d2['d1,d3']).shape == (2,)
 
     # use (compatible) group from another *incompatible* axis
     # XXX: I am unsure whether this should be allowed. Maybe we
     # should simply check that the group is valid in axis, but that
     # will trigger a pretty meaningful error anyway
-    lipro3 = Axis('lipro=P01,P03,P05')
-    assert small_array.sum(lipro3['P01,P03']).shape == (2,)
+    d3 = Axis('d=d1,d3,d5')
+    assert small_array.sum(d3['d1,d3']).shape == (2,)
 
     # use a group (from another axis) which is incompatible with the axis of
     # the same name in the array
-    lipro4 = Axis('lipro=P01,P03,P16')
-    codes = "'P01', 'P02', 'P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15'"
-    with must_raise(ValueError, f"lipro['P01', 'P16'] is not a valid label for the 'lipro' axis with labels: {codes}"):
-        small_array.sum(lipro4['P01,P16'])
+    d4 = Axis('d=d1,d3,d7')
+    codes = "'d1', 'd2', 'd3', 'd4', 'd5', 'd6'"
+    with must_raise(ValueError, f"d['d1', 'd7'] is not a valid label for the 'd' axis with labels: {codes}"):
+        small_array.sum(d4['d1,d7'])
 
 
 def test_agg_kwargs(array):
@@ -2467,69 +2453,69 @@ def test_agg_kwargs(array):
     assert array.std(ddof=0) == raw.std(ddof=0)
 
     # out
-    res = array.std(X.sex)
+    res = array.std(X.c)
     out = zeros_like(res)
-    array.std(X.sex, out=out)
+    array.std(X.c, out=out)
     assert_array_equal(res, out)
 
 
 def test_agg_by(array):
-    age, geo, sex, lipro = array.axes
-    vla, wal, bru = vla_str, wal_str, bru_str
+    a, b, c, d = array.axes
+    g1, g2, g3 = b_group1_str, b_group2_str, b_group3_str
 
     # no group or axis
     assert array.sum_by().shape == ()
     assert array.sum_by() == array.sum()
 
     # all axes
-    assert array.sum_by(geo, age, lipro, sex).equals(array)
-    assert array.sum_by(age, geo, sex, lipro).equals(array)
+    assert array.sum_by(b, a, d, c).equals(array)
+    assert array.sum_by(a, b, c, d).equals(array)
 
     # a) group aggregate on a fresh array
 
     # a.1) one group
-    res = array.sum_by(geo='A11,A21,A25')
+    res = array.sum_by(b='b0,b3,b6')
     assert res.shape == ()
-    assert res == array.sum(geo='A11,A21,A25').sum()
+    assert res == array.sum(b='b0,b3,b6').sum()
 
     # a.2) a tuple of one group
-    res = array.sum_by(geo=(geo[:],))
+    res = array.sum_by(b=(b[:],))
     assert res.shape == (1,)
-    assert_array_equal(res, array.sum(age, sex, lipro, geo=(geo[:],)))
+    assert_array_equal(res, array.sum(a, c, d, b=(b[:],)))
 
     # a.3) several groups
     # string groups
-    res = array.sum_by(geo=(vla, wal, bru))
+    res = array.sum_by(b=(g1, g2, g3))
     assert res.shape == (3,)
-    assert_array_equal(res, array.sum(age, sex, lipro, geo=(vla, wal, bru)))
+    assert_array_equal(res, array.sum(a, c, d, b=(g1, g2, g3)))
 
     # with one label in several groups
-    assert array.sum_by(sex=(['M'], ['M', 'F'])).shape == (2,)
-    assert array.sum_by(sex=('M', 'M,F')).shape == (2,)
+    assert array.sum_by(c=(['c0'], ['c0', 'c1'])).shape == (2,)
+    assert array.sum_by(c=('c0', 'c0,c1')).shape == (2,)
 
-    res = array.sum_by(sex='M;M,F')
+    res = array.sum_by(c='c0;c0,c1')
     assert res.shape == (2,)
-    assert_array_equal(res, array.sum(age, geo, lipro, sex='M;M,F'))
+    assert_array_equal(res, array.sum(a, b, d, c='c0;c0,c1'))
 
     # a.4) several dimensions at the same time
-    res = array.sum_by(geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:')
+    res = array.sum_by(b=(g1, g2, g3, all_b), d='d1,d3;d2,d5;:')
     assert res.shape == (4, 3)
-    assert_array_equal(res, array.sum(age, sex, geo=(vla, wal, bru, belgium), lipro='P01,P03;P02,P05;:'))
+    assert_array_equal(res, array.sum(a, c, b=(g1, g2, g3, all_b), d='d1,d3;d2,d5;:'))
 
     # b) both axis aggregate and group aggregate at the same time
     # Note that you must list "full axes" aggregates first (Python does not allow non-kwargs after kwargs.
-    res = array.sum_by(sex, geo=(vla, wal, bru, belgium))
+    res = array.sum_by(c, b=(g1, g2, g3, all_b))
     assert res.shape == (4, 2)
-    assert_array_equal(res, array.sum(age, lipro, geo=(vla, wal, bru, belgium)))
+    assert_array_equal(res, array.sum(a, d, b=(g1, g2, g3, all_b)))
 
     # c) chain group aggregate after axis aggregate
-    res = array.sum_by(geo, sex)
-    assert res.shape == (44, 2)
-    assert_array_equal(res, array.sum(age, lipro))
+    res = array.sum_by(b, c)
+    assert res.shape == (12, 2)
+    assert_array_equal(res, array.sum(a, d))
 
-    res2 = res.sum_by(geo=(vla, wal, bru, belgium))
+    res2 = res.sum_by(b=(g1, g2, g3, all_b))
     assert res2.shape == (4,)
-    assert_array_equal(res2, res.sum(sex, geo=(vla, wal, bru, belgium)))
+    assert_array_equal(res2, res.sum(c, b=(g1, g2, g3, all_b)))
 
 
 def test_agg_igroup():
@@ -2538,97 +2524,92 @@ def test_agg_igroup():
     assert_array_equal(res.a.labels, [':a1', 'a1:'])
 
 
-def test_ratio(array):
-    age, geo, sex, lipro = array.axes
+def test_ratio():
+    arr = ndtest((3, 4))
+    a, b = arr.axes
 
-    regions = (vla_str, wal_str, bru_str, belgium)
-    reg = array.sum(age, sex, regions)
-    assert reg.shape == (4, 15)
+    expected = arr / arr.sum()
+    res = arr.ratio()
+    assert np.isclose(res.sum(), 1.0)
 
-    fla = geo[vla_str] >> 'Flanders'
-    wal = geo[wal_str] >> 'Wallonia'
-    bru = geo[bru_str] >> 'Brussels'
-    regions = (fla, wal, bru)
-    reg = array.sum(age, sex, regions)
+    assert_larray_equal(res, expected)
+    assert_larray_equal(arr.ratio(a, b), expected)
+    assert_larray_equal(arr.ratio('a', 'b'), expected)
+    assert_larray_equal(arr.ratio(X.a, X.b), expected)
 
-    ratio = reg.ratio()
-    assert_array_equal(ratio, reg / reg.sum(geo, lipro))
-    assert ratio.shape == (3, 15)
+    expected = arr / arr.sum(a)
+    assert_larray_equal(arr.ratio(a), expected)
+    assert_larray_equal(arr.ratio('a'), expected)
+    assert_larray_equal(arr.ratio(X.a), expected)
 
-    ratio = reg.ratio(geo)
-    assert_array_equal(ratio, reg / reg.sum(geo))
-    assert ratio.shape == (3, 15)
-
-    ratio = reg.ratio(geo, lipro)
-    assert_array_equal(ratio, reg / reg.sum(geo, lipro))
-    assert ratio.shape == (3, 15)
-    assert ratio.sum() == 1.0
+    expected = arr / arr.sum(b)
+    assert_larray_equal(arr.ratio(b), expected)
+    assert_larray_equal(arr.ratio('b'), expected)
+    assert_larray_equal(arr.ratio(X.b), expected)
 
 
-def test_percent(array):
-    age, geo, sex, lipro = array.axes
+def test_percent():
+    arr = ndtest((3, 4))
+    a, b = arr.axes
 
-    regions = (vla_str, wal_str, bru_str, belgium)
-    reg = array.sum(age, sex, regions)
-    assert reg.shape == (4, 15)
+    expected = arr * 100.0 / arr.sum()
+    res = arr.percent()
+    assert np.isclose(res.sum(), 100.0)
 
-    fla = geo[vla_str] >> 'Flanders'
-    wal = geo[wal_str] >> 'Wallonia'
-    bru = geo[bru_str] >> 'Brussels'
-    regions = (fla, wal, bru)
-    reg = array.sum(age, sex, regions)
+    assert_larray_equal(res, expected)
+    assert_larray_equal(arr.percent(a, b), expected)
+    assert_larray_equal(arr.percent('a', 'b'), expected)
+    assert_larray_equal(arr.percent(X.a, X.b), expected)
 
-    percent = reg.percent()
-    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo, lipro)))
-    assert percent.shape == (3, 15)
+    expected = arr * 100.0 / arr.sum(a)
+    assert_larray_equal(arr.percent(a), expected)
+    assert_larray_equal(arr.percent('a'), expected)
+    assert_larray_equal(arr.percent(X.a), expected)
 
-    percent = reg.percent(geo)
-    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo)))
-    assert percent.shape == (3, 15)
-
-    percent = reg.percent(geo, lipro)
-    assert_array_equal(percent, (reg * 100.0 / reg.sum(geo, lipro)))
-    assert percent.shape == (3, 15)
-    assert round(abs(percent.sum() - 100.0), 7) == 0
+    expected = arr * 100.0 / arr.sum(b)
+    assert_larray_equal(arr.percent(b), expected)
+    assert_larray_equal(arr.percent('b'), expected)
+    assert_larray_equal(arr.percent(X.b), expected)
 
 
 def test_total(array):
-    age, geo, sex, lipro = array.axes
+    a, b, c, d = array.axes
     # array = small_array
-    # sex, lipro = array.axes
+    # c, d = array.axes
 
-    assert array.with_total().shape == (117, 45, 3, 16)
-    assert array.with_total(sex).shape == (116, 44, 3, 15)
-    assert array.with_total(lipro).shape == (116, 44, 2, 16)
-    assert array.with_total(sex, lipro).shape == (116, 44, 3, 16)
+    assert array.with_total().shape == (20, 13, 3, 7)
+    assert array.with_total(c).shape == (19, 12, 3, 6)
+    assert array.with_total(d).shape == (19, 12, 2, 7)
+    assert array.with_total(c, d).shape == (19, 12, 3, 7)
 
-    fla = geo[vla_str] >> 'Flanders'
-    wal = geo[wal_str] >> 'Wallonia'
-    bru = geo[bru_str] >> 'Brussels'
-    bel = geo[:] >> 'Belgium'
+    g1 = b[b_group1_str] >> 'g1'
+    g2 = b[b_group2_str] >> 'g2'
+    g3 = b[b_group3_str] >> 'g3'
+    g_all = b[:] >> 'Belgium'
 
-    assert array.with_total(geo=(fla, wal, bru), op=mean).shape == (116, 47, 2, 15)
-    assert array.with_total((fla, wal, bru), op=mean).shape == (116, 47, 2, 15)
-    # works but "wrong" for X.geo (double what is expected because it includes fla wal & bru)
+    assert array.with_total(b=(g1, g2, g3), op=mean).shape == (19, 15, 2, 6)
+    assert array.with_total((g1, g2, g3), op=mean).shape == (19, 15, 2, 6)
+    # works but "wrong" for X.b (double what is expected because it includes g1 g2 & g3)
     # TODO: we probably want to display a warning (or even an error?) in that case.
     # If we really want that behavior, we can still split the operation:
-    # .with_total((fla, wal, bru)).with_total(X.geo)
+    # .with_total((g1, g2, g3)).with_total(X.b)
     # OR we might want to only sum the axis as it was before the op (but that does not play well when working with
     #    multiple axes).
-    a1 = array.with_total(X.sex, (fla, wal, bru), X.geo, X.lipro)
-    assert a1.shape == (116, 48, 3, 16)
+    arr1 = array.with_total(X.c, (g1, g2, g3), X.b, X.d)
+    assert arr1.shape == (19, 16, 3, 7)
 
     # correct total but the order is not very nice
-    a2 = array.with_total(X.sex, X.geo, (fla, wal, bru), X.lipro)
-    assert a2.shape == (116, 48, 3, 16)
+    arr2 = array.with_total(X.c, X.b, (g1, g2, g3), X.d)
+    assert arr2.shape == (19, 16, 3, 7)
 
     # the correct way to do it
-    a3 = array.with_total(X.sex, (fla, wal, bru, bel), X.lipro)
-    assert a3.shape == (116, 48, 3, 16)
+    arr3 = array.with_total(X.c, (g1, g2, g3, g_all), X.d)
+    assert arr3.shape == (19, 16, 3, 7)
 
-    # a4 = array.with_total((lipro[':P05'], lipro['P05:']), op=mean)
-    a4 = array.with_total((':P05', 'P05:'), op=mean)
-    assert a4.shape == (116, 44, 2, 17)
+    # adding two groups at once
+    # arr4 = array.with_total((d[':d5'], d['d5:']), op=mean)
+    arr4 = array.with_total((':d4', 'd4:'), op=mean)
+    assert arr4.shape == (19, 12, 2, 8)
 
 
 def test_transpose():
@@ -2651,7 +2632,7 @@ def test_transpose_anonymous():
     a = ndtest([Axis(2), Axis(3), Axis(4)])
 
     # reordered = a.transpose(0, 2, 1)
-    # self.assertEqual(reordered.shape, (2, 4, 3))
+    # assert reordered.shape == (2, 4, 3)
 
     # axes = [1, 2]
     # => union(axes, )
@@ -2708,7 +2689,7 @@ def test_binary_ops(small_array):
     assert_array_equal(30 / (small_array + 1), 30 / (raw + 1))
 
     raw_int = raw.astype(int)
-    la_int = Array(raw_int, axes=(sex, lipro))
+    la_int = Array(raw_int, axes=(c, d))
     assert_array_equal(la_int / 2, raw_int / 2)
     assert_array_equal(la_int // 2, raw_int // 2)
 
@@ -2738,9 +2719,9 @@ def test_binary_ops(small_array):
     assert_array_equal(res, ones(small_array.axes, dtype=bool))
 
     # Array + Axis
-    arr = ndtest('age=0..10')
-    res = arr + arr.age
-    assert_array_equal(res, arr + asarray(arr.age))
+    arr = ndtest('a=0..10')
+    res = arr + arr.a
+    assert_array_equal(res, arr + asarray(arr.a))
 
 
 def test_binary_ops_no_name_axes(small_array):
@@ -2830,9 +2811,9 @@ def test_broadcasting_no_name():
 
 
 def test_binary_ops_with_scalar_group():
-    time = Axis('time=2015..2019')
+    time = Axis('time=206..2019')
     arr = ndtest(3)
-    expected = arr + 2015
+    expected = arr + 206
     assert_larray_equal(time.i[0] + arr, expected)
     assert_larray_equal(arr + time.i[0], expected)
 
@@ -2854,8 +2835,8 @@ def test_unary_ops(small_array):
 
 def test_mean(small_array):
     raw = small_array.data
-    sex, lipro = small_array.axes
-    assert_array_equal(small_array.mean(lipro), raw.mean(1))
+    c, d = small_array.axes
+    assert_array_equal(small_array.mean(d), raw.mean(1))
 
 
 def test_sequence():
@@ -2948,32 +2929,32 @@ def test_sort_values():
 
 
 def test_set_labels(small_array):
-    small_array.set_labels(X.sex, ['Man', 'Woman'], inplace=True)
-    expected = small_array.set_labels(X.sex, ['Man', 'Woman'])
+    small_array.set_labels(X.c, ['Man', 'Woman'], inplace=True)
+    expected = small_array.set_labels(X.c, ['Man', 'Woman'])
     assert_array_equal(small_array, expected)
 
 
 def test_set_axes(small_array):
-    lipro2 = Axis([label.replace('P', 'Q') for label in lipro.labels], 'lipro2')
-    sex2 = Axis(['Man', 'Woman'], 'sex2')
+    d2 = Axis([label.replace('P', 'Q') for label in d.labels], 'd2')
+    c2 = Axis(['Man', 'Woman'], 'c2')
 
-    la = Array(small_array.data, axes=(sex, lipro2))
+    la = Array(small_array.data, axes=(c, d2))
     # replace one axis
-    la2 = small_array.set_axes(X.lipro, lipro2)
+    la2 = small_array.set_axes(X.d, d2)
     assert_array_equal(la, la2)
 
-    la = Array(small_array.data, axes=(sex2, lipro2))
+    la = Array(small_array.data, axes=(c2, d2))
     # all at once
-    la2 = small_array.set_axes([sex2, lipro2])
+    la2 = small_array.set_axes([c2, d2])
     assert_array_equal(la, la2)
     # using keywrods args
-    la2 = small_array.set_axes(sex=sex2, lipro=lipro2)
+    la2 = small_array.set_axes(c=c2, d=d2)
     assert_array_equal(la, la2)
     # using dict
-    la2 = small_array.set_axes({X.sex: sex2, X.lipro: lipro2})
+    la2 = small_array.set_axes({X.c: c2, X.d: d2})
     assert_array_equal(la, la2)
     # using list of pairs (axis_to_replace, new_axis)
-    la2 = small_array.set_axes([(X.sex, sex2), (X.lipro, lipro2)])
+    la2 = small_array.set_axes([(X.c, c2), (X.d, d2)])
     assert_array_equal(la, la2)
 
 
@@ -3026,31 +3007,32 @@ def test_expand():
     country = Axis("country=BE,FR,DE")
     arr = ndtest(country)
 
-    out1 = empty((sex, country))
+    out1 = empty((c, country))
     arr.expand(out=out1)
 
-    out2 = empty((sex, country))
+    out2 = empty((c, country))
     out2[:] = arr
 
     assert_array_equal(out1, out2)
 
 
 def test_append(small_array):
-    sex, lipro = small_array.axes
+    c, d = small_array.axes
 
-    small_array = small_array.append(lipro, small_array.sum(lipro), label='sum')
-    assert small_array.shape == (2, 16)
-    small_array = small_array.append(sex, small_array.sum(sex), label='sum')
-    assert small_array.shape == (3, 16)
+    arr2 = small_array.append(d, small_array.sum(d), label='sum')
+    assert arr2.shape == (2, 7)
 
-    # crap the sex axis is different !!!! we don't have this problem with
+    arr3 = arr2.append(c, arr2.sum(c), label='sum')
+    assert arr3.shape == (3, 7)
+
+    # crap the c axis is different !!!! we don't have this problem with
     # the kwargs syntax below
-    # small_array = small_array.append(small_array.mean(sex), axis=sex, label='mean')
-    # self.assertEqual(small_array.shape, (4, 16))
+    # arr4 = arr3.append(arr3.mean(c), axis=c, label='mean')
+    # assert arr4.shape == (4, 7)
 
     # another syntax (which implies we could not have an axis named "label")
-    # small_array = small_array.append(lipro=small_array.sum(lipro), label='sum')
-    # self.assertEqual(small_array.shape, (117, 44, 2, 15))
+    # arr5 = arr4.append(d=arr4.sum(d), label='sum')
+    # assert arr5.shape == (4, 8)
 
 
 def test_insert():
@@ -3233,23 +3215,23 @@ def test_drop():
 # the aim of this test is to drop the last *value* of an axis, but instead
 # of dropping the last axis *label*, drop the first one.
 def test_shift_axis(small_array):
-    sex, lipro = small_array.axes
+    c, d = small_array.axes
 
     expected = from_string(r"""
-    sex\lipro  P02  P03  P04  P05  P06  P07  P08  P09  P10  P11  P12  P13  P14  P15
-            M    0    1    2    3    4    5    6    7    8    9   10   11   12   13
-            F   15   16   17   18   19   20   21   22   23   24   25   26   27   28""")
+    c\d  d2  d3  d4  d5  d6
+      c0   0   1   2   3   4
+      c1   6   7   8   9  10""")
 
-    res = Array(small_array[:, :'P14'], axes=[sex, Axis(lipro.labels[1:], 'lipro')])
+    res = Array(small_array[:, :'d5'], axes=[c, Axis(d.labels[1:], 'd')])
     assert_array_equal(res, expected)
 
-    res = Array(small_array[:, :'P14'], axes=[sex, lipro.subaxis(slice(1, None))])
+    res = Array(small_array[:, :'d5'], axes=[c, d.subaxis(slice(1, None))])
     assert_array_equal(res, expected)
 
     # We can also modify the axis in-place (dangerous!)
-    # lipro.labels = np.append(lipro.labels[1:], lipro.labels[0])
-    res = small_array[:, :'P14']
-    res.axes.lipro.labels = lipro.labels[1:]
+    # d.labels = np.append(d.labels[1:], d.labels[0])
+    res = small_array[:, :'d5']
+    res.axes.d.labels = d.labels[1:]
     assert_array_equal(res, expected)
 
 
@@ -3270,15 +3252,15 @@ a1_b1   2   1   2   0""")
 
 
 def test_extend(small_array):
-    sex, lipro = small_array.axes
+    c, d = small_array.axes
 
-    all_lipro = lipro[:]
-    tail = small_array.sum(lipro=(all_lipro,))
-    small_array = small_array.extend(lipro, tail)
-    assert small_array.shape == (2, 16)
+    all_d = d[:]
+    tail = small_array.sum(d=(all_d,))
+    small_array = small_array.extend(d, tail)
+    assert small_array.shape == (2, 7)
     # test with a string axis
-    small_array = small_array.extend('sex', small_array.sum(sex=(sex[:],)))
-    assert small_array.shape == (3, 16)
+    small_array = small_array.extend('c', small_array.sum(c=(c[:],)))
+    assert small_array.shape == (3, 7)
 
 
 @needs_pytables
@@ -3355,17 +3337,17 @@ def test_hdf_roundtrip(tmp_path, meta):
 
 
 def test_from_string():
-    expected = ndtest("sex=M,F")
+    expected = ndtest("c=c0,c1")
 
-    res = from_string('''sex  M  F
+    res = from_string('''c  c0  c1
                          \t   0  1''')
     assert_array_equal(res, expected)
 
-    res = from_string('''sex  M  F
+    res = from_string('''c  c0  c1
                          nan  0  1''')
     assert_array_equal(res, expected)
 
-    res = from_string('''sex  M  F
+    res = from_string('''c  c0  c1
                          NaN  0  1''')
     assert_array_equal(res, expected)
 
@@ -3652,29 +3634,29 @@ def test_from_lists():
     assert_array_equal(res, arr_anon)
 
     # sort_rows
-    arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
-                      ['F', 'BE', 0, 0, 1],
-                      ['F', 'FO', 0, 0, 2],
-                      ['M', 'BE', 1, 0, 0],
-                      ['M', 'FO', 2, 0, 0]])
-    sorted_arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
-                             ['M', 'BE', 1, 0, 0],
-                             ['M', 'FO', 2, 0, 0],
-                             ['F', 'BE', 0, 0, 1],
-                             ['F', 'FO', 0, 0, 2]], sort_rows=True)
+    arr = from_lists([['c', 'nat\\year', 1991, 1992, 1993],
+                      ['c0', 'BE', 0, 0, 1],
+                      ['c0', 'FO', 0, 0, 2],
+                      ['c1', 'BE', 1, 0, 0],
+                      ['c1', 'FO', 2, 0, 0]])
+    sorted_arr = from_lists([['c', 'nat\\year', 1991, 1992, 1993],
+                             ['c1', 'BE', 1, 0, 0],
+                             ['c1', 'FO', 2, 0, 0],
+                             ['c0', 'BE', 0, 0, 1],
+                             ['c0', 'FO', 0, 0, 2]], sort_rows=True)
     assert_array_equal(sorted_arr, arr)
 
     # sort_columns
-    arr = from_lists([['sex', 'nat\\year', 1991, 1992, 1993],
-                      ['M', 'BE', 1, 0, 0],
-                      ['M', 'FO', 2, 0, 0],
-                      ['F', 'BE', 0, 0, 1],
-                      ['F', 'FO', 0, 0, 2]])
-    sorted_arr = from_lists([['sex', 'nat\\year', 1992, 1991, 1993],
-                             ['M', 'BE', 0, 1, 0],
-                             ['M', 'FO', 0, 2, 0],
-                             ['F', 'BE', 0, 0, 1],
-                             ['F', 'FO', 0, 0, 2]], sort_columns=True)
+    arr = from_lists([['c', 'nat\\year', 1991, 1992, 1993],
+                      ['c0', 'BE', 1, 0, 0],
+                      ['c0', 'FO', 2, 0, 0],
+                      ['c1', 'BE', 0, 0, 1],
+                      ['c1', 'FO', 0, 0, 2]])
+    sorted_arr = from_lists([['c', 'nat\\year', 1992, 1991, 1993],
+                             ['c0', 'BE', 0, 1, 0],
+                             ['c0', 'FO', 0, 2, 0],
+                             ['c1', 'BE', 0, 0, 1],
+                             ['c1', 'FO', 0, 0, 2]], sort_columns=True)
     assert_array_equal(sorted_arr, arr)
 
 
@@ -3691,10 +3673,10 @@ def test_from_series():
     assert_array_equal(from_series(s), expected)
 
     # Series with MultiIndex as index
-    age = Axis('age=0..3')
+    a = Axis('a=0..3')
     gender = Axis('gender=M,F')
     time = Axis('time=2015..2017')
-    expected = ndtest((age, gender, time))
+    expected = ndtest((a, gender, time))
 
     index = pd.MultiIndex.from_product(expected.axes.labels, names=expected.axes.names)
     data = expected.data.flatten()
@@ -3707,7 +3689,7 @@ def test_from_series():
     assert_array_equal(res, expected.sort_labels())
 
     expected[0, 'F'] = -1
-    s = s.reset_index().drop([3, 4, 5]).set_index(['age', 'gender', 'time'])[0]
+    s = s.reset_index().drop([3, 4, 5]).set_index(['a', 'gender', 'time'])[0]
     res = from_series(s, fill_value=-1)
     assert_array_equal(res, expected)
 
@@ -4028,50 +4010,50 @@ def test_from_frame():
 
     # 3A) Dataframe with 2 index columns
     # ==================================
-    dt = [('age', int), ('sex', 'U1'),
+    dt = [('a', int), ('c', 'U2'),
           ('2007', int), ('2010', int), ('2013', int)]
     data = np.array([
-        (0, 'F', 3722, 3395, 3347),
-        (0, 'M', 338, 316, 323),
-        (1, 'F', 2878, 2791, 2822),
-        (1, 'M', 1121, 1037, 976),
-        (2, 'F', 4073, 4161, 4429),
-        (2, 'M', 1561, 1463, 1467),
-        (3, 'F', 3507, 3741, 3366),
-        (3, 'M', 2052, 2052, 2118),
+        (0, 'c1', 3722, 3395, 3347),
+        (0, 'c0', 338, 316, 323),
+        (1, 'c1', 2878, 2791, 2822),
+        (1, 'c0', 1121, 1037, 976),
+        (2, 'c1', 4073, 4161, 4429),
+        (2, 'c0', 661, 1463, 1467),
+        (3, 'c1', 3507, 3741, 3366),
+        (3, 'c0', 2052, 2052, 2118),
     ], dtype=dt)
     df = pd.DataFrame(data)
-    df.set_index(['age', 'sex'], inplace=True)
+    df.set_index(['a', 'c'], inplace=True)
     df.columns.name = 'time'
 
     la = from_frame(df)
     assert la.ndim == 3
     assert la.shape == (4, 2, 3)
-    assert la.axes.names == ['age', 'sex', 'time']
-    assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+    assert la.axes.names == ['a', 'c', 'time']
+    assert_array_equal(la[0, 'c1', :], [3722, 3395, 3347])
 
     # 3B) Dataframe with columns.name containing \\
     # =============================================
-    dt = [('age', int), ('sex\\time', 'U1'),
+    dt = [('a', int), ('c\\time', 'U2'),
           ('2007', int), ('2010', int), ('2013', int)]
     data = np.array([
-        (0, 'F', 3722, 3395, 3347),
-        (0, 'M', 338, 316, 323),
-        (1, 'F', 2878, 2791, 2822),
-        (1, 'M', 1121, 1037, 976),
-        (2, 'F', 4073, 4161, 4429),
-        (2, 'M', 1561, 1463, 1467),
-        (3, 'F', 3507, 3741, 3366),
-        (3, 'M', 2052, 2052, 2118),
+        (0, 'c1', 3722, 3395, 3347),
+        (0, 'c0', 338, 316, 323),
+        (1, 'c1', 2878, 2791, 2822),
+        (1, 'c0', 1121, 1037, 976),
+        (2, 'c1', 4073, 4161, 4429),
+        (2, 'c0', 661, 1463, 1467),
+        (3, 'c1', 3507, 3741, 3366),
+        (3, 'c0', 2052, 2052, 2118),
     ], dtype=dt)
     df = pd.DataFrame(data)
-    df.set_index(['age', 'sex\\time'], inplace=True)
+    df.set_index(['a', 'c\\time'], inplace=True)
 
     la = from_frame(df, unfold_last_axis_name=True)
     assert la.ndim == 3
     assert la.shape == (4, 2, 3)
-    assert la.axes.names == ['age', 'sex', 'time']
-    assert_array_equal(la[0, 'F', :], [3722, 3395, 3347])
+    assert la.axes.names == ['a', 'c', 'time']
+    assert_array_equal(la[0, 'c1', :], [3722, 3395, 3347])
 
     # 3C) Dataframe with no axe names (names are None)
     # ===============================
@@ -4090,9 +4072,9 @@ def test_from_frame():
 
     # 4) test sort_rows and sort_columns arguments
     # ============================================
-    age = Axis('age=2,0,1,3')
+    a = Axis('a=2,0,1,3')
     gender = Axis('gender=M,F')
-    time = Axis('time=2016,2015,2017')
+    time = Axis('time=2016,206,2017')
     columns = pd.Index(time.labels, name=time.name)
 
     # df.index is an Index instance
@@ -4106,9 +4088,9 @@ def test_from_frame():
     assert_array_equal(res, expected)
 
     # df.index is a MultiIndex instance
-    expected = ndtest((age, gender, time))
+    expected = ndtest((a, gender, time))
     index = pd.MultiIndex.from_product(expected.axes[:-1].labels, names=expected.axes[:-1].names)
-    data = expected.data.reshape(len(age) * len(gender), len(time))
+    data = expected.data.reshape(len(a) * len(gender), len(time))
     df = pd.DataFrame(data, index=index, columns=columns)
 
     res = from_frame(df, sort_rows=True, sort_columns=True)
@@ -4117,7 +4099,7 @@ def test_from_frame():
     # 5) test fill_value
     # ==================
     expected[0, 'F'] = -1
-    df = df.reset_index().drop([3]).set_index(['age', 'gender'])
+    df = df.reset_index().drop([3]).set_index(['a', 'gender'])
     res = from_frame(df, fill_value=-1)
     assert_array_equal(res, expected)
 
@@ -4657,11 +4639,11 @@ def test_ufuncs(small_array):
 
     assert_array_equal(la_out, raw_out)
 
-    sex, lipro = small_array.axes
+    c, d = small_array.axes
 
-    low = small_array.sum(sex) // 4 + 3
+    low = small_array.sum(c) // 4 + 3
     raw_low = raw.sum(0) // 4 + 3
-    high = small_array.sum(sex) // 4 + 13
+    high = small_array.sum(c) // 4 + 13
     raw_high = raw.sum(0) // 4 + 13
 
     # LA + scalars
@@ -4685,8 +4667,8 @@ def test_ufuncs(small_array):
                        np.where(raw < 5, -5, raw))
 
     # where (with broadcasting)
-    result = where(small_array['P01'] < 5, -5, small_array)
-    assert result.axes.names == ['sex', 'lipro']
+    result = where(small_array['d1'] < 5, -5, small_array)
+    assert result.axes.names == ['c', 'd']
     assert_array_equal(result, np.where(raw[:, [0]] < 5, -5, raw))
 
     # round
@@ -4696,30 +4678,30 @@ def test_ufuncs(small_array):
 
 
 def test_eye():
-    age = Axis('age=0..2')
-    sex = Axis('sex=M,F')
+    a = Axis('a=0..2')
+    c = Axis('c=c0,c1')
 
     # using one Axis object
-    res = eye(sex)
+    res = eye(c)
     expected = from_string(r'''
-sex\sex    M    F
-      M  1.0  0.0
-      F  0.0  1.0''')
+c\c    c0    c1
+      c0  1.0  0.0
+      c1  0.0  1.0''')
     assert_array_equal(res, expected)
 
     # using an AxisCollection
-    res = eye(AxisCollection([age, sex]))
+    res = eye(AxisCollection([a, c]))
     expected = from_string(r'''
-age\sex    M    F
+a\c    c0    c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0''')
     assert_array_equal(res, expected)
 
     # using a tuple of axes
-    res = eye((age, sex))
+    res = eye((a, c))
     expected = from_string(r"""
-age\sex    M    F
+a\c    c0    c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0""")
@@ -4770,12 +4752,12 @@ def test_diag():
     assert a3.i[2, 2, 2] == a.i[2, 2, 2]
 
     # using Axis object
-    sex = Axis('sex=M,F')
-    a = eye(sex)
+    c = Axis('c=c0,c1')
+    a = eye(c)
     d = diag(a)
     assert d.ndim == 1
-    assert d.axes.names == ['sex_sex']
-    assert_array_equal(d.axes.labels, [['M_M', 'F_F']])
+    assert d.axes.names == ['c_c']
+    assert_array_equal(d.axes.labels, [['c0_c0', 'c1_c1']])
     assert d.i[0] == 1.0
     assert d.i[1] == 1.0
 
@@ -4978,7 +4960,7 @@ def test_broadcast_with():
 
 def test_plot():
     pass
-    # small_h = small['M']
+    # small_h = small['c0']
     # small_h.plot(kind='bar')
     # small_h.plot()
     # small_h.hist()
@@ -5221,19 +5203,19 @@ def test_stack():
     assert_array_equal(res, expected)
 
     # giving elements as an Array containing Arrays
-    sex = Axis('sex=M,F')
+    c = Axis('c=c0,c1')
     # not using the same length for nat and type, otherwise numpy gets confused :(
     arr1 = ones('nat=BE, FO')
     arr2 = zeros('type=1..3')
-    array_of_arrays = Array([arr1, arr2], sex, dtype=object)
-    res = stack(array_of_arrays, sex)
-    expected = from_string(r"""nat  type\sex    M    F
-                                BE         1  1.0  0.0
-                                BE         2  1.0  0.0
-                                BE         3  1.0  0.0
-                                FO         1  1.0  0.0
-                                FO         2  1.0  0.0
-                                FO         3  1.0  0.0""")
+    array_of_arrays = Array([arr1, arr2], c, dtype=object)
+    res = stack(array_of_arrays, c)
+    expected = from_string(r"""nat  type\c    c0    c1
+                                BE       1  1.0  0.0
+                                BE       2  1.0  0.0
+                                BE       3  1.0  0.0
+                                FO       1  1.0  0.0
+                                FO       2  1.0  0.0
+                                FO       3  1.0  0.0""")
     assert_array_equal(res, expected)
 
     # non scalar/non Array
