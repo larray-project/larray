@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from larray.tests.common import assert_array_equal, assert_axis_eq
+from larray.tests.common import assert_array_equal, assert_axis_eq, must_raise
 from larray import Axis, AxisCollection
 
 
@@ -221,7 +221,7 @@ def test_contains(col):
 
 def test_index(col):
     assert col.index('lipro') == 0
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col.index('nonexisting')
         assert col.index(0) == 0
     assert col.index(1) == 1
@@ -229,7 +229,7 @@ def test_index(col):
     assert col.index(-1) == -1
     assert col.index(-2) == -2
     assert col.index(-3) == -3
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col.index(3)
 
     # objects actually in col
@@ -237,9 +237,9 @@ def test_index(col):
     assert col.index(sex) == 1
     assert col.index(age) == 2
     assert col.index(sex2) == 1
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col.index(geo)
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col.index(value)
 
     # test anonymous axes
@@ -249,7 +249,7 @@ def test_index(col):
     anon2 = anon.copy()
     assert col.index(anon2) == 3
     anon3 = Axis([0, 2])
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col.index(anon3)
 
 
@@ -292,7 +292,7 @@ def test_add(col):
     assert col2 == col
     new = col2 + [Axis('geo=A11,A12,A13'), Axis('age=0..7')]
     assert new == [lipro, sex, age, geo]
-    with pytest.raises(ValueError):
+    with must_raise(ValueError):
         col2 + [Axis('geo=A11,A12,A13'), Axis('age=0..6')]
 
     # 2) other AxisCollection

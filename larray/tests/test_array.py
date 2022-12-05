@@ -7,8 +7,9 @@ import pandas as pd
 from io import StringIO
 
 from larray.tests.common import (meta, inputpath,
-                                 assert_array_equal, assert_array_nan_equal, assert_larray_equiv, assert_larray_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn, must_raise)
+                                 assert_larray_equal, assert_larray_nan_equal, assert_larray_equiv,
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn, must_raise,
+                                 assert_nparray_equal, assert_nparray_nan_equal)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
                     zeros, zeros_like, ndtest, empty, ones, full, eye, diag, stack, sequence,
                     asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
@@ -32,8 +33,8 @@ meta = meta
 
 
 def test_value_string_split():
-    assert_array_equal(_to_ticks('c0,c1'), np.asarray(['c0', 'c1']))
-    assert_array_equal(_to_ticks('c0, c1'), np.asarray(['c0', 'c1']))
+    assert_nparray_equal(_to_ticks('c0,c1'), np.asarray(['c0', 'c1']))
+    assert_nparray_equal(_to_ticks('c0, c1'), np.asarray(['c0', 'c1']))
 
 
 def test_value_string_union():
@@ -41,8 +42,8 @@ def test_value_string_union():
 
 
 def test_value_string_range():
-    assert_array_equal(_to_ticks('0..15'), np.arange(16))
-    assert_array_equal(_to_ticks('..15'), np.arange(16))
+    assert_nparray_equal(_to_ticks('0..15'), np.arange(16))
+    assert_nparray_equal(_to_ticks('..15'), np.arange(16))
     with must_raise(ValueError):
         _to_ticks('10..')
     with must_raise(ValueError):
@@ -188,20 +189,20 @@ def test_ndtest():
     arr = ndtest('a=a0..a2')
     assert arr.shape == (3,)
     assert arr.axes.names == ['a']
-    assert_array_equal(arr.data, np.arange(3))
+    assert_nparray_equal(arr.data, np.arange(3))
 
     # using an explicit Axis object
     a = Axis('a=a0..a2')
     arr = ndtest(a)
     assert arr.shape == (3,)
     assert arr.axes.names == ['a']
-    assert_array_equal(arr.data, np.arange(3))
+    assert_nparray_equal(arr.data, np.arange(3))
 
     # using a group as an axis
     arr = ndtest(a[:'a1'])
     assert arr.shape == (2,)
     assert arr.axes.names == ['a']
-    assert_array_equal(arr.data, np.arange(2))
+    assert_nparray_equal(arr.data, np.arange(2))
 
 
 def test_getattr(array):
@@ -214,13 +215,13 @@ def test_getattr(array):
 def test_zeros():
     arr = zeros((b, a))
     assert arr.shape == (12, 19)
-    assert_array_equal(arr, np.zeros((12, 19)))
+    assert_nparray_equal(arr.data, np.zeros((12, 19)))
 
 
 def test_zeros_like(array):
     arr = zeros_like(array)
     assert arr.shape == (19, 12, 2, 6)
-    assert_array_equal(arr, np.zeros((19, 12, 2, 6)))
+    assert_nparray_equal(arr.data, np.zeros((19, 12, 2, 6)))
 
 
 def test_bool():
@@ -245,8 +246,8 @@ def test_bool():
 
 def test_iter(small_array):
     list_ = list(small_array)
-    assert_array_equal(list_[0], small_array['c0'])
-    assert_array_equal(list_[1], small_array['c1'])
+    assert_larray_equal(list_[0], small_array['c0'])
+    assert_larray_equal(list_[1], small_array['c1'])
 
 
 def test_keys():
@@ -466,57 +467,61 @@ a    0      1      2      3  ...      14      15      16      17      18
 def test_getitem(array):
     raw = array.data
     a, b, c, d = array.axes
-    a69 = a[[1, 5, 9]]
+    a159 = a[[1, 5, 9]]
     d124 = d['d1,d2,d4']
 
     # LGroup at "correct" place
-    subset = array[a69]
-    assert subset.axes[1:] == (b, c, d)
-    assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
-    assert_array_equal(subset, raw[[1, 5, 9]])
+    res = array[a159]
+    assert res.axes[1:] == (b, c, d)
+    assert res.axes[0].equals(Axis([1, 5, 9], 'a'))
+    assert_nparray_equal(res.data, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
+    res = array[d124]
+    assert_nparray_equal(res.data, raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    res = array[d124, a69]
+    res = array[d124, a159]
     assert res.axes.names == ['a', 'b', 'c', 'd']
-    assert_array_equal(res, raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(res.data, raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # LGroup key and scalar
     res = array[d124, 5]
     assert res.axes.names == ['b', 'c', 'd']
-    assert_array_equal(res, raw[..., [0, 1, 3]][5])
+    assert_nparray_equal(res.data, raw[..., [0, 1, 3]][5])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], d124],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    res = array[[1, 5, 9], d124]
+    assert_nparray_equal(res.data, raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
-    assert_array_equal(array[:], raw)
+    res = array[:]
+    assert_nparray_equal(res.data, raw)
 
     # only Ellipsis
-    assert_array_equal(array[...], raw)
+    res = array[...]
+    assert_nparray_equal(res.data, raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
+    res = array[..., d124]
+    assert_nparray_equal(res.data, raw[..., [0, 1, 3]])
 
     # string 'int..int'
-    assert_array_equal(array['10..13'], array['10,11,12,13'])
-    assert_array_equal(array['8, 10..13, 6'], array['8,10,11,12,13,6'])
+    assert_larray_equal(array['10..13'], array['10,11,12,13'])
+    assert_larray_equal(array['8, 10..13, 6'], array['8,10,11,12,13,6'])
 
     # ambiguous label
     arr = ndtest("a=l0,l1;b=l1,l2")
     res = arr[arr.b['l1']]
-    assert_array_equal(res, arr.data[:, 0])
+    assert_nparray_equal(res.data, arr.data[:, 0])
 
     # scalar group on another axis
     arr = ndtest((3, 2))
     alt_a = Axis("alt_a=a1..a2")
     lgroup = alt_a['a1']
-    assert_array_equal(arr[lgroup], arr['a1'])
+    assert_larray_equal(arr[lgroup], arr['a1'])
     pgroup = alt_a.i[0]
-    assert_array_equal(arr[pgroup], arr['a1'])
+    assert_larray_equal(arr[pgroup], arr['a1'])
 
     # key with duplicate axes
     with must_raise(ValueError):
@@ -531,32 +536,36 @@ def test_getitem(array):
 def test_getitem_abstract_axes(array):
     raw = array.data
     a, b, c, d = array.axes
-    a69 = X.a[1, 5, 9]
+    a159 = X.a[1, 5, 9]
     d124 = X.d['d1,d2,d4']
 
     # LGroup at "correct" place
-    subset = array[a69]
+    subset = array[a159]
     assert subset.axes[1:] == (b, c, d)
     assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
-    assert_array_equal(subset, raw[[1, 5, 9]])
+    assert_nparray_equal(subset.data, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[d124].data,
+                         raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[d124, a69], raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[d124, a159].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], d124], raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[[1, 5, 9], d124].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
-    assert_array_equal(array[:], raw)
+    assert_nparray_equal(array[:].data, raw)
 
     # only Ellipsis
-    assert_array_equal(array[...], raw)
+    assert_nparray_equal(array[...].data, raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[..., d124].data,
+                         raw[..., [0, 1, 3]])
 
     # key with duplicate axes
     with must_raise(ValueError):
@@ -570,10 +579,10 @@ def test_getitem_abstract_axes(array):
 def test_getitem_anonymous_axes():
     arr = ndtest([Axis(3), Axis(4)])
     raw = arr.data
-    assert_array_equal(arr[X[0][1:]], raw[1:])
-    assert_array_equal(arr[X[1][2:]], raw[:, 2:])
-    assert_array_equal(arr[X[0][2:], X[1][1:]], raw[2:, 1:])
-    assert_array_equal(arr.i[2:, 1:], raw[2:, 1:])
+    assert_nparray_equal(arr[X[0][1:]].data, raw[1:])
+    assert_nparray_equal(arr[X[1][2:]].data, raw[:, 2:])
+    assert_nparray_equal(arr[X[0][2:], X[1][1:]].data, raw[2:, 1:])
+    assert_nparray_equal(arr.i[2:, 1:].data, raw[2:, 1:])
 
 
 def test_getitem_guess_axis(array):
@@ -581,37 +590,40 @@ def test_getitem_guess_axis(array):
     a, b, c, d = array.axes
 
     # key at "correct" place
-    assert_array_equal(array[[1, 5, 9]], raw[[1, 5, 9]])
     subset = array[[1, 5, 9]]
     assert subset.axes[1:] == (b, c, d)
     assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
-    assert_array_equal(subset, raw[[1, 5, 9]])
+    assert_nparray_equal(subset.data, raw[[1, 5, 9]])
 
     # key at "incorrect" place
-    assert_array_equal(array['d1,d2,d4'], raw[..., [0, 1, 3]])
-    assert_array_equal(array[['d1', 'd2', 'd4']], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array['d1,d2,d4'].data,
+                         raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[['d1', 'd2', 'd4']].data,
+                         raw[..., [0, 1, 3]])
 
     # multiple keys (in "incorrect" order)
-    assert_array_equal(array['d1,d2,d4', [1, 5, 9]],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array['d1,d2,d4', [1, 5, 9]].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/key
-    assert_array_equal(array[d['d1,d2,d4'], [1, 5, 9]],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[d['d1,d2,d4'], [1, 5, 9]].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
-    assert_array_equal(array[:], raw)
+    assert_nparray_equal(array[:].data, raw)
 
     # only Ellipsis
-    assert_array_equal(array[...], raw)
+    assert_nparray_equal(array[...].data, raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., 'd1,d2,d4'], raw[..., [0, 1, 3]])
-    assert_array_equal(array[..., ['d1', 'd2', 'd4']], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[..., 'd1,d2,d4'].data,
+                         raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[..., ['d1', 'd2', 'd4']].data,
+                         raw[..., [0, 1, 3]])
 
     # LGroup without axis (which also needs to be guessed)
     g = LGroup(['d1', 'd2', 'd4'])
-    assert_array_equal(array[g], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[g].data, raw[..., [0, 1, 3]])
 
     # key with duplicate axes
     with must_raise(ValueError, """key has several values for axis: a
@@ -657,40 +669,41 @@ key: ([1, 2], [3, 4])"""):
 
     # ambiguous key disambiguated via string
     res = arr['b[l1]']
-    assert_array_equal(res, arr.data[:, 0])
+    assert_nparray_equal(res.data, arr.data[:, 0])
 
 
 def test_getitem_positional_group(array):
     raw = array.data
     a, b, c, d = array.axes
-    a69 = a.i[1, 5, 9]
+    a159 = a.i[1, 5, 9]
     d124 = d.i[0, 1, 3]
 
     # LGroup at "correct" place
-    subset = array[a69]
+    subset = array[a159]
     assert subset.axes[1:] == (b, c, d)
     assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
-    assert_array_equal(subset, raw[[1, 5, 9]])
+    assert_nparray_equal(subset.data, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[d124].data, raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[d124, a69],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[d124, a159].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], d124],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[[1, 5, 9], d124].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
-    assert_array_equal(array[:], raw)
+    assert_nparray_equal(array[:].data, raw)
 
     # only Ellipsis
-    assert_array_equal(array[...], raw)
+    assert_nparray_equal(array[...].data, raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[..., d124].data,
+                         raw[..., [0, 1, 3]])
 
     # key with duplicate axes
     with must_raise(ValueError, "key has several values for axis: a\nkey: (a.i[1, 2], a.i[3, 4])"):
@@ -701,40 +714,41 @@ def test_getitem_str_positional_group():
     arr = ndtest('a=l0..l2;b=l0..l2')
     res = arr['b.i[1]']
     expected = Array([1, 4, 7], 'a=l0..l2')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_getitem_abstract_positional(array):
     raw = array.data
     a, b, c, d = array.axes
-    a69 = X.a.i[1, 5, 9]
+    a159 = X.a.i[1, 5, 9]
     d124 = X.d.i[0, 1, 3]
 
     # LGroup at "correct" place
-    subset = array[a69]
+    subset = array[a159]
     assert subset.axes[1:] == (b, c, d)
     assert subset.axes[0].equals(Axis([1, 5, 9], 'a'))
-    assert_array_equal(subset, raw[[1, 5, 9]])
+    assert_nparray_equal(subset.data, raw[[1, 5, 9]])
 
     # LGroup at "incorrect" place
-    assert_array_equal(array[d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[d124].data, raw[..., [0, 1, 3]])
 
     # multiple LGroup key (in "incorrect" order)
-    assert_array_equal(array[d124, a69],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[d124, a159].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # mixed LGroup/positional key
-    assert_array_equal(array[[1, 5, 9], d124],
-                       raw[[1, 5, 9]][..., [0, 1, 3]])
+    assert_nparray_equal(array[[1, 5, 9], d124].data,
+                         raw[[1, 5, 9]][..., [0, 1, 3]])
 
     # single None slice
-    assert_array_equal(array[:], raw)
+    assert_nparray_equal(array[:].data, raw)
 
     # only Ellipsis
-    assert_array_equal(array[...], raw)
+    assert_nparray_equal(array[...].data, raw)
 
     # Ellipsis and LGroup
-    assert_array_equal(array[..., d124], raw[..., [0, 1, 3]])
+    assert_nparray_equal(array[..., d124].data,
+                         raw[..., [0, 1, 3]])
 
     # key with duplicate axes
     with must_raise(ValueError, "key has several values for axis: a\nkey: (X.a.i[2, 3], X.a.i[1, 5])"):
@@ -749,7 +763,7 @@ def test_getitem_bool_larray_key_arr_whout_bool_axis():
     res = arr[arr < 5]
     assert isinstance(res, Array)
     assert res.ndim == 1
-    assert_array_equal(res, raw[raw < 5])
+    assert_nparray_equal(res.data, raw[raw < 5])
 
     # missing dimension
     filter_ = arr['b1'] % 5 == 0
@@ -759,17 +773,17 @@ def test_getitem_bool_larray_key_arr_whout_bool_axis():
     assert res.shape == (3, 2)
     raw_key = raw[:, 1, :] % 5 == 0
     raw_d1, raw_d3 = raw_key.nonzero()
-    assert_array_equal(res, raw[raw_d1, :, raw_d3])
+    assert_nparray_equal(res.data, raw[raw_d1, :, raw_d3])
 
     # using an Axis object
     arr = ndtest('a=a0,a1;b=0..3')
     raw = arr.data
     res = arr[arr.b < 2]
-    assert_array_equal(res, raw[:, :2])
+    assert_nparray_equal(res.data, raw[:, :2])
 
     # using an AxisReference (ExprNode)
     res = arr[X.b < 2]
-    assert_array_equal(res, raw[:, :2])
+    assert_nparray_equal(res.data, raw[:, :2])
 
 
 def test_getitem_bool_larray_key_arr_wh_bool_axis():
@@ -799,13 +813,13 @@ def test_getitem_bool_larray_and_group_key():
     assert isinstance(res, Array)
     assert res.ndim == 3
     expected = arr['a0,a2', '0:2', 'c0:c3']
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # using axis reference
     res = arr['a0,a2', X.b < 3, 'c0:c3']
     assert isinstance(res, Array)
     assert res.ndim == 3
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_getitem_bool_ndarray_key_arr_whout_bool_axis(array):
@@ -813,7 +827,7 @@ def test_getitem_bool_ndarray_key_arr_whout_bool_axis(array):
     res = array[raw < 5]
     assert isinstance(res, Array)
     assert res.ndim == 1
-    assert_array_equal(res, raw[raw < 5])
+    assert_nparray_equal(res.data, raw[raw < 5])
 
 
 def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
@@ -831,9 +845,7 @@ def test_getitem_bool_ndarray_key_arr_wh_bool_axis():
     # raw key => ???
     # this test checks that the current behavior does not change unintentionally...
     # ... but I am unsure the current behavior is what we actually want
-    # L? is to account for Python2 where shape can be 'long' integers
-    msg = r"boolean key with a different shape \(\(4L?,\)\) than array \(\(2,\)\)"
-    with must_raise(ValueError, match=msg):
+    with must_raise(ValueError, msg="boolean key with a different shape ((4,)) than array ((2,))"):
         _ = arr[key]
 
 
@@ -862,13 +874,13 @@ def test_getitem_integer_string_axes():
     arr = ndtest((5, 5))
     a, b = arr.axes
 
-    assert_array_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
-    assert_array_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
+    assert_larray_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
+    assert_larray_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
     with must_raise(ValueError):
         _ = arr['1[a0, a2]']
 
-    assert_array_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
-    assert_array_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
+    assert_larray_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
+    assert_larray_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
     with must_raise(ValueError):
         _ = arr['3.i[0, 2]']
 
@@ -893,31 +905,31 @@ def test_getitem_structured_key_with_groups():
 
     # a) slice with lgroup
     # a.1) LGroup.axis from array.axes
-    assert_array_equal(arr[a['a1']:a['a2']], expected)
+    assert_larray_equal(arr[a['a1']:a['a2']], expected)
 
     # a.2) LGroup.axis not from array.axes
-    assert_array_equal((arr[alt_a['a1']:alt_a['a2']]), expected)
+    assert_larray_equal((arr[alt_a['a1']:alt_a['a2']]), expected)
 
     # b) slice with igroup
     # b.1) IGroup.axis from array.axes
-    assert_array_equal((arr[a.i[1]:a.i[2]]), expected)
+    assert_larray_equal((arr[a.i[1]:a.i[2]]), expected)
 
     # b.2) IGroup.axis not from array.axes
-    assert_array_equal((arr[alt_a.i[0]:alt_a.i[1]]), expected)
+    assert_larray_equal((arr[alt_a.i[0]:alt_a.i[1]]), expected)
 
     # c) list with LGroup
     # c.1) LGroup.axis from array.axes
-    assert_array_equal((arr[[a['a1'], a['a2']]]), expected)
+    assert_larray_equal((arr[[a['a1'], a['a2']]]), expected)
 
     # c.2) LGroup.axis not from array.axes
-    assert_array_equal((arr[[alt_a['a1'], alt_a['a2']]]), expected)
+    assert_larray_equal((arr[[alt_a['a1'], alt_a['a2']]]), expected)
 
     # d) list with IGroup
     # d.1) IGroup.axis from array.axes
-    assert_array_equal((arr[[a.i[1], a.i[2]]]), expected)
+    assert_larray_equal((arr[[a.i[1], a.i[2]]]), expected)
 
     # d.2) IGroup.axis not from array.axes
-    assert_array_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
+    assert_larray_equal((arr[[alt_a.i[0], alt_a.i[1]]]), expected)
 
 
 def test_getitem_single_larray_key_guess():
@@ -938,7 +950,7 @@ c\b  b0  b1  b2
  c1   3   4   5
  c2   3   4   5
  c3   0   1   2""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 2) key with the target axis (the one being replaced)
     key = Array(['b1', 'b0', 'b2'], b)
@@ -947,7 +959,7 @@ c\b  b0  b1  b2
 a\b  b0  b1  b2
  a0   1   0   2
  a1   4   3   5""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 2bis) key with part of the target axis (the one being replaced)
     key = Array(['b2', 'b1'], 'b=b0,b1')
@@ -955,14 +967,14 @@ a\b  b0  b1  b2
 a\b  b0  b1
  a0   2   1
  a1   5   4""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 3) key with another existing axis (not the target axis)
     key = Array(['a0', 'a1', 'a0'], b)
     expected = from_string("""
 b  b0  b1  b2
 \t  0   4   2""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # TODO: this does not work yet but should be much easier to implement with "align" in make_np_broadcastable
     # 3bis) key with *part* of another existing axis (not the target axis)
@@ -970,7 +982,7 @@ b  b0  b1  b2
     # expected = from_string("""
     # b  b0  b1
     # \t  3   1""")
-    # assert_array_equal(arr[key], expected)
+    # assert_larray_equal(arr[key], expected)
 
     # 4) key has both the target axis and another existing axis
     # TODO: maybe we should make this work without requiring astype!
@@ -982,7 +994,7 @@ a\b b0 b1 b2
 a\b  b0  b1  b2
  a0   0   4   2
  a1   3   1   5""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 5) key has both the target axis and an extra axis
     key = from_string(r"""
@@ -999,7 +1011,7 @@ a1   c0   3   4   5
 a1   c1   0   1   2
 a1   c2   0   1   2
 a1   c3   3   4   5""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 6) key has both another existing axis (not target) and an extra axis
     key = from_string(r"""
@@ -1010,7 +1022,7 @@ a\c  c0  c1  c2  c3
 a\c  c0  c1  c2  c3
  a0   0   1   0   1
  a1   5   4   5   4""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
     # 7) key has the target axis, another existing axis and an extra axis
     key = from_string(r"""
@@ -1029,7 +1041,7 @@ a0   b2   2   5   2   5
 a1   b0   0   3   3   0
 a1   b1   4   4   4   4
 a1   b2   2   5   5   2""")
-    assert_array_equal(arr[key], expected)
+    assert_larray_equal(arr[key], expected)
 
 
 def test_getitem_multiple_larray_key_guess():
@@ -1049,7 +1061,7 @@ def test_getitem_multiple_larray_key_guess():
                                 b1   2   0
                                 b2   5   3
                                 b3   2   0""")
-    assert_array_equal(arr[k1, k2], expected)
+    assert_larray_equal(arr[k1, k2], expected)
 
     # 2) keys with a common existing axis
     k1 = from_string(""" b  b0  b1  b2
@@ -1058,7 +1070,7 @@ def test_getitem_multiple_larray_key_guess():
                         \t  b1  b2  b0""")
     expected = from_string(""" b  b0  b1  b2
                               \t   4   2   3""")
-    assert_array_equal(arr[k1, k2], expected)
+    assert_larray_equal(arr[k1, k2], expected)
 
     # 3) keys with each a different extra axis
     k1 = from_string(""" c  c0  c1
@@ -1068,7 +1080,7 @@ def test_getitem_multiple_larray_key_guess():
     expected = from_string(r"""c\d  d0  d1  d2
                                 c0   4   5   3
                                 c1   1   2   0""")
-    assert_array_equal(arr[k1, k2], expected)
+    assert_larray_equal(arr[k1, k2], expected)
 
     # 4) keys with a common extra axis
     k1 = from_string(r"""c\d  d0  d1  d2
@@ -1084,7 +1096,7 @@ def test_getitem_multiple_larray_key_guess():
                                c1   d0   0   1
                                c1   d1   3   4
                                c1   d2   0   1""")
-    assert_array_equal(arr[k1, k2], expected)
+    assert_larray_equal(arr[k1, k2], expected)
 
 
 def test_getitem_ndarray_key_guess(array):
@@ -1094,7 +1106,7 @@ def test_getitem_ndarray_key_guess(array):
     res = array[key]
     assert isinstance(res, Array)
     assert res.axes == array.axes.replace(X.d, Axis(keys, 'd'))
-    assert_array_equal(res, raw[:, :, :, [3, 0, 2, 1]])
+    assert_nparray_equal(res.data, raw[:, :, :, [3, 0, 2, 1]])
 
 
 def test_getitem_int_larray_key_guess():
@@ -1126,12 +1138,12 @@ def test_getitem_axis_object():
     arr = ndtest((2, 3))
     a, b = arr.axes
 
-    assert_array_equal(arr[a], arr)
-    assert_array_equal(arr[b], arr)
+    assert_larray_equal(arr[a], arr)
+    assert_larray_equal(arr[b], arr)
 
     b2 = Axis('b=b0,b2')
 
-    assert_array_equal(arr[b2], from_string(r"""a\b  b0  b2
+    assert_larray_equal(arr[b2], from_string(r"""a\b  b0  b2
                                                  a0   0   2
                                                  a1   3   5"""))
 
@@ -1140,7 +1152,7 @@ def test_getitem_empty_tuple():
     # an empty tuple should return a view on the original array
     arr = ndtest((2, 3))
     res = arr[()]
-    assert_array_equal(res, arr)
+    assert_larray_equal(res, arr)
     assert res is not arr
 
     z = Array(0)
@@ -1151,9 +1163,22 @@ def test_getitem_empty_tuple():
 
 def test_positional_indexer_getitem(array):
     raw = array.data
-    for key in [0, (0, 5, 1, 2), (slice(None), 5, 1), (0, 5), [1, 0], ([1, 0], 5)]:
-        assert_array_equal(array.i[key], raw[key])
-    assert_array_equal(array.i[[1, 0], [5, 4]], raw[np.ix_([1, 0], [5, 4])])
+    # scalar result
+    assert array.i[(0, 5, 1, 2)] == raw[0, 5, 1, 2]
+
+    # normal indexing (supported by numpy)
+    for key in [0,
+                (slice(None), 5, 1),
+                (0, 5),
+                [1, 0],
+                ([1, 0], 5)]:
+        assert_nparray_equal(array.i[key].data, raw[key])
+
+    # cross product indexing
+    assert_nparray_equal(array.i[[1, 0], [5, 4]].data,
+                         raw[np.ix_([1, 0], [5, 4])])
+
+    # too many indices
     with must_raise(IndexError):
         _ = array.i[0, 0, 0, 0, 0]
 
@@ -1164,25 +1189,27 @@ def test_positional_indexer_setitem(array):
         raw = array.data.copy()
         arr.i[key] = 42
         raw[key] = 42
-        assert_array_equal(arr, raw)
+        assert_nparray_equal(arr.data, raw)
 
     raw = array.data
     array.i[[1, 0], [5, 4]] = 42
     raw[np.ix_([1, 0], [5, 4])] = 42
-    assert_array_equal(array, raw)
+    assert_nparray_equal(array.data, raw)
 
 
 def test_points_indexer_getitem():
     arr = ndtest((2, 3, 3))
     raw = arr.data
 
+    # scalar result
+    assert arr.points['a0', 'b1', 'c2'], raw[0, 1, 2]
+
+    # array result
     keys = [
         ('a0',
             0),
         (('a0', 'c2'),
             (0, slice(None), 2)),
-        (('a0', 'b1', 'c2'),
-            (0, 1, 2)),
         # key in the "correct" order
         ((['a1', 'a0', 'a1', 'a0'], 'b1', ['c1', 'c0', 'c1', 'c0']),
             ([1, 0, 1, 0], 1, [1, 0, 1, 0])),
@@ -1194,7 +1221,7 @@ def test_points_indexer_getitem():
             ([1, 0, 1, 0], slice(None), [1, 0, 1, 0])),
     ]
     for label_key, index_key in keys:
-        assert_array_equal(arr.points[label_key], raw[index_key])
+        assert_nparray_equal(arr.points[label_key].data, raw[index_key])
 
     # XXX: we might want to raise KeyError or IndexError instead?
     with must_raise(ValueError):
@@ -1224,7 +1251,7 @@ def test_points_indexer_setitem():
         raw = arr.data.copy()
         arr.points[label_key] = 42
         raw[index_key] = 42
-        assert_array_equal(arr, raw)
+        assert_nparray_equal(arr.data, raw)
 
     arr = ndtest(2)
     # XXX: we might want to raise KeyError or IndexError instead?
@@ -1237,24 +1264,27 @@ def test_points_indexer_setitem():
     raw_value = raw[:, 0, 0].reshape(2, 1)
     raw[:, [0, 1, 2], [0, 1, 2]] = raw_value
     arr.points['b0,b1,b2', 'c0,c1,c2'] = arr['b0', 'c0']
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
 
 def test_ipoints_indexer_getitem():
     arr = ndtest((2, 3, 3))
     raw = arr.data
 
+    # scalar result
+    assert arr.ipoints[0, 1, 2], raw[0, 1, 2]
+
+    # array result
     keys = [
         0,
         (0, slice(None), 2),
-        (0, 1, 2),
         # key in the "correct" order
         ([1, 0, 1, 0], 1, [1, 0, 1, 0]),
         # advanced key with a missing dimension
         ([1, 0, 1, 0], slice(None), [1, 0, 1, 0]),
     ]
     for index_key in keys:
-        assert_array_equal(arr.ipoints[index_key], raw[index_key])
+        assert_nparray_equal(arr.ipoints[index_key].data, raw[index_key])
 
     with must_raise(IndexError, "key is too long (4) for array with 3 dimensions"):
         _ = arr.ipoints[0, 1, 2, 0]
@@ -1275,7 +1305,7 @@ def test_ipoints_indexer_setitem():
         raw = arr.data.copy()
         arr.ipoints[index_key] = 42
         raw[index_key] = 42
-        assert_array_equal(arr, raw)
+        assert_nparray_equal(arr.data, raw)
 
     arr = ndtest(2)
     with must_raise(IndexError, "key is too long (2) for array with 1 dimensions"):
@@ -1287,7 +1317,7 @@ def test_ipoints_indexer_setitem():
     raw_value = raw[:, 0, 0].reshape(2, 1)
     raw[:, [0, 1, 2], [0, 1, 2]] = raw_value
     arr.ipoints[:, [0, 1, 2], [0, 1, 2]] = arr['b0', 'c0']
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
 
 def test_setitem_larray(array, small_array):
@@ -1305,13 +1335,13 @@ def test_setitem_larray(array, small_array):
 
     arr[as1_5_9] = arr[as1_5_9] + 25.0
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # b) value has exactly the same shape but LGroup at a "wrong" positions
     arr = array.copy()
     arr[b[:], as1_5_9] = arr[as1_5_9] + 25.0
     # same raw as previous test
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # c) value has an extra length-1 axis
     arr = array.copy()
@@ -1323,21 +1353,21 @@ def test_setitem_larray(array, small_array):
     value = Array(raw_value, axes=(a_axis, fake_axis, b, c, d))
     arr[as1_5_9] = value
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # d) value has the same axes than target but one has length 1
     # arr = array.copy()
     # raw = array.data.copy()
     # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     # arr[as1_5_9] = arr[as1_5_9].sum(b=(b.all(),))
-    # assert_array_equal(arr, raw)
+    # assert_nparray_equal(arr.data, raw)
 
     # e) value has a missing dimension
     arr = array.copy()
     raw = array.data.copy()
     arr[as1_5_9] = arr[as1_5_9].sum(b)
     raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # 2) using a LGroup and scalar key (triggers advanced indexing/cross)
 
@@ -1349,32 +1379,32 @@ def test_setitem_larray(array, small_array):
     value = arr[a[1, 5, 8], c['c0']] + 25.0
     arr[a[1, 5, 8], c['c0']] = value
     raw[[1, 5, 8], :, 0] = raw[[1, 5, 8], :, 0] + 25.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # 3) using a string key
     arr = array.copy()
     raw = array.data.copy()
     arr['1, 5, 9'] = arr['1, 5, 9'] + 27.0
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # 4) using ellipsis keys
     # only Ellipsis
     arr = array.copy()
     arr[...] = 0
-    assert_array_equal(arr, np.zeros_like(raw))
+    assert_nparray_equal(arr.data, np.zeros_like(raw))
 
     # Ellipsis and LGroup
     arr = array.copy()
     raw = array.data.copy()
     arr[..., d['d1,d2,d4']] = 0
     raw[..., [0, 1, 3]] = 0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # 5) using a single slice(None) key
     arr = array.copy()
     arr[:] = 0
-    assert_array_equal(arr, np.zeros_like(raw))
+    assert_nparray_equal(arr.data, np.zeros_like(raw))
 
     # 6) incompatible axes
     arr = small_array.copy()
@@ -1415,7 +1445,7 @@ Axis(['c1', 'c0'], 'c')"""):
     key = (a.i[a_key], b.i[b_key])
     array = empty((a, b))
     array[key] = value
-    assert_array_equal(array, expected)
+    assert_larray_equal(array, expected)
 
     # b) with wildcard combined_axis
     wild_combined_axis = combined_axis.ignore_labels()
@@ -1424,18 +1454,18 @@ Axis(['c1', 'c0'], 'c')"""):
     wild_key = (a.i[wild_a_key], b.i[wild_b_key])
     array = empty((a, b))
     array[wild_key] = value
-    assert_array_equal(array, expected)
+    assert_larray_equal(array, expected)
 
     # c) with a wildcard value
     wild_value = value.ignore_labels()
     array = empty((a, b))
     array[key] = wild_value
-    assert_array_equal(array, expected)
+    assert_larray_equal(array, expected)
 
     # d) with a wildcard combined axis and wildcard value
     array = empty((a, b))
     array[wild_key] = wild_value
-    assert_array_equal(array, expected)
+    assert_larray_equal(array, expected)
 
 
 def test_setitem_ndarray(array):
@@ -1449,7 +1479,7 @@ def test_setitem_ndarray(array):
     value = raw[[1, 5, 9]] + 25.0
     arr[[1, 5, 9]] = value
     raw[[1, 5, 9]] = value
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # b) value has the same axes than target but one has length 1
     arr = array.copy()
@@ -1457,7 +1487,7 @@ def test_setitem_ndarray(array):
     value = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     arr[[1, 5, 9]] = value
     raw[[1, 5, 9]] = value
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
 
 def test_setitem_scalar(array):
@@ -1469,14 +1499,14 @@ def test_setitem_scalar(array):
     raw = array.data.copy()
     arr[[1, 5, 9]] = 42
     raw[[1, 5, 9]] = 42
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # b) full scalar key (ie set one cell)
     arr = array.copy()
     raw = array.data.copy()
     arr[0, 'd2', 'b1', 'c0'] = 42
     raw[0, 1, 0, 1] = 42
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
 
 def test_setitem_bool_array_key(array):
@@ -1489,7 +1519,7 @@ def test_setitem_bool_array_key(array):
     raw = array.data.copy()
     arr[arr < 5] = 0
     raw[raw < 5] = 0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # a2) same shape, different order
     arr = array.copy()
@@ -1497,7 +1527,7 @@ def test_setitem_bool_array_key(array):
     key = (arr < 5).T
     arr[key] = 0
     raw[raw < 5] = 0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # b) numpy-broadcastable shape
     # arr = array.copy()
@@ -1506,7 +1536,7 @@ def test_setitem_bool_array_key(array):
     # assert key.ndim == 4
     # arr[key] = 0
     # raw[raw[:, :, [1]] < 5] = 0
-    # assert_array_equal(arr, raw)
+    # assert_nparray_equal(arr.data, raw)
 
     # c) Array-broadcastable shape (missing axis)
     arr = array.copy()
@@ -1518,14 +1548,14 @@ def test_setitem_bool_array_key(array):
     raw_key = raw[:, :, 0, :] < 5
     raw_d1, raw_d2, raw_d4 = raw_key.nonzero()
     raw[raw_d1, raw_d2, :, raw_d4] = 0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # ndarray key
     arr = array.copy()
     raw = array.data.copy()
     arr[raw < 5] = 0
     raw[raw < 5] = 0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # d) Array with extra axes
     arr = array.copy()
@@ -1548,7 +1578,7 @@ def test_set(array):
 
     arr.set(arr[as1_5_9] + 25.0, a=as1_5_9)
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # b) same size but a different shape (extra length-1 axis)
     arr = array.copy()
@@ -1560,28 +1590,28 @@ def test_set(array):
     value = Array(raw_value, axes=(a_axis, fake_axis, b, c, d))
     arr.set(value, a=as1_5_9)
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # dimension of length 1
     # arr = array.copy()
     # raw = array.data.copy()
     # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     # arr.set(arr[as1_5_9].sum(b=(b.all(),)), a=as1_5_9)
-    # assert_array_equal(arr, raw)
+    # assert_nparray_equal(arr.data, raw)
 
     # c) missing dimension
     arr = array.copy()
     raw = array.data.copy()
     arr.set(arr[as1_5_9].sum(b), a=as1_5_9)
     raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
     # 2) using a raw key
     arr = array.copy()
     raw = array.data.copy()
     arr.set(arr[[1, 5, 9]] + 27.0, a=[1, 5, 9])
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 27.0
-    assert_array_equal(arr, raw)
+    assert_nparray_equal(arr.data, raw)
 
 
 def test_filter(array):
@@ -1675,7 +1705,7 @@ def test_nonzero():
     arr = ndtest((2, 3))
     a, b = arr.axes
     cond = arr > 1
-    assert_array_equal(cond, from_string(r"""a\b     b0     b1    b2
+    assert_larray_equal(cond, from_string(r"""a\b     b0     b1    b2
                                               a0  False  False  True
                                               a1   True   True  True"""))
     a_group, b_group = cond.nonzero()
@@ -1690,9 +1720,9 @@ def test_nonzero():
 
     expected = from_string("""a_b  a0_b2  a1_b0  a1_b1  a1_b2
                                \t      2      3      4      5""")
-    assert_array_equal(arr[a_group, b_group], expected)
-    assert_array_equal(arr.points[a_group, b_group], expected)
-    assert_array_equal(arr[cond], expected)
+    assert_larray_equal(arr[a_group, b_group], expected)
+    assert_larray_equal(arr.points[a_group, b_group], expected)
+    assert_larray_equal(arr[cond], expected)
 
 
 def test_contains():
@@ -1747,11 +1777,11 @@ def test_sum_full_axes_with_nan(array):
     assert isnan(array.sum(skipna=False))
 
     # using Axis objects
-    assert_array_nan_equal(array.sum(X.a), np.nansum(raw, 0))
-    assert_array_nan_equal(array.sum(X.a, skipna=False), raw.sum(0))
+    assert_nparray_nan_equal(array.sum(X.a).data, np.nansum(raw, 0))
+    assert_nparray_nan_equal(array.sum(X.a, skipna=False).data, raw.sum(0))
 
-    assert_array_nan_equal(array.sum(X.a, X.c), np.nansum(raw, (0, 2)))
-    assert_array_nan_equal(array.sum(X.a, X.c, skipna=False), raw.sum((0, 2)))
+    assert_nparray_nan_equal(array.sum(X.a, X.c).data, np.nansum(raw, (0, 2)))
+    assert_nparray_nan_equal(array.sum(X.a, X.c, skipna=False).data, raw.sum((0, 2)))
 
 
 def test_sum_full_axes_keep_axes(array):
@@ -1770,8 +1800,8 @@ def test_mean_full_axes(array):
     raw = array.data
 
     assert array.mean() == np.mean(raw)
-    assert_array_nan_equal(array.mean(X.a), np.mean(raw, 0))
-    assert_array_nan_equal(array.mean(X.a, X.c), np.mean(raw, (0, 2)))
+    assert_nparray_nan_equal(array.mean(X.a).data, np.mean(raw, 0))
+    assert_nparray_nan_equal(array.mean(X.a, X.c).data, np.mean(raw, (0, 2)))
 
 
 def test_mean_groups(array):
@@ -1779,30 +1809,30 @@ def test_mean_groups(array):
     arr = array.astype(int)
     raw = array.data
     res = arr.mean(X.b['b0', 'b2', 'b5', 'b7'])
-    assert_array_nan_equal(res, np.mean(raw[:, [0, 2, 4, 5]], 1))
+    assert_nparray_nan_equal(res.data, np.mean(raw[:, [0, 2, 4, 5]], 1))
 
 
 def test_median_full_axes(array):
     raw = array.data
 
     assert array.median() == np.median(raw)
-    assert_array_nan_equal(array.median(X.a), np.median(raw, 0))
-    assert_array_nan_equal(array.median(X.a, X.c), np.median(raw, (0, 2)))
+    assert_nparray_nan_equal(array.median(X.a).data, np.median(raw, 0))
+    assert_nparray_nan_equal(array.median(X.a, X.c).data, np.median(raw, (0, 2)))
 
 
 def test_median_groups(array):
     raw = array.data
     res = array.median(X.b['b0', 'b2', 'b5'])
     assert res.shape == (19, 2, 6)
-    assert_array_nan_equal(res, np.median(raw[:, [0, 2, 4]], 1))
+    assert_nparray_nan_equal(res.data, np.median(raw[:, [0, 2, 4]], 1))
 
 
 def test_percentile_full_axes():
     arr = ndtest((2, 3, 4))
     raw = arr.data
     assert arr.percentile(10) == np.percentile(raw, 10)
-    assert_array_nan_equal(arr.percentile(10, X.a), np.percentile(raw, 10, 0))
-    assert_array_nan_equal(arr.percentile(10, X.c, X.a), np.percentile(raw, 10, (2, 0)))
+    assert_nparray_nan_equal(arr.percentile(10, X.a).data, np.percentile(raw, 10, 0))
+    assert_nparray_nan_equal(arr.percentile(10, X.c, X.a).data, np.percentile(raw, 10, (2, 0)))
 
 
 def test_percentile_groups():
@@ -1810,21 +1840,21 @@ def test_percentile_groups():
     raw = arr.data
 
     res = arr.percentile(10, X.b['b0', 'b2', 'b4'])
-    assert_array_nan_equal(res, np.percentile(raw[:, [0, 2, 4]], 10, 1))
+    assert_nparray_nan_equal(res.data, np.percentile(raw[:, [0, 2, 4]], 10, 1))
 
 
 def test_cumsum(array):
     raw = array.data
 
     # using Axis objects
-    assert_array_equal(array.cumsum(X.a), raw.cumsum(0))
-    assert_array_equal(array.cumsum(X.d), raw.cumsum(3))
+    assert_nparray_equal(array.cumsum(X.a).data, raw.cumsum(0))
+    assert_nparray_equal(array.cumsum(X.d).data, raw.cumsum(3))
 
     # using axes numbers
-    assert_array_equal(array.cumsum(1), raw.cumsum(1))
+    assert_nparray_equal(array.cumsum(1).data, raw.cumsum(1))
 
     # using axes names
-    assert_array_equal(array.cumsum('c'), raw.cumsum(2))
+    assert_nparray_equal(array.cumsum('c').data, raw.cumsum(2))
 
 
 def test_group_agg_kwargs(array):
@@ -1848,8 +1878,8 @@ def test_group_agg_kwargs(array):
     # and b3 is the last one, this should be equivalent to the previous
     # tests.
     assert array.sum(b='b0:b3').shape == (19, 2, 6)
-    assert_array_equal(array.sum(b='b0:b3'), array.sum(b=':'))
-    assert_array_equal(array.sum(b=b['b0:b3']), array.sum(b=':'))
+    assert_larray_equal(array.sum(b='b0:b3'), array.sum(b=':'))
+    assert_larray_equal(array.sum(b=b['b0:b3']), array.sum(b=':'))
 
     # a.2) a tuple of one group => do not collapse dimension
     assert array.sum(b=(b[:],)).shape == (19, 1, 2, 6)
@@ -1900,8 +1930,8 @@ def test_group_agg_guess_axis(array):
     # and b3 is the last one, this should be equivalent to taking the
     # full axis.
     assert array.sum('b0:b3').shape == (19, 2, 6)
-    assert_array_equal(array.sum('b0:b3'), array.sum(b=':'))
-    assert_array_equal(array.sum('b0:b3'), array.sum(b))
+    assert_larray_equal(array.sum('b0:b3'), array.sum(b=':'))
+    assert_larray_equal(array.sum('b0:b3'), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
     assert array.sum((b[:],)).shape == (19, 1, 2, 6)
@@ -1923,16 +1953,16 @@ def test_group_agg_guess_axis(array):
     res = array.sum('c0 >> first;c0,c1 >> all')
     assert res.shape == (19, 12, 2, 6)
     assert 'c' in res.axes
-    assert_array_equal(res.axes.c.labels, ['first', 'all'])
-    assert_array_equal(res['first'], raw[:, :, 0, :])
-    assert_array_equal(res['all'], raw.sum(2))
+    assert list(res.axes.c.labels) == ['first', 'all']
+    assert_nparray_equal(res['first'].data, raw[:, :, 0, :])
+    assert_nparray_equal(res['all'].data, raw.sum(2))
 
     res = array.sum(('c0 >> first', 'c0,c1 >> all'))
     assert res.shape == (19, 12, 2, 6)
     assert 'c' in res.axes
-    assert_array_equal(res.axes.c.labels, ['first', 'all'])
-    assert_array_equal(res['first'], raw[:, :, 0, :])
-    assert_array_equal(res['all'], raw.sum(2))
+    assert list(res.axes.c.labels), ['first', 'all']
+    assert_nparray_equal(res['first'].data, raw[:, :, 0, :])
+    assert_nparray_equal(res['all'].data, raw.sum(2))
 
     res = array.sum(b_groups_all)
     assert res.shape == (19, 4, 2, 6)
@@ -1989,8 +2019,8 @@ def test_group_agg_label_group(array):
     # Include everything between two labels. Since b0 is the first label and b3 is the last one, this should be
     # equivalent to the previous tests.
     assert array.sum(b['b0:b3']).shape == (19, 2, 6)
-    assert_array_equal(array.sum(b['b0:b3']), array.sum(b))
-    assert_array_equal(array.sum(b['b0':'b3']), array.sum(b))
+    assert_larray_equal(array.sum(b['b0:b3']), array.sum(b))
+    assert_larray_equal(array.sum(b['b0':'b3']), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
     assert array.sum((b[:],)).shape == (19, 1, 2, 6)
@@ -2048,8 +2078,8 @@ def test_group_agg_label_group_no_axis(array):
     # Include everything between two labels. Since b0 is the first label
     # and b3 is the last one, this should be equivalent to the full axis.
     assert array.sum(LGroup('b0:b3')).shape == (19, 2, 6)
-    assert_array_equal(array.sum(LGroup('b0:b3')), array.sum(b))
-    assert_array_equal(array.sum(LGroup(slice('b0', 'b3'))), array.sum(b))
+    assert_larray_equal(array.sum(LGroup('b0:b3')), array.sum(b))
+    assert_larray_equal(array.sum(LGroup(slice('b0', 'b3'))), array.sum(b))
 
     # a.3) several groups
     # string groups
@@ -2112,8 +2142,8 @@ def test_group_agg_axis_ref_label_group(array):
     # and b3 is the last one, this should be equivalent to the previous
     # tests.
     assert array.sum(b['b0:b3']).shape == (19, 2, 6)
-    assert_array_equal(array.sum(b['b0:b3']), array.sum(b))
-    assert_array_equal(array.sum(b['b0':'b3']), array.sum(b))
+    assert_larray_equal(array.sum(b['b0:b3']), array.sum(b))
+    assert_larray_equal(array.sum(b['b0':'b3']), array.sum(b))
 
     # a.2) a tuple of one group => do not collapse dimension
     assert array.sum((b[:],)).shape == (19, 1, 2, 6)
@@ -2156,22 +2186,22 @@ def test_group_agg_axis_ref_label_group(array):
 def test_group_agg_one_axis():
     a = Axis(range(3), 'a')
     arr = ndtest(a)
-    raw = np.asarray(arr)
+    raw = arr.data
 
-    assert_array_equal(arr.sum(a[0, 2]), raw[[0, 2]].sum())
+    assert arr.sum(a[0, 2]) == raw[[0, 2]].sum()
 
 
 def test_group_agg_anonymous_axis():
     arr = ndtest([Axis(2), Axis(3)])
     a1, a2 = arr.axes
-    raw = np.asarray(arr)
-    assert_array_equal(arr.sum(a2[0, 2]), raw[:, [0, 2]].sum(1))
+    raw = arr.data
+    assert_nparray_equal(arr.sum(a2[0, 2]).data, raw[:, [0, 2]].sum(1))
 
 
 def test_group_agg_zero_padded_label():
     arr = ndtest("a=01,02,03,10,11; b=b0..b2")
     expected = Array([36, 30, 39], "a=01_03,10,11")
-    assert_array_equal(arr.sum("01,02,03 >> 01_03; 10; 11", "b"), expected)
+    assert_larray_equal(arr.sum("01,02,03 >> 01_03; 10; 11", "b"), expected)
 
 
 def test_group_agg_on_int_array():
@@ -2191,16 +2221,16 @@ def test_group_agg_on_bool_array():
     b = a > 1
     expected = from_string("""a,a0,a1
                                , 1, 2""", sep=',')
-    assert_array_equal(b.sum('b1:'), expected)
+    assert_larray_equal(b.sum('b1:'), expected)
 
 
 # TODO: fix this (and add other tests for references (X.) to anonymous axes
 # def test_group_agg_anonymous_axis_ref():
 #     arr = ndtest([Axis(2), Axis(3)])
-#     raw = np.asarray(arr)
+#     raw = arr.data
 #     # this does not work because x[1] refers to an axis with name 1,
 #     # which does not exist. We might want to change this.
-#     assert_array_equal(arr.sum(x[1][0, 2]), raw[:, [0, 2]].sum(1))
+#     assert_nparray_equal(arr.sum(x[1][0, 2]).data, raw[:, [0, 2]].sum(1))
 
 
 # group aggregates on a group-aggregated array
@@ -2453,7 +2483,7 @@ def test_agg_kwargs(array):
     res = array.std(X.c)
     out = zeros_like(res)
     array.std(X.c, out=out)
-    assert_array_equal(res, out)
+    assert_larray_equal(res, out)
 
 
 def test_agg_by(array):
@@ -2478,13 +2508,13 @@ def test_agg_by(array):
     # a.2) a tuple of one group
     res = array.sum_by(b=(b[:],))
     assert res.shape == (1,)
-    assert_array_equal(res, array.sum(a, c, d, b=(b[:],)))
+    assert_larray_equal(res, array.sum(a, c, d, b=(b[:],)))
 
     # a.3) several groups
     # string groups
     res = array.sum_by(b=(g1, g2, g3))
     assert res.shape == (3,)
-    assert_array_equal(res, array.sum(a, c, d, b=(g1, g2, g3)))
+    assert_larray_equal(res, array.sum(a, c, d, b=(g1, g2, g3)))
 
     # with one label in several groups
     assert array.sum_by(c=(['c0'], ['c0', 'c1'])).shape == (2,)
@@ -2492,33 +2522,33 @@ def test_agg_by(array):
 
     res = array.sum_by(c='c0;c0,c1')
     assert res.shape == (2,)
-    assert_array_equal(res, array.sum(a, b, d, c='c0;c0,c1'))
+    assert_larray_equal(res, array.sum(a, b, d, c='c0;c0,c1'))
 
     # a.4) several dimensions at the same time
     res = array.sum_by(b=(g1, g2, g3, all_b), d='d1,d3;d2,d5;:')
     assert res.shape == (4, 3)
-    assert_array_equal(res, array.sum(a, c, b=(g1, g2, g3, all_b), d='d1,d3;d2,d5;:'))
+    assert_larray_equal(res, array.sum(a, c, b=(g1, g2, g3, all_b), d='d1,d3;d2,d5;:'))
 
     # b) both axis aggregate and group aggregate at the same time
     # Note that you must list "full axes" aggregates first (Python does not allow non-kwargs after kwargs.
     res = array.sum_by(c, b=(g1, g2, g3, all_b))
     assert res.shape == (4, 2)
-    assert_array_equal(res, array.sum(a, d, b=(g1, g2, g3, all_b)))
+    assert_larray_equal(res, array.sum(a, d, b=(g1, g2, g3, all_b)))
 
     # c) chain group aggregate after axis aggregate
     res = array.sum_by(b, c)
     assert res.shape == (12, 2)
-    assert_array_equal(res, array.sum(a, d))
+    assert_larray_equal(res, array.sum(a, d))
 
     res2 = res.sum_by(b=(g1, g2, g3, all_b))
     assert res2.shape == (4,)
-    assert_array_equal(res2, res.sum(c, b=(g1, g2, g3, all_b)))
+    assert_larray_equal(res2, res.sum(c, b=(g1, g2, g3, all_b)))
 
 
 def test_agg_igroup():
     arr = ndtest(3)
     res = arr.sum((X.a.i[:2], X.a.i[1:]))
-    assert_array_equal(res.a.labels, [':a1', 'a1:'])
+    assert list(res.a.labels) == [':a1', 'a1:']
 
 
 def test_ratio():
@@ -2655,17 +2685,17 @@ def test_transpose_anonymous():
 def test_binary_ops(small_array):
     raw = small_array.data
 
-    assert_array_equal(small_array + small_array, raw + raw)
-    assert_array_equal(small_array + 1, raw + 1)
-    assert_array_equal(1 + small_array, 1 + raw)
+    assert_nparray_equal((small_array + small_array).data, raw + raw)
+    assert_nparray_equal((small_array + 1).data, raw + 1)
+    assert_nparray_equal((1 + small_array).data, 1 + raw)
 
-    assert_array_equal(small_array - small_array, raw - raw)
-    assert_array_equal(small_array - 1, raw - 1)
-    assert_array_equal(1 - small_array, 1 - raw)
+    assert_nparray_equal((small_array - small_array).data, raw - raw)
+    assert_nparray_equal((small_array - 1).data, raw - 1)
+    assert_nparray_equal((1 - small_array).data, 1 - raw)
 
-    assert_array_equal(small_array * small_array, raw * raw)
-    assert_array_equal(small_array * 2, raw * 2)
-    assert_array_equal(2 * small_array, 2 * raw)
+    assert_nparray_equal((small_array * small_array).data, raw * raw)
+    assert_nparray_equal((small_array * 2).data, raw * 2)
+    assert_nparray_equal((2 * small_array).data, 2 * raw)
 
     with np.errstate(invalid='ignore'):
         raw_res = raw / raw
@@ -2673,107 +2703,107 @@ def test_binary_ops(small_array):
     warn_msg = "invalid value (NaN) encountered during operation (this is typically caused by a 0 / 0)"
     with must_warn(RuntimeWarning, msg=warn_msg):
         res = small_array / small_array
-    assert_array_nan_equal(res, raw_res)
+    assert_nparray_nan_equal(res.data, raw_res)
 
-    assert_array_equal(small_array / 2, raw / 2)
+    assert_nparray_equal((small_array / 2).data, raw / 2)
 
     with np.errstate(divide='ignore'):
         raw_res = 30 / raw
     with must_warn(RuntimeWarning, msg="divide by zero encountered during operation"):
         res = 30 / small_array
-    assert_array_equal(res, raw_res)
+    assert_nparray_equal(res.data, raw_res)
 
-    assert_array_equal(30 / (small_array + 1), 30 / (raw + 1))
+    assert_nparray_equal((30 / (small_array + 1)).data, 30 / (raw + 1))
 
     raw_int = raw.astype(int)
     la_int = Array(raw_int, axes=(c, d))
-    assert_array_equal(la_int / 2, raw_int / 2)
-    assert_array_equal(la_int // 2, raw_int // 2)
+    assert_nparray_equal((la_int / 2).data, raw_int / 2)
+    assert_nparray_equal((la_int // 2).data, raw_int // 2)
 
     # test adding two larrays with different axes order
-    assert_array_equal(small_array + small_array.transpose(), raw * 2)
+    assert_nparray_equal((small_array + small_array.transpose()).data, raw * 2)
 
     # mixed operations
     raw2 = raw / 2
     la_raw2 = small_array - raw2
     assert la_raw2.axes == small_array.axes
-    assert_array_equal(la_raw2, raw - raw2)
+    assert_nparray_equal(la_raw2.data, raw - raw2)
     raw2_la = raw2 - small_array
     assert raw2_la.axes == small_array.axes
-    assert_array_equal(raw2_la, raw2 - raw)
+    assert_nparray_equal(raw2_la.data, raw2 - raw)
 
     la_ge_raw2 = small_array >= raw2
     assert la_ge_raw2.axes == small_array.axes
-    assert_array_equal(la_ge_raw2, raw >= raw2)
+    assert_nparray_equal(la_ge_raw2.data, raw >= raw2)
 
     raw2_ge_la = raw2 >= small_array
     assert raw2_ge_la.axes == small_array.axes
-    assert_array_equal(raw2_ge_la, raw2 >= raw)
+    assert_nparray_equal(raw2_ge_la.data, raw2 >= raw)
 
     # arrays filled with None
     arr = full(small_array.axes, fill_value=None)
     res = arr == None                                                       # noqa: E711
-    assert_array_equal(res, ones(small_array.axes, dtype=bool))
+    assert_larray_equal(res, ones(small_array.axes, dtype=bool))
 
     # Array + Axis
     arr = ndtest('a=0..10')
     res = arr + arr.a
-    assert_array_equal(res, arr + asarray(arr.a))
+    assert_larray_equal(res, arr + asarray(arr.a))
 
 
 def test_binary_ops_no_name_axes(small_array):
     raw = small_array.data
     raw2 = small_array.data + 1
-    arr = ndtest([Axis(label) for label in small_array.shape])
-    arr2 = ndtest([Axis(label) for label in small_array.shape]) + 1
+    arr = ndtest([Axis(length) for length in small_array.shape])
+    arr2 = ndtest([Axis(length) for length in small_array.shape]) + 1
 
-    assert_array_equal(arr + arr2, raw + raw2)
-    assert_array_equal(arr + 1, raw + 1)
-    assert_array_equal(1 + arr, 1 + raw)
+    assert_nparray_equal((arr + arr2).data, raw + raw2)
+    assert_nparray_equal((arr + 1).data, raw + 1)
+    assert_nparray_equal((1 + arr).data, 1 + raw)
 
-    assert_array_equal(arr - arr2, raw - raw2)
-    assert_array_equal(arr - 1, raw - 1)
-    assert_array_equal(1 - arr, 1 - raw)
+    assert_nparray_equal((arr - arr2).data, raw - raw2)
+    assert_nparray_equal((arr - 1).data, raw - 1)
+    assert_nparray_equal((1 - arr).data, 1 - raw)
 
-    assert_array_equal(arr * arr2, raw * raw2)
-    assert_array_equal(arr * 2, raw * 2)
-    assert_array_equal(2 * arr, 2 * raw)
+    assert_nparray_equal((arr * arr2).data, raw * raw2)
+    assert_nparray_equal((arr * 2).data, raw * 2)
+    assert_nparray_equal((2 * arr).data, 2 * raw)
 
-    assert_array_nan_equal(arr / arr2, raw / raw2)
-    assert_array_equal(arr / 2, raw / 2)
+    assert_nparray_nan_equal((arr / arr2).data, raw / raw2)
+    assert_nparray_equal((arr / 2).data, raw / 2)
 
     with np.errstate(divide='ignore'):
         raw_res = 30 / raw
     with must_warn(RuntimeWarning, msg="divide by zero encountered during operation"):
         res = 30 / arr
-    assert_array_equal(res, raw_res)
+    assert_nparray_equal(res.data, raw_res)
 
-    assert_array_equal(30 / (arr + 1), 30 / (raw + 1))
+    assert_nparray_equal((30 / (arr + 1)).data, 30 / (raw + 1))
 
     raw_int = raw.astype(int)
     la_int = Array(raw_int)
-    assert_array_equal(la_int / 2, raw_int / 2)
-    assert_array_equal(la_int // 2, raw_int // 2)
+    assert_nparray_equal((la_int / 2).data, raw_int / 2)
+    assert_nparray_equal((la_int // 2).data, raw_int // 2)
 
     # adding two larrays with different axes order cannot work with unnamed axes
-    # assert_array_equal(arr + arr.transpose(), raw * 2)
+    # assert_nparray_equal((arr + arr.transpose()).data, raw * 2)
 
     # mixed operations
     raw2 = raw / 2
     la_raw2 = arr - raw2
     assert la_raw2.axes == arr.axes
-    assert_array_equal(la_raw2, raw - raw2)
+    assert_nparray_equal(la_raw2.data, raw - raw2)
     raw2_la = raw2 - arr
     assert raw2_la.axes == arr.axes
-    assert_array_equal(raw2_la, raw2 - raw)
+    assert_nparray_equal(raw2_la.data, raw2 - raw)
 
     la_ge_raw2 = arr >= raw2
     assert la_ge_raw2.axes == arr.axes
-    assert_array_equal(la_ge_raw2, raw >= raw2)
+    assert_nparray_equal(la_ge_raw2.data, raw >= raw2)
 
     raw2_ge_la = raw2 >= arr
     assert raw2_ge_la.axes == arr.axes
-    assert_array_equal(raw2_ge_la, raw2 >= raw)
+    assert_nparray_equal(raw2_ge_la.data, raw2 >= raw)
 
 
 def test_broadcasting_no_name():
@@ -2781,11 +2811,8 @@ def test_broadcasting_no_name():
     b = ndtest(Axis(3))
     c = ndtest(Axis(2))
 
-    with must_raise(ValueError):
-        # ValueError: incompatible axes:
-        # Axis(None, [0, 1, 2])
-        # vs
-        # Axis(None, [0, 1])
+    # FIXME: this error message is awful
+    with must_raise(ValueError, "axis {?}* is not compatible with {?}*"):
         a * b
 
     d = a * c
@@ -2802,8 +2829,7 @@ def test_broadcasting_no_name():
     assert np.array_equal(d, [[0, 1,  4],   # noqa: E241
                               [0, 4, 10]])
 
-    with must_raise(ValueError):
-        # ValueError: operands could not be broadcast together with shapes (2,3) (2,)
+    with must_raise(ValueError, "operands could not be broadcast together with shapes (2,3) (2,) "):
         np.asarray(a) * np.asarray(c)
 
 
@@ -2819,21 +2845,21 @@ def test_unary_ops(small_array):
     raw = small_array.data
 
     # using numpy functions
-    assert_array_equal(np.abs(small_array - 10), np.abs(raw - 10))
-    assert_array_equal(np.negative(small_array), np.negative(raw))
-    assert_array_equal(np.invert(small_array), np.invert(raw))
+    assert_nparray_equal(np.abs(small_array - 10).data, np.abs(raw - 10))
+    assert_nparray_equal(np.negative(small_array).data, np.negative(raw))
+    assert_nparray_equal(np.invert(small_array).data, np.invert(raw))
 
     # using python builtin ops
-    assert_array_equal(abs(small_array - 10), abs(raw - 10))
-    assert_array_equal(-small_array, -raw)
-    assert_array_equal(+small_array, +raw)
-    assert_array_equal(~small_array, ~raw)
+    assert_nparray_equal(abs(small_array - 10).data, abs(raw - 10))
+    assert_nparray_equal((-small_array).data, -raw)
+    assert_nparray_equal((+small_array).data, +raw)
+    assert_nparray_equal((~small_array).data, ~raw)
 
 
 def test_mean(small_array):
     raw = small_array.data
     c, d = small_array.axes
-    assert_array_equal(small_array.mean(d), raw.mean(1))
+    assert_nparray_equal((small_array.mean(d)).data, raw.mean(1))
 
 
 def test_sequence():
@@ -2910,11 +2936,11 @@ def test_sort_values():
     arr = Array([0, 1, 6, 3, -1], "a=a0..a4")
     res = arr.sort_values()
     expected = Array([-1, 0, 1, 3, 6], "a=a4,a0,a1,a3,a2")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
     # ascending arg
     res = arr.sort_values(ascending=False)
     expected = Array([6, 3, 1, 0, -1], "a=a2,a3,a1,a0,a4")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # 3D arrays
     arr = Array([[[10, 2, 4], [3, 7, 1]], [[5, 1, 6], [2, 8, 9]]],
@@ -2922,13 +2948,13 @@ def test_sort_values():
     res = arr.sort_values(axis='c')
     expected = Array([[[2, 4, 10], [1, 3, 7]], [[1, 5, 6], [2, 8, 9]]],
                      [Axis('a=a0,a1'), Axis('b=b0,b1'), Axis(3, 'c')])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_set_labels(small_array):
     small_array.set_labels(X.c, ['Man', 'Woman'], inplace=True)
     expected = small_array.set_labels(X.c, ['Man', 'Woman'])
-    assert_array_equal(small_array, expected)
+    assert_larray_equal(small_array, expected)
 
 
 def test_set_axes(small_array):
@@ -2938,53 +2964,53 @@ def test_set_axes(small_array):
     arr = Array(small_array.data, axes=(c, d2))
     # replace one axis
     arr2 = small_array.set_axes(X.d, d2)
-    assert_array_equal(arr, arr2)
+    assert_larray_equal(arr, arr2)
 
     arr = Array(small_array.data, axes=(c2, d2))
     # all at once
     arr2 = small_array.set_axes([c2, d2])
-    assert_array_equal(arr, arr2)
+    assert_larray_equal(arr, arr2)
     # using keywrods args
     arr2 = small_array.set_axes(c=c2, d=d2)
-    assert_array_equal(arr, arr2)
+    assert_larray_equal(arr, arr2)
     # using dict
     arr2 = small_array.set_axes({X.c: c2, X.d: d2})
-    assert_array_equal(arr, arr2)
+    assert_larray_equal(arr, arr2)
     # using list of pairs (axis_to_replace, new_axis)
     arr2 = small_array.set_axes([(X.c, c2), (X.d, d2)])
-    assert_array_equal(arr, arr2)
+    assert_larray_equal(arr, arr2)
 
 
 def test_reindex():
     arr = ndtest((2, 2))
     res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1)
-    assert_array_equal(res, from_string(r"""a\b  b1  b2  b0
+    assert_larray_equal(res, from_string(r"""a\b  b1  b2  b0
                                              a0   1  -1   0
                                              a1   3  -1   2"""))
 
     arr2 = ndtest((2, 2))
     arr2.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1, inplace=True)
-    assert_array_equal(arr2, from_string(r"""a\b  b1  b2  b0
+    assert_larray_equal(arr2, from_string(r"""a\b  b1  b2  b0
                                               a0   1  -1   0
                                               a1   3  -1   2"""))
 
     # Array fill value
     filler = ndtest(arr.a)
     res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=filler)
-    assert_array_equal(res, from_string(r"""a\b  b1  b2  b0
+    assert_larray_equal(res, from_string(r"""a\b  b1  b2  b0
                                              a0   1   0   0
                                              a1   3   1   2"""))
 
     # using labels from another array
     arr = ndtest('a=v0..v2;b=v0,v2,v1,v3')
     res = arr.reindex('a', arr.b.labels, fill_value=-1)
-    assert_array_equal(res, from_string(r"""a\b  v0  v2  v1  v3
+    assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
                                              v0   0   1   2   3
                                              v2   8   9  10  11
                                              v1   4   5   6   7
                                              v3  -1  -1  -1  -1"""))
     res = arr.reindex('a', arr.b, fill_value=-1)
-    assert_array_equal(res, from_string(r"""a\b  v0  v2  v1  v3
+    assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
                                              v0   0   1   2   3
                                              v2   8   9  10  11
                                              v1   4   5   6   7
@@ -2993,7 +3019,7 @@ def test_reindex():
     # passing a list of Axis
     arr = ndtest((2, 2))
     res = arr.reindex([Axis("a=a0,a1"), Axis("c=c0"), Axis("b=b1,b2")], fill_value=-1)
-    assert_array_equal(res, from_string(r""" a  b\c  c0
+    assert_larray_equal(res, from_string(r""" a  b\c  c0
                                             a0   b1   1
                                             a0   b2  -1
                                             a1   b1   3
@@ -3010,7 +3036,7 @@ def test_expand():
     out2 = empty((c, country))
     out2[:] = arr
 
-    assert_array_equal(out1, out2)
+    assert_larray_equal(out1, out2)
 
 
 def test_append(small_array):
@@ -3042,7 +3068,7 @@ def test_insert():
     a\b  b0  None  b1  b2
      a0   0    42   1   2
      a1   3    42   4   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # Specify label if not in the value
     res = arr1.insert(42, before='b1', label='new')
@@ -3050,7 +3076,7 @@ def test_insert():
     a\b  b0  new  b1  b2
      a0   0   42   1   2
      a1   3   42   4   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # insert at multiple places at once
 
@@ -3059,54 +3085,54 @@ def test_insert():
     expected = from_lists([[r'a\b', 'b0', 'new', 'new', 'b1', 'b2'],
                            [  'a0',    0,    42,    43,    1,    2],   # noqa: E201,E241
                            [  'a1',    3,    42,    43,    4,    5]])  # noqa: E201,E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert(42, before=['b1', 'b2'], label='new')
     expected = from_lists([[r'a\b', 'b0', 'new', 'b1', 'new', 'b2'],
                            [  'a0',    0,    42,    1,    42,    2],   # noqa: E201,E241
                            [  'a1',    3,    42,    4,    42,    5]])  # noqa: E201,E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert(42, before='b1', label=['b0.1', 'b0.2'])
     expected = from_string(r"""
     a\b  b0  b0.1  b0.2  b1  b2
      a0   0    42    42   1   2
      a1   3    42    42   4   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert(42, before=['b1', 'b2'], label=['b0.5', 'b1.5'])
     expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    42   2
      a1   3    42   4    42   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert([42, 43], before='b1', label=['b0.1', 'b0.2'])
     expected = from_string(r"""
     a\b  b0  b0.1  b0.2  b1  b2
      a0   0    42    43   1   2
      a1   3    42    43   4   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert([42, 43], before=['b1', 'b2'], label='new')
     expected = from_lists([[r'a\b', 'b0', 'new', 'b1', 'new', 'b2'],
                            [  'a0',    0,    42,    1,    43,    2],   # noqa: E201,E241
                            [  'a1',    3,    42,    4,    43,    5]])  # noqa: E201,E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert([42, 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
     expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
      a1   3    42   4    43   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.insert([42, 43], before='b1,b2', label=['b0.5', 'b1.5'])
     expected = from_string(r"""
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
      a1   3    42   4    43   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     arr2 = ndtest(2)
     res = arr1.insert([arr2 + 42, arr2 + 43], before=['b1', 'b2'], label=['b0.5', 'b1.5'])
@@ -3114,7 +3140,7 @@ def test_insert():
     a\b  b0  b0.5  b1  b1.5  b2
      a0   0    42   1    43   2
      a1   3    43   4    44   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     arr3 = ndtest('a=a0,a1;b=b0.1,b0.2') + 42
     res = arr1.insert(arr3, before='b1,b2')
@@ -3122,7 +3148,7 @@ def test_insert():
     a\b  b0  b0.1  b1  b0.2  b2
      a0   0    42   1    43   2
      a1   3    44   4    45   5""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # Override array label
     res = arr1.insert(arr3, before='b1', label='new')
@@ -3130,7 +3156,7 @@ def test_insert():
     expected = from_lists([[r'a\b', 'b0', 'new', 'new', 'b1', 'b2'],
                            [  'a0',    0,    42,    43,    1,    2],   # noqa: E201,E241
                            [  'a1',    3,    44,    45,    4,    5]])  # noqa: E201,E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # with ambiguous labels
     arr4 = ndtest('a=v0,v1;b=v0,v1')
@@ -3139,13 +3165,13 @@ def test_insert():
     a\b  v0  v0.5  v1
      v0   0    42   1
      v1   2    42   3""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr4.insert(42, before=X.b['v1'], label='v0.5')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr4.insert(42, before=arr4.b['v1'], label='v0.5')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_drop():
@@ -3154,17 +3180,17 @@ def test_drop():
 
     # indices
     res = arr1.drop('a.i[1]')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.drop(X.a.i[1])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # labels
     res = arr1.drop(X.a['a1'])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr1.drop('a[a1]')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # 2D array
     arr2 = ndtest((2, 4))
@@ -3173,23 +3199,23 @@ def test_drop():
      a0   0   2
      a1   4   6""")
     res = arr2.drop(['b1', 'b3'])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr2.drop(X.b['b1', 'b3'])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr2.drop('b.i[1, 3]')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = arr2.drop(X.b.i[1, 3])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     a = Axis('a=label0..label2')
     b = Axis('b=label0..label2')
     arr3 = ndtest((a, b))
 
     res = arr3.drop('a[label1]')
-    assert_array_equal(res, from_string(r"""
+    assert_larray_equal(res, from_string(r"""
        a\b  label0  label1  label2
     label0       0       1       2
     label2       6       7       8"""))
@@ -3197,13 +3223,13 @@ def test_drop():
     # XXX: implement the following (#671)?
     # res = arr3.drop('0[label1]')
     res = arr3.drop(X[0]['label1'])
-    assert_array_equal(res, from_string(r"""
+    assert_larray_equal(res, from_string(r"""
        a\b  label0  label1  label2
     label0       0       1       2
     label2       6       7       8"""))
 
     res = arr3.drop(a['label1'])
-    assert_array_equal(res, from_string(r"""
+    assert_larray_equal(res, from_string(r"""
        a\b  label0  label1  label2
     label0       0       1       2
     label2       6       7       8"""))
@@ -3220,16 +3246,16 @@ def test_shift_axis(small_array):
      c1   6   7   8   9  10""")
 
     res = Array(small_array[:, :'d5'], axes=[c, Axis(d.labels[1:], 'd')])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = Array(small_array[:, :'d5'], axes=[c, d.subaxis(slice(1, None))])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # We can also modify the axis in-place (dangerous!)
     # d.labels = np.append(d.labels[1:], d.labels[0])
     res = small_array[:, :'d5']
     res.axes.d.labels = d.labels[1:]
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_unique():
@@ -3237,15 +3263,15 @@ def test_unique():
                   [1, 1, 1, 0]],
                  [[0, 2, 0, 0],
                   [2, 1, 2, 0]]], 'a=a0,a1;b=b0,b1;c=c0..c3')
-    assert_array_equal(arr.unique('a'), arr)
-    assert_array_equal(arr.unique('b'), arr)
-    assert_array_equal(arr.unique('c'), arr['c0,c1,c3'])
+    assert_larray_equal(arr.unique('a'), arr)
+    assert_larray_equal(arr.unique('b'), arr)
+    assert_larray_equal(arr.unique('c'), arr['c0,c1,c3'])
     expected = from_string(r"""
     a_b\c  c0  c1  c2  c3
     a0_b0   0   2   0   0
     a0_b1   1   1   1   0
     a1_b1   2   1   2   0""")
-    assert_array_equal(arr.unique(('a', 'b')), expected)
+    assert_larray_equal(arr.unique(('a', 'b')), expected)
 
 
 def test_extend(small_array):
@@ -3270,10 +3296,7 @@ def test_hdf_roundtrip(tmp_path, meta):
     arr.to_hdf(fpath, 'a')
     res = read_hdf(fpath, 'a')
 
-    assert a.ndim == 2
-    assert a.shape == (2, 3)
-    assert a.axes.names == ['a', 'b']
-    assert_array_equal(res, arr)
+    assert_larray_equal(res, arr)
     assert res.meta == arr.meta
 
     # issue 72: int-like strings should not be parsed (should round-trip correctly)
@@ -3285,7 +3308,7 @@ def test_hdf_roundtrip(tmp_path, meta):
     assert res.ndim == 1
     axis = res.axes[0]
     assert axis.name == 'axis'
-    assert_array_equal(axis.labels, ['10', '20'])
+    assert list(axis.labels) == ['10', '20']
 
     # passing group as key to to_hdf
     a3 = ndtest((4, 3, 4))
@@ -3326,7 +3349,7 @@ def test_hdf_roundtrip(tmp_path, meta):
     # passing group as key to read_hdf
     for label in a3.a:
         subset = read_hdf(fpath, label)
-        assert_array_equal(subset, a3[label])
+        assert_larray_equal(subset, a3[label])
 
     # load Session
     from larray.core.session import Session
@@ -3339,76 +3362,76 @@ def test_from_string():
 
     res = from_string(""" c  c0  c1
                          \t   0   1""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = from_string(r"""  c  c0  c1
                           nan   0   1""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = from_string(r"""  c  c0  c1
                           NaN   0   1""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_read_csv():
     res = read_csv(inputpath('test1d.csv'))
-    assert_array_equal(res, io_1d)
+    assert_larray_equal(res, io_1d)
 
     res = read_csv(inputpath('test2d.csv'))
-    assert_array_equal(res, io_2d)
+    assert_larray_equal(res, io_2d)
 
     res = read_csv(inputpath('test3d.csv'))
-    assert_array_equal(res, io_3d)
+    assert_larray_equal(res, io_3d)
 
     res = read_csv(inputpath('testint_labels.csv'))
-    assert_array_equal(res, io_int_labels)
+    assert_larray_equal(res, io_int_labels)
 
     res = read_csv(inputpath('test2d_classic.csv'))
-    assert_array_equal(res, ndtest("a=a0..a2; b0..b2"))
+    assert_larray_equal(res, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_csv(inputpath('test1d_liam2.csv'), dialect='liam2')
     assert arr.ndim == 1
     assert arr.shape == (3,)
     assert arr.axes.names == ['time']
-    assert_array_equal(arr, [3722, 3395, 3347])
+    assert list(arr.data) == [3722, 3395, 3347]
 
     arr = read_csv(inputpath('test5d_liam2.csv'), dialect='liam2')
     assert arr.ndim == 5
     assert arr.shape == (2, 5, 2, 2, 3)
     assert arr.axes.names == ['arr', 'age', 'sex', 'nat', 'time']
-    assert_array_equal(arr[X.arr[1], 0, 'F', X.nat[1], :], [3722, 3395, 3347])
+    assert list(arr[X.arr[1], 0, 'F', X.nat[1], :].data) == [3722, 3395, 3347]
 
     # missing values
     res = read_csv(inputpath('testmissing_values.csv'))
-    assert_array_nan_equal(res, io_missing_values)
+    assert_larray_nan_equal(res, io_missing_values)
 
     # test StringIO
     res = read_csv(StringIO('a,1,2\n,0,1\n'))
-    assert_array_equal(res, ndtest('a=1,2'))
+    assert_larray_equal(res, ndtest('a=1,2'))
 
     # sort_columns=True
     res = read_csv(StringIO('a,a2,a0,a1\n,2,0,1\n'), sort_columns=True)
-    assert_array_equal(res, ndtest(3))
+    assert_larray_equal(res, ndtest(3))
 
     #################
     # narrow format #
     #################
     res = read_csv(inputpath('test1d_narrow.csv'), wide=False)
-    assert_array_equal(res, io_1d)
+    assert_larray_equal(res, io_1d)
 
     res = read_csv(inputpath('test2d_narrow.csv'), wide=False)
-    assert_array_equal(res, io_2d)
+    assert_larray_equal(res, io_2d)
 
     res = read_csv(inputpath('test3d_narrow.csv'), wide=False)
-    assert_array_equal(res, io_3d)
+    assert_larray_equal(res, io_3d)
 
     # missing values
     res = read_csv(inputpath('testmissing_values_narrow.csv'), wide=False)
-    assert_array_nan_equal(res, io_narrow_missing_values)
+    assert_larray_nan_equal(res, io_narrow_missing_values)
 
     # unsorted values
     res = read_csv(inputpath('testunsorted_narrow.csv'), wide=False)
-    assert_array_equal(res, io_unsorted)
+    assert_larray_equal(res, io_unsorted)
 
 
 def test_read_eurostat():
@@ -3417,83 +3440,82 @@ def test_read_eurostat():
     assert arr.shape == (2, 5, 2, 2, 3)
     assert arr.axes.names == ['arr', 'age', 'sex', 'nat', 'time']
     # FIXME: integer labels should be parsed as such
-    assert_array_equal(arr[X.arr['1'], '0', 'F', X.nat['1'], :],
-                       [3722, 3395, 3347])
+    assert list(arr[X.arr['1'], '0', 'F', X.nat['1'], :].data) == [3722, 3395, 3347]
 
 
 @needs_xlwings
 def test_read_excel_xlwings():
     arr = read_excel(inputpath('test.xlsx'), '1d')
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     arr = read_excel(inputpath('test.xlsx'), '2d')
-    assert_array_equal(arr, io_2d)
+    assert_larray_equal(arr, io_2d)
 
     arr = read_excel(inputpath('test.xlsx'), '2d_classic')
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+    assert_larray_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2)
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+    assert_larray_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_excel(inputpath('test.xlsx'), '3d')
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     # for > 2d, specifying nb_axes is required if there is no name for the horizontal axis
     arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3)
-    assert_array_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
+    assert_larray_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
 
     arr = read_excel(inputpath('test.xlsx'), 'int_labels')
-    assert_array_equal(arr, io_int_labels)
+    assert_larray_equal(arr, io_int_labels)
 
     # passing a Group as sheet arg
     axis = Axis('dim=1d,2d,3d,5d')
 
     arr = read_excel(inputpath('test.xlsx'), axis['1d'])
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     # missing rows, default fill_value
     arr = read_excel(inputpath('test.xlsx'), 'missing_values')
     expected = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
     expected[2, 'b0'] = nan
     expected[3, 'b1'] = nan
-    assert_array_nan_equal(arr, expected)
+    assert_larray_nan_equal(arr, expected)
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42)
     expected = ndtest("a=1..3; b=b0,b1; c=c0..c2", dtype=float)
     expected[2, 'b0'] = 42
     expected[3, 'b1'] = 42
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # range
     arr = read_excel(inputpath('test.xlsx'), 'position', range='D3:H9')
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     #################
     # narrow format #
     #################
     arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False)
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False)
-    assert_array_equal(arr, io_2d)
+    assert_larray_equal(arr, io_2d)
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False)
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values', fill_value=42, wide=False)
     expected = io_narrow_missing_values.copy()
     expected[isnan(expected)] = 42
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # unsorted values
     arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False)
-    assert_array_equal(arr, io_unsorted)
+    assert_larray_equal(arr, io_unsorted)
 
     # range
     arr = read_excel(inputpath('test_narrow.xlsx'), 'position', range='D3:G21', wide=False)
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     ##############################
     #  invalid keyword argument  #
@@ -3512,104 +3534,103 @@ def test_read_excel_xlwings():
     good = read_excel(fpath, 'good')
     bad1 = read_excel(fpath, 'blanksafter_morerowsthancols')
     bad2 = read_excel(fpath, 'blanksafter_morecolsthanrows')
-    assert_array_equal(bad1, good)
-    assert_array_equal(bad2, good)
+    assert_larray_equal(bad1, good)
+    assert_larray_equal(bad2, good)
     # with additional empty column in the middle of the array to read
     good2 = ndtest('a=a0,a1;b=2003..2006').astype(object)
     good2[2005] = None
     good2 = good2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
     bad3 = read_excel(fpath, 'middleblankcol')
     bad4 = read_excel(fpath, '16384col')
-    assert_array_equal(bad3, good2)
-    assert_array_equal(bad4, good2)
+    assert_larray_equal(bad3, good2)
+    assert_larray_equal(bad4, good2)
 
 
 @needs_openpyxl
 def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '1d', engine='openpyxl')
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     arr = read_excel(inputpath('test.xlsx'), '2d', engine='openpyxl')
-    assert_array_equal(arr, io_2d)
+    assert_larray_equal(arr, io_2d)
 
     arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='openpyxl')
-    assert_array_equal(arr, io_2d)
+    assert_larray_equal(arr, io_2d)
 
     arr = read_excel(inputpath('test.xlsx'), '2d_classic', engine='openpyxl')
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+    assert_larray_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_excel(inputpath('test.xlsx'), '2d_classic', nb_axes=2, engine='openpyxl')
-    assert_array_equal(arr, ndtest("a=a0..a2; b0..b2"))
+    assert_larray_equal(arr, ndtest("a=a0..a2; b0..b2"))
 
     arr = read_excel(inputpath('test.xlsx'), '3d', index_col=[0, 1], engine='openpyxl')
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     arr = read_excel(inputpath('test.xlsx'), '3d', engine='openpyxl')
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     # for > 2d, specifying nb_axes is required if there is no name for the horizontal axis
     arr = read_excel(inputpath('test.xlsx'), '3d_classic', nb_axes=3, engine='openpyxl')
-    assert_array_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
+    assert_larray_equal(arr, ndtest("a=1..3; b=b0,b1; c0..c2"))
 
     arr = read_excel(inputpath('test.xlsx'), 'int_labels', engine='openpyxl')
-    assert_array_equal(arr, io_int_labels)
+    assert_larray_equal(arr, io_int_labels)
 
     # passing a Group as sheet arg
     axis = Axis('dim=1d,2d,3d,5d')
 
     arr = read_excel(inputpath('test.xlsx'), axis['1d'], engine='openpyxl')
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test.xlsx'), 'missing_values', fill_value=42, engine='openpyxl')
     expected = io_missing_values.copy()
     expected[isnan(expected)] = 42
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     #################
     # narrow format #
     #################
     arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='openpyxl')
-    assert_array_equal(arr, io_1d)
+    assert_larray_equal(arr, io_1d)
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='openpyxl')
-    assert_array_equal(arr, io_2d)
+    assert_larray_equal(arr, io_2d)
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='openpyxl')
-    assert_array_equal(arr, io_3d)
+    assert_larray_equal(arr, io_3d)
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
                      fill_value=42, wide=False, engine='openpyxl')
     expected = io_narrow_missing_values.copy()
     expected[isnan(expected)] = 42
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # unsorted values
     arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='openpyxl')
-    assert_array_equal(arr, io_unsorted)
+    assert_larray_equal(arr, io_unsorted)
 
 
 def test_from_lists():
-    simple_arr = ndtest((2, 2, 3))
+    expected = ndtest((2, 2, 3))
 
     # simple
-    arr_list = [[ 'a', r'b\c', 'c0', 'c1', 'c2'],              # noqa: E201
-                ['a0',   'b0',    0,    1,    2],              # noqa: E241
-                ['a0',   'b1',    3,    4,    5],              # noqa: E241
-                ['a1',   'b0',    6,    7,    8],              # noqa: E241
-                ['a1',   'b1',    9,   10,   11]]              # noqa: E241
-    res = from_lists(arr_list)
-    assert_array_equal(res, simple_arr)
+    res = from_lists([[ 'a', r'b\c', 'c0', 'c1', 'c2'],   # noqa: E201
+                      ['a0',   'b0',    0,    1,    2],   # noqa: E241
+                      ['a0',   'b1',    3,    4,    5],   # noqa: E241
+                      ['a1',   'b0',    6,    7,    8],   # noqa: E241
+                      ['a1',   'b1',    9,   10,   11]])  # noqa: E241
+    assert_larray_equal(res, expected)
 
-    # simple (using dump). This should be the same test than above.
+    # simple (using dump). This should be the same test as above.
     # We just make sure dump() and from_lists() round-trip correctly.
-    arr_list = simple_arr.dump()
+    arr_list = expected.dump()
     res = from_lists(arr_list)
-    assert_array_equal(res, simple_arr)
+    assert_larray_equal(res, expected)
 
     # with anonymous axes
-    arr_anon = simple_arr.rename({0: None, 1: None, 2: None})
+    arr_anon = expected.rename({0: None, 1: None, 2: None})
     arr_list = arr_anon.dump()
     assert arr_list == [[None, None, 'c0', 'c1', 'c2'],
                         ['a0', 'b0',    0,    1,    2],              # noqa: E241
@@ -3617,10 +3638,10 @@ def test_from_lists():
                         ['a1', 'b0',    6,    7,    8],              # noqa: E241
                         ['a1', 'b1',    9,   10,   11]]              # noqa: E241
     res = from_lists(arr_list, nb_axes=3)
-    assert_array_equal(res, arr_anon)
+    assert_larray_equal(res, arr_anon)
 
     # with empty ('') axes names
-    arr_empty_names = simple_arr.rename({0: '', 1: '', 2: ''})
+    arr_empty_names = expected.rename({0: '', 1: '', 2: ''})
     arr_list = arr_empty_names.dump()
     assert arr_list == [[  '',   '', 'c0', 'c1', 'c2'],              # noqa: E201,E241
                         ['a0', 'b0',    0,    1,    2],              # noqa: E241
@@ -3629,46 +3650,46 @@ def test_from_lists():
                         ['a1', 'b1',    9,   10,   11]]              # noqa: E241
     res = from_lists(arr_list, nb_axes=3)
     # this is purposefully NOT arr_empty_names because from_lists (via df_asarray) transforms '' axes to None
-    assert_array_equal(res, arr_anon)
+    assert_larray_equal(res, arr_anon)
 
     # sort_rows
-    arr = from_lists([['c', r'nat\year', 1991, 1992, 1993],
-                      ['c0', 'BE', 0, 0, 1],
-                      ['c0', 'FO', 0, 0, 2],
-                      ['c1', 'BE', 1, 0, 0],
-                      ['c1', 'FO', 2, 0, 0]])
+    expected = from_lists([['c', r'nat\year', 1991, 1992, 1993],
+                           ['c0', 'BE', 0, 0, 1],
+                           ['c0', 'FO', 0, 0, 2],
+                           ['c1', 'BE', 1, 0, 0],
+                           ['c1', 'FO', 2, 0, 0]])
     sorted_arr = from_lists([['c', r'nat\year', 1991, 1992, 1993],
                              ['c1', 'BE', 1, 0, 0],
                              ['c1', 'FO', 2, 0, 0],
                              ['c0', 'BE', 0, 0, 1],
                              ['c0', 'FO', 0, 0, 2]], sort_rows=True)
-    assert_array_equal(sorted_arr, arr)
+    assert_larray_equal(sorted_arr, expected)
 
     # sort_columns
-    arr = from_lists([['c', r'nat\year', 1991, 1992, 1993],
-                      ['c0', 'BE', 1, 0, 0],
-                      ['c0', 'FO', 2, 0, 0],
-                      ['c1', 'BE', 0, 0, 1],
-                      ['c1', 'FO', 0, 0, 2]])
+    expected = from_lists([['c', r'nat\year', 1991, 1992, 1993],
+                           ['c0', 'BE', 1, 0, 0],
+                           ['c0', 'FO', 2, 0, 0],
+                           ['c1', 'BE', 0, 0, 1],
+                           ['c1', 'FO', 0, 0, 2]])
     sorted_arr = from_lists([['c', r'nat\year', 1992, 1991, 1993],
                              ['c0', 'BE', 0, 1, 0],
                              ['c0', 'FO', 0, 2, 0],
                              ['c1', 'BE', 0, 0, 1],
                              ['c1', 'FO', 0, 0, 2]], sort_columns=True)
-    assert_array_equal(sorted_arr, arr)
+    assert_larray_equal(sorted_arr, expected)
 
 
 def test_from_series():
     # Series with Index as index
     expected = ndtest(3)
     s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
-    assert_array_equal(from_series(s), expected)
+    assert_larray_equal(from_series(s), expected)
 
     s = pd.Series([2, 0, 1], index=pd.Index(['a2', 'a0', 'a1'], name='a'))
-    assert_array_equal(from_series(s, sort_rows=True), expected)
+    assert_larray_equal(from_series(s, sort_rows=True), expected)
 
     expected = ndtest(3)[['a2', 'a0', 'a1']]
-    assert_array_equal(from_series(s), expected)
+    assert_larray_equal(from_series(s), expected)
 
     # Series with MultiIndex as index
     a = Axis('a=0..3')
@@ -3681,15 +3702,15 @@ def test_from_series():
     s = pd.Series(data, index)
 
     res = from_series(s)
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     res = from_series(s, sort_rows=True)
-    assert_array_equal(res, expected.sort_labels())
+    assert_larray_equal(res, expected.sort_labels())
 
     expected[0, 'F'] = -1
     s = s.reset_index().drop([3, 4, 5]).set_index(['a', 'gender', 'time'])[0]
     res = from_series(s, fill_value=-1)
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_from_frame():
@@ -3723,7 +3744,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous columns
     # input dataframe:
@@ -3743,7 +3764,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous columns/non string row axis name
     # input dataframe:
@@ -3761,7 +3782,7 @@ def test_from_frame():
     assert res.ndim == 2
     assert res.shape == (1, 1)
     assert res.axes.names == [0, None]
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # anonymous index
     # input dataframe:
@@ -3780,7 +3801,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # index and columns with name
     # input dataframe:
@@ -3800,7 +3821,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # 2) data = vector
     # ================
@@ -3836,7 +3857,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous columns
     # input dataframe:
@@ -3856,7 +3877,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous index
     # input dataframe:
@@ -3875,7 +3896,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # index and columns with name
     # input dataframe:
@@ -3895,7 +3916,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == index
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # 2B) data = vertical vector (N x 1)
     # ==================================
@@ -3931,7 +3952,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == indexes
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous columns
     # input dataframe:
@@ -3955,7 +3976,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == indexes
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index.rename('index'), axis_columns])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # anonymous index
     # input dataframe:
@@ -3978,7 +3999,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == indexes
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # index and columns with name
     # input dataframe:
@@ -4001,7 +4022,7 @@ def test_from_frame():
     assert list(arr.axes.labels[0]) == indexes
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
-    assert_array_equal(arr, expected)
+    assert_larray_equal(arr, expected)
 
     # 3) 3D array
     # ===========
@@ -4028,7 +4049,7 @@ def test_from_frame():
     assert arr.ndim == 3
     assert arr.shape == (4, 2, 3)
     assert arr.axes.names == ['a', 'c', 'time']
-    assert_array_equal(arr[0, 'c1', :], [3722, 3395, 3347])
+    assert list(arr[0, 'c1', :].data) == [3722, 3395, 3347]
 
     # 3B) Dataframe with columns.name containing \
     # ============================================
@@ -4051,14 +4072,14 @@ def test_from_frame():
     assert arr.ndim == 3
     assert arr.shape == (4, 2, 3)
     assert arr.axes.names == ['a', 'c', 'time']
-    assert_array_equal(arr[0, 'c1', :], [3722, 3395, 3347])
+    assert_nparray_equal(arr[0, 'c1', :].data, np.array([3722, 3395, 3347]))
 
     # 3C) Dataframe with no axe names (names are None)
     # ===============================
     arr_no_names = ndtest("a0,a1;b0..b2;c0..c3")
     df_no_names = arr_no_names.df
     res = from_frame(df_no_names)
-    assert_array_equal(res, arr_no_names)
+    assert_larray_equal(res, arr_no_names)
 
     # 3D) Dataframe with empty axe names (names are '')
     # ==================================
@@ -4066,7 +4087,7 @@ def test_from_frame():
     assert arr_empty_names.axes.names == ['', '', '']
     df_empty_names = arr_empty_names.df
     res = from_frame(df_empty_names)
-    assert_array_equal(res, arr_empty_names)
+    assert_larray_equal(res, arr_empty_names)
 
     # 4) test sort_rows and sort_columns arguments
     # ============================================
@@ -4083,7 +4104,7 @@ def test_from_frame():
 
     expected = expected.sort_labels()
     res = from_frame(df, sort_rows=True, sort_columns=True)
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # df.index is a MultiIndex instance
     expected = ndtest((a, gender, time))
@@ -4092,14 +4113,14 @@ def test_from_frame():
     df = pd.DataFrame(data, index=index, columns=columns)
 
     res = from_frame(df, sort_rows=True, sort_columns=True)
-    assert_array_equal(res, expected.sort_labels())
+    assert_larray_equal(res, expected.sort_labels())
 
     # 5) test fill_value
     # ==================
     expected[0, 'F'] = -1
     df = df.reset_index().drop([3]).set_index(['a', 'gender'])
     res = from_frame(df, fill_value=-1)
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_to_csv(tmp_path):
@@ -4156,19 +4177,19 @@ def test_to_excel_xlsxwriter(tmp_path):
     # fpath/Sheet1/A1
     a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
     stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
-    assert_array_equal(res, stacked_a1)
+    assert_larray_equal(res, stacked_a1)
 
     # 2D
     a2 = ndtest((2, 3))
@@ -4176,18 +4197,18 @@ def test_to_excel_xlsxwriter(tmp_path):
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # fpath/Sheet1/A10
     # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
     # a2.to_excel('fpath', 'Sheet1', 'A10', engine='xlsxwriter')
     # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=9)
-    # assert_array_equal(res, a2)
+    # assert_larray_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlsxwriter')
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # 3D
     a3 = ndtest((2, 3, 4))
@@ -4197,18 +4218,18 @@ def test_to_excel_xlsxwriter(tmp_path):
     a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
     # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # fpath/Sheet1/A20
     # TODO: implement position (see above)
     # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
     # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=19)
-    # assert_array_equal(res, a3)
+    # assert_larray_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # 1D
     a1 = ndtest(3)
@@ -4216,19 +4237,19 @@ def test_to_excel_xlsxwriter(tmp_path):
     # fpath/Sheet1/A1
     a1.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
     stacked_a1 = a1.reshape([a1.a, Axis(['value'])])
-    assert_array_equal(res, stacked_a1)
+    assert_larray_equal(res, stacked_a1)
 
     # 2D
     a2 = ndtest((2, 3))
@@ -4236,18 +4257,18 @@ def test_to_excel_xlsxwriter(tmp_path):
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlsxwriter')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # fpath/Sheet1/A10
     # TODO: this is currently not supported (though we would only need to translate A10 to startrow=0 and startcol=0
     # a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlsxwriter')
     # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=9)
-    # assert_array_equal(res, a2)
+    # assert_larray_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlsxwriter')
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # 3D
     a3 = ndtest((2, 3, 4))
@@ -4257,18 +4278,18 @@ def test_to_excel_xlsxwriter(tmp_path):
     a3.to_excel(fpath, overwrite_file=True, engine='xlsxwriter', merge_cells=False)
     # a3.to_excel('fpath', overwrite_file=True, engine='openpyxl')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # fpath/Sheet1/A20
     # TODO: implement position (see above)
     # a3.to_excel('fpath', 'Sheet1', 'A20', engine='xlsxwriter', merge_cells=False)
     # res = read_excel('fpath', 'Sheet1', engine='openpyxl', skiprows=19)
-    # assert_array_equal(res, a3)
+    # assert_larray_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlsxwriter', merge_cells=False)
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # passing group as sheet_name
     a3 = ndtest((4, 3, 4))
@@ -4307,18 +4328,18 @@ def test_to_excel_xlwings(tmp_path):
     a1.to_excel(fpath, engine='xlwings')
     # we use openpyxl to read back instead of xlwings even if that should work, to make the test faster
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1(transposed)
     a1.to_excel(fpath, transpose=True, engine='xlwings')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # fpath/Sheet1/A1
     # stacked data (one column containing all the values and another column listing the context of the value)
     a1.to_excel(fpath, wide=False, engine='xlwings')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a1)
+    assert_larray_equal(res, a1)
 
     # 2D
     a2 = ndtest((2, 3))
@@ -4326,22 +4347,22 @@ def test_to_excel_xlwings(tmp_path):
     # fpath/Sheet1/A1
     a2.to_excel(fpath, overwrite_file=True, engine='xlwings')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # fpath/Sheet1/A10
     a2.to_excel(fpath, 'Sheet1', 'A10', engine='xlwings')
     res = read_excel(fpath, 'Sheet1', engine='openpyxl', skiprows=9)
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # fpath/other/A1
     a2.to_excel(fpath, 'other', engine='xlwings')
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a2)
+    assert_larray_equal(res, a2)
 
     # transpose
     a2.to_excel(fpath, 'transpose', transpose=True, engine='xlwings')
     res = read_excel(fpath, 'transpose', engine='openpyxl')
-    assert_array_equal(res, a2.T)
+    assert_larray_equal(res, a2.T)
 
     # 3D
     a3 = ndtest((2, 3, 4))
@@ -4349,17 +4370,17 @@ def test_to_excel_xlwings(tmp_path):
     # fpath/Sheet1/A1
     a3.to_excel(fpath, overwrite_file=True, engine='xlwings')
     res = read_excel(fpath, engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # fpath/Sheet1/A20
     a3.to_excel(fpath, 'Sheet1', 'A20', engine='xlwings')
     res = read_excel(fpath, 'Sheet1', engine='openpyxl', skiprows=19)
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # fpath/other/A1
     a3.to_excel(fpath, 'other', engine='xlwings')
     res = read_excel(fpath, 'other', engine='openpyxl')
-    assert_array_equal(res, a3)
+    assert_larray_equal(res, a3)
 
     # passing group as sheet_name
     a3 = ndtest((4, 3, 4))
@@ -4428,11 +4449,11 @@ def test_open_excel(tmp_path):
         # Sheet1/A1
         wb['Sheet1'] = a1.dump()
         res = wb['Sheet1'].load()
-        assert_array_equal(res, a1)
+        assert_larray_equal(res, a1)
 
         wb[0] = a1.dump()
         res = wb[0].load()
-        assert_array_equal(res, a1)
+        assert_larray_equal(res, a1)
 
         # Sheet1/A1(transposed)
         # TODO: implement .options on Sheet so that one can write:
@@ -4441,7 +4462,7 @@ def test_open_excel(tmp_path):
         # TODO: implement .options on Range so that you can write:
         # res = wb[0]['A1:B4'].options(transpose=True).load()
         # res = from_lists(wb[0]['A1:B4'].options(transpose=True).value)
-        # assert_array_equal(res, a1)
+        # assert_larray_equal(res, a1)
 
         # 2D
         a2 = ndtest((2, 3))
@@ -4449,31 +4470,31 @@ def test_open_excel(tmp_path):
         # Sheet1/A1
         wb[0] = a2.dump()
         res = wb[0].load()
-        assert_array_equal(res, a2)
+        assert_larray_equal(res, a2)
 
         # Sheet1/A10
         wb[0]['A10'] = a2.dump()
         res = wb[0]['A10:D12'].load()
-        assert_array_equal(res, a2)
+        assert_larray_equal(res, a2)
 
         # other/A1
         wb['other'] = a2.dump()
         res = wb['other'].load()
-        assert_array_equal(res, a2)
+        assert_larray_equal(res, a2)
 
         # new/A10
         # we need to create the sheet first
         wb['new'] = ''
         wb['new']['A10'] = a2.dump()
         res = wb['new']['A10:D12'].load()
-        assert_array_equal(res, a2)
+        assert_larray_equal(res, a2)
 
         # new2/A10
         # cannot store the return value of "add" because that's a raw xlwings Sheet
         wb.sheets.add('new2')
         wb['new2']['A10'] = a2.dump()
         res = wb['new2']['A10:D12'].load()
-        assert_array_equal(res, a2)
+        assert_larray_equal(res, a2)
 
         # 3D
         a3 = ndtest((2, 3, 4))
@@ -4481,28 +4502,28 @@ def test_open_excel(tmp_path):
         # 3D/A1
         wb['3D'] = a3.dump()
         res = wb['3D'].load()
-        assert_array_equal(res, a3)
+        assert_larray_equal(res, a3)
 
         # 3D/A20
         wb['3D']['A20'] = a3.dump()
         res = wb['3D']['A20:F26'].load()
-        assert_array_equal(res, a3)
+        assert_larray_equal(res, a3)
 
         # 3D/A20 without name for columns
         wb['3D']['A20'] = a3.dump()
         # assume we have no name for the columns axis (ie change b\c to b)
         wb['3D']['B20'] = 'b'
         res = wb['3D']['A20:F26'].load(nb_axes=3)
-        assert_array_equal(res, a3.data)
+        assert_nparray_equal(res.data, a3.data)
         # the two first axes should be the same
         assert res.axes[:2] == a3.axes[:2]
         # the third axis should have the same labels (but not the same name obviously)
-        assert_array_equal(res.axes[2].labels, a3.axes[2].labels)
+        assert_nparray_equal(res.axes[2].labels, a3.axes[2].labels)
 
     with open_excel(inputpath('test.xlsx')) as wb:
         expected = ndtest("a=a0..a2; b0..b2")
         res = wb['2d_classic'].load()
-        assert_array_equal(res, expected)
+        assert_larray_equal(res, expected)
 
     # 3) without headers
     # ==================
@@ -4513,11 +4534,11 @@ def test_open_excel(tmp_path):
         # Sheet1/A1
         wb['Sheet1'] = a1
         res = wb['Sheet1'].load(header=False)
-        assert_array_equal(res, a1.data)
+        assert_nparray_equal(res.data, a1.data)
 
         wb[0] = a1
         res = wb[0].load(header=False)
-        assert_array_equal(res, a1.data)
+        assert_nparray_equal(res.data, a1.data)
 
         # Sheet1/A1(transposed)
         # FIXME: we need to .dump(header=False) explicitly because otherwise we go via ArrayConverter which
@@ -4527,7 +4548,7 @@ def test_open_excel(tmp_path):
         # wb[0]['A1'].options(transpose=True).value = a1
         wb[0]['A1'].options(transpose=True).value = a1.dump(header=False)
         res = wb[0]['A1:A3'].load(header=False)
-        assert_array_equal(res, a1.data)
+        assert_nparray_equal(res.data, a1.data)
 
         # 2D
         a2 = ndtest((2, 3))
@@ -4535,24 +4556,24 @@ def test_open_excel(tmp_path):
         # Sheet1/A1
         wb[0] = a2
         res = wb[0].load(header=False)
-        assert_array_equal(res, a2.data)
+        assert_nparray_equal(res.data, a2.data)
 
         # Sheet1/A10
         wb[0]['A10'] = a2
         res = wb[0]['A10:C11'].load(header=False)
-        assert_array_equal(res, a2.data)
+        assert_nparray_equal(res.data, a2.data)
 
         # other/A1
         wb['other'] = a2
         res = wb['other'].load(header=False)
-        assert_array_equal(res, a2.data)
+        assert_nparray_equal(res.data, a2.data)
 
         # new/A10
         # we need to create the sheet first
         wb['new'] = ''
         wb['new']['A10'] = a2
         res = wb['new']['A10:C11'].load(header=False)
-        assert_array_equal(res, a2.data)
+        assert_nparray_equal(res.data, a2.data)
 
         # 3D
         a3 = ndtest((2, 3, 4))
@@ -4560,12 +4581,12 @@ def test_open_excel(tmp_path):
         # 3D/A1
         wb['3D'] = a3
         res = wb['3D'].load(header=False)
-        assert_array_equal(res, a3.data.reshape((6, 4)))
+        assert_nparray_equal(res.data, a3.data.reshape((6, 4)))
 
         # 3D/A20
         wb['3D']['A20'] = a3
         res = wb['3D']['A20:D25'].load(header=False)
-        assert_array_equal(res, a3.data.reshape((6, 4)))
+        assert_nparray_equal(res.data, a3.data.reshape((6, 4)))
 
     # 4) Blank cells
     # ==============
@@ -4579,10 +4600,10 @@ def test_open_excel(tmp_path):
         good2 = wb['middleblankcol']['A1:E3'].load()
         bad3 = wb['middleblankcol'].load()
         bad4 = wb['16384col'].load()
-    assert_array_equal(bad1, good)
-    assert_array_equal(bad2, good)
-    assert_array_equal(bad3, good2)
-    assert_array_equal(bad4, good2)
+    assert_larray_equal(bad1, good)
+    assert_larray_equal(bad2, good)
+    assert_larray_equal(bad3, good2)
+    assert_larray_equal(bad4, good2)
 
     # 5) anonymous and wilcard axes
     # =============================
@@ -4594,7 +4615,7 @@ def test_open_excel(tmp_path):
         # the result should be identical to the original array except we lost the information about
         # the wildcard axis being a wildcard axis
         expected = arr.set_axes('b', Axis([0, 1], 'b'))
-        assert_array_equal(res, expected)
+        assert_larray_equal(res, expected)
 
     # 6) crash test
     # =============
@@ -4613,7 +4634,7 @@ def test_open_excel(tmp_path):
     # check if file is still available
     with open_excel(fpath) as wb:
         assert wb.sheet_names() == ['arr']
-        assert_array_equal(wb['arr'].load(), arr)
+        assert_larray_equal(wb['arr'].load(), arr)
     # remove file
     if fpath.exists():
         os.remove(fpath)
@@ -4623,7 +4644,7 @@ def test_ufuncs(small_array):
     raw = small_array.data
 
     # simple one-argument ufunc
-    assert_array_equal(exp(small_array), np.exp(raw))
+    assert_nparray_equal(exp(small_array).data, np.exp(raw))
 
     # with out=
     la_out = zeros(small_array.axes)
@@ -4633,11 +4654,13 @@ def test_ufuncs(small_array):
     raw_out2 = np.exp(raw, raw_out)
 
     # FIXME: this is not the case currently
-    # self.assertIs(la_out2, la_out)
-    assert_array_equal(la_out2, la_out)
+    # assert la_out2 is la_out
+    # FIXME: this is not the case currently (la_out2 axes are wrong: wildcard & anonymous instead of actual axes)
+    # assert_larray_equal(la_out2, la_out)
+    assert_nparray_equal(la_out2.data, la_out.data)
     assert raw_out2 is raw_out
 
-    assert_array_equal(la_out, raw_out)
+    assert_nparray_equal(la_out.data, raw_out)
 
     # with out= and broadcasting
     # we need to put the 'a' axis first because array numpy only supports that
@@ -4647,12 +4670,12 @@ def test_ufuncs(small_array):
     la_out2 = exp(small_array, la_out)
     raw_out2 = np.exp(raw, raw_out)
 
-    # self.assertIs(la_out2, la_out)
+    # assert la_out2 == la_out
     # XXX: why is la_out2 transposed?
-    assert_array_equal(la_out2.transpose(X.a), la_out)
+    assert_larray_equal(la_out2.transpose(X.a), la_out)
     assert raw_out2 is raw_out
 
-    assert_array_equal(la_out, raw_out)
+    assert_nparray_equal(la_out.data, raw_out)
 
     c, d = small_array.axes
 
@@ -4662,34 +4685,34 @@ def test_ufuncs(small_array):
     raw_high = raw.sum(0) // 4 + 13
 
     # LA + scalars
-    assert_array_equal(small_array.clip(0, 10), raw.clip(0, 10))
-    assert_array_equal(clip(small_array, 0, 10), np.clip(raw, 0, 10))
+    assert_nparray_equal(small_array.clip(0, 10).data, raw.clip(0, 10))
+    assert_nparray_equal(clip(small_array, 0, 10).data, np.clip(raw, 0, 10))
 
     # LA + LA (no broadcasting)
-    assert_array_equal(clip(small_array, 21 - small_array, 9 + small_array // 2),
-                       np.clip(raw, 21 - raw, 9 + raw // 2))
+    assert_nparray_equal(clip(small_array, 21 - small_array, 9 + small_array // 2).data,
+                         np.clip(raw, 21 - raw, 9 + raw // 2))
 
     # LA + LA (with broadcasting)
-    assert_array_equal(clip(small_array, low, high),
-                       np.clip(raw, raw_low, raw_high))
+    assert_nparray_equal(clip(small_array, low, high).data,
+                         np.clip(raw, raw_low, raw_high))
 
     # where (no broadcasting)
-    assert_array_equal(where(small_array < 5, -5, small_array),
-                       np.where(raw < 5, -5, raw))
+    assert_nparray_equal(where(small_array < 5, -5, small_array).data,
+                         np.where(raw < 5, -5, raw))
 
     # where (transposed no broadcasting)
-    assert_array_equal(where(small_array < 5, -5, small_array.T),
-                       np.where(raw < 5, -5, raw))
+    assert_nparray_equal(where(small_array < 5, -5, small_array.T).data,
+                         np.where(raw < 5, -5, raw))
 
     # where (with broadcasting)
     result = where(small_array['d1'] < 5, -5, small_array)
     assert result.axes.names == ['c', 'd']
-    assert_array_equal(result, np.where(raw[:, [0]] < 5, -5, raw))
+    assert_nparray_equal(result.data, np.where(raw[:, [0]] < 5, -5, raw))
 
     # round
     small_float = small_array + 0.6
     rounded = round(small_float)
-    assert_array_equal(rounded, np.round(raw + 0.6))
+    assert_nparray_equal(rounded.data, np.round(raw + 0.6))
 
 
 def test_eye():
@@ -4702,7 +4725,7 @@ def test_eye():
     c\c   c0   c1
      c0  1.0  0.0
      c1  0.0  1.0""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # using an AxisCollection
     res = eye(AxisCollection([a, c]))
@@ -4711,7 +4734,7 @@ a\c    c0    c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # using a tuple of axes
     res = eye((a, c))
@@ -4720,61 +4743,62 @@ a\c    c0    c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_diag():
     # 2D -> 1D
-    a = ndtest((3, 3))
-    d = diag(a)
-    assert d.ndim == 1
-    assert d.i[0] == a.i[0, 0]
-    assert d.i[1] == a.i[1, 1]
-    assert d.i[2] == a.i[2, 2]
+    arr = ndtest((3, 3))
+    diag_arr = diag(arr)
+    assert diag_arr.ndim == 1
+    assert diag_arr.i[0] == arr.i[0, 0]
+    assert diag_arr.i[1] == arr.i[1, 1]
+    assert diag_arr.i[2] == arr.i[2, 2]
 
     # 1D -> 2D
-    a2 = diag(d)
-    assert a2.ndim == 2
-    assert a2.i[0, 0] == a.i[0, 0]
-    assert a2.i[1, 1] == a.i[1, 1]
-    assert a2.i[2, 2] == a.i[2, 2]
+    arr2 = diag(diag_arr)
+    assert arr2.ndim == 2
+    assert arr2.i[0, 0] == arr.i[0, 0]
+    assert arr2.i[1, 1] == arr.i[1, 1]
+    assert arr2.i[2, 2] == arr.i[2, 2]
 
     # 3D -> 2D
-    a = ndtest((3, 3, 3))
-    d = diag(a)
-    assert d.ndim == 2
-    assert d.i[0, 0] == a.i[0, 0, 0]
-    assert d.i[1, 1] == a.i[1, 1, 1]
-    assert d.i[2, 2] == a.i[2, 2, 2]
+    arr = ndtest((3, 3, 3))
+    diag_arr = diag(arr)
+    assert diag_arr.ndim == 2
+    assert diag_arr.i[0, 0] == arr.i[0, 0, 0]
+    assert diag_arr.i[1, 1] == arr.i[1, 1, 1]
+    assert diag_arr.i[2, 2] == arr.i[2, 2, 2]
 
     # 3D -> 1D
-    d = diag(a, axes=(0, 1, 2))
-    assert d.ndim == 1
-    assert d.i[0] == a.i[0, 0, 0]
-    assert d.i[1] == a.i[1, 1, 1]
-    assert d.i[2] == a.i[2, 2, 2]
+    diag_arr = diag(arr, axes=(0, 1, 2))
+    assert diag_arr.ndim == 1
+    assert diag_arr.i[0] == arr.i[0, 0, 0]
+    assert diag_arr.i[1] == arr.i[1, 1, 1]
+    assert diag_arr.i[2] == arr.i[2, 2, 2]
 
     # 1D (anon) -> 2D
-    d_anon = d.rename(0, None).ignore_labels()
-    a2 = diag(d_anon)
-    assert a2.ndim == 2
+    diag_arr_anon = diag_arr.rename(0, None).ignore_labels()
+    arr2 = diag(diag_arr_anon)
+    assert arr2.ndim == 2
 
     # 1D (anon) -> 3D
-    a3 = diag(d_anon, ndim=3)
-    assert a2.ndim == 2
-    assert a3.i[0, 0, 0] == a.i[0, 0, 0]
-    assert a3.i[1, 1, 1] == a.i[1, 1, 1]
-    assert a3.i[2, 2, 2] == a.i[2, 2, 2]
+    arr3 = diag(diag_arr_anon, ndim=3)
+    assert arr3.ndim == 3
+    assert arr3.i[0, 0, 0] == arr.i[0, 0, 0]
+    assert arr3.i[1, 1, 1] == arr.i[1, 1, 1]
+    assert arr3.i[2, 2, 2] == arr.i[2, 2, 2]
 
     # using Axis object
     c = Axis('c=c0,c1')
-    a = eye(c)
-    d = diag(a)
-    assert d.ndim == 1
-    assert d.axes.names == ['c_c']
-    assert_array_equal(d.axes.labels, [['c0_c0', 'c1_c1']])
-    assert d.i[0] == 1.0
-    assert d.i[1] == 1.0
+    arr = eye(c)
+    diag_arr = diag(arr)
+    assert diag_arr.ndim == 1
+    diag_axis = diag_arr.axes[0]
+    assert diag_axis.name == 'c_c'
+    assert list(diag_axis.labels) == ['c0_c0', 'c1_c1']
+    assert diag_arr.i[0] == 1.0
+    assert diag_arr.i[1] == 1.0
 
 
 def test_matmul():
@@ -4783,10 +4807,10 @@ def test_matmul():
     a2 = eye(3, 3) * 2
 
     # Array value
-    assert_array_equal(a1 @ a2, ndtest([Axis(3), Axis(3)]) * 2)
+    assert_larray_equal(a1 @ a2, ndtest([Axis(3), Axis(3)]) * 2)
 
     # ndarray value
-    assert_array_equal(a1 @ a2.data, ndtest([Axis(3), Axis(3)]) * 2)
+    assert_larray_equal(a1 @ a2.data, ndtest([Axis(3), Axis(3)]) * 2)
 
     # non anonymous axes (N <= 2)
     arr1d = ndtest(3)
@@ -4798,30 +4822,30 @@ def test_matmul():
     assert res == 5
 
     # 1D @ 2D
-    assert_array_equal(arr1d @ arr2d,
-                       Array([15, 18, 21], 'b=b0..b2'))
+    assert_larray_equal(arr1d @ arr2d,
+                        Array([15, 18, 21], 'b=b0..b2'))
 
     # 2D @ 1D
-    assert_array_equal(arr2d @ arr1d,
-                       Array([5, 14, 23], 'a=a0..a2'))
+    assert_larray_equal(arr2d @ arr1d,
+                        Array([5, 14, 23], 'a=a0..a2'))
 
     # 2D(a,b) @ 2D(a,b) -> 2D(a,b)
     res = from_lists([[r'a\b', 'b0', 'b1', 'b2'],
                       ['a0', 15, 18, 21],
                       ['a1', 42, 54, 66],
                       ['a2', 69, 90, 111]])
-    assert_array_equal(arr2d @ arr2d, res)
+    assert_larray_equal(arr2d @ arr2d, res)
 
     # 2D(a,b) @ 2D(b,a) -> 2D(a,a)
     res = from_lists([[r'a\a', 'a0', 'a1', 'a2'],
                       ['a0', 5, 14, 23],
                       ['a1', 14, 50, 86],
                       ['a2', 23, 86, 149]])
-    assert_array_equal(arr2d @ arr2d.T, res)
+    assert_larray_equal(arr2d @ arr2d.T, res)
 
     # ndarray value
-    assert_array_equal(arr1d @ arr2d.data, Array([15, 18, 21]))
-    assert_array_equal(arr2d.data @ arr2d.T.data, res.data)
+    assert_larray_equal(arr1d @ arr2d.data, Array([15, 18, 21]))
+    assert_nparray_equal(arr2d.data @ arr2d.T.data, res.data)
 
     # different axes
     a1 = ndtest('a=a0..a1;b=b0..b2')
@@ -4829,7 +4853,7 @@ def test_matmul():
     res = from_lists([[r'a\c', 'c0', 'c1', 'c2', 'c3'],
                       ['a0', 20, 23, 26, 29],
                       ['a1', 56, 68, 80, 92]])
-    assert_array_equal(a1 @ a2, res)
+    assert_larray_equal(a1 @ a2, res)
 
     # non anonymous axes (N >= 2)
     arr2d = ndtest((2, 2))
@@ -4858,7 +4882,7 @@ def test_matmul():
                       ['a1', 'b1', 'e0', 'c1', 30, 59],
                       ['a1', 'b1', 'e1', 'c0', 126, 151],
                       ['a1', 'b1', 'e1', 'c1', 146, 175]])
-    assert_array_equal(arr4d @ arr3d, res)
+    assert_larray_equal(arr4d @ arr3d, res)
 
     # 3D(e, d, f) @ 4D(a, b, c, d) -> 5D(e, a, b, d, d)
     res = from_lists([['e', 'a', 'b', r'd\d', 'd0', 'd1'],
@@ -4878,7 +4902,7 @@ def test_matmul():
                       ['e1', 'a1', 'b0', 'd1', 118, 131],
                       ['e1', 'a1', 'b1', 'd0', 118, 127],
                       ['e1', 'a1', 'b1', 'd1', 170, 183]])
-    assert_array_equal(arr3d @ arr4d, res)
+    assert_larray_equal(arr3d @ arr4d, res)
 
     # 4D(a, b, c, d) @ 3D(b, d, f) -> 4D(a, b, c, f)
     arr3d = arr3d.set_axes([b, d, f])
@@ -4891,7 +4915,7 @@ def test_matmul():
                       ['a1', 'b0', 'c1', 22, 43],
                       ['a1', 'b1', 'c0', 126, 151],
                       ['a1', 'b1', 'c1', 146, 175]])
-    assert_array_equal(arr4d @ arr3d, res)
+    assert_larray_equal(arr4d @ arr3d, res)
 
     # 3D(b, d, f) @ 4D(a, b, c, d) -> 4D(b, a, d, d)
     res = from_lists([['b', 'a', r'd\d', 'd0', 'd1'],
@@ -4903,7 +4927,7 @@ def test_matmul():
                       ['b1', 'a0', 'd1', 66, 79],
                       ['b1', 'a1', 'd0', 118, 127],
                       ['b1', 'a1', 'd1', 170, 183]])
-    assert_array_equal(arr3d @ arr4d, res)
+    assert_larray_equal(arr3d @ arr4d, res)
 
     # 4D(a, b, c, d) @ 2D(d, f) -> 5D(a, b, c, f)
     arr2d = arr2d.set_axes([d, f])
@@ -4916,7 +4940,7 @@ def test_matmul():
                       ['a1', 'b0', 'c1', 22, 43],
                       ['a1', 'b1', 'c0', 26, 51],
                       ['a1', 'b1', 'c1', 30, 59]])
-    assert_array_equal(arr4d @ arr2d, res)
+    assert_larray_equal(arr4d @ arr2d, res)
 
     # 2D(d, f) @ 4D(a, b, c, d) -> 5D(a, b, d, d)
     res = from_lists([['a', 'b', r'd\d', 'd0', 'd1'],
@@ -4928,7 +4952,7 @@ def test_matmul():
                       ['a1', 'b0', 'd1', 46, 51],
                       ['a1', 'b1', 'd0', 14, 15],
                       ['a1', 'b1', 'd1', 66, 71]])
-    assert_array_equal(arr2d @ arr4d, res)
+    assert_larray_equal(arr2d @ arr4d, res)
 
 
 def test_rmatmul():
@@ -4938,7 +4962,7 @@ def test_rmatmul():
     # equivalent to a1.data @ a2
     res = a2.__rmatmul__(a1.data)
     assert isinstance(res, Array)
-    assert_array_equal(res, ndtest([Axis(3), Axis(3)]) * 2)
+    assert_larray_equal(res, ndtest([Axis(3), Axis(3)]) * 2)
 
 
 def test_broadcast_with():
@@ -4947,7 +4971,7 @@ def test_broadcast_with():
     b = a2.broadcast_with(a1)
     assert b.ndim == a1.ndim
     assert b.shape == (3, 1)
-    assert_array_equal(b.i[:, 0], a2)
+    assert_larray_equal(b.i[:, 0], a2)
 
     # anonymous axes
     a1 = ndtest([Axis(3), Axis(2)])
@@ -4955,7 +4979,7 @@ def test_broadcast_with():
     b = a2.broadcast_with(a1)
     assert b.ndim == a1.ndim
     assert b.shape == (3, 1)
-    assert_array_equal(b.i[:, 0], a2)
+    assert_larray_equal(b.i[:, 0], a2)
 
     a1 = ndtest([Axis(1), Axis(3)])
     a2 = ndtest([Axis(3), Axis(1)])
@@ -4997,22 +5021,22 @@ def test_combine_axes():
     assert res.axes.names == ['a_b', 'c', 'd']
     assert res.size == arr.size
     assert res.shape == (2 * 3, 4, 5)
-    assert_array_equal(res.axes.a_b.labels[:2], ['a0_b0', 'a0_b1'])
-    assert_array_equal(res['a1_b0'], arr['a1', 'b0'])
+    assert list(res.axes.a_b.labels[:2]) == ['a0_b0', 'a0_b1']
+    assert_larray_equal(res['a1_b0'], arr['a1', 'b0'])
 
     res = arr.combine_axes((X.a, X.c))
     assert res.axes.names == ['a_c', 'b', 'd']
     assert res.size == arr.size
     assert res.shape == (2 * 4, 3, 5)
-    assert_array_equal(res.axes.a_c.labels[:2], ['a0_c0', 'a0_c1'])
-    assert_array_equal(res['a1_c0'], arr['a1', 'c0'])
+    assert list(res.axes.a_c.labels[:2]) == ['a0_c0', 'a0_c1']
+    assert_larray_equal(res['a1_c0'], arr['a1', 'c0'])
 
     res = arr.combine_axes((X.b, X.d))
     assert res.axes.names == ['a', 'b_d', 'c']
     assert res.size == arr.size
     assert res.shape == (2, 3 * 5, 4)
-    assert_array_equal(res.axes.b_d.labels[:2], ['b0_d0', 'b0_d1'])
-    assert_array_equal(res['b1_d0'], arr['b1', 'd0'])
+    assert list(res.axes.b_d.labels[:2]) == ['b0_d0', 'b0_d1']
+    assert_larray_equal(res['b1_d0'], arr['b1', 'd0'])
 
     # combine M axes into N
     # =====================
@@ -5033,7 +5057,7 @@ def test_combine_axes():
     assert res.size == arr.size
     assert res.shape == (2 * 4, 3 * 3 * 2, 4)
     assert list(res.axes.b_e_f.labels[:4]) == ['b0_e0_f0', 'b0_e0_f1', 'b0_e1_f0', 'b0_e1_f1']
-    assert_array_equal(res['a0_c2', 'b1_e2_f1'], arr['a0', 'b1', 'c2', 'e2', 'f1'])
+    assert_larray_equal(res['a0_c2', 'b1_e2_f1'], arr['a0', 'b1', 'c2', 'e2', 'f1'])
 
     # using a dict (-> user defined axes names)
     res = arr.combine_axes({('a', 'c'): 'AC', ('b', 'f'): 'BF', ('d', 'e'): 'DE'})
@@ -5052,7 +5076,7 @@ def test_combine_axes():
     assert res.axes.names == ['a_b']
     assert res.size == arr.size
     assert res.shape == (6,)
-    assert_array_equal(res.axes[0].labels, np.arange(6))
+    assert_nparray_equal(res.axes[0].labels, np.arange(6))
 
 
 def test_split_axes():
@@ -5066,24 +5090,24 @@ def test_split_axes():
     res = combined.split_axes('b_d')
     assert res.axes.names == ['a', 'b', 'd', 'c']
     assert res.shape == (2, 3, 5, 4)
-    assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+    assert_larray_equal(res, arr.transpose('a', 'b', 'd', 'c'))
 
     # with specified names
     res = combined.rename(b_d='bd').split_axes('bd', names=('b', 'd'))
     assert res.axes.names == ['a', 'b', 'd', 'c']
     assert res.shape == (2, 3, 5, 4)
-    assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+    assert_larray_equal(res, arr.transpose('a', 'b', 'd', 'c'))
 
     # regex
     res = combined.split_axes('b_d', names=['b', 'd'], regex=r'(\w+)_(\w+)')
     assert res.axes.names == ['a', 'b', 'd', 'c']
     assert res.shape == (2, 3, 5, 4)
-    assert_array_equal(res.transpose('a', 'b', 'c', 'd'), arr)
+    assert_larray_equal(res, arr.transpose('a', 'b', 'd', 'c'))
 
     # custom sep
     combined = ndtest('a|b=a0|b0,a0|b1')
     res = combined.split_axes(sep='|')
-    assert_array_equal(res, ndtest('a=a0;b=b0,b1'))
+    assert_larray_equal(res, ndtest('a=a0;b=b0,b1'))
 
     # split several axes at once
     # ==========================
@@ -5101,7 +5125,7 @@ def test_split_axes():
     assert res['a0', 'b1', 'c2', 'd3', 'e2', 'f1'] == arr['a0_b1', 'c2', 'd3', 'e2_f1']
 
     # default to all axes with name containing the delimiter _
-    assert_array_equal(arr.split_axes(), res)
+    assert_larray_equal(arr.split_axes(), res)
 
     # using a dict (-> user defined axes names)
     res = arr.split_axes({'a_b': ('A', 'B'), 'e_f': ('E', 'F')})
@@ -5147,35 +5171,35 @@ def test_split_axes():
     assert res.a.labels.dtype.kind == 'U'
     assert res.b.labels.dtype.kind == 'U'
     assert res.c.labels.dtype.kind == 'O'
-    assert_array_equal(res, ndtest((2, 2, 2)))
+    assert_larray_equal(res, ndtest((2, 2, 2)))
 
     # not sorted by first part then second part (issue #364)
     arr = ndtest((2, 3))
     combined = arr.combine_axes()['a0_b0, a1_b0, a0_b1, a1_b1, a0_b2, a1_b2']
-    assert_array_equal(combined.split_axes('a_b'), arr)
+    assert_larray_equal(combined.split_axes('a_b'), arr)
 
     # another weirdly sorted test
     combined = arr.combine_axes()['a0_b1, a0_b0, a0_b2, a1_b1, a1_b0, a1_b2']
-    assert_array_equal(combined.split_axes('a_b'), arr['b1,b0,b2'])
+    assert_larray_equal(combined.split_axes('a_b'), arr['b1,b0,b2'])
 
     # combined does not contain all combinations of labels (issue #369)
     combined_partial = combined[['a0_b0', 'a0_b1', 'a1_b1', 'a0_b2', 'a1_b2']]
     expected = arr.astype(float)
     expected['a1', 'b0'] = nan
-    assert_array_nan_equal(combined_partial.split_axes('a_b'), expected)
+    assert_larray_nan_equal(combined_partial.split_axes('a_b'), expected)
 
     # split labels are ambiguous (issue #485)
     combined = ndtest('a_b=a0_b0..a1_b1;c_d=a0_b0..a1_b1')
     expected = ndtest('a=a0,a1;b=b0,b1;c=a0,a1;d=b0,b1')
-    assert_array_equal(combined.split_axes(('a_b', 'c_d')), expected)
+    assert_larray_equal(combined.split_axes(('a_b', 'c_d')), expected)
 
     # anonymous axes
     combined = ndtest('a0_b0,a0_b1,a0_b2,a1_b0,a1_b1,a1_b2')
     expected = ndtest('a0,a1;b0,b1,b2')
-    assert_array_equal(combined.split_axes(0), expected)
+    assert_larray_equal(combined.split_axes(0), expected)
 
     # when no axis is specified and no axis contains the sep, split_axes is a no-op.
-    assert_array_equal(combined.split_axes(), combined)
+    assert_larray_equal(combined.split_axes(), combined)
 
 
 def test_stack():
@@ -5193,12 +5217,12 @@ def test_stack():
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [a, b])                              # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # same but using a group as the stacking axis
     larger_b = Axis('b=b0..b3')
     res = stack((arr0, arr1), larger_b[:'b1'])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # simple with anonymous axis
     axis0 = Axis(3)
@@ -5208,14 +5232,14 @@ def test_stack():
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [axis0, b])                          # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # using res_axes
     res = stack({'b0': 0, 'b1': 1}, axes=b, res_axes=(a, b))
     expected = Array([[0, 1],
                       [0, 1],
                       [0, 1]], [a, b])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # giving elements as an Array containing Arrays
     c = Axis('c=c0,c1')
@@ -5231,14 +5255,14 @@ def test_stack():
                                 FO       1  1.0  0.0
                                 FO       2  1.0  0.0
                                 FO       3  1.0  0.0""")
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # non scalar/non Array
     res = stack(([1, 2, 3], [4, 5, 6]))
     expected = Array([[1, 4],
                       [2, 5],
                       [3, 6]])
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # stack along multiple axes
     # =========================
@@ -5251,7 +5275,7 @@ def test_stack():
                  ('a2', 'b1'): 5},
                 (a, b))
     expected = ndtest((a, b))
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # b) keys not given in axes iteration order
     res = stack({('a0', 'b0'): 0,
@@ -5262,7 +5286,7 @@ def test_stack():
                  ('a2', 'b1'): 5},
                 (a, b))
     expected = ndtest((a, b))
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # c) key parts not given in the order of axes (ie key part for b before key part for a)
     res = stack({('a0', 'b0'): 0,
@@ -5273,7 +5297,7 @@ def test_stack():
                  ('a2', 'b1'): 5},
                 (b, a))
     expected = ndtest((b, a))
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # d) same as c) but with a key-value sequence
     res = stack([(('a0', 'b0'), 0),
@@ -5284,7 +5308,7 @@ def test_stack():
                  (('a2', 'b1'), 5)],
                 (b, a))
     expected = ndtest((b, a))
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_stack_kwargs_no_axis_labels():
@@ -5295,12 +5319,12 @@ def test_stack_kwargs_no_axis_labels():
     # a) with an axis name
     res = stack(a0=0, a1=1, axes='a')
     expected = Array([0, 1], 'a=a0,a1')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # b) without an axis name
     res = stack(a0=0, a1=1)
     expected = Array([0, 1], 'a0,a1')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # 2) dict of arrays
     # -----------------
@@ -5313,14 +5337,14 @@ def test_stack_kwargs_no_axis_labels():
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [a, 'b=b0,b1'])                      # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # b) without an axis name
     res = stack(b0=arr0, b1=arr1)
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [a, 'b0,b1'])                        # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_stack_dict_no_axis_labels():
@@ -5331,12 +5355,12 @@ def test_stack_dict_no_axis_labels():
     # a) with an axis name
     res = stack({'a0': 0, 'a1': 1}, 'a')
     expected = Array([0, 1], 'a=a0,a1')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # b) without an axis name
     res = stack({'a0': 0, 'a1': 1})
     expected = Array([0, 1], 'a0,a1')
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # 2) dict of arrays
     # -----------------
@@ -5349,14 +5373,14 @@ def test_stack_dict_no_axis_labels():
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [a, 'b=b0,b1'])                      # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
     # b) without an axis name
     res = stack({'b0': arr0, 'b1': arr1})
     expected = Array([[0, -1],
                       [1,  0],                                       # noqa: E241
                       [2,  1]], [a, 'b0,b1'])                        # noqa: E241
-    assert_array_equal(res, expected)
+    assert_larray_equal(res, expected)
 
 
 def test_0darray_convert():
@@ -5388,7 +5412,7 @@ def test_deprecated_methods():
 def test_eq():
     a = ndtest((2, 3, 4))
     ao = a.astype(object)
-    assert_array_equal(ao.eq(ao['c0'], nans_equal=True), a == a['c0'])
+    assert_larray_equal(ao.eq(ao['c0'], nans_equal=True), a == a['c0'])
 
 
 def test_zip_array_values():
@@ -5430,7 +5454,7 @@ def test_growth_rate():
     with must_warn(RuntimeWarning, "divide by zero encountered during operation"):
         res = arr.growth_rate('time')
     expected_res = Array([1.0, -1.0, 0.0, 0.0, inf, 0.25], axes='time=2015..2020')
-    assert_array_equal(res, expected_res)
+    assert_larray_equal(res, expected_res)
 
 
 if __name__ == "__main__":

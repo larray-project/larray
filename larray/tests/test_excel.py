@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import numpy as np
 
-from larray.tests.common import needs_xlwings, needs_pytables, must_warn
+from larray.tests.common import needs_xlwings, needs_pytables, must_warn, must_raise
 from larray import ndtest, open_excel, asarray, Array, Axis, nan, ExcelReport, read_excel
 from larray.inout import xw_excel
 from larray.example import load_example_data, EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -31,7 +31,7 @@ class TestWorkbook:
         faulthandler_enabled = faulthandler.is_enabled()
         if faulthandler_enabled:
             faulthandler.disable()
-        with pytest.raises(pywintypes.com_error):
+        with must_raise(pywintypes.com_error):
             wb1.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()
@@ -45,7 +45,7 @@ class TestWorkbook:
         # anything using wb2 will fail
         if faulthandler_enabled:
             faulthandler.disable()
-        with pytest.raises(pywintypes.com_error):
+        with must_raise(pywintypes.com_error):
             wb2.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()
@@ -96,7 +96,7 @@ class TestWorkbook:
             assert isinstance(sheet, xw_excel.Sheet)
             assert sheet.name == 'Sheet1'
 
-            with pytest.raises(KeyError, match="Workbook has no sheet named this_sheet_does_not_exist"):
+            with must_raise(KeyError, msg="'Workbook has no sheet named this_sheet_does_not_exist'"):
                 _ = wb['this_sheet_does_not_exist']
 
     def test_setitem(self):
@@ -123,7 +123,7 @@ class TestWorkbook:
 
             with open_excel(visible=False, app="new") as wb2:
                 assert wb.app != wb2.app
-                with pytest.raises(ValueError, match="cannot copy a sheet from one instance of Excel to another"):
+                with must_raise(ValueError, msg="cannot copy a sheet from one instance of Excel to another"):
                     wb2['sheet1'] = wb['sheet1']
 
             # group key
@@ -259,7 +259,7 @@ class TestRange:
             rng = sheet['A3']
             assert int(rng) == 1
             assert float(rng) == 1.5
-            with pytest.raises(TypeError, match="only integer scalars can be converted to a scalar index"):
+            with must_raise(TypeError, msg="only integer scalars can be converted to a scalar index"):
                 rng.__index__()
 
     def test_asarray(self):
@@ -326,8 +326,7 @@ def test_excel_report_setting_template():
     # test setting template dir
     # 1) wrong template dir
     wrong_template_dir = r"C:\Wrong\Directory\Path"
-    msg = f"The directory {wrong_template_dir} could not be found"
-    with pytest.raises(ValueError, match=re.escape(msg)):
+    with must_raise(ValueError, msg=f"The directory {wrong_template_dir} could not be found."):
         excel_report.template_dir = wrong_template_dir
     # 2) correct path
     excel_report.template_dir = EXAMPLE_EXCEL_TEMPLATES_DIR
@@ -337,7 +336,7 @@ def test_excel_report_setting_template():
     # 1) wrong extension
     template_file = 'wrong_extension.txt'
     msg = "Extension for the excel template file must be '.crtx' instead of .txt"
-    with pytest.raises(ValueError, match=re.escape(msg)):
+    with must_raise(ValueError, msg=msg):
         excel_report.template = template_file
     # 2) add .crtx extension if no extension
     template_name = 'Line'
@@ -427,7 +426,7 @@ def test_excel_report_arrays():
     # 1) pass a not registered kind of item
     item_type = 'unknown_item'
     msg = f"Item type {item_type} is not registered. Please choose in list ['graph', 'title']"
-    with pytest.raises(ValueError, match=re.escape(msg)):
+    with must_raise(ValueError, msg=msg):
         sheet_graphs.set_item_default_size(item_type, width, height)
     # 2) update default size for graphs
     sheet_graphs.set_item_default_size('graph', width, height)

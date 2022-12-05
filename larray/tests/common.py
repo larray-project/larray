@@ -73,6 +73,8 @@ def assert_larray_equal_factory(test_func, convert=True, check_axes=False):
         if convert:
             a = asarray(a)
             b = asarray(b)
+        else:
+            assert isinstance(a, Array) and isinstance(b, Array)
         if check_axes and a.axes != b.axes:
             raise AssertionError(f"axes differ:\n{a.axes.info}\n\nvs\n\n{b.axes.info}")
         equal = test_func(a, b)
@@ -87,6 +89,8 @@ def assert_nparray_equal_factory(test_func, convert=True, check_shape=False):
         if convert:
             a = np.asarray(a)
             b = np.asarray(b)
+        else:
+            assert isinstance(a, np.ndarray) and isinstance(b, np.ndarray)
         if check_shape and a.shape != b.shape:
             raise AssertionError(f"shapes differ: {a.shape} != {b.shape}")
         equal = test_func(a, b)
@@ -111,14 +115,14 @@ def nan_equal(a, b):
 assert_array_equal = assert_equal_factory(equal)
 assert_array_nan_equal = assert_equal_factory(nan_equal)
 
-assert_larray_equal = assert_larray_equal_factory(equal, check_axes=True)
-assert_larray_nan_equal = assert_larray_equal_factory(nan_equal, check_axes=True)
+assert_larray_equal = assert_larray_equal_factory(equal, convert=False, check_axes=True)
+assert_larray_nan_equal = assert_larray_equal_factory(nan_equal, convert=False, check_axes=True)
 
 assert_larray_equiv = assert_larray_equal_factory(equal)
 assert_larray_nan_equiv = assert_larray_equal_factory(nan_equal)
 
-assert_nparray_equal = assert_nparray_equal_factory(equal, check_shape=True)
-assert_nparray_nan_equal = assert_nparray_equal_factory(nan_equal, check_shape=True)
+assert_nparray_equal = assert_nparray_equal_factory(equal, convert=False, check_shape=True)
+assert_nparray_nan_equal = assert_nparray_equal_factory(nan_equal, convert=False, check_shape=True)
 
 assert_nparray_equiv = assert_nparray_equal_factory(equal)
 assert_nparray_nan_equiv = assert_nparray_equal_factory(nan_equal)
