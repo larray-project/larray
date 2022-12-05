@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from larray.tests.common import assert_array_equal, needs_pytables
+from larray.tests.common import assert_array_equal, needs_pytables, must_raise
 from larray import Axis, IGroup, LGroup, LSet, ndtest, read_hdf
 from larray.util.oset import OrderedSet
 
@@ -199,7 +199,7 @@ def test_h5_io_lgroup(tmp_path):
     named2 = read_hdf(fpath, key=named.name)
     assert all(named == named2)
     # anonymous group
-    with pytest.raises(ValueError, match="Argument key must be provided explicitly in case of anonymous group"):
+    with must_raise(ValueError, msg="Argument key must be provided explicitly in case of anonymous group"):
         anonymous.to_hdf(fpath)
     # wildcard group
     wildcard.to_hdf(fpath)
@@ -439,7 +439,7 @@ def test_h5_io_igroup(tmp_path):
     named2 = read_hdf(fpath, key=named.name)
     assert all(named == named2)
     # anonymous group
-    with pytest.raises(ValueError, match="Argument key must be provided explicitly in case of anonymous group"):
+    with must_raise(ValueError, msg="Argument key must be provided explicitly in case of anonymous group"):
         anonymous.to_hdf(fpath)
     # wildcard group
     wildcard.to_hdf(fpath)

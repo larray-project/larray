@@ -9,7 +9,7 @@ import pytest
 
 from larray.tests.common import meta
 from larray.tests.common import (assert_array_nan_equal, inputpath,
-                                 needs_xlwings, needs_pytables, needs_openpyxl, must_warn)
+                                 needs_xlwings, needs_pytables, needs_openpyxl, must_warn, must_raise)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like,
                     ones, full, full_like, stack, local_arrays, global_arrays, arrays, CheckedSession)
@@ -152,7 +152,7 @@ def test_setattr(session):
 def test_add(session):
     i = Axis('i=i0..i2')
     i01 = i['i0,i1'] >> 'i01'
-    with pytest.warns((UserWarning, FutureWarning)) as caught_warnings:
+    with must_warn((UserWarning, FutureWarning), num_expected=None) as caught_warnings:
         session.add(i, i01, j='j')
 
     future_warnings = [w for w in caught_warnings if w.category == FutureWarning]
@@ -274,12 +274,11 @@ def _add_scalars_to_session(s):
 def test_h5_io(tmp_path, session, meta):
     session = _add_scalars_to_session(session)
 
-    msg = "\nyour performance may suffer as PyTables will pickle object types"
-    regex = re.compile(msg, flags=re.MULTILINE)
-
     # for some reason the PerformanceWarning is not detected as such, so this does not work:
-    # with pytest.warns(tables.PerformanceWarning):
-    with pytest.warns(Warning, match=regex):
+    # with must_warn(tables.PerformanceWarning, ...):
+    # cannot use check_file=True because of the extra level from _test_io
+    with must_warn(Warning, match="^\nyour performance may suffer as PyTables will pickle object types that .*",
+                   num_expected=4, check_file=False):
         _test_io(tmp_path, session, meta, engine='pandas_hdf', ext='h5')
 
 
@@ -311,7 +310,7 @@ def test_csv_io(tmp_path, session, meta):
             f.write(',",')
 
         # try loading the directory with the invalid file
-        with pytest.raises(pd.errors.ParserError):
+        with must_raise(pd.errors.ParserError):
             s = Session(pattern)
 
         # test loading a pattern, ignoring invalid/unsupported files
@@ -385,7 +384,7 @@ def test_element_equals(session):
         expected_res[deleted_key] = False
     # add one item
     expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
-    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+    with must_warn(UserWarning, msg="'k' is not declared in 'CheckedSessionExample'",
                    num_expected=expected_warnings):
         other_session['k'] = k
     expected_res = expected_res.append('name', False, label='k')
@@ -425,7 +424,7 @@ def test_eq(session):
     del other_session['g']
     expected_res['g'] = False
     expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
-    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+    with must_warn(UserWarning, msg="'k' is not declared in 'CheckedSessionExample'",
                    num_expected=expected_warnings):
         other_session['k'] = k
     expected_res = expected_res.append('name', False, label='k')
@@ -468,7 +467,7 @@ def test_ne(session):
     del other_session['g']
     expected_res['g'] = True
     expected_warnings = 1 if isinstance(other_session, CheckedSession) else 0
-    with must_warn(UserWarning, match=r"'k' is not declared in 'CheckedSessionExample'",
+    with must_warn(UserWarning, msg="'k' is not declared in 'CheckedSessionExample'",
                    num_expected=expected_warnings):
         other_session['k'] = k
     expected_res = expected_res.append('name', True, label='k')

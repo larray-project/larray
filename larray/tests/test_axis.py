@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables
+from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables, must_raise
 from larray import Axis, LGroup, IGroup, read_hdf, X, ndtest
 from larray.core.axis import AxisReference
 
@@ -16,34 +16,34 @@ def test_init():
 
     axis = Axis([0, 1], name='test')
     assert axis.name == 'test'
-    assert_nparray_equal(axis.labels, [0, 1])
+    assert_nparray_equal(axis.labels, np.array([0, 1]))
 
     axis = Axis([0, 1], name=np.str_('test'))
     assert axis.name == 'test'
     assert type(axis.name) is not np.str_
-    assert_nparray_equal(axis.labels, [0, 1])
+    assert_nparray_equal(axis.labels, np.array([0, 1]))
 
     sex_tuple = ('M', 'F')
     sex_list = ['M', 'F']
     sex_array = np.array(sex_list)
-    assert_array_equal(Axis(sex_tuple, 'sex').labels, sex_array)
-    assert_array_equal(Axis(sex_list, 'sex').labels, sex_array)
-    assert_array_equal(Axis(sex_array, 'sex').labels, sex_array)
-    assert_array_equal(Axis('sex=M,F').labels, sex_array)
+    assert_nparray_equal(Axis(sex_tuple, 'sex').labels, sex_array)
+    assert_nparray_equal(Axis(sex_list, 'sex').labels, sex_array)
+    assert_nparray_equal(Axis(sex_array, 'sex').labels, sex_array)
+    assert_nparray_equal(Axis('sex=M,F').labels, sex_array)
 
-    assert_array_equal(Axis(range(116), 'age').labels, np.arange(116))
+    assert_nparray_equal(Axis(range(116), 'age').labels, np.arange(116))
     axis = Axis('0..115', 'age')
-    assert_array_equal(axis.labels, np.arange(116))
-    assert_array_equal(Axis('01..12', 'zero_padding').labels, [str(i).zfill(2) for i in range(1, 13)])
-    assert_array_equal(Axis('01,02,03,10,11,12', 'zero_padding').labels, ['01', '02', '03', '10', '11', '12'])
+    assert_nparray_equal(axis.labels, np.arange(116))
+    assert list(Axis('01..12', 'zero_padding').labels) == [str(i).zfill(2) for i in range(1, 13)]
+    assert list(Axis('01,02,03,10,11,12', 'zero_padding').labels) == ['01', '02', '03', '10', '11', '12']
     group = axis[:10]
     group_axis = Axis(group)
-    assert_array_equal(group_axis.labels, np.arange(11))
-    assert_array_equal(group_axis.name, 'age')
+    assert_nparray_equal(group_axis.labels, np.arange(11))
+    assert group_axis.name == 'age'
     other = Axis('other=0..10')
     axis = Axis(other, 'age')
-    assert_array_equal(axis.labels, other.labels)
-    assert_array_equal(axis.name, 'age')
+    assert_nparray_equal(axis.labels, other.labels)
+    assert axis.name == 'age'
 
 
 def test_equals():
@@ -541,7 +541,7 @@ def test_h5_io(tmp_path):
     lipro2 = read_hdf(fpath, key=lipro.name)
     assert lipro.equals(lipro2)
     # anonymous axis
-    with pytest.raises(ValueError, match="Argument key must be provided explicitly in case of anonymous axis"):
+    with must_raise(ValueError, msg="Argument key must be provided explicitly in case of anonymous axis"):
         anonymous.to_hdf(fpath)
     # wildcard axis
     wildcard.to_hdf(fpath)
