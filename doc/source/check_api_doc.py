@@ -1,6 +1,3 @@
-from __future__ import print_function
-
-import sys
 import os
 import inspect
 import importlib
@@ -8,12 +5,15 @@ import warnings
 
 from sphinx.util.inspect import safe_getattr
 
-_current_dir = os.path.dirname(__file__)
-_lib_path = os.path.abspath(os.path.join(_current_dir, '..', '..', 'larray'))
-_outdir = os.path.abspath(os.path.join(_current_dir, '..', 'build', 'check_api'))
-
-sys.path.insert(0, _lib_path)
+# we use the installed larray version ...
 from larray import __version__
+from larray import __file__ as _larray_path
+
+# ... but we check it is the one from the same repository
+_current_dir = os.path.dirname(__file__)
+assert _larray_path == os.path.abspath(os.path.join(_current_dir, '..', '..', 'larray'))
+
+_outdir = os.path.abspath(os.path.join(_current_dir, '..', 'build', 'check_api'))
 
 _modules = ['larray', 'larray.random', 'larray.core.constants']
 _exclude = ['absolute_import', 'division', 'print_function', 'renamed_to']
@@ -354,7 +354,7 @@ def get_items_from_api_doc():
     def add_item(item, api_doc_items):
         item = item.astext().strip().split()
         if len(item) > 0:
-            # if item comes from a hand written table (like the Exploring section of Axis in api.rst)
+            # if item comes from a handwritten table (like the Exploring section of Axis in api.rst)
             # we select the text from the left column
             if isinstance(item, list):
                 item = item[0]
@@ -362,8 +362,13 @@ def get_items_from_api_doc():
 
     api_doc_items = []
     directives.register_directive('autosummary', Autosummary)
-    cleanup_line = lambda line: line.replace(':attr:', '      ').replace('`', ' ')
-    check_line = lambda line: len(line) and not (line.startswith('..') or ':' in line)
+
+    def cleanup_line(line):
+        return line.replace(':attr:', '      ').replace('`', ' ')
+
+    def check_line(line):
+        return len(line) and not (line.startswith('..') or ':' in line)
+
     with open('./api.rst', mode='r') as f:
         content = [cleanup_line(line) for line in f.readlines()]
         content = '\n'.join([line for line in content if check_line(line)])

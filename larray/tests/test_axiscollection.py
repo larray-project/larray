@@ -196,27 +196,27 @@ def test_replace(col):
 
 def test_contains(col):
     assert 'lipro' in col
-    assert not ('nonexisting' in col)
+    assert 'nonexisting' not in col
     assert 0 in col
     assert 1 in col
     assert 2 in col
     assert -1 in col
     assert -2 in col
     assert -3 in col
-    assert not (3 in col)
+    assert 3 not in col
     assert lipro in col
     assert sex in col
     assert age in col
     assert sex2 in col
-    assert not (geo in col)
-    assert not (value in col)
+    assert geo not in col
+    assert value not in col
     anon = Axis([0, 1])
     col.append(anon)
     assert anon in col
     anon2 = anon.copy()
     assert anon2 in col
     anon3 = Axis([0, 2])
-    assert not (anon3 in col)
+    assert anon3 not in col
 
 
 def test_index(col):

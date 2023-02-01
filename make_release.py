@@ -11,7 +11,7 @@ import sys
 from os.path import abspath, dirname, join
 from subprocess import check_call
 
-from releaser import make_release, update_feedstock, short, no, chdir, set_config, insert_step_func, yes
+from releaser import make_release, update_feedstock, short, chdir, insert_step_func, yes
 from releaser.make_release import steps_funcs as make_release_steps
 from releaser.update_feedstock import steps_funcs as update_feedstock_steps
 

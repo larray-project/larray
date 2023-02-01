@@ -1694,7 +1694,7 @@ def test_contains():
     # duplicate label
     assert 2 in arr
     # slice
-    assert not slice('b0', 'b2') in arr
+    assert slice('b0', 'b2') not in arr
 
 
 def test_sum_full_axes(array):

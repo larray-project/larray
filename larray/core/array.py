@@ -6643,11 +6643,12 @@ class Array(ABCArray):
 
         labels = expand(label, num_inserts)
         if label is not None:
-            values = [v.set_labels(axis, [l]) if axis in v.axes else v.expand(Axis([l], axis.name), readonly=True)
-                      for v, l in zip(values, labels)]
+            values = [v.set_labels(axis, [label])
+                      if axis in v.axes else v.expand(Axis([label], axis.name), readonly=True)
+                      for v, label in zip(values, labels)]
         else:
-            values = [v if axis in v.axes else v.expand(Axis([l], axis.name), readonly=True)
-                      for v, l in zip(values, labels)]
+            values = [v if axis in v.axes else v.expand(Axis([label], axis.name), readonly=True)
+                      for v, label in zip(values, labels)]
 
         start = 0
         chunks = []
