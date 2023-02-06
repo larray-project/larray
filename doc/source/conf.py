@@ -104,7 +104,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'LArray'
-copyright = '2014-2017, Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
+copyright = '2014-2023, Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
