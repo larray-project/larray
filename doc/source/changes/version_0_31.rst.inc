@@ -11,7 +11,7 @@ New features
 Fixes
 ^^^^^
 
-* fixed binary operations (+, -, *, etc.) between an LArray and a (scalar) Group which silently gave a wrong
+* fixed binary operations (+, -, \*, etc.) between an LArray and a (scalar) Group which silently gave a wrong
   result (closes :issue:`797`).
 
 * fixed taking a subset of an array with boolean labels for an axis if the user explicitly specify the axis

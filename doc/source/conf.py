@@ -44,12 +44,13 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting'
+    'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx_rtd_theme',
 ]
 
 extlinks = {
-    'issue': ('https://github.com/larray-project/larray/issues/%s', 'issue '),
-    'editor_issue': ('https://github.com/larray-project/larray-editor/issues/%s', 'issue ')
+    'issue': ('https://github.com/larray-project/larray/issues/%s', 'issue %s'),
+    'editor_issue': ('https://github.com/larray-project/larray-editor/issues/%s', 'issue %s')
 }
 
 # scan all found documents for autosummary directives, and to generate stub pages for each.
