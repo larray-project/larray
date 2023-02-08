@@ -1256,11 +1256,11 @@ class Array(ABCArray):
 
         Parameters
         ----------
-        axes_to_replace : axis ref or dict {axis ref: axis} or list of tuple (axis ref, axis) \
-                          or list of Axis or AxisCollection
+        axes_to_replace : axis ref or dict {axis ref: axis} or list of (tuple or Axis) or AxisCollection
             Axes to replace. If a single axis reference is given, the `new_axis` argument must be provided.
             If a list of Axis or an AxisCollection is given, all axes will be replaced by the new ones.
             In that case, the number of new axes must match the number of the old ones.
+            If a list of tuple is given, it must be pairs of (reference to old axis, new axis).
         new_axis : Axis, optional
             New axis if `axes_to_replace` contains a single axis reference.
         inplace : bool, optional
