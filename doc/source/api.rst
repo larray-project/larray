@@ -382,7 +382,7 @@ Sorting
 .. autosummary::
    :toctree: _generated/
 
-   Array.sort_axes
+   Array.sort_labels
    Array.sort_values
    Array.labelsofsorted
    Array.indicesofsorted
