@@ -240,7 +240,7 @@ else:
         (see examples below).
         All classes inheriting from `CheckedSession` will have access to all methods of the :py:class:`Session` class.
 
-        The special :py:funct:`ConsArray` type represents an Array object with fixed axes and/or dtype.
+        The special :py:obj:`CheckedArray` type represents an Array object with fixed axes and/or dtype.
         This prevents users from modifying the dimensions (and labels) and/or the dtype of an array by mistake
         and make sure that the definition of an array remains always valid in the model.
 
@@ -265,8 +265,8 @@ else:
 
         Warnings
         --------
-        The :py:method:`CheckedSession.filter`, :py:method:`CheckedSession.compact`
-        and :py:method:`CheckedSession.apply` methods return a simple Session object.
+        The :py:obj:`CheckedSession.filter()`, :py:obj:`CheckedSession.compact()`
+        and :py:obj:`CheckedSession.apply()` methods return a simple Session object.
         The type of the declared variables (and the value for the declared constants) will
         no longer be checked.
 
