@@ -22,8 +22,6 @@ New features
   Closes :issue:`832`.
 
 
-.. _misc:
-
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

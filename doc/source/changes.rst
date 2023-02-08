@@ -104,7 +104,13 @@ Version 0.31
 
 Released on 2019-08-09.
 
+CORE
+----
 .. include:: ./changes/version_0_31.rst.inc
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_31.rst.inc
 
 
 Version 0.30
@@ -112,7 +118,13 @@ Version 0.30
 
 Released on 2019-06-27.
 
+CORE
+----
 .. include:: ./changes/version_0_30.rst.inc
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_30.rst.inc
 
 
 Version 0.29

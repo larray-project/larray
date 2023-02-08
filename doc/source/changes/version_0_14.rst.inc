@@ -94,7 +94,7 @@ For completeness
 ----------------
 
 Excel support
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
 * use xlwings (ie live Excel instance) by default for all Excel input/output,
   including read_excel(), session.dump and session.load/Session(filename).
@@ -124,7 +124,7 @@ Excel support
 * try to convert float to int in more situations
 
 Core
-~~~~
+^^^^
 
 * added support for using stack() without providing an axis. It creates an
   anonymous wildcard axis of the correct length.
