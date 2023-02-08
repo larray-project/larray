@@ -242,7 +242,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     else:
         if sort_rows or sort_columns:
             raise ValueError('sort_rows and sort_columns cannot not be used when cartesian_prod is set to False. '
-                             'Please call the method sort_axes on the returned array to sort rows or columns')
+                             'Please call the method sort_labels on the returned array to sort rows or columns')
         axes_labels = index_to_labels(df.index, sort=False)
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values
