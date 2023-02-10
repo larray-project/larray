@@ -71,3 +71,8 @@ Fixes
   in some cases.
 
 * fixed taking a subset of an Excel range (e.g. myworkbook['my_sheet']['A2:C5'][1:])
+
+* fixed setting the first sheet via position in a new workbook opened via open_excel(overwrite=True)
+
+    with open_excel(fpath, overwrite_file=True) as wb:
+        wb[0] = <something>

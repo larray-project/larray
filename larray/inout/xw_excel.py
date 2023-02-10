@@ -221,7 +221,8 @@ if xw is not None:
         def __setitem__(self, key, value):
             key = _translate_sheet_name(key)
             if self.new_workbook:
-                self.xw_wkb.sheets[0].name = key
+                if isinstance(key, str):
+                    self.xw_wkb.sheets[0].name = key
                 self.new_workbook = False
             key_in_self = key in self
             if isinstance(value, Sheet):
