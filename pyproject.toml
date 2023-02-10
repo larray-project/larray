@@ -1,3 +1,47 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "larray"
+]
+addopts = [
+    "-v",
+    "--doctest-modules",
+    # ignore module (because importing it raise an Exception)
+    "--ignore=larray/ipfp",
+    # exclude (doc)tests from ufuncs (because docstrings are copied from numpy
+    #                                 and many of those doctests are failing)
+    "--deselect=larray/core/npufuncs.py",
+    "--deselect=larray/inout/xw_reporting.py",
+    # doctest is copied from numpy (and fails for some Python + numpy version combinations)
+    "--deselect=larray/core/array.py::larray.core.array.Array.astype",
+    # doctest fails (because the plot method returns a matplotlib axis object,
+    # which we do not mention in the doctest to make it nicer)
+    "--deselect=larray/core/array.py::larray.core.array.Array.plot",
+    # skip Pandas-leeched doctests because they are not larray-specific and,
+    # without Pandas-specific documentation build infrastructure, they leave
+    # some plots open
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.area",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.bar",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.barh",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.box",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.hexbin",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.hist",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.kde",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.line",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.pie",
+    "--deselect=larray/core/array.py::larray.core.array.PlotObject.scatter",
+#    "--cov",
+]
+
+filterwarnings = [
+    "ignore::DeprecationWarning:pyreadline.*:",
+    "ignore::DeprecationWarning:pywintypes.*:",
+    "ignore::DeprecationWarning:tables.*:",
+    "ignore:Special variable 'x' is deprecated.*:FutureWarning:inspect.*:",
+    "ignore:Special variable 'x' is deprecated.*:FutureWarning:_pytest.compat.*:",
+]
+
+
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F"]
