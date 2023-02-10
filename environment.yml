@@ -8,5 +8,5 @@ dependencies:
   - matplotlib
   - openpyxl
   - xlsxwriter
-  - pytest>=3.5
+  - pytest>=6
   - pydantic
