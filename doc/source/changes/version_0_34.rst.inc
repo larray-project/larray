@@ -10,6 +10,9 @@ Syntax changes
   This means that, for example, ``Session(axis1, axis2, array1=array1)`` should be rewritten as
   ``Session(axis1name=axis1, axis2name=axis2, array1=array1)`` instead. Closes :issue:`1024`.
 
+* renamed :py:obj:`Array.percentile()` and :py:obj:`Array.percentile_by()` `interpolation` argument
+  to `method` to follow numpy and thus support additional "interpolation" methods.
+
 * renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
 

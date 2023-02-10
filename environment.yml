@@ -2,11 +2,11 @@ name: test
 channels:
   - defaults
 dependencies:
-  - numpy>=1.13
-  - pandas>=0.20
+  - numpy >=1.22
+  - pandas >=0.20
   - pytables
   - matplotlib
   - openpyxl
   - xlsxwriter
-  - pytest>=6
+  - pytest >=6
   - pydantic

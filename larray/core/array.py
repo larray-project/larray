@@ -920,19 +920,140 @@ _kwarg_agg = {
             If True, reduced axes will contain a unique label representing the applied aggregation
             (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value
             (e.g. keepaxes='summation'). Defaults to False."""},
-    'interpolation': {'value': 'linear', 'doc': """
-        interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}, optional
-            Interpolation method to use when the desired quantile lies between two data points ``i < j``:
-
-              * linear: ``i + (j - i) * fraction``, where ``fraction`` is the fractional part of the index surrounded
-                by ``i`` and ``j``.
-              * lower: ``i``.
-              * higher: ``j``.
-              * nearest: ``i`` or ``j``, whichever is nearest.
-              * midpoint: ``(i + j) / 2``.
-
-            Defaults to 'linear'."""}
+    'method': {'value': 'linear', 'doc': """
+        method : str, optional
+            This parameter specifies the method to use for estimating the
+            percentile when the desired percentile lies between two indexes.
+            The different methods supported are described in the Notes section. The options are:
+                * 'inverted_cdf'
+                * 'averaged_inverted_cdf'
+                * 'closest_observation'
+                * 'interpolated_inverted_cdf'
+                * 'hazen'
+                * 'weibull'
+                * 'linear'  (default)
+                * 'median_unbiased'
+                * 'normal_unbiased'
+                * 'lower'
+                * 'higher'
+                * 'midpoint'
+                * 'nearest'
+            The first three and last four methods are discontinuous. Defaults to 'linear'."""}
 }
+
+PERCENTILE_NOTES = """Notes
+        -----
+        Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
+        the value ``q/100`` of the way from the minimum to the maximum in a
+        sorted copy of ``V``. The values and distances of the two nearest
+        neighbors as well as the `method` parameter will determine the
+        percentile if the normalized ranking does not match the location of
+        ``q`` exactly. This function is the same as the median if ``q=50``, the
+        same as the minimum if ``q=0`` and the same as the maximum if
+        ``q=100``.
+    
+        The optional `method` parameter specifies the method to use when the
+        desired percentile lies between two indexes ``i`` and ``j = i + 1``.
+        In that case, we first determine ``i + g``, a virtual index that lies
+        between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
+        fractional part of the index. The final result is, then, an interpolation
+        of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
+        ``i`` and ``j`` are modified using correction constants ``alpha`` and
+        ``beta`` whose choices depend on the ``method`` used. Finally, note that
+        since Python uses 0-based indexing, the code subtracts another 1 from the
+        index internally.
+    
+        The following formula determines the virtual index ``i + g``, the location
+        of the percentile in the sorted sample:
+    
+        .. math::
+            i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
+    
+        The different methods then work as follows
+    
+        inverted_cdf:
+            method 1 of H&F [1]_.
+            This method gives discontinuous results:
+    
+            * if g > 0 ; then take j
+            * if g = 0 ; then take i
+    
+        averaged_inverted_cdf:
+            method 2 of H&F [1]_.
+            This method give discontinuous results:
+    
+            * if g > 0 ; then take j
+            * if g = 0 ; then average between bounds
+    
+        closest_observation:
+            method 3 of H&F [1]_.
+            This method give discontinuous results:
+    
+            * if g > 0 ; then take j
+            * if g = 0 and index is odd ; then take j
+            * if g = 0 and index is even ; then take i
+    
+        interpolated_inverted_cdf:
+            method 4 of H&F [1]_.
+            This method give continuous results using:
+    
+            * alpha = 0
+            * beta = 1
+    
+        hazen:
+            method 5 of H&F [1]_.
+            This method give continuous results using:
+    
+            * alpha = 1/2
+            * beta = 1/2
+    
+        weibull:
+            method 6 of H&F [1]_.
+            This method give continuous results using:
+    
+            * alpha = 0
+            * beta = 0
+    
+        linear:
+            method 7 of H&F [1]_.
+            This method give continuous results using:
+    
+            * alpha = 1
+            * beta = 1
+    
+        median_unbiased:
+            method 8 of H&F [1]_.
+            This method is probably the best method if the sample
+            distribution function is unknown (see reference).
+            This method give continuous results using:
+    
+            * alpha = 1/3
+            * beta = 1/3
+    
+        normal_unbiased:
+            method 9 of H&F [1]_.
+            This method is probably the best method if the sample
+            distribution function is known to be normal.
+            This method give continuous results using:
+    
+            * alpha = 3/8
+            * beta = 3/8
+    
+        lower:
+            NumPy method kept for backwards compatibility.
+            Takes ``i`` as the interpolation point.
+    
+        higher:
+            NumPy method kept for backwards compatibility.
+            Takes ``j`` as the interpolation point.
+    
+        nearest:
+            NumPy method kept for backwards compatibility.
+            Takes ``i`` or ``j``, whichever is nearest.
+    
+        midpoint:
+            NumPy method kept for backwards compatibility.
+            Uses ``(i + j) / 2``."""
 
 
 def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_args=(), kwargs=()):
@@ -980,7 +1101,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
             * ('a1:a3 >> a123', 'b[b0,b2] >> b12') : operator ' >> ' allows to rename groups."""
     parameters = f"""Parameters
         ----------{doc_args}{doc_varargs}{doc_kwargs}"""
-    func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters)
+    func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters, percentile_notes=PERCENTILE_NOTES)
 
 
 _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
@@ -5022,9 +5143,10 @@ class Array(ABCArray):
     #      since in this case np.percentile() may be called several times.
     # percentile needs an explicit method because it has not the same
     # signature as other aggregate functions (extra argument)
+    @deprecate_kwarg('interpolation', 'method')
     def percentile(self, q, *args,
                    out=_kwarg_agg['out']['value'],
-                   interpolation=_kwarg_agg['interpolation']['value'],
+                   method=_kwarg_agg['method']['value'],
                    skipna=_kwarg_agg['skipna']['value'],
                    keepaxes=_kwarg_agg['keepaxes']['value'],
                    **kwargs) -> Union['Array', Scalar]:
@@ -5043,6 +5165,8 @@ class Array(ABCArray):
         Array.percentile_by, Array.mean, Array.mean_by,
         Array.median, Array.median_by, Array.var, Array.var_by,
         Array.std, Array.std_by
+
+        {percentile_notes}
 
         Examples
         --------
@@ -5095,25 +5219,32 @@ class Array(ABCArray):
         a23  9.0  10.0  11.0  12.0
         >>> # or equivalently
         >>> # arr.percentile(25, 'a0,a1>>a01;a2,a3>>a23')
+
+        References
+        ----------
+        .. [1] R. J. Hyndman and Y. Fan,
+           "Sample quantiles in statistical packages,"
+           The American Statistician, 50(4), pp. 361-365, 1996
         """
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         if isinstance(q, (list, tuple)):
             res = stack({v: self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
-                                            extra_kwargs={'q': v, 'interpolation': interpolation}) for v in q},
+                                            extra_kwargs={'q': v, 'method': method}) for v in q},
                         'percentile')
             return res.transpose()
         else:
             return self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
-                                   out=out, extra_kwargs={'q': q, 'interpolation': interpolation})
+                                   out=out, extra_kwargs={'q': q, 'method': method})
 
     _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
-                    kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
+                    kwargs=['out', 'method', 'skipna', 'keepaxes'])
 
+    @deprecate_kwarg('interpolation', 'method')
     def percentile_by(self, q, *args,
                       out=_kwarg_agg['out']['value'],
-                      interpolation=_kwarg_agg['interpolation']['value'],
+                      method=_kwarg_agg['method']['value'],
                       skipna=_kwarg_agg['skipna']['value'],
                       keepaxes=_kwarg_agg['keepaxes']['value'],
                       **kwargs) -> Union['Array', Scalar]:
@@ -5132,6 +5263,8 @@ class Array(ABCArray):
         Array.percentile, Array.mean, Array.mean_by,
         Array.median, Array.median_by, Array.var, Array.var_by,
         Array.std, Array.std_by
+
+        {percentile_notes}
 
         Examples
         --------
@@ -5181,21 +5314,27 @@ class Array(ABCArray):
            1.75  9.75
         >>> # or equivalently
         >>> # arr.percentile_by('a0,a1>>a01;a2,a3>>a23')
+
+        References
+        ----------
+        .. [1] R. J. Hyndman and Y. Fan,
+           "Sample quantiles in statistical packages,"
+           The American Statistician, 50(4), pp. 361-365, 1996
         """
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
         if isinstance(q, (list, tuple)):
             res = stack({v: self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
-                                            extra_kwargs={'q': v, 'interpolation': interpolation}) for v in q},
+                                            extra_kwargs={'q': v, 'method': method}) for v in q},
                         'percentile')
             return res.transpose()
         else:
             return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
-                                   out=out, extra_kwargs={'q': q, 'interpolation': interpolation})
+                                   out=out, extra_kwargs={'q': q, 'method': method})
 
     _doc_agg_method(percentile_by, True, "qth percentile", extra_args=['q'],
-                    kwargs=['out', 'interpolation', 'skipna', 'keepaxes'])
+                    kwargs=['out', 'method', 'skipna', 'keepaxes'])
 
     # not commutative
 

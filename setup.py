@@ -15,7 +15,7 @@ LONG_DESCRIPTION = readlocal("README.rst")
 SETUP_REQUIRES = []
 # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
 #   (issue 702 : fixed bug when writing metadata using HDF format)
-INSTALL_REQUIRES = ['numpy >= 1.13', 'pandas >= 0.20.0']
+INSTALL_REQUIRES = ['numpy >= 1.22', 'pandas >= 0.20.0']
 TESTS_REQUIRE = ['pytest']
 
 LICENSE = 'GPLv3'
