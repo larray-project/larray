@@ -39,7 +39,7 @@ def test_equals():
 
 @pytest.fixture
 def lgroups():
-    class TestLGroup():
+    class TestLGroup:
         def __init__(self):
             self.slice_both_named_wh_named_axis = LGroup('1:5', "full", age)
             self.slice_both_named = LGroup('1:5', "named")
@@ -317,7 +317,7 @@ def test_sub_lset():
 
 @pytest.fixture
 def igroups():
-    class TestIGroup():
+    class TestIGroup:
         def __init__(self):
             self.code_axis = Axis('code=a0..a4')
             self.slice_both_named = self.code_axis.i[1:4] >> 'a123'
