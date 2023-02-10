@@ -6,6 +6,8 @@ testpaths = [
 addopts = [
     "-v",
     "--doctest-modules",
+    # auto/long/short/line/native/no
+    "--tb=short",
     # ignore module (because importing it raise an Exception)
     "--ignore=larray/ipfp",
     # exclude (doc)tests from ufuncs (because docstrings are copied from numpy
