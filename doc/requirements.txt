@@ -1,5 +1,5 @@
 # dependencies to run larray tutorials (via nbsphinx)
-numpy
+numpy >=1.22
 pandas
 matplotlib
 tables  # ==pytables
