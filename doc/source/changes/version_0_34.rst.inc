@@ -15,6 +15,34 @@ Syntax changes
 
 * renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
+* deprecated the ability to target a label in an aggregated array using the group that created it.
+  The aggregated array label should be used instead. This is a seldom used feature which is complex
+  to keep working and has a significant performance cost in some cases, even when the feature is not used
+  (closes :issue:`994`).
+
+  In other words, the following code will now raise a warning:
+
+    >>> arr = ndtest(4)
+    >>> arr
+    a  a0  a1  a2  a3
+        0   1   2   3
+    >>> group1 = arr.a['a0', 'a2'] >> 'a0_a2'
+    >>> group2 = arr.a['a1', 'a3'] >> 'a1_a3'
+    >>> agg_arr = arr.sum((group1, group2))
+    >>> agg_arr
+    a  a0_a2  a1_a3
+           2      4
+    >>> agg_arr[group1]
+    FutureWarning: Using a Group object which was used to create an aggregate to target its aggregated label is deprecated.
+    Please use the aggregated label directly instead. In this case, you should use 'a0_a2' instead of using
+    a['a0', 'a2'] >> 'a0_a2'.
+    2
+
+  One should use the label on the aggregated array instead:
+
+    >>> agg_arr['a0_a2']
+    2
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -845,6 +845,13 @@ class Axis(ABCAxis):
             and key.axis.name == self.name
             and key.name in self
         ):
+            msg = "Using a Group object which was used to create an aggregate to " \
+                  "target its aggregated label is deprecated. " \
+                  "Please use the aggregated label directly instead. " \
+                  f"In this case, you should use {key.name!r} instead of " \
+                  f"using {key!r}."
+            # let us hope the stacklevel does not vary by codepath
+            warnings.warn(msg, FutureWarning, stacklevel=7)
             return LGroup(key.name, None, self)
         # elif isinstance(key, str) and key in self:
             # TODO: this is an awful workaround to avoid the "processing" of string keys which exist as is in the axis
@@ -905,9 +912,23 @@ class Axis(ABCAxis):
                 # XXX: this is potentially very expensive if key.key is an array or list and should be tried as a last
                 # resort
                 potential_tick = _to_tick(key)
+
                 # avoid matching 0 against False or 0.0, note that None has object dtype and so always pass this test
                 if self._is_key_type_compatible(potential_tick):
-                    return mapping[potential_tick]
+                    try:
+                        res_idx = mapping[potential_tick]
+                        if potential_tick != key.key:
+                            # only warn if no KeyError was raised (potential_tick is in mapping)
+                            msg = "Using a Group object which was used to create an aggregate to " \
+                                  "target its aggregated label is deprecated. " \
+                                  "Please use the aggregated label directly instead. " \
+                                  f"In this case, you should use {potential_tick!r} instead of " \
+                                  f"using {key!r}."
+                            # let us hope the stacklevel does not vary by codepath
+                            warnings.warn(msg, FutureWarning, stacklevel=8)
+                        return res_idx
+                    except KeyError:
+                        pass
             # we must catch TypeError because key might not be hashable (eg slice)
             # IndexError is for when mapping is an ndarray
             except (KeyError, TypeError, IndexError):
