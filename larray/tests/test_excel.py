@@ -1,5 +1,7 @@
 import re
 import faulthandler
+import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -56,30 +58,34 @@ class TestWorkbook:
             wb['test'] = 'content'
 
     def test_links(self):
-        data_dir = TEST_DATA_PATH / 'excel_with_links'
-        fpath1 = data_dir / 'BookA.xlsx'
-        fpath2 = data_dir / 'BookB.xlsx'
-        fpath3 = data_dir / 'BookC.xlsx'
-        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
-        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
-        assert read_excel(fpath3).i[0, 0] == 3
+        test_data_dir = TEST_DATA_PATH / 'excel_with_links'
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            tmp_dir = Path(tmp_dir_name)
+            for book in ('BookA.xlsx', 'BookB.xlsx', 'BookC.xlsx'):
+                shutil.copy2(test_data_dir / book, tmp_dir)
+            fpath1 = tmp_dir / 'BookA.xlsx'
+            fpath2 = tmp_dir / 'BookB.xlsx'
+            fpath3 = tmp_dir / 'BookC.xlsx'
+            assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
+            assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
+            assert read_excel(fpath3).i[0, 0] == 3
 
-        with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
-            c[0]['B2'] = 41
-            a.save()
-            b.save()
-            c.save()
-        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 42
-        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 42
-        assert read_excel(fpath3).i[0, 0] == 41
-        with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
-            c[0]['B2'] = 3
-            a.save()
-            b.save()
-            c.save()
-        assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
-        assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
-        assert read_excel(fpath3).i[0, 0] == 3
+            with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
+                c[0]['B2'] = 41
+                a.save()
+                b.save()
+                c.save()
+            assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 42
+            assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 42
+            assert read_excel(fpath3).i[0, 0] == 41
+            with open_excel(fpath1) as a, open_excel(fpath2) as b, open_excel(fpath3) as c:
+                c[0]['B2'] = 3
+                a.save()
+                b.save()
+                c.save()
+            assert read_excel(fpath1)['link to cell with link to other workbook', 'value from link'] == 4
+            assert read_excel(fpath2)['cell with link to other workbook', 'formula value'] == 4
+            assert read_excel(fpath3).i[0, 0] == 3
 
     def test_repr(self):
         with open_excel(visible=False) as wb:
