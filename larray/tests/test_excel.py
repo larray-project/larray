@@ -31,7 +31,8 @@ class TestWorkbook:
         faulthandler_enabled = faulthandler.is_enabled()
         if faulthandler_enabled:
             faulthandler.disable()
-        with must_raise(pywintypes.com_error):
+        disconnected_pattern = r"\(.*, 'The object invoked has disconnected from its clients.', .*\)"
+        with must_raise(pywintypes.com_error, match=disconnected_pattern):
             wb1.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()
@@ -45,7 +46,7 @@ class TestWorkbook:
         # anything using wb2 will fail
         if faulthandler_enabled:
             faulthandler.disable()
-        with must_raise(pywintypes.com_error):
+        with must_raise(pywintypes.com_error, match=disconnected_pattern):
             wb2.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()

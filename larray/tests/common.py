@@ -152,9 +152,12 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
         yield []
     else:
         if msg is not None and match is not None:
-            raise ValueError("bad test: can't use both msg and match arguments")
+            raise ValueError("BAD TEST: can't use both msg and match arguments")
+        elif msg is None and match is None:
+            raise ValueError("BAD TEST: not checking the warning message")
         elif msg is not None:
             match = '^' + re.escape(msg) + '$'
+
         try:
             with pytest.warns(warn_cls, match=match) as caught_warnings:
                 yield caught_warnings
@@ -172,10 +175,9 @@ def must_raise(exception_cls=None, msg=None, match=None):
     from _pytest.python_api import RaisesContext
 
     if msg is not None and match is not None:
-        raise ValueError("bad test: can't use both msg and match arguments")
+        raise ValueError("BAD TEST: can't use both msg and match arguments")
     elif msg is None and match is None:
-        match = ''
-        # raise ValueError("bad test: not checking for the actual message")
+        raise ValueError("BAD TEST: not checking the error message")
     elif msg is not None:
         match = f'^{re.escape(msg)}$'
 
