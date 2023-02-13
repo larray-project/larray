@@ -19,7 +19,7 @@ from larray.example import get_example_filepath         # noqa: F401
 
 
 @deprecate_kwarg('nb_index', 'nb_axes', arg_converter=lambda x: x + 1)
-def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, fill_value=nan,
+def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, decimal='.', fill_value=nan,
              na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs) -> Array:
     r"""
     Reads csv file and returns an array with the contents.
@@ -36,9 +36,11 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
     index_col : list or None, optional
         Positions of columns for the n-1 first axes (ex. [0, 1, 2, 3]). Defaults to None (see nb_axes above).
     sep : str, optional
-        Separator.
+        Separator to use. Defaults to ','.
     headersep : str or None, optional
-        Separator for headers.
+        Specific separator to use for headers. Defaults to None (uses `sep`).
+    decimal : str, optional
+        Character to use as decimal point. Defaults to '.'.
     fill_value : scalar or Array, optional
         Value used to fill cells corresponding to label combinations which are not present in the input.
         Defaults to NaN.
@@ -210,7 +212,7 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         if index_col is None:
             index_col = [0]
 
-    df = pd.read_csv(filepath_or_buffer, index_col=index_col, sep=sep, **kwargs)
+    df = pd.read_csv(filepath_or_buffer, index_col=index_col, sep=sep, decimal=decimal, **kwargs)
     if dialect == 'liam2':
         if len(df) == 1:
             df.set_index([[nan]], inplace=True)
