@@ -44,9 +44,9 @@ def test_value_string_union():
 def test_value_string_range():
     assert_nparray_equal(_to_ticks('0..15'), np.arange(16))
     assert_nparray_equal(_to_ticks('..15'), np.arange(16))
-    with must_raise(ValueError):
+    with must_raise(ValueError, "no stop bound provided in range: '10..'"):
         _to_ticks('10..')
-    with must_raise(ValueError):
+    with must_raise(ValueError, "no stop bound provided in range: '..'"):
         _to_ticks('..')
 
 
@@ -208,7 +208,7 @@ def test_ndtest():
 def test_getattr(array):
     assert type(array.b) == Axis
     assert array.b is b
-    with must_raise(AttributeError):
+    with must_raise(AttributeError, msg="'Array' object has no attribute 'bm'"):
         _ = array.bm
 
 
@@ -226,9 +226,8 @@ def test_zeros_like(array):
 
 def test_bool():
     arr = ones([2])
-    # ValueError: The truth value of an array with more than one element
-    #             is ambiguous. Use arr.any() or arr.all()
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg="The truth value of an array with more than one element is ambiguous. "
+                                    "Use a.any() or a.all()"):
         bool(arr)
 
     arr = ones([1])
@@ -524,12 +523,12 @@ def test_getitem(array):
     assert_larray_equal(arr[pgroup], arr['a1'])
 
     # key with duplicate axes
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg="key has several values for axis: a\nkey: (a[1, 2], a[3, 4])"):
         _ = array[a[1, 2], a[3, 4]]
 
     # key with lgroup from another axis leading to duplicate axis
     bad = Axis(3, 'bad')
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg='key has several values for axis: a\nkey: (bad[1, 2], a[3, 4])'):
         _ = array[bad[1, 2], a[3, 4]]
 
 
@@ -568,11 +567,11 @@ def test_getitem_abstract_axes(array):
                          raw[..., [0, 1, 3]])
 
     # key with duplicate axes
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg="key has several values for axis: a\nkey: (X.a[1, 2], X.a[3])"):
         _ = array[X.a[1, 2], X.a[3]]
 
     # key with invalid axis
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg='key has several values for axis: a\nkey: (X.bad[1, 2], X.a[3, 4])'):
         _ = array[X.bad[1, 2], X.a[3, 4]]
 
 
@@ -876,12 +875,13 @@ def test_getitem_integer_string_axes():
 
     assert_larray_equal(arr['0[a0, a2]'], arr[a['a0', 'a2']])
     assert_larray_equal(arr['0[a0:a2]'], arr[a['a0:a2']])
-    with must_raise(ValueError):
+    msg = "1['a0', 'a2'] is not a valid label for the 'b' axis with labels: 'b0', 'b1', 'b2', 'b3', 'b4'"
+    with must_raise(ValueError, msg=msg):
         _ = arr['1[a0, a2]']
 
     assert_larray_equal(arr['0.i[0, 2]'], arr[a.i[0, 2]])
     assert_larray_equal(arr['0.i[0:2]'], arr[a.i[0:2]])
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg='Cannot evaluate a positional group without axis'):
         _ = arr['3.i[0, 2]']
 
 
@@ -1179,7 +1179,7 @@ def test_positional_indexer_getitem(array):
                          raw[np.ix_([1, 0], [5, 4])])
 
     # too many indices
-    with must_raise(IndexError):
+    with must_raise(IndexError, "key is too long (5) for array with 4 dimensions"):
         _ = array.i[0, 0, 0, 0, 0]
 
 
@@ -1224,7 +1224,10 @@ def test_points_indexer_getitem():
         assert_nparray_equal(arr.points[label_key].data, raw[index_key])
 
     # XXX: we might want to raise KeyError or IndexError instead?
-    with must_raise(ValueError):
+    with must_raise(ValueError, msg="""'d0' is not a valid label for any axis:
+ a [2]: 'a0' 'a1'
+ b [3]: 'b0' 'b1' 'b2'
+ c [3]: 'c0' 'c1' 'c2'"""):
         _ = arr.points['a0', 'b1', 'c2', 'd0']
 
 
@@ -1561,8 +1564,10 @@ def test_setitem_bool_array_key(array):
     arr = array.copy()
     key = (arr < 5).expand([Axis(2, 'extra')])
     assert key.ndim == 5
-    # TODO: make this work
-    with must_raise(ValueError):
+    # Note that we could make this work by expanding the data array behind the scene but this does not seem like a
+    # good idea.
+    msg = "boolean subset key contains more axes ({a, b, c, d, extra*}) than array ({a, b, c, d})"
+    with must_raise(ValueError, msg=msg):
         arr[key] = 0
 
 
@@ -3329,12 +3334,15 @@ def test_hdf_roundtrip(tmp_path, meta):
 
     # unnamed group
     group = a3.c['c0,c2']
-    with must_warn(tables.NaturalNameWarning, check_file=False):
+    msg_template = "object name is not a valid Python identifier: {key!r}; it does not match the " \
+                   "pattern ``^[a-zA-Z_][a-zA-Z0-9_]*$``; you will not be able to use natural " \
+                   "naming to access this object; using ``getattr()`` will still work, though"
+    with must_warn(tables.NaturalNameWarning, msg=msg_template.format(key='c0,c2'), check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # unnamed group + slice
     group = a3.c['c0::2']
-    with must_warn(tables.NaturalNameWarning, check_file=False):
+    with must_warn(tables.NaturalNameWarning, msg=msg_template.format(key='c0::2'), check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # named group
@@ -3343,7 +3351,8 @@ def test_hdf_roundtrip(tmp_path, meta):
 
     # group with name containing special characters (replaced by _)
     group = a3.c['c0,c2'] >> r':name?with*special/\[characters]'
-    with must_warn(tables.NaturalNameWarning, check_file=False):
+    with must_warn(tables.NaturalNameWarning, msg=msg_template.format(key=':name?with*special__[characters]'),
+                   check_file=False):
         a3[group].to_hdf(fpath, group)
 
     # passing group as key to read_hdf
@@ -4437,7 +4446,9 @@ def test_open_excel(tmp_path):
     # ==================
     fpath = inputpath('should_not_exist.xlsx')
     # overwrite_file must be set to True to create a new file
-    with must_raise(ValueError):
+    msg = f"File {fpath} does not exist. Please give the path to an existing file " \
+          f"or set overwrite_file argument to True"
+    with must_raise(ValueError, msg=msg):
         open_excel(fpath)
 
     # 2) with headers
@@ -5392,7 +5403,7 @@ def test_0darray_convert():
     float_arr = Array(1.0)
     assert int(float_arr) == 1
     assert float(float_arr) == 1.0
-    with must_raise(TypeError) as e_info:
+    with must_raise(TypeError, match='.*') as e_info:
         float_arr.__index__()
 
     msg = e_info.value.args[0]

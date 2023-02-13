@@ -152,7 +152,7 @@ def test_setattr(session):
 def test_add(session):
     i = Axis('i=i0..i2')
     i01 = i['i0,i1'] >> 'i01'
-    with must_warn((UserWarning, FutureWarning), num_expected=None) as caught_warnings:
+    with must_warn((UserWarning, FutureWarning), match='.*', num_expected=None) as caught_warnings:
         session.add(i, i01, j='j')
 
     future_warnings = [w for w in caught_warnings if w.category == FutureWarning]
@@ -310,7 +310,8 @@ def test_csv_io(tmp_path, session, meta):
             f.write(',",')
 
         # try loading the directory with the invalid file
-        with must_raise(pd.errors.ParserError):
+        # we do not try to validate the exact Pandas error message
+        with must_raise(pd.errors.ParserError, match='.*'):
             s = Session(pattern)
 
         # test loading a pattern, ignoring invalid/unsupported files

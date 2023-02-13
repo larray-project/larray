@@ -4,7 +4,10 @@ import larray
 
 
 def test_invalid_option_raises():
-    with must_raise(ValueError):
+    msg = "Argument not_a_valid_option is not in the set of valid options: " \
+          "display_edgeitems, display_maxlines, display_precision, " \
+          "display_width"
+    with must_raise(ValueError, msg=msg):
         larray.set_options(not_a_valid_option=True)
 
 
