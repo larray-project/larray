@@ -16,7 +16,7 @@ from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadat
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items)
-from larray.core.axis import _to_ticks, _to_key
+from larray.core.axis import _to_ticks, _to_tick, _to_key
 from larray.util.misc import LHDFStore
 
 # avoid flake8 errors
@@ -26,6 +26,17 @@ meta = meta
 # =======================================
 # E201: whitespace after '['
 # E241: multiple spaces after ','
+
+
+GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE = "Using a Group object which was used to create an aggregate to " \
+      "target its aggregated label is deprecated. " \
+      "Please use the aggregated label directly instead. " \
+      "In this case, you should use {potential_tick!r} instead of " \
+      "using {key!r}."
+
+def group_as_aggregated_label_msg(key):
+    return GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE.format(potential_tick=_to_tick(key), key=key)
+
 
 # ================== #
 # Test Value Strings #
@@ -2315,8 +2326,9 @@ def test_group_agg_on_group_agg_nokw(array):
 def test_getitem_on_group_agg(array):
     a, b, c, d = array.axes
 
-    # using a string
+    # using a string (b_group1 is a string key)
     agg_arr = array.sum(a, c).sum(b=b_groups_all)
+
     # the following are all equivalent
     assert agg_arr[b_group1].shape == (6,)
     assert agg_arr[(b_group1,)].shape == (6,)
@@ -2330,22 +2342,26 @@ def test_getitem_on_group_agg(array):
     # using an anonymous LGroup
     lg1 = b[b_group1]
     agg_arr = array.sum(a, c).sum(b=(lg1, b_group2, b_group2, all_b))
-    # the following are all equivalent
-    assert agg_arr[lg1].shape == (6,)
-    assert agg_arr[(lg1,)].shape == (6,)
-    assert agg_arr[(lg1, slice(None))].shape == (6,)
-    assert agg_arr[lg1, slice(None)].shape == (6,)
-    assert agg_arr[lg1, :].shape == (6,)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(lg1), num_expected=5):
+        # the following should all be equivalent
+        assert agg_arr[lg1].shape == (6,)
+        assert agg_arr[(lg1,)].shape == (6,)
+        # these last three are only syntactic sugar differences
+        # (__getitem__ receives the *exact* same key)
+        assert agg_arr[(lg1, slice(None))].shape == (6,)
+        assert agg_arr[lg1, slice(None)].shape == (6,)
+        assert agg_arr[lg1, :].shape == (6,)
 
     # using a named LGroup
     lg1 = b[b_group1] >> 'g1'
     agg_arr = array.sum(a, c).sum(b=(lg1, b_group2, b_group2, all_b))
-    # the following are all equivalent
-    assert agg_arr[lg1].shape == (6,)
-    assert agg_arr[(lg1,)].shape == (6,)
-    assert agg_arr[(lg1, slice(None))].shape == (6,)
-    assert agg_arr[lg1, slice(None)].shape == (6,)
-    assert agg_arr[lg1, :].shape == (6,)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(lg1), num_expected=5):
+        # the following are all equivalent
+        assert agg_arr[lg1].shape == (6,)
+        assert agg_arr[(lg1,)].shape == (6,)
+        assert agg_arr[(lg1, slice(None))].shape == (6,)
+        assert agg_arr[lg1, slice(None)].shape == (6,)
+        assert agg_arr[lg1, :].shape == (6,)
 
 
 def test_getitem_on_group_agg_nokw(array):
@@ -2354,6 +2370,7 @@ def test_getitem_on_group_agg_nokw(array):
     # using a string
     agg_arr = array.sum(a, c).sum((b_group1, b_group2, b_group3, all_b))
     # the following are all equivalent
+    # b_group1 is a string key
     assert agg_arr[b_group1].shape == (6,)
     assert agg_arr[(b_group1,)].shape == (6,)
     assert agg_arr[(b_group1, slice(None))].shape == (6,)
@@ -2366,22 +2383,24 @@ def test_getitem_on_group_agg_nokw(array):
     # using an anonymous LGroup
     lg1 = b[b_group1]
     agg_arr = array.sum(a, c).sum((lg1, b_group2, b_group3, all_b))
-    # the following are all equivalent
-    assert agg_arr[lg1].shape == (6,)
-    assert agg_arr[(lg1,)].shape == (6,)
-    assert agg_arr[(lg1, slice(None))].shape == (6,)
-    assert agg_arr[lg1, slice(None)].shape == (6,)
-    assert agg_arr[lg1, :].shape == (6,)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(lg1), num_expected=5):
+        # the following are all equivalent
+        assert agg_arr[lg1].shape == (6,)
+        assert agg_arr[(lg1,)].shape == (6,)
+        assert agg_arr[(lg1, slice(None))].shape == (6,)
+        assert agg_arr[lg1, slice(None)].shape == (6,)
+        assert agg_arr[lg1, :].shape == (6,)
 
     # using a named LGroup
     lg1 = b[b_group1] >> 'g1'
     agg_arr = array.sum(a, c).sum((lg1, b_group2, b_group3, all_b))
-    # the following are all equivalent
-    assert agg_arr[lg1].shape == (6,)
-    assert agg_arr[(lg1,)].shape == (6,)
-    assert agg_arr[(lg1, slice(None))].shape == (6,)
-    assert agg_arr[lg1, slice(None)].shape == (6,)
-    assert agg_arr[lg1, :].shape == (6,)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(lg1), num_expected=5):
+        # the following are all equivalent
+        assert agg_arr[lg1].shape == (6,)
+        assert agg_arr[(lg1,)].shape == (6,)
+        assert agg_arr[(lg1, slice(None))].shape == (6,)
+        assert agg_arr[lg1, slice(None)].shape == (6,)
+        assert agg_arr[lg1, :].shape == (6,)
 
 
 def test_filter_on_group_agg(array):
@@ -2395,7 +2414,8 @@ def test_filter_on_group_agg(array):
     # using a named LGroup
     g1 = b[b_group1] >> 'g1'
     agg_arr = array.sum(a, c).sum(b=(g1, b_group2, b_group3, all_b))
-    assert agg_arr.filter(b=g1).shape == (6,)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(g1)):
+        assert agg_arr.filter(b=g1).shape == (6,)
 
     # Note that agg_arr.filter(b=(g1,)) does NOT work. It might be a
     # little confusing for users, because agg_arr[(g1,)] works but it is
@@ -2418,7 +2438,8 @@ def test_filter_on_group_agg(array):
     # assert bya.filter(a=':17').shape == (12, 2, 6)
 
     bya = array.sum(a=(a0to5_named, 5, a6to13, a14plus))
-    assert bya.filter(a=a0to5_named).shape == (12, 2, 6)
+    with must_warn(FutureWarning, msg=group_as_aggregated_label_msg(a0to5_named)):
+        assert bya.filter(a=a0to5_named).shape == (12, 2, 6)
 
 
 def test_sum_several_lg_groups(array):
@@ -2433,8 +2454,12 @@ def test_sum_several_lg_groups(array):
 
     # the result is indexable
     # 1.a) by LGroup
-    assert agg_arr.filter(b=lg1).shape == (19, 2, 6)
-    assert agg_arr.filter(b=(lg1, lg2)).shape == (19, 2, 2, 6)
+    msg1 = group_as_aggregated_label_msg(lg1)
+    with must_warn(FutureWarning, msg=msg1):
+        assert agg_arr.filter(b=lg1).shape == (19, 2, 6)
+    msg2 = group_as_aggregated_label_msg(lg2)
+    with must_warn(FutureWarning, msg=(msg1, msg2), check_file=False):
+        assert agg_arr.filter(b=(lg1, lg2)).shape == (19, 2, 2, 6)
 
     # 1.b) by string (name of groups)
     assert agg_arr.filter(b='lg1').shape == (19, 2, 6)
