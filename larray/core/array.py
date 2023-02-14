@@ -5229,14 +5229,17 @@ class Array(ABCArray):
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
+        def compute_percentile(q):
+            extra_kwargs = {'q': q}
+            if method != 'linear':
+                extra_kwargs['method'] = method
+            return self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
+                                   extra_kwargs=extra_kwargs)
         if isinstance(q, (list, tuple)):
-            res = stack({v: self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
-                                            extra_kwargs={'q': v, 'method': method}) for v in q},
-                        'percentile')
+            res = stack({v: compute_percentile(v) for v in q}, 'percentile')
             return res.transpose()
         else:
-            return self._aggregate(_npfunc, args, kwargs, keepaxes=keepaxes, commutative=True,
-                                   out=out, extra_kwargs={'q': q, 'method': method})
+            return compute_percentile(q)
 
     _doc_agg_method(percentile, False, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'method', 'skipna', 'keepaxes'])
@@ -5324,14 +5327,17 @@ class Array(ABCArray):
         if skipna is None:
             skipna = True
         _npfunc = np.nanpercentile if skipna else np.percentile
+        def compute_percentile(q):
+            extra_kwargs = {'q': q}
+            if method != 'linear':
+                extra_kwargs['method'] = method
+            return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
+                                   extra_kwargs=extra_kwargs)
         if isinstance(q, (list, tuple)):
-            res = stack({v: self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
-                                            extra_kwargs={'q': v, 'method': method}) for v in q},
-                        'percentile')
+            res = stack({v: compute_percentile(v) for v in q}, 'percentile')
             return res.transpose()
         else:
-            return self._aggregate(_npfunc, args, kwargs, by_agg=True, keepaxes=keepaxes, commutative=True,
-                                   out=out, extra_kwargs={'q': q, 'method': method})
+            return compute_percentile(q)
 
     _doc_agg_method(percentile_by, True, "qth percentile", extra_args=['q'],
                     kwargs=['out', 'method', 'skipna', 'keepaxes'])
