@@ -155,6 +155,11 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
             raise ValueError("BAD TEST: can't use both msg and match arguments")
         elif msg is None and match is None:
             raise ValueError("BAD TEST: not checking the warning message")
+        elif isinstance(msg, (tuple, list)):
+            if num_expected != 1:
+                raise ValueError("BAD TEST: cannot use a tuple/list msg and num_expected")
+            match = None
+            num_expected = len(msg)
         elif msg is not None:
             match = '^' + re.escape(msg) + '$'
 
@@ -162,6 +167,13 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
             with pytest.warns(warn_cls, match=match) as caught_warnings:
                 yield caught_warnings
         finally:
+            if isinstance(msg, (tuple, list)):
+                caught_messages = [str(caught_w.message) for caught_w in caught_warnings]
+                caught_eq_expected = all(caught_msg == expected_msg
+                                         for caught_msg, expected_msg in zip(caught_messages, msg))
+                assert caught_eq_expected, f"Caught messages:\n{caught_messages}\n" \
+                                           f"different from expected:\n{msg}"
+
             if num_expected is not None:
                 num_caught = len(caught_warnings)
                 assert num_caught == num_expected, f"caught {num_caught} warnings instead of {num_expected}"
