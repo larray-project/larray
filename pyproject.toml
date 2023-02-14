@@ -36,6 +36,8 @@ addopts = [
 ]
 
 filterwarnings = [
+    # turn warnings into errors (unless they are explicitly handled in tests or ignored here)
+    "error",
     "ignore::DeprecationWarning:pyreadline.*:",
     "ignore::DeprecationWarning:pywintypes.*:",
     "ignore::DeprecationWarning:tables.*:",
