@@ -20,8 +20,9 @@ class PlotObject:
         label_axis = None
 
         if np.isscalar(x) and x not in axes:
-            label_axis, x_indices = axes._translate_axis_key(x)
-            x = IGroup(x_indices, axis=label_axis)
+            x_label_axis, x_indices = axes._translate_axis_key(x)
+            x = IGroup(x_indices, axis=x_label_axis)
+            label_axis = x_label_axis
 
         if np.isscalar(y) and y not in axes:
             y_label_axis, y_indices = axes._translate_axis_key(y)
