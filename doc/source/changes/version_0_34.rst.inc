@@ -15,6 +15,9 @@ Syntax changes
 
 * renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
+* made :py:obj:`Array.append()` work for the cases previously covered by ``Array.extend()`` (when the appended value
+  already has the axis being extended) and deprecated ``Array.extend()`` (closes :issue:`887`).
+
 * deprecated the ability to target a label in an aggregated array using the group that created it.
   The aggregated array label should be used instead. This is a seldom used feature which is complex
   to keep working and has a significant performance cost in some cases, even when the feature is not used

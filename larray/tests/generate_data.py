@@ -102,7 +102,7 @@ def generate_example_files(csv=True, excel=True, hdf5=True):
     population_benelux.meta.title = 'Population on 1 January by age and sex (Benelux)'
     population_benelux.meta.source = 'table demo_pjan from Eurostat'
     # ----
-    population_5_countries = population.extend('country', population_benelux[['Luxembourg', 'Netherlands']])
+    population_5_countries = population.append('country', population_benelux[['Luxembourg', 'Netherlands']])
     population_5_countries.meta.title = 'Population on 1 January by age and sex (Benelux + France + Germany)'
     population_5_countries.meta.source = 'table demo_pjan from Eurostat'
     # ----

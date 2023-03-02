@@ -3218,7 +3218,7 @@ class Array(ABCArray):
                 lgkey = axis
                 axis = lgkey[0].axis
                 value = res._aggregate(npop[op], (lgkey,))
-            res = res.extend(axis, value)
+            res = res.append(axis, value)
         return res
 
     # TODO: make sure we can do
@@ -6443,9 +6443,7 @@ class Array(ABCArray):
         return out
 
     def append(self, axis, value, label=None) -> 'Array':
-        r"""Adds an array to this array along an axis.
-
-        The two arrays must have compatible axes.
+        r"""Adds a value to this array along an axis.
 
         Parameters
         ----------
@@ -6454,37 +6452,63 @@ class Array(ABCArray):
         value : scalar or Array
             Scalar or array with compatible axes.
         label : scalar, optional
-            Label for the new item in axis
+            Label for the new item in axis. When `axis` is not present in `value`, this argument should be used.
+            Defaults to None.
 
         Returns
         -------
         Array
-            Array expanded with `value` along `axis`.
+            Array with `value` appended along `axis`.
 
         Examples
         --------
-        >>> a = ones('nat=BE,FO;sex=M,F')
-        >>> a
+        >>> arr = ones('nat=BE,FO;sex=M,F')
+        >>> arr["BE", "F"] = 2.0
+        >>> arr
         nat\sex    M    F
-             BE  1.0  1.0
+             BE  1.0  2.0
              FO  1.0  1.0
-        >>> a.append('sex', a.sum('sex'), 'M+F')
+        >>> sex_total = arr.sum('sex')
+        >>> sex_total
+        nat   BE   FO
+             3.0  2.0
+        >>> arr.append('sex', sex_total, label='M+F')
         nat\sex    M    F  M+F
-             BE  1.0  1.0  2.0
+             BE  1.0  2.0  3.0
              FO  1.0  1.0  2.0
-        >>> a.append('nat', 2, 'Other')
+
+        The value can already have the axis along which it is appended:
+
+        >>> sex_total = arr.sum('sex', keepaxes='M+F')
+        >>> sex_total
+        nat\sex  M+F
+             BE  3.0
+             FO  2.0
+        >>> arr.append('sex', sex_total)
+        nat\sex    M    F  M+F
+             BE  1.0  2.0  3.0
+             FO  1.0  1.0  2.0
+
+        The value can be a scalar or an array with fewer axes than the original array.
+        In this case, the appended value is expanded (repeated) as necessary:
+
+        >>> arr.append('nat', 2, 'Other')
         nat\sex    M    F
-             BE  1.0  1.0
+             BE  1.0  2.0
              FO  1.0  1.0
           Other  2.0  2.0
-        >>> b = zeros('type=type1,type2')
-        >>> b
+
+        The value can also have extra axes (axes not present in the original array),
+        in which case, the original array is expanded as necessary:
+
+        >>> other = zeros('type=type1,type2')
+        >>> other
         type  type1  type2
                 0.0    0.0
-        >>> a.append('nat', b, 'Other')
+        >>> arr.append('nat', other, 'Other')
           nat  sex\type  type1  type2
            BE         M    1.0    1.0
-           BE         F    1.0    1.0
+           BE         F    2.0    2.0
            FO         M    1.0    1.0
            FO         F    1.0    1.0
         Other         M    0.0    0.0
@@ -6492,6 +6516,7 @@ class Array(ABCArray):
         """
         axis = self.axes[axis]
         return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
+    extend = renamed_to(append, 'extend')
 
     def prepend(self, axis, value, label=None) -> 'Array':
         r"""Adds an array before this array along an axis.
@@ -6542,58 +6567,6 @@ class Array(ABCArray):
          FO         F    1.0    1.0
         """
         return self.insert(value, before=IGroup(0, axis=axis), label=label)
-
-    def extend(self, axis, other) -> 'Array':
-        r"""Adds an array to this array along an axis.
-
-        The two arrays must have compatible axes.
-
-        Parameters
-        ----------
-        axis : axis
-            Axis along which to extend with input array (`other`)
-        other : Array
-            Array with compatible axes
-
-        Returns
-        -------
-        Array
-            Array expanded with 'other' along 'axis'.
-
-        Examples
-        --------
-        >>> nat = Axis('nat=BE,FO')
-        >>> sex = Axis('sex=M,F')
-        >>> sex2 = Axis('sex=U')
-        >>> xtype = Axis('type=type1,type2')
-        >>> arr1 = ones([sex, xtype])
-        >>> arr1
-        sex\type  type1  type2
-               M    1.0    1.0
-               F    1.0    1.0
-        >>> arr2 = zeros([sex2, xtype])
-        >>> arr2
-        sex\type  type1  type2
-               U    0.0    0.0
-        >>> arr1.extend('sex', arr2)
-        sex\type  type1  type2
-               M    1.0    1.0
-               F    1.0    1.0
-               U    0.0    0.0
-        >>> arr3 = zeros([sex2, nat])
-        >>> arr3
-        sex\nat   BE   FO
-              U  0.0  0.0
-        >>> arr1.extend('sex', arr3)
-        sex  type\nat   BE   FO
-          M     type1  1.0  1.0
-          M     type2  1.0  1.0
-          F     type1  1.0  1.0
-          F     type2  1.0  1.0
-          U     type1  0.0  0.0
-          U     type2  0.0  0.0
-        """
-        return concat((self, other), axis)
 
     def insert(self, value, before=None, after=None, pos=None, axis=None, label=None) -> 'Array':
         r"""Inserts value in array along an axis.
