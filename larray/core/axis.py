@@ -325,11 +325,11 @@ class Axis(ABCAxis):
         >>> waxis.extend([11, 12, 13, 14])
         Traceback (most recent call last):
         ...
-        ValueError: Axis to append must (not) be wildcard if self is (not) wildcard
+        ValueError: Axis to append must (not) be wildcard if this axis is (not) wildcard
         """
         other = labels if isinstance(labels, Axis) else Axis(labels)
         if self.iswildcard != other.iswildcard:
-            raise ValueError("Axis to append must (not) be wildcard if self is (not) wildcard")
+            raise ValueError("Axis to append must (not) be wildcard if this axis is (not) wildcard")
         labels = self._length + other._length if self.iswildcard else np.append(self.labels, other.labels)
         return Axis(labels, self.name)
 
@@ -523,7 +523,7 @@ class Axis(ABCAxis):
 
     def iscompatible(self, other) -> bool:
         r"""
-        Checks if self is compatible with another axis.
+        Checks if this axis is compatible with another axis.
 
         * two axes are compatible if they have compatible names and labels
         * names are compatible if they are the same or missing
@@ -573,7 +573,7 @@ class Axis(ABCAxis):
 
     def equals(self, other) -> bool:
         r"""
-        Checks if self is equal to another axis.
+        Checks if this axis is equal to another axis.
         Two axes are equal if they have the same name and label(s).
 
         Parameters
@@ -584,7 +584,7 @@ class Axis(ABCAxis):
         Returns
         -------
         bool
-            True if input axis is equal to self, False otherwise.
+            True if other axis is equal to this axis, False otherwise.
 
         Examples
         --------

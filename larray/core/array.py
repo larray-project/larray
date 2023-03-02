@@ -5960,7 +5960,8 @@ class Array(ABCArray):
     @deprecate_kwarg('nan_equals', 'nans_equal')
     def equals(self, other, rtol=0, atol=0, nans_equal=False, check_axes=False) -> bool:
         r"""
-        Compares self with another array and returns True if they have the same axes and elements, False otherwise.
+        Compares this array with another array and returns True if they have the same axes and elements,
+        False otherwise.
 
         Parameters
         ----------
@@ -5983,7 +5984,7 @@ class Array(ABCArray):
         Returns
         -------
         bool
-            Returns True if self is equal to other.
+            Returns True if this array is equal to other.
 
         See Also
         --------
@@ -6092,11 +6093,11 @@ class Array(ABCArray):
     def allclose(self, other: Any, rtol: float = 1e-05, atol: float = 1e-08, nans_equal: bool = True,
                  check_axes: bool = False) -> bool:
         """
-        Compares self with another array and returns True if they are element-wise equal within a tolerance.
+        Compares this array with another array and returns True if they are element-wise equal within a tolerance.
 
         The tolerance values are positive, typically very small numbers.
         The relative difference (rtol * abs(other)) and the absolute difference atol are added together to compare
-        against the absolute difference between self and other.
+        against the absolute difference between this array and other.
 
         NaN values are treated as equal if they are in the same place and if `nans_equal=True`.
 
@@ -6165,7 +6166,7 @@ class Array(ABCArray):
     @deprecate_kwarg('nan_equals', 'nans_equal')
     def eq(self, other, rtol=0, atol=0, nans_equal=False) -> 'Array':
         """
-        Compares self with another array element-wise and returns an array of booleans.
+        Compares this array with another array element-wise and returns an array of booleans.
 
         Parameters
         ----------
@@ -6184,7 +6185,7 @@ class Array(ABCArray):
         Returns
         -------
         Array
-            Boolean array where each cell tells whether corresponding elements of self and other are equal
+            Boolean array where each cell tells whether corresponding elements of this array and other are equal
             within a tolerance range if given. If nans_equal=True, corresponding elements with NaN values
             will be considered as equal.
 
@@ -6297,7 +6298,7 @@ class Array(ABCArray):
     def divnot0(self, other) -> 'Array':
         # part of the doctest is skipped because it produces a warning we do not want to have to handle within the
         # doctest and cannot properly ignore
-        r"""Divides array by other, but returns 0.0 where other is 0.
+        r"""Divides this array by other, but returns 0.0 where other is 0.
 
         Parameters
         ----------
@@ -6353,16 +6354,16 @@ class Array(ABCArray):
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False) -> 'Array':
-        r"""Expands array to target_axes.
+        r"""Expands this array to target_axes.
 
-        Target axes will be added to array if not present.
+        Target axes will be added to this array if not present.
         In most cases this function is not needed because LArray can do operations with arrays having different
         (compatible) axes.
 
         Parameters
         ----------
         target_axes : string, list of Axis or AxisCollection, optional
-            Self can contain axes not present in `target_axes`.
+            This array can contain axes not present in `target_axes`.
             The result axes will be: [self.axes not in target_axes] + target_axes
         out : Array, optional
             Output array, must have more axes than array. Defaults to a new array.
@@ -6441,7 +6442,7 @@ class Array(ABCArray):
         return out
 
     def append(self, axis, value, label=None) -> 'Array':
-        r"""Adds an array to self along an axis.
+        r"""Adds an array to this array along an axis.
 
         The two arrays must have compatible axes.
 
@@ -6492,7 +6493,7 @@ class Array(ABCArray):
         return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
 
     def prepend(self, axis, value, label=None) -> 'Array':
-        r"""Adds an array before self along an axis.
+        r"""Adds an array before this array along an axis.
 
         The two arrays must have compatible axes.
 
@@ -6542,7 +6543,7 @@ class Array(ABCArray):
         return self.insert(value, before=IGroup(0, axis=axis), label=label)
 
     def extend(self, axis, other) -> 'Array':
-        r"""Adds an array to self along an axis.
+        r"""Adds an array to this array along an axis.
 
         The two arrays must have compatible axes.
 
