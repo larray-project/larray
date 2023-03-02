@@ -3069,23 +3069,71 @@ def test_expand():
     assert_larray_equal(out1, out2)
 
 
-def test_append(small_array):
+def test_append():
+    arr = ndtest((2, 3))
+
+    # append a scalar
+    res = arr.append('b', 6, label='b3')
+    expected = from_string(r"""
+    a\b  b0  b1  b2  b3
+     a0   0   1   2   6
+     a1   3   4   5   6""")
+    assert_larray_equal(res, expected)
+
+    # append an array without the axis
+    value = stack({'a0': 6, 'a1': 7}, 'a')
+    res = arr.append('b', value, label='b3')
+    expected = from_string(r"""
+    a\b  b0  b1  b2  b3
+     a0   0   1   2   6
+     a1   3   4   5   7""")
+    assert_larray_equal(res, expected)
+
+    # when the value has not the axis and label already exists on another axis in array
+    value = stack({'a0': 6, 'a1': 7}, 'a')
+    res = arr.append('b', value, label='a1')
+    expected = from_string(r"""
+    a\b  b0  b1  b2  a1
+     a0   0   1   2   6
+     a1   3   4   5   7""")
+    assert_larray_equal(res, expected)
+
+    # when the value already has the axis
+    value = stack({'b3': 6, 'b4': 7}, 'b')
+    res = arr.append('b', value)
+    expected = from_string(r"""
+    a\b  b0  b1  b2  b3  b4
+     a0   0   1   2   6   7
+     a1   3   4   5   6   7""")
+    assert_larray_equal(res, expected)
+
+    # when the value already has the axis but one of the appended labels is ambiguous on the value
+    value = from_string(r"""
+    a\b  b3  a1
+     a0   6   7
+     a1   8   9""")
+    res = arr.append('b', value)
+    expected = from_string(r"""
+    a\b  b0  b1  b2  b3  a1
+     a0   0   1   2   6   7
+     a1   3   4   5   8   9""")
+    assert_larray_equal(res, expected)
+
+
+
+def test_extend(small_array):
     c, d = small_array.axes
 
-    arr2 = small_array.append(d, small_array.sum(d), label='sum')
-    assert arr2.shape == (2, 7)
-
-    arr3 = arr2.append(c, arr2.sum(c), label='sum')
-    assert arr3.shape == (3, 7)
-
-    # crap the c axis is different !!!! we don't have this problem with
-    # the kwargs syntax below
-    # arr4 = arr3.append(arr3.mean(c), axis=c, label='mean')
-    # assert arr4.shape == (4, 7)
-
-    # another syntax (which implies we could not have an axis named "label")
-    # arr5 = arr4.append(d=arr4.sum(d), label='sum')
-    # assert arr5.shape == (4, 8)
+    all_d = d[:]
+    tail = small_array.sum(d=(all_d,))
+    with must_warn(FutureWarning, "extend() is deprecated. Use append() instead."):
+        small_array = small_array.extend(d, tail)
+    assert small_array.shape == (2, 7)
+    # test with a string axis
+    value = small_array.sum(c=(c[:],))
+    with must_warn(FutureWarning, "extend() is deprecated. Use append() instead."):
+        small_array = small_array.extend('c', value)
+    assert small_array.shape == (3, 7)
 
 
 def test_insert():
@@ -3314,18 +3362,6 @@ def test_unique():
     a0_b1   1   1   1   0
     a1_b1   2   1   2   0""")
     assert_larray_equal(arr.unique(('a', 'b')), expected)
-
-
-def test_extend(small_array):
-    c, d = small_array.axes
-
-    all_d = d[:]
-    tail = small_array.sum(d=(all_d,))
-    small_array = small_array.extend(d, tail)
-    assert small_array.shape == (2, 7)
-    # test with a string axis
-    small_array = small_array.extend('c', small_array.sum(c=(c[:],)))
-    assert small_array.shape == (3, 7)
 
 
 @needs_pytables
