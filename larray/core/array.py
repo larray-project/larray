@@ -6370,6 +6370,7 @@ class Array(ABCArray):
             arr.expand(out=out) is equivalent to out[:] = arr
         readonly : bool, optional
             Whether returning a readonly view is acceptable or not (this is much faster)
+            Defaults to False.
 
         Returns
         -------
