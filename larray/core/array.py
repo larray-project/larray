@@ -9597,8 +9597,9 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
     Returns
     -------
-    Array
-        A single array combining arrays. The new (stacked) axes will be the last axes of the new array.
+    Array or Session
+        A single Array combining input values, or a single Session combining input Sessions.
+        The new (stacked) axes will be the last axes of the new array.
 
     Examples
     --------
