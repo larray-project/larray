@@ -9586,13 +9586,12 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
 
     Parameters
     ----------
-    elements : tuple, list or dict.
+    elements : tuple, list, dict or Session.
         Elements to stack. Elements can be scalars, arrays, sessions, (label, value) pairs or a {label: value} mapping.
-        In the later case, axis must be defined and cannot be a name only, because we need to have labels order,
-        which the mapping does not provide.
 
-        Stacking sessions will return a new session containing the arrays of all sessions stacked together. An array
-        missing in a session will be replaced by NaN.
+        Stacking a single session will stack all its arrays in a single array.
+        Stacking several sessions will take the corresponding arrays in all the sessions and stack them, returning a
+        new session. An array missing in a session will be replaced by NaN.
     axes : str, Axis, Group or sequence of Axis, optional
         Axes to create. If None, defaults to a range() axis.
     title : str, optional
@@ -9733,7 +9732,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
     if kwargs:
         elements = kwargs.items()
 
-    if isinstance(elements, dict):
+    if isinstance(elements, (dict, Session)):
         elements = elements.items()
 
     if isinstance(elements, Array):
@@ -9741,6 +9740,10 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
             axes = -1
         axes = elements.axes[axes]
         items = elements.items(axes)
+    elif isinstance(elements, Session):
+        if axes is None:
+            axes = 'array'
+        items = elements.items()
     elif isinstance(elements, Iterable):
         if not isinstance(elements, Sequence):
             elements = list(elements)
