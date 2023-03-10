@@ -6780,7 +6780,8 @@ class Array(ABCArray):
         num_inserts = max(length(before_pos), length(label), length(value))
         stops = expand(before_pos, num_inserts)
 
-        if isinstance(value, Array) and axis in value.axes:
+        axis_in_value = isinstance(value, Array) and axis in value.axes
+        if axis_in_value:
             # FIXME: when length(before_pos) == 1 and length(label) == 1, this is inefficient
             #        in the case of extend, this is awfully inefficent (needlessly splits the value)
             value_axis = value.axes[axis]
@@ -6792,17 +6793,25 @@ class Array(ABCArray):
             values = [value[IGroup([i], None, value_axis)] for i in range(len(value_axis))]
         else:
             values = expand(value, num_inserts)
+
         values = [asarray(v) if not isinstance(v, Array) else v
                   for v in values]
 
-        labels = expand(label, num_inserts)
         if label is not None:
-            values = [v.set_labels(axis, [label])
-                      if axis in v.axes else v.expand(Axis([label], axis.name), readonly=True)
-                      for v, label in zip(values, labels)]
+            labels = expand(label, num_inserts)
+            if axis_in_value:
+                values = [v.set_labels(axis, [label])
+                          for v, label in zip(values, labels)]
+            else:
+                values = [v.expand(Axis([label], axis.name), readonly=True)
+                          for v, label in zip(values, labels)]
+        elif not axis_in_value:
+            v_axis = Axis([None], axis.name)
+            values = [v.expand(v_axis, readonly=True)
+                      for v in values]
         else:
-            values = [v if axis in v.axes else v.expand(Axis([label], axis.name), readonly=True)
-                      for v, label in zip(values, labels)]
+            # When label is None and axis is in value.axes, we do not need to do anything
+            pass
 
         start = 0
         chunks = []
