@@ -6819,7 +6819,8 @@ class Array(ABCArray):
             chunks.append(self[axis.i[start:stop]])
             chunks.append(value)
             start = stop
-        chunks.append(self[axis.i[start:]])
+        if start < len(axis):
+            chunks.append(self[axis.i[start:]])
         return concat(chunks, axis)
 
     def drop(self, labels=None) -> 'Array':
