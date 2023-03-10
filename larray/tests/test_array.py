@@ -3188,7 +3188,19 @@ def test_insert():
                            [  'a1',    3,    44,    45,    4,    5]])  # noqa: E201,E241
     assert_larray_equal(res, expected)
 
-    # with ambiguous labels
+    # with ambiguous labels on the value
+    value = from_string(r"""
+    a\b  b3  a1
+     a0   6   7
+     a1   8   9""")
+    res = arr1.append('b', value)
+    expected = from_string(r"""
+    a\b  b0  b1  b2  b3  a1
+     a0   0   1   2   6   7
+     a1   3   4   5   8   9""")
+    assert_larray_equal(res, expected)
+
+    # with ambiguous labels in the array
     arr4 = ndtest('a=v0,v1;b=v0,v1')
     res = arr4.insert(42, before='b[v1]', label='v0.5')
     expected = from_string(r"""

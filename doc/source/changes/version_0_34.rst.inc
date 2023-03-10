@@ -93,16 +93,16 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed displaying plots made via :py:obj:`Array.plot()` outside of LArray editor (closes :issue:`1019`).
+* fixed displaying plots made via :py:obj:`Array.plot()` outside of the LArray editor (closes :issue:`1019`).
 
 * fixed :py:obj:`Array.insert()` when no label is provided (closes :issue:`879`).
+
+* fixed :py:obj:`Array.insert()` when (one of) the inserted label(s) is ambigous on the value.
 
 * fixed comparison between :py:obj:`Array` and :py:obj:`None` returning False instead of an array of boolean values
   (closes :issue:`988`)
 
-* fixed binary operation between an :py:obj:`Array` and an :py:obj:`Axis` returning False.
-
-* fixed Array.ipoints[] when not all dimensions are given in the key.
+* fixed binary operations between an :py:obj:`Array` and an :py:obj:`Axis` returning False.
 
 * fixed :py:obj:`AxisCollection.split_axes()` with anonymous axes.
 
@@ -115,3 +115,5 @@ Fixes
 
     >>> with open_excel(fpath, overwrite_file=True) as wb:
     ...     wb[0] = <something>
+
+* fixed Array.ipoints[] when not all dimensions are given in the key.

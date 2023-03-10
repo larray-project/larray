@@ -6782,7 +6782,14 @@ class Array(ABCArray):
 
         if isinstance(value, Array) and axis in value.axes:
             # FIXME: when length(before_pos) == 1 and length(label) == 1, this is inefficient
-            values = [value[[k]] for k in value.axes[axis]]
+            #        in the case of extend, this is awfully inefficent (needlessly splits the value)
+            value_axis = value.axes[axis]
+            # This odd construction is to get a subset for each individual label of the axis
+            # but keep the label AND work with ambigous labels
+            # values = [value[[k]] for k in value_axis]             -> does not work for ambigous labels
+            # values = [value[k] for k in value_axis]               -> does not keep the label
+            # values = [value[value_axis[[k]]] for k in value_axis] -> works but is "slow"
+            values = [value[IGroup([i], None, value_axis)] for i in range(len(value_axis))]
         else:
             values = expand(value, num_inserts)
         values = [asarray(v) if not isinstance(v, Array) else v
