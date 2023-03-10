@@ -5785,6 +5785,8 @@ class Array(ABCArray):
                 other = asarray(other)
             elif other is not None and not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
                 # support for inspect.signature
+                # FIXME: this should only be the case for __eq__. For other operations, we should
+                #        probably raise a TypeError (or return NotImplemented???)
                 return False
 
             if isinstance(other, Array):
@@ -6515,7 +6517,13 @@ class Array(ABCArray):
         Other         F    0.0    0.0
         """
         axis = self.axes[axis]
-        return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
+        if isinstance(value, Array) and axis in value.axes:
+             # This is just an optimization because going via the insert path
+             # for this case makes this 10x slower.
+             # FIXME: we should fix insert slowness instead
+             return concat((self, value), axis)
+        else:
+            return self.insert(value, before=IGroup(len(axis), axis=axis), label=label)
     extend = renamed_to(append, 'extend')
 
     def prepend(self, axis, value, label=None) -> 'Array':
