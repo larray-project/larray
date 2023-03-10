@@ -657,6 +657,27 @@ def test_arrays():
 
 
 def test_stack():
+    # stacking all arrays of a single session
+    # =======================================
+    # a) using explicit axis
+    s = Session(arr1=ndtest(3), arr2=ndtest(3) + 10)
+    axis = Axis("array=arr2,arr1")
+    res = stack(s, axis)
+    expected = stack(arr1=s.arr1, arr2=s.arr2, axes=axis)
+    assert_larray_equal(res, expected)
+
+    # b) using explicit axis name
+    s = Session(arr1=ndtest(3), arr2=ndtest(3) + 10)
+    res = stack(s, "array")
+    expected = stack(arr1=s.arr1, arr2=s.arr2, axes="array")
+    assert_larray_equal(res, expected)
+
+    # c) using not axis information
+    s = Session(arr1=ndtest(3), arr2=ndtest(3) + 10)
+    res = stack(s)
+    expected = stack(arr1=s.arr1, arr2=s.arr2)
+    assert_larray_equal(res, expected)
+
     # stacking two sessions (it will stack all arrays with corresponding names
     s1 = Session(arr1=ndtest(3), arr2=ndtest(3) + 10)
     s2 = Session(arr1=ndtest(3), arr2=ndtest(3) + 30)
