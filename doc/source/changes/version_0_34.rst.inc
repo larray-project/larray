@@ -4,19 +4,13 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
-* deprecated :py:obj:`Session.add()`. Please use :py:obj:`Session.update()` instead (closes :issue:`999`).
-
-* deprecated passing individual session elements as non-keyword arguments to :py:obj:`Session()`.
-  This means that, for example, ``Session(axis1, axis2, array1=array1)`` should be rewritten as
-  ``Session(axis1name=axis1, axis2name=axis2, array1=array1)`` instead. Closes :issue:`1024`.
-
-* renamed :py:obj:`Array.percentile()` and :py:obj:`Array.percentile_by()` `interpolation` argument
-  to `method` to follow numpy and thus support additional "interpolation" methods.
+* made :py:obj:`Array.append()` work for the cases previously covered by ``Array.extend()`` (when the appended value
+  already has the axis being extended) and deprecated ``Array.extend()`` (closes :issue:`887`).
 
 * renamed ``Array.sort_axes()`` to :py:obj:`Array.sort_labels()` (closes :issue:`861`).
 
-* made :py:obj:`Array.append()` work for the cases previously covered by ``Array.extend()`` (when the appended value
-  already has the axis being extended) and deprecated ``Array.extend()`` (closes :issue:`887`).
+* renamed :py:obj:`Array.percentile()` and :py:obj:`Array.percentile_by()` `interpolation` argument
+  to `method` to follow numpy and thus support additional "interpolation" methods.
 
 * deprecated the ability to target a label in an aggregated array using the group that created it.
   The aggregated array label should be used instead. This is a seldom used feature which is complex
@@ -46,6 +40,12 @@ Syntax changes
     >>> agg_arr['a0_a2']
     2
 
+* deprecated passing individual session elements as non-keyword arguments to :py:obj:`Session()`.
+  This means that, for example, ``Session(axis1, axis2, array1=array1)`` should be rewritten as
+  ``Session(axis1name=axis1, axis2name=axis2, array1=array1)`` instead. Closes :issue:`1024`.
+
+* deprecated :py:obj:`Session.add()`. Please use :py:obj:`Session.update()` instead (closes :issue:`999`).
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -59,6 +59,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* added support for Python 3.10.
+
 * implemented :py:obj:`Array.value_counts()`, which computes the number of occurrences of each unique value in an array.
 
 * added :py:obj:`Session.nbytes` and added :py:obj:`Session.memory_used` attributes.
@@ -69,13 +71,14 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* made all I/O functions/methods/constructors to accept either a string or a pathlib.Path object
+* made all I/O functions/methods/constructors accept pathlib.Path objects in addition to strings
   for all arguments representing a path (closes :issue:`896`).
 
 * added type hints for all remaining functions and methods which improves autocompletion in editors (such as PyCharm).
   Closes :issue:`864`.
 
-* made several error message more useful when trying to get an invalid subset of an array (closes :issue:`875`).
+* made several error messages more useful when trying to get an invalid subset of an array (closes :issue:`875`).
+
   - when a key is not valid on any axis, the error message includes the array axes
   - when a key is not valid for the axis specified by the user, the error message includes that axis labels
   - when a label is ambiguous (valid on several axes), the error message includes the axes labels in addition to the
@@ -86,7 +89,7 @@ Miscellaneous improvements
 * made :py:obj:`ipfp()` faster (the smaller the array, the larger the improvement)
   For example, for small arrays it is several times faster than before, for 1000x1000 arrays it is about 30% faster.
 
-* made operations between two Arrays with the same axes much faster.
+* made arithmetic operations between two Arrays with the same axes much faster.
 
 * made Array[] faster in the usual/simple cases.
 
