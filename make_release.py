@@ -21,7 +21,8 @@ PACKAGE_NAME = "larray"
 SRC_CODE = "larray"
 SRC_DOC = join('doc', 'source')
 GITHUB_REP = "https://github.com/larray-project/larray"
-CONDA_FEEDSTOCK_REP = "https://github.com/larray-project/larray-feedstock.git"
+UPSTREAM_CONDAFORGE_FEEDSTOCK_REP = "https://github.com/conda-forge/larray-feedstock.git"
+ORIGIN_CONDAFORGE_FEEDSTOCK_REP = "https://github.com/larray-project/larray-feedstock.git"
 CONDA_BUILD_ARGS = {'--user': 'larray-project'}
 
 LARRAY_READTHEDOCS = "http://larray.readthedocs.io/en/stable/"
@@ -130,7 +131,8 @@ Usage:
         if yes("Is metapackage larrayenv updated?", default='n'):
             announce_new_release(argv[2])
     elif argv[1] == '-c' or argv[1] == '--conda':
-        update_feedstock(GITHUB_REP, CONDA_FEEDSTOCK_REP, SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
+        update_feedstock(GITHUB_REP, UPSTREAM_CONDAFORGE_FEEDSTOCK_REP, ORIGIN_CONDAFORGE_FEEDSTOCK_REP,
+                         SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
     else:
         make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:], src_documentation=SRC_DOC, tmp_dir=TMP_PATH,
                      conda_build_args=CONDA_BUILD_ARGS)
