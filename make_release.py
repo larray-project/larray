@@ -12,6 +12,7 @@ from os.path import abspath, dirname, join
 from subprocess import check_call
 
 from releaser import make_release, update_feedstock, short, chdir, insert_step_func, yes
+from releaser.utils import prepare_outlook_email
 from releaser.make_release import steps_funcs as make_release_steps
 from releaser.update_feedstock import steps_funcs as update_feedstock_steps
 
@@ -79,13 +80,11 @@ insert_step_func(merge_changelogs, msg='append changelogs from larray-editor pro
 
 # TODO : move to larrayenv project
 def announce_new_release(release_name):
-    import win32com.client as win32
-    version = short(release_name)
-    outlook = win32.Dispatch('outlook.application')
-    mail = outlook.CreateItem(0)
-    mail.To = LARRAY_ANNOUNCE_MAILING_LIST
-    mail.Subject = f"LArray {version} released"
-    mail.Body = f"""\
+    version=short(release_name)
+    prepare_outlook_email(
+        to=LARRAY_ANNOUNCE_MAILING_LIST,
+        subject=f"LArray {version} released",
+        body = f"""\
 Hello all, 
 
 We are pleased to announce that version {version} of LArray is now available. 
@@ -97,8 +96,7 @@ The complete description of changes including examples can be found at:
 
 As always, *any* feedback is very welcome, preferably on the larray-users 
 mailing list: {LARRAY_USERS_GROUP} (you need to register to be able to post).
-"""
-    mail.Display(True)
+""")
 
 
 if __name__ == '__main__':
