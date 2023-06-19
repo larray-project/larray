@@ -1369,14 +1369,24 @@ def test_setitem_larray(array, small_array):
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 26.0
     assert_nparray_equal(arr.data, raw)
 
-    # d) value has the same axes than target but one has length 1
+    # d) value is an Array with a length-1 axis but the target region is a single cell
+    # these two cases raise a deprecation warning with Numpy 1.25+ (and will stop working
+    # in a future version), so we do not support that anymore (see issue #1070)
+    # res = ndtest((2, 3))
+    # res['a0', 'b1'] = Array([42])
+    # res['a0', 'b1'] = Array([42], 'dummy=d0')
+    # assert_larray_equal(res, from_string(r"""a\b b0  b1 b2
+    #                                           a0  0  42  2
+    #                                           a1  3   4  5"""))
+
+    # e) value has the same axes than target but one has length 1
     # arr = array.copy()
     # raw = array.data.copy()
     # raw[[1, 5, 9]] = np.sum(raw[[1, 5, 9]], axis=1, keepdims=True)
     # arr[as1_5_9] = arr[as1_5_9].sum(b=(b.all(),))
     # assert_nparray_equal(arr.data, raw)
 
-    # e) value has a missing dimension
+    # f) value has a missing dimension
     arr = array.copy()
     raw = array.data.copy()
     arr[as1_5_9] = arr[as1_5_9].sum(b)
