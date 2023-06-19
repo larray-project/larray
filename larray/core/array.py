@@ -2413,8 +2413,11 @@ class Array(ABCArray):
         raw_broadcasted_key, target_axes, _ = \
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=True)
         if isinstance(value, Array):
-            value = value.broadcast_with(target_axes, check_compatible=True)
-
+            # None target_axes can happen when setting a single "cell"/value with an Array (of size 1)
+            if target_axes is not None:
+                value = value.broadcast_with(target_axes, check_compatible=True)
+            else:
+                target_axes = []
             # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
             extra_axes = [axis for axis in value.axes - target_axes if len(axis) > 1]
