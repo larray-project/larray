@@ -3761,6 +3761,24 @@ def test_from_lists():
     assert_larray_equal(sorted_arr, expected)
 
 
+def test_to_series():
+    # simple test
+    arr = ndtest(3, dtype=np.int32)
+    res = arr.to_series()
+    expected = pd.Series([0, 1, 2], dtype="int32", index=pd.Index(['a0', 'a1', 'a2'], name='a'))
+    assert res.equals(expected)
+
+    # test for issue #1061 (object dtype labels array produce warning with Pandas1.4+)
+    # We use an explicit int64 type because for some reason, under Linux, summing an int32 array
+    # results in an int64 value, so it is easier to just use a int64 array in the first place so
+    # that the test works on both Windows and Linux
+    arr = ndtest("a=1..3", dtype=np.int64).with_total()[:3]
+    res = arr.to_series()
+    index = pd.Index([1, 2, 3], dtype=object, name='a')
+    expected = pd.Series([0, 1, 2], dtype="int64", index=index)
+    assert res.equals(expected)
+
+
 def test_from_series():
     # Series with Index as index
     expected = ndtest(3)
@@ -3793,6 +3811,27 @@ def test_from_series():
     s = s.reset_index().drop([3, 4, 5]).set_index(['a', 'gender', 'time'])[0]
     res = from_series(s, fill_value=-1)
     assert_larray_equal(res, expected)
+
+
+def test_to_frame():
+    # these tests are for issue #1061
+    arr = ndtest("a=0..2").with_total()[:2]
+    df = arr.to_frame()
+    assert df.columns.name == 'a'
+    assert df.columns.to_list() == [0, 1, 2]
+
+    arr = ndtest("a=0..2;b=b0").with_total('a')[:2]
+    df = arr.to_frame()
+    assert df.columns.name == 'b'
+    assert df.columns.to_list() == ['b0']
+    assert df.index.name == 'a'
+    assert df.index.to_list() == [0, 1, 2]
+
+    arr = ndtest("a=0..2;b=b0;c=c0").with_total('a')[:2]
+    df = arr.to_frame()
+    assert df.columns.name == 'c'
+    assert df.columns.to_list() == ['c0']
+    assert df.index.names == ['a', 'b']
 
 
 def test_from_frame():
