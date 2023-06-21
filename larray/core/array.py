@@ -1140,6 +1140,13 @@ def _handle_meta(meta, title):
                         f"instead of {type(meta).__name__}")
     return Metadata(meta)
 
+# This prevents a warning in Pandas 1.4 <= version < 2.0 for arrays with object
+# dtype which contain only numeric values. We force Pandas 2.0 behavior
+# (ie use object dtype instead of inferring). See issue #1061.
+def np_array_to_pd_index(array, name=None, tupleize_cols=True):
+    dtype = None if array.dtype.kind != 'O' else object
+    return pd.Index(array, dtype=dtype, name=name, tupleize_cols=tupleize_cols)
+
 
 class Array(ABCArray):
     r"""
@@ -1538,17 +1545,17 @@ class Array(ABCArray):
         a1 b0    4   5
            b1    6   7
         """
-        columns = pd.Index(self.axes[-1].labels)
-        if not fold_last_axis_name:
-            columns.name = self.axes[-1].name
+        last_name = self.axes[-1].name
+        columns_name = None if fold_last_axis_name else last_name
+        columns = np_array_to_pd_index(self.axes[-1].labels, name=columns_name)
         if self.ndim > 1:
             axes_names = self.axes.names[:-1]
             if fold_last_axis_name:
                 tmp = axes_names[-1] if axes_names[-1] is not None else ''
-                if self.axes[-1].name:
-                    axes_names[-1] = f"{tmp}\\{self.axes[-1].name}"
+                if last_name:
+                    axes_names[-1] = f"{tmp}\\{last_name}"
             if self.ndim == 2:
-                index = pd.Index(data=self.axes[0].labels, name=axes_names[0])
+                index = np_array_to_pd_index(self.axes[0].labels, name=axes_names[0])
             else:
                 index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=axes_names)
         else:
@@ -1632,7 +1639,9 @@ class Array(ABCArray):
         elif self.ndim == 1:
             axis = self.axes[0]
             # Note that string labels will be converted to object dtype in the process
-            index = pd.Index(axis.labels, name=axis.name, tupleize_cols=False)
+            # and label arrays with object dtype containing only numeric values will keep
+            # the object dtype.
+            index = np_array_to_pd_index(axis.labels, name=axis.name, tupleize_cols=False)
         else:
             index = pd.MultiIndex.from_product(self.axes.labels, names=self.axes.names)
         series = pd.Series(self.data.reshape(-1), index, name=name)
