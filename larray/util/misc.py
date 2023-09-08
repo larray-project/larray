@@ -743,7 +743,7 @@ def np_array_common_dtype(arrays) -> np.dtype:
     if any(mk != meta_kinds[0] for mk in meta_kinds[1:]):
         return np.dtype(object)
     elif meta_kinds[0] == 'numeric':
-        return np.find_common_type(dtypes, [])
+        return np.result_type(*dtypes)
     elif meta_kinds[0] == 'str':
         need_unicode = any(dt.kind == 'U' for dt in dtypes)
         # unicode are coded with 4 bytes
