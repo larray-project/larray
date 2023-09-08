@@ -32,4 +32,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* avoid warnings with recent versions of Pandas or Numpy (closes :issue:`1061`).
