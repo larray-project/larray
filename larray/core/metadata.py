@@ -66,9 +66,11 @@ class Metadata(AttributeDict):
         from pandas import to_numeric, to_datetime
 
         def _convert_value(value):
+            # errors='ignore' => the value is unmodified if it does not parse
             value = to_numeric([value], errors='ignore')[0]
             if isinstance(value, str):
-                value = to_datetime(value, errors='ignore', infer_datetime_format=True)
+                # same here
+                value = to_datetime(value, errors='ignore')
             return value
 
         return Metadata({key: _convert_value(value) for key, value in zip(array.axes.labels[0], array.data)})
