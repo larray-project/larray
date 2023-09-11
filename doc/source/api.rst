@@ -62,7 +62,6 @@ Modifying/Selecting
    Axis.i
    Axis.by
    Axis.rename
-   Axis.subaxis
    Axis.extend
    Axis.insert
    Axis.replace
