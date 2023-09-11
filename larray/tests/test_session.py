@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from larray.tests.common import meta
-from larray.tests.common import (assert_array_nan_equal, inputpath,
+from larray.tests.common import (assert_larray_equal, assert_array_nan_equal, inputpath,
                                  needs_xlwings, needs_pytables, needs_openpyxl, must_warn, must_raise)
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like,
@@ -654,6 +654,18 @@ def test_arrays():
     s = arrays(include_private=True)
     s_expected = Session({'_e': _e, '_i': _i, 'e': e, 'f': f, 'g': g, 'h': h, 'i': i, 'k': k})
     assert s.equals(s_expected)
+
+
+def test_stack():
+    # stacking two sessions (it will stack all arrays with corresponding names
+    s1 = Session(arr1=ndtest(3), arr2=ndtest(3) + 10)
+    s2 = Session(arr1=ndtest(3), arr2=ndtest(3) + 30)
+    expected_arr1 = stack(s1=s1.arr1, s2=s2.arr1, axes="session")
+    expected_arr2 = stack(s1=s1.arr2, s2=s2.arr2, axes="session")
+    res = stack(s1=s1, s2=s2, axes="session")
+    assert isinstance(res, Session)
+    assert_larray_equal(res.arr1, expected_arr1)
+    assert_larray_equal(res.arr2, expected_arr2)
 
 
 if __name__ == "__main__":
