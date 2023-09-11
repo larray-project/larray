@@ -1,6 +1,6 @@
 # dependencies to run larray tutorials (via nbsphinx)
-numpy >=1.13
-pandas
+numpy >=1.22
+pandas >=0.20
 matplotlib
 tables  # ==pytables
 openpyxl
