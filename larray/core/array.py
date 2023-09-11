@@ -5791,15 +5791,10 @@ class Array(ABCArray):
 
             # we could pass scalars through asarray too but it is too costly performance-wise for only suppressing one
             # isscalar test and an if statement.
-            # TODO: ndarray should probably be converted to larrays because that would harmonize broadcasting rules, but
-            # it makes some tests fail for some reason.
+            # TODO: ndarray should probably be converted to larrays too because that would harmonize broadcasting rules,
+            #       but it makes some tests fail for some reason.
             if isinstance(other, (list, Axis)):
                 other = asarray(other)
-            elif other is not None and not isinstance(other, (Array, np.ndarray)) and not np.isscalar(other):
-                # support for inspect.signature
-                # FIXME: this should only be the case for __eq__. For other operations, we should
-                #        probably raise a TypeError (or return NotImplemented???)
-                return False
 
             if isinstance(other, Array):
                 # TODO: first test if it is not already broadcastable
@@ -5809,9 +5804,13 @@ class Array(ABCArray):
                     res_axes = self.axes
                 else:
                     (self_data, other_data), res_axes = raw_broadcastable((self, other))
-            else:
+            # We need to check for None explicitly because we consider None as a valid scalar, while numpy does not.
+            # i.e. we consider "arr == None" as valid code
+            elif isinstance(other, np.ndarray) or np.isscalar(other) or other is None:
                 self_data, other_data = self.data, other
                 res_axes = self.axes
+            else:
+                return NotImplemented
             return Array(super_method(self_data, other_data), res_axes)
         opmethod.__name__ = fullname
         return opmethod

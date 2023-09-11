@@ -2790,6 +2790,18 @@ def test_binary_ops(small_array):
     res = arr + arr.a
     assert_larray_equal(res, arr + asarray(arr.a))
 
+    # Array + <unsupported type>
+    with must_raise(TypeError, "unsupported operand type(s) for +: 'Array' and 'object'"):
+        res = arr + object()
+
+    # Array + <unsupported type which implements the reverse op>
+    class Test:
+        def __radd__(self, other):
+            return "success"
+
+    res = arr + Test()
+    assert res == 'success'
+
 
 def test_binary_ops_no_name_axes(small_array):
     raw = small_array.data
@@ -2879,6 +2891,43 @@ def test_binary_ops_with_scalar_group():
     expected = arr + 206
     assert_larray_equal(time.i[0] + arr, expected)
     assert_larray_equal(arr + time.i[0], expected)
+
+
+def test_comparison_ops():
+    # simple array equality (identity)
+    a = Axis('a=a0,a1,a2')
+    arr = ndtest(a)
+    res = arr == arr
+    expected = ones(a)
+    assert_larray_equal(res, expected)
+
+    # simple array equality
+    arr = ndtest(a)
+    res = arr == zeros(a)
+    expected = Array([True, False, False], a)
+    assert_larray_equal(res, expected)
+
+    # invalid types
+    # a) eq
+    arr = ndtest(3)
+    res = arr == object()
+    assert res is False
+
+    # b) ne
+    res = arr != object()
+    assert res is True
+
+    # c) others
+    with must_raise(TypeError, "'>' not supported between instances of 'Array' and 'object'"):
+        res = arr > object()
+
+    # d) other type implementing the reverse comparison
+    class Test:
+        def __lt__(self, other):
+            return "success"
+
+    res = arr > Test()
+    assert res == 'success'
 
 
 def test_unary_ops(small_array):
