@@ -12,6 +12,7 @@ AUTHOR = 'Gaetan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
 AUTHOR_EMAIL = 'gdementen@gmail.com'
 DESCRIPTION = "N-D labeled arrays in Python"
 LONG_DESCRIPTION = readlocal("README.rst")
+LONG_DESCRIPTION_CONTENT_TYPE = "text/x-rst"
 SETUP_REQUIRES = []
 # - pandas >= 0.20.0 is required since commit 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
 #   (issue 702 : fixed bug when writing metadata using HDF format)
@@ -46,6 +47,7 @@ setup(
     classifiers=CLASSIFIERS,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
     setup_requires=SETUP_REQUIRES,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
