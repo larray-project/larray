@@ -7141,7 +7141,7 @@ class Array(ABCArray):
 
         Save an array in a specific HDF group
 
-        >>> a.to_hdf('test.h5', 'arrays/a')  # doctest: +SKIP
+        >>> a.to_hdf('test.h5', 'arrays/a')   # doctest: +SKIP
         """
         key = _translate_group_key_hdf(key)
         with LHDFStore(filepath) as store:
@@ -7179,7 +7179,7 @@ class Array(ABCArray):
                   0       BE    F
                   1       FR    M
                   2       FR    F
-        >>> arr.to_stata('test.dta')
+        >>> arr.to_stata('test.dta')      # doctest: +SKIP
         """
         self.to_frame().to_stata(filepath_or_buffer, **kwargs)
 
