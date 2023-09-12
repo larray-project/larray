@@ -382,7 +382,7 @@ def permutation(x, axis=0) -> Array:
 
 def choice(choices=None, axes=None, replace=True, p=None, meta=None) -> Array:
     r"""
-    Generates a random sample from given choices
+    Generate a random sample from given choices.
 
     Parameters
     ----------

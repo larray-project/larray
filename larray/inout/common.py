@@ -49,6 +49,7 @@ class FileHandler:
     fname : Path
         Filename.
     """
+
     def __init__(self, fname: Union[str, Path], overwrite_file: bool = False):
         assert fname is not None
         if isinstance(fname, str):
@@ -68,16 +69,16 @@ class FileHandler:
 
     def item_types(self) -> Dict[str, str]:
         r"""
-        Return dict with type of each stored object
+        Return dict with type of each stored object.
         """
         raise NotImplementedError()
 
     def _read_item(self, key, type, *args, **kwargs):
-        r"""Read item"""
+        r"""Read item."""
         raise NotImplementedError()
 
     def _read_metadata(self) -> Metadata:
-        r"""Read metadata"""
+        r"""Read metadata."""
         raise NotImplementedError()
 
     def _dump_item(self, key, value, *args, **kwargs):
@@ -85,18 +86,18 @@ class FileHandler:
         raise NotImplementedError()
 
     def _dump_metadata(self, metadata):
-        r"""Dump metadata"""
+        r"""Dump metadata."""
         raise NotImplementedError()
 
     def save(self):
         r"""
-        Saves items in file.
+        Save items in file.
         """
         pass
 
     def close(self):
         r"""
-        Closes file.
+        Close file.
         """
         raise NotImplementedError()
 
@@ -112,7 +113,7 @@ class FileHandler:
 
     def read(self, keys, *args, display=False, ignore_exceptions=False, **kwargs) -> Tuple[Metadata, dict]:
         r"""
-        Reads file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
+        Read file content (HDF, Excel, CSV, ...) and returns a dictionary containing loaded objects.
 
         Parameters
         ----------
@@ -156,7 +157,7 @@ class FileHandler:
 
     def dump(self, metadata, values, *args, display=False, **kwargs):
         r"""
-        Dumps objects corresponding to keys in file in HDF, Excel, CSV, ... format
+        Dump objects corresponding to keys in file in HDF, Excel, CSV, ... format.
 
         Parameters
         ----------

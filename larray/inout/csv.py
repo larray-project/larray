@@ -22,7 +22,7 @@ from larray.example import get_example_filepath         # noqa: F401
 def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headersep=None, decimal='.', fill_value=nan,
              na=nan, sort_rows=False, sort_columns=False, wide=True, dialect='larray', **kwargs) -> Array:
     r"""
-    Reads csv file and returns an array with the contents.
+    Read csv file and returns an array with the contents.
 
     Parameters
     ----------
@@ -237,7 +237,7 @@ def read_tsv(filepath_or_buffer, **kwargs) -> Array:
 
 
 def read_eurostat(filepath_or_buffer, **kwargs) -> Array:
-    r"""Reads EUROSTAT TSV (tab-separated) file into an array.
+    r"""Read EUROSTAT TSV (tab-separated) file into an array.
 
     EUROSTAT TSV files are special because they use tabs as data separators but comas to separate headers.
 

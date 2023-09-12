@@ -76,6 +76,7 @@ class Session:
     title: my title
     author: John Smith
     """
+
     def __init__(self, *args, meta=None, **kwargs):
         object.__setattr__(self, '_objects', {})
         if meta is None:
@@ -102,7 +103,7 @@ class Session:
 
     @property
     def meta(self) -> Metadata:
-        r"""Returns metadata of the session.
+        r"""Return metadata of the session.
 
         Returns
         -------
@@ -259,7 +260,7 @@ class Session:
 
     def get(self, key, default=None) -> Any:
         r"""
-        Returns the object corresponding to the key.
+        Return the object corresponding to the key.
         If the key doesn't correspond to any object, a default one can be returned.
 
         Parameters
@@ -444,7 +445,7 @@ class Session:
 
     def save(self, fname, names=None, engine='auto', overwrite=True, display=False, **kwargs) -> None:
         r"""
-        Dumps objects from the current session to a file, or several .csv files.
+        Dump objects from the current session to a file, or several .csv files.
         The Excel and CSV formats only dump objects of Array type (plus metadata).
 
         Parameters
@@ -598,7 +599,7 @@ class Session:
 
     def to_pickle(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
-        Dumps objects from the current session to a file using pickle.
+        Dump objects from the current session to a file using pickle.
 
         WARNING: never load a pickle file (.pkl or .pickle) from an untrusted source, as it can lead to arbitrary code
         execution.
@@ -658,7 +659,7 @@ class Session:
 
     def to_hdf(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
-        Dumps objects from the current session to an HDF file.
+        Dump objects from the current session to an HDF file.
 
         Parameters
         ----------
@@ -715,7 +716,7 @@ class Session:
 
     def to_excel(self, fname, names=None, overwrite=True, display=False, **kwargs) -> None:
         r"""
-        Dumps Array objects from the current session to an Excel file.
+        Dump Array objects from the current session to an Excel file.
 
         Parameters
         ----------
@@ -772,7 +773,7 @@ class Session:
 
     def to_csv(self, fname, names=None, display=False, **kwargs) -> None:
         r"""
-        Dumps Array objects from the current session to CSV files.
+        Dump Array objects from the current session to CSV files.
 
         Parameters
         ----------
@@ -827,7 +828,7 @@ class Session:
 
     def filter(self, pattern=None, kind=None) -> 'Session':
         r"""
-        Returns a new session with objects which match some criteria.
+        Return a new session with objects which match some criteria.
 
         Parameters
         ----------
@@ -883,7 +884,7 @@ class Session:
     @property
     def names(self) -> List[str]:
         r"""
-        Returns the list of names of the objects in the session.
+        Return the list of names of the objects in the session.
         The list is sorted alphabetically and does not follow the internal order.
 
         Returns
@@ -911,14 +912,14 @@ class Session:
         return sorted(self._objects.keys())
 
     def copy(self) -> 'Session':
-        r"""Returns a copy of the session.
+        r"""Return a copy of the session.
         """
         # this actually *does* a copy of the internal mapping (the mapping is not reused-as is)
         return self.__class__(self._objects)
 
     def keys(self) -> KeysView[str]:
         r"""
-        Returns a view on the session's keys.
+        Return a view on the session's keys.
 
         Returns
         -------
@@ -946,7 +947,7 @@ class Session:
 
     def values(self) -> ValuesView[Any]:
         r"""
-        Returns a view on the session's values.
+        Return a view on the session's values.
 
         Returns
         -------
@@ -973,7 +974,7 @@ class Session:
 
     def items(self) -> ItemsView[str, Any]:
         r"""
-        Returns a view of the session’s items ((key, value) pairs).
+        Return a view of the session's items ((key, value) pairs).
 
         Returns
         -------
@@ -1334,8 +1335,8 @@ class Session:
 
     def compact(self, display=False) -> 'Session':
         r"""
-        Detects and removes "useless" axes (ie axes for which values are constant over the whole axis) for all array
-        objects in session
+        Detect and remove "useless" axes (ie axes for which values are constant over the whole axis) for all array
+        objects in session.
 
         Parameters
         ----------
@@ -1375,7 +1376,7 @@ class Session:
         *args : any
             Any extra arguments are passed to the function
         kind : type or tuple of types, optional
-            Type(s) of elements `func` will be applied to. Other elements will be left intact. Use ´kind=object´ to
+            Type(s) of elements `func` will be applied to. Other elements will be left intact. Use `kind=object` to
             apply to all kinds of objects. Defaults to Array.
         **kwargs : any
             Any extra keyword arguments are passed to the function
@@ -1424,8 +1425,8 @@ class Session:
         return Session({k: func(v, *args, **kwargs) if isinstance(v, kind) else v for k, v in self.items()})
 
     def summary(self, template=None) -> str:
-        """
-        Returns a summary of the content of the session.
+        r"""
+        Return a summary of the content of the session.
 
         Parameters
         ----------
@@ -1475,11 +1476,11 @@ class Session:
         >>> def print_array(key, array):
         ...     axes_names = ', '.join(array.axes.display_names)
         ...     shape = ' x '.join(str(i) for i in array.shape)
-        ...     return f"{key} -> {axes_names} ({shape})\\n  title = {array.meta.title}\\n  dtype = {array.dtype}"
+        ...     return f"{key} -> {axes_names} ({shape})\n  title = {array.meta.title}\n  dtype = {array.dtype}"
         >>> template = {Axis:  "{key} -> {name} [{labels}] ({length})",
         ...             Group: "{key} -> {name}: {axis_name}{labels} ({length})",
         ...             Array: print_array,
-        ...             Metadata: "\\t{key} -> {value}"}
+        ...             Metadata: "\t{key} -> {value}"}
         >>> print(s.summary(template))   # doctest: +NORMALIZE_WHITESPACE
         Metadata:
             title -> my title
@@ -1537,7 +1538,7 @@ class Session:
 
     @property
     def nbytes(self) -> str:
-        r"""Returns the memory in bytes consumed by the session.
+        r"""Return the memory in bytes consumed by the session.
 
         Returns
         -------
@@ -1560,7 +1561,7 @@ class Session:
 
     @property
     def memory_used(self) -> str:
-        r"""Returns the memory consumed by the session in human readable form.
+        r"""Return the memory consumed by the session in human readable form.
 
         Returns
         -------
@@ -1584,7 +1585,7 @@ def _exclude_private_vars(vars_dict: Dict[str, Any]) -> Dict[str, Any]:
 
 def local_arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
-    Returns a session containing all local arrays sorted in alphabetical order.
+    Return a session containing all local arrays sorted in alphabetical order.
 
     Parameters
     ----------
@@ -1609,7 +1610,7 @@ def local_arrays(depth=0, include_private=False, meta=None) -> Session:
 
 def global_arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
-    Returns a session containing all global arrays sorted in alphabetical order.
+    Return a session containing all global arrays sorted in alphabetical order.
 
     Parameters
     ----------
@@ -1634,7 +1635,7 @@ def global_arrays(depth=0, include_private=False, meta=None) -> Session:
 
 def arrays(depth=0, include_private=False, meta=None) -> Session:
     r"""
-    Returns a session containing all available arrays (whether they are defined in local or global variables) sorted in
+    Return a session containing all available arrays (whether they are defined in local or global variables) sorted in
     alphabetical order. Local arrays take precedence over global ones (if a name corresponds to both a local
     and a global variable, the local array will be returned).
 

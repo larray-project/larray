@@ -34,7 +34,7 @@ __all__ = ['read_excel']
 def read_excel(filepath, sheet=0, nb_axes=None, index_col=None, fill_value=nan, na=nan,
                sort_rows=False, sort_columns=False, wide=True, engine=None, range=slice(None), **kwargs) -> Array:
     r"""
-    Reads excel file from sheet name and returns an Array with the contents
+    Read excel file from sheet name and returns an Array with the contents.
 
     Parameters
     ----------
@@ -233,6 +233,7 @@ class PandasExcelHandler(FileHandler):
     r"""
     Handler for Excel files using Pandas.
     """
+
     def _open_for_read(self):
         self.handle = pd.ExcelFile(self.fname)
 
@@ -282,6 +283,7 @@ class XLWingsHandler(FileHandler):
     r"""
     Handler for Excel files using XLWings.
     """
+
     def _get_original_file_name(self):
         # for XLWingsHandler, no need to create a temporary file, the job is already done in the Workbook class
         pass

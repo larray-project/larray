@@ -1,5 +1,5 @@
 """
-Array class
+Array class.
 """
 
 # ? implement multi group in one axis getitem: lipro['P01,P02;P05'] <=> (lipro['P01,P02'], lipro['P05'])
@@ -122,7 +122,7 @@ def prod(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def cumsum(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Returns the cumulative sum of array elements.
+    Return the cumulative sum of array elements.
 
     See Also
     --------
@@ -133,7 +133,7 @@ def cumsum(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def cumprod(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Returns the cumulative product of array elements.
+    Return the cumulative product of array elements.
 
     See Also
     --------
@@ -172,7 +172,7 @@ def max(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def mean(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Computes the arithmetic mean.
+    Compute the arithmetic mean.
 
     See Also
     --------
@@ -183,7 +183,7 @@ def mean(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def median(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Computes the median.
+    Compute the median.
 
     See Also
     --------
@@ -194,7 +194,7 @@ def median(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def percentile(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Computes the qth percentile of the data along the specified axis.
+    Compute the qth percentile of the data along the specified axis.
 
     See Also
     --------
@@ -206,7 +206,7 @@ def percentile(array, *args, **kwargs) -> Union['Array', Scalar]:
 # not commutative
 def ptp(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Returns the range of values (maximum - minimum).
+    Return the range of values (maximum - minimum).
 
     See Also
     --------
@@ -217,7 +217,7 @@ def ptp(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def var(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Computes the variance.
+    Compute the variance.
 
     See Also
     --------
@@ -228,7 +228,7 @@ def var(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 def std(array, *args, **kwargs) -> Union['Array', Scalar]:
     r"""
-    Computes the standard deviation.
+    Compute the standard deviation.
 
     See Also
     --------
@@ -238,7 +238,7 @@ def std(array, *args, **kwargs) -> Union['Array', Scalar]:
 
 
 def concat(arrays, axis=0, dtype=None):
-    r"""Concatenate arrays along axis
+    r"""Concatenate arrays along axis.
 
     Parameters
     ----------
@@ -307,7 +307,7 @@ class ArrayIterator:
         next_data_func = data_iter.__next__
         res_axes = array.axes[1:]
         # this case should not happen (handled by the fastpath in Array.__iter__)
-        assert len(res_axes) > 0
+        assert len(res_axes) > 0  # noqa: S101
 
         def next_func():
             return Array(next_data_func(), res_axes)
@@ -646,6 +646,7 @@ class ArrayPositionalIndexer:
     a1   b0  12  14
     a1   b1  16  18
     """
+
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -722,6 +723,7 @@ class ArrayPointsIndexer:
         ...
     ValueError: all combined keys should have the same length
     """
+
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -783,6 +785,7 @@ class ArrayFlatIndicesIndexer:
     c  c0  c1
        42  30
     """
+
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -844,6 +847,7 @@ class ArrayPositionalPointsIndexer:
     a0_b0   0   1   2   3
     a1_b2  20  21  22  23
     """
+
     __slots__ = ('array',)
 
     def __init__(self, array):
@@ -858,7 +862,7 @@ class ArrayPositionalPointsIndexer:
 
 def get_axis(obj, i):
     r"""
-    Returns an axis according to its position.
+    Return an axis according to its position.
 
     Parameters
     ----------
@@ -904,7 +908,7 @@ _kwarg_agg = {
     'out': {'value': None, 'doc': """
         out : Array, optional
             Alternate output array in which to place the result. It must have the same shape as the expected output and
-            its type is preserved (e.g., if dtype(out) is float, the result will consist of 0.0’s and 1.0’s).
+            its type is preserved (e.g., if dtype(out) is float, the result will consist of 0.0's and 1.0's).
             Axes and labels can be different, only the shape matters. Defaults to None (create a new array)."""},
     'ddof': {'value': 1, 'doc': """
         ddof : int, optional
@@ -1125,7 +1129,7 @@ def nan_equal(a1, a2):
 
 def _handle_meta(meta, title):
     """
-    Make sure meta is either None or a Metadata instance
+    Make sure meta is either None or a Metadata instance.
     """
     if title is not None:
         if meta is None:
@@ -1242,6 +1246,7 @@ class Array(ABCArray):
           M  10   9   8
           F  10  11  12
     """
+
     __slots__ = ('data', 'axes', '_meta')
 
     def __init__(self, data, axes=None, title=None, meta=None, dtype=None):
@@ -1280,7 +1285,7 @@ class Array(ABCArray):
 
     @property
     def meta(self) -> Metadata:
-        r"""Returns metadata of the array.
+        r"""Return metadata of the array.
 
         Returns
         -------
@@ -1299,7 +1304,7 @@ class Array(ABCArray):
     # TODO: implement wildcard argument to avoid producing the combined labels
     def nonzero(self) -> Tuple[IGroup, ...]:
         r"""
-        Returns the indices of the elements that are non-zero.
+        Return the indices of the elements that are non-zero.
 
         Specifically, it returns a tuple of arrays (one for each dimension)
         containing the indices of the non-zero elements in that dimension.
@@ -1500,7 +1505,7 @@ class Array(ABCArray):
 
     def to_frame(self, fold_last_axis_name=False, dropna=None) -> pd.DataFrame:
         r"""
-        Converts an Array into a Pandas DataFrame.
+        Convert an Array into a Pandas DataFrame.
 
         Parameters
         ----------
@@ -1572,7 +1577,7 @@ class Array(ABCArray):
 
     def to_series(self, name=None, dropna=False) -> pd.Series:
         r"""
-        Converts an Array into a Pandas Series.
+        Convert an Array into a Pandas Series.
 
         Parameters
         ----------
@@ -1807,12 +1812,12 @@ class Array(ABCArray):
     # TODO: either support a list (of axes names) as first argument here (and set_labels)
     #       or don't support that in set_axes
     def rename(self, renames=None, to=None, inplace=False, **kwargs) -> 'Array':
-        r"""Renames axes of the array.
+        r"""Rename axes of the array.
 
         Parameters
         ----------
         renames : axis ref or dict {axis ref: str} or list of tuple (axis ref, str)
-            Renames to apply. If a single axis reference is given, the `to` argument must be used.
+            Rename to apply. If a single axis reference is given, the `to` argument must be used.
         to : str or Axis
             New name if `renames` contains a single axis reference.
         **kwargs : str or Axis
@@ -2205,7 +2210,7 @@ class Array(ABCArray):
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True) -> 'Array':
-        r"""Sorts values of the array.
+        r"""Sort values of the array.
 
         Parameters
         ----------
@@ -2328,7 +2333,7 @@ class Array(ABCArray):
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_labels(self, axes=None, ascending=True) -> 'Array':
-        r"""Sorts labels of axes of the array.
+        r"""Sort labels of axes of the array.
 
         Parameters
         ----------
@@ -2390,7 +2395,7 @@ class Array(ABCArray):
     sort_axis = renamed_to(sort_labels, 'sort_axis', raise_error=True)
     sort_axes = renamed_to(sort_labels, 'sort_axes')
 
-    # todo : set returned type to Union['Array', np.ndarray, Scalar] ?
+    # TODO: set returned type to Union['Array', np.ndarray, Scalar] ?
     def __getitem__(self, key, collapse_slices=False, translate_key=True, points=False) -> Union['Array', Scalar]:
         raw_broadcasted_key, res_axes, transpose_indices = \
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=False)
@@ -2441,7 +2446,7 @@ class Array(ABCArray):
 
     def set(self, value, **kwargs) -> None:
         r"""
-        Sets a subset of array to value.
+        Set a subset of array to value.
 
         * all common axes must be either of length 1 or the same length
         * extra axes in value must be of length 1
@@ -2553,7 +2558,7 @@ class Array(ABCArray):
 
     def broadcast_with(self, target, check_compatible=False) -> 'Array':
         r"""
-        Returns an array that is (NumPy) broadcastable with target.
+        Return an array that is (NumPy) broadcastable with target.
 
         * all common axes must be either of length 1 or the same length
         * extra axes in source can have any length and will be moved to the
@@ -2884,7 +2889,7 @@ class Array(ABCArray):
     # defaults to 'auto' (ie collapse by default), can be set to False to
     # force a copy and to True to raise an exception if a view is not possible.
     def filter(self, collapse=False, **kwargs) -> 'Array':
-        r"""Filters the array along the axes given as keyword arguments.
+        r"""Filter the array along the axes given as keyword arguments.
 
         The *collapse* argument determines whether consecutive ranges should
         be collapsed to slices, which is more efficient and returns a view
@@ -3042,11 +3047,10 @@ class Array(ABCArray):
                 res = res_data
         return res
 
-    # todo : not sure about the returned type
+    # TODO: not sure about the returned type
     def _prepare_aggregate(self, op, args, kwargs=None, commutative=False, stack_depth=1) \
             -> Union[List[Union[LGroup, Axis]], AxisCollection]:
-        r"""converts args to keys & LGroup and kwargs to LGroup"""
-
+        r"""Convert args to keys & LGroup and kwargs to LGroup."""
         if kwargs is None:
             kwargs_items = []
         else:
@@ -3245,7 +3249,7 @@ class Array(ABCArray):
     # for the case where axis is None, we should return an NDGroup
     # so that arr[arr.labelofmin()] works even if the minimum is on ambiguous labels
     def labelofmin(self, axis=None) -> Union['Array', Tuple[Scalar, ...]]:
-        r"""Returns labels of the minimum values along a given axis.
+        r"""Return labels of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -3287,7 +3291,7 @@ class Array(ABCArray):
     argmin = renamed_to(labelofmin, 'argmin', raise_error=True)
 
     def indexofmin(self, axis=None) -> Union['Array', Tuple[int, ...]]:
-        r"""Returns indices of the minimum values along a given axis.
+        r"""Return indices of the minimum values along a given axis.
 
         Parameters
         ----------
@@ -3328,7 +3332,7 @@ class Array(ABCArray):
     posargmin = renamed_to(indexofmin, 'posargmin', raise_error=True)
 
     def labelofmax(self, axis=None) -> Union['Array', Tuple[Scalar, ...]]:
-        r"""Returns labels of the maximum values along a given axis.
+        r"""Return labels of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3370,7 +3374,7 @@ class Array(ABCArray):
     argmax = renamed_to(labelofmax, 'argmax', raise_error=True)
 
     def indexofmax(self, axis=None) -> Union['Array', Tuple[int, ...]]:
-        r"""Returns indices of the maximum values along a given axis.
+        r"""Return indices of the maximum values along a given axis.
 
         Parameters
         ----------
@@ -3411,7 +3415,7 @@ class Array(ABCArray):
     posargmax = renamed_to(indexofmax, 'posargmax', raise_error=True)
 
     def labelsofsorted(self, axis=None, ascending=True, kind='quicksort') -> 'Array':
-        r"""Returns the labels that would sort this array.
+        r"""Return the labels that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
         an array of labels of the same shape as `a` that index data along the given axis in sorted order.
@@ -3459,7 +3463,7 @@ class Array(ABCArray):
     argsort = renamed_to(labelsofsorted, 'argsort', raise_error=True)
 
     def indicesofsorted(self, axis=None, ascending=True, kind='quicksort') -> 'Array':
-        r"""Returns the indices that would sort this array.
+        r"""Return the indices that would sort this array.
 
         Performs an indirect sort along the given axis using the algorithm specified by the `kind` keyword. It returns
         an array of indices with the same axes as `a` that index data along the given axis in sorted order.
@@ -3515,7 +3519,7 @@ class Array(ABCArray):
     # XXX: implement expand=True? Unsure it is necessary now that we have zip_array_*
     # TODO: add support for groups in addition to entire axes
     def keys(self, axes=None, ascending=True) -> Product:
-        r"""Returns a view on the array labels along axes.
+        r"""Return a view on the array labels along axes.
 
         Parameters
         ----------
@@ -3595,7 +3599,7 @@ class Array(ABCArray):
     # TODO: add support for groups in addition to entire axes
     # TODO : not sure about the returned type
     def values(self, axes=None, ascending=True) -> Union[np.ndarray, List['Array'], ArrayPositionalIndexer]:
-        r"""Returns a view on the values of the array along axes.
+        r"""Return a view on the values of the array along axes.
 
         Parameters
         ----------
@@ -3690,7 +3694,7 @@ class Array(ABCArray):
     # TODO: we currently return a tuple of groups even for 1D arrays, which can be both a bad or a good thing.
     #       if we returned an NDGroup in all cases, it would solve the problem
     def items(self, axes=None, ascending=True) -> SequenceZip:
-        r"""Returns a (label, value) view of the array along axes.
+        r"""Return a (label, value) view of the array along axes.
 
         Parameters
         ----------
@@ -3779,12 +3783,12 @@ class Array(ABCArray):
     iflat.__doc__ = ArrayFlatIndicesIndexer.__doc__
 
     def copy(self) -> 'Array':
-        r"""Returns a copy of the array. """
+        r"""Return a copy of the array."""
         return Array(self.data.copy(), axes=self.axes[:], meta=self.meta)
 
     # XXX: we might want to implement this using .groupby().first()
     def unique(self, axes=None, sort=False, sep='_') -> 'Array':
-        r"""Returns unique values (optionally along axes)
+        r"""Return unique values (optionally along axes).
 
         Parameters
         ----------
@@ -3878,7 +3882,7 @@ class Array(ABCArray):
 
     @property
     def info(self) -> str:
-        r"""Describes an Array (metadata + shape and labels for each axis).
+        r"""Describe an Array (metadata + shape and labels for each axis).
 
         Returns
         -------
@@ -3910,7 +3914,7 @@ class Array(ABCArray):
         return ReprString(str_info)
 
     def ratio(self, *axes) -> 'Array':
-        r"""Returns an array with all values divided by the sum of values along given axes.
+        r"""Return an array with all values divided by the sum of values along given axes.
 
         Parameters
         ----------
@@ -4003,7 +4007,7 @@ class Array(ABCArray):
     def rationot0(self, *axes) -> 'Array':
         # part of the doctest is skipped because it produces a warning we do not want to have to handle within the
         # doctest and cannot properly ignore
-        r"""Returns an Array with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
+        r"""Return an Array with values array / array.sum(axes) where the sum is not 0, 0 otherwise.
 
         Parameters
         ----------
@@ -4045,7 +4049,7 @@ class Array(ABCArray):
         return self.divnot0(self.sum(*axes))
 
     def percent(self, *axes) -> 'Array':
-        r"""Returns an array with values given as percent of the total of all values along given axes.
+        r"""Return an array with values given as percent of the total of all values along given axes.
 
         Parameters
         ----------
@@ -4382,7 +4386,7 @@ class Array(ABCArray):
     def sum(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the sum of array elements along given axes/groups.
+        Compute the sum of array elements along given axes/groups.
 
         {parameters}
 
@@ -4447,7 +4451,7 @@ class Array(ABCArray):
     def sum_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the sum of array elements for the given axes/groups.
+        Compute the sum of array elements for the given axes/groups.
 
         {parameters}
 
@@ -4510,7 +4514,7 @@ class Array(ABCArray):
     def prod(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the product of array elements along given axes/groups.
+        Compute the product of array elements along given axes/groups.
 
         {parameters}
 
@@ -4576,7 +4580,7 @@ class Array(ABCArray):
     def prod_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the product of array elements for the given axes/groups.
+        Compute the product of array elements for the given axes/groups.
 
         {parameters}
 
@@ -4888,7 +4892,7 @@ class Array(ABCArray):
     def mean(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the arithmetic mean.
+        Compute the arithmetic mean.
 
         {parameters}
 
@@ -4954,7 +4958,7 @@ class Array(ABCArray):
     def mean_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the arithmetic mean.
+        Compute the arithmetic mean.
 
         {parameters}
 
@@ -5017,7 +5021,7 @@ class Array(ABCArray):
     def median(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the arithmetic median.
+        Compute the arithmetic median.
 
         {parameters}
 
@@ -5087,7 +5091,7 @@ class Array(ABCArray):
     def median_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the arithmetic median.
+        Compute the arithmetic median.
 
         {parameters}
 
@@ -5164,7 +5168,7 @@ class Array(ABCArray):
                    **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the qth percentile of the data along the specified axis.
+        Compute the qth percentile of the data along the specified axis.
 
         {parameters}
 
@@ -5265,7 +5269,7 @@ class Array(ABCArray):
                       **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the qth percentile of the data for the specified axis.
+        Compute the qth percentile of the data for the specified axis.
 
         {parameters}
 
@@ -5359,9 +5363,9 @@ class Array(ABCArray):
     def ptp(self, *args, out=_kwarg_agg['out']['value'], **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Returns the range of values (maximum - minimum).
+        Return the range of values (maximum - minimum).
 
-        The name of the function comes from the acronym for ‘peak to peak’.
+        The name of the function comes from the acronym for `peak to peak`.
 
         {parameters}
 
@@ -5423,7 +5427,7 @@ class Array(ABCArray):
     def var(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the unbiased variance.
+        Compute the unbiased variance.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
 
@@ -5487,7 +5491,7 @@ class Array(ABCArray):
     def var_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the unbiased variance.
+        Compute the unbiased variance.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
 
@@ -5551,7 +5555,7 @@ class Array(ABCArray):
     def std(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the sample standard deviation.
+        Compute the sample standard deviation.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
 
@@ -5616,7 +5620,7 @@ class Array(ABCArray):
     def std_by(self, *args, **kwargs) -> Union['Array', Scalar]:
         r"""{signature}
 
-        Computes the sample standard deviation.
+        Compute the sample standard deviation.
 
         Normalized by N-1 by default. This can be changed using the ddof argument.
 
@@ -5679,7 +5683,7 @@ class Array(ABCArray):
     # cumulative aggregates
     def cumsum(self, axis=-1) -> Union['Array', Scalar]:
         r"""
-        Returns the cumulative sum of array elements along an axis.
+        Return the cumulative sum of array elements along an axis.
 
         Parameters
         ----------
@@ -5727,7 +5731,7 @@ class Array(ABCArray):
 
     def cumprod(self, axis=-1) -> Union['Array', Scalar]:
         r"""
-        Returns the cumulative product of array elements.
+        Return the cumulative product of array elements.
 
         Parameters
         ----------
@@ -5851,7 +5855,7 @@ class Array(ABCArray):
 
     def __matmul__(self, other) -> 'Array':
         r"""
-        Overrides operator @ for matrix multiplication.
+        Override operator @ for matrix multiplication.
 
         Notes
         -----
@@ -5973,7 +5977,7 @@ class Array(ABCArray):
     @deprecate_kwarg('nan_equals', 'nans_equal')
     def equals(self, other, rtol=0, atol=0, nans_equal=False, check_axes=False) -> bool:
         r"""
-        Compares this array with another array and returns True if they have the same axes and elements,
+        Compare this array with another array and returns True if they have the same axes and elements,
         False otherwise.
 
         Parameters
@@ -5997,7 +6001,7 @@ class Array(ABCArray):
         Returns
         -------
         bool
-            Returns True if this array is equal to other.
+            Return True if this array is equal to other.
 
         See Also
         --------
@@ -6106,7 +6110,7 @@ class Array(ABCArray):
     def allclose(self, other: Any, rtol: float = 1e-05, atol: float = 1e-08, nans_equal: bool = True,
                  check_axes: bool = False) -> bool:
         """
-        Compares this array with another array and returns True if they are element-wise equal within a tolerance.
+        Compare this array with another array and returns True if they are element-wise equal within a tolerance.
 
         The tolerance values are positive, typically very small numbers.
         The relative difference (rtol * abs(other)) and the absolute difference atol are added together to compare
@@ -6135,7 +6139,7 @@ class Array(ABCArray):
         Returns
         -------
         bool
-            Returns True if the two arrays are equal within the given tolerance; False otherwise.
+            Return True if the two arrays are equal within the given tolerance; False otherwise.
 
         See Also
         --------
@@ -6179,7 +6183,7 @@ class Array(ABCArray):
     @deprecate_kwarg('nan_equals', 'nans_equal')
     def eq(self, other, rtol=0, atol=0, nans_equal=False) -> 'Array':
         """
-        Compares this array with another array element-wise and returns an array of booleans.
+        Compare this array with another array element-wise and returns an array of booleans.
 
         Parameters
         ----------
@@ -6268,7 +6272,7 @@ class Array(ABCArray):
 
     def isin(self, test_values, assume_unique=False, invert=False) -> 'Array':
         r"""
-        Computes whether each element of this array is in `test_values`. Returns a boolean array of the same shape as
+        Compute whether each element of this array is in `test_values`. Return a boolean array of the same shape as
         this array that is True where the array element is in `test_values` and False otherwise.
 
         Parameters
@@ -6311,7 +6315,7 @@ class Array(ABCArray):
     def divnot0(self, other) -> 'Array':
         # part of the doctest is skipped because it produces a warning we do not want to have to handle within the
         # doctest and cannot properly ignore
-        r"""Divides this array by other, but returns 0.0 where other is 0.
+        r"""Divide this array by other, but return 0.0 where other is 0.
 
         Parameters
         ----------
@@ -6367,7 +6371,7 @@ class Array(ABCArray):
     # XXX: rename/change to "add_axes" ?
     # TODO: add a flag copy=True to force a new array.
     def expand(self, target_axes=None, out=None, readonly=False) -> 'Array':
-        r"""Expands this array to target_axes.
+        r"""Expand this array to target_axes.
 
         Target axes will be added to this array if not present.
         In most cases this function is not needed because LArray can do operations with arrays having different
@@ -6456,7 +6460,7 @@ class Array(ABCArray):
         return out
 
     def append(self, axis, value, label=None) -> 'Array':
-        r"""Adds a value to this array along an axis.
+        r"""Add a value to this array along an axis.
 
         Parameters
         ----------
@@ -6538,7 +6542,7 @@ class Array(ABCArray):
     extend = renamed_to(append, 'extend')
 
     def prepend(self, axis, value, label=None) -> 'Array':
-        r"""Adds an array before this array along an axis.
+        r"""Add an array before this array along an axis.
 
         The two arrays must have compatible axes.
 
@@ -6588,7 +6592,7 @@ class Array(ABCArray):
         return self.insert(value, before=IGroup(0, axis=axis), label=label)
 
     def insert(self, value, before=None, after=None, pos=None, axis=None, label=None) -> 'Array':
-        r"""Inserts value in array along an axis.
+        r"""Insert value in array along an axis.
 
         Parameters
         ----------
@@ -6653,7 +6657,6 @@ class Array(ABCArray):
          a0   0    42    43   1   2
          a1   3    44    45   4   5
         """
-
         # XXX: unsure we should have arr1.insert(arr3, before='b1,b2') result in (see unit tests):
 
         # a\b  b0  b0.1  b1  b0.2  b2
@@ -7041,7 +7044,7 @@ class Array(ABCArray):
     def to_csv(self, filepath, sep=',', na_rep='', wide=True, value_name='value', dropna=None,
                dialect='default', **kwargs) -> None:
         r"""
-        Writes array to a csv file.
+        Write array to a csv file.
 
         Parameters
         ----------
@@ -7112,7 +7115,7 @@ class Array(ABCArray):
 
     def to_hdf(self, filepath, key) -> None:
         r"""
-        Writes array to a HDF file.
+        Write array to a HDF file.
 
         A HDF file can contain multiple arrays.
         The 'key' parameter is a unique identifier for the array.
@@ -7153,7 +7156,7 @@ class Array(ABCArray):
 
     def to_stata(self, filepath_or_buffer, **kwargs) -> None:
         r"""
-        Writes array to a Stata .dta file.
+        Write array to a Stata .dta file.
 
         Parameters
         ----------
@@ -7187,7 +7190,7 @@ class Array(ABCArray):
     def to_excel(self, filepath=None, sheet=None, position='A1', overwrite_file=False, clear_sheet=False,
                  header=True, transpose=False, wide=True, value_name='value', engine=None, *args, **kwargs) -> None:
         r"""
-        Writes array in the specified sheet of specified excel workbook.
+        Write array in the specified sheet of specified excel workbook.
 
         Parameters
         ----------
@@ -7291,7 +7294,7 @@ class Array(ABCArray):
             pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs) -> None:
-        r"""Sends the content of the array to clipboard.
+        r"""Send the content of the array to the clipboard.
 
         Using to_clipboard() makes it possible to paste the content of the array into a file (Excel, ascii file,...).
 
@@ -7339,7 +7342,7 @@ class Array(ABCArray):
 
     @property
     def plot(self) -> PlotObject:
-        r"""Plots the data of the array into a graph (window pop-up).
+        r"""Plot the data of the array into a graph (window pop-up).
 
         The graph can be tweaked to achieve the desired formatting and can be saved to a .png file.
 
@@ -7466,7 +7469,7 @@ class Array(ABCArray):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        r"""Returns the shape of the array as a tuple.
+        r"""Return the shape of the array as a tuple.
 
         Returns
         -------
@@ -7483,7 +7486,7 @@ class Array(ABCArray):
 
     @property
     def ndim(self) -> int:
-        r"""Returns the number of dimensions of the array.
+        r"""Return the number of dimensions of the array.
 
         Returns
         -------
@@ -7500,7 +7503,7 @@ class Array(ABCArray):
 
     @property
     def size(self) -> int:
-        r"""Returns the number of elements in array.
+        r"""Return the number of elements in array.
 
         Returns
         -------
@@ -7517,7 +7520,7 @@ class Array(ABCArray):
 
     @property
     def nbytes(self) -> int:
-        r"""Returns the number of bytes used to store the array in memory.
+        r"""Return the number of bytes used to store the array in memory.
 
         Returns
         -------
@@ -7534,7 +7537,7 @@ class Array(ABCArray):
 
     @property
     def memory_used(self) -> str:
-        r"""Returns the memory consumed by the array in human readable form.
+        r"""Return the memory consumed by the array in human readable form.
 
         Returns
         -------
@@ -7551,7 +7554,7 @@ class Array(ABCArray):
 
     @property
     def dtype(self) -> np.dtype:
-        r"""Returns the type of the data of the array.
+        r"""Return the type of the data of the array.
 
         Returns
         -------
@@ -7580,7 +7583,7 @@ class Array(ABCArray):
 
     # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'Array':
-        r"""Replaces the labels of one or several axes of the array.
+        r"""Replace the labels of one or several axes of the array.
 
         Parameters
         ----------
@@ -7689,7 +7692,7 @@ class Array(ABCArray):
     astype.__doc__ = np.ndarray.astype.__doc__
 
     def shift(self, axis, n=1) -> 'Array':
-        r"""Shifts the cells of the array n-times to the right along axis.
+        r"""Shift the cells of the array n-times to the right along axis.
 
         Parameters
         ----------
@@ -7732,7 +7735,7 @@ class Array(ABCArray):
             return self[:]
 
     def roll(self, axis=None, n=1) -> 'Array':
-        r"""Rolls the cells of the array n-times to the right along axis. Cells which would be pushed "outside of the
+        r"""Roll the cells of the array n-times to the right along axis. Cells which would be pushed "outside of the
         axis" are reintroduced on the opposite side of the axis.
 
         Parameters
@@ -7791,7 +7794,7 @@ class Array(ABCArray):
     # TODO: add support for groups as axis (like aggregates)
     # eg a.diff(X.year[2018:]) instead of a[2018:].diff(X.year)
     def diff(self, axis=-1, d=1, n=1, label='upper') -> 'Array':
-        r"""Calculates the n-th order discrete difference along a given axis.
+        r"""Compute the n-th order discrete difference along a given axis.
 
         The first order difference is given by out[n] = a[n + 1] - a[n] along the given axis, higher order differences
         are calculated by using diff recursively.
@@ -7856,7 +7859,7 @@ class Array(ABCArray):
     # XXX: this is called pct_change in Pandas (but returns the same results, not results * 100, which I find silly).
     # Maybe change_rate would be better (because growth is not always positive)?
     def growth_rate(self, axis=-1, d=1, label='upper') -> 'Array':
-        r"""Calculates the growth along a given axis.
+        r"""Compute the growth along a given axis.
 
         Roughly equivalent to a.diff(axis, d, label) / a[axis.i[:-d]]
 
@@ -7921,7 +7924,7 @@ class Array(ABCArray):
         return Array(diff.data / shifted_array, diff.axes)
 
     def compact(self, display=False, name='array') -> 'Array':
-        r"""Detects and removes "useless" axes (ie axes for which values are constant over the whole axis)
+        r"""Detect and remove "useless" axes (ie axes for which values are constant over the whole axis).
 
         Parameters
         ----------
@@ -8052,7 +8055,7 @@ class Array(ABCArray):
         assert isinstance(axes, dict)
 
         transposed_axes = self.axes[:]
-        for axes_to_combine, name in axes.items():
+        for axes_to_combine in axes.keys():
             # transpose all axes next to each other, using index of first axis
             axes_to_combine = self.axes[axes_to_combine]
             axes_indices = [transposed_axes.index(axis) for axis in axes_to_combine]
@@ -8065,7 +8068,7 @@ class Array(ABCArray):
         return transposed.reshape(new_axes)
 
     def split_axes(self, axes=None, sep='_', names=None, regex=None, sort=False, fill_value=nan) -> 'Array':
-        r"""Split axes and returns a new array
+        r"""Split axes and returns a new array.
 
         Parameters
         ----------
@@ -8183,7 +8186,7 @@ class Array(ABCArray):
 
     def reverse(self, axes=None) -> 'Array':
         r"""
-        Reverse axes of an array
+        Reverse axes of an array.
 
         Parameters
         ----------
@@ -8474,7 +8477,7 @@ def larray_nan_equal(a1, a2):
 
 def asarray(a, meta=None) -> Array:
     r"""
-    Converts input as Array if possible.
+    Convert input as Array if possible.
 
     Parameters
     ----------
@@ -8540,7 +8543,7 @@ def _check_axes_argument(func):
 
 @_check_axes_argument
 def zeros(axes, title=None, dtype=float, order='C', meta=None) -> Array:
-    r"""Returns an array with the specified axes and filled with zeros.
+    r"""Return an array with the specified axes and filled with zeros.
 
     Parameters
     ----------
@@ -8586,7 +8589,7 @@ def zeros(axes, title=None, dtype=float, order='C', meta=None) -> Array:
 
 
 def zeros_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
-    r"""Returns an array with the same axes as array and filled with zeros.
+    r"""Return an array with the same axes as array and filled with zeros.
 
     Parameters
     ----------
@@ -8622,7 +8625,7 @@ def zeros_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
 
 @_check_axes_argument
 def ones(axes, title=None, dtype=float, order='C', meta=None) -> Array:
-    r"""Returns an array with the specified axes and filled with ones.
+    r"""Return an array with the specified axes and filled with ones.
 
     Parameters
     ----------
@@ -8658,7 +8661,7 @@ def ones(axes, title=None, dtype=float, order='C', meta=None) -> Array:
 
 
 def ones_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
-    r"""Returns an array with the same axes as array and filled with ones.
+    r"""Return an array with the same axes as array and filled with ones.
 
     Parameters
     ----------
@@ -8695,7 +8698,7 @@ def ones_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
 
 @_check_axes_argument
 def empty(axes, title=None, dtype=float, order='C', meta=None) -> Array:
-    r"""Returns an array with the specified axes and uninitialized (arbitrary) data.
+    r"""Return an array with the specified axes and uninitialized (arbitrary) data.
 
     Parameters
     ----------
@@ -8731,7 +8734,7 @@ def empty(axes, title=None, dtype=float, order='C', meta=None) -> Array:
 
 
 def empty_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
-    r"""Returns an array with the same axes as array and uninitialized (arbitrary) data.
+    r"""Return an array with the same axes as array and uninitialized (arbitrary) data.
 
     Parameters
     ----------
@@ -8769,7 +8772,7 @@ def empty_like(array, title=None, dtype=None, order='K', meta=None) -> Array:
 
 # We cannot use @_check_axes_argument here because an integer fill_value would be considered as an error
 def full(axes, fill_value, title=None, dtype=None, order='C', meta=None) -> Array:
-    r"""Returns an array with the specified axes and filled with fill_value.
+    r"""Return an array with the specified axes and filled with fill_value.
 
     Parameters
     ----------
@@ -8821,7 +8824,7 @@ def full(axes, fill_value, title=None, dtype=None, order='C', meta=None) -> Arra
 
 
 def full_like(array, fill_value, title=None, dtype=None, order='K', meta=None) -> Array:
-    r"""Returns an array with the same axes and type as input array and filled with fill_value.
+    r"""Return an array with the same axes and type as input array and filled with fill_value.
 
     Parameters
     ----------
@@ -8867,7 +8870,7 @@ _integer_types = (int, np.integer)
 # XXX: would it be possible to generalize to multiple axes?
 def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=None, meta=None) -> Array:
     r"""
-    Creates an array by sequentially applying modifications to the array along axis.
+    Create an array by sequentially applying modifications to the array along axis.
 
     The value for each label in axis will be given by sequentially transforming the value for the previous label.
     This transformation on the previous label value consists of applying the function "func" on that value if provided,
@@ -9148,7 +9151,7 @@ def ndrange(axes, start=0, title=None, dtype=int):
 
 @_check_axes_argument
 def ndtest(shape_or_axes, start=0, label_start=0, title=None, dtype=int, meta=None) -> Array:
-    r"""Returns test array with given shape.
+    r"""Return test array with given shape.
 
     Axes are named by single letters starting from 'a'.
     Axes labels are constructed using a '{axis_name}{label_pos}' pattern (e.g. 'a0').
@@ -9249,7 +9252,7 @@ def kth_diag_indices(shape, k):
 
 def diag(a, k=0, axes=(0, 1), ndim=2, split=True) -> Array:
     r"""
-    Extracts a diagonal or construct a diagonal array.
+    Extract a diagonal or construct a diagonal array.
 
     Parameters
     ----------
@@ -9330,7 +9333,7 @@ def diag(a, k=0, axes=(0, 1), ndim=2, split=True) -> Array:
 
 @_check_axes_argument
 def labels_array(axes, title=None, meta=None) -> Array:
-    r"""Returns an array with specified axes and the combination of
+    r"""Return an array with specified axes and the combination of
     corresponding labels as values.
 
     Parameters
@@ -9387,7 +9390,7 @@ def identity(axis):
 
 
 def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None) -> Array:
-    r"""Returns a 2-D array with ones on the diagonal and zeros elsewhere.
+    r"""Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
     Parameters
     ----------
@@ -9581,7 +9584,7 @@ def eye(rows, columns=None, k=0, title=None, dtype=None, meta=None) -> Array:
 @deprecate_kwarg('axis', 'axes')
 def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=None, **kwargs) -> 'Array':
     r"""
-    Combines several arrays or sessions along an axis.
+    Combine several arrays or sessions along an axis.
 
     Parameters
     ----------
@@ -9862,7 +9865,7 @@ def _equal_modulo_len1(shape1, shape2):
 # but if we had assigned axes names from the start (without dropping them) this wouldn't be a problem.
 def make_numpy_broadcastable(values, min_axes=None) -> Tuple[List[Array], AxisCollection]:
     r"""
-    Returns values where Arrays are (NumPy) broadcastable between them.
+    Return values where Arrays are (NumPy) broadcastable between them.
     For that to be possible, all common axes must be compatible (see Axis class documentation).
     Extra axes (in any array) can have any length.
 
@@ -9902,7 +9905,7 @@ def make_numpy_broadcastable(values, min_axes=None) -> Tuple[List[Array], AxisCo
 
 def raw_broadcastable(values, min_axes=None) -> Tuple[Tuple[Any, ...], AxisCollection]:
     r"""
-    same as make_numpy_broadcastable but returns numpy arrays
+    same as make_numpy_broadcastable but returns numpy arrays.
     """
     arrays, res_axes = make_numpy_broadcastable(values, min_axes=min_axes)
     raw = tuple(a.data if isinstance(a, Array) else a
@@ -9923,7 +9926,7 @@ def make_args_broadcastable(args, kwargs=None) -> Tuple[Any, Any, Any]:
 
 
 def zip_array_values(values, axes=None, ascending=True) -> SequenceZip:
-    r"""Returns a sequence as if simultaneously iterating on several arrays.
+    r"""Return a sequence as if simultaneously iterating on several arrays.
 
     Parameters
     ----------
@@ -10031,7 +10034,7 @@ def zip_array_values(values, axes=None, ascending=True) -> SequenceZip:
 
 
 def zip_array_items(values, axes=None, ascending=True) -> SequenceZip:
-    r"""Returns a sequence as if simultaneously iterating on several arrays as well as the current iteration "key".
+    r"""Return a sequence as if simultaneously iterating on several arrays as well as the current iteration "key".
 
     Broadcasts all values against each other. Scalars are simply repeated.
 

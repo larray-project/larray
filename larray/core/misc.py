@@ -5,7 +5,7 @@ import numpy as np
 
 def isscalar(element: Any) -> bool:
     r"""
-    Returns `True` if the type of element is a scalar type.
+    Return `True` if the type of element is a scalar type.
 
     Parameters
     ----------

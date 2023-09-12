@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fetch release notes from satellite projects of the larray-project constellation to the main project
+Fetch release notes from satellite projects of the larray-project constellation to the main project.
 """
 
 from pathlib import Path

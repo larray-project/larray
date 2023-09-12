@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # LArray documentation build configuration file, created by
 # sphinx-quickstart on Wed Nov 26 12:22:43 2014.
 #

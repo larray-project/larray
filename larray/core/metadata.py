@@ -52,6 +52,7 @@ class Metadata(AttributeDict):
 
     >>> del arr.meta.creation_date
     """
+
     def __larray__(self):
         from larray.core.array import stack
         return stack(self.items(), axes='metadata')

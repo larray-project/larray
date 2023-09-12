@@ -17,7 +17,7 @@ from larray.util.types import Scalar, Key
 
 def _slice_to_str(key: slice, repr_func=str) -> str:
     r"""
-    Converts a slice to a string
+    Convert a slice to a string.
 
     Examples
     --------
@@ -199,7 +199,7 @@ _range_str_pattern = re.compile(r'(?P<start>[^\s.]+)?\s*\.\.\s*(?P<stop>[^\s.]+)
 
 def _range_str_to_range(s, stack_depth=1) -> Union[range, List[str], List[int]]:
     r"""
-    Converts a range string to a range (of values).
+    Convert a range string to a range (of values).
     The end point is included.
 
     Parameters
@@ -345,7 +345,7 @@ def _seq_group_to_name(seq) -> Sequence[Any]:
 
 def _to_tick(v) -> Scalar:
     r"""
-    Converts any value to a tick (ie makes it hashable, and acceptable as an ndarray element)
+    Convert any value to a tick (ie makes it hashable, and acceptable as an ndarray element).
 
     scalar -> not modified
     slice -> 'start:stop'
@@ -387,7 +387,7 @@ def _to_tick(v) -> Scalar:
 
 def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
     r"""
-    Makes a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
+    Make a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
 
     Strip strings, split them on ',' and translate "range strings" to list of values **including the end point** !
 
@@ -451,7 +451,7 @@ _axis_name_pattern = re.compile(r'\s*(([A-Za-z0-9]\w*)(\.i)?\s*\[)?(.*)')
 
 def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False) -> Union[slice, List[Scalar], range, Scalar]:
     r"""
-    Converts a sequence string to its sequence (or scalar)
+    Convert a sequence string to its sequence (or scalar).
 
     Parameters
     ----------
@@ -494,7 +494,7 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False) -> Union[slice, Li
 
 def _to_key(v, stack_depth=1, parse_single_int=False) -> Key:
     r"""
-    Converts a value to a key usable for indexing (slice object, list of values,...).
+    Convert a value to a key usable for indexing (slice object, list of values,...).
     Strings are split on ',' and stripped. Colons (:) are interpreted as slices.
 
     Parameters
@@ -595,7 +595,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False) -> Key:
 
 def _to_keys(value, stack_depth=1) -> Union[Key, Tuple[Key]]:
     r"""
-    Converts a (collection of) group(s) to a structure usable for indexing.
+    Convert a (collection of) group(s) to a structure usable for indexing.
 
     'label' or ['l1', 'l2'] or [['l1', 'l2'], ['l3']]
 
@@ -680,7 +680,7 @@ def _translate_group_key_hdf(key) -> str:
 def union(*args) -> List[Any]:
     # TODO: add support for LGroup and lists
     r"""
-    Returns the union of several "value strings" as a list.
+    Return the union of several "value strings" as a list.
 
     Parameters
     ----------
@@ -715,6 +715,7 @@ class IGroupMaker:
     -----
     This class is used by the method `Axis.i`
     """
+
     __slots__ = ('axis',)
 
     def __init__(self, axis):
@@ -735,6 +736,7 @@ class IGroupMaker:
 class Group:
     """Abstract Group.
     """
+
     __slots__ = ('key', 'name', 'axis')
 
     format_string = None
@@ -779,7 +781,7 @@ class Group:
         else:
             if self.axis is not None:
                 # anonymous axis
-                axis_ref = f', axis={repr(self.axis)}'
+                axis_ref = f', axis={self.axis!r}'
             else:
                 axis_ref = ''
 
@@ -789,7 +791,7 @@ class Group:
                 key_repr = f'[{key_repr}]'
 
             s = f'{self.__class__.__name__}({key_repr}{axis_ref})'
-        return f"{s} >> {repr(self.name)}" if self.name is not None else s
+        return f"{s} >> {self.name!r}" if self.name is not None else s
 
     def __str__(self) -> str:
         return str(self.eval())
@@ -797,7 +799,7 @@ class Group:
     # TODO: rename to "to_positional"
     def translate(self, bound=None, stop=False) -> Union[int, slice, Sequence[int]]:
         r"""
-        Translate key to a position if it is not already
+        Translate key to a position if it is not already.
 
         Parameters
         ----------
@@ -822,7 +824,7 @@ class Group:
 
     def to_label(self) -> Union[Scalar, slice, Sequence[Scalar]]:
         r"""
-        Translate key to labels, if it is not already
+        Translate key to labels, if it is not already.
 
         Returns
         -------
@@ -888,7 +890,7 @@ class Group:
         return iter([LGroup(v, axis=axis) for v in self.eval()])
 
     def named(self, name) -> 'Group':
-        r"""Returns group with a different name.
+        r"""Return group with a different name.
 
         Parameters
         ----------
@@ -903,7 +905,7 @@ class Group:
     __rshift__ = named
 
     def with_axis(self, axis) -> 'Group':
-        r"""Returns group with a different axis.
+        r"""Return group with a different axis.
 
         Parameters
         ----------
@@ -1076,7 +1078,7 @@ class Group:
 
     def equals(self, other) -> bool:
         r"""
-        Checks if this group is equal to another group.
+        Check if this group is equal to another group.
         Two groups are equal if they have the same group and axis names and correspond to the same labels.
 
         Parameters
@@ -1138,7 +1140,7 @@ class Group:
         return res if isinstance(res, bool) else all(res)
 
     def set(self) -> 'LSet':
-        r"""Creates LSet from this group
+        r"""Create LSet from this group.
 
         Returns
         -------
@@ -1147,7 +1149,7 @@ class Group:
         return LSet(self.eval(), self.name, self.axis)
 
     def union(self, other) -> 'LSet':
-        r"""Returns (set) union of this label group and other.
+        r"""Return (set) union of this label group and other.
 
         Labels relative order will be kept intact, but only unique labels will be returned. Labels from this group will
         be before labels from other.
@@ -1175,7 +1177,7 @@ class Group:
         return self.set().union(other)
 
     def intersection(self, other) -> 'LSet':
-        r"""Returns (set) intersection of this label group and other.
+        r"""Return (set) intersection of this label group and other.
 
         In other words, this will return labels from this group which are also in other. Labels relative order will be
         kept intact, but only unique labels will be returned.
@@ -1203,7 +1205,7 @@ class Group:
         return self.set().intersection(other)
 
     def difference(self, other) -> 'LSet':
-        r"""Returns (set) difference of this label group and other.
+        r"""Return (set) difference of this label group and other.
 
         In other words, this will return labels from this group without those in other. Labels relative order will be
         kept intact, but only unique labels will be returned.
@@ -1237,7 +1239,7 @@ class Group:
 
     def startingwith(self, prefix) -> 'LGroup':
         r"""
-        Returns a group with the labels starting with the specified string.
+        Return a group with the labels starting with the specified string.
 
         Parameters
         ----------
@@ -1265,7 +1267,7 @@ class Group:
 
     def endingwith(self, suffix) -> 'LGroup':
         r"""
-        Returns a group with the labels ending with the specified string.
+        Return a group with the labels ending with the specified string.
 
         Parameters
         ----------
@@ -1293,7 +1295,7 @@ class Group:
 
     def matching(self, deprecated=None, pattern=None, regex=None) -> 'LGroup':
         r"""
-        Returns a group with all the labels matching the specified pattern or regular expression.
+        Return a group with all the labels matching the specified pattern or regular expression.
 
         Parameters
         ----------
@@ -1362,7 +1364,7 @@ class Group:
 
     def containing(self, substring) -> 'LGroup':
         r"""
-        Returns a group with all the labels containing the specified substring.
+        Return a group with all the labels containing the specified substring.
 
         Parameters
         ----------
@@ -1390,7 +1392,7 @@ class Group:
 
     def to_hdf(self, filepath, key=None, axis_key=None) -> None:
         r"""
-        Writes group to a HDF file.
+        Write group to a HDF file.
 
         A HDF file can contain multiple groups.
         The 'key' parameter is a unique identifier for the group.
@@ -1558,6 +1560,7 @@ class LGroup(Group):
     >>> teens
     X.age[10:19] >> 'teens'
     """
+
     __slots__ = ()
     format_string = "{axis}[{key}]"
 
@@ -1568,7 +1571,7 @@ class LGroup(Group):
     # XXX: return IGroup instead?
     def translate(self, bound=None, stop=False) -> int:
         r"""
-        compute position(s) of group
+        compute position(s) of group.
         """
         if bound is None:
             bound = self.key
@@ -1618,6 +1621,7 @@ class LSet(LGroup):
     >>> abc & letters['b:d']
     letters['b', 'c'].set()
     """
+
     __slots__ = ()
     format_string = "{axis}[{key}].set()"
 
@@ -1681,12 +1685,13 @@ class IGroup(Group):
     axis : int, str, Axis, optional
         Axis for group.
     """
+
     __slots__ = ()
     format_string = "{axis}.i[{key}]"
 
     def translate(self, bound=None, stop=False) -> Union[int, slice, Sequence[int]]:
         r"""
-        compute position(s) of group
+        compute position(s) of group.
         """
         if bound is not None:
             return bound
