@@ -182,8 +182,8 @@ class ModuleItem(AbstractItem):
                 self.funcs[name] = obj
         elif inspect.isclass(obj):
             if name in self.classes:
-                # FIXME: missing format or fstring
-                warnings.warn("Class '{}' was already present in '{}' module item and will be replaced")
+                warnings.warn(f"Class '{name}' was already present in '{self.module.__name__}' module item "
+                              f"and will be replaced")
             class_ = getattr(self.module, name)
             class_item = ClassItem(class_)
             self.classes[name] = class_item
