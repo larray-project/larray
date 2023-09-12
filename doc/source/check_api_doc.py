@@ -262,17 +262,22 @@ def make_diff(left_api, right_api, include_deprecated=False):
     return diff_api
 
 
+def get_module_item(module_name):
+    try:
+        module = importlib.import_module(module_name)
+        return ModuleItem(module)
+    except ImportError as err:
+        print(f'module {module_name} could not be imported: {err}')
+        return err
+
+
 def get_public_api():
     public_api = {}
     for module_name in _modules:
-        try:
-            module = importlib.import_module(module_name)
-            module_item = ModuleItem(module)
+        module_item = get_module_item(module_name)
+        if isinstance(module_item, ModuleItem):
             module_item.auto_discovery()
-            public_api[module_name] = module_item
-        except ImportError as err:
-            print(f'module {module_name} could not be imported: {err}')
-            public_api[module_name] = err
+        public_api[module_name] = module_item
     return public_api
 
 
@@ -290,13 +295,9 @@ def get_autosummary_api():
 
     autosummary_api = {}
     for module_name in _modules:
-        try:
-            module = importlib.import_module(module_name)
-            module_item = ModuleItem(module)
+        module_item = get_module_item(module_name)
+        if isinstance(module_item, ModuleItem):
             autosummary_api[module_name] = module_item
-        except ImportError as err:
-            print(f'module {module_name} could not be imported: {err}')
-            autosummary_api[module_name] = err
 
     for generated_rst_file in os.listdir(output_dir):
         qualname, ext = os.path.splitext(generated_rst_file)
