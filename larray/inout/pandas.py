@@ -42,7 +42,7 @@ def parse(s):
 
 def index_to_labels(idx, sort=True):
     r"""
-    Returns unique labels for each dimension.
+    Return unique labels for each dimension.
     """
     if isinstance(idx, pd.MultiIndex):
         if sort:
@@ -78,7 +78,7 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan
 
 def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Array:
     r"""
-    Converts Pandas Series into Array.
+    Convert Pandas Series into Array.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
 def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
                fill_value=nan, meta=None, cartesian_prod=True, **kwargs) -> Array:
     r"""
-    Converts Pandas DataFrame into Array.
+    Convert Pandas DataFrame into Array.
 
     Parameters
     ----------
@@ -256,11 +256,11 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
 
 def set_dataframe_index_by_position(df, index_col_indices):
     """
-    equivalent to Dataframe.set_index but with column indices, not column labels
+    equivalent to Dataframe.set_index but with column indices, not column labels.
 
     This is necessary to support creating an index from columns without a name or with duplicate names.
 
-    Returns a new Dataframe
+    Return a new Dataframe
     """
     if not isinstance(index_col_indices, list):
         index_col_indices = [index_col_indices]

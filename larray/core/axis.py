@@ -91,6 +91,7 @@ class Axis(ABCAxis):
     >>> anonymous
     Axis([0, 1, 2, 3, 4], None)
     """
+
     __slots__ = ('name', '__mapping', '__sorted_keys', '__sorted_values', '_labels', '_length', '_iswildcard')
 
     # ticks instead of labels?
@@ -171,8 +172,7 @@ class Axis(ABCAxis):
     @lazy_attribute
     def i(self) -> IGroupMaker:
         r"""
-        Allows to define a subset using positions along the axis
-        instead of labels.
+        Take a subset using positions along the axis instead of labels.
 
         Examples
         --------
@@ -194,7 +194,7 @@ class Axis(ABCAxis):
     @property
     def labels(self) -> Iterable[Scalar]:
         r"""
-        labels of the axis.
+        Labels of the axis.
         """
         return self._labels
 
@@ -471,12 +471,12 @@ class Axis(ABCAxis):
         axis_name = self.name if self.name else 'axis'
         syntax = f'{axis_name}[{key}]'
         if name is not None:
-            syntax += f' >> {repr(name)}'
+            syntax += f' >> {name!r}'
         raise NotImplementedError(f'Axis.group is deprecated. Use {syntax} instead.')
 
     def all(self, name=None):
         r"""
-        (Deprecated) Returns a group containing all labels.
+        (Deprecated) Return a group containing all labels.
 
         Parameters
         ----------
@@ -485,12 +485,12 @@ class Axis(ABCAxis):
         """
         axis_name = self.name if self.name else 'axis'
         group_name = name if name else 'all'
-        raise NotImplementedError(f'Axis.all is deprecated. Use {axis_name}[:] >> {repr(group_name)} instead.')
+        raise NotImplementedError(f'Axis.all is deprecated. Use {axis_name}[:] >> {group_name!r} instead.')
 
     # TODO: make this method private
     def subaxis(self, key) -> 'Axis':
         r"""
-        Returns an axis for a sub-array.
+        Return an axis for a sub-array.
 
         Parameters
         ----------
@@ -523,7 +523,7 @@ class Axis(ABCAxis):
 
     def iscompatible(self, other) -> bool:
         r"""
-        Checks if this axis is compatible with another axis.
+        Check if this axis is compatible with another axis.
 
         * two axes are compatible if they have compatible names and labels
         * names are compatible if they are the same or missing
@@ -573,7 +573,7 @@ class Axis(ABCAxis):
 
     def equals(self, other) -> bool:
         r"""
-        Checks if this axis is equal to another axis.
+        Check if this axis is equal to another axis.
         Two axes are equal if they have the same name and label(s).
 
         Parameters
@@ -652,7 +652,7 @@ class Axis(ABCAxis):
 
     def matching(self, deprecated=None, pattern=None, regex=None) -> LGroup:
         r"""
-        Returns a group with all the labels matching the specified pattern or regular expression.
+        Return a group with all the labels matching the specified pattern or regular expression.
 
         Parameters
         ----------
@@ -726,7 +726,7 @@ class Axis(ABCAxis):
 
     def startingwith(self, prefix) -> LGroup:
         r"""
-        Returns a group with the labels starting with the specified string.
+        Return a group with the labels starting with the specified string.
 
         Parameters
         ----------
@@ -752,7 +752,7 @@ class Axis(ABCAxis):
 
     def endingwith(self, suffix) -> LGroup:
         r"""
-        Returns a group with the labels ending with the specified string.
+        Return a group with the labels ending with the specified string.
 
         Parameters
         ----------
@@ -778,7 +778,7 @@ class Axis(ABCAxis):
 
     def containing(self, substring) -> LGroup:
         r"""
-        Returns a group with all the labels containing the specified substring.
+        Return a group with all the labels containing the specified substring.
 
         Parameters
         ----------
@@ -808,7 +808,7 @@ class Axis(ABCAxis):
 
     def __getitem__(self, key) -> Union[LGroup, List[Group], Tuple[Group, ...]]:
         r"""
-        Returns a group (list or unique element) of label(s) usable in .sum or .filter
+        Return a group (list or unique element) of label(s) usable in .sum or .filter.
 
         key is a label-based key (other axis, slice and fancy indexing are supported)
 
@@ -881,7 +881,7 @@ class Axis(ABCAxis):
 
     def index(self, key) -> Union[int, np.ndarray, slice]:
         r"""
-        Translates a label key to its numerical index counterpart.
+        Translate a label key to its numerical index counterpart.
 
         Parameters
         ----------
@@ -1030,7 +1030,7 @@ class Axis(ABCAxis):
 
     def labels_summary(self) -> str:
         r"""
-        Returns a short representation of the labels.
+        Return a short representation of the labels.
 
         Examples
         --------
@@ -1101,14 +1101,14 @@ class Axis(ABCAxis):
 
     def __larray__(self):
         r"""
-        Returns axis as Array.
+        Return axis as Array.
         """
         from .array import labels_array
         return labels_array(self)
 
     def copy(self) -> 'Axis':
         r"""
-        Returns a copy of the axis.
+        Return a copy of the axis.
         """
         new_axis = Axis([], self.name)
         # XXX: I wonder if we should make a copy of the labels + mapping. There should at least be an option.
@@ -1122,7 +1122,7 @@ class Axis(ABCAxis):
 
     def replace(self, old, new=None) -> 'Axis':
         r"""
-        Returns a new axis with some labels replaced.
+        Return a new axis with some labels replaced.
 
         Parameters
         ----------
@@ -1168,7 +1168,7 @@ class Axis(ABCAxis):
 
     def apply(self, func) -> 'Axis':
         r"""
-        Returns a new axis with the labels transformed by func.
+        Return a new axis with the labels transformed by func.
 
         Parameters
         ----------
@@ -1191,7 +1191,7 @@ class Axis(ABCAxis):
     # XXX: rename to named like Group?
     def rename(self, name) -> 'Axis':
         r"""
-        Renames the axis.
+        Rename the axis.
 
         Parameters
         ----------
@@ -1219,7 +1219,7 @@ class Axis(ABCAxis):
     _rename = renamed_to(rename, '_rename', raise_error=True)
 
     def union(self, other) -> 'Axis':
-        r"""Returns axis with the union of this axis labels and other labels.
+        r"""Return axis with the union of this axis labels and other labels.
 
         Labels relative order will be kept intact, but only unique labels will be returned. Labels from this axis will
         be before labels from other.
@@ -1255,7 +1255,7 @@ class Axis(ABCAxis):
         return Axis(unique_multi((self.labels, other)), self.name)
 
     def intersection(self, other) -> 'Axis':
-        r"""Returns axis with the (set) intersection of this axis labels and other labels.
+        r"""Return axis with the (set) intersection of this axis labels and other labels.
 
         In other words, this will use labels from this axis if they are also in other. Labels relative order will be
         kept intact.
@@ -1292,7 +1292,7 @@ class Axis(ABCAxis):
         return Axis([label for label in self.labels if label in to_keep], self.name)
 
     def difference(self, other) -> 'Axis':
-        r"""Returns axis with the (set) difference of this axis labels and other labels.
+        r"""Return axis with the (set) difference of this axis labels and other labels.
 
         In other words, this will use labels from this axis if they are not in other. Labels relative order will be
         kept intact.
@@ -1383,7 +1383,7 @@ class Axis(ABCAxis):
 
     def to_hdf(self, filepath, key=None) -> None:
         r"""
-        Writes axis to a HDF file.
+        Write axis to a HDF file.
 
         A HDF file can contain multiple axes.
         The 'key' parameter is a unique identifier for the axis.
@@ -1440,7 +1440,7 @@ class Axis(ABCAxis):
         return self._labels.dtype
 
     def ignore_labels(self) -> 'Axis':
-        r"""Returns a wildcard axis with the same name and length than this axis.
+        r"""Return a wildcard axis with the same name and length than this axis.
 
         Useful when you want to apply operations between two arrays with the same shape but incompatible axes
         (different labels).
@@ -1565,7 +1565,7 @@ class AxisCollection:
 
     # TODO: move a few doctests to unit tests
     def iter_labels(self, axes=None, ascending=True) -> Sequence[Tuple[IGroup, ...]]:
-        r"""Returns a view of the axes labels.
+        r"""Return a view of the axes labels.
 
         Parameters
         ----------
@@ -1630,7 +1630,7 @@ class AxisCollection:
         return p
 
     def _combined_iflat(self, flat_key, sep='_'):
-        """return the combined axes AxisCollection indexed by flat_key
+        """Return the combined axes AxisCollection indexed by flat_key.
 
         Parameters
         ----------
@@ -1655,7 +1655,7 @@ class AxisCollection:
         return self._adv_keys_to_combined_axes(nd_key, sep=sep)
 
     def _iflat(self, key):
-        """Returns labels for each axis corresponding to indexing an array with the AxisCollection axes
+        """Return labels for each axis corresponding to indexing an array with the AxisCollection axes.
 
         Parameters
         ----------
@@ -1739,7 +1739,7 @@ class AxisCollection:
     # It could either be moved to make_numpy_broadcastable or made non default
     def get_by_pos(self, key, i) -> Axis:
         r"""
-        Returns axis corresponding to a key, or to position i if the key has no name and key object not found.
+        Return axis corresponding to a key, or to position i if the key has no name and key object not found.
 
         Parameters
         ----------
@@ -1841,7 +1841,7 @@ class AxisCollection:
 
     def __and__(self, other) -> 'AxisCollection':
         r"""
-        Returns the intersection of this collection and other.
+        Return the intersection of this collection and other.
         """
         if not isinstance(other, AxisCollection):
             other = AxisCollection(other)
@@ -1887,7 +1887,7 @@ class AxisCollection:
 
     def isaxis(self, value) -> bool:
         r"""
-        Tests if input is an Axis object or the name of an axis contained in self.
+        Test if input is an Axis object or the name of an axis contained in self.
 
         Parameters
         ----------
@@ -1950,7 +1950,7 @@ class AxisCollection:
     # TODO: kill name argument (does not seem to be used anywhere
     def get(self, key, default=None, name=None) -> Axis:
         r"""
-        Returns axis corresponding to key. If not found, the argument `name` is used to create a new Axis.
+        Return axis corresponding to key. If not found, the argument `name` is used to create a new Axis.
         If `name` is None, the `default` axis is then returned.
 
         Parameters
@@ -1986,7 +1986,7 @@ class AxisCollection:
 
     def get_all(self, key) -> 'AxisCollection':
         r"""
-        Returns all axes from key if present and length 1 wildcard axes otherwise.
+        Return all axes from key if present and length 1 wildcard axes otherwise.
 
         Parameters
         ----------
@@ -2032,7 +2032,7 @@ class AxisCollection:
 
     def keys(self) -> List[str]:
         r"""
-        Returns list of all axis names.
+        Return list of all axis names.
 
         Examples
         --------
@@ -2047,7 +2047,7 @@ class AxisCollection:
 
     def pop(self, axis=-1) -> Axis:
         r"""
-        Removes and returns an axis.
+        Remove and return an axis.
 
         Parameters
         ----------
@@ -2081,7 +2081,7 @@ class AxisCollection:
 
     def append(self, axis) -> None:
         r"""
-        Appends axis at the end of the collection.
+        Append axis at the end of the collection.
 
         Parameters
         ----------
@@ -2106,7 +2106,7 @@ class AxisCollection:
 
     def check_compatible(self, axes) -> None:
         r"""
-        Checks if axes passed as argument are compatible with those contained in the collection.
+        Check if axes passed as argument are compatible with those contained in the collection.
         Raises ValueError if not.
 
         See Also
@@ -2127,7 +2127,7 @@ class AxisCollection:
     # TODO: deprecate replace_wildcards argument (unused)
     def extend(self, axes, validate=True, replace_wildcards=False) -> None:
         r"""
-        Extends the collection by appending the axes from `axes`.
+        Extend the collection by appending the axes from `axes`.
 
         Parameters
         ----------
@@ -2186,7 +2186,7 @@ class AxisCollection:
 
     def index(self, axis, compatible=False) -> int:
         r"""
-        Returns the index of axis.
+        Return the index of axis.
 
         `axis` can be a name or an Axis object (or an index). If the Axis object itself exists in the list, index()
         will return it. Otherwise, it will return the index of the local axis with the same name than the key (whether
@@ -2265,7 +2265,7 @@ class AxisCollection:
     # append, extend, pop, __delitem__, __setitem__)
     def insert(self, index, axis) -> None:
         r"""
-        Inserts axis before index.
+        Insert axis before index.
 
         Parameters
         ----------
@@ -2292,17 +2292,17 @@ class AxisCollection:
 
     def copy(self) -> 'AxisCollection':
         r"""
-        Returns a copy.
+        Return a copy.
         """
         return self[:]
 
     def rename(self, renames=None, to=None, **kwargs) -> 'AxisCollection':
-        r"""Renames axes of the collection.
+        r"""Rename axes of the collection.
 
         Parameters
         ----------
         renames : axis ref or dict {axis ref: str} or list of tuple (axis ref, str), optional
-            Renames to apply. If a single axis reference is given, the `to` argument must be used.
+            Rename to apply. If a single axis reference is given, the `to` argument must be used.
         to : str or Axis, optional
             New name if `renames` contains a single axis reference.
         **kwargs : str or Axis
@@ -2461,7 +2461,7 @@ class AxisCollection:
             return AxisCollection(axes)
 
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'AxisCollection':
-        r"""Replaces the labels of one or several axes.
+        r"""Replace the labels of one or several axes.
 
         Parameters
         ----------
@@ -2605,7 +2605,7 @@ class AxisCollection:
     # TODO: deprecate method (should use __sub__ instead)
     def without(self, axes) -> 'AxisCollection':
         r"""
-        Returns a new collection without some axes.
+        Return a new collection without some axes.
 
         You can use a comma separated list of names.
 
@@ -2688,7 +2688,7 @@ class AxisCollection:
 
     def _guess_axis(self, axis_key):
         """
-        Translates any *single axis* key to an LGroup on the real axis.
+        Translate any *single axis* key to an LGroup on the real axis.
         """
         if isinstance(axis_key, Group):
             group_axis = axis_key.axis
@@ -2704,7 +2704,7 @@ class AxisCollection:
 
     def _translate_axis_key_chunk(self, axis_key):
         """
-        Translates any *single axis* key to an (axis, indices) pair.
+        Translate any *single axis* key to an (axis, indices) pair.
 
         Parameters
         ----------
@@ -2758,7 +2758,7 @@ class AxisCollection:
 
     def _translate_axis_key(self, axis_key):
         """
-        Translates single axis label-based key to (axis, indices)
+        Translate single axis label-based key to (axis, indices).
 
         Parameters
         ----------
@@ -2826,7 +2826,7 @@ class AxisCollection:
 
     def _key_to_axis_indices_dict(self, key):
         """
-        Translates any label-based key to an {axis: indices} dict.
+        Translate any label-based key to an {axis: indices} dict.
 
         Parameters
         ----------
@@ -2894,7 +2894,7 @@ class AxisCollection:
 
     def _key_to_raw_and_axes(self, key, collapse_slices=False, translate_key=True, points=False, wildcard=False):
         r"""
-        Transforms any key (from Array.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
+        Transform any key (from Array.__getitem__) to a raw numpy key, the resulting axes, and potentially a tuple
         of indices to transpose axes back to where they were.
 
         Parameters
@@ -3065,7 +3065,7 @@ class AxisCollection:
     @property
     def labels(self) -> List[Iterable[Scalar]]:
         r"""
-        Returns the list of labels of the axes.
+        Return the list of labels of the axes.
 
         Returns
         -------
@@ -3085,7 +3085,7 @@ class AxisCollection:
     @property
     def names(self) -> List[str]:
         r"""
-        Returns the list of (raw) names of the axes.
+        Return the list of (raw) names of the axes.
 
         Returns
         -------
@@ -3126,7 +3126,7 @@ class AxisCollection:
     @property
     def display_names(self) -> List[str]:
         r"""
-        Returns the list of (display) names of the axes.
+        Return the list of (display) names of the axes.
 
         Returns
         -------
@@ -3148,7 +3148,7 @@ class AxisCollection:
     @property
     def ids(self) -> List[Union[str, int]]:
         r"""
-        Returns the list of ids of the axes.
+        Return the list of ids of the axes.
 
         Returns
         -------
@@ -3172,7 +3172,7 @@ class AxisCollection:
 
     def axis_id(self, axis) -> Union[str, int]:
         r"""
-        Returns the id of an axis.
+        Return the id of an axis.
 
         Returns
         -------
@@ -3198,7 +3198,7 @@ class AxisCollection:
     @property
     def shape(self) -> Tuple[int, ...]:
         r"""
-        Returns the shape of the collection.
+        Return the shape of the collection.
 
         Returns
         -------
@@ -3219,7 +3219,7 @@ class AxisCollection:
     @property
     def size(self) -> int:
         r"""
-        Returns the size of the collection, i.e.
+        Return the size of the collection, i.e.
         the number of elements of the array.
 
         Returns
@@ -3240,7 +3240,7 @@ class AxisCollection:
     @property
     def info(self) -> str:
         r"""
-        Describes the collection (shape and labels for each axis).
+        Describe the collection (shape and labels for each axis).
 
         Returns
         -------
@@ -3381,7 +3381,7 @@ class AxisCollection:
         return new_axes
 
     def split_axes(self, axes=None, sep='_', names=None, regex=None) -> 'AxisCollection':
-        r"""Split axes and returns a new collection
+        r"""Split axes and returns a new collection.
 
         The split axes are inserted where the combined axis was.
 
@@ -3604,7 +3604,7 @@ class AxisCollection:
 
     # XXX: make this into a public method/property? AxisCollection.flat_labels[flat_indices]?
     def _flat_lookup(self, flat_indices):
-        r"""Return labels corresponding to indices into the flattened axes
+        r"""Return labels corresponding to indices into the flattened axes.
 
         Parameters
         ----------
@@ -3641,7 +3641,7 @@ class AxisCollection:
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
         r"""
-        Returns key with the non-Array "advanced indexing" key parts transformed to Arrays with a combined axis.
+        Return key with the non-Array "advanced indexing" key parts transformed to Arrays with a combined axis.
         Scalar, slice and Array key parts are just left as is.
 
         Parameters
@@ -3669,7 +3669,7 @@ class AxisCollection:
 
     def _adv_keys_to_combined_axes(self, key, wildcard=False, sep='_'):
         r"""
-        Returns an AxisCollection corresponding to the combined axis of the non-Array "advanced indexing" key parts.
+        Return an AxisCollection corresponding to the combined axis of the non-Array "advanced indexing" key parts.
         Scalar, slice and Array key parts are ignored.
 
         Parameters

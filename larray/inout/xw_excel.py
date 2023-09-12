@@ -325,7 +325,7 @@ if xw is not None:
 
     def _fill_slice(s, length):
         r"""
-        replaces a slice None bounds by actual bounds.
+        Replace slice None bounds by actual bounds.
 
         Parameters
         ----------
@@ -650,7 +650,7 @@ open_excel
 """
 
 Workbook.sheet_names.__doc__ = r"""
-Returns the names of the Excel sheets.
+Return the names of the Excel sheets.
 
 Examples
 --------
@@ -669,8 +669,8 @@ Workbook.save.__doc__ = r"""
 Saves the Workbook.
 
 If a path is being provided, this works like SaveAs() in Excel.
-If no path is specified and if the file hasn’t been saved previously,
-it’s being saved in the current working directory with the current filename.
+If no path is specified and if the file hasn't been saved previously,
+it's being saved in the current working directory with the current filename.
 Existing files are overwritten without prompting.
 
 Parameters

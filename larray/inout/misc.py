@@ -14,7 +14,7 @@ from larray.inout.csv import read_csv
 def from_lists(data, nb_axes=None, index_col=None, fill_value=nan, sort_rows=False, sort_columns=False,
                wide=True) -> Array:
     r"""
-    initialize array from a list of lists (lines)
+    initialize array from a list of lists (lines).
 
     Parameters
     ----------

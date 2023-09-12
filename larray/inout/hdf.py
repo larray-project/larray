@@ -27,7 +27,7 @@ def _get_type_from_attrs(attrs):
 
 def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, sort_columns=False,
              name=None, **kwargs) -> Array:
-    r"""Reads a scalar or an axis or group or array named key from a HDF5 file in filepath (path+name)
+    r"""Read a scalar or an axis or group or array named key from a HDF5 file in filepath (path+name).
 
     Parameters
     ----------
@@ -133,6 +133,7 @@ class PandasHDFHandler(FileHandler):
     r"""
     Handler for HDF5 files using Pandas.
     """
+
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
 

@@ -1,5 +1,5 @@
 """
-Misc tools
+Misc tools.
 """
 
 import __main__
@@ -61,12 +61,13 @@ def get_col_width(table, index):
 
 
 def longest_word(s):
-    """Return length of the longest word in the given string
+    """Return length of the longest word in the given string.
 
     Parameters
     ----------
     s : str
         string to check
+
     Returns
     -------
     int
@@ -95,8 +96,12 @@ def get_min_width(table, index):
 def table2str(table, missing, summarize=True, maxwidth=200, numedges='auto', sep='  ', cont='...',
               keepcols=0, precision=None):
     """
-    table is a list of lists
-    :type table: list of list
+    Convert list of list to string.
+
+    Parameters
+    ----------
+    table : list of list
+        input to convert.
     """
     if not table:
         return ''
@@ -164,7 +169,7 @@ def table2str(table, missing, summarize=True, maxwidth=200, numedges='auto', sep
 # copied from itertools recipes
 def unique(iterable):
     """
-    Yields all elements once, preserving order. Remember all elements ever seen.
+    Yield all elements once, preserving order. Remember all elements ever seen.
 
     >>> list(unique('AAAABBBCCDAABBB'))
     ['A', 'B', 'C', 'D']
@@ -179,7 +184,7 @@ def unique(iterable):
 
 def unique_list(iterable, res=None, seen=None):
     """
-    Returns a list of all unique elements, preserving order. Remember all elements ever seen.
+    Return a list of all unique elements, preserving order. Remember all elements ever seen.
 
     >>> unique_list('AAAABBBCCDAABBB')
     ['A', 'B', 'C', 'D']
@@ -199,7 +204,9 @@ def unique_list(iterable, res=None, seen=None):
 
 def unique_multi(iterable_of_iterables):
     """
-    Returns a list of all unique elements across multiple iterables. Elements of earlier iterables will come first.
+    Return a list of all unique elements across multiple iterables.
+
+    Elements of earlier iterables will come first.
     """
     seen = set()
     res = []
@@ -210,7 +217,7 @@ def unique_multi(iterable_of_iterables):
 
 def has_duplicates(iterable):
     """
-    Returns whether iterable contains any duplicated element.
+    Return whether iterable contains any duplicated element.
     """
     # using a dict is faster than using a set (at least for Python <= 3.9)
     seen = {}
@@ -284,7 +291,7 @@ class ReprString(str):
 
 
 def array_lookup(array, mapping):
-    """pass all elements of an np.ndarray through a mapping"""
+    """Pass all elements of an np.ndarray through a mapping."""
     array = np.asarray(array)
     # TODO: this must be cached in the Axis
     # TODO: range axes should be optimized (reuse Pandas 0.18 indexes)
@@ -307,7 +314,7 @@ def array_lookup(array, mapping):
 
 
 def array_lookup2(array, sorted_keys, sorted_values):
-    """pass all elements of an np.ndarray through a "mapping" """
+    """Pass all elements of an np.ndarray through a "mapping"."""
     if not len(array):
         return np.empty(0, dtype=sorted_values.dtype)
 
@@ -328,7 +335,7 @@ def array_lookup2(array, sorted_keys, sorted_values):
 
 
 def split_on_condition(seq, condition):
-    """splits an iterable into two lists depending on a condition
+    """Split an iterable into two lists depending on a condition.
 
     Parameters
     ----------
@@ -352,7 +359,7 @@ def split_on_condition(seq, condition):
 
 
 def split_on_values(seq, values):
-    """splits an iterable into two lists depending on a list of values
+    """Split an iterable into two lists depending on a list of values.
 
     Parameters
     ----------
@@ -383,8 +390,9 @@ def skip_comment_cells(lines):
 
 def strip_rows(lines):
     """
-    returns an iterator of lines with trailing blank (empty or
-    which contain only space) cells.
+    Return an iterator of lines without trailing blank cells.
+
+    Empty cells or cells containing only space are considered blank.
     """
     def isblank(s):
         return s == '' or s.isspace()
@@ -395,6 +403,10 @@ def strip_rows(lines):
 
 def size2str(value):
     """
+    Convert number of bytes to a size string.
+
+    Examples
+    --------
     >>> size2str(0)
     '0 bytes'
     >>> size2str(100)
@@ -418,6 +430,7 @@ def size2str(value):
 
 def find_closing_chr(s, start=0):
     """
+    Find the position of character which matches/closes to first character of string s.
 
     Parameters
     ----------
@@ -507,6 +520,7 @@ def float_error_handler_factory(stacklevel):
 def _isintstring(s):
     """
     Return True if the passed string represents an integer.
+
     Zero padded integers are considered as strings and not integers.
 
     Parameters
@@ -532,8 +546,9 @@ def _isintstring(s):
 
 
 def _parse_bound(s, stack_depth=1, parse_int=True):
-    """Parse a string representing a single value, converting int-like strings to integers and evaluating expressions
-    within {}.
+    """Parse a string representing a single value.
+
+    It converts int-like strings to integers and evaluates expressions within {}.
 
     Parameters
     ----------
@@ -574,14 +589,14 @@ def _parse_bound(s, stack_depth=1, parse_int=True):
 
 def _isnoneslice(v):
     """
-    Checks if input is slice(None) object.
+    Check if input is slice(None) object.
     """
     return isinstance(v, slice) and v.start is None and v.stop is None and v.step is None
 
 
 def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
     """
-    Returns a string representing a sequence by showing only the n first and last elements.
+    Return a string representing a sequence by showing only the n first and last elements.
 
     Examples
     --------
@@ -597,7 +612,7 @@ def _seq_summary(seq, n=3, repr_func=repr, sep=' '):
 
 def index_by_id(seq, value):
     """
-    Returns position of an object in a sequence.
+    Return position of an object in a sequence.
 
     Raises an error if the object is not in the list.
 
@@ -678,9 +693,11 @@ def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None
 
 class lazy_attribute:
     """
-    Decorate a method of a class and turn it into an attribute on the instance
-    when first called. Should obviously only be used when the result of the method is constant.
+    Decorate a method of a class to turn it into an instance attribute when first called.
+
+    Should obviously only be used when the result of the method is constant.
     """
+
     def __init__(self, func):
         self.func = func
         self.__doc__ = func.__doc__
@@ -721,7 +738,7 @@ _meta_kind.update({k: 'numeric' for k in _numeric_kinds})
 
 def np_array_common_dtype(arrays) -> np.dtype:
     """
-    Returns a dtype that all input numpy arrays can be safely cast to.
+    Return a dtype that all input numpy arrays can be safely cast to.
 
     Parameters
     ----------
@@ -756,7 +773,7 @@ def np_array_common_dtype(arrays) -> np.dtype:
 
 def common_dtype(arrays) -> np.dtype:
     """
-    Returns a dtype that all input arrays can be safely cast to.
+    Return a dtype that all input arrays can be safely cast to.
 
     Parameters
     ----------
@@ -777,7 +794,8 @@ def common_dtype(arrays) -> np.dtype:
 
 
 class LHDFStore:
-    """Context manager for pandas HDFStore"""
+    """Context manager for pandas HDFStore."""
+
     def __init__(self, filepath_or_buffer, **kwargs):
         if isinstance(filepath_or_buffer, pd.HDFStore):
             if not filepath_or_buffer.is_open:
@@ -824,6 +842,7 @@ class SequenceZip:
     >>> list(z[1:4])
     [('b', 2), ('c', 3)]
     """
+
     def __init__(self, sequences):
         self.sequences = sequences
         length = len(sequences[0])
@@ -853,7 +872,8 @@ class SequenceZip:
 
 class Repeater:
     """
-    Returns a virtual sequence with value repeated n times.
+    Return a virtual sequence with value repeated n times.
+
     The sequence is never actually created in memory.
 
     Parameters
@@ -898,6 +918,7 @@ class Repeater:
     >>> list(r[10:])
     []
     """
+
     def __init__(self, value, n):
         self.value = value
         self.n = n
@@ -958,6 +979,7 @@ class Product:
     >>> list(Product([]))
     [()]
     """
+
     def __init__(self, sequences):
         self.sequences = sequences
         shape = [len(a) for a in self.sequences]
@@ -1005,7 +1027,7 @@ _kill_np_types = np.vectorize(_kill_np_type, otypes=[object])
 
 def ensure_no_numpy_type(array):
     """
-    Converts array to a (potentially nested) list of builtin Python values (i.e. using no numpy-specific types)
+    Convert array to a (potentially nested) list of builtin Python values (i.e. using no numpy-specific types).
 
     Parameters
     ----------
@@ -1043,12 +1065,12 @@ def argsort(seq):
 
 
 def exactly_one(a: bool, b: bool, c: bool = False) -> bool:
-    """returns True if exactly one of a, b or c boolean arguments is True, False otherwise"""
+    """Return True if exactly one of a, b or c boolean arguments is True, False otherwise."""
     return (a or b) and not (a and b) if not c else not (a or b)
 
 
 def concatenate_ndarrays(arrays) -> np.ndarray:
-    """concatenate Sequence of np.ndarray, converting to object dtype if needed"""
+    """Concatenate Sequence of np.ndarray, converting to object dtype if needed."""
     dtype = np_array_common_dtype(arrays)
     if dtype.kind == 'O':
         # astype always copies, while asarray only copies if necessary

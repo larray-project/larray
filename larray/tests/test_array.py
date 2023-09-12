@@ -1336,7 +1336,7 @@ def test_ipoints_indexer_setitem():
 
 def test_setitem_larray(array, small_array):
     """
-    tests Array.__setitem__(key, value) where value is an Array
+    Test Array.__setitem__(key, value) where value is an Array.
     """
     a, b, c, d = array.axes
 
@@ -1494,7 +1494,7 @@ Axis(['c1', 'c0'], 'c')"""):
 
 def test_setitem_ndarray(array):
     """
-    tests Array.__setitem__(key, value) where value is a raw ndarray.
+    Test Array.__setitem__(key, value) where value is a raw ndarray.
     In that case, value.shape is more restricted as we rely on numpy broadcasting.
     """
     # a) value has exactly the same shape as the target slice
@@ -1516,7 +1516,7 @@ def test_setitem_ndarray(array):
 
 def test_setitem_scalar(array):
     """
-    tests Array.__setitem__(key, value) where value is a scalar
+    Test Array.__setitem__(key, value) where value is a scalar.
     """
     # a) list key (one dimension)
     arr = array.copy()

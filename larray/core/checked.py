@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 
-from typing import TYPE_CHECKING, Type, Any, Dict, Set, List, no_type_check
+from typing import TYPE_CHECKING, Type, Any, Dict, Set, List, no_type_check, Optional
 
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
@@ -134,7 +134,7 @@ else:
         """
         Return type as is for immutable built-in types
         Use obj.copy() for built-in empty collections
-        Use copy.deepcopy() for non-empty collections and unknown objects
+        Use copy.deepcopy() for non-empty collections and unknown objects.
         """
         obj_type = obj.__class__
         if obj_type in IMMUTABLE_NON_COLLECTIONS_TYPES:
@@ -235,7 +235,7 @@ else:
 
     class CheckedSession(Session, AbstractCheckedSession, metaclass=ModelMetaclass):
         """
-        This class is intended to be inherited by user defined classes in which the variables of a model are declared.
+        Class intended to be inherited by user defined classes in which the variables of a model are declared.
         Each declared variable is constrained by a type defined explicitly or deduced from the given default value
         (see examples below).
         All classes inheriting from `CheckedSession` will have access to all methods of the :py:class:`Session` class.
@@ -398,6 +398,7 @@ else:
         dumping population ... done
         dumping undeclared_var ... done
         """
+
         if TYPE_CHECKING:
             # populated by the metaclass, defined here to help IDEs only
             __fields__: Dict[str, ModelField] = {}
@@ -433,7 +434,7 @@ else:
             # create an intermediate Session object to not call the __setattr__
             # and __setitem__ overridden in the present class and in case a filepath
             # is given as only argument
-            # todo: refactor Session.load() to use a private function which returns the handler directly
+            # TODO: refactor Session.load() to use a private function which returns the handler directly
             # so that we can get the items out of it and avoid this
             input_data = dict(Session(*args, **kwargs))
 
@@ -501,7 +502,7 @@ else:
         def __setstate__(self, state: Dict[str, Any]) -> None:
             object.__setattr__(self, '__dict__', state['__dict__'])
 
-        def dict(self, exclude: Set[str] = None) -> Dict[str, Any]:
+        def dict(self, exclude: Optional[Set[str]] = None) -> Dict[str, Any]:
             return {k: v for k, v in self.items() if k not in exclude}
 
     class CheckedParameters(CheckedSession):
@@ -555,6 +556,7 @@ else:
         TypeError: Cannot change the value of the variable 'variant_name' since 'Parameters'
         is immutable and does not support item assignment
         """
+
         class Config:
             # whether models are faux-immutable, i.e. whether __setattr__ is allowed.
             # (default: True)
