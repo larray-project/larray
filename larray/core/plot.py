@@ -157,7 +157,7 @@ class PlotObject:
 
         subplot_axes, series_axes, x, y = PlotObject._handle_x_y_axes(array.axes, x, y, subplots)
 
-        if constrained_layout is None:
+        if constrained_layout is None and tight_layout is None:
             constrained_layout = True
 
         if subplots:
