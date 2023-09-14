@@ -7248,7 +7248,7 @@ class Array(ABCArray):
 
         Simple line plot
 
-        >>> arr.plot()
+        >>> arr.plot()                                                           # doctest: +SKIP
         <Axes: xlabel='year'>
 
         Line plot with grid and a title, saved in a file
@@ -7259,33 +7259,40 @@ class Array(ABCArray):
         easier to compare. By default sub plots are independant of each other and the axes
         ranges are computed to "fit" just the data for their individual plot.
 
-        >>> arr.plot.bar(subplots='gender', sharey=True)                       # doctest: +SKIP
+        >>> arr.plot.bar(subplots='gender', sharey=True)                         # doctest: +SKIP
+        array([<Axes: title={'center': 'M'}, xlabel='year'>,
+               <Axes: title={'center': 'F'}, xlabel='year'>], dtype=object)
 
         A stacked bar plot (genders are stacked)
 
-        >>> arr.plot.bar(stack='gender')
+        >>> arr.plot.bar(stack='gender')                                         # doctest: +SKIP
+        <Axes: xlabel='year'>
 
         An animated bar chart (with two bars). We set explicit y bounds via ylim so that the
         same boundaries are used for the whole animation.
 
-        >>> arr.plot.bar(animate='year', ylim=(0, 22), filepath='myanim.avi')  # doctest: +SKIP
+        >>> arr.plot.bar(animate='year', ylim=(0, 22), filepath='myanim.avi')    # doctest: +SKIP
 
         Create a figure containing 2 x 2 graphs
 
         >>> import matplotlib.pyplot as plt
         >>> # see matplotlib.pyplot.subplots documentation for more details
-        >>> fig, ax = plt.subplots(2, 2, figsize=(10, 8), tight_layout=True)   # doctest: +SKIP
+        >>> fig, ax = plt.subplots(2, 2, figsize=(10, 8), tight_layout=True)     # doctest: +SKIP
         >>> # line plot with 2 curves (Males and Females) in the top left corner (0, 0)
-        >>> arr.plot(ax=ax[0, 0], title='line plot')                           # doctest: +SKIP
+        >>> arr.plot(ax=ax[0, 0], title='line plot')                             # doctest: +SKIP
+        <Axes: title={'center': 'line plot'}, xlabel='year'>
         >>> # bar plot with stacked values in the top right corner (0, 1)
         >>> arr.plot.bar(ax=ax[0, 1], stack='gender', title='stacked bar plot')  # doctest: +SKIP
+        <Axes: title={'center': 'stacked bar plot'}, xlabel='year'>
         >>> # area plot in the bottom left corner (1, 0)
-        >>> arr.plot.area(ax=ax[1, 0], title='area plot')                      # doctest: +SKIP
+        >>> arr.plot.area(ax=ax[1, 0], title='area plot')                        # doctest: +SKIP
+        <Axes: title={'center': 'area plot'}, xlabel='year'>
         >>> # scatter plot in the bottom right corner (1, 1), using the year as color
         >>> # index and a specific colormap
         >>> arr.plot.scatter(ax=ax[1, 1], x='M', y='F', c=arr.year, colormap='viridis',
-        ...                  title='scatter plot')                             # doctest: +SKIP
-        >>> plt.show()                                                         # doctest: +SKIP
+        ...                  title='scatter plot')                               # doctest: +SKIP
+        <Axes: title={'center': 'scatter plot'}, xlabel='M', ylabel='F'>
+        >>> plt.show()                                                           # doctest: +SKIP
         """
         return PlotObject(self)
 

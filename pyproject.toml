@@ -16,9 +16,6 @@ addopts = [
     "--deselect=larray/inout/xw_reporting.py",
     # doctest is copied from numpy (and fails for some Python + numpy version combinations)
     "--deselect=larray/core/array.py::larray.core.array.Array.astype",
-    # doctest fails (because the plot method returns a matplotlib axis object,
-    # which we do not mention in the doctest to make it nicer)
-    "--deselect=larray/core/array.py::larray.core.array.Array.plot",
     # skip Pandas-leeched doctests because they are not larray-specific and,
     # without Pandas-specific documentation build infrastructure, they leave
     # some plots open
