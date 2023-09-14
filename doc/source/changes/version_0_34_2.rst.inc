@@ -52,3 +52,7 @@ Fixes
   but this did not: ::
 
     >>> (X.age != 2) * arr
+
+* fixed plots with fewer than 6 integer labels in the x axis. In that case,
+  it interpolated the values, which usually looks wrong for integer labels (e.g. year).
+  Closes :issue:`1076`.

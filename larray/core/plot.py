@@ -122,12 +122,22 @@ class PlotObject:
                 # move label_axis last (it must be a dataframe column)
                 array = array.transpose(..., label_axis)
 
-        lineplot = 'kind' not in kwargs or kwargs['kind'] == 'line'
+        kind = kwargs.get('kind', 'line')
+        if kind is None:
+            kind = 'line'
+        lineplot = kind == 'line'
+        # TODO: why don't we handle all line plots this way?
         if lineplot and label_axis is not None and series is not None and len(series) > 0:
             # the problem with this approach (n calls to pandas.plot) is that the color
             # cycling and "stacked" bar/area of pandas break for all kinds of plots except "line"
             # when we have more than one dimension involved
             for series_key, series_data in array.items(series):
+                # workaround for issue #1076 (see below for more details)
+                # matplotlib default behavior when there are few ticks is to interpolate
+                # them, which looks pretty silly for integer types
+                x_labels = series_data.axes[0].labels
+                if len(x_labels) < 6 and np.issubdtype(x_labels.dtype, np.integer) and 'xticks' not in kwargs:
+                    kwargs['xticks'] = x_labels
                 series_name = ' '.join(str(k) for k in series_key)
                 # support for list-like y
                 if isinstance(y, (list, np.ndarray)):
@@ -144,6 +154,15 @@ class PlotObject:
                 # move it last (as columns) unless we need x axes or label axis last
                 if not _x_axes_last and label_axis is None:
                     array = array.transpose(..., array.axes[0])
+
+            # workaround for issue #1076 (see above)
+            # We only do it for line and area charts because specifying xticks
+            # breaks bar plots (and bar plots do not suffer from the issue anyway)
+            # (see https://github.com/pandas-dev/pandas/issues/55508)
+            if kind in {'line', 'area'}:
+                x_labels = array.axes[0].labels
+                if len(x_labels) < 6 and np.issubdtype(x_labels.dtype, np.integer) and 'xticks' not in kwargs:
+                    kwargs['xticks'] = x_labels
 
             return PlotObject._to_pd_obj(array).plot(*args, x=x, y=y, **kwargs)
 
