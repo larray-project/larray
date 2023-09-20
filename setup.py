@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 
 def readlocal(fname):
@@ -53,6 +53,6 @@ setup(
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
     url=URL,
-    packages=find_packages(),
+    packages=find_namespace_packages(),
     include_package_data=True,
 )
