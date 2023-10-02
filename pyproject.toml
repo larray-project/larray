@@ -22,16 +22,16 @@ addopts = [
     # skip Pandas-leeched doctests because they are not larray-specific and,
     # without Pandas-specific documentation build infrastructure, they leave
     # some plots open
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.area",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.bar",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.barh",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.box",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.hexbin",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.hist",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.kde",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.line",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.pie",
-    "--deselect=larray/core/array.py::larray.core.array.PlotObject.scatter",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.area",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.bar",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.barh",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.box",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.hexbin",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.hist",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.kde",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.line",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.pie",
+    "--deselect=larray/core/plot.py::larray.core.plot.PlotObject.scatter",
 #    "--cov",
 ]
 
