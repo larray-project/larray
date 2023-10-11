@@ -7116,8 +7116,6 @@ class Array(ABCArray):
     def plot(self) -> PlotObject:
         r"""Plot the data of the array into a graph (window pop-up).
 
-        The graph can be tweaked to achieve the desired formatting and can be saved to a .png file.
-
         Parameters
         ----------
         kind : str
@@ -7132,6 +7130,14 @@ class Array(ABCArray):
             - 'pie' : pie plot
             - 'scatter' : scatter plot (if array's dimensions >= 2)
             - 'hexbin' : hexbin plot (if array's dimensions >= 2)
+        filepath : str or Path, default None
+            Save plot as a file at `filepath`. Defaults to None (do not save).
+            When saving the plot to a file, the function returns None. In other
+            words, in that case, the plot is no longer available for further
+            tweaking or display.
+        show : bool, optional
+            Whether to display the plot directly.
+            Defaults to True if `filepath` is None and `ax` is None, False otherwise.
         ax : matplotlib axes object, default None
         subplots : boolean, Axis, int, str or tuple, default False
             Make several subplots.
@@ -7232,29 +7238,26 @@ class Array(ABCArray):
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt
-        >>> # let us define an array with some made up data
+        Let us first define an array with some made up data
+
         >>> import larray as la
-        >>> arr = la.Array([[5, 20, 5, 10],                 [6, 16, 8, 11]], 'gender=M,F;year=2018..2021')
+        >>> arr = la.Array([[5, 20, 5, 10],
+        ...              [6, 16, 8, 11]], 'gender=M,F;year=2018..2021')
 
         Simple line plot
 
         >>> arr.plot()
-        >>> # show figure (it also resets it after showing it! Do not call it before savefig)
-        >>> plt.show()
+        <Axes: xlabel='year'>
 
-        Line plot with grid and a title
+        Line plot with grid and a title, saved in a file
 
-        >>> arr.plot(grid=True, title='line plot')
-        >>> # save figure in a file (see matplotlib.pyplot.savefig documentation for more details)
-        >>> plt.savefig('my_file.png')
+        >>> arr.plot(grid=True, title='line plot', filepath='my_file.png')
 
         2 bar plots (one for each gender) sharing the same y axis, which makes sub plots
         easier to compare. By default sub plots are independant of each other and the axes
         ranges are computed to "fit" just the data for their individual plot.
 
-        >>> arr.plot.bar(subplots='gender', sharey=True)
-        >>> plt.show()
+        >>> arr.plot.bar(subplots='gender', sharey=True)                       # doctest: +SKIP
 
         A stacked bar plot (genders are stacked)
 
@@ -7263,10 +7266,11 @@ class Array(ABCArray):
         An animated bar chart (with two bars). We set explicit y bounds via ylim so that the
         same boundaries are used for the whole animation.
 
-        >>> arr.plot.bar(animate='year', ylim=(0, 22))                         # doctest: +SKIP
+        >>> arr.plot.bar(animate='year', ylim=(0, 22), filepath='myanim.avi')  # doctest: +SKIP
 
         Create a figure containing 2 x 2 graphs
 
+        >>> import matplotlib.pyplot as plt
         >>> # see matplotlib.pyplot.subplots documentation for more details
         >>> fig, ax = plt.subplots(2, 2, figsize=(10, 8), tight_layout=True)   # doctest: +SKIP
         >>> # line plot with 2 curves (Males and Females) in the top left corner (0, 0)
