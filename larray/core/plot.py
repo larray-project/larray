@@ -181,7 +181,7 @@ class PlotObject:
     @deprecate_kwarg('stacked', 'stack')
     def __call__(self, x=None, y=None, ax=None, subplots=False, layout=None, figsize=None,
                  sharex=None, sharey=False, tight_layout=None, constrained_layout=None, title=None, legend=None,
-                 animate=None, filepath=None, **kwargs):
+                 animate=None, filepath=None, show=None, **kwargs):
         from matplotlib import pyplot as plt
 
         array = self.array
@@ -200,14 +200,14 @@ class PlotObject:
             kwargs['stacked'] = True
 
         animate_axes, subplot_axes, x, y, series_axes = PlotObject._handle_x_y_axes(array.axes, animate, subplots, x, y)
-
+        if show is None:
+            show = filepath is None and ax is None
         if constrained_layout is None and tight_layout is None:
             constrained_layout = True
 
         if ax is None:
             fig = plt.figure(figsize=figsize, tight_layout=tight_layout, constrained_layout=constrained_layout)
-
-            if subplots:
+            if subplots or layout is not None:
                 if layout is None:
                     subplots_shape = subplot_axes.shape
                     if len(subplots_shape) > 2:
@@ -217,37 +217,33 @@ class PlotObject:
                         layout = subplot_axes.shape
                 if sharex is None:
                     sharex = True
-                ax = fig.subplots(*layout, sharex=sharex, sharey=sharey)
+                ax_to_return = fig.subplots(*layout, sharex=sharex, sharey=sharey)
+                ax = ax_to_return if subplots else ax_to_return.flat[0]
             else:
                 ax = fig.add_subplot()
+                ax_to_return = ax
+        else:
+            fig = ax.figure
+            ax_to_return = ax
 
+        anim_kwargs = kwargs.pop('anim_params', {})
         if animate:
-            import matplotlib.animation as animation
+            from matplotlib.animation import FuncAnimation
 
-            def run(t):
-                if subplots:
+            if subplots:
+                def run(t):
                     for subplot_ax in ax.flat:
                         subplot_ax.clear()
-                else:
+                    self._plot_many(array[t], ax, kwargs, series_axes, subplot_axes, title, x, y)
+            else:
+                def run(t):
                     ax.clear()
-                self._plot_many(array[t], ax, kwargs, series_axes, subplot_axes, title, x, y)
+                    self._plot_many(array[t], ax, kwargs, series_axes, subplot_axes, title, x, y)
             # TODO: add support for interpolation between frames/labels
             #  see https://github.com/julkaar9/pynimate for inspiration
-            ani = animation.FuncAnimation(fig, run, frames=animate_axes.iter_labels())
-            if not isinstance(filepath, Path):
-                filepath = Path(filepath)
-            print(f"Writing animation to {filepath} ...", end=' ', flush=True)
-            if '.htm' in filepath.suffix:
-                filepath.write_text(f'<html>{ani.to_html5_video()}</html>', encoding='utf8')
-            else:
-                # writer = self.writer
-                # if writer is None:
-                writer = 'pillow' if filepath.suffix == '.gif' else 'ffmpeg'
-                fps = 5
-                metadata = None
-                bitrate = None
-                ani.save(filepath, writer=writer, fps=fps, metadata=metadata, bitrate=bitrate)
+            ani = FuncAnimation(fig, run, frames=animate_axes.iter_labels())
         else:
+            ani = None
             self._plot_many(array, ax, kwargs, series_axes, subplot_axes, title, x, y)
 
         if legend or legend is None:
@@ -267,7 +263,56 @@ class PlotObject:
                 # use figure to place legend to add a single legend for all subplots
                 legend_parent = first_ax.figure if subplots else ax
                 legend_parent.legend(handles, labels, **legend_kwargs)
-        return ax
+
+        if filepath is not None:
+            if ani is None:
+                fig.savefig(filepath)
+            else:
+                if not isinstance(filepath, Path):
+                    filepath = Path(filepath)
+                if filepath.suffix in {'.htm', '.html'}:
+                    # TODO: we should offer the option to use to_jshtml instead of to_html5_video. Even if it makes the
+                    #       files (much) bigger (because they are stored as individual frames) it also adds some useful
+                    #       play/pause/next frame/... buttons.
+                    filepath.write_text(f'<html>{ani.to_html5_video()}</html>', encoding='utf8')
+                else:
+                    writer = anim_kwargs.pop('writer', None)
+                    fps = anim_kwargs.pop('fps', 5)
+                    metadata = anim_kwargs.pop('metadata', None)
+                    bitrate = anim_kwargs.pop('bitrate', None)
+                    if writer is None:
+                        # pillow only supports .gif, .png and .tiff ffmpeg supports .avi, .mov, .mp4 (but needs the
+                        # ffmpeg package installed)
+                        writer = 'pillow' if filepath.suffix in {'.gif', '.png', '.tiff'} else 'ffmpeg'
+                    from matplotlib.animation import writers
+                    if not writers.is_available(writer):
+                        raise Exception(f"Cannot write animation using '{filepath.suffix}' extension "
+                                        f"because '{writer}' writer is not available.\n"
+                                        "Installing an optional package is probably necessary.")
+
+                    ani.save(filepath, writer=writer, fps=fps, metadata=metadata, bitrate=bitrate)
+
+        if show:
+            # The following line displays the plot window. Note however that
+            # it is only blocking when no Qt loop is already running (i.e. we are
+            # not running inside the editor).
+            # When using the Qt backend this boils down to:
+            #     manager = fig.canvas.manager
+            #     manager.show()
+            #     if block:
+            #         manager.start_main_loop()
+            # the last line just gets the current Qt QApplication instance (created during
+            # the first canvas creation) and .exec() it
+            plt.show(block=True)
+            # It is important to return ani, because otherwise in the non-blocking case
+            # (i.e. when run in the editor), the animation is garbage-collected before
+            # it is drawn, and we get a blank animation.
+            return (ax_to_return, ani) if ani is not None else ax_to_return
+        elif filepath is not None:  # filepath and not show
+            plt.close(fig)
+            return None
+        else:                       # no filepath and not show
+            return (ax_to_return, ani) if ani is not None else ax_to_return
 
     def _plot_many(self, array, ax, kwargs, series_axes, subplot_axes, title, x, y):
         if len(subplot_axes):

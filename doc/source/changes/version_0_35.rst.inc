@@ -15,7 +15,10 @@ Syntax changes
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* other backward incompatible changes
+* Plots made with Array.plot() in a Python script will be shown by default,
+  unless either the filepath (see below) or ax arguments are used. Shown plots
+  will open a window and pause the running script until the window is closed by
+  the user. To revert to the previous behavior, use show=False.
 
 
 New features
@@ -29,6 +32,12 @@ New features
     >>> arr.plot.bar(animate='year')
 
   will create an animated bar plot with one frame per year.
+
+* implemented Array.plot `filepath` argument to save plots to a file directly,
+  without having to use the matplotlib API.
+
+* implemented Array.plot `show` argument to display plots directly, without
+  having to use the matplotlib API. This is the new default behavior.
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.

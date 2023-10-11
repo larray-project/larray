@@ -3,6 +3,7 @@ import os
 import pytest
 import numpy as np
 import pandas as pd
+import matplotlib.figure
 
 from io import StringIO
 
@@ -5377,11 +5378,22 @@ def test_broadcast_with():
 
 
 def test_plot():
-    pass
-    # small_h = small['c0']
-    # small_h.plot(kind='bar')
-    # small_h.plot()
-    # small_h.hist()
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()  # doctest: +SKIP
+    assert isinstance(fig, matplotlib.figure.Figure)
+    arr = Array([[1, 5, 2],
+                 [3, 2, 4]], axes='a=a0,a1;b=b0,b1,b2')
+    arr.plot(kind='bar', ax=ax)
+    fig.savefig('bar.png')
+
+    fig, ax = plt.subplots()  # doctest: +SKIP
+    arr.plot(ax=ax)
+    fig.savefig('plot.png')
+
+    fig, ax = plt.subplots()  # doctest: +SKIP
+    arr.plot.hist(ax=ax)
+    fig.savefig('hist.png')
 
     # large_data = np.random.randn(1000)
     # tick_v = np.random.randint(ord('a'), ord('z'), size=1000)
