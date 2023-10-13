@@ -281,9 +281,9 @@ class PlotObject:
 
         ax = self(kind='pie', y=y, legend=legend, **kwds)
 
-        # if we created the Axes and we have subplots, hide all x axis because as of now
+        # if we created the Axes and have subplots, hide all x axes because as of now
         # (pandas 1.3.0 and matplotlib 3.3.4) there are some ugly and useless x axes
-        # with a few ticks when have subplots in a vertical layout
+        # with a few ticks when we have subplots in a vertical layout
         if 'ax' not in kwds and isinstance(ax, np.ndarray):
             for axes in ax.flat:
                 axes.get_xaxis().set_visible(False)
