@@ -3074,45 +3074,45 @@ def test_reindex():
     arr = ndtest((2, 2))
     res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  b1  b2  b0
-                                             a0   1  -1   0
-                                             a1   3  -1   2"""))
+                                              a0   1  -1   0
+                                              a1   3  -1   2"""))
 
     arr2 = ndtest((2, 2))
     arr2.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1, inplace=True)
     assert_larray_equal(arr2, from_string(r"""a\b  b1  b2  b0
-                                              a0   1  -1   0
-                                              a1   3  -1   2"""))
+                                               a0   1  -1   0
+                                               a1   3  -1   2"""))
 
     # Array fill value
     filler = ndtest(arr.a)
     res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=filler)
     assert_larray_equal(res, from_string(r"""a\b  b1  b2  b0
-                                             a0   1   0   0
-                                             a1   3   1   2"""))
+                                              a0   1   0   0
+                                              a1   3   1   2"""))
 
     # using labels from another array
     arr = ndtest('a=v0..v2;b=v0,v2,v1,v3')
     res = arr.reindex('a', arr.b.labels, fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
-                                             v0   0   1   2   3
-                                             v2   8   9  10  11
-                                             v1   4   5   6   7
-                                             v3  -1  -1  -1  -1"""))
+                                              v0   0   1   2   3
+                                              v2   8   9  10  11
+                                              v1   4   5   6   7
+                                              v3  -1  -1  -1  -1"""))
     res = arr.reindex('a', arr.b, fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
-                                             v0   0   1   2   3
-                                             v2   8   9  10  11
-                                             v1   4   5   6   7
-                                             v3  -1  -1  -1  -1"""))
+                                              v0   0   1   2   3
+                                              v2   8   9  10  11
+                                              v1   4   5   6   7
+                                              v3  -1  -1  -1  -1"""))
 
     # passing a list of Axis
     arr = ndtest((2, 2))
     res = arr.reindex([Axis("a=a0,a1"), Axis("c=c0"), Axis("b=b1,b2")], fill_value=-1)
     assert_larray_equal(res, from_string(r""" a  b\c  c0
-                                            a0   b1   1
-                                            a0   b2  -1
-                                            a1   b1   3
-                                            a1   b2  -1"""))
+                                             a0   b1   1
+                                             a0   b2  -1
+                                             a1   b1   3
+                                             a1   b2  -1"""))
 
 
 def test_expand():
@@ -4912,7 +4912,7 @@ def test_eye():
     # using an AxisCollection
     res = eye(AxisCollection([a, c]))
     expected = from_string(r"""
-a\c    c0    c1
+    a\c   c0   c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0""")
@@ -4921,7 +4921,7 @@ a\c    c0    c1
     # using a tuple of axes
     res = eye((a, c))
     expected = from_string(r"""
-a\c    c0    c1
+    a\c   c0   c1
       0  1.0  0.0
       1  0.0  1.0
       2  0.0  0.0""")
