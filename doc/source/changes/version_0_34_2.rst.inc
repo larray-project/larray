@@ -55,4 +55,4 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed reindex when using an axis object from the array as `axes_to_reindex` (closes :issue:`1088`).

@@ -3071,6 +3071,89 @@ def test_set_axes(small_array):
 
 
 def test_reindex():
+    # simple case (1D array, one axis reindexed)
+    arr = ndtest(2)
+    a = arr.a  # == Axis('a=a0,a1')
+    new_a = Axis('a=a0,a1,a2')
+
+    expected = from_string(""" a   a0   a1   a2
+                              \t  0.0  1.0  nan""")
+
+    # using the axis name
+    res = arr.reindex('a', new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using an axis reference
+    res = arr.reindex(X.a, new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using an axis position
+    res = arr.reindex(0, new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using the actual original axis as axes_to_replace (issue #1088)
+    res = arr.reindex(a, new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using another axis equal to the original axis (issue #1088)
+    res = arr.reindex(a.copy(), new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using another axis with the same name but different labels
+    # (unsure we should support this -- but unsure either it is worth adding extra
+    #  code to explicitly raise in that case)
+    res = arr.reindex(Axis('a=hello'), new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using a single axis to determine both axis_to_replace and new_axis
+    res = arr.reindex(new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using an axis definition for its labels
+    res = arr.reindex('a', 'a=a0,a1,a2')
+    assert_larray_nan_equal(res, expected)
+
+    # using an axis with a different name as new labels
+    # TODO: unsure we should support this as the functionality seems weird
+    #       to me. I think we should either raise an error if the axis name
+    #       is different (force using other_axis.labels instead
+    #       of other_axis) OR do not do use the old name
+    #       (and make sure this effectively does a rename)
+    res = arr.reindex('a', Axis('a0,a1,a2', 'b'))
+    assert_larray_nan_equal(res, expected)
+
+    # using an axis definition with a different name for its labels
+    # (the axis name should be ignored - unsure we should support this, see above)
+    res = arr.reindex('a', 'b=a0,a1,a2')
+    assert_larray_nan_equal(res, expected)
+
+    # test error conditions
+    msg = ("In Array.reindex, when using an axis reference ('axis name', X.axis_name or "
+           "axis_integer_position) as axes_to_reindex, you must provide a value for `new_axis`.")
+    with must_raise(TypeError, msg):
+        res = arr.reindex('a')
+
+    with must_raise(TypeError, msg):
+        res = arr.reindex(X.a)
+
+    with must_raise(TypeError, msg):
+        res = arr.reindex(0)
+
+    msg_tmpl = ("In Array.reindex, when `new_axis` is used, `axes_to_reindex`"
+                " must be an Axis object or an axis reference ('axis name', "
+                "X.axis_name or axis_integer_position) but got object of "
+                "type {objtype} instead.")
+
+    with must_raise(TypeError, msg_tmpl.format(objtype='list')):
+        res = arr.reindex([a], new_a)
+
+    with must_raise(TypeError, msg_tmpl.format(objtype='AxisCollection')):
+        res = arr.reindex(AxisCollection([a]), new_a)
+
+    with must_raise(TypeError, msg_tmpl.format(objtype='dict')):
+        res = arr.reindex({a: new_a}, new_a)
+
+    # 2d array, one axis reindexed
     arr = ndtest((2, 2))
     res = arr.reindex(X.b, ['b1', 'b2', 'b0'], fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  b1  b2  b0
@@ -3090,7 +3173,7 @@ def test_reindex():
                                               a0   1   0   0
                                               a1   3   1   2"""))
 
-    # using labels from another array
+    # using labels from another axis
     arr = ndtest('a=v0..v2;b=v0,v2,v1,v3')
     res = arr.reindex('a', arr.b.labels, fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
@@ -3098,7 +3181,16 @@ def test_reindex():
                                               v2   8   9  10  11
                                               v1   4   5   6   7
                                               v3  -1  -1  -1  -1"""))
+    # using another axis for its labels (unsure we should support this, see above)
     res = arr.reindex('a', arr.b, fill_value=-1)
+    assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
+                                              v0   0   1   2   3
+                                              v2   8   9  10  11
+                                              v1   4   5   6   7
+                                              v3  -1  -1  -1  -1"""))
+
+    # using an axis definition for its labels (unsure we should support this, see above)
+    res = arr.reindex('a', 'b=v0,v2,v1,v3', fill_value=-1)
     assert_larray_equal(res, from_string(r"""a\b  v0  v2  v1  v3
                                               v0   0   1   2   3
                                               v2   8   9  10  11
