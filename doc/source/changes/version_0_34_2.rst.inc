@@ -55,4 +55,6 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed reindex when using an axis object from the array as `axes_to_reindex` (closes :issue:`1088`).
+* fixed Array.reindex when using an axis object from the array as `axes_to_reindex` (closes :issue:`1088`).
+
+* fixed Array.reindex({axis: list_of_labels}) (closes :issue:`1068`).
