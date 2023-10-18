@@ -1,6 +1,20 @@
 ﻿Change log
 ##########
 
+Version 0.34.2
+==============
+
+In development.
+
+CORE
+----
+.. include:: ./changes/version_0_34_2.rst.inc
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_34_2.rst.inc
+
+
 Version 0.34.1
 ==============
 
