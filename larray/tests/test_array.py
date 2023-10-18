@@ -3127,6 +3127,22 @@ def test_reindex():
     res = arr.reindex('a', 'b=a0,a1,a2')
     assert_larray_nan_equal(res, expected)
 
+    # using a list as the new labels
+    res = arr.reindex('a', ['a0', 'a1', 'a2'])
+    assert_larray_nan_equal(res, expected)
+
+    # using the dict syntax
+    res = arr.reindex({'a': new_a})
+    assert_larray_nan_equal(res, expected)
+
+    # using the dict syntax with a list of labels (issue #1068)
+    res = arr.reindex({'a': ['a0', 'a1', 'a2']})
+    assert_larray_nan_equal(res, expected)
+
+    # using the dict syntax with a labels def string
+    res = arr.reindex({'a': 'a0,a1,a2'})
+    assert_larray_nan_equal(res, expected)
+
     # test error conditions
     msg = ("In Array.reindex, when using an axis reference ('axis name', X.axis_name or "
            "axis_integer_position) as axes_to_reindex, you must provide a value for `new_axis`.")
@@ -3141,16 +3157,22 @@ def test_reindex():
 
     msg_tmpl = ("In Array.reindex, when `new_axis` is used, `axes_to_reindex`"
                 " must be an Axis object or an axis reference ('axis name', "
-                "X.axis_name or axis_integer_position) but got object of "
-                "type {objtype} instead.")
+                "X.axis_name or axis_integer_position) but got {obj_str} "
+                "(which is of type {obj_type}) instead.")
 
-    with must_raise(TypeError, msg_tmpl.format(objtype='list')):
+    msg = msg_tmpl.format(obj_str="[Axis(['a0', 'a1'], 'a')]", obj_type='list')
+    with must_raise(TypeError, msg):
         res = arr.reindex([a], new_a)
 
-    with must_raise(TypeError, msg_tmpl.format(objtype='AxisCollection')):
+    msg = msg_tmpl.format(obj_str='{a}', obj_type='AxisCollection')
+    with must_raise(TypeError, msg):
         res = arr.reindex(AxisCollection([a]), new_a)
 
-    with must_raise(TypeError, msg_tmpl.format(objtype='dict')):
+    msg = msg_tmpl.format(
+        obj_str="{Axis(['a0', 'a1'], 'a'): Axis(['a0', 'a1', 'a2'], 'a')}",
+        obj_type='dict'
+    )
+    with must_raise(TypeError, msg):
         res = arr.reindex({a: new_a}, new_a)
 
     # 2d array, one axis reindexed

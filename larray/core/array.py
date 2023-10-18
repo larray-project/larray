@@ -1985,52 +1985,79 @@ class Array(ABCArray):
         a0   c0  -1  -1
         a1   c0   2   1
         """
-        if isinstance(axes_to_reindex, str) and '=' in axes_to_reindex:
-            axes_to_reindex = Axis(axes_to_reindex)
-        elif isinstance(axes_to_reindex, Group):
-            axes_to_reindex = Axis(axes_to_reindex)
-
-        # XXX: can't we move this to AxisCollection.replace?
-        if new_axis is None:
-            if isinstance(axes_to_reindex, (int, str, AxisReference)):
-                raise TypeError("In Array.reindex, when using an axis reference ('axis name', X.axis_name or "
-                                "axis_integer_position) as axes_to_reindex, you must provide a value for `new_axis`.")
-            elif isinstance(axes_to_reindex, Axis):
-                new_axis = axes_to_reindex
-                axes_to_reindex = self.axes[axes_to_reindex]
-            else:
-                assert isinstance(axes_to_reindex, (tuple, list, dict, AxisCollection))
-        else:
-            if isinstance(axes_to_reindex, (int, str, Axis)):
-                axes_to_reindex = self.axes[axes_to_reindex]
-            else:
-                raise TypeError(
-                    "In Array.reindex, when `new_axis` is used, `axes_to_reindex`"
-                    " must be an Axis object or an axis reference ('axis name', "
-                    "X.axis_name or axis_integer_position) but got object of "
-                    f"type {type(axes_to_reindex).__name__} instead."
-                )
-            assert isinstance(axes_to_reindex, Axis)
-            old_axis_name = axes_to_reindex.name
-
-            if not isinstance(new_axis, Axis):
-                new_axis = Axis(new_axis)
-            # TODO: this functionality seems weird to me.
+        def labels_def_and_name_to_axis(labels_def, axis_name=None):
+            # TODO: the rename functionality seems weird to me.
             #       I think we should either raise an error if the axis name
             #       is different (force using new_axis=other_axis.labels instead
             #       of new_axis=other_axis) OR do not do use the old name
-            #       (and make sure this effectively does a rename)
-            new_axis = new_axis.rename(old_axis_name)
+            #       (and make sure this effectively does a rename).
+            #       it might have been the unintended consequence of supporting a
+            #       list of labels as new_axis
+            axis = labels_def if isinstance(labels_def, Axis) else Axis(labels_def)
+            return axis.rename(axis_name) if axis_name is not None else axis
 
-        if isinstance(axes_to_reindex, (list, tuple)) and all([isinstance(axis, Axis) for axis in axes_to_reindex]):
+        def axis_ref_to_axis(axes, axis_ref):
+            if isinstance(axis_ref, Axis) or is_axis_ref(axis_ref):
+                return axes[axis_ref]
+            else:
+                raise TypeError(
+                    "In Array.reindex, source axes must be Axis objects or axis references ('axis name', "
+                    "X.axis_name or axis_integer_position) but got object of "
+                    f"type {type(axis_ref).__name__} instead."
+                )
+
+        def is_axis_ref(axis_ref):
+            return isinstance(axis_ref, (int, str, AxisReference))
+
+        def is_axis_def(axis_def):
+            return ((isinstance(axis_def, str) and '=' in axis_def)
+                    or isinstance(axis_def, Group))
+
+        if new_axis is None:
+            if isinstance(axes_to_reindex, Axis) and not isinstance(axes_to_reindex, AxisReference):
+                axes_to_reindex = {axes_to_reindex: axes_to_reindex}
+            elif is_axis_def(axes_to_reindex):
+                axis = Axis(axes_to_reindex)
+                axes_to_reindex = {axis: axis}
+            elif is_axis_ref(axes_to_reindex):
+                raise TypeError("In Array.reindex, when using an axis reference ('axis name', X.axis_name or "
+                                "axis_integer_position) as axes_to_reindex, you must provide a value for `new_axis`.")
+            # otherwise axes_to_reindex should be None (when kwargs are used),
+            # a dict or a sequence of axes
+            # axes_to_reindex can be None when kwargs are used
+            assert (axes_to_reindex is None or
+                    isinstance(axes_to_reindex, (tuple, list, dict, AxisCollection)))
+        else:
+            if not (isinstance(axes_to_reindex, Axis) or is_axis_ref(axes_to_reindex)):
+                raise TypeError(
+                    "In Array.reindex, when `new_axis` is used, `axes_to_reindex` "
+                    "must be an Axis object or an axis reference ('axis name', "
+                    f"X.axis_name or axis_integer_position) but got {axes_to_reindex} "
+                    f"(which is of type {type(axes_to_reindex).__name__}) instead."
+                )
+            axes_to_reindex = {axes_to_reindex: new_axis}
+            new_axis = None
+
+        if isinstance(axes_to_reindex, (list, tuple)):
             axes_to_reindex = AxisCollection(axes_to_reindex)
 
+        assert new_axis is None
+        assert axes_to_reindex is None or isinstance(axes_to_reindex, (dict, AxisCollection))
+
         if isinstance(axes_to_reindex, AxisCollection):
-            assert new_axis is None
-            # add extra axes if needed
+            # | axes_to_reindex is needed because axes_to_reindex can contain more axes than self.axes
             res_axes = AxisCollection([axes_to_reindex.get(axis, axis) for axis in self.axes]) | axes_to_reindex
         else:
-            res_axes = self.axes.replace(axes_to_reindex, new_axis, **kwargs)
+            # TODO: move this to AxisCollection.replace
+            if isinstance(axes_to_reindex, dict):
+                new_axes_to_reindex = {}
+                for k, v in axes_to_reindex.items():
+                    src_axis = axis_ref_to_axis(self.axes, k)
+                    dst_axis = labels_def_and_name_to_axis(v, src_axis.name)
+                    new_axes_to_reindex[src_axis] = dst_axis
+                axes_to_reindex = new_axes_to_reindex
+
+            res_axes = self.axes.replace(axes_to_reindex, **kwargs)
         res = full(res_axes, fill_value, dtype=common_dtype((self.data, fill_value)))
 
         def get_group(res_axes, self_axis):
@@ -2039,9 +2066,9 @@ class Array(ABCArray):
                 return self_axis[:]
             else:
                 return self_axis[self_axis.intersection(res_axis).labels]
-        self_labels = tuple(get_group(res_axes, axis) for axis in self.axes)
-        res_labels = tuple(res_axes[group.axis][group] for group in self_labels)
-        res[res_labels] = self[self_labels]
+        self_groups = tuple(get_group(res_axes, axis) for axis in self.axes)
+        res_groups = tuple(res_axes[group.axis][group] for group in self_groups)
+        res[res_groups] = self[self_groups]
         if inplace:
             self.axes = res.axes
             self.data = res.data
