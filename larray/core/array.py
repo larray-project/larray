@@ -1701,6 +1701,8 @@ class Array(ABCArray):
         #     ...
         # }, 'statistic')
         return stack({
+            # Note that np.isnan works as well as la.isnan thanks to __array_wrap__
+            # and using it avoids having a cyclic import
             'count': (~np.isnan(self)).sum(*args),
             'mean': self.mean(*args),
             'std': self.std(*args),
