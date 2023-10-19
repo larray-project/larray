@@ -382,19 +382,30 @@ class Axis(ABCAxis):
         if not regex:
             # np.char.split does not work on arrays with object dtype
             labels = self.labels if self.labels.dtype.kind != 'O' else self.labels.astype(str)
-            # gives us an array of lists
+            # split_labels is an array of lists
             split_labels = np.char.split(labels, sep)
         else:
             match = re.compile(regex).match
+            # split_labels is a list of tuples
             split_labels = [match(label).groups() for label in self.labels]
+        first_split_label_length = len(split_labels[0])
+        # TODO: when our lowest supported version will be Python 3.10, we should use
+        #       strict=True instead of checking lengths explicitly
+        if any(len(split_label) != first_split_label_length
+               for split_label in split_labels):
+            raise ValueError("not all labels have the same number of separators")
+        indexing_labels = tuple(zip(*split_labels))
         if names is None:
-            names = [None] * len(split_labels)
-        indexing_labels = zip(*split_labels)
-        if return_labels:
-            indexing_labels = tuple(indexing_labels)
+            names = [None] * first_split_label_length
+        num_axes = len(indexing_labels)
+        if num_axes != len(names):
+            raise ValueError(f"number of resulting axes ({num_axes}) differs "
+                             f"from number of resulting axes names "
+                             f"({len(names)})")
         # not using np.unique because we want to keep the original order
         split_axes = [Axis(unique_list(ax_labels), name) for ax_labels, name in zip(indexing_labels, names)]
         if return_labels:
+            assert len(split_axes) == num_axes
             indexing_labels = tuple(axis[labels] for axis, labels in zip(split_axes, indexing_labels))
             return split_axes, indexing_labels
         else:

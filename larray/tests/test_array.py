@@ -5497,6 +5497,20 @@ def test_split_axes():
     # when no axis is specified and no axis contains the sep, split_axes is a no-op.
     assert_larray_equal(combined.split_axes(), combined)
 
+    # with varying sep characters in labels (issue #1089)
+    arr = ndtest("a_b=a0_b0,a0_b1_1,a0_b1_2")
+    # a_b  a0_b0  a0_b1_1  a0_b1_2
+    #          0        1        2
+    with must_raise(ValueError, "not all labels have the same number of separators"):
+        arr.split_axes()
+
+    # with different number of sep characters in labels than in axis name
+    arr = ndtest("a_b=a0_b0_1,a0_b1_1,a0_b1_2")
+    # a_b  a0_b0_1  a0_b1_1  a0_b1_2
+    #            0        1        2
+    with must_raise(ValueError, "number of resulting axes (3) differs from number of resulting axes names (2)"):
+        arr.split_axes()
+
 
 def test_stack():
     # stack along a single axis
