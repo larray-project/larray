@@ -58,3 +58,7 @@ Fixes
 * fixed Array.reindex when using an axis object from the array as `axes_to_reindex` (closes :issue:`1088`).
 
 * fixed Array.reindex({axis: list_of_labels}) (closes :issue:`1068`).
+
+* Array.split_axes now raises an explicit error when some labels contain
+  more separators than others, instead of silently dropping part of those
+  labels, or even some data (closes :issue:`1089`).
