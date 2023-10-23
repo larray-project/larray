@@ -87,6 +87,9 @@ class BinaryOp(ExprNode):
         expr2 = expr_eval(self.expr2, context)
         return getattr(expr1, self.opname)(expr2)
 
+    def __repr__(self):
+        return f"BinaryOp({self.opname[2:-2]!r}, {self.expr1!r}, {self.expr2!r})"
+
 
 class UnaryOp(ExprNode):
     def __init__(self, op, expr):
@@ -97,3 +100,6 @@ class UnaryOp(ExprNode):
         # TODO: implement eval via numexpr
         expr = expr_eval(self.expr, context)
         return getattr(expr, self.opname)()
+
+    def __repr__(self):
+        return f"UnaryOp({self.opname[2:-2]!r}, {self.expr!r})"
