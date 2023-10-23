@@ -2945,6 +2945,11 @@ def test_unary_ops(small_array):
     assert_nparray_equal((~small_array).data, ~raw)
 
 
+def test_binary_ops_expressions():
+    with must_raise(ValueError, "Cannot evaluate the truth value of an expression using X.axis_name"):
+        res = 0 if X.age == 3 else 1
+
+
 def test_mean(small_array):
     raw = small_array.data
     c, d = small_array.axes
