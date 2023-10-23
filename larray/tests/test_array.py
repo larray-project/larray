@@ -2946,6 +2946,20 @@ def test_unary_ops(small_array):
 
 
 def test_binary_ops_expressions():
+    arr = ndtest("age=0..5")
+
+    expected = arr.copy()
+    expected[3] = 42
+
+    res = arr * (X.age != 3) + 42 * (X.age == 3)
+    assert_larray_equal(res, expected)
+    res = (X.age != 3) * arr + 42 * (X.age == 3)
+    assert_larray_equal(res, expected)
+    res = 42 * (X.age == 3) + arr * (X.age != 3)
+    assert_larray_equal(res, expected)
+    res = (X.age == 3) * 42 + arr * (X.age != 3)
+    assert_larray_equal(res, expected)
+
     with must_raise(ValueError, "Cannot evaluate the truth value of an expression using X.axis_name"):
         res = 0 if X.age == 3 else 1
 
