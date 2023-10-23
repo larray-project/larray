@@ -9949,13 +9949,19 @@ def make_numpy_broadcastable(values, min_axes=None) -> Tuple[List[Array], AxisCo
     --------
     Axis.iscompatible : tests if axes are compatible between them.
     """
-    all_axes = AxisCollection.union(*[get_axes(v) for v in values])
+    axes_union = AxisCollection.union(*[get_axes(v) for v in values])
     if min_axes is not None:
         if not isinstance(min_axes, AxisCollection):
             min_axes = AxisCollection(min_axes)
-        all_axes = min_axes | all_axes
-    return [v.broadcast_with(all_axes) if isinstance(v, Array) else v
-            for v in values], all_axes
+        axes_union = min_axes | axes_union
+    def broadcasted_value(value):
+        if isinstance(value, Array):
+            return value.broadcast_with(axes_union)
+        elif isinstance(value, ExprNode):
+            return value.evaluate(axes_union)
+        else:
+            return value
+    return [broadcasted_value(value) for value in values], axes_union
 
 
 def raw_broadcastable(values, min_axes=None) -> Tuple[Tuple[Any, ...], AxisCollection]:

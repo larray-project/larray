@@ -5011,23 +5011,45 @@ def test_ufuncs(small_array):
     assert_nparray_equal(clip(small_array, low, high).data,
                          np.clip(raw, raw_low, raw_high))
 
-    # where (no broadcasting)
-    assert_nparray_equal(where(small_array < 5, -5, small_array).data,
-                         np.where(raw < 5, -5, raw))
-
-    # where (transposed no broadcasting)
-    assert_nparray_equal(where(small_array < 5, -5, small_array.T).data,
-                         np.where(raw < 5, -5, raw))
-
-    # where (with broadcasting)
-    result = where(small_array['d1'] < 5, -5, small_array)
-    assert result.axes.names == ['c', 'd']
-    assert_nparray_equal(result.data, np.where(raw[:, [0]] < 5, -5, raw))
-
     # round
     small_float = small_array + 0.6
     rounded = round(small_float)
     assert_nparray_equal(rounded.data, np.round(raw + 0.6))
+
+
+def test_where():
+    arr = ndtest((2, 3))
+    # a\b  b0  b1  b2
+    #  a0   0   1   2
+    #  a1   3   4   5
+
+    expected = from_string(r"""a\b  b0  b1  b2
+                                a0  -1  -1  -1
+                                a1  -1   4   5""")
+
+    # where (no broadcasting)
+    res = where(arr < 4, -1, arr)
+    assert_larray_equal(res, expected)
+
+    # where (transposed no broadcasting)
+    res = where(arr < 4, -1, arr.T)
+    assert_larray_equal(res, expected)
+
+    # where (with broadcasting)
+    res = where(arr['b1'] < 4, -1, arr)
+    assert_larray_equal(res, from_string(r"""a\b  b0  b1  b2
+                                              a0  -1  -1  -1
+                                              a1   3   4   5"""))
+
+    # with expressions (issue #1083)
+    arr = ndtest("age=0..5")
+    res = where(X.age == 3, 42, arr)
+    assert_larray_equal(res, from_string("""age  0  1  2   3  4  5
+                                             \t  0  1  2  42  4  5"""))
+
+    res = where(X.age == 3, arr, 42)
+    assert_larray_equal(res, from_string("""age   0   1   2  3   4   5
+                                             \t  42  42  42  3  42  42"""))
 
 
 def test_eye():
