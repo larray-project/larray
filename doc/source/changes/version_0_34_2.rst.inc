@@ -62,3 +62,11 @@ Fixes
 * Array.split_axes now raises an explicit error when some labels contain
   more separators than others, instead of silently dropping part of those
   labels, or even some data (closes :issue:`1089`).
+
+* a boolean condition including only X.axes_name and scalars (e.g. X.age == 0)
+  raises an error when Python needs to know whether it is True or not (because
+  there is no array to extract the axis labels from) instead of always
+  evaluating to True. This was especially dangerous in the context of a
+  where() function, which always evaluated to its left side
+  (e.g. where(X.age > 0, arr, 0) evaluated to 'arr' for all ages).
+  Closes :issue:`1083`.

@@ -1,4 +1,7 @@
 class ExprNode:
+    def __bool__(self):
+        raise ValueError("Cannot evaluate the truth value of an expression using X.axis_name")
+
     # method factory
     def _binop(opname):
         def opmethod(self, other):
