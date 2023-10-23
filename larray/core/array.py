@@ -7196,7 +7196,7 @@ class Array(ABCArray):
 
         Line plot with grid and a title
 
-        >>> arr.plot(grid=True,  title='line plot')
+        >>> arr.plot(grid=True, title='line plot')
         >>> # save figure in a file (see matplotlib.pyplot.savefig documentation for more details)
         >>> plt.savefig('my_file.png')
 
@@ -7217,8 +7217,8 @@ class Array(ABCArray):
         >>> arr.plot.bar(ax=ax[0, 1], stacked=True, title='stacked bar plot')  # doctest: +SKIP
         >>> # area plot in the bottom left corner (1, 0)
         >>> arr.plot.area(ax=ax[1, 0], title='area plot')                      # doctest: +SKIP
-        >>> # scatter plot in the bottom right corner (1, 1)
-        >>> arr.plot.scatter(ax=ax[1, 1], x='M', y='F', title='scatter plot')  # doctest: +SKIP
+        >>> # scatter plot in the bottom right corner (1, 1), using the year as color
+        >>> # index and a specific colormap
         >>> arr.plot.scatter(ax=ax[1, 1], x='M', y='F', c=arr.year, colormap='viridis',
         ...                  title='scatter plot')                             # doctest: +SKIP
         >>> plt.show()                                                         # doctest: +SKIP
