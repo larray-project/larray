@@ -67,6 +67,12 @@ class ExprNode:
     __invert__ = _unaryop('invert')
 
     def evaluate(self, context):
+        """
+        Parameters
+        ----------
+        context : AxisCollection
+            Use axes from this collection
+        """
         raise NotImplementedError()
 
 
