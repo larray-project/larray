@@ -1,3 +1,6 @@
+from larray.core.abstractbases import ABCArray
+
+
 class ExprNode:
     def __bool__(self):
         raise ValueError("Cannot evaluate the truth value of an expression using X.axis_name")
@@ -5,7 +8,12 @@ class ExprNode:
     # method factory
     def _binop(opname):
         def opmethod(self, other):
-            return BinaryOp(opname, self, other)
+            # evaluate eagerly when possible
+            if isinstance(other, ABCArray):
+                self_value = self.evaluate(other.axes)
+                return getattr(self_value, f'__{opname}__')(other)
+            else:
+                return BinaryOp(opname, self, other)
 
         opmethod.__name__ = f'__{opname}__'
         return opmethod
