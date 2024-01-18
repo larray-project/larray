@@ -56,3 +56,5 @@ Fixes
 ^^^^^
 
 * fixed something (closes :issue:`1`).
+
+* fixed converting a scalar Array (an Array with 0 dimensions) to string with numpy 1.22+.
