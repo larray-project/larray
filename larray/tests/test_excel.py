@@ -199,6 +199,10 @@ class TestSheet:
         with open_excel(visible=False) as wb:
             sheet = wb[0]
 
+            # empty sheet
+            res = asarray(sheet)
+            assert res.equals(Array(None))
+
             arr1 = ndtest((2, 3))
             # no header so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
@@ -274,7 +278,7 @@ class TestRange:
             sheet = wb[0]
 
             arr1 = ndtest((2, 3))
-            # no header so that we have an uniform dtype for the whole sheet
+            # dump only the data (no labels/headers) so that we have an uniform dtype for the whole sheet
             sheet['A1'] = arr1
             res1 = np.asarray(sheet['A1:C2'])
             assert np.array_equal(res1, arr1.data)
