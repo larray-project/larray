@@ -435,8 +435,9 @@ memory used: 21.38 Kb"""
 def test_str(small_array, array):
     d3 = d['d1:d3']
 
-    # zero dimension / scalar
-    assert str(small_array[d['d1'], c['c1']]) == "6"
+    # zero dimension / scalar Array
+    scalar_array = Array(42)
+    assert str(scalar_array) == "42"
 
     # empty / len 0 first dimension
     assert str(small_array[c[[]]]) == "Array([])"

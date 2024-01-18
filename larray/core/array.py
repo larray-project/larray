@@ -2446,9 +2446,9 @@ class Array(ABCArray):
     drop_labels = renamed_to(ignore_labels, 'drop_labels', raise_error=True)
 
     def __str__(self) -> str:
-        if not self.ndim:
-            return str(np.asscalar(self))
-        elif not len(self):
+        if self.ndim == 0:
+            return str(self.data.item())
+        elif len(self) == 0:
             return 'Array([])'
         else:
             table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS],
