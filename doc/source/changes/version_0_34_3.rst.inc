@@ -58,3 +58,6 @@ Fixes
 * fixed something (closes :issue:`1`).
 
 * fixed converting a scalar Array (an Array with 0 dimensions) to string with numpy 1.22+.
+
+* fixed copying a sheet from one Excel workbook to another when the destination
+  sheet is given by position (closes :issue:`1092`).

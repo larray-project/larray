@@ -128,6 +128,15 @@ class TestWorkbook:
             assert wb.sheet_names() == ['sheet1', 'sheet2', 'sheet3']
             assert wb['sheet2']['A1'].value == 'sheet1 content'
 
+            # reset sheet 3 content (for next test)
+            wb['sheet3'] = 'sheet3 content'
+            assert wb['sheet3']['A1'].value == 'sheet3 content'
+
+            # sheet did exist, Sheet value (int key)
+            wb[1] = wb['sheet3']
+            assert wb.sheet_names() == ['sheet1', 'sheet3 (2)', 'sheet3']
+            assert wb[1]['A1'].value == 'sheet3 content'
+
             with open_excel(visible=False, app="new") as wb2:
                 assert wb.app != wb2.app
                 with must_raise(ValueError, msg="cannot copy a sheet from one instance of Excel to another"):

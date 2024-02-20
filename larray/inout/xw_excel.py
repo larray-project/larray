@@ -239,8 +239,11 @@ if xw is not None:
                 value.xw_sheet.api.Copy(None, target_sheet.api)
                 if key_in_self:
                     target_sheet.delete()
-                # rename the new sheet
-                self[target_idx].name = key
+
+                # rename the new sheet if necessary
+                # if the key is an integer, we keep the name of the source sheet
+                if isinstance(key, str):
+                    self[target_idx].name = key
                 return
             if key_in_self:
                 sheet = self[key]
