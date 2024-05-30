@@ -7184,15 +7184,19 @@ class Array(ABCArray):
             Colormap to select colors from. If string, load colormap with that name from matplotlib.
         colorbar : boolean, optional
             If True, plot colorbar (only relevant for 'scatter' and 'hexbin' plots)
-        position : float
+        position : float, optional
             Specify relative alignments for bar plot layout. From 0 (left/bottom-end) to 1 (right/top-end).
-            Default is 0.5 (center)
-        yerr : array-like
+            Defaults to 0.5 (center).
+        yerr : array-like, optional
             Error bars on y axis
-        xerr : array-like
+        xerr : array-like, optional
             Error bars on x axis
-        stacked : boolean, default False in line and bar plots, and True in area plot.
-            If True, create stacked plot.
+        stack : boolean, Axis, int, str or tuple, optional
+            Make a stacked plot.
+            - if an Axis (or int or str), stack that axis.
+            - if a tuple of Axis (or int or str), stack each combination of labels of those axes.
+            - True is equivalent to all axes (not already used in other arguments) except the last.
+            Defaults to False in line and bar plots, and True in area plot.
         **kwargs : keywords
             Options to pass to matplotlib plotting method
 
@@ -7208,7 +7212,8 @@ class Array(ABCArray):
         --------
         >>> import matplotlib.pyplot as plt
         >>> # let us define an array with some made up data
-        >>> arr = Array([[5, 20, 5, 10], [6, 16, 8, 11]], 'gender=M,F;year=2018..2021')
+        >>> import larray as la
+        >>> arr = la.Array([[5, 20, 5, 10],                 [6, 16, 8, 11]], 'gender=M,F;year=2018..2021')
 
         Simple line plot
 
@@ -7229,6 +7234,10 @@ class Array(ABCArray):
         >>> arr.plot.bar(subplots='gender', sharey=True)
         >>> plt.show()
 
+        A stacked bar plot (genders are stacked)
+
+        >>> arr.plot.bar(stack='gender')
+
         Create a figure containing 2 x 2 graphs
 
         >>> # see matplotlib.pyplot.subplots documentation for more details
@@ -7236,7 +7245,7 @@ class Array(ABCArray):
         >>> # line plot with 2 curves (Males and Females) in the top left corner (0, 0)
         >>> arr.plot(ax=ax[0, 0], title='line plot')                           # doctest: +SKIP
         >>> # bar plot with stacked values in the top right corner (0, 1)
-        >>> arr.plot.bar(ax=ax[0, 1], stacked=True, title='stacked bar plot')  # doctest: +SKIP
+        >>> arr.plot.bar(ax=ax[0, 1], stack='gender', title='stacked bar plot')  # doctest: +SKIP
         >>> # area plot in the bottom left corner (1, 0)
         >>> arr.plot.area(ax=ax[1, 0], title='area plot')                      # doctest: +SKIP
         >>> # scatter plot in the bottom right corner (1, 1), using the year as color
