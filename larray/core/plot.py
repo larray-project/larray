@@ -1,7 +1,10 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
 from larray import IGroup, Axis, AxisCollection, Group
+from larray.util.misc import deprecate_kwarg
 
 
 def _use_pandas_plot_docstring(f):
@@ -166,6 +169,7 @@ class PlotObject:
 
             return PlotObject._to_pd_obj(array).plot(*args, x=x, y=y, **kwargs)
 
+    @deprecate_kwarg('stacked', 'stack')
     def __call__(self, x=None, y=None, ax=None, subplots=False, layout=None, figsize=None,
                  sharex=None, sharey=False, tight_layout=None, constrained_layout=None, title=None, legend=None,
                  **kwargs):
@@ -173,6 +177,18 @@ class PlotObject:
 
         array = self.array
         legend_kwargs = legend if isinstance(legend, dict) else {}
+
+        if 'stack' in kwargs:
+            if y is not None:
+                raise ValueError("in Array.plot(), cannot use both the 'y' argument and "
+                                 "give axes for the 'stack' argument")
+            # checking that 'stacked' is not also given is done in deprecate_kwarg
+            y = kwargs.pop('stack')
+            if y is True:
+                y = None
+                warnings.warn("in Array.plot(), using stack=True is deprecated, please use "
+                              "stack=axis_name instead", FutureWarning)
+            kwargs['stacked'] = True
 
         subplot_axes, series_axes, x, y = PlotObject._handle_x_y_axes(array.axes, x, y, subplots)
 
@@ -235,14 +251,17 @@ class PlotObject:
                 legend_parent.legend(handles, labels, **legend_kwargs)
         return ax
 
+    @deprecate_kwarg('stacked', 'stack')
     @_use_pandas_plot_docstring
     def line(self, x=None, y=None, **kwds):
         return self(kind='line', x=x, y=y, **kwds)
 
+    @deprecate_kwarg('stacked', 'stack')
     @_use_pandas_plot_docstring
     def bar(self, x=None, y=None, **kwds):
         return self(kind='bar', x=x, y=y, **kwds)
 
+    @deprecate_kwarg('stacked', 'stack')
     @_use_pandas_plot_docstring
     def barh(self, x=None, y=None, **kwds):
         return self(kind='barh', x=x, y=y, **kwds)
@@ -279,6 +298,7 @@ class PlotObject:
                 y = by
         return self(kind='kde', bw_method=bw_method, ind=ind, y=y, **kwds)
 
+    @deprecate_kwarg('stacked', 'stack')
     @_use_pandas_plot_docstring
     def area(self, x=None, y=None, **kwds):
         return self(kind='area', x=x, y=y, **kwds)

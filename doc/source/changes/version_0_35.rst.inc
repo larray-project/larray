@@ -6,7 +6,10 @@ Syntax changes
 
 * renamed ``Array.old_method_name()`` to :py:obj:`Array.new_method_name()` (closes :issue:`1`).
 
-* renamed ``old_argument_name`` argument of :py:obj:`Array.method_name()` to ``new_argument_name``.
+* renamed ``stacked`` argument of :py:obj:`Array.plot()` to ``stack``. This
+  also impacts all the relevant kind-specific sub-methods
+  (:py:obj:`Array.plot.area()`, :py:obj:`Array.plot.bar()`,
+  :py:obj:`Array.plot.barh()`, and :py:obj:`Array.plot.line()`).
 
 
 Backward incompatible changes
@@ -49,7 +52,12 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* :py:obj:`Array.plot()` ``stack`` argument (previously called ``stacked``) can
+  now take an axis (or several axes) to specify which axes to stack, instead of
+  always stacking the last axis. For example, a plot with genders stacked
+  could be specified as:
+
+    >>> arr.plot.bar(stacked='gender')
 
 
 Fixes
