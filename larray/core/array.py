@@ -7134,15 +7134,19 @@ class Array(ABCArray):
             - 'hexbin' : hexbin plot (if array's dimensions >= 2)
         ax : matplotlib axes object, default None
         subplots : boolean, Axis, int, str or tuple, default False
-            Make several subplots. If True, will make subplots for each combination of labels for all axes except the
-            last. If an Axis, int, str (or tuple of those), it will make subplots for combination of labels of those
-            axes.
+            Make several subplots.
+            - if an Axis (or int or str), make subplots for each label of that axis.
+            - if a tuple of Axis (or int or str), make subplots for each combination of
+              labels of those axes.
+            - True is equivalent to all axes except the last.
+            Defaults to False.
         sharex : boolean, default True if ax is None else False
-            In case subplots=True, share x axis and set some x axis labels to invisible;
+            When subplots are used, share x axis and set some x axis labels to invisible;
             defaults to True if ax is None otherwise False if an ax is passed in;
-            Be aware, that passing in both an ax and sharex=True will alter all x axis labels for all axis in a figure!
+            Be aware, that passing in both an ax and sharex=True will alter all x axis
+            labels for all axis in a figure!
         sharey : boolean, default False
-            In case subplots=True, share y axis and set some y axis labels to invisible
+            When subplots are used, share y axis and set some y axis labels to invisible.
         layout : tuple (optional)
             (rows, columns) for the layout of subplots
         figsize : a tuple (width, height) in inches
