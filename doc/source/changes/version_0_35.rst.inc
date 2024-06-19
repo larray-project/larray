@@ -11,6 +11,11 @@ Syntax changes
   (:py:obj:`Array.plot.area()`, :py:obj:`Array.plot.bar()`,
   :py:obj:`Array.plot.barh()`, and :py:obj:`Array.plot.line()`).
 
+* all align() methods (:py:obj:`Axis.align()`, :py:obj:`AxisCollection.align()`
+  and :py:obj:`Array.align()`) only take options (``join``, ``axes`` and/or
+  ``fill_value``) as keywords arguments. Extra positional arguments will be
+  considered as more objects to align (see below).
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -45,6 +50,9 @@ New features
 * implemented a new kind of plot: `heatmap`. It can be used like this:
 
     >>> arr.plot.heatmap()
+
+* implemented :py:obj:`Session.align()` to align all the arrays in several
+  sessions at once. Closes :issue:`501`.
 
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
@@ -88,6 +96,12 @@ Miscellaneous improvements
   axes should be used as columns (defaults to 1, as before).
 
 * made :py:obj:`ipfp()` slightly faster when display_progress is False.
+
+* all align() methods (:py:obj:`Axis.align()`, :py:obj:`AxisCollection.align()`
+  and :py:obj:`Array.align()`) now support aligning more than two objects at
+  once by passing them as positional arguments. For example:
+
+    >>> array1.align(array2, array3, join='outer')
 
 
 Fixes
