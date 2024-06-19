@@ -1077,3 +1077,7 @@ def concatenate_ndarrays(arrays) -> np.ndarray:
         arrays = [np.asarray(labels, dtype=object) for labels in arrays]
     # TODO: try using the new dtype argument to concatenate instead of converting labels explicitly as above
     return np.concatenate(arrays)
+
+
+def first(iterable, default=None):
+    return next(iter(iterable), default)

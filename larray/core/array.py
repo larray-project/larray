@@ -54,6 +54,7 @@ from larray.core.expr import ExprNode, BinaryOp
 from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
+from larray.core.axis import align_axis_collections
 from larray.core.plot import PlotObject
 from larray.util.misc import (table2str, size2str, ReprString,
                               float_error_handler_factory, light_product, common_dtype,
@@ -851,6 +852,34 @@ def _handle_meta(meta, title):
 def np_array_to_pd_index(array, name=None, tupleize_cols=True):
     dtype = None if array.dtype.kind != 'O' else object
     return pd.Index(array, dtype=dtype, name=name, tupleize_cols=tupleize_cols)
+
+
+def align_arrays(values, join='outer', fill_value=nan, axes=None):
+    bad_values = [value for value in values
+                 if not isinstance(value, Array) and not np.isscalar(value)]
+    if bad_values:
+        bad_types = set(type(v) for v in bad_values)
+        bad_type_names = sorted(t.__name__ for t in bad_types)
+        raise TypeError("align only supports Arrays and scalars but got:"
+                        f"{', '.join(bad_type_names)}")
+    axis_collections = [
+        value.axes if isinstance(value, Array) else AxisCollection()
+        for value in values
+    ]
+    # fail early because reindex does not currently support anonymous axes
+    if any(any(name is None for name in axis_col.names)
+           for axis_col in axis_collections):
+        raise ValueError("arrays with anonymous axes are currently not "
+                         "supported by Array.align")
+    try:
+       aligned_axis_collections = align_axis_collections(axis_collections,
+                                                         join=join, axes=axes)
+    except ValueError as e:
+        raise ValueError(f"Arrays are not aligned because {e}")
+    return tuple(value.reindex(aligned_axes, fill_value=fill_value)
+                    if isinstance(value, Array)
+                    else value
+                 for value, aligned_axes in zip(values, aligned_axis_collections))
 
 
 class Array(ABCArray):
@@ -1817,14 +1846,14 @@ class Array(ABCArray):
         else:
             return res
 
-    def align(self, other, join='outer', fill_value=nan, axes=None) -> Tuple['Array', 'Array']:
-        r"""Align two arrays on their axes with the specified join method.
+    def align(self, *other, join='outer', fill_value=nan, axes=None) -> Tuple['Array', 'Array']:
+        r"""Align array with other(s) on their axes with the specified join method.
 
         In other words, it ensure all common axes are compatible. Those arrays can then be used in binary operations.
 
         Parameters
         ----------
-        other : Array-like
+        *other : Array-like
         join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Join method. For each axis common to both arrays:
               - outer: will use a label if it is in either arrays axis (ordered like the first array).
@@ -1837,13 +1866,13 @@ class Array(ABCArray):
             Value used to fill cells corresponding to label combinations which are not common to both arrays.
             Defaults to NaN.
         axes : AxisReference or sequence of them, optional
-            Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
+            Axes to align. Need to be valid in all arrays. Defaults to None (all common axes). This must be specified
             when mixing anonymous and non-anonymous axes.
 
         Returns
         -------
-        (left, right) : (Array, Array)
-            Aligned objects
+        arrays : tuple of Array
+            Aligned arrays
 
         Notes
         -----
@@ -1989,18 +2018,11 @@ class Array(ABCArray):
         >>> arr1.align(arr2, join='exact')   # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        ValueError: Both arrays are not aligned because align method with join='exact'
+        ValueError: Arrays are not aligned because align method with join='exact'
         expected Axis(['a0', 'a1'], 'a') to be equal to Axis(['a0', 'a1', 'a2'], 'a')
         """
-        other = asarray(other)
-        # reindex does not currently support anonymous axes
-        if any(name is None for name in self.axes.names) or any(name is None for name in other.axes.names):
-            raise ValueError("arrays with anonymous axes are currently not supported by Array.align")
-        try:
-            left_axes, right_axes = self.axes.align(other.axes, join=join, axes=axes)
-        except ValueError as e:
-            raise ValueError(f"Both arrays are not aligned because {e}")
-        return self.reindex(left_axes, fill_value=fill_value), other.reindex(right_axes, fill_value=fill_value)
+        return align_arrays((self, *other),
+                            join=join, fill_value=fill_value, axes=axes)
 
     @deprecate_kwarg('reverse', 'ascending', {True: False, False: True})
     def sort_values(self, key=None, axis=None, ascending=True) -> 'Array':

@@ -17,8 +17,8 @@ from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
                               exactly_one, concatenate_ndarrays)
+from larray.util.misc import first
 from larray.util.types import Scalar
-
 
 np_frompyfunc = np.frompyfunc
 
@@ -1330,12 +1330,12 @@ class Axis(ABCAxis):
         to_drop = set(other)
         return Axis([label for label in self.labels if label not in to_drop], self.name)
 
-    def align(self, other, join='outer') -> 'Axis':
+    def align(self, *other, join='outer') -> 'Axis':
         r"""Align axis with other object using specified join method.
 
         Parameters
         ----------
-        other : Axis or label sequence
+        *other : Axis or label sequence
         join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Defaults to 'outer'.
 
@@ -1366,22 +1366,16 @@ class Axis(ABCAxis):
         ValueError: align method with join='exact' expected
         Axis(['a0', 'a1', 'a2'], 'a') to be equal to Axis(['a1', 'a2', 'a3'], 'a')
         """
-        assert join in {'outer', 'inner', 'left', 'right', 'exact'}
-        if join == 'outer':
-            return self.union(other)
-        elif join == 'inner':
-            return self.intersection(other)
-        elif join == 'left':
-            return self
-        elif join == 'right':
-            if not isinstance(other, Axis):
-                other = Axis(other)
-            return other
-        elif join == 'exact':
-            if not self.equals(other):
-                raise ValueError(f"align method with join='exact' expected {self!r} to be equal to {other!r}")
-            else:
-                return self
+        bad_objs = [obj for obj in other if not isinstance(obj, Axis)]
+        if bad_objs:
+            for obj in bad_objs:
+                obj_type = type(obj).__name__
+                warnings.warn(f"aligning an Axis to a non-Axis object "
+                              f"({obj_type}) is deprecated. Please convert to "
+                              f"an Axis first.", FutureWarning, stacklevel=2)
+            other = [obj if isinstance(obj, Axis) else Axis(obj)
+                     for obj in other]
+        return align_axes((self, *other), join=join)
 
     def to_hdf(self, filepath, key=None) -> None:
         r"""
@@ -1460,6 +1454,50 @@ class Axis(ABCAxis):
         Axis(2, 'a')
         """
         return Axis(len(self), self.name)
+
+
+def align_axes(axes: Sequence[Axis], join: str = 'outer') -> Axis:
+    if not all(isinstance(axis, Axis) for axis in axes):
+        raise TypeError("all objects to align must be Axis objects")
+
+    if join not in {'outer', 'inner', 'left', 'right', 'exact'}:
+        raise ValueError(f"join must be one of 'outer', 'inner', 'left', "
+                         f"'right' or 'exact', got {join!r}")
+
+    names = [axis.name for axis in axes]
+    first_name = first((name for name in names if name is not None),
+                       default=None)
+    if first_name is not None:
+        if not all(name is None or name == first_name for name in names):
+            raise ValueError("In align, all axes must be anonymous or "
+                             "have the same name: "
+                             f"{', '.join(repr(name) for name in names)}")
+
+    def join_left(axis1, axis2):
+        return axis1
+    def join_right(axis1, axis2):
+        return axis2
+    def join_exact(axis1, axis2):
+        if not axis1.equals(axis2):
+            raise ValueError(f"align method with join='exact' expected "
+                             f"{axis1!r} to be equal to {axis2!r}")
+        else:
+            return axis1
+    if join == 'outer':
+        join_labels_func = Axis.union
+    elif join == 'inner':
+        join_labels_func = Axis.intersection
+    elif join == 'left':
+        join_labels_func = join_left
+    elif join == 'right':
+        join_labels_func = join_right
+    else:
+        assert join == 'exact'
+        join_labels_func = join_exact
+    aligned_axis = axes[0]
+    for axis in axes[1:]:
+        aligned_axis = join_labels_func(aligned_axis, axis)
+    return aligned_axis
 
 
 def _make_axis(obj) -> Axis:
@@ -3552,23 +3590,25 @@ incompatible axes:
 
     split_axis = renamed_to(split_axes, 'split_axis', raise_error=True)
 
-    def align(self, other, join='outer', axes=None) -> Tuple['AxisCollection', 'AxisCollection']:
-        r"""Align this axis collection with another.
+    def align(self, *other, join='outer', axes=None) -> Tuple['AxisCollection']:
+        r"""Align this AxisCollection with (an)other AxisCollection(s).
 
         This ensures all common axes are compatible.
 
         Parameters
         ----------
-        other : AxisCollection
+        *other : AxisCollection
+            AxisCollection(s) to align with this one.
         join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
             Defaults to 'outer'.
         axes : AxisReference or sequence of them, optional
-            Axes to align. Need to be valid in both arrays. Defaults to None (all common axes). This must be specified
+            Axes to align. Need to be valid in all axis collections.
+            Defaults to None (all common axes). This must be specified
             when mixing anonymous and non-anonymous axes.
 
         Returns
         -------
-        (left, right) : (AxisCollection, AxisCollection)
+        tuple of AxisCollection
             Aligned collections
 
         See Also
@@ -3631,31 +3671,20 @@ incompatible axes:
             Axis(['c0'], None)
         ])
         """
-        if join not in {'outer', 'inner', 'left', 'right', 'exact'}:
-            raise ValueError("join should be one of 'outer', 'inner', 'left', 'right' or 'exact'")
-        other = other if isinstance(other, AxisCollection) else AxisCollection(other)
+        # For backward compatibility with older code using align with a
+        # non-AxisCollection second argument, we only support aligning more
+        # than two collection when other contains actual AxisCollection objects
+        bad_objs = [obj for obj in other if not isinstance(obj, AxisCollection)]
+        if bad_objs:
+            for obj in bad_objs:
+                obj_type = type(obj).__name__
+                warnings.warn(f"aligning an AxisCollection to a "
+                              f"non-AxisCollection object ({obj_type}) is "
+                              f"deprecated. Please convert to an AxisCollection "
+                              f"first.", FutureWarning, stacklevel=2)
+            other = [AxisCollection(obj) for obj in other]
 
-        # if axes not specified
-        if axes is None:
-            # and we have only anonymous axes on both sides
-            if all(name is None for name in self.names) and all(name is None for name in other.names):
-                # use N first axes by position
-                join_axes = list(range(min(len(self), len(other))))
-            elif any(name is None for name in self.names) or any(name is None for name in other.names):
-                raise ValueError("axes collections with mixed anonymous/non anonymous axes are not supported by align"
-                                 "without specifying axes explicitly")
-            else:
-                assert all(name is not None for name in self.names) and all(name is not None for name in other.names)
-                # use all common axes
-                join_axes = list(OrderedSet(self.names) & OrderedSet(other.names))
-        else:
-            if isinstance(axes, (int, str, Axis)):
-                axes = [axes]
-            join_axes = axes
-        new_axes = [self_axis.align(other_axis, join=join)
-                    for self_axis, other_axis in zip(self[join_axes], other[join_axes])]
-        axes_changes = list(zip(join_axes, new_axes))
-        return self.replace(axes_changes), other.replace(axes_changes)
+        return align_axis_collections((self, *other), join=join, axes=axes)
 
     # XXX: make this into a public method/property? AxisCollection.flat_labels[flat_indices]?
     def _flat_lookup(self, flat_indices):
@@ -3800,6 +3829,57 @@ incompatible axes:
                 combined_labels = [sepjoin(comb) for comb in zip(*axes_labels)]
             combined_axis = Axis(combined_labels, combined_name)
         return AxisCollection(combined_axis)
+
+
+def align_axis_collections(axis_collections, join='outer', axes=None):
+    if join not in {'outer', 'inner', 'left', 'right', 'exact'}:
+        raise ValueError("join should be one of 'outer', 'inner', 'left', "
+                         "'right' or 'exact'")
+
+    # if axes not specified
+    if axes is None:
+        # and we have only anonymous axes
+        if all(name is None for col in axis_collections
+               for name in col.names):
+            # use all axes by position
+            max_length = max(len(col) for col in axis_collections)
+            join_axes_refs = list(range(max_length))
+        elif any(name is None for col in axis_collections
+                 for name in col.names):
+            raise ValueError(
+                "axes collections with mixed anonymous/non anonymous axes "
+                "are not supported by align without specifying axes "
+                "explicitly")
+        else:
+            assert all(name is not None for col in axis_collections
+                       for name in col.names)
+            # use all axes by name
+            join_axes_refs = OrderedSet(axis_collections[0].names)
+            for col in axis_collections[1:]:
+                join_axes_refs |= OrderedSet(col.names)
+    else:
+        if isinstance(axes, (int, str, Axis)):
+            axes = [axes]
+        join_axes_refs = axes
+
+    # first compute all aligned axes for all collections
+    axes_changes = {
+        axis_ref: align_axes([axis_col[axis_ref]
+                              for axis_col in axis_collections
+                              if axis_ref in axis_col],
+                             join=join)
+        for axis_ref in join_axes_refs
+    }
+
+    # then apply the changed axes for the collections where the axis exists
+    return tuple(
+        axis_col.replace({
+            axis_ref: aligned_axis
+            for axis_ref, aligned_axis in axes_changes.items()
+            if axis_ref in axis_col
+        })
+        for axis_col in axis_collections
+    )
 
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):

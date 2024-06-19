@@ -7,13 +7,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from larray.tests.common import meta
-from larray.tests.common import (assert_larray_equal, assert_array_nan_equal, inputpath,
-                                 needs_xlwings, needs_pytables, needs_openpyxl, must_warn, must_raise)
+from larray.tests.common import (
+    meta, inputpath,
+    assert_larray_equal, assert_array_nan_equal, assert_larray_nan_equal,
+    needs_xlwings, needs_pytables, needs_openpyxl,
+    must_warn, must_raise
+)
 from larray.inout.common import _supported_scalars_types
-from larray import (Session, Axis, Array, Group, isnan, zeros_like, ndtest, ones_like,
-                    ones, full, full_like, stack, local_arrays, global_arrays, arrays, CheckedSession)
-
+from larray import (Session, Axis, Array, Group, CheckedSession,
+                    isnan,
+                    zeros_like, ndtest, ones_like, ones, full, full_like,
+                    stack, from_string,
+                    local_arrays, global_arrays, arrays)
 
 # avoid flake8 errors
 meta = meta
@@ -687,6 +692,37 @@ def test_stack():
     assert_larray_equal(res.arr1, expected_arr1)
     assert_larray_equal(res.arr2, expected_arr2)
 
+
+def test_align():
+    s1 = Session(arr1=ndtest("        a=a0,a1   ;b=b0,b1"),
+                 arr2=ndtest("        a=a0,a1   ;b=b0,b1"))
+    s2 = Session(arr1=ndtest("        a=a0,a1,a2;b=b0,b1"),  # extra label
+                 arr2=ndtest("c=c0,c1;a=a0,a1   ;b=b0,b1"),  # extra axis
+                 arr3=ndtest("        a=a0,a1   ;b=b0,b1"))  # extra array
+    s3 = Session(                                            # missing array
+                 arr2=ndtest("        a=a0,a1   ;b=   b1"),  # missing label
+                 arr3=ndtest("                   b=b0,b1"))  # missing axis
+
+    al_s1, al_s2, al_s3 = s1.align(s2, s3)
+
+    assert_larray_nan_equal(al_s1.arr1, from_string(r"""
+    a\b   b0   b1
+     a0  0.0  1.0
+     a1  2.0  3.0
+     a2  nan  nan"""))
+    assert_larray_equal(al_s1.arr2, s1.arr2)  # no change
+    assert isnan(al_s1.arr3)
+
+    assert_larray_equal(al_s2.arr1, s2.arr1)  # no change
+    assert_larray_equal(al_s2.arr2, s2.arr2)  # no change
+    assert_larray_equal(al_s2.arr3, s2.arr3)  # no change
+
+    assert isnan(al_s3.arr1)
+    assert_larray_nan_equal(al_s3.arr2, from_string(r"""
+    a\b   b0   b1
+     a0  nan  0.0
+     a1  nan  1.0"""))
+    assert_larray_equal(al_s3.arr3, s3.arr3)  # no change
 
 if __name__ == "__main__":
     pytest.main()

@@ -13,7 +13,9 @@ from larray.core.group import Group
 from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.array import Array, get_axes, ndtest, zeros, zeros_like, sequence      # noqa: F401
+from larray.core.array import align_arrays
 from larray.util.misc import float_error_handler_factory, is_interactive_interpreter, renamed_to, inverseop, size2str
+from larray.util.misc import unique_list, first
 from larray.inout.session import ext_default_engine, get_file_handler
 
 
@@ -1577,6 +1579,97 @@ class Session:
         '412 bytes'
         """
         return size2str(self.nbytes)
+
+    def align(self, *other, join='outer', fill_value=nan):
+        r"""Align the current session with (an)other session(s)
+
+        Arrays from all sessions will be aligned with the corresponding arrays
+        in all other sessions where arrays with the same name are present.
+
+        Non-Array objects (eg. Axis, Group) are not aligned, but simply copied
+        to the resulting sessions.
+
+        Parameters
+        ----------
+        *other : Session
+            Session(s) to align with.
+        join : {'outer', 'inner', 'left', 'right', 'exact'}, optional
+            How to handle common axes when aligning arrays.
+            See :py:obj:`Array.align()` for details. Defaults to 'outer'.
+        fill_value : scalar or Array, optional
+            Value used to fill cells corresponding to label combinations which
+            are not present in an array. Defaults to NaN.
+
+        Returns
+        -------
+        sessions: tuple of Session
+            Aligned sessions.
+
+        Examples
+        --------
+        >>> arr1 = ndtest('a=a0,a1; b=b0,b1')
+        >>> arr1
+        a\b  b0  b1
+         a0   0   1
+         a1   2   3
+        >>> arr2 = ndtest('a=a1,a2; b=b1,b2')
+        >>> arr2
+        a\b  b1  b2
+         a1   0   1
+         a2   2   3
+        >>> s1 = Session({'a': arr1.a, 'arr': arr1})
+        >>> s2 = Session({'a': arr2.a, 'arr': arr2})
+        >>> s1_aligned, s2_aligned = s1.align(s2, join='outer', fill_value=-1)
+        >>> s1_aligned.arr
+        a\b  b0  b1  b2
+         a0   0   1  -1
+         a1   2   3  -1
+         a2  -1  -1  -1
+        >>> s2_aligned.arr
+        a\b  b0  b1  b2
+         a0  -1  -1  -1
+         a1  -1   0   1
+         a2  -1   2   3
+        >>> s1_aligned.a
+        Axis(['a0', 'a1'], 'a')
+        """
+        sessions = (self, other) if isinstance(other, Session) else (self, *other)
+        if not all(isinstance(s, Session) for s in sessions):
+            raise TypeError("Session.align only supports aligning with other "
+                            "Session objects")
+
+        seen = set()
+        all_keys = []
+        for s in sessions:
+            unique_list(s.keys(), all_keys, seen)
+
+        def rename_anonymous_axes(obj):
+            if not isinstance(obj, Array):
+                return obj
+            if not any(axis.name is None for axis in obj.axes):
+                return obj
+            return obj.rename({
+                axis_num: axis.name
+                if axis.name is not None else f'axis{axis_num}'
+                for axis_num, axis in enumerate(obj.axes)
+            })
+
+        res_sessions = tuple(Session() for s in sessions)
+        for name in all_keys:
+            objects = [s.get(name, np.nan) for s in sessions]
+            first_array = first((obj for obj in objects
+                                 if isinstance(obj, Array)))
+            if first_array is None:
+                # not a single array, copy the objects as is
+                aligned_objects = objects
+            else:
+                # rename anonymous axes because they are not supported by align
+                objects = [rename_anonymous_axes(obj) for obj in objects]
+                aligned_objects = align_arrays(objects, join=join,
+                                               fill_value=fill_value)
+            for res_session, obj in zip(res_sessions, aligned_objects):
+                res_session[name] = obj
+        return res_sessions
 
 
 def _exclude_private_vars(vars_dict: Dict[str, Any]) -> Dict[str, Any]:
