@@ -1,4 +1,4 @@
-__version__ = '0.34.2'
+__version__ = '0.34.3-dev'
 
 
 from larray.core.axis import Axis, AxisCollection, X
