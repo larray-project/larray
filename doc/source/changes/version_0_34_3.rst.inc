@@ -62,3 +62,6 @@ Fixes
 
 * fixed copying a sheet from one Excel workbook to another when the destination
   sheet is given by position (closes :issue:`1092`).
+
+* fixed :py:obj:`Array.values()` and :py:obj:`Array.items()` on the first axis given by position.
+  (e.g. `my_array.values(axes=0)`). Closes :issue:`1093`.
