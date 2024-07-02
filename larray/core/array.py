@@ -3434,12 +3434,13 @@ class Array(ABCArray):
             combined = np.ravel(self.data)
             # combined[::-1] *is* indexable
             return combined if ascending else combined[::-1]
-        elif not axes:
-            # empty axes list
-            return [self]
 
         if not isinstance(axes, (tuple, list, AxisCollection)):
             axes = (axes,)
+
+        if len(axes) == 0:
+            # empty axes list
+            return [self]
 
         axes = self.axes[axes]
         # move axes in front

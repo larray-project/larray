@@ -336,6 +336,11 @@ def test_values():
     res = list(values)
     assert_larray_equal(res[0], arr)
 
+    # issue 1093
+    values = arr.values(0)
+    res = list(values)
+    assert_larray_equal(res[0], arr['a0'])
+
 
 def test_items():
     arr = ndtest((2, 2))
@@ -398,6 +403,14 @@ def test_items():
     key, value = items_list[-1]
     assert key == (b.i[0],)
     assert_larray_equal(value, arr['b0'])
+
+    # issue 1093
+    items = arr.items(0)
+    items_list = list(items)
+    key, value = items_list[0]
+    assert key == (a.i[0],)
+    assert_larray_equal(value, arr['a0'])
+
 
 
 def test_rename(array):
