@@ -4772,6 +4772,16 @@ def test_dump():
                    ['a0', 0, 1],
                    ['a1', 2, 3]]
 
+    # axes_names when ndim == 1 (issue #1094)
+    arr = ndtest(3)
+    res = arr.dump()
+    assert res == [['a', 'a0', 'a1', 'a2'], ['', 0, 1, 2]]
+    res = arr.dump(axes_names=False)
+    # unsure if we should produce [['a0', 'a1', 'a2'], [0, 1, 2]] instead
+    assert res == [['a0', 'a1', 'a2'], [0, 1, 2]]
+    res = arr.dump(axes_names='except_last')
+    assert res == [['a0', 'a1', 'a2'], [0, 1, 2]]
+
 
 @needs_xlwings
 def test_open_excel(tmp_path):
