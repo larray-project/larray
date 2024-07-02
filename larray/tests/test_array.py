@@ -771,7 +771,8 @@ def test_getitem_bool_larray_key_arr_whout_bool_axis():
     raw = arr.data
 
     # all dimensions
-    res = arr[arr < 5]
+    filter_ = arr < 5
+    res = arr[filter_]
     assert isinstance(res, Array)
     assert res.ndim == 1
     assert_nparray_equal(res.data, raw[raw < 5])
@@ -785,6 +786,20 @@ def test_getitem_bool_larray_key_arr_whout_bool_axis():
     raw_key = raw[:, 1, :] % 5 == 0
     raw_d1, raw_d3 = raw_key.nonzero()
     assert_nparray_equal(res.data, raw[raw_d1, :, raw_d3])
+
+    # filter with smaller axis than array
+    filter_ = arr < 10
+    filter2 = filter_['c0,c2,c3']
+    with must_raise(ValueError, """boolean subset array has incompatible axes with array:
+array axes: {a, b, c}
+subset array axes: {a, b, c}
+incompatible axes:
+    array axis:
+        Axis(['c0', 'c1', 'c2', 'c3'], 'c')
+    subset array axis:
+        Axis(['c0', 'c2', 'c3'], 'c')
+"""):
+        _ = arr[filter2]
 
     # using an Axis object
     arr = ndtest('a=a0,a1;b=0..3')

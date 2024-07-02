@@ -2878,6 +2878,22 @@ class AxisCollection:
                 extra_key_axes = axis_key.axes - self
                 if extra_key_axes:
                     raise ValueError(f"boolean subset key contains more axes ({axis_key.axes}) than array ({self})")
+
+                # TODO: factorize with check_compatible
+                for i, subset_axis in enumerate(axis_key.axes):
+                    array_axis = self.get_by_pos(subset_axis, i)
+                    if not array_axis.iscompatible(subset_axis):
+                        msg = f"""boolean subset array has incompatible axes with array:
+array axes: {self}
+subset array axes: {axis_key.axes}
+incompatible axes:
+    array axis:
+        {array_axis!r}
+    subset array axis:
+        {subset_axis!r}
+"""
+                        raise ValueError(msg)
+
                 # nonzero (currently) returns a tuple of IGroups containing 1D Arrays (one IGroup per axis)
                 filtered_key.extend(axis_key.nonzero())
             # drop slice(None) and Ellipsis since they are meaningless because of guess_axis.
