@@ -2580,23 +2580,29 @@ class Array(ABCArray):
                 axes_names = self.axes.names
 
             # transforms ['a', 'b', 'c', 'd'] into ['a', 'b', 'c\\d']
-            if wide and len(axes_names) > 1:
-                if dump_axes_names is True:
-                    # combine two last names
-                    last_name = axes_names.pop()
-                    prev_name = axes_names[-1]
-                    # do not combine if last_name is None or ''
-                    if last_name:
-                        prev_name = prev_name if prev_name is not None else ''
-                        combined_name = prev_name + '\\' + last_name
+            if wide:
+                if len(axes_names) == 1:
+                    # if dump_axes_names is False or 'except_last'
+                    if dump_axes_names is not True:
+                        axes_names = []
+                    # and do nothing when dump_axes_names is True
+                elif len(axes_names) > 1:
+                    if dump_axes_names is True:
+                        # combine two last names
+                        last_name = axes_names.pop()
+                        prev_name = axes_names[-1]
+                        # do not combine if last_name is None or ''
+                        if last_name:
+                            prev_name = prev_name if prev_name is not None else ''
+                            combined_name = prev_name + '\\' + last_name
+                        else:
+                            # whether it is a string or None !
+                            combined_name = prev_name
+                        axes_names[-1] = combined_name
+                    elif dump_axes_names == 'except_last':
+                        axes_names = axes_names[:-1]
                     else:
-                        # whether it is a string or None !
-                        combined_name = prev_name
-                    axes_names[-1] = combined_name
-                elif dump_axes_names == 'except_last':
-                    axes_names = axes_names[:-1]
-                else:
-                    axes_names = [''] * (len(axes_names) - 1)
+                        axes_names = [''] * (len(axes_names) - 1)
 
             axes = self.axes[:-1] if wide else self.axes
 
@@ -2605,9 +2611,13 @@ class Array(ABCArray):
 
             # creates vertical lines (ticks is a list of list)
             if self.ndim == 1 and wide:
-                # There is no vertical axis, so the axis name should not have
-                # any "tick" below it and we add an empty "tick".
-                ticks = [['']]
+                if dump_axes_names is True:
+                    # There is no vertical axis, so the axis name should not have
+                    # any "tick" below it and we add an empty "tick".
+                    ticks = [['']]
+                else:
+                    # There is no vertical axis but no axis name either
+                    ticks = [[]]
             elif light:
                 ticks = light_product(*labels)
             else:

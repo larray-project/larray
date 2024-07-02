@@ -65,3 +65,5 @@ Fixes
 
 * fixed :py:obj:`Array.values()` and :py:obj:`Array.items()` on the first axis given by position.
   (e.g. `my_array.values(axes=0)`). Closes :issue:`1093`.
+
+* fixed :py:obj:`Array.dump()` ``axes_names`` argument for 1D arrays (closes :issue:`1094`).
