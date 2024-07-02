@@ -55,7 +55,8 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* using a boolean array as a filter to take a subset of another array now raise an error when the
+  two arrays have incompatible axes instead of producing wrong result (closes :issue:`1085`).
 
 * fixed converting a scalar Array (an Array with 0 dimensions) to string with numpy 1.22+.
 
