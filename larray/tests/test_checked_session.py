@@ -267,9 +267,8 @@ def test_add_cs(checkedsession):
     test_add(cs)
 
     u = Axis('u=u0..u2')
-    # second warning is because Session.add is deprecated
-    with must_warn(UserWarning, msg=f"'u' is not declared in '{cs.__class__.__name__}'",
-                   num_expected=2):
+    with must_warn(UserWarning, msg=("Session.add() is deprecated. Please use Session.update() instead.",
+                                     f"'u' is not declared in '{cs.__class__.__name__}'")):
         cs.add(u)
 
 

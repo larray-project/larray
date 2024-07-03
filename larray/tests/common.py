@@ -165,18 +165,42 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
 
         try:
             with pytest.warns(warn_cls, match=match) as caught_warnings:
+                # yield to the tested code
                 yield caught_warnings
+        # this code executes after the tested code has finished (whether or not it raised an exception)
         finally:
             if isinstance(msg, (tuple, list)):
                 caught_messages = [str(caught_w.message) for caught_w in caught_warnings]
-                caught_eq_expected = all(caught_msg == expected_msg
-                                         for caught_msg, expected_msg in zip(caught_messages, msg))
-                assert caught_eq_expected, f"Caught messages:\n{caught_messages}\n" \
-                                           f"different from expected:\n{msg}"
+                expected_messages = list(msg)
+                assert caught_messages == expected_messages, (f"Caught messages:\n{caught_messages}\n"
+                                                              f"different from expected:\n{msg}")
 
-            if num_expected is not None:
+            elif num_expected is not None:
+                # pytest.warns only checks there is at least *one* warning with the correct
+                # class and message
                 num_caught = len(caught_warnings)
-                assert num_caught == num_expected, f"caught {num_caught} warnings instead of {num_expected}"
+                caught_messages = [str(caught_w.message) for caught_w in caught_warnings]
+                pattern = re.compile(match)
+                messages_matching_pattern = [msg for msg in caught_messages if pattern.match(msg)]
+                messages_not_matching_pattern = [msg for msg in caught_messages if not pattern.match(msg)]
+                num_matching_msgs = len(messages_matching_pattern)
+                num_unexpected_msgs = len(messages_not_matching_pattern)
+                assert num_matching_msgs + num_unexpected_msgs == num_caught, "problem in testing framework"
+                if num_unexpected_msgs and num_matching_msgs == num_expected:
+                    assert_msg = (f"caught {num_expected} matching warning(s) *as expected* but also "
+                                  f"{num_unexpected_msgs} unexpected warning(s): {messages_not_matching_pattern}")
+                elif num_unexpected_msgs:
+                    assert_msg = (f"caught {num_matching_msgs} matching warning(s) but expected {num_expected} "
+                                  f"instead and also caught {num_unexpected_msgs} unexpected warning(s): "
+                                  f"{messages_not_matching_pattern}")
+                elif num_matching_msgs != num_expected:
+                    assert_msg = (f"caught {num_matching_msgs} matching warning(s) but expected {num_expected} "
+                                  f"instead")
+                else:
+                    assert_msg = None
+                if assert_msg is not None:
+                    raise AssertionError(assert_msg)
+
             if check_file:
                 caller_path = inspect.stack()[2].filename
                 warning_path = caught_warnings[0].filename
