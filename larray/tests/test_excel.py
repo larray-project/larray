@@ -33,8 +33,8 @@ class TestWorkbook:
         faulthandler_enabled = faulthandler.is_enabled()
         if faulthandler_enabled:
             faulthandler.disable()
-        disconnected_pattern = r"\(.*, 'The object invoked has disconnected from its clients.', .*\)"
-        with must_raise(pywintypes.com_error, match=disconnected_pattern):
+        disconnected_msg = r"The object invoked has disconnected from its clients."
+        with must_raise(pywintypes.com_error, match=rf"\(.*, '{disconnected_msg}', .*\)"):
             wb1.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()
@@ -48,7 +48,11 @@ class TestWorkbook:
         # anything using wb2 will fail
         if faulthandler_enabled:
             faulthandler.disable()
-        with must_raise(pywintypes.com_error, match=disconnected_pattern):
+        # from xlwings 0.30.2 onward, the message is a "call failed" error, while it was
+        # "disconnected" error in previous versions
+        call_failed_msg = "The remote procedure call failed."
+        error_pattern = fr"\(.*, '({disconnected_msg})|({call_failed_msg})', .*\)"
+        with must_raise(pywintypes.com_error, match=error_pattern):
             wb2.sheet_names()
         if faulthandler_enabled:
             faulthandler.enable()
