@@ -60,10 +60,12 @@ Fixes
 
 * fixed converting a scalar Array (an Array with 0 dimensions) to string with numpy 1.22+.
 
-* fixed copying a sheet from one Excel workbook to another when the destination
-  sheet is given by position (closes :issue:`1092`).
+* fixed copying a sheet from one Excel workbook to another when the destination sheet
+  is given by position (closes :issue:`1092`).
 
 * fixed :py:obj:`Array.values()` and :py:obj:`Array.items()` on the first axis given by position.
   (e.g. `my_array.values(axes=0)`). Closes :issue:`1093`.
 
 * fixed :py:obj:`Array.dump()` ``axes_names`` argument for 1D arrays (closes :issue:`1094`).
+
+* fixed our test suite with xlwings 0.30.2+ (closes :issue:`1107`).
