@@ -73,7 +73,7 @@ Once you have satisfied the requirements detailed below, simply run::
 Required Dependencies
 ---------------------
 
-- Python 3.8, 3.9, 3.10 or 3.11
+- Python 3.8, 3.9, 3.10, 3.11 or 3.12
 - `numpy <http://www.numpy.org/>`__ (1.22 or later)
 - `pandas <http://pandas.pydata.org/>`__ (0.20 or later)
 
