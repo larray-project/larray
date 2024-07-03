@@ -293,9 +293,8 @@ def test_xlsx_xlwings_io(tmp_path, session, meta):
 
 
 def test_csv_io(tmp_path, session, meta):
+    fpath = _test_io(tmp_path, session, meta, engine='pandas_csv', ext='csv')
     try:
-        fpath = _test_io(tmp_path, session, meta, engine='pandas_csv', ext='csv')
-
         names = Session({k: v for k, v in session.items() if isinstance(v, Array)}).names
 
         # test loading with a pattern
