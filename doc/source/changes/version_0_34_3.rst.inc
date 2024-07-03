@@ -68,4 +68,5 @@ Fixes
 
 * fixed :py:obj:`Array.dump()` ``axes_names`` argument for 1D arrays (closes :issue:`1094`).
 
-* fixed our test suite with xlwings 0.30.2+ (closes :issue:`1107`).
+* avoid warnings and errors with recent versions of our dependencies (pandas 2.2+ and
+  xlwings 0.30.2+). Closes :issue:`1107` and :issue:`1108`.
