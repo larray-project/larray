@@ -111,7 +111,7 @@ class Axis(ABCAxis):
 
         # make sure we do not have np.str_ as it causes problems down the
         # line with xlwings. Cannot use isinstance to check that though.
-        name_is_python_str = type(name) is str or type(name) is bytes
+        name_is_python_str = type(name) is str or type(name) is bytes  # noqa: E721
         if isinstance(name, str) and not name_is_python_str:
             name = str(name)
         if name is not None and not isinstance(name, (int, str)):
