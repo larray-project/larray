@@ -1,3 +1,5 @@
+import sys
+
 import fnmatch
 import re
 import warnings
@@ -14,6 +16,8 @@ from larray.util.misc import (unique_list, find_closing_chr, _parse_bound, _seq_
                               LHDFStore)
 from larray.util.types import Scalar, Key
 
+
+PY312_OR_LATER = sys.version_info[:2] >= (3, 12)
 
 def _slice_to_str(key: slice, repr_func=str) -> str:
     r"""
@@ -463,11 +467,12 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False) -> Union[slice, Li
     scalar, slice, range or list
     """
     numcolons = s.count(':')
+    # stack_depth + 2 before Python 3.12 because the list comp had its own frame
+    extra_depth = 1 if PY312_OR_LATER else 2
     if numcolons:
         assert numcolons <= 2
         # bounds can be of len 2 or 3 (if step is provided)
-        # stack_depth + 2 because the list comp has its own stack
-        bounds = [_parse_bound(b, stack_depth + 2) for b in s.split(':')]
+        bounds = [_parse_bound(b, stack_depth + extra_depth) for b in s.split(':')]
         return slice(*bounds)
     elif ',' in s and '..' in s:
         # strip extremity commas to avoid empty string sequence elements
@@ -480,12 +485,11 @@ def _seq_str_to_seq(s, stack_depth=1, parse_single_int=False) -> Union[slice, Li
                 parsed = _parse_bound(b, stack_depth + 1)
                 return (parsed,)
 
-        # stack_depth + 2 because the list comp has its own stack
-        return list(chain(*[to_seq(b, stack_depth + 2) for b in s.split(',')]))
+        return list(chain(*[to_seq(b, stack_depth + extra_depth) for b in s.split(',')]))
     elif ',' in s:
         # strip extremity commas to avoid empty string sequence elements
         s = s.strip(',')
-        return [_parse_bound(b, stack_depth + 2) for b in s.split(',')]
+        return [_parse_bound(b, stack_depth + extra_depth) for b in s.split(',')]
     elif '..' in s:
         return _range_str_to_range(s, stack_depth + 1)
     else:
@@ -646,8 +650,9 @@ def _to_keys(value, stack_depth=1) -> Union[Key, Tuple[Key]]:
         value = tuple(value.split(';'))
 
     if isinstance(value, tuple):
-        # stack_depth + 2 because the list comp has its own stack
-        return tuple([_to_key(group, stack_depth + 2) for group in value])
+        # stack_depth + 2 before Python 3.12 because the list comp had its own frame
+        extra_depth = 1 if PY312_OR_LATER else 2
+        return tuple([_to_key(group, stack_depth + extra_depth) for group in value])
     else:
         return _to_key(value, stack_depth + 1)
 
