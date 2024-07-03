@@ -16,12 +16,12 @@ jobs:
             python-version: "3.11"
 
       # Pin ruff version to make sure we do not break our builds at the worst times
-      - name: Install Ruff 0.0.244
-        run: pip install ruff==0.0.244
+      - name: Install Ruff 0.5.1
+        run: pip install ruff==0.5.1
 
-      # Include `--format=github` to enable automatic inline annotations.
+      # Include `--output-format=github` to enable automatic inline annotations.
       - name: Run Ruff
-        run: ruff check --format=github .
+        run: ruff check --output-format=github .
 
   test:
     # name: Test (${{ matrix.python-version }}, ${{ matrix.os }})
