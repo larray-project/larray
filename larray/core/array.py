@@ -7060,7 +7060,7 @@ class Array(ABCArray):
                 sheet = 'Sheet1'
             # TODO: implement position in this case
             # startrow, startcol
-            pd_obj.to_excel(filepath, sheet, *args, engine=engine, **kwargs)
+            pd_obj.to_excel(filepath, *args, sheet_name=sheet, engine=engine, **kwargs)
 
     def to_clipboard(self, *args, **kwargs) -> None:
         r"""Send the content of the array to the clipboard.
