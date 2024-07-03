@@ -1,11 +1,11 @@
-import pytest
+import pickle
+import warnings
 
+import pytest
 try:
     import pydantic         # noqa: F401
 except ImportError:
     pytest.skip("pydantic is required for testing Checked* classes", allow_module_level=True)
-
-import pickle
 import numpy as np
 
 from larray import (CheckedSession, CheckedArray, Axis, AxisCollection, Group, Array,
@@ -398,7 +398,12 @@ def _test_io_cs(tmp_path, meta, engine, ext):
         cs = CheckedSessionExample()
 
     with must_warn(UserWarning, match=r"'\w' is not declared in 'CheckedSessionExample'", num_expected=3):
-        cs.load(fpath, engine=engine)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    module='openpyxl',
+                                    message=r"datetime.datetime.utcnow\(\) is deprecated.*")
+
+            cs.load(fpath, engine=engine)
 
     # --- names ---
     # we do not use keys() since order of undeclared variables
@@ -418,7 +423,12 @@ def _test_io_cs(tmp_path, meta, engine, ext):
     e2 = ndtest((a4, 'b=b0..b2'))
     h2 = full_like(h, fill_value=10)
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=3):
-        CheckedSessionExample(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    module=r'openpyxl',
+                                    message=r"datetime.datetime.utcnow\(\) is deprecated.*")
+
+            CheckedSessionExample(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
         cs = CheckedSessionExample()
 

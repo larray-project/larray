@@ -38,6 +38,8 @@ addopts = [
 filterwarnings = [
     # turn warnings into errors (unless they are explicitly handled in tests or ignored here)
     "error",
+    # as of version 3.1.2, openpyxl uses datetime.datetime.utcnow() which is deprecated in Python 3.12
+    "ignore::DeprecationWarning:openpyxl.*:",
     "ignore::DeprecationWarning:pyreadline.*:",
     "ignore::DeprecationWarning:pywintypes.*:",
     "ignore::DeprecationWarning:tables.*:",
