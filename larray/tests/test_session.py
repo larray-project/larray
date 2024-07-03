@@ -155,13 +155,13 @@ def test_add(session):
     with must_warn((UserWarning, FutureWarning), match='.*', num_expected=None) as caught_warnings:
         session.add(i, i01, j='j')
 
-    future_warnings = [w for w in caught_warnings if w.category == FutureWarning]
+    future_warnings = [w for w in caught_warnings if w.category is FutureWarning]
     assert len(future_warnings) == 1
     # .message is the w object itself, .message.args[0] is the actual message
     assert future_warnings[0].message.args[0] == "Session.add() is deprecated. Please use Session.update() instead."
 
     if isinstance(session, CheckedSession):
-        user_warnings = [w for w in caught_warnings if w.category == UserWarning]
+        user_warnings = [w for w in caught_warnings if w.category is UserWarning]
         assert len(user_warnings) == 3
         assert all(re.match(r"'\w+' is not declared in 'CheckedSessionExample'", w.message.args[0])
                    for w in user_warnings)

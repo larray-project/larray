@@ -217,7 +217,7 @@ def test_ndtest():
 
 
 def test_getattr(array):
-    assert type(array.b) == Axis
+    assert isinstance(array.b, Axis)
     assert array.b is b
     with must_raise(AttributeError, msg="'Array' object has no attribute 'bm'"):
         _ = array.bm

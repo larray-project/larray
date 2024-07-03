@@ -192,8 +192,9 @@ class TestSheet:
             obj_arr_dump = obj_arr.dump()
             # [['a\\b', 'b0', 'b1', 'b2'], ['a0', 0, nan, 2], ['a1', 3, 4, 5]]
 
-            # float and *not* np.float64, otherwise it gets converted to 65535 when written to Excel
-            assert type(obj_arr_dump[1][2]) is float
+            # float and *not* np.float64 (which inherits from float), otherwise it gets
+            # converted to 65535 when written to Excel
+            assert type(obj_arr_dump[1][2]) is float  # noqa: E721
 
             sheet['A12'] = obj_arr_dump
 
