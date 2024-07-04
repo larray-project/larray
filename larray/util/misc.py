@@ -303,7 +303,7 @@ def array_lookup(array, mapping):
         raise KeyError('key has not the same dtype than axis')
     # TODO: it is very important to fail quickly, so guess_axis should try this in chunks
     # (first test first element of key, if several axes match, try [1:11] elements, [12:112], [113:1113], ...
-    if not np.all(np.in1d(array, sorted_keys)):
+    if not np.all(np.isin(array, sorted_keys)):
         raise KeyError('all keys not in array')
 
     sorted_values = np.array(sorted_values)
@@ -327,7 +327,7 @@ def array_lookup2(array, sorted_keys, sorted_values):
         raise KeyError('key has not the same dtype than axis')
     # TODO: it is very important to fail quickly, so guess_axis should try this in chunks
     # (first test first element of key, if several axes match, try [1:11] elements, [12:112], [113:1113], ...
-    if not np.all(np.in1d(array, sorted_keys)):
+    if not np.all(np.isin(array, sorted_keys)):
         raise KeyError('all keys not in array')
 
     indices = np.searchsorted(sorted_keys, array)
