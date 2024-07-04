@@ -4,7 +4,7 @@
 import numpy as np
 
 from larray.core.ufuncs import wrap_numpy_func
-
+from larray.util.misc import renamed_to
 
 # Trigonometric functions
 
@@ -37,7 +37,7 @@ arctanh = wrap_numpy_func(np.arctanh)
 # all 3 are equivalent, I am unsure I should support around and round_
 round = wrap_numpy_func(np.round)
 around = wrap_numpy_func(np.around)
-round_ = wrap_numpy_func(np.round_)
+round_ = renamed_to(round, 'round_')
 rint = wrap_numpy_func(np.rint)
 fix = wrap_numpy_func(np.fix)
 floor = wrap_numpy_func(np.floor)

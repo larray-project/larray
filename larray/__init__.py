@@ -15,7 +15,7 @@ from larray.core.ufuncs import wrap_elementwise_array_func, maximum, minimum, wh
 from larray.core.npufuncs import (sin, cos, tan, arcsin, arccos, arctan, hypot, arctan2, degrees,
                                   radians, unwrap, sinh, cosh, tanh, arcsinh, arccosh, arctanh,
                                   angle, real, imag, conj,
-                                  round, around, round_, rint, fix, floor, ceil, trunc,
+                                  round, around, rint, fix, floor, ceil, trunc,
                                   exp, expm1, exp2, log, log10, log2, log1p, logaddexp, logaddexp2,
                                   i0, sinc, signbit, copysign, frexp, ldexp,
                                   convolve, clip, sqrt, absolute, fabs, sign, fmax, fmin, nan_to_num,
@@ -70,7 +70,7 @@ __all__ = [
     'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'hypot', 'arctan2', 'degrees', 'radians',
     'unwrap', 'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
     'angle', 'real', 'imag', 'conj',
-    'round', 'around', 'round_', 'rint', 'fix', 'floor', 'ceil', 'trunc',
+    'round', 'around', 'rint', 'fix', 'floor', 'ceil', 'trunc',
     'exp', 'expm1', 'exp2', 'log', 'log10', 'log2', 'log1p', 'logaddexp', 'logaddexp2',
     'i0', 'sinc', 'signbit', 'copysign', 'frexp', 'ldexp',
     'convolve', 'clip', 'sqrt', 'absolute', 'fabs', 'sign', 'fmax', 'fmin', 'nan_to_num',
@@ -99,6 +99,7 @@ from larray.core.axis import x                                                  
 from larray.core.group import PGroup                                                        # noqa: F401
 from larray.core.array import (LArray, aslarray, create_sequential, ndrange, larray_equal,  # noqa: F401
                                larray_nan_equal, nan_equal, element_equal)
+from larray.core.npufuncs import round_                                                     # noqa: F401
 
 _deprecated_names = [
     # axis
@@ -109,6 +110,7 @@ _deprecated_names = [
     'LArray', 'aslarray',
     'create_sequential', 'ndrange',
     'larray_equal', 'larray_nan_equal', 'nan_equal', 'element_equal',
+    'round_',
 ]
 
 __all__ += _deprecated_names
