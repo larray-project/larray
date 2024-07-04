@@ -6027,7 +6027,7 @@ class Array(ABCArray):
                 from larray.core.npufuncs import isnan
 
                 def general_isnan(a):
-                    if np.issubclass_(a.dtype.type, np.inexact):
+                    if issubclass(a.dtype.type, np.inexact):
                         return isnan(a)
                     elif a.dtype.type is np.object_:
                         return Array(obj_isnan(a), a.axes)
