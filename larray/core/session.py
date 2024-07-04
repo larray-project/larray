@@ -606,7 +606,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             Path for the dump.
         names : list of str or None, optional
             Names of objects to dump.
@@ -663,7 +663,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             Path of the file for the dump.
         names : list of str or None, optional
             Names of objects to dump.
@@ -720,7 +720,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             Path of the file for the dump.
         names : list of str or None, optional
             Names of Array objects to dump.
@@ -777,7 +777,7 @@ class Session:
 
         Parameters
         ----------
-        fname : str
+        fname : str or Path
             Path for the directory that will contain CSV files.
         names : list of str or None, optional
             Names of Array objects to dump.
