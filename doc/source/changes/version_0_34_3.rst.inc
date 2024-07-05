@@ -7,6 +7,40 @@ New features
 * added support for Python 3.12 (closes :issue:`1109`).
 
 
+Miscellaneous improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* improved the error message when selecting several labels at the same time and some of them were wrong.
+  In that case, it was hard to know which labels were wrong. This was especially annoying if the axis was long and
+  thus not shown in its entirety in the error message. For example, given the following array: ::
+
+    >>> arr = la.ndtest('a=a0,a1;b=b0..b2,b4..b7')
+    >>> arr
+    a\b  b0  b1  b2  b4  b5  b6  b7
+     a0   0   1   2   3   4   5   6
+     a1   7   8   9  10  11  12  13
+
+  This code: ::
+
+    >>> arr['b0,b2,b3,b7']
+
+  used to produce the following error: ::
+
+    ValueError: 'b0,b2,b3,b7' is not a valid label for any axis:
+     a [2]: 'a0' 'a1'
+     b [7]: 'b0' 'b1' 'b2' ... 'b5' 'b6' 'b7'
+
+  which did not contain enough information to determine the problem was with 'b3'. It now produces this instead: ::
+
+    ValueError: 'b0,b2,b3,b7' is not a valid subset for any axis:
+     a [2]: 'a0' 'a1'
+     b [7]: 'b0' 'b1' 'b2' ... 'b5' 'b6' 'b7'
+    Some of those labels are valid though:
+     * axis 'b' contains 3 out of 4 labels (missing labels: 'b3')
+
+  Closes :issue:`1101`.
+
+
 Fixes
 ^^^^^
 

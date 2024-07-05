@@ -2681,7 +2681,38 @@ class AxisCollection:
             except KeyError:
                 continue
         if not valid_axes:
-            raise ValueError(f"{axis_key!r} is not a valid label for any axis:\n{self._axes_summary()}")
+            # if the key has several labels
+            nicer_key = _to_key(axis_key)
+            sequence_types = (tuple, list, np.ndarray, ABCArray)
+            if (isinstance(nicer_key, sequence_types) or
+                (isinstance(nicer_key, Group) and isinstance(nicer_key.key, sequence_types))):
+
+                # we use a different "base" message in this case (because axis_key is not really a *label*)
+                msg = f"{axis_key!r} is not a valid subset for any axis:\n{self._axes_summary()}"
+
+                # ... and check for partial matches
+                if isinstance(nicer_key, Group):
+                    nicer_key = nicer_key.eval()
+                key_label_set = set(nicer_key)
+                partial_matches = {}
+                for axis in self:
+                    missing_labels = key_label_set - set(axis.labels)
+                    if missing_labels < key_label_set:
+                        partial_matches[axis] = missing_labels
+
+                if partial_matches:
+                    partial_matches_str = '\n'.join(
+                        f" * axis '{self.axis_id(axis)}' contains {len(key_label_set) - len(missing_labels)}"
+                        f' out of {len(key_label_set)}'
+                        f' labels (missing labels: {", ".join(repr(label) for label in missing_labels)})'
+                        for axis, missing_labels in partial_matches.items()
+                    )
+                    msg += f"\nSome of those labels are valid though:\n{partial_matches_str}"
+            else:
+                # we have single label
+                msg = f"{axis_key!r} is not a valid label for any axis:\n{self._axes_summary()}"
+
+            raise ValueError(msg)
         elif len(valid_axes) > 1:
             raise ValueError(f'{axis_key!r} is ambiguous, it is valid in the following axes:\n'
                              f'{self._axes_summary(valid_axes)}')
