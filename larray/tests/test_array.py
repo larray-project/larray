@@ -8,8 +8,9 @@ from io import StringIO
 
 from larray.tests.common import (meta, inputpath,
                                  assert_larray_equal, assert_larray_nan_equal, assert_larray_equiv,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, must_warn, must_raise,
-                                 assert_nparray_equal, assert_nparray_nan_equal)
+                                 assert_nparray_equal, assert_nparray_nan_equal,
+                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, NUMPY2,
+                                 must_warn, must_raise)
 from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
                     zeros, zeros_like, ndtest, empty, ones, full, eye, diag, stack, sequence,
                     asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
@@ -5845,6 +5846,29 @@ def test_growth_rate():
         res = arr.growth_rate('time')
     expected_res = Array([1.0, -1.0, 0.0, 0.0, inf, 0.25], axes='time=2015..2020')
     assert_larray_equal(res, expected_res)
+
+
+def test_np_array():
+    arr = ndtest((2, 3))
+    res = np.array(arr)  # copy=True by default
+    assert_nparray_equal(res, arr.data)
+    assert res is not arr.data
+
+    res = np.array(arr, copy=False)
+    assert res is arr.data
+
+    res = np.array(arr, copy=False, dtype=int)
+    assert res is arr.data
+
+    if NUMPY2:
+        with must_raise(ValueError, match="Unable to avoid copy while creating an array as requested.*"):
+            # fails to avoid a copy because of the different dtype
+            res = np.array(arr, copy=False, dtype=float)
+    else:
+        # copies anyway because of the different dtype
+        res = np.array(arr, copy=False, dtype=float)
+        assert_nparray_equal(res, arr.data)
+        assert res is not arr.data
 
 
 if __name__ == "__main__":
