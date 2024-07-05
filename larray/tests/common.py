@@ -6,6 +6,7 @@ import datetime as dt
 
 import pytest
 import numpy as np
+from numpy.lib import NumpyVersion
 import pandas as pd
 try:
     import xlwings as xw
@@ -27,6 +28,7 @@ except ImportError:
 from larray import Array, isnan, asarray, Metadata
 
 
+NUMPY2 = NumpyVersion(np.__version__) >= '2.0.0'
 SKIP_EXCEL_TESTS = False
 TESTDATADIR = Path(__file__).parent
 
