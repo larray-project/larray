@@ -2962,16 +2962,16 @@ def test_comparison_ops():
 def test_unary_ops(small_array):
     raw = small_array.data
 
-    # using numpy functions
-    assert_nparray_equal(np.abs(small_array - 10).data, np.abs(raw - 10))
-    assert_nparray_equal(np.negative(small_array).data, np.negative(raw))
-    assert_nparray_equal(np.invert(small_array).data, np.invert(raw))
-
     # using python builtin ops
     assert_nparray_equal(abs(small_array - 10).data, abs(raw - 10))
     assert_nparray_equal((-small_array).data, -raw)
     assert_nparray_equal((+small_array).data, +raw)
     assert_nparray_equal((~small_array).data, ~raw)
+
+    # using numpy functions (this effectively tests __array_wrap__
+    assert_nparray_equal(np.abs(small_array - 10).data, np.abs(raw - 10))
+    assert_nparray_equal(np.negative(small_array).data, np.negative(raw))
+    assert_nparray_equal(np.invert(small_array).data, np.invert(raw))
 
 
 def test_binary_ops_expressions():
