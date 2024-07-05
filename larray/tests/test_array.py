@@ -664,7 +664,7 @@ key: ([1, 2], [3, 4])"""):
         _ = array[[1, 2], 999]
 
     # key with invalid label list (ie list of labels not found on any axis)
-    with must_raise(ValueError, """[998, 999] is not a valid label for any axis:
+    with must_raise(ValueError, """[998, 999] is not a valid subset for any axis:
  a [19]: 0 1 2 ... 16 17 18
  b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
  c [2]: 'c0' 'c1'
@@ -678,11 +678,13 @@ key: ([1, 2], [3, 4])"""):
                                 "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18"):
         _ = array[[1, 2], [3, 999]]
 
-    with must_raise(ValueError, """[999, 4] is not a valid label for any axis:
+    with must_raise(ValueError, """[999, 4] is not a valid subset for any axis:
  a [19]: 0 1 2 ... 16 17 18
  b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
  c [2]: 'c0' 'c1'
- d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'"""):
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'
+Some of those labels are valid though:
+ * axis 'a' contains 1 out of 2 labels (missing labels: 999)"""):
         _ = array[[1, 2], [999, 4]]
 
     # ambiguous key
