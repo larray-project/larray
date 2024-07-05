@@ -1502,13 +1502,16 @@ class Array(ABCArray):
     #     """
     #     return np.ndarray.__array_prepare__(self.data, arr, context)
 
-    def __array_wrap__(self, out_arr, context=None) -> 'Array':
+    def __array_wrap__(self, out_arr, context=None, return_scalar=False) -> 'Array':
         r"""
         Called after numpy ufuncs. This is never called during our wrapped
         ufuncs, but if somebody uses raw numpy function, this works in some
         cases.
         """
-        data = np.ndarray.__array_wrap__(self.data, out_arr, context)
+        # as far as I understand this, this line will only ever be useful if
+        # our .data attribute is not a np.ndarray but an array-ish. It gives
+        # that other type (cupy array or whatever) the oportunity
+        data = self.data.__array_wrap__(out_arr, context)
         return Array(data, self.axes)
 
     def __bool__(self):
@@ -7345,8 +7348,13 @@ class Array(ABCArray):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __array__(self, dtype=None):
-        return np.asarray(self.data, dtype=dtype)
+    # numpy < 2 does not use the copy argument
+    def __array__(self, dtype=None, copy=None):
+        if copy is None:
+            # numpy < 2 does not support np.array(copy=None)
+            return np.asarray(self.data, dtype=dtype)
+        else:
+            return np.array(self.data, dtype=dtype, copy=copy)
 
     __array_priority__ = 100
 
