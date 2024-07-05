@@ -1404,9 +1404,8 @@ class Array(ABCArray):
         #     ...
         # }, 'statistic')
         return stack({
-            # Note that np.isnan works as well as la.isnan thanks to __array_wrap__
-            # and using it avoids having a cyclic import
-            'count': (~np.isnan(self)).sum(*args),
+            # Not using la.isnan to avoid a cyclic import
+            'count': Array(~np.isnan(self.data), self.axes).sum(*args),
             'mean': self.mean(*args),
             'std': self.std(*args),
             'min': self.min(*args),
@@ -2193,6 +2192,7 @@ class Array(ABCArray):
                 text = 'axes are' if len(extra_axes) > 1 else 'axis is'
                 raise ValueError(f"Value {extra_axes!s} {text} not present in target subset {axes!s}. A value can only "
                                  f"have the same axes or fewer axes than the subset being targeted")
+            value = value.data
         self.data[raw_broadcasted_key] = value
 
         # concerning keys this can make sense in several cases:

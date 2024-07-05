@@ -3663,7 +3663,7 @@ incompatible axes:
         # TODO: this should be:
         # return stack({axis.name: axis.i[inds] for axis, inds in zip(axes, axes_indices)}, axis='axis')
         flat_axes = flat_indices.axes
-        axes_labels = self._iflat(flat_indices)
+        axes_labels = self._iflat(flat_indices.data)
         return stack({axis.name: Array(axis_labels, flat_axes) for axis, axis_labels in zip(self, axes_labels)}, 'axis')
 
     def _adv_keys_to_combined_axis_la_keys(self, key, wildcard=False, sep='_'):
