@@ -3400,7 +3400,7 @@ incompatible axes:
                     combined_labels = _axes[0].labels
                 else:
                     sepjoin = sep.join
-                    axes_labels = [np.array(label, str, copy=False) for label in _axes.labels]
+                    axes_labels = [np.asarray(label, str) for label in _axes.labels]
                     combined_labels = [sepjoin(p) for p in product(*axes_labels)]
                 combined_axis = Axis(combined_labels, combined_name)
             new_axes = new_axes - _axes
