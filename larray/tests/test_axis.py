@@ -441,6 +441,168 @@ def test_matching():
     assert code.endingwith('01') == LGroup(['A101', 'A201'])
 
 
+def test_difference():
+    # 1) no duplicate label
+    a = Axis('a=a0..a2')
+
+    # remove a single label (a1)
+    expected = Axis('a=a0,a2')
+    assert a.difference('a1').equals(expected)
+    assert a.difference(a['a1']).equals(expected)
+    assert a.difference(a[['a1']]).equals(expected)
+    assert a.difference([a['a1']]).equals(expected)
+    # Ideally, this should raise an Exception because this is not a sequence
+    # of labels (it is a sequence of sequences of labels) instead of silently
+    # giving the wrong result, but I am unsure the check is worth the
+    # performance loss
+    # assert a.difference([a[['a1']]]).equals(expected)
+    assert a.difference(a.i[1]).equals(expected)
+    assert a.difference(a.i[[1]]).equals(expected)
+    # this silently fails and should probably work?
+    # assert a.difference([a.i[1]]).equals(expected)
+    # this should raise (not a sequence of labels)
+    # assert a.difference([a.i[[1]]]).equals(expected)
+
+    # 2) with duplicate labels
+    a = Axis('a=a0,a1,a0,a2')
+
+    # 2.a) remove a non-duplicated label (a1)
+    expected = Axis('a=a0,a0,a2')
+    assert a.difference('a1').equals(expected)
+    assert a.difference(a['a1']).equals(expected)
+    assert a.difference(a[['a1']]).equals(expected)
+    assert a.difference([a['a1']]).equals(expected)
+    assert a.difference(a.i[1]).equals(expected)
+    assert a.difference(a.i[[1]]).equals(expected)
+    # assert a.difference([a.i[1]]).equals(expected)
+
+    # 2.b) remove all instance of the duplicated label (a0)
+    expected = Axis('a=a1,a2')
+    assert a.difference('a0').equals(expected)
+    assert a.difference(a['a0']).equals(expected)
+    assert a.difference(a[['a0']]).equals(expected)
+    assert a.difference([a['a0']]).equals(expected)
+
+    # TODO: it should be possible to remove a particular instance of
+    #       a duplicate label, but this is a larger issue (see #438)
+    # 2.c) remove a particular (the second) instance of the duplicated label (a0)
+
+    # 2.c.1) the first one
+    # expected = Axis('a=a1,a0,a2')
+    # assert a.difference(a.i[0]).equals(expected)
+    # assert a.difference(a.i[[0]]).equals(expected)
+
+    # 2.c.2) the second one
+    # expected = Axis('a=a0,a1,a2')
+    # assert a.difference(a.i[2]).equals(expected)
+    # assert a.difference(a.i[[2]]).equals(expected)
+
+    # 3) integer labels
+    a = Axis('a=1,2,3')
+    assert a.difference(2).equals(Axis('a=1,3'))
+    assert a.difference('2').equals(Axis('a=1,2,3'))
+    assert a.difference('..2').equals(Axis('a=3'))
+
+
+def test_intersection():
+    # 1) axis without duplicate label
+    a = Axis('a=a0..a2')
+
+    # intersection with a single label (a1)
+    expected = Axis('a=a1')
+    assert a.intersection('a1').equals(expected)
+    assert a.intersection(a['a1,']).equals(expected)
+    assert a.intersection(a[['a1']]).equals(expected)
+    assert a.intersection([a['a1']]).equals(expected)
+    # Ideally, this should raise an Exception because this is not a sequence
+    # of labels (it is a sequence of sequences of labels) instead of silently
+    # giving the wrong result, but I am unsure the check is worth the
+    # performance loss
+    # assert a.difference([a[['a1']]]).equals(expected)
+    assert a.intersection(a.i[1]).equals(expected)
+    assert a.intersection(a.i[[1]]).equals(expected)
+    # this silently fails and should probably work?
+    # assert a.difference([a.i[1]]).equals(expected)
+    # this should raise (not a sequence of labels)
+    # assert a.difference([a.i[[1]]]).equals(expected)
+
+    # 2) axis with duplicate labels
+    a = Axis('a=a0,a1,a0,a2')
+
+    # 2.a) intersection with a non-duplicated label (a1)
+    expected = Axis('a=a1')
+    assert a.intersection('a1').equals(expected)
+    assert a.intersection(a['a1']).equals(expected)
+    assert a.intersection(a[['a1']]).equals(expected)
+    assert a.intersection([a['a1']]).equals(expected)
+    assert a.intersection(a.i[1]).equals(expected)
+    assert a.intersection(a.i[[1]]).equals(expected)
+    # assert a.intersection([a.i[1]]).equals(expected)
+
+    # 2.b) intersection with an unspecified duplicated label (a0)
+    expected = Axis('a=a0,a0')
+    assert a.intersection('a0').equals(expected)
+    assert a.intersection(a['a0']).equals(expected)
+    assert a.intersection(a[['a0']]).equals(expected)
+    assert a.intersection([a['a0']]).equals(expected)
+
+    # TODO: it should be possible to intersect with particular instance(s) of
+    #       a duplicate label, but this is a larger issue (see #438)
+    # 2.c) intersection with one particular instance of a duplicated label (a0)
+
+    # 3) integer labels
+    a = Axis('a=1,2,3')
+    assert a.intersection(2).equals(Axis('a=2'))
+    # single int strings are not parsed as integers
+    assert a.intersection('2').equals(Axis([], 'a'))
+    assert a.intersection('..2').equals(Axis('a=1,2'))
+
+
+def test_union():
+    # 1) axis without duplicate label
+    a = Axis('a=a0..a2')
+    a2 = Axis('a2=a0..a5')
+
+    # intersection with a single label (a1)
+    expected = Axis('a=a0..a3')
+    assert a.union('a3').equals(expected)
+    assert a.union(a2['a3,']).equals(expected)
+    assert a.union(a2[['a3']]).equals(expected)
+    assert a.union([a2['a3']]).equals(expected)
+    # Ideally, this should raise an Exception because this is not a sequence
+    # of labels (it is a sequence of sequences of labels) instead of silently
+    # giving the wrong result, but I am unsure the check is worth the
+    # performance loss
+    # assert a.union([a2[['a3']]]).equals(expected)
+    assert a.union(a2.i[3]).equals(expected)
+    assert a.union(a2.i[[3]]).equals(expected)
+    # this silently fails and should probably work?
+    # assert a.union([a2.i[3]]).equals(expected)
+    # this should raise (not a sequence of labels)
+    # assert a.union([a2.i[[3]]]).equals(expected)
+
+    # 2) axis with duplicate labels
+    a = Axis('a=a0,a1,a0,a2')
+
+    # union drops duplicates
+    expected = Axis('a=a0,a1,a2,a3')
+    assert a.union('a3').equals(expected)
+    assert a.union(a2['a3']).equals(expected)
+    assert a.union(a2[['a3']]).equals(expected)
+    assert a.union([a2['a3']]).equals(expected)
+    assert a.union(a2.i[3]).equals(expected)
+    assert a.union(a2.i[[3]]).equals(expected)
+
+    # 3) integer labels
+    a = Axis('a=1,2,3')
+    assert a.union(2).equals(a)
+    assert a.union(4).equals(Axis('a=1..4'))
+    # single int strings are not parsed as integers
+    assert a.union('2').equals(Axis([1, 2, 3, '2'], 'a'))
+    assert a.union('4').equals(Axis([1, 2, 3, '4'], 'a'))
+    assert a.union('..2').equals(Axis([1, 2, 3, 0], 'a'))
+
+
 def test_iter():
     sex = Axis('sex=M,F')
     assert list(sex) == [IGroup(0, axis=sex), IGroup(1, axis=sex)]
