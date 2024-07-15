@@ -435,10 +435,10 @@ def test_init_from_group():
 
 
 def test_matching():
-    sutcode = Axis(['A23', 'A2301', 'A25', 'A2501'], 'sutcode')
-    assert sutcode.matching(regex='^...$') == LGroup(['A23', 'A25'])
-    assert sutcode.startingwith('A23') == LGroup(['A23', 'A2301'])
-    assert sutcode.endingwith('01') == LGroup(['A2301', 'A2501'])
+    code = Axis(['A1', 'A101', 'A2', 'A201'], 'code')
+    assert code.matching(regex='^..$') == LGroup(['A1', 'A2'])
+    assert code.startingwith('A1') == LGroup(['A1', 'A101'])
+    assert code.endingwith('01') == LGroup(['A101', 'A201'])
 
 
 def test_iter():
