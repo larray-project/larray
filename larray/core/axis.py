@@ -201,7 +201,7 @@ class Axis(ABCAxis):
     @labels.setter
     def labels(self, labels):
         if labels is None:
-            raise TypeError("labels should be a sequence or a single int, not None")
+            raise TypeError("labels should be a sequence, a string or a single int but not None")
         if isinstance(labels, (int, np.integer)):
             length = labels
             labels = np.arange(length)
@@ -1237,7 +1237,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        other : Axis or any sequence of labels
+        other : Axis, Group or any sequence of labels
             other labels
 
         Returns
@@ -1258,11 +1258,8 @@ class Axis(ABCAxis):
         >>> a.union(['a1', 'a2', 'a3'])
         Axis(['a0', 'a1', 'a2', 'a3'], 'a')
         """
-        if isinstance(other, str):
-            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
-            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
-        if isinstance(other, Axis):
-            other = other.labels
+        non_string_scalar = np.isscalar(other) and not isinstance(other, str)
+        other = [other] if non_string_scalar else _to_ticks(other)
         return Axis(unique_multi((self.labels, other)), self.name)
 
     def intersection(self, other) -> 'Axis':
@@ -1273,7 +1270,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        other : Axis or any sequence of labels
+        other : Axis, Group or any sequence of labels
             other labels
 
         Returns
@@ -1294,11 +1291,8 @@ class Axis(ABCAxis):
         >>> a.intersection(['a1', 'a2', 'a3'])
         Axis(['a1', 'a2'], 'a')
         """
-        if isinstance(other, str):
-            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
-            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
-        if isinstance(other, Axis):
-            other = other.labels
+        non_string_scalar = np.isscalar(other) and not isinstance(other, str)
+        other = [other] if non_string_scalar else _to_ticks(other)
         to_keep = set(other)
         return Axis([label for label in self.labels if label in to_keep], self.name)
 
@@ -1310,7 +1304,7 @@ class Axis(ABCAxis):
 
         Parameters
         ----------
-        other : Axis or any sequence of labels
+        other : Axis, Group or any sequence of labels
             other labels
 
         Returns
@@ -1331,11 +1325,8 @@ class Axis(ABCAxis):
         >>> a.difference(['a1', 'a2', 'a3'])
         Axis(['a0'], 'a')
         """
-        if isinstance(other, str):
-            # TODO : remove [other] if ... when FuturWarning raised in Axis.init will be removed
-            other = _to_ticks(other, parse_single_int=True) if '..' in other or ',' in other else [other]
-        if isinstance(other, Axis):
-            other = other.labels
+        non_string_scalar = np.isscalar(other) and not isinstance(other, str)
+        other = [other] if non_string_scalar else _to_ticks(other)
         to_drop = set(other)
         return Axis([label for label in self.labels if label not in to_drop], self.name)
 
