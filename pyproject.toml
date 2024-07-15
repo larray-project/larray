@@ -40,6 +40,8 @@ filterwarnings = [
     "error",
     # as of version 3.1.2, openpyxl uses datetime.datetime.utcnow() which is deprecated in Python 3.12
     "ignore::DeprecationWarning:openpyxl.*:",
+    # as of version 3.1.1, xlsxwriter uses datetime.datetime.utcnow() which is deprecated in Python 3.12
+    "ignore::DeprecationWarning:xlsxwriter.*:",
     "ignore:Special variable 'x' is deprecated.*:FutureWarning:inspect.*:",
     "ignore:Special variable 'x' is deprecated.*:FutureWarning:_pytest.compat.*:",
 ]
