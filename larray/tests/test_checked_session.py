@@ -425,7 +425,7 @@ def _test_io_cs(tmp_path, meta, engine, ext):
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=3):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore",
-                                    module=r'openpyxl',
+                                    module=r'openpyxl|xlsxwriter',
                                     message=r"datetime.datetime.utcnow\(\) is deprecated.*")
 
             CheckedSessionExample(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
