@@ -4,7 +4,7 @@
 Version 0.34.3
 ==============
 
-In development.
+Released on 2024-07-18.
 
 CORE
 ----
