@@ -10,10 +10,6 @@ CORE
 ----
 .. include:: ./changes/version_0_34_4.rst.inc
 
-EDITOR
-------
-.. include:: ./changes/editor/version_0_34_4.rst.inc
-
 
 Version 0.34.3
 ==============
