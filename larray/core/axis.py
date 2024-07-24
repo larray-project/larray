@@ -2467,7 +2467,7 @@ class AxisCollection:
 
         Parameters
         ----------
-        axis : string or Axis or dict
+        axis : Axis, str, int or dict
             Axis for which we want to replace labels, or mapping {axis: changes} where changes can either be the
             complete list of labels, a mapping {old_label: new_label} or a function to transform labels.
             If there is no ambiguity (two or more axes have the same labels), `axis` can be a direct mapping
