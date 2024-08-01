@@ -11,6 +11,16 @@ EDITOR
 .. include:: ./changes/editor/version_0_34_6.rst.inc
 
 
+Version 0.34.5
+==============
+
+Partially released on 2024-07-26.
+
+EDITOR
+------
+.. include:: ./changes/editor/version_0_34_5.rst.inc
+
+
 Version 0.34.4
 ==============
 
