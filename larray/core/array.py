@@ -7170,8 +7170,12 @@ class Array(ABCArray):
             Values to use for the xticks
         yticks : sequence
             Values to use for the yticks
-        xlim : 2-tuple/list
-        ylim : 2-tuple/list
+        xlim : 2-tuple/list, optional
+            Limits (minimum and maximum values) on x axis. If this argument is not used, or None for
+            either bound, these are determined automatically from the data. Defaults to (None, None).
+        ylim : 2-tuple/list, optional
+            Limits (minimum and maximum values) on y axis. If this argument is not used, or None for
+            either bound, these are determined automatically from the data. Defaults to (None, None).
         rot : int, default None
             Rotation for ticks (xticks for vertical, yticks for horizontal plots)
         fontsize : int, default None
