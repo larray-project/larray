@@ -104,7 +104,118 @@ class PlotObject:
             return array.to_frame()
 
     @staticmethod
+    def _plot_heat_map(array, x=None, y=None, numhaxes=1, axes_names=True, maxticks=10, ax=None,
+                       # TODO: we *might* want to default to False for wildcard axes (for label axes, even
+                       #       numeric ones, an inverted axis is more natural)
+                       # TODO: rename to topdown_yaxis or zero_top_yaxis or y0_top or whatever where
+                       #       the name actually helps knowing the direction
+                       invert_yaxis=True,
+                       x_ticks_top=True, colorbar=False, **kwargs):
+        from larray.util.plot import MaxNMultipleWithOffsetLocator
+
+        assert ax is not None
+
+        # TODO: check if we should handle those here???
+        kwargs.pop('kind')
+        kwargs.pop('legend')
+        # This is needed to support plotting using imshow (see below)
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'origin' not in kwargs:
+            kwargs['origin'] = 'lower'
+        title = kwargs.pop('title', None)
+        if title is not None:
+            ax.set_title(title)
+        if array.ndim < 2:
+            array = array.expand(Axis([''], ''))
+
+        # TODO: see how much of this is already handled in _plot_array
+        axes = array.axes
+        if x is None and y is None:
+            x = axes[:-numhaxes]
+
+        if y is None:
+            y = array.axes - x
+        else:
+            if isinstance(y, str):
+                y = [y]
+            y = array.axes[y]
+
+        if x is None:
+            x = array.axes - y
+        else:
+            if isinstance(x, str):
+                x = [x]
+            x = array.axes[x]
+
+        array = array.transpose(y + x).combine_axes([y, x])
+
+        # block size is the size of the other (non-first) combined axes
+        x_block_size = int(x[1:].size)
+        y_block_size = int(y[1:].size)
+        c = ax.imshow(array.data, **kwargs)
+
+        # place major ticks in the middle of blocks so that labels are centered
+        xlabels = x[0].labels
+        ylabels = y[0].labels
+
+        def format_x_tick(tick_val, tick_pos):
+            label_index = int(tick_val) // x_block_size
+            return xlabels[label_index] if label_index < len(xlabels) else '<bad tick>'
+
+        def format_y_tick(tick_val, tick_pos):
+            label_index = int(tick_val) // y_block_size
+            return ylabels[label_index] if label_index < len(ylabels) else '<bad tick>'
+
+        # A FuncFormatter is created automatically.
+        ax.xaxis.set_major_formatter(format_x_tick)
+        ax.yaxis.set_major_formatter(format_y_tick)
+
+        if invert_yaxis:
+            ax.invert_yaxis()
+
+        # offset=0 because imshow has some kind of builtin offset
+        x_locator = MaxNMultipleWithOffsetLocator(min(maxticks, len(xlabels)), offset=0)
+        y_locator = MaxNMultipleWithOffsetLocator(min(maxticks, len(ylabels)), offset=0)
+        ax.xaxis.set_major_locator(x_locator)
+        ax.yaxis.set_major_locator(y_locator)
+
+        if x_ticks_top:
+            ax.xaxis.tick_top()
+            ax.xaxis.set_label_position('top')
+
+        # enable grid lines for minor ticks on axes when we have several "levels" for that axis
+        if len(x) > 1:
+            # place minor ticks for grid lines between each block on the main axis
+            ax.set_xticks(np.arange(x_block_size, x.size, x_block_size), minor=True)
+            ax.grid(True, axis='x', which='minor')
+            # hide all ticks on x axis
+            ax.tick_params(axis='x', which='both', bottom=False, top=False)
+
+        if len(y) > 1:
+            ax.set_yticks(np.arange(y_block_size, y.size, y_block_size), minor=True)
+            ax.grid(True, axis='y', which='minor')
+            # hide all ticks on y axis
+            ax.tick_params(axis='y', which='both', left=False, right=False)
+
+        # set axes names
+        if axes_names:
+            ax.set_xlabel('\n'.join(x.names))
+            ax.set_ylabel('\n'.join(y.names))
+
+        if colorbar:
+            ax.figure.colorbar(c)
+        return ax
+
+    @staticmethod
     def _plot_array(array, *args, x=None, y=None, series=None, _x_axes_last=False, **kwargs):
+        kind = kwargs.get('kind', 'line')
+        if kind is None:
+            kind = 'line'
+        # heatmaps are special because they do not go via Pandas
+        if kind == 'heatmap':
+            return PlotObject._plot_heat_map(array, x=x, y=y, **kwargs)
+
         label_axis = None
         if array.ndim == 1:
             pass
@@ -134,9 +245,6 @@ class PlotObject:
                 # move label_axis last (it must be a dataframe column)
                 array = array.transpose(..., label_axis)
 
-        kind = kwargs.get('kind', 'line')
-        if kind is None:
-            kind = 'line'
         lineplot = kind == 'line'
         # TODO: why don't we handle all line plots this way?
         if lineplot and label_axis is not None and series is not None and len(series) > 0:
@@ -239,7 +347,8 @@ class PlotObject:
                 def run(t):
                     ax.clear()
                     self._plot_many(array[t], ax, kwargs, series_axes, subplot_axes, title, x, y)
-            # TODO: add support for interpolation between frames/labels
+            # TODO: add support for interpolation between frames/labels. Would be best to implement this via
+            #       a generic interpolation API in larray though.
             #  see https://github.com/julkaar9/pynimate for inspiration
             ani = FuncAnimation(fig, run, frames=animate_axes.iter_labels())
         else:
@@ -330,6 +439,8 @@ class PlotObject:
                     plot_ax.remove()
                 # this not strictly necessary but is cleaner in case we reuse flat_ax
                 flat_ax = flat_ax[:num_subplots]
+            if kwargs.get('kind') == 'heatmap' and 'x_ticks_top' not in kwargs:
+                kwargs['x_ticks_top'] = False
             for i, (ndkey, subarr) in enumerate(array.items(subplot_axes)):
                 subplot_title = ' '.join(str(ak) for ak in ndkey)
                 self._plot_array(subarr, x=x, y=y, series=series_axes, ax=flat_ax[i], legend=False, title=subplot_title,
@@ -361,6 +472,35 @@ class PlotObject:
             # avoid having a single None tick
             ax.get_xaxis().set_visible(False)
         return ax
+
+    def heatmap(self, x=None, y=None, **kwds):
+        """plot an ND array as a heatmap.
+
+        By default, it uses the last array axis as the X axis and other array axes as Y axis (like the viewer table).
+        Only the first axis in each "direction" will have its name and labels shown.
+
+        Parameters
+        ----------
+        arr : Array
+            data to display.
+        y_axes : int, str, Axis, tuple or AxisCollection, optional
+            axis or axes to use on the Y axis. Defaults to all array axes except the last `numhaxes` ones.
+        x_axes : int, str, Axis, tuple or AxisCollection, optional
+            axis or axes to use on the X axis. Defaults to all array axes except `y_axes`.
+        numhaxes : int, optional
+            if x_axes and y_axes are not specified, use the last numhaxes as X axes. Defaults to 1.
+        axes_names : bool, optional
+            whether to show axes names. Defaults to True
+        ax : matplotlib axes object, optional
+        **kwargs
+            any extra keyword argument is passed to Matplotlib imshow.
+            Likely of interest are cmap, vmin, vmax or norm.
+
+        Returns
+        -------
+        matplotlib.AxesSubplot
+        """
+        return self(kind='heatmap', x=x, y=y, **kwds)
 
     @_use_pandas_plot_docstring
     def hist(self, by=None, bins=10, y=None, **kwds):

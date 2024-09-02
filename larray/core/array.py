@@ -7130,6 +7130,8 @@ class Array(ABCArray):
             - 'pie' : pie plot
             - 'scatter' : scatter plot (if array's dimensions >= 2)
             - 'hexbin' : hexbin plot (if array's dimensions >= 2)
+            - 'heatmap': heatmap plot (if array's dimensions >= 2).
+                         See Array.plot.heatmap for more details.
         filepath : str or Path, default None
             Save plot as a file at `filepath`. Defaults to None (do not save).
             When saving the plot to a file, the function returns None. In other

@@ -39,6 +39,10 @@ New features
 * implemented Array.plot `show` argument to display plots directly, without
   having to use the matplotlib API. This is the new default behavior.
 
+* implemented a new kind of plot: `heatmap`. It can be used like this:
+
+    >>> arr.plot.heatmap()
+
 * added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
   :ref:`api-group` objects.
 
