@@ -665,7 +665,7 @@ def renamed_to(newfunc, old_name, stacklevel=2, raise_error=False):
 
 
 # deprecate_kwarg is derived from pandas.util._decorators (0.21)
-def deprecate_kwarg(old_arg_name, new_arg_name, mapping=None, arg_converter=None, stacklevel=2):
+def deprecate_kwarg(old_arg_name: str, new_arg_name: str, mapping=None, arg_converter=None, stacklevel=2):
     if mapping is not None and not isinstance(mapping, dict):
         raise TypeError("mapping from old to new argument values must be dict!")
 
