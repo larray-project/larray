@@ -468,7 +468,7 @@ def choice(choices=None, axes=None, replace=True, p=None, meta=None) -> Array:
     Using an N-dimensional array as probabilities:
 
     >>> proba = Array([[0.15, 0.25, 0.10],
-    ...                 [0.20, 0.10, 0.20]], 'a=a0,a1;b=b0..b2')                        # doctest: +SKIP
+    ...                [0.20, 0.10, 0.20]], 'a=a0,a1;b=b0..b2')                        # doctest: +SKIP
     >>> proba                                                                           # doctest: +SKIP
     a\b    b0    b1   b2
      a0  0.15  0.25  0.1
