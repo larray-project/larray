@@ -73,19 +73,21 @@ def edit(obj=None, title='', minvalue=None, maxvalue=None, readonly=False, depth
         raise Exception('edit() is not available because the larray_editor package is not installed')
 
 
-def debug(depth=0):
+def debug(title='Debugger', depth=0):
     r"""
     Open a new debug window.
 
     Parameters
     ----------
+    title : str, optional
+        Window title suffix. Defaults to 'Debugger'.
     depth : int, optional
         Stack depth where to look for variables. Defaults to 0 (where this function was called).
     """
     try:
         from larray_editor import debug
 
-        debug(depth + 1)
+        debug(title, depth + 1)
     except ImportError:
         raise Exception('debug() is not available because the larray_editor package is not installed')
 
