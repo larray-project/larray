@@ -2902,8 +2902,8 @@ class Array(ABCArray):
             elif isinstance(key, (Group, int, str, list, slice)):
                 return self.axes._guess_axis(key)
             else:
-                key_type = type(key).__name__
-                raise NotImplementedError(f"{key} has invalid type ({key_type}) for a group aggregate key")
+                raise TypeError(f"{key} has invalid type ({type(key).__name__})"
+                                f" for a group aggregate key")
 
         def standardise_arg(arg, stack_depth=1):
             if self.axes.isaxis(arg):
