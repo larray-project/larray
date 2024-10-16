@@ -154,10 +154,10 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
 
     target_sums = [asarray(ts) for ts in target_sums]
 
-    n = len(target_sums)
+    ndim = len(target_sums)
 
     if axes is None:
-        axes = list(range(n))
+        axes = list(range(ndim))
 
     def has_anonymous_axes(a):
         return any(axis.name is None for axis in a.axes)
@@ -252,32 +252,41 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
     # Here is the nice version of the algorithm
 
     # for i in range(maxiter):
-    #     for axis, axis_target in zip(axes, target_sums):
-    #         r *= axis_target.divnot0(r.sum(axis))
-    #     max_sum_diff = max(abs(r.sum(axis) - axis_target).max()
-    #                        for axis, axis_target in zip(axes, target_sums))
+    #     for axis, axis_target_sum in zip(axes, target_sums):
+    #         r *= axis_target_sum.divnot0(r.sum(axis))
+    #     max_sum_diff = max(abs(r.sum(axis) - axis_target_sum).max()
+    #                        for axis, axis_target_sum in zip(axes, target_sums))
     #     step_sum_improvement = ...
 
-    # Here is the ugly optimized version which use only numpy operations and avoids computing the sum for the first
-    # axis twice per iteration
+    # Here is the ugly optimized version which use only numpy operations and reuses the sum for the first
+    # axis from the previous iteration "check phase"
     target_sums = [axis_target.data for axis_target in target_sums]
     res_data = a.data.astype(float)
     axes_indices = [a.axes.index(axis) for axis in axes]
     axis0_sum = res_data.sum(axes_indices[0])
 
+    if ndim == 1:
+        # When there is only one dimension, the algorithm always
+        # terminates after a single iteration
+        res_data *= np.expand_dims(divnot0(target_sums[0], axis0_sum), axes_indices[0])
+        return Array(res_data, a.axes)
+
     for i in range(maxiter):
-        startr = res_data.copy()
+        if display_progress:
+            startr = res_data.copy()
+
         # r = r * target_sums[0].divnot0(axis0_sum)
         res_data *= np.expand_dims(divnot0(target_sums[0], axis0_sum), axes_indices[0])
-        for axis_idx, axis_target in zip(axes_indices[1:], target_sums[1:]):
-            # r = r * axis_target.divnot0(r.sum(axis))
-            res_data *= np.expand_dims(divnot0(axis_target, res_data.sum(axis_idx)), axis_idx)
+        for axis_target_sum, axis_idx in zip(target_sums[1:], axes_indices[1:]):
+            # r = r * axis_target_sum.divnot0(r.sum(axis))
+            res_data *= np.expand_dims(divnot0(axis_target_sum, res_data.sum(axis_idx)), axis_idx)
 
-        # XXX: can't we skip computing the sum and max_diff for the last axis which should be good for each
-        #      iteration???
-        axes_sum = [res_data.sum(axis_idx) for axis_idx in axes_indices]
+        # We avoid computing the sum and max_diff for the last axis which is always equal
+        # to the corresponding target_sum modulo numerical inaccuracy, hence the two [:-1]
+        # in the 3 following lines
+        axes_sum = [res_data.sum(axis_idx) for axis_idx in axes_indices[:-1]]
         max_sum_diff = max(abs(axis_sum - axis_target).max()
-                           for axis_sum, axis_target in zip(axes_sum, target_sums))
+                           for axis_sum, axis_target in zip(axes_sum, target_sums[:-1]))
         axis0_sum = axes_sum[0]
 
         if display_progress:
