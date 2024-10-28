@@ -1027,13 +1027,9 @@ class Axis(ABCAxis):
 
     translate = renamed_to(index, 'translate', raise_error=True)
 
-    # FIXME: remove id
     @property
     def id(self) -> str:
-        if self.name is not None:
-            return self.name
-        else:
-            raise ValueError('Axis has no name, so no id')
+        raise NotImplementedError('Axis.id is deprecated. Please use Axis.name instead.')
 
     def __str__(self) -> str:
         name = str(self.name) if self.name is not None else '{?}'
