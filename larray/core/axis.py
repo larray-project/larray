@@ -102,6 +102,10 @@ class Axis(ABCAxis):
             name = name.name
         if isinstance(labels, str):
             if '=' in labels:
+                if name is not None:
+                    raise ValueError("Axis(labels, name=None) cannot have "
+                                     "both a string labels with an '=' sign "
+                                     "and a value for the name argument")
                 name, labels = [o.strip() for o in labels.split('=')]
             elif '..' not in labels and ',' not in labels:
                 warnings.warn("Arguments 'name' and 'labels' of Axis constructor have been inverted in "
