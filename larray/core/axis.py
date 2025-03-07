@@ -2223,13 +2223,14 @@ class AxisCollection:
         >>> col.index('sex')
         1
         """
+        if isinstance(axis, AxisReference):
+            axis = axis.name
+        # not using an elif because name can be an int
         if isinstance(axis, int):
             if -len(self) <= axis < len(self):
                 return axis
             else:
                 raise ValueError(f"axis {axis} is not in collection")
-        elif isinstance(axis, AxisReference):
-            name = axis.name
         elif isinstance(axis, Axis):
             try:
                 # 1) first look for that particular axis object
