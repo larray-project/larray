@@ -8351,6 +8351,9 @@ def asarray(a, meta=None) -> Array:
     elif isinstance(a, pd.DataFrame):
         from larray.inout.pandas import from_frame
         return from_frame(a, meta=meta)
+    elif isinstance(a, pd.Series):
+        from larray.inout.pandas import from_series
+        return from_series(a, meta=meta)
     else:
         return Array(a, meta=meta)
 

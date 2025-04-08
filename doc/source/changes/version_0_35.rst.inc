@@ -85,4 +85,7 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* added support for Pandas Series in :py:obj:`asarray()`. This is considered a
+  fix because it kind of worked but silently ignored the index and name of the
+  series (closes :issue:`895`).
+
