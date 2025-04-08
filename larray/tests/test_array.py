@@ -4482,6 +4482,13 @@ def test_from_frame():
     assert_larray_equal(res, expected)
 
 
+def test_asarray():
+    series = pd.Series([0, 1, 2], ['a0', 'a1', 'a2'], name='a')
+    expected = ndtest(3)
+    res = asarray(series)
+    assert_larray_equal(res, expected)
+
+
 def test_to_csv(tmp_path):
     io_3d.to_csv(tmp_path / 'out3d.csv')
     assert (tmp_path / 'out3d.csv').read_text() == """\
