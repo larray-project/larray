@@ -205,23 +205,6 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     a0   b1   2   3
     a1   b0   4   5
     a1   b1   6   7
-
-    Names of the last two axes written as ``before_last_axis_name\\last_axis_name``
-
-    >>> df = ndtest((2, 2, 2)).to_frame(fold_last_axis_name=True)
-    >>> df                                                                             # doctest: +NORMALIZE_WHITESPACE
-            c0  c1
-    a  b\c
-    a0 b0    0   1
-       b1    2   3
-    a1 b0    4   5
-       b1    6   7
-    >>> from_frame(df, unfold_last_axis_name=True)
-     a  b\c  c0  c1
-    a0   b0   0   1
-    a0   b1   2   3
-    a1   b0   4   5
-    a1   b1   6   7
     """
     axes_names = [decode(name, 'utf8') if isinstance(name, bytes) else name
                   for name in df.index.names]

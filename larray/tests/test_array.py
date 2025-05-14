@@ -4114,6 +4114,12 @@ def test_to_frame():
     assert df.columns.to_list() == ['c0']
     assert df.index.names == ['a', 'b']
 
+    # fold_last_axis_name
+    arr = ndtest((2, 2, 2))
+    df = arr.to_frame(fold_last_axis_name=True)
+    assert df.columns.name is None
+    assert df.columns.to_list() == ['c0', 'c1']
+    assert df.index.names == ['a', r'b\c']
 
 def test_from_frame():
     # 1) data = scalar
