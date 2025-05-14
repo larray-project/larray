@@ -1204,7 +1204,8 @@ class Array(ABCArray):
         return ArrayPositionalPointsIndexer(self)
     ipoints.__doc__ = ArrayPositionalPointsIndexer.__doc__
 
-    def to_frame(self, fold_last_axis_name=False, dropna=None) -> pd.DataFrame:
+    def to_frame(self, fold_last_axis_name=False,
+                 dropna=None, ncolaxes=1) -> pd.DataFrame:
         r"""
         Convert an Array into a Pandas DataFrame.
 
@@ -1217,6 +1218,8 @@ class Array(ABCArray):
             * any : if any NA values are present, drop that label
             * all : if all values are NA, drop that label
             * None by default.
+        ncolaxes : int, optional
+            Number of axes to be used as columns. Defaults to 1.
 
         Returns
         -------
@@ -1250,26 +1253,55 @@ class Array(ABCArray):
            b1    2   3
         a1 b0    4   5
            b1    6   7
+        >>> arr.to_frame(ncolaxes=2)                                                   # doctest: +NORMALIZE_WHITESPACE
+        b  b0    b1
+        c  c0 c1 c0 c1
+        a
+        a0  0  1  2  3
+        a1  4  5  6  7
         """
-        last_name = self.axes[-1].name
-        columns_name = None if fold_last_axis_name else last_name
-        columns = np_array_to_pd_index(self.axes[-1].labels, name=columns_name)
-        if self.ndim > 1:
-            axes_names = self.axes.names[:-1]
+        if ncolaxes != 1:
+            if not (0 < ncolaxes < self.ndim):
+                raise ValueError(f"ncolaxes is {ncolaxes} but it must be "
+                                 f"0 < ncolaxes < {self.ndim} (number of "
+                                 f"dimensions)")
             if fold_last_axis_name:
-                tmp = axes_names[-1] if axes_names[-1] is not None else ''
-                if last_name:
-                    axes_names[-1] = f"{tmp}\\{last_name}"
-            if self.ndim == 2:
-                index = np_array_to_pd_index(self.axes[0].labels, name=axes_names[0])
+                raise ValueError("ncolaxes cannot be used in combination with"
+                                 "fold_last_axis_name=True")
+
+        axes = list(self.axes)
+        if fold_last_axis_name and self.ndim > 1:
+            assert ncolaxes == 1
+
+            # the goal is to move the last axis name from the column index
+            # to the row index name (ndim=2) or last level name (ndim>2)
+            col_axis_name = axes[-1].name
+            if col_axis_name:
+                last_row_axis_name = axes[-2].name if axes[-2].name is not None else ''
+                axes[-2] = axes[-2].rename(f"{last_row_axis_name}\\{col_axis_name}")
+            axes[-1] = axes[-1].rename(None)
+
+        def _axes_to_index(axes: list):
+            assert len(axes) > 0
+            if len(axes) == 1:
+                return np_array_to_pd_index(axes[0].labels, name=axes[0].name)
             else:
-                index = pd.MultiIndex.from_product(self.axes.labels[:-1], names=axes_names)
+                return pd.MultiIndex.from_product(
+                    [axis.labels for axis in axes],
+                    names=[axis.name for axis in axes]
+                )
+
+        if self.ndim > 1:
+            row_index = _axes_to_index(axes[:-ncolaxes])
         else:
-            index = pd.Index([''])
-            if fold_last_axis_name:
-                index.name = self.axes.names[-1]
-        data = np.asarray(self).reshape((len(index), len(columns)))
-        df = pd.DataFrame(data, index, columns)
+            row_index = pd.Index([''])
+        col_index = _axes_to_index(axes[-ncolaxes:])
+        if fold_last_axis_name and self.ndim == 1:
+            row_index.name = col_index.name
+            col_index.name = None
+
+        data = self.data.reshape((len(row_index), len(col_index)))
+        df = pd.DataFrame(data, row_index, col_index)
         if dropna is not None:
             dropna = dropna if dropna is not True else 'all'
             df.dropna(inplace=True, how=dropna)

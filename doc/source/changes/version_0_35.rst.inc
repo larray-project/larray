@@ -83,6 +83,9 @@ Miscellaneous improvements
 
     >>> arr.plot.bar(stack='gender')
 
+* :py:obj:`Array.to_frame()` gained an ``ncolaxes`` argument to control how many
+  axes should be used as columns (defaults to 1, as before).
+
 
 Fixes
 ^^^^^
