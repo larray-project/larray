@@ -92,6 +92,9 @@ Miscellaneous improvements
 
     >>> arr.plot.bar(stack='gender')
 
+* :py:obj:`from_frame()` and :py:obj:`asarray()` now support Pandas DataFrames
+  with more than one level (row) of columns (closes :issue:`466`).
+
 * :py:obj:`Array.to_frame()` gained an ``ncolaxes`` argument to control how many
   axes should be used as columns (defaults to 1, as before).
 
