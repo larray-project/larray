@@ -6,7 +6,6 @@ import pandas as pd
 from larray.core.array import Array
 from larray.core.axis import Axis, AxisCollection
 from larray.core.constants import nan
-from larray.util.misc import unique_list
 
 
 def decode(s, encoding='utf-8', errors='strict'):
@@ -46,34 +45,51 @@ def index_to_labels(idx, sort=True):
     """
     if isinstance(idx, pd.MultiIndex):
         if sort:
-            return list(idx.levels)
+            return list(idx.levels)  # list of pd.Index
         else:
-            return [unique_list(idx.get_level_values(label)) for label in range(idx.nlevels)]
+            # requires Pandas >= 0.23 (and it does NOT sort the values)
+            # TODO: unsure to_list is necessary (larray tests pass without it
+            #       but I am not sure this code path is covered by tests)
+            #       and there might be a subtle difference. The type
+            #       of the returned object without to_list() is pd.Index
+            return [idx.unique(level).to_list() for level in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.Index)
         labels = list(idx.values)
         return [sorted(labels) if sort else labels]
 
 
-def cartesian_product_df(df, sort_rows=False, sort_columns=False, fill_value=nan, **kwargs):
-    idx = df.index
-    labels = index_to_labels(idx, sort=sort_rows)
+def product_index(idx, sort=False):
+    """
+    Converts a pandas (Multi)Index to an (Multi)Index with a cartesian
+    product of the labels present in each level
+    """
+    labels = index_to_labels(idx, sort=sort)
     if isinstance(idx, pd.MultiIndex):
-        if sort_rows:
-            new_index = pd.MultiIndex.from_product(labels)
-        else:
-            new_index = pd.MultiIndex.from_tuples(list(product(*labels)))
+        return pd.MultiIndex.from_product(labels), labels
     else:
-        if sort_rows:
-            new_index = pd.Index(labels[0], name=idx.name)
+        assert isinstance(idx, pd.Index)
+        if sort:
+            return pd.Index(labels[0], name=idx.name), labels
         else:
-            new_index = idx
-    columns = sorted(df.columns) if sort_columns else list(df.columns)
-    # the prodlen test is meant to avoid the more expensive array_equal test
-    prodlen = np.prod([len(axis_labels) for axis_labels in labels])
-    if prodlen == len(df) and columns == list(df.columns) and np.array_equal(idx.values, new_index.values):
-        return df, labels
-    return df.reindex(index=new_index, columns=columns, fill_value=fill_value, **kwargs), labels
+            return idx, labels
+
+
+def cartesian_product_df(df, sort_rows=False, sort_columns=False,
+                         fill_value=nan, **kwargs):
+    idx = df.index
+    columns = df.columns
+    prod_index, index_labels = product_index(idx, sort=sort_rows)
+    prod_columns, column_labels = product_index(columns, sort=sort_columns)
+    combined_labels = index_labels + column_labels
+    # the len() tests are meant to avoid the more expensive array_equal tests
+    if (len(prod_index) == len(idx) and
+            len(prod_columns) == len(columns) and
+            np.array_equal(idx.values, prod_index.values) and
+            np.array_equal(columns.values, prod_columns.values)):
+        return df, combined_labels
+    return df.reindex(index=prod_index, columns=prod_columns,
+                      fill_value=fill_value, **kwargs), combined_labels
 
 
 def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Array:
@@ -124,8 +140,13 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
     a1   b1  6.0  7.0
     """
     if isinstance(s.index, pd.MultiIndex):
-        # TODO: use argument sort=False when it will be available
-        # (see https://github.com/pandas-dev/pandas/issues/15105)
+        # Using unstack sort argument (requires Pandas >= 2.1) would make this
+        # code simpler, but it makes it even slower than it already is.
+        # As of Pandas 2.3.3 on 12/2025, a series with a large MultiIndex is
+        # extremely slow to unstack, whether sort is used or not:
+        # >>> arr = ndtest((200, 200, 200))
+        # >>> s = arr.to_series()                     # 31.4 ms
+        # >>> s.unstack(level=-1, fill_value=np.nan)  # 1.5s !!!
         df = s.unstack(level=-1, fill_value=fill_value)
         # pandas (un)stack and pivot(_table) methods return a Dataframe/Series with sorted index and columns
         if not sort_rows:
@@ -211,13 +232,15 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
 
     # handle 2 or more dimensions with the last axis name given using \
     if unfold_last_axis_name:
+        # Note that having several axes in columns (and using df.columns.names)
+        # in this case does not make sense
         if isinstance(axes_names[-1], str) and '\\' in axes_names[-1]:
             last_axes = [name.strip() for name in axes_names[-1].split('\\')]
             axes_names = axes_names[:-1] + last_axes
         else:
             axes_names += [None]
     else:
-        axes_names += [df.columns.name]
+        axes_names += df.columns.names
 
     if cartesian_prod:
         df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns,
@@ -226,12 +249,18 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
         if sort_rows or sort_columns:
             raise ValueError('sort_rows and sort_columns cannot not be used when cartesian_prod is set to False. '
                              'Please call the method sort_labels on the returned array to sort rows or columns')
-        axes_labels = index_to_labels(df.index, sort=False)
+        index_labels = index_to_labels(df.index, sort=False)
+        column_labels = index_to_labels(df.columns, sort=False)
+        axes_labels = index_labels + column_labels
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values
-    last_axis_labels = [parse(cell) for cell in df.columns.values] if parse_header else list(df.columns.values)
-    axes_labels.append(last_axis_labels)
+    if parse_header:
+        ncolaxes = df.columns.nlevels
+        for i in range(len(axes_labels) - ncolaxes, len(axes_labels)):
+            axes_labels[i] = [parse(cell) for cell in axes_labels[i]]
 
+    # TODO: use zip(..., strict=True) instead when we drop support for Python 3.9
+    assert len(axes_labels) == len(axes_names)
     axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.values.reshape(axes.shape)
     return Array(data, axes, meta=meta)

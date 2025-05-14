@@ -4121,6 +4121,7 @@ def test_to_frame():
     assert df.columns.to_list() == ['c0', 'c1']
     assert df.index.names == ['a', r'b\c']
 
+
 def test_from_frame():
     # 1) data = scalar
     # ================
@@ -4528,6 +4529,81 @@ def test_from_frame():
     expected[0, 'F'] = -1
     df = df.reset_index().drop([3]).set_index(['a', 'gender'])
     res = from_frame(df, fill_value=-1)
+    assert_larray_equal(res, expected)
+
+    # 6) with a multi-index in columns
+    # ================================
+
+    # a) normal
+    arr = ndtest((2, 2, 2, 2))
+    df = arr.to_frame(ncolaxes=2)
+    res = from_frame(df)
+    assert_larray_equal(res, arr)
+
+    # b) with duplicated axis names
+    arr = ndtest("a=a0,a1;a=b0,b1;a=c0,c1;a=d0,d1")
+    df = arr.to_frame(ncolaxes=2)
+    res = from_frame(df)
+    assert_larray_equal(res, arr)
+
+    # c) with duplicated axes names and labels
+    arr = ndtest("a=a0,a1;a=a0,a1;a=a0,a1;a=a0,a1")
+    df = arr.to_frame(ncolaxes=2)
+    res = from_frame(df)
+    assert_larray_equal(res, arr)
+
+    # d) with unsorted labels
+    arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
+    df = arr.to_frame(ncolaxes=2)
+    res = from_frame(df)
+    assert_larray_equal(res, arr)
+
+    # e) with sorting of unsorted column labels
+    arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
+    df = arr.to_frame(ncolaxes=2)
+    expected = from_string(r"""
+     a   b  c\d  d0  d1
+    a1  b1   c0   3   2
+    a1  b1   c1   1   0
+    a1  b0   c0   7   6
+    a1  b0   c1   5   4
+    a0  b1   c0  11  10
+    a0  b1   c1   9   8
+    a0  b0   c0  15  14
+    a0  b0   c1  13  12""")
+    res = from_frame(df, sort_columns=True)
+    assert_larray_equal(res, expected)
+
+    # f) with sorting of unsorted row labels
+    arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
+    df = arr.to_frame(ncolaxes=2)
+    expected = from_string(r"""
+     a   b  c\d  d1  d0
+    a0  b0   c1  12  13
+    a0  b0   c0  14  15
+    a0  b1   c1   8   9
+    a0  b1   c0  10  11
+    a1  b0   c1   4   5
+    a1  b0   c0   6   7
+    a1  b1   c1   0   1
+    a1  b1   c0   2   3""")
+    res = from_frame(df, sort_rows=True)
+    assert_larray_equal(res, expected)
+
+    # g) with sorting of all unsorted labels
+    arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
+    df = arr.to_frame(ncolaxes=2)
+    expected = from_string(r"""
+    a   b  c\d  d0  d1
+    a0  b0   c0  15  14
+    a0  b0   c1  13  12
+    a0  b1   c0  11  10
+    a0  b1   c1   9   8
+    a1  b0   c0   7   6
+    a1  b0   c1   5   4
+    a1  b1   c0   3   2
+    a1  b1   c1   1   0""")
+    res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected)
 
 
