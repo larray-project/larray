@@ -150,7 +150,7 @@ if xw is not None:
                 app = global_app
             assert isinstance(app, xw.App)
 
-            # activate XLA(M) addins, if nee
+            # activate XLA(M) addins, if needed
             # By default, add-ins are not activated when an Excel Workbook is opened via COM
             if load_addins:
                 xl_app = app.api
