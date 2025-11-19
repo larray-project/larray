@@ -150,6 +150,9 @@ needs_xlsxwriter = pytest.mark.skipif(SKIP_EXCEL_TESTS or xlsxwriter is None,
 
 @contextmanager
 def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected=1):
+    # makes this function not appear in pytest tracebacks
+    __tracebackhide__ = True
+
     if num_expected == 0:
         yield []
     else:
