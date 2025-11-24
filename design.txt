@@ -1131,6 +1131,9 @@ subset = pop.q('M, age.sum(10:20 >> yada1, 20:30 >> yada2'))
 # without ambiguity, that would be
 subset = pop.q('M, sum(10:20 >> yada1, 20:30 >> yada2'))
 
+# this could work too:
+subset = pop.q('M', sum(age[10:20] >> 'yada1', age[20:30] >> 'yada2'))
+
 # if using a function (like .q) we could also "rename" axes on the fly. the above would create an aggregated axis
 # named "age" but the code below would create "toto" instead
 subset = pop.q('M', toto=age.sum[10:20, 20:30])
