@@ -79,7 +79,7 @@ Miscellaneous improvements
   always stacking the last axis. For example, a plot with genders stacked
   could be specified as:
 
-    >>> arr.plot.bar(stacked='gender')
+    >>> arr.plot.bar(stack='gender')
 
 
 Fixes
