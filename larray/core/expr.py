@@ -9,9 +9,13 @@ class ExprNode:
 
     # method factory
     def _binop(opname):
+        # reversed = opname.startswith('r') and opname != 'rshift'
         def opmethod(self, other):
-            # evaluate eagerly when possible
-            if isinstance(other, ABCArray):
+            assert isinstance(self, ExprNode), \
+                (f"Expected ExprNode, got {type(self).__name__} "
+                 f"({self=} {other=})")
+            if (isinstance(other, ABCArray) and
+                    self.can_evaluate_with(other.axes)):
                 self_value = self.evaluate(other.axes)
                 return getattr(self_value, f'__{opname}__')(other)
             else:
@@ -20,6 +24,7 @@ class ExprNode:
         opmethod.__name__ = f'__{opname}__'
         return opmethod
 
+    __rmatmul__ = _binop('rmatmul')
     __matmul__ = _binop('matmul')
     __ror__ = _binop('ror')
     __or__ = _binop('or')
@@ -28,7 +33,7 @@ class ExprNode:
     __rand__ = _binop('rand')
     __and__ = _binop('and')
     __rrshift__ = _binop('rrshift')
-    __rshift__ = _binop('rshift')
+    __rshift__ = _binop('rshift')   # not reverse even though it starts with 'r'
     __rlshift__ = _binop('rlshift')
     __lshift__ = _binop('lshift')
     __rpow__ = _binop('rpow')
@@ -67,6 +72,21 @@ class ExprNode:
     __pos__ = _unaryop('pos')
     __abs__ = _unaryop('abs')
     __invert__ = _unaryop('invert')
+
+    def can_evaluate_with(self, context):
+        """
+        Returns wether this expression can be evaluated using the given context.
+
+        Parameters
+        ----------
+        context : AxisCollection
+            Use axes from this collection
+
+        Returns
+        -------
+        bool
+        """
+        raise NotImplementedError()
 
     def evaluate(self, context):
         """
@@ -114,6 +134,13 @@ class BinaryOp(ExprNode):
         expr2 = expr_eval(self.expr2, context)
         return getattr(expr1, self.opname)(expr2)
 
+    def can_evaluate_with(self, context):
+        return (
+            (self.expr1.can_evaluate_with(context) if isinstance(self.expr1, ExprNode) else True)
+            and
+            (self.expr2.can_evaluate_with(context) if isinstance(self.expr2, ExprNode) else True)
+        )
+
     def __repr__(self):
         return (f"BinaryOp({self.opname[2:-2]!r}, "
                            f"{value_summary(self.expr1)}, "
@@ -129,6 +156,9 @@ class UnaryOp(ExprNode):
         # TODO: implement eval via numexpr
         expr = expr_eval(self.expr, context)
         return getattr(expr, self.opname)()
+
+    def can_evaluate_with(self, context):
+        return self.expr.can_evaluate_with(context)
 
     def __repr__(self):
         return f"UnaryOp({self.opname[2:-2]!r}, {value_summary(self.expr)})"

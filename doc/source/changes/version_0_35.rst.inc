@@ -89,3 +89,6 @@ Fixes
   fix because it kind of worked but silently ignored the index and name of the
   series (closes :issue:`895`).
 
+* fixed evaluating operations involving X.axis and an array when
+  that operation is only valid in the context of a larger array by delaying
+  the evaluation until the larger array is known (closes :issue:`1129`).

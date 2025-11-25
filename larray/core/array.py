@@ -50,7 +50,7 @@ except ImportError:
 from larray.core.abstractbases import ABCArray
 from larray.core.constants import nan, inf
 from larray.core.metadata import Metadata
-from larray.core.expr import ExprNode
+from larray.core.expr import ExprNode, BinaryOp
 from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
                                _translate_sheet_name, _translate_group_key_hdf)
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
@@ -5557,8 +5557,15 @@ class Array(ABCArray):
         super_method = getattr(np.ndarray, fullname)
 
         def opmethod(self, other) -> 'Array':
+            # we could implement this more cleanly by returning
+            # NotImplemented in this case and letting the ExprNode reverse
+            # op (r*) handle it, but this can change the result axes order
+            # so I am unsure about that.
             if isinstance(other, ExprNode):
-                other = other.evaluate(self.axes)
+                if other.can_evaluate_with(self.axes):
+                    other = other.evaluate(self.axes)
+                else:
+                    return BinaryOp(opname, self, other)
 
             # XXX: unsure what happens for non scalar Groups.
             #      we might want to be more general than this and .eval all Groups?

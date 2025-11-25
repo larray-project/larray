@@ -3817,6 +3817,9 @@ class AxisReference(ABCAxisReference, ExprNode, Axis):
         """
         return context[self.name]
 
+    def can_evaluate_with(self, context) -> set:  # set[int]
+        return self.name in context
+
     # Use the default hash. We have to specify it explicitly because we define __eq__ via ExprNode and
     # ExprNode.__hash__ (which is not set explicitly) takes precedence over Axis.__hash__
     __hash__ = object.__hash__
