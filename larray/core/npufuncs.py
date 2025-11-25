@@ -118,12 +118,10 @@ fabs = wrap_numpy_func(np.fabs)
 sign = wrap_numpy_func(np.sign)
 fmax = wrap_numpy_func(np.fmax)
 fmin = wrap_numpy_func(np.fmin)
-nan_to_num = wrap_numpy_func(np.nan_to_num)
 real_if_close = wrap_numpy_func(np.real_if_close)
 
 # TODO: add examples for functions below
 sqrt = wrap_numpy_func(np.sqrt)
-isnan = wrap_numpy_func(np.isnan)
 isinf = wrap_numpy_func(np.isinf)
 inverse = wrap_numpy_func(np.linalg.inv)
 

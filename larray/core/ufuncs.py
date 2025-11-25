@@ -300,3 +300,189 @@ minimum(x1, x2, out=None, dtype=None)
      a0   6   2   5   0
      a1   5   2   3   0
 """)
+
+def _generalized_isnan(arr, out=None, where=True, **kwargs):
+    if isinstance(arr, np.ndarray) and arr.dtype.kind == 'O':
+        if out is not None or where is not True or kwargs:
+            raise ValueError("The 'out', 'where' and other keyword arguments "
+                             "are not supported for object arrays.")
+        return arr != arr
+    else:
+        return np.isnan(arr, out=out, where=where, **kwargs)
+
+isnan = wrap_elementwise_array_func(_generalized_isnan, r"""
+Test element-wise for NaN and return result as a boolean array.
+
+Parameters
+----------
+x : array_like
+    Input array.
+out : ndarray, None, or tuple of ndarray and None, optional
+    A location into which the result is stored. If provided, it must have
+    a shape that the inputs broadcast to. If not provided or None,
+    a freshly-allocated array is returned. A tuple (possible only as a
+    keyword argument) must have length equal to the number of outputs.
+where : array_like, optional
+    This condition is broadcast over the input. At locations where the
+    condition is True, the `out` array will be set to the ufunc result.
+    Elsewhere, the `out` array will retain its original value.
+    Note that if an uninitialized `out` array is created via the default
+    ``out=None``, locations within it where the condition is False will
+    remain uninitialized.
+**kwargs
+    For other keyword-only arguments, see the
+    :ref:`ufunc docs <ufuncs.kwargs>`.
+
+Returns
+-------
+y : ndarray or bool
+    True where ``x`` is NaN, false otherwise.
+    This is a scalar if `x` is a scalar.
+
+See Also
+--------
+isinf, isneginf, isposinf, isfinite, isnat
+
+Notes
+-----
+Contrary to the numpy implementation, this function support object arrays.
+
+NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+(IEEE 754). This means that Not a Number is not equivalent to infinity.
+
+Examples
+--------
+>>> import larray as la
+>>> la.isnan(la.nan)
+True
+>>> la.isnan(la.inf)
+False
+>>> arr = la.Array([la.nan, 1, la.inf], 
+...                la.Axis(3, 'values'))
+>>> la.isnan(arr)
+values*     0      1      2
+         True  False  False
+>>> arr = la.Array(['abc', 1, la.nan],
+...                la.Axis(3, 'values'), dtype=object)
+>>> la.isnan(arr)
+values*      0      1     2
+         False  False  True
+""")
+
+
+def _generalized_nan_to_num(arr, copy=True, nan=0, posinf=None, neginf=None):
+    if isinstance(arr, np.ndarray) and arr.dtype.kind == 'O':
+        import sys
+        if posinf is None:
+            posinf = sys.float_info.max
+        if neginf is None:
+            neginf = -sys.float_info.max
+        res = arr.copy() if copy else arr
+        is_nan_value = arr != arr
+        is_pos_inf_value = arr == np.inf
+        is_neg_inf_value = arr == -np.inf
+        if isinstance(nan, np.ndarray):
+            # each array argument is reshaped to a compatible shape for
+            # broadcasting by larray machinery but not actually broadcasted yet
+            nan = np.broadcast_to(nan, arr.shape)[is_nan_value]
+        res[is_nan_value] = nan
+        if isinstance(posinf, np.ndarray):
+            posinf = np.broadcast_to(posinf, arr.shape)[is_pos_inf_value]
+        res[is_pos_inf_value] = posinf
+        if isinstance(neginf, np.ndarray):
+            neginf = np.broadcast_to(neginf, arr.shape)[is_neg_inf_value]
+        res[is_neg_inf_value] = neginf
+        return res
+    else:
+        return np.nan_to_num(arr, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
+
+nan_to_num = wrap_elementwise_array_func(_generalized_nan_to_num,r"""
+    Replace NaN with zero and infinity with large finite numbers (default
+    behaviour) or with the numbers defined by the user using the `nan`,
+    `posinf` and/or `neginf` keywords.
+
+    If `x` is inexact or an object array, NaN is replaced by zero or by the user
+    defined value in `nan` keyword, infinity is replaced by the largest finite 
+    floating point value representable by ``x.dtype`` or by the user defined 
+    value in `posinf` keyword and -infinity is replaced by the most negative 
+    finite floating point value representable by ``x.dtype`` or by the user 
+    defined value in `neginf` keyword.
+
+    For complex dtypes, the above is applied to each of the real and
+    imaginary components of `x` separately.
+
+    If `x` is not inexact or object, then no replacements are made.
+
+    Parameters
+    ----------
+    x : scalar or array_like
+        Input data.
+    copy : bool, optional
+        Whether to create a copy of `x` (True) or to replace values
+        in-place (False). The in-place operation only occurs if
+        casting to an array does not require a copy.
+        Default is True.
+    nan : int, float or array_like, optional
+        Value to be used to fill NaN values. If no value is passed
+        then NaN values will be replaced with 0.0.
+    posinf : int, float, optional
+        Value to be used to fill positive infinity values. If no value is
+        passed then positive infinity values will be replaced with the largest 
+        finite floating point value representable by ``x.dtype``.
+    neginf : int, float, optional
+        Value to be used to fill negative infinity values. If no value is
+        passed then negative infinity values will be replaced with the most 
+        negative finite floating point value representable by ``x.dtype``.
+
+    Returns
+    -------
+    out : Array or scalar
+        `x`, with the non-finite values replaced. If `copy` is False, this may
+        be `x` itself.
+
+    See Also
+    --------
+    isinf : Shows which elements are positive or negative infinity.
+    isneginf : Shows which elements are negative infinity.
+    isposinf : Shows which elements are positive infinity.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite : Shows which elements are finite (not NaN, not infinity)
+
+    Notes
+    -----
+    Contrary to the numpy implementation, this function support object arrays.
+
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+
+    Examples
+    --------
+    >>> import larray as la
+
+    >>> la.nan_to_num(la.inf)
+    1.7976931348623157e+308
+    >>> la.nan_to_num(-la.inf)
+    -1.7976931348623157e+308
+    >>> la.nan_to_num(np.nan)
+    0.0
+
+    >>> x = la.Array([-la.inf, 1, la.nan, 2, la.inf], la.Axis(5, 'values'))
+    >>> la.nan_to_num(x)
+    values*                         0    1    2    3                        4
+             -1.7976931348623157e+308  1.0  0.0  2.0  1.7976931348623157e+308
+    >>> la.nan_to_num(x, nan=-1, posinf=999, neginf=-999)
+    values*       0    1     2    3      4
+             -999.0  1.0  -1.0  2.0  999.0
+
+    >>> x = la.Array([1, 'abc', la.nan, 2], la.Axis(4, 'values'), dtype=object)
+    >>> la.nan_to_num(x)
+    values*  0    1  2  3
+             1  abc  0  2
+
+    >>> y = la.Array([complex(la.inf, la.nan), la.nan, complex(la.nan, la.inf)],
+    ...              la.Axis(3, 'values'))
+    >>> la.nan_to_num(y)
+    values*                             0   1                         2
+             (1.7976931348623157e+308+0j)  0j  1.7976931348623157e+308j
+    """
+)

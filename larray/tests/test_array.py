@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 import numpy as np
@@ -17,7 +18,7 @@ from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadat
                     asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
-                    zip_array_values, zip_array_items)
+                    zip_array_values, zip_array_items, nan_to_num)
 from larray.core.axis import _to_ticks, _to_tick, _to_key
 from larray.util.misc import LHDFStore
 
@@ -5829,7 +5830,9 @@ def test_deprecated_methods():
 def test_eq():
     a = ndtest((2, 3, 4))
     ao = a.astype(object)
-    assert_larray_equal(ao.eq(ao['c0'], nans_equal=True), a == a['c0'])
+    res = ao.eq(ao['c0'], nans_equal=True)
+    expected = a == a['c0']
+    assert_larray_equal(res, expected)
 
 
 def test_zip_array_values():
@@ -5895,6 +5898,33 @@ def test_np_array():
         res = np.array(arr, copy=False, dtype=float)
         assert_nparray_equal(res, arr.data)
         assert res is not arr.data
+
+
+def test_nan_to_num():
+    a = Axis('a=a0..a4')
+    arr = Array([1.0, nan, inf, 2.0, -inf], axes=a)
+    res = nan_to_num(arr)
+    max_float = np.finfo(arr.dtype).max
+    expected = Array([1.0, 0.0, max_float, 2.0, -max_float], axes=a)
+    assert_larray_equal(res, expected)
+
+    max_float = sys.float_info.max
+    arr = Array(["abc", 1.0, nan, inf, -inf], axes=a, dtype=object)
+    res = nan_to_num(arr, neginf=-10, posinf=10)
+    expected = Array(["abc", 1.0, 0.0, 10.0, -10.0], axes=a, dtype=object)
+    assert_larray_equal(res, expected)
+
+
+def test_isnan():
+    a = Axis('a=a0..a3')
+    arr = Array([1.0, nan, inf, -inf], axes=a)
+    res = isnan(arr)
+    expected = Array([False, True, False, False], axes=a)
+    assert_larray_equal(res, expected)
+
+    oarr = arr.astype(object)
+    res = isnan(oarr)
+    assert_larray_equal(res, expected)
 
 
 if __name__ == "__main__":
