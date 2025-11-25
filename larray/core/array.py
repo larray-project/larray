@@ -814,8 +814,6 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
                         np.std, np.nanstd, np.var, np.nanvar}
 
-obj_isnan = np.vectorize(lambda x: x != x, otypes=[bool])
-
 
 def element_equal(a1, a2, rtol=0, atol=0, nan_equals=False):
     warnings.warn("element_equal() is deprecated. Use array1.eq(array2, rtol, atol, nan_equals) instead.",
@@ -6027,24 +6025,15 @@ class Array(ABCArray):
         """
         other = asarray(other)
 
+        (self_data, other_data), res_axes = raw_broadcastable([self, other])
         if rtol == 0 and atol == 0:
-            if not nans_equal:
-                return self == other
-            else:
-                from larray.core.npufuncs import isnan
-
-                def general_isnan(a):
-                    if issubclass(a.dtype.type, np.inexact):
-                        return isnan(a)
-                    elif a.dtype.type is np.object_:
-                        return Array(obj_isnan(a), a.axes)
-                    else:
-                        return False
-
-                return (self == other) | (general_isnan(self) & general_isnan(other))
+            res_data = self_data == other_data
+            if nans_equal:
+                res_data |= (self_data != self_data) & (other_data != other_data)
         else:
-            (a1_data, a2_data), res_axes = raw_broadcastable([self, other])
-            return Array(np.isclose(a1_data, a2_data, rtol=rtol, atol=atol, equal_nan=nans_equal), res_axes)
+            res_data = np.isclose(self_data, other_data,
+                                  rtol=rtol, atol=atol, equal_nan=nans_equal)
+        return Array(res_data, res_axes)
 
     def isin(self, test_values, assume_unique=False, invert=False) -> 'Array':
         r"""
