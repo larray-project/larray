@@ -1720,6 +1720,14 @@ class Array(ABCArray):
             return ((isinstance(axis_def, str) and '=' in axis_def)
                     or isinstance(axis_def, Group))
 
+        def axes_refs_and_defs_to_axes(axes_to_reindex: dict):
+            new_axes_to_reindex = {}
+            for k, v in axes_to_reindex.items():
+                src_axis = axis_ref_to_axis(self.axes, k)
+                dst_axis = labels_def_and_name_to_axis(v, src_axis.name)
+                new_axes_to_reindex[src_axis] = dst_axis
+            return new_axes_to_reindex
+
         if new_axis is None:
             if isinstance(axes_to_reindex, Axis) and not isinstance(axes_to_reindex, AxisReference):
                 axes_to_reindex = {axes_to_reindex: axes_to_reindex}
@@ -1757,14 +1765,10 @@ class Array(ABCArray):
         else:
             # TODO: move this to AxisCollection.replace
             if isinstance(axes_to_reindex, dict):
-                new_axes_to_reindex = {}
-                for k, v in axes_to_reindex.items():
-                    src_axis = axis_ref_to_axis(self.axes, k)
-                    dst_axis = labels_def_and_name_to_axis(v, src_axis.name)
-                    new_axes_to_reindex[src_axis] = dst_axis
-                axes_to_reindex = new_axes_to_reindex
-
-            res_axes = self.axes.replace(axes_to_reindex, **kwargs)
+                axes_to_reindex = axes_refs_and_defs_to_axes(axes_to_reindex)
+            res_axes = self.axes.replace(axes_to_reindex)
+            if kwargs:
+                res_axes = res_axes.replace(axes_refs_and_defs_to_axes(kwargs))
         res = full(res_axes, fill_value, dtype=common_dtype((self.data, fill_value)))
 
         def get_group(res_axes, self_axis):

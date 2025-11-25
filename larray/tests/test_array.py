@@ -3195,6 +3195,18 @@ def test_reindex():
     res = arr.reindex({'a': 'a0,a1,a2'})
     assert_larray_nan_equal(res, expected)
 
+    # using the **kwargs syntax
+    res = arr.reindex(a=new_a)
+    assert_larray_nan_equal(res, expected)
+
+    # using the **kwargs syntax with a list of labels
+    res = arr.reindex(a=['a0', 'a1', 'a2'])
+    assert_larray_nan_equal(res, expected)
+
+    # using the **kwargs syntax with a labels def string (issue #1120)
+    res = arr.reindex(a='a0,a1,a2')
+    assert_larray_nan_equal(res, expected)
+
     # test error conditions
     msg = ("In Array.reindex, when using an axis reference ('axis name', X.axis_name or "
            "axis_integer_position) as axes_to_reindex, you must provide a value for `new_axis`.")
