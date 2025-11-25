@@ -829,6 +829,18 @@ incompatible axes:
     res = arr[X.b < 2]
     assert_nparray_equal(res.data, raw[:, :2])
 
+    # using an AxisReference (ExprNode) with an Array which cannot be evaluated
+    # outside of the getitem context (issue #1129)
+    threshold = stack({'a0': 2, 'a1': 3}, 'a')
+    expected = Array([2, 3, 7], Axis('b_a=2_a0,3_a0,3_a1'))
+    res = arr[X.b >= threshold]
+    assert_larray_equal(res, expected)
+
+    # same situation when the array is first (the code path is different)
+    expected = Array([2, 3, 7], Axis('a_b=a0_2,a0_3,a1_3'))
+    res = arr[threshold <= X.b]
+    assert_larray_equal(res, expected)
+
 
 def test_getitem_bool_larray_key_arr_wh_bool_axis():
     gender = Axis([False, True], 'gender')
