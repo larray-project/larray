@@ -1,4 +1,6 @@
-from larray.core.abstractbases import ABCArray
+import numpy as np
+
+from larray.core.abstractbases import ABCAxisReference, ABCAxis, ABCArray
 
 
 class ExprNode:
@@ -81,6 +83,25 @@ def expr_eval(expr, context):
     return expr.evaluate(context) if isinstance(expr, ExprNode) else expr
 
 
+def value_summary(value):
+    if isinstance(value, ABCArray):
+        axes = value.axes
+        axes_info = ' x '.join(f'{name} ({length})'
+                               for name, length
+                               in zip(axes.display_names, axes.shape))
+        return f"Array(<{axes_info}>)"
+    elif isinstance(value, ABCAxisReference):
+        return f"X.{value.name}"
+    elif isinstance(value, ABCAxis):
+        return f"Axis(<{value.name} ({len(value)})>)"
+    elif isinstance(value, ExprNode):
+        return repr(value)
+    else:
+        assert np.isscalar(value), (f"Expected scalar value, "
+                                    f"got {type(value).__name__}")
+        return repr(value)
+
+
 class BinaryOp(ExprNode):
     def __init__(self, op, expr1, expr2):
         self.opname = f'__{op}__'
@@ -94,7 +115,9 @@ class BinaryOp(ExprNode):
         return getattr(expr1, self.opname)(expr2)
 
     def __repr__(self):
-        return f"BinaryOp({self.opname[2:-2]!r}, {self.expr1!r}, {self.expr2!r})"
+        return (f"BinaryOp({self.opname[2:-2]!r}, "
+                           f"{value_summary(self.expr1)}, "
+                           f"{value_summary(self.expr2)})")
 
 
 class UnaryOp(ExprNode):
@@ -108,4 +131,4 @@ class UnaryOp(ExprNode):
         return getattr(expr, self.opname)()
 
     def __repr__(self):
-        return f"UnaryOp({self.opname[2:-2]!r}, {self.expr!r})"
+        return f"UnaryOp({self.opname[2:-2]!r}, {value_summary(self.expr)})"
