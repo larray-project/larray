@@ -675,9 +675,13 @@ key: ([1, 2], [3, 4])"""):
 
     # key with partial invalid list (ie list containing a label not found
     # on any axis)
-    # FIXME: this should not mention the a axis specifically (this is due to the chunking code)
-    with must_raise(ValueError, "a[3, 999] is not a valid label for the 'a' axis with labels: 0, 1, 2, 3, 4, 5, 6, "
-                                "7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18"):
+    with must_raise(ValueError, """[3, 999] is not a valid subset for any axis:
+ a [19]: 0 1 2 ... 16 17 18
+ b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
+ c [2]: 'c0' 'c1'
+ d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'
+Some of those labels correspond though:
+ * axis 'a' contains 1 out of 2 labels (labels not found: 999)"""):
         _ = array[[1, 2], [3, 999]]
 
     with must_raise(ValueError, """[999, 4] is not a valid subset for any axis:
@@ -685,8 +689,8 @@ key: ([1, 2], [3, 4])"""):
  b [12]: 'b0' 'b1' 'b2' ... 'b10' 'b11' 'b3'
  c [2]: 'c0' 'c1'
  d [6]: 'd1' 'd2' 'd3' 'd4' 'd5' 'd6'
-Some of those labels are valid though:
- * axis 'a' contains 1 out of 2 labels (missing labels: 999)"""):
+Some of those labels correspond though:
+ * axis 'a' contains 1 out of 2 labels (labels not found: 999)"""):
         _ = array[[1, 2], [999, 4]]
 
     # ambiguous key
@@ -1099,6 +1103,32 @@ a1   b0   0   3   3   0
 a1   b1   4   4   4   4
 a1   b2   2   5   5   2""")
     assert_larray_equal(arr[key], expected)
+
+    arr = ndtest((2, 3))
+    # key with invalid label (ie label not found on any axis)
+    key = from_string(r"""
+    a\b b0 b1 b2
+     a0 a0 a1 a0
+     a1 a1 a0 a2""").astype(str)
+    with must_raise(ValueError, r"""The values of the array key:
+
+a\b  b0  b1  b2
+ a0  a0  a1  a0
+ a1  a1  a0  a2
+
+do not all correspond to labels of a single axis of the subsetted array which has the following axes:
+
+ a [2]: 'a0' 'a1'
+ b [3]: 'b0' 'b1' 'b2'
+
+Some of those key values correspond though:
+ * axis 'a' contains 2 out of 3 labels (labels not found: 'a2')
+
+Note that all the bad key values are located within the following labels:
+ a: 'a1'
+ b: 'b2'"""):
+        _ = arr[key]
+
 
 
 
