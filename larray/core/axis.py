@@ -2805,8 +2805,6 @@ class AxisCollection:
         """
         # called from _key_to_igroups
 
-        from .array import Array
-
         # Need to convert string keys to groups otherwise command like
         # >>> ndtest((5, 5)).drop('1[a0]')
         # will work although it shouldn't
@@ -2827,35 +2825,7 @@ class AxisCollection:
             else:
                 axis_key = axis_key.labels
 
-        # TODO: do it for Group without axis too
-        if isinstance(axis_key, (tuple, list, np.ndarray, Array)):
-            axis = None
-            # TODO: I should actually do some benchmarks to see if this is useful, and estimate which numbers to use
-            # FIXME: check that size is < than key size
-            for size in (1, 10, 100, 1000):
-                # TODO: do not recheck already checked elements
-                key_chunk = axis_key.i[:size] if isinstance(axis_key, Array) else axis_key[:size]
-                try:
-                    axis, ikey = self._translate_axis_key_chunk(key_chunk)
-                    # if key is unambiguous (did not raise an exception), we know the axis
-                    # TODO: if len(axis_key) < size, we can return axis, ikey directly
-                    break
-                # TODO: we should only continue when ValueError is caused by an ambiguous key, otherwise we only delay
-                #       an inevitable failure
-                except ValueError:
-                    continue
-            # the (start of the) key match a single axis
-            if axis is not None:
-                # make sure we have an Axis object
-                # TODO: we should make sure the tkey returned from _translate_axis_key_chunk always contains a
-                # real Axis (and thus kill this line)
-                # axis = self[axis]
-                # wrap key in LGroup
-                axis_key = axis[axis_key]
-                # XXX: reuse tkey chunks and only translate the rest?
-            return self._translate_axis_key_chunk(axis_key)
-        else:
-            return self._translate_axis_key_chunk(axis_key)
+        return self._translate_axis_key_chunk(axis_key)
 
     def _key_to_axis_indices_dict(self, key):
         """
