@@ -1265,8 +1265,8 @@ class Axis(ABCAxis):
     def intersection(self, other) -> 'Axis':
         r"""Return axis with the (set) intersection of this axis labels and other labels.
 
-        In other words, this will use labels from this axis if they are also in other. Labels relative order will be
-        kept intact.
+        In other words, this will use labels from this axis if they are also in
+        other. Duplicate labels and labels relative order will be kept intact.
 
         Parameters
         ----------
@@ -1290,6 +1290,8 @@ class Axis(ABCAxis):
         Axis(['a1', 'a2'], 'a')
         >>> a.intersection(['a1', 'a2', 'a3'])
         Axis(['a1', 'a2'], 'a')
+        >>> Axis('a=a0,a1,a0').intersection('a1,a0')
+        Axis(['a0', 'a1', 'a0'], 'a')
         """
         non_string_scalar = np.isscalar(other) and not isinstance(other, str)
         other = [other] if non_string_scalar else _to_ticks(other)
