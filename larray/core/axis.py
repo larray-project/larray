@@ -2681,19 +2681,33 @@ class AxisCollection:
             except KeyError:
                 continue
         if not valid_axes:
-            # if the key has several labels
+            # transform string key to object (Group, list, slice, range, scalar)
             nicer_key = _to_key(axis_key)
             sequence_types = (tuple, list, np.ndarray, ABCArray)
             if (isinstance(nicer_key, sequence_types) or
                 (isinstance(nicer_key, Group) and isinstance(nicer_key.key, sequence_types))):
 
-                # we use a different "base" message in this case (because axis_key is not really a *label*)
-                msg = f"{axis_key!r} is not a valid subset for any axis:\n{self._axes_summary()}"
-
                 # ... and check for partial matches
                 if isinstance(nicer_key, Group):
                     nicer_key = nicer_key.eval()
-                key_label_set = set(nicer_key)
+
+                # we transform arrays with ndim > 1 to flat arrays because
+                # otherwise the elements are arrays themselves which are not
+                # hashable and thus we cannot compute a set of them
+                if isinstance(nicer_key, (ABCArray, np.ndarray)):
+                    key_flat_values = nicer_key.data.flat if isinstance(nicer_key, ABCArray) else nicer_key.flat
+                    array_key = True
+                    msg = (f"The values of the array key:\n\n{axis_key!r}\n\n"
+                           f"do not all correspond to labels of a single axis "
+                           f"of the subsetted array which has the following "
+                           f"axes:\n\n{self._axes_summary()}\n")
+                else:
+                    key_flat_values = nicer_key
+                    array_key = False
+                    msg = (f"{axis_key!r} is not a valid subset for any axis:\n"
+                           f"{self._axes_summary()}")
+
+                key_label_set = set(key_flat_values)
                 partial_matches = {}
                 for axis in self:
                     missing_labels = key_label_set - set(axis.labels)
@@ -2704,12 +2718,33 @@ class AxisCollection:
                     partial_matches_str = '\n'.join(
                         f" * axis '{self.axis_id(axis)}' contains {len(key_label_set) - len(missing_labels)}"
                         f' out of {len(key_label_set)}'
-                        f' labels (missing labels: {", ".join(repr(label) for label in missing_labels)})'
+                        f' labels (labels not found: {", ".join(repr(label) for label in missing_labels)})'
                         for axis, missing_labels in partial_matches.items()
                     )
-                    msg += f"\nSome of those labels are valid though:\n{partial_matches_str}"
+                    what = 'key values' if array_key else 'labels'
+                    msg += f"\nSome of those {what} correspond though:\n{partial_matches_str}"
+
+                # if we have a single partial match and an la.Array key (we
+                # don't do it for np.ndarray keys), we compute the problematic
+                # parts of the key and mention them if they are small enough
+                if len(partial_matches) == 1 and isinstance(nicer_key, ABCArray):
+                    axis = next(iter(partial_matches.keys()))
+                    is_bad_key_value = (~nicer_key.isin(axis.labels)).compact()
+                    bad_indices_per_axis = is_bad_key_value.data.nonzero()
+                    SMALL_BAD_PART_THRESHOLD = 5
+                    small_bad_parts_locations = [
+                        f" {axis.name}: " +
+                            ' '.join(repr(label)
+                                     for label in axis.labels[axis_indices])
+                        for axis, axis_indices in zip(nicer_key.axes, bad_indices_per_axis)
+                        if len(axis_indices) <= SMALL_BAD_PART_THRESHOLD
+                    ]
+                    if small_bad_parts_locations:
+                        msg += ("\n\nNote that all the bad key values are "
+                                "located within the following labels:\n")
+                        msg += '\n'.join(small_bad_parts_locations)
             else:
-                # we have single label
+                # we have a single label
                 msg = f"{axis_key!r} is not a valid label for any axis:\n{self._axes_summary()}"
 
             raise ValueError(msg)

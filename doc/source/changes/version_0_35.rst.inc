@@ -85,6 +85,10 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed error message when trying to take a subset of an array with an array
+  key which has ndim > 1 and some bad values in the key. The message was also
+  improved (see the issue for details). Closes :issue:`1134`.
+
 * added support for Pandas Series in :py:obj:`asarray()`. This is considered a
   fix because it kind of worked but silently ignored the index and name of the
   series (closes :issue:`895`).
