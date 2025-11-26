@@ -20,6 +20,8 @@ Backward incompatible changes
   will open a window and pause the running script until the window is closed by
   the user. To revert to the previous behavior, use show=False.
 
+* Using :py:obj:`CheckedParameters` or :py:obj:`CheckedParameters` now requires
+  to install pydantic >= 2.12 (closes :issue:`1075`).
 
 New features
 ^^^^^^^^^^^^
