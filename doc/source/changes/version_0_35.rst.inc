@@ -15,10 +15,10 @@ Syntax changes
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Plots made with Array.plot() in a Python script will be shown by default,
-  unless either the filepath (see below) or ax arguments are used. Shown plots
-  will open a window and pause the running script until the window is closed by
-  the user. To revert to the previous behavior, use show=False.
+* Plots made with :py:obj:`Array.plot()` in a Python script will be shown by
+  default, unless either the filepath (see below) or ax arguments are used.
+  Shown plots will open a window and pause the running script until the window
+  is closed by the user. To revert to the previous behavior, use show=False.
 
 * Using :py:obj:`CheckedSession`, :py:obj:`CheckedParameters` or :py:obj:`CheckedArray`
   now requires to install pydantic >= 2.12 (closes :issue:`1075`).
@@ -26,20 +26,21 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
-* Array.plot now has an ´animate´ argument to produce animated plots. The
-  argument takes an axis (it also supports several axes but that is rarely
-  useful) and will create an animation, with one image per label of that axis.
-  For example,
+* :py:obj:`Array.plot()` now has an ``animate`` argument to produce animated
+  plots. The argument takes an axis (it also supports several axes but that is
+  rarely useful) and will create an animation, with one image per label of that
+  axis. For example,
 
     >>> arr.plot.bar(animate='year')
 
   will create an animated bar plot with one frame per year.
 
-* implemented Array.plot `filepath` argument to save plots to a file directly,
-  without having to use the matplotlib API.
+* implemented :py:obj:`Array.plot()` ``filepath`` argument to save plots to a
+  file directly, without having to use the matplotlib API.
 
-* implemented Array.plot `show` argument to display plots directly, without
-  having to use the matplotlib API. This is the new default behavior.
+* implemented :py:obj:`Array.plot()` ``show`` argument to display plots
+  directly, without having to use the matplotlib API. This is the new default
+  behavior, unless a ``filepath`` is given.
 
 * implemented a new kind of plot: `heatmap`. It can be used like this:
 
