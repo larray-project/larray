@@ -46,10 +46,6 @@ def checkedsession():
 
 
 def test_create_checkedsession_instance(meta):
-    # As of v1.0 of pydantic all fields with annotations (whether annotation-only or with a default value)
-    # will precede all fields without an annotation. Within their respective groups, fields remain in the
-    # order they were defined.
-    # See https://pydantic-docs.helpmanual.io/usage/models/#field-ordering
     declared_variable_keys = ['a', 'a2', 'a01', 'c', 'e', 'g', 'f', 'h', 'b', 'b024', 'anonymous', 'ano01', 'd']
 
     # setting variables without default values
@@ -173,14 +169,16 @@ def test_setitem_cs(checkedsession):
     # trying to set a variable with an object of different type -> should fail
     # a) type given explicitly
     # -> Axis
-    with must_raise(TypeError, msg="instance of Axis expected"):
+    with must_raise(TypeError, msg="Error while assigning value to variable 'a':\n"
+                                   "Input should be an instance of Axis. Got input value of type 'int'."):
         cs['a'] = 0
     # -> CheckedArray
     with must_raise(TypeError, msg="Expected object of type 'Array' or a scalar for the variable 'h' but got "
                                    "object of type 'ndarray'"):
         cs['h'] = h.data
     # b) type deduced from the given default value
-    with must_raise(TypeError, msg="instance of Axis expected"):
+    with must_raise(TypeError, msg="Error while assigning value to variable 'b':\n"
+                                   "Input should be an instance of Axis. Got input value of type 'Array'."):
         cs['b'] = ndtest((3, 3))
 
     # trying to set a CheckedArray variable using a scalar -> OK
@@ -196,11 +194,13 @@ def test_setitem_cs(checkedsession):
 
     # trying to set a CheckedArray variable using an array with wrong axes -> should fail
     # a) extra axis
-    with must_raise(ValueError, msg="Array 'h' was declared with axes {a, b} but got array with axes {a, b, c} "
+    with must_raise(ValueError, msg="Error while assigning value to variable 'h':\n"
+                                    "Array 'h' was declared with axes {a, b} but got array with axes {a, b, c} "
                                     "(unexpected {c} axis)"):
         cs['h'] = ndtest((a3, b2, 'c=c0..c2'))
     # b) incompatible axis
     msg = """\
+Error while assigning value to variable 'h':
 Incompatible axis for array 'h':
 Axis(['a0', 'a1', 'a2', 'a3', 'a4'], 'a')
 vs
@@ -226,14 +226,16 @@ def test_setattr_cs(checkedsession):
     # trying to set a variable with an object of different type -> should fail
     # a) type given explicitly
     # -> Axis
-    with must_raise(TypeError, msg="instance of Axis expected"):
+    with must_raise(TypeError, msg="Error while assigning value to variable 'a':\n"
+                                   "Input should be an instance of Axis. Got input value of type 'int'."):
         cs.a = 0
     # -> CheckedArray
     with must_raise(TypeError, msg="Expected object of type 'Array' or a scalar for the variable 'h' but got "
                                    "object of type 'ndarray'"):
         cs.h = h.data
     # b) type deduced from the given default value
-    with must_raise(TypeError, msg="instance of Axis expected"):
+    with must_raise(TypeError, msg="Error while assigning value to variable 'b':\n"
+                                   "Input should be an instance of Axis. Got input value of type 'Array'."):
         cs.b = ndtest((3, 3))
 
     # trying to set a CheckedArray variable using a scalar -> OK
@@ -249,11 +251,13 @@ def test_setattr_cs(checkedsession):
 
     # trying to set a CheckedArray variable using an array with wrong axes -> should fail
     # a) extra axis
-    with must_raise(ValueError, msg="Array 'h' was declared with axes {a, b} but got array with axes {a, b, c} "
+    with must_raise(ValueError, msg="Error while assigning value to variable 'h':\n"
+                                    "Array 'h' was declared with axes {a, b} but got array with axes {a, b, c} "
                                     "(unexpected {c} axis)"):
         cs.h = ndtest((a3, b2, 'c=c0..c2'))
     # b) incompatible axis
     msg = """\
+Error while assigning value to variable 'h':
 Incompatible axis for array 'h':
 Axis(['a0', 'a1', 'a2', 'a3', 'a4'], 'a')
 vs
@@ -578,7 +582,7 @@ def test_sub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- array variables ---
     assert_array_nan_equal(diff.e, np.full((2, 3), 1, dtype=np.int32))
     assert_array_nan_equal(diff.g, g)
@@ -597,7 +601,7 @@ def test_sub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, e - 2)
     assert_array_nan_equal(diff.g, g - 2)
@@ -617,7 +621,7 @@ def test_sub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, e - ones_like(e))
     assert isnan(diff.g).all()
@@ -639,7 +643,7 @@ def test_sub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, cs.e - ones(axes))
     assert_array_nan_equal(diff.g, cs.g - ones(axes))
@@ -663,7 +667,7 @@ def test_rsub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, 2 - e)
     assert_array_nan_equal(diff.g, 2 - g)
@@ -683,7 +687,7 @@ def test_rsub_cs(checkedsession):
     assert diff.a01 is a01
     assert diff.ano01 is ano01
     assert diff.c is c
-    assert diff.d is d
+    assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, ones_like(e) - e)
     assert isnan(diff.g).all()

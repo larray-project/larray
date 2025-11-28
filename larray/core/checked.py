@@ -1,10 +1,9 @@
 from abc import ABCMeta
-from copy import deepcopy
 import warnings
 
 import numpy as np
 
-from typing import TYPE_CHECKING, Type, Any, Dict, Set, List, no_type_check, Optional
+from typing import Type, Any, Dict, Set, no_type_check, Optional, Annotated
 
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
@@ -37,62 +36,10 @@ if not pydantic:
             raise NotImplementedError("CheckedParameters class cannot be instantiated "
                                       "because pydantic is not installed")
 else:
-    from pydantic.utils import Obj, IMMUTABLE_NON_COLLECTIONS_TYPES, BUILTIN_COLLECTIONS
-    from pydantic.fields import ModelField
-    from pydantic.class_validators import Validator
-    from pydantic.main import BaseConfig
-
-    # the implementation of the class below is inspired by the 'ConstrainedBytes' class
-    # from the types.py module of the 'pydantic' library
-    class CheckedArrayImpl(Array):
-        expected_axes: AxisCollection
-        dtype: np.dtype = np.dtype(float)
-
-        # see https://pydantic-docs.helpmanual.io/usage/types/#classes-with-__get_validators__
-        @classmethod
-        def __get_validators__(cls):
-            # one or more validators may be yielded which will be called in the
-            # order to validate the input, each validator will receive as an input
-            # the value returned from the previous validator
-            yield cls.validate
-
-        @classmethod
-        def validate(cls, value, field: ModelField) -> Array:
-            if not (isinstance(value, Array) or np.isscalar(value)):
-                raise TypeError(f"Expected object of type '{Array.__name__}' or a scalar for "
-                                f"the variable '{field.name}' but got object of type '{type(value).__name__}'")
-
-            # check axes
-            if isinstance(value, Array):
-                error_msg = f"Array '{field.name}' was declared with axes {cls.expected_axes} but got array " \
-                            f"with axes {value.axes}"
-                # check for extra axes
-                extra_axes = value.axes - cls.expected_axes
-                if extra_axes:
-                    raise ValueError(f"{error_msg} (unexpected {extra_axes} "
-                                     f"{'axes' if len(extra_axes) > 1 else 'axis'})")
-                # check compatible axes
-                try:
-                    cls.expected_axes.check_compatible(value.axes)
-                except ValueError as error:
-                    error_msg = str(error).replace("incompatible axes", f"Incompatible axis for array '{field.name}'")
-                    raise ValueError(error_msg)
-                # broadcast + transpose if needed
-                value = value.expand(cls.expected_axes)
-                # check dtype
-                if value.dtype != cls.dtype:
-                    value = value.astype(cls.dtype)
-                return value
-            else:
-                return full(axes=cls.expected_axes, fill_value=value, dtype=cls.dtype)
-
-    # the implementation of the function below is inspired by the 'conbytes' function
-    # from the types.py module of the 'pydantic' library
+    from pydantic import ConfigDict, BeforeValidator, ValidationInfo, TypeAdapter, ValidationError
+    from pydantic_core import PydanticUndefined
 
     def CheckedArray(axes: AxisCollection, dtype: np.dtype = float) -> Type[Array]:
-        # XXX: for a very weird reason I don't know, I have to put the fake import below
-        #      to get autocompletion from PyCharm
-        from larray.core.checked import CheckedArrayImpl
         """
         Represents a constrained array. It is intended to only be used along with :py:class:`CheckedSession`.
 
@@ -113,125 +60,144 @@ else:
         """
         if axes is not None and not isinstance(axes, AxisCollection):
             axes = AxisCollection(axes)
-        _dtype = np.dtype(dtype)
+        expected_axes = axes
 
-        class ArrayDefValue(CheckedArrayImpl):
-            expected_axes = axes
-            dtype = _dtype
+        dtype = np.dtype(dtype)
 
-        return ArrayDefValue
+        def validate_array(value: Any, info: ValidationInfo) -> Array:
+            name = info.context.get("name", "<unknown>")
+            if not (isinstance(value, Array) or np.isscalar(value)):
+                raise TypeError(f"Expected object of type '{Array.__name__}' or a scalar for "
+                                f"the variable '{name}' but got object of type '{type(value).__name__}'")
+
+            # check axes
+            if isinstance(value, Array):
+                error_msg = f"Array '{name}' was declared with axes {expected_axes} but got array " \
+                            f"with axes {value.axes}"
+                # check for extra axes
+                extra_axes = value.axes - expected_axes
+                if extra_axes:
+                    raise ValueError(f"{error_msg} (unexpected {extra_axes} "
+                                     f"{'axes' if len(extra_axes) > 1 else 'axis'})")
+                # check compatible axes
+                try:
+                    expected_axes.check_compatible(value.axes)
+                except ValueError as error:
+                    error_msg = str(error).replace("incompatible axes",
+                                                   f"Incompatible axis for array '{name}'")
+                    raise ValueError(error_msg)
+                # broadcast + transpose if needed
+                value = value.expand(expected_axes)
+                # check dtype
+                if value.dtype != dtype:
+                    value = value.astype(dtype)
+                return value
+            else:
+                return full(axes=expected_axes, fill_value=value, dtype=dtype)
+
+        return Annotated[Array, BeforeValidator(validate_array)]
 
     class AbstractCheckedSession:
         pass
 
-    # the original version of smart_deepcopy() (from pydantic) crashes when obj is of type of
-    # np.ndarray or Array because the second if is written as:
-    # elif not obj and obj_type in BUILTIN_COLLECTIONS:
-    # which throws the error:
-    # ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-    # see https://github.com/samuelcolvin/pydantic/issues/2923
-    def smart_deepcopy(obj: Obj) -> Obj:
-        """
-        Return type as is for immutable built-in types
-        Use obj.copy() for built-in empty collections
-        Use copy.deepcopy() for non-empty collections and unknown objects.
-        """
-        obj_type = obj.__class__
-        if obj_type in IMMUTABLE_NON_COLLECTIONS_TYPES:
-            return obj  # fastest case: obj is immutable and not collection therefore will not be copied anyway
-        elif obj_type in BUILTIN_COLLECTIONS and not obj:
-            # faster way for empty collections, no need to copy its members
-            return obj if obj_type is tuple else obj.copy()  # type: ignore  # tuple doesn't have copy method
-        return deepcopy(obj)  # slowest way when we actually might need a deepcopy
-
-    class LModelField(ModelField):
-        def get_default(self) -> Any:
-            return smart_deepcopy(self.default) if self.default_factory is None else self.default_factory()
-
     # Simplified version of the ModelMetaclass class from pydantic:
-    # https://github.com/samuelcolvin/pydantic/blob/master/pydantic/main.py
+    # https://github.com/pydantic/pydantic/blob/v2.12.0/pydantic/_internal/_model_construction.py
 
     class ModelMetaclass(ABCMeta):
         @no_type_check  # noqa C901
-        def __new__(mcs, name, bases, namespace, **kwargs):
-            from pydantic.fields import Undefined
-            from pydantic.class_validators import extract_validators, inherit_validators
-            from pydantic.types import PyObject
-            from pydantic.typing import is_classvar, resolve_annotations
-            from pydantic.utils import lenient_issubclass, validate_field_name
-            from pydantic.main import inherit_config, prepare_config, UNTOUCHED_TYPES
+        def __new__(mcs, cls_name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
+            from pydantic._internal._config import ConfigWrapper
+            from pydantic._internal._decorators import DecoratorInfos
+            from pydantic._internal._namespace_utils import NsResolver
+            from pydantic._internal._fields import is_valid_field_name
+            from pydantic._internal._model_construction import (inspect_namespace, set_model_fields,
+                                                                complete_model_class, set_default_hash_func)
 
-            fields: Dict[str, ModelField] = {}
-            config = BaseConfig
-            validators: Dict[str, List[Validator]] = {}
+            raw_annotations = namespace.get('__annotations__', {})
 
+            # tries to infer types for variables without type hints
+            keys_to_infer_type = [key for key in namespace.keys() if key not in raw_annotations]
+            keys_to_infer_type = [key for key in keys_to_infer_type if is_valid_field_name(key)]
+            keys_to_infer_type = [key for key in keys_to_infer_type if key not in {'model_config', 'dict'}]
+            for key in keys_to_infer_type:
+                value = namespace[key]
+                raw_annotations[key] = type(value)
+
+            base_field_names, class_vars, base_private_attributes = mcs._collect_bases_data(bases)
+
+            config_wrapper = ConfigWrapper.for_model(bases, namespace, raw_annotations, kwargs)
+            namespace['model_config'] = config_wrapper.config_dict
+            private_attributes = inspect_namespace(namespace, raw_annotations, config_wrapper.ignored_types,
+                                                   class_vars, base_field_names)
+
+            namespace['__class_vars__'] = class_vars
+            namespace['__private_attributes__'] = {**base_private_attributes, **private_attributes}
+
+            cls = super().__new__(mcs, cls_name, bases, namespace, **kwargs)
+
+            cls.__pydantic_decorators__ = DecoratorInfos.build(cls)
+            cls.__pydantic_decorators__.update_from_config(config_wrapper)
+
+            cls.__pydantic_generic_metadata__ = {'origin': None, 'args': (), 'parameters': None}
+            cls.__pydantic_root_model__ = False
+            cls.__pydantic_complete__ = False
+
+            # create a copy of raw_annotations since cls.__annotations__ points to it and
+            # cls.__annotations__ must not be polluted before calling set_model_fields() later
+            cls.__fields_annotations__ = {k: v for k, v in raw_annotations.items()}
             for base in reversed(bases):
                 if issubclass(base, AbstractCheckedSession) and base != AbstractCheckedSession:
-                    config = inherit_config(base.__config__, config)
-                    fields.update(deepcopy(base.__fields__))
-                    validators = inherit_validators(base.__validators__, validators)
+                    base_fields_annotations = getattr(base, '__fields_annotations__', {})
+                    for k, v in base_fields_annotations.items():
+                        if k not in cls.__fields_annotations__:
+                            cls.__fields_annotations__[k] = v
 
-            config = inherit_config(namespace.get('Config'), config)
-            validators = inherit_validators(extract_validators(namespace), validators)
+            # preserve `__set_name__` protocol defined in https://peps.python.org/pep-0487
+            # for attributes not in `namespace` (e.g. private attributes)
+            for name, obj in private_attributes.items():
+                obj.__set_name__(cls, name)
 
-            # update fields inherited from base classes
-            for field in fields.values():
-                field.set_config(config)
-                extra_validators = validators.get(field.name, [])
-                if extra_validators:
-                    field.class_validators.update(extra_validators)
-                    # re-run prepare to add extra validators
-                    field.populate_validators()
+            ns_resolver = NsResolver()
+            set_model_fields(cls, config_wrapper=config_wrapper, ns_resolver=ns_resolver)
+            complete_model_class(cls, config_wrapper, ns_resolver, raise_errors=False, call_on_complete_hook=False)
 
-            prepare_config(config, name)
+            if config_wrapper.frozen and '__hash__' not in namespace:
+                set_default_hash_func(cls, bases)
 
-            # extract and build fields
-            class_vars = set()
-            if (namespace.get('__module__'), namespace.get('__qualname__')) != \
-                    ('larray.core.checked', 'CheckedSession'):
-                untouched_types = UNTOUCHED_TYPES + config.keep_untouched
+            return cls
 
-                # annotation only fields need to come first in fields
-                annotations = resolve_annotations(namespace.get('__annotations__', {}),
-                                                  namespace.get('__module__', None))
-                for ann_name, ann_type in annotations.items():
-                    if is_classvar(ann_type):
-                        class_vars.add(ann_name)
-                    elif not ann_name.startswith('_'):
-                        validate_field_name(bases, ann_name)
-                        value = namespace.get(ann_name, Undefined)
-                        if (isinstance(value, untouched_types) and ann_type != PyObject
-                                and not lenient_issubclass(getattr(ann_type, '__origin__', None), Type)):
-                            continue
-                        fields[ann_name] = LModelField.infer(name=ann_name, value=value, annotation=ann_type,
-                                                             class_validators=validators.get(ann_name, []),
-                                                             config=config)
+        @staticmethod
+        def _collect_bases_data(bases: tuple[type[Any], ...]) -> tuple[set[str], set[str], dict[str, Any]]:
+            from pydantic.fields import ModelPrivateAttr
 
-                for var_name, value in namespace.items():
-                    # 'var_name not in annotations' because namespace.items() contains annotated fields
-                    # with default values
-                    # 'var_name not in class_vars' to avoid to update a field if it was redeclared (by mistake)
-                    if (var_name not in annotations and not var_name.startswith('_')
-                            and not isinstance(value, untouched_types) and var_name not in class_vars):
-                        validate_field_name(bases, var_name)
-                        # since pydantic 1.6, ModelField.infer() fails to infer the type (it is set to None)
-                        annotation = type(value)
-                        inferred = LModelField.infer(name=var_name, value=value, annotation=annotation,
-                                                     class_validators=validators.get(var_name, []), config=config)
-                        if var_name in fields and inferred.type_ != fields[var_name].type_:
-                            raise TypeError(f'The type of {name}.{var_name} differs from the new default value; '
-                                            f'if you wish to change the type of this field, please use a type '
-                                            f'annotation')
-                        fields[var_name] = inferred
+            field_names: set[str] = set()
+            class_vars: set[str] = set()
+            private_attributes: dict[str, ModelPrivateAttr] = {}
+            for base in bases:
+                if issubclass(base, AbstractCheckedSession) and base is not AbstractCheckedSession:
+                    # model_fields might not be defined yet in the case of generics, so we use getattr here:
+                    field_names.update(getattr(base, '__pydantic_fields__', {}).keys())
+                    class_vars.update(base.__class_vars__)
+                    private_attributes.update(base.__private_attributes__)
+            return field_names, class_vars, private_attributes
 
-            new_namespace = {
-                '__config__': config,
-                '__fields__': fields,
-                '__field_defaults__': {n: f.default for n, f in fields.items() if not f.required},
-                '__validators__': validators,
-                **{n: v for n, v in namespace.items() if n not in fields},
-            }
-            return super().__new__(mcs, name, bases, new_namespace, **kwargs)
+        @property
+        def __pydantic_fields_complete__(self) -> bool:
+            """Whether the fields where successfully collected (i.e. type hints were successfully resolves).
+
+            This is a private attribute, not meant to be used outside Pydantic.
+            """
+            if '__pydantic_fields__' not in self.__dict__:
+                return False
+
+            field_infos = self.__pydantic_fields__
+            return all(field_info._complete for field_info in field_infos.values())
+
+        def __dir__(self) -> list[str]:
+            attributes = list(super().__dir__())
+            if '__fields__' in attributes:
+                attributes.remove('__fields__')
+            return attributes
 
     class CheckedSession(Session, AbstractCheckedSession, metaclass=ModelMetaclass):
         """
@@ -320,7 +286,8 @@ else:
         >>> m.birth_rate = [0.045, 0.055]                   # Fails
         Traceback (most recent call last):
             ...
-        pydantic.errors.ArbitraryTypeError: instance of Array expected
+        TypeError: Error while assigning value to variable 'birth_rate':
+        Input should be an instance of Array. Got input value of type 'list'.
         >>> # However, the arrays 'birth_rate', 'births' and 'population' have not been declared as 'CheckedArray'.
         >>> # Thus, axes and dtype of these arrays are not protected, leading to potentially unexpected behavior
         >>> # of the model.
@@ -350,7 +317,8 @@ else:
         # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        ValueError: Array 'mortality_rate' was declared with axes {age, gender} but got array with axes
+        ValueError: Error while assigning value to variable 'mortality_rate':
+        Array 'mortality_rate' was declared with axes {age, gender} but got array with axes
         {age, gender, time} (unexpected {time} axis)
 
         >>> # example 2: let's say we want to calculate the new births for all years.
@@ -398,36 +366,9 @@ else:
         dumping population ... done
         dumping undeclared_var ... done
         """
+        model_config = ConfigDict(arbitrary_types_allowed=True, validate_default=True, extra='allow',
+                                  validate_assignment=True, frozen=False)
 
-        if TYPE_CHECKING:
-            # populated by the metaclass, defined here to help IDEs only
-            __fields__: Dict[str, ModelField] = {}
-            __field_defaults__: Dict[str, Any] = {}
-            __validators__: Dict[str, List[Validator]] = {}
-            __config__: Type[BaseConfig] = BaseConfig
-
-        class Config:
-            # whether to allow arbitrary user types for fields (they are validated simply by checking
-            # if the value is an instance of the type). If False, RuntimeError will be raised on model declaration.
-            # (default: False)
-            arbitrary_types_allowed = True
-            # whether to validate field defaults
-            validate_all = True
-            # whether to ignore, allow, or forbid extra attributes during model initialization (and after).
-            # Accepts the string values of 'ignore', 'allow', or 'forbid', or values of the Extra enum
-            # (default: Extra.ignore)
-            extra = 'allow'
-            # whether to perform validation on assignment to attributes
-            validate_assignment = True
-            # whether models are faux-immutable, i.e. whether __setattr__ is allowed.
-            # (default: True)
-            allow_mutation = True
-
-        # Warning: order of fields is not preserved.
-        # As of v1.0 of pydantic all fields with annotations (whether annotation-only or with a default value)
-        # will precede all fields without an annotation. Within their respective groups, fields remain in the
-        # order they were defined.
-        # See https://pydantic-docs.helpmanual.io/usage/models/#field-ordering
         def __init__(self, *args, meta=None, **kwargs):
             Session.__init__(self, meta=meta)
 
@@ -439,59 +380,75 @@ else:
             input_data = dict(Session(*args, **kwargs))
 
             # --- declared variables
-            for name, field in self.__fields__.items():
-                value = input_data.pop(field.name, NotLoaded())
+            for name, field in self.__pydantic_fields__.items():
+                value = input_data.pop(name, NotLoaded())
 
                 if isinstance(value, NotLoaded):
-                    if field.default is None:
-                        warnings.warn(f"No value passed for the declared variable '{field.name}'", stacklevel=2)
-                        self.__setattr__(name, value, skip_allow_mutation=True, skip_validation=True)
+                    if field.default is PydanticUndefined:
+                        warnings.warn(f"No value passed for the declared variable '{name}'", stacklevel=2)
+                        self.__setattr__(name, value, skip_frozen=True, skip_validation=True)
                     else:
-                        self.__setattr__(name, field.default, skip_allow_mutation=True)
+                        self.__setattr__(name, field.default, skip_frozen=True)
                 else:
-                    self.__setattr__(name, value, skip_allow_mutation=True)
+                    self.__setattr__(name, value, skip_frozen=True)
 
             # --- undeclared variables
             for name, value in input_data.items():
-                self.__setattr__(name, value, skip_allow_mutation=True, stacklevel=2)
+                self.__setattr__(name, value, skip_frozen=True, stacklevel=2)
 
         # code of the method below has been partly borrowed from pydantic.BaseModel.__setattr__()
-        def _check_key_value(self, name: str, value: Any, skip_allow_mutation: bool, skip_validation: bool,
+        def _check_key_value(self, name: str, value: Any, skip_frozen: bool, skip_validation: bool,
                              stacklevel: int) -> Any:
-            config = self.__config__
-            if not config.extra and name not in self.__fields__:
+            config = self.model_config
+            if not config['extra'] and name not in self.__pydantic_fields__:
                 raise ValueError(f"Variable '{name}' is not declared in '{self.__class__.__name__}'. "
                                  f"Adding undeclared variables is forbidden. "
-                                 f"List of declared variables is: {list(self.__fields__.keys())}.")
-            if not skip_allow_mutation and not config.allow_mutation:
+                                 f"List of declared variables is: {list(self.__pydantic_fields__.keys())}.")
+            if not skip_frozen and config['frozen']:
                 raise TypeError(f"Cannot change the value of the variable '{name}' since '{self.__class__.__name__}' "
                                 f"is immutable and does not support item assignment")
-            known_field = self.__fields__.get(name, None)
-            if known_field:
+            if name in self.__pydantic_fields__:
                 if not skip_validation:
-                    value, error_ = known_field.validate(value, self.dict(exclude={name}), loc=name, cls=self.__class__)
-                    if error_:
-                        raise error_.exc
+                    try:
+                        field_type = self.__fields_annotations__.get(name, None)
+                        if field_type is None:
+                            return value
+                        # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
+                        # for more details about TypeAdapter
+                        adapter = TypeAdapter(field_type, config=self.model_config)
+                        value = adapter.validate_python(value, context={'name': name})
+                    except ValidationError as e:
+                        error = e.errors()[0]
+                        msg = f"Error while assigning value to variable '{name}':\n"
+                        if error['type'] == 'is_instance_of':
+                            msg += error['msg']
+                            msg += f". Got input value of type '{type(value).__name__}'."
+                            raise TypeError(msg)
+                        if error['type'] == 'value_error':
+                            msg += error['ctx']['error'].args[0]
+                        else:
+                            msg += error['msg']
+                        raise ValueError(msg)
+
             else:
-                warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'", stacklevel=stacklevel + 1)
+                warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'",
+                              stacklevel=stacklevel + 1)
             return value
 
         def _update_from_iterable(self, it):
             for k, v in it:
                 self.__setitem__(k, v, stacklevel=3)
 
-        def __setitem__(self, key, value, skip_allow_mutation=False, skip_validation=False, stacklevel=1):
+        def __setitem__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
             if key != 'meta':
-                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation,
-                                              stacklevel=stacklevel + 1)
+                value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
                 # we need to keep the attribute in sync
                 object.__setattr__(self, key, value)
                 self._objects[key] = value
 
-        def __setattr__(self, key, value, skip_allow_mutation=False, skip_validation=False, stacklevel=1):
+        def __setattr__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
             if key != 'meta':
-                value = self._check_key_value(key, value, skip_allow_mutation, skip_validation,
-                                              stacklevel=stacklevel + 1)
+                value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
                 # we need to keep the attribute in sync
                 object.__setattr__(self, key, value)
             Session.__setattr__(self, key, value)
@@ -556,8 +513,4 @@ else:
         TypeError: Cannot change the value of the variable 'variant_name' since 'Parameters'
         is immutable and does not support item assignment
         """
-
-        class Config:
-            # whether models are faux-immutable, i.e. whether __setattr__ is allowed.
-            # (default: True)
-            allow_mutation = False
+        model_config = ConfigDict(frozen=True)
