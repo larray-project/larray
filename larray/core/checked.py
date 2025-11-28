@@ -101,7 +101,7 @@ else:
         pass
 
     # Simplified version of the ModelMetaclass class from pydantic:
-    # https://github.com/pydantic/pydantic/blob/main/pydantic/_internal/_model_construction.py
+    # https://github.com/pydantic/pydantic/blob/v2.12.0/pydantic/_internal/_model_construction.py
 
     class ModelMetaclass(ABCMeta):
         @no_type_check  # noqa C901
@@ -413,7 +413,7 @@ else:
                         field_type = self.__fields_annotations__.get(name, None)
                         if field_type is None:
                             return value
-                        # see https://docs.pydantic.dev/latest/concepts/types/#custom-types
+                        # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
                         # for more details about TypeAdapter
                         adapter = TypeAdapter(field_type, config=self.model_config)
                         value = adapter.validate_python(value, context={'name': name})
