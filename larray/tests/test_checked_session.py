@@ -574,14 +574,14 @@ def test_sub_cs(checkedsession):
     diff = cs - other
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- array variables ---
     assert_array_nan_equal(diff.e, np.full((2, 3), 1, dtype=np.int32))
@@ -593,14 +593,14 @@ def test_sub_cs(checkedsession):
     diff = cs - 2
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, e - 2)
@@ -613,14 +613,14 @@ def test_sub_cs(checkedsession):
     diff = cs - other
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, e - ones_like(e))
@@ -635,14 +635,14 @@ def test_sub_cs(checkedsession):
     diff = cs - ones(axes)
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, cs.e - ones(axes))
@@ -659,14 +659,14 @@ def test_rsub_cs(checkedsession):
     diff = 2 - cs
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, 2 - e)
@@ -679,14 +679,14 @@ def test_rsub_cs(checkedsession):
     diff = other - cs
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
-    assert diff.b.equals(b)
-    assert diff.b024.equals(b024)
-    assert diff.a.equals(a)
-    assert diff.a2.equals(a2)
-    assert diff.anonymous.equals(anonymous)
-    assert diff.a01.equals(a01)
-    assert diff.ano01.equals(ano01)
-    assert diff.c == c
+    assert diff.b is b
+    assert diff.b024 is b024
+    assert diff.a is a
+    assert diff.a2 is a2
+    assert diff.anonymous is anonymous
+    assert diff.a01 is a01
+    assert diff.ano01 is ano01
+    assert diff.c is c
     assert diff.d == d
     # --- non constant arrays ---
     assert_array_nan_equal(diff.e, ones_like(e) - e)
