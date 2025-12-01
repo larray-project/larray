@@ -31,6 +31,8 @@ Backward incompatible changes
 New features
 ^^^^^^^^^^^^
 
+* added support for Python 3.13 (closes :issue:`1128`).
+
 * :py:obj:`Array.plot()` now has an ``animate`` argument to produce animated
   plots. The argument takes an axis (it also supports several axes but that is
   rarely useful) and will create an animation, with one image per label of that
