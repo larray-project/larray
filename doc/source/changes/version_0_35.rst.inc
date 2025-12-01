@@ -4,8 +4,6 @@
 Syntax changes
 ^^^^^^^^^^^^^^
 
-* renamed ``Array.old_method_name()`` to :py:obj:`Array.new_method_name()` (closes :issue:`1`).
-
 * renamed ``stacked`` argument of :py:obj:`Array.plot()` to ``stack``. This
   also impacts all the relevant kind-specific sub-methods
   (:py:obj:`Array.plot.area()`, :py:obj:`Array.plot.bar()`,
@@ -25,8 +23,10 @@ Backward incompatible changes
   Shown plots will open a window and pause the running script until the window
   is closed by the user. To revert to the previous behavior, use show=False.
 
-* Using :py:obj:`CheckedSession`, :py:obj:`CheckedParameters` or :py:obj:`CheckedArray`
-  now requires to install pydantic >= 2.12 (closes :issue:`1075`).
+* Using :py:obj:`CheckedSession`, :py:obj:`CheckedParameters` or
+  :py:obj:`CheckedArray` now requires installing pydantic >= 2.12
+  (closes :issue:`1075`).
+
 
 New features
 ^^^^^^^^^^^^
@@ -49,40 +49,13 @@ New features
   directly, without having to use the matplotlib API. This is the new default
   behavior, unless a ``filepath`` is given.
 
-* implemented a new kind of plot: `heatmap`. It can be used like this:
+* implemented a new kind of plot: ``heatmap``. It can be used like this:
 
     >>> arr.plot.heatmap()
 
 * implemented :py:obj:`Session.align()` to align all the arrays in several
   sessions at once. Closes :issue:`501`.
 
-* added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
-  :ref:`api-group` objects.
-
-  Here is an example of the new feature:
-
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-
-  And it can also be used like this:
-
-    >>> arr = ndtest("a=a0..a2")
-    >>> arr
-    a  a0  a1  a2
-        0   1   2
-
-* added another feature in the editor (closes :editor_issue:`1`).
-
-  .. note::
-
-     - It works for foo bar !
-     - It does not work for foo baz !
-
-
-.. _misc:
 
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
