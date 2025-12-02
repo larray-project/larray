@@ -15,7 +15,7 @@ jobs:
         with:
           # Pin ruff version to make sure we do not break our builds at the
           # worst times
-          version: "0.14.5"
+          version: "0.14.7"
 
   test:
     # name: Test (${{ matrix.python-version }}, ${{ matrix.os }})
