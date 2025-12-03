@@ -2302,7 +2302,10 @@ class AxisCollection:
             name = axis
         if name is None:
             raise ValueError(f"{axis!r} is not in collection")
-        return self.names.index(name)
+        try:
+            return self.names.index(name)
+        except ValueError:
+            raise ValueError(f"axis {name!r} is not in collection")
 
     # XXX: we might want to return a new AxisCollection (same question for other inplace operations:
     # append, extend, pop, __delitem__, __setitem__)

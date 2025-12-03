@@ -221,9 +221,9 @@ def test_contains(col):
 
 def test_index(col):
     assert col.index('lipro') == 0
-    with must_raise(ValueError, msg="'nonexisting' is not in list"):
+    with must_raise(ValueError, msg="axis 'nonexisting' is not in collection"):
         col.index('nonexisting')
-        assert col.index(0) == 0
+    assert col.index(0) == 0
     assert col.index(1) == 1
     assert col.index(2) == 2
     assert col.index(-1) == -1
@@ -237,9 +237,9 @@ def test_index(col):
     assert col.index(sex) == 1
     assert col.index(age) == 2
     assert col.index(sex2) == 1
-    with must_raise(ValueError, msg="'geo' is not in list"):
+    with must_raise(ValueError, msg="axis 'geo' is not in collection"):
         col.index(geo)
-    with must_raise(ValueError, msg="'value' is not in list"):
+    with must_raise(ValueError, msg="axis 'value' is not in collection"):
         col.index(value)
 
     # test anonymous axes
