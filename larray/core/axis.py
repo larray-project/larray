@@ -922,32 +922,41 @@ class Axis(ABCAxis):
         """
         mapping = self._mapping
 
-        if isinstance(key, Group) and key.axis is not self and key.axis is not None:
-            try:
-                # XXX: this is potentially very expensive if key.key is an array or list and should be tried as a last
-                # resort
-                potential_tick = _to_tick(key)
+        if isinstance(key, Group):
+            if key.axis is self:
+                if isinstance(key, IGroup):
+                    return key.key
+                else:
+                    # at this point we do not care about the axis nor the name
+                    key = key.key
+            elif key.axis is not None:
+                try:
+                    # TODO: remove this as it is potentially very expensive
+                    #       if key.key is an array or list and should be tried
+                    #       as a last resort
+                    potential_tick = _to_tick(key)
 
-                # avoid matching 0 against False or 0.0, note that None has object dtype and so always pass this test
-                if self._is_key_type_compatible(potential_tick):
-                    try:
-                        res_idx = mapping[potential_tick]
-                        if potential_tick != key.key:
-                            # only warn if no KeyError was raised (potential_tick is in mapping)
-                            msg = "Using a Group object which was used to create an aggregate to " \
-                                  "target its aggregated label is deprecated. " \
-                                  "Please use the aggregated label directly instead. " \
-                                  f"In this case, you should use {potential_tick!r} instead of " \
-                                  f"using {key!r}."
-                            # let us hope the stacklevel does not vary by codepath
-                            warnings.warn(msg, FutureWarning, stacklevel=8)
-                        return res_idx
-                    except KeyError:
-                        pass
-            # we must catch TypeError because key might not be hashable (eg slice)
-            # IndexError is for when mapping is an ndarray
-            except (KeyError, TypeError, IndexError):
-                pass
+                    # avoid matching 0 against False or 0.0, note that None has
+                    # object dtype and so always pass this test
+                    if self._is_key_type_compatible(potential_tick):
+                        try:
+                            res_idx = mapping[potential_tick]
+                            if potential_tick != key.key:
+                                # only warn if no KeyError was raised (potential_tick is in mapping)
+                                msg = "Using a Group object which was used to create an aggregate to " \
+                                      "target its aggregated label is deprecated. " \
+                                      "Please use the aggregated label directly instead. " \
+                                      f"In this case, you should use {potential_tick!r} instead of " \
+                                      f"using {key!r}."
+                                # let us hope the stacklevel does not vary by codepath
+                                warnings.warn(msg, FutureWarning, stacklevel=8)
+                            return res_idx
+                        except KeyError:
+                            pass
+                # we must catch TypeError because key might not be hashable (eg slice)
+                # IndexError is for when mapping is an ndarray
+                except (KeyError, TypeError, IndexError):
+                    pass
 
         if isinstance(key, str):
             # try the key as-is to allow getting at ticks with special characters (",", ":", ...)
@@ -961,24 +970,35 @@ class Axis(ABCAxis):
             except (KeyError, TypeError, IndexError):
                 pass
 
-            # transform "specially formatted strings" for slices, lists, LGroup and IGroup to actual objects
+            # transform "specially formatted strings" for slices, lists, LGroup
+            # and IGroup to actual objects
             key = _to_key(key)
 
         if isinstance(key, range):
             key = list(key)
-
-        # this can happen when key was passed as a string and converted to a Group via _to_key
-        if isinstance(key, Group) and isinstance(key.axis, str) and key.axis != self.name:
-            raise KeyError(key)
-
-        if isinstance(key, IGroup):
-            if isinstance(key.axis, Axis):
-                assert key.axis is self
-            return key.key
-
-        if isinstance(key, LGroup):
-            # at this point we do not care about the axis nor the name
-            key = key.key
+        elif isinstance(key, Group):
+            key_axis = key.axis
+            if isinstance(key_axis, str):
+                if key_axis != self.name:
+                    raise KeyError(key)
+            elif isinstance(key_axis, AxisReference):
+                if key_axis.name != self.name:
+                    raise KeyError(key)
+            elif isinstance(key_axis, Axis):  # we know it is not self
+                # IGroups will be retargeted to LGroups
+                key = key.retarget_to(self)
+            elif isinstance(key_axis, int):
+                raise TypeError('Axis.index() does not support Group keys with '
+                                'integer axis')
+            else:
+                assert key_axis is None
+            # an IGroup can still exist at this point if the key was an IGroup
+            # with a compatible axis (string or AxisReference axis with the
+            # correct name or Axis object equal to self)
+            if isinstance(key, IGroup):
+                return key.key
+            else:
+                key = key.key
 
         if isinstance(key, slice):
             start = mapping[key.start] if key.start is not None else None
@@ -1915,7 +1935,8 @@ class AxisCollection:
         if isinstance(key, int):
             return -len(self) <= key < len(self)
         elif isinstance(key, Axis):
-            # the special case is just a performance optimization to avoid scanning through the whole list
+            # the special case is just a performance optimization to avoid
+            # scanning through the whole list
             if key.name is not None:
                 return key.name in self._map
             else:
@@ -2808,7 +2829,7 @@ class AxisCollection:
                 # we have axis information but not necessarily an Axis object from self
                 real_axis = self[group_axis]
                 if group_axis is not real_axis:
-                    axis_key = axis_key.with_axis(real_axis)
+                    axis_key = axis_key.retarget_to(real_axis)
                 return axis_key
 
         real_axis, axis_pos_key = self._translate_nice_key(axis_key)
@@ -2828,6 +2849,7 @@ class AxisCollection:
         (axis, indices)
             Indices group with a valid axis (from self)
         """
+        orig_key = axis_key
         axis_key = remove_nested_groups(axis_key)
 
         if isinstance(axis_key, IGroup):
@@ -2852,11 +2874,16 @@ class AxisCollection:
         # labels but known axis
         if isinstance(axis_key, LGroup) and axis_key.axis is not None:
             try:
-                real_axis = self[axis_key.axis]
+                key_axis = axis_key.axis
+                real_axis = self[key_axis]
+                if isinstance(key_axis, (AxisReference, int)):
+                    # this is one of the rare cases where with_axis is correct !
+                    axis_key = axis_key.with_axis(real_axis)
+
                 try:
                     axis_pos_key = real_axis.index(axis_key)
                 except KeyError:
-                    raise ValueError(f"{axis_key!r} is not a valid label for the {real_axis.name!r} axis "
+                    raise ValueError(f"{orig_key!r} is not a valid label for the {real_axis.name!r} axis "
                                      f"with labels: {', '.join(repr(label) for label in real_axis.labels)}")
                 return real_axis, axis_pos_key
             except KeyError:
@@ -3889,6 +3916,7 @@ def align_axis_collections(axis_collections, join='outer', axes=None):
 
 class AxisReference(ABCAxisReference, ExprNode, Axis):
     def __init__(self, name):
+        assert isinstance(name, (int, str))
         self.name = name
         self._labels = None
         self._iswildcard = False
