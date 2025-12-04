@@ -2140,6 +2140,9 @@ class Array(ABCArray):
             # FWIW, using .data, I get IGroup([1, 2, 0], axis='nat'), which works.
             sorter = axis.i[indicesofsorted.data]
             res = self[sorter]
+            # res has its axis in a different order than the original axis
+            # so we need this line to reverse the order below if not ascending
+            axis = res.axes[axis]
         else:
             res = self.combine_axes()
             indicesofsorted = np.argsort(res.data)
@@ -2799,22 +2802,27 @@ class Array(ABCArray):
             if isinstance(item, tuple):
                 assert all(isinstance(g, Group) for g in item)
                 groups = item
-                axis = groups[0].axis
+                group_axis = groups[0].axis
                 # they should all have the same axis (this is already checked
                 # in _prepare_aggregate though)
-                assert all(g.axis.equals(axis) for g in groups[1:])
+                assert all(g.axis.equals(group_axis) for g in groups[1:])
                 killaxis = False
             else:
                 # item is in fact a single group
                 assert isinstance(item, Group), type(item)
                 groups = (item,)
-                axis = item.axis
+                group_axis = item.axis
                 # it is easier to kill the axis after the fact
                 killaxis = True
 
-            axis, axis_idx = res.axes[axis], res.axes.index(axis)
+            axis_idx = res.axes.index(group_axis)
+            res_axis = res.axes[axis_idx]
+            assert group_axis.equals(res_axis)
+
             # potentially translate axis reference to real axes
-            groups = tuple(g.with_axis(axis) for g in groups)
+            # with_axis is correct because we already checked
+            # that g.axis.equals(axis)
+            groups = tuple(g.with_axis(res_axis) for g in groups)
             res_shape[axis_idx] = len(groups)
 
             # XXX: this code is fragile. I wonder if there isn't a way to ask the function what kind of dtype/shape it
@@ -2866,7 +2874,7 @@ class Array(ABCArray):
                 # We do NOT modify the axis name (eg append "_agg" or "*") even though this creates a new axis that is
                 # independent from the original one because the original name is what users will want to use to access
                 # that axis (eg in .filter kwargs)
-                res_axes[axis_idx] = Axis(groups, axis.name)
+                res_axes[axis_idx] = Axis(groups, res_axis.name)
 
             if isinstance(res_data, np.ndarray):
                 res = Array(res_data, res_axes)

@@ -112,6 +112,28 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed array[slice_group_from_an_incompatible_axis] and
+  array.sum(slice_group_from_an_incompatible_axis) (closes :issue:`1146`
+  and :issue:`1117`).
+  It used to evaluate the slice on the array axis instead of first evaluating
+  the slice on the axis it was created on, then take the corresponding labels
+  from the array axis.
+
+    >>> arr = ndtest(3)
+    >>> arr
+    a  a0  a1  a2
+        0   1   2
+    >>> other_axis_a = Axis('a=a0,a1')
+    >>> group = other_axis_a[:]
+    >>> print(group)
+    ['a0' 'a1']
+    >>> arr[group]  # <-- before
+    a  a0  a1  a2
+        0   1   2
+    >>> arr[group]  # <-- now
+    a  a0  a1
+        0   1
+
 * fixed error message when trying to take a subset of an array with an array
   key which has ndim > 1 and some bad values in the key. The message was also
   improved (see the issue for details). Closes :issue:`1134`.

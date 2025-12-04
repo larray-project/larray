@@ -123,6 +123,16 @@ def test_index():
     assert a.index('a1') == 1
     assert a.index('a1 >> A1') == 1
 
+    time = Axis([2007, 2009], 'time')
+    res = time.index(time.i[1])
+    assert res == 1
+
+    res = time.index(X.time.i[1])
+    assert res == 1
+
+    res = time.index('time.i[1]')
+    assert res == 1
+
 
 def test_astype():
     arr = ndtest(Axis('time=2015..2020,total')).drop('total')

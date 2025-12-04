@@ -560,6 +560,17 @@ def test_getitem(array):
         _ = array[bad[1, 2], a[3, 4]]
 
 
+def test_getitem_group_from_another_axis():
+    # using slice Group from an axis not present, we must retarget the group
+    arr = ndtest(3)
+    a2 = Axis('a=a0,a1')
+
+    # issue #1146
+    expected = ndtest(2)
+    res = arr[a2[:]]
+    assert_larray_equal(res, expected)
+
+
 def test_getitem_abstract_axes(array):
     raw = array.data
     a, b, c, d = array.axes
@@ -1128,8 +1139,6 @@ Note that all the bad key values are located within the following labels:
  a: 'a1'
  b: 'b2'"""):
         _ = arr[key]
-
-
 
 
 def test_getitem_multiple_larray_key_guess():
@@ -2160,6 +2169,20 @@ def test_group_agg_label_group(array):
     # c) chain group aggregate after axis aggregate
     res = array.sum(a, c).sum((g1, g2, g3, g_all))
     assert res.shape == (4, 6)
+
+    # d) group aggregate using a group from another axis
+    #    1) LGroup
+    array = ndtest(3)
+    smaller_a_axis = Axis('a=a0,a1')
+    group = smaller_a_axis[:]
+    res = array.sum(group)
+    assert res == 1
+
+    #    2) IGroup
+    group = Axis("a=a1,a0").i[0]  # targets a1
+    assert array[group] == 1
+    res = array.sum(group)
+    assert res == 1
 
 
 def test_group_agg_label_group_no_axis(array):
