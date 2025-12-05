@@ -715,5 +715,24 @@ def test_neg_cs(checkedsession):
     assert_array_nan_equal(neg_cs.h, -h)
 
 
+def test_checked_class_with_methods():
+    a = Axis('a=a0,a1')
+
+    class CheckedSessionWithMethods(CheckedSession):
+        arr: CheckedArray(a)
+
+        # Define a method which already exists in Session/CheckedSession
+        def save(self, path=None, **kwargs):
+            super().save(path, **kwargs)
+
+        def new_method(self):
+            return True
+
+    array = ndtest(a)
+
+    cs = CheckedSessionWithMethods(arr=array)
+    assert cs.new_method()
+
+
 if __name__ == "__main__":
     pytest.main()
