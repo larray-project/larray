@@ -116,9 +116,14 @@ else:
             raw_annotations = namespace.get('__annotations__', {})
 
             # tries to infer types for variables without type hints
-            keys_to_infer_type = [key for key in namespace.keys() if key not in raw_annotations]
-            keys_to_infer_type = [key for key in keys_to_infer_type if is_valid_field_name(key)]
-            keys_to_infer_type = [key for key in keys_to_infer_type if key not in {'model_config', 'dict'}]
+            keys_to_infer_type = [key for key in namespace.keys()
+                                  if key not in raw_annotations]
+            keys_to_infer_type = [key for key in keys_to_infer_type
+                                  if is_valid_field_name(key)]
+            keys_to_infer_type = [key for key in keys_to_infer_type
+                                  if key not in {'model_config', 'dict', 'build'}]
+            keys_to_infer_type = [key for key in keys_to_infer_type
+                                  if not callable(namespace[key])]
             for key in keys_to_infer_type:
                 value = namespace[key]
                 raw_annotations[key] = type(value)
