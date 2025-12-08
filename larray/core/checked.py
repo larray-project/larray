@@ -19,9 +19,10 @@ try:
 except ImportError:
     pydantic = None
 
-#  moved the not implemented versions of Checked* classes in the beginning of the module
-#  otherwise PyCharm do not provide auto-completion for methods of CheckedSession
-#  (imported from Session)
+
+# the not implemented versions of Checked* classes must be in the beginning of
+# the module otherwise PyCharm do not provide auto-completion for methods of
+# CheckedSession (imported from Session)
 if not pydantic:
     def CheckedArray(axes: AxisCollection, dtype: np.dtype = float) -> Type[Array]:
         raise NotImplementedError("CheckedArray cannot be used because pydantic is not installed")
@@ -97,12 +98,13 @@ else:
 
         return Annotated[Array, BeforeValidator(validate_array)]
 
+
     class AbstractCheckedSession:
         pass
 
+
     # Simplified version of the ModelMetaclass class from pydantic:
     # https://github.com/pydantic/pydantic/blob/v2.12.0/pydantic/_internal/_model_construction.py
-
     class ModelMetaclass(ABCMeta):
         @no_type_check  # noqa C901
         def __new__(mcs, cls_name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
@@ -203,6 +205,7 @@ else:
             if '__fields__' in attributes:
                 attributes.remove('__fields__')
             return attributes
+
 
     class CheckedSession(Session, AbstractCheckedSession, metaclass=ModelMetaclass):
         """
