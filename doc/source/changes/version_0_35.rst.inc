@@ -24,7 +24,7 @@ Backward incompatible changes
   is closed by the user. To revert to the previous behavior, use show=False.
 
 * Using :py:obj:`CheckedSession`, :py:obj:`CheckedParameters` or
-  :py:obj:`CheckedArray` now requires installing pydantic >= 2.12
+  :py:obj:`CheckedArray` now requires installing pydantic >= 2
   (closes :issue:`1075`).
 
 

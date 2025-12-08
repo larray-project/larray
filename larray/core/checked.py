@@ -1,9 +1,8 @@
-from abc import ABCMeta
+from types import FunctionType
+from typing import Type, Any, Dict, Set, Annotated
 import warnings
 
 import numpy as np
-
-from typing import Type, Any, Dict, Set, no_type_check, Annotated
 
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
@@ -13,6 +12,8 @@ from larray.core.session import Session
 class NotLoaded:
     pass
 
+
+NOT_LOADED = NotLoaded()
 
 try:
     import pydantic
@@ -37,8 +38,28 @@ if not pydantic:
             raise NotImplementedError("CheckedParameters class cannot be instantiated "
                                       "because pydantic is not installed")
 else:
-    from pydantic import ConfigDict, BeforeValidator, ValidationInfo, TypeAdapter, ValidationError
+    from pydantic import (
+        ConfigDict, BeforeValidator, ValidationInfo, TypeAdapter,
+        ValidationError, BaseModel
+    )
     from pydantic_core import PydanticUndefined
+
+    from pydantic.fields import ComputedFieldInfo
+
+    # should more or less match pydantic's default ignored types found
+    # in pydantic at:
+    # from pydantic._internal._model_construction import default_ignored_types
+    # PYDANTIC_IGNORED_TYPES = default_ignored_types()
+    PYDANTIC_IGNORED_TYPES = (
+        FunctionType,
+        property,
+        classmethod,
+        staticmethod,
+        # PydanticDescriptorProxy,
+        ComputedFieldInfo,
+        # TypeAliasType,  # from `typing_extensions`
+    )
+
 
     def CheckedArray(axes: AxisCollection, dtype: np.dtype = float) -> Type[Array]:
         """
@@ -99,115 +120,37 @@ else:
         return Annotated[Array, BeforeValidator(validate_array)]
 
 
-    class AbstractCheckedSession:
-        pass
+    # this is a trick to avoid using pydantic internal API. It is mostly
+    # equivalent to:
+    # from pydantic._internal._model_construction import ModelMetaclass
+    ModelMetaclass = type(BaseModel)
 
+    # metaclass to dynamically add type annotations for
+    # variables defined without type hints in CheckedSession subclasses.
+    # This allows defining constant class variables (e.g. axes), without having
+    # to explicitly add type hints, which would feel redundant.
+    class LArrayModelMetaclass(ModelMetaclass):
+        def __new__(mcs, cls_name: str, bases: tuple[type[Any], ...],
+                    namespace: dict[str, Any], **kwargs):
 
-    # Simplified version of the ModelMetaclass class from pydantic:
-    # https://github.com/pydantic/pydantic/blob/v2.12.0/pydantic/_internal/_model_construction.py
-    class ModelMetaclass(ABCMeta):
-        @no_type_check  # noqa C901
-        def __new__(mcs, cls_name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
-            from pydantic._internal._config import ConfigWrapper
-            from pydantic._internal._decorators import DecoratorInfos
-            from pydantic._internal._namespace_utils import NsResolver
-            from pydantic._internal._fields import is_valid_field_name
-            from pydantic._internal._model_construction import (inspect_namespace, set_model_fields,
-                                                                complete_model_class, set_default_hash_func)
-
+            # any type hints defined in the class body will land in
+            # __annotations__ (this is not pydantic-specific) but
+            # __annotations__ is only defined if there are type hints
             raw_annotations = namespace.get('__annotations__', {})
-
-            # tries to infer types for variables without type hints
-            keys_to_infer_type = [key for key in namespace.keys()
-                                  if key not in raw_annotations]
-            keys_to_infer_type = [key for key in keys_to_infer_type
-                                  if is_valid_field_name(key)]
-            keys_to_infer_type = [key for key in keys_to_infer_type
-                                  if key not in {'model_config', 'dict', 'build'}]
-            keys_to_infer_type = [key for key in keys_to_infer_type
-                                  if not callable(namespace[key])]
-            for key in keys_to_infer_type:
-                value = namespace[key]
-                raw_annotations[key] = type(value)
-
-            base_field_names, class_vars, base_private_attributes = mcs._collect_bases_data(bases)
-
-            config_wrapper = ConfigWrapper.for_model(bases, namespace, raw_annotations, kwargs)
-            namespace['model_config'] = config_wrapper.config_dict
-            private_attributes = inspect_namespace(namespace, raw_annotations, config_wrapper.ignored_types,
-                                                   class_vars, base_field_names)
-
-            namespace['__class_vars__'] = class_vars
-            namespace['__private_attributes__'] = {**base_private_attributes, **private_attributes}
-
-            cls = super().__new__(mcs, cls_name, bases, namespace, **kwargs)
-
-            cls.__pydantic_decorators__ = DecoratorInfos.build(cls)
-            cls.__pydantic_decorators__.update_from_config(config_wrapper)
-
-            cls.__pydantic_generic_metadata__ = {'origin': None, 'args': (), 'parameters': None}
-            cls.__pydantic_root_model__ = False
-            cls.__pydantic_complete__ = False
-
-            # create a copy of raw_annotations since cls.__annotations__ points to it and
-            # cls.__annotations__ must not be polluted before calling set_model_fields() later
-            cls.__fields_annotations__ = {k: v for k, v in raw_annotations.items()}
-            for base in reversed(bases):
-                if issubclass(base, AbstractCheckedSession) and base != AbstractCheckedSession:
-                    base_fields_annotations = getattr(base, '__fields_annotations__', {})
-                    for k, v in base_fields_annotations.items():
-                        if k not in cls.__fields_annotations__:
-                            cls.__fields_annotations__[k] = v
-
-            # preserve `__set_name__` protocol defined in https://peps.python.org/pep-0487
-            # for attributes not in `namespace` (e.g. private attributes)
-            for name, obj in private_attributes.items():
-                obj.__set_name__(cls, name)
-
-            ns_resolver = NsResolver()
-            set_model_fields(cls, config_wrapper=config_wrapper, ns_resolver=ns_resolver)
-            complete_model_class(cls, config_wrapper, ns_resolver, raise_errors=False, call_on_complete_hook=False)
-
-            if config_wrapper.frozen and '__hash__' not in namespace:
-                set_default_hash_func(cls, bases)
-
-            return cls
-
-        @staticmethod
-        def _collect_bases_data(bases: tuple[type[Any], ...]) -> tuple[set[str], set[str], dict[str, Any]]:
-            from pydantic.fields import ModelPrivateAttr
-
-            field_names: set[str] = set()
-            class_vars: set[str] = set()
-            private_attributes: dict[str, ModelPrivateAttr] = {}
-            for base in bases:
-                if issubclass(base, AbstractCheckedSession) and base is not AbstractCheckedSession:
-                    # model_fields might not be defined yet in the case of generics, so we use getattr here:
-                    field_names.update(getattr(base, '__pydantic_fields__', {}).keys())
-                    class_vars.update(base.__class_vars__)
-                    private_attributes.update(base.__private_attributes__)
-            return field_names, class_vars, private_attributes
-
-        @property
-        def __pydantic_fields_complete__(self) -> bool:
-            """Whether the fields where successfully collected (i.e. type hints were successfully resolves).
-
-            This is a private attribute, not meant to be used outside Pydantic.
-            """
-            if '__pydantic_fields__' not in self.__dict__:
-                return False
-
-            field_infos = self.__pydantic_fields__
-            return all(field_info._complete for field_info in field_infos.values())
-
-        def __dir__(self) -> list[str]:
-            attributes = list(super().__dir__())
-            if '__fields__' in attributes:
-                attributes.remove('__fields__')
-            return attributes
+            type_annotations = {
+                key: type(value)
+                for key, value in namespace.items()
+                if not (key in raw_annotations or
+                        key.startswith('_') or
+                        isinstance(value, PYDANTIC_IGNORED_TYPES))
+            }
+            if type_annotations:
+                namespace = namespace.copy()
+                namespace['__annotations__'] = raw_annotations | type_annotations
+            return super().__new__(mcs, cls_name, bases, namespace)
 
 
-    class CheckedSession(Session, AbstractCheckedSession, metaclass=ModelMetaclass):
+    class CheckedSession(Session, BaseModel, metaclass=LArrayModelMetaclass):
         """
         Class intended to be inherited by user defined classes in which the variables of a model are declared.
         Each declared variable is constrained by a type defined explicitly or deduced from the given default value
@@ -374,10 +317,16 @@ else:
         dumping population ... done
         dumping undeclared_var ... done
         """
-        model_config = ConfigDict(arbitrary_types_allowed=True, validate_default=True, extra='allow',
-                                  validate_assignment=True, frozen=False)
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            validate_default=True,
+            extra='allow',
+            validate_assignment=True,
+            frozen=False
+        )
 
         def __init__(self, *args, meta=None, **kwargs):
+            # initialize an empty Session
             Session.__init__(self, meta=meta)
 
             # create an intermediate Session object to not call the __setattr__
@@ -386,14 +335,15 @@ else:
             # TODO: refactor Session.load() to use a private function which returns the handler directly
             # so that we can get the items out of it and avoid this
             input_data = dict(Session(*args, **kwargs))
-
             # --- declared variables
-            for name, field in self.__pydantic_fields__.items():
-                value = input_data.pop(name, NotLoaded())
+            for name, field in self.__class__.model_fields.items():
+                value = input_data.pop(name, NOT_LOADED)
 
-                if isinstance(value, NotLoaded):
+                if value is NOT_LOADED:
                     if field.default is PydanticUndefined:
-                        warnings.warn(f"No value passed for the declared variable '{name}'", stacklevel=2)
+                        warnings.warn(f"No value passed for the declared variable '{name}'",
+                                      stacklevel=2)
+                        # we actually use NOT_LOADED as the value
                         self.__setattr__(name, value, skip_frozen=True, skip_validation=True)
                     else:
                         self.__setattr__(name, field.default, skip_frozen=True)
@@ -405,42 +355,67 @@ else:
                 self.__setattr__(name, value, skip_frozen=True, stacklevel=2)
 
         # code of the method below has been partly borrowed from pydantic.BaseModel.__setattr__()
-        def _check_key_value(self, name: str, value: Any, skip_frozen: bool, skip_validation: bool,
+        def _check_key_value(self, name: str,
+                             value: Any,
+                             skip_frozen: bool,
+                             skip_validation: bool,
                              stacklevel: int) -> Any:
-            config = self.model_config
-            if not config['extra'] and name not in self.__pydantic_fields__:
-                raise ValueError(f"Variable '{name}' is not declared in '{self.__class__.__name__}'. "
-                                 f"Adding undeclared variables is forbidden. "
-                                 f"List of declared variables is: {list(self.__pydantic_fields__.keys())}.")
-            if not skip_frozen and config['frozen']:
-                raise TypeError(f"Cannot change the value of the variable '{name}' since '{self.__class__.__name__}' "
-                                f"is immutable and does not support item assignment")
-            if name in self.__pydantic_fields__:
-                if not skip_validation:
-                    try:
-                        field_type = self.__fields_annotations__.get(name, None)
-                        if field_type is None:
-                            return value
-                        # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
-                        # for more details about TypeAdapter
-                        adapter = TypeAdapter(field_type, config=self.model_config)
-                        value = adapter.validate_python(value, context={'name': name})
-                    except ValidationError as e:
-                        error = e.errors()[0]
-                        msg = f"Error while assigning value to variable '{name}':\n"
-                        if error['type'] == 'is_instance_of':
-                            msg += error['msg']
-                            msg += f". Got input value of type '{type(value).__name__}'."
-                            raise TypeError(msg)
-                        if error['type'] == 'value_error':
-                            msg += error['ctx']['error'].args[0]
-                        else:
-                            msg += error['msg']
-                        raise ValueError(msg)
+            if skip_validation:
+                return value
 
-            else:
-                warnings.warn(f"'{name}' is not declared in '{self.__class__.__name__}'",
-                              stacklevel=stacklevel + 1)
+            cls = self.__class__
+            cls_name = cls.__name__
+            model_config = cls.model_config
+            if model_config['frozen'] and not skip_frozen:
+                raise TypeError(f"Cannot change the value of the variable '{name}' since '{cls_name}' "
+                                f"is immutable and does not support item assignment")
+
+            model_fields = cls.model_fields
+            if name not in model_fields:
+                if model_config['extra']:
+                    warnings.warn(f"'{name}' is not declared in '{cls_name}'",
+                                  stacklevel=stacklevel + 1)
+                    return value
+                else:
+                    raise ValueError(f"Variable '{name}' is not declared in '{cls_name}'. "
+                                     f"Adding undeclared variables is forbidden. "
+                                     f"List of declared variables is: {list(model_fields.keys())}.")
+
+            field_info = model_fields[name]
+            field_type = field_info.annotation
+            if field_type is None:
+                return value
+
+            # Annotated[T, x] => field_info.metadata == (x,)
+            if field_info.metadata:
+                # recreate the Annotated type that CheckedArray
+                # initially created, because TypeAdapter needs the
+                # metadata (the validator function) to actually
+                # validate more than just the value type. I wonder
+                # if the type isn't available as-is somewhere in
+                # the field_info structure...
+                # TODO: use Annotated[field_type, *field_info.metadata] when
+                #       we drop support for Python < 3.11
+                type_info = (field_type, *field_info.metadata)
+                field_type = Annotated[type_info]
+
+            # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
+            # for more details about TypeAdapter
+            adapter = TypeAdapter(field_type, config=self.model_config)
+            try:
+                value = adapter.validate_python(value, context={'name': name})
+            except ValidationError as e:
+                error = e.errors()[0]
+                msg = f"Error while assigning value to variable '{name}':\n"
+                if error['type'] == 'is_instance_of':
+                    msg += error['msg']
+                    msg += f". Got input value of type '{type(value).__name__}'."
+                    raise TypeError(msg)
+                if error['type'] == 'value_error':
+                    msg += error['ctx']['error'].args[0]
+                else:
+                    msg += error['msg']
+                raise ValueError(msg)
             return value
 
         def _update_from_iterable(self, it):
@@ -448,18 +423,29 @@ else:
                 self.__setitem__(k, v, stacklevel=3)
 
         def __setitem__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
-            if key != 'meta':
-                value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
-                # we need to keep the attribute in sync
-                object.__setattr__(self, key, value)
-                self._objects[key] = value
+            if key == 'meta':
+                raise ValueError(
+                    "Sessions cannot contain any object named 'meta'. "
+                    "To modify the session metadata, use "
+                    "'session.meta = value' instead.")
+            value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
+            # we need to keep the attribute in sync
+            # TODO: I don't think this is specific to CheckedSession, so either
+            #       we should do it in Session too or not do it here.
+            object.__setattr__(self, key, value)
+            self._objects[key] = value
 
         def __setattr__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
-            if key != 'meta':
-                value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
-                # we need to keep the attribute in sync
+            if key == 'meta':
                 object.__setattr__(self, key, value)
-            Session.__setattr__(self, key, value)
+                return
+
+            value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
+            # we need to keep the attribute in sync
+            # TODO: I don't think this is specific to CheckedSession, so either
+            #       we should do it in Session too or not do it here.
+            object.__setattr__(self, key, value)
+            self._objects[key] = value
 
         def __getstate__(self) -> Dict[str, Any]:
             return {'__dict__': self.__dict__}
