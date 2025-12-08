@@ -9,4 +9,4 @@ dependencies:
   - openpyxl
   - xlsxwriter
   - pytest >=6
-  - pydantic >= 2.12
+  - pydantic >=2

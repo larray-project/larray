@@ -173,6 +173,8 @@ def test_setitem_cs(checkedsession):
                                    "Input should be an instance of Axis. Got input value of type 'int'."):
         cs['a'] = 0
     # -> CheckedArray
+    # with must_raise(TypeError, msg="Error while assigning value to variable 'h':\n"
+    #                                "Input should be an instance of Array. Got input value of type 'ndarray'."):
     with must_raise(TypeError, msg="Expected object of type 'Array' or a scalar for the variable 'h' but got "
                                    "object of type 'ndarray'"):
         cs['h'] = h.data
@@ -230,6 +232,8 @@ def test_setattr_cs(checkedsession):
                                    "Input should be an instance of Axis. Got input value of type 'int'."):
         cs.a = 0
     # -> CheckedArray
+    # with must_raise(TypeError, msg="Error while assigning value to variable 'h':\n"
+    #                                "Input should be an instance of Array. Got input value of type 'ndarray'."):
     with must_raise(TypeError, msg="Expected object of type 'Array' or a scalar for the variable 'h' but got "
                                    "object of type 'ndarray'"):
         cs.h = h.data
@@ -728,10 +732,15 @@ def test_checked_class_with_methods():
         def new_method(self):
             return True
 
+        @property
+        def new_property(self):
+            return "property value"
+
     array = ndtest(a)
 
     cs = CheckedSessionWithMethods(arr=array)
     assert cs.new_method()
+    assert cs.new_property == "property value"
 
 
 if __name__ == "__main__":
