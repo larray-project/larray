@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-from typing import Type, Any, Dict, Set, no_type_check, Optional, Annotated
+from typing import Type, Any, Dict, Set, no_type_check, Annotated
 
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
@@ -467,8 +467,17 @@ else:
         def __setstate__(self, state: Dict[str, Any]) -> None:
             object.__setattr__(self, '__dict__', state['__dict__'])
 
-        def dict(self, exclude: Optional[Set[str]] = None) -> Dict[str, Any]:
+        def dict(self, exclude: Set[str]) -> Dict[str, Any]:
+            warnings.warn(
+                "checked_session.dict(exclude) is deprecated. Use a dict "
+                "comprehension instead: "
+                "{k: v for k, v in checked_session.items() if k not in exclude}"
+                "\nIf you use this method a lot, please complain and we may "
+                "add it back in a better form.",
+                FutureWarning, stacklevel=2)
+
             return {k: v for k, v in self.items() if k not in exclude}
+
 
     class CheckedParameters(CheckedSession):
         """
