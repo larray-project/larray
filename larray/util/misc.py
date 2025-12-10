@@ -1081,3 +1081,27 @@ def concatenate_ndarrays(arrays) -> np.ndarray:
 
 def first(iterable, default=None):
     return next(iter(iterable), default)
+
+
+try:
+    # Python 3.14+
+    import annotationlib
+
+    def get_annotations(namespace):
+        # should not happen in Python3.14+ unless
+        # "from __future__ import annotations" is used
+        if "__annotations__" in namespace:
+            return namespace["__annotations__"]
+        elif annotate := annotationlib.get_annotate_from_class_namespace(namespace):
+            return annotationlib.call_annotate_function(
+                annotate, format=annotationlib.Format.FORWARDREF
+            )
+        else:
+            return {}
+except ImportError:
+    # Python <3.14
+    def get_annotations(namespace):
+        # any type hints defined in the class body will land in a
+        # __annotations__ key in its namespace (this is not pydantic-specific)
+        # but __annotations__ is only defined if there are type hints
+        return namespace.get('__annotations__', {})

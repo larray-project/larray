@@ -7,6 +7,7 @@ import numpy as np
 from larray.core.axis import AxisCollection
 from larray.core.array import Array, full
 from larray.core.session import Session
+from larray.util.misc import get_annotations
 
 
 class NotLoaded:
@@ -132,11 +133,8 @@ else:
     class LArrayModelMetaclass(ModelMetaclass):
         def __new__(mcs, cls_name: str, bases: tuple[type[Any], ...],
                     namespace: dict[str, Any], **kwargs):
-
-            # any type hints defined in the class body will land in
-            # __annotations__ (this is not pydantic-specific) but
-            # __annotations__ is only defined if there are type hints
-            raw_annotations = namespace.get('__annotations__', {})
+            # get user-defined annotations
+            raw_annotations = get_annotations(namespace)
             type_annotations = {
                 key: type(value)
                 for key, value in namespace.items()
