@@ -1,9 +1,13 @@
 import pytest
 import numpy as np
 
-from larray.tests.common import assert_array_equal, assert_nparray_equal, needs_pytables, must_raise
+from larray.tests.common import (
+    assert_array_equal, assert_nparray_equal,
+    needs_pytables,
+    must_raise, must_warn
+)
 from larray import Axis, LGroup, IGroup, read_hdf, X, ndtest
-from larray.core.axis import AxisReference
+from larray.core.axis import AxisReference, _retarget_warn_msg
 
 
 def test_init():
@@ -166,6 +170,7 @@ def test_getitem_lgroup_keys():
 def test_getitem_group_keys():
     a = Axis('a=a0..a2')
     alt_a = Axis('a=a1..a3')
+    alt2_a = Axis('a=a1,a0,a2')
 
     key = a['a1']
 
@@ -186,6 +191,20 @@ def test_getitem_group_keys():
     res = alt_a[key]
     assert res.key == slice('a1', 'a2')
     assert res.axis is alt_a
+
+    # key on an axis with different label order
+    key = alt2_a['a1':'a2']
+
+    res = alt2_a[key]
+    assert res.key == slice('a1', 'a2')
+    assert res.axis is alt2_a
+
+    with must_warn(FutureWarning, msg=_retarget_warn_msg(key, a)):
+        res = a[key]
+    # we SHOULD have this result, but we only warn for now (see #1154)
+    # assert res.key == ['a1', 'a0', 'a2']
+    assert res.key == slice('a1', 'a2')
+    assert res.axis is a
 
     key = a[['a1', 'a2']]
 

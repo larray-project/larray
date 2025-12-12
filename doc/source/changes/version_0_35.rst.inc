@@ -28,6 +28,41 @@ Backward incompatible changes
   (closes :issue:`1075`).
 
 
+Future breaking changes
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* array[slice_group_from_an_incompatible_axis],
+  array.sum(slice_group_from_an_incompatible_axis) and
+  axis[slice_group_from_an_incompatible_axis] will change behavior in a future
+  release.
+
+  It currently evaluates the slice on the array axis instead of first
+  evaluating the slice on the axis it was created on, then take the
+  corresponding labels from the array axis. For example:
+
+    >>> arr = ndtest(3)
+    >>> arr
+    a  a0  a1  a2
+        0   1   2
+    >>> other_axis_a = Axis('a=a0,a1')
+    >>> group = other_axis_a[:]
+    >>> print(group)
+    ['a0' 'a1']
+    >>> arr[group]  # <-- current
+    a  a0  a1  a2
+        0   1   2
+    >>> arr[group]  # <-- future
+    a  a0  a1
+        0   1
+
+  Even though this behavior is considered a bug, some of our users actually
+  relied on this behavior. As a consequence, only a (loud) warning is issued for
+  this release and the behavior was NOT changed yet. We will turn that warning
+  to an error in larray 0.36 and change the behavior in an even more distant
+  release (larray 0.37 at the earliest). See :issue:`1117`, :issue:`1146`
+  and :issue:`1154` for more details.
+
+
 New features
 ^^^^^^^^^^^^
 
@@ -84,28 +119,6 @@ Miscellaneous improvements
 
 Fixes
 ^^^^^
-
-* fixed array[slice_group_from_an_incompatible_axis] and
-  array.sum(slice_group_from_an_incompatible_axis) (closes :issue:`1146`
-  and :issue:`1117`).
-  It used to evaluate the slice on the array axis instead of first evaluating
-  the slice on the axis it was created on, then take the corresponding labels
-  from the array axis.
-
-    >>> arr = ndtest(3)
-    >>> arr
-    a  a0  a1  a2
-        0   1   2
-    >>> other_axis_a = Axis('a=a0,a1')
-    >>> group = other_axis_a[:]
-    >>> print(group)
-    ['a0' 'a1']
-    >>> arr[group]  # <-- before
-    a  a0  a1  a2
-        0   1   2
-    >>> arr[group]  # <-- now
-    a  a0  a1
-        0   1
 
 * fixed error message when trying to take a subset of an array with an array
   key which has ndim > 1 and some bad values in the key. The message was also

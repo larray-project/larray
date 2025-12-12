@@ -17,8 +17,9 @@ from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
                               exactly_one, concatenate_ndarrays)
-from larray.util.misc import first
+from larray.util.misc import first, find_names
 from larray.util.types import Scalar
+
 
 np_frompyfunc = np.frompyfunc
 
@@ -33,6 +34,81 @@ def array_equal(a1: np.ndarray, a2: np.ndarray):
     else:
         # equivalent to np.array_equal, except we assume we already have numpy arrays
         return bool((a1 == a2).all())
+
+
+def get_obj_var_name(obj, default, depth=0):
+    names = find_names(obj, depth=depth + 1)
+    if names:
+        return names[0]
+    else:
+        return default
+
+
+_RETARGET_WARNING_TEMPLATE = """
+WARNING: The {key!r} group was defined on:
+  {key_axis!r} 
+but is being used on:
+  {real_axis!r}
+
+This currently evaluates to the following labels:
+  {current_eval!r}
+but in a future release of LArray will evaluate to the following labels instead:
+  {future_eval!r}
+
+To avoid this warning, you have two options:
+  1) To keep the current behavior, please either define the group directly on the 
+     real target axis using the current key, or use the X. syntax with the 
+     current key, because the X. syntax evaluates lazily (as late as possible):
+
+       {x_group!r}
+
+  2) To get the new behavior already, please either define the group directly 
+     on the real target axis using a modified key, or retarget
+     the existing group to the real axis using the retarget_to() method:
+
+       group.retarget_to(real_axis)
+"""
+
+def check_warn_retarget(key, real_axis, stacklevel):
+    assert isinstance(key, Group)
+    key_axis = key.axis
+    if key_axis is real_axis:
+        return
+    assert isinstance(real_axis, Axis)
+    if (isinstance(key_axis, Axis) and
+            not isinstance(key_axis, AxisReference) and
+            not key_axis.equals(real_axis)):
+        if (isinstance(key, IGroup) or isinstance(key.key, slice)):
+            future_eval = key.eval()
+            current_eval = key.with_axis(real_axis).eval()
+            if isinstance(future_eval, np.ndarray):
+                eval_equal = array_equal(future_eval, current_eval)
+            else:
+                eval_equal = future_eval == current_eval
+
+            if not eval_equal:
+                msg = _retarget_warn_msg(key, real_axis,
+                                         current_eval, future_eval)
+                warnings.warn(msg,
+                              stacklevel=stacklevel,
+                              category=FutureWarning)
+
+
+def _retarget_warn_msg(key, real_axis, current_eval=None, future_eval=None):
+    key_axis = key.axis
+    if current_eval is None:
+        current_eval = key.with_axis(real_axis).eval()
+    if future_eval is None:
+        future_eval = key.eval()
+    x_group = key.with_axis(X[real_axis.name])
+    return _RETARGET_WARNING_TEMPLATE.format(
+        key=key,
+        key_axis=key_axis,
+        real_axis=real_axis,
+        current_eval=current_eval.tolist(),
+        future_eval=future_eval.tolist(),
+        x_group=x_group,
+    )
 
 
 class Axis(ABCAxis):
@@ -852,22 +928,31 @@ class Axis(ABCAxis):
             # this creates a group for each key if it wasn't and retargets IGroup
             list_res = [self[k] for k in key]
             return list_res if isinstance(key, list) else tuple(list_res)
-        # allow targeting a label from an aggregated axis with the group which created it
-        elif (
-            not isinstance(self, AxisReference)
-            and isinstance(key, Group)
-            and isinstance(key.axis, Axis)
-            and key.axis.name == self.name
-            and key.name in self
-        ):
-            msg = "Using a Group object which was used to create an aggregate to " \
-                  "target its aggregated label is deprecated. " \
-                  "Please use the aggregated label directly instead. " \
-                  f"In this case, you should use {key.name!r} instead of " \
-                  f"using {key!r}."
-            # let us hope the stacklevel does not vary by codepath
-            warnings.warn(msg, FutureWarning, stacklevel=7)
-            return LGroup(key.name, None, self)
+        elif isinstance(key, Group) and isinstance(key.axis, Axis):
+            # allow targeting a label from an aggregated axis with the group which created it
+            if (not isinstance(self, AxisReference)
+                    and key.axis.name == self.name
+                    and key.name in self):
+                msg = (
+                    "Using a Group object which was used to create an "
+                    "aggregate to target its aggregated label is deprecated. "
+                    "Please use the aggregated label directly instead. "
+                    f"In this case, you should use {key.name!r} instead of "
+                    f"using {key!r}."
+                )
+                # let us hope the stacklevel does not vary by codepath
+                warnings.warn(msg, FutureWarning, stacklevel=7)
+                return LGroup(key.name, None, self)
+            # retarget a Group from another axis to this axis
+            # TODO: uncomment this code once we actually retarget groups from
+            #       other axes in LGroup.__init__
+            # elif (not isinstance(key.axis, AxisReference) and
+            #       key.axis.equals(self)):
+            #     # this is a fast path when the axes matches to avoid
+            #     # transforming slice keys to array keys (which would otherwise
+            #     # be done in LGroup.__init__)
+            #     return LGroup(key.key, key.name, self)
+
         # elif isinstance(key, str) and key in self:
             # TODO: this is an awful workaround to avoid the "processing" of string keys which exist as is in the axis
             #       (probably because the string was used in an aggregate function to create the label)
@@ -984,9 +1069,13 @@ class Axis(ABCAxis):
             elif isinstance(key_axis, AxisReference):
                 if key_axis.name != self.name:
                     raise KeyError(key)
-            elif isinstance(key_axis, Axis):  # we know it is not self
-                # IGroups will be retargeted to LGroups
-                key = key.retarget_to(self)
+            elif isinstance(key_axis, Axis):
+                # TODO: this is what we should do instead but since it changes
+                #       behavior, we must wait for a future release, and we
+                #       only output a warning for now (see #1146)
+                # key = key.retarget_to(self)
+                check_warn_retarget(key, self, stacklevel=9)
+                key = key.with_axis(self)
             elif isinstance(key_axis, int):
                 raise TypeError('Axis.index() does not support Group keys with '
                                 'integer axis')
@@ -2828,9 +2917,12 @@ class AxisCollection:
             if group_axis is not None:
                 # we have axis information but not necessarily an Axis object from self
                 real_axis = self[group_axis]
-                if group_axis is not real_axis:
-                    axis_key = axis_key.retarget_to(real_axis)
-                return axis_key
+                # TODO: this is what we should do instead but since it changes
+                #       behavior, we must wait for a future release, and we
+                #       only output a warning for now (see #1117)
+                # return axis_key.retarget_to(real_axis)
+                check_warn_retarget(axis_key, real_axis, stacklevel=8)
+                return axis_key.with_axis(real_axis)
 
         real_axis, axis_pos_key = self._translate_nice_key(axis_key)
         return real_axis[axis_key]

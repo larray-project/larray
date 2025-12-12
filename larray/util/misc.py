@@ -1105,3 +1105,28 @@ except ImportError:
         # __annotations__ key in its namespace (this is not pydantic-specific)
         # but __annotations__ is only defined if there are type hints
         return namespace.get('__annotations__', {})
+
+
+def find_names(obj, depth=0):
+    """Return all names an object is bound to.
+
+    Parameters
+    ----------
+    obj : object
+        the object to find names for.
+    depth : int
+        depth of call frame to inspect. 0 is where find_names was called,
+        1 the caller of find_names, etc.
+
+    Returns
+    -------
+    list of str
+        all names obj is bound to, sorted alphabetically. Can be [] if we
+        computed an array just to view it.
+    """
+    # noinspection PyProtectedMember
+    local_vars = sys._getframe(depth + 1).f_locals
+    names = [k for k, v in local_vars.items() if v is obj]
+    if any(not name.startswith('_') for name in names):
+        names = [name for name in names if not name.startswith('_')]
+    return sorted(names)

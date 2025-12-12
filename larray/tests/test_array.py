@@ -19,7 +19,9 @@ from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadat
                     read_hdf, read_csv, read_eurostat, read_excel, open_excel,
                     from_lists, from_string, from_frame, from_series,
                     zip_array_values, zip_array_items, nan_to_num)
-from larray.core.axis import _to_ticks, _to_tick, _to_key
+from larray.core.axis import (
+    _to_ticks, _to_tick, _to_key, _retarget_warn_msg
+)
 from larray.util.misc import LHDFStore
 
 # avoid flake8 errors
@@ -562,13 +564,18 @@ def test_getitem(array):
 
 def test_getitem_group_from_another_axis():
     # using slice Group from an axis not present, we must retarget the group
-    arr = ndtest(3)
-    a2 = Axis('a=a0,a1')
+    a = Axis('a=a0,a1,a2')
+    arr = ndtest(a)
 
-    # issue #1146
-    expected = ndtest(2)
-    res = arr[a2[:]]
-    assert_larray_equal(res, expected)
+    alt_a = Axis('a=a0,a1')
+    key = alt_a[:]
+    # TODO: this is what we SHOULD have but cannot have for now for backward
+    #       compatibility reasons (see #1146)
+    # expected_res = ndtest(2)
+    expected_res = arr
+    with must_warn(FutureWarning, msg=_retarget_warn_msg(key, a)):
+        res = arr[key]
+    assert_larray_equal(res, expected_res)
 
 
 def test_getitem_abstract_axes(array):
@@ -2172,17 +2179,29 @@ def test_group_agg_label_group(array):
 
     # d) group aggregate using a group from another axis
     #    1) LGroup
-    array = ndtest(3)
-    smaller_a_axis = Axis('a=a0,a1')
-    group = smaller_a_axis[:]
-    res = array.sum(group)
-    assert res == 1
+    a = Axis('a=a0,a1,a2')
+    array = ndtest(a)
+
+    alt_a = Axis('a=a0,a1')
+    group = alt_a[:]
+
+    with must_warn(FutureWarning, msg=_retarget_warn_msg(group, a)):
+        res = array.sum(group)
+
+    # TODO: this is what we SHOULD have but cannot for now for backward
+    #       compatibility reasons (see #1117)
+    # assert res == 1
+    assert res == 3
 
     #    2) IGroup
-    group = Axis("a=a1,a0").i[0]  # targets a1
+    # group targets a1
+    group = Axis("a=a1,a0").i[0]
     assert array[group] == 1
-    res = array.sum(group)
-    assert res == 1
+    # ... but when used in a group agg, it currently targets a0 (see #1117)
+    with must_warn(FutureWarning, msg=_retarget_warn_msg(group, a)):
+        res = array.sum(group)
+    # assert res == 1
+    assert res == 0
 
 
 def test_group_agg_label_group_no_axis(array):

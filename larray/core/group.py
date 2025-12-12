@@ -1571,6 +1571,22 @@ class LGroup(Group):
 
     def __init__(self, key, name=None, axis=None):
         key = _to_key(key)
+        # we only check for LGroup and not Group because for scalar and list
+        # IGroup, it already worked thanks to .to_label() in Group.__init__
+        # and for slice IGroup, the case causing problem is subtle and we need
+        # a different error message because it currently evaluates to a weird
+        # thing.
+        if (isinstance(key, LGroup) and isinstance(key.axis, ABCAxis) and
+               not isinstance(key.axis, ABCAxisReference)):
+            # unsure whether we should copy the name and axis if they are not
+            # provided
+            # this is what we SHOULD do but do not for backward compatibility
+            # (see #1154)
+            # key = key.eval()
+            if (isinstance(axis, ABCAxis) and
+                    not isinstance(axis, ABCAxisReference)):
+                from larray.core.axis import check_warn_retarget
+                check_warn_retarget(key, axis, stacklevel=4)
         Group.__init__(self, key, name, axis)
 
     # XXX: return IGroup instead?
