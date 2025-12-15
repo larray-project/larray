@@ -24,7 +24,7 @@ SRC_DOC = join('doc', 'source')
 GITHUB_REP = "https://github.com/larray-project/larray"
 UPSTREAM_CONDAFORGE_FEEDSTOCK_REP = "https://github.com/conda-forge/larray-feedstock.git"
 ORIGIN_CONDAFORGE_FEEDSTOCK_REP = "https://github.com/larray-project/larray-feedstock.git"
-CONDA_BUILD_ARGS = {'--user': 'larray-project'}
+ANACONDA_UPLOAD_ARGS = {'--user': 'larray-project'}
 
 LARRAY_READTHEDOCS = "http://larray.readthedocs.io/en/stable/"
 LARRAY_ANNOUNCE_MAILING_LIST = "larray-announce@googlegroups.com"
@@ -132,5 +132,6 @@ Usage:
         update_feedstock(GITHUB_REP, UPSTREAM_CONDAFORGE_FEEDSTOCK_REP, ORIGIN_CONDAFORGE_FEEDSTOCK_REP,
                          SRC_CODE, *argv[2:], tmp_dir=TMP_PATH_CONDA)
     else:
-        make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:], src_documentation=SRC_DOC, tmp_dir=TMP_PATH,
-                     conda_build_args=CONDA_BUILD_ARGS)
+        make_release(local_repository, PACKAGE_NAME, SRC_CODE, *argv[1:],
+                     src_documentation=SRC_DOC, tmp_dir=TMP_PATH,
+                     anaconda_upload_args=ANACONDA_UPLOAD_ARGS)
