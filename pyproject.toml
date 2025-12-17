@@ -52,6 +52,7 @@ test = ["pytest"]
 homepage = "https://github.com/larray-project/larray"
 repository = "https://github.com/larray-project/larray"
 issues = "https://github.com/larray-project/larray/issues"
+documentation = "https://larray.readthedocs.io/en/stable/"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
