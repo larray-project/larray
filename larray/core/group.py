@@ -591,7 +591,9 @@ def _to_key(v, stack_depth=1, parse_single_int=False) -> Key:
             return cls(key, name=name, axis=axis)
         else:
             return _seq_str_to_seq(v, stack_depth + 1, parse_single_int=parse_single_int)
-    elif v is Ellipsis or np.isscalar(v) or isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet)):
+    elif (v is Ellipsis or np.isscalar(v) or
+          isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet,
+                         pd.arrays.ArrowStringArray))):
         return v
     else:
         raise TypeError(f"{v} has an invalid type ({type(v).__name__}) for a key")
