@@ -1130,3 +1130,6 @@ def find_names(obj, depth=0):
     if any(not name.startswith('_') for name in names):
         names = [name for name in names if not name.startswith('_')]
     return sorted(names)
+
+
+PY312_OR_LATER = sys.version_info[:2] >= (3, 12)
