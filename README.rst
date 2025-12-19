@@ -158,10 +158,8 @@ Get in touch
 
 .. |ci-status| image:: https://github.com/larray-project/larray/actions/workflows/ci.yml/badge.svg
     :alt: CI status
-    :scale: 100%
     :target: https://github.com/larray-project/larray/actions/workflows/ci.yml
 
 .. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=stable
     :alt: Documentation Status
-    :scale: 100%
     :target: https://larray.readthedocs.io/en/latest/?badge=stable
