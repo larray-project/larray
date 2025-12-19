@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "larray"
-version = "0.35-dev"
+version = "0.35"
 description = "N-D labeled arrays in Python"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 
