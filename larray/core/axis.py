@@ -17,7 +17,7 @@ from larray.util.oset import OrderedSet
 from larray.util.misc import (duplicates, array_lookup2, ReprString, index_by_id, renamed_to, LHDFStore,
                               lazy_attribute, _isnoneslice, unique_list, unique_multi, Product, argsort, has_duplicates,
                               exactly_one, concatenate_ndarrays)
-from larray.util.misc import first, find_names
+from larray.util.misc import first, find_names, PY312_OR_LATER
 from larray.util.types import Scalar
 
 
@@ -2921,7 +2921,8 @@ class AxisCollection:
                 #       behavior, we must wait for a future release, and we
                 #       only output a warning for now (see #1117)
                 # return axis_key.retarget_to(real_axis)
-                check_warn_retarget(axis_key, real_axis, stacklevel=8)
+                stack_level = 8 if PY312_OR_LATER else 9
+                check_warn_retarget(axis_key, real_axis, stacklevel=stack_level)
                 return axis_key.with_axis(real_axis)
 
         real_axis, axis_pos_key = self._translate_nice_key(axis_key)

@@ -1,5 +1,3 @@
-import sys
-
 import fnmatch
 import re
 import warnings
@@ -12,12 +10,12 @@ from typing import Union, List, Tuple, Any, Sequence, Iterable
 
 from larray.core.abstractbases import ABCAxis, ABCAxisReference, ABCArray
 from larray.util.oset import OrderedSet
-from larray.util.misc import (unique_list, find_closing_chr, _parse_bound, _seq_summary, _isintstring, renamed_to,
-                              LHDFStore)
+from larray.util.misc import (
+    unique_list, find_closing_chr, _parse_bound, _seq_summary, _isintstring,
+    renamed_to, LHDFStore, PY312_OR_LATER
+)
 from larray.util.types import Scalar, Key
 
-
-PY312_OR_LATER = sys.version_info[:2] >= (3, 12)
 
 def _slice_to_str(key: slice, repr_func=str) -> str:
     r"""
