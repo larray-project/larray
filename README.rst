@@ -1,7 +1,7 @@
 LArray: N-dimensional labelled arrays
 =====================================
 
-|build-status| |docs|
+|ci-status| |docs|
 
 .. _start-intro:
 
@@ -73,7 +73,7 @@ Once you have satisfied the requirements detailed below, simply run::
 Required Dependencies
 ---------------------
 
-- Python 3.8, 3.9, 3.10, 3.11 or 3.12
+- Python 3.9, 3.10, 3.11, 3.12, 3.13 or 3.14
 - `numpy <http://www.numpy.org/>`__ (1.22 or later)
 - `pandas <http://pandas.pydata.org/>`__ (0.20 or later)
 
@@ -156,10 +156,10 @@ Get in touch
 
 .. end-readme-file
 
-.. |build-status| image:: https://github.com/larray-project/larray/actions/workflows/test-larray.yml/badge.svg
-    :alt: Build Status
+.. |ci-status| image:: https://github.com/larray-project/larray/actions/workflows/ci.yml/badge.svg
+    :alt: CI status
     :scale: 100%
-    :target: https://github.com/larray-project/larray/actions/workflows/test-larray.yml
+    :target: https://github.com/larray-project/larray/actions/workflows/ci.yml
 
 .. |docs| image:: https://readthedocs.org/projects/larray/badge/?version=stable
     :alt: Documentation Status
