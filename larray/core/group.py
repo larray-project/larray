@@ -752,6 +752,13 @@ class Group:
         if isinstance(key, tuple):
             key = list(key)
         if isinstance(key, Group):
+            # FIXME: this is wrong for slices. Triggering a problem with
+            #        this needs axes with labels in different order.
+            #        We should call .eval() instead, but we might want
+            #        to keep the slice as is (for performance reasons) when
+            #        possible (when slice evaluates to the same labels on
+            #        both axes). See #1155.
+            # key = key.eval()
             key = key.to_label()
         self.key = remove_nested_groups(key)
 

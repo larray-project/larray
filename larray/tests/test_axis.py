@@ -240,6 +240,15 @@ def test_getitem_group_keys():
     assert res.key == slice('a1', 'a2')
     assert res.axis is alt_a
 
+    alt2_a = Axis('a=a1,a0,a2')
+    res = a[alt2_a.i[0:3]]
+    assert isinstance(res, LGroup)
+    # FIXME: we SHOULD have this result, but it is not what we currently
+    #        return (see #1155)
+    # assert res.key == ['a1', 'a0', 'a2']
+    assert res.key == slice('a1', 'a2')
+    assert res.axis is a
+
     key = a.i[[1, 2]]
 
     res = a[key]
