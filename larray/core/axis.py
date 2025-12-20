@@ -111,6 +111,23 @@ def _retarget_warn_msg(key, real_axis, current_eval=None, future_eval=None):
     )
 
 
+_GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE = \
+    "Using a Group object which was used to create an aggregate to " \
+    "target its aggregated label is deprecated. " \
+    "Please use the aggregated label directly instead. " \
+    "In this case, you should use {potential_tick!r} instead of " \
+    "using {key!r}."
+
+
+def _group_as_aggregated_label_msg(key, potential_tick=None):
+    if potential_tick is None:
+        potential_tick = _to_tick(key)
+    return _GROUP_AS_AGGREGATED_LABEL_MSG_TEMPLATE.format(
+        potential_tick=potential_tick,
+        key=key
+    )
+
+
 class Axis(ABCAxis):
     r"""
     Represents an axis. It consists of a name and a list of labels.
@@ -933,16 +950,7 @@ class Axis(ABCAxis):
             if (not isinstance(self, AxisReference)
                     and key.axis.name == self.name
                     and key.name in self):
-                msg = (
-                    "Using a Group object which was used to create an "
-                    "aggregate to target its aggregated label is deprecated. "
-                    "Please use the aggregated label directly instead. "
-                    f"In this case, you should use {key.name!r} instead of "
-                    f"using {key!r}."
-                )
-                # let us hope the stacklevel does not vary by codepath
-                warnings.warn(msg, FutureWarning, stacklevel=7)
-                return LGroup(key.name, None, self)
+                raise ValueError(_group_as_aggregated_label_msg(key, key.name))
             # retarget a Group from another axis to this axis
             # TODO: uncomment this code once we actually retarget groups from
             #       other axes in LGroup.__init__
@@ -1027,14 +1035,12 @@ class Axis(ABCAxis):
                         try:
                             res_idx = mapping[potential_tick]
                             if potential_tick != key.key:
-                                # only warn if no KeyError was raised (potential_tick is in mapping)
-                                msg = "Using a Group object which was used to create an aggregate to " \
-                                      "target its aggregated label is deprecated. " \
-                                      "Please use the aggregated label directly instead. " \
-                                      f"In this case, you should use {potential_tick!r} instead of " \
-                                      f"using {key!r}."
-                                # let us hope the stacklevel does not vary by codepath
-                                warnings.warn(msg, FutureWarning, stacklevel=8)
+                                raise ValueError(
+                                    _group_as_aggregated_label_msg(
+                                        key,
+                                        potential_tick
+                                    )
+                                )
                             return res_idx
                         except KeyError:
                             pass
