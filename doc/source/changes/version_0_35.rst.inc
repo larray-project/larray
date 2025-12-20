@@ -27,6 +27,13 @@ Backward incompatible changes
   :py:obj:`CheckedArray` now requires installing pydantic >= 2
   (closes :issue:`1075`).
 
+* the warning introduced in LArray 0.34 (see :issue:`994`) when targeting a
+  label in an aggregated array using the group that created it, has been
+  changed to an error. The aggregated array label should be used instead.
+  This was a seldom used feature which was complex to keep working and had a
+  significant performance cost in some cases, even when the feature is not
+  used.
+
 
 Future breaking changes
 ^^^^^^^^^^^^^^^^^^^^^^^
