@@ -28,6 +28,11 @@ requirements:
 test:
   requires:
     - pytest
+    - pytables
+    - matplotlib-base
+    - openpyxl
+    - xlsxwriter
+    - pydantic >=2
 
   imports:
     - larray
