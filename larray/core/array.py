@@ -7330,7 +7330,7 @@ class Array(ABCArray):
 
         Line plot with grid and a title, saved in a file
 
-        >>> arr.plot(grid=True, title='line plot', filepath='my_file.png')
+        >>> arr.plot(grid=True, title='line plot', filepath='my_file.png')       # doctest: +SKIP
 
         2 bar plots (one for each gender) sharing the same y axis, which makes sub plots
         easier to compare. By default sub plots are independant of each other and the axes
@@ -7352,7 +7352,7 @@ class Array(ABCArray):
 
         Create a figure containing 2 x 2 graphs
 
-        >>> import matplotlib.pyplot as plt
+        >>> import matplotlib.pyplot as plt                                      # doctest: +SKIP
         >>> # see matplotlib.pyplot.subplots documentation for more details
         >>> fig, ax = plt.subplots(2, 2, figsize=(10, 8), tight_layout=True)     # doctest: +SKIP
         >>> # line plot with 2 curves (Males and Females) in the top left corner (0, 0)

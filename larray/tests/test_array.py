@@ -1,24 +1,28 @@
 import os
 import sys
+from io import StringIO
 
 import pytest
 import numpy as np
 import pandas as pd
-import matplotlib.figure
 
-from io import StringIO
-
-from larray.tests.common import (meta, inputpath,
-                                 assert_larray_equal, assert_larray_nan_equal, assert_larray_equiv,
-                                 assert_nparray_equal, assert_nparray_nan_equal,
-                                 needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl, NUMPY2,
-                                 must_warn, must_raise)
-from larray import (Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
-                    zeros, zeros_like, ndtest, empty, ones, full, eye, diag, stack, sequence,
-                    asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
-                    read_hdf, read_csv, read_eurostat, read_excel, open_excel,
-                    from_lists, from_string, from_frame, from_series,
-                    zip_array_values, zip_array_items, nan_to_num)
+from larray.tests.common import (
+    meta, inputpath,
+    assert_larray_equal, assert_larray_nan_equal, assert_larray_equiv,
+    assert_nparray_equal, assert_nparray_nan_equal,
+    needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl,
+    needs_matplotlib,
+    NUMPY2,
+    must_warn, must_raise
+)
+from larray import (
+    Array, LArray, Axis, AxisCollection, LGroup, IGroup, Metadata,
+    zeros, zeros_like, ndtest, empty, ones, full, eye, diag, stack, sequence,
+    asarray, union, clip, exp, where, X, mean, inf, nan, isnan, round,
+    read_hdf, read_csv, read_eurostat, read_excel, open_excel,
+    from_lists, from_string, from_frame, from_series,
+    zip_array_values, zip_array_items, nan_to_num
+)
 from larray.core.axis import (
     _to_ticks, _to_key, _retarget_warn_msg, _group_as_aggregated_label_msg
 )
@@ -5568,7 +5572,9 @@ def test_broadcast_with():
     assert_larray_equiv(b, a2)
 
 
+@needs_matplotlib
 def test_plot():
+    import matplotlib.figure
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()  # doctest: +SKIP
