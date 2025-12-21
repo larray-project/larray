@@ -8,6 +8,11 @@ import pytest
 import numpy as np
 from numpy.lib import NumpyVersion
 import pandas as pd
+
+try:
+    import matplotlib
+except ImportError:
+    matplotlib = None
 try:
     import xlwings as xw
 except ImportError:
@@ -141,11 +146,26 @@ def meta():
                     score=9.70, date=pd.Timestamp(dt.datetime(1970, 3, 21)))
 
 
-needs_pytables = pytest.mark.skipif(tables is None, reason="pytables is required for this test")
-needs_xlwings = pytest.mark.skipif(SKIP_EXCEL_TESTS or xw is None, reason="xlwings is required for this test")
-needs_openpyxl = pytest.mark.skipif(SKIP_EXCEL_TESTS or openpyxl is None, reason="openpyxl is required for this test")
-needs_xlsxwriter = pytest.mark.skipif(SKIP_EXCEL_TESTS or xlsxwriter is None,
-                                      reason="xlsxwriter is required for this test")
+needs_matplotlib = (
+    pytest.mark.skipif(matplotlib is None,
+                       reason="matplotlib is required for this test")
+)
+needs_pytables = (
+    pytest.mark.skipif(tables is None,
+                       reason="pytables is required for this test")
+)
+needs_xlwings = (
+    pytest.mark.skipif(SKIP_EXCEL_TESTS or xw is None,
+                       reason="xlwings is required for this test")
+)
+needs_openpyxl = (
+    pytest.mark.skipif(SKIP_EXCEL_TESTS or openpyxl is None,
+                       reason="openpyxl is required for this test")
+)
+needs_xlsxwriter = (
+    pytest.mark.skipif(SKIP_EXCEL_TESTS or xlsxwriter is None,
+                       reason="xlsxwriter is required for this test")
+)
 
 
 @contextmanager
