@@ -27,12 +27,9 @@ requirements:
 
 test:
   requires:
+    # do not add optional dependencies here, as those are already tested in
+    # the CI workflow, but testing whether the tests run without them is not
     - pytest
-    - pytables
-    - matplotlib-base
-    - openpyxl
-    - xlsxwriter
-    - pydantic >=2
 
   imports:
     - larray
