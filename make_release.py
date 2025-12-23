@@ -42,12 +42,13 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
     print(f'Updating larrayenv metapackage to version {version}')
     dependencies = [
         f'larray =={version}', f'larray-editor =={version}', f'larray_eurostat =={version}', 
-        'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'pydantic',
+        'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'pydantic ==2',
         'xlsxwriter', 'xlrd', 'openpyxl', 'xlwings',
     ]
     check_call([
         'conda', 'metapackage', 'larrayenv', version,
         '--dependencies'] + dependencies + [
+#        '--build-number', '1',
         '--user', 'larray-project',
         '--home', 'http://github.com/larray-project/larray',
         '--license', 'GPL-3.0',
