@@ -601,167 +601,175 @@ def get_axis(obj, i):
 
 _arg_agg = {
     'q': """
-        q : int in range of [0,100] (or sequence of floats)
-            Percentile to compute, which must be between 0 and 100 inclusive."""
+q : int in range of [0,100] (or sequence of floats)
+    Percentile to compute, which must be between 0 and 100 inclusive."""
 }
 
 _kwarg_agg = {
     'dtype': {'value': None, 'doc': """
-        dtype : dtype, optional
-            The data type of the returned array. Defaults to None (the dtype of the input array)."""},
+dtype : dtype, optional
+    The data type of the returned array. Defaults to None (the dtype of the input array)."""},
     'out': {'value': None, 'doc': """
-        out : Array, optional
-            Alternate output array in which to place the result. It must have the same shape as the expected output and
-            its type is preserved (e.g., if dtype(out) is float, the result will consist of 0.0's and 1.0's).
-            Axes and labels can be different, only the shape matters. Defaults to None (create a new array)."""},
+out : Array, optional
+    Alternate output array in which to place the result. It must have 
+    the same shape as the expected output and its type is preserved 
+    (e.g., if dtype(out) is float, the result will consist of 0.0's and 
+    1.0's). Axes and labels can be different, only the shape matters. 
+    Defaults to None (create a new array)."""},
     'ddof': {'value': 1, 'doc': """
-        ddof : int, optional
-            "Delta Degrees of Freedom": the divisor used in the calculation is ``N - ddof``, where ``N`` represents
-            the number of elements. Defaults to 1."""},
+ddof : int, optional
+    "Delta Degrees of Freedom": the divisor used in the calculation is 
+    ``N - ddof``, where ``N`` represents the number of elements. 
+    Defaults to 1."""},
     'skipna': {'value': None, 'doc': """
-        skipna : bool, optional
-            Whether to skip NaN (null) values. If False, resulting cells will be NaN if any of the aggregated
-            cells is NaN. Defaults to True."""},
+skipna : bool, optional
+    Whether to skip NaN (null) values. If False, resulting cells will be NaN if any of the aggregated
+    cells is NaN. Defaults to True."""},
     'keepaxes': {'value': False, 'doc': """
-        keepaxes : bool or label-like, optional
-            Whether reduced axes are left in the result as dimensions with size one.
-            If True, reduced axes will contain a unique label representing the applied aggregation
-            (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value
-            (e.g. keepaxes='summation'). Defaults to False."""},
+keepaxes : bool or label-like, optional
+    Whether reduced axes are left in the result as dimensions with size one.
+    If True, reduced axes will contain a unique label representing the applied aggregation
+    (e.g. 'sum', 'prod', ...). It is possible to override this label by passing a specific value
+    (e.g. keepaxes='summation'). Defaults to False."""},
     'method': {'value': 'linear', 'doc': """
-        method : str, optional
-            This parameter specifies the method to use for estimating the
-            percentile when the desired percentile lies between two indexes.
-            The different methods supported are described in the Notes section. The options are:
-                * 'inverted_cdf'
-                * 'averaged_inverted_cdf'
-                * 'closest_observation'
-                * 'interpolated_inverted_cdf'
-                * 'hazen'
-                * 'weibull'
-                * 'linear'  (default)
-                * 'median_unbiased'
-                * 'normal_unbiased'
-                * 'lower'
-                * 'higher'
-                * 'midpoint'
-                * 'nearest'
-            The first three and last four methods are discontinuous. Defaults to 'linear'."""}
+method : str, optional
+    This parameter specifies the method to use for estimating the
+    percentile when the desired percentile lies between two indexes.
+
+    The different methods supported are described in the Notes section.
+    The options are:
+
+        * 'inverted_cdf'
+        * 'averaged_inverted_cdf'
+        * 'closest_observation'
+        * 'interpolated_inverted_cdf'
+        * 'hazen'
+        * 'weibull'
+        * 'linear'  (default)
+        * 'median_unbiased'
+        * 'normal_unbiased'
+        * 'lower'
+        * 'higher'
+        * 'midpoint'
+        * 'nearest'
+
+    The first three and last four methods are discontinuous. 
+    Defaults to 'linear'."""}
 }
 
 PERCENTILE_NOTES = """Notes
-        -----
-        Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
-        the value ``q/100`` of the way from the minimum to the maximum in a
-        sorted copy of ``V``. The values and distances of the two nearest
-        neighbors as well as the `method` parameter will determine the
-        percentile if the normalized ranking does not match the location of
-        ``q`` exactly. This function is the same as the median if ``q=50``, the
-        same as the minimum if ``q=0`` and the same as the maximum if
-        ``q=100``.
-    
-        The optional `method` parameter specifies the method to use when the
-        desired percentile lies between two indexes ``i`` and ``j = i + 1``.
-        In that case, we first determine ``i + g``, a virtual index that lies
-        between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
-        fractional part of the index. The final result is, then, an interpolation
-        of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
-        ``i`` and ``j`` are modified using correction constants ``alpha`` and
-        ``beta`` whose choices depend on the ``method`` used. Finally, note that
-        since Python uses 0-based indexing, the code subtracts another 1 from the
-        index internally.
-    
-        The following formula determines the virtual index ``i + g``, the location
-        of the percentile in the sorted sample:
-    
-        .. math::
-            i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
-    
-        The different methods then work as follows
-    
-        inverted_cdf:
-            method 1 of H&F [1]_.
-            This method gives discontinuous results:
-    
-            * if g > 0 ; then take j
-            * if g = 0 ; then take i
-    
-        averaged_inverted_cdf:
-            method 2 of H&F [1]_.
-            This method give discontinuous results:
-    
-            * if g > 0 ; then take j
-            * if g = 0 ; then average between bounds
-    
-        closest_observation:
-            method 3 of H&F [1]_.
-            This method give discontinuous results:
-    
-            * if g > 0 ; then take j
-            * if g = 0 and index is odd ; then take j
-            * if g = 0 and index is even ; then take i
-    
-        interpolated_inverted_cdf:
-            method 4 of H&F [1]_.
-            This method give continuous results using:
-    
-            * alpha = 0
-            * beta = 1
-    
-        hazen:
-            method 5 of H&F [1]_.
-            This method give continuous results using:
-    
-            * alpha = 1/2
-            * beta = 1/2
-    
-        weibull:
-            method 6 of H&F [1]_.
-            This method give continuous results using:
-    
-            * alpha = 0
-            * beta = 0
-    
-        linear:
-            method 7 of H&F [1]_.
-            This method give continuous results using:
-    
-            * alpha = 1
-            * beta = 1
-    
-        median_unbiased:
-            method 8 of H&F [1]_.
-            This method is probably the best method if the sample
-            distribution function is unknown (see reference).
-            This method give continuous results using:
-    
-            * alpha = 1/3
-            * beta = 1/3
-    
-        normal_unbiased:
-            method 9 of H&F [1]_.
-            This method is probably the best method if the sample
-            distribution function is known to be normal.
-            This method give continuous results using:
-    
-            * alpha = 3/8
-            * beta = 3/8
-    
-        lower:
-            NumPy method kept for backwards compatibility.
-            Takes ``i`` as the interpolation point.
-    
-        higher:
-            NumPy method kept for backwards compatibility.
-            Takes ``j`` as the interpolation point.
-    
-        nearest:
-            NumPy method kept for backwards compatibility.
-            Takes ``i`` or ``j``, whichever is nearest.
-    
-        midpoint:
-            NumPy method kept for backwards compatibility.
-            Uses ``(i + j) / 2``."""
+-----
+Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
+the value ``q/100`` of the way from the minimum to the maximum in a
+sorted copy of ``V``. The values and distances of the two nearest
+neighbors as well as the `method` parameter will determine the
+percentile if the normalized ranking does not match the location of
+``q`` exactly. This function is the same as the median if ``q=50``, the
+same as the minimum if ``q=0`` and the same as the maximum if
+``q=100``.
+
+The optional `method` parameter specifies the method to use when the
+desired percentile lies between two indexes ``i`` and ``j = i + 1``.
+In that case, we first determine ``i + g``, a virtual index that lies
+between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
+fractional part of the index. The final result is, then, an interpolation
+of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
+``i`` and ``j`` are modified using correction constants ``alpha`` and
+``beta`` whose choices depend on the ``method`` used. Finally, note that
+since Python uses 0-based indexing, the code subtracts another 1 from the
+index internally.
+
+The following formula determines the virtual index ``i + g``, the location
+of the percentile in the sorted sample:
+
+.. math::
+    i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
+
+The different methods then work as follows
+
+inverted_cdf:
+    method 1 of H&F [1]_.
+    This method gives discontinuous results:
+
+    * if g > 0 ; then take j
+    * if g = 0 ; then take i
+
+averaged_inverted_cdf:
+    method 2 of H&F [1]_.
+    This method give discontinuous results:
+
+    * if g > 0 ; then take j
+    * if g = 0 ; then average between bounds
+
+closest_observation:
+    method 3 of H&F [1]_.
+    This method give discontinuous results:
+
+    * if g > 0 ; then take j
+    * if g = 0 and index is odd ; then take j
+    * if g = 0 and index is even ; then take i
+
+interpolated_inverted_cdf:
+    method 4 of H&F [1]_.
+    This method give continuous results using:
+
+    * alpha = 0
+    * beta = 1
+
+hazen:
+    method 5 of H&F [1]_.
+    This method give continuous results using:
+
+    * alpha = 1/2
+    * beta = 1/2
+
+weibull:
+    method 6 of H&F [1]_.
+    This method give continuous results using:
+
+    * alpha = 0
+    * beta = 0
+
+linear:
+    method 7 of H&F [1]_.
+    This method give continuous results using:
+
+    * alpha = 1
+    * beta = 1
+
+median_unbiased:
+    method 8 of H&F [1]_.
+    This method is probably the best method if the sample
+    distribution function is unknown (see reference).
+    This method give continuous results using:
+
+    * alpha = 1/3
+    * beta = 1/3
+
+normal_unbiased:
+    method 9 of H&F [1]_.
+    This method is probably the best method if the sample
+    distribution function is known to be normal.
+    This method give continuous results using:
+
+    * alpha = 3/8
+    * beta = 3/8
+
+lower:
+    NumPy method kept for backwards compatibility.
+    Takes ``i`` as the interpolation point.
+
+higher:
+    NumPy method kept for backwards compatibility.
+    Takes ``j`` as the interpolation point.
+
+nearest:
+    NumPy method kept for backwards compatibility.
+    Takes ``i`` or ``j``, whichever is nearest.
+
+midpoint:
+    NumPy method kept for backwards compatibility.
+    Uses ``(i + j) / 2``."""
 
 
 def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_args=(), kwargs=()):
@@ -774,7 +782,7 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
 
     if by:
         specific_template = """The {long_name} is {action_verb}ed along all axes except the given one(s).
-            For groups, {long_name} is {action_verb}ed along groups and non associated axes."""
+    For groups, {long_name} is {action_verb}ed along groups and non associated axes."""
     else:
         specific_template = "Axis(es) or group(s) along which the {long_name} is {action_verb}ed."
     doc_specific = specific_template.format(long_name=long_name, action_verb=action_verb)
@@ -782,34 +790,39 @@ def _doc_agg_method(func, by=False, long_name='', action_verb='perform', extra_a
     doc_args = "".join(_arg_agg[arg] for arg in extra_args)
     doc_kwargs = "".join(_kwarg_agg[kw]['doc'] for kw in kwargs)
     doc_varargs = fr"""
-        \*axes_and_groups : None or int or str or Axis or Group or any combination of those
-            {doc_specific}
-            The default (no axis or group) is to {action_verb} the {long_name} over all the dimensions of the input
-            array.
+\*axes_and_groups : None or int or str or Axis or Group or any combination of those
+    {doc_specific}
+    The default (no axis or group) is to {action_verb} the {long_name} over all the dimensions of the input
+    array.
 
-            An axis can be referred by:
+    An axis can be referred by:
 
-            * its index (integer). Index can be a negative integer, in which case it counts from the last to the
-              first axis.
-            * its name (str or AxisReference). You can use either a simple string ('axis_name') or the special
-              variable X (X.axis_name).
-            * a variable (Axis). If the axis has been defined previously and assigned to a variable, you can pass it as
-              argument.
+    * its index (integer). Index can be a negative integer, in which case it counts from the last to the
+      first axis.
+    * its name (str or AxisReference). You can use either a simple string ('axis_name') or the special
+      variable X (X.axis_name).
+    * a variable (Axis). If the axis has been defined previously and assigned to a variable, you can pass it as
+      argument.
 
-            You may not want to {action_verb} the {long_name} over a whole axis but over a selection of specific
-            labels. To do so, you have several possibilities:
+    You may not want to {action_verb} the {long_name} over a whole axis but over a selection of specific
+    labels. To do so, you have several possibilities:
 
-            * (['a1', 'a3', 'a5'], 'b1, b3, b5') : labels separated by commas in a list or a string
-            * ('a1:a5:2') : select labels using a slice (general syntax is 'start:end:step' where is 'step' is
-              optional and 1 by default).
-            * (a='a1, a2, a3', X.b['b1, b2, b3']) : in case of possible ambiguity, i.e. if labels can belong to more
-              than one axis, you must precise the axis.
-            * ('a1:a3; a5:a7', b='b0,b2; b1,b3') : create several groups with semicolons.
-              Names are simply given by the concatenation of labels (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
-            * ('a1:a3 >> a123', 'b[b0,b2] >> b12') : operator ' >> ' allows to rename groups."""
+    * (['a1', 'a3', 'a5'], 'b1, b3, b5') : labels separated by commas in a list or a string
+    * ('a1:a5:2') : select labels using a slice (general syntax is 'start:end:step' where is 'step' is
+      optional and 1 by default).
+    * (a='a1, a2, a3', X.b['b1, b2, b3']) : in case of possible ambiguity, i.e. if labels can belong to more
+      than one axis, you must precise the axis.
+    * ('a1:a3; a5:a7', b='b0,b2; b1,b3') : create several groups with semicolons.
+      Names are simply given by the concatenation of labels (here: 'a1,a2,a3', 'a5,a6,a7', 'b0,b2' and 'b1,b3')
+    * ('a1:a3 >> a123', 'b[b0,b2] >> b12') : operator ' >> ' allows to rename groups."""
     parameters = f"""Parameters
-        ----------{doc_args}{doc_varargs}{doc_kwargs}"""
-    func.__doc__ = func.__doc__.format(signature=signature, parameters=parameters, percentile_notes=PERCENTILE_NOTES)
+----------{doc_args}{doc_varargs}{doc_kwargs}"""
+    docstring = func.__doc__.format(signature=signature, parameters=parameters,
+                                    percentile_notes=PERCENTILE_NOTES)
+    # Compared to a normal/manual docstring, we get no indentation. We could
+    # add it here but that is not necessary. Tools like inspect.getdoc()
+    # strips any leading indentation anyway.
+    func.__doc__ = docstring
 
 
 _always_return_float = {np.mean, np.nanmean, np.median, np.nanmedian, np.percentile, np.nanpercentile,
@@ -7220,10 +7233,12 @@ class Array(ABCArray):
         ax : matplotlib axes object, default None
         subplots : boolean, Axis, int, str or tuple, default False
             Make several subplots.
+
             - if an Axis (or int or str), make subplots for each label of that axis.
             - if a tuple of Axis (or int or str), make subplots for each combination of
               labels of those axes.
             - True is equivalent to all axes except the last.
+
             Defaults to False.
         sharex : boolean, default True if ax is None else False
             When subplots are used, share x axis and set some x axis labels to invisible;
@@ -7278,18 +7293,23 @@ class Array(ABCArray):
             Error bars on x axis
         stack : boolean, Axis, int, str or tuple, optional
             Make a stacked plot.
+
             - if an Axis (or int or str), stack that axis.
             - if a tuple of Axis (or int or str), stack each combination of labels of those axes.
             - True is equivalent to all axes (not already used in other arguments) except the last.
+
             Defaults to False in line and bar plots, and True in area plot.
         animate : Axis, int, str or tuple, optional
             Make an animated plot.
+
             - if an Axis (or int or str), animate that axis (create one image per label on that axis).
               One would usually use a time-related axis.
             - if a tuple of Axis (or int or str), animate each combination of labels of those axes.
+
             Defaults to None.
         anim_params: dict, optional
             Optional parameters to control how animations are saved to file.
+
             - writer : str, optional
                 Backend to use. Defaults to 'pillow' for images (.gif .png and
                 .tiff), 'ffmpeg' otherwise.
@@ -7304,6 +7324,7 @@ class Array(ABCArray):
                 means higher quality movies, but increase the file size.
                 A value of -1 lets the underlying movie encoder select the
                 bitrate.
+
         **kwargs : keywords
             Options to pass to matplotlib plotting method
 
