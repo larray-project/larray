@@ -1,3 +1,11 @@
+# To create the environment used to build the documentation:
+# > conda create -n larray_doc2026 python=3.13
+# > conda activate -n larray_doc2026
+# > pip install -r .\doc\requirements.txt
+# > cd <directory_of_larray_repository>
+# > pip install -e .
+# > cd <directory_of_larray-editor_repository>
+# > pip install -e .
 # dependencies to run larray tutorials (via nbsphinx)
 numpy >=1.22
 pandas >=0.20
