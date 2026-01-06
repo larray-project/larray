@@ -100,6 +100,7 @@ def wrap_numpy_func(func, doc=None):
         doc = f'{short_desc}\n\n{ident}larray specific variant of ``numpy.{func.__name__}``.\n\n' \
               f'{ident}Documentation from numpy:{numpy_doc}'
     wrapper = wrap_elementwise_array_func(func, doc)
+
     # set __qualname__ explicitly (all these functions are supposed to be top-level function in the ufuncs module)
     wrapper.__qualname__ = func.__name__
     # we should not copy __module__
@@ -397,92 +398,91 @@ def _generalized_nan_to_num(arr, copy=True, nan=0, posinf=None, neginf=None):
         return np.nan_to_num(arr, copy=copy, nan=nan, posinf=posinf, neginf=neginf)
 
 nan_to_num = wrap_elementwise_array_func(_generalized_nan_to_num,r"""
-    Replace NaN with zero and infinity with large finite numbers (default
-    behaviour) or with the numbers defined by the user using the `nan`,
-    `posinf` and/or `neginf` keywords.
+Replace NaN with zero and infinity with large finite numbers (default
+behaviour) or with the numbers defined by the user using the `nan`,
+`posinf` and/or `neginf` keywords.
 
-    If `x` is inexact or an object array, NaN is replaced by zero or by the user
-    defined value in `nan` keyword, infinity is replaced by the largest finite 
-    floating point value representable by ``x.dtype`` or by the user defined 
-    value in `posinf` keyword and -infinity is replaced by the most negative 
-    finite floating point value representable by ``x.dtype`` or by the user 
-    defined value in `neginf` keyword.
+If `x` is inexact or an object array, NaN is replaced by zero or by the user
+defined value in `nan` keyword, infinity is replaced by the largest finite 
+floating point value representable by ``x.dtype`` or by the user defined 
+value in `posinf` keyword and -infinity is replaced by the most negative 
+finite floating point value representable by ``x.dtype`` or by the user 
+defined value in `neginf` keyword.
 
-    For complex dtypes, the above is applied to each of the real and
-    imaginary components of `x` separately.
+For complex dtypes, the above is applied to each of the real and
+imaginary components of `x` separately.
 
-    If `x` is not inexact or object, then no replacements are made.
+If `x` is not inexact or object, then no replacements are made.
 
-    Parameters
-    ----------
-    x : scalar or array_like
-        Input data.
-    copy : bool, optional
-        Whether to create a copy of `x` (True) or to replace values
-        in-place (False). The in-place operation only occurs if
-        casting to an array does not require a copy.
-        Default is True.
-    nan : int, float or array_like, optional
-        Value to be used to fill NaN values. If no value is passed
-        then NaN values will be replaced with 0.0.
-    posinf : int, float, optional
-        Value to be used to fill positive infinity values. If no value is
-        passed then positive infinity values will be replaced with the largest 
-        finite floating point value representable by ``x.dtype``.
-    neginf : int, float, optional
-        Value to be used to fill negative infinity values. If no value is
-        passed then negative infinity values will be replaced with the most 
-        negative finite floating point value representable by ``x.dtype``.
+Parameters
+----------
+x : scalar or array_like
+    Input data.
+copy : bool, optional
+    Whether to create a copy of `x` (True) or to replace values
+    in-place (False). The in-place operation only occurs if
+    casting to an array does not require a copy.
+    Default is True.
+nan : int, float or array_like, optional
+    Value to be used to fill NaN values. If no value is passed
+    then NaN values will be replaced with 0.0.
+posinf : int, float, optional
+    Value to be used to fill positive infinity values. If no value is
+    passed then positive infinity values will be replaced with the largest 
+    finite floating point value representable by ``x.dtype``.
+neginf : int, float, optional
+    Value to be used to fill negative infinity values. If no value is
+    passed then negative infinity values will be replaced with the most 
+    negative finite floating point value representable by ``x.dtype``.
 
-    Returns
-    -------
-    out : Array or scalar
-        `x`, with the non-finite values replaced. If `copy` is False, this may
-        be `x` itself.
+Returns
+-------
+out : Array or scalar
+    `x`, with the non-finite values replaced. If `copy` is False, this may
+    be `x` itself.
 
-    See Also
-    --------
-    isinf : Shows which elements are positive or negative infinity.
-    isneginf : Shows which elements are negative infinity.
-    isposinf : Shows which elements are positive infinity.
-    isnan : Shows which elements are Not a Number (NaN).
-    isfinite : Shows which elements are finite (not NaN, not infinity)
+See Also
+--------
+isinf : Shows which elements are positive or negative infinity.
+isneginf : Shows which elements are negative infinity.
+isposinf : Shows which elements are positive infinity.
+isnan : Shows which elements are Not a Number (NaN).
+isfinite : Shows which elements are finite (not NaN, not infinity)
 
-    Notes
-    -----
-    Contrary to the numpy implementation, this function support object arrays.
+Notes
+-----
+Contrary to the numpy implementation, this function support object arrays.
 
-    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+(IEEE 754). This means that Not a Number is not equivalent to infinity.
 
-    Examples
-    --------
-    >>> import larray as la
+Examples
+--------
+>>> import larray as la
 
-    >>> la.nan_to_num(la.inf)
-    1.7976931348623157e+308
-    >>> la.nan_to_num(-la.inf)
-    -1.7976931348623157e+308
-    >>> la.nan_to_num(np.nan)
-    0.0
+>>> la.nan_to_num(la.inf)
+1.7976931348623157e+308
+>>> la.nan_to_num(-la.inf)
+-1.7976931348623157e+308
+>>> la.nan_to_num(np.nan)
+0.0
 
-    >>> x = la.Array([-la.inf, 1, la.nan, 2, la.inf], la.Axis(5, 'values'))
-    >>> la.nan_to_num(x)
-    values*                         0    1    2    3                        4
-             -1.7976931348623157e+308  1.0  0.0  2.0  1.7976931348623157e+308
-    >>> la.nan_to_num(x, nan=-1, posinf=999, neginf=-999)
-    values*       0    1     2    3      4
-             -999.0  1.0  -1.0  2.0  999.0
+>>> x = la.Array([-la.inf, 1, la.nan, 2, la.inf], la.Axis(5, 'values'))
+>>> la.nan_to_num(x)
+values*                         0    1    2    3                        4
+         -1.7976931348623157e+308  1.0  0.0  2.0  1.7976931348623157e+308
+>>> la.nan_to_num(x, nan=-1, posinf=999, neginf=-999)
+values*       0    1     2    3      4
+         -999.0  1.0  -1.0  2.0  999.0
 
-    >>> x = la.Array([1, 'abc', la.nan, 2], la.Axis(4, 'values'), dtype=object)
-    >>> la.nan_to_num(x)
-    values*  0    1  2  3
-             1  abc  0  2
+>>> x = la.Array([1, 'abc', la.nan, 2], la.Axis(4, 'values'), dtype=object)
+>>> la.nan_to_num(x)
+values*  0    1  2  3
+         1  abc  0  2
 
-    >>> y = la.Array([complex(la.inf, la.nan), la.nan, complex(la.nan, la.inf)],
-    ...              la.Axis(3, 'values'))
-    >>> la.nan_to_num(y)
-    values*                             0   1                         2
-             (1.7976931348623157e+308+0j)  0j  1.7976931348623157e+308j
-    """
-)
+>>> y = la.Array([complex(la.inf, la.nan), la.nan, complex(la.nan, la.inf)],
+...              la.Axis(3, 'values'))
+>>> la.nan_to_num(y)
+values*                             0   1                         2
+         (1.7976931348623157e+308+0j)  0j  1.7976931348623157e+308j
+""")
