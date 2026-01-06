@@ -33,14 +33,14 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
     'sphinx.ext.extlinks',
-    'numpydoc',
-    'nbsphinx',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
+    'numpydoc',
+    'nbsphinx',
     'sphinx_rtd_theme',
 ]
 
@@ -91,7 +91,7 @@ nbsphinx_prolog = r"""
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -101,7 +101,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'LArray'
-copyright = '2014-2023, Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
+copyright = '2014-2026, Gaëtan de Menten, Geert Bryon, Johan Duyck, Alix Damman'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -319,6 +319,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
+# -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/3': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}

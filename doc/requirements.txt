@@ -1,5 +1,5 @@
 # dependencies to run larray tutorials (via nbsphinx)
-numpy >=1.22, <2.0.0
+numpy >=1.22
 pandas >=0.20
 matplotlib
 tables  # ==pytables
@@ -7,8 +7,8 @@ openpyxl
 pydantic ==2.12
 
 # dependencies to actually build the documentation
-sphinx ==5.3.0
-sphinx-rtd-theme ==1.1.1
+sphinx ==8.2.3
+sphinx-rtd-theme ==3.0.2
 numpydoc
 # This only installs the python bindings for pandoc. It works on read-the-docs
 # because it has a system-wide pandoc installed but elsewhere, installing
