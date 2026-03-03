@@ -5675,10 +5675,15 @@ class Array(ABCArray):
         opmethod.__name__ = fullname
         return opmethod
 
-    __lt__ = _binop('lt')
-    __le__ = _binop('le')
+    # We use the normal _binop even for eq and ne, which will return
+    # NotImplemented for unknown types instead of returning False or True
+    # directly (which would be more efficient) because that is the right thing
+    # to do: it leaves the possibility open for the other type to implement
+    # equality with Arrays
     __eq__ = _binop('eq')
     __ne__ = _binop('ne')
+    __lt__ = _binop('lt')
+    __le__ = _binop('le')
     __gt__ = _binop('gt')
     __ge__ = _binop('ge')
     __add__ = _binop('add')
