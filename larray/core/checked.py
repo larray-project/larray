@@ -359,8 +359,9 @@ This warning will become an error in a future version of larray."""
             # create an intermediate Session object to not call the __setattr__
             # and __setitem__ overridden in the present class and in case a filepath
             # is given as only argument
-            # TODO: refactor Session.load() to use a private function which returns the handler directly
-            # so that we can get the items out of it and avoid this
+            # TODO: refactor Session.load() to use a private function which
+            #       returns the handler directly so that we can get the items
+            #       out of it and avoid this
             input_session = Session(*args, **kwargs)
             input_data = input_session._objects
             self._initialize_attributes(input_data, stacklevel=2)
@@ -384,9 +385,10 @@ This warning will become an error in a future version of larray."""
                 if value is NOT_LOADED:
                     if field.default is PydanticUndefined:
                         # we actually use NOT_LOADED as the value
-                        warnings.warn(f"No value passed for the declared variable '{name}'",
+                        warnings.warn(f"No value passed for the declared "
+                                      f"variable '{name}'",
                                       stacklevel=stacklevel + 1)
-                        skip_validation = True
+                        skip_validation=True
                     else:
                         value = field.default
 
@@ -408,8 +410,11 @@ This warning will become an error in a future version of larray."""
             cls_name = cls.__name__
             model_config = cls.model_config
             if model_config['frozen'] and not skip_frozen:
-                raise TypeError(f"Cannot change the value of the variable '{name}' since '{cls_name}' "
-                                f"is immutable and does not support item assignment")
+                raise TypeError(
+                    f"Cannot change the value of the variable '{name}' since "
+                    f"'{cls_name}' is immutable and does not support item "
+                    f"assignment"
+                )
 
             model_fields = cls.model_fields
             if name not in model_fields:
