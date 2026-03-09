@@ -131,8 +131,8 @@ class Session:
         r"""
         Deprecated. Please use Session.update instead.
         """
-        warnings.warn("Session.add() is deprecated. Please use Session.update() instead.",
-                      FutureWarning, stacklevel=2)
+        warnings.warn("Session.add() is deprecated. Please use "
+                      "Session.update() instead.", FutureWarning, stacklevel=2)
         self.update({arg.name: arg for arg in args}, **kwargs)
 
     def update(self, other=None, **kwargs) -> None:

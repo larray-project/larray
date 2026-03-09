@@ -2526,8 +2526,10 @@ class Array(ABCArray):
         elif len(self) == 0:
             return 'Array([])'
         else:
-            table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES], edgeitems=_OPTIONS[DISPLAY_EDGEITEMS],
+            table = self.dump(maxlines=_OPTIONS[DISPLAY_MAXLINES],
+                              edgeitems=_OPTIONS[DISPLAY_EDGEITEMS],
                               _axes_display_names=True)
+
             return table2str(table, 'nan', maxwidth=_OPTIONS[DISPLAY_WIDTH], keepcols=self.ndim - 1,
                              precision=_OPTIONS[DISPLAY_PRECISION])
     __repr__ = __str__
