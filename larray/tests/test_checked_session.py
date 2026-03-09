@@ -672,7 +672,10 @@ def test_sub_cs(checkedsession):
     )
     with must_warn(FutureWarning, warn_msg):
         diff = cs - ones(axes)
-    assert isinstance(diff, session_cls)
+    assert isinstance(diff, session_cls), (
+        f"diff session has type {type(diff).__name__} instead of "
+        f"{session_cls.__name__}"
+    )
     # --- non-array variables ---
     assert diff.b is b
     assert diff.b024 is b024
