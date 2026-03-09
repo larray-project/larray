@@ -88,6 +88,29 @@ def cartesian_product_df(df, sort_rows=False, sort_columns=False,
             np.array_equal(idx.values, prod_index.values) and
             np.array_equal(columns.values, prod_columns.values)):
         return df, combined_labels
+    import numbers
+    if (isinstance(fill_value, numbers.Number) and not np.isnan(fill_value) and
+        any(dt.kind == 'O' and dt.type is str for dt in df.dtypes)):
+        df = df.copy()
+        for col in df.columns:
+            dt = df[col].dtype
+            if dt.kind == 'O' and dt.type is str:
+                # TODO: we should really output this warning, but the user
+                #       needs a way to silence it, which requires we implement
+                #       in all user-facing functions calling this function
+                #       directly or indirectly (from_series, from_frame,
+                #       read_excel, read_csv, ...) a way to specify
+                #       both a usecols argument (when the data has mixed type
+                #       but the user only needs an homogeneously typed subset)
+                #       and a dtype=object argument when the user does need
+                #       mixed types (and want to silence the warning).
+                # warnings.warn("fill_value is not valid for all "
+                #               "columns because it is a (non-NaN) number but "
+                #               f"the '{col}' column has string dtype. That "
+                #               "column will converted to object dtype to avoid "
+                #               "errors but this may cause performance issues.",
+                #               FutureWarning, stacklevel=3)
+                df[col] = df[col].astype(object)
     return df.reindex(index=prod_index, columns=prod_columns,
                       fill_value=fill_value, **kwargs), combined_labels
 
