@@ -79,4 +79,7 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed something (closes :issue:`1`).
+* fixed loading data files with all the following conditions when using
+  Pandas >= 3.0: mixed type columns, some combination of labels in index
+  columns not being present in the data and a non-NaN fill_value
+  (closes :issue:`1166`).

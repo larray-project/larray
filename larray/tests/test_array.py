@@ -4656,6 +4656,38 @@ def test_from_frame():
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected)
 
+    # h) with a MultiIndex with some missing combination and a fill_value which
+    #    is not valid for all columns. This pattern broke for Pandas >= 3
+    #    See issue #1166. In the user code, this issue came from, from_frame
+    #    is used indirectly by read_excel and users are keeping only the
+    #    numeric column (col2 in the test below) just after reading the array.
+    df = pd.DataFrame({
+        'idx1': [0, 0, 1],
+        'idx2': ['a', 'b', 'a'],
+        'col1': ['a', 'a', 'a'],
+        'col2': [1, 1, 1]
+    }).set_index(['idx1', 'idx2'])
+    # TODO: we should have this warning, but before that we need more
+    #       functionality to let users do something about it.
+    #       See comment in inout/pandas.py:cartesian_product_df
+    # msg = ("fill_value is not valid for all columns because it is a "
+    #        "(non-NaN) number but the 'col1' column has string dtype. That "
+    #        "column will converted to object dtype to avoid errors but this "
+    #        "may cause performance issues.")
+    # with must_warn(FutureWarning, msg=msg):
+    #     from_frame(df, fill_value=-1)
+    res = from_frame(df, fill_value=-1)
+    expected_data = [[['a', 1],
+                      ['a', 1]],
+                     [['a', 1],
+                      [-1, -1]]]
+    expected_axes = [
+        # third axis is anonymous
+        Axis('idx1=0,1'), Axis('idx2=a,b'), Axis('col1,col2')
+    ]
+    expected = Array(expected_data, expected_axes, dtype=object)
+    assert_larray_equal(res, expected)
+
 
 def test_asarray():
     series = pd.Series([0, 1, 2], ['a0', 'a1', 'a2'], name='a')
