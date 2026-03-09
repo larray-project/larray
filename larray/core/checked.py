@@ -61,6 +61,19 @@ else:
         # TypeAliasType,  # from `typing_extensions`
     )
 
+    UNSAFE_CAST_WARNING_TEMPLATE = """
+Array '{name}' was declared with dtype {expected_dtype} but got value with \
+{value_dtype} dtype.
+
+It will be converted to {expected_dtype} like in previous larray versions but \
+this is 
+not a safe operation (some information could be lost in the conversion). 
+
+If you want to keep doing this conversion and silence this warning, please
+convert the value explicitly using value.astype(<declared_type>). 
+
+This warning will become an error in a future version of larray."""
+
 
     def CheckedArray(axes: AxisCollection, dtype: np.dtype = float) -> Type[Array]:
         """
@@ -113,6 +126,17 @@ else:
                 value = value.expand(expected_axes)
                 # check dtype
                 if value.dtype != dtype:
+                    if not np.can_cast(value.dtype, dtype, 'safe'):
+                        # TODO: in a later version, turn to an exception
+                        stacklevel = info.context.get("stacklevel", 2)
+                        warn_msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+                            name=name,
+                            expected_dtype=dtype,
+                            value_dtype=value.dtype
+                        )
+                        warnings.warn(warn_msg,
+                                      category=FutureWarning,
+                                      stacklevel=stacklevel)
                     value = value.astype(dtype)
                 return value
             else:
@@ -204,17 +228,20 @@ else:
 
         >>> class ModelVariables(CheckedSession):
         ...     # --- declare variables with defined types ---
-        ...     # Their values will be defined at runtime but must match the specified type.
+        ...     # Their values will be defined at runtime but must match the
+        ...     # specified type.
         ...     birth_rate: Array
         ...     births: Array
         ...     # --- declare variables with a default value ---
-        ...     # The default value will be used to set the variable if no value is passed at instantiation (see below).
-        ...     # Their type is deduced from their default value and cannot be changed at runtime.
+        ...     # The default value will be used to set the variable if no value
+        ...     # is passed at instantiation (see below).
+        ...     # Their type is deduced from their default value and cannot be
+        ...     # changed at runtime.
         ...     target_age = AGE[:2] >> '0-2'
         ...     population = zeros((AGE, GENDER, TIME), dtype=int)
         ...     # --- declare checked arrays ---
-        ...     # The checked arrays have axes assumed to be "frozen", meaning they are
-        ...     # constant all along the execution of the program.
+        ...     # The checked arrays have axes assumed to be "frozen", meaning
+        ...     # they are constant over the whole execution of the program.
         ...     mortality_rate: CheckedArray((AGE, GENDER))
         ...     # For checked arrays, the default value can be given as a scalar.
         ...     # Optionally, a dtype can be also specified (defaults to float).
@@ -287,9 +314,11 @@ else:
         memory used: 1.89 Kb
         >>> # now let's try to do the same for deaths.
         >>> m.mortality_rate = full((AGE, GENDER), fill_value=sequence(AGE, inc=0.02))
-        >>> # here the result of the multiplication of the 'population' array by the 'mortality_rate' array
-        >>> # is automatically converted to an integer array
-        >>> m.deaths = m.population * m.mortality_rate
+        >>> # the result of this multiplication is a float array
+        >>> deaths = m.population * m.mortality_rate
+        >>> # because m.deaths was declared as a CheckedArray with dtype=int,
+        >>> # we need to convert it to an integer array to avoid a warning
+        >>> m.deaths = (m.population * m.mortality_rate).astype(int)
         >>> print(m.deaths.info)                            # doctest: +SKIP
         11 x 2 x 11
          age [11]: 0 1 2 ... 8 9 10
@@ -332,35 +361,49 @@ else:
             # is given as only argument
             # TODO: refactor Session.load() to use a private function which returns the handler directly
             # so that we can get the items out of it and avoid this
-            input_data = dict(Session(*args, **kwargs))
+            input_session = Session(*args, **kwargs)
+            input_data = input_session._objects
+            self._initialize_attributes(input_data, stacklevel=2)
+
+        @classmethod
+        def _create_instance_from_dict(cls, data: dict, stacklevel=3) -> Session:
+            try:
+                inst = object.__new__(cls)
+                Session.__init__(inst)
+                inst._initialize_attributes(data, stacklevel=stacklevel)
+                return inst
+            except Exception:
+                return Session(data)
+
+        def _initialize_attributes(self, data: dict, stacklevel: int):
+            data = data.copy()
             # --- declared variables
             for name, field in self.__class__.model_fields.items():
-                value = input_data.pop(name, NOT_LOADED)
-
+                value = data.pop(name, NOT_LOADED)
+                skip_validation = False
                 if value is NOT_LOADED:
                     if field.default is PydanticUndefined:
-                        warnings.warn(f"No value passed for the declared variable '{name}'",
-                                      stacklevel=2)
                         # we actually use NOT_LOADED as the value
-                        self.__setattr__(name, value, skip_frozen=True, skip_validation=True)
+                        warnings.warn(f"No value passed for the declared variable '{name}'",
+                                      stacklevel=stacklevel + 1)
+                        skip_validation = True
                     else:
-                        self.__setattr__(name, field.default, skip_frozen=True)
+                        value = field.default
+
+                if skip_validation:
+                    super().__setattr__(name, value)
                 else:
-                    self.__setattr__(name, value, skip_frozen=True)
+                    self.__setattr__(name, value, skip_frozen=True, stacklevel=stacklevel + 1)
 
             # --- undeclared variables
-            for name, value in input_data.items():
-                self.__setattr__(name, value, skip_frozen=True, stacklevel=2)
+            for name, value in data.items():
+                self.__setattr__(name, value, skip_frozen=True, stacklevel=stacklevel + 1)
 
         # code of the method below has been partly borrowed from pydantic.BaseModel.__setattr__()
         def _check_key_value(self, name: str,
                              value: Any,
                              skip_frozen: bool,
-                             skip_validation: bool,
                              stacklevel: int) -> Any:
-            if skip_validation:
-                return value
-
             cls = self.__class__
             cls_name = cls.__name__
             model_config = cls.model_config
@@ -382,6 +425,7 @@ else:
             field_info = model_fields[name]
             field_type = field_info.annotation
             if field_type is None:
+                assert False, f"None field_type for {name} ({value})"
                 return value
 
             # Annotated[T, x] => field_info.metadata == (x,)
@@ -399,9 +443,11 @@ else:
 
             # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
             # for more details about TypeAdapter
-            adapter = TypeAdapter(field_type, config=self.model_config)
+            adapter = TypeAdapter(field_type, config=model_config)
             try:
-                value = adapter.validate_python(value, context={'name': name})
+                # pydantic machinery adds a few stack frames
+                validate_context = {'name': name, 'stacklevel': stacklevel + 3}
+                value = adapter.validate_python(value, context=validate_context)
             except ValidationError as e:
                 error = e.errors()[0]
                 msg = f"Error while assigning value to variable '{name}':\n"
@@ -418,32 +464,29 @@ else:
 
         def _update_from_iterable(self, it):
             for k, v in it:
-                self.__setitem__(k, v, stacklevel=3)
+                self.__setattr__(k, v, stacklevel=3)
 
-        def __setitem__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
+        def __setitem__(self, key, value):
             if key == 'meta':
                 raise ValueError(
                     "Sessions cannot contain any object named 'meta'. "
                     "To modify the session metadata, use "
                     "'session.meta = value' instead.")
-            value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
-            # we need to keep the attribute in sync
-            # TODO: I don't think this is specific to CheckedSession, so either
-            #       we should do it in Session too or not do it here.
-            object.__setattr__(self, key, value)
-            self._objects[key] = value
+            value = self._check_key_value(key, value,
+                                          skip_frozen=False,
+                                          stacklevel=2)
+            super().__setitem__(key, value)
+            # object.__setattr__(self, key, value)
 
-        def __setattr__(self, key, value, skip_frozen=False, skip_validation=False, stacklevel=1):
+        def __setattr__(self, key, value, skip_frozen=False, stacklevel=1):
             if key == 'meta':
                 object.__setattr__(self, key, value)
                 return
-
-            value = self._check_key_value(key, value, skip_frozen, skip_validation, stacklevel=stacklevel + 1)
-            # we need to keep the attribute in sync
-            # TODO: I don't think this is specific to CheckedSession, so either
-            #       we should do it in Session too or not do it here.
-            object.__setattr__(self, key, value)
-            self._objects[key] = value
+            value = self._check_key_value(key, value,
+                                          skip_frozen,
+                                          stacklevel=stacklevel + 1)
+            super().__setattr__(key, value)
+            # object.__setattr__(self, key, value)
 
         def __getstate__(self) -> Dict[str, Any]:
             return {'__dict__': self.__dict__}

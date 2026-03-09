@@ -49,7 +49,31 @@ New features
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* improved something.
+* added warning when doing unsafe implicit type conversions (for example from
+  float to integers) when setting CheckedSession fields (closes :issue:`1168`).
+
+    >>> a = Axis('a=a0,a1')
+    >>> class MySession(CheckedSession):
+    ...     my_field: CheckedArray(a, dtype=int)
+    >>> good_value = ndtest(a)
+    >>> good_value
+    a  a0  a1
+        0   1
+    >>> s = MySession(my_field=good_value)
+    >>> bad_value = good_value * 1.6
+    >>> bad_value
+    a   a0   a1
+       0.0  1.6
+    >>> s.my_field = bad_value
+    Array 'my_field' was declared with dtype int64 but got value with float64 dtype.
+
+    It will be converted to int64 like in previous larray versions but this is
+    not a safe operation (some information could be lost in the conversion).
+
+    If you want to keep doing this conversion and silence this warning, please
+    convert the value explicitly using value.astype(<declared_type>).
+
+    This warning will become an error in a future version of larray.
 
 
 Fixes
