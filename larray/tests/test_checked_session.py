@@ -17,8 +17,7 @@ from larray.tests.test_session import (a, a2, a3, anonymous, a01, ano01, b, b2, 
                                        c, d, e, f, g, h,
                                        assert_seq_equal, session, test_getitem, test_getattr,
                                        test_add, test_element_equals, test_eq, test_ne)
-from larray.core.checked import NotLoaded
-
+from larray.core.checked import NotLoaded, UNSAFE_CAST_WARNING_TEMPLATE
 
 # avoid flake8 errors
 meta = meta
@@ -145,6 +144,14 @@ def test_create_checkedsession_instance(meta):
                    check_file=False):
         _ = CheckedSessionExample(a, a01, a2=a2, e=e, f=f, g=g, h=h)
 
+    # test using unsafe casting
+    warn_msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        name='h', expected_dtype='int64', value_dtype='float64'
+    )
+    float_h = h * 1.5
+    with must_warn(FutureWarning, warn_msg):
+        _ = CheckedSessionExample(a=a, a01=a01, a2=a2, e=e, f=f, g=g, h=float_h)
+
 
 @needs_pytables
 def test_init_checkedsession_hdf():
@@ -222,30 +229,34 @@ def test_setattr_cs(checkedsession):
     cs.h = zeros_like(h)
 
     # trying to add an undeclared variable -> prints a warning message
-    with must_warn(UserWarning, msg=f"'i' is not declared in '{cs.__class__.__name__}'"):
+    msg = f"'i' is not declared in '{cs.__class__.__name__}'"
+    with must_warn(UserWarning, msg=msg):
         cs.i = ndtest((3, 3))
 
     # trying to set a variable with an object of different type -> should fail
     # a) type given explicitly
     # -> Axis
-    with must_raise(TypeError, msg="Error while assigning value to variable 'a':\n"
-                                   "Input should be an instance of Axis. Got input value of type 'int'."):
+    msg = "Error while assigning value to variable 'a':\n" \
+          "Input should be an instance of Axis. Got input value of type 'int'."
+    with must_raise(TypeError, msg=msg):
         cs.a = 0
     # -> CheckedArray
-    # with must_raise(TypeError, msg="Error while assigning value to variable 'h':\n"
-    #                                "Input should be an instance of Array. Got input value of type 'ndarray'."):
-    with must_raise(TypeError, msg="Expected object of type 'Array' or a scalar for the variable 'h' but got "
-                                   "object of type 'ndarray'"):
+    msg = ("Expected object of type 'Array' or a scalar for the variable 'h' "
+           "but got object of type 'ndarray'")
+    with must_raise(TypeError, msg=msg):
         cs.h = h.data
     # b) type deduced from the given default value
-    with must_raise(TypeError, msg="Error while assigning value to variable 'b':\n"
-                                   "Input should be an instance of Axis. Got input value of type 'Array'."):
+    msg = ("Error while assigning value to variable 'b':\n"
+           "Input should be an instance of Axis. Got input value of type "
+           "'Array'.")
+    with must_raise(TypeError, msg=msg):
         cs.b = ndtest((3, 3))
 
     # trying to set a CheckedArray variable using a scalar -> OK
     cs.h = 5
 
-    # trying to set a CheckedArray variable using an array with axes in different order -> OK
+    # trying to set a CheckedArray variable using an array with axes in
+    # different order -> OK
     cs.h = h.transpose()
     assert cs.h.axes.names == h.axes.names
 
@@ -253,12 +264,16 @@ def test_setattr_cs(checkedsession):
     cs.h = ndtest(a3)
     assert_array_nan_equal(cs.h['b0'], cs.h['b1'])
 
-    # trying to set a CheckedArray variable using an array with wrong axes -> should fail
+    # trying to set a CheckedArray variable using an array with wrong axes
+    # => should fail
+
     # a) extra axis
-    with must_raise(ValueError, msg="Error while assigning value to variable 'h':\n"
-                                    "Array 'h' was declared with axes {a, b} but got array with axes {a, b, c} "
-                                    "(unexpected {c} axis)"):
+    msg = ("Error while assigning value to variable 'h':\n"
+           "Array 'h' was declared with axes {a, b} "
+           "but got array with axes {a, b, c} (unexpected {c} axis)")
+    with must_raise(ValueError, msg=msg):
         cs.h = ndtest((a3, b2, 'c=c0..c2'))
+
     # b) incompatible axis
     msg = """\
 Error while assigning value to variable 'h':
@@ -268,6 +283,19 @@ vs
 Axis(['a0', 'a1', 'a2', 'a3'], 'a')"""
     with must_raise(ValueError, msg=msg):
         cs.h = h.append('a', 0, 'a4')
+
+    # set a CheckedArray variable with safe casting (from int to float)
+    int_f = f.astype(int)
+    cs.f = int_f
+
+    # set a CheckedArray variable with unsafe casting (from float to int)
+    # => warning
+    warn_msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        name='h', expected_dtype='int64', value_dtype='float64'
+    )
+    float_h = h * 1.5
+    with must_warn(FutureWarning, msg=warn_msg):
+        cs.h = float_h
 
 
 def test_add_cs(checkedsession):
@@ -636,7 +664,14 @@ def test_sub_cs(checkedsession):
     axes = cs.h.axes
     cs.e = ndtest(axes)
     cs.g = ones_like(cs.h)
-    diff = cs - ones(axes)
+
+    # an operation with a float array will create float values, hence the
+    # checked session will complain of unsafe casting (from float to int)
+    warn_msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        name='h', expected_dtype='int64', value_dtype='float64'
+    )
+    with must_warn(FutureWarning, warn_msg):
+        diff = cs - ones(axes)
     assert isinstance(diff, session_cls)
     # --- non-array variables ---
     assert diff.b is b

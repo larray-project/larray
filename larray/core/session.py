@@ -310,8 +310,9 @@ class Session:
         del self._objects[key]
 
     def __getattr__(self, key) -> Any:
-        if key in self._objects:
-            return self._objects[key]
+        data = object.__getattribute__(self, '_objects')
+        if key in data:
+            return data[key]
         else:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
 
@@ -1013,44 +1014,48 @@ class Session:
     def __len__(self) -> int:
         return len(self._objects)
 
-    # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
-    def _binop(opname, arrays_only=True):
-        opfullname = f'__{opname}__'
+    @classmethod
+    def _create_instance_from_dict(cls, data: dict, stacklevel=3) -> 'Session':
+        return cls(data)
 
-        def opmethod(self, other) -> 'Session':
-            self_keys = set(self.keys())
-            all_keys = list(self.keys())
-            if not isinstance(other, Array) and hasattr(other, 'keys'):
-                all_keys += [n for n in other.keys() if n not in self_keys]
-            with np.errstate(call=_session_float_error_handler):
-                res = []
-                for name in all_keys:
-                    self_item = self.get(name, nan)
-                    other_operand = other.get(name, nan) if hasattr(other, 'get') else other
-                    if arrays_only and not isinstance(self_item, Array):
-                        res_item = self_item
-                    else:
+    # binary operations are dispatched element-wise to all arrays (we consider Session as an array-like)
+    def _compute_binop(self, opname, other, cls_filter) -> dict:
+        opfullname = f'__{opname}__'
+        inv_opname = f'__{inverseop(opname)}__'
+        all_keys = list(self.keys())
+        if not isinstance(other, Array) and hasattr(other, 'keys'):
+            # we cannot simply use all_keys += self.keys() - other.keys()
+            # because we need to keep ordering
+            self_keys_set = set(all_keys)
+            all_keys.extend([k for k in other.keys() if k not in self_keys_set])
+
+        res = {}
+        with np.errstate(call=_session_float_error_handler):
+            for key in all_keys:
+                self_item = self.get(key, nan)
+                other_item = other.get(key, nan) if hasattr(other, 'get') else other
+                if cls_filter is not None and not isinstance(self_item, cls_filter):
+                    res_item = self_item
+                else:
+                    try:
+                        res_item = getattr(self_item, opfullname)(other_item)
+                    # TypeError for str arrays, ValueError for incompatible axes, ...
+                    except Exception:
+                        res_item = nan
+                    if res_item is NotImplemented:
                         try:
-                            res_item = getattr(self_item, opfullname)(other_operand)
+                            res_item = getattr(other_item, inv_opname)(self_item)
                         # TypeError for str arrays, ValueError for incompatible axes, ...
                         except Exception:
                             res_item = nan
-                        # this should only ever happen when self_array is a non Array (eg. nan)
-                        if res_item is NotImplemented:
-                            inv_opname = f'__{inverseop(opname)}__'
-                            try:
-                                res_item = getattr(other_operand, inv_opname)(self_item)
-                            # TypeError for str arrays, ValueError for incompatible axes, ...
-                            except Exception:
-                                res_item = nan
-                    res.append((name, res_item))
-            try:
-                # XXX: print a warning?
-                ses = self.__class__(res)
-            except Exception:
-                ses = Session(res)
-            return ses
-        opmethod.__name__ = opfullname
+                res[key] = res_item
+        return res
+
+    def _binop(opname, default_cls_filter=Array):
+        def opmethod(self, other, cls_filter=default_cls_filter) -> 'Session':
+            dict_res = self._compute_binop(opname, other, cls_filter)
+            return self._create_instance_from_dict(dict_res)
+        opmethod.__name__ = f'__{opname}__'
         return opmethod
 
     __add__ = _binop('add')
@@ -1062,30 +1067,30 @@ class Session:
     __truediv__ = _binop('truediv')
     __rtruediv__ = _binop('rtruediv')
 
-    __eq__ = _binop('eq', arrays_only=False)
-    __ne__ = _binop('ne', arrays_only=False)
+    __eq__ = _binop('eq', default_cls_filter=None)
+    __ne__ = _binop('ne', default_cls_filter=None)
 
     # element-wise method factory
     # unary operations are (also) dispatched element-wise to all arrays
-    def _unaryop(opname):
+    def _compute_unaryop(self, opname, cls_filter):
         opfullname = f'__{opname}__'
+        res = {}
+        with np.errstate(call=_session_float_error_handler):
+            for k, v in self.items():
+                try:
+                    res_item = getattr(v, opfullname)()
+                except Exception:
+                    res_item = nan
+                res[k] = res_item
+        return res
 
-        def opmethod(self) -> 'Session':
-            with np.errstate(call=_session_float_error_handler):
-                res = []
-                for k, v in self.items():
-                    try:
-                        res_array = getattr(v, opfullname)()
-                    except Exception:
-                        res_array = nan
-                    res.append((k, res_array))
-            try:
-                # XXX: print a warning?
-                ses = self.__class__(res)
-            except Exception:
-                ses = Session(res)
-            return ses
-        opmethod.__name__ = opfullname
+    def _unaryop(opname):
+        # TODO: change default cls_filter to Array (using None for now
+        #       to avoid changing behavior in a bugfix release)
+        def opmethod(self, cls_filter=None) -> 'Session':
+            dict_res = self._compute_unaryop(opname, cls_filter)
+            return self._create_instance_from_dict(dict_res)
+        opmethod.__name__ = f'__{opname}__'
         return opmethod
 
     __neg__ = _unaryop('neg')
@@ -1763,4 +1768,4 @@ def arrays(depth=0, include_private=False, meta=None) -> Session:
     return Session({k: v for k, v in combined_vars if isinstance(v, Array)}, meta=meta)
 
 
-_session_float_error_handler = float_error_handler_factory(4)
+_session_float_error_handler = float_error_handler_factory(5)
