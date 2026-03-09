@@ -116,10 +116,12 @@ class Session:
 
     @meta.setter
     def meta(self, meta) -> None:
-        if not isinstance(meta, (list, dict, Metadata)):
-            raise TypeError(f"Expected list of pairs or dict or Metadata object "
+        if isinstance(meta, (list, dict)):
+            meta = Metadata(meta)
+        elif not isinstance(meta, Metadata):
+            raise TypeError("Expected list of pairs or dict or Metadata object "
                             f"instead of {type(meta).__name__}")
-        object.__setattr__(self, '_meta', meta if isinstance(meta, Metadata) else Metadata(meta))
+        object.__setattr__(self, '_meta', meta)
 
     # XXX: behave like a dict and return keys instead?
     def __iter__(self) -> Iterable[Any]:
