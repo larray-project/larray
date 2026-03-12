@@ -513,7 +513,9 @@ def float_error_handler_factory(stacklevel):
         else:
             # for division by 0, we use a specific error handler *just* to set the correct stacklevel
             extra = ''
-        warnings.warn(f"{error} encountered during operation{extra}", RuntimeWarning, stacklevel=stacklevel)
+        warnings.warn(f"{error} encountered during operation{extra}",
+                      RuntimeWarning,
+                      stacklevel=stacklevel)
     return error_handler
 
 
