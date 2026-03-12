@@ -422,7 +422,7 @@ def test_eq(session):
     # ====== same sessions ======
     res = session == other_session
     res = to_boolean_array_eq(res)
-    assert res.axes == expected_res.axes
+    assert res.axes == expected_res.axes, f"{res.axes=} != {expected_res.axes=}"
     assert res.equals(expected_res)
 
     # ====== session with missing/extra items ======
