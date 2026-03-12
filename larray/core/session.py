@@ -1359,7 +1359,7 @@ class Session:
 
         Examples
         --------
-        >>> arr1 = sequence('b=b0..b2', ndtest(3), zeros_like(ndtest(3)))
+        >>> arr1 = sequence('b=b0..b2', initial=ndtest(3), inc=0)
         >>> arr1
         a\b  b0  b1  b2
          a0   0   0   0
