@@ -99,7 +99,8 @@ def assert_nparray_equal_factory(test_func, convert=True, check_shape=False):
         else:
             assert isinstance(a, np.ndarray) and isinstance(b, np.ndarray)
         if check_shape and a.shape != b.shape:
-            raise AssertionError(f"shapes differ: {a.shape} != {b.shape}")
+            raise AssertionError(f"shapes differ: {a.shape} != {b.shape}\n"
+                                 f"got:\n\n{a}\n\nexpected:\n\n{b}")
         equal = test_func(a, b)
         if not equal.all():
             notequal = ~equal
