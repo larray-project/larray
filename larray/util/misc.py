@@ -6,6 +6,7 @@ import __main__
 import math
 import itertools
 import os
+import re
 import sys
 import operator
 import warnings
@@ -1134,4 +1135,27 @@ def find_names(obj, depth=0):
     return sorted(names)
 
 
+SUFFIX_PATTERN = re.compile(r'[a-zA-Z_\-]+[0-9]?')
+
+def version_str_to_tuple(s: str):
+    """
+    Tranform a version string into a tuple of integers, ignoring any suffixes.
+
+    Examples
+    --------
+    >>> version_str_to_tuple('3.1.4')
+    (3, 1, 4)
+    >>> version_str_to_tuple('3.1.4-dev')
+    (3, 1, 4)
+    >>> version_str_to_tuple('3.1.4-b1')
+    (3, 1, 4)
+    >>> version_str_to_tuple('3.0.0rc0')
+    (3, 0, 0)
+    """
+    parts = s.split('.')
+    cleaned_parts = [SUFFIX_PATTERN.sub('', part) for part in parts]
+    return tuple(int(part) for part in cleaned_parts if part)
+
+
 PY312_OR_LATER = sys.version_info[:2] >= (3, 12)
+PANDAS30_OR_LATER = version_str_to_tuple(pd.__version__) >= (3, 0)

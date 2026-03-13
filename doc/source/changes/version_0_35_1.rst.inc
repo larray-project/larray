@@ -83,3 +83,6 @@ Fixes
   Pandas >= 3.0: mixed type columns, some combination of labels in index
   columns not being present in the data and a non-NaN fill_value
   (closes :issue:`1166`).
+
+* fixed most data reading functions returning readonly Arrays when using
+  Pandas >= 3.0 (closes :issue:`1170`).

@@ -49,4 +49,7 @@ def read_stata(filepath_or_buffer, index_col=None, sort_rows=False, sort_columns
           2       FR    F
     """
     df = pd.read_stata(filepath_or_buffer, index_col=index_col, **kwargs)
-    return from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns)
+    return from_frame(df,
+                      sort_rows=sort_rows,
+                      sort_columns=sort_columns,
+                      copy=False)

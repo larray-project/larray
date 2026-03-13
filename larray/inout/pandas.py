@@ -118,7 +118,12 @@ def cartesian_product_df(df,
                       fill_value=fill_value, **kwargs), combined_labels
 
 
-def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Array:
+def from_series(s,
+                sort_rows=False,
+                fill_value=nan,
+                meta=None,
+                copy=True,
+                **kwargs) -> Array:
     r"""
     Convert Pandas Series into Array.
 
@@ -134,6 +139,11 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
     meta : list of pairs or dict or Metadata, optional
         Metadata (title, description, author, creation_date, ...) associated with the array.
         Keys must be strings. Values must be of type string, int, float, date, time or datetime.
+    copy : bool, optional
+        Whether to copy the data from the Series. Defaults to True.
+        copy=False does not guarantee that no copy will be made, only that a
+        copy is only done when necessary. If the resulting array shares the same
+        data buffer than the original series, it will be read-only.
 
     Returns
     -------
@@ -182,13 +192,30 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
             else:
                 index = labels[0]
             columns = labels[-1]
+            # no need to use copy=False since Pandas implemented copy-on-write
+            # and will only copy if necessary
             df = df.reindex(index=index, columns=columns, fill_value=fill_value)
-        return from_frame(df, sort_rows=sort_rows, sort_columns=sort_rows, fill_value=fill_value, meta=meta, **kwargs)
+        # copy=False because unstack above already copied the data
+        res = from_frame(df,
+                         sort_rows=sort_rows,
+                         sort_columns=sort_rows,
+                         fill_value=fill_value,
+                         meta=meta,
+                         copy=False,
+                         **kwargs)
+        res.data.flags.writeable = True
+        return res
     else:
         name = decode(s.name, 'utf8') if s.name is not None else decode(s.index.name, 'utf8')
         if sort_rows:
             s = s.sort_index()
-        return Array(s.values, Axis(s.index.values, name), meta=meta)
+            # sort_index copies the data, no need to copy it again
+            values = s.to_numpy(copy=False)
+            values.flags.writeable = True
+        else:
+            values = s.to_numpy(copy=copy)
+        labels = s.index.to_numpy(copy=copy)
+        return Array(values, Axis(labels, name), meta=meta)
 
 
 def from_frame(df,
@@ -199,6 +226,7 @@ def from_frame(df,
                fill_value=nan,
                meta=None,
                cartesian_prod=True,
+               copy=True,
                **kwargs) -> Array:
     r"""
     Convert Pandas DataFrame into Array.
@@ -233,6 +261,11 @@ def from_frame(df,
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
         well-formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
+    copy : bool, optional
+        Whether to copy the data from the DataFrame. Defaults to True.
+        copy=False does not guarantee that no copy will be made, only that a
+        copy is only done when necessary. If the resulting array shares the same
+        data buffer than the original series, it will be read-only.
 
     Returns
     -------
@@ -275,9 +308,21 @@ def from_frame(df,
     else:
         axes_names += df.columns.names
 
+    make_writable = False
     if cartesian_prod:
-        df, axes_labels = cartesian_product_df(df, sort_rows=sort_rows, sort_columns=sort_columns,
-                                               fill_value=fill_value, **kwargs)
+        orig_df = df
+        df, axes_labels = (
+            cartesian_product_df(df,
+                                 sort_rows=sort_rows,
+                                 sort_columns=sort_columns,
+                                 fill_value=fill_value,
+                                 **kwargs)
+        )
+        # we already copied the data so we can avoid copying it again when
+        # converting to numpy array
+        if copy and df is not orig_df:
+            copy = False
+            make_writable = True
     else:
         if sort_rows or sort_columns:
             raise ValueError('sort_rows and sort_columns cannot not be used when cartesian_prod is set to False. '
@@ -295,7 +340,9 @@ def from_frame(df,
     # TODO: use zip(..., strict=True) instead when we drop support for Python 3.9
     assert len(axes_labels) == len(axes_names)
     axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
-    data = df.values.reshape(axes.shape)
+    data = df.to_numpy(copy=copy).reshape(axes.shape)
+    if make_writable:
+        data.flags.writeable = True
     return Array(data, axes, meta=meta)
 
 
@@ -305,7 +352,7 @@ def set_dataframe_index_by_position(df, index_col_indices):
 
     This is necessary to support creating an index from columns without a name or with duplicate names.
 
-    Return a new Dataframe
+    Return a new Dataframe (no shared data)
     """
     if not isinstance(index_col_indices, list):
         index_col_indices = [index_col_indices]
@@ -319,10 +366,26 @@ def set_dataframe_index_by_position(df, index_col_indices):
     return df
 
 
-def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=True, wide=True, cartesian_prod=True,
+def df_asarray(df,
+               sort_rows=False,
+               sort_columns=False,
+               raw=False,
+               parse_header=True,
+               wide=True,
+               cartesian_prod=True,
                **kwargs) -> Array:
     r"""
     Prepare Pandas DataFrame and then convert it into Array.
+
+    Warning
+    -------
+    This function actively tries to share data with the input dataframe
+    (equivalent to copy=False in from_frame) and will always return a writable
+    array (whether the backing array is shared with the input dataframe or not).
+
+    This is not a problem because we only use this function internally with
+    dataframes we created ourselves (by reading/converting files or other
+    data structures).
 
     Parameters
     ----------
@@ -349,7 +412,7 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
     cartesian_prod : bool, optional
         Whether to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
-        well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
+        well-formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
 
     Returns
@@ -379,7 +442,10 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
             df = set_dataframe_index_by_position(df, list(range(len(df.columns) - 1)))
             series = df.iloc[:, -1]
             series.name = df.index.name
-            return from_series(series, sort_rows=sort_columns, **kwargs)
+            # copy=False because set_dataframe_index_by_position copies data
+            res = from_series(series, sort_rows=sort_columns, copy=False, **kwargs)
+            res.data.flags.writeable = True
+            return res
 
     # handle 1D arrays
     if len(df) == 1 and (pd.isnull(df.index.values[0])
@@ -390,7 +456,7 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
         series.name = df.index.name
         if sort_rows:
             raise ValueError('sort_rows=True is not valid for 1D arrays. Please use sort_columns instead.')
-        res = from_series(series, sort_rows=sort_columns)
+        res = from_series(series, sort_rows=sort_columns, copy=False)
     else:
         def parse_axis_name(name):
             if isinstance(name, bytes):
@@ -400,8 +466,16 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
             return name
         axes_names = [parse_axis_name(name) for name in df.index.names]
         unfold_last_axis_name = isinstance(axes_names[-1], str) and '\\' in axes_names[-1]
-        res = from_frame(df, sort_rows=sort_rows, sort_columns=sort_columns, parse_header=parse_header,
-                         unfold_last_axis_name=unfold_last_axis_name, cartesian_prod=cartesian_prod, **kwargs)
+        res = from_frame(df,
+                         sort_rows=sort_rows,
+                         sort_columns=sort_columns,
+                         parse_header=parse_header,
+                         unfold_last_axis_name=unfold_last_axis_name,
+                         cartesian_prod=cartesian_prod,
+                         copy=False,
+                         **kwargs)
+
+    res.data.flags.writeable = True
 
     # ugly hack to avoid anonymous axes converted as axes with name 'Unnamed: x' by pandas
     # we also take the opportunity to change axes with empty name to real anonymous axes (name is None) to
