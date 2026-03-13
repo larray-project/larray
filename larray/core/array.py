@@ -7002,21 +7002,8 @@ class Array(ABCArray):
         >>> a.to_hdf('test.h5', 'arrays/a')   # doctest: +SKIP
         """
         key = _translate_group_key_hdf(key)
-        def ensure_non_string_index(index):
-            if (isinstance(index, pd.MultiIndex) and
-                    any(isinstance(dt, pd.StringDtype) for dt in index.dtypes)):
-                obj_levels = [pd.Index(level_labels, dtype=object)
-                              for level_labels in index.levels]
-                index = pd.MultiIndex(obj_levels, index.codes, names=index.names)
-            return index
-
         with LHDFStore(filepath) as store:
             df = self.to_frame()
-            # workaround for https://github.com/pandas-dev/pandas/issues/63412
-            # Since we created the dataframe ourselves, we can just
-            # replace the index inplace
-            df.index = ensure_non_string_index(df.index)
-            df.columns = ensure_non_string_index(df.columns)
 
             store.put(key, df)
             attrs = store.get_storer(key).attrs
