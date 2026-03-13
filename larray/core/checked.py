@@ -323,6 +323,15 @@ else:
             frozen=False
         )
 
+        # Cache for TypeAdapters, keyed by field name.
+        # This is initialized per-class via __init_subclass__ to handle inheritance correctly.
+        _type_adapter_cache: Dict[str, TypeAdapter] = {}
+
+        def __init_subclass__(cls, **kwargs):
+            super().__init_subclass__(**kwargs)
+            # Initialize empty cache for each subclass to avoid inheriting parent's cache
+            cls._type_adapter_cache = {}
+
         def __init__(self, *args, meta=None, **kwargs):
             # initialize an empty Session
             Session.__init__(self, meta=meta)
@@ -399,7 +408,12 @@ else:
 
             # see https://docs.pydantic.dev/2.12/concepts/types/#custom-types
             # for more details about TypeAdapter
-            adapter = TypeAdapter(field_type, config=self.model_config)
+            # Use cached TypeAdapter to avoid recreating it on each attribute assignment
+            cache = self._type_adapter_cache
+            adapter = cache.get(name)
+            if adapter is None:
+                adapter = TypeAdapter(field_type, config=self.model_config)
+                cache[name] = adapter
             try:
                 value = adapter.validate_python(value, context={'name': name})
             except ValidationError as e:
