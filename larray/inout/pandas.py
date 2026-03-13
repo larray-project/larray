@@ -75,8 +75,11 @@ def product_index(idx, sort=False):
             return idx, labels
 
 
-def cartesian_product_df(df, sort_rows=False, sort_columns=False,
-                         fill_value=nan, **kwargs):
+def cartesian_product_df(df,
+                         sort_rows=False,
+                         sort_columns=False,
+                         fill_value=nan,
+                         **kwargs):
     idx = df.index
     columns = df.columns
     prod_index, index_labels = product_index(idx, sort=sort_rows)
@@ -188,8 +191,15 @@ def from_series(s, sort_rows=False, fill_value=nan, meta=None, **kwargs) -> Arra
         return Array(s.values, Axis(s.index.values, name), meta=meta)
 
 
-def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfold_last_axis_name=False,
-               fill_value=nan, meta=None, cartesian_prod=True, **kwargs) -> Array:
+def from_frame(df,
+               sort_rows=False,
+               sort_columns=False,
+               parse_header=False,
+               unfold_last_axis_name=False,
+               fill_value=nan,
+               meta=None,
+               cartesian_prod=True,
+               **kwargs) -> Array:
     r"""
     Convert Pandas DataFrame into Array.
 
@@ -221,7 +231,7 @@ def from_frame(df, sort_rows=False, sort_columns=False, parse_header=False, unfo
     cartesian_prod : bool, optional
         Whether to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
-        well formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
+        well-formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
         Defaults to True.
 
     Returns
@@ -395,7 +405,7 @@ def df_asarray(df, sort_rows=False, sort_columns=False, raw=False, parse_header=
 
     # ugly hack to avoid anonymous axes converted as axes with name 'Unnamed: x' by pandas
     # we also take the opportunity to change axes with empty name to real anonymous axes (name is None) to
-    # make them roundtrip correctly, based on the assumption that in an in-memory LArray an anonymouse axis is more
+    # make them roundtrip correctly, based on the assumption that in an in-memory LArray an anonymous axis is more
     # likely and useful than an Axis with an empty name.
     # TODO : find a more robust and elegant solution
     res = res.rename({axis: None for axis in res.axes if (isinstance(axis.name, str)

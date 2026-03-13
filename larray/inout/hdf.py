@@ -90,8 +90,13 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
         if _type == 'Array':
             # cartesian product is not necessary if the array was written by LArray
             cartesian_prod = writer != 'LArray'
-            res = df_asarray(pd_obj, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value,
-                             parse_header=False, cartesian_prod=cartesian_prod)
+            # we use df_asarray instead of from_frame to support 1D arrays
+            res = df_asarray(pd_obj,
+                             sort_rows=sort_rows,
+                             sort_columns=sort_columns,
+                             fill_value=fill_value,
+                             parse_header=False,
+                             cartesian_prod=cartesian_prod)
             if _meta is not None:
                 res.meta = _meta
         elif _type == 'Axis':
