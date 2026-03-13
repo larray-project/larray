@@ -229,7 +229,12 @@ def read_csv(filepath_or_buffer, nb_axes=None, index_col=None, sep=',', headerse
         df.index.names = combined_axes_names.split(headersep)
         raw = False
 
-    return df_asarray(df, sort_rows=sort_rows, sort_columns=sort_columns, fill_value=fill_value, raw=raw, wide=wide)
+    return df_asarray(df,
+                      sort_rows=sort_rows,
+                      sort_columns=sort_columns,
+                      fill_value=fill_value,
+                      raw=raw,
+                      wide=wide)
 
 
 def read_tsv(filepath_or_buffer, **kwargs) -> Array:

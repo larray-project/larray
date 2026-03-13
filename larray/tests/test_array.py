@@ -26,7 +26,7 @@ from larray import (
 from larray.core.axis import (
     _to_ticks, _to_key, _retarget_warn_msg, _group_as_aggregated_label_msg
 )
-from larray.util.misc import LHDFStore
+from larray.util.misc import LHDFStore, PANDAS30_OR_LATER
 
 # avoid flake8 errors
 meta = meta
@@ -3707,6 +3707,7 @@ def test_hdf_roundtrip(tmp_path, meta):
 
     assert_larray_equal(res, arr)
     assert res.meta == arr.meta
+    assert res.data.flags.writeable
 
     # issue 72: int-like strings should not be parsed (should round-trip correctly)
     fpath = tmp_path / 'issue72.h5'
@@ -3718,6 +3719,7 @@ def test_hdf_roundtrip(tmp_path, meta):
     axis = res.axes[0]
     assert axis.name == 'axis'
     assert list(axis.labels) == ['10', '20']
+    assert res.data.flags.writeable
 
     # passing group as key to to_hdf
     a3 = ndtest((4, 3, 4))
@@ -3776,22 +3778,27 @@ def test_from_string():
     res = from_string(""" c  c0  c1
                          \t   0   1""")
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     res = from_string(r"""  c  c0  c1
                           nan   0   1""")
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     res = from_string(r"""  c  c0  c1
                           NaN   0   1""")
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
 
 def test_read_csv():
     res = read_csv(inputpath('test1d.csv'))
     assert_larray_equal(res, io_1d)
+    assert res.data.flags.writeable
 
     res = read_csv(inputpath('test2d.csv'))
     assert_larray_equal(res, io_2d)
+    assert res.data.flags.writeable
 
     res = read_csv(inputpath('test3d.csv'))
     assert_larray_equal(res, io_3d)
@@ -3807,12 +3814,14 @@ def test_read_csv():
     assert arr.shape == (3,)
     assert arr.axes.names == ['time']
     assert list(arr.data) == [3722, 3395, 3347]
+    assert res.data.flags.writeable
 
     arr = read_csv(inputpath('test5d_liam2.csv'), dialect='liam2')
     assert arr.ndim == 5
     assert arr.shape == (2, 5, 2, 2, 3)
     assert arr.axes.names == ['arr', 'age', 'sex', 'nat', 'time']
     assert list(arr[X.arr[1], 0, 'F', X.nat[1], :].data) == [3722, 3395, 3347]
+    assert res.data.flags.writeable
 
     # missing values
     res = read_csv(inputpath('testmissing_values.csv'))
@@ -3831,9 +3840,11 @@ def test_read_csv():
     #################
     res = read_csv(inputpath('test1d_narrow.csv'), wide=False)
     assert_larray_equal(res, io_1d)
+    assert res.data.flags.writeable
 
     res = read_csv(inputpath('test2d_narrow.csv'), wide=False)
     assert_larray_equal(res, io_2d)
+    assert res.data.flags.writeable
 
     res = read_csv(inputpath('test3d_narrow.csv'), wide=False)
     assert_larray_equal(res, io_3d)
@@ -3854,15 +3865,18 @@ def test_read_eurostat():
     assert arr.axes.names == ['arr', 'age', 'sex', 'nat', 'time']
     # FIXME: integer labels should be parsed as such
     assert list(arr[X.arr['1'], '0', 'F', X.nat['1'], :].data) == [3722, 3395, 3347]
+    assert arr.data.flags.writeable
 
 
 @needs_xlwings
 def test_read_excel_xlwings():
     arr = read_excel(inputpath('test.xlsx'), '1d')
     assert_larray_equal(arr, io_1d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test.xlsx'), '2d')
     assert_larray_equal(arr, io_2d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test.xlsx'), '2d_classic')
     assert_larray_equal(arr, ndtest("a=a0..a2; b0..b2"))
@@ -3963,9 +3977,11 @@ def test_read_excel_xlwings():
 def test_read_excel_pandas():
     arr = read_excel(inputpath('test.xlsx'), '1d', engine='openpyxl')
     assert_larray_equal(arr, io_1d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test.xlsx'), '2d', engine='openpyxl')
     assert_larray_equal(arr, io_2d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test.xlsx'), '2d', nb_axes=2, engine='openpyxl')
     assert_larray_equal(arr, io_2d)
@@ -4006,12 +4022,15 @@ def test_read_excel_pandas():
     #################
     arr = read_excel(inputpath('test_narrow.xlsx'), '1d', wide=False, engine='openpyxl')
     assert_larray_equal(arr, io_1d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '2d', wide=False, engine='openpyxl')
     assert_larray_equal(arr, io_2d)
+    assert arr.data.flags.writeable
 
     arr = read_excel(inputpath('test_narrow.xlsx'), '3d', wide=False, engine='openpyxl')
     assert_larray_equal(arr, io_3d)
+    assert arr.data.flags.writeable
 
     # missing rows + fill_value argument
     arr = read_excel(inputpath('test_narrow.xlsx'), 'missing_values',
@@ -4019,10 +4038,12 @@ def test_read_excel_pandas():
     expected = io_narrow_missing_values.copy()
     expected[isnan(expected)] = 42
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # unsorted values
     arr = read_excel(inputpath('test_narrow.xlsx'), 'unsorted', wide=False, engine='openpyxl')
     assert_larray_equal(arr, io_unsorted)
+    assert arr.data.flags.writeable
 
 
 def test_from_lists():
@@ -4035,6 +4056,7 @@ def test_from_lists():
                       ['a1',   'b0',    6,    7,    8],   # noqa: E241
                       ['a1',   'b1',    9,   10,   11]])  # noqa: E241
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # simple (using dump). This should be the same test as above.
     # We just make sure dump() and from_lists() round-trip correctly.
@@ -4114,13 +4136,35 @@ def test_from_series():
     # Series with Index as index
     expected = ndtest(3)
     s = pd.Series([0, 1, 2], index=pd.Index(['a0', 'a1', 'a2'], name='a'))
-    assert_larray_equal(from_series(s), expected)
+    res = from_series(s)
+    assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
+
+    # Without sorting we can share the data buffer, but in that case
+    # the result must be read-only with Pandas 3.0+
+    s2 = s.copy()
+    res = from_series(s2, copy=False)
+    assert_larray_equal(res, expected)
+    if PANDAS30_OR_LATER:
+        assert not res.data.flags.writeable
+        res.data.flags.writeable = True
+    # I don't know how to test explicitly that the buffers are shared because
+    # the underlying buffer from the array "is not" the same, that is:
+    #     s.to_numpy(copy=False).data is not s.to_numpy(copy=False).data
+    # so I use this indirect test instead: modifying an item of the array
+    # modifies the series
+    res['a1'] = 42
+    assert s2['a1'] == 42
 
     s = pd.Series([2, 0, 1], index=pd.Index(['a2', 'a0', 'a1'], name='a'))
-    assert_larray_equal(from_series(s, sort_rows=True), expected)
+    res = from_series(s, sort_rows=True)
+    assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     expected = ndtest(3)[['a2', 'a0', 'a1']]
-    assert_larray_equal(from_series(s), expected)
+    res = from_series(s)
+    assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # Series with MultiIndex as index
     a = Axis('a=0..3')
@@ -4134,14 +4178,17 @@ def test_from_series():
 
     res = from_series(s)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     res = from_series(s, sort_rows=True)
     assert_larray_equal(res, expected.sort_labels())
+    assert res.data.flags.writeable
 
     expected[0, 'F'] = -1
     s = s.reset_index().drop([3, 4, 5]).set_index(['a', 'gender', 'time'])[0]
     res = from_series(s, fill_value=-1)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
 
 def test_to_frame():
@@ -4204,6 +4251,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous columns
     # input dataframe:
@@ -4224,6 +4272,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous columns/non string row axis name
     # input dataframe:
@@ -4242,6 +4291,7 @@ def test_from_frame():
     assert res.shape == (1, 1)
     assert res.axes.names == [0, None]
     assert_larray_equal(res, expected)
+    assert arr.data.flags.writeable
 
     # anonymous index
     # input dataframe:
@@ -4261,6 +4311,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # index and columns with name
     # input dataframe:
@@ -4281,6 +4332,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # 2) data = vector
     # ================
@@ -4299,6 +4351,7 @@ def test_from_frame():
     assert df.columns.name is None
     assert list(df.index.values) == indexes
     assert list(df.columns.values) == columns
+    assert arr.data.flags.writeable
 
     # anonymous indexes/columns
     # input dataframe:
@@ -4317,6 +4370,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous columns
     # input dataframe:
@@ -4337,6 +4391,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous index
     # input dataframe:
@@ -4356,6 +4411,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # index and columns with name
     # input dataframe:
@@ -4376,6 +4432,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # 2B) data = vertical vector (N x 1)
     # ==================================
@@ -4390,6 +4447,7 @@ def test_from_frame():
     assert df.columns.name is None
     assert list(df.index.values) == indexes
     assert list(df.columns.values) == columns
+    assert arr.data.flags.writeable
 
     # anonymous indexes/columns
     # input dataframe:
@@ -4412,6 +4470,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous columns
     # input dataframe:
@@ -4436,6 +4495,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # anonymous index
     # input dataframe:
@@ -4459,6 +4519,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # index and columns with name
     # input dataframe:
@@ -4482,6 +4543,7 @@ def test_from_frame():
     assert list(arr.axes.labels[1]) == columns
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
+    assert arr.data.flags.writeable
 
     # 3) 3D array
     # ===========
@@ -4509,6 +4571,7 @@ def test_from_frame():
     assert arr.shape == (4, 2, 3)
     assert arr.axes.names == ['a', 'c', 'time']
     assert list(arr[0, 'c1', :].data) == [3722, 3395, 3347]
+    assert arr.data.flags.writeable
 
     # 3B) Dataframe with columns.name containing \
     # ============================================
@@ -4532,6 +4595,7 @@ def test_from_frame():
     assert arr.shape == (4, 2, 3)
     assert arr.axes.names == ['a', 'c', 'time']
     assert_nparray_equal(arr[0, 'c1', :].data, np.array([3722, 3395, 3347]))
+    assert arr.data.flags.writeable
 
     # 3C) Dataframe with no axe names (names are None)
     # ===============================
@@ -4539,6 +4603,7 @@ def test_from_frame():
     df_no_names = arr_no_names.df
     res = from_frame(df_no_names)
     assert_larray_equal(res, arr_no_names)
+    assert res.data.flags.writeable
 
     # 3D) Dataframe with empty axe names (names are '')
     # ==================================
@@ -4547,6 +4612,7 @@ def test_from_frame():
     df_empty_names = arr_empty_names.df
     res = from_frame(df_empty_names)
     assert_larray_equal(res, arr_empty_names)
+    assert res.data.flags.writeable
 
     # 4) test sort_rows and sort_columns arguments
     # ============================================
@@ -4564,6 +4630,7 @@ def test_from_frame():
     expected = expected.sort_labels()
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # df.index is a MultiIndex instance
     expected = ndtest((a, gender, time))
@@ -4573,6 +4640,7 @@ def test_from_frame():
 
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected.sort_labels())
+    assert res.data.flags.writeable
 
     # 5) test fill_value
     # ==================
@@ -4580,6 +4648,7 @@ def test_from_frame():
     df = df.reset_index().drop([3]).set_index(['a', 'gender'])
     res = from_frame(df, fill_value=-1)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # 6) with a multi-index in columns
     # ================================
@@ -4589,24 +4658,28 @@ def test_from_frame():
     df = arr.to_frame(ncolaxes=2)
     res = from_frame(df)
     assert_larray_equal(res, arr)
+    assert res.data.flags.writeable
 
     # b) with duplicated axis names
     arr = ndtest("a=a0,a1;a=b0,b1;a=c0,c1;a=d0,d1")
     df = arr.to_frame(ncolaxes=2)
     res = from_frame(df)
     assert_larray_equal(res, arr)
+    assert res.data.flags.writeable
 
     # c) with duplicated axes names and labels
     arr = ndtest("a=a0,a1;a=a0,a1;a=a0,a1;a=a0,a1")
     df = arr.to_frame(ncolaxes=2)
     res = from_frame(df)
     assert_larray_equal(res, arr)
+    assert res.data.flags.writeable
 
     # d) with unsorted labels
     arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
     df = arr.to_frame(ncolaxes=2)
     res = from_frame(df)
     assert_larray_equal(res, arr)
+    assert res.data.flags.writeable
 
     # e) with sorting of unsorted column labels
     arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
@@ -4623,6 +4696,7 @@ def test_from_frame():
     a0  b0   c1  13  12""")
     res = from_frame(df, sort_columns=True)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # f) with sorting of unsorted row labels
     arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
@@ -4639,6 +4713,7 @@ def test_from_frame():
     a1  b1   c0   2   3""")
     res = from_frame(df, sort_rows=True)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # g) with sorting of all unsorted labels
     arr = ndtest("a=a1,a0;b=b1,b0;c=c1,c0;d=d1,d0")
@@ -4655,6 +4730,7 @@ def test_from_frame():
     a1  b1   c1   1   0""")
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
     # h) with a MultiIndex with some missing combination and a fill_value which
     #    is not valid for all columns. This pattern broke for Pandas >= 3
@@ -4687,6 +4763,7 @@ def test_from_frame():
     ]
     expected = Array(expected_data, expected_axes, dtype=object)
     assert_larray_equal(res, expected)
+    assert res.data.flags.writeable
 
 
 def test_asarray():
