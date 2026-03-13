@@ -338,7 +338,10 @@ def from_frame(df,
             axes_labels[i] = [parse(cell) for cell in axes_labels[i]]
 
     # TODO: use zip(..., strict=True) instead when we drop support for Python 3.9
-    assert len(axes_labels) == len(axes_names)
+    assert len(axes_labels) == len(axes_names), \
+        (f"number of axes labels and axes names do not match: "
+         f"{len(axes_labels)} vs {len(axes_names)}:\n"
+         f"{axes_labels}\n\nvs\n\n{axes_names}")
     axes = AxisCollection([Axis(labels, name) for labels, name in zip(axes_labels, axes_names)])
     data = df.to_numpy(copy=copy).reshape(axes.shape)
     if make_writable:
