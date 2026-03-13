@@ -2546,11 +2546,12 @@ class Array(ABCArray):
 
     # XXX: dump as a 2D Array with row & col dims?
     def dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
-             maxlines=-1, edgeitems=5, _axes_display_names=False) -> List[List[str]]:
+             maxlines=-1, edgeitems=5, _axes_display_names=False) -> List[List[Any]]:
         r"""dump(self, header=True, wide=True, value_name='value', light=False, axes_names=True, na_repr='as_is',
              maxlines=-1, edgeitems=5)
 
-        Dump array as a 2D nested list. This is especially useful when writing to an Excel sheet via open_excel().
+        Dump array as a 2D nested list. This is especially useful when writing
+        to an Excel sheet via open_excel().
 
         Parameters
         ----------
