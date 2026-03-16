@@ -2243,10 +2243,6 @@ class Array(ABCArray):
             return res_data
 
     def __setitem__(self, key, value, collapse_slices=True, translate_key=True, points=False) -> None:
-        # TODO: if key or value has more axes than self, we could use
-        # total_axes = self.axes + key.axes + value.axes
-        # expanded = self.expand(total_axes)
-        # data = np.asarray(expanded.data)
         raw_broadcasted_key, target_axes, _ = \
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=True)
         if isinstance(value, Array):
@@ -2255,6 +2251,16 @@ class Array(ABCArray):
                 value = value.broadcast_with(target_axes, check_compatible=True)
             else:
                 target_axes = []
+
+            # Even though we could theoretically allow more axes than self in value
+            # (in key, it already does the right thing) by expanding the data to
+            # the axes union, I don't think it is a good idea because it seems to
+            # me more likely to do this by mistake than intentionally. Even though:
+            #   orig_arr = arr; arr[key] = value; orig_arr is arr
+            # would still be True,
+            #   orig_data = arr.data; arr[key] = value; orig_data is arr.data
+            # would not.
+
             # replace incomprehensible error message "could not broadcast input array from shape XX into shape YY"
             # for users by "incompatible axes"
             extra_axes = [axis for axis in value.axes - target_axes if len(axis) > 1]
@@ -2266,16 +2272,6 @@ class Array(ABCArray):
                                  f"have the same axes or fewer axes than the subset being targeted")
             value = value.data
         self.data[raw_broadcasted_key] = value
-
-        # concerning keys this can make sense in several cases:
-        # single bool Array key with extra axes.
-        # tuple of bool Array keys (eg one for each axis). each could have extra axes. Common axes between keys are
-        # not a problem, we can simply "and" them. Though we should avoid explicitly "and"ing them if there is no
-        # common axis because that is less efficient than the implicit "and" that is done by numpy __getitem__ (and
-        # the fact we need to combine dimensions when any key has more than 1 dim).
-
-        # the bool value represents whether the axis label is taken or not if any bool key (part) has more than one
-        # axis, we get combined dimensions out of it.
 
     def set(self, value, **kwargs) -> None:
         r"""
