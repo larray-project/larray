@@ -23,6 +23,7 @@ from larray import (
     from_lists, from_string, from_frame, from_series,
     zip_array_values, zip_array_items, nan_to_num
 )
+from larray.core.array import UNSAFE_CAST_WARNING_TEMPLATE
 from larray.core.axis import (
     _to_ticks, _to_key, _retarget_warn_msg, _group_as_aggregated_label_msg
 )
@@ -1430,13 +1431,27 @@ def test_setitem_larray(array, small_array):
     # 1) using a LGroup key
     as1_5_9 = a[[1, 5, 9]]
 
-    # a) value has exactly the same shape as the target slice
+    # a1) value has exactly the same shape as the target slice
     arr = array.copy()
     raw = array.data.copy()
 
     arr[as1_5_9] = arr[as1_5_9] + 25.0
     raw[[1, 5, 9]] = raw[[1, 5, 9]] + 25.0
     assert_nparray_equal(arr.data, raw)
+
+    # a2) correct shape with safe (int to float) casting
+    arr[as1_5_9] = (array[as1_5_9] + 25).astype(int)
+    assert_nparray_equal(arr.data, raw)
+
+    # a3) correct shape with unsafe (float to int) casting => warning
+    int_arr = array.astype(int)
+    msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        expected_dtype=int_arr.dtype,
+        value_dtype=array.dtype
+    )
+    with must_warn(FutureWarning, msg):
+        int_arr[as1_5_9] = array[as1_5_9] + 25.0
+    assert_nparray_equal(int_arr.data, raw)
 
     # b) value has exactly the same shape but LGroup at a "wrong" positions
     arr = array.copy()
@@ -1601,22 +1616,39 @@ def test_setitem_ndarray(array):
     assert_nparray_equal(arr.data, raw)
 
 
-def test_setitem_scalar(array):
+def test_setitem_scalar():
     """
     Test Array.__setitem__(key, value) where value is a scalar.
     """
     # a) list key (one dimension)
+    array = ndtest((2, 3, 4, 5))
     arr = array.copy()
     raw = array.data.copy()
-    arr[[1, 5, 9]] = 42
-    raw[[1, 5, 9]] = 42
+    arr[['c0', 'c2', 'c3']] = 42
+    raw[:, :, [0, 2, 3]] = 42
     assert_nparray_equal(arr.data, raw)
 
     # b) full scalar key (ie set one cell)
+    # b.1) same order than axes
     arr = array.copy()
     raw = array.data.copy()
-    arr[0, 'd2', 'b1', 'c0'] = 42
-    raw[0, 1, 0, 1] = 42
+    arr['a0', 'b1', 'c0', 'd2'] = 42
+    raw[0, 1, 0, 2] = 42
+    assert_nparray_equal(arr.data, raw)
+
+    # b.2) different order than axes
+    arr = array.copy()
+    arr['a0', 'd2', 'b1', 'c0'] = 42
+    assert_nparray_equal(arr.data, raw)
+
+    # c) one cell and unsafe type
+    arr = array.copy()
+    msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        expected_dtype='int64',
+        value_dtype='float'
+    )
+    with must_warn(FutureWarning, msg):
+        arr['a0', 'b1', 'c0', 'd2'] = 42.9
     assert_nparray_equal(arr.data, raw)
 
 
