@@ -1,56 +1,38 @@
 ﻿.. py:currentmodule:: larray
 
 
-Syntax changes
-^^^^^^^^^^^^^^
-
-* renamed ``Array.old_method_name()`` to :py:obj:`Array.new_method_name()` (closes :issue:`1`).
-
-* renamed ``old_argument_name`` argument of :py:obj:`Array.method_name()` to ``new_argument_name``.
-
-
-Backward incompatible changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* other backward incompatible changes
-
-
-New features
-^^^^^^^^^^^^
-
-* added a feature (see the :ref:`miscellaneous section <misc>` for details). It works on :ref:`api-axis` and
-  :ref:`api-group` objects.
-
-  Here is an example of the new feature:
-
-    >>> arr = ndtest((2, 3))
-    >>> arr
-    a\b  b0  b1  b2
-     a0   0   1   2
-     a1   3   4   5
-
-  And it can also be used like this:
-
-    >>> arr = ndtest("a=a0..a2")
-    >>> arr
-    a  a0  a1  a2
-        0   1   2
-
-* added another feature in the editor (closes :editor_issue:`1`).
-
-  .. note::
-
-     - It works for foo bar !
-     - It does not work for foo baz !
-
-
-.. _misc:
-
 Miscellaneous improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* added warning when doing unsafe implicit type conversions (for example from
-  float to integers) when setting CheckedSession fields (closes :issue:`1168`).
+* added warning when setting an array subset causes an unsafe type conversion
+  (which could lead to information loss). For example, when setting an integer
+  array with a float value, the float value is truncated to an integer
+  value, loosing the decimal part. The behavior did not change (yet) but
+  a warning is now emitted (whether there is actual loss of information or
+  not). Closes :issue:`1164`.
+
+    >>> arr = ndtest(3)
+    >>> arr
+    a  a0  a1  a2
+        0   1   2
+    >>> arr.dtype
+    dtype('int64')
+    >>> arr['a1'] = 3.9
+    Setting a subset of an array with int64 dtype with a value with float dtype.
+
+    It will be converted to int64 like in previous larray versions but this is
+    not a safe operation (some information could be lost in the conversion).
+
+    If you want to keep doing this conversion and silence this warning, please
+    convert the value explicitly using value.astype(<target_array_type>).
+
+    This warning will become an error in a future version of larray.
+    >>> arr
+    a  a0  a1  a2
+        0   3   2
+
+* added a similar warning when doing unsafe type conversions when setting
+  CheckedSession fields (closes :issue:`1168`).
 
     >>> a = Axis('a=a0,a1')
     >>> class MySession(CheckedSession):
@@ -65,15 +47,8 @@ Miscellaneous improvements
     a   a0   a1
        0.0  1.6
     >>> s.my_field = bad_value
-    Array 'my_field' was declared with dtype int64 but got value with float64 dtype.
-
-    It will be converted to int64 like in previous larray versions but this is
-    not a safe operation (some information could be lost in the conversion).
-
-    If you want to keep doing this conversion and silence this warning, please
-    convert the value explicitly using value.astype(<declared_type>).
-
-    This warning will become an error in a future version of larray.
+    Array 'my_field' was declared with dtype int64 but <...> (rest of warning
+    omitted for brevity)
 
 
 Fixes

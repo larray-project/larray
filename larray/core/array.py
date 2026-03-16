@@ -895,6 +895,21 @@ def align_arrays(values, join='outer', fill_value=nan, axes=None):
                  for value, aligned_axes in zip(values, aligned_axis_collections))
 
 
+
+UNSAFE_CAST_WARNING_TEMPLATE = """
+Setting a subset of an array with {expected_dtype} dtype with a value with \
+{value_dtype} dtype.
+
+It will be converted to {expected_dtype} like in previous larray versions but \
+this is 
+not a safe operation (some information could be lost in the conversion). 
+
+If you want to keep doing this conversion and silence this warning, please
+convert the value explicitly using value.astype(<target_array_type>). 
+
+This warning will become an error in a future version of larray."""
+
+
 class Array(ABCArray):
     r"""
     An Array object represents a multidimensional, homogeneous array of fixed-size items with labeled axes.
@@ -2245,7 +2260,42 @@ class Array(ABCArray):
     def __setitem__(self, key, value, collapse_slices=True, translate_key=True, points=False) -> None:
         raw_broadcasted_key, target_axes, _ = \
             self.axes._key_to_raw_and_axes(key, collapse_slices, translate_key, points, wildcard=True)
-        if isinstance(value, Array):
+        expected_dtype = self.data.dtype
+        value_is_array = isinstance(value, Array)
+        if value_is_array or isinstance(value, (np.generic, np.ndarray)):
+            value_type = value.dtype
+        # We do not handle Iterable here because np.(as)array does
+        # not handle (iterate on) them.
+        # strings are Sequence but we do not want to convert them to arrays
+        elif (isinstance(value, Sequence) and
+              not isinstance(value, (bytes, str))):
+            value = np.asarray(value)
+            value_type = value.dtype
+        else:
+            # any other value, including Python scalars (int, float, str, etc.)
+            # datetime objects are not considered scalars by numpy, but we want
+            # to allow them as values
+            value_type = type(value)
+        if value_type != expected_dtype:
+            if not np.can_cast(value_type, expected_dtype, 'safe'):
+                value_type_str = value_type.__name__ \
+                    if isinstance(value_type, type) else str(value_type)
+                msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+                    expected_dtype=expected_dtype,
+                    value_dtype=value_type_str
+                )
+                # TODO: in a later version, turn to an exception
+                warnings.warn(msg, category=FutureWarning, stacklevel=2)
+                # non numpy scalars cannot be cast using .astype directly
+                if np.isscalar(value) and not isinstance(value, np.generic):
+                    # First cast to the corresponding numpy scalar type
+                    # We do this instead of casting directly to expected_dtype
+                    # in case Numpy decides to disallow unsafe casts in its
+                    # scalar type init in the future
+                    value = np.dtype(value_type).type(value)
+                value = value.astype(expected_dtype, casting='unsafe',
+                                     copy=False)
+        if value_is_array:
             # None target_axes can happen when setting a single "cell"/value with an Array (of size 1)
             if target_axes is not None:
                 value = value.broadcast_with(target_axes, check_compatible=True)
@@ -2271,6 +2321,7 @@ class Array(ABCArray):
                 raise ValueError(f"Value {extra_axes!s} {text} not present in target subset {axes!s}. A value can only "
                                  f"have the same axes or fewer axes than the subset being targeted")
             value = value.data
+
         self.data[raw_broadcasted_key] = value
 
     def set(self, value, **kwargs) -> None:
@@ -8874,7 +8925,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
            M     3     7    15    31
            F     4    14    44   134
     >>> def modify(prev_value):
-    ...     return prev_value / 2
+    ...     return prev_value // 2
     >>> sequence(year, 8, func=modify)
     year  2016  2017  2018  2019
              8     4     2     1
@@ -8984,7 +9035,7 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
         # FIXME: the assert is broken (not has_axis is not what we want)
         assert ((np.isscalar(inc) and inc != 0) or not has_axis(inc, axis)) and \
                (np.isscalar(mult) or not has_axis(mult, axis))
-        mult_array = array_or_full(mult, axis, 1.0)
+        mult_array = array_or_full(mult, axis, 1)
         cum_mult = mult_array.cumprod(axis)[axis.i[1:]]
         res[axis.i[0]] = initial
 

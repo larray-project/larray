@@ -273,13 +273,13 @@ This warning will become an error in a future version of larray."""
         >>> # with the AGE and GENDER axes only
         >>> m.birth_rate = full((AGE, GENDER, TIME), fill_value=Array([0.045, 0.055], GENDER))
         >>> # here 'new_births' have the AGE, GENDER and TIME axes instead of the AGE and GENDER axes only
-        >>> new_births = m.population['female', 2025] * m.birth_rate
+        >>> new_births = (m.population['female', 2025] * m.birth_rate).astype(int)
         >>> print(new_births.info)
         11 x 2 x 11
          age [11]: 0 1 2 ... 8 9 10
          gender [2]: 'male' 'female'
          time [11]: 2020 2021 2022 ... 2028 2029 2030
-        dtype: float64
+        dtype: int64
         memory used: 1.89 Kb
         >>> # and the line below will crash
         >>> m.births[2025] = new_births         # doctest: +NORMALIZE_WHITESPACE
