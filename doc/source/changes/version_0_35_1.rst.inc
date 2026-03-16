@@ -86,3 +86,5 @@ Fixes
 
 * fixed most data reading functions returning readonly Arrays when using
   Pandas >= 3.0 (closes :issue:`1170`).
+
+* fixed `sequence()` when both `inc` and `mult` are defined.
