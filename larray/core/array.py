@@ -8930,17 +8930,17 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
     def has_axis(a, axis):
         return isinstance(a, Array) and axis in a.axes
 
-    def array_or_full(a, axis, initial):
-        dt = common_dtype((a, initial))
-        r = empty(strip_axes(initial) | strip_axes(a) | axis, dtype=dt)
-        r[axis.i[0]] = initial
-        if isinstance(a, Array) and axis in a.axes:
-            # not using axis.i[1:] because a could have less ticks
-            # on axis than axis
-            r[axis.i[1:]] = a[axis[axis.labels[1]:]]
+    def array_or_full(value, seq_axis, initial):
+        dt = common_dtype((value, initial))
+        res = empty(strip_axes(initial) | strip_axes(value) | seq_axis, dtype=dt)
+        res[seq_axis.i[0]] = initial
+        if isinstance(value, Array) and seq_axis in value.axes:
+            # not using seq_axis.i[1:] on the right side because value could
+            # have less ticks on its axis than seq_axis
+            res[seq_axis.i[1:]] = value[seq_axis[seq_axis.labels[1]:]]
         else:
-            r[axis.i[1:]] = a
-        return r
+            res[seq_axis.i[1:]] = value
+        return res
 
     if axes is None:
         # we need to remove axis if present, because it might be incompatible
@@ -8970,14 +8970,14 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
     # inc only (array)
     elif np.isscalar(mult) and mult == 1:
         inc_array = array_or_full(inc, axis, initial)
-        # TODO: when axis is None, this is inefficient (inc_array.cumsum() is the result)
+        # TODO: when axes is None, this is inefficient (inc_array.cumsum() is the result)
         res[axis.i[0]] = initial
         res[axis.i[1:]] = inc_array.cumsum(axis)[axis.i[1:]]
     # mult only (scalar or array)
     elif np.isscalar(inc) and inc == 0:
         mult_array = array_or_full(mult, axis, initial)
         res[axis.i[0]] = initial
-        # TODO: when axis is None, this is inefficient (mult_array.cumprod() is the result)
+        # TODO: when axes is None, this is inefficient (mult_array.cumprod() is the result)
         res[axis.i[1:]] = mult_array.cumprod(axis)[axis.i[1:]]
     # both inc and mult defined but constant (scalars or axis not present)
     elif not has_axis(inc, axis) and not has_axis(mult, axis):
@@ -9001,16 +9001,19 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
 
         # a[i] = initial * cum_mult[i] + inc * cum_mult[i - 1]
 
-        # the case "mult == 1" was already handled above but we still need to handle the case where mult is
-        # an array and *one cell* == 1
-        res_where_not_1 = ((1 - cum_mult) / (1 - mult)) * inc + initial * cum_mult
+        # the case "scalar_mult == 1" is already handled above but we still
+        # need to handle the case where mult is an array and *some* cells are 1
+        res_where_not_1 = ((1 - cum_mult).divnot0(1 - mult)) * inc + initial * cum_mult
         if isinstance(mult, Array) and any(mult == 1):
             from larray.core.ufuncs import where
 
-            res_where_1 = Array(np.linspace(initial, initial + inc * (len(axis) - 1), len(axis)), axis)
-            res[axis.i[1:]] = where(mult == 1, res_where_1, res_where_not_1)
+            # equivalent to:
+            # res_where_1 = sequence(axis, initial=initial, inc=inc)[axis.i[1:]]
+            res_where_1 = sequence(axis.i[1:], initial=initial + inc, inc=inc)
+            res_not_initial = where(mult == 1, res_where_1, res_where_not_1)
+            res[axis.i[1:]] = res_not_initial.astype(res_dtype, copy=False)
         else:
-            res[axis.i[1:]] = res_where_not_1
+            res[axis.i[1:]] = res_where_not_1.astype(res_dtype, copy=False)
     else:
         assert has_axis(inc, axis) or has_axis(mult, axis)
         # This case is more complicated to vectorize. It seems

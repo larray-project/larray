@@ -3165,6 +3165,50 @@ def test_sequence():
      a1  2.0  4.0  4.0""")
     assert_larray_equal(res, expected)
 
+    # both inc and mult defined but constant (scalars)
+    initial = Array([1, 2], 'a=a0,a1')
+    res = sequence('b=b0..b2', initial=initial, mult=2, inc=1)
+    expected = from_string(r"""
+    a\b   b0   b1   b2
+     a0    1    3    7
+     a1    2    5   11""")
+    assert_larray_equal(res, expected)
+
+    # both inc and mult defined but "constant" array (sequence axis not present)
+    initial = Array([1, 2], 'a=a0,a1')
+    mult = Array([2, 3], 'a=a0,a1')
+    inc = Array([1, 2], 'a=a0,a1')
+    res = sequence('b=b0..b2', initial=initial, mult=mult, inc=inc)
+    #  1 (res_a0_b0) = 1 (initial_a0)
+    #  3 (res_a0_b1) = 1 (res_a0_b0) * 2 (mult_a0) + 1 (inc_a0)
+    #  7 (res_a0_b2) = 3 (res_a0_b1) * 2 (mult_a0) + 1 (inc_a0)
+    #  2 (res_a1_b0) = 2 (initial_a1)
+    #  8 (res_a1_b1) = 2 (res_a1_b0) * 3 (mult_a1) + 2 (inc_a1)
+    # 26 (res_a1_b2) = 8 (res_a1_b1) * 3 (mult_a1) + 2 (inc_a1)
+    expected = from_string(r"""
+    a\b   b0   b1   b2
+     a0    1    3    7
+     a1    2    8   26""")
+    assert_larray_equal(res, expected)
+
+    # both inc and mult defined but "constant" array (sequence axis not present)
+    # and a mult cell equal to 1
+    initial = Array([1, 2], 'a=a0,a1')
+    mult = Array([2, 1], 'a=a0,a1')
+    inc = Array([3, 5], 'a=a0,a1')
+    res = sequence('b=b0..b2', initial=initial, mult=mult, inc=inc)
+    #  1 (res_a0_b0) = 1 (initial_a0)
+    #  5 (res_a0_b1) = 1 (res_a0_b0) * 2 (mult_a0) + 3 (inc_a0)
+    # 13 (res_a0_b2) = 5 (res_a0_b1) * 2 (mult_a0) + 3 (inc_a0)
+    #  2 (res_a1_b0) = 2 (initial_a1)
+    #  7 (res_a1_b1) = 2 (res_a1_b0) * 1 (mult_a1) + 5 (inc_a1)
+    # 12 (res_a1_b2) = 7 (res_a1_b1) * 1 (mult_a1) + 5 (inc_a1)
+    expected = from_string(r"""
+    a\b   b0   b1   b2
+     a0    1    5   13
+     a1    2    7   12""")
+    assert_larray_equal(res, expected)
+
 
 def test_sort_values():
     # 1D arrays
