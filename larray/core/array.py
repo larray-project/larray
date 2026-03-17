@@ -8861,15 +8861,16 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
     initial : scalar or Array, optional
         Value for the first label of axis. Defaults to 0.
     inc : scalar, Array, optional
-        Value to increment the previous value by. Defaults to 1 unless mult is provided (in which case it defaults
-        to 0).
+        Value to increment the previous value by. Defaults to 1 unless mult is
+        provided (in which case it defaults to 0).
     mult : scalar, Array, optional
         Value to multiply the previous value by. Defaults to None.
     func : function/callable, optional
         Function to apply to the previous value. Defaults to None.
         Note that this is much slower than using inc and/or mult.
     axes : int, tuple of int or tuple/list/AxisCollection of Axis, optional
-        Axes of the result. Defaults to the union of axes present in other arguments.
+        Axes of the result. Defaults to the union of axes present in other
+        arguments.
     title : str, optional
         Deprecated. See 'meta' below.
     meta : list of pairs or dict or Metadata, optional
