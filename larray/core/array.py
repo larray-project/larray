@@ -9033,9 +9033,10 @@ def sequence(axis, initial=0, inc=None, mult=None, func=None, axes=None, title=N
         res[axis.i[1:]] = mult_array.cumprod(axis)[axis.i[1:]]
     # both inc and mult defined but constant (scalars or axis not present)
     elif not has_axis(inc, axis) and not has_axis(mult, axis):
-        # FIXME: the assert is broken (not has_axis is not what we want)
-        assert ((np.isscalar(inc) and inc != 0) or not has_axis(inc, axis)) and \
-               (np.isscalar(mult) or not has_axis(mult, axis))
+        scalar_inc = np.isscalar(inc) and inc != 0
+        scalar_mult = np.isscalar(mult) and mult != 1
+        assert scalar_inc or (isinstance(inc, Array) and axis not in inc.axes)
+        assert scalar_mult or (isinstance(mult, Array) and axis not in mult.axes)
         mult_array = array_or_full(mult, axis, 1)
         cum_mult = mult_array.cumprod(axis)[axis.i[1:]]
         res[axis.i[0]] = initial
