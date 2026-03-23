@@ -885,6 +885,7 @@ class Group:
         # if isinstance(value, (tuple, list, Array, np.ndarray, str)):
         if hasattr(value, '__len__'):
             return len(value)
+        # this case happens for groups without axis and a slice key
         elif isinstance(value, slice):
             start, stop = value.start, value.stop
             # not using stop - start because that does not work for string bounds
