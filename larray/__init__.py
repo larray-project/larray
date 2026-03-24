@@ -5,8 +5,7 @@ from larray.core.axis import Axis, AxisCollection, X
 from larray.core.group import Group, LGroup, LSet, IGroup, union
 from larray.core.array import (Array, zeros, zeros_like, ones, ones_like, empty, empty_like, full,
                                full_like, sequence, labels_array, ndtest, asarray, identity, diag,
-                               eye, all, any, sum, prod, cumsum, cumprod, min, max, mean, ptp, var,
-                               std, median, percentile, stack, zip_array_values, zip_array_items)
+                               eye, stack, zip_array_values, zip_array_items)
 from larray.core.session import Session, local_arrays, global_arrays, arrays
 from larray.core.checked import CheckedArray, CheckedSession, CheckedParameters
 from larray.core.constants import nan, inf, pi, e, euler_gamma
@@ -21,6 +20,10 @@ from larray.core.npufuncs import (sin, cos, tan, arcsin, arccos, arctan, hypot, 
                                   convolve, clip, sqrt, absolute, fabs, sign, fmax, fmin,
                                   real_if_close, interp, isinf, inverse)
 from larray.core.misc import isscalar
+from larray.core.array_ops import (
+    all, any, sum, prod, cumsum, cumprod, min, max, mean, median, percentile,
+    ptp, var, std
+)
 
 from larray.inout.misc import from_lists, from_string
 from larray.inout.pandas import from_frame, from_series

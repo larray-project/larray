@@ -1,7 +1,7 @@
 import math
 from collections import deque
 
-from larray.core.array import Array, asarray, ones, any
+from larray.core.array import Array, asarray, ones
 import numpy as np
 
 
@@ -222,19 +222,19 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
                              f"{axes[0]} (axis {a.axes.index(axes[0])}): {axis_total} vs {axis0_total}")
 
     negative = a < 0
-    if any(negative):
+    if negative.any():
         raise ValueError(f"negative value(s) found:\n{badvalues(a, negative)}")
 
     for axis, axis_target_sum in zip(axes, target_sums):
         axis_idx = a.axes.index(axis)
         axis_sum = a.sum(axis)
         bad = (axis_sum == 0) & (axis_target_sum != 0)
-        if any(bad):
+        if bad.any():
             raise ValueError(f"found all zero values sum along {axis.name} (axis {axis_idx}) but non zero target sum:\n"
                              f"{badvalues(axis_target_sum, bad)}")
 
         bad = (axis_sum != 0) & (axis_target_sum == 0)
-        if any(bad):
+        if bad.any():
             if nzvzs in {'warn', 'raise'}:
                 msg = f"found Non Zero Values but Zero target Sum (nzvzs) along {axis.name} (axis {axis_idx})"
                 if nzvzs == 'raise':
@@ -245,7 +245,7 @@ def ipfp(target_sums, a=None, axes=None, maxiter=1000, threshold=0.5, stepstoabo
 
             a[bad] = 0
             # verify we did fix the problem
-            assert not any((a.sum(axis) != 0) & (axis_target_sum == 0))
+            assert not ((a.sum(axis) != 0) & (axis_target_sum == 0)).any()
 
     lastdiffs = deque([float('nan')], maxlen=stepstoabort)
 
