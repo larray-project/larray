@@ -1286,7 +1286,7 @@ class Session:
         >>> s1.equals(s2)
         False
         """
-        return all(self.element_equals(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
+        return self.element_equals(other, rtol=rtol, atol=atol, nans_equal=nans_equal).all()
 
     def transpose(self, *args) -> 'Session':
         r"""Reorder axes of arrays in session, ignoring missing axes for each array.

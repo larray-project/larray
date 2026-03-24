@@ -28,7 +28,6 @@ Array class.
 from itertools import product, chain, groupby
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-import builtins
 import functools
 import warnings
 
@@ -56,187 +55,13 @@ from larray.core.group import (Group, IGroup, LGroup, _to_key, _to_keys,
 from larray.core.axis import Axis, AxisReference, AxisCollection, X, _make_axis         # noqa: F401
 from larray.core.axis import align_axis_collections
 from larray.core.plot import PlotObject
+from larray.core.array_ops import sum, _np_op
 from larray.util.misc import (table2str, size2str, ReprString,
                               float_error_handler_factory, light_product, common_dtype,
                               renamed_to, deprecate_kwarg, LHDFStore, lazy_attribute, unique_multi, SequenceZip,
                               Repeater, Product, ensure_no_numpy_type, exactly_one, concatenate_ndarrays)
 from larray.util.options import _OPTIONS, DISPLAY_MAXLINES, DISPLAY_EDGEITEMS, DISPLAY_WIDTH, DISPLAY_PRECISION
 from larray.util.types import Scalar
-
-
-def all(values, axis=None) -> Union['Array', Scalar]:
-    r"""
-    Test whether all array elements along a given axis evaluate to True.
-
-    See Also
-    --------
-    Array.all
-    """
-    if isinstance(values, Array):
-        return values.all(axis)
-    else:
-        return builtins.all(values)
-
-
-def any(values, axis=None) -> Union['Array', Scalar]:
-    r"""
-    Test whether any array elements along a given axis evaluate to True.
-
-    See Also
-    --------
-    Array.any
-    """
-    if isinstance(values, Array):
-        return values.any(axis)
-    else:
-        return builtins.any(values)
-
-
-# commutative modulo float precision errors
-def sum(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Sum of array elements.
-
-    See Also
-    --------
-    Array.sum
-    """
-    # XXX: we might want to be more aggressive here (more types to convert), however, generators should still be
-    #      computed via the builtin.
-    if isinstance(array, (np.ndarray, list)):
-        array = Array(array)
-    if isinstance(array, Array):
-        return array.sum(*args, **kwargs)
-    else:
-        return builtins.sum(array, *args, **kwargs)
-
-
-def prod(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Product of array elements.
-
-    See Also
-    --------
-    Array.prod
-    """
-    return array.prod(*args, **kwargs)
-
-
-def cumsum(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Return the cumulative sum of array elements.
-
-    See Also
-    --------
-    Array.cumsum
-    """
-    return array.cumsum(*args, **kwargs)
-
-
-def cumprod(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Return the cumulative product of array elements.
-
-    See Also
-    --------
-    Array.cumprod
-    """
-    return array.cumprod(*args, **kwargs)
-
-
-def min(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Minimum of array elements.
-
-    See Also
-    --------
-    Array.min
-    """
-    if isinstance(array, Array):
-        return array.min(*args, **kwargs)
-    else:
-        return builtins.min(array, *args, **kwargs)
-
-
-def max(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Maximum of array elements.
-
-    See Also
-    --------
-    Array.max
-    """
-    if isinstance(array, Array):
-        return array.max(*args, **kwargs)
-    else:
-        return builtins.max(array, *args, **kwargs)
-
-
-def mean(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Compute the arithmetic mean.
-
-    See Also
-    --------
-    Array.mean
-    """
-    return array.mean(*args, **kwargs)
-
-
-def median(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Compute the median.
-
-    See Also
-    --------
-    Array.median
-    """
-    return array.median(*args, **kwargs)
-
-
-def percentile(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Compute the qth percentile of the data along the specified axis.
-
-    See Also
-    --------
-    Array.percentile
-    """
-    return array.percentile(*args, **kwargs)
-
-
-# not commutative
-def ptp(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Return the range of values (maximum - minimum).
-
-    See Also
-    --------
-    Array.ptp
-    """
-    return array.ptp(*args, **kwargs)
-
-
-def var(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Compute the variance.
-
-    See Also
-    --------
-    Array.var
-    """
-    return array.var(*args, **kwargs)
-
-
-def std(array, *args, **kwargs) -> Union['Array', Scalar]:
-    r"""
-    Compute the standard deviation.
-
-    See Also
-    --------
-    Array.std
-    """
-    return array.std(*args, **kwargs)
 
 
 def concat(arrays, axis=0, dtype=None):
@@ -3064,6 +2889,7 @@ class Array(ABCArray):
 
         Examples
         --------
+        >>> from larray import mean
         >>> arr = ndtest("gender=M,F;time=2013..2016")
         >>> arr
         gender\time  2013  2014  2015  2016
@@ -3103,18 +2929,6 @@ class Array(ABCArray):
         >>> # arr.with_total('time[:2014] >> before_2015; time[2015:] >> after_2015')
         """
         # TODO: make label default to op.__name__
-        npop = {
-            sum: np.sum,
-            prod: np.prod,
-            min: np.min,
-            max: np.max,
-            mean: np.mean,
-            ptp: np.ptp,
-            var: np.var,
-            std: np.std,
-            median: np.median,
-            percentile: np.percentile,
-        }
         # TODO: commutative should be known for usual ops
         operations = self._prepare_aggregate(op, args, kwargs, False, stack_depth=2)
         res = self
@@ -3122,8 +2936,9 @@ class Array(ABCArray):
         #       only copied once
         for axis in operations:
             # TODO: append/extend first with an empty array then _aggregate with out=
+            npfunc = _np_op[op]
             if self.axes.isaxis(axis):
-                value = res._axis_aggregate(npop[op], (axis,), keepaxes=label)
+                value = res._axis_aggregate(npfunc, (axis,), keepaxes=label)
             else:
                 # groups
                 if not isinstance(axis, tuple):
@@ -3131,7 +2946,7 @@ class Array(ABCArray):
                     axis = (axis,)
                 lgkey = axis
                 axis = lgkey[0].axis
-                value = res._aggregate(npop[op], (lgkey,))
+                value = res._aggregate(npfunc, (lgkey,))
             res = res.append(axis, value)
         return res
 
@@ -6014,7 +5829,8 @@ class Array(ABCArray):
             return False
         try:
             axes_equal = self.axes == other.axes if check_axes else True
-            return axes_equal and all(self.eq(other, rtol=rtol, atol=atol, nans_equal=nans_equal))
+            eq = self.eq(other, rtol=rtol, atol=atol, nans_equal=nans_equal)
+            return axes_equal and eq.all()
         except ValueError:
             return False
 
