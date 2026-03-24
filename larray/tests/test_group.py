@@ -113,6 +113,23 @@ def test_eq_lgroup(lgroups):
     assert lgroups.list_named == ['P01', 'P03', 'P04']
 
 
+def test_group_arithmetic():
+    time = Axis('time=2000..2040')
+    t = time.i[20]  # 2020
+    r1 = t + 65
+    assert r1 == 2085
+
+    # issue #1173
+    age = Axis('age=65..75')
+    a = age.i[5]  # 70
+    r2 = r1 - a   # should be 2015
+    # issue was failing because r1 is a numpy type (int64) and a is a non-numpy
+    # type (Group) which has a __array_interface__ method forwarded to the
+    # __array_interface__ of its value (a.eval() which is another numpy int64)
+    # but no __array_struct__ method. See issue for details.
+    assert r2 == 2015 # (2085 - 70)
+
+
 def test_getitem_lgroup():
     axis = Axis("a=a0,a1")
     assert axis['a0'][0] == 'a'
