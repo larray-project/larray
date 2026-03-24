@@ -54,6 +54,9 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed silent bad result in some arithmetic operations using Group
+  instances when using Numpy 2.1 or later (closes :issue:`1173`).
+
 * fixed loading data files with all the following conditions when using
   Pandas >= 3.0: mixed type columns, some combination of labels in index
   columns not being present in the data and a non-NaN fill_value

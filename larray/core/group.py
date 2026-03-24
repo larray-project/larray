@@ -1048,7 +1048,8 @@ class Group:
         # TODO: implement this in a delayed fashion for axes references
         def opmethod(self, other):
             other_value = other.eval() if isinstance(other, Group) else other
-            return getattr(self.eval(), op_fullname)(other_value)
+            self_value = self.eval()
+            return getattr(self_value, op_fullname)(other_value)
 
         opmethod.__name__ = op_fullname
         return opmethod
@@ -1504,8 +1505,8 @@ class Group:
         return list(set(dir(self.eval())) | set(attributes) | set(dir(self.__class__)))
 
     def __getattr__(self, key) -> Scalar:
-        if key == '__array_struct__':
-            raise AttributeError("'Group' object has no attribute '__array_struct__'")
+        if key in {'__array_struct__', '__array_interface__'}:
+            raise AttributeError(f"'Group' object has no attribute '{key}'")
         else:
             return getattr(self.eval(), key)
 
