@@ -259,7 +259,7 @@ def from_frame(df,
     cartesian_prod : bool, optional
         Whether to expand the dataframe to a cartesian product dataframe as needed by Array.
         This is an expensive operation but is absolutely required if you cannot guarantee your dataframe is already
-        well-formed. If True, arguments `sort_rows` and `sort_columns` must be set to False.
+        well-formed. If False, arguments `sort_rows` and `sort_columns` must also be False.
         Defaults to True.
     copy : bool, optional
         Whether to copy the data from the DataFrame. Defaults to True.
