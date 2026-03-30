@@ -104,7 +104,7 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 name = str(pd_obj.name)
             if name == 'None':
                 name = None
-            labels = pd_obj.values
+            labels = pd_obj.to_numpy(copy=False)
             if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
                 # this check is there because there are cases where dtype_kind is 'U' but pandas returns
                 # an array with object dtype containing bytes instead of a string array, and in that case
@@ -121,15 +121,15 @@ def read_hdf(filepath_or_buffer, key, fill_value=nan, na=nan, sort_rows=False, s
                 name = str(pd_obj.name)
             if name == 'None':
                 name = None
-            key = pd_obj.values
+            key = pd_obj.to_numpy(copy=False)
             if 'dtype_kind' in attrs and attrs['dtype_kind'] == 'U':
                 key = np.char.decode(key, 'utf-8')
             axis = read_hdf(filepath_or_buffer, attrs['axis_key'])
             res = LGroup(key=key, name=name, axis=axis)
         elif _type in _supported_typenames:
-            res = pd_obj.values
-            assert len(res) == 1
-            res = res[0]
+            assert isinstance(pd_obj, pd.Series)
+            # .item() returns the first element (and checks length is 1)
+            res = pd_obj.item()
     return res
 
 

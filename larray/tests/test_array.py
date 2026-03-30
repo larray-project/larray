@@ -4042,7 +4042,8 @@ def test_read_excel_xlwings():
     # with additional empty column in the middle of the array to read
     good2 = ndtest('a=a0,a1;b=2003..2006').astype(object)
     good2[2005] = None
-    good2 = good2.set_axes('b', Axis([2003, 2004, None, 2006], 'b'))
+    new_b_axis = Axis(np.array([2003, 2004, None, 2006], dtype=object), 'b')
+    good2 = good2.set_axes('b', new_b_axis)
     bad3 = read_excel(fpath, 'middleblankcol')
     bad4 = read_excel(fpath, '16384col')
     assert_larray_equal(bad3, good2)
@@ -4300,15 +4301,15 @@ def test_from_frame():
     # ================
     # Dataframe becomes 1D Array
     data = np.array([10])
-    index = ['i0']
-    columns = ['c0']
-    axis_index, axis_columns = Axis(index), Axis(columns)
+    index_labels = ['i0']
+    column_labels = ['c0']
+    axis_index, axis_columns = Axis(index_labels), Axis(column_labels)
 
-    df = pd.DataFrame(data, index=index, columns=columns)
+    df = pd.DataFrame(data, index=index_labels, columns=column_labels)
     assert df.index.name is None
     assert df.columns.name is None
-    assert list(df.index.values) == index
-    assert list(df.columns.values) == columns
+    assert df.index.to_list() == index_labels
+    assert df.columns.to_list() == column_labels
 
     # anonymous indexes/columns
     # input dataframe:
@@ -4323,8 +4324,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, 1)
     assert arr.axes.names == [None, None]
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4344,8 +4345,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, 1)
     assert arr.axes.names == ['index', None]
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4383,8 +4384,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, 1)
     assert arr.axes.names == [None, 'columns']
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, 1)), [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4404,8 +4405,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, 1)
     assert arr.axes.names == ['index', 'columns']
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, 1)), [axis_index.rename('index'), axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4418,15 +4419,15 @@ def test_from_frame():
     # ====================================
     # Dataframe becomes 1D Array
     data = np.arange(size)
-    indexes = ['i0']
-    columns = [f'c{i}' for i in range(size)]
-    axis_index, axis_columns = Axis(indexes), Axis(columns)
+    index_labels = ['i0']
+    column_labels = [f'c{i}' for i in range(size)]
+    axis_index, axis_columns = Axis(index_labels), Axis(column_labels)
 
-    df = pd.DataFrame(data.reshape(1, size), index=indexes, columns=columns)
+    df = pd.DataFrame(data.reshape(1, size), index=index_labels, columns=column_labels)
     assert df.index.name is None
     assert df.columns.name is None
-    assert list(df.index.values) == indexes
-    assert list(df.columns.values) == columns
+    assert df.index.to_list() == index_labels
+    assert df.columns.to_list() == column_labels
     assert arr.data.flags.writeable
 
     # anonymous indexes/columns
@@ -4442,8 +4443,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, size)
     assert arr.axes.names == [None, None]
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4463,8 +4464,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, size)
     assert arr.axes.names == ['index', None]
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4483,8 +4484,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, size)
     assert arr.axes.names == [None, 'columns']
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, size)), [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4504,8 +4505,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (1, size)
     assert arr.axes.names == ['index', 'columns']
-    assert list(arr.axes.labels[0]) == index
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data.reshape((1, size)), [axis_index.rename('index'), axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4514,15 +4515,15 @@ def test_from_frame():
     # ==================================
     # Dataframe becomes 2D Array
     data = data.reshape(size, 1)
-    indexes = [f'i{i}' for i in range(size)]
-    columns = ['c0']
-    axis_index, axis_columns = Axis(indexes), Axis(columns)
+    index_labels = [f'i{i}' for i in range(size)]
+    column_labels = ['c0']
+    axis_index, axis_columns = Axis(index_labels), Axis(column_labels)
 
-    df = pd.DataFrame(data, index=indexes, columns=columns)
+    df = pd.DataFrame(data, index=index_labels, columns=column_labels)
     assert df.index.name is None
     assert df.columns.name is None
-    assert list(df.index.values) == indexes
-    assert list(df.columns.values) == columns
+    assert df.index.to_list() == index_labels
+    assert df.columns.to_list() == column_labels
     assert arr.data.flags.writeable
 
     # anonymous indexes/columns
@@ -4542,8 +4543,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (size, 1)
     assert arr.axes.names == [None, None]
-    assert list(arr.axes.labels[0]) == indexes
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data, [axis_index, axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4567,8 +4568,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (size, 1)
     assert arr.axes.names == ['index', None]
-    assert list(arr.axes.labels[0]) == indexes
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data, [axis_index.rename('index'), axis_columns])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4591,8 +4592,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (size, 1)
     assert arr.axes.names == [None, 'columns']
-    assert list(arr.axes.labels[0]) == indexes
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4615,8 +4616,8 @@ def test_from_frame():
     assert arr.ndim == 2
     assert arr.shape == (size, 1)
     assert arr.axes.names == [None, 'columns']
-    assert list(arr.axes.labels[0]) == indexes
-    assert list(arr.axes.labels[1]) == columns
+    assert arr.axes[0].labels.tolist() == index_labels
+    assert arr.axes[1].labels.tolist() == column_labels
     expected = Array(data, [axis_index, axis_columns.rename('columns')])
     assert_larray_equal(arr, expected)
     assert arr.data.flags.writeable
@@ -4695,13 +4696,13 @@ def test_from_frame():
     a = Axis('a=2,0,1,3')
     gender = Axis('gender=M,F')
     time = Axis('time=2016,206,2017')
-    columns = pd.Index(time.labels, name=time.name)
+    column_labels = pd.Index(time.labels, name=time.name)
 
     # df.index is an Index instance
     expected = ndtest((gender, time))
-    index = pd.Index(gender.labels, name=gender.name)
+    index_labels = pd.Index(gender.labels, name=gender.name)
     data = expected.data
-    df = pd.DataFrame(data, index=index, columns=columns)
+    df = pd.DataFrame(data, index=index_labels, columns=column_labels)
 
     expected = expected.sort_labels()
     res = from_frame(df, sort_rows=True, sort_columns=True)
@@ -4710,9 +4711,9 @@ def test_from_frame():
 
     # df.index is a MultiIndex instance
     expected = ndtest((a, gender, time))
-    index = pd.MultiIndex.from_product(expected.axes[:-1].labels, names=expected.axes[:-1].names)
+    index_labels = pd.MultiIndex.from_product(expected.axes[:-1].labels, names=expected.axes[:-1].names)
     data = expected.data.reshape(len(a) * len(gender), len(time))
-    df = pd.DataFrame(data, index=index, columns=columns)
+    df = pd.DataFrame(data, index=index_labels, columns=column_labels)
 
     res = from_frame(df, sort_rows=True, sort_columns=True)
     assert_larray_equal(res, expected.sort_labels())

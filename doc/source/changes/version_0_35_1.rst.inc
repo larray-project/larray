@@ -54,15 +54,19 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
-* fixed silent bad result in some arithmetic operations using Group
-  instances when using Numpy 2.1 or later (closes :issue:`1173`).
+* fixed a critical error: arithmetic operations using Group instances silently
+  produced bad results in some cases when using Numpy 2.1 or later
+  (closes :issue:`1173`).
+
+* fixed most data reading functions returning readonly Arrays when using
+  Pandas >= 3.0 (closes :issue:`1170`).
+
+* fixed loading string data from H5 files written with Pandas >= 3.0 (whether
+  pyarrow is installed or not). Closes :issue:`1180`.
 
 * fixed loading data files with all the following conditions when using
   Pandas >= 3.0: mixed type columns, some combination of labels in index
   columns not being present in the data and a non-NaN fill_value
   (closes :issue:`1166`).
-
-* fixed most data reading functions returning readonly Arrays when using
-  Pandas >= 3.0 (closes :issue:`1170`).
 
 * fixed `sequence()` when both `inc` and `mult` are defined.
