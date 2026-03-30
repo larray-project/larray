@@ -428,7 +428,9 @@ def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
         return s
 
     if isinstance(s, pd.Index):
-        ticks = s.values
+        # TODO: deprecate this? (see #1182)
+        # This is about supporting la.Axis(pd.Index())
+        ticks = s.to_numpy()
     elif isinstance(s, (list, tuple)):
         ticks = [_to_tick(e) for e in s]
     elif isinstance(s, range):
@@ -590,8 +592,7 @@ def _to_key(v, stack_depth=1, parse_single_int=False) -> Key:
         else:
             return _seq_str_to_seq(v, stack_depth + 1, parse_single_int=parse_single_int)
     elif (v is Ellipsis or np.isscalar(v) or
-          isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet,
-                         pd.arrays.ArrowStringArray))):
+          isinstance(v, (Group, slice, list, np.ndarray, ABCArray, OrderedSet))):
         return v
     else:
         raise TypeError(f"{v} has an invalid type ({type(v).__name__}) for a key")

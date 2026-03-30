@@ -39,24 +39,27 @@ def parse(s):
         return s
 
 
-def index_to_labels(idx, sort=True):
+def index_to_labels(idx, sort=True): # -> list[np.ndarray]:
     r"""
-    Return unique labels for each dimension.
+    Return unique labels for each dimension as a list of numpy arrays
     """
     if isinstance(idx, pd.MultiIndex):
         if sort:
-            return list(idx.levels)  # list of pd.Index
+            return [level.to_numpy() for level in idx.levels]
         else:
             # requires Pandas >= 0.23 (and it does NOT sort the values)
-            # TODO: unsure to_list is necessary (larray tests pass without it
-            #       but I am not sure this code path is covered by tests)
-            #       and there might be a subtle difference. The type
-            #       of the returned object without to_list() is pd.Index
-            return [idx.unique(level).to_list() for level in range(idx.nlevels)]
+            return [idx.unique(level_num).to_numpy()
+                    for level_num in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.Index)
-        labels = list(idx.values)
-        return [sorted(labels) if sort else labels]
+        if sort:
+            # TODO: we should probably only pass via Python when the dtype is
+            #       object
+            # For object arrays, it is often faster to sort the labels
+            # in Python than to use np.sort, which is very slow in that case
+            return [np.asarray(sorted(idx.to_list()))]
+        else:
+            return [idx.to_numpy()]
 
 
 def product_index(idx, sort=False):
@@ -88,8 +91,8 @@ def cartesian_product_df(df,
     # the len() tests are meant to avoid the more expensive array_equal tests
     if (len(prod_index) == len(idx) and
             len(prod_columns) == len(columns) and
-            np.array_equal(idx.values, prod_index.values) and
-            np.array_equal(columns.values, prod_columns.values)):
+            idx.equals(prod_index) and
+            columns.equals(prod_columns)):
         return df, combined_labels
     import numbers
     if (isinstance(fill_value, numbers.Number) and not np.isnan(fill_value) and
@@ -429,7 +432,7 @@ def df_asarray(df,
     # raw = True: the dataframe was read without index at all (ie 2D dataframe),
     # irrespective of the actual data dimensionality
     if raw:
-        columns = df.columns.values.tolist()
+        columns = df.columns.to_list()
         if wide:
             try:
                 # take the first column which contains '\'
@@ -451,10 +454,17 @@ def df_asarray(df,
             return res
 
     # handle 1D arrays
-    if len(df) == 1 and (pd.isnull(df.index.values[0])
-                         or (isinstance(df.index.values[0], str) and df.index.values[0].strip() == '')):
+    if len(df) == 1:
+        # .item() returns the first element and checks length is 1
+        idx_val = df.index.item()
+        is_1d_array = (pd.isnull(idx_val) or
+                       (isinstance(idx_val, str) and idx_val.strip() == ''))
+    else:
+        is_1d_array = False
+
+    if is_1d_array:
         if parse_header:
-            df.columns = pd.Index([parse(cell) for cell in df.columns.values], name=df.columns.name)
+            df.columns = pd.Index([parse(cell) for cell in df.columns.to_list()], name=df.columns.name)
         series = df.iloc[0]
         series.name = df.index.name
         if sort_rows:
