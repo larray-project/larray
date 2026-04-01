@@ -481,7 +481,7 @@ This warning will become an error in a future version of larray."""
                                           skip_frozen=False,
                                           stacklevel=2)
             super().__setitem__(key, value)
-            # object.__setattr__(self, key, value)
+            object.__setattr__(self, key, value)
 
         def __setattr__(self, key, value, skip_frozen=False, stacklevel=1):
             if key == 'meta':
@@ -491,7 +491,7 @@ This warning will become an error in a future version of larray."""
                                           skip_frozen,
                                           stacklevel=stacklevel + 1)
             super().__setattr__(key, value)
-            # object.__setattr__(self, key, value)
+            object.__setattr__(self, key, value)
 
         def __getstate__(self) -> Dict[str, Any]:
             return {'__dict__': self.__dict__}
