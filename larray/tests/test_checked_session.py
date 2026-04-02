@@ -458,7 +458,8 @@ def _test_io_cs(tmp_path, meta, engine, ext):
     csession = CheckedSessionExample(a=a, a2=a2, a01=a01, d=d, e=e, g=g, f=f, h=h, meta=meta)
     csession.save(fpath, engine=engine)
     a4 = Axis('a=0..3')
-    a4_01 = a3['0,1'] >> 'a01'
+    a4_01 = a4['0,1'] >> 'a01'
+    a4_ano01 = a4['0,1']
     e2 = ndtest((a4, 'b=b0..b2'))
     h2 = full_like(h, fill_value=10)
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=3):
@@ -467,7 +468,13 @@ def _test_io_cs(tmp_path, meta, engine, ext):
                                     module=r'openpyxl|xlsxwriter',
                                     message=r"datetime.datetime.utcnow\(\) is deprecated.*")
 
-            CheckedSessionExample(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
+            # see comment in test_session.py:_test_io about overwrite=False
+            updated_vars = CheckedSessionExample(a=a4,
+                                                 a01=a4_01,
+                                                 ano01=a4_ano01,
+                                                 e=e2,
+                                                 h=h2)
+            updated_vars.save(fpath, overwrite=False, engine=engine)
     with must_warn(UserWarning, match=r"No value passed for the declared variable '\w+'", num_expected=7):
         cs = CheckedSessionExample()
 
@@ -487,7 +494,6 @@ def _test_io_cs(tmp_path, meta, engine, ext):
     assert cs.b.equals(b)
     assert cs.b024.equals(b024)
     assert cs.anonymous.equals(anonymous)
-    assert cs.ano01.equals(ano01)
     # --- typed variables ---
     # Array is support by all formats
     assert cs.e.equals(e2)
@@ -513,6 +519,7 @@ def _test_io_cs(tmp_path, meta, engine, ext):
         assert cs.a.equals(a4)
         assert cs.a2.equals(a2)
         assert cs.a01.equals(a4_01)
+        assert cs.ano01.equals(a4_ano01)
         assert cs.g.equals(g)
         assert cs.f.equals(f)
     if engine != 'pandas_excel':
