@@ -232,10 +232,21 @@ def _test_io(tmp_path, session, meta, engine, ext):
 
     # update a Group + an Axis + an array (overwrite=False)
     a4 = Axis('a=0..3')
-    a4_01 = a3['0,1'] >> 'a01'
+    a4_01 = a4['0,1'] >> 'a01'
+    a4_ano01 = a4['0,1']
     e2 = ndtest((a4, 'b=b0..b2'))
     h2 = full_like(h, fill_value=10)
-    Session(a=a4, a01=a4_01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
+    # overwrite=False is an nasty functionality:
+    # * it is a misnomer because the file *is* updated (and thus overwritten)
+    #   just not cleared/started from scratch
+    # * in combination with groups, it can create invalid files. For example,
+    #   in the line below, if we do not redefine ano01, the file still
+    #   contains the original ano01 group which "expects" the original a axis
+    #   but since the reference to the axis is by name, it refers to the new
+    #   a4 axis which has incompatible labels. We got away with it so far
+    #   because we did not test that variable *not* tested that a group
+    #   labels are actually valid on their axis when creating them.
+    Session(a=a4, a01=a4_01, ano01=a4_ano01, e=e2, h=h2).save(fpath, overwrite=False, engine=engine)
     s = Session()
     s.load(fpath, engine=engine)
     if engine == 'pandas_excel':
@@ -247,6 +258,7 @@ def _test_io(tmp_path, session, meta, engine, ext):
         assert s.names == session.names
         assert s['a'].equals(a4)
         assert s['a01'].equals(a4_01)
+        assert s['ano01'].equals(a4_ano01)
     assert_array_nan_equal(s['e'], e2)
     if engine != 'pandas_excel':
         assert s.meta == meta

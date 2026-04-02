@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from larray.tests.common import assert_array_equal, needs_pytables, must_raise
-from larray import Axis, IGroup, LGroup, LSet, ndtest, read_hdf
+from larray import Array, Axis, IGroup, LGroup, LSet, read_hdf
 from larray.util.oset import OrderedSet
 
 age = Axis('age=0..10')
@@ -12,7 +12,7 @@ age_wildcard = Axis(10, 'wildcard')
 
 
 def test_equals():
-    a = Axis('a=a0..a2')
+    a = Axis('a=a0..a3')
     # keys are single value
     assert a['a0'].equals(a['a0'])
     # keys are arrays
@@ -132,15 +132,27 @@ def test_group_arithmetic():
 
 def test_getitem_lgroup():
     axis = Axis("a=a0,a1")
-    assert axis['a0'][0] == 'a'
-    assert axis['a0'][1] == '0'
-    assert axis['a0':'a1'][1] == 'a1'
-    assert axis[:][1] == 'a1'
-    assert list(axis[:][0:2]) == ['a0', 'a1']
-    assert list((axis[:][[1, 0]])) == ['a1', 'a0']
-    assert axis[['a0', 'a1', 'a0']][2] == 'a0'
-    assert axis[('a0', 'a1', 'a0')][2] == 'a0'
-    assert axis[ndtest("a=a0,a1,a0")][2] == 2
+    group = axis['a0']
+    assert group[0] == 'a'
+    assert group[1] == '0'
+
+    group = axis['a0':'a1']
+    assert group[1] == 'a1'
+
+    group = axis[:]
+    assert group[1] == 'a1'
+    assert list(group[0:2]) == ['a0', 'a1']
+    assert list(group[[1, 0]]) == ['a1', 'a0']
+
+    group = axis[['a0', 'a1', 'a0']]
+    assert group[2] == 'a0'
+
+    group = axis[('a0', 'a1', 'a0')]
+    assert group[2] == 'a0'
+
+    arr = Array(['a0', 'a1', 'a0'], axes="b=b0,b1,b2")
+    group = axis[arr]
+    assert group[2] == 'a0'
 
 
 def test_sorted_lgroup():
