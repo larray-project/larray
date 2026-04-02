@@ -1599,6 +1599,20 @@ class LGroup(Group):
                 from larray.core.axis import check_warn_retarget
                 check_warn_retarget(key, axis, stacklevel=4)
         Group.__init__(self, key, name, axis)
+        # TODO: we should check that the key is valid on the axis.
+        #       We should also do that for IGroups too but I am unsure how to
+        #       handle IGroup(len(axis), axis=axis) that we use internally
+        #       in append
+        # if (isinstance(self.axis, ABCAxis) and
+        #         not isinstance(self.axis, ABCAxisReference)):
+        #     # check that the key is valid on the axis
+        #     try:
+        #         self.axis.labels[self.axis.index(self.key)]
+        #     except:
+        #         print("failed to create Group: cannot translate group key using"
+        #               "axis:")
+        #         print(f"{self=} {self.axis=} {self.axis.labels=} {key=}")
+        #         raise
 
     # XXX: return IGroup instead?
     def translate(self, bound=None) -> int:
