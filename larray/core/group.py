@@ -810,14 +810,13 @@ class Group:
         return str(self.eval())
 
     # TODO: rename to "to_positional"
-    def translate(self, bound=None, stop=False) -> Union[int, slice, Sequence[int]]:
+    def translate(self, bound=None) -> Union[int, slice, Sequence[int]]:
         r"""
         Translate key to a position if it is not already.
 
         Parameters
         ----------
         bound : any, optional
-        stop : bool, optional
 
         Returns
         -------
@@ -1018,7 +1017,9 @@ class Group:
                 if key_step is None:
                     key_step = 1
 
-                orig_stop_pos = self.translate(orig_stop, stop=True) if orig_stop is not None else len(self)
+                orig_stop_pos = (self.translate(orig_stop) + 1
+                                 if orig_stop is not None
+                                 else len(self))
                 new_start = orig_start_pos + key_start * orig_step
                 new_stop = min(orig_start_pos + key_stop * orig_step, orig_stop_pos)
                 new_step = orig_step * key_step
@@ -1600,15 +1601,14 @@ class LGroup(Group):
         Group.__init__(self, key, name, axis)
 
     # XXX: return IGroup instead?
-    def translate(self, bound=None, stop=False) -> int:
+    def translate(self, bound=None) -> int:
         r"""
         compute position(s) of group.
         """
         if bound is None:
             bound = self.key
         if isinstance(self.axis, ABCAxis):
-            pos = self.axis.index(bound)
-            return (pos + int(stop)) if np.isscalar(pos) else pos
+            return self.axis.index(bound)
         else:
             raise ValueError("Cannot translate an LGroup without axis")
 
@@ -1720,7 +1720,7 @@ class IGroup(Group):
     __slots__ = ()
     format_string = "{axis}.i[{key}]"
 
-    def translate(self, bound=None, stop=False) -> Union[int, slice, Sequence[int]]:
+    def translate(self, bound=None) -> Union[int, slice, Sequence[int]]:
         r"""
         compute position(s) of group.
         """
