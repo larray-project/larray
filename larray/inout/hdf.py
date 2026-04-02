@@ -171,9 +171,13 @@ class PandasHDFHandler(FileHandler):
     def _dump_item(self, key, value, *args, **kwargs):
         hdf_key = '/' + key
         if isinstance(value, (Array, Axis)):
+            # TODO: any *args or **kwargs would be passed to to_hdf,
+            #       but they are not supported for now
             value.to_hdf(self.handle, hdf_key, *args, **kwargs)
         elif isinstance(value, Group):
             hdf_axis_key = '/' + value.axis.name
+            # TODO: any *args or **kwargs would be passed to to_hdf,
+            #       but they are not supported for now
             value.to_hdf(self.handle, hdf_key, hdf_axis_key, *args, **kwargs)
         elif isinstance(value, _supported_scalars_types):
             s = pd.Series(data=value)
