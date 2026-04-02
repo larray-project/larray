@@ -268,8 +268,12 @@ def _add_scalars_to_session(s):
     s['s_int'] = 5
     s['s_float'] = 5.5
     s['s_bool'] = True
-    s['s_str'] = 'string'
+    s['s_str'] = 'EUR = €'
+    # pickled
+    s['s_bytes'] = b'this is a byte string'
+    # pickled
     s['s_date'] = date(2020, 1, 10)
+    # pickled
     s['s_time'] = time(11, 23, 54)
     s['s_datetime'] = datetime(2020, 1, 10, 11, 23, 54)
     return s
@@ -279,11 +283,15 @@ def _add_scalars_to_session(s):
 def test_h5_io(tmp_path, session, meta):
     session = _add_scalars_to_session(session)
 
-    # for some reason the PerformanceWarning is not detected as such, so this does not work:
+    # for some reason the PerformanceWarning is not detected as such, so this
+    # does not work:
     # with must_warn(tables.PerformanceWarning, ...):
     # cannot use check_file=True because of the extra level from _test_io
+    # the warnings are caused by s_bytes, s_date and s_time fields which are
+    # pickled
+    # TODO: we should avoid the pickles and thus those warnings (see #1184)
     with must_warn(Warning, match="^\nyour performance may suffer as PyTables will pickle object types that .*",
-                   num_expected=4, check_file=False):
+                   num_expected=6, check_file=False):
         _test_io(tmp_path, session, meta, engine='pandas_hdf', ext='h5')
 
 
