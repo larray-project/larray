@@ -1479,11 +1479,12 @@ class Group:
         s = pd.Series(data=data, name=self.name)
         with LHDFStore(filepath) as store:
             store.put(key, s)
-            store.get_storer(key).attrs.type = 'Group'
-            store.get_storer(key).attrs.dtype_kind = dtype_kind
+            attrs = store.get_storer(key).attrs
+            attrs.type = 'Group'
+            attrs.dtype_kind = dtype_kind
             if axis_key not in store:
                 self.axis.to_hdf(store, key=axis_key)
-            store.get_storer(key).attrs.axis_key = axis_key
+            attrs.axis_key = axis_key
 
     # this makes range(LGroup(int)) possible
     def __index__(self):
