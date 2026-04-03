@@ -230,7 +230,16 @@ def _test_io(tmp_path, session, meta, engine, ext):
     if engine != 'pandas_excel':
         assert s.meta == meta
 
-    # update a Group + an Axis + an array (overwrite=False)
+    # load only some objects
+    s = Session()
+    names_to_load = ['e', 'f'] if is_excel_or_csv else \
+        ['a', 'a01', 'a2', 'anonymous', 'e', 'f', 's_bool', 's_int']
+    s.load(fpath, names=names_to_load, engine=engine)
+    assert s.names == names_to_load
+    if engine != 'pandas_excel':
+        assert s.meta == meta
+
+    # update session (a Group + an Axis + an array) using overwrite=False
     a4 = Axis('a=0..3')
     a4_01 = a4['0,1'] >> 'a01'
     a4_ano01 = a4['0,1']
@@ -260,15 +269,6 @@ def _test_io(tmp_path, session, meta, engine, ext):
         assert s['a01'].equals(a4_01)
         assert s['ano01'].equals(a4_ano01)
     assert_array_nan_equal(s['e'], e2)
-    if engine != 'pandas_excel':
-        assert s.meta == meta
-
-    # load only some objects
-    session.save(fpath, engine=engine)
-    s = Session()
-    names_to_load = ['e', 'f'] if is_excel_or_csv else ['a', 'a01', 'a2', 'anonymous', 'e', 'f', 's_bool', 's_int']
-    s.load(fpath, names=names_to_load, engine=engine)
-    assert s.names == names_to_load
     if engine != 'pandas_excel':
         assert s.meta == meta
 
@@ -303,7 +303,7 @@ def test_h5_io(tmp_path, session, meta):
     # pickled
     # TODO: we should avoid the pickles and thus those warnings (see #1184)
     with must_warn(Warning, match="^\nyour performance may suffer as PyTables will pickle object types that .*",
-                   num_expected=6, check_file=False):
+                   num_expected=3, check_file=False):
         _test_io(tmp_path, session, meta, engine='pandas_hdf', ext='h5')
 
 
