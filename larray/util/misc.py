@@ -325,7 +325,10 @@ def array_lookup2(array, sorted_keys, sorted_values):
     # prevent an array of booleans from matching a integer axis (sorted_keys)
     # XXX: we might want to allow signed and unsigned integers to match against each other
     if array.dtype.kind != sorted_keys.dtype.kind:
-        raise KeyError('key has not the same dtype than axis')
+        raise KeyError('key has not the same dtype than axis (key has '
+                       f'{array.dtype.kind!r} kind while axis has '
+                       f'{sorted_keys.dtype.kind!r} kind)\n'
+                       f'{array}\n{sorted_keys}\n')
     # TODO: it is very important to fail quickly, so guess_axis should try this in chunks
     # (first test first element of key, if several axes match, try [1:11] elements, [12:112], [113:1113], ...
     if not np.all(np.isin(array, sorted_keys)):
