@@ -34,6 +34,7 @@ from larray import Array, isnan, asarray, Metadata
 
 
 NUMPY2 = NumpyVersion(np.__version__) >= '2.0.0'
+NUMPY24 = NumpyVersion(np.__version__) >= '2.4.0'
 SKIP_EXCEL_TESTS = False
 TESTDATADIR = Path(__file__).parent
 
