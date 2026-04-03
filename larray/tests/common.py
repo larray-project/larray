@@ -222,6 +222,13 @@ def must_warn(warn_cls=None, msg=None, match=None, check_file=True, num_expected
                 elif num_matching_msgs != num_expected:
                     assert_msg = (f"caught {num_matching_msgs} matching warning(s) but expected {num_expected} "
                                   f"instead")
+                    # If we have a precise expected message, displaying the
+                    # caught messages is not really useful, but if we only have
+                    # a pattern (ie when msg is None), it can be useful to see
+                    # the varying part
+                    if msg is None:
+                        assert_msg += (':\n' +
+                                       '\n    '.join(messages_matching_pattern))
                 else:
                     assert_msg = None
                 if assert_msg is not None:
